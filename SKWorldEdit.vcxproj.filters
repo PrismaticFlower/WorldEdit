@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="resource">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src\imgui">
+      <UniqueIdentifier>{196d1e49-d78c-4a7d-87e3-09141fc5b5eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\imgui">
+      <UniqueIdentifier>{e27b628c-ea5a-4c5a-8505-c3406633a1da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\editor">
+      <UniqueIdentifier>{66c31a31-9741-47af-8def-f077204835bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\world">
+      <UniqueIdentifier>{a9a001a4-a3f9-4ec4-a47c-36f385551888}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resource\SKWorldEdit.ico">
+      <Filter>resource</Filter>
+    </Image>
+    <Image Include="resource\small.ico">
+      <Filter>resource</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource\Resource.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\com_ptr.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\error.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\types.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\exceptions.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource\SKWorldEdit.rc">
+      <Filter>resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
