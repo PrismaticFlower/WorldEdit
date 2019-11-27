@@ -1,1 +1,8 @@
-stb headers
+TODO: Add licenses here. No third party code is actually included in the repository (I aquire them all from vcpkg) so I can (unless I'm mistaken?) be lazy about 
+filling this out for now, it only becomes an issue once binaries start getting distributed.
+
+ms-gsl
+glm
+{fmt}
+Boost.Container
+catch2

@@ -27,17 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="resource\SKWorldEdit.ico">
-      <Filter>resource</Filter>
-    </Image>
-    <Image Include="resource\small.ico">
-      <Filter>resource</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="resource\Resource.h">
-      <Filter>resource</Filter>
-    </ClInclude>
     <ClInclude Include="include\com_ptr.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -50,10 +39,40 @@
     <ClInclude Include="include\exceptions.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\assets\msh\material.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\enum_bitflags.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\assets\msh\scene.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\assets\msh\scene_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\read_file.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ucfb\reader.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\make_from_bytes.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\string_ops.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="resource\SKWorldEdit.rc">
-      <Filter>resource</Filter>
-    </ResourceCompile>
+    <ClCompile Include="src\assets\msh\scene_io.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utility\read_file.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utility\string_ops.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

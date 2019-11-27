@@ -7,7 +7,7 @@
 #include <array>
 #include <string>
 
-namespace sk::msh {
+namespace sk::assets::msh {
 
 enum class material_flags : uint8 {
    none = 0,
@@ -48,7 +48,7 @@ struct material {
    std::string name;
    vec3 specular_color = {1.0f, 1.0f, 1.0f};
    material_flags flags = material_flags::none;
-   rendertype flags = rendertype::normal;
+   rendertype rendertype = rendertype::normal;
    uint8 data0 = 0;
    uint8 data1 = 0;
 

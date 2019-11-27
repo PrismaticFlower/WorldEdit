@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SKWorldEdit", "SKWorldEdit.vcxproj", "{058233ED-26E5-4477-9D28-EE08E423BB95}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SKWorldEditTests", "tests\tests.vcxproj", "{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{058233ED-26E5-4477-9D28-EE08E423BB95}.Debug|x64.Build.0 = Debug|x64
 		{058233ED-26E5-4477-9D28-EE08E423BB95}.Release|x64.ActiveCfg = Release|x64
 		{058233ED-26E5-4477-9D28-EE08E423BB95}.Release|x64.Build.0 = Release|x64
+		{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}.Debug|x64.ActiveCfg = Debug|x64
+		{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}.Debug|x64.Build.0 = Debug|x64
+		{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}.Release|x64.ActiveCfg = Release|x64
+		{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

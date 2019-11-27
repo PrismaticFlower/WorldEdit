@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+   <Catch2Adapter disabled="false">
+      <FilenameFilter>Tests</FilenameFilter>
+      <DebugBreak>on</DebugBreak>
+      <WorkingDirectory>tests/</WorkingDirectory>
+      <WorkingDirectoryRoot>Solution</WorkingDirectoryRoot>
+   </Catch2Adapter>
+</RunSettings>
