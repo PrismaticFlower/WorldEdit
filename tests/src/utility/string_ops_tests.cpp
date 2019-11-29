@@ -13,6 +13,22 @@ TEST_CASE("string count lines", "[Utility][StringOp]")
    REQUIRE(count_lines(input) == 3);
 }
 
+TEST_CASE("string iterate lines", "[Utility][StringOp]")
+{
+   const auto input = "Line0\nLine1\r\nLine2\n"sv;
+   const std::array expected_lines{"Line0"sv, "Line1"sv, "Line2"sv};
+
+   int i = 0;
+   for (auto line : iterate_lines(input)) {
+      CHECK(line.number == i + 1);
+      CHECK(line.string == expected_lines.at(i));
+
+      ++i;
+   }
+
+   REQUIRE(i == expected_lines.size());
+}
+
 TEST_CASE("string split first of inclusive", "[Utility][StringOp]")
 {
    const auto input = "Foo Bar Baz"sv;
@@ -20,6 +36,44 @@ TEST_CASE("string split first of inclusive", "[Utility][StringOp]")
    REQUIRE(split_first_of_inclusive(input, "Bar"sv) ==
            std::array{"Foo Bar"sv, " Baz"sv});
    REQUIRE(split_first_of_inclusive(input, ","sv) == std::array{input, ""sv});
+}
+
+TEST_CASE("string split first of exclusive", "[Utility][StringOp]")
+{
+   const auto input = "Foo Bar Baz"sv;
+
+   REQUIRE(split_first_of_exclusive(input, "Bar"sv) == std::array{"Foo "sv, " Baz"sv});
+   REQUIRE(split_first_of_exclusive(input, ","sv) == std::array{input, ""sv});
+}
+
+TEST_CASE("string split first of exclusive if", "[Utility][StringOp]")
+{
+   const auto input = "Foo Bar Baz"sv;
+
+   REQUIRE(split_first_of_exclusive_if(input, std::isspace) ==
+           std::array{"Foo"sv, "Bar Baz"sv});
+   REQUIRE(split_first_of_exclusive_if(input, [](char) { return false; }) ==
+           std::array{input, ""sv});
+}
+
+TEST_CASE("string trim leading whitespace", "[Utility][StringOp]")
+{
+   const auto input = "   \f\v\r\n\n\tFoo Bar"sv;
+
+   REQUIRE(trim_leading_whitespace(input) == "Foo Bar"sv);
+}
+
+TEST_CASE("string trim trailing whitespace", "[Utility][StringOp]")
+{
+   const auto input = "Foo Bar   \f\v\r\n\n\t"sv;
+
+   REQUIRE(trim_trailing_whitespace(input) == "Foo Bar"sv);
+}
+
+TEST_CASE("string is whitespace", "[Utility][StringOp]")
+{
+   REQUIRE(is_whitespace("   \f\v\r\n\n\t"sv));
+   REQUIRE(not is_whitespace("Foo Bar"sv));
 }
 
 TEST_CASE("string indention", "[Utility][StringOp]")

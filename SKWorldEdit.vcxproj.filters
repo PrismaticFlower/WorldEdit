@@ -63,6 +63,15 @@
     <ClInclude Include="include\utility\string_ops.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\assets\odf\definition.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\assets\odf\properties.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\assets\odf\definition_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -72,6 +81,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utility\string_ops.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\odf\properties.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\odf\definition_io.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

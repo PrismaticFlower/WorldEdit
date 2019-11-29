@@ -1,18 +1,18 @@
 
 #include <utility/string_ops.hpp>
 
-#include <algorithm>
+#include <cctype>
 
 using namespace std::literals;
 
 namespace sk::utility::string {
 
-auto count_lines(std::string_view str) noexcept -> std::size_t
+auto count_lines(const std::string_view str) noexcept -> std::size_t
 {
    return std::count(str.cbegin(), str.cend(), '\n');
 }
 
-auto split_first_of_inclusive(std::string_view str, std::string_view delimiter)
+auto split_first_of_inclusive(std::string_view str, std::string_view delimiter) noexcept
    -> std::array<std::string_view, 2>
 {
    const auto offset = str.find(delimiter);
@@ -21,6 +21,36 @@ auto split_first_of_inclusive(std::string_view str, std::string_view delimiter)
 
    return {str.substr(0, offset + delimiter.size()),
            str.substr(offset + delimiter.size(), str.size() - offset)};
+}
+
+auto split_first_of_exclusive(std::string_view str, std::string_view delimiter) noexcept
+   -> std::array<std::string_view, 2>
+{
+   const auto offset = str.find(delimiter);
+
+   if (offset == str.npos) return {str, ""sv};
+
+   return {str.substr(0, offset),
+           str.substr(offset + delimiter.size(), str.size() - offset)};
+}
+
+auto trim_leading_whitespace(std::string_view str) noexcept -> std::string_view
+{
+   return str.substr(
+      std::distance(str.begin(),
+                    std::find_if_not(str.begin(), str.end(), std::isspace)));
+}
+
+auto trim_trailing_whitespace(std::string_view str) noexcept -> std::string_view
+{
+   return str.substr(0, std::distance(str.begin(),
+                                      std::find_if_not(str.rbegin(), str.rend(), std::isspace)
+                                         .base()));
+}
+
+bool is_whitespace(const std::string_view str) noexcept
+{
+   return std::all_of(str.cbegin(), str.cend(), std::isspace);
 }
 
 auto indent(std::size_t level, std::string_view input,

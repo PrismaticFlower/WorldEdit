@@ -63,6 +63,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <DisableSpecificWarnings>4275</DisableSpecificWarnings>
+      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -84,6 +85,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <DisableSpecificWarnings>4275</DisableSpecificWarnings>
+      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -95,6 +97,9 @@
     <ClInclude Include="include\assets\msh\material.hpp" />
     <ClInclude Include="include\assets\msh\scene.hpp" />
     <ClInclude Include="include\assets\msh\scene_io.hpp" />
+    <ClInclude Include="include\assets\odf\definition.hpp" />
+    <ClInclude Include="include\assets\odf\definition_io.hpp" />
+    <ClInclude Include="include\assets\odf\properties.hpp" />
     <ClInclude Include="include\com_ptr.hpp" />
     <ClInclude Include="include\error.hpp" />
     <ClInclude Include="include\exceptions.hpp" />
@@ -107,6 +112,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp" />
+    <ClCompile Include="src\assets\odf\definition_io.cpp" />
+    <ClCompile Include="src\assets\odf\properties.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
   </ItemGroup>

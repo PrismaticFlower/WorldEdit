@@ -4,5 +4,6 @@ filling this out for now, it only becomes an issue once binaries start getting d
 ms-gsl
 glm
 {fmt}
+Boost.Algorithm
 Boost.Container
 catch2

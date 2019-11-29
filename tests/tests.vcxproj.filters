@@ -18,6 +18,8 @@
     </ClCompile>
     <ClCompile Include="src\ucfb\reader_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
+    <ClCompile Include="src\assets\odf\properties_tests.cpp" />
+    <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
