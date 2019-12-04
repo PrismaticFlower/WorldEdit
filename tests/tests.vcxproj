@@ -57,7 +57,6 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4275</DisableSpecificWarnings>
-      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,6 +86,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\assets\config\io_tests.cpp" />
+    <ClCompile Include="src\assets\config\key_node_tests.cpp" />
+    <ClCompile Include="src\assets\config\values_tests.cpp" />
     <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />

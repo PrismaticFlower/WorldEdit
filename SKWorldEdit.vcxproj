@@ -63,7 +63,6 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <DisableSpecificWarnings>4275</DisableSpecificWarnings>
-      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -94,6 +93,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\assets\config\io.hpp" />
+    <ClInclude Include="include\assets\config\key_node.hpp" />
+    <ClInclude Include="include\assets\config\values.hpp" />
     <ClInclude Include="include\assets\msh\material.hpp" />
     <ClInclude Include="include\assets\msh\scene.hpp" />
     <ClInclude Include="include\assets\msh\scene_io.hpp" />
@@ -111,6 +113,8 @@
     <ClInclude Include="include\utility\string_ops.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\assets\config\io.cpp" />
+    <ClCompile Include="src\assets\config\key_node.cpp" />
     <ClCompile Include="src\assets\msh\scene_io.cpp" />
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />

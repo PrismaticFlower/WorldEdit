@@ -13,13 +13,13 @@ TEST_CASE("string count lines", "[Utility][StringOp]")
    REQUIRE(count_lines(input) == 3);
 }
 
-TEST_CASE("string iterate lines", "[Utility][StringOp]")
+TEST_CASE("string lines iterator", "[Utility][StringOp]")
 {
-   const auto input = "Line0\nLine1\r\nLine2\n"sv;
-   const std::array expected_lines{"Line0"sv, "Line1"sv, "Line2"sv};
+   const auto input = "Line0\nLine1\r\nLine2\n\n"sv;
+   const std::array expected_lines{"Line0"sv, "Line1"sv, "Line2"sv, ""sv};
 
    int i = 0;
-   for (auto line : iterate_lines(input)) {
+   for (auto line : lines_iterator{input}) {
       CHECK(line.number == i + 1);
       CHECK(line.string == expected_lines.at(i));
 
@@ -56,6 +56,20 @@ TEST_CASE("string split first of exclusive if", "[Utility][StringOp]")
            std::array{input, ""sv});
 }
 
+TEST_CASE("string split first of right inclusive any", "[Utility][StringOp]")
+{
+   const auto input = "Foo Bar Baz"sv;
+
+   REQUIRE(split_first_of_right_inclusive_any(input, {"Bar"sv}) ==
+           std::array{"Foo "sv, "Bar Baz"sv});
+   REQUIRE(split_first_of_right_inclusive_any(input, {"o"sv, " "sv}) ==
+           std::array{"F"sv, "oo Bar Baz"sv});
+   REQUIRE(split_first_of_right_inclusive_any(input, {"B"sv, " "sv}) ==
+           std::array{"Foo"sv, " Bar Baz"sv});
+   REQUIRE(split_first_of_right_inclusive_any(input, {","sv}) ==
+           std::array{input, ""sv});
+}
+
 TEST_CASE("string trim leading whitespace", "[Utility][StringOp]")
 {
    const auto input = "   \f\v\r\n\n\tFoo Bar"sv;
@@ -70,12 +84,30 @@ TEST_CASE("string trim trailing whitespace", "[Utility][StringOp]")
    REQUIRE(trim_trailing_whitespace(input) == "Foo Bar"sv);
 }
 
+TEST_CASE("string trim whitespace", "[Utility][StringOp]")
+{
+   const auto input = "   \f\v\r\n\n\tFoo Bar   \f\v\r\n\n\t"sv;
+
+   REQUIRE(trim_whitespace(input) == "Foo Bar"sv);
+}
+
 TEST_CASE("string is whitespace", "[Utility][StringOp]")
 {
    REQUIRE(is_whitespace("   \f\v\r\n\n\t"sv));
    REQUIRE(not is_whitespace("Foo Bar"sv));
 }
 
+TEST_CASE("string substr distance", "[Utility][StringOp]")
+{
+   const auto input = "Foo Baz"sv;
+
+   REQUIRE(substr_distance(input, input.substr(3)) == 3);
+
+   // The following would invoke Undefined Behaviour, by subtracting pointers from two different arrays.
+   // aka do not do this, make sure you call substr_distance with a valid substr.
+   //
+   // REQUIRE(substr_distance(input,  " Baz"sv) == 3);
+}
 TEST_CASE("string indention", "[Utility][StringOp]")
 {
    const auto input = "Foo\nBar\n"sv;

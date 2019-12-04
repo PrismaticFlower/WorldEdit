@@ -58,7 +58,7 @@ auto read_definition(std::string_view str) -> definition
 
    section current_section = section::none;
 
-   for (auto line : string::iterate_lines(str)) {
+   for (auto line : string::lines_iterator{str}) {
       line.string = string::trim_leading_whitespace(line.string);
 
       if (line.string.starts_with("//"sv)) continue;
