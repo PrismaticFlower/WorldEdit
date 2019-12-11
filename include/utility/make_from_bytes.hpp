@@ -8,14 +8,15 @@
 
 namespace sk::utility {
 
-template<typename type>
-inline auto make_from_bytes(const gsl::span<const std::byte> bytes) noexcept -> type
+template<typename Type>
+inline auto make_from_bytes(const gsl::span<const std::byte> bytes) noexcept -> Type
 {
-   Expects(sizeof(type) == bytes.size());
+   Expects(sizeof(Type) == bytes.size());
 
-   static_assert(std::is_trivial_v<type>);
+   static_assert(std::is_default_constructible_v<Type> &&
+                 std::is_trivially_copyable_v<Type>);
 
-   type val;
+   Type val;
 
    std::memcpy(&val, bytes.data(), bytes.size());
 

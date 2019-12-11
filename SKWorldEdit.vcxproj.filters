@@ -81,6 +81,18 @@
     <ClInclude Include="include\assets\config\io.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\assets\terrain\terrain.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\assets\terrain\terrain_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\binary_reader.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\srgb_conversion.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -102,6 +114,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\config\io.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\terrain\terrain_io.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

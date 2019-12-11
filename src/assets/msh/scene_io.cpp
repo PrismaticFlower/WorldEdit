@@ -2,11 +2,11 @@
 #include <assets/msh/scene_io.hpp>
 
 #include <ucfb/reader.hpp>
+#include <utility/srgb_conversion.hpp>
 
 #include <stdexcept>
 
 #include <fmt/format.h>
-#include <glm/gtc/color_space.hpp>
 
 #pragma warning(disable : 4063) // case is not a valid value for switch of enum
 
@@ -115,7 +115,7 @@ auto read_clrl(ucfb::reader_strict<"CLRL"_id> clrl) -> std::vector<glm::vec4>
    for (int i = 0; i < count; ++i) {
       const auto packed_color = clrl.read<uint32>();
 
-      colors.emplace_back(glm::convertSRGBToLinear(
+      colors.emplace_back(utility::decompress_srgb(
          glm::vec4{(packed_color >> 8) & 0xff, (packed_color >> 16) & 0xff,
                    packed_color & 0xff, (packed_color >> 24) & 0xff}));
    }

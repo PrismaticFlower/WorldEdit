@@ -45,9 +45,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>-clang-diagnostic-sign-compare</ClangTidyChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>-clang-diagnostic-sign-compare</ClangTidyChecks>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -62,7 +66,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
-      <DisableSpecificWarnings>4275</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -83,7 +87,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
-      <DisableSpecificWarnings>4275</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
       <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -102,14 +106,18 @@
     <ClInclude Include="include\assets\odf\definition.hpp" />
     <ClInclude Include="include\assets\odf\definition_io.hpp" />
     <ClInclude Include="include\assets\odf\properties.hpp" />
+    <ClInclude Include="include\assets\terrain\terrain.hpp" />
+    <ClInclude Include="include\assets\terrain\terrain_io.hpp" />
     <ClInclude Include="include\com_ptr.hpp" />
     <ClInclude Include="include\error.hpp" />
     <ClInclude Include="include\exceptions.hpp" />
     <ClInclude Include="include\types.hpp" />
     <ClInclude Include="include\ucfb\reader.hpp" />
+    <ClInclude Include="include\utility\binary_reader.hpp" />
     <ClInclude Include="include\utility\enum_bitflags.hpp" />
     <ClInclude Include="include\utility\make_from_bytes.hpp" />
     <ClInclude Include="include\utility\read_file.hpp" />
+    <ClInclude Include="include\utility\srgb_conversion.hpp" />
     <ClInclude Include="include\utility\string_ops.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +126,7 @@
     <ClCompile Include="src\assets\msh\scene_io.cpp" />
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />
+    <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
   </ItemGroup>

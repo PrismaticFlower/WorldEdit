@@ -23,6 +23,9 @@
     <ClCompile Include="src\assets\config\key_node_tests.cpp" />
     <ClCompile Include="src\assets\config\io_tests.cpp" />
     <ClCompile Include="src\assets\config\values_tests.cpp" />
+    <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
+    <ClCompile Include="src\utility\binary_reader_tests.cpp" />
+    <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

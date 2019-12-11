@@ -43,7 +43,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>-clang-diagnostic-sign-compare</ClangTidyChecks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <ClangTidyChecks>-clang-diagnostic-sign-compare</ClangTidyChecks>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
@@ -56,7 +63,7 @@
       <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <DisableSpecificWarnings>4275</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -76,7 +83,7 @@
       <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <DisableSpecificWarnings>4275</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
       <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -91,6 +98,9 @@
     <ClCompile Include="src\assets\config\values_tests.cpp" />
     <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />
+    <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
+    <ClCompile Include="src\utility\binary_reader_tests.cpp" />
+    <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
     <ClInclude Include="src\pch.h" />
     <ClCompile Include="src\ucfb\reader_tests.cpp">
