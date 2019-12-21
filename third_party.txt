@@ -6,6 +6,5 @@ glm
 {fmt}
 Boost.Algorithm
 Boost.Container
-Boost.MultiArray
 Boost.Variant2
 catch2

@@ -109,6 +109,7 @@
     <ClInclude Include="include\assets\terrain\terrain.hpp" />
     <ClInclude Include="include\assets\terrain\terrain_io.hpp" />
     <ClInclude Include="include\com_ptr.hpp" />
+    <ClInclude Include="include\container\dynamic_array_2d.hpp" />
     <ClInclude Include="include\error.hpp" />
     <ClInclude Include="include\exceptions.hpp" />
     <ClInclude Include="include\types.hpp" />
@@ -116,9 +117,26 @@
     <ClInclude Include="include\utility\binary_reader.hpp" />
     <ClInclude Include="include\utility\enum_bitflags.hpp" />
     <ClInclude Include="include\utility\make_from_bytes.hpp" />
+    <ClInclude Include="include\utility\make_range.hpp" />
     <ClInclude Include="include\utility\read_file.hpp" />
     <ClInclude Include="include\utility\srgb_conversion.hpp" />
     <ClInclude Include="include\utility\string_ops.hpp" />
+    <ClInclude Include="include\world\ai_path_flags.hpp" />
+    <ClInclude Include="include\world\barrier.hpp" />
+    <ClInclude Include="include\world\boundary.hpp" />
+    <ClInclude Include="include\world\gamemode_description.hpp" />
+    <ClInclude Include="include\world\hintnode.hpp" />
+    <ClInclude Include="include\world\layer_description.hpp" />
+    <ClInclude Include="include\world\light.hpp" />
+    <ClInclude Include="include\world\lighting_settings.hpp" />
+    <ClInclude Include="include\world\object.hpp" />
+    <ClInclude Include="include\world\path.hpp" />
+    <ClInclude Include="include\world\planning.hpp" />
+    <ClInclude Include="include\world\portal.hpp" />
+    <ClInclude Include="include\world\region.hpp" />
+    <ClInclude Include="include\world\sector.hpp" />
+    <ClInclude Include="include\world\terrain.hpp" />
+    <ClInclude Include="include\world\world.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\config\io.cpp" />

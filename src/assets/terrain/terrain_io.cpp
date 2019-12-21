@@ -179,14 +179,14 @@ auto read_terrain(const gsl::span<const std::byte> bytes) -> terrain
    // height map
    for (int y = 0; y < terrain.length; ++y) {
       for (int x = 0; x < terrain.length; ++x) {
-         terrain.heightmap[x][y] = reader.read<uint16>();
+         terrain.heightmap[{x, y}] = reader.read<uint16>();
       }
    }
 
    // color map foreground
    for (int y = 0; y < terrain.length; ++y) {
       for (int x = 0; x < terrain.length; ++x) {
-         terrain.colormap_foreground[x][y] =
+         terrain.colormap_foreground[{x, y}] =
             utility::unpack_srgb_bgra(reader.read<uint32>());
       }
    }
@@ -194,19 +194,18 @@ auto read_terrain(const gsl::span<const std::byte> bytes) -> terrain
    // color map background
    for (int y = 0; y < terrain.length; ++y) {
       for (int x = 0; x < terrain.length; ++x) {
-         terrain.colormap_background[x][y] =
+         terrain.colormap_background[{x, y}] =
             utility::unpack_srgb_bgra(reader.read<uint32>());
       }
    }
 
    // light map
    if (header.prelit) {
-      terrain.lightmap =
-         boost::multi_array<vec4, 2>{boost::extents[terrain.length][terrain.length]};
+      terrain.lightmap.emplace(terrain.length, terrain.length);
 
       for (int y = 0; y < terrain.length; ++y) {
          for (int x = 0; x < terrain.length; ++x) {
-            (*terrain.lightmap)[x][y] =
+            (*terrain.lightmap)[{x, y}] =
                utility::unpack_srgb_bgra(reader.read<uint32>());
          }
       }
@@ -215,7 +214,7 @@ auto read_terrain(const gsl::span<const std::byte> bytes) -> terrain
    // texture weight map
    for (int y = 0; y < terrain.length; ++y) {
       for (int x = 0; x < terrain.length; ++x) {
-         terrain.texture_weightmap[x][y] =
+         terrain.texture_weightmap[{x, y}] =
             reader.read<std::array<uint8, terrain::texture_count>>();
       }
    }
@@ -230,7 +229,7 @@ auto read_terrain(const gsl::span<const std::byte> bytes) -> terrain
    {
       for (int y = 0; y < (terrain.length / terrain.water_patch_size); ++y) {
          for (int x = 0; x < (terrain.length / terrain.water_patch_size); ++x) {
-            terrain.water_patches[x][y] =
+            terrain.water_patches[{x, y}] =
                (reader.read<terr_patch_info>().water_layer == 1);
          }
       }
@@ -242,12 +241,12 @@ auto read_terrain(const gsl::span<const std::byte> bytes) -> terrain
          for (int x = 0; x < (terrain.foliage_length / 2); ++x) {
             auto foliage = reader.read<uint8>();
 
-            terrain.foliage_patches[x * 2][y] = {.layer0 = (foliage & 0b1) != 0,
-                                                 .layer1 = (foliage & 0b10) != 0,
-                                                 .layer2 = (foliage & 0b100) != 0,
-                                                 .layer3 = (foliage & 0b1000) != 0};
+            terrain.foliage_patches[{x * 2, y}] = {.layer0 = (foliage & 0b1) != 0,
+                                                   .layer1 = (foliage & 0b10) != 0,
+                                                   .layer2 = (foliage & 0b100) != 0,
+                                                   .layer3 = (foliage & 0b1000) != 0};
 
-            terrain.foliage_patches[x * 2 + 1][y] =
+            terrain.foliage_patches[{x * 2 + 1, y}] =
                {.layer0 = (foliage & 0b10000) != 0,
                 .layer1 = (foliage & 0b100000) != 0,
                 .layer2 = (foliage & 0b1000000) != 0,

@@ -99,6 +99,7 @@
     <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
+    <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
     <ClCompile Include="src\utility\binary_reader_tests.cpp" />
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />

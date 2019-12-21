@@ -93,6 +93,60 @@
     <ClInclude Include="include\utility\srgb_conversion.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\world\world.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\layer_description.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\gamemode_description.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\light.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\lighting_settings.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\object.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\path.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\region.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\sector.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\portal.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\hintnode.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\barrier.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\planning.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\ai_path_flags.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\boundary.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\terrain.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\container\dynamic_array_2d.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\make_range.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
