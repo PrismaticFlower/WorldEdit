@@ -16,6 +16,8 @@ struct planning_hub {
       std::string connection;
       float weight = 100.0f;
       ai_path_flags flag = ai_path_flags::soldier;
+
+      bool operator==(const branch_weight&) const noexcept = default;
    };
 
    std::string name;

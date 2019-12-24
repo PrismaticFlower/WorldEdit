@@ -13,6 +13,7 @@
 #include "portal.hpp"
 #include "region.hpp"
 #include "sector.hpp"
+#include "terrain.hpp"
 
 #include <vector>
 

@@ -30,6 +30,8 @@ struct active_flags {
    bool terrain = true;
    bool water = true;
    bool foliage = true;
+
+   bool operator==(const active_flags&) const noexcept = default;
 };
 
 struct water_settings {
@@ -40,6 +42,8 @@ struct water_settings {
    float v_repeat = 0.0f;
    glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
    std::string texture;
+
+   bool operator==(const water_settings&) const noexcept = default;
 };
 
 struct foliage_patch {
@@ -48,7 +52,7 @@ struct foliage_patch {
    bool layer2 : 1;
    bool layer3 : 1;
 
-   bool operator==(const foliage_patch& other) const noexcept = default;
+   bool operator==(const foliage_patch&) const noexcept = default;
 };
 
 struct terrain {

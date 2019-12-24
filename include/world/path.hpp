@@ -16,6 +16,8 @@ struct path {
    struct property {
       std::string key;
       std::string value;
+
+      bool operator==(const property&) const noexcept = default;
    };
 
    struct node {
@@ -23,6 +25,8 @@ struct path {
       vec3 position{};
 
       std::vector<property> properties;
+
+      bool operator==(const node&) const noexcept = default;
    };
 
    path_spline_type spline_type = path_spline_type::hermite;
