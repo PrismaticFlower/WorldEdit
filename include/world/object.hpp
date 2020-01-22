@@ -21,6 +21,8 @@ struct object {
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    vec3 position{};
 
+   int team = 0;
+
    std::string class_name;
    std::vector<instance_property> instance_properties;
 

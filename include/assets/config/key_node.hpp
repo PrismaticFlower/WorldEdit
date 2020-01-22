@@ -19,7 +19,7 @@ public:
    node() = default;
 
    node(values values, std::vector<key_node> children = {}) noexcept
-      : values{std::move(values)}, container_type{std::move(children)}
+      : container_type{std::move(children)}, values{std::move(values)}
    {
    }
 

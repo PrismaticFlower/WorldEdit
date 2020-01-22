@@ -27,6 +27,7 @@
     <ClCompile Include="src\utility\binary_reader_tests.cpp" />
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
+    <ClCompile Include="src\world\world_io_load_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -46,6 +47,7 @@
     <ClInclude Include="src\pch.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\approx_test_helpers.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Catch2Adapter.runsettings" />

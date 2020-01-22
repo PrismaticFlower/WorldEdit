@@ -145,6 +145,8 @@ auto parse_node_children(const string::lines_iterator line_iter, key_node& out)
       }
    }
 
+   if (child_iter == child_iter.end()) return line_iter;
+
    for (; child_iter != child_iter.end(); ++child_iter) {
       child_line = *child_iter;
       auto str = string::trim_leading_whitespace(child_line.string);

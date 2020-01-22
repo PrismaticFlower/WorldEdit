@@ -1,6 +1,7 @@
 
 #include "pch.h"
 
+#include <approx_test_helpers.hpp>
 #include <assets/msh/scene_io.hpp>
 
 #include <utility/read_file.hpp>
@@ -11,22 +12,6 @@ using namespace std::literals;
 using namespace Catch::literals;
 
 namespace sk::assets::msh::tests {
-
-namespace {
-
-template<glm::length_t len>
-bool approx_equals(const glm::vec<len, float> l, const glm::vec<len, float> r)
-{
-   for (int i = 0; i < len; ++i) {
-      if (l[i] != Approx(r[i])) {
-         return false;
-      }
-   }
-
-   return true;
-}
-
-}
 
 TEST_CASE(".msh reading", "[Assets][MSH]")
 {

@@ -2,6 +2,10 @@
 
 #include <utility/read_file.hpp>
 
+#include <string_view>
+
+using namespace std::literals;
+
 namespace sk::utility::tests {
 
 TEST_CASE("read file to bytes", "[Utility][ReadFile]")
@@ -18,6 +22,16 @@ TEST_CASE("read file to bytes", "[Utility][ReadFile]")
                                                std::byte{0xdf}};
 
    REQUIRE(bytes == expected_bytes);
+   REQUIRE_THROWS(
+      read_file_to_bytes("data/some/path/that/does/not/exist/bad.txt"));
+}
+
+TEST_CASE("read file to string", "[Utility][ReadFile]")
+{
+
+   auto str = read_file_to_string("data/test.txt");
+
+   REQUIRE(str == "Test String"sv);
    REQUIRE_THROWS(
       read_file_to_bytes("data/some/path/that/does/not/exist/bad.txt"));
 }

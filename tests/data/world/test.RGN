@@ -1,0 +1,10 @@
+Version(1);
+RegionCount(1);
+
+Region("foleyfx water", 0)
+{
+	Position(-32.000000, 16.000000, -32.000000);
+	Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+	Size(16.000000, 16.000000, 16.000000);
+	Name("Region0");
+}

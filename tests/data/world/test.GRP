@@ -1,0 +1,9 @@
+Version(1);
+NextID(1);
+
+Group("[Base]", 0, 8)
+{
+	Layer("[Base]", 0);
+	Layer("design", 1);
+}
+

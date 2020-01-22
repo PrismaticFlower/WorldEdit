@@ -147,6 +147,12 @@
     <ClInclude Include="include\utility\make_range.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\output_stream.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\world_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -171,6 +177,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\terrain\terrain_io.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\world_io_load.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

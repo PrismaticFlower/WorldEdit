@@ -7,7 +7,8 @@
 
 namespace sk::world {
 
-enum class light_type { directional = 1, point = 2, spot = 3 };
+enum class light_type : int8 { directional = 1, point = 2, spot = 3 };
+enum class texture_addressing : int8 { wrap = 0, clamp = 1 };
 
 struct light {
    std::string name;
@@ -16,13 +17,14 @@ struct light {
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    vec3 position{};
 
-   light_type light_type = light_type::point;
    vec3 color = {1.0f, 1.0f, 1.0f};
    bool static_ = false;
    bool shadow_caster = false;
    bool specular_caster = false;
+   light_type light_type = light_type::point;
+   texture_addressing texture_addressing = texture_addressing::clamp;
 
-   float radius = 8.0f;
+   float range = 8.0f;
    float inner_cone_angle = 0.785398f;
    float outer_cone_angle = 0.959931f;
 

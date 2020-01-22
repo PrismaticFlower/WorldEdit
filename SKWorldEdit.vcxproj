@@ -47,6 +47,7 @@
     <LinkIncremental>true</LinkIncremental>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
     <ClangTidyChecks>-clang-diagnostic-sign-compare</ClangTidyChecks>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -112,6 +113,7 @@
     <ClInclude Include="include\container\dynamic_array_2d.hpp" />
     <ClInclude Include="include\error.hpp" />
     <ClInclude Include="include\exceptions.hpp" />
+    <ClInclude Include="include\output_stream.hpp" />
     <ClInclude Include="include\types.hpp" />
     <ClInclude Include="include\ucfb\reader.hpp" />
     <ClInclude Include="include\utility\binary_reader.hpp" />
@@ -126,6 +128,7 @@
     <ClInclude Include="include\world\boundary.hpp" />
     <ClInclude Include="include\world\gamemode_description.hpp" />
     <ClInclude Include="include\world\hintnode.hpp" />
+    <ClInclude Include="include\world\world_io.hpp" />
     <ClInclude Include="include\world\layer_description.hpp" />
     <ClInclude Include="include\world\light.hpp" />
     <ClInclude Include="include\world\lighting_settings.hpp" />
@@ -147,6 +150,7 @@
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
+    <ClCompile Include="src\world\world_io_load.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

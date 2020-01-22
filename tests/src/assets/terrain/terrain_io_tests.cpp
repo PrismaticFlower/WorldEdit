@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "approx_test_helpers.hpp"
+
 #include <assets/terrain/terrain_io.hpp>
 
 #include <utility/read_file.hpp>
