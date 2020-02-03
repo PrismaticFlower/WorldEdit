@@ -8,7 +8,7 @@
 
 #include <gsl/gsl>
 
-namespace sk {
+namespace sk::utility {
 
 namespace detail {
 
@@ -277,8 +277,8 @@ inline auto make_shared_com_ptr(com_ptr<Class> com_ptr) -> std::shared_ptr<Class
 }
 
 template<typename Class>
-struct std::hash<sk::com_ptr<Class>> {
-   auto operator()(const sk::com_ptr<Class>& ptr) const noexcept
+struct std::hash<sk::utility::com_ptr<Class>> {
+   auto operator()(const sk::utility::com_ptr<Class>& ptr) const noexcept
    {
       return std::hash<Class*>{}(ptr.get());
    }

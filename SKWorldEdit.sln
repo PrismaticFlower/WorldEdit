@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SKWorldEdit", "SKWorldEdit.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SKWorldEditTests", "tests\tests.vcxproj", "{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SKWorldEditApp", "app\app.vcxproj", "{1943E7FA-AB50-42EA-8F2F-BDFE6254890E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}.Debug|x64.Build.0 = Debug|x64
 		{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}.Release|x64.ActiveCfg = Release|x64
 		{2ED9FA1D-9FD5-4641-994C-AF96CC6D4EB6}.Release|x64.Build.0 = Release|x64
+		{1943E7FA-AB50-42EA-8F2F-BDFE6254890E}.Debug|x64.ActiveCfg = Debug|x64
+		{1943E7FA-AB50-42EA-8F2F-BDFE6254890E}.Debug|x64.Build.0 = Debug|x64
+		{1943E7FA-AB50-42EA-8F2F-BDFE6254890E}.Release|x64.ActiveCfg = Release|x64
+		{1943E7FA-AB50-42EA-8F2F-BDFE6254890E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

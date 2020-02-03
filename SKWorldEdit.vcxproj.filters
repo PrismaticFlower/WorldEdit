@@ -27,12 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\com_ptr.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\error.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\types.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -153,6 +147,21 @@
     <ClInclude Include="include\world\world_io.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\graphics\model.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\bounding_box.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\gpu_device.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utility\com_ptr.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hresult_error.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -180,6 +189,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\world_io_load.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\gpu_device.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

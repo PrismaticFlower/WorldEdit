@@ -60,7 +60,7 @@
       <AdditionalIncludeDirectories>../include;src/</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
@@ -80,7 +80,7 @@
       <AdditionalIncludeDirectories>../include;src/</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
@@ -100,6 +100,7 @@
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
+    <ClCompile Include="src\hresult_error_tests.cpp" />
     <ClCompile Include="src\utility\binary_reader_tests.cpp" />
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />

@@ -1,6 +1,7 @@
 TODO: Add licenses here. No third party code is actually included in the repository (I aquire them all from vcpkg) so I can (unless I'm mistaken?) be lazy about 
 filling this out for now, it only becomes an issue once binaries start getting distributed.
 
+d3dx12 - MIT
 ms-gsl
 glm
 {fmt}
@@ -8,3 +9,4 @@ Boost.Algorithm
 Boost.Container
 Boost.Variant2
 catch2
+Windows Implementation Libraries

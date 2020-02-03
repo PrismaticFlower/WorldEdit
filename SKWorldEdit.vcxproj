@@ -16,6 +16,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SKWorldEdit</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>SKWorldEdit</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -61,9 +62,9 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0601;_WIN32_WINNT=0x0601;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include/;resource/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\D3DX12;include/;resource/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -82,9 +83,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0601;_WIN32_WINNT=0x0601;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\D3DX12;include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -109,10 +110,13 @@
     <ClInclude Include="include\assets\odf\properties.hpp" />
     <ClInclude Include="include\assets\terrain\terrain.hpp" />
     <ClInclude Include="include\assets\terrain\terrain_io.hpp" />
-    <ClInclude Include="include\com_ptr.hpp" />
+    <ClInclude Include="include\utility\com_ptr.hpp" />
     <ClInclude Include="include\container\dynamic_array_2d.hpp" />
-    <ClInclude Include="include\error.hpp" />
+    <ClInclude Include="include\hresult_error.hpp" />
     <ClInclude Include="include\exceptions.hpp" />
+    <ClInclude Include="include\graphics\bounding_box.hpp" />
+    <ClInclude Include="include\graphics\gpu_device.hpp" />
+    <ClInclude Include="include\graphics\model.hpp" />
     <ClInclude Include="include\output_stream.hpp" />
     <ClInclude Include="include\types.hpp" />
     <ClInclude Include="include\ucfb\reader.hpp" />
@@ -148,6 +152,7 @@
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
+    <ClCompile Include="src\graphics\gpu_device.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\world_io_load.cpp" />
