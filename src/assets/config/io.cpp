@@ -1,7 +1,6 @@
 
-#include <assets/config/io.hpp>
-
-#include <utility/string_ops.hpp>
+#include "io.hpp"
+#include "utility/string_ops.hpp"
 
 #include <charconv>
 #include <stdexcept>

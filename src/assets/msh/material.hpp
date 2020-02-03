@@ -1,8 +1,7 @@
 #pragma once
 
-#include <utility/enum_bitflags.hpp>
-
-#include <types.hpp>
+#include "types.hpp"
+#include "utility/enum_bitflags.hpp"
 
 #include <array>
 #include <string>

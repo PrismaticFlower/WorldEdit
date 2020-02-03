@@ -1,7 +1,6 @@
 
-#include <assets/odf/definition_io.hpp>
-
-#include <utility/string_ops.hpp>
+#include "definition_io.hpp"
+#include "utility/string_ops.hpp"
 
 #include <stdexcept>
 

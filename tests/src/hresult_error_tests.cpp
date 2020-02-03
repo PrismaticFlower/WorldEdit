@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include <hresult_error.hpp>
+#include "hresult_error.hpp"
 
 namespace sk::tests {
 

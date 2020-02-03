@@ -1,7 +1,6 @@
 
-#include <graphics/gpu_device.hpp>
-
-#include <hresult_error.hpp>
+#include "gpu_device.hpp"
+#include "hresult_error.hpp"
 
 #include <algorithm>
 

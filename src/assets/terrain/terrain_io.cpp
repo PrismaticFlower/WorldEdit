@@ -1,8 +1,7 @@
-#include <assets/terrain/terrain_io.hpp>
-
-#include <utility/binary_reader.hpp>
-#include <utility/enum_bitflags.hpp>
-#include <utility/srgb_conversion.hpp>
+#include "terrain_io.hpp"
+#include "utility/binary_reader.hpp"
+#include "utility/enum_bitflags.hpp"
+#include "utility/srgb_conversion.hpp"
 
 #include <algorithm>
 #include <stdexcept>

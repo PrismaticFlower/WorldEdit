@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include <assets/config/key_node.hpp>
+#include "assets/config/key_node.hpp"
 
 #include <array>
 

@@ -294,7 +294,7 @@
     <ClInclude Include="src\world\world.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\world_io.hpp">
+    <ClInclude Include="src\world\world_io_load.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

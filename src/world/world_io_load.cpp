@@ -1,12 +1,11 @@
 
-#include <world/world_io.hpp>
-
-#include <assets/config/io.hpp>
-#include <assets/terrain/terrain_io.hpp>
-#include <exceptions.hpp>
-#include <utility/make_range.hpp>
-#include <utility/read_file.hpp>
-#include <utility/string_ops.hpp>
+#include "world_io_load.hpp"
+#include "assets/config/io.hpp"
+#include "assets/terrain/terrain_io.hpp"
+#include "exceptions.hpp"
+#include "utility/make_range.hpp"
+#include "utility/read_file.hpp"
+#include "utility/string_ops.hpp"
 
 #include <algorithm>
 

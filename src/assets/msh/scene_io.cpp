@@ -1,5 +1,5 @@
 
-#include <assets/msh/scene_io.hpp>
+#include "scene_io.hpp"
 
 #include <ucfb/reader.hpp>
 #include <utility/srgb_conversion.hpp>

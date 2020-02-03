@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include <utility/srgb_conversion.hpp>
+#include "utility/srgb_conversion.hpp"
 
 using namespace Catch::literals;
 

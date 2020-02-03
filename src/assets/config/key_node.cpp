@@ -1,5 +1,5 @@
 
-#include <assets/config/key_node.hpp>
+#include "key_node.hpp"
 
 #include <algorithm>
 

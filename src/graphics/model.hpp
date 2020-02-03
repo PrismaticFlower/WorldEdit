@@ -1,8 +1,7 @@
 #pragma once
 
-#include <types.hpp>
-
 #include "bounding_box.hpp"
+#include "types.hpp"
 
 #include <boost/container/small_vector.hpp>
 

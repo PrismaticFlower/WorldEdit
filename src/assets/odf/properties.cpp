@@ -1,5 +1,5 @@
 
-#include <assets/odf/properties.hpp>
+#include "properties.hpp"
 
 #include <cctype>
 #include <stdexcept>

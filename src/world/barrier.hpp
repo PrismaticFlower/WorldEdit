@@ -1,8 +1,7 @@
 #pragma once
 
 #include "ai_path_flags.hpp"
-
-#include <types.hpp>
+#include "types.hpp"
 
 #include <array>
 #include <string>

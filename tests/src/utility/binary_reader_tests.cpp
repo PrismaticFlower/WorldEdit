@@ -1,8 +1,7 @@
 #include "pch.h"
 
-#include <utility/binary_reader.hpp>
-
-#include <types.hpp>
+#include "types.hpp"
+#include "utility/binary_reader.hpp"
 
 #include <algorithm>
 

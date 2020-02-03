@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include <assets/odf/properties.hpp>
+#include "assets/odf/properties.hpp"
 
 using namespace std::literals;
 

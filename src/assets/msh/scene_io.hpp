@@ -1,8 +1,7 @@
 #pragma once
 
 #include "scene.hpp"
-
-#include <types.hpp>
+#include "types.hpp"
 
 #include <cstddef>
 

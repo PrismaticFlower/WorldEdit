@@ -1,8 +1,7 @@
 #pragma once
 
 #include "material.hpp"
-
-#include <types.hpp>
+#include "types.hpp"
 
 #include <array>
 #include <optional>

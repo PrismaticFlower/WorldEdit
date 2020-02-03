@@ -1,10 +1,9 @@
 
 #include "pch.h"
 
-#include <approx_test_helpers.hpp>
-#include <assets/msh/scene_io.hpp>
-
-#include <utility/read_file.hpp>
+#include "approx_test_helpers.hpp"
+#include "assets/msh/scene_io.hpp"
+#include "utility/read_file.hpp"
 
 #include <string_view>
 
