@@ -162,6 +162,141 @@
     <ClInclude Include="include\hresult_error.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\ucfb\reader.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\model.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu_device.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\bounding_box.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\container\dynamic_array_2d.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\terrain\terrain_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\terrain\terrain.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\odf\properties.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\odf\definition_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\odf\definition.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\msh\scene_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\msh\scene.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\msh\material.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\config\values.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\config\key_node.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\config\io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\binary_reader.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\com_ptr.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\enum_bitflags.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\make_from_bytes.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\make_range.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\read_file.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\srgb_conversion.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\string_ops.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\exceptions.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hresult_error.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\output_stream.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\types.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\ai_path_flags.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\barrier.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\boundary.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\gamemode_description.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\hintnode.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\layer_description.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\light.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\lighting_settings.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\object.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\path.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\planning.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\portal.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\region.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\sector.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\terrain.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\world.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\world_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
