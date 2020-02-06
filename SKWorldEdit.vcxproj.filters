@@ -297,6 +297,15 @@
     <ClInclude Include="src\world\world_io_load.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\command_allocator_pool.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\descriptor_heap.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\swap_chain.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -327,6 +336,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu_device.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\descriptor_heap.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\swap_chain.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

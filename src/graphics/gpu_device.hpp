@@ -1,8 +1,12 @@
 #pragma once
 
+#include "command_allocator_pool.hpp"
+#include "descriptor_heap.hpp"
+#include "swap_chain.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <array>
+#include <memory>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -25,28 +29,34 @@ struct gpu_device {
 
    void end_frame();
 
-   constexpr static int frame_count = 2;
-   int frame_index = 0;
+   constexpr static int rtv_descriptor_heap_size = 128;
 
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
    utility::com_ptr<ID3D12Device6> device;
    utility::com_ptr<ID3D12Fence> fence;
+   UINT64 fence_value = 1;
+   UINT64 previous_frame_fence_value = 0;
    wil::unique_event fence_event{CreateEventW(nullptr, false, false, nullptr)};
    utility::com_ptr<ID3D12CommandQueue> command_queue;
    utility::com_ptr<ID3D12GraphicsCommandList5> command_list;
 
-   std::array<utility::com_ptr<ID3D12CommandAllocator>, frame_count> command_allocators;
-   std::array<UINT64, frame_count> fence_values{1, 1};
+   descriptor_heap_cpu rtv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+                                           rtv_descriptor_heap_size, *device};
+   command_allocator_pool direct_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                                        *device};
 
-   utility::com_ptr<IDXGISwapChain4> swap_chain;
-   std::array<utility::com_ptr<ID3D12Resource>, frame_count> swap_chain_render_targets;
-   utility::com_ptr<ID3D12DescriptorHeap> swap_chain_descriptors;
+   swap_chain swap_chain;
 
-   UINT cbv_srv_uav_descriptor_size{};
-   UINT sampler_descriptor_size{};
-   UINT rtv_descriptor_size{};
-   UINT dsv_descriptor_size{};
+   auto aquire_direct_command_allocator()
+   {
+      const auto free = [this](ID3D12CommandAllocator* allocator) {
+         direct_command_allocator_pool.free(*allocator, fence_value);
+      };
+
+      return std::unique_ptr<ID3D12CommandAllocator, decltype(free)>{
+         &direct_command_allocator_pool.aquire(fence->GetCompletedValue()), free};
+   }
 };
 
 }
