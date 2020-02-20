@@ -132,7 +132,7 @@ public:
       std::swap(this->_pointer, other._pointer);
    }
 
-   [[nodiscard]] auto release() noexcept -> Class*
+   [[nodiscard]] auto release() noexcept -> gsl::owner<Class*>
    {
       return std::exchange(_pointer, nullptr);
    }

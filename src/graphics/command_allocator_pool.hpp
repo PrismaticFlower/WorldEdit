@@ -5,11 +5,10 @@
 
 #include <cassert>
 #include <mutex>
-#include <vector>
 
 #include <boost/container/small_vector.hpp>
-
 #include <d3d12.h>
+#include <gsl/gsl>
 
 namespace sk::graphics {
 
@@ -20,7 +19,13 @@ public:
    {
    }
 
-   auto aquire(const UINT64 fence_value) -> ID3D12CommandAllocator&
+   command_allocator_pool(const command_allocator_pool&) = delete;
+   auto operator=(const command_allocator_pool&) -> command_allocator_pool& = delete;
+
+   command_allocator_pool(command_allocator_pool&&) = delete;
+   auto operator=(command_allocator_pool&& other) -> command_allocator_pool& = delete;
+
+   auto aquire(const UINT64 fence_value) -> ID3D12CommandAllocator*
    {
       std::lock_guard lock{_mutex};
 
@@ -28,7 +33,7 @@ public:
          const auto front_fence_value = _free_allocators.front().fence_value;
 
          if (_free_allocators.front().fence_value <= fence_value) {
-            auto* allocator = _free_allocators.front().allocator;
+            auto allocator = _free_allocators.front().allocator;
 
             assert(allocator != nullptr);
 
@@ -36,28 +41,29 @@ public:
 
             throw_if_failed(allocator->Reset());
 
-            return *allocator;
+            return allocator;
          }
       }
 
       return get_new_allocator();
    }
 
-   void free(ID3D12CommandAllocator& allocator, const UINT64 fence_value)
+   void free(ID3D12CommandAllocator* allocator, const UINT64 fence_value)
    {
       std::lock_guard lock{_mutex};
 
       _free_allocators.push_back(
-         free_allocator{.fence_value = fence_value, .allocator = &allocator});
+         free_allocator{.fence_value = fence_value,
+                        .allocator = gsl::strict_not_null{allocator}});
    }
 
 private:
-   auto get_new_allocator() -> ID3D12CommandAllocator&
+   auto get_new_allocator() -> ID3D12CommandAllocator*
    {
       throw_if_failed(_device.CreateCommandAllocator(
          _type, IID_PPV_ARGS(_allocators.emplace_back().clear_and_assign())));
 
-      return *_allocators.back();
+      return _allocators.back().get();
    }
 
    const static int inplace_pool_size = 16;
@@ -67,7 +73,7 @@ private:
 
    struct free_allocator {
       UINT64 fence_value;
-      ID3D12CommandAllocator* allocator;
+      gsl::strict_not_null<ID3D12CommandAllocator*> allocator;
    };
 
    D3D12_COMMAND_LIST_TYPE _type = D3D12_COMMAND_LIST_TYPE_DIRECT;

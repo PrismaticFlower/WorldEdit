@@ -23,6 +23,7 @@ public:
 private:
    HWND _window{};
    graphics::gpu_device _gpu_device;
+   graphics::buffer _triangle_buffer;
 };
 
 }

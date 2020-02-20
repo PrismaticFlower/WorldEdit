@@ -27,6 +27,16 @@ struct swap_chain {
    auto current_back_buffer()
       -> std::pair<ID3D12Resource&, D3D12_CPU_DESCRIPTOR_HANDLE>;
 
+   auto width() -> UINT
+   {
+      return _width;
+   }
+
+   auto height() -> UINT
+   {
+      return _height;
+   }
+
    constexpr static int frame_count = 2;
 
    utility::com_ptr<IDXGISwapChain4> dxgi_swap_chain;
@@ -36,6 +46,8 @@ struct swap_chain {
 private:
    ID3D12Device* _device;
    HANDLE _waitable_ready_handle = INVALID_HANDLE_VALUE;
+   UINT _width = 0;
+   UINT _height = 0;
 };
 
 }

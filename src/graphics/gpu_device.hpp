@@ -1,15 +1,24 @@
 #pragma once
 
+#include "buffer.hpp"
 #include "command_allocator_pool.hpp"
+#include "command_list_pool.hpp"
+#include "command_list_recorder.hpp"
 #include "descriptor_heap.hpp"
+#include "pipeline_library.hpp"
+#include "root_signature_library.hpp"
 #include "swap_chain.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <array>
+#include <exception>
 #include <memory>
+#include <mutex>
+#include <vector>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <object_ptr.hpp>
 #include <wil/resource.h>
 
 namespace sk::graphics {
@@ -29,6 +38,13 @@ struct gpu_device {
 
    void end_frame();
 
+   auto create_buffer(const std::size_t size, const D3D12_HEAP_TYPE heap_type,
+                      const D3D12_RESOURCE_STATES initial_resource_state) -> buffer;
+
+   void deferred_destroy_resource(ID3D12Resource& resource);
+
+   void process_deferred_resource_destructions();
+
    constexpr static int rtv_descriptor_heap_size = 128;
 
    utility::com_ptr<IDXGIFactory7> factory;
@@ -37,26 +53,88 @@ struct gpu_device {
    utility::com_ptr<ID3D12Fence> fence;
    UINT64 fence_value = 1;
    UINT64 previous_frame_fence_value = 0;
+   UINT64 completed_fence_value = 0;
    wil::unique_event fence_event{CreateEventW(nullptr, false, false, nullptr)};
    utility::com_ptr<ID3D12CommandQueue> command_queue;
-   utility::com_ptr<ID3D12GraphicsCommandList5> command_list;
 
    descriptor_heap_cpu rtv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
                                            rtv_descriptor_heap_size, *device};
    command_allocator_pool direct_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
                                                         *device};
+   command_list_pool direct_command_list_pool{D3D12_COMMAND_LIST_TYPE_DIRECT, *device};
+
+   utility::com_ptr<ID3D12Fence> copy_fence;
+   UINT64 copy_fence_value = 1;
+   UINT64 copy_completed_fence_value = 0;
+   utility::com_ptr<ID3D12CommandQueue> copy_command_queue;
+   command_allocator_pool copy_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_COPY,
+                                                      *device};
+   command_list_pool copy_command_list_pool{D3D12_COMMAND_LIST_TYPE_COPY, *device};
 
    swap_chain swap_chain;
 
-   auto aquire_direct_command_allocator()
+   root_signature_library root_signatures{*device};
+   pipeline_library pipelines{*device, root_signatures};
+
+   utility::com_ptr<ID3D12Resource> triangle;
+
+   auto aquire_command_allocator(const D3D12_COMMAND_LIST_TYPE type)
    {
-      const auto free = [this](ID3D12CommandAllocator* allocator) {
-         direct_command_allocator_pool.free(*allocator, fence_value);
+      jss::object_ptr<command_allocator_pool> pool = nullptr;
+      UINT64 queue_fence_value = 0;
+      UINT64 queue_completed_fence_value = 0;
+
+      switch (type) {
+      case D3D12_COMMAND_LIST_TYPE_DIRECT:
+         pool = &direct_command_allocator_pool;
+         queue_fence_value = fence_value;
+         queue_completed_fence_value = completed_fence_value;
+         break;
+      case D3D12_COMMAND_LIST_TYPE_COPY:
+         pool = &copy_command_allocator_pool;
+         queue_fence_value = copy_fence_value;
+         queue_completed_fence_value = copy_completed_fence_value;
+         break;
+      default:
+         std::terminate();
+      }
+
+      const auto free = [pool, queue_fence_value](ID3D12CommandAllocator* allocator) {
+         pool->free(allocator, queue_fence_value);
       };
 
-      return std::unique_ptr<ID3D12CommandAllocator, decltype(free)>{
-         &direct_command_allocator_pool.aquire(fence->GetCompletedValue()), free};
+      return std::unique_ptr<ID3D12CommandAllocator, decltype(free)>{pool->aquire(queue_completed_fence_value),
+                                                                     free};
    }
+
+   auto aquire_command_list(const D3D12_COMMAND_LIST_TYPE type)
+   {
+      jss::object_ptr<command_list_pool> pool = nullptr;
+
+      using command_list_interface = command_list_pool::command_list_interface;
+
+      switch (type) {
+      case D3D12_COMMAND_LIST_TYPE_DIRECT:
+         pool = &direct_command_list_pool;
+         break;
+      case D3D12_COMMAND_LIST_TYPE_COPY:
+         pool = &copy_command_list_pool;
+         break;
+      default:
+         std::terminate();
+      }
+
+      const auto free = [pool](command_list_interface* command_list) {
+         pool->free(command_list);
+      };
+
+      return std::unique_ptr<command_list_interface, decltype(free)>{pool->aquire(),
+                                                                     free};
+   }
+
+private:
+   std::mutex _deferred_destruction_mutex;
+   std::vector<utility::com_ptr<ID3D12Resource>> _deferred_resource_destructions;
 };
 
 }

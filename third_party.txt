@@ -2,6 +2,7 @@ TODO: Add licenses here. No third party code is actually included in the reposit
 filling this out for now, it only becomes an issue once binaries start getting distributed.
 
 d3dx12 - MIT
+object_ptr - Boost Software License - https://github.com/anthonywilliams/object_ptr
 ms-gsl
 glm
 {fmt}

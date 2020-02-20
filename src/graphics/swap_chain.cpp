@@ -50,6 +50,12 @@ swap_chain::swap_chain(const HWND window, IDXGIFactory7& factory,
      _device{&device},
      _waitable_ready_handle{dxgi_swap_chain->GetFrameLatencyWaitableObject()}
 {
+   DXGI_SWAP_CHAIN_DESC1 desc{};
+   dxgi_swap_chain->GetDesc1(&desc);
+
+   _width = desc.Width;
+   _height = desc.Height;
+
    for (int i = 0; i < frame_count; ++i) {
       throw_if_failed(
          dxgi_swap_chain->GetBuffer(i, IID_PPV_ARGS(
@@ -71,9 +77,6 @@ void swap_chain::wait_for_ready()
    WaitForSingleObjectEx(_waitable_ready_handle, 1000, true);
 }
 
-auto current_render_target()
-   -> std::pair<ID3D12Resource&, D3D12_CPU_DESCRIPTOR_HANDLE>;
-
 void swap_chain::present()
 {
    throw_if_failed(dxgi_swap_chain->Present(1, 0));
@@ -83,6 +86,8 @@ void swap_chain::resize(const UINT width, const UINT height)
 {
    assert(dxgi_swap_chain);
 
+   _width = width;
+   _height = height;
    render_targets = {};
 
    throw_if_failed(

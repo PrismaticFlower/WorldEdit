@@ -64,7 +64,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\D3DX12;src/;resource/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\object_ptr;$(SolutionDir)third_party\D3DX12\;src\;resource\;$(IntermediateOutputPath)compiled_shaders\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -73,6 +73,12 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <FxCompile>
+      <ShaderModel>6.0</ShaderModel>
+      <VariableName>%(Filename)_dxil</VariableName>
+      <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxil.h</HeaderFileOutput>
+      <ObjectFileOutput />
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -85,7 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\D3DX12;src/;resource/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\object_ptr;$(SolutionDir)third_party\D3DX12\;src\;resource\;$(IntermediateOutputPath)compiled_shaders\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -97,6 +103,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <FxCompile>
+      <ShaderModel>6.0</ShaderModel>
+      <VariableName>%(Filename)_dxil</VariableName>
+      <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxil.h</HeaderFileOutput>
+      <ObjectFileOutput />
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -158,10 +170,18 @@
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\exceptions.hpp" />
     <ClInclude Include="src\graphics\bounding_box.hpp" />
+    <ClInclude Include="src\graphics\buffer.hpp" />
     <ClInclude Include="src\graphics\command_allocator_pool.hpp" />
+    <ClInclude Include="src\graphics\command_list_pool.hpp" />
+    <ClInclude Include="src\graphics\command_list_recorder.hpp" />
+    <ClInclude Include="src\graphics\concepts.hpp" />
     <ClInclude Include="src\graphics\descriptor_heap.hpp" />
     <ClInclude Include="src\graphics\gpu_device.hpp" />
     <ClInclude Include="src\graphics\model.hpp" />
+    <ClInclude Include="src\graphics\pipeline_library.hpp" />
+    <ClInclude Include="src\graphics\resource_owner_base.hpp" />
+    <ClInclude Include="src\graphics\root_signature_library.hpp" />
+    <ClInclude Include="src\graphics\shader_library.hpp" />
     <ClInclude Include="src\graphics\swap_chain.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
@@ -202,10 +222,24 @@
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
     <ClCompile Include="src\graphics\gpu_device.cpp" />
     <ClCompile Include="src\graphics\descriptor_heap.cpp" />
+    <ClCompile Include="src\graphics\pipeline_library.cpp" />
+    <ClCompile Include="src\graphics\resource_owner_base.cpp" />
+    <ClCompile Include="src\graphics\root_signature_library.cpp" />
+    <ClCompile Include="src\graphics\shader_library.cpp" />
     <ClCompile Include="src\graphics\swap_chain.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\world_io_load.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="src\graphics\shaders\basic_testPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="src\graphics\shaders\basic_testVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
