@@ -1,5 +1,5 @@
 
-#include "graphics/gpu_device.hpp"
+#include "graphics/gpu/device.hpp"
 
 #include <Windows.h>
 
@@ -22,8 +22,8 @@ public:
 
 private:
    HWND _window{};
-   graphics::gpu_device _gpu_device;
-   graphics::buffer _triangle_buffer;
+   graphics::gpu::device _gpu_device;
+   graphics::gpu::buffer _triangle_buffer;
 };
 
 }

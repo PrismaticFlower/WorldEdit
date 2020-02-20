@@ -5,7 +5,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
 namespace {
 

@@ -5,32 +5,32 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
-struct gpu_device;
+struct device;
 
 // clang-format off
 
 template<typename T>
-concept gpu_device_child = requires(T child) {
-   { child.parent_gpu_device.operator->() } -> std::convertible_to<gpu_device*>;
-   { *child.parent_gpu_device } -> std::convertible_to<gpu_device&>;
+concept device_child = requires(T child) {
+   { child.parent_device.operator->() } -> std::convertible_to<device*>;
+   { *child.parent_device } -> std::convertible_to<device&>;
 };
 
 template<typename T>
-concept gpu_resource_owner = gpu_device_child<T> and requires(T owner) {
+concept resource_owner = gpu_device_child<T> and requires(T owner) {
    { owner.resource } -> ID3D12Resource*;
    { owner.resource_state } -> D3D12_RESOURCE_STATES;
 };
 
 template<typename T>
-concept gpu_resource_ref = requires(T ref) {
+concept resource_ref = requires(T ref) {
    { ref.resource } -> ID3D12Resource*;
    { ref.resource_state } -> D3D12_RESOURCE_STATES;
 };
 
 template<typename T>
-concept gpu_buffer_ref = gpu_resource_ref<T> and requires(T buffer) {
+concept buffer_ref = gpu_resource_ref<T> and requires(T buffer) {
    { buffer.size } -> std::convertible_to<std::size_t>;
 };
 

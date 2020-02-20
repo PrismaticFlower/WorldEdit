@@ -10,7 +10,7 @@
 #include <d3d12.h>
 #include <gsl/gsl>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
 class command_allocator_pool {
 public:

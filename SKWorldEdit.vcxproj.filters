@@ -294,37 +294,40 @@
     <ClInclude Include="src\world\world_io_load.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\buffer.hpp">
+    <ClInclude Include="src\graphics\gpu\buffer.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\command_allocator_pool.hpp">
+    <ClInclude Include="src\graphics\gpu\concepts.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\concepts.hpp">
+    <ClInclude Include="src\graphics\gpu\command_list_recorder.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\descriptor_heap.hpp">
+    <ClInclude Include="src\graphics\gpu\command_list_pool.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu_device.hpp">
+    <ClInclude Include="src\graphics\gpu\command_allocator_pool.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\pipeline_library.hpp">
+    <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\resource_owner_base.hpp">
+    <ClInclude Include="src\graphics\gpu\pipeline_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\root_signature_library.hpp">
+    <ClInclude Include="src\graphics\gpu\resource_owner_base.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\shader_library.hpp">
+    <ClInclude Include="src\graphics\gpu\root_signature_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\swap_chain.hpp">
+    <ClInclude Include="src\graphics\gpu\shader_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\command_list_recorder.hpp">
+    <ClInclude Include="src\graphics\gpu\swap_chain.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\device.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -356,30 +359,30 @@
     <ClCompile Include="src\world\world_io_load.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\descriptor_heap.cpp">
+    <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\gpu_device.cpp">
+    <ClCompile Include="src\graphics\gpu\pipeline_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\pipeline_library.cpp">
+    <ClCompile Include="src\graphics\gpu\resource_owner_base.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\resource_owner_base.cpp">
+    <ClCompile Include="src\graphics\gpu\root_signature_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\root_signature_library.cpp">
+    <ClCompile Include="src\graphics\gpu\shader_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\shader_library.cpp">
+    <ClCompile Include="src\graphics\gpu\swap_chain.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\swap_chain.cpp">
+    <ClCompile Include="src\graphics\gpu\device.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\graphics\shaders\basic_testVS.hlsl" />
-    <FxCompile Include="src\graphics\shaders\basic_testPS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\basic_testPS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\basic_testVS.hlsl" />
   </ItemGroup>
 </Project>

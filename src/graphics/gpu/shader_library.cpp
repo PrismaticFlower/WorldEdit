@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-namespace sk::graphics::shader_library {
+namespace sk::graphics::gpu::shader_library {
 
 namespace {
 

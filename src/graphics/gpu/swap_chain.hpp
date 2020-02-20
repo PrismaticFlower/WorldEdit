@@ -9,7 +9,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
 struct swap_chain {
    swap_chain() = default;

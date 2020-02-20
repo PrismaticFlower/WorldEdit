@@ -1,12 +1,12 @@
 
-#include "gpu_device.hpp"
+#include "device.hpp"
 #include "hresult_error.hpp"
 
 #include <algorithm>
 
 #include <d3dx12.h>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
 namespace {
 auto create_factory() -> utility::com_ptr<IDXGIFactory7>
@@ -63,11 +63,11 @@ auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device6>
 
 }
 
-gpu_device::gpu_device(const HWND window)
-   : factory{create_factory()}, adapter{create_adapter(*factory)}, device{create_device(*adapter)}
+device::device(const HWND window)
+   : factory{create_factory()}, adapter{create_adapter(*factory)}, device_d3d{create_device(*adapter)}
 {
-   throw_if_failed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-                                       IID_PPV_ARGS(fence.clear_and_assign())));
+   throw_if_failed(device_d3d->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+                                           IID_PPV_ARGS(fence.clear_and_assign())));
 
    D3D12_COMMAND_QUEUE_DESC queue_desc{.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
                                        .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE};
@@ -75,34 +75,35 @@ gpu_device::gpu_device(const HWND window)
    fence_event = wil::unique_event{CreateEventW(nullptr, false, false, nullptr)};
 
    throw_if_failed(
-      device->CreateCommandQueue(&queue_desc,
-                                 IID_PPV_ARGS(command_queue.clear_and_assign())));
+      device_d3d->CreateCommandQueue(&queue_desc,
+                                     IID_PPV_ARGS(command_queue.clear_and_assign())));
 
-   throw_if_failed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-                                       IID_PPV_ARGS(copy_fence.clear_and_assign())));
+   throw_if_failed(
+      device_d3d->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+                              IID_PPV_ARGS(copy_fence.clear_and_assign())));
 
    queue_desc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
 
    throw_if_failed(
-      device->CreateCommandQueue(&queue_desc,
-                                 IID_PPV_ARGS(copy_command_queue.clear_and_assign())));
+      device_d3d->CreateCommandQueue(&queue_desc,
+                                     IID_PPV_ARGS(copy_command_queue.clear_and_assign())));
 
-   swap_chain = {window, *factory, *device, *command_queue, rtv_descriptor_heap};
+   swap_chain = {window, *factory, *device_d3d, *command_queue, rtv_descriptor_heap};
 
    if (utility::com_ptr<ID3D12InfoQueue> info_queue;
-       SUCCEEDED(device->QueryInterface(info_queue.clear_and_assign()))) {
+       SUCCEEDED(device_d3d->QueryInterface(info_queue.clear_and_assign()))) {
       info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
       info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
       info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
    }
 }
 
-gpu_device::~gpu_device()
+device::~device()
 {
    wait_for_idle();
 }
 
-void gpu_device::wait_for_idle()
+void device::wait_for_idle()
 {
    const UINT64 wait_value = fence_value++;
    throw_if_failed(command_queue->Signal(fence.get(), wait_value));
@@ -115,7 +116,7 @@ void gpu_device::wait_for_idle()
    }
 }
 
-void gpu_device::end_frame()
+void device::end_frame()
 {
    const UINT64 wait_value = previous_frame_fence_value;
    throw_if_failed(command_queue->Signal(fence.get(), wait_value));
@@ -130,8 +131,8 @@ void gpu_device::end_frame()
    }
 }
 
-auto gpu_device::create_buffer(const std::size_t size, const D3D12_HEAP_TYPE heap_type,
-                               const D3D12_RESOURCE_STATES initial_resource_state) -> buffer
+auto device::create_buffer(const std::size_t size, const D3D12_HEAP_TYPE heap_type,
+                           const D3D12_RESOURCE_STATES initial_resource_state) -> buffer
 {
 
    const D3D12_HEAP_PROPERTIES heap_properties{.Type = heap_type,
@@ -144,14 +145,13 @@ auto gpu_device::create_buffer(const std::size_t size, const D3D12_HEAP_TYPE hea
 
    utility::com_ptr<ID3D12Resource> buffer_resource;
 
-   throw_if_failed(
-      device->CreateCommittedResource(&heap_properties, D3D12_HEAP_FLAG_NONE,
-                                      &buffer_desc, initial_resource_state, nullptr,
-                                      IID_PPV_ARGS(buffer_resource.clear_and_assign())));
+   throw_if_failed(device_d3d->CreateCommittedResource(
+      &heap_properties, D3D12_HEAP_FLAG_NONE, &buffer_desc, initial_resource_state,
+      nullptr, IID_PPV_ARGS(buffer_resource.clear_and_assign())));
 
    buffer buffer;
 
-   buffer.parent_gpu_device = this;
+   buffer.parent_device = this;
    buffer.resource = buffer_resource.release();
    buffer.resource_state = initial_resource_state;
    buffer.size = size;
@@ -159,14 +159,14 @@ auto gpu_device::create_buffer(const std::size_t size, const D3D12_HEAP_TYPE hea
    return buffer;
 }
 
-void gpu_device::deferred_destroy_resource(ID3D12Resource& resource)
+void device::deferred_destroy_resource(ID3D12Resource& resource)
 {
    std::lock_guard lock{_deferred_destruction_mutex};
 
    _deferred_resource_destructions.emplace_back(&resource);
 }
 
-void gpu_device::process_deferred_resource_destructions()
+void device::process_deferred_resource_destructions()
 {
    std::lock_guard lock{_deferred_destruction_mutex};
 

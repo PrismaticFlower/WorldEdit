@@ -9,7 +9,7 @@
 #include <boost/container/static_vector.hpp>
 #include <d3d12.h>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
 class command_list_recorder {
 public:
@@ -32,7 +32,7 @@ public:
       return command_list->Reset(&allocator, pipeline_state);
    }
 
-   template<gpu_resource_ref Dest, gpu_resource_ref Src>
+   template<resource_ref Dest, resource_ref Src>
    void copy_buffer_region(Dest& dest, const UINT64 dest_offset, Src& src,
                            const UINT64 src_offset, const UINT64 byte_count)
    {
@@ -47,7 +47,7 @@ public:
                                      src_offset, byte_count);
    }
 
-   template<gpu_resource_ref Dest, gpu_resource_ref Src>
+   template<resource_ref Dest, resource_ref Src>
    void copy_resource(Dest& dest, Src& src)
    {
       flush_barriers();
@@ -55,7 +55,7 @@ public:
       command_list->CopyResource(dest.resource, src.resource);
    }
 
-   template<gpu_resource_ref T>
+   template<resource_ref T>
    void resource_transition_barrier(T& resource, const D3D12_RESOURCE_STATES new_state,
                                     const D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
                                     const UINT subresource = 0)

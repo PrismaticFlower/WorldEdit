@@ -8,7 +8,7 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
 class descriptor_heap_cpu {
 public:

@@ -21,18 +21,18 @@
 #include <object_ptr.hpp>
 #include <wil/resource.h>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
-struct gpu_device {
-   explicit gpu_device(const HWND window);
+struct device {
+   explicit device(const HWND window);
 
-   gpu_device(const gpu_device&) = delete;
-   gpu_device operator=(const gpu_device&) = delete;
+   device(const device&) = delete;
+   device operator=(const device&) = delete;
 
-   gpu_device(gpu_device&&) = delete;
-   gpu_device operator=(gpu_device&&) = delete;
+   device(device&&) = delete;
+   device operator=(device&&) = delete;
 
-   ~gpu_device();
+   ~device();
 
    void wait_for_idle();
 
@@ -49,7 +49,7 @@ struct gpu_device {
 
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
-   utility::com_ptr<ID3D12Device6> device;
+   utility::com_ptr<ID3D12Device6> device_d3d;
    utility::com_ptr<ID3D12Fence> fence;
    UINT64 fence_value = 1;
    UINT64 previous_frame_fence_value = 0;
@@ -58,23 +58,24 @@ struct gpu_device {
    utility::com_ptr<ID3D12CommandQueue> command_queue;
 
    descriptor_heap_cpu rtv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-                                           rtv_descriptor_heap_size, *device};
+                                           rtv_descriptor_heap_size, *device_d3d};
    command_allocator_pool direct_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                        *device};
-   command_list_pool direct_command_list_pool{D3D12_COMMAND_LIST_TYPE_DIRECT, *device};
+                                                        *device_d3d};
+   command_list_pool direct_command_list_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                              *device_d3d};
 
    utility::com_ptr<ID3D12Fence> copy_fence;
    UINT64 copy_fence_value = 1;
    UINT64 copy_completed_fence_value = 0;
    utility::com_ptr<ID3D12CommandQueue> copy_command_queue;
    command_allocator_pool copy_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_COPY,
-                                                      *device};
-   command_list_pool copy_command_list_pool{D3D12_COMMAND_LIST_TYPE_COPY, *device};
+                                                      *device_d3d};
+   command_list_pool copy_command_list_pool{D3D12_COMMAND_LIST_TYPE_COPY, *device_d3d};
 
    swap_chain swap_chain;
 
-   root_signature_library root_signatures{*device};
-   pipeline_library pipelines{*device, root_signatures};
+   root_signature_library root_signatures{*device_d3d};
+   pipeline_library pipelines{*device_d3d, root_signatures};
 
    utility::com_ptr<ID3D12Resource> triangle;
 

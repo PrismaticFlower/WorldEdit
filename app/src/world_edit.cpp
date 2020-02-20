@@ -48,7 +48,7 @@ world_edit::world_edit(const HWND window)
 
       ID3D12CommandList* exec_command_list = command_list.get();
 
-      const UINT64 fence_value = ++_gpu_device.fence_value;
+      const UINT64 fence_value = ++_gpu_device.copy_fence_value;
 
       _gpu_device.copy_command_queue->ExecuteCommandLists(1, &exec_command_list);
       _gpu_device.copy_command_queue->Signal(_gpu_device.copy_fence.get(), fence_value);

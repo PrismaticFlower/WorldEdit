@@ -9,12 +9,12 @@
 #include <gsl/gsl>
 #include <object_ptr.hpp>
 
-namespace sk::graphics {
+namespace sk::graphics::gpu {
 
-struct gpu_device;
+struct device;
 
 struct buffer : resource_owner_base<buffer> {
-   jss::object_ptr<gpu_device> parent_gpu_device;
+   jss::object_ptr<device> parent_device;
 
    std::size_t size = 0;
 };
