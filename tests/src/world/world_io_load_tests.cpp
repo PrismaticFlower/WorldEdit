@@ -153,7 +153,7 @@ TEST_CASE("world loading", "[World][Load]")
          CHECK(world.paths[0].layer == 0);
          CHECK(world.paths[0].properties.empty());
 
-         constexpr std::array<vec3, 12> expected_positions{
+         constexpr std::array<float3, 12> expected_positions{
             {{383.557434f, 0.000000f, -4.797800f},
              {332.062256f, 0.000000f, 187.287064f},
              {191.642288f, 0.000000f, 327.707031f},
@@ -186,7 +186,7 @@ TEST_CASE("world loading", "[World][Load]")
          CHECK(world.paths[1].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
 
-         constexpr std::array<vec3, 3> expected_positions{
+         constexpr std::array<float3, 3> expected_positions{
             {{-16.041691, 0.000000, -31.988783},
              {-31.982189, 0.000000, -48.033310},
              {-48.012756, 0.000000, -31.962399}}};

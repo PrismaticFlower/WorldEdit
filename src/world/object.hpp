@@ -19,7 +19,7 @@ struct object {
    int layer = 0;
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
-   vec3 position{};
+   float3 position{};
 
    int team = 0;
 

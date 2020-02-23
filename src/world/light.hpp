@@ -15,9 +15,9 @@ struct light {
    int layer = 0;
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
-   vec3 position{};
+   float3 position{};
 
-   vec3 color = {1.0f, 1.0f, 1.0f};
+   float3 color = {1.0f, 1.0f, 1.0f};
    bool static_ = false;
    bool shadow_caster = false;
    bool specular_caster = false;
@@ -28,8 +28,8 @@ struct light {
    float inner_cone_angle = 0.785398f;
    float outer_cone_angle = 0.959931f;
 
-   vec2 directional_texture_tiling = {1.0f, 1.0f};
-   vec2 directional_texture_offset = {0.0f, 0.0f};
+   float2 directional_texture_tiling = {1.0f, 1.0f};
+   float2 directional_texture_offset = {0.0f, 0.0f};
 
    std::optional<std::string> texture = std::nullopt;
    std::optional<std::string> directional_region = std::nullopt;

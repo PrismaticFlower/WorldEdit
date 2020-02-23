@@ -63,7 +63,7 @@ struct terr_decal_tile {
    int32 y;
    int32 texture_index;
 
-   std::array<vec2, 4> coords;
+   std::array<float2, 4> coords;
 };
 
 static_assert(sizeof(terr_decal_tile) == 44);

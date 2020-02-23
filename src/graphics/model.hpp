@@ -12,12 +12,12 @@
 namespace sk::graphics {
 
 struct mesh_vertex {
-   vec3 position;
-   vec2 texcoords;
-   vec2 lightmap_texcoords;
-   vec3 tangent;
-   vec3 bitangent;
-   vec3 normal;
+   float3 position;
+   float2 texcoords;
+   float2 lightmap_texcoords;
+   float3 tangent;
+   float3 bitangent;
+   float3 normal;
    uint32 colour;
 };
 

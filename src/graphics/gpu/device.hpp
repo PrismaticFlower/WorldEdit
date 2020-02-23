@@ -38,7 +38,7 @@ struct device {
 
    void end_frame();
 
-   auto create_buffer(const std::size_t size, const D3D12_HEAP_TYPE heap_type,
+   auto create_buffer(const UINT size, const D3D12_HEAP_TYPE heap_type,
                       const D3D12_RESOURCE_STATES initial_resource_state) -> buffer;
 
    void deferred_destroy_resource(ID3D12Resource& resource);

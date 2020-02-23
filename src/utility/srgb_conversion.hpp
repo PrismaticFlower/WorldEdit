@@ -16,13 +16,13 @@ inline auto decompress_srgb(const Float v) -> Float
              : std::pow(std::abs((v + Float{0.055})) / Float{1.055}, Float{2.4});
 }
 
-inline auto decompress_srgb(const vec3 color) -> vec3
+inline auto decompress_srgb(const float3 color) -> float3
 {
    return {decompress_srgb(color.r), decompress_srgb(color.g),
            decompress_srgb(color.b)};
 }
 
-inline auto decompress_srgb(const vec4 color) -> vec4
+inline auto decompress_srgb(const float4 color) -> float4
 {
    return {decompress_srgb(color.r), decompress_srgb(color.g),
            decompress_srgb(color.b), color.a};
@@ -37,12 +37,12 @@ inline auto compress_srgb(const Float v)
                   Float{0.055};
 }
 
-inline auto compress_srgb(const vec3 color) -> vec3
+inline auto compress_srgb(const float3 color) -> float3
 {
    return {compress_srgb(color.r), compress_srgb(color.g), compress_srgb(color.b)};
 }
 
-inline auto compress_srgb(const vec4 color) -> vec4
+inline auto compress_srgb(const float4 color) -> float4
 {
    return {compress_srgb(color.r), compress_srgb(color.g),
            compress_srgb(color.b), color.a};
@@ -103,14 +103,14 @@ inline constexpr std::array srgb_unorm_to_float_lut = {
    1.0f,
 };
 
-inline auto unpack_srgb_bgra(const uint32 bgra) -> vec4
+inline auto unpack_srgb_bgra(const uint32 bgra) -> float4
 {
    return {srgb_unorm_to_float_lut[(bgra >> 16) & 0xff],
            srgb_unorm_to_float_lut[(bgra >> 8) & 0xff],
            srgb_unorm_to_float_lut[bgra & 0xff], ((bgra >> 24) & 0xff) / 255.0f};
 }
 
-inline auto pack_srgb_bgra(const vec4 color) -> uint32
+inline auto pack_srgb_bgra(const float4 color) -> uint32
 {
    const auto pack_unorm = [](const float v) -> uint32 {
       return static_cast<uint32>(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f);

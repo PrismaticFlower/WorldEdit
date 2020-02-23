@@ -170,6 +170,7 @@
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\exceptions.hpp" />
     <ClInclude Include="src\graphics\bounding_box.hpp" />
+    <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\gpu\buffer.hpp" />
     <ClInclude Include="src\graphics\gpu\command_allocator_pool.hpp" />
     <ClInclude Include="src\graphics\gpu\command_list_pool.hpp" />
@@ -183,6 +184,7 @@
     <ClInclude Include="src\graphics\gpu\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\gpu\shader_library.hpp" />
     <ClInclude Include="src\graphics\gpu\swap_chain.hpp" />
+    <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
     <ClInclude Include="src\types.hpp" />
@@ -220,6 +222,7 @@
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
+    <ClCompile Include="src\graphics\camera.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />
@@ -227,6 +230,7 @@
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
+    <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\world_io_load.cpp" />

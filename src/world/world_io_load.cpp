@@ -29,7 +29,7 @@ auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap
    return 0;
 }
 
-auto read_location(const assets::config::node& node) -> std::pair<quaternion, vec3>
+auto read_location(const assets::config::node& node) -> std::pair<quaternion, float3>
 {
    return {{node.at("Rotation"sv).values.get<float>(0),
             node.at("Rotation"sv).values.get<float>(1),

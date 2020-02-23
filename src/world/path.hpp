@@ -22,7 +22,7 @@ struct path {
 
    struct node {
       quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
-      vec3 position{};
+      float3 position{};
 
       std::vector<property> properties;
 

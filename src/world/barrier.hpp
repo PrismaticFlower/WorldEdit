@@ -12,7 +12,7 @@ struct barrier {
    std::string name;
    int layer = 0;
 
-   std::array<vec2, 4> corners{};
+   std::array<float2, 4> corners{};
    ai_path_flags flags = ai_path_flags::soldier | ai_path_flags::hover |
                          ai_path_flags::small | ai_path_flags::medium |
                          ai_path_flags::huge | ai_path_flags::flyer;

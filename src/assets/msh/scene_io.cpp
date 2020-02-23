@@ -17,12 +17,12 @@ namespace sk::assets::msh {
 
 namespace {
 
-auto from_msh_space(glm::vec3 vec) -> glm::vec3
+auto from_msh_space(float3 vec) -> float3
 {
    return {-vec.x, vec.y, vec.z};
 }
 
-auto from_msh_space(glm::vec2 vec) -> glm::vec2
+auto from_msh_space(float2 vec) -> float2
 {
    return {vec.x, 1.0f - vec.y};
 }
@@ -105,19 +105,19 @@ auto read_strp(ucfb::reader_strict<"STRP"_id> strp)
    return triangle_strips_to_lists(strips);
 }
 
-auto read_clrl(ucfb::reader_strict<"CLRL"_id> clrl) -> std::vector<glm::vec4>
+auto read_clrl(ucfb::reader_strict<"CLRL"_id> clrl) -> std::vector<float4>
 {
    const auto count = clrl.read<int32>();
 
-   std::vector<glm::vec4> colors;
+   std::vector<float4> colors;
    colors.reserve(count);
 
    for (int i = 0; i < count; ++i) {
       const auto packed_color = clrl.read<uint32>();
 
       colors.emplace_back(utility::decompress_srgb(
-         glm::vec4{(packed_color >> 8) & 0xff, (packed_color >> 16) & 0xff,
-                   packed_color & 0xff, (packed_color >> 24) & 0xff}));
+         float4{(packed_color >> 8) & 0xff, (packed_color >> 16) & 0xff,
+                packed_color & 0xff, (packed_color >> 24) & 0xff}));
    }
 
    return colors;
@@ -150,13 +150,13 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
          segment.material_index = child.read<int32>();
          continue;
       case "POSL"_id:
-         segment.positions = read_vertex_atrb<glm::vec3>(child);
+         segment.positions = read_vertex_atrb<float3>(child);
          continue;
       case "NRML"_id:
-         segment.normals = read_vertex_atrb<glm::vec3>(child);
+         segment.normals = read_vertex_atrb<float3>(child);
          continue;
       case "UV0L"_id:
-         segment.texcoords = read_vertex_atrb<glm::vec2>(child);
+         segment.texcoords = read_vertex_atrb<float2>(child);
          continue;
       case "CLRL"_id:
          segment.colors = read_clrl(ucfb::reader_strict<"CLRL"_id>{child});
@@ -192,10 +192,10 @@ auto read_tran(ucfb::reader_strict<"TRAN"_id> tran) -> transform
 {
    transform transform;
 
-   tran.read<glm::vec3>(); // scale, ignored by modelmunge
-   glm::vec4 rotation = tran.read<glm::vec4>();
+   tran.read<float3>(); // scale, ignored by modelmunge
+   float4 rotation = tran.read<float4>();
    transform.rotation = {rotation.w, -rotation.x, rotation.y, rotation.z};
-   transform.translation = from_msh_space(tran.read<glm::vec3>());
+   transform.translation = from_msh_space(tran.read<float3>());
 
    return transform;
 }
@@ -247,9 +247,9 @@ auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
          material.name = child.read_string();
          continue;
       case "DATA"_id:
-         child.read<glm::vec4>(); // Diffuse Colour, seams to get ignored by modelmunge
-         material.specular_color = child.read<glm::vec4>();
-         child.read<glm::vec4>(); // Ambient Colour, ignored by modelmunge and Zero(?)
+         child.read<float4>(); // Diffuse Colour, seams to get ignored by modelmunge
+         material.specular_color = child.read<float4>();
+         child.read<float4>(); // Ambient Colour, ignored by modelmunge and Zero(?)
          child.read<float>(); // Specular Exponent/Decay (Gets ignored by RedEngine in SWBFII for all known materials)
          continue;
       case "ATRB"_id:

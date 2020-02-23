@@ -5,8 +5,8 @@
 namespace sk::graphics {
 
 struct bounding_box {
-   vec3 min{};
-   vec3 max{};
+   float3 min{};
+   float3 max{};
 };
 
 }

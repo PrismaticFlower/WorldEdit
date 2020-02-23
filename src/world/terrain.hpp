@@ -35,9 +35,9 @@ struct terrain {
    std::string detail_texture_name;
 
    container::dynamic_array_2d<int16> heightmap{length, length};
-   container::dynamic_array_2d<vec4> colormap_foreground{length, length};
-   container::dynamic_array_2d<vec4> colormap_background{length, length};
-   std::optional<container::dynamic_array_2d<vec4>> lightmap = std::nullopt;
+   container::dynamic_array_2d<float4> colormap_foreground{length, length};
+   container::dynamic_array_2d<float4> colormap_background{length, length};
+   std::optional<container::dynamic_array_2d<float4>> lightmap = std::nullopt;
    container::dynamic_array_2d<std::array<uint8, texture_count>> texture_weightmap{length, length};
 
    container::dynamic_array_2d<bool> water_patches{length / water_patch_size,

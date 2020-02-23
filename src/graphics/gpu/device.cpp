@@ -9,6 +9,7 @@
 namespace sk::graphics::gpu {
 
 namespace {
+
 auto create_factory() -> utility::com_ptr<IDXGIFactory7>
 {
    UINT dxgi_flags = 0;
@@ -131,7 +132,7 @@ void device::end_frame()
    }
 }
 
-auto device::create_buffer(const std::size_t size, const D3D12_HEAP_TYPE heap_type,
+auto device::create_buffer(const UINT size, const D3D12_HEAP_TYPE heap_type,
                            const D3D12_RESOURCE_STATES initial_resource_state) -> buffer
 {
 

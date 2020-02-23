@@ -22,7 +22,7 @@ struct planning_hub {
    std::string name;
    int layer = 0;
 
-   vec3 position;
+   float3 position;
    float radius = 0.0f;
 
    std::vector<branch_weight> branch_weights;

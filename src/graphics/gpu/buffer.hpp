@@ -16,7 +16,7 @@ struct device;
 struct buffer : resource_owner_base<buffer> {
    jss::object_ptr<device> parent_device;
 
-   std::size_t size = 0;
+   UINT size = 0;
 };
 
 }

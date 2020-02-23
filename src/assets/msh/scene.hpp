@@ -24,17 +24,17 @@ enum class collision_primitive_shape : int32 {
 };
 
 struct transform {
-   glm::vec3 translation = {0.0f, 0.0f, 0.0f};
-   glm::quat rotation = {1.0f, 0.0f, 0.0f, 0.0f};
+   float3 translation = {0.0f, 0.0f, 0.0f};
+   quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
 };
 
 struct geometry_segment {
    int32 material_index = 0;
 
-   std::vector<vec3> positions;
-   std::vector<vec3> normals;
-   std::optional<std::vector<vec4>> colors;
-   std::vector<vec2> texcoords;
+   std::vector<float3> positions;
+   std::vector<float3> normals;
+   std::optional<std::vector<float4>> colors;
+   std::vector<float2> texcoords;
 
    std::vector<std::array<uint16, 3>> triangles;
 };

@@ -13,8 +13,8 @@ struct region {
    int layer = 0;
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
-   vec3 position{};
-   vec3 size{};
+   float3 position{};
+   float3 size{};
    region_shape shape = region_shape::box;
 
    std::string description;

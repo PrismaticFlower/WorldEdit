@@ -45,7 +45,7 @@ enum class rendertype : uint8 {
 
 struct material {
    std::string name;
-   vec3 specular_color = {1.0f, 1.0f, 1.0f};
+   float3 specular_color = {1.0f, 1.0f, 1.0f};
    material_flags flags = material_flags::none;
    rendertype rendertype = rendertype::normal;
    uint8 data0 = 0;

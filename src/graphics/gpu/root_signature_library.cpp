@@ -35,10 +35,19 @@ auto create_root_signature(ID3D12Device& device,
 
 root_signature_library::root_signature_library(ID3D12Device& device)
 {
+   constexpr D3D12_ROOT_PARAMETER1 cam_root_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
+      .Descriptor = {.ShaderRegister = 0,
+                     .RegisterSpace = 0,
+                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE},
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
+
    basic_test = create_root_signature(
       device,
       {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
+       .Desc_1_1 = {.NumParameters = 1,
+                    .pParameters = &cam_root_param,
+                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 }
 
 }

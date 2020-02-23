@@ -14,7 +14,7 @@ struct sector {
    float base = 0.0f;
    float height = 0.0f;
 
-   std::vector<vec2> points;
+   std::vector<float2> points;
    std::vector<std::string> objects;
 
    bool operator==(const sector&) const noexcept = default;
