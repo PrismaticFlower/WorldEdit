@@ -168,6 +168,7 @@
     <ClInclude Include="src\assets\terrain\terrain.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_io.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
+    <ClInclude Include="src\container\enum_array.hpp" />
     <ClInclude Include="src\exceptions.hpp" />
     <ClInclude Include="src\graphics\bounding_box.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="src\graphics\gpu\swap_chain.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
+    <ClInclude Include="src\input_state.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ucfb\reader.hpp" />
@@ -231,6 +233,7 @@
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
+    <ClCompile Include="src\input_state.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\world_io_load.cpp" />

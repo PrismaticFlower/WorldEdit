@@ -29,6 +29,7 @@
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
     <ClCompile Include="src\hresult_error_tests.cpp" />
+    <ClCompile Include="src\container\enum_array_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
