@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fmt/format.h>
+#include <stdexcept>
 
 #include <Windows.h>
 
@@ -8,10 +8,7 @@ namespace sk {
 
 class hresult_exception : public std::runtime_error {
 public:
-   hresult_exception(const HRESULT hr) noexcept
-      : std::runtime_error{fmt::format("HRESULT: {:#x}",
-                                       static_cast<std::make_unsigned_t<HRESULT>>(hr))},
-        _hr{hr} {};
+   hresult_exception(const HRESULT hr) noexcept;
 
    auto error() const noexcept -> HRESULT
    {

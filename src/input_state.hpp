@@ -2,9 +2,27 @@
 
 #include "container/enum_array.hpp"
 
+#include <array>
 #include <string_view>
 
+#include <Windows.h>
+
 namespace sk {
+
+struct mouse_state {
+   int x = 0;
+   int y = 0;
+   int x_movement = 0;
+   int y_movement = 0;
+
+   bool left_button = false;
+   bool middle_button = false;
+   bool right_button = false;
+
+   std::array<bool, 2> extra_buttons{false, false};
+
+   bool over_window = false;
+};
 
 enum class keyboard_keys {
    _0,
@@ -428,6 +446,8 @@ inline constexpr container::enum_array<std::string_view, keyboard_keys> keyboard
    });
 
 using keyboard_state = container::enum_array<bool, keyboard_keys>;
+
+auto get_mouse_state(const HWND window) -> mouse_state; // NOT thread safe!
 
 auto get_keyboard_state() -> keyboard_state;
 

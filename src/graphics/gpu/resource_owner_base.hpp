@@ -37,8 +37,6 @@ struct resource_owner_base {
       std::swap(this->resource, other.resource);
       std::swap(this->resource_state, other.resource_state);
 
-      other = {};
-
       return *this;
    }
 

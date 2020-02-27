@@ -176,9 +176,11 @@
     <ClInclude Include="src\graphics\gpu\command_allocator_pool.hpp" />
     <ClInclude Include="src\graphics\gpu\command_list_pool.hpp" />
     <ClInclude Include="src\graphics\gpu\command_list_recorder.hpp" />
+    <ClInclude Include="src\graphics\gpu\common.hpp" />
     <ClInclude Include="src\graphics\gpu\concepts.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp" />
     <ClInclude Include="src\graphics\gpu\device.hpp" />
+    <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\model.hpp" />
     <ClInclude Include="src\graphics\gpu\pipeline_library.hpp" />
     <ClInclude Include="src\graphics\gpu\resource_owner_base.hpp" />
@@ -233,6 +235,7 @@
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
+    <ClCompile Include="src\hresult_error.cpp" />
     <ClCompile Include="src\input_state.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />

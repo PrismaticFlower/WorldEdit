@@ -1,10 +1,11 @@
 
+#include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
+#include "input_state.hpp"
+
+#include <chrono>
 
 #include <Windows.h>
-
-#include <d3d12.h>
-#include <dxgi1_6.h>
 
 namespace sk {
 
@@ -21,8 +22,16 @@ public:
    void unfocused();
 
 private:
+   void update_camera(const float delta_time, const mouse_state& mouse_state,
+                      const keyboard_state& keyboard_state);
+
    HWND _window{};
+
+   std::chrono::steady_clock::time_point _last_update =
+      std::chrono::steady_clock::now();
+
    graphics::renderer _renderer;
+   graphics::camera _camera;
 };
 
 }

@@ -33,9 +33,7 @@ renderer::renderer(const HWND window)
      _box_vertex_buffer{_device.create_buffer(sizeof(box_vertices), D3D12_HEAP_TYPE_DEFAULT,
                                               D3D12_RESOURCE_STATE_COPY_DEST)},
      _box_index_buffer{_device.create_buffer(sizeof(box_indices), D3D12_HEAP_TYPE_DEFAULT,
-                                             D3D12_RESOURCE_STATE_COPY_DEST)},
-     _temp_proj_matrix{_device.create_buffer(sizeof(matrix4x4), D3D12_HEAP_TYPE_UPLOAD,
-                                             D3D12_RESOURCE_STATE_GENERIC_READ)}
+                                             D3D12_RESOURCE_STATE_COPY_DEST)}
 {
    auto cpu_box_vertex_buffer =
       _device.create_buffer(sizeof(box_vertices), D3D12_HEAP_TYPE_UPLOAD,
@@ -83,26 +81,20 @@ renderer::renderer(const HWND window)
       _device.copy_command_queue->Signal(_device.copy_fence.get(), fence_value);
       _device.command_queue->Wait(_device.copy_fence.get(), fence_value);
    }
-
-   throw_if_failed(_temp_proj_matrix.resource->Map(0, &read_range, &data));
-
-   camera cam;
-   cam.update();
-
-   std::memcpy(data, &cam.projection_matrix(), sizeof(matrix4x4));
 }
 
-void renderer::draw_frame()
+void renderer::draw_frame(const camera& camera)
 {
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
 
-   auto command_allocator =
-      _device.aquire_command_allocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
+   auto& command_allocator = *_command_allocators[_device.frame_index];
    auto command_list = _device.aquire_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT);
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
 
-   throw_if_failed(command_list->Reset(command_allocator.get(), nullptr));
+   throw_if_failed(command_allocator.Reset());
+   throw_if_failed(command_list->Reset(&command_allocator, nullptr));
+   _dynamic_buffer_allocator.reset(_device.frame_index);
 
    const auto rt_barrier =
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
@@ -128,8 +120,17 @@ void renderer::draw_frame()
 
    command_list->SetGraphicsRootSignature(_device.root_signatures.basic_test.get());
    command_list->SetPipelineState(_device.pipelines.basic_test.get());
-   command_list->SetGraphicsRootConstantBufferView(
-      0, _temp_proj_matrix.resource->GetGPUVirtualAddress());
+
+   // TEMP Camera Setup
+   {
+      auto allocation =
+         _dynamic_buffer_allocator.allocate(sizeof(sizeof(matrix4x4)));
+
+      std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
+                  sizeof(matrix4x4));
+
+      command_list->SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
+   }
 
    D3D12_VERTEX_BUFFER_VIEW vbv{_box_vertex_buffer.resource->GetGPUVirtualAddress(),
                                 _box_vertex_buffer.size, 12};

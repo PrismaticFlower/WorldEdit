@@ -4,6 +4,7 @@
 #include "command_allocator_pool.hpp"
 #include "command_list_pool.hpp"
 #include "command_list_recorder.hpp"
+#include "common.hpp"
 #include "descriptor_heap.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
@@ -23,6 +24,9 @@
 
 namespace sk::graphics::gpu {
 
+using command_allocators =
+   std::array<utility::com_ptr<ID3D12CommandAllocator>, render_latency>;
+
 struct device {
    explicit device(const HWND window);
 
@@ -37,6 +41,9 @@ struct device {
    void wait_for_idle();
 
    void end_frame();
+
+   auto create_command_allocators(const D3D12_COMMAND_LIST_TYPE type)
+      -> command_allocators;
 
    auto create_buffer(const UINT size, const D3D12_HEAP_TYPE heap_type,
                       const D3D12_RESOURCE_STATES initial_resource_state) -> buffer;
@@ -54,6 +61,7 @@ struct device {
    UINT64 fence_value = 1;
    UINT64 previous_frame_fence_value = 0;
    UINT64 completed_fence_value = 0;
+   UINT64 frame_index = 0;
    wil::unique_event fence_event{CreateEventW(nullptr, false, false, nullptr)};
    utility::com_ptr<ID3D12CommandQueue> command_queue;
 

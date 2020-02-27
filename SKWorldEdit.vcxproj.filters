@@ -342,6 +342,12 @@
     <ClInclude Include="src\container\enum_array.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\common.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -399,6 +405,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\input_state.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hresult_error.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

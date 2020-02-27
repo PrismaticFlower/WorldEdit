@@ -122,6 +122,7 @@ void device::end_frame()
    const UINT64 wait_value = previous_frame_fence_value;
    throw_if_failed(command_queue->Signal(fence.get(), wait_value));
    previous_frame_fence_value = fence_value++;
+   frame_index = fence_value % render_latency;
    completed_fence_value = fence->GetCompletedValue();
    copy_completed_fence_value = copy_fence->GetCompletedValue();
 
@@ -130,6 +131,19 @@ void device::end_frame()
       WaitForSingleObject(fence_event.get(), INFINITE);
       completed_fence_value = fence->GetCompletedValue();
    }
+}
+
+auto device::create_command_allocators(const D3D12_COMMAND_LIST_TYPE type) -> command_allocators
+{
+   command_allocators allocators;
+
+   for (auto& allocator : allocators) {
+      throw_if_failed(
+         device_d3d->CreateCommandAllocator(type, IID_PPV_ARGS(
+                                                     allocator.clear_and_assign())));
+   }
+
+   return allocators;
 }
 
 auto device::create_buffer(const UINT size, const D3D12_HEAP_TYPE heap_type,

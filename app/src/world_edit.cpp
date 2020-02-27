@@ -1,28 +1,90 @@
 
 #include "world_edit.hpp"
 #include "hresult_error.hpp"
-#include "input_state.hpp"
 
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
+
+#include <iostream>
 
 namespace sk {
 
+namespace {
+
+constexpr float camera_movement_sensitivity = 5.0f;
+constexpr float camera_look_sensitivity = 0.18f;
+
+}
+
 world_edit::world_edit(const HWND window) : _window{window}, _renderer{window}
 {
+   RECT rect{};
+   GetWindowRect(window, &rect);
+
+   _camera.aspect_ratio(static_cast<float>(rect.right - rect.left) /
+                        static_cast<float>(rect.bottom - rect.top));
+   _camera.position({0.0f, 0.0f, 10.0f});
 }
 
 bool world_edit::update()
 {
-   const auto keyboard_state = get_keyboard_state();
+   const float delta_time =
+      std::chrono::duration<float>(
+         std::chrono::steady_clock::now() -
+         std::exchange(_last_update, std::chrono::steady_clock::now()))
+         .count();
 
-   _renderer.draw_frame();
+   const auto keyboard_state = get_keyboard_state();
+   const auto mouse_state = get_mouse_state(_window);
+
+   update_camera(delta_time, mouse_state, keyboard_state);
+
+   _renderer.draw_frame(_camera);
 
    return true;
 }
 
+void world_edit::update_camera(const float delta_time, const mouse_state& mouse_state,
+                               const keyboard_state& keyboard_state)
+{
+
+   float3 camera_position = _camera.position();
+
+   const float camera_movement_scale = delta_time * camera_movement_sensitivity;
+
+   if (keyboard_state[keyboard_keys::w]) {
+      camera_position += (_camera.forward() * camera_movement_scale);
+   }
+   if (keyboard_state[keyboard_keys::s]) {
+      camera_position += (_camera.back() * camera_movement_scale);
+   }
+   if (keyboard_state[keyboard_keys::a]) {
+      camera_position += (_camera.left() * camera_movement_scale);
+   }
+   if (keyboard_state[keyboard_keys::d]) {
+      camera_position += (_camera.right() * camera_movement_scale);
+   }
+   if (keyboard_state[keyboard_keys::r]) {
+      camera_position += (_camera.up() * camera_movement_scale);
+   }
+   if (keyboard_state[keyboard_keys::f]) {
+      camera_position += (_camera.down() * camera_movement_scale);
+   }
+
+   if (mouse_state.over_window and mouse_state.right_button) {
+      const float camera_look_scale = delta_time * camera_look_sensitivity;
+
+      _camera.pitch(_camera.pitch() + (mouse_state.y_movement * camera_look_scale));
+      _camera.yaw(_camera.yaw() + (mouse_state.x_movement * camera_look_scale));
+   }
+
+   _camera.position(camera_position);
+}
+
 void world_edit::resized(int width, int height)
 {
+   _camera.aspect_ratio(float(width) / float(height));
    _renderer.window_resized(width, height);
 }
 
