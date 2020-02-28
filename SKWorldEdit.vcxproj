@@ -237,6 +237,7 @@
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\hresult_error.cpp" />
     <ClCompile Include="src\input_state.cpp" />
+    <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\world_io_load.cpp" />

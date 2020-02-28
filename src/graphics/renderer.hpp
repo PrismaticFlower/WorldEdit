@@ -3,6 +3,7 @@
 #include "camera.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
+#include "world/world.hpp"
 
 namespace sk::graphics {
 
@@ -10,7 +11,7 @@ class renderer {
 public:
    explicit renderer(const HWND window);
 
-   void draw_frame(const camera& camera);
+   void draw_frame(const camera& camera, const world::world& world);
 
    void window_resized(int width, int height);
 

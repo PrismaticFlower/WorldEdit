@@ -1,6 +1,7 @@
 
 #include "world_edit.hpp"
 #include "hresult_error.hpp"
+#include "world/world_io_load.hpp"
 
 #include <stdexcept>
 #include <type_traits>
@@ -19,6 +20,16 @@ constexpr float camera_look_sensitivity = 0.18f;
 
 world_edit::world_edit(const HWND window) : _window{window}, _renderer{window}
 {
+   std::filesystem::current_path(_project_dir); // TODO: Decide on project dir handling design.
+
+   standard_output_stream stream;
+
+   try {
+      _world = world::load_world("Worlds/SPT/World1/SPT.wld", stream);
+   }
+   catch (std::exception&) {
+   }
+
    RECT rect{};
    GetWindowRect(window, &rect);
 
@@ -40,7 +51,7 @@ bool world_edit::update()
 
    update_camera(delta_time, mouse_state, keyboard_state);
 
-   _renderer.draw_frame(_camera);
+   _renderer.draw_frame(_camera, _world);
 
    return true;
 }
@@ -75,8 +86,8 @@ void world_edit::update_camera(const float delta_time, const mouse_state& mouse_
    if (mouse_state.over_window and mouse_state.right_button) {
       const float camera_look_scale = delta_time * camera_look_sensitivity;
 
-      _camera.pitch(_camera.pitch() + (mouse_state.y_movement * camera_look_scale));
       _camera.yaw(_camera.yaw() + (mouse_state.x_movement * camera_look_scale));
+      _camera.pitch(_camera.pitch() + (mouse_state.y_movement * camera_look_scale));
    }
 
    _camera.position(camera_position);

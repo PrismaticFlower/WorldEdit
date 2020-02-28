@@ -83,7 +83,7 @@ renderer::renderer(const HWND window)
    }
 }
 
-void renderer::draw_frame(const camera& camera)
+void renderer::draw_frame(const camera& camera, const world::world& world)
 {
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
@@ -139,8 +139,25 @@ void renderer::draw_frame(const camera& camera)
    command_list->IASetVertexBuffers(0, 1, &vbv);
    command_list->IASetIndexBuffer(&ibv);
    command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-   command_list->DrawIndexedInstanced(static_cast<UINT>(box_indices.size() * 3),
-                                      1, 0, 0, 0);
+
+   // TEMP object placeholder rendering
+   for (auto& object : world.objects) {
+      // TEMP object constants setup
+      {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(sizeof(matrix4x4)));
+
+         matrix4x4 world_transform = matrix4x4{quaternion{object.rotation}};
+         world_transform[3] = {object.position, 1.0f};
+
+         std::memcpy(allocation.cpu_address, &world_transform, sizeof(matrix4x4));
+
+         command_list->SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+      }
+
+      command_list->DrawIndexedInstanced(static_cast<UINT>(box_indices.size() * 3),
+                                         1, 0, 0, 0);
+   }
 
    const auto present_barrier =
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer,

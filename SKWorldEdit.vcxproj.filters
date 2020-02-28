@@ -410,6 +410,9 @@
     <ClCompile Include="src\hresult_error.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\output_stream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\graphics\gpu\shaders\basic_testPS.hlsl" />

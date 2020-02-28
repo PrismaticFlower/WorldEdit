@@ -2,8 +2,10 @@
 #include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
 #include "input_state.hpp"
+#include "world/world.hpp"
 
 #include <chrono>
+#include <filesystem>
 
 #include <Windows.h>
 
@@ -29,6 +31,11 @@ private:
 
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
+
+   // TODO: Decide on project dir handling.
+   std::filesystem::path _project_dir = L"D:/BF2_ModTools/data_SPT";
+
+   world::world _world;
 
    graphics::renderer _renderer;
    graphics::camera _camera;

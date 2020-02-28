@@ -4,6 +4,10 @@
 
 namespace sk::world {
 
+// A Windows header defines small for some legacy reason with no escape hatch.
+// Get rid of it here incase Windows.h ends up included before us.
+#undef small
+
 enum class ai_path_flags {
    soldier = 0b1,
    hover = 0b10,
