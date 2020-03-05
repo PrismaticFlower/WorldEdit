@@ -22,12 +22,12 @@ public:
 
    auto right() const noexcept -> float3
    {
-      return -_world_matrix[0];
+      return _world_matrix[0];
    }
 
    auto left() const noexcept -> float3
    {
-      return _world_matrix[0];
+      return -_world_matrix[0];
    }
 
    auto up() const noexcept -> float3
@@ -98,17 +98,17 @@ public:
       rotation(quaternion{float3{_pitch, _yaw, 0.0f}});
    }
 
-   auto view_matrix() const noexcept -> const matrix4x4&
+   auto view_matrix() const noexcept -> const float4x4&
    {
       return _view_matrix;
    }
 
-   auto projection_matrix() const noexcept -> const matrix4x4&
+   auto projection_matrix() const noexcept -> const float4x4&
    {
       return _projection_matrix;
    }
 
-   auto view_projection_matrix() const noexcept -> const matrix4x4&
+   auto view_projection_matrix() const noexcept -> const float4x4&
    {
       return _view_projection_matrix;
    }
@@ -138,10 +138,10 @@ private:
    float _pitch = 0.0f;
    float _yaw = 0.0f;
 
-   matrix4x4 _world_matrix;
-   matrix4x4 _view_matrix;
-   matrix4x4 _projection_matrix;
-   matrix4x4 _view_projection_matrix;
+   float4x4 _world_matrix;
+   float4x4 _view_matrix;
+   float4x4 _projection_matrix;
+   float4x4 _view_projection_matrix;
 };
 
 }

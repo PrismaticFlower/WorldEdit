@@ -26,8 +26,10 @@ using double3 = glm::dvec3;
 using double4 = glm::dvec4;
 
 using quaternion = glm::quat;
-using matrix4x4 = glm::mat4;
-using matrix4x4d = glm::dmat4;
+using float4x4 = glm::mat4;
+using double4x4 = glm::dmat4;
+using float3x3 = glm::mat3;
+using double3x3 = glm::dmat4;
 
 static_assert(sizeof(float2) == 8);
 static_assert(sizeof(float3) == 12);
@@ -38,7 +40,7 @@ static_assert(sizeof(double3) == 24);
 static_assert(sizeof(double4) == 32);
 
 static_assert(sizeof(quaternion) == 16);
-static_assert(sizeof(matrix4x4) == 64);
-static_assert(sizeof(matrix4x4d) == 128);
+static_assert(sizeof(float4x4) == 64);
+static_assert(sizeof(double4x4) == 128);
 
 }

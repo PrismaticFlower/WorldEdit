@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -96,12 +96,14 @@
     <ClCompile Include="src\assets\config\io_tests.cpp" />
     <ClCompile Include="src\assets\config\key_node_tests.cpp" />
     <ClCompile Include="src\assets\config\values_tests.cpp" />
+    <ClCompile Include="src\assets\msh\flat_model_tests.cpp" />
     <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
     <ClCompile Include="src\container\enum_array_tests.cpp" />
     <ClCompile Include="src\hresult_error_tests.cpp" />
+    <ClCompile Include="src\math\bounding_box_tests.cpp" />
     <ClCompile Include="src\utility\binary_reader_tests.cpp" />
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />

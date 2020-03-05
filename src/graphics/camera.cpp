@@ -8,11 +8,11 @@ namespace sk::graphics {
 
 void camera::update() noexcept
 {
-   _world_matrix = matrix4x4{_rotation};
+   _world_matrix = float4x4{_rotation};
    _world_matrix[3] = {_position, 1.0f};
 
    quaternion rotation_inverse = glm::conjugate(_rotation);
-   _view_matrix = matrix4x4{rotation_inverse};
+   _view_matrix = float4x4{rotation_inverse};
    _view_matrix[3] = {rotation_inverse * -_position, 1.0f};
 
    _projection_matrix = {1.0f, 0.0f, 0.0f, 0.0f, //

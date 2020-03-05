@@ -18,8 +18,8 @@ auto get_mouse_state(const HWND window) -> mouse_state
 
    mouse_state new_mouse_state{.x = point.x,
                                .y = point.y,
-                               .x_movement = point.x - previous_mouse_state.x,
-                               .y_movement = point.y - previous_mouse_state.y};
+                               .x_movement = previous_mouse_state.x - point.x,
+                               .y_movement = previous_mouse_state.y - point.y};
 
    new_mouse_state.left_button = (GetKeyState(VK_LBUTTON) & 0x8000) != 0;
    new_mouse_state.right_button = (GetKeyState(VK_RBUTTON) & 0x8000) != 0;

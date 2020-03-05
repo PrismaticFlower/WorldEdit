@@ -52,6 +52,8 @@ struct material {
    uint8 data1 = 0;
 
    std::array<std::string, 4> textures{};
+
+   bool operator==(const material&) const noexcept = default;
 };
 
 }

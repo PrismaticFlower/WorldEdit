@@ -123,11 +123,10 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
 
    // TEMP Camera Setup
    {
-      auto allocation =
-         _dynamic_buffer_allocator.allocate(sizeof(sizeof(matrix4x4)));
+      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(sizeof(float4x4)));
 
       std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
-                  sizeof(matrix4x4));
+                  sizeof(float4x4));
 
       command_list->SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
    }
@@ -145,12 +144,12 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
       // TEMP object constants setup
       {
          auto allocation =
-            _dynamic_buffer_allocator.allocate(sizeof(sizeof(matrix4x4)));
+            _dynamic_buffer_allocator.allocate(sizeof(sizeof(float4x4)));
 
-         matrix4x4 world_transform = matrix4x4{quaternion{object.rotation}};
+         float4x4 world_transform = float4x4{quaternion{object.rotation}};
          world_transform[3] = {object.position, 1.0f};
 
-         std::memcpy(allocation.cpu_address, &world_transform, sizeof(matrix4x4));
+         std::memcpy(allocation.cpu_address, &world_transform, sizeof(float4x4));
 
          command_list->SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
       }
