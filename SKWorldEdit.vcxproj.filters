@@ -357,6 +357,15 @@
     <ClInclude Include="src\assets\msh\flat_model.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\asset_libraries.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\asset_loaders.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\object_instance_property.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -423,6 +432,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\msh\flat_model.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\asset_libraries.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\asset_loaders.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\object_class.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

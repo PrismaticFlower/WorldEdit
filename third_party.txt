@@ -1,5 +1,4 @@
-TODO: Add licenses here. No third party code is actually included in the repository (I aquire them all from vcpkg) so I can (unless I'm mistaken?) be lazy about 
-filling this out for now, it only becomes an issue once binaries start getting distributed.
+TODO: Add licenses here. 
 
 d3dx12 - MIT
 object_ptr - Boost Software License - https://github.com/anthonywilliams/object_ptr

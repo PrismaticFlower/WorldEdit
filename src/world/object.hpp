@@ -1,5 +1,6 @@
 #pragma once
 
+#include "object_instance_property.hpp"
 #include "types.hpp"
 
 #include <string>
@@ -8,13 +9,6 @@
 namespace sk::world {
 
 struct object {
-   struct instance_property {
-      std::string key;
-      std::string value;
-
-      bool operator==(const instance_property&) const noexcept = default;
-   };
-
    std::string name;
    int layer = 0;
 

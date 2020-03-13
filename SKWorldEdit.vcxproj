@@ -156,6 +156,8 @@
     <ClInclude Include="include\world\sector.hpp" />
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
+    <ClInclude Include="src\assets\asset_libraries.hpp" />
+    <ClInclude Include="src\assets\asset_loaders.hpp" />
     <ClInclude Include="src\assets\config\io.hpp" />
     <ClInclude Include="src\assets\config\key_node.hpp" />
     <ClInclude Include="src\assets\config\values.hpp" />
@@ -213,6 +215,7 @@
     <ClInclude Include="src\world\lighting_settings.hpp" />
     <ClInclude Include="src\world\object.hpp" />
     <ClInclude Include="src\world\object_class.hpp" />
+    <ClInclude Include="src\world\object_instance_property.hpp" />
     <ClInclude Include="src\world\path.hpp" />
     <ClInclude Include="src\world\planning.hpp" />
     <ClInclude Include="src\world\portal.hpp" />
@@ -223,6 +226,8 @@
     <ClInclude Include="src\world\world_io_load.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\assets\asset_libraries.cpp" />
+    <ClCompile Include="src\assets\asset_loaders.cpp" />
     <ClCompile Include="src\assets\config\io.cpp" />
     <ClCompile Include="src\assets\config\key_node.cpp" />
     <ClCompile Include="src\assets\msh\flat_model.cpp" />
@@ -244,6 +249,7 @@
     <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
+    <ClCompile Include="src\world\object_class.cpp" />
     <ClCompile Include="src\world\world_io_load.cpp" />
   </ItemGroup>
   <ItemGroup>

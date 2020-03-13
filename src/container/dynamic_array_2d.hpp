@@ -111,7 +111,7 @@ public:
    {
       assert(_y >= 0 and _y < _height);
 
-      return value_type{_data + (_y * _width), _width};
+      return value_type{_data + (_y * _width), static_cast<std::size_t>(_width)};
    }
 
    auto operator[](const std::ptrdiff_t offset) const noexcept -> value_type
