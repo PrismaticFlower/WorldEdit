@@ -1,4 +1,5 @@
 
+#include "assets/asset_libraries.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
 #include "input_state.hpp"
@@ -41,6 +42,7 @@ private:
    // TODO: Decide on project dir handling.
    std::filesystem::path _project_dir = L"D:/BF2_ModTools/data_SPT";
 
+   assets::libraries_manager _asset_libraries{_stream};
    std::unordered_map<std::string, world::object_class> _object_classes;
    world::world _world;
 

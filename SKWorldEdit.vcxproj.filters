@@ -168,9 +168,6 @@
     <ClInclude Include="src\graphics\model.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\bounding_box.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\container\dynamic_array_2d.hpp">
       <Filter>include</Filter>
     </ClInclude>

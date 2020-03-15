@@ -19,21 +19,17 @@ const std::unordered_set ignored_folders = {L"_BUILD"sv,    L"_LVL_PC"sv,
 
 }
 
-void libraries_manager::output_stream(jss::object_ptr<sk::output_stream> stream) noexcept
+libraries_manager::libraries_manager(output_stream& stream) noexcept
+   : odfs{stream}, models{stream}
 {
-   _output_stream =
-      stream ? stream.get() : &null_output_stream::get_static_instance();
-
-   odfs.output_stream(_output_stream);
-   models.output_stream(_output_stream);
 }
 
-void libraries_manager::project_directory(const std::filesystem::path& project_directory) noexcept
+void libraries_manager::source_directory(const std::filesystem::path& source_directory) noexcept
 {
 
    for (auto entry =
            std::filesystem::recursive_directory_iterator{
-              project_directory,
+              source_directory,
               std::filesystem::directory_options::follow_directory_symlink |
                  std::filesystem::directory_options::skip_permission_denied};
         entry != std::filesystem::end(entry); ++entry) {
@@ -53,7 +49,5 @@ void libraries_manager::project_directory(const std::filesystem::path& project_d
       }
    }
 }
-
-libraries_manager libraries;
 
 }

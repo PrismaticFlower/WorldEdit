@@ -18,8 +18,6 @@ public:
 
 class null_output_stream final : public output_stream {
 public:
-   static auto get_static_instance() noexcept -> null_output_stream&;
-
    void write(const std::string_view) noexcept override{};
 };
 

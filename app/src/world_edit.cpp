@@ -22,8 +22,7 @@ constexpr float camera_look_sensitivity = 0.18f;
 world_edit::world_edit(const HWND window) : _window{window}, _renderer{window}
 {
    std::filesystem::current_path(_project_dir); // TODO: Decide on project dir handling design.
-   assets::libraries.output_stream(&_stream);
-   assets::libraries.project_directory(_project_dir);
+   _asset_libraries.source_directory(_project_dir);
 
    try {
       _world = world::load_world("Worlds/SPT/World1/SPT.wld", _stream);
@@ -66,11 +65,12 @@ void world_edit::update_object_classes()
    for (const auto& object : _world.objects) {
       if (_object_classes.contains(object.class_name)) continue;
 
-      auto definition = assets::libraries.odfs.aquire_if(object.class_name);
+      auto definition = _asset_libraries.odfs.aquire_if(object.class_name);
 
       if (not definition) continue; // TODO: Default ODF handling.
 
-      _object_classes.emplace(object.class_name, *definition);
+      _object_classes.emplace(object.class_name,
+                              world::object_class{*definition, _asset_libraries});
    }
 }
 

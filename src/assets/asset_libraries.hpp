@@ -19,7 +19,6 @@
 
 #include <fmt/format.h>
 #include <gsl/gsl>
-#include <object_ptr.hpp>
 
 namespace sk::assets {
 
@@ -28,6 +27,8 @@ class libraries_manager;
 template<typename T>
 class library {
 public:
+   explicit library(output_stream& stream) : _output_stream{stream} {}
+
    void add_asset(std::filesystem::path asset_path) noexcept
    {
       std::lock_guard lock{_mutex};
@@ -74,8 +75,6 @@ public:
    }
 
 private:
-   friend libraries_manager;
-
    auto create_asset_if_known(const std::string_view name) noexcept
       -> std::shared_ptr<T>
    {
@@ -96,13 +95,13 @@ private:
 
          _cached_assets.insert_or_assign(name_str, asset);
 
-         _output_stream->write(
+         _output_stream.write(
             fmt::format("Loaded asset '{}'\n"sv, asset_path.string()));
 
          return asset;
       }
       catch (std::exception& e) {
-         _output_stream->write(
+         _output_stream.write(
             fmt::format("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
                         asset_path.string(), utility::string::indent(2, e.what())));
 
@@ -110,8 +109,7 @@ private:
       }
    }
 
-   gsl::not_null<sk::output_stream*> _output_stream =
-      &null_output_stream::get_static_instance();
+   sk::output_stream& _output_stream;
 
    std::shared_mutex _mutex;
 
@@ -121,18 +119,14 @@ private:
 
 class libraries_manager {
 public:
-   void output_stream(jss::object_ptr<output_stream> stream) noexcept;
+   explicit libraries_manager(output_stream& stream) noexcept;
 
-   void project_directory(const std::filesystem::path& path) noexcept;
+   void source_directory(const std::filesystem::path& path) noexcept;
 
    library<odf::definition> odfs;
    library<msh::flat_model> models;
 
 private:
-   gsl::not_null<sk::output_stream*> _output_stream =
-      &null_output_stream::get_static_instance();
 };
-
-extern libraries_manager libraries;
 
 }

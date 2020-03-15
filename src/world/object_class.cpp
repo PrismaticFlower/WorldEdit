@@ -6,7 +6,8 @@ using namespace std::literals;
 
 namespace sk::world {
 
-object_class::object_class(const assets::odf::definition& definition)
+object_class::object_class(const assets::odf::definition& definition,
+                           assets::libraries_manager& assets_libraries)
 {
    if (definition.class_properties.contains("GeometryName"sv)) {
       model_name = definition.class_properties.at("GeometryName"sv);
@@ -19,7 +20,7 @@ object_class::object_class(const assets::odf::definition& definition)
                           ".msh"sv.size());
    }
 
-   model = assets::libraries.models.aquire_if(model_name);
+   model = assets_libraries.models.aquire_if(model_name);
 
    instance_properties.reserve(definition.instance_properties.size());
 

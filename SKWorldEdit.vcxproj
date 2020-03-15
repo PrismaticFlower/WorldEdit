@@ -173,7 +173,6 @@
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
     <ClInclude Include="src\exceptions.hpp" />
-    <ClInclude Include="src\graphics\bounding_box.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\gpu\buffer.hpp" />
     <ClInclude Include="src\graphics\gpu\command_allocator_pool.hpp" />
