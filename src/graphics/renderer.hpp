@@ -1,6 +1,7 @@
 #pragma once
 
 #include "camera.hpp"
+#include "gpu/buffer.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "world/world.hpp"

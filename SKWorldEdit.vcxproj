@@ -185,7 +185,6 @@
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\model.hpp" />
     <ClInclude Include="src\graphics\gpu\pipeline_library.hpp" />
-    <ClInclude Include="src\graphics\gpu\resource_owner_base.hpp" />
     <ClInclude Include="src\graphics\gpu\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\gpu\shader_library.hpp" />
     <ClInclude Include="src\graphics\gpu\swap_chain.hpp" />
@@ -238,7 +237,6 @@
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />
-    <ClCompile Include="src\graphics\gpu\resource_owner_base.cpp" />
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />

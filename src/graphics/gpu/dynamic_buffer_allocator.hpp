@@ -21,18 +21,19 @@ public:
    explicit dynamic_buffer_allocator(const UINT max_size, device& device)
       : _buffer_size{max_size}
    {
-      for (auto& buffer : _buffers) {
-         buffer.underlying_buffer =
-            device.create_buffer(max_size, D3D12_HEAP_TYPE_UPLOAD,
-                                 D3D12_RESOURCE_STATE_GENERIC_READ);
+      for (auto& backing_buffer : _buffers) {
+         backing_buffer.underlying_buffer =
+            buffer{device, max_size, D3D12_HEAP_TYPE_UPLOAD,
+                   D3D12_RESOURCE_STATE_GENERIC_READ};
 
          const D3D12_RANGE read_range{};
          void* data = nullptr;
-         throw_if_failed(buffer.underlying_buffer.resource->Map(0, &read_range, &data));
+         throw_if_failed(
+            backing_buffer.underlying_buffer.resource->Map(0, &read_range, &data));
 
-         buffer.cpu_address = static_cast<std::byte*>(data);
-         buffer.gpu_address =
-            buffer.underlying_buffer.resource->GetGPUVirtualAddress();
+         backing_buffer.cpu_address = static_cast<std::byte*>(data);
+         backing_buffer.gpu_address =
+            backing_buffer.underlying_buffer.resource->GetGPUVirtualAddress();
       }
 
       reset(device.frame_index);

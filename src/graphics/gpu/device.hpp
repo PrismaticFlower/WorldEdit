@@ -1,10 +1,10 @@
 #pragma once
 
-#include "buffer.hpp"
 #include "command_allocator_pool.hpp"
 #include "command_list_pool.hpp"
 #include "command_list_recorder.hpp"
 #include "common.hpp"
+#include "concepts.hpp"
 #include "descriptor_heap.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
@@ -45,10 +45,13 @@ struct device {
    auto create_command_allocators(const D3D12_COMMAND_LIST_TYPE type)
       -> command_allocators;
 
-   auto create_buffer(const UINT size, const D3D12_HEAP_TYPE heap_type,
-                      const D3D12_RESOURCE_STATES initial_resource_state) -> buffer;
+   template<resource_owner Owner>
+   void deferred_destroy_resource(Owner& resource_owner)
+   {
+      std::lock_guard lock{_deferred_destruction_mutex};
 
-   void deferred_destroy_resource(ID3D12Resource& resource);
+      _deferred_resource_destructions.emplace_back(resource_owner.resource);
+   }
 
    void process_deferred_resource_destructions();
 

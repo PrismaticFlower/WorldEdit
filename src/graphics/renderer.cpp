@@ -30,18 +30,18 @@ constexpr std::array<std::array<uint16, 3>, 12> box_indices{{{0, 1, 2},
 renderer::renderer(const HWND window)
    : _window{window},
      _device{window},
-     _box_vertex_buffer{_device.create_buffer(sizeof(box_vertices), D3D12_HEAP_TYPE_DEFAULT,
-                                              D3D12_RESOURCE_STATE_COPY_DEST)},
-     _box_index_buffer{_device.create_buffer(sizeof(box_indices), D3D12_HEAP_TYPE_DEFAULT,
-                                             D3D12_RESOURCE_STATE_COPY_DEST)}
+     _box_vertex_buffer{_device, sizeof(box_vertices), D3D12_HEAP_TYPE_DEFAULT,
+                        D3D12_RESOURCE_STATE_COPY_DEST},
+     _box_index_buffer{_device, sizeof(box_indices), D3D12_HEAP_TYPE_DEFAULT,
+                       D3D12_RESOURCE_STATE_COPY_DEST}
 {
-   auto cpu_box_vertex_buffer =
-      _device.create_buffer(sizeof(box_vertices), D3D12_HEAP_TYPE_UPLOAD,
-                            D3D12_RESOURCE_STATE_GENERIC_READ);
+   gpu::buffer cpu_box_vertex_buffer{_device, sizeof(box_vertices),
+                                     D3D12_HEAP_TYPE_UPLOAD,
+                                     D3D12_RESOURCE_STATE_GENERIC_READ};
 
-   auto cpu_box_index_buffer =
-      _device.create_buffer(sizeof(box_indices), D3D12_HEAP_TYPE_UPLOAD,
-                            D3D12_RESOURCE_STATE_GENERIC_READ);
+   gpu::buffer cpu_box_index_buffer = {_device, sizeof(box_indices),
+                                       D3D12_HEAP_TYPE_UPLOAD,
+                                       D3D12_RESOURCE_STATE_GENERIC_READ};
 
    const D3D12_RANGE read_range{};
    void* data = nullptr;

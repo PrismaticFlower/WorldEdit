@@ -312,9 +312,6 @@
     <ClInclude Include="src\graphics\gpu\pipeline_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\resource_owner_base.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\gpu\root_signature_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -396,9 +393,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\resource_owner_base.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp">

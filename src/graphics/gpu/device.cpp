@@ -146,41 +146,6 @@ auto device::create_command_allocators(const D3D12_COMMAND_LIST_TYPE type) -> co
    return allocators;
 }
 
-auto device::create_buffer(const UINT size, const D3D12_HEAP_TYPE heap_type,
-                           const D3D12_RESOURCE_STATES initial_resource_state) -> buffer
-{
-
-   const D3D12_HEAP_PROPERTIES heap_properties{.Type = heap_type,
-                                               .CPUPageProperty =
-                                                  D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-                                               .MemoryPoolPreference =
-                                                  D3D12_MEMORY_POOL_UNKNOWN};
-
-   const auto buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(size);
-
-   utility::com_ptr<ID3D12Resource> buffer_resource;
-
-   throw_if_failed(device_d3d->CreateCommittedResource(
-      &heap_properties, D3D12_HEAP_FLAG_NONE, &buffer_desc, initial_resource_state,
-      nullptr, IID_PPV_ARGS(buffer_resource.clear_and_assign())));
-
-   buffer buffer;
-
-   buffer.parent_device = this;
-   buffer.resource = buffer_resource.release();
-   buffer.resource_state = initial_resource_state;
-   buffer.size = size;
-
-   return buffer;
-}
-
-void device::deferred_destroy_resource(ID3D12Resource& resource)
-{
-   std::lock_guard lock{_deferred_destruction_mutex};
-
-   _deferred_resource_destructions.emplace_back(&resource);
-}
-
 void device::process_deferred_resource_destructions()
 {
    std::lock_guard lock{_deferred_destruction_mutex};
