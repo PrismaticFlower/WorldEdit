@@ -105,6 +105,8 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
    command_list->ClearRenderTargetView(back_buffer_rtv,
                                        std::array{0.0f, 0.0f, 0.0f, 1.0f}.data(),
                                        0, nullptr);
+   command_list->ClearDepthStencilView(_depth_stencil_texture.depth_stencil_view,
+                                       D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0, 0, nullptr);
 
    const D3D12_VIEWPORT viewport{.Width =
                                     static_cast<float>(_device.swap_chain.width()),
@@ -116,7 +118,8 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
                                    static_cast<LONG>(_device.swap_chain.height())};
    command_list->RSSetViewports(1, &viewport);
    command_list->RSSetScissorRects(1, &sissor_rect);
-   command_list->OMSetRenderTargets(1, &back_buffer_rtv, true, nullptr);
+   command_list->OMSetRenderTargets(1, &back_buffer_rtv, true,
+                                    &_depth_stencil_texture.depth_stencil_view);
 
    command_list->SetGraphicsRootSignature(_device.root_signatures.basic_test.get());
    command_list->SetPipelineState(_device.pipelines.basic_test.get());
@@ -177,10 +180,19 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
    _device.process_deferred_resource_destructions();
 }
 
-void renderer::window_resized(int width, int height)
+void renderer::window_resized(uint16 width, uint16 height)
 {
    _device.wait_for_idle();
    _device.swap_chain.resize(width, height);
+   _depth_stencil_texture =
+      {_device,
+       {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+        .width = _device.swap_chain.width(),
+        .height = _device.swap_chain.height(),
+        .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                  .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
+       D3D12_HEAP_TYPE_DEFAULT,
+       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 }
 
 }

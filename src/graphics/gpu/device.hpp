@@ -56,6 +56,7 @@ struct device {
    void process_deferred_resource_destructions();
 
    constexpr static int rtv_descriptor_heap_size = 128;
+   constexpr static int dsv_descriptor_heap_size = 32;
 
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
@@ -70,6 +71,8 @@ struct device {
 
    descriptor_heap_cpu rtv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
                                            rtv_descriptor_heap_size, *device_d3d};
+   descriptor_heap_cpu dsv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+                                           dsv_descriptor_heap_size, *device_d3d};
    command_allocator_pool direct_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
                                                         *device_d3d};
    command_list_pool direct_command_list_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,

@@ -53,8 +53,8 @@ swap_chain::swap_chain(const HWND window, IDXGIFactory7& factory,
    DXGI_SWAP_CHAIN_DESC1 desc{};
    dxgi_swap_chain->GetDesc1(&desc);
 
-   _width = desc.Width;
-   _height = desc.Height;
+   _width = static_cast<uint16>(desc.Width);
+   _height = static_cast<uint16>(desc.Height);
 
    for (int i = 0; i < frame_count; ++i) {
       throw_if_failed(
@@ -82,7 +82,7 @@ void swap_chain::present()
    throw_if_failed(dxgi_swap_chain->Present(1, 0));
 }
 
-void swap_chain::resize(const UINT width, const UINT height)
+void swap_chain::resize(const uint16 width, const uint16 height)
 {
    assert(dxgi_swap_chain);
 

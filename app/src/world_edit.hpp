@@ -21,7 +21,7 @@ public:
 
    bool update();
 
-   void resized(int width, int height);
+   void resized(uint16 width, uint16 height);
 
    void focused();
 

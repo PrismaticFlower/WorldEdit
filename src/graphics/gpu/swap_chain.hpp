@@ -1,6 +1,7 @@
 #pragma once
 
 #include "descriptor_heap.hpp"
+#include "types.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <array>
@@ -22,17 +23,17 @@ struct swap_chain {
 
    void present();
 
-   void resize(const UINT width, const UINT height);
+   void resize(const uint16 width, const uint16 height);
 
    auto current_back_buffer()
       -> std::pair<ID3D12Resource&, D3D12_CPU_DESCRIPTOR_HANDLE>;
 
-   auto width() -> UINT
+   auto width() -> uint16
    {
       return _width;
    }
 
-   auto height() -> UINT
+   auto height() -> uint16
    {
       return _height;
    }
@@ -46,8 +47,8 @@ struct swap_chain {
 private:
    ID3D12Device* _device;
    HANDLE _waitable_ready_handle = INVALID_HANDLE_VALUE;
-   UINT _width = 0;
-   UINT _height = 0;
+   uint16 _width = 0;
+   uint16 _height = 0;
 };
 
 }

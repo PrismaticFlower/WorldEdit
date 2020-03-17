@@ -80,6 +80,16 @@ constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_disabled =
     .FrontFace = stencilop_disabled,
     .BackFace = stencilop_disabled};
 
+constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_enabled =
+   {.DepthEnable = true,
+    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
+    .DepthFunc = D3D12_COMPARISON_FUNC_GREATER,
+    .StencilEnable = false,
+    .StencilReadMask = 0,
+    .StencilWriteMask = 0,
+    .FrontFace = stencilop_disabled,
+    .BackFace = stencilop_disabled};
+
 constexpr std::array mesh_input_layout_elements = {
    D3D12_INPUT_ELEMENT_DESC{.SemanticName = "POSITION",
                             .SemanticIndex = 0,
@@ -105,13 +115,13 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_disabled,
+               .DepthStencilState = depth_stencil_enabled,
                .InputLayout = mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
                .NumRenderTargets = 1,
                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-               .DSVFormat = DXGI_FORMAT_UNKNOWN,
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 }
 

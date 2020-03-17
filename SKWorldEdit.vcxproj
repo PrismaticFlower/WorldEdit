@@ -180,9 +180,11 @@
     <ClInclude Include="src\graphics\gpu\command_list_recorder.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
     <ClInclude Include="src\graphics\gpu\concepts.hpp" />
+    <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp" />
     <ClInclude Include="src\graphics\gpu\device.hpp" />
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
+    <ClInclude Include="src\graphics\gpu\texture.hpp" />
     <ClInclude Include="src\graphics\model.hpp" />
     <ClInclude Include="src\graphics\gpu\pipeline_library.hpp" />
     <ClInclude Include="src\graphics\gpu\root_signature_library.hpp" />
