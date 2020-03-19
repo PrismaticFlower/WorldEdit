@@ -1,9 +1,7 @@
 #pragma once
 
 #include "async_copy_manager.hpp"
-#include "command_allocator_pool.hpp"
 #include "command_list_pool.hpp"
-#include "command_list_recorder.hpp"
 #include "common.hpp"
 #include "concepts.hpp"
 #include "descriptor_heap.hpp"
@@ -74,8 +72,6 @@ struct device {
                                            rtv_descriptor_heap_size, *device_d3d};
    descriptor_heap_cpu dsv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
                                            dsv_descriptor_heap_size, *device_d3d};
-   command_allocator_pool direct_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                        *device_d3d};
    command_list_pool direct_command_list_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
                                               *device_d3d};
 
@@ -85,32 +81,6 @@ struct device {
 
    root_signature_library root_signatures{*device_d3d};
    pipeline_library pipelines{*device_d3d, root_signatures};
-
-   utility::com_ptr<ID3D12Resource> triangle;
-
-   auto aquire_command_allocator(const D3D12_COMMAND_LIST_TYPE type)
-   {
-      jss::object_ptr<command_allocator_pool> pool = nullptr;
-      UINT64 queue_fence_value = 0;
-      UINT64 queue_completed_fence_value = 0;
-
-      switch (type) {
-      case D3D12_COMMAND_LIST_TYPE_DIRECT:
-         pool = &direct_command_allocator_pool;
-         queue_fence_value = fence_value;
-         queue_completed_fence_value = completed_fence_value;
-         break;
-      default:
-         std::terminate();
-      }
-
-      const auto free = [pool, queue_fence_value](ID3D12CommandAllocator* allocator) {
-         pool->free(allocator, queue_fence_value);
-      };
-
-      return std::unique_ptr<ID3D12CommandAllocator, decltype(free)>{pool->aquire(queue_completed_fence_value),
-                                                                     free};
-   }
 
    auto aquire_command_list(const D3D12_COMMAND_LIST_TYPE type)
    {

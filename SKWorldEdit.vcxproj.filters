@@ -297,13 +297,7 @@
     <ClInclude Include="src\graphics\gpu\concepts.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\command_list_recorder.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\gpu\command_list_pool.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\command_allocator_pool.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp">
