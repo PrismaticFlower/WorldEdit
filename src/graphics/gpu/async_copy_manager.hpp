@@ -3,7 +3,6 @@
 #include "hresult_error.hpp"
 #include "utility/com_ptr.hpp"
 
-#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <mutex>
@@ -123,12 +122,8 @@ public:
          }
       }
 
-      _used_command_allocators.erase(std::remove_if(_used_command_allocators.begin(),
-                                                    _used_command_allocators.end(),
-                                                    [](const auto& used) {
-                                                       return used.second == nullptr;
-                                                    }),
-                                     _used_command_allocators.end());
+      std::erase_if(_used_command_allocators,
+                    [](const auto& used) { return used.second == nullptr; });
    }
 
 private:

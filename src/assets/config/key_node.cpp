@@ -68,11 +68,9 @@ auto node::erase(const std::string_view child_key) noexcept -> std::size_t
 {
    const auto begin_size = size();
 
-   erase(std::remove_if(begin(), end(),
-                        [child_key](const key_node& child) {
-                           return child.key == child_key;
-                        }),
-         end());
+   std::erase_if(*this, [child_key](const key_node& child) {
+      return child.key == child_key;
+   });
 
    return begin_size - size();
 }

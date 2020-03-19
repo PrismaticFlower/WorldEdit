@@ -2,8 +2,6 @@
 #include "device.hpp"
 #include "hresult_error.hpp"
 
-#include <algorithm>
-
 #include <d3dx12.h>
 
 namespace sk::graphics::gpu {
@@ -155,13 +153,10 @@ void device::process_deferred_resource_destructions()
 {
    std::scoped_lock lock{_deferred_destruction_mutex};
 
-   _deferred_resource_destructions
-      .erase(std::remove_if(_deferred_resource_destructions.begin(),
-                            _deferred_resource_destructions.end(),
-                            [=](const deferred_resource_destruction& resource) {
-                               return resource.last_used_frame <= completed_fence_value;
-                            }),
-             _deferred_resource_destructions.end());
+   std::erase_if(_deferred_resource_destructions,
+                 [=](const deferred_resource_destruction& resource) {
+                    return resource.last_used_frame <= completed_fence_value;
+                 });
 }
 
 }
