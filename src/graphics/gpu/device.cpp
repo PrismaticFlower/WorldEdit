@@ -117,6 +117,8 @@ void device::end_frame()
    frame_index = fence_value % render_latency;
    completed_fence_value = fence->GetCompletedValue();
 
+   process_deferred_resource_destructions();
+
    if (completed_fence_value < wait_value) {
       throw_if_failed(fence->SetEventOnCompletion(wait_value, fence_event.get()));
       WaitForSingleObject(fence_event.get(), INFINITE);
@@ -139,17 +141,15 @@ auto device::create_command_allocators(const D3D12_COMMAND_LIST_TYPE type) -> co
 
 void device::process_deferred_resource_destructions()
 {
-   std::lock_guard lock{_deferred_destruction_mutex};
+   std::scoped_lock lock{_deferred_destruction_mutex};
 
-   if (_deferred_resource_destructions.empty()) return;
-
-   // Simply waiting for the GPU to go idle isn't very sophisticated but resource destruction
-   // should be rare enough that it doesn't matter. If the stalls introduced are actually proven
-   // to be a problem then this can be extended to work
-   // asynchronously off fence values. But for now this will do.
-   wait_for_idle();
-
-   _deferred_resource_destructions.clear();
+   _deferred_resource_destructions
+      .erase(std::remove_if(_deferred_resource_destructions.begin(),
+                            _deferred_resource_destructions.end(),
+                            [=](const deferred_resource_destruction& resource) {
+                               return resource.last_used_frame <= completed_fence_value;
+                            }),
+             _deferred_resource_destructions.end());
 }
 
 }

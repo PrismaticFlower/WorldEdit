@@ -166,10 +166,6 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
 
    _device.command_queue->ExecuteCommandLists(1, &exec_command_list);
    _device.end_frame();
-
-   swap_chain.present();
-
-   _device.process_deferred_resource_destructions();
 }
 
 void renderer::window_resized(uint16 width, uint16 height)

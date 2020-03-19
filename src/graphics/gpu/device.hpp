@@ -49,10 +49,11 @@ struct device {
    {
       std::lock_guard lock{_deferred_destruction_mutex};
 
-      _deferred_resource_destructions.emplace_back(resource_owner.resource);
+      _deferred_resource_destructions.push_back(
+         {// TODO (maybe, depending on how memory residency management shapes up): frame usage tracking for resources
+          .last_used_frame = fence_value,
+          .resource = utility::com_ptr{resource_owner.resource}});
    }
-
-   void process_deferred_resource_destructions();
 
    constexpr static int rtv_descriptor_heap_size = 128;
    constexpr static int dsv_descriptor_heap_size = 32;
@@ -82,7 +83,7 @@ struct device {
    root_signature_library root_signatures{*device_d3d};
    pipeline_library pipelines{*device_d3d, root_signatures};
 
-   auto aquire_command_list(const D3D12_COMMAND_LIST_TYPE type)
+   auto aquire_command_list(const D3D12_COMMAND_LIST_TYPE type) // TODO: Remove command list pool.
    {
       jss::object_ptr<command_list_pool> pool = nullptr;
 
@@ -105,8 +106,15 @@ struct device {
    }
 
 private:
+   void process_deferred_resource_destructions();
+
+   struct deferred_resource_destruction {
+      UINT64 last_used_frame = 0;
+      utility::com_ptr<ID3D12Resource> resource;
+   };
+
    std::mutex _deferred_destruction_mutex;
-   std::vector<utility::com_ptr<ID3D12Resource>> _deferred_resource_destructions;
+   std::vector<deferred_resource_destruction> _deferred_resource_destructions;
 };
 
 }
