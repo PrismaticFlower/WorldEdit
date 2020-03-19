@@ -60,26 +60,18 @@ renderer::renderer(const HWND window)
    cpu_box_index_buffer.resource->Unmap(0, &write_range);
 
    {
-      auto command_allocator =
-         _device.aquire_command_allocator(D3D12_COMMAND_LIST_TYPE_COPY);
-      auto command_list = _device.aquire_command_list(D3D12_COMMAND_LIST_TYPE_COPY);
+      auto& copy_manager = _device.copy_manager;
+      auto copy_context = copy_manager.aquire_context();
+      auto& command_list = copy_context.command_list;
 
-      throw_if_failed(command_list->Reset(command_allocator.get(), nullptr));
+      command_list.CopyResource(_box_vertex_buffer.resource,
+                                cpu_box_vertex_buffer.resource);
+      command_list.CopyResource(_box_index_buffer.resource,
+                                cpu_box_index_buffer.resource);
 
-      command_list->CopyResource(_box_vertex_buffer.resource,
-                                 cpu_box_vertex_buffer.resource);
-      command_list->CopyResource(_box_index_buffer.resource,
-                                 cpu_box_index_buffer.resource);
+      const UINT64 fence_value = copy_manager.close_and_execute(copy_context);
 
-      throw_if_failed(command_list->Close());
-
-      ID3D12CommandList* exec_command_list = command_list.get();
-
-      const UINT64 fence_value = ++_device.copy_fence_value;
-
-      _device.copy_command_queue->ExecuteCommandLists(1, &exec_command_list);
-      _device.copy_command_queue->Signal(_device.copy_fence.get(), fence_value);
-      _device.command_queue->Wait(_device.copy_fence.get(), fence_value);
+      _device.command_queue->Wait(&copy_manager.fence(), fence_value);
    }
 }
 

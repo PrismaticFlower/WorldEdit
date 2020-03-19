@@ -1,5 +1,6 @@
 #pragma once
 
+#include "async_copy_manager.hpp"
 #include "command_allocator_pool.hpp"
 #include "command_list_pool.hpp"
 #include "command_list_recorder.hpp"
@@ -77,6 +78,8 @@ struct device {
                                                         *device_d3d};
    command_list_pool direct_command_list_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
                                               *device_d3d};
+
+   async_copy_manager copy_manager{*device_d3d};
 
    utility::com_ptr<ID3D12Fence> copy_fence;
    UINT64 copy_fence_value = 1;

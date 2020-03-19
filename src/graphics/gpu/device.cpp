@@ -119,6 +119,8 @@ void device::wait_for_idle()
 
 void device::end_frame()
 {
+   copy_manager.update_completed();
+
    const UINT64 wait_value = previous_frame_fence_value;
    throw_if_failed(command_queue->Signal(fence.get(), wait_value));
    previous_frame_fence_value = fence_value++;

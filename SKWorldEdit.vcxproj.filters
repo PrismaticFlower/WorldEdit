@@ -366,6 +366,9 @@
     <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

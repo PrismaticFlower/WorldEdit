@@ -180,6 +180,7 @@
     <ClInclude Include="src\graphics\gpu\command_list_recorder.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
     <ClInclude Include="src\graphics\gpu\concepts.hpp" />
+    <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp" />
     <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp" />
     <ClInclude Include="src\graphics\gpu\device.hpp" />
