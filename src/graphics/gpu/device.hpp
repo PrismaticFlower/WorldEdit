@@ -81,14 +81,6 @@ struct device {
 
    async_copy_manager copy_manager{*device_d3d};
 
-   utility::com_ptr<ID3D12Fence> copy_fence;
-   UINT64 copy_fence_value = 1;
-   UINT64 copy_completed_fence_value = 0;
-   utility::com_ptr<ID3D12CommandQueue> copy_command_queue;
-   command_allocator_pool copy_command_allocator_pool{D3D12_COMMAND_LIST_TYPE_COPY,
-                                                      *device_d3d};
-   command_list_pool copy_command_list_pool{D3D12_COMMAND_LIST_TYPE_COPY, *device_d3d};
-
    swap_chain swap_chain;
 
    root_signature_library root_signatures{*device_d3d};
@@ -107,11 +99,6 @@ struct device {
          pool = &direct_command_allocator_pool;
          queue_fence_value = fence_value;
          queue_completed_fence_value = completed_fence_value;
-         break;
-      case D3D12_COMMAND_LIST_TYPE_COPY:
-         pool = &copy_command_allocator_pool;
-         queue_fence_value = copy_fence_value;
-         queue_completed_fence_value = copy_completed_fence_value;
          break;
       default:
          std::terminate();
@@ -134,9 +121,6 @@ struct device {
       switch (type) {
       case D3D12_COMMAND_LIST_TYPE_DIRECT:
          pool = &direct_command_list_pool;
-         break;
-      case D3D12_COMMAND_LIST_TYPE_COPY:
-         pool = &copy_command_list_pool;
          break;
       default:
          std::terminate();

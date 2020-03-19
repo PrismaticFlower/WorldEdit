@@ -79,16 +79,6 @@ device::device(const HWND window)
       device_d3d->CreateCommandQueue(&queue_desc,
                                      IID_PPV_ARGS(command_queue.clear_and_assign())));
 
-   throw_if_failed(
-      device_d3d->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-                              IID_PPV_ARGS(copy_fence.clear_and_assign())));
-
-   queue_desc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-
-   throw_if_failed(
-      device_d3d->CreateCommandQueue(&queue_desc,
-                                     IID_PPV_ARGS(copy_command_queue.clear_and_assign())));
-
    swap_chain = {window, *factory, *device_d3d, *command_queue, rtv_descriptor_heap};
 
    if (utility::com_ptr<ID3D12InfoQueue> info_queue;
@@ -126,7 +116,6 @@ void device::end_frame()
    previous_frame_fence_value = fence_value++;
    frame_index = fence_value % render_latency;
    completed_fence_value = fence->GetCompletedValue();
-   copy_completed_fence_value = copy_fence->GetCompletedValue();
 
    if (completed_fence_value < wait_value) {
       throw_if_failed(fence->SetEventOnCompletion(wait_value, fence_event.get()));
