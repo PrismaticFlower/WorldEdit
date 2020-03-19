@@ -147,7 +147,8 @@ public:
    template<chunk_id type_id>
    auto read_child_strict() -> reader_strict<type_id>
    {
-      return {read_child_strict(type_id), reader_strict<type_id>::unchecked_tag{}};
+      return {read_child_strict(type_id),
+              typename reader_strict<type_id>::unchecked_tag{}};
    }
 
    void consume(const std::size_t amount, const bool unaligned = false)
