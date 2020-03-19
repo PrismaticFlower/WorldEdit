@@ -25,8 +25,10 @@ private:
    const HWND _window;
 
    gpu::device _device{_window};
-   gpu::command_allocators _command_allocators =
+   gpu::command_allocators _world_command_allocators =
       _device.create_command_allocators(D3D12_COMMAND_LIST_TYPE_DIRECT);
+   utility::com_ptr<ID3D12GraphicsCommandList5> _world_command_list =
+      _device.create_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
    gpu::dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
 

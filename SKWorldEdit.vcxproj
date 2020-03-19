@@ -175,7 +175,6 @@
     <ClInclude Include="src\exceptions.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\gpu\buffer.hpp" />
-    <ClInclude Include="src\graphics\gpu\command_list_pool.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
     <ClInclude Include="src\graphics\gpu\concepts.hpp" />
     <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp" />

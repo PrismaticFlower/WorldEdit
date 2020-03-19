@@ -80,25 +80,25 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
 
-   auto& command_allocator = *_command_allocators[_device.frame_index];
-   auto command_list = _device.aquire_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT);
+   auto& command_allocator = *_world_command_allocators[_device.frame_index];
+   auto& command_list = *_world_command_list;
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
 
    throw_if_failed(command_allocator.Reset());
-   throw_if_failed(command_list->Reset(&command_allocator, nullptr));
+   throw_if_failed(command_list.Reset(&command_allocator, nullptr));
    _dynamic_buffer_allocator.reset(_device.frame_index);
 
    const auto rt_barrier =
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
                                            D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-   command_list->ResourceBarrier(1, &rt_barrier);
+   command_list.ResourceBarrier(1, &rt_barrier);
 
-   command_list->ClearRenderTargetView(back_buffer_rtv,
-                                       std::array{0.0f, 0.0f, 0.0f, 1.0f}.data(),
-                                       0, nullptr);
-   command_list->ClearDepthStencilView(_depth_stencil_texture.depth_stencil_view,
-                                       D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0, 0, nullptr);
+   command_list.ClearRenderTargetView(back_buffer_rtv,
+                                      std::array{0.0f, 0.0f, 0.0f, 1.0f}.data(),
+                                      0, nullptr);
+   command_list.ClearDepthStencilView(_depth_stencil_texture.depth_stencil_view,
+                                      D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0, 0, nullptr);
 
    const D3D12_VIEWPORT viewport{.Width =
                                     static_cast<float>(_device.swap_chain.width()),
@@ -108,13 +108,13 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
    const D3D12_RECT sissor_rect{.right = static_cast<LONG>(_device.swap_chain.width()),
                                 .bottom =
                                    static_cast<LONG>(_device.swap_chain.height())};
-   command_list->RSSetViewports(1, &viewport);
-   command_list->RSSetScissorRects(1, &sissor_rect);
-   command_list->OMSetRenderTargets(1, &back_buffer_rtv, true,
-                                    &_depth_stencil_texture.depth_stencil_view);
+   command_list.RSSetViewports(1, &viewport);
+   command_list.RSSetScissorRects(1, &sissor_rect);
+   command_list.OMSetRenderTargets(1, &back_buffer_rtv, true,
+                                   &_depth_stencil_texture.depth_stencil_view);
 
-   command_list->SetGraphicsRootSignature(_device.root_signatures.basic_test.get());
-   command_list->SetPipelineState(_device.pipelines.basic_test.get());
+   command_list.SetGraphicsRootSignature(_device.root_signatures.basic_test.get());
+   command_list.SetPipelineState(_device.pipelines.basic_test.get());
 
    // TEMP Camera Setup
    {
@@ -123,16 +123,16 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
       std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
                   sizeof(float4x4));
 
-      command_list->SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
+      command_list.SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
    }
 
    D3D12_VERTEX_BUFFER_VIEW vbv{_box_vertex_buffer.resource->GetGPUVirtualAddress(),
                                 _box_vertex_buffer.size, 12};
    D3D12_INDEX_BUFFER_VIEW ibv{_box_index_buffer.resource->GetGPUVirtualAddress(),
                                _box_index_buffer.size, DXGI_FORMAT_R16_UINT};
-   command_list->IASetVertexBuffers(0, 1, &vbv);
-   command_list->IASetIndexBuffer(&ibv);
-   command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+   command_list.IASetVertexBuffers(0, 1, &vbv);
+   command_list.IASetIndexBuffer(&ibv);
+   command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // TEMP object placeholder rendering
    for (auto& object : world.objects) {
@@ -146,11 +146,11 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
 
          std::memcpy(allocation.cpu_address, &world_transform, sizeof(float4x4));
 
-         command_list->SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
       }
 
-      command_list->DrawIndexedInstanced(static_cast<UINT>(box_indices.size() * 3),
-                                         1, 0, 0, 0);
+      command_list.DrawIndexedInstanced(static_cast<UINT>(box_indices.size() * 3),
+                                        1, 0, 0, 0);
    }
 
    const auto present_barrier =
@@ -158,13 +158,16 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
                                            D3D12_RESOURCE_STATE_PRESENT);
 
-   command_list->ResourceBarrier(1, &present_barrier);
+   command_list.ResourceBarrier(1, &present_barrier);
 
-   throw_if_failed(command_list->Close());
+   throw_if_failed(command_list.Close());
 
-   ID3D12CommandList* exec_command_list = command_list.get();
+   ID3D12CommandList* exec_command_list = &command_list;
 
    _device.command_queue->ExecuteCommandLists(1, &exec_command_list);
+
+   swap_chain.present();
+
    _device.end_frame();
 }
 

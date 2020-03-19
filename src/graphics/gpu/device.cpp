@@ -139,6 +139,18 @@ auto device::create_command_allocators(const D3D12_COMMAND_LIST_TYPE type) -> co
    return allocators;
 }
 
+auto device::create_command_list(const D3D12_COMMAND_LIST_TYPE type)
+   -> utility::com_ptr<ID3D12GraphicsCommandList5>
+{
+   utility::com_ptr<ID3D12GraphicsCommandList5> command_list;
+
+   throw_if_failed(
+      device_d3d->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE,
+                                     IID_PPV_ARGS(command_list.clear_and_assign())));
+
+   return command_list;
+}
+
 void device::process_deferred_resource_destructions()
 {
    std::scoped_lock lock{_deferred_destruction_mutex};

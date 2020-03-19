@@ -1,7 +1,6 @@
 #pragma once
 
 #include "async_copy_manager.hpp"
-#include "command_list_pool.hpp"
 #include "common.hpp"
 #include "concepts.hpp"
 #include "descriptor_heap.hpp"
@@ -44,6 +43,9 @@ struct device {
    auto create_command_allocators(const D3D12_COMMAND_LIST_TYPE type)
       -> command_allocators;
 
+   auto create_command_list(const D3D12_COMMAND_LIST_TYPE type)
+      -> utility::com_ptr<ID3D12GraphicsCommandList5>;
+
    template<resource_owner Owner>
    void deferred_destroy_resource(Owner& resource_owner)
    {
@@ -73,8 +75,6 @@ struct device {
                                            rtv_descriptor_heap_size, *device_d3d};
    descriptor_heap_cpu dsv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
                                            dsv_descriptor_heap_size, *device_d3d};
-   command_list_pool direct_command_list_pool{D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                              *device_d3d};
 
    async_copy_manager copy_manager{*device_d3d};
 
@@ -82,28 +82,6 @@ struct device {
 
    root_signature_library root_signatures{*device_d3d};
    pipeline_library pipelines{*device_d3d, root_signatures};
-
-   auto aquire_command_list(const D3D12_COMMAND_LIST_TYPE type) // TODO: Remove command list pool.
-   {
-      jss::object_ptr<command_list_pool> pool = nullptr;
-
-      using command_list_interface = command_list_pool::command_list_interface;
-
-      switch (type) {
-      case D3D12_COMMAND_LIST_TYPE_DIRECT:
-         pool = &direct_command_list_pool;
-         break;
-      default:
-         std::terminate();
-      }
-
-      const auto free = [pool](command_list_interface* command_list) {
-         pool->free(command_list);
-      };
-
-      return std::unique_ptr<command_list_interface, decltype(free)>{pool->aquire(),
-                                                                     free};
-   }
 
 private:
    void process_deferred_resource_destructions();
