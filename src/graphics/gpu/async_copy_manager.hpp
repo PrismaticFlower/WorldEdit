@@ -32,11 +32,10 @@ public:
 private:
    friend async_copy_manager;
 
-   copy_context(async_copy_manager& manager, ID3D12CommandAllocator& command_allocator,
+   copy_context(ID3D12CommandAllocator& command_allocator,
                 ID3D12GraphicsCommandList5& command_list)
-      : command_list{command_list}, manager{manager}, command_allocator{command_allocator} {};
+      : command_list{command_list}, command_allocator{command_allocator} {};
 
-   async_copy_manager& manager;
    ID3D12CommandAllocator& command_allocator;
    bool closed_and_executed = false;
 };
@@ -82,7 +81,7 @@ public:
 
       throw_if_failed(command_list->Reset(command_allocator.get(), nullptr));
 
-      return {*this, *command_allocator.release(), *command_list.release()};
+      return {*command_allocator.release(), *command_list.release()};
    }
 
    [[nodiscard]] auto close_and_execute(copy_context& copy_context) -> UINT64
