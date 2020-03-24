@@ -8,13 +8,11 @@
 #include <type_traits>
 #include <utility>
 
-#include <iostream>
-
 namespace sk {
 
 namespace {
 
-constexpr float camera_movement_sensitivity = 5.0f;
+constexpr float camera_movement_sensitivity = 20.0f;
 constexpr float camera_look_sensitivity = 0.18f;
 
 }
@@ -55,7 +53,7 @@ bool world_edit::update()
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);
 
-   _renderer.draw_frame(_camera, _world);
+   _renderer.draw_frame(_camera, _world, _object_classes);
 
    return true;
 }

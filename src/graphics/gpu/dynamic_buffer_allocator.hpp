@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "device.hpp"
 #include "hresult_error.hpp"
+#include "math/align.hpp"
 
 #include <array>
 #include <atomic>
@@ -47,7 +48,7 @@ public:
 
    [[nodiscard]] auto allocate(const std::size_t size) -> allocation
    {
-      const std::size_t aligned_size = (size + alignment - 1) / alignment * alignment;
+      const std::size_t aligned_size = math::align_up(size, alignment);
       const std::size_t allocation_offset =
          _allocated.fetch_add(aligned_size, std::memory_order_relaxed);
 

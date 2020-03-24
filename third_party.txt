@@ -10,3 +10,5 @@ Boost.Container
 Boost.Variant2
 catch2
 Windows Implementation Libraries
+range-v3 - https://github.com/ericniebler/range-v3
+tbb - Apache License Version 2.0

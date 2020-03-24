@@ -59,16 +59,20 @@ const scene input_scene{
           {{
               .material_index = 0,
               .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
-              .normals = {{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-              .texcoords = {{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+              .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                             {0.0f, 1.0f, 1.0f},
+                                             {0.0f, 1.0f, 0.0f}},
+              .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
               .triangles = {{0, 1, 2}},
            },
 
            {
               .material_index = 1,
               .positions = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-              .normals = {{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-              .texcoords = {{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+              .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                             {0.0f, 1.0f, 1.0f},
+                                             {0.0f, 1.0f, 0.0f}},
+              .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
               .triangles = {{0, 1, 2}},
            }}},
 
@@ -96,8 +100,8 @@ const scene input_scene{
        .segments = {{
           .material_index = 0,
           .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
-          .normals = {{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-          .texcoords = {{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+          .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+          .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
           .triangles = {{0, 1, 2}},
        }}},
    }};
@@ -203,8 +207,8 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
       const auto check_mesh = [&](auto& mesh, auto& segment) {
          REQUIRE(mesh.material == input_scene.materials[segment.material_index]);
          REQUIRE(mesh.positions.size() == segment.positions.size());
-         REQUIRE(mesh.normals.size() == segment.normals.size());
-         REQUIRE(mesh.texcoords.size() == segment.texcoords.size());
+         REQUIRE(mesh.normals.size() == segment.normals->size());
+         REQUIRE(mesh.texcoords.size() == segment.texcoords->size());
          REQUIRE(mesh.triangles.size() == 1);
 
          CHECK(approx_equals(mesh.positions[0],
@@ -214,20 +218,22 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
          CHECK(approx_equals(mesh.positions[2],
                              transform_position_from_root(segment.positions[2])));
 
+         auto& segment_normals = *segment.normals;
          CHECK(approx_equals(mesh.normals[0],
-                             transform_normal_from_root(segment.normals[0])));
+                             transform_normal_from_root(segment_normals[0])));
          CHECK(approx_equals(mesh.normals[1],
-                             transform_normal_from_root(segment.normals[1])));
+                             transform_normal_from_root(segment_normals[1])));
          CHECK(approx_equals(mesh.normals[2],
-                             transform_normal_from_root(segment.normals[2])));
+                             transform_normal_from_root(segment_normals[2])));
 
          CHECK(approx_equals(mesh.colors[0], {1.0f, 1.0f, 1.0f, 1.0f}));
          CHECK(approx_equals(mesh.colors[1], {1.0f, 1.0f, 1.0f, 1.0f}));
          CHECK(approx_equals(mesh.colors[2], {1.0f, 1.0f, 1.0f, 1.0f}));
 
-         CHECK(approx_equals(mesh.texcoords[0], segment.texcoords[0]));
-         CHECK(approx_equals(mesh.texcoords[1], segment.texcoords[1]));
-         CHECK(approx_equals(mesh.texcoords[2], segment.texcoords[2]));
+         auto& segment_texcoords = *segment.texcoords;
+         CHECK(approx_equals(mesh.texcoords[0], segment_texcoords[0]));
+         CHECK(approx_equals(mesh.texcoords[1], segment_texcoords[1]));
+         CHECK(approx_equals(mesh.texcoords[2], segment_texcoords[2]));
 
          CHECK(mesh.triangles[0][0] == segment.triangles[0][0]);
          CHECK(mesh.triangles[0][1] == segment.triangles[0][1]);

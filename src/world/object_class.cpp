@@ -1,6 +1,7 @@
 
 #include "object_class.hpp"
 #include "assets/asset_libraries.hpp"
+#include "assets/msh/default_missing_scene.hpp"
 
 using namespace std::literals;
 
@@ -21,6 +22,8 @@ object_class::object_class(const assets::odf::definition& definition,
    }
 
    model = assets_libraries.models.aquire_if(model_name);
+
+   if (not model) model = assets::msh::default_missing_scene();
 
    instance_properties.reserve(definition.instance_properties.size());
 

@@ -38,12 +38,14 @@ struct transform {
 };
 
 struct geometry_segment {
+   constexpr static std::size_t max_vertex_count = 0x8000;
+
    int32 material_index = 0;
 
    std::vector<float3> positions;
-   std::vector<float3> normals;
+   std::optional<std::vector<float3>> normals;
    std::optional<std::vector<float4>> colors;
-   std::vector<float2> texcoords;
+   std::optional<std::vector<float2>> texcoords;
 
    std::vector<std::array<uint16, 3>> triangles;
 };

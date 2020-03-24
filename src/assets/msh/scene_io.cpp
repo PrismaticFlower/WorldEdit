@@ -1,8 +1,8 @@
 
 #include "scene_io.hpp"
-
-#include <ucfb/reader.hpp>
-#include <utility/srgb_conversion.hpp>
+#include "ucfb/reader.hpp"
+#include "utility/srgb_conversion.hpp"
+#include "validate_scene.hpp"
 
 #include <stdexcept>
 
@@ -329,7 +329,11 @@ auto read_scene_from_bytes(const gsl::span<const std::byte> bytes) -> scene
       throw std::runtime_error{"Version 1 .msh files are not supported."};
    }
 
-   return read_msh2(ucfb::reader_strict<"MSH2"_id>{msh_});
+   scene result = read_msh2(ucfb::reader_strict<"MSH2"_id>{msh_});
+
+   validate_scene(result);
+
+   return result;
 }
 
 }

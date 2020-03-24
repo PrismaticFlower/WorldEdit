@@ -8,6 +8,9 @@
 #include <string_view>
 
 #include <fmt/format.h>
+#include <gsl/gsl>
+
+#include <range/v3/algorithm.hpp>
 
 using namespace std::literals;
 
@@ -106,6 +109,26 @@ auto make_flat_scene_node(const node& base, const std::vector<node>& nodes) -> f
    return flat_node;
 }
 
+auto generate_normals(gsl::span<const float3> positions,
+                      gsl::span<const std::array<uint16, 3>> triangles)
+   -> std::vector<float3>
+{
+   std::vector<float3> normals{positions.size(), float3{0.0f}};
+
+   for (const auto [i0, i1, i2] : triangles) {
+      const float3 normal =
+         glm::cross(positions[i0] - positions[i1], positions[i2] - positions[i1]);
+
+      normals[i0] += normal;
+      normals[i1] += normal;
+      normals[i2] += normal;
+   }
+
+   for (auto& normal : normals) normal = glm::normalize(normal);
+
+   return normals;
+}
+
 }
 
 flat_model::flat_model(const scene& scene) noexcept
@@ -168,8 +191,13 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
 
       const float3x3 normal_node_to_object = node_to_object;
 
-      for (auto normal : segment.normals) {
-         mesh.normals.emplace_back(normal_node_to_object * float4{normal, 1.0f});
+      if (not segment.normals) {
+         mesh.normals = generate_normals(mesh.positions, mesh.triangles);
+      }
+      else {
+         for (auto normal : *segment.normals) {
+            mesh.normals.emplace_back(normal_node_to_object * float4{normal, 1.0f});
+         }
       }
 
       if (not segment.colors) {
@@ -181,8 +209,14 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
                             segment.colors->end());
       }
 
-      mesh.texcoords.insert(mesh.texcoords.end(), segment.texcoords.begin(),
-                            segment.texcoords.end());
+      if (not segment.texcoords) {
+         mesh.texcoords.insert(mesh.texcoords.end(), segment.positions.size(),
+                               float2{0.0f, 0.0f});
+      }
+      else {
+         mesh.texcoords.insert(mesh.texcoords.end(), segment.texcoords->begin(),
+                               segment.texcoords->end());
+      }
 
       for (auto [i0, i1, i2] : segment.triangles) {
          mesh.triangles.push_back({static_cast<uint16>(i0 + vertex_offset),

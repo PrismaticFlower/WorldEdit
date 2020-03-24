@@ -75,10 +75,16 @@ renderer::renderer(const HWND window)
    }
 }
 
-void renderer::draw_frame(const camera& camera, const world::world& world)
+void renderer::draw_frame(const camera& camera, const world::world& world,
+                          const std::unordered_map<std::string, world::object_class>& world_classes)
 {
+   build_object_render_list(world, world_classes);
+
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
+
+   _device.command_queue->Wait(&_device.copy_manager.fence(),
+                               _model_manager.copy_fence_wait_value());
 
    auto& command_allocator = *_world_command_allocators[_device.frame_index];
    auto& command_list = *_world_command_list;
@@ -126,31 +132,27 @@ void renderer::draw_frame(const camera& camera, const world::world& world)
       command_list.SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
    }
 
-   D3D12_VERTEX_BUFFER_VIEW vbv{_box_vertex_buffer.resource->GetGPUVirtualAddress(),
-                                _box_vertex_buffer.size, 12};
-   D3D12_INDEX_BUFFER_VIEW ibv{_box_index_buffer.resource->GetGPUVirtualAddress(),
-                               _box_index_buffer.size, DXGI_FORMAT_R16_UINT};
-   command_list.IASetVertexBuffers(0, 1, &vbv);
-   command_list.IASetIndexBuffer(&ibv);
    command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // TEMP object placeholder rendering
-   for (auto& object : world.objects) {
+   for (auto& object : _object_render_list) {
       // TEMP object constants setup
       {
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(sizeof(float4x4)));
 
-         float4x4 world_transform = float4x4{quaternion{object.rotation}};
-         world_transform[3] = {object.position, 1.0f};
-
-         std::memcpy(allocation.cpu_address, &world_transform, sizeof(float4x4));
+         std::memcpy(allocation.cpu_address, &object.transform, sizeof(float4x4));
 
          command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
       }
 
-      command_list.DrawIndexedInstanced(static_cast<UINT>(box_indices.size() * 3),
-                                        1, 0, 0, 0);
+      command_list.IASetVertexBuffers(0,
+                                      static_cast<UINT>(
+                                         object.vertex_buffer_views.size()),
+                                      object.vertex_buffer_views.data());
+      command_list.IASetIndexBuffer(&object.index_buffer_view);
+      command_list.DrawIndexedInstanced(object.index_count, 1, object.start_index,
+                                        object.start_vertex, 0);
    }
 
    const auto present_barrier =
@@ -184,6 +186,34 @@ void renderer::window_resized(uint16 width, uint16 height)
                                   .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
        D3D12_HEAP_TYPE_DEFAULT,
        D3D12_RESOURCE_STATE_DEPTH_WRITE};
+}
+
+void renderer::build_object_render_list(
+   const world::world& world,
+   const std::unordered_map<std::string, world::object_class>& world_classes)
+{
+   _object_render_list.clear();
+   _object_render_list.reserve(world.objects.size());
+
+   for (auto& object : world.objects) {
+      auto& model = _model_manager.get(world_classes.at(object.class_name).model);
+
+      float4x4 transform = static_cast<float4x4>(object.rotation);
+      transform[3] = float4{object.position, 1.0f};
+
+      for (const auto& mesh : model.parts) {
+         _object_render_list.push_back(
+            {.distance = 0.0f, // TODO: Distance, frustum culling...
+             .index_count = mesh.index_count,
+             .start_index = mesh.start_index,
+             .start_vertex = mesh.start_vertex,
+             .index_buffer_view = model.gpu_buffer.index_buffer_view,
+             .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                     model.gpu_buffer.normal_vertex_buffer_view,
+                                     model.gpu_buffer.texcoord_vertex_buffer_view},
+             .transform = transform});
+      }
+   }
 }
 
 }

@@ -68,7 +68,8 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
-      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
+      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -95,8 +96,8 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
-      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
-      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
+      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -161,10 +162,15 @@
     <ClInclude Include="src\assets\config\io.hpp" />
     <ClInclude Include="src\assets\config\key_node.hpp" />
     <ClInclude Include="src\assets\config\values.hpp" />
+    <ClInclude Include="src\assets\msh\default_missing_scene.hpp" />
     <ClInclude Include="src\assets\msh\flat_model.hpp" />
     <ClInclude Include="src\assets\msh\material.hpp" />
+    <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
+      <FileType>CppHeader</FileType>
+    </ClCompile>
     <ClInclude Include="src\assets\msh\scene.hpp" />
     <ClInclude Include="src\assets\msh\scene_io.hpp" />
+    <ClInclude Include="src\assets\msh\validate_scene.hpp" />
     <ClInclude Include="src\assets\odf\definition.hpp" />
     <ClInclude Include="src\assets\odf\definition_io.hpp" />
     <ClInclude Include="src\assets\odf\properties.hpp" />
@@ -188,9 +194,11 @@
     <ClInclude Include="src\graphics\gpu\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\gpu\shader_library.hpp" />
     <ClInclude Include="src\graphics\gpu\swap_chain.hpp" />
+    <ClInclude Include="src\graphics\model_manager.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\input_state.hpp" />
+    <ClInclude Include="src\math\align.hpp" />
     <ClInclude Include="src\math\bounding_box.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
     <ClInclude Include="src\types.hpp" />
@@ -230,6 +238,7 @@
     <ClCompile Include="src\assets\config\key_node.cpp" />
     <ClCompile Include="src\assets\msh\flat_model.cpp" />
     <ClCompile Include="src\assets\msh\scene_io.cpp" />
+    <ClCompile Include="src\assets\msh\validate_scene.cpp" />
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
@@ -240,6 +249,7 @@
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
+    <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\hresult_error.cpp" />
     <ClCompile Include="src\input_state.cpp" />

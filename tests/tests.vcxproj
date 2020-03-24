@@ -97,12 +97,14 @@
     <ClCompile Include="src\assets\config\key_node_tests.cpp" />
     <ClCompile Include="src\assets\config\values_tests.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_tests.cpp" />
+    <ClCompile Include="src\assets\msh\validate_scene_tests.cpp" />
     <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
     <ClCompile Include="src\container\enum_array_tests.cpp" />
     <ClCompile Include="src\hresult_error_tests.cpp" />
+    <ClCompile Include="src\math\align_tests.cpp" />
     <ClCompile Include="src\math\bounding_box_tests.cpp" />
     <ClCompile Include="src\utility\binary_reader_tests.cpp" />
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />

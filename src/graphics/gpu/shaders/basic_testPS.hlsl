@@ -1,22 +1,13 @@
-uint Hash(uint s)
-{
-   s ^= 2747636419u;
-   s *= 2654435769u;
-   s ^= s >> 16;
-   s *= 2654435769u;
-   s ^= s >> 16;
-   s *= 2654435769u;
-   return s;
-}
+struct input_vertex {
+   float3 positionWS : POSITIONWS;
+   float3 normalWS : NORMALWS;
+   float2 texcoords : TEXCOORD;
+};
 
-float Random(uint seed)
+float4 main(input_vertex input_vertex) : SV_TARGET
 {
-   return float(Hash(seed)) / 4294967295.0; // 2^32-1
-}
+   const float3 light_normalWS =
+      normalize(float3(-159.264923, 300.331013, -66.727310));
 
-float4 main(uint id : SV_PrimitiveID) : SV_TARGET
-{
-   float3 col = {Random(id), Random(id), Random(id)};
-
-   return float4(col, 1.0f);
+   return float4(dot(normalize(input_vertex.normalWS), light_normalWS) * 0.6.xxx, 1.0f);
 }

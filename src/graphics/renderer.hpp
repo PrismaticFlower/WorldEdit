@@ -5,10 +5,12 @@
 #include "gpu/depth_stencil_texture.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
-#include "model.hpp"
+#include "model_manager.hpp"
+#include "world/object_class.hpp"
 #include "world/world.hpp"
 
 #include <array>
+#include <unordered_map>
 #include <vector>
 
 namespace sk::graphics {
@@ -17,11 +19,16 @@ class renderer {
 public:
    explicit renderer(const HWND window);
 
-   void draw_frame(const camera& camera, const world::world& world);
+   void draw_frame(const camera& camera, const world::world& world,
+                   const std::unordered_map<std::string, world::object_class>& world_classes);
 
    void window_resized(uint16 width, uint16 height);
 
 private:
+   void build_object_render_list(
+      const world::world& world,
+      const std::unordered_map<std::string, world::object_class>& world_classes);
+
    const HWND _window;
 
    gpu::device _device{_window};
@@ -42,20 +49,22 @@ private:
       D3D12_HEAP_TYPE_DEFAULT,
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
-   graphics::gpu::buffer _box_vertex_buffer;
-   graphics::gpu::buffer _box_index_buffer;
+   gpu::buffer _box_vertex_buffer;
+   gpu::buffer _box_index_buffer;
+
+   model_manager _model_manager{_device};
 
    struct render_list_item {
       float distance;
-      int index_count;
-      int start_index;
-      int start_vertex;
+      uint32 index_count;
+      uint32 start_index;
+      uint32 start_vertex;
       D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-      std::array<D3D12_VERTEX_BUFFER_VIEW, 5> vertex_buffer_views;
+      std::array<D3D12_VERTEX_BUFFER_VIEW, 3> vertex_buffer_views;
       float4x4 transform;
    };
 
-   std::vector<render_list_item> _render_list;
+   std::vector<render_list_item> _object_render_list;
 };
 
 }

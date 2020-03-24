@@ -360,6 +360,18 @@
     <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\model_manager.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\msh\validate_scene.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\msh\default_missing_scene.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\align.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -432,6 +444,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\object_class.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\model.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\msh\validate_scene.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

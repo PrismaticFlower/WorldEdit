@@ -1,7 +1,8 @@
 #pragma once
 
-#include "assets/msh/scene.hpp"
-#include "bounding_box.hpp"
+#include "assets/msh/flat_model.hpp"
+#include "gpu/buffer.hpp"
+#include "math/bounding_box.hpp"
 #include "types.hpp"
 
 #include <array>
@@ -11,39 +12,40 @@
 
 namespace sk::graphics {
 
-struct mesh_vertex {
-   float3 position;
-   float2 texcoords;
-   float2 lightmap_texcoords;
-   float3 tangent;
-   float3 bitangent;
-   float3 normal;
-   uint32 colour;
+struct mesh_vertices {
+   std::vector<float3> positions;
+   std::vector<float3> normals;
+   std::vector<float2> texcoords;
 };
 
-struct mesh_vertex_packed {
-   i16vec4 position;
-   i16vec4 qtangent;
-   i16vec2 texcoords;
-   i16vec2 lightmap_texcoords;
-   uint32 colour;
+struct mesh_part {
+   uint32 index_count;
+   uint32 start_index;
+   uint32 start_vertex;
 };
 
-struct model_part {
-   int index_count;
-   int start_index;
-   int start_vertex;
+struct mesh_gpu_buffer {
+   gpu::buffer buffer;
+
+   D3D12_INDEX_BUFFER_VIEW index_buffer_view;
+   D3D12_VERTEX_BUFFER_VIEW position_vertex_buffer_view;
+   D3D12_VERTEX_BUFFER_VIEW normal_vertex_buffer_view;
+   D3D12_VERTEX_BUFFER_VIEW texcoord_vertex_buffer_view;
 };
 
 struct model {
-   explicit model(const assets::msh::scene& msh_scene);
+   explicit model(const assets::msh::flat_model& model);
 
-   bounding_box bbox;
+   auto init_gpu_buffer_async(gpu::device& device) -> UINT64;
 
-   std::vector<mesh_vertex_packed> vertices;
+   math::bounding_box bbox;
+
+   mesh_vertices vertices;
    std::vector<std::array<uint16, 3>> indices;
 
-   boost::container::small_vector<model_part, 4> parts;
+   mesh_gpu_buffer gpu_buffer;
+
+   boost::container::small_vector<mesh_part, 8> parts;
 };
 
 }

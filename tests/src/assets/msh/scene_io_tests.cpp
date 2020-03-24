@@ -79,11 +79,13 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
             const geometry_segment& segment = node.segments[0];
 
             REQUIRE(segment.material_index == 0);
+            REQUIRE(segment.normals != std::nullopt);
+            REQUIRE(segment.texcoords != std::nullopt);
             REQUIRE(segment.colors == std::nullopt);
 
             REQUIRE(segment.positions.size() == 4);
-            REQUIRE(segment.normals.size() == 4);
-            REQUIRE(segment.texcoords.size() == 4);
+            REQUIRE(segment.normals->size() == 4);
+            REQUIRE(segment.texcoords->size() == 4);
             REQUIRE(segment.triangles.size() == 2);
 
             CHECK(approx_equals(segment.positions[0], {-1.0f, 0.0f, -1.0f}));
@@ -91,15 +93,17 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
             CHECK(approx_equals(segment.positions[2], {1.0f, 0.0f, 1.0f}));
             CHECK(approx_equals(segment.positions[3], {-1.0f, 0.0f, 1.0f}));
 
-            CHECK(approx_equals(segment.normals[0], {0.0f, 1.0f, 0.0f}));
-            CHECK(approx_equals(segment.normals[1], {0.0f, 1.0f, 0.0f}));
-            CHECK(approx_equals(segment.normals[2], {0.0f, 1.0f, 0.0f}));
-            CHECK(approx_equals(segment.normals[3], {0.0f, 1.0f, 0.0f}));
+            auto& normals = *segment.normals;
+            CHECK(approx_equals(normals[0], {0.0f, 1.0f, 0.0f}));
+            CHECK(approx_equals(normals[1], {0.0f, 1.0f, 0.0f}));
+            CHECK(approx_equals(normals[2], {0.0f, 1.0f, 0.0f}));
+            CHECK(approx_equals(normals[3], {0.0f, 1.0f, 0.0f}));
 
-            CHECK(approx_equals(segment.texcoords[0], {0.0f, 1.0f}));
-            CHECK(approx_equals(segment.texcoords[1], {1.0f, 1.0f}));
-            CHECK(approx_equals(segment.texcoords[2], {1.0f, 0.0f}));
-            CHECK(approx_equals(segment.texcoords[3], {0.0f, 0.0f}));
+            auto& texcoords = *segment.texcoords;
+            CHECK(approx_equals(texcoords[0], {0.0f, 1.0f}));
+            CHECK(approx_equals(texcoords[1], {1.0f, 1.0f}));
+            CHECK(approx_equals(texcoords[2], {1.0f, 0.0f}));
+            CHECK(approx_equals(texcoords[3], {0.0f, 0.0f}));
 
             REQUIRE(segment.triangles.size() == 2);
 
