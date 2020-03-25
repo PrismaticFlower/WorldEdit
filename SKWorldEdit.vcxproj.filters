@@ -372,6 +372,9 @@
     <ClInclude Include="src\math\align.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\odf\default_object_class_definition.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -453,6 +456,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\odf\default_object_class_definition.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

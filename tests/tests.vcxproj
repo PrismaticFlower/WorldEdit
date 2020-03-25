@@ -63,7 +63,8 @@
       <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
+      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -83,8 +84,8 @@
       <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
-      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
+      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -92,7 +92,8 @@
       <AdditionalIncludeDirectories>$(SolutionDir)third_party\object_ptr;$(SolutionDir)third_party\D3DX12;../src</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
+      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,8 +141,9 @@
       <AdditionalIncludeDirectories>$(SolutionDir)third_party\object_ptr;$(SolutionDir)third_party\D3DX12;../src</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <DisableSpecificWarnings>4275;4459</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
       <ControlFlowGuard>Guard</ControlFlowGuard>
+      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

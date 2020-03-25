@@ -171,6 +171,7 @@
     <ClInclude Include="src\assets\msh\scene.hpp" />
     <ClInclude Include="src\assets\msh\scene_io.hpp" />
     <ClInclude Include="src\assets\msh\validate_scene.hpp" />
+    <ClInclude Include="src\assets\odf\default_object_class_definition.hpp" />
     <ClInclude Include="src\assets\odf\definition.hpp" />
     <ClInclude Include="src\assets\odf\definition_io.hpp" />
     <ClInclude Include="src\assets\odf\properties.hpp" />
@@ -239,6 +240,7 @@
     <ClCompile Include="src\assets\msh\flat_model.cpp" />
     <ClCompile Include="src\assets\msh\scene_io.cpp" />
     <ClCompile Include="src\assets\msh\validate_scene.cpp" />
+    <ClCompile Include="src\assets\odf\default_object_class_definition.cpp" />
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />

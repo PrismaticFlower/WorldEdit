@@ -30,6 +30,8 @@ public:
 private:
    void update_object_classes();
 
+   void update_assets();
+
    void update_camera(const float delta_time, const mouse_state& mouse_state,
                       const keyboard_state& keyboard_state);
 

@@ -28,6 +28,8 @@ public:
 
    auto get(const std::shared_ptr<assets::msh::flat_model>& flat_model) -> model&
    {
+      if (not flat_model) return _placeholder_model;
+
       if (auto model = get_if_loaded(flat_model); model) {
          return *model;
       }

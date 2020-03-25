@@ -1,6 +1,7 @@
 
 #include "world_edit.hpp"
 #include "assets/asset_libraries.hpp"
+#include "assets/odf/default_object_class_definition.hpp"
 #include "hresult_error.hpp"
 #include "world/world_io_load.hpp"
 
@@ -49,6 +50,7 @@ bool world_edit::update()
 
    // Logic!
    update_object_classes();
+   update_assets();
 
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);
@@ -65,10 +67,27 @@ void world_edit::update_object_classes()
 
       auto definition = _asset_libraries.odfs.aquire_if(object.class_name);
 
-      if (not definition) continue; // TODO: Default ODF handling.
-
       _object_classes.emplace(object.class_name,
-                              world::object_class{*definition, _asset_libraries});
+                              world::object_class{definition
+                                                     ? definition
+                                                     : assets::odf::default_object_class_definition(),
+                                                  _asset_libraries});
+   }
+}
+
+void world_edit::update_assets()
+{
+   for (const auto& [name, definition] : _asset_libraries.odfs.loaded_assets()) {
+      if (auto object_class = _object_classes.find(std::string{name});
+          object_class != _object_classes.end()) {
+         object_class->second = world::object_class{definition, _asset_libraries};
+      }
+   }
+
+   for (const auto& [name, model] : _asset_libraries.models.loaded_assets()) {
+      for (auto& [_, object_class] : _object_classes) {
+         if (object_class.model_name == name) object_class.model = model;
+      }
    }
 }
 
@@ -118,5 +137,4 @@ void world_edit::resized(uint16 width, uint16 height)
 void world_edit::focused() {}
 
 void world_edit::unfocused() {}
-
 }
