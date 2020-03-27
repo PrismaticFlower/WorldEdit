@@ -36,6 +36,14 @@ auto read_property(string::line line) -> property
    key = string::trim_trailing_whitespace(key);
    value = string::trim_leading_whitespace(value);
 
+   if (boost::contains(line.string, "="sv) and value.empty()) {
+      throw std::runtime_error{
+         fmt::format("Error in .odf on line #{}! The value right of '=' can "
+                     "not be only whitespace. "
+                     "Use '{} = \"\"' to indicate an empty value."sv,
+                     line.number, key)};
+   }
+
    if (value.front() == '"') {
       value = value.substr(1);
       value = string::split_first_of_exclusive(value, "\""sv).front();
@@ -61,6 +69,7 @@ auto read_definition(std::string_view str) -> definition
       line.string = string::trim_leading_whitespace(line.string);
 
       if (line.string.starts_with("//"sv)) continue;
+      if (line.string.starts_with(R"(\\)"sv)) continue;
       if (string::is_whitespace(line.string)) continue;
 
       if (boost::istarts_with(line.string, "[ExplosionClass]"sv)) {

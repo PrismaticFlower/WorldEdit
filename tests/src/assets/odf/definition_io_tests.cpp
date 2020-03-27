@@ -14,6 +14,8 @@ const std::string_view valid_odf_test = R"(// First line is ignored.
 [GameObjectClass] // Comment after [GameObjectClass]
 
 // This is a test .odf
+\\ Line comments can also begin with '\\'
+
 
 ClassLabel = "prop"
 GeometryName = "test_prop_sphere.msh"
@@ -35,17 +37,25 @@ const std::string_view valid_odf_test_mixed_line_breaks =
    "SemiquotedProp = \"quoted values do not need an ending quote // this is "
    "part of the value \r\n";
 
-const std::string_view invalid_odf_test_bad_header_name = R"([FameObjectGlass]
+const std::string_view invalid_odf_test_bad_header_name =
+   R"([FameObjectGlass] // Line #1 Expect Error Here
 
 ClassLabel = "prop"
-GeometryName "test_prop_sphere.msh" // Line #7 Expect Error Here
+GeometryName = "test_prop_sphere.msh" 
 
 [Properties])";
 
 const std::string_view invalid_odf_test_bad_key_value = R"([GameObjectClass]
 
 ClassLabel = "prop"
-GeometryName "test_prop_sphere.msh" // Line #7 Expect Error Here
+GeometryName "test_prop_sphere.msh" // Line #4 Expect Error Here
+
+[Properties])";
+
+const std::string_view invalid_odf_test_empty_value = R"([GameObjectClass]
+
+ClassLabel = "prop" // Expect error the on below line.
+GeometryName = 
 
 [Properties])";
 }
@@ -89,5 +99,10 @@ TEST_CASE(".odf failed reading bad header", "[Assets][ODF]")
 TEST_CASE(".odf failed reading bad key value", "[Assets][ODF]")
 {
    REQUIRE_THROWS(read_definition(invalid_odf_test_bad_key_value));
+}
+
+TEST_CASE(".odf failed reading empty value", "[Assets][ODF]")
+{
+   REQUIRE_THROWS(read_definition(invalid_odf_test_empty_value));
 }
 }
