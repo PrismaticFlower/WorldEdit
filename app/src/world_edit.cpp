@@ -130,6 +130,8 @@ void world_edit::update_camera(const float delta_time, const mouse_state& mouse_
 
 void world_edit::resized(uint16 width, uint16 height)
 {
+   if (width == 0 or height == 0) return;
+
    _camera.aspect_ratio(float(width) / float(height));
    _renderer.window_resized(width, height);
 }
