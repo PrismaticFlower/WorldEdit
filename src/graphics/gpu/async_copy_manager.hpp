@@ -6,9 +6,11 @@
 #include <atomic>
 #include <cassert>
 #include <mutex>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
+#include <boost/container/small_vector.hpp>
 #include <d3d12.h>
 
 namespace sk::graphics::gpu {
@@ -29,29 +31,41 @@ public:
 
    ID3D12GraphicsCommandList5& command_list;
 
+   auto create_upload_resource(const D3D12_RESOURCE_DESC& desc) -> ID3D12Resource&
+   {
+      const D3D12_HEAP_PROPERTIES heap_properties{.Type = D3D12_HEAP_TYPE_UPLOAD,
+                                                  .CPUPageProperty =
+                                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+                                                  .MemoryPoolPreference =
+                                                     D3D12_MEMORY_POOL_UNKNOWN};
+
+      throw_if_failed(device.CreateCommittedResource(
+         &heap_properties, D3D12_HEAP_FLAG_NONE, &desc,
+         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+         IID_PPV_ARGS(upload_resources.emplace_back().clear_and_assign())));
+
+      return *upload_resources.back();
+   }
+
 private:
    friend async_copy_manager;
 
    copy_context(ID3D12CommandAllocator& command_allocator,
-                ID3D12GraphicsCommandList5& command_list)
-      : command_list{command_list}, command_allocator{command_allocator} {};
+                ID3D12Device6& device, ID3D12GraphicsCommandList5& command_list)
+      : command_list{command_list}, device{device}, command_allocator{command_allocator} {};
 
+   ID3D12Device6& device;
    ID3D12CommandAllocator& command_allocator;
+
+   using resource_vector_type =
+      boost::container::small_vector<utility::com_ptr<ID3D12Resource>, 4>;
+
+   resource_vector_type upload_resources;
+
    bool closed_and_executed = false;
 };
 
 class async_copy_manager {
-private:
-   struct command_list_returner {
-      async_copy_manager& copy_context;
-      ID3D12CommandAllocator& allocator;
-
-      void operator()(ID3D12GraphicsCommandList5* list) const noexcept
-      {
-         copy_context.return_command_list(*list);
-      }
-   };
-
 public:
    explicit async_copy_manager(ID3D12Device6& device) : _device{device}
    {
@@ -76,12 +90,14 @@ public:
    {
       std::scoped_lock lock{_mutex};
 
+      update_completed_lockless();
+
       auto command_allocator = aquire_command_allocator();
       auto command_list = aquire_command_list();
 
       throw_if_failed(command_list->Reset(command_allocator.get(), nullptr));
 
-      return {*command_allocator.release(), *command_list.release()};
+      return {*command_allocator.release(), _device, *command_list.release()};
    }
 
    [[nodiscard]] auto close_and_execute(copy_context& copy_context) -> UINT64
@@ -98,8 +114,7 @@ public:
 
       std::scoped_lock lock{_mutex};
 
-      return_command_allocator(copy_fence_value, copy_context.command_allocator);
-      return_command_list(copy_context.command_list);
+      return_copy_context(copy_fence_value, copy_context);
 
       return copy_fence_value;
    }
@@ -111,21 +126,29 @@ public:
 
    void update_completed()
    {
-      const auto completed_value = _fence->GetCompletedValue();
-
       std::scoped_lock lock{_mutex};
 
-      for (auto& used_allocator : _used_command_allocators) {
-         if (used_allocator.first <= completed_value) {
-            _free_command_allocators.emplace_back(std::move(used_allocator.second));
-         }
-      }
-
-      std::erase_if(_used_command_allocators,
-                    [](const auto& used) { return used.second == nullptr; });
+      update_completed_lockless();
    }
 
 private:
+   void update_completed_lockless()
+   {
+      const auto completed_value = _fence->GetCompletedValue();
+
+      for (auto& pending : _pending_copy_resources) {
+         if (pending.first > completed_value) continue;
+
+         pending.second.resources.clear();
+         _free_command_allocators.emplace_back(
+            std::move(pending.second.command_allocator));
+      }
+
+      std::erase_if(_pending_copy_resources, [=](const auto& used_allocator) {
+         return used_allocator.first <= completed_value;
+      });
+   }
+
    auto aquire_command_allocator() -> utility::com_ptr<ID3D12CommandAllocator>
    {
       if (_free_command_allocators.empty()) {
@@ -166,15 +189,15 @@ private:
       return command_list;
    }
 
-   void return_command_allocator(const UINT64 wait_fence_value,
-                                 ID3D12CommandAllocator& allocator)
+   void return_copy_context(const UINT64 wait_fence_value, copy_context& context)
    {
-      _used_command_allocators.emplace_back(wait_fence_value, &allocator);
-   }
+      _command_lists.emplace_back(&context.command_list);
 
-   void return_command_list(ID3D12GraphicsCommandList5& command_list)
-   {
-      _command_lists.emplace_back(&command_list);
+      _pending_copy_resources.emplace_back(
+         wait_fence_value,
+         pending_copy_context{.command_allocator =
+                                 utility::com_ptr{&context.command_allocator},
+                              .resources = std::move(context.upload_resources)});
    }
 
    ID3D12Device6& _device;
@@ -186,6 +209,11 @@ private:
    std::vector<utility::com_ptr<ID3D12CommandAllocator>> _free_command_allocators;
    std::vector<utility::com_ptr<ID3D12GraphicsCommandList5>> _command_lists;
 
-   std::vector<std::pair<UINT64, utility::com_ptr<ID3D12CommandAllocator>>> _used_command_allocators;
+   struct pending_copy_context {
+      utility::com_ptr<ID3D12CommandAllocator> command_allocator;
+      copy_context::resource_vector_type resources;
+   };
+
+   std::vector<std::pair<UINT64, pending_copy_context>> _pending_copy_resources;
 };
 }

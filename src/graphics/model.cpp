@@ -9,6 +9,8 @@
 #include <range/v3/numeric.hpp>
 #include <range/v3/view.hpp>
 
+#include <d3dx12.h>
+
 namespace sk::graphics {
 
 model::model(const assets::msh::flat_model& model)
@@ -81,30 +83,34 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
       static_cast<uint32>(aligned_indices_size + aligned_positions_size +
                           aligned_normals_size + aligned_texcoords_size);
 
-   gpu::buffer upload_buffer{device, buffer_size, D3D12_HEAP_TYPE_UPLOAD,
-                             D3D12_RESOURCE_STATE_GENERIC_READ};
+   auto copy_context = device.copy_manager.aquire_context();
 
-   const D3D12_RANGE read_range{};
-   void* upload_data_void_ptr = nullptr;
+   ID3D12Resource& upload_buffer =
+      copy_context.create_upload_resource(CD3DX12_RESOURCE_DESC::Buffer(buffer_size));
 
-   throw_if_failed(upload_buffer.resource->Map(0, &read_range, &upload_data_void_ptr));
+   std::byte* const upload_buffer_ptr = [&] {
+      const D3D12_RANGE read_range{};
+      void* map_void_ptr = nullptr;
 
-   std::byte* const upload_data = static_cast<std::byte*>(upload_data_void_ptr);
+      throw_if_failed(upload_buffer.Map(0, &read_range, &map_void_ptr));
 
-   std::memcpy(upload_data + indices_data_offset, indices.data(), indices_data_size);
-   std::memcpy(upload_data + positions_data_offset, vertices.positions.data(),
-               positions_data_size);
-   std::memcpy(upload_data + normals_data_offset, vertices.normals.data(),
+      return static_cast<std::byte*>(map_void_ptr);
+   }();
+
+   std::memcpy(upload_buffer_ptr + indices_data_offset, indices.data(),
+               indices_data_size);
+   std::memcpy(upload_buffer_ptr + positions_data_offset,
+               vertices.positions.data(), positions_data_size);
+   std::memcpy(upload_buffer_ptr + normals_data_offset, vertices.normals.data(),
                normals_data_size);
-   std::memcpy(upload_data + texcoords_data_offset, vertices.texcoords.data(),
-               texcoords_data_size);
+   std::memcpy(upload_buffer_ptr + texcoords_data_offset,
+               vertices.texcoords.data(), texcoords_data_size);
 
    const D3D12_RANGE write_range{0, buffer_size};
-   upload_buffer.resource->Unmap(0, &write_range);
+   upload_buffer.Unmap(0, &write_range);
 
    gpu_buffer = {.buffer = {device, buffer_size, D3D12_HEAP_TYPE_DEFAULT,
                             D3D12_RESOURCE_STATE_COPY_DEST}};
-
    gpu_buffer.index_buffer_view = {.BufferLocation =
                                       gpu_buffer.buffer.resource->GetGPUVirtualAddress() +
                                       indices_data_offset,
@@ -126,14 +132,9 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
        .SizeInBytes = static_cast<uint32>(texcoords_data_size),
        .StrideInBytes = sizeof(decltype(vertices.texcoords)::value_type)};
 
-   {
-      auto copy_context = device.copy_manager.aquire_context();
+   copy_context.command_list.CopyResource(gpu_buffer.buffer.resource, &upload_buffer);
 
-      copy_context.command_list.CopyResource(gpu_buffer.buffer.resource,
-                                             upload_buffer.resource);
-
-      return device.copy_manager.close_and_execute(copy_context);
-   }
+   return device.copy_manager.close_and_execute(copy_context);
 }
 
 }
