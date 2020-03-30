@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lowercase_string.hpp"
 #include "object_instance_property.hpp"
 #include "types.hpp"
 
@@ -17,7 +18,7 @@ struct object {
 
    int team = 0;
 
-   std::string class_name;
+   lowercase_string class_name;
    std::vector<instance_property> instance_properties;
 
    bool operator==(const object&) const noexcept = default;

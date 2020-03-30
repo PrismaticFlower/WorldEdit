@@ -200,6 +200,7 @@
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\input_state.hpp" />
+    <ClInclude Include="src\lowercase_string.hpp" />
     <ClInclude Include="src\math\align.hpp" />
     <ClInclude Include="src\math\bounding_box.hpp" />
     <ClInclude Include="src\output_stream.hpp" />

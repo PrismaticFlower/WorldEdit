@@ -143,7 +143,7 @@ void load_objects(const std::filesystem::path& path, output_stream& output,
          auto& object = world_out.objects.emplace_back();
 
          object.name = key_node.values.get<std::string>(0);
-         object.class_name = key_node.values.get<std::string>(1);
+         object.class_name = lowercase_string{key_node.values.get<std::string>(1)};
          std::tie(object.rotation, object.position) =
             read_location(key_node, "ChildRotation"sv, "ChildPosition"sv);
 

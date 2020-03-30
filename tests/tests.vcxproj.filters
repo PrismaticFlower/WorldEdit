@@ -34,6 +34,7 @@
     <ClCompile Include="src\math\bounding_box_tests.cpp" />
     <ClCompile Include="src\assets\msh\validate_scene_tests.cpp" />
     <ClCompile Include="src\math\align_tests.cpp" />
+    <ClCompile Include="src\lowercase_string_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

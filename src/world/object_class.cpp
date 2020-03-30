@@ -12,16 +12,17 @@ object_class::object_class(std::shared_ptr<assets::odf::definition> definition,
    : definition{definition}
 {
    if (definition->class_properties.contains("GeometryName"sv)) {
-      model_name = definition->class_properties.at("GeometryName"sv);
+      model_name =
+         lowercase_string{definition->class_properties.at("GeometryName"sv)};
    }
    else if (definition->header_properties.contains("GeometryName"sv)) {
-      model_name =
+      model_name = lowercase_string{
          definition->header_properties.at("GeometryName"sv)
             .substr(0, definition->header_properties.at("GeometryName"sv).size() -
-                          ".msh"sv.size());
+                          ".msh"sv.size())};
    }
    else {
-      model_name = ""s;
+      model_name = {};
    }
 
    model = assets_libraries.models.aquire_if(model_name);

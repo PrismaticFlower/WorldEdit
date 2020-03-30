@@ -3,6 +3,7 @@
 #include "assets/asset_libraries.hpp"
 #include "assets/msh/flat_model.hpp"
 #include "assets/odf/definition.hpp"
+#include "lowercase_string.hpp"
 #include "object_instance_property.hpp"
 
 #include <memory>
@@ -20,7 +21,7 @@ struct object_class {
    std::shared_ptr<assets::odf::definition> definition;
 
    std::shared_ptr<assets::msh::flat_model> model;
-   std::string model_name;
+   lowercase_string model_name;
 
    std::vector<instance_property> instance_properties;
 };

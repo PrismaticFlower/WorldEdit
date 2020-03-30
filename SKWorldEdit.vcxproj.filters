@@ -375,6 +375,9 @@
     <ClInclude Include="src\assets\asset_traits.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\lowercase_string.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

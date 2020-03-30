@@ -2,6 +2,7 @@
 
 #include "asset_traits.hpp"
 #include "exceptions.hpp"
+#include "lowercase_string.hpp"
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
 #include "output_stream.hpp"
@@ -40,7 +41,7 @@ public:
       _known_assets.emplace(asset_path.stem().string(), std::move(asset_path));
    }
 
-   auto aquire_if(const std::string& name) noexcept -> std::shared_ptr<T>
+   auto aquire_if(const lowercase_string& name) noexcept -> std::shared_ptr<T>
    {
       if (name.empty()) return nullptr;
       if (auto existing = aquire_cached_if(name); existing) return existing;
@@ -84,7 +85,7 @@ public:
       return nullptr;
    }
 
-   auto aquire_cached_if(const std::string& name) noexcept -> std::shared_ptr<T>
+   auto aquire_cached_if(const lowercase_string& name) noexcept -> std::shared_ptr<T>
    {
       std::shared_lock read_lock{_mutex};
 
@@ -121,7 +122,7 @@ public:
    }
 
 private:
-   void enqueue_create_asset(std::string name) noexcept
+   void enqueue_create_asset(lowercase_string name) noexcept
    {
       using namespace std::literals;
 
@@ -157,9 +158,9 @@ private:
 
    std::shared_mutex _mutex;
 
-   std::unordered_map<std::string, std::filesystem::path> _known_assets;
-   std::unordered_map<std::string, std::future<std::shared_ptr<T>>> _pending_assets;
-   std::unordered_map<std::string, std::weak_ptr<T>> _cached_assets;
+   std::unordered_map<lowercase_string, std::filesystem::path> _known_assets;
+   std::unordered_map<lowercase_string, std::future<std::shared_ptr<T>>> _pending_assets;
+   std::unordered_map<lowercase_string, std::weak_ptr<T>> _cached_assets;
 
    tbb::task_group _tasks;
 };
