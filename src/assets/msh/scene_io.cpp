@@ -65,11 +65,28 @@ auto triangle_strips_to_lists(const std::vector<std::vector<uint16>>& strips)
    return triangles;
 }
 
+bool is_valid_collision_primitive_shape(const collision_primitive_shape shape) noexcept
+{
+   switch (shape) {
+   case collision_primitive_shape::sphere:
+   case collision_primitive_shape::cylinder:
+   case collision_primitive_shape::box:
+      return true;
+   }
+
+   return false;
+}
+
 auto read_swci(ucfb::reader_strict<"SWCI"_id> swci) -> collision_primitive
 {
    collision_primitive primitive;
 
-   primitive.shape = swci.read<collision_primitive_shape>();
+   const auto shape = swci.read<collision_primitive_shape>();
+
+   // The game treats any invalid shape (and some stock assets DO have invalid shapes) as a sphere.
+   primitive.shape = is_valid_collision_primitive_shape(shape)
+                        ? shape
+                        : collision_primitive_shape::sphere;
    primitive.radius = swci.read<float>();
    primitive.height = swci.read<float>();
    primitive.length = swci.read<float>();
