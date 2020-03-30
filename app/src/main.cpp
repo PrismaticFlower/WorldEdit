@@ -20,6 +20,7 @@ concept application = requires(App app, HWND window, int size) {
    { app.resized(size, size) };
    { app.focused() };
    { app.unfocused() };
+   { app.idling() } -> std::convertible_to<bool>;
 };
 
 // clang-format on
@@ -102,15 +103,26 @@ void run_application()
    ShowWindowAsync(window_handle.get(), SW_SHOWDEFAULT);
 
    do {
-      MSG message{};
-
-      while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
-         TranslateMessage(&message);
-         DispatchMessageW(&message);
-
-         if (message.message == WM_QUIT) return;
+      if (app.idling()) {
+         MSG message{};
+         if (const auto result = GetMessageW(&message, nullptr, 0, 0); result > 0) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+         }
+         else {
+            return;
+         }
       }
+      else {
+         MSG message{};
 
+         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+
+            if (message.message == WM_QUIT) return;
+         }
+      }
    } while (app.update());
 }
 

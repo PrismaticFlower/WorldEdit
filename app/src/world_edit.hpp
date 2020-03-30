@@ -27,6 +27,8 @@ public:
 
    void unfocused();
 
+   bool idling() const noexcept;
+
 private:
    void update_object_classes();
 
@@ -38,6 +40,7 @@ private:
    standard_output_stream _stream;
    HWND _window{};
 
+   bool _focused = true;
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
 

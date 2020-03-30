@@ -9,6 +9,8 @@
 #include <type_traits>
 #include <utility>
 
+using namespace std::literals;
+
 namespace sk {
 
 namespace {
@@ -51,6 +53,8 @@ bool world_edit::update()
    // Logic!
    update_object_classes();
    update_assets();
+
+   if (not _focused) return true;
 
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);
@@ -136,7 +140,19 @@ void world_edit::resized(uint16 width, uint16 height)
    _renderer.window_resized(width, height);
 }
 
-void world_edit::focused() {}
+void world_edit::focused()
+{
+   _focused = true;
+}
 
-void world_edit::unfocused() {}
+void world_edit::unfocused()
+{
+   _focused = false;
+}
+
+bool world_edit::idling() const noexcept
+{
+   return not _focused;
+}
+
 }
