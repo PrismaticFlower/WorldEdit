@@ -1,6 +1,6 @@
 #pragma once
 
-#include "asset_loaders.hpp"
+#include "asset_traits.hpp"
 #include "exceptions.hpp"
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
@@ -42,6 +42,7 @@ public:
 
    auto aquire_if(const std::string& name) noexcept -> std::shared_ptr<T>
    {
+      if (name.empty()) return nullptr;
       if (auto existing = aquire_cached_if(name); existing) return existing;
 
       std::lock_guard lock{_mutex};
@@ -71,7 +72,14 @@ public:
          return nullptr;
       }
 
-      if (_known_assets.contains(name)) enqueue_create_asset(name);
+      if (_known_assets.contains(name)) {
+         enqueue_create_asset(name);
+      }
+      else {
+         _output_stream.write(fmt::format(
+            "Error! Unable to find referenced {} asset named '{}'!\n",
+            asset_traits<T>::error_type_name, name));
+      }
 
       return nullptr;
    }
@@ -117,27 +125,26 @@ private:
    {
       using namespace std::literals;
 
-      auto load_asset_task =
-         std::make_unique<std::packaged_task<std::shared_ptr<T>()>>(
-            [this, asset_path = _known_assets.at(name),
-             name = name]() -> std::shared_ptr<T> {
-               try {
-                  auto asset = std::make_shared<T>(loaders<T>::load(asset_path));
+      auto load_asset_task = std::make_unique<std::packaged_task<std::shared_ptr<T>()>>(
+         [this, asset_path = _known_assets.at(name),
+          name = name]() -> std::shared_ptr<T> {
+            try {
+               auto asset = std::make_shared<T>(asset_traits<T>::load(asset_path));
 
-                  _output_stream.write(
-                     fmt::format("Loaded asset '{}'\n"sv, asset_path.string()));
+               _output_stream.write(
+                  fmt::format("Loaded asset '{}'\n"sv, asset_path.string()));
 
-                  return asset;
-               }
-               catch (std::exception& e) {
-                  _output_stream.write(
-                     fmt::format("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
-                                 asset_path.string(),
-                                 utility::string::indent(2, e.what())));
+               return asset;
+            }
+            catch (std::exception& e) {
+               _output_stream.write(
+                  fmt::format("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
+                              asset_path.string(),
+                              utility::string::indent(2, e.what())));
 
-                  return nullptr;
-               }
-            });
+               return nullptr;
+            }
+         });
 
       _pending_assets.emplace(name, load_asset_task->get_future());
 

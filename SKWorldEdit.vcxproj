@@ -158,13 +158,14 @@
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />
-    <ClInclude Include="src\assets\asset_loaders.hpp" />
+    <ClInclude Include="src\assets\asset_traits.hpp" />
     <ClInclude Include="src\assets\config\io.hpp" />
     <ClInclude Include="src\assets\config\key_node.hpp" />
     <ClInclude Include="src\assets\config\values.hpp" />
     <ClInclude Include="src\assets\msh\default_missing_scene.hpp" />
     <ClInclude Include="src\assets\msh\flat_model.hpp" />
     <ClInclude Include="src\assets\msh\material.hpp" />
+    <ClCompile Include="src\assets\asset_traits.cpp" />
     <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
       <FileType>CppHeader</FileType>
     </ClCompile>
@@ -234,7 +235,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\asset_libraries.cpp" />
-    <ClCompile Include="src\assets\asset_loaders.cpp" />
     <ClCompile Include="src\assets\config\io.cpp" />
     <ClCompile Include="src\assets\config\key_node.cpp" />
     <ClCompile Include="src\assets\msh\flat_model.cpp" />
