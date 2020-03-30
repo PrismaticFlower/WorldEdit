@@ -34,8 +34,8 @@ TEST_CASE("world loading", "[World][Load]")
       {
          CHECK(world.objects[0].name == "com_item_healthrecharge"sv);
          CHECK(world.objects[0].class_name == "com_item_healthrecharge"sv);
-         CHECK(approx_equals(world.objects[0].position, {-32.000, 0.008, -32.000}));
-         CHECK(approx_equals(world.objects[0].rotation, {1.000, 0.000, 0.000, 0.000}));
+         CHECK(approx_equals(world.objects[0].position, {-32.000, 0.008, 32.000}));
+         CHECK(approx_equals(world.objects[0].rotation, {0.000, 0.000, 1.000, 0.000}));
          CHECK(world.objects[0].team == 0);
          CHECK(world.objects[0].layer == 0);
 
@@ -50,8 +50,8 @@ TEST_CASE("world loading", "[World][Load]")
       {
          CHECK(world.objects[1].name == "com_inv_col_8"sv);
          CHECK(world.objects[1].class_name == "com_inv_col_8"sv);
-         CHECK(approx_equals(world.objects[1].position, {68.000, 0.000, 4.000}));
-         CHECK(approx_equals(world.objects[1].rotation, {1.000, 0.000, 0.000, 0.000}));
+         CHECK(approx_equals(world.objects[1].position, {68.000, 0.000, -4.000}));
+         CHECK(approx_equals(world.objects[1].rotation, {0.000, 0.000, 1.000, 0.000}));
          CHECK(world.objects[1].team == 0);
          CHECK(world.objects[1].layer == 1);
          CHECK(world.objects[1].instance_properties.size() == 0);
@@ -73,9 +73,9 @@ TEST_CASE("world loading", "[World][Load]")
       {
          CHECK(world.lights[0].name == "Light 2"sv);
          CHECK(approx_equals(world.lights[0].position,
-                             {-128.463806, 0.855094, -22.575970}));
+                             {-128.463806, 0.855094, 22.575970}));
          CHECK(approx_equals(world.lights[0].rotation,
-                             {0.998519f, 0.000000f, 0.000000f, -0.054843f}));
+                             {0.000000f, 0.054843f, 0.998519f, 0.000000f}));
          CHECK(world.lights[0].layer == 0);
          CHECK(world.lights[0].light_type == light_type::point);
          CHECK(approx_equals(world.lights[0].color, {0.501961, 0.376471, 0.376471}));
@@ -91,9 +91,9 @@ TEST_CASE("world loading", "[World][Load]")
 
          CHECK(world.lights[1].name == "sun"sv);
          CHECK(approx_equals(world.lights[1].position,
-                             {-159.264923, 19.331013, -66.727310}));
+                             {-159.264923, 19.331013, 66.727310}));
          CHECK(approx_equals(world.lights[1].rotation,
-                             {0.922373f, 0.384204f, -0.039542f, -0.008615f}));
+                             {-0.039542f, 0.008615f, 0.922373f, -0.384204f}));
          CHECK(world.lights[1].layer == 0);
          CHECK(world.lights[1].light_type == light_type::directional);
          CHECK(approx_equals(world.lights[1].color, {1.000000, 0.882353, 0.752941}));
@@ -110,9 +110,9 @@ TEST_CASE("world loading", "[World][Load]")
       {
          CHECK(world.lights[2].name == "Light 3"sv);
          CHECK(approx_equals(world.lights[2].position,
-                             {-149.102463, 0.469788, 22.194153}));
+                             {-149.102463, 0.469788, -22.194153}));
          CHECK(approx_equals(world.lights[2].rotation,
-                             {1.000000, 0.000000, 0.000000, 0.000000}));
+                             {0.000000, 0.000000, 1.000000, 0.000000}));
          CHECK(world.lights[2].layer == 0);
          CHECK(world.lights[2].light_type == light_type::spot);
          CHECK(approx_equals(world.lights[2].color, {1.000000, 1.000000, 1.000000}));
@@ -129,9 +129,9 @@ TEST_CASE("world loading", "[World][Load]")
       {
          CHECK(world.lights[3].name == "Light 1"sv);
          CHECK(approx_equals(world.lights[3].position,
-                             {-129.618546, 5.019108, -27.300539}));
+                             {-129.618546, 5.019108, 27.300539}));
          CHECK(approx_equals(world.lights[3].rotation,
-                             {0.924904f, 0.000000f, 0.380202f, 0.000000f}));
+                             {0.380202f, 0.000000f, 0.924904f, 0.000000f}));
          CHECK(world.lights[3].layer == 0);
          CHECK(world.lights[3].light_type == light_type::point);
          CHECK(approx_equals(world.lights[3].color, {0.498039, 0.498039, 0.627451}));
@@ -154,18 +154,18 @@ TEST_CASE("world loading", "[World][Load]")
          CHECK(world.paths[0].properties.empty());
 
          constexpr std::array<float3, 12> expected_positions{
-            {{383.557434f, 0.000000f, -4.797800f},
-             {332.062256f, 0.000000f, 187.287064f},
-             {191.642288f, 0.000000f, 327.707031f},
-             {-0.442575f, 0.000000f, 379.202209f},
-             {-192.527451f, 0.000000f, 327.707031f},
-             {-332.947418f, 0.000000f, 187.287064f},
-             {-384.442566f, 0.000000f, -4.797800f},
-             {-332.947021f, 0.000000f, -196.882675f},
-             {-192.527451f, 0.000000f, -337.302643f},
-             {-0.442575f, 0.000000f, -388.797791f},
-             {191.642288f, 0.000000f, -337.302246f},
-             {332.062256f, 0.000000f, -196.882675f}}};
+            {{383.557434f, 0.000000f, 4.797800f},
+             {332.062256f, 0.000000f, -187.287064f},
+             {191.642288f, 0.000000f, -327.707031f},
+             {-0.442575f, 0.000000f, -379.202209f},
+             {-192.527451f, 0.000000f, -327.707031f},
+             {-332.947418f, 0.000000f, -187.287064f},
+             {-384.442566f, 0.000000f, 4.797800f},
+             {-332.947021f, 0.000000f, 196.882675f},
+             {-192.527451f, 0.000000f, 337.302643f},
+             {-0.442575f, 0.000000f, 388.797791f},
+             {191.642288f, 0.000000f, 337.302246f},
+             {332.062256f, 0.000000f, 196.882675f}}};
 
          REQUIRE(world.paths[0].nodes.size() == 12);
 
@@ -173,7 +173,7 @@ TEST_CASE("world loading", "[World][Load]")
             CHECK(approx_equals(world.paths[0].nodes[i].position,
                                 expected_positions[i]));
             CHECK(approx_equals(world.paths[0].nodes[i].rotation,
-                                {1.0f, 0.0f, 0.0f, 0.0f}));
+                                {0.0f, 0.0f, 1.0f, 0.0f}));
             CHECK(world.paths[0].nodes[i].properties.empty());
          }
       }
@@ -187,27 +187,27 @@ TEST_CASE("world loading", "[World][Load]")
                path::property{.key = "PropKey"s, .value = "PropValue"s});
 
          constexpr std::array<float3, 3> expected_positions{
-            {{-16.041691, 0.000000, -31.988783},
-             {-31.982189, 0.000000, -48.033310},
-             {-48.012756, 0.000000, -31.962399}}};
+            {{-16.041691, 0.000000, 31.988783},
+             {-31.982189, 0.000000, 48.033310},
+             {-48.012756, 0.000000, 31.962399}}};
 
          REQUIRE(world.paths[1].nodes.size() == 3);
 
          CHECK(approx_equals(world.paths[1].nodes[0].position, expected_positions[0]));
          CHECK(approx_equals(world.paths[1].nodes[0].rotation,
-                             {1.0f, 0.0f, 0.0f, 0.0f}));
+                             {0.0f, 0.0f, 1.0f, 0.0f}));
          REQUIRE(world.paths[1].nodes[0].properties.size() == 1);
          CHECK(world.paths[1].nodes[0].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
 
          CHECK(approx_equals(world.paths[1].nodes[1].position, expected_positions[1]));
          CHECK(approx_equals(world.paths[1].nodes[1].rotation,
-                             {1.0f, 0.0f, 0.0f, 0.0f}));
+                             {0.0f, 0.0f, 1.0f, 0.0f}));
          CHECK(world.paths[1].nodes[1].properties.empty());
 
          CHECK(approx_equals(world.paths[1].nodes[2].position, expected_positions[2]));
          CHECK(approx_equals(world.paths[1].nodes[2].rotation,
-                             {1.0f, 0.0f, 0.0f, 0.0f}));
+                             {0.0f, 0.0f, 1.0f, 0.0f}));
          CHECK(world.paths[1].nodes[2].properties.empty());
       }
    }
@@ -221,8 +221,8 @@ TEST_CASE("world loading", "[World][Load]")
       CHECK(world.regions[0].description == "foleyfx water"sv);
       CHECK(world.regions[0].shape == region_shape::box);
       CHECK(approx_equals(world.regions[0].position,
-                          {-32.000000, 16.000000, -32.000000}));
-      CHECK(approx_equals(world.regions[0].rotation, {1.000, 0.000, 0.000, 0.000}));
+                          {-32.000000, 16.000000, 32.000000}));
+      CHECK(approx_equals(world.regions[0].rotation, {0.000, 0.000, 1.000, 0.000}));
       CHECK(approx_equals(world.regions[0].size, {16.000000, 16.000000, 16.000000}));
    }
 
@@ -246,10 +246,10 @@ TEST_CASE("world loading", "[World][Load]")
       REQUIRE(world.barriers.size() == 1);
       CHECK(world.barriers[0].name == "Barrier0"sv);
       CHECK(world.barriers[0].flags == ai_path_flags::flyer);
-      CHECK(approx_equals(world.barriers[0].corners[0], {72.596146, -31.159695}));
-      CHECK(approx_equals(world.barriers[0].corners[1], {86.691795, -0.198154}));
-      CHECK(approx_equals(world.barriers[0].corners[2], {99.806587, -6.168838}));
-      CHECK(approx_equals(world.barriers[0].corners[3], {85.710938, -37.130379}));
+      CHECK(approx_equals(world.barriers[0].corners[0], {72.596146, 31.159695}));
+      CHECK(approx_equals(world.barriers[0].corners[1], {86.691795, 0.198154}));
+      CHECK(approx_equals(world.barriers[0].corners[2], {99.806587, 6.168838}));
+      CHECK(approx_equals(world.barriers[0].corners[3], {85.710938, 37.130379}));
    }
 
    // planning hubs checks

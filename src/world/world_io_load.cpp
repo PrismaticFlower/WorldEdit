@@ -29,15 +29,24 @@ auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap
    return 0;
 }
 
-auto read_location(const assets::config::node& node) -> std::pair<quaternion, float3>
+auto read_location(const assets::config::node& node, const std::string_view rotation_key,
+                   const std::string_view position_key) -> std::pair<quaternion, float3>
 {
-   return {{node.at("Rotation"sv).values.get<float>(0),
-            node.at("Rotation"sv).values.get<float>(1),
-            node.at("Rotation"sv).values.get<float>(2),
-            node.at("Rotation"sv).values.get<float>(3)},
-           {node.at("Position"sv).values.get<float>(0),
-            node.at("Position"sv).values.get<float>(1),
-            node.at("Position"sv).values.get<float>(2)}};
+   quaternion rotation{node.at(rotation_key).values.get<float>(0),
+                       node.at(rotation_key).values.get<float>(1),
+                       node.at(rotation_key).values.get<float>(2),
+                       node.at(rotation_key).values.get<float>(3)};
+
+   rotation.x = -rotation.x;
+   rotation.z = -rotation.z;
+
+   std::swap(rotation.x, rotation.z);
+   std::swap(rotation.y, rotation.w);
+
+   return {rotation,
+           {node.at(position_key).values.get<float>(0),
+            node.at(position_key).values.get<float>(1),
+            -node.at(position_key).values.get<float>(2)}};
 }
 
 auto read_path_properties(const assets::config::node& node)
@@ -135,18 +144,12 @@ void load_objects(const std::filesystem::path& path, output_stream& output,
 
          object.name = key_node.values.get<std::string>(0);
          object.class_name = key_node.values.get<std::string>(1);
+         std::tie(object.rotation, object.position) =
+            read_location(key_node, "ChildRotation"sv, "ChildPosition"sv);
 
          for (auto& obj_prop : key_node) {
-            if (obj_prop.key == "ChildRotation"sv) {
-               object.rotation = {obj_prop.values.get<float>(0),
-                                  obj_prop.values.get<float>(1),
-                                  obj_prop.values.get<float>(2),
-                                  obj_prop.values.get<float>(3)};
-            }
-            else if (obj_prop.key == "ChildPosition"sv) {
-               object.position = {obj_prop.values.get<float>(0),
-                                  obj_prop.values.get<float>(1),
-                                  obj_prop.values.get<float>(2)};
+            if (obj_prop.key == "ChildRotation"sv or obj_prop.key == "ChildPosition"sv) {
+               continue;
             }
             else if (obj_prop.key == "Team"sv) {
                object.team = obj_prop.values.get<int>(0);
@@ -185,7 +188,8 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
 
             light.name = key_node.values.get<std::string>(0);
             light.layer = read_layer_index(key_node, layer_remap);
-            std::tie(light.rotation, light.position) = read_location(key_node);
+            std::tie(light.rotation, light.position) =
+               read_location(key_node, "Rotation"sv, "Position"sv);
 
             switch (const auto type = key_node.at("Type"sv).values.get<int>(0); type) {
             case 1:
@@ -301,7 +305,8 @@ void load_paths(const std::filesystem::path& filepath, output_stream& output,
             for (auto& node : path_nodes) {
                auto& path_node = path.nodes.emplace_back();
 
-               std::tie(path_node.rotation, path_node.position) = read_location(node);
+               std::tie(path_node.rotation, path_node.position) =
+                  read_location(node, "Rotation"sv, "Position"sv);
 
                path_node.properties = read_path_properties(node.at("Properties"sv));
             }
@@ -330,7 +335,8 @@ void load_regions(const std::filesystem::path& filepath, output_stream& output,
 
          region.name = key_node.at("Name"sv).values.get<std::string>(0);
          region.layer = read_layer_index(key_node, layer_remap);
-         std::tie(region.rotation, region.position) = read_location(key_node);
+         std::tie(region.rotation, region.position) =
+            read_location(key_node, "Rotation"sv, "Position"sv);
          region.size = {key_node.at("Size"sv).values.get<float>(0),
                         key_node.at("Size"sv).values.get<float>(1),
                         key_node.at("Size"sv).values.get<float>(2)};
@@ -393,7 +399,8 @@ void load_portals_sectors(const std::filesystem::path& filepath, output_stream& 
 
             portal.name = key_node.values.get<std::string>(0);
             portal.layer = read_layer_index(key_node, layer_remap);
-            std::tie(portal.rotation, portal.position) = read_location(key_node);
+            std::tie(portal.rotation, portal.position) =
+               read_location(key_node, "Rotation"sv, "Position"sv);
             portal.width = key_node.at("Width"sv).values.get<float>(0);
             portal.height = key_node.at("Height"sv).values.get<float>(0);
 
@@ -440,7 +447,7 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
          for (int i = 0; i < 4; ++i) {
             if (corner != key_node.cend()) {
                barrier.corners[i] = {corner->values.get<float>(0),
-                                     corner->values.get<float>(2)};
+                                     -corner->values.get<float>(2)};
 
                corner = std::find_if(corner + 1, key_node.cend(), is_corner);
             }
