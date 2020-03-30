@@ -35,7 +35,7 @@ auto build_node_to_object_transforms(const scene& scene) -> std::vector<float4x4
                                               return node.name == parent;
                                            });
              parent_it != nodes.cend()) {
-            transform *= float4x4{parent_it->transform};
+            transform = float4x4{parent_it->transform} * transform;
 
             if (parent_it->parent) {
                apply_parent_transform(apply_parent_transform, transform,

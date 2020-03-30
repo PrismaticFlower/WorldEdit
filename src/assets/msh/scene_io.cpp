@@ -19,7 +19,7 @@ namespace {
 
 auto from_msh_space(float3 vec) -> float3
 {
-   return {-vec.x, vec.y, vec.z};
+   return vec;
 }
 
 auto from_msh_space(float2 vec) -> float2
@@ -194,8 +194,9 @@ auto read_tran(ucfb::reader_strict<"TRAN"_id> tran) -> transform
 
    tran.read<float3>(); // scale, ignored by modelmunge
    float4 rotation = tran.read<float4>();
-   transform.rotation = {rotation.w, -rotation.x, rotation.y, rotation.z};
-   transform.translation = from_msh_space(tran.read<float3>());
+
+   transform.rotation = quaternion{rotation.w, rotation.x, rotation.y, rotation.z};
+   transform.translation = tran.read<float3>();
 
    return transform;
 }

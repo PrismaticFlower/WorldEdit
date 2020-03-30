@@ -66,9 +66,9 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
          REQUIRE(node.type == node_type::static_mesh);
          REQUIRE(not node.hidden);
 
-         CHECK(approx_equals(node.transform.translation, {2.0f, 1.0f, 3.0f}));
+         CHECK(approx_equals(node.transform.translation, {-2.0f, 1.0f, 3.0f}));
          CHECK(node.transform.rotation.w == -0.878902792930603_a);
-         CHECK(node.transform.rotation.x == -0.0112990252673626_a);
+         CHECK(node.transform.rotation.x == 0.0112990252673626_a);
          CHECK(node.transform.rotation.y == -0.116856157779694_a);
          CHECK(node.transform.rotation.z == -0.462327867746353_a);
 
@@ -88,10 +88,10 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
             REQUIRE(segment.texcoords->size() == 4);
             REQUIRE(segment.triangles.size() == 2);
 
-            CHECK(approx_equals(segment.positions[0], {-1.0f, 0.0f, -1.0f}));
-            CHECK(approx_equals(segment.positions[1], {1.0f, 0.0f, -1.0f}));
-            CHECK(approx_equals(segment.positions[2], {1.0f, 0.0f, 1.0f}));
-            CHECK(approx_equals(segment.positions[3], {-1.0f, 0.0f, 1.0f}));
+            CHECK(approx_equals(segment.positions[0], {1.0f, 0.0f, -1.0f}));
+            CHECK(approx_equals(segment.positions[1], {-1.0f, 0.0f, -1.0f}));
+            CHECK(approx_equals(segment.positions[2], {-1.0f, 0.0f, 1.0f}));
+            CHECK(approx_equals(segment.positions[3], {1.0f, 0.0f, 1.0f}));
 
             auto& normals = *segment.normals;
             CHECK(approx_equals(normals[0], {0.0f, 1.0f, 0.0f}));
@@ -125,7 +125,7 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
 
          CHECK(approx_equals(node.transform.translation, {0.0f, -0.0625f, 0.0f}));
          CHECK(node.transform.rotation.w == -0.985783636569977_a);
-         CHECK(node.transform.rotation.x == -0.163417175412178_a);
+         CHECK(node.transform.rotation.x == 0.163417175412178_a);
          CHECK(node.transform.rotation.y == -0.0304092466831207_a);
          CHECK(node.transform.rotation.z == -0.0245117712765932_a);
 

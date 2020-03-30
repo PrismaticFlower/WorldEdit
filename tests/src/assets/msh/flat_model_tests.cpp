@@ -190,18 +190,18 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
       REQUIRE(model.meshes.size() == 2);
 
       const auto transform_position_from_root = [&](float3 position) {
-         return input_scene.nodes[2].transform.rotation *
+         return input_scene.nodes[0].transform.rotation *
                    (input_scene.nodes[1].transform.rotation *
-                       (input_scene.nodes[0].transform.rotation * position +
-                        input_scene.nodes[0].transform.translation) +
+                       (input_scene.nodes[2].transform.rotation * position +
+                        input_scene.nodes[2].transform.translation) +
                     input_scene.nodes[1].transform.translation) +
-                input_scene.nodes[2].transform.translation;
+                input_scene.nodes[0].transform.translation;
       };
 
       const auto transform_normal_from_root = [&](float3 normal) {
-         return input_scene.nodes[2].transform.rotation *
+         return input_scene.nodes[0].transform.rotation *
                 (input_scene.nodes[1].transform.rotation *
-                 (input_scene.nodes[0].transform.rotation * normal));
+                 (input_scene.nodes[2].transform.rotation * normal));
       };
 
       const auto check_mesh = [&](auto& mesh, auto& segment) {
@@ -266,14 +266,14 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
          CHECK(primitive.length ==
                Approx(input_scene.nodes[3].collision_primitive->length));
 
-         const auto rotation = input_scene.nodes[3].transform.rotation *
+         const auto rotation = input_scene.nodes[0].transform.rotation *
                                input_scene.nodes[1].transform.rotation *
-                               input_scene.nodes[0].transform.rotation;
-         const auto position = input_scene.nodes[3].transform.rotation *
+                               input_scene.nodes[3].transform.rotation;
+         const auto position = input_scene.nodes[0].transform.rotation *
                                   (input_scene.nodes[1].transform.rotation *
-                                      input_scene.nodes[0].transform.translation +
+                                      input_scene.nodes[3].transform.translation +
                                    input_scene.nodes[1].transform.translation) +
-                               input_scene.nodes[3].transform.translation;
+                               input_scene.nodes[0].transform.translation;
 
          CHECK(approx_equals(primitive.transform.rotation, rotation));
          CHECK(approx_equals(primitive.transform.translation, position));
@@ -290,12 +290,12 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
          CHECK(mesh.triangles == input_scene.nodes[4].segments[0].triangles);
 
          const auto transform_position_from_root = [&](float3 position) {
-            return input_scene.nodes[4].transform.rotation *
+            return input_scene.nodes[0].transform.rotation *
                       (input_scene.nodes[1].transform.rotation *
-                          (input_scene.nodes[0].transform.rotation * position +
-                           input_scene.nodes[0].transform.translation) +
+                          (input_scene.nodes[4].transform.rotation * position +
+                           input_scene.nodes[4].transform.translation) +
                        input_scene.nodes[1].transform.translation) +
-                   input_scene.nodes[4].transform.translation;
+                   input_scene.nodes[0].transform.translation;
          };
 
          auto& segment = input_scene.nodes[4].segments[0];
