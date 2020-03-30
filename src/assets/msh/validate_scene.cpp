@@ -40,6 +40,7 @@ void check_node_type_validity(const scene& scene)
       case node_type::cloth:
       case node_type::bone:
       case node_type::static_mesh:
+      case node_type::shadow_volume:
          continue;
       default:
          throw std::runtime_error{fmt::format(

@@ -324,17 +324,24 @@ auto read_scene_from_bytes(const gsl::span<const std::byte> bytes) -> scene
 {
    ucfb::reader_strict<"HEDR"_id> hedr{bytes};
 
-   auto msh_ = hedr.read_child();
+   while (hedr) {
+      auto msh_ = hedr.read_child();
 
-   if (msh_.id() == "MSH1"_id) {
-      throw std::runtime_error{"Version 1 .msh files are not supported."};
+      if (msh_.id() == "MSH1"_id) {
+         throw std::runtime_error{"Version 1 .msh files are not supported."};
+      }
+      else if (msh_.id() != "MSH2"_id) {
+         continue;
+      }
+
+      scene result = read_msh2(ucfb::reader_strict<"MSH2"_id>{msh_});
+
+      validate_scene(result);
+
+      return result;
    }
 
-   scene result = read_msh2(ucfb::reader_strict<"MSH2"_id>{msh_});
-
-   validate_scene(result);
-
-   return result;
+   throw std::runtime_error{".msh file contained no scene."};
 }
 
 }

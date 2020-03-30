@@ -14,7 +14,8 @@ enum class node_type : int32 {
    skinned_mesh = 1,
    cloth = 2,
    bone = 3,
-   static_mesh = 4
+   static_mesh = 4,
+   shadow_volume = 6
 };
 
 enum class collision_primitive_shape : int32 {

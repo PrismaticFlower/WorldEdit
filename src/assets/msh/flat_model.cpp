@@ -63,11 +63,13 @@ bool is_mesh_node(const node& node) noexcept
    case node_type::null:
    case node_type::cloth:
    case node_type::bone:
+   case node_type::shadow_volume:
       return false;
    }
 
    if (node.hidden) return false;
    if (node.name.starts_with("sv_")) return false;
+   if (node.name.starts_with("shadowvolume")) return false;
    if (node.name.starts_with("p_")) return false;
    if (node.name.starts_with("collision")) return false;
    if (node.name.starts_with("terraincutter")) return false;
