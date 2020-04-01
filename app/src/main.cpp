@@ -5,6 +5,7 @@
 #include <concepts>
 #include <exception>
 #include <functional>
+#include <iostream>
 
 #include <Windows.h>
 
@@ -128,5 +129,7 @@ void run_application()
 
 int main()
 {
+   std::ios_base::sync_with_stdio(false);
+
    run_application<sk::world_edit>();
 }
