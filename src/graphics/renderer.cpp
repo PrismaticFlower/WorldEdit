@@ -15,8 +15,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
 
-   _device.command_queue->Wait(&_device.copy_manager.fence(),
-                               _model_manager.copy_fence_wait_value());
+   _device.copy_manager.enqueue_fence_wait_if_needed(*_device.command_queue);
 
    auto& command_allocator = *_world_command_allocators[_device.frame_index];
    auto& command_list = *_world_command_list;

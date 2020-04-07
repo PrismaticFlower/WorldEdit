@@ -110,6 +110,8 @@ public:
       const UINT64 copy_fence_value = ++_fence_value;
       throw_if_failed(_command_queue->Signal(_fence.get(), copy_fence_value));
 
+      _queued_copy.store(true, std::memory_order_relaxed);
+
       copy_context.closed_and_executed = true;
 
       std::scoped_lock lock{_mutex};
@@ -122,6 +124,13 @@ public:
    [[nodiscard]] auto fence() const noexcept -> ID3D12Fence&
    {
       return *_fence;
+   }
+
+   void enqueue_fence_wait_if_needed(ID3D12CommandQueue& queue) noexcept
+   {
+      if (_queued_copy.exchange(false, std::memory_order_relaxed)) {
+         queue.Wait(_fence.get(), _fence_value.load(std::memory_order_relaxed));
+      }
    }
 
    void update_completed()
@@ -204,6 +213,7 @@ private:
    utility::com_ptr<ID3D12CommandQueue> _command_queue;
    utility::com_ptr<ID3D12Fence> _fence;
    std::atomic<UINT64> _fence_value = 0;
+   std::atomic_bool _queued_copy = false;
 
    std::mutex _mutex;
    std::vector<utility::com_ptr<ID3D12CommandAllocator>> _free_command_allocators;
