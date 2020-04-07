@@ -13,7 +13,8 @@
 
 namespace sk::graphics::gpu {
 
-struct texture {
+class texture {
+public:
    struct texture_init {
       D3D12_RESOURCE_DIMENSION dimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
       D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
@@ -65,16 +66,17 @@ struct texture {
          device.device_d3d->CreateCommittedResource(&heap_properties, D3D12_HEAP_FLAG_NONE,
                                                     &desc, initial_resource_state,
                                                     optimized_clear_value,
-                                                    IID_PPV_ARGS(&resource)));
+                                                    IID_PPV_ARGS(&_resource)));
 
-      parent_device = &device;
       resource_state = initial_resource_state;
-      format = init_params.format;
-      width = init_params.width;
-      height = init_params.height;
-      depth = init_params.depth;
-      mip_levels = init_params.mip_levels;
-      array_size = init_params.array_size;
+
+      _parent_device = &device;
+      _format = init_params.format;
+      _width = init_params.width;
+      _height = init_params.height;
+      _depth = init_params.depth;
+      _mip_levels = init_params.mip_levels;
+      _array_size = init_params.array_size;
    }
 
    texture(const texture&) noexcept = delete;
@@ -97,31 +99,27 @@ struct texture {
 
    ~texture()
    {
-      if (resource) {
-         assert(parent_device);
-
-         parent_device->deferred_destroy_resource(*this);
-      }
+      if (_resource) _parent_device->deferred_destroy_resource(*this);
    }
 
    void swap(texture& other) noexcept
    {
       using std::swap;
 
-      swap(this->parent_device, other.parent_device);
-      swap(this->resource, other.resource);
       swap(this->resource_state, other.resource_state);
-      swap(this->format, other.format);
-      swap(this->width, other.width);
-      swap(this->height, other.height);
-      swap(this->depth, other.depth);
-      swap(this->mip_levels, other.mip_levels);
-      swap(this->array_size, other.array_size);
+      swap(this->_parent_device, other._parent_device);
+      swap(this->_resource, other._resource);
+      swap(this->_format, other._format);
+      swap(this->_width, other._width);
+      swap(this->_height, other._height);
+      swap(this->_depth, other._depth);
+      swap(this->_mip_levels, other._mip_levels);
+      swap(this->_array_size, other._array_size);
    }
 
    bool alive() const noexcept
    {
-      return resource;
+      return _resource != nullptr;
    }
 
    explicit operator bool() const noexcept
@@ -129,16 +127,58 @@ struct texture {
       return alive();
    }
 
-   jss::object_ptr<device> parent_device = nullptr;
-   gsl::owner<ID3D12Resource*> resource = nullptr;
+   auto parent_device() const noexcept -> device*
+   {
+      return _parent_device.get();
+   }
+
+   auto resource() const noexcept -> ID3D12Resource*
+   {
+      return _resource;
+   }
+
+   auto format() const noexcept -> DXGI_FORMAT
+   {
+      return _format;
+   }
+
+   auto width() const noexcept -> uint16
+   {
+      return _width;
+   }
+
+   auto height() const noexcept -> uint16
+   {
+      return _height;
+   }
+
+   auto depth() const noexcept -> uint16
+   {
+      return _depth;
+   }
+
+   auto mip_levels() const noexcept -> uint16
+   {
+      return _mip_levels;
+   }
+
+   auto array_size() const noexcept -> uint16
+   {
+      return _array_size;
+   }
+
    D3D12_RESOURCE_STATES resource_state = D3D12_RESOURCE_STATE_COMMON;
 
-   DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-   uint16 width = 0;
-   uint16 height = 0;
-   uint16 depth = 0;
-   uint16 mip_levels = 0;
-   uint16 array_size = 0;
+private:
+   jss::object_ptr<device> _parent_device = nullptr;
+   gsl::owner<ID3D12Resource*> _resource = nullptr;
+
+   DXGI_FORMAT _format = DXGI_FORMAT_UNKNOWN;
+   uint16 _width = 0;
+   uint16 _height = 0;
+   uint16 _depth = 0;
+   uint16 _mip_levels = 0;
+   uint16 _array_size = 0;
 };
 
 }

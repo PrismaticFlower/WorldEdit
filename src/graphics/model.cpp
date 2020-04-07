@@ -112,27 +112,27 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
    gpu_buffer = {.buffer = {device, buffer_size, D3D12_HEAP_TYPE_DEFAULT,
                             D3D12_RESOURCE_STATE_COPY_DEST}};
    gpu_buffer.index_buffer_view = {.BufferLocation =
-                                      gpu_buffer.buffer.resource->GetGPUVirtualAddress() +
+                                      gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
                                       indices_data_offset,
                                    .SizeInBytes = static_cast<uint32>(indices_data_size),
                                    .Format = DXGI_FORMAT_R16_UINT};
    gpu_buffer.position_vertex_buffer_view =
-      {.BufferLocation = gpu_buffer.buffer.resource->GetGPUVirtualAddress() +
+      {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
                          positions_data_offset,
        .SizeInBytes = static_cast<uint32>(positions_data_size),
        .StrideInBytes = sizeof(decltype(vertices.positions)::value_type)};
    gpu_buffer.normal_vertex_buffer_view =
-      {.BufferLocation =
-          gpu_buffer.buffer.resource->GetGPUVirtualAddress() + normals_data_offset,
+      {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
+                         normals_data_offset,
        .SizeInBytes = static_cast<uint32>(normals_data_size),
        .StrideInBytes = sizeof(decltype(vertices.normals)::value_type)};
    gpu_buffer.texcoord_vertex_buffer_view =
-      {.BufferLocation = gpu_buffer.buffer.resource->GetGPUVirtualAddress() +
+      {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
                          texcoords_data_offset,
        .SizeInBytes = static_cast<uint32>(texcoords_data_size),
        .StrideInBytes = sizeof(decltype(vertices.texcoords)::value_type)};
 
-   copy_context.command_list.CopyResource(gpu_buffer.buffer.resource, &upload_buffer);
+   copy_context.command_list.CopyResource(gpu_buffer.buffer.resource(), &upload_buffer);
 
    return device.copy_manager.close_and_execute(copy_context);
 }

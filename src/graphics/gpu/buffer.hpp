@@ -15,10 +15,11 @@ namespace sk::graphics::gpu {
 
 struct device;
 
-struct buffer {
+class buffer {
+public:
    buffer() = default;
 
-   buffer(device& device, const UINT size, const D3D12_HEAP_TYPE heap_type,
+   buffer(device& device, const uint32 size, const D3D12_HEAP_TYPE heap_type,
           const D3D12_RESOURCE_STATES initial_resource_state)
    {
       const D3D12_HEAP_PROPERTIES heap_properties{.Type = heap_type,
@@ -35,10 +36,10 @@ struct buffer {
          &heap_properties, D3D12_HEAP_FLAG_NONE, &buffer_desc, initial_resource_state,
          nullptr, IID_PPV_ARGS(buffer_resource.clear_and_assign())));
 
-      parent_device = &device;
-      resource = buffer_resource.release();
+      _parent_device = &device;
+      _resource = buffer_resource.release();
       resource_state = initial_resource_state;
-      this->size = size;
+      _size = size;
    }
 
    buffer(const buffer&) noexcept = delete;
@@ -61,26 +62,22 @@ struct buffer {
 
    ~buffer()
    {
-      if (resource) {
-         assert(parent_device);
-
-         parent_device->deferred_destroy_resource(*this);
-      }
+      if (_resource) _parent_device->deferred_destroy_resource(*this);
    }
 
    void swap(buffer& other) noexcept
    {
       using std::swap;
 
-      swap(this->parent_device, other.parent_device);
-      swap(this->resource, other.resource);
       swap(this->resource_state, other.resource_state);
-      swap(this->size, other.size);
+      swap(this->_parent_device, other._parent_device);
+      swap(this->_resource, other._resource);
+      swap(this->_size, other._size);
    }
 
    bool alive() const noexcept
    {
-      return resource;
+      return _resource != nullptr;
    }
 
    explicit operator bool() const noexcept
@@ -88,10 +85,27 @@ struct buffer {
       return alive();
    }
 
-   jss::object_ptr<device> parent_device = nullptr;
-   gsl::owner<ID3D12Resource*> resource = nullptr;
+   auto parent_device() const noexcept -> device*
+   {
+      return _parent_device.get();
+   }
+
+   auto resource() const noexcept -> ID3D12Resource*
+   {
+      return _resource;
+   }
+
+   auto size() const noexcept -> uint32
+   {
+      return _size;
+   }
+
    D3D12_RESOURCE_STATES resource_state = D3D12_RESOURCE_STATE_COMMON;
-   UINT size = 0;
+
+private:
+   jss::object_ptr<device> _parent_device = nullptr;
+   gsl::owner<ID3D12Resource*> _resource = nullptr;
+   uint32 _size = 0;
 };
 
 }

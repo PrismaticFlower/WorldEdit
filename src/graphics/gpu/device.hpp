@@ -54,7 +54,7 @@ struct device {
       _deferred_resource_destructions.push_back(
          {// TODO (maybe, depending on how memory residency management shapes up): frame usage tracking for resources
           .last_used_frame = fence_value,
-          .resource = utility::com_ptr{resource_owner.resource}});
+          .resource = utility::com_ptr{resource_owner.resource()}});
    }
 
    constexpr static int rtv_descriptor_heap_size = 128;

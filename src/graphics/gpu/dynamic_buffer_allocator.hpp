@@ -30,11 +30,11 @@ public:
          const D3D12_RANGE read_range{};
          void* data = nullptr;
          throw_if_failed(
-            backing_buffer.underlying_buffer.resource->Map(0, &read_range, &data));
+            backing_buffer.underlying_buffer.resource()->Map(0, &read_range, &data));
 
          backing_buffer.cpu_address = static_cast<std::byte*>(data);
          backing_buffer.gpu_address =
-            backing_buffer.underlying_buffer.resource->GetGPUVirtualAddress();
+            backing_buffer.underlying_buffer.resource()->GetGPUVirtualAddress();
       }
 
       reset(device.frame_index);

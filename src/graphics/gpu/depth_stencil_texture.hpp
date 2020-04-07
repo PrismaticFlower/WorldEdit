@@ -35,7 +35,7 @@ struct depth_stencil_texture : private texture {
       : texture{device, init_params, heap_type, initial_resource_state}
    {
       depth_stencil_view = device.dsv_descriptor_heap.allocate();
-      device.device_d3d->CreateDepthStencilView(resource, nullptr, depth_stencil_view);
+      device.device_d3d->CreateDepthStencilView(resource(), nullptr, depth_stencil_view);
    }
 
    depth_stencil_texture(const depth_stencil_texture&) noexcept = delete;
@@ -59,7 +59,7 @@ struct depth_stencil_texture : private texture {
    ~depth_stencil_texture()
    {
       if (alive()) {
-         parent_device->dsv_descriptor_heap.free(depth_stencil_view);
+         parent_device()->dsv_descriptor_heap.free(depth_stencil_view);
       }
    }
 

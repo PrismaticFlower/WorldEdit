@@ -45,29 +45,29 @@ renderer::renderer(const HWND window)
 
    const D3D12_RANGE read_range{};
    void* data = nullptr;
-   throw_if_failed(cpu_box_vertex_buffer.resource->Map(0, &read_range, &data));
+   throw_if_failed(cpu_box_vertex_buffer.resource()->Map(0, &read_range, &data));
 
    std::memcpy(data, box_vertices.data(), sizeof(box_vertices));
 
    D3D12_RANGE write_range{0, sizeof(box_vertices)};
-   cpu_box_vertex_buffer.resource->Unmap(0, &write_range);
+   cpu_box_vertex_buffer.resource()->Unmap(0, &write_range);
 
-   throw_if_failed(cpu_box_index_buffer.resource->Map(0, &read_range, &data));
+   throw_if_failed(cpu_box_index_buffer.resource()->Map(0, &read_range, &data));
 
    std::memcpy(data, box_indices.data(), sizeof(box_indices));
 
    write_range = {0, sizeof(box_indices)};
-   cpu_box_index_buffer.resource->Unmap(0, &write_range);
+   cpu_box_index_buffer.resource()->Unmap(0, &write_range);
 
    {
       auto& copy_manager = _device.copy_manager;
       auto copy_context = copy_manager.aquire_context();
       auto& command_list = copy_context.command_list;
 
-      command_list.CopyResource(_box_vertex_buffer.resource,
-                                cpu_box_vertex_buffer.resource);
-      command_list.CopyResource(_box_index_buffer.resource,
-                                cpu_box_index_buffer.resource);
+      command_list.CopyResource(_box_vertex_buffer.resource(),
+                                cpu_box_vertex_buffer.resource());
+      command_list.CopyResource(_box_index_buffer.resource(),
+                                cpu_box_index_buffer.resource());
 
       const UINT64 fence_value = copy_manager.close_and_execute(copy_context);
 
