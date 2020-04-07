@@ -5,75 +5,7 @@
 
 namespace sk::graphics {
 
-constexpr std::array<float3, 8> box_vertices{{{1.0f, 1.0f, 1.0f},
-                                              {-1.0f, 1.0f, -1.0f},
-                                              {-1.0f, 1.0f, 1.0f},
-                                              {1.0f, -1.0f, -1.0f},
-                                              {-1.0f, -1.0f, -1.0f},
-                                              {1.0f, 1.0f, -1.0f},
-                                              {1.0f, -1.0f, 1.0f},
-                                              {-1.0f, -1.0f, 1.0f}}};
-
-constexpr std::array<std::array<uint16, 3>, 12> box_indices{{{0, 1, 2},
-                                                             {1, 3, 4},
-                                                             {5, 6, 3},
-                                                             {7, 3, 6},
-                                                             {2, 4, 7},
-                                                             {0, 7, 6},
-                                                             {0, 5, 1},
-                                                             {1, 5, 3},
-                                                             {5, 0, 6},
-                                                             {7, 4, 3},
-                                                             {2, 1, 4},
-                                                             {0, 2, 7}}};
-
-renderer::renderer(const HWND window)
-   : _window{window},
-     _device{window},
-     _box_vertex_buffer{_device, sizeof(box_vertices), D3D12_HEAP_TYPE_DEFAULT,
-                        D3D12_RESOURCE_STATE_COPY_DEST},
-     _box_index_buffer{_device, sizeof(box_indices), D3D12_HEAP_TYPE_DEFAULT,
-                       D3D12_RESOURCE_STATE_COPY_DEST}
-{
-   gpu::buffer cpu_box_vertex_buffer{_device, sizeof(box_vertices),
-                                     D3D12_HEAP_TYPE_UPLOAD,
-                                     D3D12_RESOURCE_STATE_GENERIC_READ};
-
-   gpu::buffer cpu_box_index_buffer = {_device, sizeof(box_indices),
-                                       D3D12_HEAP_TYPE_UPLOAD,
-                                       D3D12_RESOURCE_STATE_GENERIC_READ};
-
-   const D3D12_RANGE read_range{};
-   void* data = nullptr;
-   throw_if_failed(cpu_box_vertex_buffer.resource()->Map(0, &read_range, &data));
-
-   std::memcpy(data, box_vertices.data(), sizeof(box_vertices));
-
-   D3D12_RANGE write_range{0, sizeof(box_vertices)};
-   cpu_box_vertex_buffer.resource()->Unmap(0, &write_range);
-
-   throw_if_failed(cpu_box_index_buffer.resource()->Map(0, &read_range, &data));
-
-   std::memcpy(data, box_indices.data(), sizeof(box_indices));
-
-   write_range = {0, sizeof(box_indices)};
-   cpu_box_index_buffer.resource()->Unmap(0, &write_range);
-
-   {
-      auto& copy_manager = _device.copy_manager;
-      auto copy_context = copy_manager.aquire_context();
-      auto& command_list = copy_context.command_list;
-
-      command_list.CopyResource(_box_vertex_buffer.resource(),
-                                cpu_box_vertex_buffer.resource());
-      command_list.CopyResource(_box_index_buffer.resource(),
-                                cpu_box_index_buffer.resource());
-
-      const UINT64 fence_value = copy_manager.close_and_execute(copy_context);
-
-      _device.command_queue->Wait(&copy_manager.fence(), fence_value);
-   }
-}
+renderer::renderer(const HWND window) : _window{window}, _device{window} {}
 
 void renderer::draw_frame(const camera& camera, const world::world& world,
                           const std::unordered_map<std::string, world::object_class>& world_classes)

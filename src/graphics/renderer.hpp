@@ -49,9 +49,6 @@ private:
       D3D12_HEAP_TYPE_DEFAULT,
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
-   gpu::buffer _box_vertex_buffer;
-   gpu::buffer _box_index_buffer;
-
    model_manager _model_manager{_device};
 
    struct render_list_item {
