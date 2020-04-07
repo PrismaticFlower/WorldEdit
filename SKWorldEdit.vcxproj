@@ -178,6 +178,8 @@
     <ClInclude Include="src\assets\odf\properties.hpp" />
     <ClInclude Include="src\assets\terrain\terrain.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_io.hpp" />
+    <ClInclude Include="src\assets\texture\texture.hpp" />
+    <ClInclude Include="src\assets\texture\texture_format.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
     <ClInclude Include="src\exceptions.hpp" />
@@ -245,6 +247,8 @@
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
+    <ClCompile Include="src\assets\texture\texture.cpp" />
+    <ClCompile Include="src\assets\texture\texture_format.cpp" />
     <ClCompile Include="src\graphics\camera.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />

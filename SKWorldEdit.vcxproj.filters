@@ -378,6 +378,12 @@
     <ClInclude Include="src\lowercase_string.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\texture\texture.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\texture\texture_format.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -462,6 +468,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\asset_traits.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\texture\texture.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\texture\texture_format.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
