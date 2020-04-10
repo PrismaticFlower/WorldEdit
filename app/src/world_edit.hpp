@@ -9,9 +9,12 @@
 
 #include <chrono>
 #include <filesystem>
+#include <memory>
 #include <unordered_map>
 
 #include <Windows.h>
+
+struct ImGuiContext;
 
 namespace sk {
 
@@ -43,6 +46,8 @@ private:
    bool _focused = true;
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
+
+   std::unique_ptr<ImGuiContext, void (*)(ImGuiContext*)> _imgui_context;
 
    // TODO: Decide on project dir handling.
    std::filesystem::path _project_dir = L"D:/BF2_ModTools/data_SPT";

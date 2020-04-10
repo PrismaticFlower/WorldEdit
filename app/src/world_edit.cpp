@@ -3,6 +3,9 @@
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
 #include "hresult_error.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_dx12.h"
+#include "imgui/imgui_impl_win32.h"
 #include "world/world_io_load.hpp"
 
 #include <stdexcept>
@@ -20,8 +23,11 @@ constexpr float camera_look_sensitivity = 0.18f;
 
 }
 
-world_edit::world_edit(const HWND window) : _window{window}, _renderer{window}
+world_edit::world_edit(const HWND window)
+   : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}, _renderer{window}
 {
+   ImGui_ImplWin32_Init(window);
+
    std::filesystem::current_path(_project_dir); // TODO: Decide on project dir handling design.
    _asset_libraries.source_directory(_project_dir);
 
@@ -55,6 +61,11 @@ bool world_edit::update()
    update_assets();
 
    if (not _focused) return true;
+
+   ImGui_ImplDX12_NewFrame();
+   ImGui_ImplWin32_NewFrame();
+   ImGui::NewFrame();
+   ImGui::ShowDemoWindow(nullptr);
 
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);

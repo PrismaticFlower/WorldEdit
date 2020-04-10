@@ -1,11 +1,21 @@
 
 #include "renderer.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_dx12.h"
 
 #include <d3dx12.h>
 
 namespace sk::graphics {
 
-renderer::renderer(const HWND window) : _window{window}, _device{window} {}
+renderer::renderer(const HWND window) : _window{window}, _device{window}
+{
+   auto imgui_font_descriptor = _device.descriptor_heap.allocate_static(1);
+
+   ImGui_ImplDX12_Init(_device.device_d3d.get(), gpu::render_latency,
+                       gpu::swap_chain::format_rtv, &_device.descriptor_heap.get(),
+                       imgui_font_descriptor.start().cpu,
+                       imgui_font_descriptor.start().gpu);
+}
 
 void renderer::draw_frame(const camera& camera, const world::world& world,
                           const std::unordered_map<std::string, world::object_class>& world_classes)
@@ -20,10 +30,13 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    auto& command_allocator = *_world_command_allocators[_device.frame_index];
    auto& command_list = *_world_command_list;
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
+   ID3D12DescriptorHeap* const descriptor_heap = &_device.descriptor_heap.get();
 
    throw_if_failed(command_allocator.Reset());
    throw_if_failed(command_list.Reset(&command_allocator, nullptr));
    _dynamic_buffer_allocator.reset(_device.frame_index);
+
+   command_list.SetDescriptorHeaps(1, &descriptor_heap);
 
    const auto rt_barrier =
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
@@ -86,6 +99,10 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
                                         object.start_vertex, 0);
    }
 
+   // Render ImGui
+   ImGui::Render();
+   ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), &command_list);
+
    const auto present_barrier =
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer,
                                            D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -106,6 +123,10 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
 void renderer::window_resized(uint16 width, uint16 height)
 {
+   if (width == _device.swap_chain.width() and height == _device.swap_chain.height()) {
+      return;
+   }
+
    _device.wait_for_idle();
    _device.swap_chain.resize(width, height);
    _depth_stencil_texture =

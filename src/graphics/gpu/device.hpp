@@ -59,6 +59,8 @@ struct device {
 
    constexpr static int rtv_descriptor_heap_size = 128;
    constexpr static int dsv_descriptor_heap_size = 32;
+   constexpr static int descriptor_static_heap_size = 16 * 4096;
+   constexpr static int descriptor_dynamic_heap_size = 16 * 4096;
 
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
@@ -75,6 +77,9 @@ struct device {
                                            rtv_descriptor_heap_size, *device_d3d};
    descriptor_heap_cpu dsv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
                                            dsv_descriptor_heap_size, *device_d3d};
+   descriptor_heap descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+                                   descriptor_static_heap_size,
+                                   descriptor_dynamic_heap_size, *device_d3d};
 
    async_copy_manager copy_manager{*device_d3d};
 

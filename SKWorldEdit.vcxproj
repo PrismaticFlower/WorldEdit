@@ -201,6 +201,14 @@
     <ClInclude Include="src\graphics\model_manager.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
+    <ClInclude Include="src\imgui\imconfig.h" />
+    <ClInclude Include="src\imgui\imgui.h" />
+    <ClInclude Include="src\imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="src\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="src\imgui\imgui_internal.h" />
+    <ClInclude Include="src\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\input_state.hpp" />
     <ClInclude Include="src\lowercase_string.hpp" />
     <ClInclude Include="src\math\align.hpp" />
@@ -259,6 +267,12 @@
     <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\hresult_error.cpp" />
+    <ClCompile Include="src\imgui\imgui.cpp" />
+    <ClCompile Include="src\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\imgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="src\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="src\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\input_state.cpp" />
     <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\read_file.cpp" />

@@ -17,7 +17,7 @@ auto create_dxgi_swapchain(const HWND window, IDXGIFactory7& factory,
    const DXGI_SWAP_CHAIN_DESC1 desc{.Width = static_cast<UINT>(rect.right - rect.left),
                                     .Height =
                                        static_cast<UINT>(rect.bottom - rect.top),
-                                    .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+                                    .Format = swap_chain::format,
                                     .SampleDesc =
                                        {
                                           .Count = 1,
@@ -63,7 +63,7 @@ swap_chain::swap_chain(const HWND window, IDXGIFactory7& factory,
 
       render_target_views[i] = rtv_descriptor_heap.allocate();
 
-      const D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+      const D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{.Format = format_rtv,
                                                    .ViewDimension =
                                                       D3D12_RTV_DIMENSION_TEXTURE2D};
 
@@ -91,7 +91,7 @@ void swap_chain::resize(const uint16 width, const uint16 height)
    render_targets = {};
 
    throw_if_failed(
-      dxgi_swap_chain->ResizeBuffers(frame_count, width, height, DXGI_FORMAT_R8G8B8A8_UNORM,
+      dxgi_swap_chain->ResizeBuffers(frame_count, width, height, format,
                                      DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT));
 
    for (int i = 0; i < frame_count; ++i) {
@@ -99,7 +99,7 @@ void swap_chain::resize(const uint16 width, const uint16 height)
          dxgi_swap_chain->GetBuffer(i, IID_PPV_ARGS(
                                           render_targets[i].clear_and_assign())));
 
-      const D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+      const D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{.Format = format_rtv,
                                                    .ViewDimension =
                                                       D3D12_RTV_DIMENSION_TEXTURE2D};
 
