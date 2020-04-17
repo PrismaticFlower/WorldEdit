@@ -27,6 +27,7 @@ world_edit::world_edit(const HWND window)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}, _renderer{window}
 {
    ImGui_ImplWin32_Init(window);
+   imgui_keymap_init(ImGui::GetIO());
 
    std::filesystem::current_path(_project_dir); // TODO: Decide on project dir handling design.
    _asset_libraries.source_directory(_project_dir);
@@ -65,6 +66,7 @@ bool world_edit::update()
    ImGui_ImplDX12_NewFrame();
    ImGui_ImplWin32_NewFrame();
    ImGui::NewFrame();
+   imgui_update_io(mouse_state, keyboard_state, ImGui::GetIO());
    ImGui::ShowDemoWindow(nullptr);
 
    // Render!
@@ -110,37 +112,40 @@ void world_edit::update_camera(const float delta_time, const mouse_state& mouse_
                                const keyboard_state& keyboard_state)
 {
 
-   float3 camera_position = _camera.position();
+   if (not ImGui::GetIO().WantCaptureKeyboard) {
+      float3 camera_position = _camera.position();
 
-   const float camera_movement_scale = delta_time * camera_movement_sensitivity;
+      const float camera_movement_scale = delta_time * camera_movement_sensitivity;
 
-   if (keyboard_state[keyboard_keys::w]) {
-      camera_position += (_camera.forward() * camera_movement_scale);
-   }
-   if (keyboard_state[keyboard_keys::s]) {
-      camera_position += (_camera.back() * camera_movement_scale);
-   }
-   if (keyboard_state[keyboard_keys::a]) {
-      camera_position += (_camera.left() * camera_movement_scale);
-   }
-   if (keyboard_state[keyboard_keys::d]) {
-      camera_position += (_camera.right() * camera_movement_scale);
-   }
-   if (keyboard_state[keyboard_keys::r]) {
-      camera_position += (_camera.up() * camera_movement_scale);
-   }
-   if (keyboard_state[keyboard_keys::f]) {
-      camera_position += (_camera.down() * camera_movement_scale);
+      if (keyboard_state[keyboard_keys::w]) {
+         camera_position += (_camera.forward() * camera_movement_scale);
+      }
+      if (keyboard_state[keyboard_keys::s]) {
+         camera_position += (_camera.back() * camera_movement_scale);
+      }
+      if (keyboard_state[keyboard_keys::a]) {
+         camera_position += (_camera.left() * camera_movement_scale);
+      }
+      if (keyboard_state[keyboard_keys::d]) {
+         camera_position += (_camera.right() * camera_movement_scale);
+      }
+      if (keyboard_state[keyboard_keys::r]) {
+         camera_position += (_camera.up() * camera_movement_scale);
+      }
+      if (keyboard_state[keyboard_keys::f]) {
+         camera_position += (_camera.down() * camera_movement_scale);
+      }
+
+      _camera.position(camera_position);
    }
 
-   if (mouse_state.over_window and mouse_state.right_button) {
+   if (mouse_state.over_window and mouse_state.right_button and
+       not ImGui::GetIO().WantCaptureMouse) {
       const float camera_look_scale = delta_time * camera_look_sensitivity;
 
       _camera.yaw(_camera.yaw() + (mouse_state.x_movement * camera_look_scale));
       _camera.pitch(_camera.pitch() + (mouse_state.y_movement * camera_look_scale));
    }
-
-   _camera.position(camera_position);
 }
 
 void world_edit::resized(uint16 width, uint16 height)
@@ -164,6 +169,43 @@ void world_edit::unfocused()
 bool world_edit::idling() const noexcept
 {
    return not _focused;
+}
+
+void world_edit::mouse_wheel_movement(const float movement) noexcept
+{
+   ImGui::GetIO().MouseWheel += movement;
+}
+
+void world_edit::update_cursor() noexcept
+{
+   SetCursor(LoadCursorW(nullptr, [] {
+      switch (ImGui::GetMouseCursor()) {
+      default:
+      case ImGuiMouseCursor_Arrow:
+         return IDC_ARROW;
+      case ImGuiMouseCursor_TextInput:
+         return IDC_IBEAM;
+      case ImGuiMouseCursor_ResizeAll:
+         return IDC_SIZEALL;
+      case ImGuiMouseCursor_ResizeNS:
+         return IDC_SIZEWE;
+      case ImGuiMouseCursor_ResizeEW:
+         return IDC_SIZEWE;
+      case ImGuiMouseCursor_ResizeNESW:
+         return IDC_SIZENESW;
+      case ImGuiMouseCursor_ResizeNWSE:
+         return IDC_SIZENWSE;
+      case ImGuiMouseCursor_Hand:
+         return IDC_HAND;
+      case ImGuiMouseCursor_NotAllowed:
+         return IDC_NO;
+      }
+   }()));
+}
+
+void world_edit::char_input(const char16_t c) noexcept
+{
+   ImGui::GetIO().AddInputCharacterUTF16(static_cast<ImWchar16>(c));
 }
 
 }

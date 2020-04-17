@@ -1,5 +1,4 @@
 
-#include "imgui/imgui_impl_win32.h"
 #include "world_edit.hpp"
 
 #include <atomic>
@@ -16,13 +15,16 @@
 // clang-format off
 
 template<typename App>
-concept application = requires(App app, HWND window, int size) {
+concept application = requires(App app, HWND window, int size, float movement, char16_t char16) {
    { App{window} };
    { app.update() } -> std::convertible_to<bool>;
    { app.resized(size, size) };
    { app.focused() };
    { app.unfocused() };
    { app.idling() } -> std::convertible_to<bool>;
+   { app.mouse_wheel_movement(movement) };
+   { app.update_cursor() };
+   { app.char_input(char16) };
 };
 
 // clang-format on
@@ -95,6 +97,23 @@ void run_application()
          else if (wparam == FALSE) {
             app.unfocused();
          }
+
+         return 0;
+      case WM_SETCURSOR:
+         if (LOWORD(lparam) != HTCLIENT) break;
+
+         app.update_cursor();
+
+         return TRUE;
+      case WM_MOUSEWHEEL: {
+         const float delta = GET_WHEEL_DELTA_WPARAM(wparam);
+
+         app.mouse_wheel_movement(delta / float{WHEEL_DELTA});
+
+         return 0;
+      }
+      case WM_CHAR:
+         app.char_input(static_cast<char16_t>(wparam));
 
          return 0;
       }

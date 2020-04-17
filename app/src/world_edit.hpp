@@ -32,6 +32,12 @@ public:
 
    bool idling() const noexcept;
 
+   void mouse_wheel_movement(const float movement) noexcept;
+
+   void update_cursor() noexcept;
+
+   void char_input(const char16_t c) noexcept;
+
 private:
    void update_object_classes();
 
