@@ -18,7 +18,7 @@ struct pipeline_library {
    explicit pipeline_library(ID3D12Device& device,
                              const root_signature_library& root_signature_library);
 
-   utility::com_ptr<ID3D12PipelineState> basic_test;
+   utility::com_ptr<ID3D12PipelineState> basic_object_mesh;
 };
 
 }

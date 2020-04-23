@@ -63,8 +63,9 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    command_list.OMSetRenderTargets(1, &back_buffer_rtv, true,
                                    &_depth_stencil_texture.depth_stencil_view);
 
-   command_list.SetGraphicsRootSignature(_device.root_signatures.basic_test.get());
-   command_list.SetPipelineState(_device.pipelines.basic_test.get());
+   command_list.SetGraphicsRootSignature(
+      _device.root_signatures.basic_object_mesh.get());
+   command_list.SetPipelineState(_device.pipelines.basic_object_mesh.get());
 
    // TEMP Camera Setup
    {

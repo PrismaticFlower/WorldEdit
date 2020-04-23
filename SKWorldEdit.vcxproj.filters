@@ -520,7 +520,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\graphics\gpu\shaders\basic_testPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\basic_testVS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshVS.hlsl" />
   </ItemGroup>
 </Project>

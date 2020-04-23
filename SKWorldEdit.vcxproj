@@ -281,11 +281,11 @@
     <ClCompile Include="src\world\world_io_load.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\graphics\gpu\shaders\basic_testPS.hlsl">
+    <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="src\graphics\gpu\shaders\basic_testVS.hlsl">
+    <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>

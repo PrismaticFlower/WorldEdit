@@ -51,7 +51,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    constexpr std::array basic_root_params{global_cb_root_param, object_cb_root_param};
 
-   basic_test = create_root_signature(
+   basic_object_mesh = create_root_signature(
       device,
       {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
        .Desc_1_1 = {.NumParameters = static_cast<UINT>(basic_root_params.size()),

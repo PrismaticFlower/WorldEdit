@@ -120,10 +120,10 @@ constexpr D3D12_INPUT_LAYOUT_DESC mesh_input_layout =
 pipeline_library::pipeline_library(ID3D12Device& device,
                                    const root_signature_library& root_signature_library)
 {
-   basic_test = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.basic_test.get(),
-               .VS = shader_library::basic_test_vs,
-               .PS = shader_library::basic_test_ps,
+   basic_object_mesh = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.basic_object_mesh.get(),
+               .VS = shader_library::basic_object_mesh_vs,
+               .PS = shader_library::basic_object_mesh_ps,
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
