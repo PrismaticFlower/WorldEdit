@@ -347,6 +347,7 @@ void load_regions(const std::filesystem::path& filepath, output_stream& output,
          case 1:
          case 2:
             region.shape = static_cast<region_shape>(shape);
+            break;
          default:
             output.write(fmt::format("Warning! World region '{}' has invalid shape! Defaulting to box.\n"sv,
                                      region.name));
