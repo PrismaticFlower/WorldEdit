@@ -408,6 +408,9 @@
     <ClInclude Include="src\imgui\imstb_truetype.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\geometric_shapes.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -518,9 +521,14 @@
     <ClCompile Include="src\imgui\imgui_widgets.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\geometric_shapes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshVS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshVS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshPS.hlsl" />
   </ItemGroup>
 </Project>

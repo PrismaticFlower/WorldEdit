@@ -199,6 +199,7 @@
     <ClInclude Include="src\graphics\gpu\shader_library.hpp" />
     <ClInclude Include="src\graphics\gpu\swap_chain.hpp" />
     <ClInclude Include="src\graphics\model_manager.hpp" />
+    <ClInclude Include="src\graphics\geometric_shapes.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\imgui\imconfig.h" />
@@ -258,6 +259,7 @@
     <ClCompile Include="src\assets\texture\texture.cpp" />
     <ClCompile Include="src\assets\texture\texture_format.cpp" />
     <ClCompile Include="src\graphics\camera.cpp" />
+    <ClCompile Include="src\graphics\geometric_shapes.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />
@@ -286,6 +288,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>

@@ -57,6 +57,24 @@ root_signature_library::root_signature_library(ID3D12Device& device)
        .Desc_1_1 = {.NumParameters = static_cast<UINT>(basic_root_params.size()),
                     .pParameters = basic_root_params.data(),
                     .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
+
+   constexpr D3D12_ROOT_PARAMETER1 meta_object_color_cb_root_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
+      .Descriptor = {.ShaderRegister = 0,
+                     .RegisterSpace = 0,
+                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE},
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
+
+   constexpr std::array meta_object_mesh_params{global_cb_root_param,
+                                                object_cb_root_param,
+                                                meta_object_color_cb_root_param};
+
+   meta_object_mesh = create_root_signature(
+      device,
+      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+       .Desc_1_1 = {.NumParameters = static_cast<UINT>(meta_object_mesh_params.size()),
+                    .pParameters = meta_object_mesh_params.data(),
+                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 }
 
 }

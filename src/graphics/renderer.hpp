@@ -1,6 +1,7 @@
 #pragma once
 
 #include "camera.hpp"
+#include "geometric_shapes.hpp"
 #include "gpu/buffer.hpp"
 #include "gpu/depth_stencil_texture.hpp"
 #include "gpu/device.hpp"
@@ -25,6 +26,9 @@ public:
    void window_resized(uint16 width, uint16 height);
 
 private:
+   void draw_world_meta_objects(const camera& camera, const world::world& world,
+                                ID3D12GraphicsCommandList5& command_list);
+
    void build_object_render_list(
       const world::world& world,
       const std::unordered_map<std::string, world::object_class>& world_classes);
@@ -50,6 +54,7 @@ private:
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
    model_manager _model_manager{_device};
+   geometric_shapes _geometric_shapes{_device};
 
    struct render_list_item {
       float distance;

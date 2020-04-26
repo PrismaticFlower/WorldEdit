@@ -7,6 +7,15 @@
 
 namespace sk::graphics {
 
+namespace {
+
+struct TEMP_meta_constant_buffer {
+   float4x4 transform;
+   float4 color;
+};
+
+}
+
 renderer::renderer(const HWND window) : _window{window}, _device{window}
 {
    auto imgui_font_descriptor = _device.descriptor_heap.allocate_static(1);
@@ -69,7 +78,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
    // TEMP Camera Setup
    {
-      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(sizeof(float4x4)));
+      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
 
       std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
                   sizeof(float4x4));
@@ -83,8 +92,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    for (auto& object : _object_render_list) {
       // TEMP object constants setup
       {
-         auto allocation =
-            _dynamic_buffer_allocator.allocate(sizeof(sizeof(float4x4)));
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
 
          std::memcpy(allocation.cpu_address, &object.transform, sizeof(float4x4));
 
@@ -99,6 +107,9 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
       command_list.DrawIndexedInstanced(object.index_count, 1, object.start_index,
                                         object.start_vertex, 0);
    }
+
+   // Render World Meta Objects
+   draw_world_meta_objects(camera, world, command_list);
 
    // Render ImGui
    ImGui::Render();
@@ -141,6 +152,87 @@ void renderer::window_resized(uint16 width, uint16 height)
        D3D12_RESOURCE_STATE_DEPTH_WRITE};
 }
 
+void renderer::draw_world_meta_objects(const camera& camera, const world::world& world,
+                                       ID3D12GraphicsCommandList5& command_list)
+{
+   command_list.SetGraphicsRootSignature(
+      _device.root_signatures.meta_object_mesh.get());
+   command_list.SetPipelineState(_device.pipelines.meta_object_mesh.get());
+
+   // TEMP Camera Setup
+   {
+      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+      std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
+                  sizeof(float4x4));
+
+      command_list.SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
+   }
+
+   // Set Regions Color
+   {
+      const float4 color{0.25f, 0.4f, 1.0f, 0.3f};
+
+      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
+
+      std::memcpy(allocation.cpu_address, &color, sizeof(float4));
+
+      command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+   }
+
+   for (auto& region : world.regions) {
+      // TEMP constants setup
+      {
+         const float3 scale = [&] {
+            switch (region.shape) {
+            default:
+            case world::region_shape::box: {
+               return region.size;
+            }
+            case world::region_shape::sphere: {
+               return float3{glm::length(region.size)};
+            }
+            case world::region_shape::cylinder: {
+               const float cylinder_length =
+                  glm::length(float2{region.size.x, region.size.z});
+               return float3{cylinder_length, region.size.y, cylinder_length};
+            }
+            }
+         }();
+
+         float4x4 transform = static_cast<float4x4>(region.rotation) *
+                              glm::mat4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                        {0.0f, scale.y, 0.0f, 0.0f},
+                                        {0.0f, 0.0f, scale.z, 0.0f},
+                                        {0.0f, 0.0f, 0.0f, 1.0f}};
+
+         transform[3] = {region.position, 1.0f};
+
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+         std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+      }
+
+      const geometric_shape shape = [&] {
+         switch (region.shape) {
+         default:
+         case world::region_shape::box:
+            return _geometric_shapes.cube();
+         case world::region_shape::sphere:
+            return _geometric_shapes.icosphere();
+         case world::region_shape::cylinder:
+            return _geometric_shapes.cylinder();
+         }
+      }();
+
+      command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+      command_list.IASetIndexBuffer(&shape.index_buffer_view);
+      command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+   }
+}
+
 void renderer::build_object_render_list(
    const world::world& world,
    const std::unordered_map<std::string, world::object_class>& world_classes)
@@ -168,5 +260,4 @@ void renderer::build_object_render_list(
       }
    }
 }
-
 }

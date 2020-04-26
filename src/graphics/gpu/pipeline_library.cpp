@@ -41,10 +41,30 @@ constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_blend_disabled =
     .LogicOp = D3D12_LOGIC_OP_NOOP,
     .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
 
+constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_premult_alpha_belnd =
+   {.BlendEnable = true,
+    .LogicOpEnable = false,
+    .SrcBlend = D3D12_BLEND_ONE,
+    .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+    .BlendOp = D3D12_BLEND_OP_ADD,
+    .SrcBlendAlpha = D3D12_BLEND_ONE,
+    .DestBlendAlpha = D3D12_BLEND_ZERO,
+    .BlendOpAlpha = D3D12_BLEND_OP_ADD,
+    .LogicOp = D3D12_LOGIC_OP_NOOP,
+    .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
+
 constexpr D3D12_BLEND_DESC blend_disabled =
    {.AlphaToCoverageEnable = false,
     .IndependentBlendEnable = false,
     .RenderTarget = {render_target_blend_disabled, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled}};
+
+constexpr D3D12_BLEND_DESC blend_premult_alpha =
+   {.AlphaToCoverageEnable = false,
+    .IndependentBlendEnable = false,
+    .RenderTarget = {render_target_premult_alpha_belnd, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled}};
@@ -90,6 +110,16 @@ constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_enabled =
     .FrontFace = stencilop_disabled,
     .BackFace = stencilop_disabled};
 
+constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_enabled =
+   {.DepthEnable = true,
+    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
+    .DepthFunc = D3D12_COMPARISON_FUNC_GREATER,
+    .StencilEnable = false,
+    .StencilReadMask = 0,
+    .StencilWriteMask = 0,
+    .FrontFace = stencilop_disabled,
+    .BackFace = stencilop_disabled};
+
 constexpr std::array mesh_input_layout_elements =
    {D3D12_INPUT_ELEMENT_DESC{.SemanticName = "POSITION",
                              .SemanticIndex = 0,
@@ -115,6 +145,18 @@ constexpr D3D12_INPUT_LAYOUT_DESC mesh_input_layout =
    {.pInputElementDescs = mesh_input_layout_elements.data(),
     .NumElements = static_cast<UINT>(mesh_input_layout_elements.size())};
 
+constexpr std::array meta_mesh_input_layout_elements = {
+   D3D12_INPUT_ELEMENT_DESC{.SemanticName = "POSITION",
+                            .SemanticIndex = 0,
+                            .Format = DXGI_FORMAT_R32G32B32_FLOAT,
+                            .InputSlot = 0,
+                            .AlignedByteOffset = 0,
+                            .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA}};
+
+constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
+   {.pInputElementDescs = meta_mesh_input_layout_elements.data(),
+    .NumElements = static_cast<UINT>(meta_mesh_input_layout_elements.size())};
+
 }
 
 pipeline_library::pipeline_library(ID3D12Device& device,
@@ -130,6 +172,23 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .RasterizerState = rasterizer_cull_backfacing,
                .DepthStencilState = depth_stencil_enabled,
                .InputLayout = mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 1,
+               .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
+   meta_object_mesh = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
+               .VS = shader_library::meta_object_mesh_vs,
+               .PS = shader_library::meta_object_mesh_ps,
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_premult_alpha,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_backfacing,
+               .DepthStencilState = depth_stencil_readonly_enabled,
+               .InputLayout = meta_mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
                .NumRenderTargets = 1,
