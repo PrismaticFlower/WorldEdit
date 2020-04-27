@@ -9,10 +9,7 @@ namespace sk::graphics {
 
 namespace {
 
-struct TEMP_meta_constant_buffer {
-   float4x4 transform;
-   float4 color;
-};
+constexpr float temp_barrier_height = 64.0f;
 
 }
 
@@ -230,6 +227,56 @@ void renderer::draw_world_meta_objects(const camera& camera, const world::world&
       command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
       command_list.IASetIndexBuffer(&shape.index_buffer_view);
       command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+   }
+
+   // Set Barriers Color
+   {
+      const float4 color{1.0f, 0.1f, 0.05f, 0.3f};
+
+      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
+
+      std::memcpy(allocation.cpu_address, &color, sizeof(float4));
+
+      command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+   }
+
+   // Set Barriers IA State
+   {
+      const geometric_shape shape = _geometric_shapes.cube();
+
+      command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+      command_list.IASetIndexBuffer(&shape.index_buffer_view);
+   }
+
+   for (auto& barrier : world.barriers) {
+      // TEMP constants setup
+      {
+         const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
+         const float2 size{glm::distance(barrier.corners[0], barrier.corners[3]),
+                           glm::distance(barrier.corners[0], barrier.corners[1])};
+         const float angle =
+            std::atan2(barrier.corners[1].x - barrier.corners[0].x,
+                       barrier.corners[1].y - barrier.corners[0].y);
+
+         const quaternion rotation{float3{0.0f, angle, 0.0f}};
+
+         float4x4 transform = static_cast<float4x4>(rotation) *
+                              glm::mat4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                                        {0.0f, temp_barrier_height, 0.0f, 0.0f},
+                                        {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                                        {0.0f, 0.0f, 0.0f, 1.0f}};
+
+         transform[3] = {position.x, 0.0f, position.y, 1.0f};
+
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+         std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+      }
+
+      command_list.DrawIndexedInstanced(_geometric_shapes.cube().index_count, 1,
+                                        0, 0, 0);
    }
 }
 
