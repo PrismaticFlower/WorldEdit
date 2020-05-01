@@ -377,6 +377,17 @@ struct geometric_shapes_buffer {
                                                                 {7, 4, 3},
                                                                 {2, 1, 4},
                                                                 {0, 2, 7}}};
+
+   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<float3, 6> octahedron_vertices{
+      {{1.000000f, 0.000000f, 1.000000f},
+       {0.000000f, 1.000000f, 0.000000f},
+       {-1.000000f, 0.000000f, 1.000000f},
+       {-1.000000f, 0.000000f, -1.000000f},
+       {1.000000f, 0.000000f, -1.000000f},
+       {0.000000f, -1.000000f, 0.000000f}}};
+
+   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<std::array<uint16, 3>, 8> octahedron_indices{
+      {{0, 1, 2}, {2, 1, 3}, {3, 1, 4}, {4, 1, 0}, {4, 5, 3}, {0, 5, 4}, {2, 5, 0}, {3, 5, 2}}};
 };
 
 constexpr geometric_shapes_buffer shapes_buffer;
@@ -460,6 +471,19 @@ void geometric_shapes::init_shapes()
                    gpu_address + offsetof(geometric_shapes_buffer, cube_vertices),
                 .SizeInBytes = sizeof(geometric_shapes_buffer::cube_vertices),
                 .StrideInBytes = sizeof(float3)}};
+
+   _octahedron =
+      {.index_count = static_cast<uint32>(shapes_buffer.octahedron_indices.size()) * 3,
+       .index_buffer_view = {.BufferLocation =
+                                gpu_address + offsetof(geometric_shapes_buffer,
+                                                       octahedron_indices),
+                             .SizeInBytes = sizeof(geometric_shapes_buffer::octahedron_indices),
+                             .Format = DXGI_FORMAT_R16_UINT},
+       .position_vertex_buffer_view =
+          {.BufferLocation =
+              gpu_address + offsetof(geometric_shapes_buffer, octahedron_vertices),
+           .SizeInBytes = sizeof(geometric_shapes_buffer::octahedron_vertices),
+           .StrideInBytes = sizeof(float3)}};
 }
 
 }

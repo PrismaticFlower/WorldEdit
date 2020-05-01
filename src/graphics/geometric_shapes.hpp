@@ -33,6 +33,11 @@ public:
       return _icosphere;
    }
 
+   auto octahedron() -> geometric_shape
+   {
+      return _octahedron;
+   }
+
 private:
    void init_gpu_buffer(gpu::device& device);
 
@@ -43,6 +48,7 @@ private:
    geometric_shape _icosphere;
    geometric_shape _cylinder;
    geometric_shape _cube;
+   geometric_shape _octahedron;
 };
 
 }

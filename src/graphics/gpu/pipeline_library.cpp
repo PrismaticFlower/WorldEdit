@@ -53,6 +53,18 @@ constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_premult_alpha_belnd =
     .LogicOp = D3D12_LOGIC_OP_NOOP,
     .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
 
+constexpr D3D12_RENDER_TARGET_BLEND_DESC render_targett_alpha_belnd =
+   {.BlendEnable = true,
+    .LogicOpEnable = false,
+    .SrcBlend = D3D12_BLEND_SRC_ALPHA,
+    .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+    .BlendOp = D3D12_BLEND_OP_ADD,
+    .SrcBlendAlpha = D3D12_BLEND_ONE,
+    .DestBlendAlpha = D3D12_BLEND_ZERO,
+    .BlendOpAlpha = D3D12_BLEND_OP_ADD,
+    .LogicOp = D3D12_LOGIC_OP_NOOP,
+    .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
+
 constexpr D3D12_BLEND_DESC blend_disabled =
    {.AlphaToCoverageEnable = false,
     .IndependentBlendEnable = false,
@@ -65,6 +77,14 @@ constexpr D3D12_BLEND_DESC blend_premult_alpha =
    {.AlphaToCoverageEnable = false,
     .IndependentBlendEnable = false,
     .RenderTarget = {render_target_premult_alpha_belnd, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled}};
+
+constexpr D3D12_BLEND_DESC blend_alpha =
+   {.AlphaToCoverageEnable = false,
+    .IndependentBlendEnable = false,
+    .RenderTarget = {render_targett_alpha_belnd, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled}};
@@ -84,21 +104,24 @@ constexpr D3D12_RASTERIZER_DESC rasterizer_cull_backfacing =
     .ForcedSampleCount = 0,
     .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
 
+constexpr D3D12_RASTERIZER_DESC rasterizer_no_cull =
+   {.FillMode = D3D12_FILL_MODE_SOLID,
+    .CullMode = D3D12_CULL_MODE_NONE,
+    .FrontCounterClockwise = true,
+    .DepthBias = 0,
+    .DepthBiasClamp = 0.0f,
+    .SlopeScaledDepthBias = 0.0f,
+    .DepthClipEnable = true,
+    .MultisampleEnable = false,
+    .AntialiasedLineEnable = false,
+    .ForcedSampleCount = 0,
+    .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
+
 constexpr D3D12_DEPTH_STENCILOP_DESC stencilop_disabled =
    {.StencilFailOp = D3D12_STENCIL_OP_KEEP,
     .StencilDepthFailOp = D3D12_STENCIL_OP_KEEP,
     .StencilPassOp = D3D12_STENCIL_OP_KEEP,
     .StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS};
-
-constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_disabled =
-   {.DepthEnable = false,
-    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
-    .DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS,
-    .StencilEnable = false,
-    .StencilReadMask = 0,
-    .StencilWriteMask = 0,
-    .FrontFace = stencilop_disabled,
-    .BackFace = stencilop_disabled};
 
 constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_enabled =
    {.DepthEnable = true,
@@ -179,7 +202,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
-   meta_object_mesh = create_graphics_pipeline(
+   meta_object_transparent_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
                .VS = shader_library::meta_object_mesh_vs,
                .PS = shader_library::meta_object_mesh_ps,
@@ -188,6 +211,23 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_backfacing,
                .DepthStencilState = depth_stencil_readonly_enabled,
+               .InputLayout = meta_mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 1,
+               .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
+   meta_object_mesh_outlined = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
+               .VS = shader_library::meta_object_mesh_vs,
+               .PS = shader_library::meta_object_mesh_outlined_ps,
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_backfacing,
+               .DepthStencilState = depth_stencil_enabled,
                .InputLayout = meta_mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,

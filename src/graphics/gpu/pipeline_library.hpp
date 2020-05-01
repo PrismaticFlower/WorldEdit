@@ -20,7 +20,8 @@ struct pipeline_library {
 
    utility::com_ptr<ID3D12PipelineState> basic_object_mesh;
 
-   utility::com_ptr<ID3D12PipelineState> meta_object_mesh;
+   utility::com_ptr<ID3D12PipelineState> meta_object_transparent_mesh;
+   utility::com_ptr<ID3D12PipelineState> meta_object_mesh_outlined;
 };
 
 }

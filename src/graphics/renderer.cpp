@@ -154,8 +154,6 @@ void renderer::draw_world_meta_objects(const camera& camera, const world::world&
 {
    command_list.SetGraphicsRootSignature(
       _device.root_signatures.meta_object_mesh.get());
-   command_list.SetPipelineState(_device.pipelines.meta_object_mesh.get());
-
    // TEMP Camera Setup
    {
       auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
@@ -165,6 +163,56 @@ void renderer::draw_world_meta_objects(const camera& camera, const world::world&
 
       command_list.SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
    }
+
+   // Set Path Nodes Constants
+   {
+      struct {
+         const float4 color{0.15f, 1.0f, 0.3f, 1.0f};
+         const float4 outline_color{0.1125f, 0.6f, 0.2225f, 1.0f};
+         float2 viewport_size;
+         float2 viewport_topleft = {0.0f, 0.0f};
+      } temp_constants;
+
+      temp_constants.viewport_size = {static_cast<float>(_device.swap_chain.width()),
+                                      static_cast<float>(_device.swap_chain.height())};
+
+      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(temp_constants));
+
+      std::memcpy(allocation.cpu_address, &temp_constants, sizeof(temp_constants));
+
+      command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+   }
+
+   command_list.SetPipelineState(_device.pipelines.meta_object_mesh_outlined.get());
+
+   for (auto& path : world.paths) {
+      for (auto& node : path.nodes) {
+         // TEMP constants setup
+         {
+            float4x4 transform = static_cast<float4x4>(node.rotation) *
+                                 glm::mat4{{0.5f, 0.0f, 0.0f, 0.0f},
+                                           {0.0f, 0.5f, 0.0f, 0.0f},
+                                           {0.0f, 0.0f, 0.5f, 0.0f},
+                                           {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {node.position, 1.0f};
+
+            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+            std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+            command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+         }
+
+         const geometric_shape shape = _geometric_shapes.octahedron();
+
+         command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+         command_list.IASetIndexBuffer(&shape.index_buffer_view);
+         command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+      }
+   }
+
+   command_list.SetPipelineState(_device.pipelines.meta_object_transparent_mesh.get());
 
    // Set Regions Color
    {

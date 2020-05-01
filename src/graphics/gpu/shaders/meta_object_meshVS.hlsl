@@ -4,7 +4,6 @@ struct global_matrices {
 
 struct object_constants {
    float4x4 world_matrix;
-   float4 color;
 };
 
 ConstantBuffer<global_matrices> cb_global_matrices : register(b0);
@@ -15,6 +14,7 @@ struct input_vertex {
 };
 
 struct output_vertex {
+   nointerpolation float4 flat_positionPS : POSITIONPS;
    float4 positionPS : SV_Position;
 };
 
@@ -24,9 +24,11 @@ output_vertex main(input_vertex input)
 
    const float3 positionWS =
       mul(cb_object_constants.world_matrix, float4(input.positionOS, 1.0)).xyz;
-
-   output.positionPS =
+   const float4 positionPS =
       mul(cb_global_matrices.view_projection_matrix, float4(positionWS, 1.0));
+
+   output.flat_positionPS = positionPS;
+   output.positionPS = positionPS;
 
    return output;
 }
