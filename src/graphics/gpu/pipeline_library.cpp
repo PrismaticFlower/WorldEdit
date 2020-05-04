@@ -53,11 +53,11 @@ constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_premult_alpha_belnd =
     .LogicOp = D3D12_LOGIC_OP_NOOP,
     .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
 
-constexpr D3D12_RENDER_TARGET_BLEND_DESC render_targett_alpha_belnd =
+constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_additive_belnd =
    {.BlendEnable = true,
     .LogicOpEnable = false,
-    .SrcBlend = D3D12_BLEND_SRC_ALPHA,
-    .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+    .SrcBlend = D3D12_BLEND_ONE,
+    .DestBlend = D3D12_BLEND_ONE,
     .BlendOp = D3D12_BLEND_OP_ADD,
     .SrcBlendAlpha = D3D12_BLEND_ONE,
     .DestBlendAlpha = D3D12_BLEND_ZERO,
@@ -81,10 +81,10 @@ constexpr D3D12_BLEND_DESC blend_premult_alpha =
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled}};
 
-constexpr D3D12_BLEND_DESC blend_alpha =
+constexpr D3D12_BLEND_DESC blend_additive =
    {.AlphaToCoverageEnable = false,
     .IndependentBlendEnable = false,
-    .RenderTarget = {render_targett_alpha_belnd, render_target_blend_disabled,
+    .RenderTarget = {render_target_additive_belnd, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled}};
@@ -207,7 +207,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .VS = shader_library::meta_object_mesh_vs,
                .PS = shader_library::meta_object_mesh_ps,
                .StreamOutput = stream_output_disabled,
-               .BlendState = blend_premult_alpha,
+               .BlendState = blend_additive,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_backfacing,
                .DepthStencilState = depth_stencil_readonly_enabled,
