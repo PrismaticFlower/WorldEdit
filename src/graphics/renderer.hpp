@@ -26,7 +26,9 @@ public:
    void window_resized(uint16 width, uint16 height);
 
 private:
-   void draw_world_meta_objects(const camera& camera, const world::world& world,
+   void draw_world_meta_objects(const camera& camera,
+                                const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
+                                const world::world& world,
                                 ID3D12GraphicsCommandList5& command_list);
 
    void build_object_render_list(

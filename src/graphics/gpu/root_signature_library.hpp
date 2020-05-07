@@ -11,6 +11,7 @@ struct root_signature_library {
 
    utility::com_ptr<ID3D12RootSignature> basic_object_mesh;
    utility::com_ptr<ID3D12RootSignature> meta_object_mesh;
+   utility::com_ptr<ID3D12RootSignature> meta_line;
 };
 
 }

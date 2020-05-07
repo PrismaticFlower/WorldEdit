@@ -9,9 +9,12 @@ namespace {
 
 #include "basic_object_meshPS_dxil.h"
 #include "basic_object_meshVS_dxil.h"
+
 #include "meta_object_meshPS_dxil.h"
 #include "meta_object_meshVS_dxil.h"
 #include "meta_object_mesh_outlinedPS_dxil.h"
+
+#include "meta_lineVS_dxil.h"
 
 template<std::size_t n>
 constexpr auto bytecode_init(const unsigned char (&bytecode)[n]) -> D3D12_SHADER_BYTECODE
@@ -36,4 +39,5 @@ const D3D12_SHADER_BYTECODE meta_object_mesh_ps =
 const D3D12_SHADER_BYTECODE meta_object_mesh_outlined_ps =
    bytecode_init(meta_object_mesh_outlinedPS_dxil);
 
+const D3D12_SHADER_BYTECODE meta_line_vs = bytecode_init(meta_lineVS_dxil);
 }

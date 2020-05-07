@@ -2,8 +2,11 @@
 #include "renderer.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
+#include "line_drawer.hpp"
 
 #include <d3dx12.h>
+
+#include <range/v3/view.hpp>
 
 namespace sk::graphics {
 
@@ -44,6 +47,15 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
    command_list.SetDescriptorHeaps(1, &descriptor_heap);
 
+   const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address = [&] {
+      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+      std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
+                  sizeof(float4x4));
+
+      return allocation.gpu_address;
+   }();
+
    const auto rt_barrier =
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
                                            D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -73,16 +85,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
       _device.root_signatures.basic_object_mesh.get());
    command_list.SetPipelineState(_device.pipelines.basic_object_mesh.get());
 
-   // TEMP Camera Setup
-   {
-      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-      std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
-                  sizeof(float4x4));
-
-      command_list.SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
-   }
-
+   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
    command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // TEMP object placeholder rendering
@@ -106,7 +109,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    }
 
    // Render World Meta Objects
-   draw_world_meta_objects(camera, world, command_list);
+   draw_world_meta_objects(camera, camera_constants_address, world, command_list);
 
    // Render ImGui
    ImGui::Render();
@@ -149,53 +152,161 @@ void renderer::window_resized(uint16 width, uint16 height)
        D3D12_RESOURCE_STATE_DEPTH_WRITE};
 }
 
-void renderer::draw_world_meta_objects(const camera& camera, const world::world& world,
+void renderer::draw_world_meta_objects(const camera& camera,
+                                       const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
+                                       const world::world& world,
                                        ID3D12GraphicsCommandList5& command_list)
 {
+   (void)camera; // TODO: Frustrum Culling
+
    command_list.SetGraphicsRootSignature(
       _device.root_signatures.meta_object_mesh.get());
-   // TEMP Camera Setup
-   {
-      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
 
-      std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
-                  sizeof(float4x4));
+   static bool draw_paths = false;
 
-      command_list.SetGraphicsRootConstantBufferView(0, allocation.gpu_address);
+   ImGui::Checkbox("Draw Paths", &draw_paths);
+
+   if (draw_paths) {
+      static bool draw_nodes = true;
+      static bool draw_connections = true;
+
+      ImGui::Indent();
+      ImGui::Checkbox("Draw Nodes", &draw_nodes);
+      ImGui::Checkbox("Draw Connections", &draw_connections);
+      ImGui::Unindent();
+
+      if (draw_nodes) {
+         // Set Path Nodes Constants
+         {
+            struct {
+               const float4 color{0.15f, 1.0f, 0.3f, 1.0f};
+               const float4 outline_color{0.1125f, 0.6f, 0.2225f, 1.0f};
+               float2 viewport_size;
+               float2 viewport_topleft = {0.0f, 0.0f};
+            } temp_constants;
+
+            temp_constants.viewport_size = {static_cast<float>(
+                                               _device.swap_chain.width()),
+                                            static_cast<float>(
+                                               _device.swap_chain.height())};
+
+            auto allocation =
+               _dynamic_buffer_allocator.allocate(sizeof(temp_constants));
+
+            std::memcpy(allocation.cpu_address, &temp_constants,
+                        sizeof(temp_constants));
+
+            command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+         }
+
+         command_list.SetPipelineState(
+            _device.pipelines.meta_object_mesh_outlined.get());
+
+         for (auto& path : world.paths) {
+            for (auto& node : path.nodes) {
+               // TEMP constants setup
+               {
+                  float4x4 transform = static_cast<float4x4>(node.rotation) *
+                                       glm::mat4{{0.5f, 0.0f, 0.0f, 0.0f},
+                                                 {0.0f, 0.5f, 0.0f, 0.0f},
+                                                 {0.0f, 0.0f, 0.5f, 0.0f},
+                                                 {0.0f, 0.0f, 0.0f, 1.0f}};
+
+                  transform[3] = {node.position, 1.0f};
+
+                  auto allocation =
+                     _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+                  std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+                  command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+               }
+
+               const geometric_shape shape = _geometric_shapes.octahedron();
+
+               command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+               command_list.IASetIndexBuffer(&shape.index_buffer_view);
+               command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+            }
+         }
+      }
+
+      if (draw_connections) {
+         draw_lines(command_list, _device, _dynamic_buffer_allocator,
+                    {.line_color = {0.1f, 0.1f, 0.75f},
+
+                     .camera_constants_address = camera_constants_address,
+
+                     .connect_mode = line_connect_mode::linear},
+                    [&](line_draw_context& draw_context) {
+                       for (auto& path : world.paths) {
+                          using namespace ranges::views;
+
+                          const auto get_position = [](const world::path::node& node) {
+                             return node.position;
+                          };
+
+                          for (const auto [a, b] :
+                               zip(path.nodes | transform(get_position),
+                                   path.nodes | drop(1) | transform(get_position))) {
+                             draw_context.add(a, b);
+                          }
+                       }
+                    });
+      }
    }
 
-   // Set Path Nodes Constants
-   {
-      struct {
-         const float4 color{0.15f, 1.0f, 0.3f, 1.0f};
-         const float4 outline_color{0.1125f, 0.6f, 0.2225f, 1.0f};
-         float2 viewport_size;
-         float2 viewport_topleft = {0.0f, 0.0f};
-      } temp_constants;
+   command_list.SetPipelineState(_device.pipelines.meta_object_transparent_mesh.get());
+   command_list.SetGraphicsRootSignature(
+      _device.root_signatures.meta_object_mesh.get());
 
-      temp_constants.viewport_size = {static_cast<float>(_device.swap_chain.width()),
-                                      static_cast<float>(_device.swap_chain.height())};
+   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
+   command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(temp_constants));
+   static bool draw_regions = false;
 
-      std::memcpy(allocation.cpu_address, &temp_constants, sizeof(temp_constants));
+   ImGui::Checkbox("Draw Regions", &draw_regions);
 
-      command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
-   }
+   if (draw_regions) {
+      // Set Regions Color
+      {
+         const float4 color{0.25f, 0.4f, 1.0f, 0.3f};
 
-   command_list.SetPipelineState(_device.pipelines.meta_object_mesh_outlined.get());
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
 
-   for (auto& path : world.paths) {
-      for (auto& node : path.nodes) {
+         std::memcpy(allocation.cpu_address, &color, sizeof(float4));
+
+         command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+      }
+
+      for (auto& region : world.regions) {
          // TEMP constants setup
          {
-            float4x4 transform = static_cast<float4x4>(node.rotation) *
-                                 glm::mat4{{0.5f, 0.0f, 0.0f, 0.0f},
-                                           {0.0f, 0.5f, 0.0f, 0.0f},
-                                           {0.0f, 0.0f, 0.5f, 0.0f},
+            const float3 scale = [&] {
+               switch (region.shape) {
+               default:
+               case world::region_shape::box: {
+                  return region.size;
+               }
+               case world::region_shape::sphere: {
+                  return float3{glm::length(region.size)};
+               }
+               case world::region_shape::cylinder: {
+                  const float cylinder_length =
+                     glm::length(float2{region.size.x, region.size.z});
+                  return float3{cylinder_length, region.size.y, cylinder_length};
+               }
+               }
+            }();
+
+            float4x4 transform = static_cast<float4x4>(region.rotation) *
+                                 glm::mat4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                           {0.0f, scale.y, 0.0f, 0.0f},
+                                           {0.0f, 0.0f, scale.z, 0.0f},
                                            {0.0f, 0.0f, 0.0f, 1.0f}};
 
-            transform[3] = {node.position, 1.0f};
+            transform[3] = {region.position, 1.0f};
 
             auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
 
@@ -204,7 +315,17 @@ void renderer::draw_world_meta_objects(const camera& camera, const world::world&
             command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
          }
 
-         const geometric_shape shape = _geometric_shapes.octahedron();
+         const geometric_shape shape = [&] {
+            switch (region.shape) {
+            default:
+            case world::region_shape::box:
+               return _geometric_shapes.cube();
+            case world::region_shape::sphere:
+               return _geometric_shapes.icosphere();
+            case world::region_shape::cylinder:
+               return _geometric_shapes.cylinder();
+            }
+         }();
 
          command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
          command_list.IASetIndexBuffer(&shape.index_buffer_view);
@@ -212,119 +333,60 @@ void renderer::draw_world_meta_objects(const camera& camera, const world::world&
       }
    }
 
-   command_list.SetPipelineState(_device.pipelines.meta_object_transparent_mesh.get());
+   static bool draw_barriers = false;
 
-   // Set Regions Color
-   {
-      const float4 color{0.25f, 0.4f, 1.0f, 0.3f};
+   ImGui::Checkbox("Draw Barriers", &draw_barriers);
 
-      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
-
-      std::memcpy(allocation.cpu_address, &color, sizeof(float4));
-
-      command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
-   }
-
-   for (auto& region : world.regions) {
-      // TEMP constants setup
+   if (draw_barriers) {
+      // Set Barriers Color
       {
-         const float3 scale = [&] {
-            switch (region.shape) {
-            default:
-            case world::region_shape::box: {
-               return region.size;
-            }
-            case world::region_shape::sphere: {
-               return float3{glm::length(region.size)};
-            }
-            case world::region_shape::cylinder: {
-               const float cylinder_length =
-                  glm::length(float2{region.size.x, region.size.z});
-               return float3{cylinder_length, region.size.y, cylinder_length};
-            }
-            }
-         }();
+         const float4 color{1.0f, 0.1f, 0.05f, 0.3f};
 
-         float4x4 transform = static_cast<float4x4>(region.rotation) *
-                              glm::mat4{{scale.x, 0.0f, 0.0f, 0.0f},
-                                        {0.0f, scale.y, 0.0f, 0.0f},
-                                        {0.0f, 0.0f, scale.z, 0.0f},
-                                        {0.0f, 0.0f, 0.0f, 1.0f}};
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
 
-         transform[3] = {region.position, 1.0f};
+         std::memcpy(allocation.cpu_address, &color, sizeof(float4));
 
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-         std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+         command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
       }
 
-      const geometric_shape shape = [&] {
-         switch (region.shape) {
-         default:
-         case world::region_shape::box:
-            return _geometric_shapes.cube();
-         case world::region_shape::sphere:
-            return _geometric_shapes.icosphere();
-         case world::region_shape::cylinder:
-            return _geometric_shapes.cylinder();
+      // Set Barriers IA State
+      {
+         const geometric_shape shape = _geometric_shapes.cube();
+
+         command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+         command_list.IASetIndexBuffer(&shape.index_buffer_view);
+      }
+
+      for (auto& barrier : world.barriers) {
+         // TEMP constants setup
+         {
+            const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
+            const float2 size{glm::distance(barrier.corners[0], barrier.corners[3]),
+                              glm::distance(barrier.corners[0], barrier.corners[1])};
+            const float angle =
+               std::atan2(barrier.corners[1].x - barrier.corners[0].x,
+                          barrier.corners[1].y - barrier.corners[0].y);
+
+            const quaternion rotation{float3{0.0f, angle, 0.0f}};
+
+            float4x4 transform = static_cast<float4x4>(rotation) *
+                                 glm::mat4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                                           {0.0f, temp_barrier_height, 0.0f, 0.0f},
+                                           {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                                           {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {position.x, 0.0f, position.y, 1.0f};
+
+            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+            std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+            command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
          }
-      }();
 
-      command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-      command_list.IASetIndexBuffer(&shape.index_buffer_view);
-      command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
-   }
-
-   // Set Barriers Color
-   {
-      const float4 color{1.0f, 0.1f, 0.05f, 0.3f};
-
-      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
-
-      std::memcpy(allocation.cpu_address, &color, sizeof(float4));
-
-      command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
-   }
-
-   // Set Barriers IA State
-   {
-      const geometric_shape shape = _geometric_shapes.cube();
-
-      command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-      command_list.IASetIndexBuffer(&shape.index_buffer_view);
-   }
-
-   for (auto& barrier : world.barriers) {
-      // TEMP constants setup
-      {
-         const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
-         const float2 size{glm::distance(barrier.corners[0], barrier.corners[3]),
-                           glm::distance(barrier.corners[0], barrier.corners[1])};
-         const float angle =
-            std::atan2(barrier.corners[1].x - barrier.corners[0].x,
-                       barrier.corners[1].y - barrier.corners[0].y);
-
-         const quaternion rotation{float3{0.0f, angle, 0.0f}};
-
-         float4x4 transform = static_cast<float4x4>(rotation) *
-                              glm::mat4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                                        {0.0f, temp_barrier_height, 0.0f, 0.0f},
-                                        {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                                        {0.0f, 0.0f, 0.0f, 1.0f}};
-
-         transform[3] = {position.x, 0.0f, position.y, 1.0f};
-
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-         std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+         command_list.DrawIndexedInstanced(_geometric_shapes.cube().index_count,
+                                           1, 0, 0, 0);
       }
-
-      command_list.DrawIndexedInstanced(_geometric_shapes.cube().index_count, 1,
-                                        0, 0, 0);
    }
 }
 

@@ -411,6 +411,9 @@
     <ClInclude Include="src\graphics\geometric_shapes.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\line_drawer.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -524,6 +527,9 @@
     <ClCompile Include="src\graphics\geometric_shapes.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\line_drawer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl" />
@@ -531,5 +537,6 @@
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshVS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshPS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedPS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\meta_lineVS.hlsl" />
   </ItemGroup>
 </Project>

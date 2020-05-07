@@ -65,6 +65,18 @@ constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_additive_belnd =
     .LogicOp = D3D12_LOGIC_OP_NOOP,
     .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
 
+constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_alpha_belnd =
+   {.BlendEnable = true,
+    .LogicOpEnable = false,
+    .SrcBlend = D3D12_BLEND_SRC_ALPHA,
+    .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
+    .BlendOp = D3D12_BLEND_OP_ADD,
+    .SrcBlendAlpha = D3D12_BLEND_ONE,
+    .DestBlendAlpha = D3D12_BLEND_ZERO,
+    .BlendOpAlpha = D3D12_BLEND_OP_ADD,
+    .LogicOp = D3D12_LOGIC_OP_NOOP,
+    .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
+
 constexpr D3D12_BLEND_DESC blend_disabled =
    {.AlphaToCoverageEnable = false,
     .IndependentBlendEnable = false,
@@ -77,6 +89,14 @@ constexpr D3D12_BLEND_DESC blend_premult_alpha =
    {.AlphaToCoverageEnable = false,
     .IndependentBlendEnable = false,
     .RenderTarget = {render_target_premult_alpha_belnd, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled,
+                     render_target_blend_disabled, render_target_blend_disabled}};
+
+constexpr D3D12_BLEND_DESC blend_alpha =
+   {.AlphaToCoverageEnable = false,
+    .IndependentBlendEnable = false,
+    .RenderTarget = {render_target_alpha_belnd, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled,
                      render_target_blend_disabled, render_target_blend_disabled}};
@@ -104,7 +124,7 @@ constexpr D3D12_RASTERIZER_DESC rasterizer_cull_backfacing =
     .ForcedSampleCount = 0,
     .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
 
-constexpr D3D12_RASTERIZER_DESC rasterizer_no_cull =
+constexpr D3D12_RASTERIZER_DESC rasterizer_line_antialiased =
    {.FillMode = D3D12_FILL_MODE_SOLID,
     .CullMode = D3D12_CULL_MODE_NONE,
     .FrontCounterClockwise = true,
@@ -113,7 +133,7 @@ constexpr D3D12_RASTERIZER_DESC rasterizer_no_cull =
     .SlopeScaledDepthBias = 0.0f,
     .DepthClipEnable = true,
     .MultisampleEnable = false,
-    .AntialiasedLineEnable = false,
+    .AntialiasedLineEnable = true,
     .ForcedSampleCount = 0,
     .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
 
@@ -231,6 +251,23 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .InputLayout = meta_mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 1,
+               .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
+   meta_line = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.meta_line.get(),
+               .VS = shader_library::meta_line_vs,
+               .PS = shader_library::meta_object_mesh_ps,
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_alpha,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_line_antialiased,
+               .DepthStencilState = depth_stencil_readonly_enabled,
+               .InputLayout = meta_mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE,
                .NumRenderTargets = 1,
                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
