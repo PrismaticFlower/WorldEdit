@@ -14,6 +14,54 @@ namespace {
 
 constexpr float temp_barrier_height = 64.0f;
 
+const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
+   constexpr std::array<std::array<uint16, 2>, 18> arrow_indices{{{2, 1},
+                                                                  {4, 3},
+                                                                  {4, 5},
+                                                                  {3, 5},
+                                                                  {1, 5},
+                                                                  {2, 5},
+                                                                  {8, 6},
+                                                                  {6, 7},
+                                                                  {7, 9},
+                                                                  {10, 12},
+                                                                  {13, 11},
+                                                                  {11, 10},
+                                                                  {6, 10},
+                                                                  {11, 7},
+                                                                  {2, 9},
+                                                                  {1, 8},
+                                                                  {4, 13},
+                                                                  {3, 12}}};
+
+   constexpr std::array<float3, 15> arrow_vertices{
+      {{0.0f, 0.0f, 0.0f},
+       {0.611469f, -0.366881f, 0.085396f},
+       {0.611469f, 0.366881f, 0.085396f},
+       {-0.611469f, -0.366881f, 0.085396f},
+       {-0.611469f, 0.366881f, 0.085396f},
+       {0.000000f, 0.000000f, 1.002599f},
+       {0.305735f, -0.366881f, -0.984675f},
+       {0.305735f, 0.366881f, -0.984675f},
+       {0.305735f, -0.366881f, 0.085396f},
+       {0.305735f, 0.366881f, 0.085396f},
+       {-0.305735f, -0.366881f, -0.984675f},
+       {-0.305735f, 0.366881f, -0.984675f},
+       {-0.305735f, -0.366881f, 0.085396f},
+       {-0.305735f, 0.366881f, 0.085396f},
+       {-0.305735f, 0.366881f, 0.085396f}}};
+
+   std::array<std::array<float3, 2>, 18> arrow;
+
+   for (std::size_t i = 0; i < arrow.size(); ++i) {
+      arrow[i] = {arrow_vertices[arrow_indices[i][0]] * 0.25f + float3{0.0f, 0.0f, 0.8f},
+                  arrow_vertices[arrow_indices[i][1]] * 0.25f +
+                     float3{0.0f, 0.0f, 0.8f}};
+   }
+
+   return arrow;
+}();
+
 }
 
 renderer::renderer(const HWND window) : _window{window}, _device{window}
@@ -170,10 +218,12 @@ void renderer::draw_world_meta_objects(const camera& camera,
    if (draw_paths) {
       static bool draw_nodes = true;
       static bool draw_connections = true;
+      static bool draw_orientation = false;
 
       ImGui::Indent();
       ImGui::Checkbox("Draw Nodes", &draw_nodes);
       ImGui::Checkbox("Draw Connections", &draw_connections);
+      ImGui::Checkbox("Draw Orientation", &draw_orientation);
       ImGui::Unindent();
 
       if (draw_nodes) {
@@ -208,10 +258,10 @@ void renderer::draw_world_meta_objects(const camera& camera,
                // TEMP constants setup
                {
                   float4x4 transform = static_cast<float4x4>(node.rotation) *
-                                       glm::mat4{{0.5f, 0.0f, 0.0f, 0.0f},
-                                                 {0.0f, 0.5f, 0.0f, 0.0f},
-                                                 {0.0f, 0.0f, 0.5f, 0.0f},
-                                                 {0.0f, 0.0f, 0.0f, 1.0f}};
+                                       float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
+                                                {0.0f, 0.5f, 0.0f, 0.0f},
+                                                {0.0f, 0.0f, 0.5f, 0.0f},
+                                                {0.0f, 0.0f, 0.0f, 1.0f}};
 
                   transform[3] = {node.position, 1.0f};
 
@@ -254,6 +304,38 @@ void renderer::draw_world_meta_objects(const camera& camera,
                           }
                        }
                     });
+      }
+
+      if (draw_orientation) {
+         draw_lines(
+            command_list, _device, _dynamic_buffer_allocator,
+            {.line_color = {1.0f, 1.0f, 0.1f},
+
+             .camera_constants_address = camera_constants_address,
+
+             .connect_mode = line_connect_mode::linear},
+            [&](line_draw_context& draw_context) {
+               for (auto& path : world.paths) {
+                  using namespace ranges::views;
+
+                  const auto get_position = [](const world::path::node& node) {
+                     return node.position;
+                  };
+
+                  for (auto& node : path.nodes) {
+                     float4x4 transform = static_cast<float4x4>(node.rotation);
+
+                     transform[3] = {node.position, 1.0f};
+
+                     for (const auto line : path_node_arrow_wireframe) {
+                        const float3 a = transform * float4{line[0], 1.0f};
+                        const float3 b = transform * float4{line[1], 1.0f};
+
+                        draw_context.add(a, b);
+                     }
+                  }
+               }
+            });
       }
    }
 
@@ -340,7 +422,7 @@ void renderer::draw_world_meta_objects(const camera& camera,
    if (draw_barriers) {
       // Set Barriers Color
       {
-         const float4 color{1.0f, 0.1f, 0.05f, 0.3f};
+         const float4 color{1.0f, 0.1f, 0.5f, 0.3f};
 
          auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
 
