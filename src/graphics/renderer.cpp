@@ -561,8 +561,7 @@ void renderer::build_object_render_list(
 
       for (const auto& mesh : model.parts) {
          _object_render_list.push_back(
-            {.distance = 0.0f, // TODO: Distance
-             .index_count = mesh.index_count,
+            {.index_count = mesh.index_count,
              .start_index = mesh.start_index,
              .start_vertex = mesh.start_vertex,
              .index_buffer_view = model.gpu_buffer.index_buffer_view,

@@ -68,7 +68,6 @@ private:
    geometric_shapes _geometric_shapes{_device};
 
    struct render_list_item {
-      float distance;
       uint32 index_count;
       uint32 start_index;
       uint32 start_vertex;
