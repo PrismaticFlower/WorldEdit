@@ -74,6 +74,30 @@ public:
       update();
    }
 
+   auto near_clip() const noexcept
+   {
+      return _near_clip;
+   }
+
+   void near_clip(const float new_near_clip) noexcept
+   {
+      _near_clip = new_near_clip;
+
+      update();
+   }
+
+   auto far_clip() const noexcept
+   {
+      return _far_clip;
+   }
+
+   void far_clip(const float new_far_clip) noexcept
+   {
+      _far_clip = new_far_clip;
+
+      update();
+   }
+
    auto pitch() -> float
    {
       return _pitch;
@@ -113,6 +137,11 @@ public:
       return _view_projection_matrix;
    }
 
+   auto inv_view_projection_matrix() const noexcept -> const float4x4&
+   {
+      return _inv_view_projection_matrix;
+   }
+
 protected:
    auto rotation() const noexcept -> quaternion
    {
@@ -135,6 +164,9 @@ private:
    float _aspect_ratio = 1.0f;
    float _fov = 0.7853981635f;
 
+   float _near_clip = 1.0f;
+   float _far_clip = 10000.0f;
+
    float _pitch = 0.0f;
    float _yaw = 0.0f;
 
@@ -142,6 +174,7 @@ private:
    float4x4 _view_matrix;
    float4x4 _projection_matrix;
    float4x4 _view_projection_matrix;
+   float4x4 _inv_view_projection_matrix;
 };
 
 }

@@ -12,8 +12,10 @@ namespace sk::graphics {
 
 namespace {
 
+// TODO: Put this somewhere.
 constexpr float temp_barrier_height = 64.0f;
 
+// TODO: Put this somewhere.
 const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
    constexpr std::array<std::array<uint16, 2>, 18> arrow_indices{{{2, 1},
                                                                   {4, 3},
@@ -77,8 +79,6 @@ renderer::renderer(const HWND window) : _window{window}, _device{window}
 void renderer::draw_frame(const camera& camera, const world::world& world,
                           const std::unordered_map<std::string, world::object_class>& world_classes)
 {
-   build_object_render_list(world, world_classes);
-
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
 
@@ -129,35 +129,15 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    command_list.OMSetRenderTargets(1, &back_buffer_rtv, true,
                                    &_depth_stencil_texture.depth_stencil_view);
 
-   command_list.SetGraphicsRootSignature(
-      _device.root_signatures.basic_object_mesh.get());
-   command_list.SetPipelineState(_device.pipelines.basic_object_mesh.get());
+   const frustrum view_frustrum{camera};
 
-   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
-   command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-   // TEMP object placeholder rendering
-   for (auto& object : _object_render_list) {
-      // TEMP object constants setup
-      {
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-         std::memcpy(allocation.cpu_address, &object.transform, sizeof(float4x4));
-
-         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
-      }
-
-      command_list.IASetVertexBuffers(0,
-                                      static_cast<UINT>(
-                                         object.vertex_buffer_views.size()),
-                                      object.vertex_buffer_views.data());
-      command_list.IASetIndexBuffer(&object.index_buffer_view);
-      command_list.DrawIndexedInstanced(object.index_count, 1, object.start_index,
-                                        object.start_vertex, 0);
-   }
+   // Render World
+   draw_world(view_frustrum, camera_constants_address, world, world_classes,
+              command_list);
 
    // Render World Meta Objects
-   draw_world_meta_objects(camera, camera_constants_address, world, command_list);
+   draw_world_meta_objects(view_frustrum, camera_constants_address, world,
+                           world_classes, command_list);
 
    // Render ImGui
    ImGui::Render();
@@ -200,12 +180,49 @@ void renderer::window_resized(uint16 width, uint16 height)
        D3D12_RESOURCE_STATE_DEPTH_WRITE};
 }
 
-void renderer::draw_world_meta_objects(const camera& camera,
-                                       const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
-                                       const world::world& world,
-                                       ID3D12GraphicsCommandList5& command_list)
+void renderer::draw_world(const frustrum& view_frustrum,
+                          const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
+                          const world::world& world,
+                          const std::unordered_map<std::string, world::object_class>& world_classes,
+                          ID3D12GraphicsCommandList5& command_list)
 {
-   (void)camera; // TODO: Frustrum Culling
+   build_object_render_list(view_frustrum, world, world_classes);
+
+   command_list.SetGraphicsRootSignature(
+      _device.root_signatures.basic_object_mesh.get());
+   command_list.SetPipelineState(_device.pipelines.basic_object_mesh.get());
+
+   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
+   command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+   // TEMP object placeholder rendering
+   for (auto& object : _object_render_list) {
+      // TEMP object constants setup
+      {
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+         std::memcpy(allocation.cpu_address, &object.transform, sizeof(float4x4));
+
+         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+      }
+
+      command_list.IASetVertexBuffers(0,
+                                      static_cast<UINT>(
+                                         object.vertex_buffer_views.size()),
+                                      object.vertex_buffer_views.data());
+      command_list.IASetIndexBuffer(&object.index_buffer_view);
+      command_list.DrawIndexedInstanced(object.index_count, 1, object.start_index,
+                                        object.start_vertex, 0);
+   }
+}
+
+void renderer::draw_world_meta_objects(
+   const frustrum& view_frustrum,
+   const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address, const world::world& world,
+   const std::unordered_map<std::string, world::object_class>& world_classes,
+   ID3D12GraphicsCommandList5& command_list)
+{
+   (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
    command_list.SetGraphicsRootSignature(
       _device.root_signatures.meta_object_mesh.get());
@@ -452,12 +469,64 @@ void renderer::draw_world_meta_objects(const camera& camera,
             const quaternion rotation{float3{0.0f, angle, 0.0f}};
 
             float4x4 transform = static_cast<float4x4>(rotation) *
-                                 glm::mat4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                                           {0.0f, temp_barrier_height, 0.0f, 0.0f},
-                                           {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                                           {0.0f, 0.0f, 0.0f, 1.0f}};
+                                 float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                                          {0.0f, temp_barrier_height, 0.0f, 0.0f},
+                                          {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                                          {0.0f, 0.0f, 0.0f, 1.0f}};
 
             transform[3] = {position.x, 0.0f, position.y, 1.0f};
+
+            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+            std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+            command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+         }
+
+         command_list.DrawIndexedInstanced(_geometric_shapes.cube().index_count,
+                                           1, 0, 0, 0);
+      }
+   }
+
+   static bool draw_aabbs = false;
+
+   ImGui::Checkbox("Draw AABBs", &draw_aabbs);
+
+   if (draw_aabbs) {
+      // Set AABBs Color
+      {
+         const float4 color{0.0f, 1.0f, 0.0f, 0.3f};
+
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
+
+         std::memcpy(allocation.cpu_address, &color, sizeof(float4));
+
+         command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+      }
+
+      // Set Barriers IA State
+      {
+         const geometric_shape shape = _geometric_shapes.cube();
+
+         command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+         command_list.IASetIndexBuffer(&shape.index_buffer_view);
+      }
+
+      for (auto& object : world.objects) {
+         // TEMP constants setup
+         {
+            const auto& model = world_classes.at(object.class_name).model;
+            const auto object_bbox =
+               object.rotation * model->bounding_box + object.position;
+            const auto bbox_centre = (object_bbox.min + object_bbox.max) / 2.0f;
+            const auto bbox_size = (object_bbox.max - object_bbox.min) / 2.0f;
+
+            float4x4 transform = float4x4{{bbox_size.x, 0.0f, 0.0f, 0.0f},
+                                          {0.0f, bbox_size.y, 0.0f, 0.0f},
+                                          {0.0f, 0.0f, bbox_size.z, 0.0f},
+                                          {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {bbox_centre, 1.0f};
 
             auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
 
@@ -473,21 +542,26 @@ void renderer::draw_world_meta_objects(const camera& camera,
 }
 
 void renderer::build_object_render_list(
-   const world::world& world,
+   const frustrum& view_frustrum, const world::world& world,
    const std::unordered_map<std::string, world::object_class>& world_classes)
 {
    _object_render_list.clear();
    _object_render_list.reserve(world.objects.size());
 
    for (auto& object : world.objects) {
-      auto& model = _model_manager.get(world_classes.at(object.class_name).model);
+      const auto& model =
+         _model_manager.get(world_classes.at(object.class_name).model);
+
+      const auto object_bbox = object.rotation * model.bbox + object.position;
+
+      if (!intersects(view_frustrum, object_bbox)) continue;
 
       float4x4 transform = static_cast<float4x4>(object.rotation);
       transform[3] = float4{object.position, 1.0f};
 
       for (const auto& mesh : model.parts) {
          _object_render_list.push_back(
-            {.distance = 0.0f, // TODO: Distance, frustum culling...
+            {.distance = 0.0f, // TODO: Distance
              .index_count = mesh.index_count,
              .start_index = mesh.start_index,
              .start_vertex = mesh.start_vertex,

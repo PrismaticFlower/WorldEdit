@@ -20,8 +20,8 @@ void camera::update() noexcept
                          0.0f, 0.0f, 1.0f, 0.0f, //
                          0.0f, 0.0f, 0.0f, 1.0f};
 
-   const auto near_clip = 0.01f;
-   const auto far_clip = 1000.0f;
+   const auto near_clip = _near_clip;
+   const auto far_clip = _far_clip;
 
    _projection_matrix[0][0] = 1.0f / std::tan(_fov * 0.5f);
    _projection_matrix[1][1] = _projection_matrix[0][0] * _aspect_ratio;
@@ -31,6 +31,8 @@ void camera::update() noexcept
    _projection_matrix[2][3] = -1.0f;
 
    _view_projection_matrix = _projection_matrix * _view_matrix;
+
+   _inv_view_projection_matrix = glm::inverse(double4x4{_view_projection_matrix});
 }
 
 }

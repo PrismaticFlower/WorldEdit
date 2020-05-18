@@ -184,6 +184,7 @@
     <ClInclude Include="src\container\enum_array.hpp" />
     <ClInclude Include="src\exceptions.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
+    <ClInclude Include="src\graphics\frustrum.hpp" />
     <ClInclude Include="src\graphics\gpu\buffer.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
     <ClInclude Include="src\graphics\gpu\concepts.hpp" />
@@ -260,6 +261,7 @@
     <ClCompile Include="src\assets\texture\texture.cpp" />
     <ClCompile Include="src\assets\texture\texture_format.cpp" />
     <ClCompile Include="src\graphics\camera.cpp" />
+    <ClCompile Include="src\graphics\frustrum.cpp" />
     <ClCompile Include="src\graphics\geometric_shapes.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />

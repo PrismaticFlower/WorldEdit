@@ -1,6 +1,7 @@
 #pragma once
 
 #include "camera.hpp"
+#include "frustrum.hpp"
 #include "geometric_shapes.hpp"
 #include "gpu/buffer.hpp"
 #include "gpu/depth_stencil_texture.hpp"
@@ -26,13 +27,21 @@ public:
    void window_resized(uint16 width, uint16 height);
 
 private:
-   void draw_world_meta_objects(const camera& camera,
-                                const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
-                                const world::world& world,
-                                ID3D12GraphicsCommandList5& command_list);
+   void draw_world(const frustrum& view_frustrum,
+                   const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
+                   const world::world& world,
+                   const std::unordered_map<std::string, world::object_class>& world_classes,
+                   ID3D12GraphicsCommandList5& command_list);
+
+   void draw_world_meta_objects(
+      const frustrum& view_frustrum,
+      const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
+      const world::world& world,
+      const std::unordered_map<std::string, world::object_class>& world_classes,
+      ID3D12GraphicsCommandList5& command_list);
 
    void build_object_render_list(
-      const world::world& world,
+      const frustrum& view_frustrum, const world::world& world,
       const std::unordered_map<std::string, world::object_class>& world_classes);
 
    const HWND _window;
