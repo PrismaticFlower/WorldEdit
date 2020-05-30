@@ -38,6 +38,11 @@ public:
       return _octahedron;
    }
 
+   auto cone() -> geometric_shape
+   {
+      return _cone;
+   }
+
 private:
    void init_gpu_buffer(gpu::device& device);
 
@@ -49,6 +54,7 @@ private:
    geometric_shape _cylinder;
    geometric_shape _cube;
    geometric_shape _octahedron;
+   geometric_shape _cone;
 };
 
 }

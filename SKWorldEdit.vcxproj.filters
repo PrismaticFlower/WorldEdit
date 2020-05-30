@@ -417,6 +417,12 @@
     <ClInclude Include="src\graphics\frustrum.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\light_clusters.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\world_utilities.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -536,6 +542,9 @@
     <ClCompile Include="src\graphics\frustrum.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\light_clusters.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl" />
@@ -544,5 +553,6 @@
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshPS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedPS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\meta_lineVS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\basic_mesh_lightingPS.hlsl" />
   </ItemGroup>
 </Project>

@@ -69,7 +69,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
-      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -97,7 +97,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
-      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -194,6 +194,7 @@
     <ClInclude Include="src\graphics\gpu\device.hpp" />
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\gpu\texture.hpp" />
+    <ClInclude Include="src\graphics\light_clusters.hpp" />
     <ClInclude Include="src\graphics\line_drawer.hpp" />
     <ClInclude Include="src\graphics\model.hpp" />
     <ClInclude Include="src\graphics\gpu\pipeline_library.hpp" />
@@ -246,6 +247,7 @@
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />
+    <ClInclude Include="src\world\world_utilities.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\asset_libraries.cpp" />
@@ -269,6 +271,7 @@
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
+    <ClCompile Include="src\graphics\light_clusters.cpp" />
     <ClCompile Include="src\graphics\line_drawer.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
@@ -287,6 +290,10 @@
     <ClCompile Include="src\world\world_io_load.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="src\graphics\gpu\shaders\basic_mesh_lightingPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>

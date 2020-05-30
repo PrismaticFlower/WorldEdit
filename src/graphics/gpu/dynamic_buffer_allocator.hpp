@@ -62,11 +62,22 @@ public:
               .size = size};
    }
 
+   auto resource() -> ID3D12Resource*
+   {
+      return _resource;
+   }
+
+   auto gpu_base_address() -> D3D12_GPU_VIRTUAL_ADDRESS
+   {
+      return _gpu_base_address;
+   }
+
    void reset(const std::size_t new_frame_index)
    {
       _allocated = 0;
       _cpu_base_address = _buffers[new_frame_index].cpu_address;
       _gpu_base_address = _buffers[new_frame_index].gpu_address;
+      _resource = _buffers[new_frame_index].underlying_buffer.resource();
    }
 
 private:
@@ -74,6 +85,7 @@ private:
    std::size_t _buffer_size = 0;
    std::byte* _cpu_base_address = nullptr;
    D3D12_GPU_VIRTUAL_ADDRESS _gpu_base_address = 0;
+   ID3D12Resource* _resource = nullptr;
 
    struct backing_buffer {
       buffer underlying_buffer;

@@ -388,6 +388,56 @@ struct geometric_shapes_buffer {
 
    alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<std::array<uint16, 3>, 8> octahedron_indices{
       {{0, 1, 2}, {2, 1, 3}, {3, 1, 4}, {4, 1, 0}, {4, 5, 3}, {0, 5, 4}, {2, 5, 0}, {3, 5, 2}}};
+
+   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<float3, 33> cone_vertices{
+      {{0.000000f, -1.000000f, -1.000000f},
+       {0.000000f, 1.000000f, 0.000000f},
+       {0.195090f, -1.000000f, -0.980785f},
+       {0.382683f, -1.000000f, -0.923880f},
+       {0.555570f, -1.000000f, -0.831470f},
+       {0.707107f, -1.000000f, -0.707107f},
+       {0.831470f, -1.000000f, -0.555570f},
+       {0.923880f, -1.000000f, -0.382683f},
+       {0.980785f, -1.000000f, -0.195090f},
+       {1.000000f, -1.000000f, -0.000000f},
+       {0.980785f, -1.000000f, 0.195090f},
+       {0.923880f, -1.000000f, 0.382683f},
+       {0.831470f, -1.000000f, 0.555570f},
+       {0.707107f, -1.000000f, 0.707107f},
+       {0.555570f, -1.000000f, 0.831470f},
+       {0.382683f, -1.000000f, 0.923880f},
+       {0.195090f, -1.000000f, 0.980785f},
+       {-0.000000f, -1.000000f, 1.000000f},
+       {-0.195091f, -1.000000f, 0.980785f},
+       {-0.382684f, -1.000000f, 0.923879f},
+       {-0.555571f, -1.000000f, 0.831469f},
+       {-0.707107f, -1.000000f, 0.707106f},
+       {-0.831470f, -1.000000f, 0.555570f},
+       {-0.923880f, -1.000000f, 0.382683f},
+       {-0.980785f, -1.000000f, 0.195089f},
+       {-1.000000f, -1.000000f, -0.000001f},
+       {-0.980785f, -1.000000f, -0.195091f},
+       {-0.923879f, -1.000000f, -0.382684f},
+       {-0.831469f, -1.000000f, -0.555571f},
+       {-0.707106f, -1.000000f, -0.707108f},
+       {-0.555569f, -1.000000f, -0.831470f},
+       {-0.382682f, -1.000000f, -0.923880f},
+       {-0.195089f, -1.000000f, -0.980786f}}};
+
+   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<std::array<uint16, 3>, 62> cone_indices{
+      {{0, 1, 2},    {2, 1, 3},    {3, 1, 4},    {4, 1, 5},    {5, 1, 6},
+       {6, 1, 7},    {7, 1, 8},    {8, 1, 9},    {9, 1, 10},   {10, 1, 11},
+       {11, 1, 12},  {12, 1, 13},  {13, 1, 14},  {14, 1, 15},  {15, 1, 16},
+       {16, 1, 17},  {17, 1, 18},  {18, 1, 19},  {19, 1, 20},  {20, 1, 21},
+       {21, 1, 22},  {22, 1, 23},  {23, 1, 24},  {24, 1, 25},  {25, 1, 26},
+       {26, 1, 27},  {27, 1, 28},  {28, 1, 29},  {29, 1, 30},  {30, 1, 31},
+       {31, 1, 32},  {32, 1, 0},   {8, 16, 24},  {32, 0, 2},   {2, 3, 4},
+       {4, 5, 6},    {6, 7, 4},    {7, 8, 4},    {8, 9, 10},   {10, 11, 8},
+       {11, 12, 8},  {12, 13, 16}, {13, 14, 16}, {14, 15, 16}, {16, 17, 18},
+       {18, 19, 20}, {20, 21, 22}, {22, 23, 24}, {24, 25, 26}, {26, 27, 28},
+       {28, 29, 32}, {29, 30, 32}, {30, 31, 32}, {32, 2, 4},   {16, 18, 24},
+       {18, 20, 24}, {20, 22, 24}, {24, 26, 32}, {26, 28, 32}, {32, 4, 8},
+       {8, 12, 16},  {32, 8, 24}}};
 };
 
 constexpr geometric_shapes_buffer shapes_buffer;
@@ -484,6 +534,18 @@ void geometric_shapes::init_shapes()
               gpu_address + offsetof(geometric_shapes_buffer, octahedron_vertices),
            .SizeInBytes = sizeof(geometric_shapes_buffer::octahedron_vertices),
            .StrideInBytes = sizeof(float3)}};
+
+   _cone = {.index_count = static_cast<uint32>(shapes_buffer.cone_indices.size()) * 3,
+            .index_buffer_view = {.BufferLocation =
+                                     gpu_address + offsetof(geometric_shapes_buffer,
+                                                            cone_indices),
+                                  .SizeInBytes = sizeof(geometric_shapes_buffer::cone_indices),
+                                  .Format = DXGI_FORMAT_R16_UINT},
+            .position_vertex_buffer_view =
+               {.BufferLocation =
+                   gpu_address + offsetof(geometric_shapes_buffer, cone_vertices),
+                .SizeInBytes = sizeof(geometric_shapes_buffer::cone_vertices),
+                .StrideInBytes = sizeof(float3)}};
 }
 
 }

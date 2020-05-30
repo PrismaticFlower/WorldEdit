@@ -3,6 +3,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "line_drawer.hpp"
+#include "world/world_utilities.hpp"
 
 #include <d3dx12.h>
 
@@ -104,11 +105,18 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
       return allocation.gpu_address;
    }();
 
-   const auto rt_barrier =
-      CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
-                                           D3D12_RESOURCE_STATE_RENDER_TARGET);
+   const frustrum view_frustrum{camera};
 
-   command_list.ResourceBarrier(1, &rt_barrier);
+   _light_clusters.update_lights(view_frustrum, world, command_list,
+                                 _dynamic_buffer_allocator, _resource_barrier_buffer);
+
+   _resource_barrier_buffer.push_back(
+      CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
+                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+   command_list.ResourceBarrier(static_cast<UINT>(_resource_barrier_buffer.size()),
+                                _resource_barrier_buffer.data());
+   _resource_barrier_buffer.clear();
 
    command_list.ClearRenderTargetView(back_buffer_rtv,
                                       std::array{0.0f, 0.0f, 0.0f, 1.0f}.data(),
@@ -128,8 +136,6 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    command_list.RSSetScissorRects(1, &sissor_rect);
    command_list.OMSetRenderTargets(1, &back_buffer_rtv, true,
                                    &_depth_stencil_texture.depth_stencil_view);
-
-   const frustrum view_frustrum{camera};
 
    // Render World
    draw_world(view_frustrum, camera_constants_address, world, world_classes,
@@ -189,10 +195,12 @@ void renderer::draw_world(const frustrum& view_frustrum,
    build_object_render_list(view_frustrum, world, world_classes);
 
    command_list.SetGraphicsRootSignature(
-      _device.root_signatures.basic_object_mesh.get());
-   command_list.SetPipelineState(_device.pipelines.basic_object_mesh.get());
+      _device.root_signatures.basic_mesh_lighting.get());
+   command_list.SetPipelineState(_device.pipelines.basic_mesh_lighting.get());
 
    command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
+   command_list.SetGraphicsRootDescriptorTable(
+      2, _light_clusters.light_descriptors().start().gpu);
    command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // TEMP object placeholder rendering
@@ -363,6 +371,64 @@ void renderer::draw_world_meta_objects(
    command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
    command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+   // Draws a region, requires camera CBV, colour CBV, IA topplogy, pipeline state and root signature to be set.
+   //
+   // Shared between light volume drawing and region drawing.
+   //
+   // Should probably be moved to a proper function once draw_world_meta_objects
+   // isn't just for debugging and get's the love it deserves.
+   const auto draw_region = [&](const world::region& region) {
+      // TEMP constants setup
+      {
+         const float3 scale = [&] {
+            switch (region.shape) {
+            default:
+            case world::region_shape::box: {
+               return region.size;
+            }
+            case world::region_shape::sphere: {
+               return float3{glm::length(region.size)};
+            }
+            case world::region_shape::cylinder: {
+               const float cylinder_length =
+                  glm::length(float2{region.size.x, region.size.z});
+               return float3{cylinder_length, region.size.y, cylinder_length};
+            }
+            }
+         }();
+
+         float4x4 transform = static_cast<float4x4>(region.rotation) *
+                              float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                       {0.0f, scale.y, 0.0f, 0.0f},
+                                       {0.0f, 0.0f, scale.z, 0.0f},
+                                       {0.0f, 0.0f, 0.0f, 1.0f}};
+
+         transform[3] = {region.position, 1.0f};
+
+         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+         std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+      }
+
+      const geometric_shape shape = [&] {
+         switch (region.shape) {
+         default:
+         case world::region_shape::box:
+            return _geometric_shapes.cube();
+         case world::region_shape::sphere:
+            return _geometric_shapes.icosphere();
+         case world::region_shape::cylinder:
+            return _geometric_shapes.cylinder();
+         }
+      }();
+
+      command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+      command_list.IASetIndexBuffer(&shape.index_buffer_view);
+      command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+   };
+
    static bool draw_regions = false;
 
    ImGui::Checkbox("Draw Regions", &draw_regions);
@@ -380,55 +446,7 @@ void renderer::draw_world_meta_objects(
       }
 
       for (auto& region : world.regions) {
-         // TEMP constants setup
-         {
-            const float3 scale = [&] {
-               switch (region.shape) {
-               default:
-               case world::region_shape::box: {
-                  return region.size;
-               }
-               case world::region_shape::sphere: {
-                  return float3{glm::length(region.size)};
-               }
-               case world::region_shape::cylinder: {
-                  const float cylinder_length =
-                     glm::length(float2{region.size.x, region.size.z});
-                  return float3{cylinder_length, region.size.y, cylinder_length};
-               }
-               }
-            }();
-
-            float4x4 transform = static_cast<float4x4>(region.rotation) *
-                                 glm::mat4{{scale.x, 0.0f, 0.0f, 0.0f},
-                                           {0.0f, scale.y, 0.0f, 0.0f},
-                                           {0.0f, 0.0f, scale.z, 0.0f},
-                                           {0.0f, 0.0f, 0.0f, 1.0f}};
-
-            transform[3] = {region.position, 1.0f};
-
-            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-            std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-            command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
-         }
-
-         const geometric_shape shape = [&] {
-            switch (region.shape) {
-            default:
-            case world::region_shape::box:
-               return _geometric_shapes.cube();
-            case world::region_shape::sphere:
-               return _geometric_shapes.icosphere();
-            case world::region_shape::cylinder:
-               return _geometric_shapes.cylinder();
-            }
-         }();
-
-         command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-         command_list.IASetIndexBuffer(&shape.index_buffer_view);
-         command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+         draw_region(region);
       }
    }
 
@@ -537,6 +555,103 @@ void renderer::draw_world_meta_objects(
 
          command_list.DrawIndexedInstanced(_geometric_shapes.cube().index_count,
                                            1, 0, 0, 0);
+      }
+   }
+
+   static bool draw_draw_light_volumes = false;
+
+   ImGui::Checkbox("Draw Light Volumes", &draw_draw_light_volumes);
+
+   if (draw_draw_light_volumes) {
+      for (auto& light : world.lights) {
+         // Set Color
+         {
+            const float4 color{light.color, light.light_type == world::light_type::spot
+                                               ? 0.025f
+                                               : 0.05f};
+
+            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
+
+            std::memcpy(allocation.cpu_address, &color, sizeof(float4));
+
+            command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+         }
+
+         switch (light.light_type) {
+         case world::light_type::directional: {
+            if (not light.directional_region) break;
+
+            if (const world::region* const region =
+                   world::find_region_by_description(world, *light.directional_region);
+                region) {
+               draw_region(*region);
+            }
+
+            break;
+         }
+         case world::light_type::point: {
+            // TEMP constants setup
+            {
+               float4x4 transform = float4x4{{light.range, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, light.range, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, light.range, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+
+               transform[3] = {light.position, 1.0f};
+
+               auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+               std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+               command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+            }
+
+            auto shape = _geometric_shapes.icosphere();
+
+            command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+            command_list.IASetIndexBuffer(&shape.index_buffer_view);
+            command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+
+            break;
+         }
+         case world::light_type::spot: {
+            // TEMP constants setup
+            const auto bind_cone_transform = [&](const float angle) {
+               const float half_range = light.range / 2.0f;
+               const float cone_radius = half_range * std::tan(angle);
+
+               float4x4 transform =
+                  static_cast<float4x4>(light.rotation) *
+                  static_cast<float4x4>(glm::quat{0.707107f, -0.707107f, 0.0f, 0.0f}) *
+                  float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
+                           {0.0f, half_range, 0.0f, 0.0f},
+                           {0.0f, 0.0f, cone_radius, 0.0f},
+                           {0.0f, -half_range, 0.0f, 1.0f}};
+
+               transform[3] += float4{light.position, 0.0f};
+
+               auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+               std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
+
+               command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+            };
+
+            bind_cone_transform(light.outer_cone_angle);
+
+            auto shape = _geometric_shapes.cone();
+
+            command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
+            command_list.IASetIndexBuffer(&shape.index_buffer_view);
+            command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+
+            bind_cone_transform(light.inner_cone_angle);
+
+            command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+
+            break;
+         }
+         }
       }
    }
 }

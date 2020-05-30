@@ -64,7 +64,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
-      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,7 +88,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
-      <AdditionalOptions>/experimental:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -119,6 +119,7 @@
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
+    <ClCompile Include="src\world\world_utilities_tests.cpp" />
     <ClInclude Include="src\approx_test_helpers.hpp" />
     <ClInclude Include="src\pch.h" />
     <ClCompile Include="src\ucfb\reader_tests.cpp">

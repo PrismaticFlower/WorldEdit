@@ -19,15 +19,6 @@ auto index_descriptor_ptr(const Type ptr, const std::type_identity_t<Type> index
    return ptr + (index * size);
 }
 
-template<typename Type>
-auto index_descriptor_handle(const descriptor_handle handle, Type index,
-                             const std::type_identity_t<Type> size) -> descriptor_handle
-{
-   const Type offset = (index * size);
-
-   return {.cpu = {handle.cpu.ptr + offset}, .gpu = {handle.gpu.ptr + offset}};
-}
-
 }
 
 descriptor_heap::descriptor_heap(const D3D12_DESCRIPTOR_HEAP_TYPE type,
@@ -87,7 +78,7 @@ auto descriptor_heap::allocate_static(const uint32 count) -> descriptor_range
 
    if ((range_offset + count) <= _static_count) {
       return {index_descriptor_handle(_root_static_handle, range_offset, _descriptor_size),
-              count};
+              count, _descriptor_size};
    }
 
    // check if a partial size match exists in the free list
@@ -101,10 +92,10 @@ auto descriptor_heap::allocate_static(const uint32 count) -> descriptor_range
 
          if (range.size() > count) {
             *match = {index_descriptor_handle(range.start(), count, _descriptor_size),
-                      range.size() - count};
+                      range.size() - count, _descriptor_size};
          }
 
-         return {range.start(), count};
+         return {range.start(), count, _descriptor_size};
       }
    }
 
@@ -128,7 +119,7 @@ auto descriptor_heap::allocate_dynamic(const uint32 count) -> descriptor_range
 
    return {index_descriptor_handle(_root_dynamic_handles[_frame_index],
                                    range_offset, _descriptor_size),
-           count};
+           count, _descriptor_size};
 }
 
 void descriptor_heap::reset_dynamic(const std::size_t new_frame_index) noexcept

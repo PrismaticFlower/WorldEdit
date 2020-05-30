@@ -7,6 +7,7 @@
 #include "gpu/depth_stencil_texture.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
+#include "light_clusters.hpp"
 #include "model_manager.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
@@ -66,6 +67,7 @@ private:
 
    model_manager _model_manager{_device};
    geometric_shapes _geometric_shapes{_device};
+   light_clusters _light_clusters{_device};
 
    struct render_list_item {
       uint32 index_count;
@@ -77,6 +79,7 @@ private:
    };
 
    std::vector<render_list_item> _object_render_list;
+   std::vector<D3D12_RESOURCE_BARRIER> _resource_barrier_buffer; // TODO: Replace with abstraction.
 };
 
 }

@@ -222,6 +222,23 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
+   basic_mesh_lighting = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.basic_mesh_lighting.get(),
+               .VS = shader_library::basic_object_mesh_vs,
+               .PS = shader_library::basic_mesh_lighting_ps,
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_backfacing,
+               .DepthStencilState = depth_stencil_enabled,
+               .InputLayout = mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 1,
+               .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
    meta_object_transparent_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
                .VS = shader_library::meta_object_mesh_vs,

@@ -28,6 +28,11 @@ bool outside_plane(const float4& plane, const float3& point) noexcept
    return glm::dot(plane, float4{point, 1.0f}) < 0.0f;
 }
 
+bool outside_plane(const float4& plane, const float3& point, const float radius) noexcept
+{
+   return glm::dot(plane, float4{point, 1.0f}) < -radius;
+}
+
 }
 
 frustrum::frustrum(const camera& camera) noexcept
@@ -120,4 +125,14 @@ bool intersects(const frustrum& frustrum, const math::bounding_box& bbox)
    return true;
 }
 
+bool intersects(const frustrum& frustrum, const float3& position, const float radius)
+{
+   for (const auto& plane : frustrum.planes) {
+      if (outside_plane(plane, position, radius)) {
+         return false;
+      }
+   }
+
+   return true;
+}
 }

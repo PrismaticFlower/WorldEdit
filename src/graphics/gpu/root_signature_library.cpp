@@ -58,6 +58,43 @@ root_signature_library::root_signature_library(ID3D12Device& device)
                     .pParameters = basic_root_params.data(),
                     .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 
+   const std::array<D3D12_DESCRIPTOR_RANGE1, 2> basic_mesh_descriptor_table_descriptor_ranges{
+      {{.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+        .NumDescriptors = 1,
+        .BaseShaderRegister = 0,
+        .RegisterSpace = 0,
+        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+        .OffsetInDescriptorsFromTableStart = 0},
+       {.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+        .NumDescriptors = 1,
+        .BaseShaderRegister = 0,
+        .RegisterSpace = 0,
+        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+        .OffsetInDescriptorsFromTableStart = 1}}};
+
+   const D3D12_ROOT_PARAMETER1 basic_mesh_descriptor_table_root_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+      .DescriptorTable =
+         {
+            .NumDescriptorRanges = static_cast<UINT>(
+               basic_mesh_descriptor_table_descriptor_ranges.size()),
+            .pDescriptorRanges = basic_mesh_descriptor_table_descriptor_ranges.data(),
+
+         },
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
+
+   const std::array basic_mesh_lighting_root_params{global_cb_root_param,
+                                                    object_cb_root_param,
+                                                    basic_mesh_descriptor_table_root_param};
+
+   basic_mesh_lighting = create_root_signature(
+      device,
+      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+       .Desc_1_1 = {.NumParameters =
+                       static_cast<UINT>(basic_mesh_lighting_root_params.size()),
+                    .pParameters = basic_mesh_lighting_root_params.data(),
+                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
+
    constexpr D3D12_ROOT_PARAMETER1 meta_object_color_cb_root_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
       .Descriptor = {.ShaderRegister = 0,
