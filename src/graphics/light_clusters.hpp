@@ -2,6 +2,7 @@
 
 #include "frustrum.hpp"
 #include "gpu/buffer.hpp"
+#include "gpu/command_list.hpp"
 #include "gpu/descriptor_heap.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
@@ -17,7 +18,7 @@ public:
    light_clusters(gpu::device& gpu_device);
 
    void update_lights(const frustrum& view_frustrum, const world::world& world,
-                      ID3D12GraphicsCommandList5& command_list,
+                      gpu::command_list& command_list,
                       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
                       std::vector<D3D12_RESOURCE_BARRIER>& out_resource_barriers);
 

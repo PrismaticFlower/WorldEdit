@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gpu/command_list.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "types.hpp"
@@ -23,12 +24,12 @@ public:
    void add(const float3 begin, const float3 end);
 
 private:
-   friend void draw_lines(ID3D12GraphicsCommandList5& command_list, gpu::device& device,
+   friend void draw_lines(gpu::command_list& command_list, gpu::device& device,
                           gpu::dynamic_buffer_allocator& buffer_allocator,
                           const line_draw_state draw_state,
                           std::function<void(line_draw_context&)> draw_callback);
 
-   line_draw_context(ID3D12GraphicsCommandList5& command_list,
+   line_draw_context(gpu::command_list& command_list,
                      gpu::dynamic_buffer_allocator& buffer_allocator,
                      gpu::dynamic_buffer_allocator::allocation current_allocation)
       : command_list{command_list}, buffer_allocator{buffer_allocator}, current_allocation{current_allocation}
@@ -37,14 +38,14 @@ private:
 
    void draw_buffered();
 
-   ID3D12GraphicsCommandList5& command_list;
+   gpu::command_list& command_list;
    gpu::dynamic_buffer_allocator& buffer_allocator;
 
    gpu::dynamic_buffer_allocator::allocation current_allocation;
    uint32 buffered_lines = 0;
 };
 
-void draw_lines(ID3D12GraphicsCommandList5& command_list, gpu::device& device,
+void draw_lines(gpu::command_list& command_list, gpu::device& device,
                 gpu::dynamic_buffer_allocator& buffer_allocator,
                 const line_draw_state draw_state,
                 std::function<void(line_draw_context&)> draw_callback);

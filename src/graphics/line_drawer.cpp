@@ -35,19 +35,18 @@ void line_draw_context::draw_buffered()
                                          static_cast<UINT>(current_allocation.size),
                                       .StrideInBytes = sizeof(float3)};
 
-   command_list.IASetVertexBuffers(0, 1, &vbv);
-   command_list.DrawInstanced(buffered_lines * 2, 1, 0, 0);
+   command_list.ia_set_vertex_buffers(0, vbv);
+   command_list.draw_instanced(buffered_lines * 2, 1, 0, 0);
 }
 
-void draw_lines(ID3D12GraphicsCommandList5& command_list, gpu::device& device,
+void draw_lines(gpu::command_list& command_list, gpu::device& device,
                 gpu::dynamic_buffer_allocator& buffer_allocator,
                 const line_draw_state draw_state,
                 std::function<void(line_draw_context&)> draw_callback)
 {
-   command_list.SetPipelineState(device.pipelines.meta_line.get());
-   command_list.SetGraphicsRootSignature(device.root_signatures.meta_line.get());
-
-   command_list.SetGraphicsRootConstantBufferView(0, draw_state.camera_constants_address);
+   command_list.set_pipeline_state(*device.pipelines.meta_line);
+   command_list.set_graphics_root_signature(*device.root_signatures.meta_line);
+   command_list.set_graphics_root_constant_buffer_view(0, draw_state.camera_constants_address);
 
    {
       auto allocation = buffer_allocator.allocate(sizeof(float4));
@@ -56,10 +55,10 @@ void draw_lines(ID3D12GraphicsCommandList5& command_list, gpu::device& device,
 
       std::memcpy(allocation.cpu_address, &color, sizeof(float4));
 
-      command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+      command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
    }
 
-   command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
    line_draw_context context{command_list, buffer_allocator,
                              buffer_allocator.allocate(max_buffered_lines *

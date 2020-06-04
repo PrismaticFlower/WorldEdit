@@ -86,15 +86,14 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    _device.copy_manager.enqueue_fence_wait_if_needed(*_device.command_queue);
 
    auto& command_allocator = *_world_command_allocators[_device.frame_index];
-   auto& command_list = *_world_command_list;
+   auto& command_list = _world_command_list;
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
-   ID3D12DescriptorHeap* const descriptor_heap = &_device.descriptor_heap.get();
 
    throw_if_failed(command_allocator.Reset());
-   throw_if_failed(command_list.Reset(&command_allocator, nullptr));
+   command_list.reset(command_allocator, nullptr);
    _dynamic_buffer_allocator.reset(_device.frame_index);
 
-   command_list.SetDescriptorHeaps(1, &descriptor_heap);
+   command_list.set_descriptor_heaps(_device.descriptor_heap.get());
 
    const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address = [&] {
       auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
@@ -114,28 +113,23 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-   command_list.ResourceBarrier(static_cast<UINT>(_resource_barrier_buffer.size()),
-                                _resource_barrier_buffer.data());
+   command_list.resource_barrier(_resource_barrier_buffer);
    _resource_barrier_buffer.clear();
 
-   command_list.ClearRenderTargetView(back_buffer_rtv,
-                                      std::array{0.0f, 0.0f, 0.0f, 1.0f}.data(),
-                                      0, nullptr);
-   command_list.ClearDepthStencilView(_depth_stencil_texture.depth_stencil_view,
-                                      D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0, 0, nullptr);
+   command_list.clear_render_target_view(back_buffer_rtv,
+                                         float4{0.0f, 0.0f, 0.0f, 1.0f});
+   command_list.clear_depth_stencil_view(_depth_stencil_texture.depth_stencil_view,
+                                         D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0);
 
-   const D3D12_VIEWPORT viewport{.Width =
-                                    static_cast<float>(_device.swap_chain.width()),
-                                 .Height =
-                                    static_cast<float>(_device.swap_chain.height()),
-                                 .MaxDepth = 1.0f};
-   const D3D12_RECT sissor_rect{.right = static_cast<LONG>(_device.swap_chain.width()),
-                                .bottom =
-                                   static_cast<LONG>(_device.swap_chain.height())};
-   command_list.RSSetViewports(1, &viewport);
-   command_list.RSSetScissorRects(1, &sissor_rect);
-   command_list.OMSetRenderTargets(1, &back_buffer_rtv, true,
-                                   &_depth_stencil_texture.depth_stencil_view);
+   command_list.rs_set_viewports(
+      {.Width = static_cast<float>(_device.swap_chain.width()),
+       .Height = static_cast<float>(_device.swap_chain.height()),
+       .MaxDepth = 1.0f});
+   command_list.rs_set_scissor_rects(
+      {.right = static_cast<LONG>(_device.swap_chain.width()),
+       .bottom = static_cast<LONG>(_device.swap_chain.height())});
+   command_list.om_set_render_targets(back_buffer_rtv,
+                                      _depth_stencil_texture.depth_stencil_view);
 
    // Render World
    draw_world(view_frustrum, camera_constants_address, world, world_classes,
@@ -147,18 +141,15 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
    // Render ImGui
    ImGui::Render();
-   ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), &command_list);
+   ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command_list.get_underlying());
 
-   const auto present_barrier =
-      CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer,
-                                           D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                           D3D12_RESOURCE_STATE_PRESENT);
+   command_list.resource_barrier(
+      CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                           D3D12_RESOURCE_STATE_PRESENT));
 
-   command_list.ResourceBarrier(1, &present_barrier);
+   command_list.close();
 
-   throw_if_failed(command_list.Close());
-
-   ID3D12CommandList* exec_command_list = &command_list;
+   ID3D12CommandList* exec_command_list = command_list.get_underlying();
 
    _device.command_queue->ExecuteCommandLists(1, &exec_command_list);
 
@@ -190,18 +181,17 @@ void renderer::draw_world(const frustrum& view_frustrum,
                           const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
                           const world::world& world,
                           const std::unordered_map<std::string, world::object_class>& world_classes,
-                          ID3D12GraphicsCommandList5& command_list)
+                          gpu::command_list& command_list)
 {
    build_object_render_list(view_frustrum, world, world_classes);
 
-   command_list.SetGraphicsRootSignature(
-      _device.root_signatures.basic_mesh_lighting.get());
-   command_list.SetPipelineState(_device.pipelines.basic_mesh_lighting.get());
+   command_list.set_graphics_root_signature(*_device.root_signatures.basic_mesh_lighting);
+   command_list.set_pipeline_state(*_device.pipelines.basic_mesh_lighting.get());
 
-   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
-   command_list.SetGraphicsRootDescriptorTable(
+   command_list.set_graphics_root_constant_buffer_view(0, camera_constants_address);
+   command_list.set_graphics_root_descriptor_table(
       2, _light_clusters.light_descriptors().start().gpu);
-   command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // TEMP object placeholder rendering
    for (auto& object : _object_render_list) {
@@ -211,16 +201,13 @@ void renderer::draw_world(const frustrum& view_frustrum,
 
          std::memcpy(allocation.cpu_address, &object.transform, sizeof(float4x4));
 
-         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
       }
 
-      command_list.IASetVertexBuffers(0,
-                                      static_cast<UINT>(
-                                         object.vertex_buffer_views.size()),
-                                      object.vertex_buffer_views.data());
-      command_list.IASetIndexBuffer(&object.index_buffer_view);
-      command_list.DrawIndexedInstanced(object.index_count, 1, object.start_index,
-                                        object.start_vertex, 0);
+      command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
+      command_list.ia_set_index_buffer(object.index_buffer_view);
+      command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
+                                          object.start_vertex, 0);
    }
 }
 
@@ -228,13 +215,12 @@ void renderer::draw_world_meta_objects(
    const frustrum& view_frustrum,
    const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address, const world::world& world,
    const std::unordered_map<std::string, world::object_class>& world_classes,
-   ID3D12GraphicsCommandList5& command_list)
+   gpu::command_list& command_list)
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
-   command_list.SetGraphicsRootSignature(
-      _device.root_signatures.meta_object_mesh.get());
-   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
+   command_list.set_graphics_root_signature(*_device.root_signatures.meta_object_mesh);
+   command_list.set_graphics_root_constant_buffer_view(0, camera_constants_address);
 
    static bool draw_paths = false;
 
@@ -272,11 +258,10 @@ void renderer::draw_world_meta_objects(
             std::memcpy(allocation.cpu_address, &temp_constants,
                         sizeof(temp_constants));
 
-            command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
          }
 
-         command_list.SetPipelineState(
-            _device.pipelines.meta_object_mesh_outlined.get());
+         command_list.set_pipeline_state(*_device.pipelines.meta_object_mesh_outlined);
 
          for (auto& path : world.paths) {
             for (auto& node : path.nodes) {
@@ -295,14 +280,15 @@ void renderer::draw_world_meta_objects(
 
                   std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
 
-                  command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+                  command_list.set_graphics_root_constant_buffer_view(1,
+                                                                      allocation.gpu_address);
                }
 
                const geometric_shape shape = _geometric_shapes.octahedron();
 
-               command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-               command_list.IASetIndexBuffer(&shape.index_buffer_view);
-               command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+               command_list.ia_set_index_buffer(shape.index_buffer_view);
+               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
             }
          }
       }
@@ -364,12 +350,11 @@ void renderer::draw_world_meta_objects(
       }
    }
 
-   command_list.SetPipelineState(_device.pipelines.meta_object_transparent_mesh.get());
-   command_list.SetGraphicsRootSignature(
-      _device.root_signatures.meta_object_mesh.get());
+   command_list.set_pipeline_state(*_device.pipelines.meta_object_transparent_mesh);
+   command_list.set_graphics_root_signature(*_device.root_signatures.meta_object_mesh);
 
-   command_list.SetGraphicsRootConstantBufferView(0, camera_constants_address);
-   command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+   command_list.set_graphics_root_constant_buffer_view(0, camera_constants_address);
+   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // Draws a region, requires camera CBV, colour CBV, IA topplogy, pipeline state and root signature to be set.
    //
@@ -409,7 +394,7 @@ void renderer::draw_world_meta_objects(
 
          std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
 
-         command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
       }
 
       const geometric_shape shape = [&] {
@@ -424,9 +409,9 @@ void renderer::draw_world_meta_objects(
          }
       }();
 
-      command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-      command_list.IASetIndexBuffer(&shape.index_buffer_view);
-      command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+      command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+      command_list.ia_set_index_buffer(shape.index_buffer_view);
+      command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
    };
 
    static bool draw_regions = false;
@@ -442,7 +427,7 @@ void renderer::draw_world_meta_objects(
 
          std::memcpy(allocation.cpu_address, &color, sizeof(float4));
 
-         command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
       }
 
       for (auto& region : world.regions) {
@@ -463,15 +448,15 @@ void renderer::draw_world_meta_objects(
 
          std::memcpy(allocation.cpu_address, &color, sizeof(float4));
 
-         command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
       }
 
       // Set Barriers IA State
       {
          const geometric_shape shape = _geometric_shapes.cube();
 
-         command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-         command_list.IASetIndexBuffer(&shape.index_buffer_view);
+         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+         command_list.ia_set_index_buffer(shape.index_buffer_view);
       }
 
       for (auto& barrier : world.barriers) {
@@ -498,11 +483,11 @@ void renderer::draw_world_meta_objects(
 
             std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
 
-            command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
          }
 
-         command_list.DrawIndexedInstanced(_geometric_shapes.cube().index_count,
-                                           1, 0, 0, 0);
+         command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
+                                             1, 0, 0, 0);
       }
    }
 
@@ -519,15 +504,15 @@ void renderer::draw_world_meta_objects(
 
          std::memcpy(allocation.cpu_address, &color, sizeof(float4));
 
-         command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
       }
 
       // Set Barriers IA State
       {
          const geometric_shape shape = _geometric_shapes.cube();
 
-         command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-         command_list.IASetIndexBuffer(&shape.index_buffer_view);
+         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+         command_list.ia_set_index_buffer(shape.index_buffer_view);
       }
 
       for (auto& object : world.objects) {
@@ -550,11 +535,11 @@ void renderer::draw_world_meta_objects(
 
             std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
 
-            command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
          }
 
-         command_list.DrawIndexedInstanced(_geometric_shapes.cube().index_count,
-                                           1, 0, 0, 0);
+         command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
+                                             1, 0, 0, 0);
       }
    }
 
@@ -574,7 +559,7 @@ void renderer::draw_world_meta_objects(
 
             std::memcpy(allocation.cpu_address, &color, sizeof(float4));
 
-            command_list.SetGraphicsRootConstantBufferView(2, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
          }
 
          switch (light.light_type) {
@@ -603,14 +588,14 @@ void renderer::draw_world_meta_objects(
 
                std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
 
-               command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+               command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
             }
 
             auto shape = _geometric_shapes.icosphere();
 
-            command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-            command_list.IASetIndexBuffer(&shape.index_buffer_view);
-            command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
 
             break;
          }
@@ -634,20 +619,20 @@ void renderer::draw_world_meta_objects(
 
                std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
 
-               command_list.SetGraphicsRootConstantBufferView(1, allocation.gpu_address);
+               command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
             };
 
             bind_cone_transform(light.outer_cone_angle);
 
             auto shape = _geometric_shapes.cone();
 
-            command_list.IASetVertexBuffers(0, 1, &shape.position_vertex_buffer_view);
-            command_list.IASetIndexBuffer(&shape.index_buffer_view);
-            command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
 
             bind_cone_transform(light.inner_cone_angle);
 
-            command_list.DrawIndexedInstanced(shape.index_count, 1, 0, 0, 0);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
 
             break;
          }

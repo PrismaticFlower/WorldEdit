@@ -86,7 +86,7 @@ light_clusters::light_clusters(gpu::device& gpu_device)
 
 void light_clusters::update_lights(const frustrum& view_frustrum,
                                    const world::world& world,
-                                   ID3D12GraphicsCommandList5& command_list,
+                                   gpu::command_list& command_list,
                                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
                                    std::vector<D3D12_RESOURCE_BARRIER>& out_resource_barriers)
 {
@@ -234,11 +234,11 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
 
    std::memcpy(upload_buffer.cpu_address, &light_constants, sizeof(light_constants));
 
-   command_list.CopyBufferRegion(_lights_constant_buffer.resource(), 0,
-                                 dynamic_buffer_allocator.resource(),
-                                 upload_buffer.gpu_address -
-                                    dynamic_buffer_allocator.gpu_base_address(),
-                                 sizeof(light_constants));
+   command_list.copy_buffer_region(*_lights_constant_buffer.resource(), 0,
+                                   *dynamic_buffer_allocator.resource(),
+                                   upload_buffer.gpu_address -
+                                      dynamic_buffer_allocator.gpu_base_address(),
+                                   sizeof(light_constants));
 
    const auto regional_lights_descriptions_size =
       sizeof(light_region_description) * regional_lights_descriptions.size();
@@ -249,11 +249,11 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
    std::memcpy(upload_buffer.cpu_address, regional_lights_descriptions.data(),
                regional_lights_descriptions_size);
 
-   command_list.CopyBufferRegion(_regional_lights_buffer.resource(), 0,
-                                 dynamic_buffer_allocator.resource(),
-                                 upload_buffer.gpu_address -
-                                    dynamic_buffer_allocator.gpu_base_address(),
-                                 regional_lights_descriptions_size);
+   command_list.copy_buffer_region(*_regional_lights_buffer.resource(), 0,
+                                   *dynamic_buffer_allocator.resource(),
+                                   upload_buffer.gpu_address -
+                                      dynamic_buffer_allocator.gpu_base_address(),
+                                   regional_lights_descriptions_size);
 
    out_resource_barriers.push_back(
       {.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,

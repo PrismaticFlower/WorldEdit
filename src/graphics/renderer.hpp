@@ -4,6 +4,7 @@
 #include "frustrum.hpp"
 #include "geometric_shapes.hpp"
 #include "gpu/buffer.hpp"
+#include "gpu/command_list.hpp"
 #include "gpu/depth_stencil_texture.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
@@ -32,14 +33,14 @@ private:
                    const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
                    const world::world& world,
                    const std::unordered_map<std::string, world::object_class>& world_classes,
-                   ID3D12GraphicsCommandList5& command_list);
+                   gpu::command_list& command_list);
 
    void draw_world_meta_objects(
       const frustrum& view_frustrum,
       const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
       const world::world& world,
       const std::unordered_map<std::string, world::object_class>& world_classes,
-      ID3D12GraphicsCommandList5& command_list);
+      gpu::command_list& command_list);
 
    void build_object_render_list(
       const frustrum& view_frustrum, const world::world& world,
@@ -50,8 +51,7 @@ private:
    gpu::device _device{_window};
    gpu::command_allocators _world_command_allocators =
       _device.create_command_allocators(D3D12_COMMAND_LIST_TYPE_DIRECT);
-   utility::com_ptr<ID3D12GraphicsCommandList5> _world_command_list =
-      _device.create_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT);
+   gpu::command_list _world_command_list{D3D12_COMMAND_LIST_TYPE_DIRECT, _device};
 
    gpu::dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
 
