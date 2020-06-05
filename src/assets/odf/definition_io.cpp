@@ -43,6 +43,12 @@ auto read_property(string::line line) -> property
                      "Use '{} = \"\"' to indicate an empty value."sv,
                      line.number, key)};
    }
+   else if (value.empty()) {
+      throw std::runtime_error{
+         fmt::format("Error in .odf on line #{}! Expected '=' "
+                     "left of key '{}'!"sv,
+                     line.number, key)};
+   }
 
    if (value.front() == '"') {
       value = value.substr(1);

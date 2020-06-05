@@ -47,8 +47,8 @@ GeometryName = "test_prop_sphere.msh"
 
 const std::string_view invalid_odf_test_bad_key_value = R"([GameObjectClass]
 
-ClassLabel = "prop"
-GeometryName "test_prop_sphere.msh" // Line #4 Expect Error Here
+ClassLabel = "prop" // Expect error the on below line.
+GeometryName "test_prop_sphere.msh"
 
 [Properties])";
 
@@ -56,6 +56,13 @@ const std::string_view invalid_odf_test_empty_value = R"([GameObjectClass]
 
 ClassLabel = "prop" // Expect error the on below line.
 GeometryName = 
+
+[Properties])";
+
+const std::string_view invalid_odf_test_no_assignment = R"([GameObjectClass]
+
+ClassLabel = "prop" // Expect error the on below line.
+GeometryName
 
 [Properties])";
 }
@@ -104,5 +111,10 @@ TEST_CASE(".odf failed reading bad key value", "[Assets][ODF]")
 TEST_CASE(".odf failed reading empty value", "[Assets][ODF]")
 {
    REQUIRE_THROWS(read_definition(invalid_odf_test_empty_value));
+}
+
+TEST_CASE(".odf failed reading no assignment", "[Assets][ODF]")
+{
+   REQUIRE_THROWS(read_definition(invalid_odf_test_no_assignment));
 }
 }
