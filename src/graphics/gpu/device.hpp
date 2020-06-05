@@ -17,7 +17,6 @@
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <object_ptr.hpp>
 #include <wil/resource.h>
 
 namespace sk::graphics::gpu {
