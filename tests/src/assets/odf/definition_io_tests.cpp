@@ -15,7 +15,7 @@ const std::string_view valid_odf_test = R"(// First line is ignored.
 
 // This is a test .odf
 \\ Line comments can also begin with '\\'
-
+-- Another comment
 
 ClassLabel = "prop"
 GeometryName = "test_prop_sphere.msh"

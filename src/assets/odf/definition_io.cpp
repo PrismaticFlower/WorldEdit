@@ -70,6 +70,7 @@ auto read_definition(std::string_view str) -> definition
 
       if (line.string.starts_with("//"sv)) continue;
       if (line.string.starts_with(R"(\\)"sv)) continue;
+      if (line.string.starts_with("--"sv)) continue;
       if (string::is_whitespace(line.string)) continue;
 
       if (boost::istarts_with(line.string, "[ExplosionClass]"sv)) {
