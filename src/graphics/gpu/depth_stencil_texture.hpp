@@ -75,7 +75,6 @@ struct depth_stencil_texture : private texture {
 
    using texture::parent_device;
    using texture::resource;
-   using texture::resource_state;
 
    using texture::array_size;
    using texture::depth;

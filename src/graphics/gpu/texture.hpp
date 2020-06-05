@@ -68,8 +68,6 @@ public:
                                                     optimized_clear_value,
                                                     IID_PPV_ARGS(&_resource)));
 
-      resource_state = initial_resource_state;
-
       _parent_device = &device;
       _format = init_params.format;
       _width = init_params.width;
@@ -106,7 +104,6 @@ public:
    {
       using std::swap;
 
-      swap(this->resource_state, other.resource_state);
       swap(this->_parent_device, other._parent_device);
       swap(this->_resource, other._resource);
       swap(this->_format, other._format);
@@ -166,8 +163,6 @@ public:
    {
       return _array_size;
    }
-
-   D3D12_RESOURCE_STATES resource_state = D3D12_RESOURCE_STATE_COMMON;
 
 private:
    jss::object_ptr<device> _parent_device = nullptr;

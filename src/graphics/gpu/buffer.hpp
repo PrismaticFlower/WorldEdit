@@ -39,7 +39,6 @@ public:
 
       _parent_device = &device;
       _resource = buffer_resource.release();
-      resource_state = initial_resource_state;
       _size = size;
    }
 
@@ -70,7 +69,6 @@ public:
    {
       using std::swap;
 
-      swap(this->resource_state, other.resource_state);
       swap(this->_parent_device, other._parent_device);
       swap(this->_resource, other._resource);
       swap(this->_size, other._size);
@@ -100,8 +98,6 @@ public:
    {
       return _size;
    }
-
-   D3D12_RESOURCE_STATES resource_state = D3D12_RESOURCE_STATE_COMMON;
 
 private:
    jss::object_ptr<device> _parent_device = nullptr;
