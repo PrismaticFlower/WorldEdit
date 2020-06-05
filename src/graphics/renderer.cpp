@@ -107,14 +107,12 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    const frustrum view_frustrum{camera};
 
    _light_clusters.update_lights(view_frustrum, world, command_list,
-                                 _dynamic_buffer_allocator, _resource_barrier_buffer);
+                                 _dynamic_buffer_allocator);
 
-   _resource_barrier_buffer.push_back(
+   command_list.deferred_resource_barrier(
       CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
                                            D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-   command_list.resource_barrier(_resource_barrier_buffer);
-   _resource_barrier_buffer.clear();
+   command_list.flush_deferred_resource_barriers();
 
    command_list.clear_render_target_view(back_buffer_rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});

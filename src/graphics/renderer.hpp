@@ -79,7 +79,6 @@ private:
    };
 
    std::vector<render_list_item> _object_render_list;
-   std::vector<D3D12_RESOURCE_BARRIER> _resource_barrier_buffer; // TODO: Replace with abstraction.
 };
 
 }

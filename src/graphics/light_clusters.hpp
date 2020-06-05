@@ -19,8 +19,7 @@ public:
 
    void update_lights(const frustrum& view_frustrum, const world::world& world,
                       gpu::command_list& command_list,
-                      gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
-                      std::vector<D3D12_RESOURCE_BARRIER>& out_resource_barriers);
+                      gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    auto light_descriptors() const noexcept -> gpu::descriptor_range;
 

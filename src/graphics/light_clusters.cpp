@@ -87,8 +87,7 @@ light_clusters::light_clusters(gpu::device& gpu_device)
 void light_clusters::update_lights(const frustrum& view_frustrum,
                                    const world::world& world,
                                    gpu::command_list& command_list,
-                                   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
-                                   std::vector<D3D12_RESOURCE_BARRIER>& out_resource_barriers)
+                                   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    light_constants light_constants{.light_count = 0};
 
@@ -255,20 +254,23 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                                       dynamic_buffer_allocator.gpu_base_address(),
                                    regional_lights_descriptions_size);
 
-   out_resource_barriers.push_back(
-      {.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-       .Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-       .Transition = {.pResource = _lights_constant_buffer.resource(),
-                      .Subresource = 0,
-                      .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
-                      .StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER}});
-   out_resource_barriers.push_back(
-      {.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-       .Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-       .Transition = {.pResource = _regional_lights_buffer.resource(),
-                      .Subresource = 0,
-                      .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
-                      .StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE}});
+   const std::array barriers{
+      D3D12_RESOURCE_BARRIER{
+         .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+         .Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+         .Transition = {.pResource = _lights_constant_buffer.resource(),
+                        .Subresource = 0,
+                        .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
+                        .StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER}},
+      D3D12_RESOURCE_BARRIER{
+         .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+         .Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+         .Transition = {.pResource = _regional_lights_buffer.resource(),
+                        .Subresource = 0,
+                        .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
+                        .StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE}}};
+
+   command_list.deferred_resource_barrier(barriers);
 }
 
 auto light_clusters::light_descriptors() const noexcept -> gpu::descriptor_range

@@ -12,6 +12,8 @@
 
 #include <d3d12.h>
 
+#include <boost/container/small_vector.hpp>
+
 namespace sk::graphics::gpu {
 
 class command_list {
@@ -126,6 +128,25 @@ public:
    void resource_barrier(const D3D12_RESOURCE_BARRIER& barrier)
    {
       _command_list->ResourceBarrier(1, &barrier);
+   }
+
+   void deferred_resource_barrier(const std::span<const D3D12_RESOURCE_BARRIER> barriers)
+   {
+      _deferred_barriers.insert(_deferred_barriers.cend(), barriers.cbegin(),
+                                barriers.cend());
+   }
+
+   void deferred_resource_barrier(const D3D12_RESOURCE_BARRIER& barrier)
+   {
+      _deferred_barriers.emplace_back(barrier);
+   }
+
+   void flush_deferred_resource_barriers()
+   {
+      _command_list->ResourceBarrier(static_cast<UINT>(_deferred_barriers.size()),
+                                     _deferred_barriers.data());
+
+      _deferred_barriers.clear();
    }
 
    void execute_bundle(ID3D12GraphicsCommandList& bundle)
@@ -430,6 +451,8 @@ private:
 
    utility::com_ptr<ID3D12GraphicsCommandList5> _command_list;
    dynamic_buffer_allocator* _dynamic_buffer_allocator = nullptr;
+
+   boost::container::small_vector<D3D12_RESOURCE_BARRIER, 64> _deferred_barriers;
 };
 
 }
