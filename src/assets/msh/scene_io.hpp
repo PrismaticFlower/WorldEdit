@@ -4,11 +4,10 @@
 #include "types.hpp"
 
 #include <cstddef>
-
-#include <gsl/gsl>
+#include <span>
 
 namespace sk::assets::msh {
 
-auto read_scene_from_bytes(const gsl::span<const std::byte> bytes) -> scene;
+auto read_scene_from_bytes(const std::span<const std::byte> bytes) -> scene;
 
 }

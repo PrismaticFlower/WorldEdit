@@ -13,8 +13,8 @@ namespace {
 
 template<typename Byte>
 auto get_texel_bytes(const texture_format format, const uint32 x, const uint32 y,
-                     const gsl::span<Byte> data, const uint32 row_pitch)
-   -> gsl::span<Byte>
+                     const std::span<Byte> data, const uint32 row_pitch)
+   -> std::span<Byte>
 {
    assert(y * row_pitch <= data.size());
 
@@ -32,7 +32,7 @@ auto clamp_unorm(const float4 value) noexcept -> float4
            glm::isnan(value.a) ? 0.0 : glm::clamp(value.a, 0.0f, 1.0f)};
 }
 
-auto load_r8g8b8a8_unorm(const gsl::span<const std::byte> texel_bytes) noexcept -> float4
+auto load_r8g8b8a8_unorm(const std::span<const std::byte> texel_bytes) noexcept -> float4
 {
    assert(texel_bytes.size() >= sizeof(uint32));
 
@@ -46,26 +46,26 @@ auto load_r8g8b8a8_unorm(const gsl::span<const std::byte> texel_bytes) noexcept 
            ((packed >> 24) & 0xff) / 255.f};
 }
 
-auto load_r8g8b8a8_unorm_srgb(const gsl::span<const std::byte> texel_bytes) noexcept
+auto load_r8g8b8a8_unorm_srgb(const std::span<const std::byte> texel_bytes) noexcept
    -> float4
 {
    return utility::decompress_srgb(load_r8g8b8a8_unorm(texel_bytes));
 }
 
-auto load_b8g8r8a8_unorm(const gsl::span<const std::byte> texel_bytes) noexcept -> float4
+auto load_b8g8r8a8_unorm(const std::span<const std::byte> texel_bytes) noexcept -> float4
 {
    const float4 rgba = load_r8g8b8a8_unorm(texel_bytes);
 
    return {rgba.b, rgba.g, rgba.r, rgba.a};
 }
 
-auto load_b8g8r8a8_unorm_srgb(const gsl::span<const std::byte> texel_bytes) noexcept
+auto load_b8g8r8a8_unorm_srgb(const std::span<const std::byte> texel_bytes) noexcept
    -> float4
 {
    return utility::decompress_srgb(load_b8g8r8a8_unorm(texel_bytes));
 }
 
-auto load_r16g16b16a16_unorm(const gsl::span<const std::byte> texel_bytes) noexcept -> float4
+auto load_r16g16b16a16_unorm(const std::span<const std::byte> texel_bytes) noexcept -> float4
 {
    assert(texel_bytes.size() >= sizeof(uint64));
 
@@ -79,7 +79,7 @@ auto load_r16g16b16a16_unorm(const gsl::span<const std::byte> texel_bytes) noexc
            ((packed >> 48) & 0xffff) / 65535.f};
 }
 
-auto load_r16g16b16a16_float(const gsl::span<const std::byte> texel_bytes) noexcept -> float4
+auto load_r16g16b16a16_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
 {
    assert(texel_bytes.size() >= sizeof(uint64));
 
@@ -93,7 +93,7 @@ auto load_r16g16b16a16_float(const gsl::span<const std::byte> texel_bytes) noexc
            glm::unpackHalf1x16((packed >> 48) & 0xffff)};
 }
 
-auto load_r32g32b32_float(const gsl::span<const std::byte> texel_bytes) noexcept -> float4
+auto load_r32g32b32_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
 {
    assert(texel_bytes.size() >= sizeof(float3));
 
@@ -104,7 +104,7 @@ auto load_r32g32b32_float(const gsl::span<const std::byte> texel_bytes) noexcept
    return {value, 1.0f};
 }
 
-auto load_r32g32b32a32_float(const gsl::span<const std::byte> texel_bytes) noexcept -> float4
+auto load_r32g32b32a32_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
 {
    assert(texel_bytes.size() >= sizeof(float4));
 
@@ -115,7 +115,7 @@ auto load_r32g32b32a32_float(const gsl::span<const std::byte> texel_bytes) noexc
    return value;
 }
 
-void store_r8g8b8a8_unorm(const float4 value, const gsl::span<std::byte> texel_bytes) noexcept
+void store_r8g8b8a8_unorm(const float4 value, const std::span<std::byte> texel_bytes) noexcept
 {
    assert(texel_bytes.size() >= sizeof(uint32));
 
@@ -132,24 +132,24 @@ void store_r8g8b8a8_unorm(const float4 value, const gsl::span<std::byte> texel_b
 }
 
 void store_r8g8b8a8_unorm_srgb(const float4 value,
-                               const gsl::span<std::byte> texel_bytes) noexcept
+                               const std::span<std::byte> texel_bytes) noexcept
 {
    store_r8g8b8a8_unorm(utility::compress_srgb(value), texel_bytes);
 }
 
-void store_b8g8r8a8_unorm(const float4 value, const gsl::span<std::byte> texel_bytes) noexcept
+void store_b8g8r8a8_unorm(const float4 value, const std::span<std::byte> texel_bytes) noexcept
 {
    store_r8g8b8a8_unorm({value.b, value.g, value.r, value.a}, texel_bytes);
 }
 
 void store_b8g8r8a8_unorm_srgb(const float4 value,
-                               const gsl::span<std::byte> texel_bytes) noexcept
+                               const std::span<std::byte> texel_bytes) noexcept
 {
    store_b8g8r8a8_unorm(utility::compress_srgb(value), texel_bytes);
 }
 
 void store_r16g16b16a16_unorm(const float4 value,
-                              const gsl::span<std::byte> texel_bytes) noexcept
+                              const std::span<std::byte> texel_bytes) noexcept
 {
    assert(texel_bytes.size() >= sizeof(uint64));
 
@@ -166,7 +166,7 @@ void store_r16g16b16a16_unorm(const float4 value,
 }
 
 void store_r16g16b16a16_float(const float4 value,
-                              const gsl::span<std::byte> texel_bytes) noexcept
+                              const std::span<std::byte> texel_bytes) noexcept
 {
    assert(texel_bytes.size() >= sizeof(uint64));
 
@@ -180,7 +180,7 @@ void store_r16g16b16a16_float(const float4 value,
    std::memcpy(texel_bytes.data(), &packed, sizeof(uint64));
 }
 
-void store_r32g32b32_float(const float4 value, const gsl::span<std::byte> texel_bytes) noexcept
+void store_r32g32b32_float(const float4 value, const std::span<std::byte> texel_bytes) noexcept
 
 {
    assert(texel_bytes.size() >= sizeof(float3));
@@ -189,7 +189,7 @@ void store_r32g32b32_float(const float4 value, const gsl::span<std::byte> texel_
 }
 
 void store_r32g32b32a32_float(const float4 value,
-                              const gsl::span<std::byte> texel_bytes) noexcept
+                              const std::span<std::byte> texel_bytes) noexcept
 
 {
    assert(texel_bytes.size() >= sizeof(float4));
@@ -200,7 +200,7 @@ void store_r32g32b32a32_float(const float4 value,
 }
 
 auto load_texel(const texture_format format, const uint32 x, const uint32 y,
-                const gsl::span<const std::byte> data, const uint32 width,
+                const std::span<const std::byte> data, const uint32 width,
                 const uint32 height, const uint32 row_pitch) -> float4
 {
    (void)width, (void)height;
@@ -233,7 +233,7 @@ auto load_texel(const texture_format format, const uint32 x, const uint32 y,
 }
 
 void store_texel(const float4 value, const texture_format format,
-                 const uint32 x, const uint32 y, const gsl::span<std::byte> data,
+                 const uint32 x, const uint32 y, const std::span<std::byte> data,
                  const uint32 width, const uint32 height, const uint32 row_pitch)
 {
    (void)width, (void)height;

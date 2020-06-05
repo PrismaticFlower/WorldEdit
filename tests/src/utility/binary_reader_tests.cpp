@@ -4,6 +4,7 @@
 #include "utility/binary_reader.hpp"
 
 #include <algorithm>
+#include <array>
 
 using namespace Catch::literals;
 

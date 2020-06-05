@@ -5,6 +5,7 @@
 #include "utility/string_ops.hpp"
 
 #include <cstddef>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -13,7 +14,6 @@
 
 #include <boost/container/small_vector.hpp>
 #include <fmt/format.h>
-#include <gsl/gsl>
 
 namespace sk::ucfb {
 
@@ -46,7 +46,7 @@ class reader {
 public:
    reader() = delete;
 
-   explicit reader(const gsl::span<const std::byte> bytes)
+   explicit reader(const std::span<const std::byte> bytes)
       : _id{utility::make_from_bytes<chunk_id>(bytes.subspan(0, sizeof(chunk_id)))},
         _size{utility::make_from_bytes<uint32>(
            bytes.subspan(sizeof(chunk_id), sizeof(uint32)))},
@@ -82,8 +82,7 @@ public:
 
       if (!unaligned) align_head();
 
-      return utility::make_from_bytes<Type>(
-         gsl::make_span(&_data[cur_pos], sizeof(Type)));
+      return utility::make_from_bytes<Type>(std::span{&_data[cur_pos], sizeof(Type)});
    }
 
    template<typename Type>
@@ -198,26 +197,24 @@ public:
       str += fmt::format("   Read head of {} is {}\n"sv, to_string(_id), _head);
 
       if ((_head + 8) < _size) {
-         str +=
-            fmt::format("   Bytes at read head: {:02x}",
-                        fmt::join(gsl::make_span(reinterpret_cast<const unsigned char*>(
-                                                    _data + _head),
-                                                 8),
-                                  " "sv));
+         str += fmt::format("   Bytes at read head: {:02x}",
+                            fmt::join(std::span{reinterpret_cast<const unsigned char*>(
+                                                   _data + _head),
+                                                8},
+                                      " "sv));
       }
       else if ((_head - 8) < _size) {
-         str +=
-            fmt::format("   Bytes preceding read head: {:02x}",
-                        fmt::join(gsl::make_span(reinterpret_cast<const unsigned char*>(
-                                                    _data + _head - 8),
-                                                 8),
-                                  " "sv));
+         str += fmt::format("   Bytes preceding read head: {:02x}",
+                            fmt::join(std::span{reinterpret_cast<const unsigned char*>(
+                                                   _data + _head - 8),
+                                                8},
+                                      " "sv));
       }
       else {
          str +=
             fmt::format("   Bytes in {}: {:02x}", to_string(_id),
-                        fmt::join(gsl::make_span(reinterpret_cast<const unsigned char*>(_data),
-                                                 _size),
+                        fmt::join(std::span{reinterpret_cast<const unsigned char*>(_data),
+                                            _size},
                                   " "sv));
       }
 
@@ -317,7 +314,7 @@ public:
       }
    }
 
-   explicit reader_strict(const gsl::span<const std::byte> bytes)
+   explicit reader_strict(const std::span<const std::byte> bytes)
       : reader_strict{reader{bytes}}
    {
    }

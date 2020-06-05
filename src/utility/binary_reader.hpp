@@ -3,11 +3,10 @@
 #include "make_from_bytes.hpp"
 
 #include <cstddef>
+#include <span>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
-
-#include <gsl/gsl>
 
 namespace sk::utility {
 
@@ -15,7 +14,7 @@ class binary_reader {
 public:
    binary_reader() = delete;
 
-   binary_reader(const gsl::span<const std::byte> bytes) noexcept
+   binary_reader(const std::span<const std::byte> bytes) noexcept
       : _bytes{bytes}
    {
    }
@@ -52,7 +51,7 @@ public:
    }
 
 private:
-   gsl::span<const std::byte> _bytes;
+   std::span<const std::byte> _bytes;
 };
 
 }

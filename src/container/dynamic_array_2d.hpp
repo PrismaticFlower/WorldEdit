@@ -11,10 +11,9 @@
 #include <limits>
 #include <memory>
 #include <new>
+#include <span>
 #include <stdexcept>
 #include <type_traits>
-
-#include <gsl/gsl>
 
 namespace sk::container {
 
@@ -22,13 +21,13 @@ template<typename Type>
 class row_iterator {
 public:
    using difference_type = std::ptrdiff_t;
-   using value_type = gsl::span<Type>;
-   using reference = gsl::span<Type>;
+   using value_type = std::span<Type>;
+   using reference = std::span<Type>;
    using iterator_category = std::random_access_iterator_tag;
 
    row_iterator() = default;
 
-   row_iterator(gsl::span<Type> data, std::ptrdiff_t width, std::ptrdiff_t height) noexcept
+   row_iterator(std::span<Type> data, std::ptrdiff_t width, std::ptrdiff_t height) noexcept
    {
       _data = data.data();
       _width = width;
@@ -383,7 +382,7 @@ private:
    static auto rows_begin_impl(Self& self) noexcept
       -> std::conditional_t<std::is_const_v<Self>, row_iterator<const Type>, row_iterator<Type>>
    {
-      return row_iterator{gsl::span(self.data(), self.size()), self._width, self._height};
+      return row_iterator{std::span(self.data(), self.size()), self._width, self._height};
    }
 
    std::ptrdiff_t _width = 0;

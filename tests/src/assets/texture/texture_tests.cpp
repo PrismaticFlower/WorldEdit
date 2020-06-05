@@ -264,7 +264,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, float4{0.5f, 0.5f, 1.0f, 1.0f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("r8g8b8a8_unorm_srgb store")
@@ -281,7 +281,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, {0.2158605f, 0.2158605f, 1.0f, 0.5f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("b8g8r8a8_unorm store")
@@ -298,7 +298,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, {0.5f, 0.5f, 1.0f, 1.0f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("b8g8r8a8_unorm_srgb store")
@@ -315,7 +315,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, {0.2158605f, 0.2158605f, 1.0f, 0.5f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("r16g16b16a16_unorm store")
@@ -334,7 +334,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, {0.5f, 0.5f, 1.0f, 1.0f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("r16g16b16a16_float store")
@@ -353,7 +353,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, {128.0f, -1.0f, 33.5f, 1.0f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("r32g32b32_float store")
@@ -373,7 +373,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, {128.0f, -1.0f, 33.5f, 1.0f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("r32g32b32a32_float store")
@@ -394,7 +394,7 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture.store({.mip_level = 0}, {0, 0}, {128.0f, -1.0f, 33.5f, 1.0f});
 
       CHECK(ranges::equal(expected_texel,
-                          gsl::span{texture.data(), expected_texel.size()}));
+                          std::span{texture.data(), expected_texel.size()}));
    }
 
    SECTION("invalid subresource store")

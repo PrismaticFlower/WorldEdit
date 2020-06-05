@@ -92,7 +92,7 @@ auto make_string(terr_string str) -> std::string
 
 }
 
-auto read_terrain(const gsl::span<const std::byte> bytes) -> terrain
+auto read_terrain(const std::span<const std::byte> bytes) -> terrain
 {
    utility::binary_reader reader{bytes};
 

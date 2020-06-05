@@ -5,18 +5,18 @@
 
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <vector>
 
 #include <d3d12.h>
 #include <glm/glm.hpp>
-#include <gsl/gsl>
 
 namespace sk::assets::texture {
 
 class texture_subresource_view {
 public:
    struct init_params {
-      gsl::span<std::byte> data;
+      std::span<std::byte> data;
       std::size_t offset = 0;
       uint32 row_pitch = 256;
       uint32 width = 1;
@@ -49,7 +49,7 @@ public:
    void store(const glm::uvec2 index, const float4 value) noexcept;
 
 private:
-   gsl::span<std::byte> _data_span;
+   std::span<std::byte> _data_span;
    std::size_t _offset = 0;
    uint32 _row_pitch = 0;
    uint32 _width = 0;

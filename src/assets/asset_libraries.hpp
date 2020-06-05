@@ -20,7 +20,6 @@
 #include <vector>
 
 #include <fmt/format.h>
-#include <gsl/gsl>
 #include <tbb/task_group.h>
 
 namespace sk::assets {

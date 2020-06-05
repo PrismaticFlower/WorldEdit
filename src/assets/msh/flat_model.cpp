@@ -4,11 +4,11 @@
 
 #include <algorithm>
 #include <limits>
+#include <span>
 #include <stdexcept>
 #include <string_view>
 
 #include <fmt/format.h>
-#include <gsl/gsl>
 
 #include <range/v3/algorithm.hpp>
 
@@ -111,8 +111,8 @@ auto make_flat_scene_node(const node& base, const std::vector<node>& nodes) -> f
    return flat_node;
 }
 
-auto generate_normals(gsl::span<const float3> positions,
-                      gsl::span<const std::array<uint16, 3>> triangles)
+auto generate_normals(std::span<const float3> positions,
+                      std::span<const std::array<uint16, 3>> triangles)
    -> std::vector<float3>
 {
    std::vector<float3> normals{positions.size(), float3{0.0f}};

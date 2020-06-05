@@ -4,6 +4,7 @@
 #include "utility/srgb_conversion.hpp"
 #include "validate_scene.hpp"
 
+#include <numeric>
 #include <stdexcept>
 
 #include <fmt/format.h>
@@ -337,7 +338,7 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
 
 }
 
-auto read_scene_from_bytes(const gsl::span<const std::byte> bytes) -> scene
+auto read_scene_from_bytes(const std::span<const std::byte> bytes) -> scene
 {
    ucfb::reader_strict<"HEDR"_id> hedr{bytes};
 

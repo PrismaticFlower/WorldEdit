@@ -4,6 +4,7 @@
 #include "utility/make_from_bytes.hpp"
 
 #include <algorithm>
+#include <array>
 
 using namespace Catch::literals;
 

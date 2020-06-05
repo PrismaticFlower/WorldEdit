@@ -3,11 +3,10 @@
 #include "terrain.hpp"
 
 #include <cstddef>
-
-#include <gsl/gsl>
+#include <span>
 
 namespace sk::assets::terrain {
 
-auto read_terrain(const gsl::span<const std::byte> bytes) -> terrain;
+auto read_terrain(const std::span<const std::byte> bytes) -> terrain;
 
 }
