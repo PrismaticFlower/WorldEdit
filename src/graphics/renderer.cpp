@@ -1,5 +1,6 @@
 
 #include "renderer.hpp"
+#include "gpu/barrier_helpers.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "line_drawer.hpp"
@@ -110,8 +111,8 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
                                  _dynamic_buffer_allocator);
 
    command_list.deferred_resource_barrier(
-      CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_PRESENT,
-                                           D3D12_RESOURCE_STATE_RENDER_TARGET));
+      gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_PRESENT,
+                              D3D12_RESOURCE_STATE_RENDER_TARGET));
    command_list.flush_deferred_resource_barriers();
 
    command_list.clear_render_target_view(back_buffer_rtv,
@@ -142,8 +143,8 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command_list.get_underlying());
 
    command_list.resource_barrier(
-      CD3DX12_RESOURCE_BARRIER::Transition(&back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                           D3D12_RESOURCE_STATE_PRESENT));
+      gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
+                              D3D12_RESOURCE_STATE_PRESENT));
 
    command_list.close();
 

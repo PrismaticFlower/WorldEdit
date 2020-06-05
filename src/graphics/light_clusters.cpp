@@ -1,5 +1,6 @@
 
 #include "light_clusters.hpp"
+#include "gpu/barrier_helpers.hpp"
 #include "world/world_utilities.hpp"
 
 #include <cmath>
@@ -255,20 +256,12 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                                    regional_lights_descriptions_size);
 
    const std::array barriers{
-      D3D12_RESOURCE_BARRIER{
-         .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-         .Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-         .Transition = {.pResource = _lights_constant_buffer.resource(),
-                        .Subresource = 0,
-                        .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
-                        .StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER}},
-      D3D12_RESOURCE_BARRIER{
-         .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-         .Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-         .Transition = {.pResource = _regional_lights_buffer.resource(),
-                        .Subresource = 0,
-                        .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
-                        .StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE}}};
+      gpu::transition_barrier(*_lights_constant_buffer.resource(),
+                              D3D12_RESOURCE_STATE_COPY_DEST,
+                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER),
+      gpu::transition_barrier(*_regional_lights_buffer.resource(),
+                              D3D12_RESOURCE_STATE_COPY_DEST,
+                              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)};
 
    command_list.deferred_resource_barrier(barriers);
 }

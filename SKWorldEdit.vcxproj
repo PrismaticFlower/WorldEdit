@@ -187,6 +187,7 @@
     <ClInclude Include="src\exceptions.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\frustrum.hpp" />
+    <ClInclude Include="src\graphics\gpu\barrier_helpers.hpp" />
     <ClInclude Include="src\graphics\gpu\buffer.hpp" />
     <ClInclude Include="src\graphics\gpu\command_list.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
