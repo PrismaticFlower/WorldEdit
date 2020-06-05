@@ -90,7 +90,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
 
    throw_if_failed(command_allocator.Reset());
-   command_list.reset(command_allocator, nullptr);
+   command_list.reset(command_allocator, _dynamic_buffer_allocator, nullptr);
    _dynamic_buffer_allocator.reset(_device.frame_index);
 
    command_list.set_descriptor_heaps(_device.descriptor_heap.get());
@@ -195,15 +195,7 @@ void renderer::draw_world(const frustrum& view_frustrum,
 
    // TEMP object placeholder rendering
    for (auto& object : _object_render_list) {
-      // TEMP object constants setup
-      {
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-         std::memcpy(allocation.cpu_address, &object.transform, sizeof(float4x4));
-
-         command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
-      }
-
+      command_list.set_graphics_root_constant_buffer(1, object.transform);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
       command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
@@ -241,8 +233,8 @@ void renderer::draw_world_meta_objects(
          // Set Path Nodes Constants
          {
             struct {
-               const float4 color{0.15f, 1.0f, 0.3f, 1.0f};
-               const float4 outline_color{0.1125f, 0.6f, 0.2225f, 1.0f};
+               float4 color{0.15f, 1.0f, 0.3f, 1.0f};
+               float4 outline_color{0.1125f, 0.6f, 0.2225f, 1.0f};
                float2 viewport_size;
                float2 viewport_topleft = {0.0f, 0.0f};
             } temp_constants;
@@ -252,13 +244,7 @@ void renderer::draw_world_meta_objects(
                                             static_cast<float>(
                                                _device.swap_chain.height())};
 
-            auto allocation =
-               _dynamic_buffer_allocator.allocate(sizeof(temp_constants));
-
-            std::memcpy(allocation.cpu_address, &temp_constants,
-                        sizeof(temp_constants));
-
-            command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer(2, temp_constants);
          }
 
          command_list.set_pipeline_state(*_device.pipelines.meta_object_mesh_outlined);
@@ -275,13 +261,7 @@ void renderer::draw_world_meta_objects(
 
                   transform[3] = {node.position, 1.0f};
 
-                  auto allocation =
-                     _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-                  std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-                  command_list.set_graphics_root_constant_buffer_view(1,
-                                                                      allocation.gpu_address);
+                  command_list.set_graphics_root_constant_buffer(1, transform);
                }
 
                const geometric_shape shape = _geometric_shapes.octahedron();
@@ -390,11 +370,7 @@ void renderer::draw_world_meta_objects(
 
          transform[3] = {region.position, 1.0f};
 
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-         std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-         command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer(1, transform);
       }
 
       const geometric_shape shape = [&] {
@@ -423,11 +399,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{0.25f, 0.4f, 1.0f, 0.3f};
 
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
-
-         std::memcpy(allocation.cpu_address, &color, sizeof(float4));
-
-         command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer(2, color);
       }
 
       for (auto& region : world.regions) {
@@ -444,11 +416,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{1.0f, 0.1f, 0.5f, 0.3f};
 
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
-
-         std::memcpy(allocation.cpu_address, &color, sizeof(float4));
-
-         command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer(2, color);
       }
 
       // Set Barriers IA State
@@ -479,11 +447,7 @@ void renderer::draw_world_meta_objects(
 
             transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
-            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-            std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-            command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer(1, transform);
          }
 
          command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
@@ -500,11 +464,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{0.0f, 1.0f, 0.0f, 0.3f};
 
-         auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
-
-         std::memcpy(allocation.cpu_address, &color, sizeof(float4));
-
-         command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
+         command_list.set_graphics_root_constant_buffer(2, color);
       }
 
       // Set Barriers IA State
@@ -531,11 +491,7 @@ void renderer::draw_world_meta_objects(
 
             transform[3] = {bbox_centre, 1.0f};
 
-            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-            std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-            command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer(1, transform);
          }
 
          command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
@@ -555,11 +511,7 @@ void renderer::draw_world_meta_objects(
                                                ? 0.025f
                                                : 0.05f};
 
-            auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4));
-
-            std::memcpy(allocation.cpu_address, &color, sizeof(float4));
-
-            command_list.set_graphics_root_constant_buffer_view(2, allocation.gpu_address);
+            command_list.set_graphics_root_constant_buffer(2, color);
          }
 
          switch (light.light_type) {
@@ -584,11 +536,7 @@ void renderer::draw_world_meta_objects(
 
                transform[3] = {light.position, 1.0f};
 
-               auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-               std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-               command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
+               command_list.set_graphics_root_constant_buffer(1, transform);
             }
 
             auto shape = _geometric_shapes.icosphere();
@@ -615,11 +563,7 @@ void renderer::draw_world_meta_objects(
 
                transform[3] += float4{light.position, 0.0f};
 
-               auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-               std::memcpy(allocation.cpu_address, &transform, sizeof(float4x4));
-
-               command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
+               command_list.set_graphics_root_constant_buffer(1, transform);
             };
 
             bind_cone_transform(light.outer_cone_angle);

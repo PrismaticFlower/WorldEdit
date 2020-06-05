@@ -33,7 +33,7 @@ world_edit::world_edit(const HWND window)
    _asset_libraries.source_directory(_project_dir);
 
    try {
-      _world = world::load_world("Worlds/SPT/World1/SPT.wld", _stream);
+      _world = world::load_world("Worlds/NAB/World2/naboo2.wld", _stream);
    }
    catch (std::exception&) {
    }

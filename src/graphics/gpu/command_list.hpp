@@ -1,6 +1,7 @@
 #pragma once
 
 #include "device.hpp"
+#include "dynamic_buffer_allocator.hpp"
 #include "hresult_error.hpp"
 #include "types.hpp"
 #include "utility/com_ptr.hpp"
@@ -15,7 +16,7 @@ namespace sk::graphics::gpu {
 
 class command_list {
 public:
-   command_list(const D3D12_COMMAND_LIST_TYPE type, gpu::device& device)
+   command_list(const D3D12_COMMAND_LIST_TYPE type, device& device)
    {
       _command_list = device.create_command_list(type);
    }
@@ -26,8 +27,10 @@ public:
    }
 
    void reset(ID3D12CommandAllocator& allocator,
+              dynamic_buffer_allocator& dynamic_buffer_allocator,
               ID3D12PipelineState* const initial_state = nullptr)
    {
+      _dynamic_buffer_allocator = &dynamic_buffer_allocator;
       throw_if_failed(_command_list->Reset(&allocator, initial_state));
    }
 
@@ -246,6 +249,20 @@ public:
                                                         buffer_location);
    }
 
+   template<typename Type>
+   void set_compute_root_constant_buffer(const uint32 root_parameter_index,
+                                         const Type& constant_buffer)
+   {
+      set_root_constant_buffer<Type, true>(root_parameter_index, constant_buffer);
+   }
+
+   template<typename Type>
+   void set_graphics_root_constant_buffer(const uint32 root_parameter_index,
+                                          const Type& constant_buffer)
+   {
+      set_root_constant_buffer<Type, false>(root_parameter_index, constant_buffer);
+   }
+
    void ia_set_primitive_topology(const D3D12_PRIMITIVE_TOPOLOGY primitive_topology)
    {
       _command_list->IASetPrimitiveTopology(primitive_topology);
@@ -390,7 +407,29 @@ public:
    }
 
 private:
+   template<typename Type, bool compute>
+   void set_root_constant_buffer(const uint32 root_parameter_index,
+                                 const Type& constant_buffer)
+   {
+      static_assert(std::is_trivially_copyable_v<Type>,
+                    "Constant buffer type should be trivially copyable.");
+
+      auto allocation = _dynamic_buffer_allocator->allocate(sizeof(Type));
+
+      std::memcpy(allocation.cpu_address, &constant_buffer, sizeof(Type));
+
+      if constexpr (compute) {
+         _command_list->SetComputeRootConstantBufferView(root_parameter_index,
+                                                         allocation.gpu_address);
+      }
+      else {
+         _command_list->SetGraphicsRootConstantBufferView(root_parameter_index,
+                                                          allocation.gpu_address);
+      }
+   }
+
    utility::com_ptr<ID3D12GraphicsCommandList5> _command_list;
+   dynamic_buffer_allocator* _dynamic_buffer_allocator = nullptr;
 };
 
 }
