@@ -20,7 +20,7 @@ const std::unordered_set ignored_folders = {L"_BUILD"sv,    L"_LVL_PC"sv,
 }
 
 libraries_manager::libraries_manager(output_stream& stream) noexcept
-   : odfs{stream}, models{stream}
+   : odfs{stream}, models{stream}, textures{stream}
 {
 }
 
@@ -46,6 +46,9 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
       }
       else if (extension == L".msh"sv) {
          models.add_asset(path);
+      }
+      else if (extension == L".tga"sv) {
+         textures.add_asset(path);
       }
    }
 }

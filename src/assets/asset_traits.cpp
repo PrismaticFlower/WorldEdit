@@ -2,6 +2,7 @@
 #include "asset_traits.hpp"
 #include "msh/scene_io.hpp"
 #include "odf/definition_io.hpp"
+#include "texture/texture_io.hpp"
 #include "utility/read_file.hpp"
 
 namespace sk::assets {
@@ -20,6 +21,12 @@ auto asset_traits<msh::flat_model>::load(const std::filesystem::path& path)
    auto file = utility::read_file_to_bytes(path);
 
    return msh::flat_model{msh::read_scene_from_bytes(file)};
+}
+
+auto asset_traits<texture::texture>::load(const std::filesystem::path& path)
+   -> texture::texture
+{
+   return texture::load_texture(path);
 }
 
 }

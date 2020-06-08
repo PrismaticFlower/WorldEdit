@@ -22,8 +22,8 @@ enum class frustrum_corner {
 };
 
 enum class frustrum_planes {
-   near,
-   far,
+   near_,
+   far_,
    top,
    bottom,
    left,

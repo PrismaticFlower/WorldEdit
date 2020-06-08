@@ -2,6 +2,7 @@
 
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
+#include "texture/texture.hpp"
 
 #include <filesystem>
 #include <string_view>
@@ -24,6 +25,13 @@ struct asset_traits<msh::flat_model> {
    static constexpr std::string_view error_type_name = "model";
 
    static auto load(const std::filesystem::path& path) -> msh::flat_model;
+};
+
+template<>
+struct asset_traits<texture::texture> {
+   static constexpr std::string_view error_type_name = "texture";
+
+   static auto load(const std::filesystem::path& path) -> texture::texture;
 };
 
 }

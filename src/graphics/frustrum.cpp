@@ -58,12 +58,12 @@ frustrum::frustrum(const camera& camera) noexcept
                 }),
                 corners.begin());
 
-   planes[frustrum_planes::near] =
+   planes[frustrum_planes::near_] =
       get_plane({corners[frustrum_corner::top_left_near],
                  corners[frustrum_corner::top_right_near],
                  corners[frustrum_corner::bottom_left_near]});
 
-   planes[frustrum_planes::far] =
+   planes[frustrum_planes::far_] =
       get_plane({corners[frustrum_corner::top_left_far],
                  corners[frustrum_corner::bottom_left_far],
                  corners[frustrum_corner::top_right_far]});

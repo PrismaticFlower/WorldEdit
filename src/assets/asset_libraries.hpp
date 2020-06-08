@@ -172,6 +172,7 @@ public:
 
    library<odf::definition> odfs;
    library<msh::flat_model> models;
+   library<texture::texture> textures;
 
 private:
 };
