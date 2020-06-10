@@ -96,6 +96,7 @@
       <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +150,7 @@
       <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

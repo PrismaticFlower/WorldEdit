@@ -8,6 +8,7 @@
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
 #include "swap_chain.hpp"
+#include "texture.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <array>
@@ -24,12 +25,6 @@ namespace sk::graphics::gpu {
 
 using command_allocators =
    std::array<utility::com_ptr<ID3D12CommandAllocator>, render_latency>;
-
-struct buffer_desc {
-   uint32 alignment = 0;
-   uint32 size = 0;
-   D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
-};
 
 class device {
 public:
@@ -62,15 +57,7 @@ public:
                                                   .MemoryPoolPreference =
                                                      D3D12_MEMORY_POOL_UNKNOWN};
 
-      const D3D12_RESOURCE_DESC d3d12_desc{.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-                                           .Alignment = desc.alignment,
-                                           .Width = desc.size,
-                                           .Height = 1,
-                                           .DepthOrArraySize = 1,
-                                           .MipLevels = 1,
-                                           .SampleDesc = {1, 0},
-                                           .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-                                           .Flags = desc.flags};
+      const D3D12_RESOURCE_DESC d3d12_desc = desc;
 
       utility::com_ptr<ID3D12Resource> buffer_resource;
 
@@ -79,6 +66,27 @@ public:
          nullptr, IID_PPV_ARGS(buffer_resource.clear_and_assign())));
 
       return buffer{*this, desc.size, std::move(buffer_resource)};
+   }
+
+   auto create_texture(const texture_desc& desc,
+                       const D3D12_RESOURCE_STATES initial_resource_state) -> texture
+   {
+      const D3D12_HEAP_PROPERTIES heap_properties{.Type = D3D12_HEAP_TYPE_DEFAULT,
+                                                  .CPUPageProperty =
+                                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+                                                  .MemoryPoolPreference =
+                                                     D3D12_MEMORY_POOL_UNKNOWN};
+
+      const D3D12_RESOURCE_DESC d3d12_desc = desc;
+
+      utility::com_ptr<ID3D12Resource> texture_resource;
+
+      throw_if_failed(device_d3d->CreateCommittedResource(
+         &heap_properties, D3D12_HEAP_FLAG_NONE, &d3d12_desc, initial_resource_state,
+         desc.optimized_clear_value ? &desc.optimized_clear_value.value() : nullptr,
+         IID_PPV_ARGS(texture_resource.clear_and_assign())));
+
+      return texture{*this, desc, std::move(texture_resource)};
    }
 
    template<resource_owner Owner>

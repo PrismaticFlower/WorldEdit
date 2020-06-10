@@ -15,7 +15,7 @@ struct depth_stencil_texture : private texture {
                                                  .DepthStencil = {.Depth = 1.0f,
                                                                   .Stencil = 0x0}};
 
-      operator texture_init() const noexcept
+      operator texture_desc() const noexcept
       {
          return {.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
                  .flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL |
@@ -30,9 +30,8 @@ struct depth_stencil_texture : private texture {
    depth_stencil_texture() = default;
 
    depth_stencil_texture(device& device, const depth_stencil_texture_init init_params,
-                         const D3D12_HEAP_TYPE heap_type,
                          const D3D12_RESOURCE_STATES initial_resource_state)
-      : texture{device, init_params, heap_type, initial_resource_state}
+      : texture{device.create_texture(init_params, initial_resource_state)}
    {
       depth_stencil_view = device.dsv_descriptor_heap.allocate();
       device.device_d3d->CreateDepthStencilView(resource(), nullptr, depth_stencil_view);

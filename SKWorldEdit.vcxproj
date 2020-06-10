@@ -72,6 +72,7 @@
       <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -100,6 +101,7 @@
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
       <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
       <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -278,6 +280,7 @@
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
+    <ClCompile Include="src\graphics\gpu\texture.cpp" />
     <ClCompile Include="src\graphics\light_clusters.cpp" />
     <ClCompile Include="src\graphics\line_drawer.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />

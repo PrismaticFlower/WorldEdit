@@ -62,7 +62,6 @@ private:
        .height = _device.swap_chain.height(),
        .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                  .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
-      D3D12_HEAP_TYPE_DEFAULT,
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
    model_manager _model_manager{_device};
