@@ -45,8 +45,9 @@ auto create_dxgi_swapchain(const HWND window, IDXGIFactory7& factory,
 
 swap_chain::swap_chain(const HWND window, IDXGIFactory7& factory,
                        ID3D12Device& device, ID3D12CommandQueue& command_queue,
-                       descriptor_heap_cpu& rtv_descriptor_heap)
+                       descriptor_heap& descriptor_heap_rtv)
    : dxgi_swap_chain{create_dxgi_swapchain(window, factory, command_queue)},
+     render_target_views{descriptor_heap_rtv.allocate_static(frame_count)},
      _device{&device},
      _waitable_ready_handle{dxgi_swap_chain->GetFrameLatencyWaitableObject()}
 {
@@ -61,14 +62,12 @@ swap_chain::swap_chain(const HWND window, IDXGIFactory7& factory,
          dxgi_swap_chain->GetBuffer(i, IID_PPV_ARGS(
                                           render_targets[i].clear_and_assign())));
 
-      render_target_views[i] = rtv_descriptor_heap.allocate();
-
       const D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{.Format = format_rtv,
                                                    .ViewDimension =
                                                       D3D12_RTV_DIMENSION_TEXTURE2D};
 
       _device->CreateRenderTargetView(render_targets[i].get(), &rtv_desc,
-                                      render_target_views[i]);
+                                      render_target_views[i].cpu);
    }
 }
 
@@ -104,7 +103,7 @@ void swap_chain::resize(const uint16 width, const uint16 height)
                                                       D3D12_RTV_DIMENSION_TEXTURE2D};
 
       _device->CreateRenderTargetView(render_targets[i].get(), &rtv_desc,
-                                      render_target_views[i]);
+                                      render_target_views[i].cpu);
    }
 }
 
@@ -113,7 +112,7 @@ auto swap_chain::current_back_buffer()
 {
    const auto index = dxgi_swap_chain->GetCurrentBackBufferIndex();
 
-   return {*render_targets[index], render_target_views[index]};
+   return {*render_targets[index], render_target_views[index].cpu};
 }
 
 }

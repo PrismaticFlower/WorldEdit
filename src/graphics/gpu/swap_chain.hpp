@@ -16,8 +16,7 @@ struct swap_chain {
    swap_chain() = default;
 
    swap_chain(const HWND window, IDXGIFactory7& factory, ID3D12Device& device,
-              ID3D12CommandQueue& command_queue,
-              descriptor_heap_cpu& rtv_descriptor_heap);
+              ID3D12CommandQueue& command_queue, descriptor_heap& descriptor_heap_rtv);
 
    void wait_for_ready();
 
@@ -44,7 +43,7 @@ struct swap_chain {
 
    utility::com_ptr<IDXGISwapChain4> dxgi_swap_chain;
    std::array<utility::com_ptr<ID3D12Resource>, frame_count> render_targets;
-   std::array<D3D12_CPU_DESCRIPTOR_HANDLE, frame_count> render_target_views;
+   descriptor_range render_target_views;
 
 private:
    ID3D12Device* _device;

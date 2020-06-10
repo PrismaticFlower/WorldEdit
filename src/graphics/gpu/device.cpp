@@ -77,7 +77,7 @@ device::device(const HWND window)
       device_d3d->CreateCommandQueue(&queue_desc,
                                      IID_PPV_ARGS(command_queue.clear_and_assign())));
 
-   swap_chain = {window, *factory, *device_d3d, *command_queue, rtv_descriptor_heap};
+   swap_chain = {window, *factory, *device_d3d, *command_queue, descriptor_heap_rtv};
 
    if (utility::com_ptr<ID3D12InfoQueue> info_queue;
        SUCCEEDED(device_d3d->QueryInterface(info_queue.clear_and_assign()))) {
@@ -153,10 +153,9 @@ void device::process_deferred_resource_destructions()
 {
    std::scoped_lock lock{_deferred_destruction_mutex};
 
-   std::erase_if(_deferred_resource_destructions,
-                 [=](const deferred_resource_destruction& resource) {
-                    return resource.last_used_frame <= completed_fence_value;
-                 });
+   std::erase_if(_deferred_destructions, [=](const deferred_destruction& resource) {
+      return resource.last_used_frame <= completed_fence_value;
+   });
 }
 
 }

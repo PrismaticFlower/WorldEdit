@@ -22,18 +22,13 @@ auto index_descriptor_ptr(const Type ptr, const std::type_identity_t<Type> index
 }
 
 descriptor_heap::descriptor_heap(const D3D12_DESCRIPTOR_HEAP_TYPE type,
-                                 const uint32 static_descriptor_count,
-                                 const uint32 dynamic_descriptor_count,
-                                 ID3D12Device6& device)
-   : _descriptor_size{device.GetDescriptorHandleIncrementSize(type)},
-     _static_count{static_descriptor_count},
-     _dynamic_count{dynamic_descriptor_count}
+                                 const D3D12_DESCRIPTOR_HEAP_FLAGS flags,
+                                 const uint32 descriptor_count, ID3D12Device6& device)
+   : _descriptor_size{device.GetDescriptorHandleIncrementSize(type)}, _count{descriptor_count}
 {
-   const uint32 descriptor_count = _static_count + (_dynamic_count * render_latency);
-
    const D3D12_DESCRIPTOR_HEAP_DESC desc{.Type = type,
-                                         .NumDescriptors = descriptor_count,
-                                         .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE};
+                                         .NumDescriptors = _count,
+                                         .Flags = flags};
 
    throw_if_failed(
       device.CreateDescriptorHeap(&desc,
@@ -43,11 +38,7 @@ descriptor_heap::descriptor_heap(const D3D12_DESCRIPTOR_HEAP_TYPE type,
       root_handle{.cpu = _descriptor_heap->GetCPUDescriptorHandleForHeapStart(),
                   .gpu = _descriptor_heap->GetGPUDescriptorHandleForHeapStart()};
 
-   _root_static_handle = root_handle;
-   _root_dynamic_handles = {
-      index_descriptor_handle(root_handle, _static_count, _descriptor_size),
-      index_descriptor_handle(root_handle, _static_count + _dynamic_count, _descriptor_size),
-   };
+   _root_handle = root_handle;
 }
 
 auto descriptor_heap::get() const noexcept -> ID3D12DescriptorHeap&
@@ -58,36 +49,35 @@ auto descriptor_heap::get() const noexcept -> ID3D12DescriptorHeap&
 auto descriptor_heap::allocate_static(const uint32 count) -> descriptor_range
 {
    // check if an exact size match exists in the free list
-   if (std::lock_guard lock{_static_free_list_mutex}; not _static_free_list.empty()) {
-      if (auto match = ranges::find_if(_static_free_list,
+   if (std::lock_guard lock{_free_ranges_mutex}; not _free_ranges.empty()) {
+      if (auto match = ranges::find_if(_free_ranges,
                                        [count](const auto& range) {
                                           return range.size() == count;
                                        });
-          match != _static_free_list.end()) {
+          match != _free_ranges.end()) {
          const descriptor_range range = *match;
 
-         _static_free_list.erase(match);
+         _free_ranges.erase(match);
 
          return range;
       }
    }
 
    // check if we can allocate a new range
-   const uint32 range_offset =
-      _static_used_count.fetch_add(count, std::memory_order_relaxed);
+   const uint32 range_offset = _used_count.fetch_add(count, std::memory_order_relaxed);
 
-   if ((range_offset + count) <= _static_count) {
-      return {index_descriptor_handle(_root_static_handle, range_offset, _descriptor_size),
+   if ((range_offset + count) <= _count) {
+      return {index_descriptor_handle(_root_handle, range_offset, _descriptor_size),
               count, _descriptor_size};
    }
 
    // check if a partial size match exists in the free list
-   if (std::lock_guard lock{_static_free_list_mutex}; not _static_free_list.empty()) {
-      if (auto match = ranges::find_if(_static_free_list,
+   if (std::lock_guard lock{_free_ranges_mutex}; not _free_ranges.empty()) {
+      if (auto match = ranges::find_if(_free_ranges,
                                        [count](const auto& range) {
                                           return range.size() >= count;
                                        });
-          match != _static_free_list.end()) {
+          match != _free_ranges.end()) {
          descriptor_range range = *match;
 
          if (range.size() > count) {
@@ -104,28 +94,8 @@ auto descriptor_heap::allocate_static(const uint32 count) -> descriptor_range
 
 void descriptor_heap::free_static(descriptor_range range)
 {
-   std::lock_guard lock{_static_free_list_mutex};
-   _static_free_list.push_back(range);
-}
-
-auto descriptor_heap::allocate_dynamic(const uint32 count) -> descriptor_range
-{
-   const uint32 range_offset =
-      _dynamic_used_count.fetch_add(count, std::memory_order_relaxed);
-
-   if ((range_offset + count) > _dynamic_count) {
-      throw std::runtime_error{"out of space in dynamic descriptor heap!"};
-   }
-
-   return {index_descriptor_handle(_root_dynamic_handles[_frame_index],
-                                   range_offset, _descriptor_size),
-           count, _descriptor_size};
-}
-
-void descriptor_heap::reset_dynamic(const std::size_t new_frame_index) noexcept
-{
-   _frame_index = new_frame_index;
-   _dynamic_used_count.store(0, std::memory_order_relaxed);
+   std::lock_guard lock{_free_ranges_mutex};
+   _free_ranges.push_back(range);
 }
 
 descriptor_heap_cpu::descriptor_heap_cpu(const D3D12_DESCRIPTOR_HEAP_TYPE type,

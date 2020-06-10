@@ -70,10 +70,12 @@ const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
 
 renderer::renderer(const HWND window) : _window{window}, _device{window}
 {
-   auto imgui_font_descriptor = _device.descriptor_heap.allocate_static(1);
+   auto imgui_font_descriptor =
+      _device.descriptor_heap_srv_cbv_uav.allocate_static(1);
 
    ImGui_ImplDX12_Init(_device.device_d3d.get(), gpu::render_latency,
-                       gpu::swap_chain::format_rtv, &_device.descriptor_heap.get(),
+                       gpu::swap_chain::format_rtv,
+                       &_device.descriptor_heap_srv_cbv_uav.get(),
                        imgui_font_descriptor.start().cpu,
                        imgui_font_descriptor.start().gpu);
 }
@@ -89,12 +91,13 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    auto& command_allocator = *_world_command_allocators[_device.frame_index];
    auto& command_list = _world_command_list;
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
+   auto depth_stencil_view = _depth_stencil_texture.depth_stencil_view[0].cpu;
 
    throw_if_failed(command_allocator.Reset());
    command_list.reset(command_allocator, _dynamic_buffer_allocator, nullptr);
    _dynamic_buffer_allocator.reset(_device.frame_index);
 
-   command_list.set_descriptor_heaps(_device.descriptor_heap.get());
+   command_list.set_descriptor_heaps(_device.descriptor_heap_srv_cbv_uav.get());
 
    const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address = [&] {
       auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
@@ -117,7 +120,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
    command_list.clear_render_target_view(back_buffer_rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
-   command_list.clear_depth_stencil_view(_depth_stencil_texture.depth_stencil_view,
+   command_list.clear_depth_stencil_view(depth_stencil_view,
                                          D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0);
 
    command_list.rs_set_viewports(
@@ -127,8 +130,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    command_list.rs_set_scissor_rects(
       {.right = static_cast<LONG>(_device.swap_chain.width()),
        .bottom = static_cast<LONG>(_device.swap_chain.height())});
-   command_list.om_set_render_targets(back_buffer_rtv,
-                                      _depth_stencil_texture.depth_stencil_view);
+   command_list.om_set_render_targets(back_buffer_rtv, depth_stencil_view);
 
    // Render World
    draw_world(view_frustrum, camera_constants_address, world, world_classes,

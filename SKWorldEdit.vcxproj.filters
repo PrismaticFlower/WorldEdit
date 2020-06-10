@@ -432,6 +432,9 @@
     <ClInclude Include="src\assets\texture\texture_io.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\descriptor_allocation.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -561,6 +564,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\texture.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\gpu\descriptor_allocation.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

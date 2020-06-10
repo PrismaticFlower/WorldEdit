@@ -4,6 +4,7 @@
 #include "buffer.hpp"
 #include "common.hpp"
 #include "concepts.hpp"
+#include "descriptor_allocation.hpp"
 #include "descriptor_heap.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
@@ -15,13 +16,17 @@
 #include <exception>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <vector>
 
+#include <boost/variant2/variant.hpp>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wil/resource.h>
 
 namespace sk::graphics::gpu {
+
+class device;
 
 using command_allocators =
    std::array<utility::com_ptr<ID3D12CommandAllocator>, render_latency>;
@@ -89,21 +94,63 @@ public:
       return texture{*this, desc, std::move(texture_resource)};
    }
 
+   auto allocate_descriptors(const D3D12_DESCRIPTOR_HEAP_TYPE type,
+                             const uint32 count) -> descriptor_allocation
+   {
+      switch (type) {
+      case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+         return {*this, type, descriptor_heap_srv_cbv_uav.allocate_static(count)};
+      case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
+         return {*this, type, descriptor_heap_rtv.allocate_static(count)};
+      case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
+         return {*this, type, descriptor_heap_dsv.allocate_static(count)};
+      default:
+         throw std::runtime_error{
+            "attempt to allocate from unknown or unsupported descriptor heap"};
+      }
+   }
+
    template<resource_owner Owner>
    void deferred_destroy_resource(Owner& resource_owner)
    {
       std::lock_guard lock{_deferred_destruction_mutex};
 
-      _deferred_resource_destructions.push_back(
+      _deferred_destructions.push_back(
          {// TODO (maybe, depending on how memory residency management shapes up): frame usage tracking for resources
           .last_used_frame = fence_value,
           .resource = utility::com_ptr{resource_owner.resource()}});
    }
 
-   constexpr static int rtv_descriptor_heap_size = 128;
-   constexpr static int dsv_descriptor_heap_size = 32;
-   constexpr static int descriptor_static_heap_size = 16 * 4096;
-   constexpr static int descriptor_dynamic_heap_size = 16 * 4096;
+   void deferred_free_descriptors(descriptor_allocation& allocation)
+   {
+      std::lock_guard lock{_deferred_destruction_mutex};
+
+      switch (allocation.type()) {
+      case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+         _deferred_destructions.push_back(
+            {.last_used_frame = fence_value,
+             .resource =
+                descriptor_range_owner{descriptor_heap_srv_cbv_uav, allocation}});
+         return;
+      case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
+         _deferred_destructions.push_back(
+            {.last_used_frame = fence_value,
+             .resource = descriptor_range_owner{descriptor_heap_rtv, allocation}});
+         return;
+      case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
+         _deferred_destructions.push_back(
+            {.last_used_frame = fence_value,
+             .resource = descriptor_range_owner{descriptor_heap_dsv, allocation}});
+         return;
+      default:
+         throw std::runtime_error{
+            "attempt to allocate free unknown or unsupported descriptor heap"};
+      }
+   }
+
+   constexpr static int descriptor_heap_rtv_size = 128;
+   constexpr static int descriptor_heap_dsv_size = 32;
+   constexpr static int descriptor_heap_cbv_srv_uav_size = 16 * 8192;
 
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
@@ -116,13 +163,16 @@ public:
    wil::unique_event fence_event{CreateEventW(nullptr, false, false, nullptr)};
    utility::com_ptr<ID3D12CommandQueue> command_queue;
 
-   descriptor_heap_cpu rtv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-                                           rtv_descriptor_heap_size, *device_d3d};
-   descriptor_heap_cpu dsv_descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-                                           dsv_descriptor_heap_size, *device_d3d};
-   descriptor_heap descriptor_heap{D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-                                   descriptor_static_heap_size,
-                                   descriptor_dynamic_heap_size, *device_d3d};
+   descriptor_heap descriptor_heap_srv_cbv_uav{D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+                                               D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+                                               descriptor_heap_cbv_srv_uav_size,
+                                               *device_d3d};
+   descriptor_heap descriptor_heap_rtv{D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+                                       D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+                                       descriptor_heap_rtv_size, *device_d3d};
+   descriptor_heap descriptor_heap_dsv{D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+                                       D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+                                       descriptor_heap_dsv_size, *device_d3d};
 
    async_copy_manager copy_manager{*device_d3d};
 
@@ -134,13 +184,29 @@ public:
 private:
    void process_deferred_resource_destructions();
 
-   struct deferred_resource_destruction {
+   struct descriptor_range_owner {
+      descriptor_range_owner(descriptor_heap& heap, descriptor_range range)
+         : heap{&heap}, range{range}
+      {
+      }
+
+      ~descriptor_range_owner()
+      {
+         heap->free_static(range);
+      }
+
+      gsl::not_null<descriptor_heap*> heap;
+      descriptor_range range;
+   };
+
+   struct deferred_destruction {
       UINT64 last_used_frame = 0;
-      utility::com_ptr<ID3D12Resource> resource;
+
+      boost::variant2::variant<utility::com_ptr<ID3D12Resource>, descriptor_range_owner> resource;
    };
 
    std::mutex _deferred_destruction_mutex;
-   std::vector<deferred_resource_destruction> _deferred_resource_destructions;
+   std::vector<deferred_destruction> _deferred_destructions;
 };
 
 }

@@ -67,7 +67,8 @@ light_clusters::light_clusters(gpu::device& gpu_device)
                                         max_regional_lights},
                                D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
 
-   _descriptors = _gpu_device->descriptor_heap.allocate_static(2);
+   _descriptors =
+      _gpu_device->allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2);
 
    const D3D12_CONSTANT_BUFFER_VIEW_DESC cbv{
       .BufferLocation = _lights_constant_buffer.resource()->GetGPUVirtualAddress(),

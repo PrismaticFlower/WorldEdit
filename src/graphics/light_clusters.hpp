@@ -3,7 +3,6 @@
 #include "frustrum.hpp"
 #include "gpu/buffer.hpp"
 #include "gpu/command_list.hpp"
-#include "gpu/descriptor_heap.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "world/world.hpp"
@@ -29,7 +28,7 @@ private:
    gpu::buffer _lights_constant_buffer;
    gpu::buffer _regional_lights_buffer;
 
-   gpu::descriptor_range _descriptors;
+   gpu::descriptor_allocation _descriptors;
 };
 
 }

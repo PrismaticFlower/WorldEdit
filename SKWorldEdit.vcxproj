@@ -197,6 +197,7 @@
     <ClInclude Include="src\graphics\gpu\concepts.hpp" />
     <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp" />
     <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp" />
+    <ClInclude Include="src\graphics\gpu\descriptor_allocation.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp" />
     <ClInclude Include="src\graphics\gpu\device.hpp" />
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
@@ -274,6 +275,7 @@
     <ClCompile Include="src\graphics\frustrum.cpp" />
     <ClCompile Include="src\graphics\geometric_shapes.cpp" />
     <ClCompile Include="src\graphics\gpu\buffer.cpp" />
+    <ClCompile Include="src\graphics\gpu\descriptor_allocation.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />
