@@ -199,6 +199,7 @@
     <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_allocation.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp" />
+    <ClInclude Include="src\graphics\gpu\descriptor_range.hpp" />
     <ClInclude Include="src\graphics\gpu\device.hpp" />
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\gpu\texture.hpp" />

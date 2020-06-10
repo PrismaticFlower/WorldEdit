@@ -1,5 +1,6 @@
 #pragma once
 
+#include "descriptor_range.hpp"
 #include "device.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "hresult_error.hpp"
@@ -188,6 +189,20 @@ public:
    {
       _command_list->SetGraphicsRootDescriptorTable(root_parameter_index,
                                                     base_descriptor);
+   }
+
+   void set_compute_root_descriptor_table(const uint32 root_parameter_index,
+                                          const descriptor_range& range)
+   {
+      _command_list->SetComputeRootDescriptorTable(root_parameter_index,
+                                                   range[0].gpu);
+   }
+
+   void set_graphics_root_descriptor_table(const uint32 root_parameter_index,
+                                           const descriptor_range& range)
+   {
+      _command_list->SetGraphicsRootDescriptorTable(root_parameter_index,
+                                                    range[0].gpu);
    }
 
    void set_compute_root_32bit_constant(const uint32 root_parameter_index,

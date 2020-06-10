@@ -1,6 +1,6 @@
 #pragma once
 
-#include "descriptor_heap.hpp"
+#include "descriptor_range.hpp"
 
 #include <object_ptr.hpp>
 

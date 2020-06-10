@@ -189,8 +189,7 @@ void renderer::draw_world(const frustrum& view_frustrum,
    command_list.set_pipeline_state(*_device.pipelines.basic_mesh_lighting.get());
 
    command_list.set_graphics_root_constant_buffer_view(0, camera_constants_address);
-   command_list.set_graphics_root_descriptor_table(
-      2, _light_clusters.light_descriptors().start().gpu);
+   command_list.set_graphics_root_descriptor_table(2, _light_clusters.light_descriptors());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // TEMP object placeholder rendering
