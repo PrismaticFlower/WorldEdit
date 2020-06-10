@@ -109,8 +109,8 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
    const D3D12_RANGE write_range{0, buffer_size};
    upload_buffer.Unmap(0, &write_range);
 
-   gpu_buffer = {.buffer = {device, buffer_size, D3D12_HEAP_TYPE_DEFAULT,
-                            D3D12_RESOURCE_STATE_COPY_DEST}};
+   gpu_buffer = {.buffer = device.create_buffer({.size = buffer_size}, D3D12_HEAP_TYPE_DEFAULT,
+                                                D3D12_RESOURCE_STATE_COMMON)};
    gpu_buffer.index_buffer_view = {.BufferLocation =
                                       gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
                                       indices_data_offset,

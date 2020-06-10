@@ -557,6 +557,9 @@
     <ClCompile Include="src\assets\texture\texture_io.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\gpu\buffer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl" />

@@ -1,46 +1,23 @@
 #pragma once
 
-#include "device.hpp"
 #include "types.hpp"
+#include "utility/com_ptr.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <utility>
 
 #include <d3d12.h>
-#include <d3dx12.h>
 #include <gsl/gsl>
 #include <object_ptr.hpp>
 
 namespace sk::graphics::gpu {
 
-struct device;
+class device;
 
 class buffer {
 public:
    buffer() = default;
-
-   buffer(device& device, const uint32 size, const D3D12_HEAP_TYPE heap_type,
-          const D3D12_RESOURCE_STATES initial_resource_state)
-   {
-      const D3D12_HEAP_PROPERTIES heap_properties{.Type = heap_type,
-                                                  .CPUPageProperty =
-                                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-                                                  .MemoryPoolPreference =
-                                                     D3D12_MEMORY_POOL_UNKNOWN};
-
-      const auto buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(size);
-
-      utility::com_ptr<ID3D12Resource> buffer_resource;
-
-      throw_if_failed(device.device_d3d->CreateCommittedResource(
-         &heap_properties, D3D12_HEAP_FLAG_NONE, &buffer_desc, initial_resource_state,
-         nullptr, IID_PPV_ARGS(buffer_resource.clear_and_assign())));
-
-      _parent_device = &device;
-      _resource = buffer_resource.release();
-      _size = size;
-   }
 
    buffer(const buffer&) noexcept = delete;
    auto operator=(const buffer&) noexcept -> buffer& = delete;
@@ -60,10 +37,7 @@ public:
       return *this;
    }
 
-   ~buffer()
-   {
-      if (_resource) _parent_device->deferred_destroy_resource(*this);
-   }
+   ~buffer();
 
    void swap(buffer& other) noexcept
    {
@@ -100,6 +74,13 @@ public:
    }
 
 private:
+   friend device;
+
+   buffer(device& device, const uint32 size, utility::com_ptr<ID3D12Resource> resource)
+      : _parent_device{&device}, _resource{resource.release()}, _size{size}
+   {
+   }
+
    jss::object_ptr<device> _parent_device = nullptr;
    gsl::owner<ID3D12Resource*> _resource = nullptr;
    uint32 _size = 0;

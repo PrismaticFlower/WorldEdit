@@ -1,6 +1,5 @@
 #pragma once
 
-#include "buffer.hpp"
 #include "common.hpp"
 #include "device.hpp"
 #include "hresult_error.hpp"
@@ -24,8 +23,8 @@ public:
    {
       for (auto& backing_buffer : _buffers) {
          backing_buffer.underlying_buffer =
-            buffer{device, max_size, D3D12_HEAP_TYPE_UPLOAD,
-                   D3D12_RESOURCE_STATE_GENERIC_READ};
+            device.create_buffer({.size = max_size}, D3D12_HEAP_TYPE_UPLOAD,
+                                 D3D12_RESOURCE_STATE_GENERIC_READ);
 
          const D3D12_RANGE read_range{};
          void* data = nullptr;

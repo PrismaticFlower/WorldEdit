@@ -7,7 +7,7 @@
 
 namespace sk::graphics::gpu {
 
-struct device;
+class device;
 
 // clang-format off
 

@@ -271,6 +271,7 @@
     <ClCompile Include="src\graphics\camera.cpp" />
     <ClCompile Include="src\graphics\frustrum.cpp" />
     <ClCompile Include="src\graphics\geometric_shapes.cpp" />
+    <ClCompile Include="src\graphics\gpu\buffer.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />

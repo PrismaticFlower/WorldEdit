@@ -4,6 +4,8 @@
 
 #include <array>
 
+#include <d3dx12.h>
+
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
 
 namespace sk::graphics {
@@ -452,8 +454,9 @@ geometric_shapes::geometric_shapes(gpu::device& device)
 
 void geometric_shapes::init_gpu_buffer(gpu::device& device)
 {
-   _gpu_buffer = gpu::buffer{device, sizeof(shapes_buffer), D3D12_HEAP_TYPE_DEFAULT,
-                             D3D12_RESOURCE_STATE_COPY_DEST};
+   _gpu_buffer =
+      device.create_buffer({.size = sizeof(shapes_buffer)},
+                           D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
 
    auto copy_context = device.copy_manager.aquire_context();
 

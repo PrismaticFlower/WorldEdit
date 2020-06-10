@@ -1,6 +1,7 @@
 #pragma once
 
 #include "async_copy_manager.hpp"
+#include "buffer.hpp"
 #include "common.hpp"
 #include "concepts.hpp"
 #include "descriptor_heap.hpp"
@@ -24,7 +25,14 @@ namespace sk::graphics::gpu {
 using command_allocators =
    std::array<utility::com_ptr<ID3D12CommandAllocator>, render_latency>;
 
-struct device {
+struct buffer_desc {
+   uint32 alignment = 0;
+   uint32 size = 0;
+   D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+};
+
+class device {
+public:
    explicit device(const HWND window);
 
    device(const device&) = delete;
@@ -44,6 +52,34 @@ struct device {
 
    auto create_command_list(const D3D12_COMMAND_LIST_TYPE type)
       -> utility::com_ptr<ID3D12GraphicsCommandList5>;
+
+   auto create_buffer(const buffer_desc& desc, const D3D12_HEAP_TYPE heap_type,
+                      const D3D12_RESOURCE_STATES initial_resource_state) -> buffer
+   {
+      const D3D12_HEAP_PROPERTIES heap_properties{.Type = heap_type,
+                                                  .CPUPageProperty =
+                                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+                                                  .MemoryPoolPreference =
+                                                     D3D12_MEMORY_POOL_UNKNOWN};
+
+      const D3D12_RESOURCE_DESC d3d12_desc{.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+                                           .Alignment = desc.alignment,
+                                           .Width = desc.size,
+                                           .Height = 1,
+                                           .DepthOrArraySize = 1,
+                                           .MipLevels = 1,
+                                           .SampleDesc = {1, 0},
+                                           .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+                                           .Flags = desc.flags};
+
+      utility::com_ptr<ID3D12Resource> buffer_resource;
+
+      throw_if_failed(device_d3d->CreateCommittedResource(
+         &heap_properties, D3D12_HEAP_FLAG_NONE, &d3d12_desc, initial_resource_state,
+         nullptr, IID_PPV_ARGS(buffer_resource.clear_and_assign())));
+
+      return buffer{*this, desc.size, std::move(buffer_resource)};
+   }
 
    template<resource_owner Owner>
    void deferred_destroy_resource(Owner& resource_owner)

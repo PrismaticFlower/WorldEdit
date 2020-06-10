@@ -1,7 +1,7 @@
 #pragma once
 
 #include "assets/msh/flat_model.hpp"
-#include "gpu/buffer.hpp"
+#include "gpu/device.hpp"
 #include "math/bounding_box.hpp"
 #include "types.hpp"
 

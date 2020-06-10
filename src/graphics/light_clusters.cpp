@@ -60,11 +60,12 @@ light_clusters::light_clusters(gpu::device& gpu_device)
    : _gpu_device{&gpu_device}
 {
    _lights_constant_buffer =
-      gpu::buffer{*_gpu_device, sizeof(light_constants),
-                  D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON};
+      gpu_device.create_buffer({.size = sizeof(light_constants)},
+                               D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
    _regional_lights_buffer =
-      gpu::buffer{*_gpu_device, sizeof(light_region_description) * max_regional_lights,
-                  D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON};
+      gpu_device.create_buffer({.size = sizeof(light_region_description) *
+                                        max_regional_lights},
+                               D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
 
    _descriptors = _gpu_device->descriptor_heap.allocate_static(2);
 
