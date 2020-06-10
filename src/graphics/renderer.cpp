@@ -66,6 +66,14 @@ const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
    return arrow;
 }();
 
+// TODO: Put this somewhere.
+
+struct object_constants {
+   float4x4 object_to_world;
+};
+
+static_assert(sizeof(object_constants) == 64);
+
 }
 
 renderer::renderer(const HWND window) : _window{window}, _device{window}
@@ -194,7 +202,7 @@ void renderer::draw_world(const frustrum& view_frustrum,
 
    // TEMP object placeholder rendering
    for (auto& object : _object_render_list) {
-      command_list.set_graphics_root_constant_buffer(1, object.transform);
+      command_list.set_graphics_root_constant_buffer_view(1, object.object_constants_address);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
       command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
@@ -599,8 +607,20 @@ void renderer::build_object_render_list(
 
       if (!intersects(view_frustrum, object_bbox)) continue;
 
-      float4x4 transform = static_cast<float4x4>(object.rotation);
-      transform[3] = float4{object.position, 1.0f};
+      const D3D12_GPU_VIRTUAL_ADDRESS object_constants_address = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(object_constants));
+
+         object_constants constants;
+
+         constants.object_to_world = static_cast<float4x4>(object.rotation);
+         constants.object_to_world[3] = float4{object.position, 1.0f};
+
+         std::memcpy(allocation.cpu_address, &constants.object_to_world,
+                     sizeof(object_constants));
+
+         return allocation.gpu_address;
+      }();
 
       for (const auto& mesh : model.parts) {
          _object_render_list.push_back(
@@ -611,7 +631,7 @@ void renderer::build_object_render_list(
              .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
                                      model.gpu_buffer.normal_vertex_buffer_view,
                                      model.gpu_buffer.texcoord_vertex_buffer_view},
-             .transform = transform});
+             .object_constants_address = object_constants_address});
       }
    }
 }

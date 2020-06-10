@@ -74,7 +74,7 @@ private:
       uint32 start_vertex;
       D3D12_INDEX_BUFFER_VIEW index_buffer_view;
       std::array<D3D12_VERTEX_BUFFER_VIEW, 3> vertex_buffer_views;
-      float4x4 transform;
+      D3D12_GPU_VIRTUAL_ADDRESS object_constants_address;
    };
 
    std::vector<render_list_item> _object_render_list;
