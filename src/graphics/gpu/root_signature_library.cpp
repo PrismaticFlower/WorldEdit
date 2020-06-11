@@ -35,30 +35,32 @@ auto create_root_signature(ID3D12Device& device,
 
 root_signature_library::root_signature_library(ID3D12Device& device)
 {
-   constexpr D3D12_ROOT_PARAMETER1 global_cb_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-      .Descriptor = {.ShaderRegister = 0,
-                     .RegisterSpace = 0,
-                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE},
+   const D3D12_DESCRIPTOR_RANGE1 camera_descriptor_table_descriptor_range{
+      .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+      .NumDescriptors = 1,
+      .BaseShaderRegister = 0,
+      .RegisterSpace = 0,
+      .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+      .OffsetInDescriptorsFromTableStart = 0};
+
+   const D3D12_ROOT_PARAMETER1 camera_cb_descriptor_table_root_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+      .DescriptorTable =
+         {
+            .NumDescriptorRanges = 1,
+            .pDescriptorRanges = &camera_descriptor_table_descriptor_range,
+
+         },
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
 
-   constexpr D3D12_ROOT_PARAMETER1 object_cb_root_param{
+   const D3D12_ROOT_PARAMETER1 object_cb_root_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
       .Descriptor = {.ShaderRegister = 1,
                      .RegisterSpace = 0,
-                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE},
+                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
 
-   constexpr std::array basic_root_params{global_cb_root_param, object_cb_root_param};
-
-   basic_object_mesh = create_root_signature(
-      device,
-      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.NumParameters = static_cast<UINT>(basic_root_params.size()),
-                    .pParameters = basic_root_params.data(),
-                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
-
-   const std::array<D3D12_DESCRIPTOR_RANGE1, 2> basic_mesh_descriptor_table_descriptor_ranges{
+   const std::array<D3D12_DESCRIPTOR_RANGE1, 2> object_lights_descriptor_table_descriptor_ranges{
       {{.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
         .NumDescriptors = 1,
         .BaseShaderRegister = 0,
@@ -72,39 +74,39 @@ root_signature_library::root_signature_library(ID3D12Device& device)
         .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
         .OffsetInDescriptorsFromTableStart = 1}}};
 
-   const D3D12_ROOT_PARAMETER1 basic_mesh_descriptor_table_root_param{
+   const D3D12_ROOT_PARAMETER1 object_lights_descriptor_table_root_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
       .DescriptorTable =
          {
             .NumDescriptorRanges = static_cast<UINT>(
-               basic_mesh_descriptor_table_descriptor_ranges.size()),
-            .pDescriptorRanges = basic_mesh_descriptor_table_descriptor_ranges.data(),
+               object_lights_descriptor_table_descriptor_ranges.size()),
+            .pDescriptorRanges =
+               object_lights_descriptor_table_descriptor_ranges.data(),
 
          },
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
-   const std::array basic_mesh_lighting_root_params{global_cb_root_param,
-                                                    object_cb_root_param,
-                                                    basic_mesh_descriptor_table_root_param};
+   const std::array basic_root_params{object_cb_root_param,
+                                      camera_cb_descriptor_table_root_param,
+                                      object_lights_descriptor_table_root_param};
 
-   basic_mesh_lighting = create_root_signature(
+   object_mesh = create_root_signature(
       device,
       {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.NumParameters =
-                       static_cast<UINT>(basic_mesh_lighting_root_params.size()),
-                    .pParameters = basic_mesh_lighting_root_params.data(),
+       .Desc_1_1 = {.NumParameters = static_cast<UINT>(basic_root_params.size()),
+                    .pParameters = basic_root_params.data(),
                     .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 
-   constexpr D3D12_ROOT_PARAMETER1 meta_object_color_cb_root_param{
+   const D3D12_ROOT_PARAMETER1 meta_object_color_cb_root_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
       .Descriptor = {.ShaderRegister = 0,
                      .RegisterSpace = 0,
                      .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE},
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
-   constexpr std::array meta_object_mesh_params{global_cb_root_param,
-                                                object_cb_root_param,
-                                                meta_object_color_cb_root_param};
+   const std::array meta_object_mesh_params{object_cb_root_param,
+                                            meta_object_color_cb_root_param,
+                                            camera_cb_descriptor_table_root_param};
 
    meta_object_mesh = create_root_signature(
       device,
@@ -113,8 +115,8 @@ root_signature_library::root_signature_library(ID3D12Device& device)
                     .pParameters = meta_object_mesh_params.data(),
                     .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 
-   constexpr std::array meta_line_params{global_cb_root_param,
-                                         meta_object_color_cb_root_param};
+   const std::array meta_line_params{meta_object_color_cb_root_param,
+                                     camera_cb_descriptor_table_root_param};
 
    meta_line = create_root_signature(
       device,

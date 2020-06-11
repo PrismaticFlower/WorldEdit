@@ -86,6 +86,13 @@ renderer::renderer(const HWND window) : _window{window}, _device{window}
                        &_device.descriptor_heap_srv_cbv_uav.get(),
                        imgui_font_descriptor.start().cpu,
                        imgui_font_descriptor.start().gpu);
+
+   const D3D12_CONSTANT_BUFFER_VIEW_DESC camera_cbv_desc{
+      .BufferLocation = _camera_constant_buffer.resource()->GetGPUVirtualAddress(),
+      .SizeInBytes = _camera_constant_buffer.size()};
+
+   _device.device_d3d->CreateConstantBufferView(&camera_cbv_desc,
+                                                _camera_constant_buffer_view[0].cpu);
 }
 
 void renderer::draw_frame(const camera& camera, const world::world& world,
@@ -107,16 +114,9 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
    command_list.set_descriptor_heaps(_device.descriptor_heap_srv_cbv_uav.get());
 
-   const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address = [&] {
-      auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-      std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
-                  sizeof(float4x4));
-
-      return allocation.gpu_address;
-   }();
-
    const frustrum view_frustrum{camera};
+
+   update_camera_constant_buffer(camera, command_list);
 
    _light_clusters.update_lights(view_frustrum, world, command_list,
                                  _dynamic_buffer_allocator);
@@ -141,12 +141,10 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    command_list.om_set_render_targets(back_buffer_rtv, depth_stencil_view);
 
    // Render World
-   draw_world(view_frustrum, camera_constants_address, world, world_classes,
-              command_list);
+   draw_world(view_frustrum, world, world_classes, command_list);
 
    // Render World Meta Objects
-   draw_world_meta_objects(view_frustrum, camera_constants_address, world,
-                           world_classes, command_list);
+   draw_world_meta_objects(view_frustrum, world, world_classes, command_list);
 
    // Render ImGui
    ImGui::Render();
@@ -185,24 +183,41 @@ void renderer::window_resized(uint16 width, uint16 height)
        D3D12_RESOURCE_STATE_DEPTH_WRITE};
 }
 
-void renderer::draw_world(const frustrum& view_frustrum,
-                          const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
-                          const world::world& world,
+void renderer::update_camera_constant_buffer(const camera& camera,
+                                             gpu::command_list& command_list)
+{
+   auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+   std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
+               sizeof(float4x4));
+
+   command_list.copy_buffer_region(*_camera_constant_buffer.resource(), 0,
+                                   *_dynamic_buffer_allocator.resource(),
+                                   allocation.gpu_address -
+                                      _dynamic_buffer_allocator.gpu_base_address(),
+                                   sizeof(float4x4));
+
+   command_list.deferred_resource_barrier(
+      gpu::transition_barrier(*_camera_constant_buffer.resource(),
+                              D3D12_RESOURCE_STATE_COPY_DEST,
+                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+}
+
+void renderer::draw_world(const frustrum& view_frustrum, const world::world& world,
                           const std::unordered_map<std::string, world::object_class>& world_classes,
                           gpu::command_list& command_list)
 {
    build_object_render_list(view_frustrum, world, world_classes);
 
-   command_list.set_graphics_root_signature(*_device.root_signatures.basic_mesh_lighting);
+   command_list.set_graphics_root_signature(*_device.root_signatures.object_mesh);
    command_list.set_pipeline_state(*_device.pipelines.basic_mesh_lighting.get());
 
-   command_list.set_graphics_root_constant_buffer_view(0, camera_constants_address);
+   command_list.set_graphics_root_descriptor_table(1, _camera_constant_buffer_view);
    command_list.set_graphics_root_descriptor_table(2, _light_clusters.light_descriptors());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-   // TEMP object placeholder rendering
    for (auto& object : _object_render_list) {
-      command_list.set_graphics_root_constant_buffer_view(1, object.object_constants_address);
+      command_list.set_graphics_root_constant_buffer_view(0, object.object_constants_address);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
       command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
@@ -211,15 +226,14 @@ void renderer::draw_world(const frustrum& view_frustrum,
 }
 
 void renderer::draw_world_meta_objects(
-   const frustrum& view_frustrum,
-   const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address, const world::world& world,
+   const frustrum& view_frustrum, const world::world& world,
    const std::unordered_map<std::string, world::object_class>& world_classes,
    gpu::command_list& command_list)
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
    command_list.set_graphics_root_signature(*_device.root_signatures.meta_object_mesh);
-   command_list.set_graphics_root_constant_buffer_view(0, camera_constants_address);
+   command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
 
    static bool draw_paths = false;
 
@@ -251,7 +265,7 @@ void renderer::draw_world_meta_objects(
                                             static_cast<float>(
                                                _device.swap_chain.height())};
 
-            command_list.set_graphics_root_constant_buffer(2, temp_constants);
+            command_list.set_graphics_root_constant_buffer(1, temp_constants);
          }
 
          command_list.set_pipeline_state(*_device.pipelines.meta_object_mesh_outlined);
@@ -268,7 +282,7 @@ void renderer::draw_world_meta_objects(
 
                   transform[3] = {node.position, 1.0f};
 
-                  command_list.set_graphics_root_constant_buffer(1, transform);
+                  command_list.set_graphics_root_constant_buffer(0, transform);
                }
 
                const geometric_shape shape = _geometric_shapes.octahedron();
@@ -284,7 +298,7 @@ void renderer::draw_world_meta_objects(
          draw_lines(command_list, _device, _dynamic_buffer_allocator,
                     {.line_color = {0.1f, 0.1f, 0.75f},
 
-                     .camera_constants_address = camera_constants_address,
+                     .camera_constant_buffer_view = _camera_constant_buffer_view,
 
                      .connect_mode = line_connect_mode::linear},
                     [&](line_draw_context& draw_context) {
@@ -309,7 +323,7 @@ void renderer::draw_world_meta_objects(
             command_list, _device, _dynamic_buffer_allocator,
             {.line_color = {1.0f, 1.0f, 0.1f},
 
-             .camera_constants_address = camera_constants_address,
+             .camera_constant_buffer_view = _camera_constant_buffer_view,
 
              .connect_mode = line_connect_mode::linear},
             [&](line_draw_context& draw_context) {
@@ -340,7 +354,7 @@ void renderer::draw_world_meta_objects(
    command_list.set_pipeline_state(*_device.pipelines.meta_object_transparent_mesh);
    command_list.set_graphics_root_signature(*_device.root_signatures.meta_object_mesh);
 
-   command_list.set_graphics_root_constant_buffer_view(0, camera_constants_address);
+   command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // Draws a region, requires camera CBV, colour CBV, IA topplogy, pipeline state and root signature to be set.
@@ -377,7 +391,7 @@ void renderer::draw_world_meta_objects(
 
          transform[3] = {region.position, 1.0f};
 
-         command_list.set_graphics_root_constant_buffer(1, transform);
+         command_list.set_graphics_root_constant_buffer(0, transform);
       }
 
       const geometric_shape shape = [&] {
@@ -406,7 +420,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{0.25f, 0.4f, 1.0f, 0.3f};
 
-         command_list.set_graphics_root_constant_buffer(2, color);
+         command_list.set_graphics_root_constant_buffer(1, color);
       }
 
       for (auto& region : world.regions) {
@@ -423,7 +437,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{1.0f, 0.1f, 0.5f, 0.3f};
 
-         command_list.set_graphics_root_constant_buffer(2, color);
+         command_list.set_graphics_root_constant_buffer(1, color);
       }
 
       // Set Barriers IA State
@@ -454,7 +468,7 @@ void renderer::draw_world_meta_objects(
 
             transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
-            command_list.set_graphics_root_constant_buffer(1, transform);
+            command_list.set_graphics_root_constant_buffer(0, transform);
          }
 
          command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
@@ -471,7 +485,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{0.0f, 1.0f, 0.0f, 0.3f};
 
-         command_list.set_graphics_root_constant_buffer(2, color);
+         command_list.set_graphics_root_constant_buffer(1, color);
       }
 
       // Set Barriers IA State
@@ -498,7 +512,7 @@ void renderer::draw_world_meta_objects(
 
             transform[3] = {bbox_centre, 1.0f};
 
-            command_list.set_graphics_root_constant_buffer(1, transform);
+            command_list.set_graphics_root_constant_buffer(0, transform);
          }
 
          command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
@@ -518,7 +532,7 @@ void renderer::draw_world_meta_objects(
                                                ? 0.025f
                                                : 0.05f};
 
-            command_list.set_graphics_root_constant_buffer(2, color);
+            command_list.set_graphics_root_constant_buffer(1, color);
          }
 
          switch (light.light_type) {
@@ -543,7 +557,7 @@ void renderer::draw_world_meta_objects(
 
                transform[3] = {light.position, 1.0f};
 
-               command_list.set_graphics_root_constant_buffer(1, transform);
+               command_list.set_graphics_root_constant_buffer(0, transform);
             }
 
             auto shape = _geometric_shapes.icosphere();
@@ -570,7 +584,7 @@ void renderer::draw_world_meta_objects(
 
                transform[3] += float4{light.position, 0.0f};
 
-               command_list.set_graphics_root_constant_buffer(1, transform);
+               command_list.set_graphics_root_constant_buffer(0, transform);
             };
 
             bind_cone_transform(light.outer_cone_angle);

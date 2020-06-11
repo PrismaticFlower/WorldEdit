@@ -46,7 +46,7 @@ void draw_lines(gpu::command_list& command_list, gpu::device& device,
 {
    command_list.set_pipeline_state(*device.pipelines.meta_line);
    command_list.set_graphics_root_signature(*device.root_signatures.meta_line);
-   command_list.set_graphics_root_constant_buffer_view(0, draw_state.camera_constants_address);
+   command_list.set_graphics_root_descriptor_table(1, draw_state.camera_constant_buffer_view);
 
    {
       auto allocation = buffer_allocator.allocate(sizeof(float4));
@@ -55,7 +55,7 @@ void draw_lines(gpu::command_list& command_list, gpu::device& device,
 
       std::memcpy(allocation.cpu_address, &color, sizeof(float4));
 
-      command_list.set_graphics_root_constant_buffer_view(1, allocation.gpu_address);
+      command_list.set_graphics_root_constant_buffer_view(0, allocation.gpu_address);
    }
 
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);

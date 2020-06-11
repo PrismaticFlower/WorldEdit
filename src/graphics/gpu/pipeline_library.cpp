@@ -206,7 +206,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                                    const root_signature_library& root_signature_library)
 {
    basic_object_mesh = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.basic_object_mesh.get(),
+      device, {.pRootSignature = root_signature_library.object_mesh.get(),
                .VS = shader_library::basic_object_mesh_vs,
                .PS = shader_library::basic_object_mesh_ps,
                .StreamOutput = stream_output_disabled,
@@ -223,7 +223,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .SampleDesc = {1, 0}});
 
    basic_mesh_lighting = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.basic_mesh_lighting.get(),
+      device, {.pRootSignature = root_signature_library.object_mesh.get(),
                .VS = shader_library::basic_object_mesh_vs,
                .PS = shader_library::basic_mesh_lighting_ps,
                .StreamOutput = stream_output_disabled,

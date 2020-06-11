@@ -29,16 +29,15 @@ public:
    void window_resized(uint16 width, uint16 height);
 
 private:
-   void draw_world(const frustrum& view_frustrum,
-                   const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
-                   const world::world& world,
+   void update_camera_constant_buffer(const camera& camera,
+                                      gpu::command_list& command_list);
+
+   void draw_world(const frustrum& view_frustrum, const world::world& world,
                    const std::unordered_map<std::string, world::object_class>& world_classes,
                    gpu::command_list& command_list);
 
    void draw_world_meta_objects(
-      const frustrum& view_frustrum,
-      const D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address,
-      const world::world& world,
+      const frustrum& view_frustrum, const world::world& world,
       const std::unordered_map<std::string, world::object_class>& world_classes,
       gpu::command_list& command_list);
 
@@ -54,6 +53,12 @@ private:
    gpu::command_list _world_command_list{D3D12_COMMAND_LIST_TYPE_DIRECT, _device};
 
    gpu::dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
+
+   gpu::buffer _camera_constant_buffer =
+      _device.create_buffer({.size = math::align_up((uint32)sizeof(float4x4), 256)},
+                            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+   gpu::descriptor_allocation _camera_constant_buffer_view =
+      _device.allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
 
    gpu::depth_stencil_texture _depth_stencil_texture{
       _device,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gpu/command_list.hpp"
+#include "gpu/descriptor_range.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "types.hpp"
@@ -14,7 +15,7 @@ enum class line_connect_mode { linear, smooth };
 struct line_draw_state {
    float3 line_color = {1.0f, 1.0f, 1.0f};
 
-   D3D12_GPU_VIRTUAL_ADDRESS camera_constants_address{};
+   gpu::descriptor_range camera_constant_buffer_view{};
 
    line_connect_mode connect_mode = line_connect_mode::linear;
 };
