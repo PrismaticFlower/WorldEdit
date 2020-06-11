@@ -6,6 +6,7 @@
 #include "types.hpp"
 
 #include <array>
+#include <span>
 #include <vector>
 
 #include <boost/container/small_vector.hpp>
@@ -13,15 +14,22 @@
 namespace sk::graphics {
 
 struct mesh_vertices {
-   std::vector<float3> positions;
-   std::vector<float3> normals;
-   std::vector<float2> texcoords;
+   std::span<float3> positions;
+   std::span<float3> normals;
+   std::span<float2> texcoords;
 };
 
 struct mesh_part {
    uint32 index_count;
    uint32 start_index;
    uint32 start_vertex;
+};
+
+struct mesh_data_offsets {
+   std::size_t indices;
+   std::size_t positions;
+   std::size_t normals;
+   std::size_t texcoords;
 };
 
 struct mesh_gpu_buffer {
@@ -40,9 +48,12 @@ struct model {
 
    math::bounding_box bbox;
 
-   mesh_vertices vertices;
-   std::vector<std::array<uint16, 3>> indices;
+   std::vector<std::byte> buffer;
 
+   mesh_vertices vertices;
+   std::span<std::array<uint16, 3>> indices;
+
+   mesh_data_offsets data_offsets;
    mesh_gpu_buffer gpu_buffer;
 
    boost::container::small_vector<mesh_part, 8> parts;

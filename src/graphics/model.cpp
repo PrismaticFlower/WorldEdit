@@ -3,7 +3,7 @@
 #include "hresult_error.hpp"
 #include "math/align.hpp"
 
-#include <array>
+#include <memory>
 
 #include <range/v3/action.hpp>
 #include <range/v3/numeric.hpp>
@@ -23,47 +23,21 @@ model::model(const assets::msh::flat_model& model)
                                                      return mesh.positions.size();
                                                   }),
                          std::size_t{0});
-
-   vertices.positions.reserve(vertex_count);
-   vertices.normals.reserve(vertex_count);
-   vertices.texcoords.reserve(vertex_count);
-
-   indices.reserve(
+   const auto triangle_count =
       ranges::accumulate(ranges::views::transform(model.meshes,
                                                   [](const assets::msh::mesh& mesh) {
                                                      return mesh.triangles.size();
                                                   }),
-                         std::size_t{0}));
+                         std::size_t{0});
 
-   for (const auto& mesh : model.meshes) {
-      parts.push_back(
-         {.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
-          .start_index = static_cast<uint32>(indices.size() * 3),
-          .start_vertex = static_cast<uint32>(vertices.positions.size())});
-
-      for (const auto& [position, normal, texcoord] :
-           ranges::views::zip(mesh.positions, mesh.normals, mesh.texcoords)) {
-         vertices.positions.push_back(position);
-         vertices.normals.push_back(normal);
-         vertices.texcoords.push_back(texcoord);
-      }
-
-      ranges::push_back(indices, mesh.triangles);
-   }
-
-   bbox = model.bounding_box;
-}
-
-auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
-{
    const auto indices_data_size =
-      indices.size() * sizeof(decltype(indices)::value_type);
+      triangle_count * sizeof(decltype(indices)::value_type);
    const auto positions_data_size =
-      vertices.positions.size() * sizeof(decltype(vertices.positions)::value_type);
+      vertex_count * sizeof(decltype(vertices.positions)::value_type);
    const auto normals_data_size =
-      vertices.normals.size() * sizeof(decltype(vertices.normals)::value_type);
+      vertex_count * sizeof(decltype(vertices.normals)::value_type);
    const auto texcoords_data_size =
-      vertices.texcoords.size() * sizeof(decltype(vertices.texcoords)::value_type);
+      vertex_count * sizeof(decltype(vertices.texcoords)::value_type);
 
    const auto aligned_indices_size =
       math::align_up(indices_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
@@ -83,10 +57,53 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
       static_cast<uint32>(aligned_indices_size + aligned_positions_size +
                           aligned_normals_size + aligned_texcoords_size);
 
+   buffer.resize(buffer_size);
+
+   // Caution, UB below, but hey what's the worst that could happen? (Lots probably, but that's not the point.)
+   indices = {reinterpret_cast<std::array<uint16, 3>*>(&buffer[indices_data_offset]),
+              triangle_count};
+   vertices.positions = {reinterpret_cast<float3*>(&buffer[positions_data_offset]),
+                         vertex_count};
+   vertices.normals = {reinterpret_cast<float3*>(&buffer[normals_data_offset]),
+                       vertex_count};
+   vertices.texcoords = {reinterpret_cast<float2*>(&buffer[texcoords_data_offset]),
+                         vertex_count};
+
+   uint32 triangle_offset = 0;
+   uint32 vertex_offset = 0;
+
+   for (const auto& mesh : model.meshes) {
+      parts.push_back({.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
+                       .start_index = triangle_offset * 3,
+                       .start_vertex = vertex_offset});
+
+      std::uninitialized_copy_n(mesh.triangles.cbegin(), mesh.triangles.size(),
+                                indices.begin() + triangle_offset);
+      std::uninitialized_copy_n(mesh.positions.cbegin(), mesh.positions.size(),
+                                vertices.positions.begin() + vertex_offset);
+      std::uninitialized_copy_n(mesh.normals.cbegin(), mesh.normals.size(),
+                                vertices.normals.begin() + vertex_offset);
+      std::uninitialized_copy_n(mesh.texcoords.cbegin(), mesh.texcoords.size(),
+                                vertices.texcoords.begin() + vertex_offset);
+
+      triangle_offset += static_cast<uint32>(mesh.triangles.size());
+      vertex_offset += static_cast<uint32>(mesh.positions.size());
+   }
+
+   data_offsets = {.indices = indices_data_offset,
+                   .positions = positions_data_offset,
+                   .normals = normals_data_offset,
+                   .texcoords = texcoords_data_offset};
+
+   bbox = model.bounding_box;
+}
+
+auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
+{
    auto copy_context = device.copy_manager.aquire_context();
 
-   ID3D12Resource& upload_buffer =
-      copy_context.create_upload_resource(CD3DX12_RESOURCE_DESC::Buffer(buffer_size));
+   ID3D12Resource& upload_buffer = copy_context.create_upload_resource(
+      CD3DX12_RESOURCE_DESC::Buffer(buffer.size()));
 
    std::byte* const upload_buffer_ptr = [&] {
       const D3D12_RANGE read_range{};
@@ -97,39 +114,35 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
       return static_cast<std::byte*>(map_void_ptr);
    }();
 
-   std::memcpy(upload_buffer_ptr + indices_data_offset, indices.data(),
-               indices_data_size);
-   std::memcpy(upload_buffer_ptr + positions_data_offset,
-               vertices.positions.data(), positions_data_size);
-   std::memcpy(upload_buffer_ptr + normals_data_offset, vertices.normals.data(),
-               normals_data_size);
-   std::memcpy(upload_buffer_ptr + texcoords_data_offset,
-               vertices.texcoords.data(), texcoords_data_size);
+   std::memcpy(upload_buffer_ptr, buffer.data(), buffer.size());
 
-   const D3D12_RANGE write_range{0, buffer_size};
+   const D3D12_RANGE write_range{0, buffer.size()};
    upload_buffer.Unmap(0, &write_range);
 
-   gpu_buffer = {.buffer = device.create_buffer({.size = buffer_size}, D3D12_HEAP_TYPE_DEFAULT,
-                                                D3D12_RESOURCE_STATE_COMMON)};
+   gpu_buffer = {
+      .buffer = device.create_buffer({.size = static_cast<uint32>(buffer.size())},
+                                     D3D12_HEAP_TYPE_DEFAULT,
+                                     D3D12_RESOURCE_STATE_COMMON)};
    gpu_buffer.index_buffer_view = {.BufferLocation =
                                       gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                                      indices_data_offset,
-                                   .SizeInBytes = static_cast<uint32>(indices_data_size),
+                                      data_offsets.indices,
+                                   .SizeInBytes =
+                                      static_cast<uint32>(indices.size_bytes()),
                                    .Format = DXGI_FORMAT_R16_UINT};
    gpu_buffer.position_vertex_buffer_view =
       {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                         positions_data_offset,
-       .SizeInBytes = static_cast<uint32>(positions_data_size),
+                         data_offsets.positions,
+       .SizeInBytes = static_cast<uint32>(vertices.positions.size_bytes()),
        .StrideInBytes = sizeof(decltype(vertices.positions)::value_type)};
    gpu_buffer.normal_vertex_buffer_view =
       {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                         normals_data_offset,
-       .SizeInBytes = static_cast<uint32>(normals_data_size),
+                         data_offsets.normals,
+       .SizeInBytes = static_cast<uint32>(vertices.normals.size_bytes()),
        .StrideInBytes = sizeof(decltype(vertices.normals)::value_type)};
    gpu_buffer.texcoord_vertex_buffer_view =
       {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                         texcoords_data_offset,
-       .SizeInBytes = static_cast<uint32>(texcoords_data_size),
+                         data_offsets.texcoords,
+       .SizeInBytes = static_cast<uint32>(vertices.texcoords.size_bytes()),
        .StrideInBytes = sizeof(decltype(vertices.texcoords)::value_type)};
 
    copy_context.command_list.CopyResource(gpu_buffer.buffer.resource(), &upload_buffer);
