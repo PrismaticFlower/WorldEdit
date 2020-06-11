@@ -1,23 +1,33 @@
 
 #define MAX_LIGHTS 1023
 
-enum class light_type : uint { directional, point_, spot };
-enum class directional_region_type : uint { none, box, sphere, cylinder };
+struct light_type {
+   const static uint directional = 0;
+   const static uint point_ = 1;
+   const static uint spot = 2;
+};
+
+struct directional_region_type {
+   const static uint none = 0;
+   const static uint box = 1;
+   const static uint sphere = 2;
+   const static uint cylinder = 3;
+};
 
 struct light_description {
    float3 directionWS;
-   light_type type;
+   uint type;
    float3 positionWS;
    float range;
    float3 color;
    float spot_outer_param;
    float spot_inner_param;
-   directional_region_type region_type;
+   uint region_type;
    uint directional_region_index;
    uint padding;
 };
 
-struct light_constants {
+struct light_constant_buffer {
    uint light_count;
    uint3 padding0;
 
@@ -40,7 +50,7 @@ struct input_vertex {
    float2 texcoords : TEXCOORD;
 };
 
-ConstantBuffer<light_constants> light_constants : register(b0);
+ConstantBuffer<light_constant_buffer> light_constants : register(b0);
 StructuredBuffer<light_region_description> light_region_descriptions : register(t0);
 
 const static float3 surface_color = 0.75;
@@ -58,7 +68,7 @@ float4 main(input_vertex input_vertex) : SV_TARGET
 
       switch (light.type) {
       case light_type::directional: {
-         float region_fade;
+         float region_fade = 1.0;
 
          if (light.region_type == directional_region_type::none) {
             region_fade = 1.0;
@@ -145,6 +155,7 @@ float4 main(input_vertex input_vertex) : SV_TARGET
          const float falloff = saturate(dot(normalWS, light_directionWS));
 
          total_light += falloff * cone_falloff * attenuation * light.color;
+         break;
       }
       }
    }

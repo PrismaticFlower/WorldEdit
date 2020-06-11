@@ -78,9 +78,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <FxCompile>
-      <ShaderModel>6.0</ShaderModel>
-      <VariableName>%(Filename)_dxil</VariableName>
-      <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxil.h</HeaderFileOutput>
+      <ShaderModel>5.1</ShaderModel>
+      <VariableName>%(Filename)_dxbc</VariableName>
+      <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxbc.h</HeaderFileOutput>
       <ObjectFileOutput />
     </FxCompile>
   </ItemDefinitionGroup>
@@ -109,9 +109,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <FxCompile>
-      <ShaderModel>6.0</ShaderModel>
-      <VariableName>%(Filename)_dxil</VariableName>
-      <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxil.h</HeaderFileOutput>
+      <ShaderModel>5.1</ShaderModel>
+      <VariableName>%(Filename)_dxbc</VariableName>
+      <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxbc.h</HeaderFileOutput>
       <ObjectFileOutput />
     </FxCompile>
   </ItemDefinitionGroup>
@@ -330,15 +330,11 @@
     </FxCompile>
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedGS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
