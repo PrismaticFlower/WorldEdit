@@ -11,6 +11,7 @@ extern const D3D12_SHADER_BYTECODE basic_mesh_lighting_ps;
 
 extern const D3D12_SHADER_BYTECODE meta_object_mesh_vs;
 extern const D3D12_SHADER_BYTECODE meta_object_mesh_ps;
+extern const D3D12_SHADER_BYTECODE meta_object_mesh_outlined_gs;
 extern const D3D12_SHADER_BYTECODE meta_object_mesh_outlined_ps;
 extern const D3D12_SHADER_BYTECODE meta_line_vs;
 

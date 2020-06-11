@@ -14,6 +14,7 @@ namespace {
 
 #include "meta_object_meshPS_dxil.h"
 #include "meta_object_meshVS_dxil.h"
+#include "meta_object_mesh_outlinedGS_dxil.h"
 #include "meta_object_mesh_outlinedPS_dxil.h"
 
 #include "meta_lineVS_dxil.h"
@@ -41,6 +42,8 @@ const D3D12_SHADER_BYTECODE meta_object_mesh_vs =
    bytecode_init(meta_object_meshVS_dxil);
 const D3D12_SHADER_BYTECODE meta_object_mesh_ps =
    bytecode_init(meta_object_meshPS_dxil);
+const D3D12_SHADER_BYTECODE meta_object_mesh_outlined_gs =
+   bytecode_init(meta_object_mesh_outlinedGS_dxil);
 const D3D12_SHADER_BYTECODE meta_object_mesh_outlined_ps =
    bytecode_init(meta_object_mesh_outlinedPS_dxil);
 

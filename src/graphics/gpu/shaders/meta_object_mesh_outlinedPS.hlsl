@@ -7,11 +7,12 @@ struct meta_object_constants {
 
 ConstantBuffer<meta_object_constants> cb_meta_object_constants : register(b0);
 
-const static float line_width = 2.0f;
+const static float line_width = 2.5f;
 
 struct input_vertex {
-   nointerpolation float4 positionPS : POSITIONPS;
    float4 positionRT : SV_Position;
+
+   nointerpolation float4 tri_positionPS[3] : POSITIONPS;
 };
 
 float2 to_rendertarget_position(float4 positionPS)
@@ -47,9 +48,9 @@ float line_alpha(float distance)
 
 float4 main(input_vertex input_vertex) : SV_TARGET
 {
-   const float4 positionPS0 = GetAttributeAtVertex(input_vertex.positionPS, 0);
-   const float4 positionPS1 = GetAttributeAtVertex(input_vertex.positionPS, 1);
-   const float4 positionPS2 = GetAttributeAtVertex(input_vertex.positionPS, 2);
+   const float4 positionPS0 = input_vertex.tri_positionPS[0];
+   const float4 positionPS1 = input_vertex.tri_positionPS[1];
+   const float4 positionPS2 = input_vertex.tri_positionPS[2];
 
    const float2 positionRT0 = to_rendertarget_position(positionPS0);
    const float2 positionRT1 = to_rendertarget_position(positionPS1);

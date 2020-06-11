@@ -14,7 +14,6 @@ struct input_vertex {
 };
 
 struct output_vertex {
-   nointerpolation float4 flat_positionPS : POSITIONPS;
    float4 positionPS : SV_Position;
 };
 
@@ -27,7 +26,6 @@ output_vertex main(input_vertex input)
    const float4 positionPS =
       mul(cb_global_matrices.view_projection_matrix, float4(positionWS, 1.0));
 
-   output.flat_positionPS = positionPS;
    output.positionPS = positionPS;
 
    return output;
