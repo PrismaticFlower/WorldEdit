@@ -2,6 +2,8 @@
 
 #include "descriptor_range.hpp"
 
+#include <utility>
+
 #include <object_ptr.hpp>
 
 namespace sk::graphics::gpu {
@@ -12,13 +14,35 @@ class descriptor_allocation : public descriptor_range {
 public:
    descriptor_allocation() = default;
 
-   descriptor_allocation(descriptor_allocation&&) = default;
-   auto operator=(descriptor_allocation &&) -> descriptor_allocation& = default;
+   descriptor_allocation(descriptor_allocation&& other) noexcept
+   {
+      other.swap(*this);
+   }
+
+   auto operator=(descriptor_allocation&& other) noexcept -> descriptor_allocation&
+   {
+      descriptor_allocation discarded{};
+
+      discarded.swap(*this);
+      other.swap(*this);
+
+      return *this;
+   }
 
    descriptor_allocation(const descriptor_allocation&) = delete;
    auto operator=(const descriptor_allocation&) -> descriptor_allocation& = delete;
 
    ~descriptor_allocation();
+
+   void swap(descriptor_allocation& other) noexcept
+   {
+      using std::swap;
+
+      swap(this->_parent_device, other._parent_device);
+      swap(this->_type, other._type);
+      swap(static_cast<descriptor_range&>(*this),
+           static_cast<descriptor_range&>(other));
+   }
 
    bool alive() const noexcept
    {
