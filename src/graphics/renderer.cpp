@@ -87,12 +87,10 @@ renderer::renderer(const HWND window) : _window{window}, _device{window}
                        imgui_font_descriptor.start().cpu,
                        imgui_font_descriptor.start().gpu);
 
-   const D3D12_CONSTANT_BUFFER_VIEW_DESC camera_cbv_desc{
-      .BufferLocation = _camera_constant_buffer.resource()->GetGPUVirtualAddress(),
-      .SizeInBytes = _camera_constant_buffer.size()};
-
-   _device.device_d3d->CreateConstantBufferView(&camera_cbv_desc,
-                                                _camera_constant_buffer_view[0].cpu);
+   _device.create_constant_buffer_view({.buffer_location =
+                                           _camera_constant_buffer.resource()->GetGPUVirtualAddress(),
+                                        .size = _camera_constant_buffer.size()},
+                                       _camera_constant_buffer_view[0]);
 }
 
 void renderer::draw_frame(const camera& camera, const world::world& world,

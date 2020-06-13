@@ -70,21 +70,19 @@ light_clusters::light_clusters(gpu::device& gpu_device)
    _descriptors =
       _gpu_device->allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2);
 
-   const D3D12_CONSTANT_BUFFER_VIEW_DESC cbv{
-      .BufferLocation = _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
-      .SizeInBytes = _lights_constant_buffer.size()};
-   _gpu_device->device_d3d->CreateConstantBufferView(&cbv, _descriptors[0].cpu);
+   _gpu_device->create_constant_buffer_view(
+      {.buffer_location = _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
+       .size = _lights_constant_buffer.size()},
+      _descriptors[0]);
 
-   D3D12_SHADER_RESOURCE_VIEW_DESC
-   srv{.Format = DXGI_FORMAT_UNKNOWN,
-       .ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
-       .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-       .Buffer = {.FirstElement = 0,
-                  .NumElements = max_regional_lights,
-                  .StructureByteStride = sizeof(light_region_description),
-                  .Flags = D3D12_BUFFER_SRV_FLAG_NONE}};
-   _gpu_device->device_d3d->CreateShaderResourceView(_regional_lights_buffer.resource(),
-                                                     &srv, _descriptors[1].cpu);
+   _gpu_device->create_shader_resource_view(
+      *_regional_lights_buffer.resource(),
+      gpu::shader_resource_view_desc{
+         .type_description = gpu::buffer_srv{.first_element = 0,
+                                             .number_elements = max_regional_lights,
+                                             .structure_byte_stride =
+                                                sizeof(light_region_description)}},
+      _descriptors[1]);
 }
 
 void light_clusters::update_lights(const frustrum& view_frustrum,

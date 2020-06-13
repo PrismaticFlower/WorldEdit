@@ -16,6 +16,7 @@
 #include <exception>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -92,6 +93,47 @@ public:
          IID_PPV_ARGS(texture_resource.clear_and_assign())));
 
       return texture{*this, desc, std::move(texture_resource)};
+   }
+
+   void create_shader_resource_view(ID3D12Resource& resource,
+                                    const std::optional<shader_resource_view_desc> desc,
+                                    descriptor_handle dest_descriptor) noexcept
+   {
+      if (desc) {
+         const D3D12_SHADER_RESOURCE_VIEW_DESC d3d12_desc = *desc;
+
+         device_d3d->CreateShaderResourceView(&resource, &d3d12_desc,
+                                              dest_descriptor.cpu);
+      }
+      else {
+         device_d3d->CreateShaderResourceView(&resource, nullptr,
+                                              dest_descriptor.cpu);
+      }
+   }
+
+   void create_constant_buffer_view(const constant_buffer_view& desc,
+                                    descriptor_handle dest_descriptor) noexcept
+   {
+      const D3D12_CONSTANT_BUFFER_VIEW_DESC d3d12_desc = desc;
+
+      device_d3d->CreateConstantBufferView(&d3d12_desc, dest_descriptor.cpu);
+   }
+
+   void create_unordered_access_view(ID3D12Resource& resource,
+                                     ID3D12Resource* counter_resource,
+                                     const std::optional<unordered_access_view_desc> desc,
+                                     descriptor_handle dest_descriptor) noexcept
+   {
+      if (desc) {
+         const D3D12_UNORDERED_ACCESS_VIEW_DESC d3d12_desc = *desc;
+
+         device_d3d->CreateUnorderedAccessView(&resource, counter_resource,
+                                               &d3d12_desc, dest_descriptor.cpu);
+      }
+      else {
+         device_d3d->CreateUnorderedAccessView(&resource, counter_resource,
+                                               nullptr, dest_descriptor.cpu);
+      }
    }
 
    auto allocate_descriptors(const D3D12_DESCRIPTOR_HEAP_TYPE type,
