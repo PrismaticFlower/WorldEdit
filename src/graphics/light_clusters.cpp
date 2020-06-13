@@ -67,22 +67,21 @@ light_clusters::light_clusters(gpu::device& gpu_device)
                                         max_regional_lights},
                                D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
 
-   _descriptors =
-      _gpu_device->allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2);
+   _resource_views = _gpu_device->create_resource_view_set(std::array{
+      gpu::resource_view_desc{
+         .resource = *_lights_constant_buffer.resource(),
+         .view_desc =
+            gpu::constant_buffer_view{.buffer_location =
+                                         _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
+                                      .size = _lights_constant_buffer.size()}},
 
-   _gpu_device->create_constant_buffer_view(
-      {.buffer_location = _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
-       .size = _lights_constant_buffer.size()},
-      _descriptors[0]);
-
-   _gpu_device->create_shader_resource_view(
-      *_regional_lights_buffer.resource(),
-      gpu::shader_resource_view_desc{
-         .type_description = gpu::buffer_srv{.first_element = 0,
-                                             .number_elements = max_regional_lights,
-                                             .structure_byte_stride =
-                                                sizeof(light_region_description)}},
-      _descriptors[1]);
+      gpu::resource_view_desc{.resource = *_regional_lights_buffer.resource(),
+                              .view_desc = gpu::shader_resource_view_desc{
+                                 .type_description =
+                                    gpu::buffer_srv{.first_element = 0,
+                                                    .number_elements = max_regional_lights,
+                                                    .structure_byte_stride = sizeof(
+                                                       light_region_description)}}}});
 }
 
 void light_clusters::update_lights(const frustrum& view_frustrum,
@@ -268,7 +267,7 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
 
 auto light_clusters::light_descriptors() const noexcept -> gpu::descriptor_range
 {
-   return _descriptors;
+   return _resource_views.descriptors();
 }
 
 }

@@ -28,7 +28,7 @@ private:
    gpu::buffer _lights_constant_buffer;
    gpu::buffer _regional_lights_buffer;
 
-   gpu::descriptor_allocation _descriptors;
+   gpu::resource_view_set _resource_views;
 };
 
 }

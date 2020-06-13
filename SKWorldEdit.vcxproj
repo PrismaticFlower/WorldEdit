@@ -202,6 +202,7 @@
     <ClInclude Include="src\graphics\gpu\descriptor_range.hpp" />
     <ClInclude Include="src\graphics\gpu\device.hpp" />
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
+    <ClInclude Include="src\graphics\gpu\resource_view_set.hpp" />
     <ClInclude Include="src\graphics\gpu\texture.hpp" />
     <ClInclude Include="src\graphics\light_clusters.hpp" />
     <ClInclude Include="src\graphics\line_drawer.hpp" />
@@ -281,6 +282,7 @@
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />
+    <ClCompile Include="src\graphics\gpu\resource_view_set.cpp" />
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />

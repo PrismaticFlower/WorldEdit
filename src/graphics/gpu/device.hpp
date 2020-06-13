@@ -7,6 +7,7 @@
 #include "descriptor_allocation.hpp"
 #include "descriptor_heap.hpp"
 #include "pipeline_library.hpp"
+#include "resource_view_set.hpp"
 #include "root_signature_library.hpp"
 #include "swap_chain.hpp"
 #include "texture.hpp"
@@ -17,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
@@ -24,6 +26,8 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wil/resource.h>
+
+#include <range/v3/view.hpp>
 
 namespace sk::graphics::gpu {
 
@@ -136,6 +140,40 @@ public:
       }
    }
 
+   auto create_resource_view_set(const std::span<const resource_view_desc> view_descriptions) noexcept
+      -> resource_view_set
+   {
+      descriptor_range descriptors = descriptor_heap_srv_cbv_uav.allocate_static(
+         static_cast<uint32>(view_descriptions.size()));
+      std::vector<gsl::owner<ID3D12Resource*>> resources;
+      resources.reserve(view_descriptions.size());
+
+      for (auto [index, desc] : view_descriptions | ranges::views::enumerate) {
+         desc.resource.AddRef();
+         resources.push_back(&desc.resource);
+
+         boost::variant2::visit(
+            [&](const auto& view_desc) {
+               using Type = std::remove_cvref_t<decltype(view_desc)>;
+
+               if constexpr (std::is_same_v<shader_resource_view_desc, Type>) {
+                  create_shader_resource_view(desc.resource, view_desc,
+                                              descriptors[index]);
+               }
+               else if constexpr (std::is_same_v<constant_buffer_view, Type>) {
+                  create_constant_buffer_view(view_desc, descriptors[index]);
+               }
+               else if constexpr (std::is_same_v<unordered_access_view_desc, Type>) {
+                  create_unordered_access_view(desc.resource, desc.counter_resource,
+                                               view_desc, descriptors[index]);
+               }
+            },
+            desc.view_desc);
+      }
+
+      return resource_view_set{*this, descriptors, std::move(resources)};
+   }
+
    auto allocate_descriptors(const D3D12_DESCRIPTOR_HEAP_TYPE type,
                              const uint32 count) -> descriptor_allocation
    {
@@ -152,37 +190,39 @@ public:
       }
    }
 
-   template<resource_owner Owner>
-   void deferred_destroy_resource(Owner& resource_owner)
+   void deferred_destroy_resource(gsl::owner<ID3D12Resource*> resource)
    {
+      assert(resource);
+
       std::lock_guard lock{_deferred_destruction_mutex};
 
       _deferred_destructions.push_back(
          {// TODO (maybe, depending on how memory residency management shapes up): frame usage tracking for resources
           .last_used_frame = fence_value,
-          .resource = utility::com_ptr{resource_owner.resource()}});
+          .resource = utility::com_ptr{resource}});
    }
 
-   void deferred_free_descriptors(descriptor_allocation& allocation)
+   void deferred_free_descriptors(const D3D12_DESCRIPTOR_HEAP_TYPE type,
+                                  descriptor_range descriptors)
    {
       std::lock_guard lock{_deferred_destruction_mutex};
 
-      switch (allocation.type()) {
+      switch (type) {
       case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
          _deferred_destructions.push_back(
             {.last_used_frame = fence_value,
              .resource =
-                descriptor_range_owner{descriptor_heap_srv_cbv_uav, allocation}});
+                descriptor_range_owner{descriptor_heap_srv_cbv_uav, descriptors}});
          return;
       case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
          _deferred_destructions.push_back(
             {.last_used_frame = fence_value,
-             .resource = descriptor_range_owner{descriptor_heap_rtv, allocation}});
+             .resource = descriptor_range_owner{descriptor_heap_rtv, descriptors}});
          return;
       case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
          _deferred_destructions.push_back(
             {.last_used_frame = fence_value,
-             .resource = descriptor_range_owner{descriptor_heap_dsv, allocation}});
+             .resource = descriptor_range_owner{descriptor_heap_dsv, descriptors}});
          return;
       default:
          throw std::runtime_error{
