@@ -444,6 +444,9 @@
     <ClInclude Include="src\graphics\gpu\resource_view_set.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\texture_manager.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -579,6 +582,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\resource_view_set.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\material.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

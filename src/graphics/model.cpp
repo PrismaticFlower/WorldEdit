@@ -13,7 +13,8 @@
 
 namespace sk::graphics {
 
-model::model(const assets::msh::flat_model& model)
+model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
+             texture_manager& texture_manager)
 {
    parts.reserve(model.meshes.size());
 
@@ -75,7 +76,8 @@ model::model(const assets::msh::flat_model& model)
    for (const auto& mesh : model.meshes) {
       parts.push_back({.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
                        .start_index = triangle_offset * 3,
-                       .start_vertex = vertex_offset});
+                       .start_vertex = vertex_offset,
+                       .material = {mesh.material, gpu_device, texture_manager}});
 
       std::uninitialized_copy_n(mesh.triangles.cbegin(), mesh.triangles.size(),
                                 indices.begin() + triangle_offset);

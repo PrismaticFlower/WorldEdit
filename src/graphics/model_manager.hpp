@@ -3,6 +3,7 @@
 #include "assets/msh/default_missing_scene.hpp"
 #include "assets/msh/flat_model.hpp"
 #include "model.hpp"
+#include "texture_manager.hpp"
 
 #include <shared_mutex>
 #include <unordered_map>
@@ -15,7 +16,8 @@ namespace sk::graphics {
 
 class model_manager {
 public:
-   model_manager(gpu::device& gpu_device) : _gpu_device{&gpu_device}
+   model_manager(gpu::device& gpu_device, texture_manager& texture_manager)
+      : _gpu_device{&gpu_device}, _texture_manager{texture_manager}
    {
       _copy_fence_wait_value = _placeholder_model.init_gpu_buffer_async(gpu_device);
    };
@@ -68,7 +70,7 @@ private:
       }
 
       _creation_tasks.run([&, flat_model] {
-         model model{*flat_model};
+         model model{*flat_model, *_gpu_device, _texture_manager};
 
          const auto copy_fence_value = model.init_gpu_buffer_async(*_gpu_device);
 
@@ -81,6 +83,7 @@ private:
    }
 
    gsl::not_null<gpu::device*> _gpu_device; // Do NOT change while _creation_tasks has active tasks queued.
+   texture_manager& _texture_manager;
 
    std::shared_mutex _mutex;
    std::unordered_map<std::shared_ptr<assets::msh::flat_model>, model> _models;
@@ -90,7 +93,8 @@ private:
 
    tbb::task_group _creation_tasks;
 
-   model _placeholder_model{*assets::msh::default_missing_scene()};
+   model _placeholder_model{*assets::msh::default_missing_scene(), *_gpu_device,
+                            _texture_manager};
 };
 
 }

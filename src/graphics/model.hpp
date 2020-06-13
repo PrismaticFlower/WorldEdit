@@ -2,7 +2,9 @@
 
 #include "assets/msh/flat_model.hpp"
 #include "gpu/device.hpp"
+#include "material.hpp"
 #include "math/bounding_box.hpp"
+#include "texture_manager.hpp"
 #include "types.hpp"
 
 #include <array>
@@ -23,6 +25,7 @@ struct mesh_part {
    uint32 index_count;
    uint32 start_index;
    uint32 start_vertex;
+   material material;
 };
 
 struct mesh_data_offsets {
@@ -42,7 +45,8 @@ struct mesh_gpu_buffer {
 };
 
 struct model {
-   explicit model(const assets::msh::flat_model& model);
+   explicit model(const assets::msh::flat_model& model, gpu::device& gpu_device,
+                  texture_manager& texture_manager);
 
    auto init_gpu_buffer_async(gpu::device& device) -> UINT64;
 

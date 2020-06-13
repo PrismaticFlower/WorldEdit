@@ -10,6 +10,7 @@
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "light_clusters.hpp"
 #include "model_manager.hpp"
+#include "texture_manager.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
 
@@ -69,7 +70,8 @@ private:
                                  .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
-   model_manager _model_manager{_device};
+   texture_manager _texture_manager{};
+   model_manager _model_manager{_device, _texture_manager};
    geometric_shapes _geometric_shapes{_device};
    light_clusters _light_clusters{_device};
 
