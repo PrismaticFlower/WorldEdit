@@ -81,8 +81,14 @@ TEST_CASE("texture creation tests", "[Assets][Texture]")
    CHECK(texture.subresource({.mip_level = 1, .array_index = 0}).dxgi_format() ==
          texture.dxgi_format());
 
+   CHECK(&texture.subresource({.mip_level = 0, .array_index = 0}) ==
+         &texture.subresource(0));
+   CHECK(&texture.subresource({.mip_level = 1, .array_index = 0}) ==
+         &texture.subresource(1));
+
    CHECK_THROWS((void)texture.subresource({.mip_level = 2, .array_index = 0}));
    CHECK_THROWS((void)texture.subresource({.mip_level = 0, .array_index = 1}));
+   CHECK_THROWS((void)texture.subresource(2));
 }
 
 TEST_CASE("texture texel load tests", "[Assets][Texture]")

@@ -47,6 +47,8 @@ private:
       const frustrum& view_frustrum, const world::world& world,
       const std::unordered_map<std::string, world::object_class>& world_classes);
 
+   void update_textures();
+
    const HWND _window;
 
    gpu::device _device{_window};
@@ -86,6 +88,7 @@ private:
    };
 
    std::vector<render_list_item> _object_render_list;
+   std::vector<D3D12_RESOURCE_BARRIER> _texture_resource_barriers;
 };
 
 }

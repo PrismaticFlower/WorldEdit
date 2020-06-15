@@ -60,6 +60,8 @@ private:
 class texture {
 public:
    constexpr static std::size_t pitch_alignment = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
+   constexpr static std::size_t subresource_alignment =
+      D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
 
    struct init_params {
       uint32 width = 1;
@@ -77,6 +79,9 @@ public:
    };
 
    [[nodiscard]] auto subresource(const subresource_index index)
+      -> texture_subresource_view&;
+
+   [[nodiscard]] auto subresource(const std::size_t flat_index)
       -> texture_subresource_view&;
 
    [[nodiscard]] auto subresource_count() const noexcept -> std::size_t;

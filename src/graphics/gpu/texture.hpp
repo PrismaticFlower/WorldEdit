@@ -79,12 +79,12 @@ public:
       return _format;
    }
 
-   auto width() const noexcept -> uint16
+   auto width() const noexcept -> uint32
    {
       return _width;
    }
 
-   auto height() const noexcept -> uint16
+   auto height() const noexcept -> uint32
    {
       return _height;
    }
@@ -124,8 +124,8 @@ private:
    gsl::owner<ID3D12Resource*> _resource = nullptr;
 
    DXGI_FORMAT _format = DXGI_FORMAT_UNKNOWN;
-   uint16 _width = 0;
-   uint16 _height = 0;
+   uint32 _width = 0;
+   uint32 _height = 0;
    uint16 _depth = 0;
    uint16 _mip_levels = 0;
    uint16 _array_size = 0;

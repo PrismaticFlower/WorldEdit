@@ -1,6 +1,8 @@
 #include "material.hpp"
 
-#include <DirectXTex.h>
+#include <boost/algorithm/string.hpp>
+
+using namespace std::literals;
 
 namespace sk::graphics {
 
@@ -9,6 +11,10 @@ material::material(const assets::msh::material& material,
 {
    texture_names.resize(1);
    texture_names[0] = material.textures[0];
+
+   if (boost::algorithm::iends_with(texture_names[0], ".tga"sv)) {
+      texture_names[0].resize(texture_names[0].size() - ".tga"sv.size());
+   }
 
    textures.resize(1);
 
@@ -24,7 +30,7 @@ void material::init_resource_views(gpu::device& gpu_device)
    const std::array resource_view_descriptions{
       gpu::resource_view_desc{.resource = *textures[0]->resource(),
                               .view_desc = gpu::shader_resource_view_desc{
-                                 .format = DirectX::MakeSRGB(DirectX::MakeTypelessUNORM(textures[0]->format())),
+                                 .format = textures[0]->format(),
                                  .type_description = gpu::texture2d_srv{}}}};
 
    resource_views = gpu_device.create_resource_view_set(resource_view_descriptions);

@@ -5,6 +5,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <glm/glm.hpp>
+
 #include <range/v3/numeric.hpp>
 #include <range/v3/view.hpp>
 
@@ -22,8 +24,8 @@ struct texture_mip_level_desc {
 auto get_mip_level_desc(const uint32 width, const uint32 height, const uint32 mip_level,
                         const texture_format format) -> texture_mip_level_desc
 {
-   auto mip_width = width >> mip_level;
-   auto mip_height = height >> mip_level;
+   auto mip_width = glm::max(width >> mip_level, 1u);
+   auto mip_height = glm::max(height >> mip_level, 1u);
    auto mip_row_pitch = static_cast<uint32>(
       math::align_up(mip_width * format_size(format), texture::pitch_alignment));
 
@@ -129,6 +131,7 @@ texture::texture(const init_params init_params)
            ranges::views::indices(init_params.array_size)) {
          for (auto mip_level : ranges::views::indices(init_params.mip_levels)) {
             size += get_mip_level_desc(_width, _height, mip_level, _format).size;
+            size = math::align_up(size, subresource_alignment);
          }
       }
 
@@ -155,6 +158,8 @@ texture::texture(const init_params init_params)
                                                   .format = _format});
 
          subresource_offset += mip_level_desc.size;
+         subresource_offset =
+            math::align_up(subresource_offset, subresource_alignment);
       }
    }
 }
@@ -164,6 +169,15 @@ auto texture::subresource(const subresource_index index) -> texture_subresource_
    return _subresources[flatten_subresource_index(index)];
 }
 
+auto texture::subresource(const std::size_t flat_index) -> texture_subresource_view&
+{
+   if (flat_index >= _subresources.size()) {
+      throw std::invalid_argument{
+         "attempt to access nonexistent subresource in texture"};
+   }
+
+   return _subresources[flat_index];
+}
 auto texture::subresource_count() const noexcept -> std::size_t
 {
    return _subresources.size();
@@ -215,13 +229,13 @@ auto texture::dxgi_format() const noexcept -> DXGI_FORMAT
 }
 
 auto texture::load(const subresource_index subresource, const glm::uvec2 index) const
-    -> float4
+   -> float4
 {
    return _subresources[flatten_subresource_index(subresource)].load(index);
 }
 
 void texture::store(const subresource_index subresource, const glm::uvec2 index,
-                    const float4 value) 
+                    const float4 value)
 {
    _subresources[flatten_subresource_index(subresource)].store(index, value);
 }

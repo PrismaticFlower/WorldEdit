@@ -36,8 +36,8 @@ struct texture_desc {
    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
    D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-   uint16 width = 1;
-   uint16 height = 1;
+   uint32 width = 1;
+   uint32 height = 1;
    uint16 depth = 1;
    uint16 mip_levels = 1;
    uint16 array_size = 1;

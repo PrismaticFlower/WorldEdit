@@ -102,6 +102,8 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
    _device.copy_manager.enqueue_fence_wait_if_needed(*_device.command_queue);
 
+   update_textures();
+
    auto& command_allocator = *_world_command_allocators[_device.frame_index];
    auto& command_list = _world_command_list;
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
@@ -120,6 +122,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    _light_clusters.update_lights(view_frustrum, world, command_list,
                                  _dynamic_buffer_allocator);
 
+   command_list.deferred_resource_barrier(_texture_resource_barriers);
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_PRESENT,
                               D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -648,4 +651,16 @@ void renderer::build_object_render_list(
       }
    }
 }
+
+void renderer::update_textures()
+{
+   _texture_resource_barriers.clear();
+
+   _texture_manager.process_updated_textures([&](updated_texture updated) {
+      _texture_resource_barriers.push_back(
+         gpu::transition_barrier(*updated.texture->resource(), D3D12_RESOURCE_STATE_COPY_DEST,
+                                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+   });
+}
+
 }
