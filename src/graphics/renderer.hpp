@@ -70,7 +70,7 @@ private:
                                  .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
-   texture_manager _texture_manager{};
+   texture_manager _texture_manager{_device};
    model_manager _model_manager{_device, _texture_manager};
    geometric_shapes _geometric_shapes{_device};
    light_clusters _light_clusters{_device};

@@ -89,7 +89,7 @@ private:
    std::unordered_map<std::shared_ptr<assets::msh::flat_model>, model> _models;
    std::unordered_set<std::shared_ptr<assets::msh::flat_model>> _pending_models;
 
-   UINT64 _copy_fence_wait_value = 0;
+   uint64 _copy_fence_wait_value = 0;
 
    tbb::task_group _creation_tasks;
 
