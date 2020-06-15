@@ -24,7 +24,7 @@ constexpr float camera_look_sensitivity = 0.18f;
 }
 
 world_edit::world_edit(const HWND window)
-   : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}, _renderer{window}
+   : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}, _renderer{window, _asset_libraries}
 {
    ImGui_ImplWin32_Init(window);
    imgui_keymap_init(ImGui::GetIO());

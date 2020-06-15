@@ -76,7 +76,8 @@ static_assert(sizeof(object_constants) == 64);
 
 }
 
-renderer::renderer(const HWND window) : _window{window}, _device{window}
+renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries)
+   : _window{window}, _device{window}, _texture_manager{_device, asset_libraries.textures}
 {
    auto imgui_font_descriptor =
       _device.descriptor_heap_srv_cbv_uav.allocate_static(1);

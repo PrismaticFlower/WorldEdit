@@ -1,5 +1,6 @@
 #pragma once
 
+#include "assets/asset_libraries.hpp"
 #include "camera.hpp"
 #include "frustrum.hpp"
 #include "geometric_shapes.hpp"
@@ -22,7 +23,7 @@ namespace sk::graphics {
 
 class renderer {
 public:
-   explicit renderer(const HWND window);
+   renderer(const HWND window, assets::libraries_manager& asset_libraries);
 
    void draw_frame(const camera& camera, const world::world& world,
                    const std::unordered_map<std::string, world::object_class>& world_classes);
@@ -70,7 +71,7 @@ private:
                                  .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
-   texture_manager _texture_manager{_device};
+   texture_manager _texture_manager;
    model_manager _model_manager{_device, _texture_manager};
    geometric_shapes _geometric_shapes{_device};
    light_clusters _light_clusters{_device};
