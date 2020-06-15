@@ -14,6 +14,8 @@ struct material {
 
    void init_resource_views(gpu::device& gpu_device);
 
+   void process_updated_texture(gpu::device& gpu_device, updated_texture updated);
+
    gpu::resource_view_set resource_views;
 
    std::vector<std::shared_ptr<gpu::texture>> textures;

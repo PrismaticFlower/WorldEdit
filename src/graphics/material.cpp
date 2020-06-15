@@ -2,6 +2,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <range/v3/view.hpp>
+
 using namespace std::literals;
 
 namespace sk::graphics {
@@ -34,6 +36,22 @@ void material::init_resource_views(gpu::device& gpu_device)
                                  .type_description = gpu::texture2d_srv{}}}};
 
    resource_views = gpu_device.create_resource_view_set(resource_view_descriptions);
+}
+
+void material::process_updated_texture(gpu::device& gpu_device, updated_texture updated)
+{
+   using namespace ranges::views;
+
+   bool reinit_views = false;
+
+   for (auto [name, texture] : zip(texture_names, textures)) {
+      if (not boost::algorithm::iequals(name, updated.name)) continue;
+
+      texture = updated.texture;
+      reinit_views = true;
+   }
+
+   if (reinit_views) init_resource_views(gpu_device);
 }
 
 }

@@ -660,6 +660,7 @@ void renderer::update_textures()
       _texture_resource_barriers.push_back(
          gpu::transition_barrier(*updated.texture->resource(), D3D12_RESOURCE_STATE_COPY_DEST,
                                  D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+      _model_manager.process_updated_texture(_device, updated);
    });
 }
 

@@ -48,6 +48,17 @@ public:
       return _copy_fence_wait_value;
    }
 
+   void process_updated_texture(gpu::device& gpu_device, updated_texture updated)
+   {
+      std::shared_lock lock{_mutex};
+
+      for (auto& [asset, model] : _models) {
+         for (auto& part : model.parts) {
+            part.material.process_updated_texture(gpu_device, updated);
+         }
+      }
+   }
+
 private:
    auto get_if_loaded(const std::shared_ptr<assets::msh::flat_model>& flat_model)
       -> model*
