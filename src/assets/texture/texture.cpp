@@ -169,6 +169,12 @@ auto texture::subresource(const subresource_index index) -> texture_subresource_
    return _subresources[flatten_subresource_index(index)];
 }
 
+auto texture::subresource(const subresource_index index) const
+   -> const texture_subresource_view&
+{
+   return _subresources[flatten_subresource_index(index)];
+}
+
 auto texture::subresource(const std::size_t flat_index) -> texture_subresource_view&
 {
    if (flat_index >= _subresources.size()) {
@@ -178,6 +184,18 @@ auto texture::subresource(const std::size_t flat_index) -> texture_subresource_v
 
    return _subresources[flat_index];
 }
+
+auto texture::subresource(const std::size_t flat_index) const
+   -> const texture_subresource_view&
+{
+   if (flat_index >= _subresources.size()) {
+      throw std::invalid_argument{
+         "attempt to access nonexistent subresource in texture"};
+   }
+
+   return _subresources[flat_index];
+}
+
 auto texture::subresource_count() const noexcept -> std::size_t
 {
    return _subresources.size();

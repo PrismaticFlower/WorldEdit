@@ -597,5 +597,6 @@
     <FxCompile Include="src\graphics\gpu\shaders\meta_lineVS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\basic_mesh_lightingPS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedGS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\normal_meshPS.hlsl" />
   </ItemGroup>
 </Project>

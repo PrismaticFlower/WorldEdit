@@ -81,8 +81,14 @@ public:
    [[nodiscard]] auto subresource(const subresource_index index)
       -> texture_subresource_view&;
 
+   [[nodiscard]] auto subresource(const subresource_index index) const
+      -> const texture_subresource_view&;
+
    [[nodiscard]] auto subresource(const std::size_t flat_index)
       -> texture_subresource_view&;
+
+   [[nodiscard]] auto subresource(const std::size_t flat_index) const
+      -> const texture_subresource_view&;
 
    [[nodiscard]] auto subresource_count() const noexcept -> std::size_t;
 

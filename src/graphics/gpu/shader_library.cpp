@@ -12,6 +12,8 @@ namespace {
 
 #include "basic_mesh_lightingPS_dxbc.h"
 
+#include "normal_meshPS_dxbc.h"
+
 #include "meta_object_meshPS_dxbc.h"
 #include "meta_object_meshVS_dxbc.h"
 #include "meta_object_mesh_outlinedGS_dxbc.h"
@@ -37,6 +39,8 @@ const D3D12_SHADER_BYTECODE basic_object_mesh_ps =
 
 const D3D12_SHADER_BYTECODE basic_mesh_lighting_ps =
    bytecode_init(basic_mesh_lightingPS_dxbc);
+
+const D3D12_SHADER_BYTECODE normal_mesh_ps = bytecode_init(normal_meshPS_dxbc);
 
 const D3D12_SHADER_BYTECODE meta_object_mesh_vs =
    bytecode_init(meta_object_meshVS_dxbc);

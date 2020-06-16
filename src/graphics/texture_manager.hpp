@@ -31,6 +31,18 @@ public:
          gpu_device.create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
                                     .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
                                    D3D12_RESOURCE_STATE_COMMON));
+
+      _copy_fence_wait_value = [this] {
+         assets::texture::texture cpu_null_diffuse{
+            {.width = 1,
+             .height = 1,
+             .format = assets::texture::texture_format::r8g8b8a8_unorm_srgb}};
+
+         cpu_null_diffuse.store({.mip_level = 0}, {0, 0},
+                                float4{0.75f, 0.75f, 0.75f, 1.0f});
+
+         return init_texture_async(*_null_diffuse_map, cpu_null_diffuse);
+      }();
    };
 
    auto aquire_if(const std::string& name) -> std::shared_ptr<gpu::texture>
@@ -108,65 +120,7 @@ private:
          auto texture = std::make_shared<gpu::texture>(
             _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COMMON));
 
-         uint64 resource_copy_fence_value = 0;
-
-         // Upload texture.
-         {
-            auto copy_context = _gpu_device->copy_manager.aquire_context();
-
-            const gpu::buffer_desc upload_buffer_desc = [&] {
-               gpu::buffer_desc upload_buffer_desc;
-
-               upload_buffer_desc.size = static_cast<uint32>(cpu_texture->size());
-
-               return upload_buffer_desc;
-            }();
-
-            ID3D12Resource& upload_buffer =
-               copy_context.create_upload_resource(upload_buffer_desc);
-
-            std::byte* const upload_buffer_ptr = [&] {
-               const D3D12_RANGE read_range{};
-               void* map_void_ptr = nullptr;
-
-               throw_if_failed(upload_buffer.Map(0, &read_range, &map_void_ptr));
-
-               return static_cast<std::byte*>(map_void_ptr);
-            }();
-
-            std::memcpy(upload_buffer_ptr, cpu_texture->data(), cpu_texture->size());
-
-            const D3D12_RANGE write_range{0, cpu_texture->size()};
-            upload_buffer.Unmap(0, &write_range);
-
-            auto& command_list = copy_context.command_list;
-
-            for (uint32 i = 0; i < cpu_texture->subresource_count(); ++i) {
-               const auto& cpu_subresource = cpu_texture->subresource(i);
-
-               const D3D12_TEXTURE_COPY_LOCATION
-                  dest_location{.pResource = texture->resource(),
-                                .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-                                .SubresourceIndex = i};
-               const D3D12_TEXTURE_COPY_LOCATION src_location{
-                  .pResource = &upload_buffer,
-                  .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
-                  .PlacedFootprint = {
-                     .Offset = cpu_subresource.offset(),
-                     .Footprint = {.Format = texture->format(),
-                                   .Width = cpu_subresource.width(),
-                                   .Height = cpu_subresource.height(),
-                                   .Depth = 1,
-                                   .RowPitch = cpu_subresource.row_pitch()},
-                  }};
-
-               command_list.CopyTextureRegion(&dest_location, 0, 0, 0,
-                                              &src_location, nullptr);
-            }
-
-            resource_copy_fence_value =
-               _gpu_device->copy_manager.close_and_execute(copy_context);
-         }
+         uint64 resource_copy_fence_value = init_texture_async(*texture, *cpu_texture);
 
          std::scoped_lock lock{_shared_mutex};
 
@@ -176,6 +130,63 @@ private:
          _copy_fence_wait_value =
             std::max(_copy_fence_wait_value, resource_copy_fence_value);
       });
+   }
+
+   auto init_texture_async(gpu::texture& texture,
+                           const assets::texture::texture& cpu_texture) -> UINT64
+   {
+      auto copy_context = _gpu_device->copy_manager.aquire_context();
+
+      const gpu::buffer_desc upload_buffer_desc = [&] {
+         gpu::buffer_desc upload_buffer_desc;
+
+         upload_buffer_desc.size = static_cast<uint32>(cpu_texture.size());
+
+         return upload_buffer_desc;
+      }();
+
+      ID3D12Resource& upload_buffer =
+         copy_context.create_upload_resource(upload_buffer_desc);
+
+      std::byte* const upload_buffer_ptr = [&] {
+         const D3D12_RANGE read_range{};
+         void* map_void_ptr = nullptr;
+
+         throw_if_failed(upload_buffer.Map(0, &read_range, &map_void_ptr));
+
+         return static_cast<std::byte*>(map_void_ptr);
+      }();
+
+      std::memcpy(upload_buffer_ptr, cpu_texture.data(), cpu_texture.size());
+
+      const D3D12_RANGE write_range{0, cpu_texture.size()};
+      upload_buffer.Unmap(0, &write_range);
+
+      auto& command_list = copy_context.command_list;
+
+      for (uint32 i = 0; i < cpu_texture.subresource_count(); ++i) {
+         const auto& cpu_subresource = cpu_texture.subresource(i);
+
+         const D3D12_TEXTURE_COPY_LOCATION dest_location{.pResource =
+                                                            texture.resource(),
+                                                         .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+                                                         .SubresourceIndex = i};
+         const D3D12_TEXTURE_COPY_LOCATION
+            src_location{.pResource = &upload_buffer,
+                         .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+                         .PlacedFootprint = {
+                            .Offset = cpu_subresource.offset(),
+                            .Footprint = {.Format = texture.format(),
+                                          .Width = cpu_subresource.width(),
+                                          .Height = cpu_subresource.height(),
+                                          .Depth = 1,
+                                          .RowPitch = cpu_subresource.row_pitch()},
+                         }};
+
+         command_list.CopyTextureRegion(&dest_location, 0, 0, 0, &src_location, nullptr);
+      }
+
+      return _gpu_device->copy_manager.close_and_execute(copy_context);
    }
 
    assets::library<assets::texture::texture>& _texture_assets;

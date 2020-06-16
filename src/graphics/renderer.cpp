@@ -212,14 +212,15 @@ void renderer::draw_world(const frustrum& view_frustrum, const world::world& wor
    build_object_render_list(view_frustrum, world, world_classes);
 
    command_list.set_graphics_root_signature(*_device.root_signatures.object_mesh);
-   command_list.set_pipeline_state(*_device.pipelines.basic_mesh_lighting.get());
+   command_list.set_pipeline_state(*_device.pipelines.normal_mesh.get());
 
-   command_list.set_graphics_root_descriptor_table(1, _camera_constant_buffer_view);
-   command_list.set_graphics_root_descriptor_table(2, _light_clusters.light_descriptors());
+   command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
+   command_list.set_graphics_root_descriptor_table(3, _light_clusters.light_descriptors());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    for (auto& object : _object_render_list) {
       command_list.set_graphics_root_constant_buffer_view(0, object.object_constants_address);
+      command_list.set_graphics_root_descriptor_table(1, object.material_descriptor_range);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
       command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
@@ -647,7 +648,8 @@ void renderer::build_object_render_list(
              .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
                                      model.gpu_buffer.normal_vertex_buffer_view,
                                      model.gpu_buffer.texcoord_vertex_buffer_view},
-             .object_constants_address = object_constants_address});
+             .object_constants_address = object_constants_address,
+             .material_descriptor_range = mesh.material.resource_views.descriptors()});
       }
    }
 }

@@ -17,8 +17,8 @@ auto create_root_signature(ID3D12Device& device,
           &desc, root_signature_blob.clear_and_assign(),
           root_signature_error_blob.clear_and_assign()))) {
       throw std::runtime_error{
-         std::string{static_cast<const char*>(root_signature_blob->GetBufferPointer()),
-                     root_signature_blob->GetBufferSize()}};
+         std::string{static_cast<const char*>(root_signature_error_blob->GetBufferPointer()),
+                     root_signature_error_blob->GetBufferSize()}};
    }
 
    utility::com_ptr<ID3D12RootSignature> root_sig;
@@ -52,6 +52,24 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
          },
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
+
+   const D3D12_DESCRIPTOR_RANGE1 material_descriptor_table_descriptor_range{
+      .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+      .NumDescriptors = 1,
+      .BaseShaderRegister = 0,
+      .RegisterSpace = 1,
+      .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+      .OffsetInDescriptorsFromTableStart = 0};
+
+   const D3D12_ROOT_PARAMETER1 material_descriptor_table_root_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+      .DescriptorTable =
+         {
+            .NumDescriptorRanges = 1,
+            .pDescriptorRanges = &material_descriptor_table_descriptor_range,
+
+         },
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
    const D3D12_ROOT_PARAMETER1 object_cb_root_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
@@ -87,14 +105,34 @@ root_signature_library::root_signature_library(ID3D12Device& device)
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
    const std::array basic_root_params{object_cb_root_param,
+                                      material_descriptor_table_root_param,
                                       camera_cb_descriptor_table_root_param,
                                       object_lights_descriptor_table_root_param};
+
+   const D3D12_STATIC_SAMPLER_DESC trilinear_static_sampler{
+      .Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      .MipLODBias = 0.0f,
+      .MaxAnisotropy = 0,
+      .ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
+      .BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
+      .MinLOD = 0.0f,
+      .MaxLOD = D3D12_FLOAT32_MAX,
+      .ShaderRegister = 0,
+      .RegisterSpace = 0,
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
+
+   const std::array object_static_sampler{trilinear_static_sampler};
 
    object_mesh = create_root_signature(
       device,
       {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
        .Desc_1_1 = {.NumParameters = static_cast<UINT>(basic_root_params.size()),
                     .pParameters = basic_root_params.data(),
+                    .NumStaticSamplers = static_cast<UINT>(object_static_sampler.size()),
+                    .pStaticSamplers = object_static_sampler.data(),
                     .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 
    const D3D12_ROOT_PARAMETER1 meta_object_color_cb_root_param{

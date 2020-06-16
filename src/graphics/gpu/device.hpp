@@ -211,18 +211,20 @@ public:
       case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
          _deferred_destructions.push_back(
             {.last_used_frame = fence_value,
-             .resource =
-                descriptor_range_owner{descriptor_heap_srv_cbv_uav, descriptors}});
+             .resource = std::make_unique<descriptor_range_owner>(descriptor_heap_srv_cbv_uav,
+                                                                  descriptors)});
          return;
       case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
          _deferred_destructions.push_back(
             {.last_used_frame = fence_value,
-             .resource = descriptor_range_owner{descriptor_heap_rtv, descriptors}});
+             .resource = std::make_unique<descriptor_range_owner>(descriptor_heap_rtv,
+                                                                  descriptors)});
          return;
       case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
          _deferred_destructions.push_back(
             {.last_used_frame = fence_value,
-             .resource = descriptor_range_owner{descriptor_heap_dsv, descriptors}});
+             .resource = std::make_unique<descriptor_range_owner>(descriptor_heap_dsv,
+                                                                  descriptors)});
          return;
       default:
          throw std::runtime_error{
@@ -271,20 +273,27 @@ private:
          : heap{&heap}, range{range}
       {
       }
+      descriptor_range_owner(const descriptor_range_owner&) noexcept = delete;
+      auto operator=(const descriptor_range_owner&) noexcept
+         -> descriptor_range_owner& = delete;
+
+      descriptor_range_owner(descriptor_range_owner&&) noexcept = delete;
+      auto operator=(descriptor_range_owner&& other) noexcept
+         -> descriptor_range_owner& = delete;
 
       ~descriptor_range_owner()
       {
-         heap->free_static(range);
+         if (heap) heap->free_static(range);
       }
 
-      gsl::not_null<descriptor_heap*> heap;
-      descriptor_range range;
+      descriptor_heap* heap = nullptr;
+      descriptor_range range{};
    };
 
    struct deferred_destruction {
       UINT64 last_used_frame = 0;
 
-      boost::variant2::variant<utility::com_ptr<ID3D12Resource>, descriptor_range_owner> resource;
+      boost::variant2::variant<utility::com_ptr<ID3D12Resource>, std::unique_ptr<descriptor_range_owner>> resource;
    };
 
    std::mutex _deferred_destruction_mutex;
