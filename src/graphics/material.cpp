@@ -14,8 +14,9 @@ material::material(const assets::msh::material& material,
    texture_names.resize(1);
    texture_names[0] = material.textures[0];
 
-   if (boost::algorithm::iends_with(texture_names[0], ".tga"sv)) {
-      texture_names[0].resize(texture_names[0].size() - ".tga"sv.size());
+   if (const auto ext_offset = texture_names[0].find_last_of('.');
+       ext_offset != std::string::npos) {
+      texture_names[0].resize(ext_offset);
    }
 
    textures.resize(1);
@@ -53,5 +54,4 @@ void material::process_updated_texture(gpu::device& gpu_device, updated_texture 
 
    if (reinit_views) init_resource_views(gpu_device);
 }
-
 }
