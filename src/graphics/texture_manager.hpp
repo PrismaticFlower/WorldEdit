@@ -49,7 +49,13 @@ public:
    {
       if (auto loaded = aquire_if_loaded(name); loaded) return loaded;
 
-      enqueue_create_texture(name);
+      auto cpu_texture = _texture_assets.aquire_if(lowercase_string{name});
+
+      std::scoped_lock lock{_shared_mutex};
+
+      if (not cpu_texture) return nullptr;
+
+      enqueue_create_texture(name, cpu_texture);
 
       return nullptr;
    }
@@ -69,7 +75,6 @@ public:
    template<std::invocable<updated_texture> Callback>
    void process_updated_textures(Callback&& callback)
    {
-
       std::scoped_lock lock{_shared_mutex};
 
       for (auto& texture : _copied_textures) {
@@ -77,6 +82,10 @@ public:
       }
 
       _copied_textures.clear();
+
+      for (auto [name, cpu_texture] : _texture_assets.loaded_assets()) {
+         enqueue_create_texture(name, cpu_texture);
+      }
    }
 
 private:
@@ -91,14 +100,9 @@ private:
       return nullptr;
    }
 
-   void enqueue_create_texture(const std::string& name)
+   void enqueue_create_texture(const std::string& name,
+                               std::shared_ptr<assets::texture::texture> cpu_texture)
    {
-      std::scoped_lock lock{_shared_mutex};
-
-      auto cpu_texture = _texture_assets.aquire_if(lowercase_string{name});
-
-      if (not cpu_texture) return;
-
       if (auto [it, inserted] = _pending_textures.insert(name); not inserted) {
          return;
       }
