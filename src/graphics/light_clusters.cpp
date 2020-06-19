@@ -118,6 +118,8 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
             inverse_region_transform[3] = {region_rotation_inverse * -region->position,
                                            1.0f};
 
+            inverse_region_transform = glm::transpose(inverse_region_transform);
+
             const uint32 region_description_index =
                static_cast<uint32>(regional_lights_descriptions.size());
 

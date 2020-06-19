@@ -1,17 +1,17 @@
 
 #define MAX_LIGHTS 1023
 
-struct light_type {
-   const static uint directional = 0;
-   const static uint point_ = 1;
-   const static uint spot = 2;
+namespace light_type {
+const static uint directional = 0;
+const static uint point_ = 1;
+const static uint spot = 2;
 };
 
-struct directional_region_type {
-   const static uint none = 0;
-   const static uint box = 1;
-   const static uint sphere = 2;
-   const static uint cylinder = 3;
+namespace directional_region_type {
+const static uint none = 0;
+const static uint box = 1;
+const static uint sphere = 2;
+const static uint cylinder = 3;
 };
 
 struct light_description {
@@ -39,7 +39,7 @@ struct light_constant_buffer {
 struct light_region_description {
    float4x4 world_to_region;
    float3 position;
-   directional_region_type type;
+   uint type;
    float3 size;
    uint padding;
 };
