@@ -215,6 +215,7 @@
     <ClInclude Include="src\graphics\model_manager.hpp" />
     <ClInclude Include="src\graphics\geometric_shapes.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
+    <ClInclude Include="src\graphics\terrain.hpp" />
     <ClInclude Include="src\graphics\texture_manager.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\imgui\imconfig.h" />
@@ -293,6 +294,7 @@
     <ClCompile Include="src\graphics\material.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
+    <ClCompile Include="src\graphics\terrain.cpp" />
     <ClCompile Include="src\hresult_error.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
@@ -308,6 +310,10 @@
     <ClCompile Include="src\world\world_io_load.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="src\graphics\gpu\shaders\terrain_basicPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="src\graphics\gpu\shaders\basic_mesh_lightingPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
@@ -343,6 +349,10 @@
     <FxCompile Include="src\graphics\gpu\shaders\normal_meshPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="src\graphics\gpu\shaders\terrain_patchVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

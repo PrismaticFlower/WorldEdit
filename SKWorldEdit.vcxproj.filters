@@ -447,6 +447,9 @@
     <ClInclude Include="src\graphics\texture_manager.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\terrain.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -587,6 +590,9 @@
     <ClCompile Include="src\graphics\material.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\terrain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl" />
@@ -598,5 +604,7 @@
     <FxCompile Include="src\graphics\gpu\shaders\basic_mesh_lightingPS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedGS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\normal_meshPS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\terrain_patchVS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\terrain_basicPS.hlsl" />
   </ItemGroup>
 </Project>

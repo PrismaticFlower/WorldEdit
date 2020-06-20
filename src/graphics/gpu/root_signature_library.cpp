@@ -135,6 +135,68 @@ root_signature_library::root_signature_library(ID3D12Device& device)
                     .pStaticSamplers = object_static_sampler.data(),
                     .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 
+   const D3D12_STATIC_SAMPLER_DESC bilinear_static_sampler{
+      .Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT,
+      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      .MipLODBias = 0.0f,
+      .MaxAnisotropy = 0,
+      .ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
+      .BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
+      .MinLOD = 0.0f,
+      .MaxLOD = D3D12_FLOAT32_MAX,
+      .ShaderRegister = 0,
+      .RegisterSpace = 0,
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
+
+   const std::array terrain_static_sampler{bilinear_static_sampler};
+
+   const D3D12_ROOT_PARAMETER1 terrain_root_constants_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+      .Constants = {.ShaderRegister = 1, .RegisterSpace = 0, .Num32BitValues = 4},
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL};
+
+   const D3D12_DESCRIPTOR_RANGE1 terrain_descriptor_table_descriptor_range{
+      .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+      .NumDescriptors = 1,
+      .BaseShaderRegister = 0,
+      .RegisterSpace = 0,
+      .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+      .OffsetInDescriptorsFromTableStart = 0};
+
+   const D3D12_ROOT_PARAMETER1 terrain_descriptor_table_root_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+      .DescriptorTable =
+         {
+            .NumDescriptorRanges = 1,
+            .pDescriptorRanges = &terrain_descriptor_table_descriptor_range,
+
+         },
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL};
+
+   const D3D12_ROOT_PARAMETER1 terrain_patch_srv_param{
+      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV,
+      .Descriptor = {.ShaderRegister = 1,
+                     .RegisterSpace = 0,
+                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
+
+   const std::array terrain_root_params{camera_cb_descriptor_table_root_param,
+                                        terrain_root_constants_param,
+                                        terrain_descriptor_table_root_param,
+                                        terrain_patch_srv_param};
+
+   terrain = create_root_signature(
+      device,
+      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+       .Desc_1_1 = {.NumParameters = static_cast<UINT>(terrain_root_params.size()),
+                    .pParameters = terrain_root_params.data(),
+                    .NumStaticSamplers =
+                       static_cast<UINT>(terrain_static_sampler.size()),
+                    .pStaticSamplers = terrain_static_sampler.data(),
+                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE}});
+
    const D3D12_ROOT_PARAMETER1 meta_object_color_cb_root_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
       .Descriptor = {.ShaderRegister = 0,

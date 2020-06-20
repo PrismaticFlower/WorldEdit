@@ -11,6 +11,7 @@
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "light_clusters.hpp"
 #include "model_manager.hpp"
+#include "terrain.hpp"
 #include "texture_manager.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
@@ -51,6 +52,8 @@ private:
 
    const HWND _window;
 
+   bool _terrain_dirty = true; // ughhhh, this feels so ugly
+
    gpu::device _device{_window};
    gpu::command_allocators _world_command_allocators =
       _device.create_command_allocators(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -77,6 +80,7 @@ private:
    model_manager _model_manager{_device, _texture_manager};
    geometric_shapes _geometric_shapes{_device};
    light_clusters _light_clusters{_device};
+   terrain _terrain{_device};
 
    struct render_list_item {
       uint32 index_count;

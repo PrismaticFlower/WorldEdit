@@ -554,6 +554,9 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
          load_layer(world_dir, fmt::format("{}_{}"sv, world.name, layer.name),
                     ".lyr"sv, output, world, layer_remap);
       }
+
+      world.terrain = read_terrain(
+         utility::read_file_to_bytes(world_dir / world.name += ".ter"sv));
    }
    catch (file_load_failure& load_failure) {
       output.write(

@@ -122,6 +122,10 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    _light_clusters.update_lights(view_frustrum, world, command_list,
                                  _dynamic_buffer_allocator);
 
+   if (std::exchange(_terrain_dirty, false)) {
+      _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
+   }
+
    command_list.deferred_resource_barrier(_texture_resource_barriers);
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_PRESENT,
@@ -144,6 +148,9 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
 
    // Render World
    draw_world(view_frustrum, world, world_classes, command_list);
+
+   _terrain.draw(view_frustrum, _camera_constant_buffer_view, command_list,
+                 _dynamic_buffer_allocator);
 
    // Render World Meta Objects
    draw_world_meta_objects(view_frustrum, world, world_classes, command_list);
