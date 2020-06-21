@@ -6,6 +6,8 @@
 #include "types.hpp"
 #include "world/world.hpp"
 
+#include <vector>
+
 #include <gsl/gsl>
 
 namespace sk::graphics {
@@ -23,6 +25,17 @@ public:
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
 private:
+   struct terrain_patch {
+      math::bounding_box bbox;
+      uint32 x;
+      uint32 y;
+   };
+
+   void init_gpu_resources(const world::terrain& terrain, gpu::command_list& command_list,
+                           gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+
+   void init_patches_info(const world::terrain& terrain);
+
    gsl::not_null<gpu::device*> _gpu_device;
 
    uint32 _terrain_length;
@@ -31,6 +44,8 @@ private:
    float2 _terrain_half_world_size;
    float _terrain_grid_size;
    float _terrain_height_scale;
+
+   std::vector<terrain_patch> _patches;
 
    gpu::buffer _index_buffer;
    gpu::texture _height_map;

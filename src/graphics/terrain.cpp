@@ -61,6 +61,61 @@ void terrain::init(const world::terrain& terrain, gpu::command_list& command_lis
    _terrain_grid_size = terrain.grid_scale;
    _terrain_height_scale = std::numeric_limits<int16>::max() * terrain.height_scale;
 
+   init_gpu_resources(terrain, command_list, dynamic_buffer_allocator);
+   init_patches_info(terrain);
+}
+
+void terrain::draw(const frustrum& view_frustrum,
+                   gpu::descriptor_range camera_constant_buffer_view,
+                   gpu::command_list& command_list,
+                   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
+{
+   auto patches_srv_allocation = dynamic_buffer_allocator.allocate(
+      _patch_count * _patch_count * sizeof(std::array<uint32, 2>));
+
+   uint32 visible_patch_count = 0;
+
+   for (const auto& patch : _patches) {
+      if (not intersects(view_frustrum, patch.bbox)) continue;
+
+      const std::array<uint32, 2> patch_index{patch.x * patch_grid_count,
+                                              patch.y * patch_grid_count};
+
+      std::memcpy(patches_srv_allocation.cpu_address +
+                     (sizeof(patch_index) * visible_patch_count),
+                  &patch_index, sizeof(patch_index));
+
+      ++visible_patch_count;
+   }
+
+   std::array<float, 4> root_constants{_terrain_half_world_size.x,
+                                       _terrain_half_world_size.y,
+                                       _terrain_grid_size, _terrain_height_scale};
+
+   command_list.set_pipeline_state(*_gpu_device->pipelines.terrain_basic);
+
+   command_list.set_graphics_root_signature(*_gpu_device->root_signatures.terrain);
+   command_list.set_graphics_root_descriptor_table(0, camera_constant_buffer_view);
+   command_list.set_graphics_root_32bit_constants(1, std::as_bytes(std::span{root_constants}),
+                                                  0);
+   command_list.set_graphics_root_descriptor_table(2, _resource_views.descriptors());
+   command_list.set_graphics_root_shader_resource_view(3, patches_srv_allocation.gpu_address);
+
+   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+   command_list.ia_set_index_buffer(
+      {.BufferLocation = _index_buffer.resource()->GetGPUVirtualAddress(),
+       .SizeInBytes = _index_buffer.size(),
+       .Format = DXGI_FORMAT_R16_UINT});
+
+   command_list.draw_indexed_instanced(static_cast<uint32>(
+                                          terrain_patch_indices.size() * 2 * 3),
+                                       visible_patch_count, 0, 0, 0);
+}
+
+void terrain::init_gpu_resources(const world::terrain& terrain,
+                                 gpu::command_list& command_list,
+                                 gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
+{
    _height_map =
       _gpu_device->create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
                                    .format = DXGI_FORMAT_R16_SNORM,
@@ -137,53 +192,45 @@ void terrain::init(const world::terrain& terrain, gpu::command_list& command_lis
    _resource_views = _gpu_device->create_resource_view_set(resource_view_descriptions);
 }
 
-void terrain::draw(const frustrum& view_frustrum,
-                   gpu::descriptor_range camera_constant_buffer_view,
-                   gpu::command_list& command_list,
-                   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
+void terrain::init_patches_info(const world::terrain& terrain)
 {
-   (void)view_frustrum; // TODO: Frustrum culling.
-
-   // TODO: Clean this nonsense up.
-   auto patches_srv_allocation = dynamic_buffer_allocator.allocate(
-      _patch_count * _patch_count * sizeof(std::array<uint32, 2>));
-
-   std::array<uint32, 2>* patches =
-      reinterpret_cast<std::array<uint32, 2>*>(patches_srv_allocation.cpu_address);
+   _patches.clear();
+   _patches.reserve(_patch_count);
 
    for (uint32 y = 0; y < _patch_count; ++y) {
       for (uint32 x = 0; x < _patch_count; ++x) {
-         const std::array<uint32, 2> patch_index{x * patch_grid_count,
-                                                 y * patch_grid_count};
 
-         std::memcpy(patches, &patch_index, sizeof(patch_index));
+         const float min_x = (x * patch_grid_count * _terrain_grid_size) -
+                             _terrain_half_world_size.x;
+         const float max_x = min_x + (patch_grid_count * _terrain_grid_size);
 
-         ++patches;
+         const float min_z = (y * patch_grid_count * _terrain_grid_size) -
+                             _terrain_half_world_size.y + _terrain_grid_size;
+         const float max_z = min_z + (patch_grid_count * _terrain_grid_size);
+
+         float min_y = std::numeric_limits<float>::max();
+         float max_y = std::numeric_limits<float>::lowest();
+
+         for (uint32 local_y = 0; local_y < patch_point_count; ++local_y) {
+            for (uint32 local_x = 0; local_x < patch_point_count; ++local_x) {
+               const float height =
+                  terrain.height_map[{std::clamp(x * patch_grid_count + local_x,
+                                                 0u, terrain.length - 1u),
+                                      std::clamp(y * patch_grid_count + local_y,
+                                                 0u, terrain.length - 1u)}] *
+                  terrain.height_scale;
+
+               min_y = std::min(min_y, height);
+               max_y = std::max(max_y, height);
+            }
+         }
+
+         _patches.push_back(
+            {.bbox = {.min = {min_x, min_y, min_z}, .max = {max_x, max_y, max_z}},
+             .x = x,
+             .y = y});
       }
    }
-
-   std::array<float, 4> root_constants{_terrain_half_world_size.x,
-                                       _terrain_half_world_size.y,
-                                       _terrain_grid_size, _terrain_height_scale};
-
-   command_list.set_pipeline_state(*_gpu_device->pipelines.terrain_basic);
-
-   command_list.set_graphics_root_signature(*_gpu_device->root_signatures.terrain);
-   command_list.set_graphics_root_descriptor_table(0, camera_constant_buffer_view);
-   command_list.set_graphics_root_32bit_constants(1, std::as_bytes(std::span{root_constants}),
-                                                  0);
-   command_list.set_graphics_root_descriptor_table(2, _resource_views.descriptors());
-   command_list.set_graphics_root_shader_resource_view(3, patches_srv_allocation.gpu_address);
-
-   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-   command_list.ia_set_index_buffer(
-      {.BufferLocation = _index_buffer.resource()->GetGPUVirtualAddress(),
-       .SizeInBytes = _index_buffer.size(),
-       .Format = DXGI_FORMAT_R16_UINT});
-
-   command_list.draw_indexed_instanced(static_cast<uint32>(
-                                          terrain_patch_indices.size() * 2 * 3),
-                                       _patch_count * _patch_count, 0, 0, 0);
 }
 
 }
