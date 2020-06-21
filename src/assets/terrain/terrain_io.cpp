@@ -10,29 +10,40 @@ namespace sk::assets::terrain {
 
 namespace {
 
-constexpr int terr_max_string_length = 32;
+constexpr uint32 terrain_max_string_length = 32;
 
-using terr_string = std::array<char, terr_max_string_length>;
+using terr_string = std::array<char, terrain_max_string_length>;
 
-struct terr_header {
+struct terrain_string {
+   std::array<char, terrain_max_string_length> string;
+
+   operator std::string() const noexcept
+   {
+      return {string.cbegin(), std::find(string.cbegin(), string.cend(), '\0')};
+   }
+};
+
+static_assert(sizeof(terrain_string) == 32);
+
+struct terrain_header {
    std::array<char, 4> mn;
    version version;
    int16 active_left_offset;
    int16 active_top_offset;
    int16 active_right_offset;
    int16 active_bottom_offset;
-   int32 unknown;
-   std::array<float, 16> tex_scales;
-   std::array<texture_axis, 16> tex_axes;
-   std::array<float, 16> tex_rotations;
+   uint32 exheader_size;
+   std::array<float, 16> texture_scales;
+   std::array<texture_axis, 16> texture_axes;
+   std::array<float, 16> texture_rotations;
    float height_scale;
    float grid_scale;
-   int32 prelit;
+   int32 extra_light_map;
    int32 terrain_length;
    int32 foliage_patch_size;
 };
 
-static_assert(sizeof(terr_header) == 184);
+static_assert(sizeof(terrain_header) == 184);
 
 enum class active_bitflags : uint8 {
    terrain = 0b1,
@@ -45,7 +56,7 @@ constexpr bool marked_as_enum_bitflag(active_bitflags)
    return true;
 }
 
-struct terr_water_settings {
+struct terrain_water_settings {
    float height;
    std::array<float, 3> unused{};
    float u_velocity;
@@ -53,12 +64,12 @@ struct terr_water_settings {
    float u_repeat;
    float v_repeat;
    uint32 colour;
-   terr_string texture;
+   terrain_string texture;
 };
 
-static_assert(sizeof(terr_water_settings) == 68);
+static_assert(sizeof(terrain_water_settings) == 68);
 
-struct terr_decal_tile {
+struct terrain_decal_tile {
    int32 x;
    int32 y;
    int32 texture_index;
@@ -66,29 +77,7 @@ struct terr_decal_tile {
    std::array<float2, 4> coords;
 };
 
-static_assert(sizeof(terr_decal_tile) == 44);
-
-enum class terr_patch_flags : uint16 {
-   visible = 0x1,
-};
-
-constexpr bool marked_as_enum_bitflag(terr_patch_flags)
-{
-   return true;
-}
-
-struct terr_patch_info {
-   terr_patch_flags flags;
-   uint8 water_layer;
-   uint8 unknown;
-};
-
-static_assert(sizeof(terr_patch_info) == 4);
-
-auto make_string(terr_string str) -> std::string
-{
-   return {str.cbegin(), std::find(str.cbegin(), str.cend(), '\0')};
-}
+static_assert(sizeof(terrain_decal_tile) == 44);
 
 }
 
@@ -96,16 +85,15 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
 {
    utility::binary_reader reader{bytes};
 
-   auto header = reader.read<terr_header>();
+   const auto header = reader.read<terrain_header>();
 
    if (header.mn != std::array{'T', 'E', 'R', 'R'}) {
       throw std::runtime_error{
          ".ter file does not begin with 'TERR' and is likely corrupted!"};
    }
 
-   if (header.version != version::swbf2) {
-      throw std::runtime_error{".ter file version is not '22'! Support for "
-                               "SWBF1 .ter files has not been implemented."};
+   if (header.exheader_size != 164) {
+      throw std::runtime_error{"Size of terrain exheader is unexpected."};
    }
 
    if (header.foliage_patch_size != 2) {
@@ -114,15 +102,11 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    }
 
    terrain terrain{.version = header.version,
-                   .length = header.terrain_length,
-                   .active_left_offset = header.active_left_offset,
-                   .active_right_offset = header.active_right_offset,
-                   .active_top_offset = header.active_top_offset,
-                   .active_bottom_offset = header.active_bottom_offset,
+                   .length = header.active_right_offset - header.active_left_offset,
                    .height_scale = header.height_scale,
                    .grid_scale = header.grid_scale,
-                   .texture_scales = header.tex_scales,
-                   .texture_axes = header.tex_axes};
+                   .texture_scales = header.texture_scales,
+                   .texture_axes = header.texture_axes};
 
    // swbf2 active flags
    if (header.version == version::swbf2) {
@@ -138,19 +122,17 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
 
    // texture names
    for (int i = 0; i < terrain.texture_count; ++i) {
-      auto name = reader.read<terr_string>();
+      terrain.texture_names[i] = reader.read<terrain_string>();
 
-      terrain.texture_names[i] = make_string(name);
-
-      auto detail_name = reader.read<terr_string>();
+      auto detail_name = reader.read<terrain_string>();
 
       if (i == 0) {
-         terrain.detail_texture_name = make_string(detail_name);
+         terrain.detail_texture_name = detail_name;
       }
    }
 
    // water settings
-   auto water_settings = reader.read<std::array<terr_water_settings, 16>>();
+   const auto water_settings = reader.read<std::array<terrain_water_settings, 16>>();
 
    // only water_settings[1] is used by the game engine
 
@@ -160,99 +142,59 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    terrain.water_settings.u_velocity = water_settings[1].u_velocity;
    terrain.water_settings.v_velocity = water_settings[1].v_velocity;
    terrain.water_settings.color = utility::unpack_srgb_bgra(water_settings[1].colour);
-   terrain.water_settings.texture = make_string(water_settings[1].texture);
+   terrain.water_settings.texture = water_settings[1].texture;
 
    // decals
-   reader.read<std::array<terr_string, 16>>(); // (unused) decal textures
-   auto decal_tile_count = reader.read<int32>();
+   reader.read<std::array<terrain_string, 16>>(); // (unused) decal textures
+   const auto decal_tile_count = reader.read<int32>();
 
-   if (decal_tile_count > 0) {
-      for (int i = 0; i < decal_tile_count; ++i) {
-         reader.read<terr_decal_tile>();
-      }
-   }
-   else {
-      reader.read<std::array<uint32, 2>>(); // decal padding
+   for (int i = 0; i < decal_tile_count; ++i) {
+      reader.read<terrain_decal_tile>();
    }
 
-   // height map
-   for (int y = 0; y < terrain.length; ++y) {
-      for (int x = 0; x < terrain.length; ++x) {
-         terrain.heightmap[{x, y}] = reader.read<uint16>();
-      }
+   // unused foliage stuff
+
+   const auto foliage_cluster_count = reader.read<int32>();
+
+   for (int i = 0; i < foliage_cluster_count; ++i) {
+      reader.read<std::array<uint32, 6>>();
    }
 
-   // color map foreground
-   for (int y = 0; y < terrain.length; ++y) {
-      for (int x = 0; x < terrain.length; ++x) {
-         terrain.colormap_foreground[{x, y}] =
-            utility::unpack_srgb_bgra(reader.read<uint32>());
-      }
+   const auto foliage_model_count = reader.read<int32>();
+
+   for (int i = 0; i < foliage_model_count; ++i) {
+      reader.read<std::array<uint32, 7>>();
    }
 
-   // color map background
-   for (int y = 0; y < terrain.length; ++y) {
-      for (int x = 0; x < terrain.length; ++x) {
-         terrain.colormap_background[{x, y}] =
-            utility::unpack_srgb_bgra(reader.read<uint32>());
-      }
-   }
+   const int active_offset = (header.terrain_length - terrain.length) / 2;
+   const int active_end = active_offset + terrain.length;
 
-   // light map
-   if (header.prelit) {
-      terrain.lightmap.emplace(terrain.length, terrain.length);
+   const auto read_map = [&]<typename T>(container::dynamic_array_2d<T>& out) {
+      for (int y = header.terrain_length - 1; y >= 0; --y) {
+         reader.skip(active_offset * sizeof(T));
 
-      for (int y = 0; y < terrain.length; ++y) {
-         for (int x = 0; x < terrain.length; ++x) {
-            (*terrain.lightmap)[{x, y}] =
-               utility::unpack_srgb_bgra(reader.read<uint32>());
+         if ((y >= active_offset) and (y < active_end)) {
+            for (int x = 0; x < terrain.length; ++x) {
+               out[{x, y - active_offset}] = reader.read<T>();
+            }
          }
-      }
-   }
-
-   // texture weight map
-   for (int y = 0; y < terrain.length; ++y) {
-      for (int x = 0; x < terrain.length; ++x) {
-         terrain.texture_weightmap[{x, y}] =
-            reader.read<std::array<uint8, terrain::texture_count>>();
-      }
-   }
-
-   // skip unknown data #1
-   reader.skip((terrain.length / 2) * (terrain.length / 4));
-
-   // skip unknown data #2
-   reader.skip((terrain.length / 2) * (terrain.length / 4));
-
-   // terrain patches
-   {
-      for (int y = 0; y < (terrain.length / terrain.water_patch_size); ++y) {
-         for (int x = 0; x < (terrain.length / terrain.water_patch_size); ++x) {
-            terrain.water_patches[{x, y}] =
-               (reader.read<terr_patch_info>().water_layer == 1);
+         else {
+            reader.skip(terrain.length * sizeof(T));
          }
+
+         reader.skip(active_offset * sizeof(T));
       }
-   }
+   };
 
-   // foliage map
-   {
-      for (int y = 0; y < terrain.foliage_length; ++y) {
-         for (int x = 0; x < (terrain.foliage_length / 2); ++x) {
-            auto foliage = reader.read<uint8>();
+   read_map(terrain.height_map);
+   read_map(terrain.color_map);
+   read_map(terrain.light_map);
+   if (header.extra_light_map) read_map(terrain.light_map_extra);
+   read_map(terrain.texture_weight_map);
 
-            terrain.foliage_patches[{x * 2, y}] = {.layer0 = (foliage & 0b1) != 0,
-                                                   .layer1 = (foliage & 0b10) != 0,
-                                                   .layer2 = (foliage & 0b100) != 0,
-                                                   .layer3 = (foliage & 0b1000) != 0};
+   // TODO: Water.
 
-            terrain.foliage_patches[{x * 2 + 1, y}] =
-               {.layer0 = (foliage & 0b10000) != 0,
-                .layer1 = (foliage & 0b100000) != 0,
-                .layer2 = (foliage & 0b1000000) != 0,
-                .layer3 = (foliage & 0b10000000) != 0};
-         }
-      }
-   }
+   // TODO: Foliage.
 
    // TODO: Terrain cuts. (Although there isn't much point in reading them as we'll just have to recreate them based off objects in the world.)
 

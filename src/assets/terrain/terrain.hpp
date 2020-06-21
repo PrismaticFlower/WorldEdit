@@ -58,15 +58,9 @@ struct foliage_patch {
 struct terrain {
    constexpr static std::size_t foliage_length = 512;
    constexpr static std::size_t texture_count = 16;
-   constexpr static std::size_t water_patch_size = 4;
-   constexpr static std::size_t foliage_patch_size = 2;
 
    version version = version::swbf2;
    int32 length = 0;
-   int16 active_left_offset = 0;
-   int16 active_right_offset = 0;
-   int16 active_top_offset = 0;
-   int16 active_bottom_offset = 0;
 
    float height_scale = 1.0f;
    float grid_scale = 1.0f;
@@ -80,17 +74,15 @@ struct terrain {
    std::array<texture_axis, texture_count> texture_axes;
    std::string detail_texture_name;
 
-   container::dynamic_array_2d<int16> heightmap{length, length};
-   container::dynamic_array_2d<float4> colormap_foreground{length, length};
-   container::dynamic_array_2d<float4> colormap_background{length, length};
-   std::optional<container::dynamic_array_2d<float4>> lightmap = std::nullopt;
-   container::dynamic_array_2d<std::array<uint8, texture_count>> texture_weightmap{length, length};
+   container::dynamic_array_2d<int16> height_map{length, length};
+   container::dynamic_array_2d<uint32> color_map{length, length};
+   container::dynamic_array_2d<uint32> light_map{length, length};
+   container::dynamic_array_2d<uint32> light_map_extra{length, length};
+   container::dynamic_array_2d<std::array<uint8, texture_count>> texture_weight_map{length, length};
 
-   container::dynamic_array_2d<bool> water_patches{length / water_patch_size,
-                                                   length / water_patch_size};
+   // TODO: Water.
 
-   container::dynamic_array_2d<foliage_patch> foliage_patches{foliage_length,
-                                                              foliage_length};
+   // TODO: Foliage.
 
    // TODO: Terraincuts.
 };

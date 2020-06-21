@@ -15,9 +15,6 @@ namespace {
 constexpr uint32 patch_grid_count = 16;
 constexpr uint32 patch_point_count = 17;
 
-constexpr auto y = 45 / patch_grid_count;
-constexpr auto x = 45 % patch_grid_count;
-
 constexpr auto generate_patch_indices()
 {
    using tri = std::array<uint16, 3>;
@@ -57,7 +54,7 @@ terrain::terrain(gpu::device& device) : _gpu_device{&device}
 void terrain::init(const world::terrain& terrain, gpu::command_list& command_list,
                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   _terrain_length = terrain.active_right_offset - terrain.active_left_offset;
+   _terrain_length = terrain.length;
    _patch_count = _terrain_length / patch_grid_count;
 
    _terrain_half_world_size = float2{(_terrain_length / 2.0f) * terrain.grid_scale};
@@ -89,14 +86,9 @@ void terrain::init(const world::terrain& terrain, gpu::command_list& command_lis
       return static_cast<std::byte*>(map_void_ptr);
    }();
 
-   uint32 input_length_offset = (terrain.length - _terrain_length) / 2;
-   uint32 input_row_pitch = terrain.length * sizeof(int16);
-   const int16* input_data =
-      &terrain.heightmap[{input_length_offset, input_length_offset}];
-
    for (uint32 y = 0; y < _terrain_length; ++y) {
       std::memcpy(upload_buffer_ptr + (y * row_pitch),
-                  input_data + (y * input_row_pitch), sizeof(int16) * _terrain_length);
+                  &terrain.height_map[{0, y}], sizeof(int16) * _terrain_length);
    }
 
    const D3D12_RANGE write_range{0, texture_data_size};
