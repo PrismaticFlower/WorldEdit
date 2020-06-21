@@ -39,5 +39,5 @@ float4 main(input_vertex input) : SV_Target0
 
    float3 light = saturate(dot(normalWS, light_normalWS));
 
-   return float4(light * 0.6 + (1.0 - light) * 0.05.xxx, 1.0f);
+   return float4((light * 0.4 + (1.0 - light) * 0.033).xxx, 1.0f);
 }
