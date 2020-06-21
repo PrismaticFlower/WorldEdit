@@ -38,7 +38,8 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
    const uint x = (vertex_index % patch_point_count) + patch.x;
    const uint y = (vertex_index / patch_point_count) + patch.y;
 
-   const float2 patch_position = float2(x, y) * terrain_constants.grid_size;
+   const float2 patch_position = float2(x, y) * terrain_constants.grid_size +
+                                 float2(0, terrain_constants.grid_size);
    const float height = height_map[uint2(x, y)] * terrain_constants.height_scale;
    const float3 positionWS =
       float3(patch_position.x - terrain_constants.half_world_size.x, height,
