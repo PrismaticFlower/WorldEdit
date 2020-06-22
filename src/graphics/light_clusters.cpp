@@ -36,10 +36,14 @@ constexpr auto max_regional_lights = 512;
 struct light_constants {
    uint32 light_count = 0;
    std::array<uint32, 3> padding0;
+   float3 sky_ambient_color;
+   uint32 padding1;
+   float3 ground_ambient_color;
+   uint32 padding2;
 
    std::array<light_description, max_lights> lights;
 
-   std::array<float4, 3> padding1;
+   std::array<float4, 1> padding3;
 };
 
 static_assert(sizeof(light_constants) == D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16);
@@ -89,7 +93,11 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                                    gpu::command_list& command_list,
                                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   light_constants light_constants{.light_count = 0};
+   light_constants light_constants{.light_count = 0,
+                                   .sky_ambient_color =
+                                      world.lighting_settings.ambient_sky_color,
+                                   .ground_ambient_color =
+                                      world.lighting_settings.ambient_ground_color};
 
    boost::container::static_vector<light_region_description, max_regional_lights> regional_lights_descriptions;
 

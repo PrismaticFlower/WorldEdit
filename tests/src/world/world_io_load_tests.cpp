@@ -2,6 +2,7 @@
 #include "pch.h"
 
 #include "approx_test_helpers.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "world/world_io_load.hpp"
 
 #include <iostream>
@@ -63,9 +64,9 @@ TEST_CASE("world loading", "[World][Load]")
       CHECK(world.lighting_settings.global_lights[0] == "sun"sv);
       CHECK(world.lighting_settings.global_lights[1] == ""sv);
       CHECK(approx_equals(world.lighting_settings.ambient_sky_color,
-                          {0.5490196, 0.3098039, 0.2470588}));
+                          utility::decompress_srgb({0.5490196, 0.3098039, 0.2470588})));
       CHECK(approx_equals(world.lighting_settings.ambient_ground_color,
-                          {0.3137254, 0.1568627, 0.1176470}));
+                          utility::decompress_srgb({0.3137254, 0.1568627, 0.1176470})));
 
       REQUIRE(world.lights.size() == 4);
 

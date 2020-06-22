@@ -30,10 +30,14 @@ struct light_description {
 struct light_constant_buffer {
    uint light_count;
    uint3 padding0;
+   float3 sky_ambient_color;
+   uint padding1;
+   float3 ground_ambient_color;
+   uint padding2;
 
    light_description lights[MAX_LIGHTS];
 
-   float4 padding1[3];
+   float4 padding3[1];
 };
 
 struct light_region_description {
@@ -54,6 +58,18 @@ const static float region_fade_distance_sq = 0.1 * 0.1;
 
 ConstantBuffer<light_constant_buffer> light_constants : register(b0);
 StructuredBuffer<light_region_description> light_region_descriptions : register(t0);
+
+float3 calc_ambient_light(float3 normalWS)
+{
+   const float factor = normalWS.y * -0.5 + 0.5;
+
+   float3 color;
+
+   color = light_constants.sky_ambient_color * -factor + light_constants.sky_ambient_color;
+   color = light_constants.ground_ambient_color * factor + color;
+
+   return color;
+}
 
 float calc_light_strength(light_description light, calculate_light_inputs input)
 {
@@ -152,7 +168,7 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
 
 float3 calculate_lighting(calculate_light_inputs input)
 {
-   float3 total_light = 0.0;
+   float3 total_light = calc_ambient_light(input.normalWS);
 
    for (uint i = 0; i < light_constants.light_count; ++i) {
       light_description light = light_constants.lights[i];

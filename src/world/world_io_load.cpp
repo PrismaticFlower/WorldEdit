@@ -5,6 +5,7 @@
 #include "exceptions.hpp"
 #include "utility/make_range.hpp"
 #include "utility/read_file.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
@@ -259,14 +260,14 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
                key_node.at("Light1"sv).values.get<std::string>(0);
             world_out.lighting_settings.global_lights[1] =
                key_node.at("Light2"sv).values.get<std::string>(0);
-            world_out.lighting_settings.ambient_sky_color =
-               {key_node.at("Top"sv).values.get<float>(0) / 255.0f,
-                key_node.at("Top"sv).values.get<float>(1) / 255.0f,
-                key_node.at("Top"sv).values.get<float>(2) / 255.0f};
-            world_out.lighting_settings.ambient_ground_color =
-               {key_node.at("Bottom"sv).values.get<float>(0) / 255.0f,
-                key_node.at("Bottom"sv).values.get<float>(1) / 255.0f,
-                key_node.at("Bottom"sv).values.get<float>(2) / 255.0f};
+            world_out.lighting_settings.ambient_sky_color = utility::decompress_srgb(
+               float3{key_node.at("Top"sv).values.get<float>(0) / 255.0f,
+                      key_node.at("Top"sv).values.get<float>(1) / 255.0f,
+                      key_node.at("Top"sv).values.get<float>(2) / 255.0f});
+            world_out.lighting_settings.ambient_ground_color = utility::decompress_srgb(
+               float3{key_node.at("Bottom"sv).values.get<float>(0) / 255.0f,
+                      key_node.at("Bottom"sv).values.get<float>(1) / 255.0f,
+                      key_node.at("Bottom"sv).values.get<float>(2) / 255.0f});
 
             if (auto env_map = key_node.find("EnvMap"sv); env_map != key_node.cend()) {
                world_out.lighting_settings.env_map_texture =
