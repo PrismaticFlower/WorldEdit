@@ -21,7 +21,7 @@ public:
 
    void draw(const frustrum& view_frustrum,
              gpu::descriptor_range camera_constant_buffer_view,
-             gpu::command_list& command_list,
+             gpu::descriptor_range light_descriptors, gpu::command_list& command_list,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
 private:

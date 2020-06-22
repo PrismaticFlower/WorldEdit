@@ -17,6 +17,7 @@ namespace {
 #include "terrain_patchVS_dxbc.h"
 
 #include "terrain_basicPS_dxbc.h"
+#include "terrain_lightingPS_dxbc.h"
 
 #include "meta_object_meshPS_dxbc.h"
 #include "meta_object_meshVS_dxbc.h"
@@ -49,6 +50,8 @@ const D3D12_SHADER_BYTECODE normal_mesh_ps = bytecode_init(normal_meshPS_dxbc);
 const D3D12_SHADER_BYTECODE terrain_patch_vs = bytecode_init(terrain_patchVS_dxbc);
 
 const D3D12_SHADER_BYTECODE terrain_basic_ps = bytecode_init(terrain_basicPS_dxbc);
+const D3D12_SHADER_BYTECODE terrain_lighting_ps =
+   bytecode_init(terrain_lightingPS_dxbc);
 
 const D3D12_SHADER_BYTECODE meta_object_mesh_vs =
    bytecode_init(meta_object_meshVS_dxbc);

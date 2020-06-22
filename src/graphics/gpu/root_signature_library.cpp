@@ -183,6 +183,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
 
    const std::array terrain_root_params{camera_cb_descriptor_table_root_param,
+                                        object_lights_descriptor_table_root_param,
                                         terrain_root_constants_param,
                                         terrain_descriptor_table_root_param,
                                         terrain_patch_srv_param};

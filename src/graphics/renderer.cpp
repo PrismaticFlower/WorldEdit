@@ -149,7 +149,8 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    // Render World
    draw_world(view_frustrum, world, world_classes, command_list);
 
-   _terrain.draw(view_frustrum, _camera_constant_buffer_view, command_list,
+   _terrain.draw(view_frustrum, _camera_constant_buffer_view,
+                 _light_clusters.light_descriptors(), command_list,
                  _dynamic_buffer_allocator);
 
    // Render World Meta Objects
@@ -219,7 +220,7 @@ void renderer::draw_world(const frustrum& view_frustrum, const world::world& wor
    build_object_render_list(view_frustrum, world, world_classes);
 
    command_list.set_graphics_root_signature(*_device.root_signatures.object_mesh);
-   command_list.set_pipeline_state(*_device.pipelines.normal_mesh.get());
+   command_list.set_pipeline_state(*_device.pipelines.basic_mesh_lighting.get());
 
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
    command_list.set_graphics_root_descriptor_table(3, _light_clusters.light_descriptors());

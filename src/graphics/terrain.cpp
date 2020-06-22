@@ -67,6 +67,7 @@ void terrain::init(const world::terrain& terrain, gpu::command_list& command_lis
 
 void terrain::draw(const frustrum& view_frustrum,
                    gpu::descriptor_range camera_constant_buffer_view,
+                   gpu::descriptor_range light_descriptors,
                    gpu::command_list& command_list,
                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
@@ -92,14 +93,15 @@ void terrain::draw(const frustrum& view_frustrum,
                                        _terrain_half_world_size.y,
                                        _terrain_grid_size, _terrain_height_scale};
 
-   command_list.set_pipeline_state(*_gpu_device->pipelines.terrain_basic);
+   command_list.set_pipeline_state(*_gpu_device->pipelines.terrain_lighting);
 
    command_list.set_graphics_root_signature(*_gpu_device->root_signatures.terrain);
    command_list.set_graphics_root_descriptor_table(0, camera_constant_buffer_view);
-   command_list.set_graphics_root_32bit_constants(1, std::as_bytes(std::span{root_constants}),
+   command_list.set_graphics_root_descriptor_table(1, light_descriptors);
+   command_list.set_graphics_root_32bit_constants(2, std::as_bytes(std::span{root_constants}),
                                                   0);
-   command_list.set_graphics_root_descriptor_table(2, _resource_views.descriptors());
-   command_list.set_graphics_root_shader_resource_view(3, patches_srv_allocation.gpu_address);
+   command_list.set_graphics_root_descriptor_table(3, _resource_views.descriptors());
+   command_list.set_graphics_root_shader_resource_view(4, patches_srv_allocation.gpu_address);
 
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
    command_list.ia_set_index_buffer(
