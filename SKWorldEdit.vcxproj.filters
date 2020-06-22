@@ -609,5 +609,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\graphics\gpu\shaders\lights_common.hlsli" />
+    <None Include="src\graphics\gpu\shaders\terrain_common.hlsli" />
   </ItemGroup>
 </Project>

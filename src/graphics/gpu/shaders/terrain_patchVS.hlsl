@@ -1,25 +1,11 @@
+
+#include "terrain_common.hlsli"
+
 struct global_matrices {
    float4x4 view_projection_matrix;
 };
 
-struct terrain_constants_ {
-   float2 half_world_size;
-   float grid_size;
-   float height_scale;
-};
-
-struct patch_constants_ {
-   uint x;
-   uint y;
-};
-
 ConstantBuffer<global_matrices> cb_global_matrices : register(b0);
-ConstantBuffer<terrain_constants_> terrain_constants : register(b1);
-
-Texture2D<float> height_map : register(t0);
-StructuredBuffer<patch_constants_> patch_constants : register(t1);
-
-const static uint patch_point_count = 17;
 
 struct output_vertex {
    float3 positionWS : POSITIONWS;

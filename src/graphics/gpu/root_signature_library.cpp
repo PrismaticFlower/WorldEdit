@@ -154,14 +154,14 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    const D3D12_ROOT_PARAMETER1 terrain_root_constants_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
-      .Constants = {.ShaderRegister = 1, .RegisterSpace = 0, .Num32BitValues = 4},
+      .Constants = {.ShaderRegister = 0, .RegisterSpace = 2, .Num32BitValues = 4},
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL};
 
    const D3D12_DESCRIPTOR_RANGE1 terrain_descriptor_table_descriptor_range{
       .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
       .NumDescriptors = 1,
       .BaseShaderRegister = 0,
-      .RegisterSpace = 0,
+      .RegisterSpace = 2,
       .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
       .OffsetInDescriptorsFromTableStart = 0};
 
@@ -178,7 +178,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
    const D3D12_ROOT_PARAMETER1 terrain_patch_srv_param{
       .ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV,
       .Descriptor = {.ShaderRegister = 1,
-                     .RegisterSpace = 0,
+                     .RegisterSpace = 2,
                      .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
 
