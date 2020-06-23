@@ -88,6 +88,8 @@ void terrain::init(const world::terrain& terrain, gpu::command_list& command_lis
    _terrain_grid_size = terrain.grid_scale;
    _terrain_height_scale = std::numeric_limits<int16>::max() * terrain.height_scale;
 
+   _active = terrain.active_flags.terrain;
+
    init_gpu_resources(terrain, command_list, dynamic_buffer_allocator);
    init_patches_info(terrain);
 }
@@ -98,6 +100,8 @@ void terrain::draw(const frustrum& view_frustrum,
                    gpu::command_list& command_list,
                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
+   if (not _active) return;
+
    auto patches_srv_allocation = dynamic_buffer_allocator.allocate(
       _patch_count * _patch_count * sizeof(patch_info_shader));
 

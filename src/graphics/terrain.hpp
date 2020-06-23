@@ -60,6 +60,8 @@ private:
    gsl::not_null<gpu::device*> _gpu_device;
    texture_manager& _texture_manager;
 
+   bool _active = false;
+
    uint32 _terrain_length;
    uint32 _patch_count;
 
