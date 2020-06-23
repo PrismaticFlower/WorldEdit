@@ -137,9 +137,9 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    const D3D12_STATIC_SAMPLER_DESC terrain_bilinear_static_sampler{
       .Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT,
-      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
       .MipLODBias = 0.0f,
       .MaxAnisotropy = 0,
       .ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,

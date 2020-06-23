@@ -15,6 +15,14 @@ struct output_vertex {
    float4 positionPS : SV_Position;
 };
 
+uint get_height_map_length()
+{
+   uint2 height_map_size;
+   height_map.GetDimensions(height_map_size.x, height_map_size.y);
+
+   return height_map_size.x;
+}
+
 // clang-format off
 
 output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_InstanceID)
@@ -27,7 +35,9 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
 
    const float2 patch_position = float2(x, y) * terrain_constants.grid_size +
                                  float2(0, terrain_constants.grid_size);
-   const float height = height_map[uint2(x, y)] * terrain_constants.height_scale;
+   const float height =
+      height_map[clamp(uint2(x, y), 0, get_height_map_length() - 1)] *
+      terrain_constants.height_scale;
    const float3 positionWS =
       float3(patch_position.x - terrain_constants.half_world_size.x, height,
              patch_position.y - terrain_constants.half_world_size.y);
