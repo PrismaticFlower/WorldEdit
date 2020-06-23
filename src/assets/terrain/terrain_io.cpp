@@ -186,11 +186,23 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
       }
    };
 
+   container::dynamic_array_2d<std::array<uint8, terrain::texture_count>>
+      texture_weight_map{terrain.length, terrain.length};
+
    read_map(terrain.height_map);
    read_map(terrain.color_map);
    read_map(terrain.light_map);
    if (header.extra_light_map) read_map(terrain.light_map_extra);
-   read_map(terrain.texture_weight_map);
+   read_map(texture_weight_map);
+
+   // deinterleave texture weights
+   for (int y = 0; y < terrain.length; ++y) {
+      for (int x = 0; x < terrain.length; ++x) {
+         for (int i = 0; i < terrain.texture_count; ++i) {
+            terrain.texture_weight_maps[i][{x, y}] = texture_weight_map[{x, y}][i];
+         }
+      }
+   }
 
    // TODO: Water.
 

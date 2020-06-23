@@ -80,7 +80,7 @@ private:
    model_manager _model_manager{_device, _texture_manager};
    geometric_shapes _geometric_shapes{_device};
    light_clusters _light_clusters{_device};
-   terrain _terrain{_device};
+   terrain _terrain{_device, _texture_manager};
 
    struct render_list_item {
       uint32 index_count;

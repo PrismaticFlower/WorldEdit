@@ -3,6 +3,7 @@
 #include "frustrum.hpp"
 #include "gpu/command_list.hpp"
 #include "gpu/device.hpp"
+#include "texture_manager.hpp"
 #include "types.hpp"
 #include "world/world.hpp"
 
@@ -14,7 +15,9 @@ namespace sk::graphics {
 
 class terrain {
 public:
-   explicit terrain(gpu::device& device);
+   constexpr static std::size_t texture_count = assets::terrain::terrain::texture_count;
+
+   explicit terrain(gpu::device& device, texture_manager& texture_manager);
 
    void init(const world::terrain& terrain, gpu::command_list& command_list,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
@@ -23,6 +26,8 @@ public:
              gpu::descriptor_range camera_constant_buffer_view,
              gpu::descriptor_range light_descriptors, gpu::command_list& command_list,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+
+   void process_updated_texture(updated_texture updated);
 
 private:
    struct terrain_patch {
@@ -34,9 +39,24 @@ private:
    void init_gpu_resources(const world::terrain& terrain, gpu::command_list& command_list,
                            gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
+   void init_gpu_height_map(const world::terrain& terrain,
+                            gpu::command_list& command_list);
+
+   void init_gpu_texture_weight_map(const world::terrain& terrain,
+                                    gpu::command_list& command_list);
+
+   void init_gpu_terrain_constants_buffer(const world::terrain& terrain,
+                                          gpu::command_list& command_list,
+                                          gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+
+   void init_textures(const world::terrain& terrain);
+
+   void init_textures_resource_views();
+
    void init_patches_info(const world::terrain& terrain);
 
    gsl::not_null<gpu::device*> _gpu_device;
+   texture_manager& _texture_manager;
 
    uint32 _terrain_length;
    uint32 _patch_count;
@@ -48,9 +68,15 @@ private:
    std::vector<terrain_patch> _patches;
 
    gpu::buffer _index_buffer;
+   gpu::buffer _terrain_constants_buffer;
    gpu::texture _height_map;
+   gpu::texture _texture_weight_maps;
 
    gpu::resource_view_set _resource_views;
+   gpu::resource_view_set _texture_resource_views;
+
+   std::array<std::string, texture_count> _diffuse_maps_names;
+   std::array<std::shared_ptr<gpu::texture>, texture_count> _diffuse_maps;
 };
 
 }

@@ -78,7 +78,23 @@ struct terrain {
    container::dynamic_array_2d<uint32> color_map{length, length};
    container::dynamic_array_2d<uint32> light_map{length, length};
    container::dynamic_array_2d<uint32> light_map_extra{length, length};
-   container::dynamic_array_2d<std::array<uint8, texture_count>> texture_weight_map{length, length};
+   std::array<container::dynamic_array_2d<uint8>, texture_count> texture_weight_maps =
+      {container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length},
+       container::dynamic_array_2d<uint8>{length, length}};
 
    // TODO: Water.
 

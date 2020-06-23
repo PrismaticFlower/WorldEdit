@@ -607,6 +607,7 @@
     <FxCompile Include="src\graphics\gpu\shaders\terrain_patchVS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\terrain_basicPS.hlsl" />
     <FxCompile Include="src\graphics\gpu\shaders\terrain_lightingPS.hlsl" />
+    <FxCompile Include="src\graphics\gpu\shaders\terrain_normalPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\graphics\gpu\shaders\lights_common.hlsli" />
