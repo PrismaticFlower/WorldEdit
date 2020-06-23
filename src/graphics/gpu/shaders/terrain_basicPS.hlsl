@@ -1,11 +1,6 @@
 
 #include "terrain_common.hlsli"
 
-struct input_vertex {
-   float3 positionWS : POSITIONWS;
-   float2 terrain_coords : TERRAINCOORDS;
-};
-
 float4 main(input_vertex input) : SV_Target0
 {
    const float3 light_normalWS =

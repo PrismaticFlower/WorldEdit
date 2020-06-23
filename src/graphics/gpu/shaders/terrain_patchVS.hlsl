@@ -10,6 +10,7 @@ ConstantBuffer<global_matrices> cb_global_matrices : register(b0);
 struct output_vertex {
    float3 positionWS : POSITIONWS;
    float2 terrain_coords : TERRAINCOORDS;
+   nointerpolation uint active_textures : ACTIVETEXTURES;
 
    float4 positionPS : SV_Position;
 };
@@ -19,7 +20,7 @@ struct output_vertex {
 output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_InstanceID)
 {
    // clang-format on
-   patch_constants_ patch = patch_constants[patch_index];
+   patch_info patch = patch_constants.Load(patch_index);
 
    const uint x = (vertex_index % patch_point_count) + patch.x;
    const uint y = (vertex_index / patch_point_count) + patch.y;
@@ -36,6 +37,7 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
    output.positionWS = positionWS;
    output.terrain_coords =
       (positionWS.xz / terrain_constants.half_world_size.xy) * 0.5 + 0.5;
+   output.active_textures = patch.active_textures;
    output.positionPS =
       mul(cb_global_matrices.view_projection_matrix, float4(positionWS, 1.0));
 

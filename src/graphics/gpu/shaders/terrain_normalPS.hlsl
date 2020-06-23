@@ -2,11 +2,6 @@
 #include "lights_common.hlsli"
 #include "terrain_common.hlsli"
 
-struct input_vertex {
-   float3 positionWS : POSITIONWS;
-   float2 terrain_coords : TERRAINCOORDS;
-};
-
 Texture2D<float3> diffuse_maps[TERRAIN_MAX_TEXTURES] : register(t0, space1);
 
 float4 main(input_vertex input) : SV_Target0
@@ -16,7 +11,11 @@ float4 main(input_vertex input) : SV_Target0
 
    float3 diffuse_color = 0.0;
 
+   const uint active_textures = input.active_textures;
+
    for (uint i = 0; i < terrain_max_textures; ++i) {
+      [branch] if (!input.active_textures & (1 << i)) continue;
+
       const float weight =
          texture_weight_maps.Sample(bilinear_sampler, float3(input.terrain_coords, i));
 
@@ -33,5 +32,5 @@ float4 main(input_vertex input) : SV_Target0
 
    const float3 lighting = calculate_lighting(lighting_inputs);
 
-   return float4(lighting, 1.0f);
+   return float4(lighting, 1.0);
 }

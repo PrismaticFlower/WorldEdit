@@ -2,11 +2,6 @@
 #include "lights_common.hlsli"
 #include "terrain_common.hlsli"
 
-struct input_vertex {
-   float3 positionWS : POSITIONWS;
-   float2 terrain_coords : TERRAINCOORDS;
-};
-
 const static float3 surface_color = 0.75;
 
 float4 main(input_vertex input) : SV_Target0

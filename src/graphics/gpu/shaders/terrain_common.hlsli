@@ -10,15 +10,23 @@ struct terrain_constants_ {
    float3 texture_transform_y[TERRAIN_MAX_TEXTURES];
 };
 
-struct patch_constants_ {
+struct patch_info {
    uint x;
    uint y;
+   uint active_textures;
+   uint padding;
+};
+
+struct input_vertex {
+   float3 positionWS : POSITIONWS;
+   float2 terrain_coords : TERRAINCOORDS;
+   nointerpolation uint active_textures : ACTIVETEXTURES;
 };
 
 ConstantBuffer<terrain_constants_> terrain_constants : register(b0, space2);
 Texture2D<float> height_map : register(t0, space2);
 Texture2DArray<float> texture_weight_maps : register(t1, space2);
-StructuredBuffer<patch_constants_> patch_constants : register(t2, space2);
+StructuredBuffer<patch_info> patch_constants : register(t2, space2);
 
 SamplerState bilinear_sampler : register(s0);
 SamplerState trilinear_sampler : register(s1);

@@ -5,6 +5,7 @@
 #include "math/align.hpp"
 
 #include <limits>
+#include <stdexcept>
 
 #include <boost/algorithm/string.hpp>
 #include <glm/glm.hpp>
@@ -27,6 +28,15 @@ struct alignas(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT) terrain_constants
 };
 
 static_assert(sizeof(terrain_constants) == 768);
+
+struct patch_info_shader {
+   uint32 x;
+   uint32 y;
+   uint32 active_textures;
+   uint32 padding;
+};
+
+static_assert(sizeof(patch_info_shader) == 16);
 
 constexpr uint32 patch_grid_count = 16;
 constexpr uint32 patch_point_count = 17;
@@ -89,19 +99,20 @@ void terrain::draw(const frustrum& view_frustrum,
                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    auto patches_srv_allocation = dynamic_buffer_allocator.allocate(
-      _patch_count * _patch_count * sizeof(std::array<uint32, 2>));
+      _patch_count * _patch_count * sizeof(patch_info_shader));
 
    uint32 visible_patch_count = 0;
 
    for (const auto& patch : _patches) {
       if (not intersects(view_frustrum, patch.bbox)) continue;
 
-      const std::array<uint32, 2> patch_index{patch.x * patch_grid_count,
-                                              patch.y * patch_grid_count};
+      patch_info_shader info{.x = patch.x * patch_grid_count,
+                             .y = patch.y * patch_grid_count,
+                             .active_textures = patch.active_textures.to_ulong()};
 
       std::memcpy(patches_srv_allocation.cpu_address +
-                     (sizeof(patch_index) * visible_patch_count),
-                  &patch_index, sizeof(patch_index));
+                     (sizeof(patch_info_shader) * visible_patch_count),
+                  &info, sizeof(patch_info_shader));
 
       ++visible_patch_count;
    }
@@ -458,38 +469,46 @@ void terrain::init_patches_info(const world::terrain& terrain)
    _patches.clear();
    _patches.reserve(_patch_count);
 
-   for (uint32 y = 0; y < _patch_count; ++y) {
-      for (uint32 x = 0; x < _patch_count; ++x) {
+   for (uint32 patch_y = 0; patch_y < _patch_count; ++patch_y) {
+      for (uint32 patch_x = 0; patch_x < _patch_count; ++patch_x) {
 
-         const float min_x = (x * patch_grid_count * _terrain_grid_size) -
+         const float min_x = (patch_x * patch_grid_count * _terrain_grid_size) -
                              _terrain_half_world_size.x;
          const float max_x = min_x + (patch_grid_count * _terrain_grid_size);
 
-         const float min_z = (y * patch_grid_count * _terrain_grid_size) -
+         const float min_z = (patch_y * patch_grid_count * _terrain_grid_size) -
                              _terrain_half_world_size.y + _terrain_grid_size;
          const float max_z = min_z + (patch_grid_count * _terrain_grid_size);
 
          float min_y = std::numeric_limits<float>::max();
          float max_y = std::numeric_limits<float>::lowest();
 
+         std::bitset<16> active_textures{};
+
          for (uint32 local_y = 0; local_y < patch_point_count; ++local_y) {
             for (uint32 local_x = 0; local_x < patch_point_count; ++local_x) {
-               const float height =
-                  terrain.height_map[{std::clamp(x * patch_grid_count + local_x,
-                                                 0u, terrain.length - 1u),
-                                      std::clamp(y * patch_grid_count + local_y,
-                                                 0u, terrain.length - 1u)}] *
-                  terrain.height_scale;
+               const auto x = std::clamp(patch_x * patch_grid_count + local_x,
+                                         0u, terrain.length - 1u);
+               const auto y = std::clamp(patch_y * patch_grid_count + local_y,
+                                         0u, terrain.length - 1u);
+
+               const float height = terrain.height_map[{x, y}] * terrain.height_scale;
 
                min_y = std::min(min_y, height);
                max_y = std::max(max_y, height);
+
+               for (uint32 texture = 0; texture < texture_count; ++texture) {
+                  active_textures.set(texture,
+                                      terrain.texture_weight_maps[texture][{x, y}] > 0);
+               }
             }
          }
 
          _patches.push_back(
             {.bbox = {.min = {min_x, min_y, min_z}, .max = {max_x, max_y, max_z}},
-             .x = x,
-             .y = y});
+             .x = patch_x,
+             .y = patch_y,
+             .active_textures = active_textures});
       }
    }
 }

@@ -7,6 +7,7 @@
 #include "types.hpp"
 #include "world/world.hpp"
 
+#include <bitset>
 #include <vector>
 
 #include <gsl/gsl>
@@ -34,6 +35,7 @@ private:
       math::bounding_box bbox;
       uint32 x;
       uint32 y;
+      std::bitset<16> active_textures;
    };
 
    void init_gpu_resources(const world::terrain& terrain, gpu::command_list& command_list,
