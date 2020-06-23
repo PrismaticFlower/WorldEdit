@@ -82,6 +82,7 @@
       <VariableName>%(Filename)_dxbc</VariableName>
       <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxbc.h</HeaderFileOutput>
       <ObjectFileOutput />
+      <AllResourcesBound>true</AllResourcesBound>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -113,6 +114,7 @@
       <VariableName>%(Filename)_dxbc</VariableName>
       <HeaderFileOutput>$(IntermediateOutputPath)compiled_shaders\%(Filename)_dxbc.h</HeaderFileOutput>
       <ObjectFileOutput />
+      <AllResourcesBound>true</AllResourcesBound>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
