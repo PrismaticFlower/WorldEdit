@@ -453,6 +453,12 @@
     <ClInclude Include="src\graphics\gpu\shader_list.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\shader_cache.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\binary_writer.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -597,6 +603,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\shader_list.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\gpu\shader_cache.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

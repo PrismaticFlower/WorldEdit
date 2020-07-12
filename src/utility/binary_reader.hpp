@@ -36,6 +36,19 @@ public:
       return value;
    }
 
+   auto read_bytes(const std::size_t count) -> std::span<const std::byte>
+   {
+      if (_bytes.size() < count) {
+         throw std::runtime_error{"binary_reader ran out of bytes!"};
+      }
+
+      auto result = _bytes.subspan(0, count);
+
+      _bytes = _bytes.subspan(count);
+
+      return result;
+   }
+
    void skip(const std::size_t count)
    {
       if (static_cast<std::size_t>(_bytes.size()) < count) {

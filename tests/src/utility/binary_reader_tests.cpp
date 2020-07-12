@@ -17,7 +17,7 @@ TEST_CASE("binary reader", "[Utility][BinaryReader]")
                               std::byte{0x01}, std::byte{0x00},
                               std::byte{0x00}, std::byte{0x00},
                               std::byte{0x00}, std::byte{0x00},
-                              std::byte{0x00}, std::byte{0x00}};
+                              std::byte{0x00}, std::byte{0x10}};
 
    binary_reader reader{bytes};
 
@@ -26,7 +26,7 @@ TEST_CASE("binary reader", "[Utility][BinaryReader]")
    REQUIRE(reader.read<int32>() == 1);
    REQUIRE_NOTHROW(reader.skip(2));
    REQUIRE(reader.read<int8>() == 0);
-   REQUIRE(reader.read<int8>() == 0);
+   REQUIRE(reader.read_bytes(1)[0] == std::byte{0x10});
 
    REQUIRE(not reader);
    REQUIRE_THROWS(reader.read<int32>() == 42);

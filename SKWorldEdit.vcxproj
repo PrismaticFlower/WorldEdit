@@ -205,6 +205,7 @@
     <ClInclude Include="src\graphics\gpu\device.hpp" />
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\gpu\resource_view_set.hpp" />
+    <ClInclude Include="src\graphics\gpu\shader_cache.hpp" />
     <ClInclude Include="src\graphics\gpu\shader_list.hpp" />
     <ClInclude Include="src\graphics\gpu\texture.hpp" />
     <ClInclude Include="src\graphics\light_clusters.hpp" />
@@ -237,6 +238,7 @@
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ucfb\reader.hpp" />
     <ClInclude Include="src\utility\binary_reader.hpp" />
+    <ClInclude Include="src\utility\binary_writer.hpp" />
     <ClInclude Include="src\utility\com_ptr.hpp" />
     <ClInclude Include="src\utility\enum_bitflags.hpp" />
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
@@ -289,6 +291,7 @@
     <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />
     <ClCompile Include="src\graphics\gpu\resource_view_set.cpp" />
     <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
+    <ClCompile Include="src\graphics\gpu\shader_cache.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_list.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
