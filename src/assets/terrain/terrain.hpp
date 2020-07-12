@@ -60,7 +60,7 @@ struct terrain {
    constexpr static std::size_t texture_count = 16;
 
    version version = version::swbf2;
-   int32 length = 0;
+   int32 length = 64;
 
    float height_scale = 1.0f;
    float grid_scale = 1.0f;
