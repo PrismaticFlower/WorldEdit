@@ -9,6 +9,8 @@
 #include "pipeline_library.hpp"
 #include "resource_view_set.hpp"
 #include "root_signature_library.hpp"
+#include "shader_library.hpp"
+#include "shader_list.hpp"
 #include "swap_chain.hpp"
 #include "texture.hpp"
 #include "utility/com_ptr.hpp"
@@ -262,8 +264,9 @@ public:
 
    swap_chain swap_chain;
 
+   shader_library shaders{shader_list};
    root_signature_library root_signatures{*device_d3d};
-   pipeline_library pipelines{*device_d3d, root_signatures};
+   pipeline_library pipelines{*device_d3d, shaders, root_signatures};
 
 private:
    void process_deferred_resource_destructions();

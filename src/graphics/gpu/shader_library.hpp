@@ -1,26 +1,63 @@
 #pragma once
 
+#include "utility/com_ptr.hpp"
+
+#include <filesystem>
+#include <initializer_list>
+#include <string>
+#include <vector>
+
 #include <d3d12.h>
 
-namespace sk::graphics::gpu::shader_library {
+#include <boost/container/static_vector.hpp>
 
-extern const D3D12_SHADER_BYTECODE basic_object_mesh_vs;
-extern const D3D12_SHADER_BYTECODE basic_object_mesh_ps;
+namespace sk::graphics::gpu {
 
-extern const D3D12_SHADER_BYTECODE basic_mesh_lighting_ps;
+constexpr static auto max_shader_defines = 64;
 
-extern const D3D12_SHADER_BYTECODE normal_mesh_ps;
+enum class shader_type {
+   vertex,
+   hull,
+   domain,
+   geometry,
+   pixel,
+   compute,
+   library
+};
 
-extern const D3D12_SHADER_BYTECODE terrain_patch_vs;
+struct shader_define {
+   struct value : std::string {
+      value() = default;
+      value(long long v) : std::string{std::to_string(v)} {}
 
-extern const D3D12_SHADER_BYTECODE terrain_basic_ps;
-extern const D3D12_SHADER_BYTECODE terrain_lighting_ps;
-extern const D3D12_SHADER_BYTECODE terrain_normal_ps;
+      using std::string::string;
+   };
 
-extern const D3D12_SHADER_BYTECODE meta_object_mesh_vs;
-extern const D3D12_SHADER_BYTECODE meta_object_mesh_ps;
-extern const D3D12_SHADER_BYTECODE meta_object_mesh_outlined_gs;
-extern const D3D12_SHADER_BYTECODE meta_object_mesh_outlined_ps;
-extern const D3D12_SHADER_BYTECODE meta_line_vs;
+   std::string var;
+   value value = 1;
+};
+
+struct shader_description {
+   std::string name;
+   std::string entrypoint;
+   shader_type type;
+   std::filesystem::path file;
+
+   boost::container::static_vector<shader_define, max_shader_defines> defines;
+};
+
+struct compiled_shader : shader_description {
+   utility::com_ptr<ID3DBlob> bytecode;
+};
+
+class shader_library {
+public:
+   explicit shader_library(std::initializer_list<shader_description> shaders);
+
+   auto operator[](const std::string_view name) const noexcept -> D3D12_SHADER_BYTECODE;
+
+private:
+   std::vector<compiled_shader> _compiled_shaders;
+};
 
 }

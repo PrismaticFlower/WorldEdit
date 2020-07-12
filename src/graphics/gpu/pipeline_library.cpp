@@ -7,6 +7,8 @@
 #include <array>
 #include <stdexcept>
 
+using namespace std::literals;
+
 namespace sk::graphics::gpu {
 
 namespace {
@@ -203,12 +205,13 @@ constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
 }
 
 pipeline_library::pipeline_library(ID3D12Device& device,
+                                   const shader_library& shader_library,
                                    const root_signature_library& root_signature_library)
 {
    basic_object_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library::basic_object_mesh_vs,
-               .PS = shader_library::basic_object_mesh_ps,
+               .VS = shader_library["basic_object_meshVS"sv],
+               .PS = shader_library["basic_object_meshPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -224,8 +227,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    basic_mesh_lighting = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library::basic_object_mesh_vs,
-               .PS = shader_library::basic_mesh_lighting_ps,
+               .VS = shader_library["basic_object_meshVS"sv],
+               .PS = shader_library["basic_mesh_lightingPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -241,8 +244,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    normal_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library::basic_object_mesh_vs,
-               .PS = shader_library::normal_mesh_ps,
+               .VS = shader_library["basic_object_meshVS"sv],
+               .PS = shader_library["normal_meshPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -258,8 +261,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    terrain_basic = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.terrain.get(),
-               .VS = shader_library::terrain_patch_vs,
-               .PS = shader_library::terrain_basic_ps,
+               .VS = shader_library["terrain_patchVS"sv],
+               .PS = shader_library["terrain_basicPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -274,8 +277,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    terrain_lighting = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.terrain.get(),
-               .VS = shader_library::terrain_patch_vs,
-               .PS = shader_library::terrain_lighting_ps,
+               .VS = shader_library["terrain_patchVS"sv],
+               .PS = shader_library["terrain_lightingPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -290,8 +293,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    terrain_normal = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.terrain.get(),
-               .VS = shader_library::terrain_patch_vs,
-               .PS = shader_library::terrain_normal_ps,
+               .VS = shader_library["terrain_patchVS"sv],
+               .PS = shader_library["terrain_normalPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -306,8 +309,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    meta_object_transparent_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
-               .VS = shader_library::meta_object_mesh_vs,
-               .PS = shader_library::meta_object_mesh_ps,
+               .VS = shader_library["meta_object_meshVS"sv],
+               .PS = shader_library["meta_object_meshPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_additive,
                .SampleMask = sample_mask_default,
@@ -323,9 +326,9 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    meta_object_mesh_outlined = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
-               .VS = shader_library::meta_object_mesh_vs,
-               .PS = shader_library::meta_object_mesh_outlined_ps,
-               .GS = shader_library::meta_object_mesh_outlined_gs,
+               .VS = shader_library["meta_object_meshVS"sv],
+               .PS = shader_library["meta_object_mesh_outlinedPS"sv],
+               .GS = shader_library["meta_object_mesh_outlinedGS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -341,8 +344,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    meta_line = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_line.get(),
-               .VS = shader_library::meta_line_vs,
-               .PS = shader_library::meta_object_mesh_ps,
+               .VS = shader_library["meta_lineVS"sv],
+               .PS = shader_library["meta_object_meshPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_alpha,
                .SampleMask = sample_mask_default,

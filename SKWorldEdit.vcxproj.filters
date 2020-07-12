@@ -450,6 +450,9 @@
     <ClInclude Include="src\graphics\terrain.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\shader_list.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -593,24 +596,8 @@
     <ClCompile Include="src\graphics\terrain.cpp">
       <Filter>src</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\basic_object_meshVS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshVS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\meta_object_meshPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\meta_lineVS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\basic_mesh_lightingPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\meta_object_mesh_outlinedGS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\normal_meshPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\terrain_patchVS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\terrain_basicPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\terrain_lightingPS.hlsl" />
-    <FxCompile Include="src\graphics\gpu\shaders\terrain_normalPS.hlsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\graphics\gpu\shaders\lights_common.hlsli" />
-    <None Include="src\graphics\gpu\shaders\terrain_common.hlsli" />
+    <ClCompile Include="src\graphics\gpu\shader_list.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
