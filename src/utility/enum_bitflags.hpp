@@ -62,4 +62,10 @@ constexpr Enum& operator^=(Enum& l, const Enum r) noexcept
    return l = l ^ r;
 }
 
+template<typename Enum>
+constexpr bool are_flags_set(const Enum value, const Enum flags) noexcept
+{
+   return (value & flags) == flags;
+}
+
 }

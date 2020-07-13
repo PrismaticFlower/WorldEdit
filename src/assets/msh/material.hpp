@@ -13,7 +13,7 @@ enum class material_flags : uint8 {
    unlit = 1,
    glow = 2,
    transparent = 4,
-   doublesided = 8,
+   transparent_doublesided = 8,
    hardedged = 16,
    perpixel = 32,
    additive = 64,

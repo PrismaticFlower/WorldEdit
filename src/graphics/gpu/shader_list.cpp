@@ -29,6 +29,16 @@ auto shader(const std::string_view name) -> shader_description
            .file = fmt::format("worldedit/shaders/{}.hlsl", name)};
 }
 
+auto material_shader(const std::string_view name, const std::string_view file_name,
+                     std::initializer_list<shader_define> defines) -> shader_description
+{
+   return {.name = std::string{name},
+           .entrypoint = "main",
+           .type = type_from_name(name),
+           .file = fmt::format("worldedit/shaders/{}.hlsl", file_name),
+           .defines = defines};
+}
+
 }
 
 std::initializer_list<shader_description> shader_list =
@@ -36,7 +46,12 @@ std::initializer_list<shader_description> shader_list =
     shader("basic_object_meshPS"),
     shader("basic_mesh_lightingPS"),
 
-    shader("normal_meshPS"),
+    material_shader("normal_meshPS", "normal_meshPS",
+                    {{"MATERIAL_ALPHA_CUTOUT", 0}, {"MATERIAL_TRANSPARENT", 0}}),
+    material_shader("normal_cutout_meshPS", "normal_meshPS",
+                    {{"MATERIAL_ALPHA_CUTOUT", 1}, {"MATERIAL_TRANSPARENT", 0}}),
+    material_shader("normal_transparent_meshPS", "normal_meshPS",
+                    {{"MATERIAL_ALPHA_CUTOUT", 0}, {"MATERIAL_TRANSPARENT", 1}}),
 
     shader("terrain_patchVS"),
     shader("terrain_basicPS"),

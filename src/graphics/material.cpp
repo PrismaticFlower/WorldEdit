@@ -26,6 +26,27 @@ material::material(const assets::msh::material& material,
    if (not textures[0]) textures[0] = texture_manager.null_diffuse_map();
 
    init_resource_views(gpu_device);
+
+   using assets::msh::material_flags;
+   using gpu::material_pipeline_flags;
+
+   if (are_flags_set(material.flags, material_flags::transparent)) {
+      flags |= material_pipeline_flags::transparent;
+   }
+
+   if (are_flags_set(material.flags, material_flags ::transparent_doublesided)) {
+      flags |= material_pipeline_flags::transparent;
+      flags |= material_pipeline_flags::doublesided;
+   }
+
+   if (are_flags_set(material.flags, material_flags ::hardedged)) {
+      flags |= material_pipeline_flags::alpha_cutout;
+      flags &= ~material_pipeline_flags::transparent;
+   }
+
+   if (are_flags_set(material.flags, material_flags::additive)) {
+      flags |= material_pipeline_flags::additive;
+   }
 }
 
 void material::init_resource_views(gpu::device& gpu_device)

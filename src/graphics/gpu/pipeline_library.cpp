@@ -7,6 +7,8 @@
 #include <array>
 #include <stdexcept>
 
+#include <fmt/format.h>
+
 using namespace std::literals;
 
 namespace sk::graphics::gpu {
@@ -113,6 +115,19 @@ constexpr D3D12_BLEND_DESC blend_additive =
 
 constexpr UINT sample_mask_default = 0xffffffff;
 
+constexpr D3D12_RASTERIZER_DESC rasterizer_cull_none =
+   {.FillMode = D3D12_FILL_MODE_SOLID,
+    .CullMode = D3D12_CULL_MODE_NONE,
+    .FrontCounterClockwise = true,
+    .DepthBias = 0,
+    .DepthBiasClamp = 0.0f,
+    .SlopeScaledDepthBias = 0.0f,
+    .DepthClipEnable = true,
+    .MultisampleEnable = false,
+    .AntialiasedLineEnable = false,
+    .ForcedSampleCount = 0,
+    .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
+
 constexpr D3D12_RASTERIZER_DESC rasterizer_cull_backfacing =
    {.FillMode = D3D12_FILL_MODE_SOLID,
     .CullMode = D3D12_CULL_MODE_BACK,
@@ -202,6 +217,69 @@ constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
    {.pInputElementDescs = meta_mesh_input_layout_elements.data(),
     .NumElements = static_cast<UINT>(meta_mesh_input_layout_elements.size())};
 
+auto create_material_pipelines(const std::string_view name, ID3D12Device& device,
+                               const shader_library& shader_library,
+                               const root_signature_library& root_signature_library)
+   -> material_pipelines
+{
+   material_pipelines pipelines;
+
+   for (auto i = 0u; i < pipelines.size(); ++i) {
+      const auto flags = material_pipeline_flags{i};
+
+      const auto ps_name = fmt::format(name, [&] {
+         if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) {
+            return "_cutout";
+         }
+         else if (are_flags_set(flags, material_pipeline_flags::transparent)) {
+            return "_transparent";
+         }
+
+         return "";
+      }());
+
+      const auto blend_state = [&] {
+         if (are_flags_set(flags, material_pipeline_flags::additive)) {
+            return blend_additive;
+         }
+         else if (are_flags_set(flags, material_pipeline_flags::transparent)) {
+            return blend_premult_alpha;
+         }
+
+         return blend_disabled;
+      }();
+
+      const auto rasterizer_state =
+         are_flags_set(flags, material_pipeline_flags::doublesided)
+            ? rasterizer_cull_none
+            : rasterizer_cull_backfacing;
+
+      const auto depth_stencil_state =
+         are_flags_set(flags, material_pipeline_flags::transparent)
+            ? depth_stencil_readonly_enabled
+            : depth_stencil_enabled;
+
+      pipelines[i] = create_graphics_pipeline(
+         device, {.pRootSignature = root_signature_library.object_mesh.get(),
+                  .VS = shader_library["basic_object_meshVS"sv],
+                  .PS = shader_library[ps_name],
+                  .StreamOutput = stream_output_disabled,
+                  .BlendState = blend_state,
+                  .SampleMask = sample_mask_default,
+                  .RasterizerState = rasterizer_state,
+                  .DepthStencilState = depth_stencil_state,
+                  .InputLayout = mesh_input_layout,
+                  .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+                  .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+                  .NumRenderTargets = 1,
+                  .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+                  .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                  .SampleDesc = {1, 0}});
+   }
+
+   return pipelines;
+}
+
 }
 
 pipeline_library::pipeline_library(ID3D12Device& device,
@@ -229,23 +307,6 @@ pipeline_library::pipeline_library(ID3D12Device& device,
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
                .VS = shader_library["basic_object_meshVS"sv],
                .PS = shader_library["basic_mesh_lightingPS"sv],
-               .StreamOutput = stream_output_disabled,
-               .BlendState = blend_disabled,
-               .SampleMask = sample_mask_default,
-               .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_enabled,
-               .InputLayout = mesh_input_layout,
-               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-               .NumRenderTargets = 1,
-               .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-               .SampleDesc = {1, 0}});
-
-   normal_mesh = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library["basic_object_meshVS"sv],
-               .PS = shader_library["normal_meshPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -358,6 +419,9 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
+
+   normal_mesh = create_material_pipelines("normal{}_meshPS"sv, device,
+                                           shader_library, root_signature_library);
 }
 
 }

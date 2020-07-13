@@ -32,12 +32,27 @@ public:
    void window_resized(uint16 width, uint16 height);
 
 private:
+   struct render_list_item {
+      uint64 priority;
+      ID3D12PipelineState* pipeline;
+      D3D12_INDEX_BUFFER_VIEW index_buffer_view;
+      std::array<D3D12_VERTEX_BUFFER_VIEW, 3> vertex_buffer_views;
+      D3D12_GPU_VIRTUAL_ADDRESS object_constants_address;
+      gpu::descriptor_range material_descriptor_range;
+      uint32 index_count;
+      uint32 start_index;
+      uint32 start_vertex;
+   };
+
    void update_camera_constant_buffer(const camera& camera,
                                       gpu::command_list& command_list);
 
    void draw_world(const frustrum& view_frustrum, const world::world& world,
                    const std::unordered_map<std::string, world::object_class>& world_classes,
                    gpu::command_list& command_list);
+
+   void draw_world_render_list(const std::vector<render_list_item>& list,
+                               gpu::command_list& command_list);
 
    void draw_world_meta_objects(
       const frustrum& view_frustrum, const world::world& world,
@@ -82,17 +97,8 @@ private:
    light_clusters _light_clusters{_device};
    terrain _terrain{_device, _texture_manager};
 
-   struct render_list_item {
-      uint32 index_count;
-      uint32 start_index;
-      uint32 start_vertex;
-      D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-      std::array<D3D12_VERTEX_BUFFER_VIEW, 3> vertex_buffer_views;
-      D3D12_GPU_VIRTUAL_ADDRESS object_constants_address;
-      gpu::descriptor_range material_descriptor_range;
-   };
-
-   std::vector<render_list_item> _object_render_list;
+   std::vector<render_list_item> _opaque_object_render_list;
+   std::vector<render_list_item> _transparent_object_render_list;
    std::vector<D3D12_RESOURCE_BARRIER> _texture_resource_barriers;
 };
 

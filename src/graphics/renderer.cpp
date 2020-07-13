@@ -149,10 +149,6 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    // Render World
    draw_world(view_frustrum, world, world_classes, command_list);
 
-   _terrain.draw(view_frustrum, _camera_constant_buffer_view,
-                 _light_clusters.light_descriptors(), command_list,
-                 _dynamic_buffer_allocator);
-
    // Render World Meta Objects
    draw_world_meta_objects(view_frustrum, world, world_classes, command_list);
 
@@ -219,14 +215,30 @@ void renderer::draw_world(const frustrum& view_frustrum, const world::world& wor
 {
    build_object_render_list(view_frustrum, world, world_classes);
 
-   command_list.set_graphics_root_signature(*_device.root_signatures.object_mesh);
-   command_list.set_pipeline_state(*_device.pipelines.normal_mesh.get());
+   draw_world_render_list(_opaque_object_render_list, command_list);
 
+   _terrain.draw(view_frustrum, _camera_constant_buffer_view,
+                 _light_clusters.light_descriptors(), command_list,
+                 _dynamic_buffer_allocator);
+
+   draw_world_render_list(_transparent_object_render_list, command_list);
+}
+
+void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
+                                      gpu::command_list& command_list)
+{
+   command_list.set_graphics_root_signature(*_device.root_signatures.object_mesh);
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
    command_list.set_graphics_root_descriptor_table(3, _light_clusters.light_descriptors());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-   for (auto& object : _object_render_list) {
+   ID3D12PipelineState* pipeline_state = nullptr;
+
+   for (auto& object : list) {
+      if (pipeline_state != object.pipeline) {
+         command_list.set_pipeline_state(*object.pipeline);
+      }
+
       command_list.set_graphics_root_constant_buffer_view(0, object.object_constants_address);
       command_list.set_graphics_root_descriptor_table(1, object.material_descriptor_range);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
@@ -621,8 +633,10 @@ void renderer::build_object_render_list(
    const frustrum& view_frustrum, const world::world& world,
    const std::unordered_map<std::string, world::object_class>& world_classes)
 {
-   _object_render_list.clear();
-   _object_render_list.reserve(world.objects.size());
+   _opaque_object_render_list.clear();
+   _transparent_object_render_list.clear();
+   _opaque_object_render_list.reserve(2048);
+   _transparent_object_render_list.reserve(2048);
 
    for (auto& object : world.objects) {
       const auto& model =
@@ -631,6 +645,9 @@ void renderer::build_object_render_list(
       const auto object_bbox = object.rotation * model.bbox + object.position;
 
       if (!intersects(view_frustrum, object_bbox)) continue;
+
+      const float distance = glm::dot(view_frustrum.planes[frustrum_planes::near_],
+                                      float4{object.position, 1.0f});
 
       const D3D12_GPU_VIRTUAL_ADDRESS object_constants_address = [&] {
          auto allocation =
@@ -648,18 +665,49 @@ void renderer::build_object_render_list(
       }();
 
       for (const auto& mesh : model.parts) {
-         _object_render_list.push_back(
-            {.index_count = mesh.index_count,
-             .start_index = mesh.start_index,
-             .start_vertex = mesh.start_vertex,
-             .index_buffer_view = model.gpu_buffer.index_buffer_view,
-             .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                     model.gpu_buffer.normal_vertex_buffer_view,
-                                     model.gpu_buffer.texcoord_vertex_buffer_view},
-             .object_constants_address = object_constants_address,
-             .material_descriptor_range = mesh.material.resource_views.descriptors()});
+         ID3D12PipelineState* const pipeline =
+            _device.pipelines.normal_mesh[mesh.material.flags].get();
+
+         uint64 priority;
+
+         std::memcpy(&priority, &distance, sizeof(float));
+
+         priority |= ((std::hash<ID3D12PipelineState*>{}(pipeline)&0xffffffff) << 32);
+
+         auto& render_list =
+            are_flags_set(mesh.material.flags, gpu::material_pipeline_flags::transparent)
+               ? _transparent_object_render_list
+               : _opaque_object_render_list;
+
+         render_list.push_back({
+            .priority = priority,
+
+            .pipeline = pipeline,
+
+            .index_buffer_view = model.gpu_buffer.index_buffer_view,
+            .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                    model.gpu_buffer.normal_vertex_buffer_view,
+                                    model.gpu_buffer.texcoord_vertex_buffer_view},
+
+            .object_constants_address = object_constants_address,
+            .material_descriptor_range = mesh.material.resource_views.descriptors(),
+
+            .index_count = mesh.index_count,
+            .start_index = mesh.start_index,
+            .start_vertex = mesh.start_vertex,
+         });
       }
    }
+
+   std::sort(_opaque_object_render_list.begin(), _opaque_object_render_list.end(),
+             [](const render_list_item& l, const render_list_item& r) {
+                return l.priority < r.priority;
+             });
+   std::sort(_transparent_object_render_list.begin(),
+             _transparent_object_render_list.end(),
+             [](const render_list_item& l, const render_list_item& r) {
+                return l.priority < r.priority;
+             });
 }
 
 void renderer::update_textures()

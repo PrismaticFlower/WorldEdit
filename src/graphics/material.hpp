@@ -16,6 +16,7 @@ struct material {
 
    void process_updated_texture(gpu::device& gpu_device, updated_texture updated);
 
+   gpu::material_pipeline_flags flags = gpu::material_pipeline_flags::none;
    gpu::resource_view_set resource_views;
 
    std::vector<std::shared_ptr<gpu::texture>> textures;
