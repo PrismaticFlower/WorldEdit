@@ -36,7 +36,7 @@ enum class rendertype : uint8 {
    detail = glow, // SWBF1
    refraction = 22,
    normalmap_tiled = 24,
-   normalmapped_envmapped = 26,
+   normalmap_envmapped = 26,
    blinking = 25,
    normalmap = 27,
    normalmap_specular = 28,

@@ -1,17 +1,65 @@
 
 #include "texture_io.hpp"
+#include "../option_file.hpp"
+#include "texture_transforms.hpp"
+#include "utility/read_file.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
 
 #include <DirectXTex.h>
+#include <boost/algorithm/string.hpp>
 #include <glm/gtc/integer.hpp>
+
 #include <range/v3/view.hpp>
+
+using namespace std::literals;
 
 namespace sk::assets::texture {
 
 namespace {
+
+struct texture_options {
+   bool srgb = true;
+   bool generate_normal_map = false;
+   float normal_map_scale = 1.0f;
+};
+
+auto load_options(std::filesystem::path path) -> texture_options
+{
+   path += L".option"s;
+
+   if (not std::filesystem::exists(path)) return {};
+
+   texture_options opts;
+
+   for (auto& opt : parse_options(utility::read_file_to_string(path))) {
+      using boost::iequals;
+
+      if (iequals(opt.name, "-format"sv) or iequals(opt.name, "-forceformat"sv)) {
+         if (opt.arguments.empty()) continue;
+
+         if (const auto& format = opt.arguments[0];
+             iequals(format, "bump"sv) or iequals(format, "terrain_bump"sv) or
+             iequals(format, "bump_alpha"sv) or
+             iequals(format, "terrain_bump_alpha"sv)) {
+            opts.srgb = false;
+         }
+      }
+      else if (iequals(opt.name, "-bumpmap"sv) or iequals(opt.name, "-hiqbumpmap"sv)) {
+         opts.srgb = false;
+         opts.generate_normal_map = true;
+      }
+      else if (iequals(opt.name, "-bumpscale"sv)) {
+         if (opt.arguments.empty()) continue;
+
+         opts.normal_map_scale = std::stof(opt.arguments[0]);
+      }
+   }
+
+   return opts;
+}
 
 auto get_mip_count(const std::size_t length) noexcept -> uint16
 {
@@ -87,7 +135,11 @@ auto load_texture(const std::filesystem::path& path) -> texture
       throw std::runtime_error{"Failed to load .TGA file."};
    }
 
-   scratch_image.OverrideFormat(DirectX::MakeSRGB(scratch_image.GetMetadata().format)); // TODO: Read .tex files and .option files to decide if an image is sRGB or not.
+   const auto options = load_options(path);
+
+   if (options.srgb) {
+      scratch_image.OverrideFormat(DirectX::MakeSRGB(scratch_image.GetMetadata().format));
+   }
 
    if (not is_1x1x1(scratch_image)) {
       scratch_image = generate_mipmaps(std::move(scratch_image));
@@ -104,6 +156,10 @@ auto load_texture(const std::filesystem::path& path) -> texture
    for (uint32 i = 0; i < texture.mip_levels(); ++i) {
       init_texture_data(texture.subresource({.mip_level = i}),
                         *scratch_image.GetImage(i, 0, 0));
+   }
+
+   if (options.generate_normal_map) {
+      texture = generate_normal_maps(texture, options.normal_map_scale);
    }
 
    return texture;

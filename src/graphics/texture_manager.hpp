@@ -27,22 +27,30 @@ public:
                    assets::library<assets::texture::texture>& texture_assets)
       : _texture_assets{texture_assets}, _gpu_device{&gpu_device}
    {
-      _null_diffuse_map = std::make_shared<gpu::texture>(
-         gpu_device.create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-                                    .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                   D3D12_RESOURCE_STATE_COMMON));
+      using assets::texture::texture_format;
 
-      _copy_fence_wait_value = [this] {
-         assets::texture::texture cpu_null_diffuse{
-            {.width = 1,
-             .height = 1,
-             .format = assets::texture::texture_format::r8g8b8a8_unorm_srgb}};
+      const auto null_texture = [&](const float4 v, const texture_format format,
+                                    std::shared_ptr<gpu::texture>& out) {
+         assets::texture::texture cpu_null_texture{
+            {.width = 1, .height = 1, .format = format}};
 
-         cpu_null_diffuse.store({.mip_level = 0}, {0, 0},
-                                float4{0.75f, 0.75f, 0.75f, 1.0f});
+         cpu_null_texture.store({.mip_level = 0}, {0, 0}, v);
 
-         return init_texture_async(*_null_diffuse_map, cpu_null_diffuse);
-      }();
+         out = std::make_shared<gpu::texture>(
+            gpu_device.create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+                                       .format = cpu_null_texture.dxgi_format()},
+                                      D3D12_RESOURCE_STATE_COMMON));
+
+         return init_texture_async(*out, cpu_null_texture);
+      };
+
+      _copy_fence_wait_value = std::max({
+         null_texture(float4{0.75f, 0.75f, 0.75f, 1.0f},
+                      texture_format::r8g8b8a8_unorm_srgb, _null_diffuse_map),
+
+         null_texture(float4{0.5f, 0.5f, 1.0f, 1.0f},
+                      texture_format::r8g8b8a8_unorm_srgb, _null_normal_map),
+      });
    };
 
    auto aquire_if(const std::string& name) -> std::shared_ptr<gpu::texture>
@@ -70,6 +78,11 @@ public:
    auto null_diffuse_map() -> std::shared_ptr<gpu::texture>
    {
       return _null_diffuse_map;
+   }
+
+   auto null_normal_map() -> std::shared_ptr<gpu::texture>
+   {
+      return _null_normal_map;
    }
 
    template<std::invocable<updated_texture> Callback>
@@ -206,6 +219,7 @@ private:
    tbb::task_group _creation_tasks;
 
    std::shared_ptr<gpu::texture> _null_diffuse_map;
+   std::shared_ptr<gpu::texture> _null_normal_map;
 };
 
 }

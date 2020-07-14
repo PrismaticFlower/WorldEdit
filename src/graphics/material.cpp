@@ -8,22 +8,45 @@ using namespace std::literals;
 
 namespace sk::graphics {
 
+namespace {
+
+constexpr bool has_normalmap(const assets::msh::material& material)
+{
+   using assets::msh::rendertype;
+
+   return material.rendertype == (rendertype::normalmap) or
+          material.rendertype == (rendertype::normalmap_specular) or
+          material.rendertype == (rendertype::normalmap_tiled_envmapped) or
+          material.rendertype == (rendertype::normalmap_tiled) or
+          material.rendertype == (rendertype::normalmap_envmapped);
+}
+
+}
+
 material::material(const assets::msh::material& material,
                    gpu::device& gpu_device, texture_manager& texture_manager)
 {
-   texture_names.resize(1);
+   texture_names.resize(2);
    texture_names[0] = material.textures[0];
+   texture_names[1] = material.textures[1];
 
-   if (const auto ext_offset = texture_names[0].find_last_of('.');
-       ext_offset != std::string::npos) {
-      texture_names[0].resize(ext_offset);
+   for (auto& name : texture_names) {
+      if (const auto ext_offset = name.find_last_of('.');
+          ext_offset != std::string::npos) {
+         name.resize(ext_offset);
+      }
    }
 
-   textures.resize(1);
+   textures.resize(2);
 
    textures[0] = texture_manager.aquire_if(texture_names[0]);
 
+   if (has_normalmap(material)) {
+      textures[1] = texture_manager.aquire_if(texture_names[1]);
+   }
+
    if (not textures[0]) textures[0] = texture_manager.null_diffuse_map();
+   if (not textures[1]) textures[1] = texture_manager.null_normal_map();
 
    init_resource_views(gpu_device);
 
@@ -53,9 +76,17 @@ void material::init_resource_views(gpu::device& gpu_device)
 {
    const std::array resource_view_descriptions{
       gpu::resource_view_desc{.resource = *textures[0]->resource(),
-                              .view_desc = gpu::shader_resource_view_desc{
-                                 .format = textures[0]->format(),
-                                 .type_description = gpu::texture2d_srv{}}}};
+                              .view_desc =
+                                 gpu::shader_resource_view_desc{
+                                    .format = textures[0]->format(),
+                                    .type_description = gpu::texture2d_srv{}}},
+
+      gpu::resource_view_desc{.resource = *textures[1]->resource(),
+                              .view_desc =
+                                 gpu::shader_resource_view_desc{
+                                    .format = textures[1]->format(),
+                                    .type_description = gpu::texture2d_srv{}}},
+   };
 
    resource_views = gpu_device.create_resource_view_set(resource_view_descriptions);
 }

@@ -55,7 +55,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    const D3D12_DESCRIPTOR_RANGE1 material_descriptor_table_descriptor_range{
       .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-      .NumDescriptors = 1,
+      .NumDescriptors = 2,
       .BaseShaderRegister = 0,
       .RegisterSpace = 1,
       .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
