@@ -29,8 +29,8 @@ TEST_CASE("binary reader", "[Utility][BinaryReader]")
    REQUIRE(reader.read_bytes(1)[0] == std::byte{0x10});
 
    REQUIRE(not reader);
-   REQUIRE_THROWS(reader.read<int32>() == 42);
-   REQUIRE_THROWS(reader.skip(2));
+   REQUIRE_THROWS_AS(reader.read<int32>() == 42, binary_reader_overflow);
+   REQUIRE_THROWS_AS(reader.skip(2), binary_reader_overflow);
 }
 
 }

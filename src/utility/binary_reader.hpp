@@ -10,6 +10,10 @@
 
 namespace sk::utility {
 
+struct binary_reader_overflow : std::runtime_error {
+   using std::runtime_error::runtime_error;
+};
+
 class binary_reader {
 public:
    binary_reader() = delete;
@@ -26,7 +30,7 @@ public:
                     std::is_trivially_copyable_v<Type>);
 
       if (_bytes.size() < sizeof(Type)) {
-         throw std::runtime_error{"binary_reader ran out of bytes!"};
+         throw binary_reader_overflow{"binary_reader ran out of bytes!"};
       }
 
       auto value = make_from_bytes<Type>(_bytes.subspan(0, sizeof(Type)));
@@ -39,7 +43,7 @@ public:
    auto read_bytes(const std::size_t count) -> std::span<const std::byte>
    {
       if (_bytes.size() < count) {
-         throw std::runtime_error{"binary_reader ran out of bytes!"};
+         throw binary_reader_overflow{"binary_reader ran out of bytes!"};
       }
 
       auto result = _bytes.subspan(0, count);
@@ -52,7 +56,7 @@ public:
    void skip(const std::size_t count)
    {
       if (static_cast<std::size_t>(_bytes.size()) < count) {
-         throw std::runtime_error{"binary_reader ran out of bytes!"};
+         throw binary_reader_overflow{"binary_reader ran out of bytes!"};
       }
 
       _bytes = _bytes.subspan(count);

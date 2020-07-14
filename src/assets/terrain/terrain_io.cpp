@@ -189,11 +189,17 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    container::dynamic_array_2d<std::array<uint8, terrain::texture_count>>
       texture_weight_map{terrain.length, terrain.length};
 
-   read_map(terrain.height_map);
-   read_map(terrain.color_map);
-   read_map(terrain.light_map);
-   if (header.extra_light_map) read_map(terrain.light_map_extra);
-   read_map(texture_weight_map);
+   try {
+      read_map(terrain.height_map);
+      read_map(terrain.color_map);
+      read_map(terrain.light_map);
+      if (header.extra_light_map) read_map(terrain.light_map_extra);
+      read_map(texture_weight_map);
+   }
+   catch (utility::binary_reader_overflow&) {
+      // some .ter files in the stock assets end without all their data present
+      // to ensure they load we catch the exception and just let the data be the default (0)
+   }
 
    // deinterleave texture weights
    for (int y = 0; y < terrain.length; ++y) {
