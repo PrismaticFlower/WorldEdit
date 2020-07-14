@@ -42,6 +42,25 @@ auto get_texture_format(const DXGI_FORMAT dxgi_format) -> texture_format
    throw std::runtime_error{"Texture has unsupported format!"};
 }
 
+bool is_1x1x1(const DirectX::ScratchImage& image) noexcept
+{
+   return image.GetMetadata().width == 1 and image.GetMetadata().height == 1 and
+          image.GetMetadata().depth == 1;
+}
+
+auto generate_mipmaps(DirectX::ScratchImage scratch_image) -> DirectX::ScratchImage
+{
+   DirectX::ScratchImage mipped_image;
+
+   if (FAILED(DirectX::GenerateMipMaps(*scratch_image.GetImage(0, 0, 0),
+                                       DirectX::TEX_FILTER_BOX | DirectX::TEX_FILTER_FORCE_NON_WIC,
+                                       0, mipped_image))) {
+      throw std::runtime_error{"Failed to generate mip maps."};
+   }
+
+   return mipped_image;
+}
+
 void init_texture_data(texture_subresource_view texture, DirectX::Image image)
 {
    assert(texture.dxgi_format() == image.format);
@@ -70,14 +89,11 @@ auto load_texture(const std::filesystem::path& path) -> texture
 
    scratch_image.OverrideFormat(DirectX::MakeSRGB(scratch_image.GetMetadata().format)); // TODO: Read .tex files and .option files to decide if an image is sRGB or not.
 
-   DirectX::ScratchImage mipped_image;
-   if (FAILED(DirectX::GenerateMipMaps(*scratch_image.GetImage(0, 0, 0),
-                                       DirectX::TEX_FILTER_BOX | DirectX::TEX_FILTER_FORCE_NON_WIC,
-                                       0, mipped_image))) {
-      throw std::runtime_error{"Failed to generate mip maps."};
+   if (not is_1x1x1(scratch_image)) {
+      scratch_image = generate_mipmaps(std::move(scratch_image));
    }
 
-   auto metadata = mipped_image.GetMetadata();
+   auto metadata = scratch_image.GetMetadata();
 
    texture texture =
       texture::init_params{.width = static_cast<uint32>(metadata.width),
@@ -85,12 +101,9 @@ auto load_texture(const std::filesystem::path& path) -> texture
                            .mip_levels = static_cast<uint16>(metadata.mipLevels),
                            .format = get_texture_format(metadata.format)};
 
-   init_texture_data(texture.subresource({.mip_level = 0}),
-                     *scratch_image.GetImage(0, 0, 0));
-
    for (uint32 i = 0; i < texture.mip_levels(); ++i) {
       init_texture_data(texture.subresource({.mip_level = i}),
-                        *mipped_image.GetImage(i, 0, 0));
+                        *scratch_image.GetImage(i, 0, 0));
    }
 
    return texture;
