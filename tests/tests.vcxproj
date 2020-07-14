@@ -111,6 +111,7 @@
     <ClCompile Include="src\assets\msh\validate_scene_tests.cpp" />
     <ClCompile Include="src\assets\odf\definition_io_tests.cpp" />
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />
+    <ClCompile Include="src\assets\option_file_tests.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
     <ClCompile Include="src\assets\texture\texture_io_tests.cpp" />
     <ClCompile Include="src\assets\texture\texture_tests.cpp" />

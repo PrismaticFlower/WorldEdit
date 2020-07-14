@@ -182,6 +182,7 @@
     <ClInclude Include="src\assets\odf\definition.hpp" />
     <ClInclude Include="src\assets\odf\definition_io.hpp" />
     <ClInclude Include="src\assets\odf\properties.hpp" />
+    <ClInclude Include="src\assets\option_file.hpp" />
     <ClInclude Include="src\assets\terrain\terrain.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_io.hpp" />
     <ClInclude Include="src\assets\texture\texture.hpp" />
@@ -277,6 +278,7 @@
     <ClCompile Include="src\assets\odf\default_object_class_definition.cpp" />
     <ClCompile Include="src\assets\odf\definition_io.cpp" />
     <ClCompile Include="src\assets\odf\properties.cpp" />
+    <ClCompile Include="src\assets\option_file.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
     <ClCompile Include="src\assets\texture\texture.cpp" />
     <ClCompile Include="src\assets\texture\texture_format.cpp" />
