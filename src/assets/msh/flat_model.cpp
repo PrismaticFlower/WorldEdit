@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string_view>
 
+#include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
 #include <range/v3/algorithm.hpp>
@@ -68,25 +69,25 @@ bool is_mesh_node(const node& node) noexcept
    }
 
    if (node.hidden) return false;
-   if (node.name.starts_with("sv_")) return false;
-   if (node.name.starts_with("shadowvolume")) return false;
-   if (node.name.starts_with("p_")) return false;
-   if (node.name.starts_with("collision")) return false;
-   if (node.name.starts_with("terraincutter")) return false;
+   if (node.name.starts_with("sv_"sv)) return false;
+   if (node.name.starts_with("shadowvolume"sv)) return false;
+   if (node.name.starts_with("p_"sv)) return false;
+   if (boost::istarts_with(node.name, "collision"sv)) return false;
+   if (boost::istarts_with(node.name, "terraincutter"sv)) return false;
 
    // TODO: LOD Support
-   if (node.name.ends_with("_lod2")) return false;
-   if (node.name.ends_with("_lod3")) return false;
-   if (node.name.ends_with("_lowres")) return false;
-   if (node.name.ends_with("_lowrez")) return false;
+   if (boost::iends_with(node.name, "lod2"sv)) return false;
+   if (boost::iends_with(node.name, "lod3"sv)) return false;
+   if (boost::iends_with(node.name, "lowres"sv)) return false;
+   if (boost::iends_with(node.name, "lowrez"sv)) return false;
 
    return true;
 }
 
 bool is_collision_node(const node& node) noexcept
 {
-   if (node.name.starts_with("p_")) return true;
-   if (node.name.starts_with("collision")) return true;
+   if (node.name.starts_with("p_"sv)) return true;
+   if (boost::istarts_with(node.name, "collision"sv)) return true;
 
    return false;
 }
