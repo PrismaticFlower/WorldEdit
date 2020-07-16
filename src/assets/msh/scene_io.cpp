@@ -1,12 +1,15 @@
 
 #include "scene_io.hpp"
+#include "../option_file.hpp"
 #include "ucfb/reader.hpp"
+#include "utility/read_file.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "validate_scene.hpp"
 
 #include <numeric>
 #include <stdexcept>
 
+#include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
 #pragma warning(disable : 4063) // case is not a valid value for switch of enum
@@ -338,7 +341,7 @@ auto read_msh2(ucfb::reader_strict<"MSH2"_id> msh2) -> scene
 
 }
 
-auto read_scene_from_bytes(const std::span<const std::byte> bytes) -> scene
+auto read_scene(const std::span<const std::byte> bytes) -> scene
 {
    ucfb::reader_strict<"HEDR"_id> hedr{bytes};
 
@@ -360,6 +363,37 @@ auto read_scene_from_bytes(const std::span<const std::byte> bytes) -> scene
    }
 
    throw std::runtime_error{".msh file contained no scene."};
+}
+
+auto read_scene(const std::filesystem::path& path) -> scene
+{
+   auto file = utility::read_file_to_bytes(path);
+   auto scene = read_scene(file);
+
+   if (auto option_path = std::filesystem::path{path} += ".option"sv;
+       std ::filesystem::exists(option_path)) {
+      scene.options = read_scene_options(option_path);
+   }
+
+   return scene;
+}
+
+auto read_scene_options(const std::filesystem::path& path) -> options
+{
+   options results;
+
+   for (auto& opt : parse_options(utility::read_file_to_string(path))) {
+      using boost::iequals;
+
+      if (iequals(opt.name, "-bump"sv)) {
+         results.normal_maps.assign(opt.arguments.begin(), opt.arguments.end());
+      }
+      else if (iequals(opt.name, "-additiveemissive"sv)) {
+         results.additive_emissive = true;
+      }
+   }
+
+   return results;
 }
 
 }

@@ -12,9 +12,12 @@ namespace {
 
 constexpr bool has_normalmap(const assets::msh::material& material)
 {
+   using assets::msh::material_flags;
    using assets::msh::rendertype;
 
-   return material.rendertype == (rendertype::normalmap) or
+   return are_flags_set(material.flags, material_flags::perpixel) or
+          are_flags_set(material.flags, material_flags::specular) or
+          material.rendertype == (rendertype::normalmap) or
           material.rendertype == (rendertype::normalmap_specular) or
           material.rendertype == (rendertype::normalmap_tiled_envmapped) or
           material.rendertype == (rendertype::normalmap_tiled) or
@@ -41,7 +44,7 @@ material::material(const assets::msh::material& material,
 
    textures[0] = texture_manager.aquire_if(texture_names[0]);
 
-   if (has_normalmap(material)) {
+   if (has_normalmap(material) and not texture_names[1].empty()) {
       textures[1] = texture_manager.aquire_if(texture_names[1]);
    }
 

@@ -69,8 +69,14 @@ struct node {
    std::optional<collision_primitive> collision_primitive;
 };
 
+struct options {
+   bool additive_emissive;
+   std::vector<std::string> normal_maps;
+};
+
 struct scene {
    std::vector<material> materials;
    std::vector<node> nodes;
+   options options;
 };
 }

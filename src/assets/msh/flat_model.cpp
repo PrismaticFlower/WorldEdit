@@ -1,5 +1,6 @@
 
 #include "flat_model.hpp"
+#include "utility/enum_bitflags.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
@@ -132,6 +133,33 @@ auto generate_normals(std::span<const float3> positions,
    return normals;
 }
 
+void patch_materials_with_options(std::vector<mesh>& meshes, const options& opts)
+{
+   for (auto& mesh : meshes) {
+      for (auto& normal_map : opts.normal_maps) {
+         auto texture = mesh.material.textures[0];
+
+         // TODO: Refactor texture extension handling.
+         if (const auto ext_offset = texture.find_last_of('.');
+             ext_offset != std::string::npos) {
+            texture.resize(ext_offset);
+         }
+
+         if (boost::iequals(texture, normal_map)) {
+            mesh.material.textures[1] = texture + "_bump.tga";
+            mesh.material.flags |= material_flags::perpixel;
+         }
+      }
+
+      if (opts.additive_emissive) {
+         mesh.material.flags |=
+            are_flags_set(mesh.material.flags, material_flags::additive)
+               ? material_flags::unlit
+               : material_flags::none;
+      }
+   }
+}
+
 }
 
 flat_model::flat_model(const scene& scene) noexcept
@@ -157,6 +185,7 @@ flat_model::flat_model(const scene& scene) noexcept
       node_hierarchy.emplace_back(make_flat_scene_node(node, scene.nodes));
    }
 
+   patch_materials_with_options(meshes, scene.options);
    regenerate_bounding_boxes();
 }
 
