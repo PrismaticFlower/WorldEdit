@@ -18,7 +18,7 @@ const scene input_scene{
                     .specular_color = {0.75f, 0.75f, 0.75f},
                     .flags = material_flags::specular,
                     .rendertype = rendertype::normalmap,
-                    .textures = {"snow.png"s, "snow_normalmap.png"s},
+                    .textures = {"snow"s, "snow_normalmap"s},
                  },
 
                  {
@@ -26,7 +26,7 @@ const scene input_scene{
                     .specular_color = {0.0f, 0.0f, 0.0f},
                     .flags = material_flags::none,
                     .rendertype = rendertype::normalmap,
-                    .textures = {"dirt.png"s, "dirt_normalmap.png"s},
+                    .textures = {"dirt"s, "dirt_normalmap"s},
                  }},
 
    .nodes = {

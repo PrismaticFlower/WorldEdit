@@ -137,16 +137,8 @@ void patch_materials_with_options(std::vector<mesh>& meshes, const options& opts
 {
    for (auto& mesh : meshes) {
       for (auto& normal_map : opts.normal_maps) {
-         auto texture = mesh.material.textures[0];
-
-         // TODO: Refactor texture extension handling.
-         if (const auto ext_offset = texture.find_last_of('.');
-             ext_offset != std::string::npos) {
-            texture.resize(ext_offset);
-         }
-
-         if (boost::iequals(texture, normal_map)) {
-            mesh.material.textures[1] = texture + "_bump.tga";
+         if (boost::iequals(mesh.material.textures[0], normal_map)) {
+            mesh.material.textures[1] = mesh.material.textures[0] + "_bump";
             mesh.material.flags |= material_flags::perpixel;
          }
       }

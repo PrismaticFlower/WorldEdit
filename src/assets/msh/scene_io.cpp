@@ -257,6 +257,18 @@ auto read_modl(ucfb::reader_strict<"MODL"_id> modl) -> node
    return node;
 }
 
+auto read_txnd(ucfb::reader txnd) -> std::string
+{
+   auto name = txnd.read_string();
+
+   if (const auto ext_offset = name.find_last_of('.');
+       ext_offset != std::string_view::npos) {
+      return std::string{name.substr(0, ext_offset)};
+   }
+
+   return std::string{name};
+}
+
 auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
 {
    material material;
@@ -281,16 +293,16 @@ auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
          material.data1 = child.read_unaligned<uint8>();
          continue;
       case "TX0D"_id:
-         material.textures[0] = child.read_string();
+         material.textures[0] = read_txnd(child);
          continue;
       case "TX1D"_id:
-         material.textures[1] = child.read_string();
+         material.textures[1] = read_txnd(child);
          continue;
       case "TX2D"_id:
-         material.textures[2] = child.read_string();
+         material.textures[2] = read_txnd(child);
          continue;
       case "TX3D"_id:
-         material.textures[3] = child.read_string();
+         material.textures[3] = read_txnd(child);
          continue;
       }
    }

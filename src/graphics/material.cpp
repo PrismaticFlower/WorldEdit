@@ -33,13 +33,6 @@ material::material(const assets::msh::material& material,
    texture_names[0] = material.textures[0];
    texture_names[1] = material.textures[1];
 
-   for (auto& name : texture_names) {
-      if (const auto ext_offset = name.find_last_of('.');
-          ext_offset != std::string::npos) {
-         name.resize(ext_offset);
-      }
-   }
-
    textures.resize(2);
 
    textures[0] = texture_manager.aquire_if(texture_names[0]);

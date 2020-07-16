@@ -14,8 +14,7 @@ namespace sk::assets::msh::tests {
 
 TEST_CASE(".msh reading", "[Assets][MSH]")
 {
-   auto scene =
-      read_scene_from_bytes(utility::read_file_to_bytes("data/sand_test.msh"));
+   auto scene = read_scene("data/sand_test.msh");
 
    // Materials Checks
    {
@@ -30,9 +29,9 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
       CHECK(material.rendertype == rendertype::normalmap);
       CHECK(material.data0 == 0);
       CHECK(material.data1 == 0);
-      CHECK(material.textures[0] == "sand.tga"sv);
-      CHECK(material.textures[1] == "sand_normalmap.tga"sv);
-      CHECK(material.textures[2] == "sand_detail.tga"sv);
+      CHECK(material.textures[0] == "sand"sv);
+      CHECK(material.textures[1] == "sand_normalmap"sv);
+      CHECK(material.textures[2] == "sand_detail"sv);
    }
 
    // Node Checks
