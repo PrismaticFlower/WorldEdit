@@ -12,6 +12,7 @@ float4 main(input_vertex input) : SV_Target0
    float3 diffuse_color = 0.0;
 
    const uint active_textures = input.active_textures;
+   float total_weight = 0.0;
 
    for (uint i = 0; i < terrain_max_textures; ++i) {
       [branch] if (!input.active_textures & (1 << i)) continue;
@@ -23,7 +24,10 @@ float4 main(input_vertex input) : SV_Target0
       const float2 texcoords = get_terrain_texcoords(i, positionWS);
 
       diffuse_color += weight * diffuse_maps[i].Sample(trilinear_sampler, texcoords);
+      total_weight += weight;
    }
+
+   diffuse_color /= total_weight;
 
    calculate_light_inputs lighting_inputs;
 
