@@ -58,7 +58,18 @@ auto read_path_properties(const assets::config::node& node)
    properties.reserve(node.values.get<std::size_t>(0));
 
    for (auto& prop : node) {
-      properties.push_back({.key = prop.key, .value = prop.values.get<std::string>(0)});
+      properties.push_back(
+         {.key = prop.key,
+          .value = boost::variant2::visit(
+             [](const auto& v) noexcept -> std::string {
+                if constexpr (std::is_same_v<decltype(v), const std::string&>) {
+                   return v;
+                }
+                else {
+                   return std::to_string(v);
+                }
+             },
+             prop.values.at(0))});
    }
 
    return properties;
