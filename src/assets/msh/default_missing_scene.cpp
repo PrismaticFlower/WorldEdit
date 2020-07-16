@@ -3287,13 +3287,10 @@ auto default_missing_scene() noexcept -> const std::shared_ptr<flat_model>&
    const static std::shared_ptr<flat_model> default_missing_scene =
       std::make_shared<flat_model>([] {
          scene scene{
-            .materials = {{
-               .name = "missing_scene"s,
-               .specular_color = {0.5f, 0.5f, 0.5f},
-               .flags = material_flags::specular,
-               .rendertype = rendertype::normal,
-               .textures = {"missing_scene.png"s},
-            }},
+            .materials = {{.name = "missing_scene"s,
+                           .specular_color = {0.5f, 0.5f, 0.5f},
+                           .flags = material_flags::specular,
+                           .rendertype = rendertype::normal}},
             .nodes = {
                {.name = "geometry"s,
                 .type = node_type::static_mesh,
