@@ -9,6 +9,7 @@ namespace sk::graphics::gpu {
 struct root_signature_library {
    explicit root_signature_library(ID3D12Device& device);
 
+   utility::com_ptr<ID3D12RootSignature> depth_only_mesh;
    utility::com_ptr<ID3D12RootSignature> object_mesh;
    utility::com_ptr<ID3D12RootSignature> terrain;
    utility::com_ptr<ID3D12RootSignature> meta_object_mesh;

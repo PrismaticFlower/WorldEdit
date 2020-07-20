@@ -10,6 +10,7 @@ struct depth_stencil_texture : private texture {
       DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
       uint16 width = 1;
       uint16 height = 1;
+      bool shader_resource = false;
 
       D3D12_CLEAR_VALUE optimized_clear_value = {.Format = format,
                                                  .DepthStencil = {.Depth = 1.0f,
@@ -19,7 +20,8 @@ struct depth_stencil_texture : private texture {
       {
          return {.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
                  .flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL |
-                          D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
+                          (shader_resource ? D3D12_RESOURCE_FLAG_NONE 
+                                           : D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
                  .format = format,
                  .width = width,
                  .height = height,

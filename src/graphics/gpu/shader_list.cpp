@@ -42,7 +42,9 @@ auto material_shader(const std::string_view name, const std::string_view file_na
 }
 
 std::initializer_list<shader_description> shader_list =
-   {shader("basic_object_meshVS"),
+   {shader("depth_only_meshVS"),
+
+    shader("basic_object_meshVS"),
     shader("basic_object_meshPS"),
     shader("basic_mesh_lightingPS"),
 

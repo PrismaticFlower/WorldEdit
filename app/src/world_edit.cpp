@@ -8,6 +8,8 @@
 #include "imgui/imgui_impl_win32.h"
 #include "world/world_io_load.hpp"
 
+#include "graphics/frustrum.hpp"
+
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -29,7 +31,7 @@ world_edit::world_edit(const HWND window)
    ImGui_ImplWin32_Init(window);
    imgui_keymap_init(ImGui::GetIO());
 
-   std::filesystem::current_path(_project_dir); // TODO: Decide on project dir handling design.
+   std::filesystem::current_path(_project_dir);
    _asset_libraries.source_directory(_project_dir);
 
    try {
@@ -43,7 +45,6 @@ world_edit::world_edit(const HWND window)
 
    _camera.aspect_ratio(static_cast<float>(rect.right - rect.left) /
                         static_cast<float>(rect.bottom - rect.top));
-   _camera.position({0.0f, 0.0f, 10.0f});
 }
 
 bool world_edit::update()

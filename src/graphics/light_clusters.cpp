@@ -5,6 +5,7 @@
 
 #include <cmath>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/container/static_vector.hpp>
 
 namespace sk::graphics {
@@ -29,7 +30,7 @@ struct light_description {
 
 static_assert(sizeof(light_description) == 64);
 
-constexpr auto max_lights = ((D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16) - 16) /
+constexpr auto max_lights = ((D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16) - 86) /
                             sizeof(light_description);
 constexpr auto max_regional_lights = 512;
 
@@ -40,6 +41,7 @@ struct light_constants {
    uint32 padding1;
    float3 ground_ambient_color;
    uint32 padding2;
+   float4x4 shadow_transform;
 
    std::array<light_description, max_lights> lights;
 
@@ -71,6 +73,23 @@ light_clusters::light_clusters(gpu::device& gpu_device)
                                         max_regional_lights},
                                D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
 
+   _shadow_map = gpu_device.create_texture(
+      {.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+       .flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL,
+       .format = DXGI_FORMAT_D32_FLOAT,
+       .width = 2048,
+       .height = 2048,
+       .optimized_clear_value =
+          D3D12_CLEAR_VALUE{.Format = DXGI_FORMAT_D32_FLOAT,
+                            .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
+      D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+   _shadow_map_dsv =
+      gpu_device.allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
+
+   _gpu_device->device_d3d->CreateDepthStencilView(_shadow_map.resource(), nullptr,
+                                                   _shadow_map_dsv[0].cpu);
+
    _resource_views = _gpu_device->create_resource_view_set(std::array{
       gpu::resource_view_desc{
          .resource = *_lights_constant_buffer.resource(),
@@ -80,12 +99,18 @@ light_clusters::light_clusters(gpu::device& gpu_device)
                                       .size = _lights_constant_buffer.size()}},
 
       gpu::resource_view_desc{.resource = *_regional_lights_buffer.resource(),
+                              .view_desc =
+                                 gpu::shader_resource_view_desc{
+                                    .type_description =
+                                       gpu::buffer_srv{.first_element = 0,
+                                                       .number_elements = max_regional_lights,
+                                                       .structure_byte_stride = sizeof(
+                                                          light_region_description)}}},
+
+      gpu::resource_view_desc{.resource = *_shadow_map.resource(),
                               .view_desc = gpu::shader_resource_view_desc{
-                                 .type_description =
-                                    gpu::buffer_srv{.first_element = 0,
-                                                    .number_elements = max_regional_lights,
-                                                    .structure_byte_stride = sizeof(
-                                                       light_region_description)}}}});
+                                 .format = DXGI_FORMAT_R32_FLOAT,
+                                 .type_description = gpu::texture2d_srv{}}}});
 }
 
 void light_clusters::update_lights(const frustrum& view_frustrum,
@@ -97,7 +122,8 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                                    .sky_ambient_color =
                                       world.lighting_settings.ambient_sky_color,
                                    .ground_ambient_color =
-                                      world.lighting_settings.ambient_ground_color};
+                                      world.lighting_settings.ambient_ground_color,
+                                   .shadow_transform = _shadow_transform};
 
    boost::container::static_vector<light_region_description, max_regional_lights> regional_lights_descriptions;
 
@@ -273,6 +299,166 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                               D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)};
 
    command_list.deferred_resource_barrier(barriers);
+}
+
+namespace {
+
+auto sun_direction(const world::world& world) -> float3
+{
+   for (auto& light : world.lights) {
+      if (boost::iequals(light.name, world.lighting_settings.global_lights[0])) {
+         return glm::normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+      }
+   }
+
+   return float3{1.0f, 0.0f, 0.0f};
+}
+
+auto make_shadow_camera(const float3 light_direction, const camera& view_camera,
+                        const frustrum& view_frustrum) -> shadow_orthographic_camera
+{
+   shadow_orthographic_camera cam;
+
+   float3 frustrum_centre{0.0f};
+
+   for (auto& corner : view_frustrum.corners) {
+      frustrum_centre += corner;
+   }
+
+   frustrum_centre /= 8.0f;
+
+   (void)view_camera;
+   // float3 min{std::numeric_limits<float>::max()};
+   // float3 max{std::numeric_limits<float>::lowest()};
+   //
+   // {
+   //    const float3 light_camera_position = frustrum_centre;
+   //    const float3 look_at = frustrum_centre - light_direction;
+   //    const float4x4 light_view =
+   //       glm::lookAtLH(light_camera_position, look_at, view_camera.right());
+   //
+   //    for (auto& view_frustrum_corner : view_frustrum.corners) {
+   //       const float3 corner = light_view * float4{view_frustrum_corner, 1.0f};
+   //       min = glm::min(min, corner);
+   //       max = glm::max(max, corner);
+   //    }
+   // }
+
+   // const float3 light_camera_position = frustrum_centre + light_direction *
+   // -min.z; const float3 up = view_camera.right();
+
+   // cam.bounds({min.x, min.y, 0.0f}, {max.x, max.y, max.z - min.z});
+   // cam.look_at(light_camera_position, frustrum_centre, view_camera.right());
+   cam.bounds({-256.f, -256.f, -256.f}, {256.f, 256.f, 256.f});
+   cam.look_at({0.0f, 0.0f, 0.0f}, -light_direction, {0.0f, 1.0f, 0.0f});
+
+   return cam;
+}
+
+}
+
+void light_clusters::TEMP_render_shadow_maps(
+   const camera& view_camera, const frustrum& view_frustrum, const world::world& world,
+   const std::unordered_map<std::string, world::object_class>& world_classes,
+   model_manager& model_manager, gpu::command_list& command_list,
+   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
+{
+   const float3 light_direction = sun_direction(world);
+
+   shadow_orthographic_camera shadow_camera =
+      make_shadow_camera(light_direction, view_camera, view_frustrum);
+   frustrum shadow_frustrum{shadow_camera};
+
+   struct shadow_render_list_item {
+      D3D12_INDEX_BUFFER_VIEW index_buffer_view;
+      D3D12_VERTEX_BUFFER_VIEW position_vertex_buffer_view;
+      D3D12_GPU_VIRTUAL_ADDRESS object_transform_address;
+      uint32 index_count;
+      uint32 start_index;
+      uint32 start_vertex;
+   };
+
+   static std::vector<shadow_render_list_item> render_list;
+   render_list.clear();
+
+   for (auto& object : world.objects) {
+      const auto& model = model_manager.get(world_classes.at(object.class_name).model);
+
+      const auto object_bbox = object.rotation * model.bbox + object.position;
+
+      if (!intersects(shadow_frustrum, object_bbox)) continue;
+
+      const D3D12_GPU_VIRTUAL_ADDRESS object_transform_address = [&] {
+         auto allocation = dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+         float4x4 object_transform = static_cast<float4x4>(object.rotation);
+         object_transform[3] = float4{object.position, 1.0f};
+
+         std::memcpy(allocation.cpu_address, &object_transform,
+                     sizeof(object_transform));
+
+         return allocation.gpu_address;
+      }();
+
+      for (const auto& mesh : model.parts) {
+         render_list.push_back(
+            {.index_buffer_view = model.gpu_buffer.index_buffer_view,
+             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
+
+             .object_transform_address = object_transform_address,
+
+             .index_count = mesh.index_count,
+             .start_index = mesh.start_index,
+             .start_vertex = mesh.start_vertex});
+      }
+   }
+
+   const D3D12_GPU_VIRTUAL_ADDRESS shadow_view_projection_matrix_address = [&] {
+      auto allocation = dynamic_buffer_allocator.allocate(sizeof(float4x4));
+
+      std::memcpy(allocation.cpu_address,
+                  &shadow_camera.view_projection_matrix(), sizeof(float4x4));
+
+      return allocation.gpu_address;
+   }();
+
+   auto depth_stencil_view = _shadow_map_dsv[0].cpu;
+
+   command_list.deferred_resource_barrier(
+      gpu::transition_barrier(*_shadow_map.resource(),
+                              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                              D3D12_RESOURCE_STATE_DEPTH_WRITE));
+   command_list.flush_deferred_resource_barriers();
+
+   command_list.clear_depth_stencil_view(depth_stencil_view,
+                                         D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0);
+
+   command_list.set_graphics_root_signature(*_gpu_device->root_signatures.depth_only_mesh);
+   command_list.set_graphics_root_constant_buffer(1, shadow_camera.view_projection_matrix());
+   command_list.set_pipeline_state(*_gpu_device->pipelines.depth_only_mesh);
+
+   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+   command_list.rs_set_scissor_rects({0, 0, 2048, 2048});
+   command_list.rs_set_viewports({0, 0, 2048, 2048, 0.0f, 1.0f});
+
+   command_list.om_set_render_targets({}, false, _shadow_map_dsv.start().cpu);
+
+   for (auto& mesh : render_list) {
+      command_list.set_graphics_root_constant_buffer_view(0, mesh.object_transform_address);
+
+      command_list.ia_set_index_buffer(mesh.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, mesh.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(mesh.index_count, 1, mesh.start_index,
+                                          mesh.start_vertex, 0);
+   }
+
+   command_list.deferred_resource_barrier(
+      gpu::transition_barrier(*_shadow_map.resource(), D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+   _shadow_transform = shadow_camera.view_projection_matrix();
 }
 
 auto light_clusters::light_descriptors() const noexcept -> gpu::descriptor_range

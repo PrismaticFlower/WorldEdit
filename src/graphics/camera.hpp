@@ -8,18 +8,6 @@ namespace sk::graphics {
 
 class camera {
 public:
-   auto position() const noexcept -> float3
-   {
-      return _position;
-   }
-
-   void position(const float3 new_position) noexcept
-   {
-      _position = new_position;
-
-      update();
-   }
-
    auto right() const noexcept -> float3
    {
       return _world_matrix[0];
@@ -48,6 +36,60 @@ public:
    auto back() const noexcept -> float3
    {
       return _world_matrix[2];
+   }
+
+   auto view_matrix() const noexcept -> const float4x4&
+   {
+      return _view_matrix;
+   }
+
+   auto projection_matrix() const noexcept -> const float4x4&
+   {
+      return _projection_matrix;
+   }
+
+   auto view_projection_matrix() const noexcept -> const float4x4&
+   {
+      return _view_projection_matrix;
+   }
+
+   auto inv_view_projection_matrix() const noexcept -> const float4x4&
+   {
+      return _inv_view_projection_matrix;
+   }
+
+protected:
+   float4x4 _world_matrix;
+   float4x4 _view_matrix;
+   float4x4 _projection_matrix;
+   float4x4 _view_projection_matrix;
+   float4x4 _inv_view_projection_matrix;
+};
+
+class perspective_camera : public camera {
+public:
+   auto position() const noexcept -> float3
+   {
+      return _position;
+   }
+
+   void position(const float3 new_position) noexcept
+   {
+      _position = new_position;
+
+      update();
+   }
+
+   auto rotation() const noexcept -> quaternion
+   {
+      return _rotation;
+   }
+
+   void rotation(const quaternion new_rotation) noexcept
+   {
+      _rotation = new_rotation;
+
+      update();
    }
 
    auto aspect_ratio() const noexcept -> float
@@ -98,6 +140,74 @@ public:
       update();
    }
 
+private:
+   void update() noexcept;
+
+   float3 _position{0.0f, 0.0f, 0.0f};
+   quaternion _rotation{1.0f, 0.0f, 0.0f, 0.0f};
+
+   float _aspect_ratio = 1.0f;
+   float _fov = 0.7853981635f;
+
+   float _near_clip = 1.0f;
+   float _far_clip = 1000.0f;
+};
+
+class shadow_orthographic_camera : public camera {
+public:
+   void look_at(const float3 eye, const float3 at, const float3 up) noexcept
+   {
+      _view_matrix = glm::lookAtLH(eye, at, up);
+      _world_matrix = glm::inverse(_view_matrix);
+
+      update();
+   }
+
+   auto bounds(const float3 min, const float3 max) noexcept
+   {
+      _min = min;
+      _max = max;
+
+      update();
+   }
+
+   auto min() const noexcept -> float3
+   {
+      return _min;
+   }
+
+   void min(const float3 new_min) noexcept
+   {
+      _min = new_min;
+
+      update();
+   }
+
+   auto max() const noexcept -> float3
+   {
+      return _max;
+   }
+
+   void max(const float3 new_max) noexcept
+   {
+      _max = new_max;
+
+      update();
+   }
+
+private:
+   void update() noexcept;
+
+   float3 _position{0.0f, 0.0f, 0.0f};
+   quaternion _rotation{1.0f, 0.0f, 0.0f, 0.0f};
+
+   float3 _min = {-64.0f, -64.0f, 0.0f};
+   float3 _max = {64.0f, 64.0f, 1000.f};
+};
+
+template<typename T>
+class basic_controllable_camera : public T {
+public:
    auto pitch() -> float
    {
       return _pitch;
@@ -122,59 +232,13 @@ public:
       rotation(quaternion{float3{_pitch, _yaw, 0.0f}});
    }
 
-   auto view_matrix() const noexcept -> const float4x4&
-   {
-      return _view_matrix;
-   }
-
-   auto projection_matrix() const noexcept -> const float4x4&
-   {
-      return _projection_matrix;
-   }
-
-   auto view_projection_matrix() const noexcept -> const float4x4&
-   {
-      return _view_projection_matrix;
-   }
-
-   auto inv_view_projection_matrix() const noexcept -> const float4x4&
-   {
-      return _inv_view_projection_matrix;
-   }
-
-protected:
-   auto rotation() const noexcept -> quaternion
-   {
-      return _rotation;
-   }
-
-   void rotation(const quaternion new_rotation) noexcept
-   {
-      _rotation = new_rotation;
-
-      update();
-   }
-
 private:
-   void update() noexcept;
-
-   float3 _position{0.0f, 0.0f, 0.0f};
-   quaternion _rotation{1.0f, 0.0f, 0.0f, 0.0f};
-
-   float _aspect_ratio = 1.0f;
-   float _fov = 0.7853981635f;
-
-   float _near_clip = 1.0f;
-   float _far_clip = 10000.0f;
+   using T::rotation;
 
    float _pitch = 0.0f;
    float _yaw = 0.0f;
-
-   float4x4 _world_matrix;
-   float4x4 _view_matrix;
-   float4x4 _projection_matrix;
-   float4x4 _view_projection_matrix;
-   float4x4 _inv_view_projection_matrix;
 };
+
+using controllable_perspective_camera = basic_controllable_camera<perspective_camera>;
 
 }

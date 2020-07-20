@@ -55,15 +55,15 @@ private:
 
    std::unique_ptr<ImGuiContext, void (*)(ImGuiContext*)> _imgui_context;
 
-   // TODO: Decide on project dir handling.
-   std::filesystem::path _project_dir = L"D:/BF2_ModTools/data_SPT";
+   std::filesystem::path _project_dir =
+      L"D:/BF2_ModTools/data_SPT"; // TODO: Decide on project dir handling.
 
    assets::libraries_manager _asset_libraries{_stream};
    std::unordered_map<std::string, world::object_class> _object_classes;
    world::world _world;
 
    graphics::renderer _renderer;
-   graphics::camera _camera;
+   graphics::controllable_perspective_camera _camera;
 };
 
 }

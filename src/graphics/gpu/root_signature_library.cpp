@@ -16,9 +16,11 @@ auto create_root_signature(ID3D12Device& device,
        FAILED(D3D12SerializeVersionedRootSignature(
           &desc, root_signature_blob.clear_and_assign(),
           root_signature_error_blob.clear_and_assign()))) {
-      throw std::runtime_error{
-         std::string{static_cast<const char*>(root_signature_error_blob->GetBufferPointer()),
-                     root_signature_error_blob->GetBufferSize()}};
+      std::string message{static_cast<const char*>(
+                             root_signature_error_blob->GetBufferPointer()),
+                          root_signature_error_blob->GetBufferSize()};
+
+      throw std::runtime_error{std::move(message)};
    }
 
    utility::com_ptr<ID3D12RootSignature> root_sig;
@@ -86,7 +88,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
         .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
         .OffsetInDescriptorsFromTableStart = 0},
        {.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-        .NumDescriptors = 1,
+        .NumDescriptors = 2,
         .BaseShaderRegister = 0,
         .RegisterSpace = 0,
         .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
@@ -124,7 +126,23 @@ root_signature_library::root_signature_library(ID3D12Device& device)
       .RegisterSpace = 0,
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
-   const std::array object_static_sampler{trilinear_static_sampler};
+   const D3D12_STATIC_SAMPLER_DESC shadow_static_sampler{
+      .Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR,
+      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+      .MipLODBias = 0.0f,
+      .MaxAnisotropy = 0,
+      .ComparisonFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL,
+      .BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
+      .MinLOD = 0.0f,
+      .MaxLOD = D3D12_FLOAT32_MAX,
+      .ShaderRegister = 2,
+      .RegisterSpace = 0,
+      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
+
+   const std::array object_static_sampler{trilinear_static_sampler,
+                                          shadow_static_sampler};
 
    object_mesh = create_root_signature(
       device,
@@ -166,7 +184,8 @@ root_signature_library::root_signature_library(ID3D12Device& device)
       .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
    const std::array terrain_static_sampler{terrain_bilinear_static_sampler,
-                                           terrain_trilinear_static_sampler};
+                                           terrain_trilinear_static_sampler,
+                                           shadow_static_sampler};
 
    const D3D12_DESCRIPTOR_RANGE1 terrain_constants_descriptor_range{
       .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -265,6 +284,27 @@ root_signature_library::root_signature_library(ID3D12Device& device)
       {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
        .Desc_1_1 = {.NumParameters = static_cast<UINT>(meta_line_params.size()),
                     .pParameters = meta_line_params.data(),
+                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
+
+   const std::array depth_only_mesh_root_params{
+      D3D12_ROOT_PARAMETER1{.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
+                            .Descriptor = {.ShaderRegister = 0,
+                                           .RegisterSpace = 0,
+                                           .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
+                            .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX},
+
+      D3D12_ROOT_PARAMETER1{.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
+                            .Descriptor = {.ShaderRegister = 1,
+                                           .RegisterSpace = 0,
+                                           .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
+                            .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX}};
+
+   depth_only_mesh = create_root_signature(
+      device,
+      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+       .Desc_1_1 = {.NumParameters =
+                       static_cast<UINT>(depth_only_mesh_root_params.size()),
+                    .pParameters = depth_only_mesh_root_params.data(),
                     .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
 }
 

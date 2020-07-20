@@ -1,5 +1,5 @@
 
-#define MAX_LIGHTS 1023
+#define MAX_LIGHTS 1022
 
 namespace light_type {
 const static uint directional = 0;
@@ -34,6 +34,7 @@ struct light_constant_buffer {
    uint padding1;
    float3 ground_ambient_color;
    uint padding2;
+   float4x4 shadow_transform;
 
    light_description lights[MAX_LIGHTS];
 
@@ -58,6 +59,9 @@ const static float region_fade_distance_sq = 0.1 * 0.1;
 
 ConstantBuffer<light_constant_buffer> light_constants : register(b0);
 StructuredBuffer<light_region_description> light_region_descriptions : register(t0);
+Texture2D TEMP_shadowmap : register(t1);
+SamplerComparisonState shadow_sampler : register(s2);
+const static float temp_shadow_bias = 0.005;
 
 float3 calc_ambient_light(float3 normalWS)
 {
@@ -75,6 +79,15 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
 {
    const float3 normalWS = input.normalWS;
    const float3 positionWS = input.positionWS;
+
+   const float3 positionLS =
+      mul(light_constants.shadow_transform, float4(input.positionWS, 1.0)).xyz;
+
+   const float shadow =
+      TEMP_shadowmap
+         .SampleCmpLevelZero(shadow_sampler, positionLS.xy * float2(0.5, -0.5) + 0.5,
+                             positionLS.z + temp_shadow_bias)
+         .r;
 
    switch (light.type) {
    case light_type::directional: {
@@ -133,7 +146,7 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
 
       const float falloff = saturate(dot(normalWS, light.directionWS));
 
-      return falloff * region_fade;
+      return falloff * region_fade * shadow;
    }
    case light_type::point_: {
       const float3 light_directionWS = normalize(light.positionWS - positionWS);
