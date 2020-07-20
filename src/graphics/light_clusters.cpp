@@ -401,6 +401,11 @@ void light_clusters::TEMP_render_shadow_maps(
       }();
 
       for (const auto& mesh : model.parts) {
+         if (are_flags_set(mesh.material.flags,
+                           gpu::material_pipeline_flags::transparent)) {
+            continue;
+         }
+
          render_list.push_back(
             {.index_buffer_view = model.gpu_buffer.index_buffer_view,
              .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
