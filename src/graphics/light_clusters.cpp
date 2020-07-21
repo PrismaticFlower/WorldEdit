@@ -81,7 +81,7 @@ light_clusters::light_clusters(gpu::device& gpu_device)
        .height = 2048,
        .optimized_clear_value =
           D3D12_CLEAR_VALUE{.Format = DXGI_FORMAT_D32_FLOAT,
-                            .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
+                            .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
       D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
    _shadow_map_dsv =
@@ -436,7 +436,7 @@ void light_clusters::TEMP_render_shadow_maps(
    command_list.flush_deferred_resource_barriers();
 
    command_list.clear_depth_stencil_view(depth_stencil_view,
-                                         D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0);
+                                         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0x0);
 
    command_list.set_graphics_root_signature(*_gpu_device->root_signatures.depth_only_mesh);
    command_list.set_graphics_root_constant_buffer(1, shadow_camera.view_projection_matrix());

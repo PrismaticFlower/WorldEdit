@@ -138,7 +138,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    command_list.clear_render_target_view(back_buffer_rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
    command_list.clear_depth_stencil_view(depth_stencil_view,
-                                         D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0x0);
+                                         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0x0);
 
    command_list.rs_set_viewports(
       {.Width = static_cast<float>(_device.swap_chain.width()),
@@ -188,7 +188,7 @@ void renderer::window_resized(uint16 width, uint16 height)
         .width = _device.swap_chain.width(),
         .height = _device.swap_chain.height(),
         .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                  .DepthStencil = {.Depth = 0.0f, .Stencil = 0x0}}},
+                                  .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
        D3D12_RESOURCE_STATE_DEPTH_WRITE};
 }
 

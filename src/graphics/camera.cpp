@@ -26,8 +26,8 @@ void perspective_camera::update() noexcept
    _projection_matrix[0][0] = 1.0f / std::tan(_fov * 0.5f);
    _projection_matrix[1][1] = _projection_matrix[0][0] * _aspect_ratio;
 
-   _projection_matrix[2][2] = near_clip / (far_clip - near_clip);
-   _projection_matrix[3][2] = far_clip * _projection_matrix[2][2];
+   _projection_matrix[2][2] = far_clip / (near_clip - far_clip);
+   _projection_matrix[3][2] = near_clip * _projection_matrix[2][2];
    _projection_matrix[2][3] = -1.0f;
 
    _view_projection_matrix = _projection_matrix * _view_matrix;
@@ -44,7 +44,7 @@ void shadow_orthographic_camera::update() noexcept
 
    const auto inv_x_range = 1.0f / (_min.x - _max.x);
    const auto inv_y_range = 1.0f / (_max.y - _min.y);
-   const auto inv_z_range = 1.0f / (_min.z - _max.z);
+   const auto inv_z_range = 1.0f / (_max.z - _min.z);
 
    _projection_matrix[0][0] = inv_x_range + inv_x_range;
    _projection_matrix[1][1] = inv_y_range + inv_y_range;
@@ -52,7 +52,7 @@ void shadow_orthographic_camera::update() noexcept
 
    _projection_matrix[3][0] = -(_max.x + _min.x) * inv_x_range;
    _projection_matrix[3][1] = -(_max.y + _min.y) * inv_y_range;
-   _projection_matrix[3][2] = -_max.z * inv_z_range;
+   _projection_matrix[3][2] = -_min.z * inv_z_range;
 
    _view_projection_matrix = _projection_matrix * _view_matrix;
 

@@ -39,17 +39,17 @@ frustrum::frustrum(const camera& camera) noexcept
 {
    constexpr container::enum_array<float4, frustrum_corner> corners_proj =
       container::make_enum_array<float4, frustrum_corner>(
-         {{frustrum_corner::bottom_left_near, {-1.0f, -1.0f, 1.0f, 1.0f}},
-          {frustrum_corner::bottom_right_near, {1.0f, -1.0f, 1.0f, 1.0f}},
+         {{frustrum_corner::bottom_left_near, {-1.0f, -1.0f, 0.0f, 1.0f}},
+          {frustrum_corner::bottom_right_near, {1.0f, -1.0f, 0.0f, 1.0f}},
 
-          {frustrum_corner::top_left_near, {-1.0f, 1.0f, 1.0f, 1.0f}},
-          {frustrum_corner::top_right_near, {1.0f, 1.0f, 1.0f, 1.0f}},
+          {frustrum_corner::top_left_near, {-1.0f, 1.0f, 0.0f, 1.0f}},
+          {frustrum_corner::top_right_near, {1.0f, 1.0f, 0.0f, 1.0f}},
 
-          {frustrum_corner::bottom_left_far, {-1.0f, -1.0f, 0.0f, 1.0f}},
-          {frustrum_corner::bottom_right_far, {1.0f, -1.0f, 0.0f, 1.0f}},
+          {frustrum_corner::bottom_left_far, {-1.0f, -1.0f, 1.0f, 1.0f}},
+          {frustrum_corner::bottom_right_far, {1.0f, -1.0f, 1.0f, 1.0f}},
 
-          {frustrum_corner::top_left_far, {-1.0f, 1.0f, 0.0f, 1.0f}},
-          {frustrum_corner::top_right_far, {1.0f, 1.0f, 0.0f, 1.0f}}});
+          {frustrum_corner::top_left_far, {-1.0f, 1.0f, 1.0f, 1.0f}},
+          {frustrum_corner::top_right_far, {1.0f, 1.0f, 1.0f, 1.0f}}});
 
    ranges::copy(corners_proj | ranges::views::transform([&](float4 position) {
                    position = camera.inv_view_projection_matrix() * position;
