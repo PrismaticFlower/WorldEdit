@@ -294,9 +294,6 @@
     <ClInclude Include="src\graphics\gpu\buffer.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\concepts.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp">
       <Filter>include</Filter>
     </ClInclude>

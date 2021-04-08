@@ -207,7 +207,7 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
             case 1:
             case 2:
             case 3:
-               light.light_type = light_type{type};
+               light.light_type = static_cast<light_type>(type);
                break;
             default:
                output.write(fmt::format("Warning! World light '{}' has invalid light type! Defaulting to point light.\n"sv,
@@ -229,7 +229,8 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
                switch (const auto addressing = texture->values.get<int>(1); addressing) {
                case 0:
                case 1:
-                  light.texture_addressing = texture_addressing{addressing};
+                  light.texture_addressing =
+                     static_cast<texture_addressing>(addressing);
                   break;
                default:
                   output.write(fmt::format("Warning! World light '{}' has invalid texture addressing mode! Defaulting to clamp.\n"sv,

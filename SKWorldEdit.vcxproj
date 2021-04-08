@@ -198,7 +198,6 @@
     <ClInclude Include="src\graphics\gpu\buffer.hpp" />
     <ClInclude Include="src\graphics\gpu\command_list.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
-    <ClInclude Include="src\graphics\gpu\concepts.hpp" />
     <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp" />
     <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_allocation.hpp" />

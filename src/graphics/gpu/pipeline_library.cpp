@@ -229,7 +229,7 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
    material_pipelines pipelines;
 
    for (auto i = 0u; i < pipelines.size(); ++i) {
-      const auto flags = material_pipeline_flags{i};
+      const auto flags = static_cast<material_pipeline_flags>(i);
 
       const auto ps_name = fmt::format(name, [&] {
          if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) {
