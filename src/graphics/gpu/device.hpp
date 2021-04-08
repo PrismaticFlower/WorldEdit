@@ -3,7 +3,6 @@
 #include "async_copy_manager.hpp"
 #include "buffer.hpp"
 #include "common.hpp"
-#include "concepts.hpp"
 #include "descriptor_allocation.hpp"
 #include "descriptor_heap.hpp"
 #include "pipeline_library.hpp"

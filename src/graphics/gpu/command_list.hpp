@@ -133,8 +133,8 @@ public:
 
    void deferred_resource_barrier(const std::span<const D3D12_RESOURCE_BARRIER> barriers)
    {
-      _deferred_barriers.insert(_deferred_barriers.cend(), barriers.cbegin(),
-                                barriers.cend());
+      _deferred_barriers.insert(_deferred_barriers.end(), barriers.begin(),
+                                barriers.end());
    }
 
    void deferred_resource_barrier(const D3D12_RESOURCE_BARRIER& barrier)
