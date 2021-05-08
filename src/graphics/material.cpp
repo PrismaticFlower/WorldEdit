@@ -70,19 +70,35 @@ material::material(const assets::msh::material& material,
 
 void material::init_resource_views(gpu::device& gpu_device)
 {
-   const std::array resource_view_descriptions{
-      gpu::resource_view_desc{.resource = *textures[0]->resource(),
-                              .view_desc =
-                                 gpu::shader_resource_view_desc{
-                                    .format = textures[0]->format(),
-                                    .type_description = gpu::texture2d_srv{}}},
+   // const std::array resource_view_descriptions{
+   //    gpu::resource_view_desc{.resource = *textures[0]->resource(),
+   //                            .view_desc =
+   //                               gpu::shader_resource_view_desc{
+   //                                  .format = textures[0]->format(),
+   //                                  .type_description = gpu::texture2d_srv{}}},
+   //
+   //    gpu::resource_view_desc{.resource = *textures[1]->resource(),
+   //                            .view_desc =
+   //                               gpu::shader_resource_view_desc{
+   //                                  .format = textures[1]->format(),
+   //                                  .type_description = gpu::texture2d_srv{}}},
+   // };
 
-      gpu::resource_view_desc{.resource = *textures[1]->resource(),
-                              .view_desc =
-                                 gpu::shader_resource_view_desc{
-                                    .format = textures[1]->format(),
-                                    .type_description = gpu::texture2d_srv{}}},
+   // Above ICEs, workaround below...
+
+   std::array resource_view_descriptions{
+      gpu::resource_view_desc{.resource = *textures[0]->resource()},
+
+      gpu::resource_view_desc{.resource = *textures[1]->resource()},
    };
+
+   resource_view_descriptions[0].view_desc =
+      gpu::shader_resource_view_desc{.format = textures[0]->format(),
+                                     .type_description = gpu::texture2d_srv{}};
+
+   resource_view_descriptions[1].view_desc =
+      gpu::shader_resource_view_desc{.format = textures[1]->format(),
+                                     .type_description = gpu::texture2d_srv{}};
 
    resource_views = gpu_device.create_resource_view_set(resource_view_descriptions);
 }

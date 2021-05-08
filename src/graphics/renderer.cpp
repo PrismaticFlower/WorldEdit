@@ -172,6 +172,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    swap_chain.present();
 
    _device.end_frame();
+   _model_manager.trim_models();
 }
 
 void renderer::window_resized(uint16 width, uint16 height)

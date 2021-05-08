@@ -5,10 +5,11 @@
 #include "model.hpp"
 #include "texture_manager.hpp"
 
+#include <memory>
 #include <shared_mutex>
-#include <unordered_map>
-#include <unordered_set>
 
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 #include <gsl/gsl>
 #include <tbb/task_group.h>
 
@@ -52,11 +53,20 @@ public:
    {
       std::shared_lock lock{_mutex};
 
-      for (auto& [asset, model] : _models) {
-         for (auto& part : model.parts) {
+      for (auto& [asset, model_pair] : _models) {
+         for (auto& part : model_pair->gpu_model.parts) {
             part.material.process_updated_texture(gpu_device, updated);
          }
       }
+   }
+
+   void trim_models() noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      absl::erase_if(_models, [](const auto& value) {
+         return value.second->cpu_model.expired();
+      });
    }
 
 private:
@@ -66,7 +76,7 @@ private:
       std::shared_lock lock{_mutex};
 
       if (auto it = _models.find(flat_model); it != _models.end()) {
-         return &it->second;
+         return &it->second->gpu_model;
       }
 
       return nullptr;
@@ -76,11 +86,11 @@ private:
    {
       std::scoped_lock lock{_mutex};
 
-      if (auto [it, inserted] = _pending_models.insert(flat_model); not inserted) {
+      if (auto [it, inserted] = _pending_models.insert(flat_model.get()); not inserted) {
          return;
       }
 
-      _creation_tasks.run([&, flat_model] {
+      _creation_tasks.run([&, flat_model = flat_model] {
          model model{*flat_model, *_gpu_device, _texture_manager};
 
          const auto copy_fence_value = model.init_gpu_buffer_async(*_gpu_device);
@@ -88,17 +98,24 @@ private:
          std::scoped_lock lock{_mutex};
 
          _copy_fence_wait_value = std::max(copy_fence_value, _copy_fence_wait_value);
-         _models.emplace(flat_model, std::move(model));
-         _pending_models.erase(flat_model);
+         _models.emplace(flat_model.get(),
+                         std::make_unique<ready_model>(std::move(model), flat_model));
+         _pending_models.erase(flat_model.get());
       });
    }
+
+   struct ready_model {
+      model gpu_model;
+      std::weak_ptr<assets::msh::flat_model> cpu_model;
+   };
 
    gsl::not_null<gpu::device*> _gpu_device; // Do NOT change while _creation_tasks has active tasks queued.
    texture_manager& _texture_manager;
 
    std::shared_mutex _mutex;
-   std::unordered_map<std::shared_ptr<assets::msh::flat_model>, model> _models;
-   std::unordered_set<std::shared_ptr<assets::msh::flat_model>> _pending_models;
+
+   absl::flat_hash_map<assets::msh::flat_model*, std::unique_ptr<ready_model>> _models;
+   absl::flat_hash_set<assets::msh::flat_model*> _pending_models;
 
    uint64 _copy_fence_wait_value = 0;
 

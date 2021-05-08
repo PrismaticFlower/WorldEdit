@@ -68,8 +68,8 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
-      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
-      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4324;4127;4275;4459;5105</DisableSpecificWarnings>
+      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
@@ -242,6 +242,10 @@
     <ClInclude Include="src\utility\binary_writer.hpp" />
     <ClInclude Include="src\utility\com_ptr.hpp" />
     <ClInclude Include="src\utility\enum_bitflags.hpp" />
+    <ClCompile Include="src\utility\file_watcher.cpp" />
+    <ClInclude Include="src\utility\file_watcher.hpp">
+      <FileType>CppHeader</FileType>
+    </ClInclude>
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
     <ClInclude Include="src\utility\make_range.hpp" />
     <ClInclude Include="src\utility\read_file.hpp" />

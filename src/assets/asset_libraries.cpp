@@ -1,5 +1,6 @@
 
 #include "asset_libraries.hpp"
+#include "utility/file_watcher.hpp"
 
 #include <string_view>
 #include <unordered_set>
@@ -24,9 +25,10 @@ libraries_manager::libraries_manager(output_stream& stream) noexcept
 {
 }
 
+libraries_manager::~libraries_manager() = default;
+
 void libraries_manager::source_directory(const std::filesystem::path& source_directory) noexcept
 {
-
    for (auto entry =
            std::filesystem::recursive_directory_iterator{
               source_directory,
@@ -41,15 +43,35 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
          continue;
       }
 
-      if (auto extension = path.extension(); extension == L".odf"sv) {
-         odfs.add_asset(path);
-      }
-      else if (extension == L".msh"sv) {
-         models.add_asset(path);
-      }
-      else if (extension == L".tga"sv) {
-         textures.add_asset(path);
-      }
+      register_asset(path);
+   }
+
+   _file_watcher = std::make_unique<utility::file_watcher>(source_directory);
+}
+
+void libraries_manager::update_changed() noexcept
+{
+   _file_watcher->evaluate_changed_files([this](const std::filesystem::path& path) {
+      // TODO: Skip path if parent path is ignored.
+
+      register_asset(path);
+   });
+
+   if (_file_watcher->unknown_files_changed()) {
+      // TODO: manual scan here
+   }
+}
+
+void libraries_manager::register_asset(const std::filesystem::path& path) noexcept
+{
+   if (auto extension = path.extension(); extension == L".odf"sv) {
+      odfs.add(path);
+   }
+   else if (extension == L".msh"sv) {
+      models.add(path);
+   }
+   else if (extension == L".tga"sv) {
+      textures.add(path);
    }
 }
 

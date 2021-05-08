@@ -90,27 +90,52 @@ light_clusters::light_clusters(gpu::device& gpu_device)
    _gpu_device->device_d3d->CreateDepthStencilView(_shadow_map.resource(), nullptr,
                                                    _shadow_map_dsv[0].cpu);
 
-   _resource_views = _gpu_device->create_resource_view_set(std::array{
-      gpu::resource_view_desc{
-         .resource = *_lights_constant_buffer.resource(),
-         .view_desc =
-            gpu::constant_buffer_view{.buffer_location =
-                                         _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
-                                      .size = _lights_constant_buffer.size()}},
+   // _resource_views = _gpu_device->create_resource_view_set(std::array{
+   // gpu::resource_view_desc{
+   //    .resource = *_lights_constant_buffer.resource(),
+   //    .view_desc =
+   //       gpu::constant_buffer_view{.buffer_location =
+   //                                    _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
+   //                                 .size = _lights_constant_buffer.size()}},
+   //
+   // gpu::resource_view_desc{.resource = *_regional_lights_buffer.resource(),
+   //                         .view_desc =
+   //                            gpu::shader_resource_view_desc{
+   //                               .type_description =
+   //                                  gpu::buffer_srv{.first_element = 0,
+   //                                                  .number_elements = max_regional_lights,
+   //                                                  .structure_byte_stride = sizeof(
+   //                                                     light_region_description)}}},
+   //
+   // gpu::resource_view_desc{.resource = *_shadow_map.resource(),
+   //                         .view_desc = gpu::shader_resource_view_desc{
+   //                            .format = DXGI_FORMAT_R32_FLOAT,
+   //                            .type_description = gpu::texture2d_srv{}}}});
 
-      gpu::resource_view_desc{.resource = *_regional_lights_buffer.resource(),
-                              .view_desc =
-                                 gpu::shader_resource_view_desc{
-                                    .type_description =
-                                       gpu::buffer_srv{.first_element = 0,
-                                                       .number_elements = max_regional_lights,
-                                                       .structure_byte_stride = sizeof(
-                                                          light_region_description)}}},
+   // Above ICEs, convoluted workaround below
+   std::array resource_view_descs{
+      gpu::resource_view_desc{.resource = *_lights_constant_buffer.resource()},
 
-      gpu::resource_view_desc{.resource = *_shadow_map.resource(),
-                              .view_desc = gpu::shader_resource_view_desc{
-                                 .format = DXGI_FORMAT_R32_FLOAT,
-                                 .type_description = gpu::texture2d_srv{}}}});
+      gpu::resource_view_desc{.resource = *_regional_lights_buffer.resource()},
+
+      gpu::resource_view_desc{.resource = *_shadow_map.resource()}};
+
+   resource_view_descs[0].view_desc =
+      gpu::constant_buffer_view{.buffer_location =
+                                   _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
+                                .size = _lights_constant_buffer.size()};
+
+   resource_view_descs[1].view_desc = gpu::shader_resource_view_desc{
+      .type_description = gpu::buffer_srv{.first_element = 0,
+                                          .number_elements = max_regional_lights,
+                                          .structure_byte_stride =
+
+                                             sizeof(light_region_description)}};
+   resource_view_descs[2].view_desc =
+      gpu::shader_resource_view_desc{.format = DXGI_FORMAT_R32_FLOAT,
+                                     .type_description = gpu::texture2d_srv{}};
+
+   _resource_views = _gpu_device->create_resource_view_set(resource_view_descs);
 }
 
 void light_clusters::update_lights(const frustrum& view_frustrum,
@@ -470,5 +495,4 @@ auto light_clusters::light_descriptors() const noexcept -> gpu::descriptor_range
 {
    return _resource_views.descriptors();
 }
-
 }

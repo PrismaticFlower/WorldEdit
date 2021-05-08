@@ -462,6 +462,9 @@
     <ClInclude Include="src\assets\texture\texture_transforms.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\utility\file_watcher.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -615,6 +618,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\texture\texture_transforms.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utility\file_watcher.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

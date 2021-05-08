@@ -35,7 +35,7 @@ world_edit::world_edit(const HWND window)
    _asset_libraries.source_directory(_project_dir);
 
    try {
-      _world = world::load_world("Worlds/NAB/World2/naboo2.wld", _stream);
+      _world = world::load_world("Worlds/SPT/World1/spt.wld", _stream);
    }
    catch (std::exception&) {
    }
@@ -95,6 +95,8 @@ void world_edit::update_object_classes()
 
 void world_edit::update_assets()
 {
+   _asset_libraries.update_changed();
+
    for (const auto& [name, definition] : _asset_libraries.odfs.loaded_assets()) {
       if (auto object_class = _object_classes.find(std::string{name});
           object_class != _object_classes.end()) {

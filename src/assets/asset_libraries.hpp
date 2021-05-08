@@ -22,6 +22,10 @@
 #include <fmt/format.h>
 #include <tbb/task_group.h>
 
+namespace sk::utility {
+class file_watcher;
+}
+
 namespace sk::assets {
 
 class libraries_manager;
@@ -31,13 +35,22 @@ class library {
 public:
    explicit library(output_stream& stream) : _output_stream{stream} {}
 
-   void add_asset(std::filesystem::path asset_path) noexcept
+   void add(std::filesystem::path asset_path) noexcept
    {
       std::lock_guard lock{_mutex};
 
       asset_path.make_preferred(); // makes for prettier output messages
 
-      _known_assets.emplace(asset_path.stem().string(), std::move(asset_path));
+      const lowercase_string name{asset_path.stem().string()};
+
+      _known_assets.emplace(name, std::move(asset_path));
+      _pending_assets.erase(name);
+
+      if (auto existing = _cached_assets.find(name); existing != _cached_assets.end()) {
+         if (auto asset = existing->second.lock(); asset) {
+            enqueue_create_asset(name);
+         }
+      }
    }
 
    auto aquire_if(const lowercase_string& name) noexcept -> std::shared_ptr<T>
@@ -109,6 +122,7 @@ public:
 
             if (not asset) continue;
 
+            _cached_assets.emplace(name, asset);
             loaded.emplace_back(std::move(name), std::move(asset));
          }
       }
@@ -168,13 +182,20 @@ class libraries_manager {
 public:
    explicit libraries_manager(output_stream& stream) noexcept;
 
+   ~libraries_manager();
+
    void source_directory(const std::filesystem::path& path) noexcept;
+
+   void update_changed() noexcept;
 
    library<odf::definition> odfs;
    library<msh::flat_model> models;
    library<texture::texture> textures;
 
 private:
+   void register_asset(const std::filesystem::path& path) noexcept;
+
+   std::unique_ptr<utility::file_watcher> _file_watcher;
 };
 
 }

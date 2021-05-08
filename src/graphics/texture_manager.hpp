@@ -107,7 +107,7 @@ private:
       std::shared_lock lock{_shared_mutex};
 
       if (auto it = _ready_textures.find(name); it != _ready_textures.end()) {
-         return it->second;
+         return it->second.gpu_texture;
       }
 
       return nullptr;
@@ -141,7 +141,8 @@ private:
 
          std::scoped_lock lock{_shared_mutex};
 
-         _ready_textures.emplace(name, texture);
+         _ready_textures.emplace(name, ready_texture{.gpu_texture = texture,
+                                                     .cpu_texture = cpu_texture});
          _pending_textures.erase(name);
          _copied_textures.emplace_back(name, texture);
          _copy_fence_wait_value =
@@ -206,11 +207,16 @@ private:
       return _gpu_device->copy_manager.close_and_execute(copy_context);
    }
 
+   struct ready_texture {
+      std::shared_ptr<gpu::texture> gpu_texture;
+      std::shared_ptr<assets::texture::texture> cpu_texture;
+   };
+
    assets::library<assets::texture::texture>& _texture_assets;
    gsl::not_null<gpu::device*> _gpu_device; // Do NOT change while _creation_tasks has active tasks queued.
 
    std::shared_mutex _shared_mutex;
-   std::unordered_map<std::string, std::shared_ptr<gpu::texture>> _ready_textures;
+   std::unordered_map<std::string, ready_texture> _ready_textures;
    std::unordered_set<std::string> _pending_textures;
    std::vector<std::pair<std::string, std::shared_ptr<gpu::texture>>> _copied_textures;
 

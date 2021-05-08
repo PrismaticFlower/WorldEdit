@@ -167,25 +167,51 @@ void terrain::init_gpu_resources(const world::terrain& terrain,
    init_gpu_texture_weight_map(terrain, command_list);
    init_gpu_terrain_constants_buffer(terrain, command_list, dynamic_buffer_allocator);
 
-   _resource_views = _gpu_device->create_resource_view_set(std::array{
-      gpu::resource_view_desc{
-         .resource = *_terrain_constants_buffer.resource(),
-         .view_desc =
-            gpu::constant_buffer_view{.buffer_location =
-                                         _terrain_constants_buffer.resource()->GetGPUVirtualAddress(),
-                                      .size = _terrain_constants_buffer.size()}},
+   // _resource_views = _gpu_device->create_resource_view_set(std::array{
+   //    gpu::resource_view_desc{
+   //       .resource = *_terrain_constants_buffer.resource(),
+   //       .view_desc =
+   //          gpu::constant_buffer_view{.buffer_location =
+   //                                       _terrain_constants_buffer.resource()->GetGPUVirtualAddress(),
+   //                                    .size = _terrain_constants_buffer.size()}},
+   //
+   //    gpu::resource_view_desc{.resource = *_height_map.resource(),
+   //                            .view_desc =
+   //                               gpu::shader_resource_view_desc{
+   //                                  .format = _height_map.format(),
+   //                                  .type_description = gpu::texture2d_srv{}}},
+   //
+   //    gpu::resource_view_desc{.resource = *_texture_weight_maps.resource(),
+   //                            .view_desc = gpu::shader_resource_view_desc{
+   //                               .format = _texture_weight_maps.format(),
+   //                               .type_description = gpu::texture2d_array_srv{
+   //                                  .array_size = _texture_weight_maps.array_size()}}}});
 
-      gpu::resource_view_desc{.resource = *_height_map.resource(),
-                              .view_desc =
-                                 gpu::shader_resource_view_desc{
-                                    .format = _height_map.format(),
-                                    .type_description = gpu::texture2d_srv{}}},
+   // Above ICEs, workaround below...
 
-      gpu::resource_view_desc{.resource = *_texture_weight_maps.resource(),
-                              .view_desc = gpu::shader_resource_view_desc{
-                                 .format = _texture_weight_maps.format(),
-                                 .type_description = gpu::texture2d_array_srv{
-                                    .array_size = _texture_weight_maps.array_size()}}}});
+   std::array resource_view_descs{
+      gpu::resource_view_desc{.resource = *_terrain_constants_buffer.resource()},
+
+      gpu::resource_view_desc{.resource = *_height_map.resource()},
+
+      gpu::resource_view_desc{.resource = *_texture_weight_maps.resource()}};
+
+   resource_view_descs[0].view_desc =
+      gpu::constant_buffer_view{.buffer_location =
+                                   _terrain_constants_buffer.resource()->GetGPUVirtualAddress(),
+                                .size = _terrain_constants_buffer.size()};
+
+   resource_view_descs[1].view_desc =
+      gpu::shader_resource_view_desc{.format = _height_map.format(),
+                                     .type_description = gpu::texture2d_srv{}};
+
+   resource_view_descs[2].view_desc =
+      gpu::shader_resource_view_desc{.format = _texture_weight_maps.format(),
+                                     .type_description = gpu::texture2d_array_srv{
+                                        .array_size =
+                                           _texture_weight_maps.array_size()}};
+
+   _resource_views = _gpu_device->create_resource_view_set(resource_view_descs);
 
    auto indices_allocation =
       dynamic_buffer_allocator.allocate(sizeof(terrain_patch_indices));
@@ -516,5 +542,4 @@ void terrain::init_patches_info(const world::terrain& terrain)
       }
    }
 }
-
 }
