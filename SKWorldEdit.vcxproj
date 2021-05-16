@@ -163,7 +163,9 @@
     <ClInclude Include="include\world\sector.hpp" />
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
+    <ClInclude Include="src\assets\asset_ref.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />
+    <ClInclude Include="src\assets\asset_state.hpp" />
     <ClInclude Include="src\assets\asset_traits.hpp" />
     <ClInclude Include="src\assets\config\io.hpp" />
     <ClInclude Include="src\assets\config\key_node.hpp" />
@@ -243,6 +245,7 @@
     <ClInclude Include="src\utility\com_ptr.hpp" />
     <ClInclude Include="src\utility\enum_bitflags.hpp" />
     <ClCompile Include="src\utility\file_watcher.cpp" />
+    <ClInclude Include="src\utility\event.hpp" />
     <ClInclude Include="src\utility\file_watcher.hpp">
       <FileType>CppHeader</FileType>
     </ClInclude>

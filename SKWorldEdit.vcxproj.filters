@@ -465,6 +465,15 @@
     <ClInclude Include="src\utility\file_watcher.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\asset_ref.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\asset_state.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\event.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
