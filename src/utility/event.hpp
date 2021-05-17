@@ -148,3 +148,9 @@ private:
 };
 
 }
+
+namespace sk {
+
+using utility::event_listener;
+
+}
