@@ -254,6 +254,7 @@
     <ClInclude Include="src\utility\read_file.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />
     <ClInclude Include="src\utility\string_ops.hpp" />
+    <ClInclude Include="src\utility\synchronous_task_queue.hpp" />
     <ClInclude Include="src\world\ai_path_flags.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />

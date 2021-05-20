@@ -125,6 +125,7 @@
     <ClCompile Include="src\utility\event_tests.cpp" />
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
+    <ClCompile Include="src\utility\synchronous_task_queue_tests.cpp" />
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
     <ClCompile Include="src\world\world_utilities_tests.cpp" />
     <ClInclude Include="src\approx_test_helpers.hpp" />

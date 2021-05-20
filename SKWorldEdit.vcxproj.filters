@@ -474,6 +474,9 @@
     <ClInclude Include="src\utility\event.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\utility\synchronous_task_queue.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

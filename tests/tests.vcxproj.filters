@@ -40,6 +40,7 @@
     <ClCompile Include="src\assets\texture\texture_io_tests.cpp" />
     <ClCompile Include="src\assets\option_file_tests.cpp" />
     <ClCompile Include="src\utility\event_tests.cpp" />
+    <ClCompile Include="src\utility\synchronous_task_queue_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
