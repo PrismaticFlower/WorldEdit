@@ -60,7 +60,8 @@ bool world_edit::update()
 
    // Logic!
    update_object_classes();
-   update_assets();
+
+   _asset_load_queue.execute();
 
    if (not _focused) return true;
 
@@ -83,31 +84,11 @@ void world_edit::update_object_classes()
    for (const auto& object : _world.objects) {
       if (_object_classes.contains(object.class_name)) continue;
 
-      auto definition = _asset_libraries.odfs.aquire_if(object.class_name);
+      auto definition = _asset_libraries.odfs[object.class_name];
 
       _object_classes.emplace(object.class_name,
-                              world::object_class{definition
-                                                     ? definition
-                                                     : assets::odf::default_object_class_definition(),
-                                                  _asset_libraries});
-   }
-}
-
-void world_edit::update_assets()
-{
-   _asset_libraries.update_changed();
-
-   for (const auto& [name, definition] : _asset_libraries.odfs.loaded_assets()) {
-      if (auto object_class = _object_classes.find(std::string{name});
-          object_class != _object_classes.end()) {
-         object_class->second = world::object_class{definition, _asset_libraries};
-      }
-   }
-
-   for (const auto& [name, model] : _asset_libraries.models.loaded_assets()) {
-      for (auto& [_, object_class] : _object_classes) {
-         if (object_class.model_name == name) object_class.model = model;
-      }
+                              std::make_shared<world::object_class>(_asset_libraries,
+                                                                    definition));
    }
 }
 
@@ -148,6 +129,25 @@ void world_edit::update_camera(const float delta_time, const mouse_state& mouse_
 
       _camera.yaw(_camera.yaw() + (mouse_state.x_movement * camera_look_scale));
       _camera.pitch(_camera.pitch() + (mouse_state.y_movement * camera_look_scale));
+   }
+}
+
+void world_edit::object_definition_loaded(const lowercase_string& name,
+                                          asset_ref<assets::odf::definition> asset,
+                                          asset_data<assets::odf::definition> data)
+{
+   _object_classes[name]->update_definition(_asset_libraries, asset);
+}
+
+void world_edit::model_loaded(const lowercase_string& name,
+                              asset_ref<assets::msh::flat_model> asset,
+                              asset_data<assets::msh::flat_model> data)
+{
+   for (auto& [object_class_name, object_class] : _object_classes) {
+      if (object_class->model_name != name) continue;
+
+      object_class->model_asset = asset;
+      object_class->model = data;
    }
 }
 

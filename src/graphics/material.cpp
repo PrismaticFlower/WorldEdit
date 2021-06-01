@@ -1,7 +1,5 @@
 #include "material.hpp"
 
-#include <boost/algorithm/string.hpp>
-
 #include <range/v3/view.hpp>
 
 using namespace std::literals;
@@ -30,15 +28,17 @@ material::material(const assets::msh::material& material,
                    gpu::device& gpu_device, texture_manager& texture_manager)
 {
    texture_names.resize(2);
-   texture_names[0] = material.textures[0];
-   texture_names[1] = material.textures[1];
+   texture_names[0] = lowercase_string{material.textures[0]};
+   texture_names[1] = lowercase_string{material.textures[1]};
 
    textures.resize(2);
 
-   textures[0] = texture_manager.aquire_if(texture_names[0]);
+   textures[0] =
+      texture_manager.at_or(texture_names[0], texture_manager.null_diffuse_map());
 
    if (has_normalmap(material) and not texture_names[1].empty()) {
-      textures[1] = texture_manager.aquire_if(texture_names[1]);
+      textures[1] = texture_manager.at_or(texture_names[1],
+                                          texture_manager.null_normal_map());
    }
 
    if (not textures[0]) textures[0] = texture_manager.null_diffuse_map();
@@ -110,7 +110,7 @@ void material::process_updated_texture(gpu::device& gpu_device, updated_texture 
    bool reinit_views = false;
 
    for (auto [name, texture] : zip(texture_names, textures)) {
-      if (not boost::algorithm::iequals(name, updated.name)) continue;
+      if (name != updated.name) continue;
 
       texture = updated.texture;
       reinit_views = true;

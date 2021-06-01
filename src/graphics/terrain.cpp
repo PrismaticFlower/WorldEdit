@@ -7,7 +7,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include <boost/algorithm/string.hpp>
 #include <glm/glm.hpp>
 
 #include <range/v3/view.hpp>
@@ -148,7 +147,7 @@ void terrain::process_updated_texture(updated_texture updated)
    bool reinit_views = false;
 
    for (auto [name, texture] : zip(_diffuse_maps_names, _diffuse_maps)) {
-      if (not boost::algorithm::iequals(name, updated.name)) continue;
+      if (name != updated.name) continue;
 
       texture = updated.texture;
       reinit_views = true;
@@ -473,7 +472,9 @@ void terrain::init_textures(const world::terrain& terrain)
 {
    using namespace ranges::views;
 
-   _diffuse_maps_names = terrain.texture_names;
+   for (auto i : iota(std::size_t{0}, _diffuse_maps_names.size())) {
+      _diffuse_maps_names[i] = lowercase_string{terrain.texture_names[i]};
+   }
 
    for (auto& name : _diffuse_maps_names) {
       if (const auto ext_offset = name.find_last_of('.');
@@ -487,9 +488,7 @@ void terrain::init_textures(const world::terrain& terrain)
          texture = _texture_manager.null_diffuse_map();
       }
       else {
-         texture = _texture_manager.aquire_if(name);
-
-         if (not texture) texture = _texture_manager.null_diffuse_map();
+         texture = _texture_manager.at_or(name, _texture_manager.null_diffuse_map());
       }
    }
 }

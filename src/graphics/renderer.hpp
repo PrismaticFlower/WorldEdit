@@ -17,8 +17,9 @@
 #include "world/world.hpp"
 
 #include <array>
-#include <unordered_map>
 #include <vector>
+
+#include <absl/container/flat_hash_map.h>
 
 namespace sk::graphics {
 
@@ -26,8 +27,9 @@ class renderer {
 public:
    renderer(const HWND window, assets::libraries_manager& asset_libraries);
 
-   void draw_frame(const camera& camera, const world::world& world,
-                   const std::unordered_map<std::string, world::object_class>& world_classes);
+   void draw_frame(
+      const camera& camera, const world::world& world,
+      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes);
 
    void window_resized(uint16 width, uint16 height);
 
@@ -47,21 +49,22 @@ private:
    void update_camera_constant_buffer(const camera& camera,
                                       gpu::command_list& command_list);
 
-   void draw_world(const frustrum& view_frustrum, const world::world& world,
-                   const std::unordered_map<std::string, world::object_class>& world_classes,
-                   gpu::command_list& command_list);
+   void draw_world(
+      const frustrum& view_frustrum, const world::world& world,
+      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
+      gpu::command_list& command_list);
 
    void draw_world_render_list(const std::vector<render_list_item>& list,
                                gpu::command_list& command_list);
 
    void draw_world_meta_objects(
       const frustrum& view_frustrum, const world::world& world,
-      const std::unordered_map<std::string, world::object_class>& world_classes,
+      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
       gpu::command_list& command_list);
 
    void build_object_render_list(
       const frustrum& view_frustrum, const world::world& world,
-      const std::unordered_map<std::string, world::object_class>& world_classes);
+      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes);
 
    void update_textures();
 
@@ -92,7 +95,7 @@ private:
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
    texture_manager _texture_manager;
-   model_manager _model_manager{_device, _texture_manager};
+   model_manager _model_manager;
    geometric_shapes _geometric_shapes{_device};
    light_clusters _light_clusters{_device};
    terrain _terrain{_device, _texture_manager};

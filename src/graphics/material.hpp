@@ -19,8 +19,8 @@ struct material {
    gpu::material_pipeline_flags flags = gpu::material_pipeline_flags::none;
    gpu::resource_view_set resource_views;
 
-   std::vector<std::shared_ptr<gpu::texture>> textures;
-   std::vector<std::string> texture_names;
+   std::vector<std::shared_ptr<const gpu::texture>> textures;
+   std::vector<lowercase_string> texture_names;
 };
 
 }

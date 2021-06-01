@@ -50,8 +50,9 @@ TEST_CASE("string split first of exclusive if", "[Utility][StringOp]")
 {
    const auto input = "Foo Bar Baz"sv;
 
-   REQUIRE(split_first_of_exclusive_if(input, std::isspace) ==
-           std::array{"Foo"sv, "Bar Baz"sv});
+   REQUIRE(split_first_of_exclusive_if(input, [](char c) {
+              return std::isspace(c);
+           }) == std::array{"Foo"sv, "Bar Baz"sv});
    REQUIRE(split_first_of_exclusive_if(input, [](char) { return false; }) ==
            std::array{input, ""sv});
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "asset_ref.hpp"
+#include "asset_state.hpp"
 #include "asset_traits.hpp"
 #include "exceptions.hpp"
 #include "lowercase_string.hpp"
@@ -11,14 +13,13 @@
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
-#include <future>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
-#include <string>
-#include <unordered_map>
+#include <stop_token>
 #include <vector>
 
+#include <absl/container/flat_hash_map.h>
 #include <fmt/format.h>
 #include <tbb/task_group.h>
 
@@ -35,135 +36,149 @@ class library {
 public:
    explicit library(output_stream& stream) : _output_stream{stream} {}
 
+   /// @brief Adds an asset to the library.
+   /// @param asset_path The path to the asset.
    void add(std::filesystem::path asset_path) noexcept
    {
-      std::lock_guard lock{_mutex};
-
       asset_path.make_preferred(); // makes for prettier output messages
 
       const lowercase_string name{asset_path.stem().string()};
 
-      _known_assets.emplace(name, std::move(asset_path));
-      _pending_assets.erase(name);
+      auto new_state = make_asset_state(name, asset_path);
 
-      if (auto existing = _cached_assets.find(name); existing != _cached_assets.end()) {
-         if (auto asset = existing->second.lock(); asset) {
-            enqueue_create_asset(name);
-         }
+      std::scoped_lock lock{_mutex};
+
+      auto [state_pair, inserted] = _assets.emplace(name, new_state);
+
+      auto state = state_pair->second;
+
+      if (not inserted) {
+         std::scoped_lock state_lock{state->mutex};
+
+         state->exists = true;
+         state->path = asset_path;
+         state->start_load = [this, name] {
+            std::scoped_lock lock{_mutex};
+
+            enqueue_create_asset(name, false);
+         };
+      }
+
+      if (state->ref_count.load(std::memory_order_relaxed) > 1) {
+         enqueue_create_asset(name, true);
       }
    }
 
-   auto aquire_if(const lowercase_string& name) noexcept -> std::shared_ptr<T>
+   /// @brief Gets or creates a reference to an asset. The asset need not yet exist on disk.
+   /// @param name The name of the asset.
+   /// @return An asset_ref referencing to the asset.
+   auto operator[](const lowercase_string& name) noexcept -> asset_ref<T>
    {
-      if (name.empty()) return nullptr;
-      if (auto existing = aquire_cached_if(name); existing) return existing;
+      if (name.empty()) return asset_ref{_null_asset};
+
+      // Take a shared_lock to try and get an already existing asset state.
+      {
+         std::shared_lock lock{_mutex};
+
+         if (auto asset = _assets.find(name); asset != _assets.end()) {
+            return asset_ref{asset->second};
+         }
+      }
+
+      auto placeholder_state = make_placeholder_asset_state();
 
       std::lock_guard lock{_mutex};
 
-      // make sure another thread hasn't already loaded the asset inbetween us checking for it and taking the write lock
-      if (auto existing = _cached_assets.find(name); existing != _cached_assets.end()) {
-         if (auto asset = existing->second.lock(); asset) {
-            return asset;
-         }
-      }
+      auto [state_pair, inserted] = _assets.emplace(name, placeholder_state);
 
-      if (auto pending = _pending_assets.find(name); pending != _pending_assets.end()) {
-         auto& [_, future] = *pending;
-
-         if (const auto status = future.wait_for(std::chrono::seconds{0});
-             status == std::future_status::ready) {
-
-            if (auto asset = future.get(); asset) {
-               _cached_assets[name] = asset;
-
-               _pending_assets.erase(pending);
-
-               return asset;
-            }
-         }
-
-         return nullptr;
-      }
-
-      if (_known_assets.contains(name)) {
-         enqueue_create_asset(name);
-      }
-      else {
-         _output_stream.write(fmt::format(
-            "Error! Unable to find referenced {} asset named '{}'!\n",
-            asset_traits<T>::error_type_name, name));
-      }
-
-      return nullptr;
+      return state_pair->second;
    }
 
-   auto aquire_cached_if(const lowercase_string& name) noexcept -> std::shared_ptr<T>
+   /// @brief Listens for load updates on the assets.
+   /// @param callback Function to call whenever an asset is loaded or is reloaded.
+   /// @return The event_listener for the callback.
+   auto listen_for_loads(
+      std::function<void(const lowercase_string& name, asset_ref<T> asset, asset_data<T> data)> callback) noexcept
+      -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>
    {
-      std::shared_lock read_lock{_mutex};
-
-      if (auto existing = _cached_assets.find(name); existing != _cached_assets.end()) {
-         return existing->second.lock();
-      }
-
-      return nullptr;
-   }
-
-   auto loaded_assets() -> std::vector<std::pair<std::string, std::shared_ptr<T>>>
-   {
-      std::lock_guard lock{_mutex};
-
-      std::vector<std::pair<std::string, std::shared_ptr<T>>> loaded;
-      loaded.reserve(_pending_assets.size());
-
-      for (auto& [name, future] : _pending_assets) {
-         if (const auto status = future.wait_for(std::chrono::seconds{0});
-             status == std::future_status::ready) {
-            auto asset = future.get();
-
-            if (not asset) continue;
-
-            _cached_assets.emplace(name, asset);
-            loaded.emplace_back(std::move(name), std::move(asset));
-         }
-      }
-
-      std::erase_if(_pending_assets, [](const auto& pending) {
-         return not pending.second.valid();
-      });
-
-      return loaded;
+      return _load_event.listen(std::move(callback));
    }
 
 private:
-   void enqueue_create_asset(lowercase_string name) noexcept
+   auto make_asset_state(const lowercase_string& name, std::filesystem::path asset_path)
+      -> std::shared_ptr<asset_state<T>>
+   {
+      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{},
+                                              not asset_path.empty(),
+                                              asset_path, [this, name = name] {
+                                                 std::scoped_lock lock{_mutex};
+
+                                                 enqueue_create_asset(name, false);
+                                              });
+   }
+
+   auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
+   {
+      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{}, false,
+                                              std::filesystem::path{}, [] {});
+   }
+
+   void enqueue_create_asset(lowercase_string name, bool preempt_current_load) noexcept
    {
       using namespace std::literals;
 
-      auto load_asset_task = std::make_unique<std::packaged_task<std::shared_ptr<T>()>>(
-         [this, asset_path = _known_assets.at(name),
-          name = name]() -> std::shared_ptr<T> {
-            try {
-               auto asset = std::make_shared<T>(asset_traits<T>::load(asset_path));
+      auto asset = _assets.at(name);
 
-               _output_stream.write(
-                  fmt::format("Loaded asset '{}'\n"sv, asset_path.string()));
+      if (preempt_current_load) {
+         if (auto stop_load = _loading_assets.find(name);
+             stop_load != _loading_assets.end()) {
+            stop_load->second.request_stop();
+            _loading_assets.erase(stop_load);
+         }
+      }
+      else if (_loading_assets.contains(name)) {
+         return;
+      }
 
-               return asset;
+      std::shared_lock lock{asset->mutex};
+
+      const bool block = (name == lowercase_string{"metalroughspheres"sv});
+      auto path = _assets.at(name)->path;
+
+      _tasks.run([this, asset_path = _assets.at(name)->path, asset, name,
+                  stop_token = _loading_assets[name].get_token()]() {
+         try {
+            if (stop_token.stop_requested()) return;
+
+            auto asset_data =
+               std::make_shared<const T>(asset_traits<T>::load(asset_path));
+
+            _output_stream.write(
+               fmt::format("Loaded asset '{}'\n"sv, asset_path.string()));
+
+            if (stop_token.stop_requested()) return;
+
+            // update the asset state's data ref
+            {
+               std::scoped_lock lock{asset->mutex};
+
+               asset->data = asset_data;
             }
-            catch (std::exception& e) {
-               _output_stream.write(
-                  fmt::format("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
-                              asset_path.string(),
-                              utility::string::indent(2, e.what())));
 
-               return nullptr;
+            // erase the loading marker/stop_source
+            {
+               std::scoped_lock lock{_mutex};
+
+               _loading_assets.erase(name);
             }
-         });
 
-      _pending_assets.emplace(name, load_asset_task->get_future());
-
-      _tasks.run([load_asset_task = std::move(load_asset_task)]() {
-         (*load_asset_task)();
+            _load_event.broadcast(name, asset, asset_data);
+         }
+         catch (std::exception& e) {
+            _output_stream.write(
+               fmt::format("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
+                           asset_path.string(), utility::string::indent(2, e.what())));
+         }
       });
    }
 
@@ -171,11 +186,14 @@ private:
 
    std::shared_mutex _mutex;
 
-   std::unordered_map<lowercase_string, std::filesystem::path> _known_assets;
-   std::unordered_map<lowercase_string, std::future<std::shared_ptr<T>>> _pending_assets;
-   std::unordered_map<lowercase_string, std::weak_ptr<T>> _cached_assets;
+   absl::flat_hash_map<lowercase_string, std::shared_ptr<asset_state<T>>> _assets;
+   absl::flat_hash_map<lowercase_string, std::stop_source> _loading_assets;
 
    tbb::task_group _tasks;
+
+   const std::shared_ptr<asset_state<T>> _null_asset = make_placeholder_asset_state();
+
+   utility::event<void(const lowercase_string&, asset_ref<T>, asset_data<T>)> _load_event;
 };
 
 class libraries_manager {

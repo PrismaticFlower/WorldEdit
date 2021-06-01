@@ -77,7 +77,10 @@ static_assert(sizeof(object_constants) == 64);
 }
 
 renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries)
-   : _window{window}, _device{window}, _texture_manager{_device, asset_libraries.textures}
+   : _window{window},
+     _device{window},
+     _texture_manager{_device, asset_libraries.textures},
+     _model_manager{_device, _texture_manager, asset_libraries.models}
 {
    auto imgui_font_descriptor =
       _device.descriptor_heap_srv_cbv_uav.allocate_static(1);
@@ -94,8 +97,9 @@ renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries
                                        _camera_constant_buffer_view[0]);
 }
 
-void renderer::draw_frame(const camera& camera, const world::world& world,
-                          const std::unordered_map<std::string, world::object_class>& world_classes)
+void renderer::draw_frame(
+   const camera& camera, const world::world& world,
+   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
 {
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
@@ -213,9 +217,10 @@ void renderer::update_camera_constant_buffer(const camera& camera,
                               D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 }
 
-void renderer::draw_world(const frustrum& view_frustrum, const world::world& world,
-                          const std::unordered_map<std::string, world::object_class>& world_classes,
-                          gpu::command_list& command_list)
+void renderer::draw_world(
+   const frustrum& view_frustrum, const world::world& world,
+   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
+   gpu::command_list& command_list)
 {
    build_object_render_list(view_frustrum, world, world_classes);
 
@@ -254,7 +259,7 @@ void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
 
 void renderer::draw_world_meta_objects(
    const frustrum& view_frustrum, const world::world& world,
-   const std::unordered_map<std::string, world::object_class>& world_classes,
+   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
    gpu::command_list& command_list)
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
@@ -526,7 +531,7 @@ void renderer::draw_world_meta_objects(
       for (auto& object : world.objects) {
          // TEMP constants setup
          {
-            const auto& model = world_classes.at(object.class_name).model;
+            const auto& model = world_classes.at(object.class_name)->model;
             const auto object_bbox =
                object.rotation * model->bounding_box + object.position;
             const auto bbox_centre = (object_bbox.min + object_bbox.max) / 2.0f;
@@ -635,7 +640,7 @@ void renderer::draw_world_meta_objects(
 
 void renderer::build_object_render_list(
    const frustrum& view_frustrum, const world::world& world,
-   const std::unordered_map<std::string, world::object_class>& world_classes)
+   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
 {
    _opaque_object_render_list.clear();
    _transparent_object_render_list.clear();
@@ -644,7 +649,7 @@ void renderer::build_object_render_list(
 
    for (auto& object : world.objects) {
       const auto& model =
-         _model_manager.get(world_classes.at(object.class_name).model);
+         _model_manager[world_classes.at(object.class_name)->model_name];
 
       const auto object_bbox = object.rotation * model.bbox + object.position;
 

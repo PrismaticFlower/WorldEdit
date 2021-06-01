@@ -7,18 +7,18 @@
 #include <concepts>
 #include <memory>
 #include <shared_mutex>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <DirectXTex.h>
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 #include <tbb/tbb.h>
 
 namespace sk::graphics {
 
 struct updated_texture {
-   const std::string& name;
-   const std::shared_ptr<gpu::texture>& texture;
+   const lowercase_string& name;
+   std::shared_ptr<const gpu::texture> texture;
 };
 
 class texture_manager {
@@ -29,129 +29,99 @@ public:
    {
       using assets::texture::texture_format;
 
-      const auto null_texture = [&](const float4 v, const texture_format format,
-                                    std::shared_ptr<gpu::texture>& out) {
+      const auto null_texture_init = [&](const float4 v, const texture_format format) {
          assets::texture::texture cpu_null_texture{
             {.width = 1, .height = 1, .format = format}};
 
          cpu_null_texture.store({.mip_level = 0}, {0, 0}, v);
 
-         out = std::make_shared<gpu::texture>(
+         auto result = std::make_shared<gpu::texture>(
             gpu_device.create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
                                        .format = cpu_null_texture.dxgi_format()},
                                       D3D12_RESOURCE_STATE_COMMON));
 
-         return init_texture_async(*out, cpu_null_texture);
+         init_texture_async(*result, cpu_null_texture);
+
+         return result;
       };
 
-      _copy_fence_wait_value = std::max({
-         null_texture(float4{0.75f, 0.75f, 0.75f, 1.0f},
-                      texture_format::r8g8b8a8_unorm_srgb, _null_diffuse_map),
+      _null_diffuse_map = null_texture_init(float4{0.75f, 0.75f, 0.75f, 1.0f},
+                                            texture_format::r8g8b8a8_unorm_srgb);
 
-         null_texture(float4{0.5f, 0.5f, 1.0f, 1.0f},
-                      texture_format::r8g8b8a8_unorm_srgb, _null_normal_map),
-      });
+      _null_normal_map = null_texture_init(float4{0.5f, 0.5f, 1.0f, 1.0f},
+                                           texture_format::r8g8b8a8_unorm_srgb);
    };
 
-   auto aquire_if(const std::string& name) -> std::shared_ptr<gpu::texture>
+   /// @brief Gets the specified texture or returns a default texture if it is not available.
+   /// @param name Name of the texture to get.
+   /// @param default_texture Texture to return if the requested texture is not available.
+   /// @return The texture or default_texture.
+   auto at_or(const lowercase_string& name,
+              std::shared_ptr<const gpu::texture> default_texture)
+      -> std::shared_ptr<const gpu::texture>
    {
-      if (auto loaded = aquire_if_loaded(name); loaded) return loaded;
+      if (name.empty()) return default_texture;
 
-      auto cpu_texture = _texture_assets.aquire_if(lowercase_string{name});
+      {
+         std::shared_lock lock{_shared_mutex};
 
-      std::scoped_lock lock{_shared_mutex};
+         if (auto it = _textures.find(name); it != _textures.end()) {
+            return it->second.texture;
+         }
+      }
 
-      if (not cpu_texture) return nullptr;
+      enqueue_create_texture(name);
 
-      enqueue_create_texture(name, cpu_texture);
-
-      return nullptr;
+      return default_texture;
    }
 
-   auto copy_fence_wait_value() -> UINT64
-   {
-      std::shared_lock lock{_shared_mutex};
-
-      return _copy_fence_wait_value;
-   }
-
+   /// @brief Texture with a color value of 0.75, 0.75, 0.75, 1.0.
+   /// @return The texture.
    auto null_diffuse_map() -> std::shared_ptr<gpu::texture>
    {
       return _null_diffuse_map;
    }
 
+   /// @brief Texture with a color value of 0.5, 0.5, 1.0, 1.0.
+   /// @return The texture.
    auto null_normal_map() -> std::shared_ptr<gpu::texture>
    {
       return _null_normal_map;
    }
 
-   template<std::invocable<updated_texture> Callback>
-   void process_updated_textures(Callback&& callback)
+   /// @brief Process textures that have been updated since the last frame.
+   /// @param callback A function to call with a updated_texture on the updated textures.
+   void process_updated_textures(std::invocable<updated_texture> auto&& callback)
    {
       std::scoped_lock lock{_shared_mutex};
 
       for (auto& texture : _copied_textures) {
-         callback({.name = texture.first, .texture = texture.second});
+         std::invoke(callback, updated_texture{.name = texture.first,
+                                               .texture = texture.second});
       }
 
       _copied_textures.clear();
-
-      for (auto [name, cpu_texture] : _texture_assets.loaded_assets()) {
-         enqueue_create_texture(name, cpu_texture);
-      }
    }
 
 private:
-   auto aquire_if_loaded(const std::string& name) -> std::shared_ptr<gpu::texture>
+   void enqueue_create_texture(const lowercase_string& name)
    {
-      std::shared_lock lock{_shared_mutex};
+      auto texture_asset = _texture_assets[name];
+      auto texture_data = _texture_assets[name].get_if();
 
-      if (auto it = _ready_textures.find(name); it != _ready_textures.end()) {
-         return it->second.gpu_texture;
-      }
-
-      return nullptr;
-   }
-
-   void enqueue_create_texture(const std::string& name,
-                               std::shared_ptr<assets::texture::texture> cpu_texture)
-   {
-      if (auto [it, inserted] = _pending_textures.insert(name); not inserted) {
+      if (auto [it, inserted] = _pending_textures.emplace(name, texture_asset);
+          not inserted) {
          return;
       }
 
-      _creation_tasks.run([this, name = name, cpu_texture = std::move(cpu_texture)] {
-         // ICE workaround...
-         const gpu::texture_desc texture_desc = [&] {
-            gpu::texture_desc texture_desc;
+      if (not texture_data) return;
 
-            texture_desc.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            texture_desc.format = cpu_texture->dxgi_format();
-            texture_desc.width = cpu_texture->width();
-            texture_desc.height = cpu_texture->height();
-            texture_desc.mip_levels = cpu_texture->mip_levels();
-
-            return texture_desc;
-         }();
-
-         auto texture = std::make_shared<gpu::texture>(
-            _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COMMON));
-
-         uint64 resource_copy_fence_value = init_texture_async(*texture, *cpu_texture);
-
-         std::scoped_lock lock{_shared_mutex};
-
-         _ready_textures.emplace(name, ready_texture{.gpu_texture = texture,
-                                                     .cpu_texture = cpu_texture});
-         _pending_textures.erase(name);
-         _copied_textures.emplace_back(name, texture);
-         _copy_fence_wait_value =
-            std::max(_copy_fence_wait_value, resource_copy_fence_value);
+      _creation_tasks.run([this, texture_asset, texture_data, name = name] {
+         texture_loaded(name, texture_asset, texture_data);
       });
    }
 
-   auto init_texture_async(gpu::texture& texture,
-                           const assets::texture::texture& cpu_texture) -> UINT64
+   void init_texture_async(gpu::texture& texture, const assets::texture::texture& cpu_texture)
    {
       auto copy_context = _gpu_device->copy_manager.aquire_context();
 
@@ -204,28 +174,62 @@ private:
          command_list.CopyTextureRegion(&dest_location, 0, 0, 0, &src_location, nullptr);
       }
 
-      return _gpu_device->copy_manager.close_and_execute(copy_context);
+      _gpu_device->copy_manager.close_and_execute(copy_context);
    }
 
-   struct ready_texture {
-      std::shared_ptr<gpu::texture> gpu_texture;
-      std::shared_ptr<assets::texture::texture> cpu_texture;
+   void texture_loaded(const lowercase_string& name,
+                       asset_ref<assets::texture::texture> asset,
+                       asset_data<assets::texture::texture> data) noexcept
+   {
+      const gpu::texture_desc texture_desc = [&] {
+         gpu::texture_desc texture_desc;
+
+         texture_desc.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+         texture_desc.format = data->dxgi_format();
+         texture_desc.width = data->width();
+         texture_desc.height = data->height();
+         texture_desc.mip_levels = data->mip_levels();
+
+         return texture_desc;
+      }();
+
+      auto texture = std::make_shared<gpu::texture>(
+         _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COMMON));
+
+      init_texture_async(*texture, *data);
+
+      std::scoped_lock lock{_shared_mutex};
+
+      _textures[name] = texture_state{.texture = texture, .asset = asset};
+      _pending_textures.erase(name);
+      _copied_textures.emplace_back(name, texture);
+   }
+
+   struct texture_state {
+      std::shared_ptr<gpu::texture> texture;
+      asset_ref<assets::texture::texture> asset;
    };
 
    assets::library<assets::texture::texture>& _texture_assets;
    gsl::not_null<gpu::device*> _gpu_device; // Do NOT change while _creation_tasks has active tasks queued.
 
    std::shared_mutex _shared_mutex;
-   std::unordered_map<std::string, ready_texture> _ready_textures;
-   std::unordered_set<std::string> _pending_textures;
-   std::vector<std::pair<std::string, std::shared_ptr<gpu::texture>>> _copied_textures;
-
-   uint64 _copy_fence_wait_value = 0;
+   absl::flat_hash_map<lowercase_string, texture_state> _textures;
+   absl::flat_hash_map<lowercase_string, asset_ref<assets::texture::texture>> _pending_textures;
+   std::vector<std::pair<lowercase_string, std::shared_ptr<gpu::texture>>> _copied_textures;
 
    tbb::task_group _creation_tasks;
 
    std::shared_ptr<gpu::texture> _null_diffuse_map;
    std::shared_ptr<gpu::texture> _null_normal_map;
+
+   event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>,
+                       asset_data<assets::texture::texture>)>
+      _asset_load_listener = _texture_assets.listen_for_loads(
+         [this](const lowercase_string& name, asset_ref<assets::texture::texture> asset,
+                asset_data<assets::texture::texture> data) {
+            texture_loaded(name, asset, data);
+         });
 };
 
 }

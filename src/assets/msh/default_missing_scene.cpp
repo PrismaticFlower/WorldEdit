@@ -3282,10 +3282,10 @@ const std::array<std::array<uint16, 3>, 928> questionmark_triangles = {
 
 }
 
-auto default_missing_scene() noexcept -> const std::shared_ptr<flat_model>&
+auto default_missing_scene() noexcept -> const std::shared_ptr<const flat_model>&
 {
-   const static std::shared_ptr<flat_model> default_missing_scene =
-      std::make_shared<flat_model>([] {
+   const static std::shared_ptr<const flat_model> default_missing_scene =
+      std::make_shared<const flat_model>([] {
          scene scene{
             .materials = {{.name = "missing_scene"s,
                            .specular_color = {0.5f, 0.5f, 0.5f},

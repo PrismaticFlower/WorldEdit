@@ -82,7 +82,7 @@ public:
    auto operator=(const async_copy_manager&) -> async_copy_manager& = delete;
 
    async_copy_manager(async_copy_manager&&) = delete;
-   auto operator=(async_copy_manager &&) -> async_copy_manager& = delete;
+   auto operator=(async_copy_manager&&) -> async_copy_manager& = delete;
 
    ~async_copy_manager() = default;
 
@@ -100,7 +100,7 @@ public:
       return {*command_allocator.release(), _device, *command_list.release()};
    }
 
-   [[nodiscard]] auto close_and_execute(copy_context& copy_context) -> UINT64
+   auto close_and_execute(copy_context& copy_context) -> UINT64
    {
       throw_if_failed(copy_context.command_list.Close());
 

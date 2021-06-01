@@ -12,6 +12,8 @@
 #include <array>
 #include <vector>
 
+#include <absl/container/flat_hash_map.h>
+
 namespace sk::graphics {
 
 class light_clusters {
@@ -25,7 +27,7 @@ public:
    void TEMP_render_shadow_maps(
       const camera& view_camera, const frustrum& view_frustrum,
       const world::world& world,
-      const std::unordered_map<std::string, world::object_class>& world_classes,
+      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
       model_manager& model_manager, gpu::command_list& command_list,
       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
