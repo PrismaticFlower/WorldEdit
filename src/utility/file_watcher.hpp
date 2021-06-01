@@ -21,7 +21,7 @@ class file_watcher {
 public:
    explicit file_watcher(const std::filesystem::path& path);
 
-   void evaluate_changed_files(file_watcher_callback auto callback) noexcept
+   void evaluate_modified_files(file_watcher_callback auto callback) noexcept
    {
       std::lock_guard lock{_changed_files_mutex};
 

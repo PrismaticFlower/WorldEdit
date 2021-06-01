@@ -64,7 +64,7 @@ public:
          };
       }
 
-      if (state->ref_count.load(std::memory_order_relaxed) > 1) {
+      if (state->ref_count.load(std::memory_order_relaxed) > 0) {
          enqueue_create_asset(name, true);
       }
    }
@@ -202,9 +202,12 @@ public:
 
    ~libraries_manager();
 
+   /// @brief Sets the source directory for assets.
+   /// @param path The directory to search through for assets.
    void source_directory(const std::filesystem::path& path) noexcept;
 
-   void update_changed() noexcept;
+   /// @brief Updates assets that have been modified on disk.
+   void update_modified() noexcept;
 
    library<odf::definition> odfs;
    library<msh::flat_model> models;

@@ -49,9 +49,9 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
    _file_watcher = std::make_unique<utility::file_watcher>(source_directory);
 }
 
-void libraries_manager::update_changed() noexcept
+void libraries_manager::update_modified() noexcept
 {
-   _file_watcher->evaluate_changed_files([this](const std::filesystem::path& path) {
+   _file_watcher->evaluate_modified_files([this](const std::filesystem::path& path) {
       // TODO: Skip path if parent path is ignored.
 
       register_asset(path);
