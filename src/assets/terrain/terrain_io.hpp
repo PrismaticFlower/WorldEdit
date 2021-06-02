@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <span>
 
-namespace sk::assets::terrain {
+namespace we::assets::terrain {
 
 auto read_terrain(const std::span<const std::byte> bytes) -> terrain;
 

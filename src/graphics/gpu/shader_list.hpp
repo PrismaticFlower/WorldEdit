@@ -4,7 +4,7 @@
 
 #include <initializer_list>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 extern std::initializer_list<shader_description> shader_list;
 

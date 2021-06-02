@@ -6,7 +6,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 namespace {
 const std::array<float3, 1264> questionmark_positions = {{

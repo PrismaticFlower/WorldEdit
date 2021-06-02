@@ -6,7 +6,7 @@
 #include <optional>
 #include <string>
 
-namespace sk::world {
+namespace we::world {
 
 struct lighting_settings {
    std::array<std::string, 2> global_lights;

@@ -16,7 +16,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::texture {
+namespace we::assets::texture {
 
 namespace {
 

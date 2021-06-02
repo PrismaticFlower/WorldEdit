@@ -4,7 +4,7 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 struct descriptor_handle {
    D3D12_CPU_DESCRIPTOR_HANDLE cpu{};

@@ -2,7 +2,7 @@
 #include "buffer.hpp"
 #include "device.hpp"
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 buffer::~buffer()
 {

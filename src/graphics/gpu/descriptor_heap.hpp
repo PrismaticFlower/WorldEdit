@@ -11,7 +11,7 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 class descriptor_heap {
 public:

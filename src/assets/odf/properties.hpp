@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-namespace sk::assets::odf {
+namespace we::assets::odf {
 
 struct property {
    std::string key;

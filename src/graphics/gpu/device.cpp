@@ -4,7 +4,7 @@
 
 #include <d3dx12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 namespace {
 

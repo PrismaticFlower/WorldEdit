@@ -6,7 +6,7 @@
 
 #include <type_traits>
 
-namespace sk {
+namespace we {
 
 template<typename GLM_type>
 inline bool approx_equals(const GLM_type& l, const std::type_identity_t<GLM_type>& r)

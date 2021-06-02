@@ -5,7 +5,7 @@
 #include <optional>
 #include <string>
 
-namespace sk::world {
+namespace we::world {
 
 enum class light_type : int8 { directional = 1, point = 2, spot = 3 };
 enum class texture_addressing : int8 { wrap = 0, clamp = 1 };

@@ -23,11 +23,11 @@
 #include <fmt/format.h>
 #include <tbb/task_group.h>
 
-namespace sk::utility {
+namespace we::utility {
 class file_watcher;
 }
 
-namespace sk::assets {
+namespace we::assets {
 
 class libraries_manager;
 
@@ -182,7 +182,7 @@ private:
       });
    }
 
-   sk::output_stream& _output_stream;
+   we::output_stream& _output_stream;
 
    std::shared_mutex _mutex;
 

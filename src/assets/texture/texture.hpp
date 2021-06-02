@@ -11,7 +11,7 @@
 #include <d3d12.h>
 #include <glm/glm.hpp>
 
-namespace sk::assets::texture {
+namespace we::assets::texture {
 
 class texture_subresource_view {
 public:

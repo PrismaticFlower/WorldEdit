@@ -4,7 +4,7 @@
 
 #include <cassert>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 namespace {
 
 auto create_dxgi_swapchain(const HWND window, IDXGIFactory7& factory,

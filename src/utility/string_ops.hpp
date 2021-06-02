@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-namespace sk::utility::string {
+namespace we::utility::string {
 
 struct line {
    int number = 0;
@@ -100,7 +100,7 @@ public:
       return _line;
    }
 
-   auto operator-> () const noexcept -> const line&
+   auto operator->() const noexcept -> const line&
    {
       return _line;
    }

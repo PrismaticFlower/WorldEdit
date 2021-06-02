@@ -50,7 +50,7 @@ Nodes(2) // Another Comment
 )"sv;
 }
 
-namespace sk::assets::config::tests {
+namespace we::assets::config::tests {
 TEST_CASE("config io valid tests", "[Assets][Config]")
 {
    node config = read_config(valid_config_test);

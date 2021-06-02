@@ -2,7 +2,7 @@
 
 #include "container/dynamic_array_2d.hpp"
 
-namespace sk::container::tests {
+namespace we::container::tests {
 
 TEST_CASE("dynamic array 2d", "[Container][DynamicArray2D]")
 {

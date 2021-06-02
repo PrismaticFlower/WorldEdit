@@ -4,7 +4,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::odf::tests {
+namespace we::assets::odf::tests {
 
 TEST_CASE(".odf properties empty container", "[Assets][ODF]")
 {

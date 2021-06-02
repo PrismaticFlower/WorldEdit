@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace sk::utility {
+namespace we::utility {
 
 auto read_file_to_bytes(const std::filesystem::path& path) -> std::vector<std::byte>;
 

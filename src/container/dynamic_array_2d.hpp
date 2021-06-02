@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace sk::container {
+namespace we::container {
 
 template<typename Type>
 class row_iterator {

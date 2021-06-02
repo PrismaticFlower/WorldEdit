@@ -3,7 +3,7 @@
 #include "approx_test_helpers.hpp"
 #include "math/bounding_box.hpp"
 
-namespace sk::math::tests {
+namespace we::math::tests {
 
 TEST_CASE("bounding box combine tests", "[Math][BoundingBox]")
 {

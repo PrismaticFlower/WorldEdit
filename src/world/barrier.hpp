@@ -6,7 +6,7 @@
 #include <array>
 #include <string>
 
-namespace sk::world {
+namespace we::world {
 
 struct barrier {
    std::string name;

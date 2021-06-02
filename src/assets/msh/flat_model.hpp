@@ -8,7 +8,7 @@
 
 #include <boost/variant2/variant.hpp>
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 struct mesh {
    math::bounding_box bounding_box;

@@ -8,7 +8,7 @@
 #include <boost/variant2/variant.hpp>
 #include <d3d12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 constexpr static int render_latency = 2;
 

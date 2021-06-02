@@ -6,7 +6,7 @@
 #include <memory>
 #include <shared_mutex>
 
-namespace sk::assets {
+namespace we::assets {
 
 /// @brief Private asset state.
 /// @tparam T The type of the asset.

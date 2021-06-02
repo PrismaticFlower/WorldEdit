@@ -10,7 +10,7 @@
 using namespace std::literals;
 using namespace Catch::literals;
 
-namespace sk::assets::msh::tests {
+namespace we::assets::msh::tests {
 
 TEST_CASE(".msh reading", "[Assets][MSH]")
 {

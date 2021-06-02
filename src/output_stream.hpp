@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-namespace sk {
+namespace we {
 
 class output_stream {
 public:

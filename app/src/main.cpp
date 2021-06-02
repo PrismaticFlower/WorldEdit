@@ -151,5 +151,5 @@ int main()
 {
    std::ios_base::sync_with_stdio(false);
 
-   run_application<sk::world_edit>();
+   run_application<we::world_edit>();
 }

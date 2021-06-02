@@ -16,7 +16,7 @@
 
 using namespace std::literals;
 
-namespace sk {
+namespace we {
 
 namespace {
 

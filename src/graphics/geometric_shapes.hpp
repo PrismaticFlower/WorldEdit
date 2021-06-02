@@ -6,7 +6,7 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 struct geometric_shape {
    uint32 index_count;

@@ -2,7 +2,7 @@
 
 #include "scene.hpp"
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 void validate_scene(const scene& scene);
 

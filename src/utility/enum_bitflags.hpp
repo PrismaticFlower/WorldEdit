@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-namespace sk {
+namespace we {
 
 template<typename Type>
 constexpr bool marked_as_enum_bitflag(Type&&) noexcept

@@ -2,7 +2,7 @@
 
 #include "hresult_error.hpp"
 
-namespace sk::tests {
+namespace we::tests {
 
 TEST_CASE("throw if failed tests", "[Error]")
 {

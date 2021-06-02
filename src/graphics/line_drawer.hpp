@@ -8,7 +8,7 @@
 
 #include <functional>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 enum class line_connect_mode { linear, smooth };
 

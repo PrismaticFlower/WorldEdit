@@ -3,7 +3,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::odf {
+namespace we::assets::odf {
 
 auto default_object_class_definition() noexcept
    -> const std::shared_ptr<const definition>&

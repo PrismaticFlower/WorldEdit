@@ -5,7 +5,7 @@
 #include "texture/texture_io.hpp"
 #include "utility/read_file.hpp"
 
-namespace sk::assets {
+namespace we::assets {
 
 auto asset_traits<odf::definition>::load(const std::filesystem::path& path)
    -> odf::definition

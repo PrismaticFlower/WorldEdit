@@ -4,7 +4,7 @@
 
 #include <memory>
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 auto default_missing_scene() noexcept -> const std::shared_ptr<const flat_model>&;
 

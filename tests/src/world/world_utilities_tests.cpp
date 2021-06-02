@@ -7,7 +7,7 @@
 
 using namespace std::literals;
 
-namespace sk::world::tests {
+namespace we::world::tests {
 
 TEST_CASE("world utilities find_entity", "[World][Utilities]")
 {

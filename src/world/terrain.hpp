@@ -2,7 +2,7 @@
 
 #include "assets/terrain/terrain.hpp"
 
-namespace sk::world {
+namespace we::world {
 
 using namespace assets::terrain;
 

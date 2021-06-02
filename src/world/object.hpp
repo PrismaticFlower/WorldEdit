@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace sk::world {
+namespace we::world {
 
 struct object {
    std::string name;

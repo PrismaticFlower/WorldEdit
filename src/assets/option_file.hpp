@@ -6,7 +6,7 @@
 
 #include <boost/container/small_vector.hpp>
 
-namespace sk::assets {
+namespace we::assets {
 
 struct option {
    std::string name;

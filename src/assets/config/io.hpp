@@ -4,7 +4,7 @@
 
 #include <string_view>
 
-namespace sk::assets::config {
+namespace we::assets::config {
 
 auto read_config(std::string_view str) -> node;
 

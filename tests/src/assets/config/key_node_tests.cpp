@@ -6,7 +6,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::config::tests {
+namespace we::assets::config::tests {
 
 TEST_CASE("config key node tests", "[Assets][Config]")
 {

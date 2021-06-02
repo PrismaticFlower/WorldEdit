@@ -8,7 +8,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/container/static_vector.hpp>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 namespace {
 

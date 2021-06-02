@@ -3,7 +3,7 @@
 #include <iostream>
 #include <span>
 
-namespace sk::utility {
+namespace we::utility {
 
 class binary_stream_writer {
 public:

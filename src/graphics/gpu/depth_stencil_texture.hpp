@@ -3,7 +3,7 @@
 #include "device.hpp"
 #include "texture.hpp"
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 struct depth_stencil_texture : private texture {
    struct depth_stencil_texture_init {
@@ -20,7 +20,7 @@ struct depth_stencil_texture : private texture {
       {
          return {.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
                  .flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL |
-                          (shader_resource ? D3D12_RESOURCE_FLAG_NONE 
+                          (shader_resource ? D3D12_RESOURCE_FLAG_NONE
                                            : D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE),
                  .format = format,
                  .width = width,

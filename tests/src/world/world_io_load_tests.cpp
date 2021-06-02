@@ -10,7 +10,7 @@
 using namespace std::literals;
 using namespace Catch::literals;
 
-namespace sk::world::tests {
+namespace we::world::tests {
 
 TEST_CASE("world loading", "[World][Load]")
 {

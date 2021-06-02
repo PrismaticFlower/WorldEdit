@@ -23,7 +23,7 @@
 
 using namespace std::literals;
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 namespace {
 
@@ -217,8 +217,8 @@ auto shader_library::operator[](const std::string_view name) const noexcept
 
 }
 
-auto std::hash<sk::graphics::gpu::shader_description>::operator()(
-   const sk::graphics::gpu::shader_description& desc) const noexcept -> std::size_t
+auto std::hash<we::graphics::gpu::shader_description>::operator()(
+   const we::graphics::gpu::shader_description& desc) const noexcept -> std::size_t
 {
    std::size_t hash = 0;
 

@@ -15,7 +15,7 @@
 #include <boost/container/small_vector.hpp>
 #include <fmt/format.h>
 
-namespace sk::ucfb {
+namespace we::ucfb {
 
 enum class chunk_id : uint32 {};
 

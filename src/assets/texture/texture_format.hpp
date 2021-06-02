@@ -8,7 +8,7 @@
 
 #include <dxgiformat.h>
 
-namespace sk::assets::texture {
+namespace we::assets::texture {
 
 enum class texture_format {
    r8g8b8a8_unorm,

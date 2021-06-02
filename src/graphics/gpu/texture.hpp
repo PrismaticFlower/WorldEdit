@@ -12,7 +12,7 @@
 #include <gsl/gsl>
 #include <object_ptr.hpp>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 class device;
 

@@ -6,7 +6,7 @@
 #include <boost/container/small_vector.hpp>
 #include <boost/variant2/variant.hpp>
 
-namespace sk::assets::config {
+namespace we::assets::config {
 
 using values_container_type =
    boost::container::small_vector<boost::variant2::variant<int, long long, double, std::string>, 4>;

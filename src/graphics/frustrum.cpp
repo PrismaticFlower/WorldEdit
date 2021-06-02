@@ -11,7 +11,7 @@
 
 #include <fmt/format.h>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 namespace {
 

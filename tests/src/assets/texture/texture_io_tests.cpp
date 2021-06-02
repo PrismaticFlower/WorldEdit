@@ -10,7 +10,7 @@
 using namespace std::literals;
 using namespace Catch::literals;
 
-namespace sk::assets::texture::tests {
+namespace we::assets::texture::tests {
 
 TEST_CASE(".tga texture loading", "[Assets][Texture]")
 {

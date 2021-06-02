@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace sk::world {
+namespace we::world {
 
 struct planning_hub {
    struct branch_weight {

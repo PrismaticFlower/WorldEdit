@@ -17,7 +17,7 @@
 
 #include <vector>
 
-namespace sk::world {
+namespace we::world {
 
 struct world {
    std::string name;

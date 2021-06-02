@@ -1,6 +1,6 @@
 #pragma once
 
-namespace sk::utility {
+namespace we::utility {
 
 template<typename Begin, typename End>
 auto make_range(Begin begin, End end) noexcept

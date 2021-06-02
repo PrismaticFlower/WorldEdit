@@ -30,7 +30,7 @@
 
 #include <range/v3/view.hpp>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 class device;
 

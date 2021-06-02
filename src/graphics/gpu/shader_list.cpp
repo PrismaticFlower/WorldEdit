@@ -5,7 +5,7 @@
 
 using namespace std::literals;
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 namespace {
 

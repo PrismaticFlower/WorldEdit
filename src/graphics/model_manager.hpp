@@ -15,7 +15,7 @@
 #include <gsl/gsl>
 #include <tbb/task_group.h>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 class model_manager {
 public:

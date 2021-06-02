@@ -18,7 +18,7 @@
 
 struct ImGuiContext;
 
-namespace sk {
+namespace we {
 
 class world_edit {
 public:

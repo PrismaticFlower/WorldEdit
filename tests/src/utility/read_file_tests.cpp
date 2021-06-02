@@ -6,7 +6,7 @@
 
 using namespace std::literals;
 
-namespace sk::utility::tests {
+namespace we::utility::tests {
 
 TEST_CASE("read file to bytes", "[Utility][ReadFile]")
 {

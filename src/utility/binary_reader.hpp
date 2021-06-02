@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace sk::utility {
+namespace we::utility {
 
 struct binary_reader_overflow : std::runtime_error {
    using std::runtime_error::runtime_error;

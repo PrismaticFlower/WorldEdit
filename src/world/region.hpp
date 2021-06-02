@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace sk::world {
+namespace we::world {
 
 enum class region_shape { box = 0, sphere = 1, cylinder = 2 };
 

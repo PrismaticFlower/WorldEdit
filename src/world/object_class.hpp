@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace sk::world {
+namespace we::world {
 
 struct object_class : std::enable_shared_from_this<object_class> {
    object_class() = default;

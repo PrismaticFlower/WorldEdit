@@ -4,7 +4,7 @@
 
 using namespace std::literals;
 
-namespace sk::tests {
+namespace we::tests {
 
 TEST_CASE("lowercase string tests", "[String]")
 {

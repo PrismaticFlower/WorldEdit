@@ -11,7 +11,7 @@
 
 #include <d3dx12.h>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
              texture_manager& texture_manager)

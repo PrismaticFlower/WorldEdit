@@ -6,7 +6,7 @@
 
 #include <vector>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 struct material {
    material(const assets::msh::material& material, gpu::device& gpu_device,

@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace sk::container {
+namespace we::container {
 
 // clang-format off
 

@@ -5,7 +5,7 @@
 #include <optional>
 #include <string>
 
-namespace sk::world {
+namespace we::world {
 
 struct portal {
    std::string name;

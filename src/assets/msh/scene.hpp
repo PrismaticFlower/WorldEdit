@@ -7,7 +7,7 @@
 #include <optional>
 #include <vector>
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 enum class node_type : int32 {
    null = 0,

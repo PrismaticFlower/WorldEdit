@@ -1,7 +1,7 @@
 
 #include "texture_transforms.hpp"
 
-namespace sk::assets::texture {
+namespace we::assets::texture {
 
 namespace {
 

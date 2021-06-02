@@ -12,7 +12,7 @@
 
 #include <gsl/gsl>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 class terrain {
 public:

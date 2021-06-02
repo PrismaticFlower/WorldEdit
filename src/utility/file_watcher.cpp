@@ -10,7 +10,7 @@
 
 using namespace std::literals;
 
-namespace sk::utility {
+namespace we::utility {
 
 namespace {
 

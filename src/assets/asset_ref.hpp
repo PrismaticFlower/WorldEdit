@@ -7,7 +7,7 @@
 #include <memory>
 #include <utility>
 
-namespace sk::assets {
+namespace we::assets {
 
 /// @brief Convenience alias for std::shared_ptr that adds const to the type.
 /// @tparam T The type of the asset.
@@ -137,7 +137,7 @@ private:
 
 }
 
-namespace sk {
+namespace we {
 
 using assets::asset_data;
 using assets::asset_ref;
@@ -147,8 +147,8 @@ using assets::asset_ref;
 namespace std {
 
 template<typename T>
-struct hash<sk::assets::asset_ref<T>> {
-   auto operator()(const sk::assets::asset_ref::asset_ref<T>& ref) const noexcept
+struct hash<we::assets::asset_ref<T>> {
+   auto operator()(const we::assets::asset_ref::asset_ref<T>& ref) const noexcept
       -> std::size_t
    {
       return ref.hash();

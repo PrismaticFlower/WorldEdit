@@ -15,7 +15,7 @@
 
 #include <boost/container/small_vector.hpp>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 class command_list {
 public:

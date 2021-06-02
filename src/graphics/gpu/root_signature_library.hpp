@@ -4,7 +4,7 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 struct root_signature_library {
    explicit root_signature_library(ID3D12Device& device);

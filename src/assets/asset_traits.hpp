@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <string_view>
 
-namespace sk::assets {
+namespace we::assets {
 
 template<typename T>
 struct asset_traits {

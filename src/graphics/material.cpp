@@ -4,7 +4,7 @@
 
 using namespace std::literals;
 
-namespace sk::graphics {
+namespace we::graphics {
 
 namespace {
 

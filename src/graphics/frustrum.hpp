@@ -5,7 +5,7 @@
 #include "math/bounding_box.hpp"
 #include "types.hpp"
 
-namespace sk::graphics {
+namespace we::graphics {
 
 enum class frustrum_corner {
    bottom_left_near,

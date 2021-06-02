@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace sk::world {
+namespace we::world {
 
 enum class path_spline_type { none, linear, hermite, catmull_rom };
 

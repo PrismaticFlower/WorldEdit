@@ -9,7 +9,7 @@
 
 #include <range/v3/algorithm.hpp>
 
-namespace sk::assets::texture::tests {
+namespace we::assets::texture::tests {
 
 TEST_CASE("texture subresource view creation tests", "[Assets][Texture]")
 {

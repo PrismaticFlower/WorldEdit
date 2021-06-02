@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <span>
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 auto read_scene(const std::span<const std::byte> bytes) -> scene;
 

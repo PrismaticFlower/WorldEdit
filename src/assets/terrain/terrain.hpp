@@ -7,7 +7,7 @@
 #include <optional>
 #include <string>
 
-namespace sk::assets::terrain {
+namespace we::assets::terrain {
 
 enum class version : uint32 { swbf = 21, swbf2 = 22 };
 

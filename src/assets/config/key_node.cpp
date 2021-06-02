@@ -7,7 +7,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::config {
+namespace we::assets::config {
 
 auto node::count(const std::string_view child_key) const noexcept -> std::size_t
 {

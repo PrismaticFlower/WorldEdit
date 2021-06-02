@@ -6,7 +6,7 @@
 #include <imgui/imgui.h>
 #include <range/v3/algorithm/copy.hpp>
 
-namespace sk {
+namespace we {
 
 auto get_mouse_state(const HWND window) -> mouse_state
 {

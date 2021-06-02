@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace sk::world {
+namespace we::world {
 
 struct hintnode {
    std::string name;

@@ -8,7 +8,7 @@
 
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
 
-namespace sk::graphics {
+namespace we::graphics {
 
 namespace {
 struct geometric_shapes_buffer {

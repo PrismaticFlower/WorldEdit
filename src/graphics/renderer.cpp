@@ -10,7 +10,7 @@
 
 #include <range/v3/view.hpp>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 namespace {
 

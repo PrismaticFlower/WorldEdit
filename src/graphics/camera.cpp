@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 void perspective_camera::update() noexcept
 {

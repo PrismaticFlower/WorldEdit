@@ -8,7 +8,7 @@
 
 using namespace Catch::literals;
 
-namespace sk::utility::tests {
+namespace we::utility::tests {
 
 TEST_CASE("binary reader", "[Utility][BinaryReader]")
 {

@@ -7,7 +7,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets {
+namespace we::assets {
 
 namespace {
 

@@ -6,7 +6,7 @@
 #include <array>
 #include <string>
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 enum class material_flags : uint8 {
    none = 0,

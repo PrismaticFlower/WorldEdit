@@ -8,7 +8,7 @@
 
 #include <range/v3/algorithm/find_if.hpp>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 namespace {
 

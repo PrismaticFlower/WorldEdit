@@ -2,7 +2,7 @@
 
 #include "container/enum_array.hpp"
 
-namespace sk::container::tests {
+namespace we::container::tests {
 
 namespace {
 

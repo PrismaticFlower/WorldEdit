@@ -11,7 +11,7 @@
 #include <absl/container/flat_hash_set.h>
 #include <wil/resource.h>
 
-namespace sk::utility {
+namespace we::utility {
 
 template<typename Callback>
 concept file_watcher_callback =

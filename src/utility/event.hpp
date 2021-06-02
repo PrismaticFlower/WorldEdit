@@ -11,7 +11,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-namespace sk::utility {
+namespace we::utility {
 
 namespace impl {
 
@@ -149,7 +149,7 @@ private:
 
 }
 
-namespace sk {
+namespace we {
 
 using utility::event_listener;
 

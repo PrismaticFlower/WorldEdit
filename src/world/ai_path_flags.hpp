@@ -2,7 +2,7 @@
 
 #include "utility/enum_bitflags.hpp"
 
-namespace sk::world {
+namespace we::world {
 
 // A Windows header defines small for some legacy reason with no escape hatch.
 // Get rid of it here incase Windows.h ends up included before us.

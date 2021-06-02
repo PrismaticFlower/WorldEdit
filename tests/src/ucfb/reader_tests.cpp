@@ -6,7 +6,7 @@
 
 using namespace std::literals;
 
-namespace sk::ucfb::tests {
+namespace we::ucfb::tests {
 
 TEST_CASE("ucfb reading", "[ucfb][reader]")
 {

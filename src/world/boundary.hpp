@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace sk::world {
+namespace we::world {
 
 struct boundary {
    std::string name;

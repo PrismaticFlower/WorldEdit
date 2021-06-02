@@ -3,7 +3,7 @@
 
 #include "math/align.hpp"
 
-namespace sk::math::tests {
+namespace we::math::tests {
 
 static_assert(align_up(0, 16) == 0);
 

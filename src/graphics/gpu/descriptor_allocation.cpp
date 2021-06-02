@@ -2,7 +2,7 @@
 #include "descriptor_allocation.hpp"
 #include "device.hpp"
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 descriptor_allocation::~descriptor_allocation()
 {

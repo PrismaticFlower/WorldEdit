@@ -5,7 +5,7 @@
 #include <span>
 #include <string_view>
 
-namespace sk::world {
+namespace we::world {
 
 template<typename Type>
 inline auto find_entity(const std::vector<Type>& entities, const std::string_view name)

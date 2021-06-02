@@ -13,7 +13,7 @@
 #include <boost/container/small_vector.hpp>
 #include <d3d12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 class async_copy_manager;
 

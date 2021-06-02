@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace sk::assets::odf {
+namespace we::assets::odf {
 
 enum class type {
    explosion_class,

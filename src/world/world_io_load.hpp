@@ -5,7 +5,7 @@
 
 #include <filesystem>
 
-namespace sk::world {
+namespace we::world {
 
 auto load_world(const std::filesystem::path& path, output_stream& output) -> world;
 

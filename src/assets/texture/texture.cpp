@@ -10,7 +10,7 @@
 #include <range/v3/numeric.hpp>
 #include <range/v3/view.hpp>
 
-namespace sk::assets::texture {
+namespace we::assets::texture {
 
 namespace {
 

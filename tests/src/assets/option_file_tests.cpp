@@ -4,7 +4,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::tests {
+namespace we::assets::tests {
 
 TEST_CASE("option file parse", "[Assets][OptionFile]")
 {

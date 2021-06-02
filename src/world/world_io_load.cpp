@@ -15,7 +15,7 @@
 
 using namespace std::literals;
 
-namespace sk::world {
+namespace we::world {
 
 namespace {
 

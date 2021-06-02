@@ -4,7 +4,7 @@
 
 #include <Windows.h>
 
-namespace sk {
+namespace we {
 
 class hresult_exception : public std::runtime_error {
 public:

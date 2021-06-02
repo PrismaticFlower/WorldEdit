@@ -7,7 +7,7 @@
 using namespace std::literals;
 using namespace Catch::literals;
 
-namespace sk::assets::terrain::tests {
+namespace we::assets::terrain::tests {
 
 TEST_CASE("terrain io valid tests", "[Assets][Terrain]")
 {

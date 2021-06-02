@@ -9,7 +9,7 @@
 
 struct ImGuiIO;
 
-namespace sk {
+namespace we {
 
 struct mouse_state {
    int x = 0;

@@ -6,7 +6,7 @@
 #include <array>
 #include <cmath>
 
-namespace sk::utility {
+namespace we::utility {
 
 template<typename Float>
 inline auto decompress_srgb(const Float v) -> Float

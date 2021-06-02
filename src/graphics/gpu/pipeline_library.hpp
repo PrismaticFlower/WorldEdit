@@ -6,7 +6,7 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 enum class blend_modes { none, additive, alpha_blended };
 

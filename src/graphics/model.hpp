@@ -13,7 +13,7 @@
 
 #include <boost/container/small_vector.hpp>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 struct mesh_vertices {
    std::span<float3> positions;

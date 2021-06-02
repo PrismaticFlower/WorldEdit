@@ -14,7 +14,7 @@
 #include <absl/container/flat_hash_set.h>
 #include <tbb/tbb.h>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 struct updated_texture {
    const lowercase_string& name;

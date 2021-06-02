@@ -10,7 +10,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::config {
+namespace we::assets::config {
 
 using namespace utility;
 

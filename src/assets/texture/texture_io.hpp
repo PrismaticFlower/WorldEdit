@@ -4,7 +4,7 @@
 
 #include <filesystem>
 
-namespace sk::assets::texture {
+namespace we::assets::texture {
 
 auto load_texture(const std::filesystem::path& path) -> texture;
 

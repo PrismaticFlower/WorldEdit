@@ -4,7 +4,7 @@
 
 #include <glm/gtc/matrix_access.hpp>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 class camera {
 public:

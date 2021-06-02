@@ -21,7 +21,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 class renderer {
 public:

@@ -2,7 +2,7 @@
 
 #include "utility/synchronous_task_queue.hpp"
 
-namespace sk::utility::tests {
+namespace we::utility::tests {
 
 TEST_CASE("synchronous_task_queue tests", "[Utility][SynchronousTaskQueue]")
 {

@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace sk::assets::terrain {
+namespace we::assets::terrain {
 
 namespace {
 

@@ -4,7 +4,7 @@
 
 #include <array>
 
-namespace sk::math {
+namespace we::math {
 
 struct bounding_box {
    float3 min{};

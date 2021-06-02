@@ -1,7 +1,7 @@
 
 #include "line_drawer.hpp"
 
-namespace sk::graphics {
+namespace we::graphics {
 
 namespace {
 

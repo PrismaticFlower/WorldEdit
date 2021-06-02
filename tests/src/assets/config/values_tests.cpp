@@ -7,7 +7,7 @@
 using namespace std::literals;
 using namespace Catch::literals;
 
-namespace sk::assets::config::tests {
+namespace we::assets::config::tests {
 
 TEST_CASE("config values get/set", "[Assets][Config]")
 {

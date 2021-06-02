@@ -11,7 +11,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 namespace {
 

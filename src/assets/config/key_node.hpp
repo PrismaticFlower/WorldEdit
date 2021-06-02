@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-namespace sk::assets::config {
+namespace we::assets::config {
 
 class key_node;
 

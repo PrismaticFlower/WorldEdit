@@ -14,10 +14,10 @@
 
 #pragma warning(disable : 4063) // case is not a valid value for switch of enum
 
-using namespace sk::ucfb::literals;
+using namespace we::ucfb::literals;
 using namespace std::literals;
 
-namespace sk::assets::msh {
+namespace we::assets::msh {
 
 namespace {
 

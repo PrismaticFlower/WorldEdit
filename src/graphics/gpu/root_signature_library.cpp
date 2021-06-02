@@ -2,7 +2,7 @@
 #include "root_signature_library.hpp"
 #include "hresult_error.hpp"
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 namespace {
 

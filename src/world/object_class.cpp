@@ -6,7 +6,7 @@
 
 using namespace std::literals;
 
-namespace sk::world {
+namespace we::world {
 
 object_class::object_class(assets::libraries_manager& assets_libraries,
                            asset_ref<assets::odf::definition> definition_asset)

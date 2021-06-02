@@ -2,7 +2,7 @@
 
 #include <d3d12.h>
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 [[nodiscard]] inline auto transition_barrier(
    ID3D12Resource& resource, const D3D12_RESOURCE_STATES state_before,

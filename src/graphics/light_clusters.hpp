@@ -14,7 +14,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-namespace sk::graphics {
+namespace we::graphics {
 
 class light_clusters {
 public:

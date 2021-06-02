@@ -1,7 +1,7 @@
 #include "texture.hpp"
 #include "device.hpp"
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 texture::~texture()
 {

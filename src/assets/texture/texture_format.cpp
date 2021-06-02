@@ -7,7 +7,7 @@
 
 #include <glm/gtc/packing.hpp>
 
-namespace sk::assets::texture {
+namespace we::assets::texture {
 
 namespace {
 

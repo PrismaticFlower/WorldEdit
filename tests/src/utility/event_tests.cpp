@@ -2,7 +2,7 @@
 
 #include "utility/event.hpp"
 
-namespace sk::utility::tests {
+namespace we::utility::tests {
 
 TEST_CASE("event listener tests", "[Utility][Event]")
 {

@@ -9,7 +9,7 @@
 
 using namespace std::literals;
 
-namespace sk::assets::odf {
+namespace we::assets::odf {
 
 namespace {
 

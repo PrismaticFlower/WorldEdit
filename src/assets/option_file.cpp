@@ -5,7 +5,7 @@
 #include <tuple>
 #include <utility>
 
-namespace sk::assets {
+namespace we::assets {
 
 using namespace utility::string;
 

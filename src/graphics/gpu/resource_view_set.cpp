@@ -2,7 +2,7 @@
 #include "resource_view_set.hpp"
 #include "device.hpp"
 
-namespace sk::graphics::gpu {
+namespace we::graphics::gpu {
 
 resource_view_set::~resource_view_set()
 {

@@ -5,7 +5,7 @@
 #include <string>
 #include <string_view>
 
-namespace sk {
+namespace we {
 
 class lowercase_string : public std::string {
 public:
@@ -41,8 +41,8 @@ private:
 namespace std {
 
 template<>
-struct hash<sk::lowercase_string> {
-   auto operator()(const sk::lowercase_string& string) const noexcept
+struct hash<we::lowercase_string> {
+   auto operator()(const we::lowercase_string& string) const noexcept
    {
       return std::hash<std::string_view>{}(string);
    }

@@ -8,7 +8,7 @@
 
 #include <gsl/gsl>
 
-namespace sk::utility {
+namespace we::utility {
 
 template<typename Type>
 inline auto make_from_bytes(const std::span<const std::byte> bytes) noexcept -> Type
