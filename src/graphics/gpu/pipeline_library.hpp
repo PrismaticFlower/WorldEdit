@@ -1,6 +1,7 @@
 #pragma once
 
 #include "container/enum_array.hpp"
+#include "types.hpp"
 #include "utility/com_ptr.hpp"
 #include "utility/enum_bitflags.hpp"
 
@@ -17,7 +18,7 @@ enum class depth_test_mode { disabled, read_write, read };
 class shader_library;
 struct root_signature_library;
 
-enum class material_pipeline_flags {
+enum class material_pipeline_flags : uint8 {
    none = 0b0,
    alpha_cutout = 0b1,
    doublesided = 0b10,

@@ -147,9 +147,9 @@
       <AdditionalIncludeDirectories>$(SolutionDir)third_party\object_ptr;$(SolutionDir)third_party\D3DX12;../src</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <DisableSpecificWarnings>4275;4459;5105</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4127;4275;4324;4459;5105</DisableSpecificWarnings>
       <ControlFlowGuard>Guard</ControlFlowGuard>
-      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
     </ClCompile>
     <Link>

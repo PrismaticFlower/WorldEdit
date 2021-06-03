@@ -383,9 +383,9 @@ auto make_shadow_camera(const float3 light_direction, const camera& view_camera,
 }
 
 void light_clusters::TEMP_render_shadow_maps(
-   const camera& view_camera, const frustrum& view_frustrum, const world::world& world,
-   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
-   model_manager& model_manager, gpu::command_list& command_list,
+   const camera& view_camera, const frustrum& view_frustrum,
+   const world_mesh_list& meshes, const world::world& world,
+   gpu::command_list& command_list,
    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    const float3 light_direction = sun_direction(world);
@@ -406,42 +406,23 @@ void light_clusters::TEMP_render_shadow_maps(
    static std::vector<shadow_render_list_item> render_list;
    render_list.clear();
 
-   for (auto& object : world.objects) {
-      const auto& model =
-         model_manager[world_classes.at(object.class_name)->model_name];
+   for (std::size_t i = 0; i < meshes.size(); ++i) {
+      if (!intersects(shadow_frustrum, meshes.bbox[i])) continue;
 
-      const auto object_bbox = object.rotation * model.bbox + object.position;
-
-      if (!intersects(shadow_frustrum, object_bbox)) continue;
-
-      const D3D12_GPU_VIRTUAL_ADDRESS object_transform_address = [&] {
-         auto allocation = dynamic_buffer_allocator.allocate(sizeof(float4x4));
-
-         float4x4 object_transform = static_cast<float4x4>(object.rotation);
-         object_transform[3] = float4{object.position, 1.0f};
-
-         std::memcpy(allocation.cpu_address, &object_transform,
-                     sizeof(object_transform));
-
-         return allocation.gpu_address;
-      }();
-
-      for (const auto& mesh : model.parts) {
-         if (are_flags_set(mesh.material.flags,
-                           gpu::material_pipeline_flags::transparent)) {
-            continue;
-         }
-
-         render_list.push_back(
-            {.index_buffer_view = model.gpu_buffer.index_buffer_view,
-             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
-
-             .object_transform_address = object_transform_address,
-
-             .index_count = mesh.index_count,
-             .start_index = mesh.start_index,
-             .start_vertex = mesh.start_vertex});
+      if (are_flags_set(meshes.pipeline_flags[i],
+                        gpu::material_pipeline_flags::transparent)) {
+         continue;
       }
+
+      render_list.push_back(
+         {.index_buffer_view = meshes.mesh[i].index_buffer_view,
+          .position_vertex_buffer_view = meshes.mesh[i].vertex_buffer_views[0],
+
+          .object_transform_address = meshes.gpu_constants[i],
+
+          .index_count = meshes.mesh[i].index_count,
+          .start_index = meshes.mesh[i].start_index,
+          .start_vertex = meshes.mesh[i].start_vertex});
    }
 
    const D3D12_GPU_VIRTUAL_ADDRESS shadow_view_projection_matrix_address = [&] {

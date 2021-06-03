@@ -108,6 +108,11 @@ void renderer::draw_frame(
 
    update_textures();
 
+   const frustrum view_frustrum{camera};
+
+   build_world_mesh_list(world, world_classes);
+   build_object_render_list(view_frustrum);
+
    auto& command_allocator = *_world_command_allocators[_device.frame_index];
    auto& command_list = _world_command_list;
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
@@ -119,15 +124,13 @@ void renderer::draw_frame(
 
    command_list.set_descriptor_heaps(_device.descriptor_heap_srv_cbv_uav.get());
 
-   const frustrum view_frustrum{camera};
-
    update_camera_constant_buffer(camera, command_list);
 
    _light_clusters.update_lights(view_frustrum, world, command_list,
                                  _dynamic_buffer_allocator);
-   _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum, world,
-                                           world_classes, _model_manager,
-                                           command_list, _dynamic_buffer_allocator);
+   _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum,
+                                           _world_mesh_list, world, command_list,
+                                           _dynamic_buffer_allocator);
 
    if (std::exchange(_terrain_dirty, false)) {
       _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
@@ -154,7 +157,7 @@ void renderer::draw_frame(
    command_list.om_set_render_targets(back_buffer_rtv, depth_stencil_view);
 
    // Render World
-   draw_world(view_frustrum, world, world_classes, command_list);
+   draw_world(view_frustrum, command_list);
 
    // Render World Meta Objects
    draw_world_meta_objects(view_frustrum, world, world_classes, command_list);
@@ -217,13 +220,8 @@ void renderer::update_camera_constant_buffer(const camera& camera,
                               D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 }
 
-void renderer::draw_world(
-   const frustrum& view_frustrum, const world::world& world,
-   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
-   gpu::command_list& command_list)
+void renderer::draw_world(const frustrum& view_frustrum, gpu::command_list& command_list)
 {
-   build_object_render_list(view_frustrum, world, world_classes);
-
    draw_world_render_list(_opaque_object_render_list, command_list);
 
    _terrain.draw(view_frustrum, _camera_constant_buffer_view,
@@ -638,14 +636,12 @@ void renderer::draw_world_meta_objects(
    }
 }
 
-void renderer::build_object_render_list(
-   const frustrum& view_frustrum, const world::world& world,
+void renderer::build_world_mesh_list(
+   const world::world& world,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
 {
-   _opaque_object_render_list.clear();
-   _transparent_object_render_list.clear();
-   _opaque_object_render_list.reserve(2048);
-   _transparent_object_render_list.reserve(2048);
+   _world_mesh_list.clear();
+   _world_mesh_list.reserve(1024 * 16);
 
    for (auto& object : world.objects) {
       const auto& model =
@@ -653,22 +649,17 @@ void renderer::build_object_render_list(
 
       const auto object_bbox = object.rotation * model.bbox + object.position;
 
-      if (!intersects(view_frustrum, object_bbox)) continue;
-
-      const float distance = glm::dot(view_frustrum.planes[frustrum_planes::near_],
-                                      float4{object.position, 1.0f});
-
       const D3D12_GPU_VIRTUAL_ADDRESS object_constants_address = [&] {
          auto allocation =
-            _dynamic_buffer_allocator.allocate(sizeof(object_constants));
+            _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
 
-         object_constants constants;
+         world_mesh_constants constants;
 
          constants.object_to_world = static_cast<float4x4>(object.rotation);
          constants.object_to_world[3] = float4{object.position, 1.0f};
 
          std::memcpy(allocation.cpu_address, &constants.object_to_world,
-                     sizeof(object_constants));
+                     sizeof(world_mesh_constants));
 
          return allocation.gpu_address;
       }();
@@ -677,35 +668,63 @@ void renderer::build_object_render_list(
          ID3D12PipelineState* const pipeline =
             _device.pipelines.normal_mesh[mesh.material.flags].get();
 
-         uint64 priority;
-
-         std::memcpy(&priority, &distance, sizeof(float));
-
-         priority |= ((std::hash<ID3D12PipelineState*>{}(pipeline)&0xffffffff) << 32);
-
-         auto& render_list =
-            are_flags_set(mesh.material.flags, gpu::material_pipeline_flags::transparent)
-               ? _transparent_object_render_list
-               : _opaque_object_render_list;
-
-         render_list.push_back({
-            .priority = priority,
-
-            .pipeline = pipeline,
-
-            .index_buffer_view = model.gpu_buffer.index_buffer_view,
-            .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                    model.gpu_buffer.normal_vertex_buffer_view,
-                                    model.gpu_buffer.texcoord_vertex_buffer_view},
-
-            .object_constants_address = object_constants_address,
-            .material_descriptor_range = mesh.material.resource_views.descriptors(),
-
-            .index_count = mesh.index_count,
-            .start_index = mesh.start_index,
-            .start_vertex = mesh.start_vertex,
-         });
+         _world_mesh_list.push_back(
+            object_bbox, object_constants_address, object.position, pipeline,
+            mesh.material.flags, mesh.material.resource_views.descriptors(),
+            world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                       .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                               model.gpu_buffer.normal_vertex_buffer_view,
+                                               model.gpu_buffer.texcoord_vertex_buffer_view},
+                       .index_count = mesh.index_count,
+                       .start_index = mesh.start_index,
+                       .start_vertex = mesh.start_vertex});
       }
+   }
+}
+
+void renderer::build_object_render_list(const frustrum& view_frustrum)
+{
+   auto& meshes = _world_mesh_list;
+
+   _opaque_object_render_list.clear();
+   _transparent_object_render_list.clear();
+   _opaque_object_render_list.reserve(meshes.size());
+   _transparent_object_render_list.reserve(meshes.size());
+
+   for (std::size_t i = 0; i < meshes.size(); ++i) {
+      if (!intersects(view_frustrum, meshes.bbox[i])) continue;
+
+      const float distance = glm::dot(view_frustrum.planes[frustrum_planes::near_],
+                                      float4{meshes.position[i], 1.0f});
+
+      ID3D12PipelineState* const pipeline = meshes.pipeline[i];
+
+      uint64 priority;
+
+      std::memcpy(&priority, &distance, sizeof(float));
+
+      priority |= ((std::hash<ID3D12PipelineState*>{}(pipeline)&0xffffffff) << 32);
+
+      auto& render_list = are_flags_set(meshes.pipeline_flags[i],
+                                        gpu::material_pipeline_flags::transparent)
+                             ? _transparent_object_render_list
+                             : _opaque_object_render_list;
+
+      render_list.push_back({
+         .priority = priority,
+
+         .pipeline = pipeline,
+
+         .index_buffer_view = meshes.mesh[i].index_buffer_view,
+         .vertex_buffer_views = {meshes.mesh[i].vertex_buffer_views},
+
+         .object_constants_address = meshes.gpu_constants[i],
+         .material_descriptor_range = meshes.material_descriptor_range[i],
+
+         .index_count = meshes.mesh[i].index_count,
+         .start_index = meshes.mesh[i].start_index,
+         .start_vertex = meshes.mesh[i].start_vertex,
+      });
    }
 
    std::sort(_opaque_object_render_list.begin(), _opaque_object_render_list.end(),

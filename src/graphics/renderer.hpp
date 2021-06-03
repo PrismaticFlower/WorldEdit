@@ -15,6 +15,7 @@
 #include "texture_manager.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
+#include "world_mesh_list.hpp"
 
 #include <array>
 #include <vector>
@@ -49,10 +50,7 @@ private:
    void update_camera_constant_buffer(const camera& camera,
                                       gpu::command_list& command_list);
 
-   void draw_world(
-      const frustrum& view_frustrum, const world::world& world,
-      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
-      gpu::command_list& command_list);
+   void draw_world(const frustrum& view_frustrum, gpu::command_list& command_list);
 
    void draw_world_render_list(const std::vector<render_list_item>& list,
                                gpu::command_list& command_list);
@@ -62,9 +60,11 @@ private:
       const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
       gpu::command_list& command_list);
 
-   void build_object_render_list(
-      const frustrum& view_frustrum, const world::world& world,
+   void build_world_mesh_list(
+      const world::world& world,
       const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes);
+
+   void build_object_render_list(const frustrum& view_frustrum);
 
    void update_textures();
 
@@ -100,6 +100,7 @@ private:
    light_clusters _light_clusters{_device};
    terrain _terrain{_device, _texture_manager};
 
+   world_mesh_list _world_mesh_list;
    std::vector<render_list_item> _opaque_object_render_list;
    std::vector<render_list_item> _transparent_object_render_list;
    std::vector<D3D12_RESOURCE_BARRIER> _texture_resource_barriers;
