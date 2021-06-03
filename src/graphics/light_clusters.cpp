@@ -407,7 +407,7 @@ void light_clusters::TEMP_render_shadow_maps(
    render_list.clear();
 
    for (std::size_t i = 0; i < meshes.size(); ++i) {
-      if (!intersects(shadow_frustrum, meshes.bbox[i])) continue;
+      if (not intersects(shadow_frustrum, meshes.bbox[i])) continue;
 
       if (are_flags_set(meshes.pipeline_flags[i],
                         gpu::material_pipeline_flags::transparent)) {

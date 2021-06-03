@@ -36,7 +36,7 @@ public:
 
 private:
    struct render_list_item {
-      uint64 priority;
+      float distance;
       ID3D12PipelineState* pipeline;
       D3D12_INDEX_BUFFER_VIEW index_buffer_view;
       std::array<D3D12_VERTEX_BUFFER_VIEW, 3> vertex_buffer_views;

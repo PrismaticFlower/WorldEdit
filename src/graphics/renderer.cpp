@@ -692,18 +692,7 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
    _transparent_object_render_list.reserve(meshes.size());
 
    for (std::size_t i = 0; i < meshes.size(); ++i) {
-      if (!intersects(view_frustrum, meshes.bbox[i])) continue;
-
-      const float distance = glm::dot(view_frustrum.planes[frustrum_planes::near_],
-                                      float4{meshes.position[i], 1.0f});
-
-      ID3D12PipelineState* const pipeline = meshes.pipeline[i];
-
-      uint64 priority;
-
-      std::memcpy(&priority, &distance, sizeof(float));
-
-      priority |= ((std::hash<ID3D12PipelineState*>{}(pipeline)&0xffffffff) << 32);
+      if (not intersects(view_frustrum, meshes.bbox[i])) continue;
 
       auto& render_list = are_flags_set(meshes.pipeline_flags[i],
                                         gpu::material_pipeline_flags::transparent)
@@ -711,9 +700,10 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
                              : _opaque_object_render_list;
 
       render_list.push_back({
-         .priority = priority,
+         .distance = glm::dot(view_frustrum.planes[frustrum_planes::near_],
+                              float4{meshes.position[i], 1.0f}),
 
-         .pipeline = pipeline,
+         .pipeline = meshes.pipeline[i],
 
          .index_buffer_view = meshes.mesh[i].index_buffer_view,
          .vertex_buffer_views = {meshes.mesh[i].vertex_buffer_views},
@@ -729,12 +719,13 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
 
    std::sort(_opaque_object_render_list.begin(), _opaque_object_render_list.end(),
              [](const render_list_item& l, const render_list_item& r) {
-                return l.priority < r.priority;
+                return std::tie(l.distance, l.pipeline) <
+                       std::tie(r.distance, r.pipeline);
              });
    std::sort(_transparent_object_render_list.begin(),
              _transparent_object_render_list.end(),
              [](const render_list_item& l, const render_list_item& r) {
-                return l.priority < r.priority;
+                return l.distance > r.distance;
              });
 }
 
