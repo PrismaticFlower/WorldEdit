@@ -480,6 +480,15 @@
     <ClInclude Include="src\graphics\world_mesh_list.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\d3d12_mem_alloc.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\resource.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -605,12 +614,6 @@
     <ClCompile Include="src\assets\texture\texture_io.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\gpu\buffer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\texture.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\gpu\descriptor_allocation.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -636,6 +639,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utility\file_watcher.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\gpu\resource.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

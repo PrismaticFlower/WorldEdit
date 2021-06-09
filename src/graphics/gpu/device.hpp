@@ -3,9 +3,11 @@
 #include "async_copy_manager.hpp"
 #include "buffer.hpp"
 #include "common.hpp"
+#include "d3d12_mem_alloc.hpp"
 #include "descriptor_allocation.hpp"
 #include "descriptor_heap.hpp"
 #include "pipeline_library.hpp"
+#include "resource.hpp"
 #include "resource_view_set.hpp"
 #include "root_signature_library.hpp"
 #include "shader_library.hpp"
@@ -62,42 +64,16 @@ public:
    auto create_buffer(const buffer_desc& desc, const D3D12_HEAP_TYPE heap_type,
                       const D3D12_RESOURCE_STATES initial_resource_state) -> buffer
    {
-      const D3D12_HEAP_PROPERTIES heap_properties{.Type = heap_type,
-                                                  .CPUPageProperty =
-                                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-                                                  .MemoryPoolPreference =
-                                                     D3D12_MEMORY_POOL_UNKNOWN};
-
-      const D3D12_RESOURCE_DESC d3d12_desc = desc;
-
-      utility::com_ptr<ID3D12Resource> buffer_resource;
-
-      throw_if_failed(device_d3d->CreateCommittedResource(
-         &heap_properties, D3D12_HEAP_FLAG_NONE, &d3d12_desc, initial_resource_state,
-         nullptr, IID_PPV_ARGS(buffer_resource.clear_and_assign())));
-
-      return buffer{*this, desc.size, std::move(buffer_resource)};
+      return buffer{create_resource(desc, heap_type, initial_resource_state),
+                    desc.size};
    }
 
    auto create_texture(const texture_desc& desc,
                        const D3D12_RESOURCE_STATES initial_resource_state) -> texture
    {
-      const D3D12_HEAP_PROPERTIES heap_properties{.Type = D3D12_HEAP_TYPE_DEFAULT,
-                                                  .CPUPageProperty =
-                                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-                                                  .MemoryPoolPreference =
-                                                     D3D12_MEMORY_POOL_UNKNOWN};
-
-      const D3D12_RESOURCE_DESC d3d12_desc = desc;
-
-      utility::com_ptr<ID3D12Resource> texture_resource;
-
-      throw_if_failed(device_d3d->CreateCommittedResource(
-         &heap_properties, D3D12_HEAP_FLAG_NONE, &d3d12_desc, initial_resource_state,
-         desc.optimized_clear_value ? &desc.optimized_clear_value.value() : nullptr,
-         IID_PPV_ARGS(texture_resource.clear_and_assign())));
-
-      return texture{*this, desc, std::move(texture_resource)};
+      return texture{create_resource(desc, D3D12_HEAP_TYPE_DEFAULT, initial_resource_state,
+                                     desc.optimized_clear_value),
+                     desc};
    }
 
    void create_shader_resource_view(ID3D12Resource& resource,
@@ -146,26 +122,28 @@ public:
    {
       descriptor_range descriptors = descriptor_heap_srv_cbv_uav.allocate_static(
          static_cast<uint32>(view_descriptions.size()));
-      std::vector<gsl::owner<ID3D12Resource*>> resources;
+      std::vector<std::shared_ptr<ID3D12Resource>> resources;
       resources.reserve(view_descriptions.size());
 
       for (auto [index, desc] : view_descriptions | ranges::views::enumerate) {
-         desc.resource.AddRef();
-         resources.push_back(&desc.resource);
+         resources.push_back(desc.resource);
+
+         if (desc.counter_resource) resources.push_back(desc.counter_resource);
 
          boost::variant2::visit(
             [&](const auto& view_desc) {
                using Type = std::remove_cvref_t<decltype(view_desc)>;
 
                if constexpr (std::is_same_v<shader_resource_view_desc, Type>) {
-                  create_shader_resource_view(desc.resource, view_desc,
+                  create_shader_resource_view(*desc.resource, view_desc,
                                               descriptors[index]);
                }
                else if constexpr (std::is_same_v<constant_buffer_view, Type>) {
                   create_constant_buffer_view(view_desc, descriptors[index]);
                }
                else if constexpr (std::is_same_v<unordered_access_view_desc, Type>) {
-                  create_unordered_access_view(desc.resource, desc.counter_resource,
+                  create_unordered_access_view(*desc.resource,
+                                               desc.counter_resource.get(),
                                                view_desc, descriptors[index]);
                }
             },
@@ -191,16 +169,17 @@ public:
       }
    }
 
-   void deferred_destroy_resource(gsl::owner<ID3D12Resource*> resource)
+   void deferred_destroy_resource(gsl::owner<ID3D12Resource*> resource,
+                                  gsl::owner<D3D12MA::Allocation*> allocation)
    {
       assert(resource);
 
       std::lock_guard lock{_deferred_destruction_mutex};
 
       _deferred_destructions.push_back(
-         {// TODO (maybe, depending on how memory residency management shapes up): frame usage tracking for resources
-          .last_used_frame = fence_value,
-          .resource = utility::com_ptr{resource}});
+         {.last_used_frame = fence_value,
+          .resource = resource_owner{.allocation = release_ptr{allocation},
+                                     .resource = utility::com_ptr{resource}}});
    }
 
    void deferred_free_descriptors(const D3D12_DESCRIPTOR_HEAP_TYPE type,
@@ -268,6 +247,30 @@ public:
    pipeline_library pipelines{*device_d3d, shaders, root_signatures};
 
 private:
+   auto create_resource(const D3D12_RESOURCE_DESC& desc, const D3D12_HEAP_TYPE heap_type,
+                        const D3D12_RESOURCE_STATES initial_resource_state,
+                        std::optional<D3D12_CLEAR_VALUE> optimized_clear_value = std::nullopt)
+      -> std::shared_ptr<ID3D12Resource>
+   {
+      const D3D12MA::ALLOCATION_DESC alloc_desc{.HeapType = heap_type};
+
+      utility::com_ptr<ID3D12Resource> d3d12_resource;
+      release_ptr<D3D12MA::Allocation> allocation;
+
+      throw_if_failed(
+         _allocator->CreateResource(&alloc_desc, &desc, initial_resource_state,
+                                    optimized_clear_value
+                                       ? &optimized_clear_value.value()
+                                       : nullptr,
+                                    allocation.clear_and_assign(),
+                                    IID_PPV_ARGS(d3d12_resource.clear_and_assign())));
+
+      auto resource_owner =
+         std::make_shared<resource>(*this, d3d12_resource, std::move(allocation));
+
+      return std::shared_ptr<ID3D12Resource>{resource_owner, d3d12_resource.get()};
+   }
+
    void process_deferred_resource_destructions();
 
    struct descriptor_range_owner {
@@ -292,11 +295,18 @@ private:
       descriptor_range range{};
    };
 
+   struct resource_owner {
+      release_ptr<D3D12MA::Allocation> allocation;
+      utility::com_ptr<ID3D12Resource> resource;
+   };
+
    struct deferred_destruction {
       UINT64 last_used_frame = 0;
 
-      boost::variant2::variant<utility::com_ptr<ID3D12Resource>, std::unique_ptr<descriptor_range_owner>> resource;
+      boost::variant2::variant<resource_owner, std::unique_ptr<descriptor_range_owner>> resource;
    };
+
+   release_ptr<D3D12MA::Allocator> _allocator;
 
    std::mutex _deferred_destruction_mutex;
    std::vector<deferred_destruction> _deferred_destructions;

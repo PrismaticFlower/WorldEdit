@@ -19,34 +19,12 @@ class buffer {
 public:
    buffer() = default;
 
-   buffer(const buffer&) noexcept = delete;
-   auto operator=(const buffer&) noexcept -> buffer& = delete;
+   buffer(const buffer&) noexcept = default;
+   auto operator=(const buffer&) noexcept -> buffer& = default;
 
-   buffer(buffer&& other) noexcept
-   {
-      this->swap(other);
-   }
+   buffer(buffer&& other) noexcept = default;
 
-   auto operator=(buffer&& other) noexcept -> buffer&
-   {
-      buffer discarded;
-
-      discarded.swap(*this);
-      this->swap(other);
-
-      return *this;
-   }
-
-   ~buffer();
-
-   void swap(buffer& other) noexcept
-   {
-      using std::swap;
-
-      swap(this->_parent_device, other._parent_device);
-      swap(this->_resource, other._resource);
-      swap(this->_size, other._size);
-   }
+   auto operator=(buffer&& other) noexcept -> buffer& = default;
 
    bool alive() const noexcept
    {
@@ -58,14 +36,14 @@ public:
       return alive();
    }
 
-   auto parent_device() const noexcept -> device*
-   {
-      return _parent_device.get();
-   }
-
-   auto resource() const noexcept -> ID3D12Resource*
+   auto resource() const noexcept -> std::shared_ptr<ID3D12Resource>
    {
       return _resource;
+   }
+
+   auto view_resource() const noexcept -> ID3D12Resource*
+   {
+      return _resource.get();
    }
 
    auto size() const noexcept -> uint32
@@ -76,13 +54,12 @@ public:
 private:
    friend device;
 
-   buffer(device& device, const uint32 size, utility::com_ptr<ID3D12Resource> resource)
-      : _parent_device{&device}, _resource{resource.release()}, _size{size}
+   buffer(std::shared_ptr<ID3D12Resource> resource, const uint32 size)
+      : _resource{resource}, _size{size}
    {
    }
 
-   jss::object_ptr<device> _parent_device = nullptr;
-   gsl::owner<ID3D12Resource*> _resource = nullptr;
+   std::shared_ptr<ID3D12Resource> _resource = nullptr;
    uint32 _size = 0;
 };
 

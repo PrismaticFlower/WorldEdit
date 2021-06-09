@@ -87,8 +87,8 @@ light_clusters::light_clusters(gpu::device& gpu_device)
    _shadow_map_dsv =
       gpu_device.allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
 
-   _gpu_device->device_d3d->CreateDepthStencilView(_shadow_map.resource(), nullptr,
-                                                   _shadow_map_dsv[0].cpu);
+   _gpu_device->device_d3d->CreateDepthStencilView(_shadow_map.view_resource(),
+                                                   nullptr, _shadow_map_dsv[0].cpu);
 
    // _resource_views = _gpu_device->create_resource_view_set(std::array{
    // gpu::resource_view_desc{
@@ -114,11 +114,11 @@ light_clusters::light_clusters(gpu::device& gpu_device)
 
    // Above ICEs, convoluted workaround below
    std::array resource_view_descs{
-      gpu::resource_view_desc{.resource = *_lights_constant_buffer.resource()},
+      gpu::resource_view_desc{.resource = _lights_constant_buffer.resource()},
 
-      gpu::resource_view_desc{.resource = *_regional_lights_buffer.resource()},
+      gpu::resource_view_desc{.resource = _regional_lights_buffer.resource()},
 
-      gpu::resource_view_desc{.resource = *_shadow_map.resource()}};
+      gpu::resource_view_desc{.resource = _shadow_map.resource()}};
 
    resource_view_descs[0].view_desc =
       gpu::constant_buffer_view{.buffer_location =
@@ -295,7 +295,7 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
    std::memcpy(upload_buffer.cpu_address, &light_constants, sizeof(light_constants));
 
    command_list.copy_buffer_region(*_lights_constant_buffer.resource(), 0,
-                                   *dynamic_buffer_allocator.resource(),
+                                   *dynamic_buffer_allocator.view_resource(),
                                    upload_buffer.gpu_address -
                                       dynamic_buffer_allocator.gpu_base_address(),
                                    sizeof(light_constants));
@@ -310,7 +310,7 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                regional_lights_descriptions_size);
 
    command_list.copy_buffer_region(*_regional_lights_buffer.resource(), 0,
-                                   *dynamic_buffer_allocator.resource(),
+                                   *dynamic_buffer_allocator.view_resource(),
                                    upload_buffer.gpu_address -
                                       dynamic_buffer_allocator.gpu_base_address(),
                                    regional_lights_descriptions_size);

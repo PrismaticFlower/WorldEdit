@@ -477,7 +477,7 @@ void geometric_shapes::init_gpu_buffer(gpu::device& device)
    const D3D12_RANGE write_range{0, sizeof(shapes_buffer)};
    upload_buffer.Unmap(0, &write_range);
 
-   copy_context.command_list.CopyResource(_gpu_buffer.resource(), &upload_buffer);
+   copy_context.command_list.CopyResource(_gpu_buffer.view_resource(), &upload_buffer);
 
    (void)device.copy_manager.close_and_execute(copy_context);
 }

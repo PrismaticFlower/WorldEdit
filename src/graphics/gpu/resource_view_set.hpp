@@ -74,7 +74,7 @@ private:
    friend device;
 
    resource_view_set(device& device, descriptor_range descriptors,
-                     std::vector<gsl::owner<ID3D12Resource*>> resources)
+                     std::vector<std::shared_ptr<ID3D12Resource>> resources)
       : _parent_device{&device}, _descriptor_range{descriptors}, _resources{std::move(resources)}
    {
    }
@@ -82,7 +82,7 @@ private:
    jss::object_ptr<device> _parent_device = nullptr;
 
    descriptor_range _descriptor_range;
-   std::vector<gsl::owner<ID3D12Resource*>> _resources;
+   std::vector<std::shared_ptr<ID3D12Resource>> _resources;
 };
 
 }

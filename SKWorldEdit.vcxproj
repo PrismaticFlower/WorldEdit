@@ -201,12 +201,15 @@
     <ClInclude Include="src\graphics\gpu\command_list.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
     <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp" />
+    <ClInclude Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.h" />
+    <ClInclude Include="src\graphics\gpu\d3d12_mem_alloc.hpp" />
     <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_allocation.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp" />
     <ClInclude Include="src\graphics\gpu\descriptor_range.hpp" />
     <ClInclude Include="src\graphics\gpu\device.hpp" />
     <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp" />
+    <ClInclude Include="src\graphics\gpu\resource.hpp" />
     <ClInclude Include="src\graphics\gpu\resource_view_set.hpp" />
     <ClInclude Include="src\graphics\gpu\shader_cache.hpp" />
     <ClInclude Include="src\graphics\gpu\shader_list.hpp" />
@@ -245,6 +248,11 @@
     <ClInclude Include="src\utility\binary_writer.hpp" />
     <ClInclude Include="src\utility\com_ptr.hpp" />
     <ClInclude Include="src\utility\enum_bitflags.hpp" />
+    <ClCompile Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.cpp">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4100;4127;4275;4324;4459;5105</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4100;4324;4127;4275;4459;5105</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="src\graphics\gpu\resource.cpp" />
     <ClCompile Include="src\utility\file_watcher.cpp" />
     <ClInclude Include="src\utility\event.hpp" />
     <ClInclude Include="src\utility\file_watcher.hpp">
@@ -296,7 +304,6 @@
     <ClCompile Include="src\graphics\camera.cpp" />
     <ClCompile Include="src\graphics\frustrum.cpp" />
     <ClCompile Include="src\graphics\geometric_shapes.cpp" />
-    <ClCompile Include="src\graphics\gpu\buffer.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_allocation.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
@@ -307,7 +314,6 @@
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_list.cpp" />
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp" />
-    <ClCompile Include="src\graphics\gpu\texture.cpp" />
     <ClCompile Include="src\graphics\light_clusters.cpp" />
     <ClCompile Include="src\graphics\line_drawer.cpp" />
     <ClCompile Include="src\graphics\material.cpp" />

@@ -413,8 +413,8 @@ struct unordered_access_view_desc {
 };
 
 struct resource_view_desc {
-   ID3D12Resource& resource;
-   ID3D12Resource* counter_resource = nullptr;
+   std::shared_ptr<ID3D12Resource> resource;
+   std::shared_ptr<ID3D12Resource> counter_resource = nullptr;
 
    boost::variant2::variant<shader_resource_view_desc, constant_buffer_view, unordered_access_view_desc> view_desc;
 };

@@ -85,6 +85,12 @@ device::device(const HWND window)
       info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
       info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
    }
+
+   const D3D12MA::ALLOCATOR_DESC alloc_desc{.pDevice = device_d3d.get(),
+                                            .pAdapter = adapter.get()};
+
+   throw_if_failed(
+      D3D12MA::CreateAllocator(&alloc_desc, _allocator.clear_and_assign()));
 }
 
 device::~device()

@@ -61,7 +61,7 @@ public:
               .size = size};
    }
 
-   auto resource() -> ID3D12Resource*
+   auto view_resource() -> ID3D12Resource*
    {
       return _resource;
    }
@@ -76,7 +76,7 @@ public:
       _allocated = 0;
       _cpu_base_address = _buffers[new_frame_index].cpu_address;
       _gpu_base_address = _buffers[new_frame_index].gpu_address;
-      _resource = _buffers[new_frame_index].underlying_buffer.resource();
+      _resource = _buffers[new_frame_index].underlying_buffer.view_resource();
    }
 
 private:

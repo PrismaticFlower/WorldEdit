@@ -35,13 +35,12 @@ struct depth_stencil_texture : private texture {
    {
       depth_stencil_view =
          device.allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
-      device.device_d3d->CreateDepthStencilView(resource(), nullptr,
+      device.device_d3d->CreateDepthStencilView(view_resource(), nullptr,
                                                 depth_stencil_view[0].cpu);
    }
 
    using texture::alive;
 
-   using texture::parent_device;
    using texture::resource;
 
    using texture::array_size;

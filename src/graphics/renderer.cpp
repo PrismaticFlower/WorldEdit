@@ -209,7 +209,7 @@ void renderer::update_camera_constant_buffer(const camera& camera,
                sizeof(float4x4));
 
    command_list.copy_buffer_region(*_camera_constant_buffer.resource(), 0,
-                                   *_dynamic_buffer_allocator.resource(),
+                                   *_dynamic_buffer_allocator.view_resource(),
                                    allocation.gpu_address -
                                       _dynamic_buffer_allocator.gpu_base_address(),
                                    sizeof(float4x4));

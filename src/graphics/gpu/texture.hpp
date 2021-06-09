@@ -5,6 +5,7 @@
 #include "utility/com_ptr.hpp"
 
 #include <cassert>
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -20,31 +21,17 @@ class texture {
 public:
    texture() = default;
 
-   texture(const texture&) noexcept = delete;
-   auto operator=(const texture&) noexcept -> texture& = delete;
+   texture(const texture&) noexcept = default;
+   auto operator=(const texture&) noexcept -> texture& = default;
 
-   texture(texture&& other) noexcept
-   {
-      this->swap(other);
-   }
+   texture(texture&& other) noexcept = default;
 
-   auto operator=(texture&& other) noexcept -> texture&
-   {
-      texture discarded;
-
-      discarded.swap(*this);
-      this->swap(other);
-
-      return *this;
-   }
-
-   ~texture();
+   auto operator=(texture&& other) noexcept -> texture& = default;
 
    void swap(texture& other) noexcept
    {
       using std::swap;
 
-      swap(this->_parent_device, other._parent_device);
       swap(this->_resource, other._resource);
       swap(this->_format, other._format);
       swap(this->_width, other._width);
@@ -61,17 +48,17 @@ public:
 
    explicit operator bool() const noexcept
    {
-      return alive();
+      return _resource != nullptr;
    }
 
-   auto parent_device() const noexcept -> device*
-   {
-      return _parent_device.get();
-   }
-
-   auto resource() const noexcept -> ID3D12Resource*
+   auto resource() const noexcept -> std::shared_ptr<ID3D12Resource>
    {
       return _resource;
+   }
+
+   auto view_resource() const noexcept -> ID3D12Resource*
+   {
+      return _resource.get();
    }
 
    auto format() const noexcept -> DXGI_FORMAT
@@ -107,11 +94,9 @@ public:
 private:
    friend device;
 
-   texture(device& device, const texture_desc& desc,
-           utility::com_ptr<ID3D12Resource> resource)
+   texture(std::shared_ptr<ID3D12Resource> resource, const texture_desc& desc)
    {
-      _parent_device = &device;
-      _resource = resource.release();
+      _resource = std::move(resource);
       _format = desc.format;
       _width = desc.width;
       _height = desc.height;
@@ -120,8 +105,7 @@ private:
       _array_size = desc.array_size;
    }
 
-   jss::object_ptr<device> _parent_device = nullptr;
-   gsl::owner<ID3D12Resource*> _resource = nullptr;
+   std::shared_ptr<ID3D12Resource> _resource;
 
    DXGI_FORMAT _format = DXGI_FORMAT_UNKNOWN;
    uint32 _width = 0;

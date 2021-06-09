@@ -87,9 +87,9 @@ void material::init_resource_views(gpu::device& gpu_device)
    // Above ICEs, workaround below...
 
    std::array resource_view_descriptions{
-      gpu::resource_view_desc{.resource = *textures[0]->resource()},
+      gpu::resource_view_desc{.resource = textures[0]->resource()},
 
-      gpu::resource_view_desc{.resource = *textures[1]->resource()},
+      gpu::resource_view_desc{.resource = textures[1]->resource()},
    };
 
    resource_view_descriptions[0].view_desc =

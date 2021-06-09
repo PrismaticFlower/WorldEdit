@@ -125,29 +125,30 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
       .buffer = device.create_buffer({.size = static_cast<uint32>(buffer.size())},
                                      D3D12_HEAP_TYPE_DEFAULT,
                                      D3D12_RESOURCE_STATE_COMMON)};
+
+   const auto gpu_virtual_address =
+      gpu_buffer.buffer.view_resource()->GetGPUVirtualAddress();
+
    gpu_buffer.index_buffer_view = {.BufferLocation =
-                                      gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                                      data_offsets.indices,
+                                      gpu_virtual_address + data_offsets.indices,
                                    .SizeInBytes =
                                       static_cast<uint32>(indices.size_bytes()),
                                    .Format = DXGI_FORMAT_R16_UINT};
    gpu_buffer.position_vertex_buffer_view =
-      {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                         data_offsets.positions,
+      {.BufferLocation = gpu_virtual_address + data_offsets.positions,
        .SizeInBytes = static_cast<uint32>(vertices.positions.size_bytes()),
        .StrideInBytes = sizeof(decltype(vertices.positions)::value_type)};
    gpu_buffer.normal_vertex_buffer_view =
-      {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                         data_offsets.normals,
+      {.BufferLocation = gpu_virtual_address + data_offsets.normals,
        .SizeInBytes = static_cast<uint32>(vertices.normals.size_bytes()),
        .StrideInBytes = sizeof(decltype(vertices.normals)::value_type)};
    gpu_buffer.texcoord_vertex_buffer_view =
-      {.BufferLocation = gpu_buffer.buffer.resource()->GetGPUVirtualAddress() +
-                         data_offsets.texcoords,
+      {.BufferLocation = gpu_virtual_address + data_offsets.texcoords,
        .SizeInBytes = static_cast<uint32>(vertices.texcoords.size_bytes()),
        .StrideInBytes = sizeof(decltype(vertices.texcoords)::value_type)};
 
-   copy_context.command_list.CopyResource(gpu_buffer.buffer.resource(), &upload_buffer);
+   copy_context.command_list.CopyResource(gpu_buffer.buffer.view_resource(),
+                                          &upload_buffer);
 
    return device.copy_manager.close_and_execute(copy_context);
 }

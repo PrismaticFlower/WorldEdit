@@ -156,7 +156,7 @@ private:
          const auto& cpu_subresource = cpu_texture.subresource(i);
 
          const D3D12_TEXTURE_COPY_LOCATION dest_location{.pResource =
-                                                            texture.resource(),
+                                                            texture.view_resource(),
                                                          .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
                                                          .SubresourceIndex = i};
          const D3D12_TEXTURE_COPY_LOCATION

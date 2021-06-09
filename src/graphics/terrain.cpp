@@ -189,11 +189,11 @@ void terrain::init_gpu_resources(const world::terrain& terrain,
    // Above ICEs, workaround below...
 
    std::array resource_view_descs{
-      gpu::resource_view_desc{.resource = *_terrain_constants_buffer.resource()},
+      gpu::resource_view_desc{.resource = _terrain_constants_buffer.resource()},
 
-      gpu::resource_view_desc{.resource = *_height_map.resource()},
+      gpu::resource_view_desc{.resource = _height_map.resource()},
 
-      gpu::resource_view_desc{.resource = *_texture_weight_maps.resource()}};
+      gpu::resource_view_desc{.resource = _texture_weight_maps.resource()}};
 
    resource_view_descs[0].view_desc =
       gpu::constant_buffer_view{.buffer_location =
@@ -219,7 +219,7 @@ void terrain::init_gpu_resources(const world::terrain& terrain,
                sizeof(terrain_patch_indices));
 
    command_list.copy_buffer_region(*_index_buffer.resource(), 0,
-                                   *dynamic_buffer_allocator.resource(),
+                                   *dynamic_buffer_allocator.view_resource(),
                                    indices_allocation.gpu_address -
                                       dynamic_buffer_allocator.gpu_base_address(),
                                    sizeof(terrain_patch_indices));
@@ -266,11 +266,11 @@ void terrain::init_gpu_height_map(const world::terrain& terrain,
    height_map_upload_buffer.resource()->Unmap(0, &write_range);
 
    command_list.copy_texture_region(
-      {.pResource = _height_map.resource(),
+      {.pResource = _height_map.view_resource(),
        .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
        .SubresourceIndex = 0},
       0, 0, 0,
-      {.pResource = height_map_upload_buffer.resource(),
+      {.pResource = height_map_upload_buffer.view_resource(),
        .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
        .PlacedFootprint = {.Offset = 0,
                            .Footprint = {.Format = DXGI_FORMAT_R16_SNORM,
@@ -329,11 +329,11 @@ void terrain::init_gpu_texture_weight_map(const world::terrain& terrain,
 
    for (uint32 item = 0; item < texture_count; ++item) {
       command_list.copy_texture_region(
-         {.pResource = _texture_weight_maps.resource(),
+         {.pResource = _texture_weight_maps.view_resource(),
           .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
           .SubresourceIndex = item},
          0, 0, 0,
-         {.pResource = upload_buffer.resource(),
+         {.pResource = upload_buffer.view_resource(),
           .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
           .PlacedFootprint = {.Offset = texture_item_size * item,
                               .Footprint = {.Format = DXGI_FORMAT_R8_UNORM,
@@ -423,7 +423,7 @@ void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
    std::memcpy(upload_allocation.cpu_address, &constants, sizeof(constants));
 
    command_list.copy_buffer_region(*_terrain_constants_buffer.resource(), 0,
-                                   *dynamic_buffer_allocator.resource(),
+                                   *dynamic_buffer_allocator.view_resource(),
                                    upload_allocation.gpu_address -
                                       dynamic_buffer_allocator.gpu_base_address(),
                                    sizeof(constants));
@@ -437,7 +437,7 @@ void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
 void terrain::init_textures_resource_views()
 {
    const auto diffuse_map_view_desc = [&](const int i) {
-      return gpu::resource_view_desc{.resource = *_diffuse_maps[i]->resource(),
+      return gpu::resource_view_desc{.resource = _diffuse_maps[i]->resource(),
                                      .view_desc = gpu::shader_resource_view_desc{
                                         .format = _diffuse_maps[i]->format(),
                                         .type_description = gpu::texture2d_srv{}}};
