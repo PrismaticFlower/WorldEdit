@@ -244,42 +244,42 @@ public:
    }
 
    void set_compute_root_constant_buffer_view(const uint32 root_parameter_index,
-                                              const D3D12_GPU_VIRTUAL_ADDRESS buffer_location)
+                                              const gpu_virtual_address buffer_location)
    {
       _command_list->SetComputeRootConstantBufferView(root_parameter_index,
                                                       buffer_location);
    }
 
    void set_graphics_root_constant_buffer_view(const uint32 root_parameter_index,
-                                               const D3D12_GPU_VIRTUAL_ADDRESS buffer_location)
+                                               const gpu_virtual_address buffer_location)
    {
       _command_list->SetGraphicsRootConstantBufferView(root_parameter_index,
                                                        buffer_location);
    }
 
    void set_compute_root_shader_resource_view(const uint32 root_parameter_index,
-                                              const D3D12_GPU_VIRTUAL_ADDRESS buffer_location)
+                                              const gpu_virtual_address buffer_location)
    {
       _command_list->SetComputeRootShaderResourceView(root_parameter_index,
                                                       buffer_location);
    }
 
    void set_graphics_root_shader_resource_view(const uint32 root_parameter_index,
-                                               const D3D12_GPU_VIRTUAL_ADDRESS buffer_location)
+                                               const gpu_virtual_address buffer_location)
    {
       _command_list->SetGraphicsRootShaderResourceView(root_parameter_index,
                                                        buffer_location);
    }
 
    void set_compute_root_unordered_access_view(const uint32 root_parameter_index,
-                                               const D3D12_GPU_VIRTUAL_ADDRESS buffer_location)
+                                               const gpu_virtual_address buffer_location)
    {
       _command_list->SetComputeRootUnorderedAccessView(root_parameter_index,
                                                        buffer_location);
    }
 
    void set_graphics_root_unordered_access_view(const uint32 root_parameter_index,
-                                                const D3D12_GPU_VIRTUAL_ADDRESS buffer_location)
+                                                const gpu_virtual_address buffer_location)
    {
       _command_list->SetGraphicsRootUnorderedAccessView(root_parameter_index,
                                                         buffer_location);

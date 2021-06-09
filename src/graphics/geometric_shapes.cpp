@@ -484,7 +484,7 @@ void geometric_shapes::init_gpu_buffer(gpu::device& device)
 
 void geometric_shapes::init_shapes()
 {
-   const D3D12_GPU_VIRTUAL_ADDRESS gpu_address =
+   const gpu::virtual_address gpu_address =
       _gpu_buffer.resource()->GetGPUVirtualAddress();
 
    _icosphere =

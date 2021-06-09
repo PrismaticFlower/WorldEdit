@@ -41,7 +41,7 @@ public:
 
    struct allocation {
       std::byte* cpu_address;
-      D3D12_GPU_VIRTUAL_ADDRESS gpu_address;
+      gpu_virtual_address gpu_address;
       std::size_t size;
    };
 
@@ -66,7 +66,7 @@ public:
       return _resource;
    }
 
-   auto gpu_base_address() -> D3D12_GPU_VIRTUAL_ADDRESS
+   auto gpu_base_address() -> gpu_virtual_address
    {
       return _gpu_base_address;
    }
@@ -83,13 +83,13 @@ private:
    std::atomic_size_t _allocated = 0;
    std::size_t _buffer_size = 0;
    std::byte* _cpu_base_address = nullptr;
-   D3D12_GPU_VIRTUAL_ADDRESS _gpu_base_address = 0;
+   gpu_virtual_address _gpu_base_address = 0;
    ID3D12Resource* _resource = nullptr;
 
    struct backing_buffer {
       buffer underlying_buffer;
       std::byte* cpu_address = nullptr;
-      D3D12_GPU_VIRTUAL_ADDRESS gpu_address = 0;
+      gpu_virtual_address gpu_address = 0;
    };
 
    std::array<backing_buffer, render_latency> _buffers;

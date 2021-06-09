@@ -397,7 +397,7 @@ void light_clusters::TEMP_render_shadow_maps(
    struct shadow_render_list_item {
       D3D12_INDEX_BUFFER_VIEW index_buffer_view;
       D3D12_VERTEX_BUFFER_VIEW position_vertex_buffer_view;
-      D3D12_GPU_VIRTUAL_ADDRESS object_transform_address;
+      gpu::virtual_address object_transform_address;
       uint32 index_count;
       uint32 start_index;
       uint32 start_vertex;
@@ -425,7 +425,7 @@ void light_clusters::TEMP_render_shadow_maps(
           .start_vertex = meshes.mesh[i].start_vertex});
    }
 
-   const D3D12_GPU_VIRTUAL_ADDRESS shadow_view_projection_matrix_address = [&] {
+   const gpu::virtual_address shadow_view_projection_matrix_address = [&] {
       auto allocation = dynamic_buffer_allocator.allocate(sizeof(float4x4));
 
       std::memcpy(allocation.cpu_address,

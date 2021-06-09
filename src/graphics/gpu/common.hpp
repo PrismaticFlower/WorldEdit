@@ -12,6 +12,9 @@ namespace we::graphics::gpu {
 
 constexpr static int render_latency = 2;
 
+using virtual_address = D3D12_GPU_VIRTUAL_ADDRESS;
+using gpu_virtual_address = virtual_address;
+
 struct buffer_desc {
    uint32 alignment = 0;
    uint32 size = 0;
@@ -202,7 +205,7 @@ struct texture_cube_array_srv {
 };
 
 struct raytracing_acceleration_structure_srv {
-   D3D12_GPU_VIRTUAL_ADDRESS location;
+   gpu_virtual_address location;
 
    operator D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV() const noexcept
    {
@@ -282,7 +285,7 @@ struct shader_resource_view_desc {
 };
 
 struct constant_buffer_view {
-   D3D12_GPU_VIRTUAL_ADDRESS buffer_location;
+   gpu_virtual_address buffer_location;
    uint32 size;
 
    operator D3D12_CONSTANT_BUFFER_VIEW_DESC() const noexcept

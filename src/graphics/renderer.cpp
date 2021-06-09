@@ -649,7 +649,7 @@ void renderer::build_world_mesh_list(
 
       const auto object_bbox = object.rotation * model.bbox + object.position;
 
-      const D3D12_GPU_VIRTUAL_ADDRESS object_constants_address = [&] {
+      const gpu::virtual_address object_constants_address = [&] {
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
 

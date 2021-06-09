@@ -40,7 +40,7 @@ private:
       ID3D12PipelineState* pipeline;
       D3D12_INDEX_BUFFER_VIEW index_buffer_view;
       std::array<D3D12_VERTEX_BUFFER_VIEW, 3> vertex_buffer_views;
-      D3D12_GPU_VIRTUAL_ADDRESS object_constants_address;
+      gpu::virtual_address object_constants_address;
       gpu::descriptor_range material_descriptor_range;
       uint32 index_count;
       uint32 start_index;
