@@ -66,7 +66,9 @@ public:
          std::shared_lock lock{_shared_mutex};
 
          if (auto it = _textures.find(name); it != _textures.end()) {
-            return it->second.texture;
+            if (auto texture = it->second.texture.lock(); texture) {
+               return texture;
+            }
          }
       }
 
@@ -206,7 +208,7 @@ private:
    }
 
    struct texture_state {
-      std::shared_ptr<gpu::texture> texture;
+      std::weak_ptr<gpu::texture> texture;
       asset_ref<assets::texture::texture> asset;
    };
 
