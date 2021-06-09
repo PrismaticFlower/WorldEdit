@@ -131,7 +131,7 @@ void terrain::draw(const frustrum& view_frustrum,
 
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
    command_list.ia_set_index_buffer(
-      {.BufferLocation = _index_buffer.resource()->GetGPUVirtualAddress(),
+      {.BufferLocation = _index_buffer.gpu_virtual_address(),
        .SizeInBytes = _index_buffer.size(),
        .Format = DXGI_FORMAT_R16_UINT});
 
@@ -171,7 +171,7 @@ void terrain::init_gpu_resources(const world::terrain& terrain,
    //       .resource = *_terrain_constants_buffer.resource(),
    //       .view_desc =
    //          gpu::constant_buffer_view{.buffer_location =
-   //                                       _terrain_constants_buffer.resource()->GetGPUVirtualAddress(),
+   //                                       _terrain_constants_buffer.gpu_virtual_address(),
    //                                    .size = _terrain_constants_buffer.size()}},
    //
    //    gpu::resource_view_desc{.resource = *_height_map.resource(),

@@ -126,8 +126,7 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
                                      D3D12_HEAP_TYPE_DEFAULT,
                                      D3D12_RESOURCE_STATE_COMMON)};
 
-   const auto gpu_virtual_address =
-      gpu_buffer.buffer.view_resource()->GetGPUVirtualAddress();
+   const auto gpu_virtual_address = gpu_buffer.buffer.gpu_virtual_address();
 
    gpu_buffer.index_buffer_view = {.BufferLocation =
                                       gpu_virtual_address + data_offsets.indices,

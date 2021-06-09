@@ -92,7 +92,7 @@ renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries
                        imgui_font_descriptor.start().gpu);
 
    _device.create_constant_buffer_view({.buffer_location =
-                                           _camera_constant_buffer.resource()->GetGPUVirtualAddress(),
+                                           _camera_constant_buffer.gpu_virtual_address(),
                                         .size = _camera_constant_buffer.size()},
                                        _camera_constant_buffer_view[0]);
 }

@@ -95,7 +95,7 @@ light_clusters::light_clusters(gpu::device& gpu_device)
    //    .resource = *_lights_constant_buffer.resource(),
    //    .view_desc =
    //       gpu::constant_buffer_view{.buffer_location =
-   //                                    _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
+   //                                    _lights_constant_buffer.gpu_virtual_address(),
    //                                 .size = _lights_constant_buffer.size()}},
    //
    // gpu::resource_view_desc{.resource = *_regional_lights_buffer.resource(),
@@ -122,7 +122,7 @@ light_clusters::light_clusters(gpu::device& gpu_device)
 
    resource_view_descs[0].view_desc =
       gpu::constant_buffer_view{.buffer_location =
-                                   _lights_constant_buffer.resource()->GetGPUVirtualAddress(),
+                                   _lights_constant_buffer.gpu_virtual_address(),
                                 .size = _lights_constant_buffer.size()};
 
    resource_view_descs[1].view_desc = gpu::shader_resource_view_desc{

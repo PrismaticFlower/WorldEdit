@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common.hpp"
 #include "types.hpp"
 #include "utility/com_ptr.hpp"
 
@@ -49,6 +50,11 @@ public:
    auto size() const noexcept -> uint32
    {
       return _size;
+   }
+
+   auto gpu_virtual_address() const noexcept -> gpu_virtual_address
+   {
+      return _resource->GetGPUVirtualAddress();
    }
 
 private:

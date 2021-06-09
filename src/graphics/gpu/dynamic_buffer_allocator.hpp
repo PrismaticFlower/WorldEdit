@@ -33,7 +33,7 @@ public:
 
          backing_buffer.cpu_address = static_cast<std::byte*>(data);
          backing_buffer.gpu_address =
-            backing_buffer.underlying_buffer.resource()->GetGPUVirtualAddress();
+            backing_buffer.underlying_buffer.gpu_virtual_address();
       }
 
       reset(device.frame_index);

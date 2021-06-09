@@ -484,8 +484,7 @@ void geometric_shapes::init_gpu_buffer(gpu::device& device)
 
 void geometric_shapes::init_shapes()
 {
-   const gpu::virtual_address gpu_address =
-      _gpu_buffer.resource()->GetGPUVirtualAddress();
+   const gpu::virtual_address gpu_address = _gpu_buffer.gpu_virtual_address();
 
    _icosphere =
       {.index_count = static_cast<uint32>(shapes_buffer.icosphere_indices.size()) * 3,
