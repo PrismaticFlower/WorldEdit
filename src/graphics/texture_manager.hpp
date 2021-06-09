@@ -49,7 +49,7 @@ public:
                                             texture_format::r8g8b8a8_unorm_srgb);
 
       _null_normal_map = null_texture_init(float4{0.5f, 0.5f, 1.0f, 1.0f},
-                                           texture_format::r8g8b8a8_unorm_srgb);
+                                           texture_format::r8g8b8a8_unorm);
    };
 
    /// @brief Gets the specified texture or returns a default texture if it is not available.
