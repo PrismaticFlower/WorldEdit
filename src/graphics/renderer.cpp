@@ -124,6 +124,10 @@ void renderer::draw_frame(
 
    command_list.set_descriptor_heaps(_device.descriptor_heap_srv_cbv_uav.get());
 
+   if (std::exchange(_terrain_dirty, false)) {
+      _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
+   }
+
    update_camera_constant_buffer(camera, command_list);
 
    _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum,
@@ -131,10 +135,6 @@ void renderer::draw_frame(
                                            _dynamic_buffer_allocator);
    _light_clusters.update_lights(view_frustrum, world, command_list,
                                  _dynamic_buffer_allocator);
-
-   if (std::exchange(_terrain_dirty, false)) {
-      _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
-   }
 
    command_list.deferred_resource_barrier(_texture_resource_barriers);
    command_list.deferred_resource_barrier(
