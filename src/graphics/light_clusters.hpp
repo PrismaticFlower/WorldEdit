@@ -6,6 +6,7 @@
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "model_manager.hpp"
+#include "terrain.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
 #include "world_mesh_list.hpp"
@@ -40,7 +41,7 @@ private:
 
    gpu::texture _shadow_map;
    gpu::descriptor_allocation _shadow_map_dsv;
-   float4x4 _shadow_transform;
+   std::array<float4x4, 4> _shadow_cascade_transforms;
 
    gpu::resource_view_set _resource_views;
 };

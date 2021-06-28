@@ -125,6 +125,24 @@ bool intersects(const frustrum& frustrum, const math::bounding_box& bbox)
    return true;
 }
 
+bool intersects_shadow_cascade(const frustrum& frustrum, const math::bounding_box& bbox)
+{
+   for (auto& plane : frustrum.planes | ranges::views::drop(1)) {
+      if (outside_plane(plane, {bbox.min.x, bbox.min.y, bbox.min.z}) &
+          outside_plane(plane, {bbox.max.x, bbox.min.y, bbox.min.z}) &
+          outside_plane(plane, {bbox.min.x, bbox.max.y, bbox.min.z}) &
+          outside_plane(plane, {bbox.max.x, bbox.max.y, bbox.min.z}) &
+          outside_plane(plane, {bbox.min.x, bbox.min.y, bbox.max.z}) &
+          outside_plane(plane, {bbox.max.x, bbox.min.y, bbox.max.z}) &
+          outside_plane(plane, {bbox.min.x, bbox.max.y, bbox.max.z}) &
+          outside_plane(plane, {bbox.max.x, bbox.max.y, bbox.max.z})) {
+         return false;
+      }
+   }
+
+   return true;
+}
+
 bool intersects(const frustrum& frustrum, const float3& position, const float radius)
 {
    for (const auto& plane : frustrum.planes) {

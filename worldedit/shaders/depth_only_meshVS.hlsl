@@ -23,6 +23,7 @@ output_vertex main(input_vertex input)
 
    output.positionPS = mul(camera.view_projection_matrix,
                            mul(object.world_matrix, float4(input.positionOS, 1.0)));
+   output.positionPS.z = max(output.positionPS.z, 0.0);
 
    return output;
 }

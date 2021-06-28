@@ -58,12 +58,25 @@ public:
       return _inv_view_projection_matrix;
    }
 
+   auto near_clip() const noexcept
+   {
+      return _near_clip;
+   }
+
+   auto far_clip() const noexcept
+   {
+      return _far_clip;
+   }
+
 protected:
    float4x4 _world_matrix;
    float4x4 _view_matrix;
    float4x4 _projection_matrix;
    float4x4 _view_projection_matrix;
    float4x4 _inv_view_projection_matrix;
+
+   float _near_clip = 1.0f;
+   float _far_clip = 500.0f;
 };
 
 class perspective_camera : public camera {
@@ -116,21 +129,11 @@ public:
       update();
    }
 
-   auto near_clip() const noexcept
-   {
-      return _near_clip;
-   }
-
    void near_clip(const float new_near_clip) noexcept
    {
       _near_clip = new_near_clip;
 
       update();
-   }
-
-   auto far_clip() const noexcept
-   {
-      return _far_clip;
    }
 
    void far_clip(const float new_far_clip) noexcept
@@ -148,9 +151,6 @@ private:
 
    float _aspect_ratio = 1.0f;
    float _fov = 0.7853981635f;
-
-   float _near_clip = 1.0f;
-   float _far_clip = 1000.0f;
 };
 
 class shadow_orthographic_camera : public camera {

@@ -41,6 +41,8 @@ struct frustrum {
 
 bool intersects(const frustrum& frustrum, const math::bounding_box& bbox);
 
+bool intersects_shadow_cascade(const frustrum& frustrum, const math::bounding_box& bbox);
+
 bool intersects(const frustrum& frustrum, const float3& position, const float radius);
 
 }
