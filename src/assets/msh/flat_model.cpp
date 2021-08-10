@@ -1,5 +1,6 @@
 
 #include "flat_model.hpp"
+#include "generate_tangents.hpp"
 #include "utility/enum_bitflags.hpp"
 #include "utility/string_ops.hpp"
 
@@ -177,6 +178,7 @@ flat_model::flat_model(const scene& scene) noexcept
       node_hierarchy.emplace_back(make_flat_scene_node(node, scene.nodes));
    }
 
+   generate_tangents_for_meshes();
    patch_materials_with_options(meshes, scene.options);
    regenerate_bounding_boxes();
 }
@@ -307,6 +309,26 @@ void flat_model::flatten_node_to_collision(const node& node, const float4x4& nod
                                       static_cast<uint16>(base_vertex + i2)});
          }
       }
+   }
+}
+
+void flat_model::generate_tangents_for_meshes()
+{
+   for (auto& mesh : meshes) {
+      auto mesh_with_tangents = generate_tangents({.positions = mesh.positions,
+                                                   .normals = mesh.normals,
+                                                   .colors = mesh.colors,
+                                                   .texcoords = mesh.texcoords,
+
+                                                   .triangles = mesh.triangles});
+
+      mesh.positions = std::move(mesh_with_tangents.positions);
+      mesh.normals = std::move(mesh_with_tangents.normals);
+      mesh.tangents = std::move(mesh_with_tangents.tangents);
+      mesh.bitangents = std::move(mesh_with_tangents.bitangents);
+      mesh.colors = std::move(mesh_with_tangents.colors);
+      mesh.texcoords = std::move(mesh_with_tangents.texcoords);
+      mesh.triangles = std::move(mesh_with_tangents.triangles);
    }
 }
 

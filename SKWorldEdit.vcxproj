@@ -73,6 +73,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -103,6 +104,7 @@
       <DisableSpecificWarnings>4127;4275;4324;4459;5105</DisableSpecificWarnings>
       <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -177,6 +179,7 @@
     <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
       <FileType>CppHeader</FileType>
     </ClCompile>
+    <ClInclude Include="src\assets\msh\mikktspace\mikktspace.h" />
     <ClInclude Include="src\assets\msh\scene.hpp" />
     <ClInclude Include="src\assets\msh\scene_io.hpp" />
     <ClInclude Include="src\assets\msh\validate_scene.hpp" />
@@ -248,6 +251,16 @@
     <ClInclude Include="src\utility\binary_writer.hpp" />
     <ClInclude Include="src\utility\com_ptr.hpp" />
     <ClInclude Include="src\utility\enum_bitflags.hpp" />
+    <ClInclude Include="src\assets\msh\generate_tangents.hpp">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClCompile Include="src\assets\msh\generate_tangents.cpp" />
+    <ClCompile Include="src\assets\msh\mikktspace\mikktspace.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level4</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level4</WarningLevel>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4456;4201;4324;4127;4275;4459;5105</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4456;4201;4127;4275;4324;4459;5105</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.cpp">
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4100;4127;4275;4324;4459;5105</DisableSpecificWarnings>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4100;4324;4127;4275;4459;5105</DisableSpecificWarnings>

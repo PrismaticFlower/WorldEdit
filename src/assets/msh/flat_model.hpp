@@ -17,6 +17,8 @@ struct mesh {
 
    std::vector<float3> positions;
    std::vector<float3> normals;
+   std::vector<float3> tangents;
+   std::vector<float3> bitangents;
    std::vector<float4> colors;
    std::vector<float2> texcoords;
 
@@ -76,6 +78,8 @@ private:
 
    auto select_mesh_for_segment(const geometry_segment& segment,
                                 const material& material) -> mesh&;
+
+   void generate_tangents_for_meshes();
 };
 
 }

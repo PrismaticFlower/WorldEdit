@@ -489,6 +489,10 @@
     <ClInclude Include="src\graphics\gpu\resource.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\msh\generate_tangents.hpp" />
+    <ClInclude Include="src\assets\msh\mikktspace\mikktspace.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -645,6 +649,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\resource.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\msh\generate_tangents.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\msh\mikktspace\mikktspace.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
