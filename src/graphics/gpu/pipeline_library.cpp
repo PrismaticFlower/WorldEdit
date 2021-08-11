@@ -302,13 +302,13 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                                    const shader_library& shader_library,
                                    const root_signature_library& root_signature_library)
 {
-   depth_only_mesh = create_graphics_pipeline(
+   shadow_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.depth_only_mesh.get(),
                .VS = shader_library["depth_only_meshVS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
-               .RasterizerState = rasterizer_cull_backfacing,
+               .RasterizerState = rasterizer_cull_none,
                .DepthStencilState = depth_stencil_enabled,
                .InputLayout = depth_only_mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,

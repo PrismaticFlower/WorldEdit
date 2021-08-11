@@ -559,7 +559,7 @@ void light_clusters::TEMP_render_shadow_maps(
       command_list.set_graphics_root_signature(
          *_gpu_device->root_signatures.depth_only_mesh);
       command_list.set_graphics_root_constant_buffer(1, shadow_camera.view_projection_matrix());
-      command_list.set_pipeline_state(*_gpu_device->pipelines.depth_only_mesh);
+      command_list.set_pipeline_state(*_gpu_device->pipelines.shadow_mesh);
 
       command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
