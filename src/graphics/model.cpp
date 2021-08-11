@@ -37,6 +37,10 @@ model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
       vertex_count * sizeof(decltype(vertices.positions)::value_type);
    const auto normals_data_size =
       vertex_count * sizeof(decltype(vertices.normals)::value_type);
+   const auto tangents_data_size =
+      vertex_count * sizeof(decltype(vertices.tangents)::value_type);
+   const auto bitangents_data_size =
+      vertex_count * sizeof(decltype(vertices.bitangents)::value_type);
    const auto texcoords_data_size =
       vertex_count * sizeof(decltype(vertices.texcoords)::value_type);
 
@@ -46,17 +50,23 @@ model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
       math::align_up(positions_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
    const auto aligned_normals_size =
       math::align_up(normals_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
+   const auto aligned_tangents_size =
+      math::align_up(tangents_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
+   const auto aligned_bitangents_size =
+      math::align_up(bitangents_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
    const auto aligned_texcoords_size =
       math::align_up(texcoords_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
 
    const auto indices_data_offset = 0;
    const auto positions_data_offset = aligned_indices_size;
    const auto normals_data_offset = positions_data_offset + aligned_positions_size;
-   const auto texcoords_data_offset = normals_data_offset + aligned_normals_size;
+   const auto tangents_data_offset = normals_data_offset + aligned_normals_size;
+   const auto bitangents_data_offset = tangents_data_offset + aligned_tangents_size;
+   const auto texcoords_data_offset = bitangents_data_offset + aligned_bitangents_size;
 
-   const auto buffer_size =
-      static_cast<uint32>(aligned_indices_size + aligned_positions_size +
-                          aligned_normals_size + aligned_texcoords_size);
+   const auto buffer_size = static_cast<uint32>(
+      aligned_indices_size + aligned_positions_size + aligned_normals_size +
+      aligned_tangents_size + aligned_bitangents_size + aligned_texcoords_size);
 
    buffer.resize(buffer_size);
 
@@ -67,6 +77,10 @@ model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
                          vertex_count};
    vertices.normals = {reinterpret_cast<float3*>(&buffer[normals_data_offset]),
                        vertex_count};
+   vertices.tangents = {reinterpret_cast<float3*>(&buffer[tangents_data_offset]),
+                        vertex_count};
+   vertices.bitangents = {reinterpret_cast<float3*>(&buffer[bitangents_data_offset]),
+                          vertex_count};
    vertices.texcoords = {reinterpret_cast<float2*>(&buffer[texcoords_data_offset]),
                          vertex_count};
 
@@ -85,6 +99,10 @@ model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
                                 vertices.positions.begin() + vertex_offset);
       std::uninitialized_copy_n(mesh.normals.cbegin(), mesh.normals.size(),
                                 vertices.normals.begin() + vertex_offset);
+      std::uninitialized_copy_n(mesh.tangents.cbegin(), mesh.tangents.size(),
+                                vertices.tangents.begin() + vertex_offset);
+      std::uninitialized_copy_n(mesh.bitangents.cbegin(), mesh.bitangents.size(),
+                                vertices.bitangents.begin() + vertex_offset);
       std::uninitialized_copy_n(mesh.texcoords.cbegin(), mesh.texcoords.size(),
                                 vertices.texcoords.begin() + vertex_offset);
 
@@ -95,6 +113,8 @@ model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
    data_offsets = {.indices = indices_data_offset,
                    .positions = positions_data_offset,
                    .normals = normals_data_offset,
+                   .tangents = tangents_data_offset,
+                   .bitangents = bitangents_data_offset,
                    .texcoords = texcoords_data_offset};
 
    bbox = model.bounding_box;
@@ -141,6 +161,14 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
       {.BufferLocation = gpu_virtual_address + data_offsets.normals,
        .SizeInBytes = static_cast<uint32>(vertices.normals.size_bytes()),
        .StrideInBytes = sizeof(decltype(vertices.normals)::value_type)};
+   gpu_buffer.tangent_vertex_buffer_view =
+      {.BufferLocation = gpu_virtual_address + data_offsets.tangents,
+       .SizeInBytes = static_cast<uint32>(vertices.tangents.size_bytes()),
+       .StrideInBytes = sizeof(decltype(vertices.tangents)::value_type)};
+   gpu_buffer.bitangent_vertex_buffer_view =
+      {.BufferLocation = gpu_virtual_address + data_offsets.bitangents,
+       .SizeInBytes = static_cast<uint32>(vertices.bitangents.size_bytes()),
+       .StrideInBytes = sizeof(decltype(vertices.bitangents)::value_type)};
    gpu_buffer.texcoord_vertex_buffer_view =
       {.BufferLocation = gpu_virtual_address + data_offsets.texcoords,
        .SizeInBytes = static_cast<uint32>(vertices.texcoords.size_bytes()),

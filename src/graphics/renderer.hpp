@@ -39,7 +39,7 @@ private:
       float distance;
       ID3D12PipelineState* pipeline;
       D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-      std::array<D3D12_VERTEX_BUFFER_VIEW, 3> vertex_buffer_views;
+      std::array<D3D12_VERTEX_BUFFER_VIEW, 5> vertex_buffer_views;
       gpu::virtual_address object_constants_address;
       gpu::descriptor_range material_descriptor_range;
       uint32 index_count;

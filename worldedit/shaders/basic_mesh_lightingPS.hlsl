@@ -3,7 +3,9 @@
 
 struct input_vertex {
    float3 positionWS : POSITIONWS;
-   float3 normalWS : NORMALWS;
+   float3 normalWS : NORMAL;
+   float3 tangentWS : TANGENT;
+   float3 bitangentWS : BITANGENT;
    float2 texcoords : TEXCOORD;
 };
 

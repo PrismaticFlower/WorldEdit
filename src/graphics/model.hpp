@@ -18,6 +18,8 @@ namespace we::graphics {
 struct mesh_vertices {
    std::span<float3> positions;
    std::span<float3> normals;
+   std::span<float3> tangents;
+   std::span<float3> bitangents;
    std::span<float2> texcoords;
 };
 
@@ -32,6 +34,8 @@ struct mesh_data_offsets {
    std::size_t indices;
    std::size_t positions;
    std::size_t normals;
+   std::size_t tangents;
+   std::size_t bitangents;
    std::size_t texcoords;
 };
 
@@ -41,6 +45,8 @@ struct mesh_gpu_buffer {
    D3D12_INDEX_BUFFER_VIEW index_buffer_view;
    D3D12_VERTEX_BUFFER_VIEW position_vertex_buffer_view;
    D3D12_VERTEX_BUFFER_VIEW normal_vertex_buffer_view;
+   D3D12_VERTEX_BUFFER_VIEW tangent_vertex_buffer_view;
+   D3D12_VERTEX_BUFFER_VIEW bitangent_vertex_buffer_view;
    D3D12_VERTEX_BUFFER_VIEW texcoord_vertex_buffer_view;
 };
 
