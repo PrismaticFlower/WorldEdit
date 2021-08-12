@@ -136,7 +136,6 @@ void renderer::draw_frame(
    _light_clusters.update_lights(view_frustrum, world, command_list,
                                  _dynamic_buffer_allocator);
 
-   command_list.deferred_resource_barrier(_texture_resource_barriers);
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_PRESENT,
                               D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -734,12 +733,7 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
 
 void renderer::update_textures()
 {
-   _texture_resource_barriers.clear();
-
    _texture_manager.process_updated_textures([&](updated_texture updated) {
-      _texture_resource_barriers.push_back(
-         gpu::transition_barrier(*updated.texture->resource(), D3D12_RESOURCE_STATE_COPY_DEST,
-                                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
       _model_manager.process_updated_texture(_device, updated);
       _terrain.process_updated_texture(updated);
    });

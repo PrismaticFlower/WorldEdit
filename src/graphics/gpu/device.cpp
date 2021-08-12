@@ -10,13 +10,13 @@ namespace we::graphics::gpu {
 
 namespace {
 
+constexpr bool use_debug_layer = true;
+
 auto create_factory() -> utility::com_ptr<IDXGIFactory7>
 {
    UINT dxgi_flags = 0;
 
-#ifndef NDEBUG
-   dxgi_flags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
+   if (use_debug_layer) dxgi_flags = DXGI_CREATE_FACTORY_DEBUG;
 
    utility::com_ptr<IDXGIFactory7> factory;
 
@@ -47,12 +47,13 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
 
 auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device6>
 {
-#ifndef NDEBUG
-   utility::com_ptr<ID3D12Debug> d3d_debug;
-   throw_if_failed(D3D12GetDebugInterface(IID_PPV_ARGS(d3d_debug.clear_and_assign())));
+   if (use_debug_layer) {
+      utility::com_ptr<ID3D12Debug> d3d_debug;
+      throw_if_failed(
+         D3D12GetDebugInterface(IID_PPV_ARGS(d3d_debug.clear_and_assign())));
 
-   d3d_debug->EnableDebugLayer();
-#endif
+      d3d_debug->EnableDebugLayer();
+   }
 
    utility::com_ptr<ID3D12Device6> device;
 
