@@ -1,13 +1,19 @@
 
 #include "root_signature_library.hpp"
+#include "common.hpp"
 #include "hresult_error.hpp"
+
+#include <algorithm>
+
+#include <boost/container/static_vector.hpp>
 
 namespace we::graphics::gpu {
 
 namespace {
 
 auto create_root_signature(ID3D12Device& device,
-                           const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& desc)
+                           const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& desc,
+                           const std::string_view name)
    -> utility::com_ptr<ID3D12RootSignature>
 {
    utility::com_ptr<ID3DBlob> root_signature_blob;
@@ -30,282 +36,394 @@ auto create_root_signature(ID3D12Device& device,
                                  root_signature_blob->GetBufferSize(),
                                  IID_PPV_ARGS(root_sig.clear_and_assign())));
 
+   if (not name.empty()) {
+      root_sig->SetPrivateData(WKPDID_D3DDebugObjectName,
+                               to_uint32(name.size()), name.data());
+   }
+
    return root_sig;
+}
+
+auto create_root_signature(ID3D12Device& device, const root_signature_desc& desc)
+   -> utility::com_ptr<ID3D12RootSignature>
+{
+   boost::container::static_vector<D3D12_DESCRIPTOR_RANGE1, 256> descriptor_ranges_stack;
+   boost::container::small_vector<D3D12_ROOT_PARAMETER1, 16> parameters;
+   boost::container::small_vector<D3D12_STATIC_SAMPLER_DESC, 16> samplers;
+
+   for (auto& param : desc.parameters) {
+      auto d3d12_param = boost::variant2::visit(
+         [&]<typename T>(const T& param) -> D3D12_ROOT_PARAMETER1 {
+            if constexpr (std::is_same_v<T, root_parameter_descriptor_table>) {
+               const auto ranges_stack_offset = descriptor_ranges_stack.size();
+
+               descriptor_ranges_stack.resize(ranges_stack_offset +
+                                              param.ranges.size());
+
+               std::copy_n(param.ranges.begin(), param.ranges.size(),
+                           descriptor_ranges_stack.begin() + ranges_stack_offset);
+
+               return D3D12_ROOT_PARAMETER1{
+                  .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                  .DescriptorTable =
+                     {
+                        .NumDescriptorRanges = to_uint32(param.ranges.size()),
+                        .pDescriptorRanges = &descriptor_ranges_stack[ranges_stack_offset],
+                     },
+                  .ShaderVisibility = param.visibility};
+            }
+            else {
+               return param;
+            }
+         },
+         param);
+
+      parameters.push_back(d3d12_param);
+   }
+
+   samplers.resize(desc.samplers.size());
+
+   std::ranges::copy(desc.samplers, samplers.begin());
+
+   const D3D12_VERSIONED_ROOT_SIGNATURE_DESC
+      d3d12_desc{.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+                 .Desc_1_1 = {.NumParameters = to_uint32(parameters.size()),
+                              .pParameters = parameters.data(),
+                              .NumStaticSamplers = to_uint32(samplers.size()),
+                              .pStaticSamplers = samplers.data(),
+                              .Flags = desc.flags}};
+
+   return create_root_signature(device, d3d12_desc, desc.name);
 }
 
 }
 
 root_signature_library::root_signature_library(ID3D12Device& device)
 {
-   const D3D12_DESCRIPTOR_RANGE1 camera_descriptor_table_descriptor_range{
-      .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-      .NumDescriptors = 1,
-      .BaseShaderRegister = 0,
-      .RegisterSpace = 0,
-      .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-      .OffsetInDescriptorsFromTableStart = 0};
+   const static_sampler_desc
+      trilinear_sampler{.filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+                        .address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+                        .address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+                        .address_w = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+                        .mip_lod_bias = 0.0f,
+                        .max_anisotropy = 0,
+                        .comparison_func = D3D12_COMPARISON_FUNC_ALWAYS,
+                        .border_color = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
+                        .min_lod = 0.0f,
+                        .max_lod = D3D12_FLOAT32_MAX};
 
-   const D3D12_ROOT_PARAMETER1 camera_cb_descriptor_table_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-      .DescriptorTable =
+   const static_sampler_desc
+      bilinear_sampler{.filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT,
+                       .address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+                       .address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+                       .address_w = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+                       .mip_lod_bias = 0.0f,
+                       .max_anisotropy = 0,
+                       .comparison_func = D3D12_COMPARISON_FUNC_ALWAYS,
+                       .border_color = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
+                       .min_lod = 0.0f,
+                       .max_lod = D3D12_FLOAT32_MAX};
+
+   const static_sampler_desc
+      shadow_sampler{.filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR,
+                     .address_u = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+                     .address_v = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+                     .address_w = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+                     .mip_lod_bias = 0.0f,
+                     .max_anisotropy = 0,
+                     .comparison_func = D3D12_COMPARISON_FUNC_LESS_EQUAL,
+                     .border_color = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
+                     .min_lod = 0.0f,
+                     .max_lod = D3D12_FLOAT32_MAX};
+
+   constexpr uint32 mesh_register_space = 0;
+   constexpr uint32 material_register_space = 1;
+   constexpr uint32 lights_register_space = 0;
+   constexpr uint32 terrain_register_space = 2;
+
+   const root_signature_desc object_mesh_desc{
+      .name = "mesh_root_signature",
+
+      .parameters =
          {
-            .NumDescriptorRanges = 1,
-            .pDescriptorRanges = &camera_descriptor_table_descriptor_range,
+            // per-object constants
+            root_parameter_cbv{
+               .shader_register = 1,
+               .register_space = mesh_register_space,
+               .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
 
+            // per-object material descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                      .count = 2,
+                      .base_shader_register = 0,
+                      .register_space = material_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+            },
+
+            // camera descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                      .count = 1,
+                      .base_shader_register = 0,
+                      .register_space = mesh_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
+
+            // lights descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                      .count = 1,
+                      .base_shader_register = 0,
+                      .register_space = lights_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                      .count = 2,
+                      .base_shader_register = 0,
+                      .register_space = lights_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 1},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+            },
          },
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
 
-   const D3D12_DESCRIPTOR_RANGE1 material_descriptor_table_descriptor_range{
-      .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-      .NumDescriptors = 2,
-      .BaseShaderRegister = 0,
-      .RegisterSpace = 1,
-      .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-      .OffsetInDescriptorsFromTableStart = 0};
-
-   const D3D12_ROOT_PARAMETER1 material_descriptor_table_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-      .DescriptorTable =
+      .samplers =
          {
-            .NumDescriptorRanges = 1,
-            .pDescriptorRanges = &material_descriptor_table_descriptor_range,
+            {.sampler = trilinear_sampler,
+             .shader_register = 0,
+             .register_space = 0,
+             .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
 
+            {.sampler = shadow_sampler,
+             .shader_register = 2,
+             .register_space = 0,
+             .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
          },
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
-   const D3D12_ROOT_PARAMETER1 object_cb_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-      .Descriptor = {.ShaderRegister = 1,
-                     .RegisterSpace = 0,
-                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
+      .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
-   const std::array<D3D12_DESCRIPTOR_RANGE1, 2> object_lights_descriptor_table_descriptor_ranges{
-      {{.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-        .NumDescriptors = 1,
-        .BaseShaderRegister = 0,
-        .RegisterSpace = 0,
-        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-        .OffsetInDescriptorsFromTableStart = 0},
-       {.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-        .NumDescriptors = 2,
-        .BaseShaderRegister = 0,
-        .RegisterSpace = 0,
-        .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-        .OffsetInDescriptorsFromTableStart = 1}}};
+   object_mesh = create_root_signature(device, object_mesh_desc);
 
-   const D3D12_ROOT_PARAMETER1 object_lights_descriptor_table_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-      .DescriptorTable =
+   const root_signature_desc terrain_desc{
+      .name = "terrain_root_signature",
+
+      .parameters =
          {
-            .NumDescriptorRanges = static_cast<UINT>(
-               object_lights_descriptor_table_descriptor_ranges.size()),
-            .pDescriptorRanges =
-               object_lights_descriptor_table_descriptor_ranges.data(),
+            // camera descriptor
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                      .count = 1,
+                      .base_shader_register = 0,
+                      .register_space = mesh_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
 
+            // lights descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                      .count = 1,
+                      .base_shader_register = 0,
+                      .register_space = lights_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                      .count = 2,
+                      .base_shader_register = 0,
+                      .register_space = lights_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 1},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+            },
+
+            // terrain descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                      .count = 1,
+                      .base_shader_register = 0,
+                      .register_space = terrain_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                      .count = 2,
+                      .base_shader_register = 0,
+                      .register_space = terrain_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 1},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_ALL,
+            },
+
+            // terrain patch data
+            root_parameter_srv{
+               .shader_register = 2,
+               .register_space = terrain_register_space,
+               .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
+
+            // material descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                      .count = 16,
+                      .base_shader_register = 0,
+                      .register_space = material_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+            },
          },
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
-   const std::array basic_root_params{object_cb_root_param,
-                                      material_descriptor_table_root_param,
-                                      camera_cb_descriptor_table_root_param,
-                                      object_lights_descriptor_table_root_param};
-
-   const D3D12_STATIC_SAMPLER_DESC trilinear_static_sampler{
-      .Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .MipLODBias = 0.0f,
-      .MaxAnisotropy = 0,
-      .ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
-      .BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
-      .MinLOD = 0.0f,
-      .MaxLOD = D3D12_FLOAT32_MAX,
-      .ShaderRegister = 0,
-      .RegisterSpace = 0,
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
-
-   const D3D12_STATIC_SAMPLER_DESC shadow_static_sampler{
-      .Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR,
-      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-      .MipLODBias = 0.0f,
-      .MaxAnisotropy = 0,
-      .ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
-      .BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
-      .MinLOD = 0.0f,
-      .MaxLOD = D3D12_FLOAT32_MAX,
-      .ShaderRegister = 2,
-      .RegisterSpace = 0,
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
-
-   const std::array object_static_sampler{trilinear_static_sampler,
-                                          shadow_static_sampler};
-
-   object_mesh = create_root_signature(
-      device,
-      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.NumParameters = static_cast<UINT>(basic_root_params.size()),
-                    .pParameters = basic_root_params.data(),
-                    .NumStaticSamplers = static_cast<UINT>(object_static_sampler.size()),
-                    .pStaticSamplers = object_static_sampler.data(),
-                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
-
-   const D3D12_STATIC_SAMPLER_DESC terrain_bilinear_static_sampler{
-      .Filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT,
-      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-      .MipLODBias = 0.0f,
-      .MaxAnisotropy = 0,
-      .ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
-      .BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
-      .MinLOD = 0.0f,
-      .MaxLOD = D3D12_FLOAT32_MAX,
-      .ShaderRegister = 0,
-      .RegisterSpace = 0,
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
-
-   const D3D12_STATIC_SAMPLER_DESC terrain_trilinear_static_sampler{
-      .Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-      .AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-      .MipLODBias = 0.0f,
-      .MaxAnisotropy = 0,
-      .ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
-      .BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
-      .MinLOD = 0.0f,
-      .MaxLOD = D3D12_FLOAT32_MAX,
-      .ShaderRegister = 1,
-      .RegisterSpace = 0,
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
-
-   const std::array terrain_static_sampler{terrain_bilinear_static_sampler,
-                                           terrain_trilinear_static_sampler,
-                                           shadow_static_sampler};
-
-   const D3D12_DESCRIPTOR_RANGE1 terrain_constants_descriptor_range{
-      .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-      .NumDescriptors = 1,
-      .BaseShaderRegister = 0,
-      .RegisterSpace = 2,
-      .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-      .OffsetInDescriptorsFromTableStart = 0};
-
-   const D3D12_DESCRIPTOR_RANGE1
-      terrain_maps_descriptor_range{.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-                                    .NumDescriptors = 2,
-                                    .BaseShaderRegister = 0,
-                                    .RegisterSpace = 2,
-                                    .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-                                    .OffsetInDescriptorsFromTableStart = 1};
-
-   const std::array terrain_descriptor_table_ranges{terrain_constants_descriptor_range,
-                                                    terrain_maps_descriptor_range};
-
-   const D3D12_ROOT_PARAMETER1 terrain_descriptor_table_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-      .DescriptorTable =
+      .samplers =
          {
-            .NumDescriptorRanges =
-               static_cast<UINT>(terrain_descriptor_table_ranges.size()),
-            .pDescriptorRanges = terrain_descriptor_table_ranges.data(),
+            {.sampler = bilinear_sampler,
+             .shader_register = 0,
+             .register_space = 0,
+             .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
 
+            {.sampler = trilinear_sampler,
+             .shader_register = 1,
+             .register_space = 0,
+             .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
+
+            {.sampler = shadow_sampler,
+             .shader_register = 2,
+             .register_space = 0,
+             .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
          },
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL};
 
-   const D3D12_ROOT_PARAMETER1 terrain_patch_srv_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV,
-      .Descriptor = {.ShaderRegister = 2,
-                     .RegisterSpace = 2,
-                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX};
+      .flags = D3D12_ROOT_SIGNATURE_FLAG_NONE};
 
-   const D3D12_DESCRIPTOR_RANGE1 terrain_material_descriptor_table_descriptor_range{
-      .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-      .NumDescriptors = 16,
-      .BaseShaderRegister = 0,
-      .RegisterSpace = 1,
-      .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-      .OffsetInDescriptorsFromTableStart = 0};
+   terrain = create_root_signature(device, terrain_desc);
 
-   const D3D12_ROOT_PARAMETER1 terrain_material_table_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-      .DescriptorTable =
+   const root_signature_desc meta_object_desc{
+      .name = "meta_object_root_signature",
+
+      .parameters =
          {
-            .NumDescriptorRanges = 1,
-            .pDescriptorRanges = &terrain_material_descriptor_table_descriptor_range,
+            // per-object constants
+            root_parameter_cbv{
+               .shader_register = 1,
+               .register_space = mesh_register_space,
+               .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
 
+            // color constant (should this be a root constant?)
+            root_parameter_cbv{
+               .shader_register = 0,
+               .register_space = mesh_register_space,
+               .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+               .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+            },
+
+            // camera descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                      .count = 1,
+                      .base_shader_register = 0,
+                      .register_space = mesh_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
          },
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
 
-   const std::array terrain_root_params{camera_cb_descriptor_table_root_param,
-                                        object_lights_descriptor_table_root_param,
-                                        terrain_descriptor_table_root_param,
-                                        terrain_patch_srv_param,
-                                        terrain_material_table_root_param};
+      .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
-   terrain = create_root_signature(
-      device,
-      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.NumParameters = static_cast<UINT>(terrain_root_params.size()),
-                    .pParameters = terrain_root_params.data(),
-                    .NumStaticSamplers =
-                       static_cast<UINT>(terrain_static_sampler.size()),
-                    .pStaticSamplers = terrain_static_sampler.data(),
-                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE}});
+   meta_object_mesh = create_root_signature(device, meta_object_desc);
 
-   const D3D12_ROOT_PARAMETER1 meta_object_color_cb_root_param{
-      .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-      .Descriptor = {.ShaderRegister = 0,
-                     .RegisterSpace = 0,
-                     .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE},
-      .ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL};
+   const root_signature_desc meta_line_desc{
+      .name = "meta_line_root_signature",
 
-   const std::array meta_object_mesh_params{object_cb_root_param,
-                                            meta_object_color_cb_root_param,
-                                            camera_cb_descriptor_table_root_param};
+      .parameters =
+         {
+            // color constant (should this be a root constant?)
+            root_parameter_cbv{
+               .shader_register = 0,
+               .register_space = mesh_register_space,
+               .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+               .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+            },
 
-   meta_object_mesh = create_root_signature(
-      device,
-      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.NumParameters = static_cast<UINT>(meta_object_mesh_params.size()),
-                    .pParameters = meta_object_mesh_params.data(),
-                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
+            // camera descriptors
+            root_parameter_descriptor_table{
+               .ranges =
+                  {
+                     {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                      .count = 1,
+                      .base_shader_register = 0,
+                      .register_space = mesh_register_space,
+                      .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                      .offset_in_descriptors_from_table_start = 0},
+                  },
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
+         },
 
-   const std::array meta_line_params{meta_object_color_cb_root_param,
-                                     camera_cb_descriptor_table_root_param};
+      .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
-   meta_line = create_root_signature(
-      device,
-      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.NumParameters = static_cast<UINT>(meta_line_params.size()),
-                    .pParameters = meta_line_params.data(),
-                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
+   meta_line = create_root_signature(device, meta_line_desc);
 
-   const std::array depth_only_mesh_root_params{
-      D3D12_ROOT_PARAMETER1{.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-                            .Descriptor = {.ShaderRegister = 0,
-                                           .RegisterSpace = 0,
-                                           .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
-                            .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX},
+   const root_signature_desc shadow_mesh_desc{
+      .name = "shadow_mesh_root_signature",
 
-      D3D12_ROOT_PARAMETER1{.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-                            .Descriptor = {.ShaderRegister = 1,
-                                           .RegisterSpace = 0,
-                                           .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC},
-                            .ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX}};
+      .parameters =
+         {
+            // transform cbv
+            root_parameter_cbv{
+               .shader_register = 0,
+               .register_space = mesh_register_space,
+               .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
 
-   depth_only_mesh = create_root_signature(
-      device,
-      {.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-       .Desc_1_1 = {.NumParameters =
-                       static_cast<UINT>(depth_only_mesh_root_params.size()),
-                    .pParameters = depth_only_mesh_root_params.data(),
-                    .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT}});
+            // camera cbv
+            root_parameter_cbv{
+               .shader_register = 1,
+               .register_space = mesh_register_space,
+               .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+               .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+            },
+         },
+
+      .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
+
+   depth_only_mesh = create_root_signature(device, shadow_mesh_desc);
 }
 
 }

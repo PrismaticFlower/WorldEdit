@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 
 #include <glm/glm.hpp>
@@ -42,5 +43,55 @@ static_assert(sizeof(double4) == 32);
 static_assert(sizeof(quaternion) == 16);
 static_assert(sizeof(float4x4) == 64);
 static_assert(sizeof(double4x4) == 128);
+
+constexpr auto to_int8(const std::convertible_to<int8> auto& value) noexcept -> int8
+{
+   return static_cast<int8>(value);
+}
+
+constexpr auto to_int16(const std::convertible_to<int16> auto& value) noexcept -> int16
+{
+   return static_cast<int16>(value);
+}
+
+constexpr auto to_int32(const std::convertible_to<int32> auto& value) noexcept -> int32
+{
+   return static_cast<int32>(value);
+}
+
+constexpr auto to_int64(const std::convertible_to<int64> auto& value) noexcept -> int64
+{
+   return static_cast<int64>(value);
+}
+
+constexpr auto to_uint8(const std::convertible_to<uint8> auto& value) noexcept -> uint8
+{
+   return static_cast<uint8>(value);
+}
+
+constexpr auto to_uint16(const std::convertible_to<uint16> auto& value) noexcept -> uint16
+{
+   return static_cast<uint16>(value);
+}
+
+constexpr auto to_uint32(const std::convertible_to<uint32> auto& value) noexcept -> uint32
+{
+   return static_cast<uint32>(value);
+}
+
+constexpr auto to_uint64(const std::convertible_to<uint64> auto& value) noexcept -> uint64
+{
+   return static_cast<uint64>(value);
+}
+
+constexpr auto to_float(const std::convertible_to<float> auto& value) noexcept -> float
+{
+   return static_cast<float>(value);
+}
+
+constexpr auto to_float(const std::convertible_to<double> auto& value) noexcept -> double
+{
+   return static_cast<double>(value);
+}
 
 }

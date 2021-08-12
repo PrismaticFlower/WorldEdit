@@ -3,8 +3,10 @@
 #include "types.hpp"
 
 #include <optional>
+#include <string>
 #include <type_traits>
 
+#include <boost/container/small_vector.hpp>
 #include <boost/variant2/variant.hpp>
 #include <d3d12.h>
 
@@ -420,6 +422,146 @@ struct resource_view_desc {
    std::shared_ptr<ID3D12Resource> counter_resource = nullptr;
 
    boost::variant2::variant<shader_resource_view_desc, constant_buffer_view, unordered_access_view_desc> view_desc;
+};
+
+struct static_sampler_desc {
+   D3D12_FILTER filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+   D3D12_TEXTURE_ADDRESS_MODE address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+   D3D12_TEXTURE_ADDRESS_MODE address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+   D3D12_TEXTURE_ADDRESS_MODE address_w = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+   float mip_lod_bias = 0.0f;
+   uint32 max_anisotropy = 0;
+   D3D12_COMPARISON_FUNC comparison_func = D3D12_COMPARISON_FUNC_ALWAYS;
+   D3D12_STATIC_BORDER_COLOR border_color = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+   FLOAT min_lod = 0.0;
+   FLOAT max_lod = D3D12_FLOAT32_MAX;
+};
+
+struct root_parameter_descriptor_range {
+   D3D12_DESCRIPTOR_RANGE_TYPE type;
+   uint32 count = 0;
+   uint32 base_shader_register = 0;
+   uint32 register_space = 0;
+   D3D12_DESCRIPTOR_RANGE_FLAGS flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+   uint32 offset_in_descriptors_from_table_start = 0;
+
+   operator D3D12_DESCRIPTOR_RANGE1() const noexcept
+   {
+      return {.RangeType = type,
+              .NumDescriptors = count,
+              .BaseShaderRegister = base_shader_register,
+              .RegisterSpace = register_space,
+              .Flags = flags,
+              .OffsetInDescriptorsFromTableStart =
+                 offset_in_descriptors_from_table_start};
+   }
+};
+
+struct root_parameter_descriptor_table {
+   using range = root_parameter_descriptor_range;
+
+   boost::container::small_vector<range, 4> ranges;
+   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+};
+
+struct root_parameter_32bit_constants {
+   uint32 shader_register = 0;
+   uint32 register_space = 0;
+   uint32 values_count = 0;
+   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+   operator D3D12_ROOT_PARAMETER1() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+              .Constants = {.ShaderRegister = shader_register,
+                            .RegisterSpace = register_space,
+                            .Num32BitValues = values_count},
+              .ShaderVisibility = visibility};
+   }
+};
+
+struct root_parameter_cbv {
+   uint32 shader_register = 0;
+   uint32 register_space = 0;
+   D3D12_ROOT_DESCRIPTOR_FLAGS flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+   operator D3D12_ROOT_PARAMETER1() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
+              .Descriptor = {.ShaderRegister = shader_register,
+                             .RegisterSpace = register_space,
+                             .Flags = flags},
+              .ShaderVisibility = visibility};
+   }
+};
+
+struct root_parameter_srv {
+   uint32 shader_register = 0;
+   uint32 register_space = 0;
+   D3D12_ROOT_DESCRIPTOR_FLAGS flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+   operator D3D12_ROOT_PARAMETER1() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV,
+              .Descriptor = {.ShaderRegister = shader_register,
+                             .RegisterSpace = register_space,
+                             .Flags = flags},
+              .ShaderVisibility = visibility};
+   }
+};
+
+struct root_parameter_uav {
+   uint32 shader_register = 0;
+   uint32 register_space = 0;
+   D3D12_ROOT_DESCRIPTOR_FLAGS flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+   operator D3D12_ROOT_PARAMETER1() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV,
+              .Descriptor = {.ShaderRegister = shader_register,
+                             .RegisterSpace = register_space,
+                             .Flags = flags},
+              .ShaderVisibility = visibility};
+   }
+};
+
+struct root_static_sampler {
+   static_sampler_desc sampler;
+   uint32 shader_register = 0;
+   uint32 register_space = 0;
+   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+   operator D3D12_STATIC_SAMPLER_DESC() const noexcept
+   {
+      return D3D12_STATIC_SAMPLER_DESC{.Filter = sampler.filter,
+                                       .AddressU = sampler.address_u,
+                                       .AddressV = sampler.address_v,
+                                       .AddressW = sampler.address_w,
+                                       .MipLODBias = sampler.mip_lod_bias,
+                                       .MaxAnisotropy = sampler.max_anisotropy,
+                                       .ComparisonFunc = sampler.comparison_func,
+                                       .BorderColor = sampler.border_color,
+                                       .MinLOD = sampler.min_lod,
+                                       .MaxLOD = sampler.max_lod,
+                                       .ShaderRegister = shader_register,
+                                       .RegisterSpace = register_space,
+                                       .ShaderVisibility = visibility};
+   }
+};
+
+struct root_signature_desc {
+   using parameter =
+      boost::variant2::variant<root_parameter_descriptor_table, root_parameter_32bit_constants,
+                               root_parameter_cbv, root_parameter_srv, root_parameter_uav>;
+
+   std::string name;
+
+   boost::container::small_vector<parameter, 16> parameters;
+   boost::container::small_vector<root_static_sampler, 16> samplers;
+   D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 };
 
 }
