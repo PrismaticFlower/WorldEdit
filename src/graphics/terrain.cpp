@@ -97,6 +97,7 @@ void terrain::draw(const frustrum& view_frustrum,
                    gpu::descriptor_range camera_constant_buffer_view,
                    gpu::descriptor_range light_descriptors,
                    gpu::command_list& command_list,
+                   root_signature_library& root_signatures, pipeline_library& pipelines,
                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    if (not _active) return;
@@ -120,9 +121,9 @@ void terrain::draw(const frustrum& view_frustrum,
       ++visible_patch_count;
    }
 
-   command_list.set_pipeline_state(*_gpu_device->pipelines.terrain_normal);
+   command_list.set_pipeline_state(*pipelines.terrain_normal);
 
-   command_list.set_graphics_root_signature(*_gpu_device->root_signatures.terrain);
+   command_list.set_graphics_root_signature(*root_signatures.terrain);
    command_list.set_graphics_root_descriptor_table(0, camera_constant_buffer_view);
    command_list.set_graphics_root_descriptor_table(1, light_descriptors);
    command_list.set_graphics_root_descriptor_table(2, _resource_views.descriptors());

@@ -7,7 +7,11 @@
 
 #include <d3d12.h>
 
-namespace we::graphics::gpu {
+namespace we::graphics {
+
+namespace gpu {
+class shader_library;
+}
 
 enum class blend_modes { none, additive, alpha_blended };
 
@@ -15,7 +19,6 @@ enum class rasterizer_cull_mode { singlesided, doublesided };
 
 enum class depth_test_mode { disabled, read_write, read };
 
-class shader_library;
 struct root_signature_library;
 
 enum class material_pipeline_flags : uint8 {
@@ -37,7 +40,7 @@ using material_pipelines =
    container::enum_array<utility::com_ptr<ID3D12PipelineState>, material_pipeline_flags>;
 
 struct pipeline_library {
-   pipeline_library(ID3D12Device& device, const shader_library& shader_library,
+   pipeline_library(ID3D12Device& device, const gpu::shader_library& shader_library,
                     const root_signature_library& root_signature_library);
 
    utility::com_ptr<ID3D12PipelineState> shadow_mesh;

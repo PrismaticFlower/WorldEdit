@@ -1,13 +1,13 @@
 
 #include "root_signature_library.hpp"
-#include "common.hpp"
+#include "gpu/common.hpp"
 #include "hresult_error.hpp"
 
 #include <algorithm>
 
 #include <boost/container/static_vector.hpp>
 
-namespace we::graphics::gpu {
+namespace we::graphics {
 
 namespace {
 
@@ -44,7 +44,7 @@ auto create_root_signature(ID3D12Device& device,
    return root_sig;
 }
 
-auto create_root_signature(ID3D12Device& device, const root_signature_desc& desc)
+auto create_root_signature(ID3D12Device& device, const gpu::root_signature_desc& desc)
    -> utility::com_ptr<ID3D12RootSignature>
 {
    boost::container::static_vector<D3D12_DESCRIPTOR_RANGE1, 256> descriptor_ranges_stack;
@@ -54,7 +54,7 @@ auto create_root_signature(ID3D12Device& device, const root_signature_desc& desc
    for (auto& param : desc.parameters) {
       auto d3d12_param = boost::variant2::visit(
          [&]<typename T>(const T& param) -> D3D12_ROOT_PARAMETER1 {
-            if constexpr (std::is_same_v<T, root_parameter_descriptor_table>) {
+            if constexpr (std::is_same_v<T, gpu::root_parameter_descriptor_table>) {
                const auto ranges_stack_offset = descriptor_ranges_stack.size();
 
                descriptor_ranges_stack.resize(ranges_stack_offset +
@@ -100,7 +100,7 @@ auto create_root_signature(ID3D12Device& device, const root_signature_desc& desc
 
 root_signature_library::root_signature_library(ID3D12Device& device)
 {
-   const static_sampler_desc
+   const gpu::static_sampler_desc
       trilinear_sampler{.filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
                         .address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
                         .address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
@@ -112,7 +112,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
                         .min_lod = 0.0f,
                         .max_lod = D3D12_FLOAT32_MAX};
 
-   const static_sampler_desc
+   const gpu::static_sampler_desc
       bilinear_sampler{.filter = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT,
                        .address_u = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
                        .address_v = D3D12_TEXTURE_ADDRESS_MODE_WRAP,
@@ -124,7 +124,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
                        .min_lod = 0.0f,
                        .max_lod = D3D12_FLOAT32_MAX};
 
-   const static_sampler_desc
+   const gpu::static_sampler_desc
       shadow_sampler{.filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR,
                      .address_u = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
                      .address_v = D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
@@ -141,13 +141,13 @@ root_signature_library::root_signature_library(ID3D12Device& device)
    constexpr uint32 lights_register_space = 0;
    constexpr uint32 terrain_register_space = 2;
 
-   const root_signature_desc object_mesh_desc{
+   const gpu::root_signature_desc object_mesh_desc{
       .name = "mesh_root_signature",
 
       .parameters =
          {
             // per-object constants
-            root_parameter_cbv{
+            gpu::root_parameter_cbv{
                .shader_register = 1,
                .register_space = mesh_register_space,
                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
@@ -155,7 +155,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // per-object material descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
@@ -169,7 +169,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // camera descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -183,7 +183,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // lights descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -221,13 +221,13 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    object_mesh = create_root_signature(device, object_mesh_desc);
 
-   const root_signature_desc terrain_desc{
+   const gpu::root_signature_desc terrain_desc{
       .name = "terrain_root_signature",
 
       .parameters =
          {
             // camera descriptor
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -241,7 +241,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // lights descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -262,7 +262,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // terrain descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -283,7 +283,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // terrain patch data
-            root_parameter_srv{
+            gpu::root_parameter_srv{
                .shader_register = 2,
                .register_space = terrain_register_space,
                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
@@ -291,7 +291,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // material descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
@@ -327,13 +327,13 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    terrain = create_root_signature(device, terrain_desc);
 
-   const root_signature_desc meta_object_desc{
+   const gpu::root_signature_desc meta_object_desc{
       .name = "meta_object_root_signature",
 
       .parameters =
          {
             // per-object constants
-            root_parameter_cbv{
+            gpu::root_parameter_cbv{
                .shader_register = 1,
                .register_space = mesh_register_space,
                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
@@ -341,7 +341,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // color constant (should this be a root constant?)
-            root_parameter_cbv{
+            gpu::root_parameter_cbv{
                .shader_register = 0,
                .register_space = mesh_register_space,
                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
@@ -349,7 +349,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // camera descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -367,13 +367,13 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    meta_object_mesh = create_root_signature(device, meta_object_desc);
 
-   const root_signature_desc meta_line_desc{
+   const gpu::root_signature_desc meta_line_desc{
       .name = "meta_line_root_signature",
 
       .parameters =
          {
             // color constant (should this be a root constant?)
-            root_parameter_cbv{
+            gpu::root_parameter_cbv{
                .shader_register = 0,
                .register_space = mesh_register_space,
                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
@@ -381,7 +381,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // camera descriptors
-            root_parameter_descriptor_table{
+            gpu::root_parameter_descriptor_table{
                .ranges =
                   {
                      {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
@@ -399,13 +399,13 @@ root_signature_library::root_signature_library(ID3D12Device& device)
 
    meta_line = create_root_signature(device, meta_line_desc);
 
-   const root_signature_desc shadow_mesh_desc{
+   const gpu::root_signature_desc shadow_mesh_desc{
       .name = "shadow_mesh_root_signature",
 
       .parameters =
          {
             // transform cbv
-            root_parameter_cbv{
+            gpu::root_parameter_cbv{
                .shader_register = 0,
                .register_space = mesh_register_space,
                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
@@ -413,7 +413,7 @@ root_signature_library::root_signature_library(ID3D12Device& device)
             },
 
             // camera cbv
-            root_parameter_cbv{
+            gpu::root_parameter_cbv{
                .shader_register = 1,
                .register_space = mesh_register_space,
                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,

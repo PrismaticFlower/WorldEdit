@@ -532,6 +532,7 @@ auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
 void light_clusters::TEMP_render_shadow_maps(
    const camera& view_camera, const frustrum& view_frustrum,
    const world_mesh_list& meshes, const world::world& world,
+   root_signature_library& root_signatures, pipeline_library& pipelines,
    gpu::command_list& command_list,
    [[maybe_unused]] gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
@@ -556,10 +557,9 @@ void light_clusters::TEMP_render_shadow_maps(
       command_list.clear_depth_stencil_view(depth_stencil_view,
                                             D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0x0);
 
-      command_list.set_graphics_root_signature(
-         *_gpu_device->root_signatures.depth_only_mesh);
+      command_list.set_graphics_root_signature(*root_signatures.depth_only_mesh);
       command_list.set_graphics_root_constant_buffer(1, shadow_camera.view_projection_matrix());
-      command_list.set_pipeline_state(*_gpu_device->pipelines.shadow_mesh);
+      command_list.set_pipeline_state(*pipelines.shadow_mesh);
 
       command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -574,7 +574,7 @@ void light_clusters::TEMP_render_shadow_maps(
          }
 
          if (are_flags_set(meshes.pipeline_flags[i],
-                           gpu::material_pipeline_flags::transparent)) {
+                           material_pipeline_flags::transparent)) {
             continue;
          }
 

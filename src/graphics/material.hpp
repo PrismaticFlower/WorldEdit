@@ -2,6 +2,7 @@
 
 #include "assets/msh/material.hpp"
 #include "gpu/device.hpp"
+#include "pipeline_library.hpp"
 #include "texture_manager.hpp"
 
 #include <vector>
@@ -16,7 +17,7 @@ struct material {
 
    void process_updated_texture(gpu::device& gpu_device, updated_texture updated);
 
-   gpu::material_pipeline_flags flags = gpu::material_pipeline_flags::none;
+   material_pipeline_flags flags = material_pipeline_flags::none;
    gpu::resource_view_set resource_views;
 
    std::vector<std::shared_ptr<const gpu::texture>> textures;

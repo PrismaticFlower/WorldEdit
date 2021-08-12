@@ -4,6 +4,8 @@
 #include "gpu/descriptor_range.hpp"
 #include "gpu/device.hpp"
 #include "gpu/dynamic_buffer_allocator.hpp"
+#include "pipeline_library.hpp"
+#include "root_signature_library.hpp"
 #include "types.hpp"
 
 #include <functional>
@@ -25,7 +27,9 @@ public:
    void add(const float3 begin, const float3 end);
 
 private:
-   friend void draw_lines(gpu::command_list& command_list, gpu::device& device,
+   friend void draw_lines(gpu::command_list& command_list,
+                          root_signature_library& root_signatures,
+                          pipeline_library& pipelines,
                           gpu::dynamic_buffer_allocator& buffer_allocator,
                           const line_draw_state draw_state,
                           std::function<void(line_draw_context&)> draw_callback);
@@ -46,7 +50,8 @@ private:
    uint32 buffered_lines = 0;
 };
 
-void draw_lines(gpu::command_list& command_list, gpu::device& device,
+void draw_lines(gpu::command_list& command_list,
+                root_signature_library& root_signatures, pipeline_library& pipelines,
                 gpu::dynamic_buffer_allocator& buffer_allocator,
                 const line_draw_state draw_state,
                 std::function<void(line_draw_context&)> draw_callback);

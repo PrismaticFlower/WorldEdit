@@ -297,12 +297,6 @@
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\pipeline_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\root_signature_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\gpu\shader_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -493,6 +487,12 @@
     <ClInclude Include="src\assets\msh\mikktspace\mikktspace.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\root_signature_library.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\pipeline_library.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -523,12 +523,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\pipeline_library.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\root_signature_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\shader_library.cpp">
@@ -655,6 +649,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\msh\mikktspace\mikktspace.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\root_signature_library.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\pipeline_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

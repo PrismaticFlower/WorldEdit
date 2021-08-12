@@ -11,6 +11,8 @@
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "light_clusters.hpp"
 #include "model_manager.hpp"
+#include "pipeline_library.hpp"
+#include "root_signature_library.hpp"
 #include "terrain.hpp"
 #include "texture_manager.hpp"
 #include "world/object_class.hpp"
@@ -93,6 +95,9 @@ private:
        .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                  .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
+
+   root_signature_library _root_signatures{*_device.device_d3d};
+   pipeline_library _pipelines{*_device.device_d3d, _device.shaders, _root_signatures};
 
    texture_manager _texture_manager;
    model_manager _model_manager;

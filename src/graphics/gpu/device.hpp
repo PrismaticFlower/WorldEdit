@@ -6,10 +6,8 @@
 #include "d3d12_mem_alloc.hpp"
 #include "descriptor_allocation.hpp"
 #include "descriptor_heap.hpp"
-#include "pipeline_library.hpp"
 #include "resource.hpp"
 #include "resource_view_set.hpp"
-#include "root_signature_library.hpp"
 #include "shader_library.hpp"
 #include "shader_list.hpp"
 #include "swap_chain.hpp"
@@ -243,8 +241,6 @@ public:
    swap_chain swap_chain;
 
    shader_library shaders{shader_list};
-   root_signature_library root_signatures{*device_d3d};
-   pipeline_library pipelines{*device_d3d, shaders, root_signatures};
 
 private:
    auto create_resource(const D3D12_RESOURCE_DESC& desc, const D3D12_HEAP_TYPE heap_type,

@@ -130,9 +130,9 @@ void renderer::draw_frame(
 
    update_camera_constant_buffer(camera, command_list);
 
-   _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum,
-                                           _world_mesh_list, world, command_list,
-                                           _dynamic_buffer_allocator);
+   _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum, _world_mesh_list,
+                                           world, _root_signatures, _pipelines,
+                                           command_list, _dynamic_buffer_allocator);
    _light_clusters.update_lights(view_frustrum, world, command_list,
                                  _dynamic_buffer_allocator);
 
@@ -226,7 +226,7 @@ void renderer::draw_world(const frustrum& view_frustrum, gpu::command_list& comm
 
    _terrain.draw(view_frustrum, _camera_constant_buffer_view,
                  _light_clusters.light_descriptors(), command_list,
-                 _dynamic_buffer_allocator);
+                 _root_signatures, _pipelines, _dynamic_buffer_allocator);
 
    draw_world_render_list(_transparent_object_render_list, command_list);
 }
@@ -234,7 +234,7 @@ void renderer::draw_world(const frustrum& view_frustrum, gpu::command_list& comm
 void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
                                       gpu::command_list& command_list)
 {
-   command_list.set_graphics_root_signature(*_device.root_signatures.object_mesh);
+   command_list.set_graphics_root_signature(*_root_signatures.object_mesh);
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
    command_list.set_graphics_root_descriptor_table(3, _light_clusters.light_descriptors());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -262,7 +262,7 @@ void renderer::draw_world_meta_objects(
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
-   command_list.set_graphics_root_signature(*_device.root_signatures.meta_object_mesh);
+   command_list.set_graphics_root_signature(*_root_signatures.meta_object_mesh);
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
 
    static bool draw_paths = false;
@@ -298,7 +298,7 @@ void renderer::draw_world_meta_objects(
             command_list.set_graphics_root_constant_buffer(1, temp_constants);
          }
 
-         command_list.set_pipeline_state(*_device.pipelines.meta_object_mesh_outlined);
+         command_list.set_pipeline_state(*_pipelines.meta_object_mesh_outlined);
 
          for (auto& path : world.paths) {
             for (auto& node : path.nodes) {
@@ -325,7 +325,7 @@ void renderer::draw_world_meta_objects(
       }
 
       if (draw_connections) {
-         draw_lines(command_list, _device, _dynamic_buffer_allocator,
+         draw_lines(command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
                     {.line_color = {0.1f, 0.1f, 0.75f},
 
                      .camera_constant_buffer_view = _camera_constant_buffer_view,
@@ -350,7 +350,7 @@ void renderer::draw_world_meta_objects(
 
       if (draw_orientation) {
          draw_lines(
-            command_list, _device, _dynamic_buffer_allocator,
+            command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
             {.line_color = {1.0f, 1.0f, 0.1f},
 
              .camera_constant_buffer_view = _camera_constant_buffer_view,
@@ -381,8 +381,8 @@ void renderer::draw_world_meta_objects(
       }
    }
 
-   command_list.set_pipeline_state(*_device.pipelines.meta_object_transparent_mesh);
-   command_list.set_graphics_root_signature(*_device.root_signatures.meta_object_mesh);
+   command_list.set_pipeline_state(*_pipelines.meta_object_transparent_mesh);
+   command_list.set_graphics_root_signature(*_root_signatures.meta_object_mesh);
 
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -666,7 +666,7 @@ void renderer::build_world_mesh_list(
 
       for (const auto& mesh : model.parts) {
          ID3D12PipelineState* const pipeline =
-            _device.pipelines.normal_mesh[mesh.material.flags].get();
+            _pipelines.normal_mesh[mesh.material.flags].get();
 
          _world_mesh_list.push_back(
             object_bbox, object_constants_address, object.position, pipeline,
@@ -698,7 +698,7 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
       if (not intersects(view_frustrum, meshes.bbox[i])) continue;
 
       auto& render_list = are_flags_set(meshes.pipeline_flags[i],
-                                        gpu::material_pipeline_flags::transparent)
+                                        material_pipeline_flags::transparent)
                              ? _transparent_object_render_list
                              : _opaque_object_render_list;
 

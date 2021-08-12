@@ -39,13 +39,14 @@ void line_draw_context::draw_buffered()
    command_list.draw_instanced(buffered_lines * 2, 1, 0, 0);
 }
 
-void draw_lines(gpu::command_list& command_list, gpu::device& device,
+void draw_lines(gpu::command_list& command_list,
+                root_signature_library& root_signatures, pipeline_library& pipelines,
                 gpu::dynamic_buffer_allocator& buffer_allocator,
                 const line_draw_state draw_state,
                 std::function<void(line_draw_context&)> draw_callback)
 {
-   command_list.set_pipeline_state(*device.pipelines.meta_line);
-   command_list.set_graphics_root_signature(*device.root_signatures.meta_line);
+   command_list.set_pipeline_state(*pipelines.meta_line);
+   command_list.set_graphics_root_signature(*root_signatures.meta_line);
    command_list.set_graphics_root_descriptor_table(1, draw_state.camera_constant_buffer_view);
 
    {

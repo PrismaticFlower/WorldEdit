@@ -221,13 +221,13 @@
     <ClInclude Include="src\graphics\line_drawer.hpp" />
     <ClInclude Include="src\graphics\material.hpp" />
     <ClInclude Include="src\graphics\model.hpp" />
-    <ClInclude Include="src\graphics\gpu\pipeline_library.hpp" />
-    <ClInclude Include="src\graphics\gpu\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\gpu\shader_library.hpp" />
     <ClInclude Include="src\graphics\gpu\swap_chain.hpp" />
     <ClInclude Include="src\graphics\model_manager.hpp" />
     <ClInclude Include="src\graphics\geometric_shapes.hpp" />
+    <ClInclude Include="src\graphics\pipeline_library.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
+    <ClInclude Include="src\graphics\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\terrain.hpp" />
     <ClInclude Include="src\graphics\texture_manager.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
@@ -266,6 +266,8 @@
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4100;4324;4127;4275;4459;5105</DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\resource.cpp" />
+    <ClCompile Include="src\graphics\pipeline_library.cpp" />
+    <ClCompile Include="src\graphics\root_signature_library.cpp" />
     <ClCompile Include="src\utility\file_watcher.cpp" />
     <ClInclude Include="src\utility\event.hpp" />
     <ClInclude Include="src\utility\file_watcher.hpp">
@@ -320,9 +322,7 @@
     <ClCompile Include="src\graphics\gpu\descriptor_allocation.cpp" />
     <ClCompile Include="src\graphics\gpu\device.cpp" />
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp" />
-    <ClCompile Include="src\graphics\gpu\pipeline_library.cpp" />
     <ClCompile Include="src\graphics\gpu\resource_view_set.cpp" />
-    <ClCompile Include="src\graphics\gpu\root_signature_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_cache.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_library.cpp" />
     <ClCompile Include="src\graphics\gpu\shader_list.cpp" />

@@ -47,7 +47,6 @@ material::material(const assets::msh::material& material,
    init_resource_views(gpu_device);
 
    using assets::msh::material_flags;
-   using gpu::material_pipeline_flags;
 
    if (are_flags_set(material.flags, material_flags::transparent)) {
       flags |= material_pipeline_flags::transparent;

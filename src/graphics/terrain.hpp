@@ -3,6 +3,8 @@
 #include "frustrum.hpp"
 #include "gpu/command_list.hpp"
 #include "gpu/device.hpp"
+#include "pipeline_library.hpp"
+#include "root_signature_library.hpp"
 #include "texture_manager.hpp"
 #include "types.hpp"
 #include "world/world.hpp"
@@ -26,6 +28,7 @@ public:
    void draw(const frustrum& view_frustrum,
              gpu::descriptor_range camera_constant_buffer_view,
              gpu::descriptor_range light_descriptors, gpu::command_list& command_list,
+             root_signature_library& root_signatures, pipeline_library& pipelines,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void process_updated_texture(updated_texture updated);
