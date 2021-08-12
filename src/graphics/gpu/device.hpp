@@ -59,6 +59,9 @@ public:
    auto create_command_list(const D3D12_COMMAND_LIST_TYPE type)
       -> utility::com_ptr<ID3D12GraphicsCommandList5>;
 
+   auto create_root_signature(const root_signature_desc& desc)
+      -> utility::com_ptr<ID3D12RootSignature>;
+
    auto create_buffer(const buffer_desc& desc, const D3D12_HEAP_TYPE heap_type,
                       const D3D12_RESOURCE_STATES initial_resource_state) -> buffer
    {

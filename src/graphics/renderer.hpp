@@ -96,7 +96,7 @@ private:
                                  .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
-   root_signature_library _root_signatures{*_device.device_d3d};
+   root_signature_library _root_signatures{_device};
    pipeline_library _pipelines{*_device.device_d3d, _device.shaders, _root_signatures};
 
    texture_manager _texture_manager;
