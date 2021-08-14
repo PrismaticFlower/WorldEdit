@@ -149,6 +149,7 @@ auto load_shader_cache(const std::filesystem::path& path)
 void save_shader_cache(const std::filesystem::path& path,
                        const std::span<const compiled_shader> shaders)
 {
+   std::filesystem::create_directories(path.parent_path());
    std::ofstream out_file{path, std::ios::binary};
    utility::binary_stream_writer out{out_file};
 
