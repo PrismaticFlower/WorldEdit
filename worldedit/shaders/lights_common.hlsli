@@ -59,10 +59,10 @@ const static float region_fade_distance_sq = 0.1 * 0.1;
 const static float cascade_fade_distance = 0.1;
 const static int shadow_cascade_count = 4;
 
-ConstantBuffer<light_constant_buffer> light_constants : register(b0);
-StructuredBuffer<light_region_description> light_region_descriptions : register(t0);
-Texture2DArray<float> TEMP_shadowmap : register(t1);
-SamplerComparisonState shadow_sampler : register(s2);
+ConstantBuffer<light_constant_buffer> light_constants : register(b0, space3);
+StructuredBuffer<light_region_description> light_region_descriptions : register(t0, space3);
+Texture2DArray<float> TEMP_shadowmap : register(t1, space3);
+SamplerComparisonState shadow_sampler : register(s2, space3);
 const static float temp_shadow_bias = 0.001;
 
 float shadow_cascade_signed_distance(float3 positionLS)
@@ -79,9 +79,7 @@ uint select_shadow_map_cascade(float3 positionWS)
 
    [unroll] for (int i = (shadow_cascade_count - 1); i >= 0; --i)
    {
-      float3 positionLS =
-         mul(light_constants.shadow_cascade_transforms[i], float4(positionWS, 1.0))
-            .xyz;
+      float3 positionLS = mul(light_constants.shadow_cascade_transforms[i], float4(positionWS, 1.0)).xyz;
 
       float cascade_signed_distance = shadow_cascade_signed_distance(positionLS);
 
@@ -91,19 +89,16 @@ uint select_shadow_map_cascade(float3 positionWS)
    return cascade_index;
 }
 
-float sample_shadow_map(float2 base_uv, float u, float v,
-                        float2 inv_shadow_map_resolution, uint cascade_index,
-                        float light_depth)
+float sample_shadow_map(float2 base_uv, float u, float v, float2 inv_shadow_map_resolution,
+                        uint cascade_index, float light_depth)
 {
    float2 uv = base_uv + float2(u, v) * inv_shadow_map_resolution;
 
-   return TEMP_shadowmap.SampleCmpLevelZero(shadow_sampler,
-                                            float3(uv, cascade_index), light_depth);
+   return TEMP_shadowmap.SampleCmpLevelZero(shadow_sampler, float3(uv, cascade_index), light_depth);
 }
 
 float sample_shadow_map_optimized_pcfx5(float3 positionLS, uint cascade_index,
-                                        float2 shadow_map_resolution,
-                                        float2 inv_shadow_map_resolution)
+                                        float2 shadow_map_resolution, float2 inv_shadow_map_resolution)
 {
    const float light_depth = positionLS.z - temp_shadow_bias;
 
@@ -138,34 +133,25 @@ float sample_shadow_map_optimized_pcfx5(float3 positionLS, uint cascade_index,
    float v2 = t / vw2 + 2.0;
 
    sum += uw0 * vw0 *
-          sample_shadow_map(base_uv, u0, v0, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u0, v0, inv_shadow_map_resolution, cascade_index, light_depth);
    sum += uw1 * vw0 *
-          sample_shadow_map(base_uv, u1, v0, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u1, v0, inv_shadow_map_resolution, cascade_index, light_depth);
    sum += uw2 * vw0 *
-          sample_shadow_map(base_uv, u2, v0, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u2, v0, inv_shadow_map_resolution, cascade_index, light_depth);
 
    sum += uw0 * vw1 *
-          sample_shadow_map(base_uv, u0, v1, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u0, v1, inv_shadow_map_resolution, cascade_index, light_depth);
    sum += uw1 * vw1 *
-          sample_shadow_map(base_uv, u1, v1, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u1, v1, inv_shadow_map_resolution, cascade_index, light_depth);
    sum += uw2 * vw1 *
-          sample_shadow_map(base_uv, u2, v1, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u2, v1, inv_shadow_map_resolution, cascade_index, light_depth);
 
    sum += uw0 * vw2 *
-          sample_shadow_map(base_uv, u0, v2, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u0, v2, inv_shadow_map_resolution, cascade_index, light_depth);
    sum += uw1 * vw2 *
-          sample_shadow_map(base_uv, u1, v2, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u1, v2, inv_shadow_map_resolution, cascade_index, light_depth);
    sum += uw2 * vw2 *
-          sample_shadow_map(base_uv, u2, v2, inv_shadow_map_resolution,
-                            cascade_index, light_depth);
+          sample_shadow_map(base_uv, u2, v2, inv_shadow_map_resolution, cascade_index, light_depth);
 
    return sum / 144.0;
 }
@@ -174,44 +160,37 @@ float sample_cascaded_shadow_map(float3 positionWS, float3 normalWS)
 {
    uint cascade_index = select_shadow_map_cascade(positionWS);
 
-   float3 positionLS = mul(light_constants.shadow_cascade_transforms[cascade_index],
-                           float4(positionWS, 1.0))
-                          .xyz;
+   float3 positionLS =
+      mul(light_constants.shadow_cascade_transforms[cascade_index], float4(positionWS, 1.0)).xyz;
 
-   float shadow =
-      sample_shadow_map_optimized_pcfx5(positionLS, cascade_index,
-                                        light_constants.shadow_map_resolution,
-                                        light_constants.inv_shadow_map_resolution);
+   float shadow = sample_shadow_map_optimized_pcfx5(positionLS, cascade_index,
+                                                    light_constants.shadow_map_resolution,
+                                                    light_constants.inv_shadow_map_resolution);
 
    float cascade_edge_distance = abs(shadow_cascade_signed_distance(positionLS));
 
-   if (cascade_edge_distance < cascade_fade_distance &&
-       cascade_index != (shadow_cascade_count - 1)) {
+   if (cascade_edge_distance < cascade_fade_distance && cascade_index != (shadow_cascade_count - 1)) {
       float previous_cascade_signed_distance = 1.0;
 
       if (cascade_index != 0) {
          float3 previous_positionLS =
-            mul(light_constants.shadow_cascade_transforms[cascade_index - 1],
-                float4(positionWS, 1.0))
+            mul(light_constants.shadow_cascade_transforms[cascade_index - 1], float4(positionWS, 1.0))
                .xyz;
 
-         previous_cascade_signed_distance =
-            shadow_cascade_signed_distance(previous_positionLS);
+         previous_cascade_signed_distance = shadow_cascade_signed_distance(previous_positionLS);
       }
 
       if (previous_cascade_signed_distance > cascade_fade_distance) {
          float3 position_nextLS =
-            mul(light_constants.shadow_cascade_transforms[cascade_index + 1],
-                float4(positionWS, 1.0))
+            mul(light_constants.shadow_cascade_transforms[cascade_index + 1], float4(positionWS, 1.0))
                .xyz;
 
-         float shadow_next =
-            sample_shadow_map_optimized_pcfx5(position_nextLS, cascade_index + 1,
-                                              light_constants.shadow_map_resolution,
-                                              light_constants.inv_shadow_map_resolution);
+         float shadow_next = sample_shadow_map_optimized_pcfx5(position_nextLS, cascade_index + 1,
+                                                               light_constants.shadow_map_resolution,
+                                                               light_constants.inv_shadow_map_resolution);
 
-         shadow = lerp(shadow, shadow_next,
-                       1.0 - saturate(cascade_edge_distance / cascade_fade_distance));
+         shadow =
+            lerp(shadow, shadow_next, 1.0 - saturate(cascade_edge_distance / cascade_fade_distance));
       }
    }
 
@@ -246,8 +225,7 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
          light_region_description region_desc =
             light_region_descriptions.Load(light.directional_region_index);
 
-         const float3 positionRS =
-            mul(region_desc.world_to_region, float4(positionWS, 1.0)).xyz;
+         const float3 positionRS = mul(region_desc.world_to_region, float4(positionWS, 1.0)).xyz;
 
          switch (light.region_type) {
          case directional_region_type::none: {
@@ -255,18 +233,15 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
             break;
          }
          case directional_region_type::box: {
-            const float3 region_to_position =
-               max(abs(positionRS) - region_desc.size, 0.0);
-            const float region_distance_sq =
-               dot(region_to_position, region_to_position);
+            const float3 region_to_position = max(abs(positionRS) - region_desc.size, 0.0);
+            const float region_distance_sq = dot(region_to_position, region_to_position);
 
             region_fade = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
 
             break;
          }
          case directional_region_type::sphere: {
-            const float region_distance =
-               max(length(positionRS) - region_desc.size.x, 0.0);
+            const float region_distance = max(length(positionRS) - region_desc.size.x, 0.0);
             const float region_distance_sq = region_distance * region_distance;
 
             region_fade = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
@@ -278,8 +253,7 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
             const float height = region_desc.size.y;
 
             const float cap_distance = max(abs(positionRS.y) - height, 0.0);
-            const float edge_distance =
-               max(length(float2(positionRS.x, positionRS.z)) - radius, 0.0);
+            const float edge_distance = max(length(float2(positionRS.x, positionRS.z)) - radius, 0.0);
             const float region_distance = max(cap_distance, edge_distance);
             const float region_distance_sq = region_distance * region_distance;
 
@@ -299,8 +273,8 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
       const float3 light_directionWS = normalize(light.positionWS - positionWS);
       const float light_distance = distance(light.positionWS, positionWS);
 
-      const float attenuation = saturate(
-         1.0 - ((light_distance * light_distance) / (light.range * light.range)));
+      const float attenuation =
+         saturate(1.0 - ((light_distance * light_distance) / (light.range * light.range)));
 
       const float falloff = saturate(dot(normalWS, light_directionWS));
 
@@ -310,12 +284,11 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
       const float3 light_directionWS = normalize(light.positionWS - positionWS);
       const float light_distance = distance(light.positionWS, positionWS);
 
-      const float attenuation = saturate(
-         1.0 - ((light_distance * light_distance) / (light.range * light.range)));
+      const float attenuation =
+         saturate(1.0 - ((light_distance * light_distance) / (light.range * light.range)));
 
       const float theta = saturate(dot(light_directionWS, light.directionWS));
-      const float cone_falloff =
-         saturate((theta - light.spot_outer_param) * light.spot_inner_param);
+      const float cone_falloff = saturate((theta - light.spot_outer_param) * light.spot_inner_param);
 
       const float falloff = saturate(dot(normalWS, light_directionWS));
 

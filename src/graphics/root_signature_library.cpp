@@ -11,8 +11,8 @@ namespace we::graphics {
 namespace {
 constexpr uint32 mesh_register_space = 0;
 constexpr uint32 material_register_space = 1;
-constexpr uint32 lights_register_space = 0;
 constexpr uint32 terrain_register_space = 2;
+constexpr uint32 lights_register_space = 3;
 
 const gpu::static_sampler_desc
    trilinear_sampler{.filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
@@ -122,7 +122,7 @@ const gpu::root_signature_desc object_mesh_desc{
 
          {.sampler = shadow_sampler,
           .shader_register = 2,
-          .register_space = 0,
+          .register_space = lights_register_space,
           .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
       },
 
@@ -226,7 +226,7 @@ const gpu::root_signature_desc
 
                       {.sampler = shadow_sampler,
                        .shader_register = 2,
-                       .register_space = 0,
+                       .register_space = lights_register_space,
                        .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
                    },
 
