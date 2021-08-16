@@ -21,10 +21,7 @@ class model_manager {
 public:
    model_manager(gpu::device& gpu_device, texture_manager& texture_manager,
                  assets::library<assets::msh::flat_model>& model_assets)
-      : _gpu_device{&gpu_device}, _model_assets{model_assets}, _texture_manager{texture_manager}
-   {
-      _placeholder_model.init_gpu_buffer_async(gpu_device);
-   };
+      : _gpu_device{&gpu_device}, _model_assets{model_assets}, _texture_manager{texture_manager} {};
 
    ~model_manager()
    {
@@ -73,8 +70,6 @@ public:
       _creation_tasks.run([this, name = name, asset, flat_model] {
          auto new_model =
             std::make_unique<model>(*flat_model, *_gpu_device, _texture_manager);
-
-         new_model->init_gpu_buffer_async(*_gpu_device);
 
          std::scoped_lock lock{_mutex};
 
@@ -127,8 +122,6 @@ private:
                      asset_data<assets::msh::flat_model> data) noexcept
    {
       auto new_model = std::make_unique<model>(*data, *_gpu_device, _texture_manager);
-
-      new_model->init_gpu_buffer_async(*_gpu_device);
 
       std::scoped_lock lock{_mutex};
 

@@ -671,12 +671,8 @@ void renderer::build_world_mesh_list(
             object_bbox, object_constants_address, object.position, pipeline,
             mesh.material.flags, mesh.material.resource_views.descriptors(),
             world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                       .vertex_buffer_views =
-                          {model.gpu_buffer.position_vertex_buffer_view,
-                           model.gpu_buffer.normal_vertex_buffer_view,
-                           model.gpu_buffer.tangent_vertex_buffer_view,
-                           model.gpu_buffer.bitangent_vertex_buffer_view,
-                           model.gpu_buffer.texcoord_vertex_buffer_view},
+                       .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                               model.gpu_buffer.attributes_vertex_buffer_view},
                        .index_count = mesh.index_count,
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});

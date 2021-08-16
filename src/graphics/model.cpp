@@ -11,78 +11,62 @@
 
 #include <d3dx12.h>
 
+using ranges::views::iota;
+using ranges::views::transform;
+
 namespace we::graphics {
 
-model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
+model::model(const assets::msh::flat_model& model, gpu::device& device,
              texture_manager& texture_manager)
 {
    parts.reserve(model.meshes.size());
 
    const auto vertex_count =
-      ranges::accumulate(ranges::views::transform(model.meshes,
-                                                  [](const assets::msh::mesh& mesh) {
-                                                     return mesh.positions.size();
-                                                  }),
+      ranges::accumulate(transform(model.meshes,
+                                   [](const assets::msh::mesh& mesh) {
+                                      return mesh.positions.size();
+                                   }),
                          std::size_t{0});
    const auto triangle_count =
-      ranges::accumulate(ranges::views::transform(model.meshes,
-                                                  [](const assets::msh::mesh& mesh) {
-                                                     return mesh.triangles.size();
-                                                  }),
+      ranges::accumulate(transform(model.meshes,
+                                   [](const assets::msh::mesh& mesh) {
+                                      return mesh.triangles.size();
+                                   }),
                          std::size_t{0});
 
-   const auto indices_data_size =
-      triangle_count * sizeof(decltype(indices)::value_type);
+   const auto indices_data_size = triangle_count * sizeof(std::array<uint16, 3>);
    const auto positions_data_size =
-      vertex_count * sizeof(decltype(vertices.positions)::value_type);
-   const auto normals_data_size =
-      vertex_count * sizeof(decltype(vertices.normals)::value_type);
-   const auto tangents_data_size =
-      vertex_count * sizeof(decltype(vertices.tangents)::value_type);
-   const auto bitangents_data_size =
-      vertex_count * sizeof(decltype(vertices.bitangents)::value_type);
-   const auto texcoords_data_size =
-      vertex_count * sizeof(decltype(vertices.texcoords)::value_type);
+      vertex_count * sizeof(decltype(mesh_vertices::positions)::value_type);
+   const auto attributes_data_size =
+      vertex_count * sizeof(decltype(mesh_vertices::attributes)::value_type);
 
    const auto aligned_indices_size =
       math::align_up(indices_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
    const auto aligned_positions_size =
       math::align_up(positions_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
-   const auto aligned_normals_size =
-      math::align_up(normals_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
-   const auto aligned_tangents_size =
-      math::align_up(tangents_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
-   const auto aligned_bitangents_size =
-      math::align_up(bitangents_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
-   const auto aligned_texcoords_size =
-      math::align_up(texcoords_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
+   const auto aligned_attributes_size =
+      math::align_up(attributes_data_size, D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT);
 
    const auto indices_data_offset = 0;
    const auto positions_data_offset = aligned_indices_size;
-   const auto normals_data_offset = positions_data_offset + aligned_positions_size;
-   const auto tangents_data_offset = normals_data_offset + aligned_normals_size;
-   const auto bitangents_data_offset = tangents_data_offset + aligned_tangents_size;
-   const auto texcoords_data_offset = bitangents_data_offset + aligned_bitangents_size;
+   const auto attributes_data_offset = positions_data_offset + aligned_positions_size;
 
    const auto buffer_size = static_cast<uint32>(
-      aligned_indices_size + aligned_positions_size + aligned_normals_size +
-      aligned_tangents_size + aligned_bitangents_size + aligned_texcoords_size);
+      aligned_indices_size + aligned_positions_size + aligned_attributes_size);
 
-   buffer.resize(buffer_size);
+   std::vector<std::byte> buffer{buffer_size};
 
    // Caution, UB below, but hey what's the worst that could happen? (Lots probably, but that's not the point.)
-   indices = {reinterpret_cast<std::array<uint16, 3>*>(&buffer[indices_data_offset]),
-              triangle_count};
-   vertices.positions = {reinterpret_cast<float3*>(&buffer[positions_data_offset]),
-                         vertex_count};
-   vertices.normals = {reinterpret_cast<float3*>(&buffer[normals_data_offset]),
-                       vertex_count};
-   vertices.tangents = {reinterpret_cast<float3*>(&buffer[tangents_data_offset]),
-                        vertex_count};
-   vertices.bitangents = {reinterpret_cast<float3*>(&buffer[bitangents_data_offset]),
-                          vertex_count};
-   vertices.texcoords = {reinterpret_cast<float2*>(&buffer[texcoords_data_offset]),
-                         vertex_count};
+   const std::span<std::array<uint16, 3>> indices =
+      {reinterpret_cast<std::array<uint16, 3>*>(&buffer[indices_data_offset]),
+       triangle_count};
+
+   const mesh_vertices vertices{.positions = {reinterpret_cast<float3*>(
+                                                 &buffer[positions_data_offset]),
+                                              vertex_count},
+                                .attributes = {reinterpret_cast<mesh_attributes*>(
+                                                  &buffer[attributes_data_offset]),
+                                               vertex_count}};
 
    uint32 triangle_offset = 0;
    uint32 vertex_offset = 0;
@@ -91,20 +75,23 @@ model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
       parts.push_back({.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
                        .start_index = triangle_offset * 3,
                        .start_vertex = vertex_offset,
-                       .material = {mesh.material, gpu_device, texture_manager}});
+                       .material = {mesh.material, device, texture_manager}});
 
       std::uninitialized_copy_n(mesh.triangles.cbegin(), mesh.triangles.size(),
                                 indices.begin() + triangle_offset);
       std::uninitialized_copy_n(mesh.positions.cbegin(), mesh.positions.size(),
                                 vertices.positions.begin() + vertex_offset);
-      std::uninitialized_copy_n(mesh.normals.cbegin(), mesh.normals.size(),
-                                vertices.normals.begin() + vertex_offset);
-      std::uninitialized_copy_n(mesh.tangents.cbegin(), mesh.tangents.size(),
-                                vertices.tangents.begin() + vertex_offset);
-      std::uninitialized_copy_n(mesh.bitangents.cbegin(), mesh.bitangents.size(),
-                                vertices.bitangents.begin() + vertex_offset);
-      std::uninitialized_copy_n(mesh.texcoords.cbegin(), mesh.texcoords.size(),
-                                vertices.texcoords.begin() + vertex_offset);
+
+      auto attributes =
+         iota(std::size_t{0}, mesh.positions.size()) | transform([&](std::size_t i) {
+            return mesh_attributes{.normals = mesh.normals[i],
+                                   .tangents = mesh.tangents[i],
+                                   .bitangents = mesh.bitangents[i],
+                                   .texcoords = mesh.texcoords[i]};
+         });
+
+      std::uninitialized_copy_n(attributes.begin(), mesh.positions.size(),
+                                vertices.attributes.begin() + vertex_offset);
 
       triangle_offset += static_cast<uint32>(mesh.triangles.size());
       vertex_offset += static_cast<uint32>(mesh.positions.size());
@@ -112,15 +99,16 @@ model::model(const assets::msh::flat_model& model, gpu::device& gpu_device,
 
    data_offsets = {.indices = indices_data_offset,
                    .positions = positions_data_offset,
-                   .normals = normals_data_offset,
-                   .tangents = tangents_data_offset,
-                   .bitangents = bitangents_data_offset,
-                   .texcoords = texcoords_data_offset};
+                   .attributes = attributes_data_offset};
 
    bbox = model.bounding_box;
+
+   init_gpu_buffer_async(device, buffer, indices, vertices);
 }
 
-auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
+void model::init_gpu_buffer_async(gpu::device& device, std::span<const std::byte> buffer,
+                                  std::span<std::array<uint16, 3>> indices,
+                                  mesh_vertices vertices)
 {
    auto copy_context = device.copy_manager.aquire_context();
 
@@ -156,28 +144,16 @@ auto model::init_gpu_buffer_async(gpu::device& device) -> UINT64
    gpu_buffer.position_vertex_buffer_view =
       {.BufferLocation = gpu_virtual_address + data_offsets.positions,
        .SizeInBytes = static_cast<uint32>(vertices.positions.size_bytes()),
-       .StrideInBytes = sizeof(decltype(vertices.positions)::value_type)};
-   gpu_buffer.normal_vertex_buffer_view =
-      {.BufferLocation = gpu_virtual_address + data_offsets.normals,
-       .SizeInBytes = static_cast<uint32>(vertices.normals.size_bytes()),
-       .StrideInBytes = sizeof(decltype(vertices.normals)::value_type)};
-   gpu_buffer.tangent_vertex_buffer_view =
-      {.BufferLocation = gpu_virtual_address + data_offsets.tangents,
-       .SizeInBytes = static_cast<uint32>(vertices.tangents.size_bytes()),
-       .StrideInBytes = sizeof(decltype(vertices.tangents)::value_type)};
-   gpu_buffer.bitangent_vertex_buffer_view =
-      {.BufferLocation = gpu_virtual_address + data_offsets.bitangents,
-       .SizeInBytes = static_cast<uint32>(vertices.bitangents.size_bytes()),
-       .StrideInBytes = sizeof(decltype(vertices.bitangents)::value_type)};
-   gpu_buffer.texcoord_vertex_buffer_view =
-      {.BufferLocation = gpu_virtual_address + data_offsets.texcoords,
-       .SizeInBytes = static_cast<uint32>(vertices.texcoords.size_bytes()),
-       .StrideInBytes = sizeof(decltype(vertices.texcoords)::value_type)};
+       .StrideInBytes = sizeof(decltype(mesh_vertices::positions)::value_type)};
+   gpu_buffer.attributes_vertex_buffer_view =
+      {.BufferLocation = gpu_virtual_address + data_offsets.attributes,
+       .SizeInBytes = static_cast<uint32>(vertices.attributes.size_bytes()),
+       .StrideInBytes = sizeof(decltype(mesh_vertices::attributes)::value_type)};
 
    copy_context.command_list.CopyResource(gpu_buffer.buffer.view_resource(),
                                           &upload_buffer);
 
-   return device.copy_manager.close_and_execute(copy_context);
+   device.copy_manager.close_and_execute(copy_context);
 }
 
 }

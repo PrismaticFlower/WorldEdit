@@ -19,7 +19,7 @@ static_assert(sizeof(world_mesh_constants) == 64);
 
 struct world_mesh {
    D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-   std::array<D3D12_VERTEX_BUFFER_VIEW, 5> vertex_buffer_views;
+   std::array<D3D12_VERTEX_BUFFER_VIEW, 2> vertex_buffer_views;
    uint32 index_count;
    uint32 start_index;
    uint32 start_vertex;
