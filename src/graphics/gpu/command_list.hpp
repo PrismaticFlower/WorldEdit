@@ -1,5 +1,6 @@
 #pragma once
 
+#include "command_allocator.hpp"
 #include "descriptor_range.hpp"
 #include "device.hpp"
 #include "dynamic_buffer_allocator.hpp"
@@ -29,12 +30,12 @@ public:
       throw_if_failed(_command_list->Close());
    }
 
-   void reset(ID3D12CommandAllocator& allocator,
+   void reset(const command_allocator& allocator,
               dynamic_buffer_allocator& dynamic_buffer_allocator,
               ID3D12PipelineState* const initial_state = nullptr)
    {
       _dynamic_buffer_allocator = &dynamic_buffer_allocator;
-      throw_if_failed(_command_list->Reset(&allocator, initial_state));
+      throw_if_failed(_command_list->Reset(allocator.get(), initial_state));
    }
 
    void clear_state(ID3D12PipelineState* const initial_state = nullptr)

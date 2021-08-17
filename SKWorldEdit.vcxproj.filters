@@ -493,6 +493,15 @@
     <ClInclude Include="src\graphics\pipeline_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\feature_tests.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\set_debug_name.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\command_allocator.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

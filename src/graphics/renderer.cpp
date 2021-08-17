@@ -12,6 +12,8 @@
 
 namespace we::graphics {
 
+using namespace gpu::literals;
+
 namespace {
 
 // TODO: Put this somewhere.
@@ -113,12 +115,15 @@ void renderer::draw_frame(
    build_world_mesh_list(world, world_classes);
    build_object_render_list(view_frustrum);
 
-   auto& command_allocator = *_world_command_allocators[_device.frame_index];
+   gpu::command_allocator_scoped command_allocator{_device.command_allocator_factory,
+                                                   D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                                   "world render"_id, _device.fence,
+                                                   _device.fence_value + 1};
+
    auto& command_list = _world_command_list;
    auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
    auto depth_stencil_view = _depth_stencil_texture.depth_stencil_view[0].cpu;
 
-   throw_if_failed(command_allocator.Reset());
    command_list.reset(command_allocator, _dynamic_buffer_allocator, nullptr);
    _dynamic_buffer_allocator.reset(_device.frame_index);
 

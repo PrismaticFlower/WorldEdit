@@ -1,6 +1,8 @@
 
 #include "device.hpp"
+#include "feature_tests.hpp"
 #include "hresult_error.hpp"
+#include "set_debug_name.hpp"
 
 #include <ranges>
 
@@ -45,7 +47,7 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
    return adapter;
 }
 
-auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device6>
+auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device8>
 {
    if (use_debug_layer) {
       utility::com_ptr<ID3D12Debug> d3d_debug;
@@ -55,7 +57,7 @@ auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device6>
       d3d_debug->EnableDebugLayer();
    }
 
-   utility::com_ptr<ID3D12Device6> device;
+   utility::com_ptr<ID3D12Device8> device;
 
    throw_if_failed(D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_0,
                                      IID_PPV_ARGS(device.clear_and_assign())));
@@ -89,8 +91,7 @@ auto create_root_signature(ID3D12Device& device,
                                  IID_PPV_ARGS(root_sig.clear_and_assign())));
 
    if (not name.empty()) {
-      root_sig->SetPrivateData(WKPDID_D3DDebugObjectName,
-                               to_uint32(name.size()), name.data());
+      set_debug_name(*root_sig, name);
    }
 
    return root_sig;
@@ -104,14 +105,22 @@ device::device(const HWND window)
    throw_if_failed(device_d3d->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                            IID_PPV_ARGS(fence.clear_and_assign())));
 
-   D3D12_COMMAND_QUEUE_DESC queue_desc{.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                       .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE};
+   D3D12_COMMAND_QUEUE_DESC queue_desc{
+      .Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+      .Priority = command_queue_priority_supported(*device_d3d.get(),
+                                                   D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                                   D3D12_COMMAND_QUEUE_PRIORITY_HIGH)
+                     ? D3D12_COMMAND_QUEUE_PRIORITY_HIGH
+                     : D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
+      .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE};
 
    fence_event = wil::unique_event{CreateEventW(nullptr, false, false, nullptr)};
 
    throw_if_failed(
       device_d3d->CreateCommandQueue(&queue_desc,
                                      IID_PPV_ARGS(command_queue.clear_and_assign())));
+
+   set_debug_name(*command_queue, "Renderer Queue");
 
    swap_chain = {window, *factory, *device_d3d, *command_queue, descriptor_heap_rtv};
 
@@ -164,19 +173,6 @@ void device::end_frame()
       WaitForSingleObject(fence_event.get(), INFINITE);
       completed_fence_value = fence->GetCompletedValue();
    }
-}
-
-auto device::create_command_allocators(const D3D12_COMMAND_LIST_TYPE type) -> command_allocators
-{
-   command_allocators allocators;
-
-   for (auto& allocator : allocators) {
-      throw_if_failed(
-         device_d3d->CreateCommandAllocator(type, IID_PPV_ARGS(
-                                                     allocator.clear_and_assign())));
-   }
-
-   return allocators;
 }
 
 auto device::create_command_list(const D3D12_COMMAND_LIST_TYPE type)

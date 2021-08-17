@@ -75,8 +75,6 @@ private:
    bool _terrain_dirty = true; // ughhhh, this feels so ugly
 
    gpu::device _device{_window};
-   gpu::command_allocators _world_command_allocators =
-      _device.create_command_allocators(D3D12_COMMAND_LIST_TYPE_DIRECT);
    gpu::command_list _world_command_list{D3D12_COMMAND_LIST_TYPE_DIRECT, _device};
 
    gpu::dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};

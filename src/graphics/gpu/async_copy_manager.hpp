@@ -107,14 +107,14 @@ public:
       ID3D12CommandList* command_list = &copy_context.command_list;
       _command_queue->ExecuteCommandLists(1, &command_list);
 
+      std::scoped_lock lock{_mutex};
+
       const UINT64 copy_fence_value = ++_fence_value;
       throw_if_failed(_command_queue->Signal(_fence.get(), copy_fence_value));
 
       _queued_copy.store(true, std::memory_order_relaxed);
 
       copy_context.closed_and_executed = true;
-
-      std::scoped_lock lock{_mutex};
 
       return_copy_context(copy_fence_value, copy_context);
 

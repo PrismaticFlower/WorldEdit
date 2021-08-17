@@ -2,6 +2,7 @@
 
 #include "async_copy_manager.hpp"
 #include "buffer.hpp"
+#include "command_allocator.hpp"
 #include "common.hpp"
 #include "d3d12_mem_alloc.hpp"
 #include "descriptor_allocation.hpp"
@@ -32,11 +33,6 @@
 
 namespace we::graphics::gpu {
 
-class device;
-
-using command_allocators =
-   std::array<utility::com_ptr<ID3D12CommandAllocator>, render_latency>;
-
 class device {
 public:
    explicit device(const HWND window);
@@ -52,9 +48,6 @@ public:
    void wait_for_idle();
 
    void end_frame();
-
-   auto create_command_allocators(const D3D12_COMMAND_LIST_TYPE type)
-      -> command_allocators;
 
    auto create_command_list(const D3D12_COMMAND_LIST_TYPE type)
       -> utility::com_ptr<ID3D12GraphicsCommandList5>;
@@ -219,7 +212,7 @@ public:
 
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
-   utility::com_ptr<ID3D12Device6> device_d3d;
+   utility::com_ptr<ID3D12Device8> device_d3d;
    utility::com_ptr<ID3D12Fence> fence;
    UINT64 fence_value = 1;
    UINT64 previous_frame_fence_value = 0;
@@ -227,6 +220,8 @@ public:
    UINT64 frame_index = 0;
    wil::unique_event fence_event{CreateEventW(nullptr, false, false, nullptr)};
    utility::com_ptr<ID3D12CommandQueue> command_queue;
+
+   command_allocator_factory command_allocator_factory{device_d3d};
 
    descriptor_heap descriptor_heap_srv_cbv_uav{D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
                                                D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
