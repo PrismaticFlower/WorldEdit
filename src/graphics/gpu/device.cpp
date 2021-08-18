@@ -65,6 +65,18 @@ auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device8>
    return device;
 }
 
+auto create_allocator(ID3D12Device& device, IDXGIAdapter4& adapter)
+   -> release_ptr<D3D12MA::Allocator>
+{
+   release_ptr<D3D12MA::Allocator> allocator;
+
+   const D3D12MA::ALLOCATOR_DESC alloc_desc{.pDevice = &device, .pAdapter = &adapter};
+
+   throw_if_failed(D3D12MA::CreateAllocator(&alloc_desc, allocator.clear_and_assign()));
+
+   return allocator;
+}
+
 auto create_root_signature(ID3D12Device& device,
                            const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& desc,
                            const std::string_view name)
@@ -100,7 +112,10 @@ auto create_root_signature(ID3D12Device& device,
 }
 
 device::device(const HWND window)
-   : factory{create_factory()}, adapter{create_adapter(*factory)}, device_d3d{create_device(*adapter)}
+   : factory{create_factory()},
+     adapter{create_adapter(*factory)},
+     device_d3d{create_device(*adapter)},
+     allocator{create_allocator(*device_d3d, *adapter)}
 {
    throw_if_failed(device_d3d->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                            IID_PPV_ARGS(fence.clear_and_assign())));
@@ -130,12 +145,6 @@ device::device(const HWND window)
       info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
       info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
    }
-
-   const D3D12MA::ALLOCATOR_DESC alloc_desc{.pDevice = device_d3d.get(),
-                                            .pAdapter = adapter.get()};
-
-   throw_if_failed(
-      D3D12MA::CreateAllocator(&alloc_desc, _allocator.clear_and_assign()));
 }
 
 device::~device()

@@ -1,6 +1,8 @@
 #pragma once
 
+#include "d3d12_mem_alloc.hpp"
 #include "hresult_error.hpp"
+#include "set_debug_name.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <atomic>
@@ -33,32 +35,37 @@ public:
 
    auto create_upload_resource(const D3D12_RESOURCE_DESC& desc) -> ID3D12Resource&
    {
-      const D3D12_HEAP_PROPERTIES heap_properties{.Type = D3D12_HEAP_TYPE_UPLOAD,
-                                                  .CPUPageProperty =
-                                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-                                                  .MemoryPoolPreference =
-                                                     D3D12_MEMORY_POOL_UNKNOWN};
+      const D3D12MA::ALLOCATION_DESC alloc_desc{.HeapType = D3D12_HEAP_TYPE_UPLOAD};
 
-      throw_if_failed(device.CreateCommittedResource(
-         &heap_properties, D3D12_HEAP_FLAG_NONE, &desc,
-         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-         IID_PPV_ARGS(upload_resources.emplace_back().clear_and_assign())));
+      copy_upload_resource& upload_resource = upload_resources.emplace_back();
 
-      return *upload_resources.back();
+      throw_if_failed(
+         allocator.CreateResource(&alloc_desc, &desc,
+                                  D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+                                  upload_resource.allocation.clear_and_assign(),
+                                  IID_PPV_ARGS(
+                                     upload_resource.resource.clear_and_assign())));
+
+      return *upload_resource.resource;
    }
 
 private:
    friend async_copy_manager;
 
    copy_context(ID3D12CommandAllocator& command_allocator,
-                ID3D12Device6& device, ID3D12GraphicsCommandList5& command_list)
-      : command_list{command_list}, device{device}, command_allocator{command_allocator} {};
+                D3D12MA::Allocator& allocator, ID3D12GraphicsCommandList5& command_list)
+      : command_list{command_list}, command_allocator{command_allocator}, allocator{allocator} {};
 
-   ID3D12Device6& device;
    ID3D12CommandAllocator& command_allocator;
+   D3D12MA::Allocator& allocator;
+
+   struct copy_upload_resource {
+      utility::com_ptr<ID3D12Resource> resource;
+      release_ptr<D3D12MA::Allocation> allocation;
+   };
 
    using resource_vector_type =
-      boost::container::small_vector<utility::com_ptr<ID3D12Resource>, 4>;
+      boost::container::small_vector<copy_upload_resource, 4>;
 
    resource_vector_type upload_resources;
 
@@ -67,7 +74,8 @@ private:
 
 class async_copy_manager {
 public:
-   explicit async_copy_manager(ID3D12Device6& device) : _device{device}
+   explicit async_copy_manager(ID3D12Device6& device, D3D12MA::Allocator& allocator)
+      : _device{device}, _allocator{allocator}
    {
       const D3D12_COMMAND_QUEUE_DESC desc{.Type = D3D12_COMMAND_LIST_TYPE_COPY};
       throw_if_failed(
@@ -76,6 +84,9 @@ public:
 
       throw_if_failed(_device.CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                           IID_PPV_ARGS(_fence.clear_and_assign())));
+
+      set_debug_name(*_command_queue, "Async Copy Queue");
+      set_debug_name(*_fence, "Async Copy Fence");
    }
 
    async_copy_manager(const async_copy_manager&) = delete;
@@ -97,7 +108,7 @@ public:
 
       throw_if_failed(command_list->Reset(command_allocator.get(), nullptr));
 
-      return {*command_allocator.release(), _device, *command_list.release()};
+      return {*command_allocator.release(), _allocator, *command_list.release()};
    }
 
    auto close_and_execute(copy_context& copy_context) -> UINT64
@@ -146,15 +157,14 @@ private:
       const auto completed_value = _fence->GetCompletedValue();
 
       for (auto& pending : _pending_copy_resources) {
-         if (pending.first > completed_value) continue;
+         if (pending.fence_value > completed_value) continue;
 
-         pending.second.resources.clear();
-         _free_command_allocators.emplace_back(
-            std::move(pending.second.command_allocator));
+         pending.resources.clear();
+         _free_command_allocators.emplace_back(std::move(pending.command_allocator));
       }
 
       std::erase_if(_pending_copy_resources, [=](const auto& used_allocator) {
-         return used_allocator.first <= completed_value;
+         return used_allocator.fence_value <= completed_value;
       });
    }
 
@@ -167,6 +177,8 @@ private:
             _device.CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY,
                                            IID_PPV_ARGS(
                                               command_allocator.clear_and_assign())));
+
+         set_debug_name(*command_allocator, "Async Copy Command Allocator");
 
          return command_allocator;
       }
@@ -188,6 +200,8 @@ private:
                                        D3D12_COMMAND_LIST_FLAG_NONE,
                                        IID_PPV_ARGS(command_list.clear_and_assign())));
 
+         set_debug_name(*command_list, "Async Copy Command List");
+
          return command_list;
       }
 
@@ -202,14 +216,14 @@ private:
    {
       _command_lists.emplace_back(&context.command_list);
 
-      _pending_copy_resources.emplace_back(
-         wait_fence_value,
-         pending_copy_context{.command_allocator =
-                                 utility::com_ptr{&context.command_allocator},
-                              .resources = std::move(context.upload_resources)});
+      _pending_copy_resources.push_back(
+         {.fence_value = wait_fence_value,
+          .command_allocator = utility::com_ptr{&context.command_allocator},
+          .resources = std::move(context.upload_resources)});
    }
 
    ID3D12Device6& _device;
+   D3D12MA::Allocator& _allocator;
    utility::com_ptr<ID3D12CommandQueue> _command_queue;
    utility::com_ptr<ID3D12Fence> _fence;
    std::atomic<UINT64> _fence_value = 0;
@@ -220,10 +234,11 @@ private:
    std::vector<utility::com_ptr<ID3D12GraphicsCommandList5>> _command_lists;
 
    struct pending_copy_context {
+      UINT64 fence_value;
       utility::com_ptr<ID3D12CommandAllocator> command_allocator;
       copy_context::resource_vector_type resources;
    };
 
-   std::vector<std::pair<UINT64, pending_copy_context>> _pending_copy_resources;
+   std::vector<pending_copy_context> _pending_copy_resources;
 };
 }

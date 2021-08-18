@@ -213,6 +213,7 @@ public:
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
    utility::com_ptr<ID3D12Device8> device_d3d;
+   release_ptr<D3D12MA::Allocator> allocator;
    utility::com_ptr<ID3D12Fence> fence;
    UINT64 fence_value = 1;
    UINT64 previous_frame_fence_value = 0;
@@ -234,7 +235,7 @@ public:
                                        D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
                                        descriptor_heap_dsv_size, *device_d3d};
 
-   async_copy_manager copy_manager{*device_d3d};
+   async_copy_manager copy_manager{*device_d3d, *allocator};
 
    swap_chain swap_chain;
 
@@ -252,12 +253,12 @@ private:
       release_ptr<D3D12MA::Allocation> allocation;
 
       throw_if_failed(
-         _allocator->CreateResource(&alloc_desc, &desc, initial_resource_state,
-                                    optimized_clear_value
-                                       ? &optimized_clear_value.value()
-                                       : nullptr,
-                                    allocation.clear_and_assign(),
-                                    IID_PPV_ARGS(d3d12_resource.clear_and_assign())));
+         allocator->CreateResource(&alloc_desc, &desc, initial_resource_state,
+                                   optimized_clear_value
+                                      ? &optimized_clear_value.value()
+                                      : nullptr,
+                                   allocation.clear_and_assign(),
+                                   IID_PPV_ARGS(d3d12_resource.clear_and_assign())));
 
       auto resource_owner =
          std::make_shared<resource>(*this, d3d12_resource, std::move(allocation));
@@ -299,8 +300,6 @@ private:
 
       boost::variant2::variant<resource_owner, std::unique_ptr<descriptor_range_owner>> resource;
    };
-
-   release_ptr<D3D12MA::Allocator> _allocator;
 
    std::mutex _deferred_destruction_mutex;
    std::vector<deferred_destruction> _deferred_destructions;

@@ -21,12 +21,12 @@ public:
    release_ptr(const release_ptr&) = delete;
    auto operator=(const release_ptr&) -> release_ptr& = delete;
 
-   release_ptr(release_ptr&& other)
+   release_ptr(release_ptr&& other) noexcept
    {
       swap(other);
    }
 
-   auto operator=(release_ptr&& other) -> release_ptr&
+   auto operator=(release_ptr&& other) noexcept -> release_ptr&
    {
       release_ptr discard;
 
