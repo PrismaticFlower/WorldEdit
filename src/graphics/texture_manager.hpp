@@ -152,7 +152,7 @@ private:
       const D3D12_RANGE write_range{0, cpu_texture.size()};
       upload_buffer.Unmap(0, &write_range);
 
-      auto& command_list = copy_context.command_list;
+      gpu::copy_command_list& command_list = copy_context.command_list();
 
       for (uint32 i = 0; i < cpu_texture.subresource_count(); ++i) {
          const auto& cpu_subresource = cpu_texture.subresource(i);
@@ -173,7 +173,7 @@ private:
                                           .RowPitch = cpu_subresource.row_pitch()},
                          }};
 
-         command_list.CopyTextureRegion(&dest_location, 0, 0, 0, &src_location, nullptr);
+         command_list.copy_texture_region(dest_location, 0, 0, 0, src_location);
       }
 
       _gpu_device->copy_manager.close_and_execute(copy_context);

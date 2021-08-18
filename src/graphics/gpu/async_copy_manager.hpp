@@ -1,5 +1,6 @@
 #pragma once
 
+#include "command_list.hpp"
 #include "d3d12_mem_alloc.hpp"
 #include "hresult_error.hpp"
 #include "set_debug_name.hpp"
@@ -31,7 +32,10 @@ public:
    copy_context(copy_context&&) = delete;
    auto operator=(copy_context&& other) -> copy_context& = delete;
 
-   ID3D12GraphicsCommandList5& command_list;
+   auto command_list() noexcept -> copy_command_list&
+   {
+      return copy_command_list;
+   }
 
    auto create_upload_resource(const D3D12_RESOURCE_DESC& desc) -> ID3D12Resource&
    {
@@ -53,8 +57,10 @@ private:
    friend async_copy_manager;
 
    copy_context(ID3D12CommandAllocator& command_allocator,
-                D3D12MA::Allocator& allocator, ID3D12GraphicsCommandList5& command_list)
-      : command_list{command_list}, command_allocator{command_allocator}, allocator{allocator} {};
+                D3D12MA::Allocator& allocator, copy_command_list command_list)
+      : copy_command_list{std::move(command_list)},
+        command_allocator{command_allocator},
+        allocator{allocator} {};
 
    ID3D12CommandAllocator& command_allocator;
    D3D12MA::Allocator& allocator;
@@ -67,6 +73,7 @@ private:
    using resource_vector_type =
       boost::container::small_vector<copy_upload_resource, 4>;
 
+   copy_command_list copy_command_list;
    resource_vector_type upload_resources;
 
    bool closed_and_executed = false;
@@ -106,16 +113,18 @@ public:
       auto command_allocator = aquire_command_allocator();
       auto command_list = aquire_command_list();
 
-      throw_if_failed(command_list->Reset(command_allocator.get(), nullptr));
+      throw_if_failed(
+         command_list.get_underlying()->Reset(command_allocator.get(), nullptr));
 
-      return {*command_allocator.release(), _allocator, *command_list.release()};
+      return {*command_allocator.release(), _allocator, std::move(command_list)};
    }
 
    auto close_and_execute(copy_context& copy_context) -> UINT64
    {
-      throw_if_failed(copy_context.command_list.Close());
+      copy_context.copy_command_list.close();
 
-      ID3D12CommandList* command_list = &copy_context.command_list;
+      ID3D12CommandList* command_list =
+         copy_context.copy_command_list.get_underlying();
       _command_queue->ExecuteCommandLists(1, &command_list);
 
       std::scoped_lock lock{_mutex};
@@ -190,10 +199,10 @@ private:
       return command_allocator;
    }
 
-   auto aquire_command_list() -> utility::com_ptr<ID3D12GraphicsCommandList5>
+   auto aquire_command_list() -> copy_command_list
    {
       if (_command_lists.empty()) {
-         utility::com_ptr<ID3D12GraphicsCommandList5> command_list;
+         utility::com_ptr<command_list::d3d12_command_list> command_list;
 
          throw_if_failed(
             _device.CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY,
@@ -202,7 +211,7 @@ private:
 
          set_debug_name(*command_list, "Async Copy Command List");
 
-         return command_list;
+         return {command_list};
       }
 
       auto command_list = std::move(_command_lists.back());
@@ -214,7 +223,7 @@ private:
 
    void return_copy_context(const UINT64 wait_fence_value, copy_context& context)
    {
-      _command_lists.emplace_back(&context.command_list);
+      _command_lists.emplace_back(std::move(context.copy_command_list));
 
       _pending_copy_resources.push_back(
          {.fence_value = wait_fence_value,
@@ -231,7 +240,7 @@ private:
 
    std::mutex _mutex;
    std::vector<utility::com_ptr<ID3D12CommandAllocator>> _free_command_allocators;
-   std::vector<utility::com_ptr<ID3D12GraphicsCommandList5>> _command_lists;
+   std::vector<copy_command_list> _command_lists;
 
    struct pending_copy_context {
       UINT64 fence_value;

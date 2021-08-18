@@ -150,8 +150,8 @@ void model::init_gpu_buffer_async(gpu::device& device, std::span<const std::byte
        .SizeInBytes = static_cast<uint32>(vertices.attributes.size_bytes()),
        .StrideInBytes = sizeof(decltype(mesh_vertices::attributes)::value_type)};
 
-   copy_context.command_list.CopyResource(gpu_buffer.buffer.view_resource(),
-                                          &upload_buffer);
+   copy_context.command_list().copy_resource(*gpu_buffer.buffer.view_resource(),
+                                             upload_buffer);
 
    device.copy_manager.close_and_execute(copy_context);
 }

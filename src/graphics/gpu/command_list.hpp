@@ -26,6 +26,12 @@ public:
    {
    }
 
+   command_list(const command_list&) = delete;
+   auto operator=(const command_list&) -> command_list& = delete;
+
+   command_list(command_list&&) noexcept = default;
+   auto operator=(command_list&&) noexcept -> command_list& = default;
+
    void close()
    {
       throw_if_failed(_command_list->Close());
