@@ -27,14 +27,14 @@ public:
    void add(const float3 begin, const float3 end);
 
 private:
-   friend void draw_lines(gpu::command_list& command_list,
+   friend void draw_lines(gpu::graphics_command_list& command_list,
                           root_signature_library& root_signatures,
                           pipeline_library& pipelines,
                           gpu::dynamic_buffer_allocator& buffer_allocator,
                           const line_draw_state draw_state,
                           std::function<void(line_draw_context&)> draw_callback);
 
-   line_draw_context(gpu::command_list& command_list,
+   line_draw_context(gpu::graphics_command_list& command_list,
                      gpu::dynamic_buffer_allocator& buffer_allocator,
                      gpu::dynamic_buffer_allocator::allocation current_allocation)
       : command_list{command_list}, buffer_allocator{buffer_allocator}, current_allocation{current_allocation}
@@ -43,14 +43,14 @@ private:
 
    void draw_buffered();
 
-   gpu::command_list& command_list;
+   gpu::graphics_command_list& command_list;
    gpu::dynamic_buffer_allocator& buffer_allocator;
 
    gpu::dynamic_buffer_allocator::allocation current_allocation;
    uint32 buffered_lines = 0;
 };
 
-void draw_lines(gpu::command_list& command_list,
+void draw_lines(gpu::graphics_command_list& command_list,
                 root_signature_library& root_signatures, pipeline_library& pipelines,
                 gpu::dynamic_buffer_allocator& buffer_allocator,
                 const line_draw_state draw_state,

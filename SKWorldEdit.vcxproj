@@ -268,6 +268,7 @@
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4100;4127;4275;4324;4459;5105</DisableSpecificWarnings>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4100;4324;4127;4275;4459;5105</DisableSpecificWarnings>
     </ClCompile>
+    <ClCompile Include="src\graphics\gpu\dynamic_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\gpu\resource.cpp" />
     <ClCompile Include="src\graphics\pipeline_library.cpp" />
     <ClCompile Include="src\graphics\root_signature_library.cpp" />

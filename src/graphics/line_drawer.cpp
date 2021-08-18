@@ -39,7 +39,7 @@ void line_draw_context::draw_buffered()
    command_list.draw_instanced(buffered_lines * 2, 1, 0, 0);
 }
 
-void draw_lines(gpu::command_list& command_list,
+void draw_lines(gpu::graphics_command_list& command_list,
                 root_signature_library& root_signatures, pipeline_library& pipelines,
                 gpu::dynamic_buffer_allocator& buffer_allocator,
                 const line_draw_state draw_state,

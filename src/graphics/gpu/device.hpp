@@ -3,10 +3,12 @@
 #include "async_copy_manager.hpp"
 #include "buffer.hpp"
 #include "command_allocator.hpp"
+#include "command_list.hpp"
 #include "common.hpp"
 #include "d3d12_mem_alloc.hpp"
 #include "descriptor_allocation.hpp"
 #include "descriptor_heap.hpp"
+#include "device.hpp"
 #include "resource.hpp"
 #include "resource_view_set.hpp"
 #include "shader_library.hpp"
@@ -49,8 +51,14 @@ public:
 
    void end_frame();
 
-   auto create_command_list(const D3D12_COMMAND_LIST_TYPE type)
-      -> utility::com_ptr<ID3D12GraphicsCommandList5>;
+   auto create_copy_command_list(const std::string_view debug_name = "")
+      -> copy_command_list;
+
+   auto create_compute_command_list(const std::string_view debug_name = "")
+      -> compute_command_list;
+
+   auto create_graphics_command_list(const std::string_view debug_name = "")
+      -> graphics_command_list;
 
    auto create_root_signature(const root_signature_desc& desc)
       -> utility::com_ptr<ID3D12RootSignature>;

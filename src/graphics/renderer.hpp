@@ -50,17 +50,18 @@ private:
    };
 
    void update_camera_constant_buffer(const camera& camera,
-                                      gpu::command_list& command_list);
+                                      gpu::graphics_command_list& command_list);
 
-   void draw_world(const frustrum& view_frustrum, gpu::command_list& command_list);
+   void draw_world(const frustrum& view_frustrum,
+                   gpu::graphics_command_list& command_list);
 
    void draw_world_render_list(const std::vector<render_list_item>& list,
-                               gpu::command_list& command_list);
+                               gpu::graphics_command_list& command_list);
 
    void draw_world_meta_objects(
       const frustrum& view_frustrum, const world::world& world,
       const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
-      gpu::command_list& command_list);
+      gpu::graphics_command_list& command_list);
 
    void build_world_mesh_list(
       const world::world& world,
@@ -75,7 +76,8 @@ private:
    bool _terrain_dirty = true; // ughhhh, this feels so ugly
 
    gpu::device _device{_window};
-   gpu::command_list _world_command_list{D3D12_COMMAND_LIST_TYPE_DIRECT, _device};
+   gpu::graphics_command_list _world_command_list =
+      _device.create_graphics_command_list("World Command List");
 
    gpu::dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
 

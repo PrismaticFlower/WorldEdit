@@ -184,16 +184,47 @@ void device::end_frame()
    }
 }
 
-auto device::create_command_list(const D3D12_COMMAND_LIST_TYPE type)
-   -> utility::com_ptr<ID3D12GraphicsCommandList5>
+auto device::create_copy_command_list(const std::string_view debug_name) -> copy_command_list
 {
-   utility::com_ptr<ID3D12GraphicsCommandList5> command_list;
+   utility::com_ptr<ID3D12GraphicsCommandList6> command_list;
 
    throw_if_failed(
-      device_d3d->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE,
+      device_d3d->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY,
+                                     D3D12_COMMAND_LIST_FLAG_NONE,
                                      IID_PPV_ARGS(command_list.clear_and_assign())));
 
-   return command_list;
+   if (not debug_name.empty()) set_debug_name(*command_list, debug_name);
+
+   return {command_list};
+}
+
+auto device::create_compute_command_list(const std::string_view debug_name) -> compute_command_list
+{
+   utility::com_ptr<ID3D12GraphicsCommandList6> command_list;
+
+   throw_if_failed(
+      device_d3d->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COMPUTE,
+                                     D3D12_COMMAND_LIST_FLAG_NONE,
+                                     IID_PPV_ARGS(command_list.clear_and_assign())));
+
+   if (not debug_name.empty()) set_debug_name(*command_list, debug_name);
+
+   return {command_list};
+}
+
+auto device::create_graphics_command_list(const std::string_view debug_name)
+   -> graphics_command_list
+{
+   utility::com_ptr<ID3D12GraphicsCommandList6> command_list;
+
+   throw_if_failed(
+      device_d3d->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                     D3D12_COMMAND_LIST_FLAG_NONE,
+                                     IID_PPV_ARGS(command_list.clear_and_assign())));
+
+   if (not debug_name.empty()) set_debug_name(*command_list, debug_name);
+
+   return {command_list};
 }
 
 auto device::create_root_signature(const root_signature_desc& desc)

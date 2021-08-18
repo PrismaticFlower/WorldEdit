@@ -22,12 +22,13 @@ public:
 
    explicit terrain(gpu::device& device, texture_manager& texture_manager);
 
-   void init(const world::terrain& terrain, gpu::command_list& command_list,
+   void init(const world::terrain& terrain, gpu::graphics_command_list& command_list,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void draw(const frustrum& view_frustrum,
              gpu::descriptor_range camera_constant_buffer_view,
-             gpu::descriptor_range light_descriptors, gpu::command_list& command_list,
+             gpu::descriptor_range light_descriptors,
+             gpu::graphics_command_list& command_list,
              root_signature_library& root_signatures, pipeline_library& pipelines,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
@@ -41,18 +42,19 @@ private:
       std::bitset<16> active_textures;
    };
 
-   void init_gpu_resources(const world::terrain& terrain, gpu::command_list& command_list,
+   void init_gpu_resources(const world::terrain& terrain,
+                           gpu::graphics_command_list& command_list,
                            gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void init_gpu_height_map(const world::terrain& terrain,
-                            gpu::command_list& command_list);
+                            gpu::graphics_command_list& command_list);
 
    void init_gpu_texture_weight_map(const world::terrain& terrain,
-                                    gpu::command_list& command_list);
+                                    gpu::graphics_command_list& command_list);
 
-   void init_gpu_terrain_constants_buffer(const world::terrain& terrain,
-                                          gpu::command_list& command_list,
-                                          gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+   void init_gpu_terrain_constants_buffer(
+      const world::terrain& terrain, gpu::graphics_command_list& command_list,
+      gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void init_textures(const world::terrain& terrain);
 

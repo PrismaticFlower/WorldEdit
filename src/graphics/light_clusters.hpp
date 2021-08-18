@@ -25,14 +25,14 @@ public:
    light_clusters(gpu::device& gpu_device);
 
    void update_lights(const frustrum& view_frustrum, const world::world& world,
-                      gpu::command_list& command_list,
+                      gpu::graphics_command_list& command_list,
                       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void TEMP_render_shadow_maps(
       const camera& view_camera, const frustrum& view_frustrum,
       const world_mesh_list& meshes, const world::world& world,
       root_signature_library& root_signatures, pipeline_library& pipelines,
-      gpu::command_list& command_list,
+      gpu::graphics_command_list& command_list,
       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    auto light_descriptors() const noexcept -> gpu::descriptor_range;

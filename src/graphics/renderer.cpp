@@ -117,7 +117,8 @@ void renderer::draw_frame(
 
    gpu::command_allocator_scoped command_allocator{_device.command_allocator_factory,
                                                    D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                   "world render"_id, _device.fence,
+                                                   "World Command Allocator"_id,
+                                                   _device.fence,
                                                    _device.fence_value + 1};
 
    auto& command_list = _world_command_list;
@@ -205,7 +206,7 @@ void renderer::window_resized(uint16 width, uint16 height)
 }
 
 void renderer::update_camera_constant_buffer(const camera& camera,
-                                             gpu::command_list& command_list)
+                                             gpu::graphics_command_list& command_list)
 {
    auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
 
@@ -224,7 +225,8 @@ void renderer::update_camera_constant_buffer(const camera& camera,
                               D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 }
 
-void renderer::draw_world(const frustrum& view_frustrum, gpu::command_list& command_list)
+void renderer::draw_world(const frustrum& view_frustrum,
+                          gpu::graphics_command_list& command_list)
 {
    draw_world_render_list(_opaque_object_render_list, command_list);
 
@@ -236,7 +238,7 @@ void renderer::draw_world(const frustrum& view_frustrum, gpu::command_list& comm
 }
 
 void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
-                                      gpu::command_list& command_list)
+                                      gpu::graphics_command_list& command_list)
 {
    command_list.set_graphics_root_signature(*_root_signatures.object_mesh);
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
@@ -262,7 +264,7 @@ void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
 void renderer::draw_world_meta_objects(
    const frustrum& view_frustrum, const world::world& world,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
-   gpu::command_list& command_list)
+   gpu::graphics_command_list& command_list)
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
@@ -739,5 +741,4 @@ void renderer::update_textures()
       _terrain.process_updated_texture(updated);
    });
 }
-
 }

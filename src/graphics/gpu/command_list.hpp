@@ -2,7 +2,6 @@
 
 #include "command_allocator.hpp"
 #include "descriptor_range.hpp"
-#include "device.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "hresult_error.hpp"
 #include "types.hpp"
@@ -20,9 +19,11 @@ namespace we::graphics::gpu {
 
 class command_list {
 public:
-   command_list(const D3D12_COMMAND_LIST_TYPE type, device& device)
+   using d3d12_command_list = ID3D12GraphicsCommandList6;
+
+   command_list(utility::com_ptr<d3d12_command_list> command_list)
+      : _command_list{command_list}
    {
-      _command_list = device.create_command_list(type);
    }
 
    void close()
@@ -38,47 +39,53 @@ public:
       throw_if_failed(_command_list->Reset(allocator.get(), initial_state));
    }
 
+   void reset(const command_allocator& allocator,
+              ID3D12PipelineState* const initial_state = nullptr)
+   {
+      throw_if_failed(_command_list->Reset(allocator.get(), initial_state));
+   }
+
    void clear_state(ID3D12PipelineState* const initial_state = nullptr)
    {
       _command_list->ClearState(initial_state);
    }
 
-   void draw_instanced(const uint32 vertex_count_per_instance,
-                       const uint32 instance_count, const uint32 start_vertex_location,
-                       const uint32 start_instance_location)
+   auto get_underlying() const noexcept -> d3d12_command_list*
    {
-      _command_list->DrawInstanced(vertex_count_per_instance, instance_count,
-                                   start_vertex_location, start_instance_location);
+      return _command_list.get();
    }
 
-   void draw_indexed_instanced(const uint32 index_count_per_instance,
-                               const uint32 instance_count,
-                               const uint32 start_index_location,
-                               const int32 base_vertex_location,
-                               const uint32 start_instance_location)
-   {
-      _command_list->DrawIndexedInstanced(index_count_per_instance, instance_count,
-                                          start_index_location, base_vertex_location,
-                                          start_instance_location);
-   }
+protected:
+   utility::com_ptr<d3d12_command_list> _command_list;
+   dynamic_buffer_allocator* _dynamic_buffer_allocator = nullptr;
 
-   void dispatch(const uint32 thread_group_count_x,
-                 const uint32 thread_group_count_y, const uint32 thread_group_count_z)
-   {
-      _command_list->Dispatch(thread_group_count_x, thread_group_count_y,
-                              thread_group_count_z);
-   }
+   boost::container::small_vector<D3D12_RESOURCE_BARRIER, 64> _deferred_barriers;
 
-   void execute_indirect(ID3D12CommandSignature& command_signature,
-                         const uint32 max_command_count, ID3D12Resource& argument_buffer,
-                         const uint64 argument_buffer_offset,
-                         ID3D12Resource* const count_buffer = nullptr,
-                         const uint64 count_buffer_offset = 0)
+   template<typename Type, bool compute>
+   void set_root_constant_buffer(const uint32 root_parameter_index,
+                                 const Type& constant_buffer)
    {
-      _command_list->ExecuteIndirect(&command_signature, max_command_count,
-                                     &argument_buffer, argument_buffer_offset,
-                                     count_buffer, count_buffer_offset);
+      static_assert(std::is_trivially_copyable_v<Type>,
+                    "Constant buffer type should be trivially copyable.");
+
+      auto allocation = _dynamic_buffer_allocator->allocate(sizeof(Type));
+
+      std::memcpy(allocation.cpu_address, &constant_buffer, sizeof(Type));
+
+      if constexpr (compute) {
+         _command_list->SetComputeRootConstantBufferView(root_parameter_index,
+                                                         allocation.gpu_address);
+      }
+      else {
+         _command_list->SetGraphicsRootConstantBufferView(root_parameter_index,
+                                                          allocation.gpu_address);
+      }
    }
+};
+
+struct copy_command_list : command_list {
+public:
+   using command_list::command_list;
 
    void copy_buffer_region(ID3D12Resource& dst_buffer, const uint64 dst_offset,
                            ID3D12Resource& src_buffer, const uint64 src_offset,
@@ -113,14 +120,6 @@ public:
                                buffer_start_offset_in_bytes, flags);
    }
 
-   void resolve_subresource(ID3D12Resource& dst_resource,
-                            const uint32 dst_subresource, ID3D12Resource& src_resource,
-                            const uint32 src_subresource, const DXGI_FORMAT format)
-   {
-      _command_list->ResolveSubresource(&dst_resource, dst_subresource,
-                                        &src_resource, src_subresource, format);
-   }
-
    void resource_barrier(const std::span<const D3D12_RESOURCE_BARRIER> barriers)
    {
       _command_list->ResourceBarrier(static_cast<UINT>(barriers.size()),
@@ -150,10 +149,28 @@ public:
 
       _deferred_barriers.clear();
    }
+};
 
-   void execute_bundle(ID3D12GraphicsCommandList& bundle)
+struct compute_command_list : copy_command_list {
+public:
+   using copy_command_list::copy_command_list;
+
+   void dispatch(const uint32 thread_group_count_x,
+                 const uint32 thread_group_count_y, const uint32 thread_group_count_z)
    {
-      _command_list->ExecuteBundle(&bundle);
+      _command_list->Dispatch(thread_group_count_x, thread_group_count_y,
+                              thread_group_count_z);
+   }
+
+   void execute_indirect(ID3D12CommandSignature& command_signature,
+                         const uint32 max_command_count, ID3D12Resource& argument_buffer,
+                         const uint64 argument_buffer_offset,
+                         ID3D12Resource* const count_buffer = nullptr,
+                         const uint64 count_buffer_offset = 0)
+   {
+      _command_list->ExecuteIndirect(&command_signature, max_command_count,
+                                     &argument_buffer, argument_buffer_offset,
+                                     count_buffer, count_buffer_offset);
    }
 
    void set_descriptor_heaps(ID3D12DescriptorHeap& cbv_uav_srv_heap,
@@ -174,22 +191,10 @@ public:
       _command_list->SetComputeRootSignature(&root_signature);
    }
 
-   void set_graphics_root_signature(ID3D12RootSignature& root_signature)
-   {
-      _command_list->SetGraphicsRootSignature(&root_signature);
-   }
-
    void set_compute_root_descriptor_table(const uint32 root_parameter_index,
                                           const D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor)
    {
       _command_list->SetComputeRootDescriptorTable(root_parameter_index, base_descriptor);
-   }
-
-   void set_graphics_root_descriptor_table(const uint32 root_parameter_index,
-                                           const D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor)
-   {
-      _command_list->SetGraphicsRootDescriptorTable(root_parameter_index,
-                                                    base_descriptor);
    }
 
    void set_compute_root_descriptor_table(const uint32 root_parameter_index,
@@ -197,13 +202,6 @@ public:
    {
       _command_list->SetComputeRootDescriptorTable(root_parameter_index,
                                                    range[0].gpu);
-   }
-
-   void set_graphics_root_descriptor_table(const uint32 root_parameter_index,
-                                           const descriptor_range& range)
-   {
-      _command_list->SetGraphicsRootDescriptorTable(root_parameter_index,
-                                                    range[0].gpu);
    }
 
    void set_compute_root_32bit_constant(const uint32 root_parameter_index,
@@ -214,14 +212,6 @@ public:
                                                  dest_offset_in_32bit_values);
    }
 
-   void set_graphics_root_32bit_constant(const uint32 root_parameter_index,
-                                         const uint32 constant,
-                                         const uint32 dest_offset_in_32bit_values)
-   {
-      _command_list->SetGraphicsRoot32BitConstant(root_parameter_index, constant,
-                                                  dest_offset_in_32bit_values);
-   }
-
    void set_compute_root_32bit_constants(const uint32 root_parameter_index,
                                          const std::span<const std::byte> constants,
                                          const uint32 dest_offset_in_32bit_values)
@@ -230,6 +220,130 @@ public:
                                                   static_cast<UINT>(constants.size() /
                                                                     sizeof(uint32)),
                                                   constants.data(),
+                                                  dest_offset_in_32bit_values);
+   }
+
+   void set_compute_root_constant_buffer_view(const uint32 root_parameter_index,
+                                              const gpu_virtual_address buffer_location)
+   {
+      _command_list->SetComputeRootConstantBufferView(root_parameter_index,
+                                                      buffer_location);
+   }
+
+   void set_compute_root_shader_resource_view(const uint32 root_parameter_index,
+                                              const gpu_virtual_address buffer_location)
+   {
+      _command_list->SetComputeRootShaderResourceView(root_parameter_index,
+                                                      buffer_location);
+   }
+
+   void set_compute_root_unordered_access_view(const uint32 root_parameter_index,
+                                               const gpu_virtual_address buffer_location)
+   {
+      _command_list->SetComputeRootUnorderedAccessView(root_parameter_index,
+                                                       buffer_location);
+   }
+
+   template<typename Type>
+   void set_compute_root_constant_buffer(const uint32 root_parameter_index,
+                                         const Type& constant_buffer)
+   {
+      set_root_constant_buffer<Type, true>(root_parameter_index, constant_buffer);
+   }
+
+   void clear_unordered_access_view_uint(
+      const D3D12_GPU_DESCRIPTOR_HANDLE view_gpu_handle_in_current_heap,
+      const D3D12_CPU_DESCRIPTOR_HANDLE view_cpu_handle,
+      ID3D12Resource& resource, const std::span<const uint32, 4> values,
+      const std::span<const D3D12_RECT> rects = {})
+   {
+      _command_list->ClearUnorderedAccessViewUint(view_gpu_handle_in_current_heap,
+                                                  view_cpu_handle, &resource,
+                                                  values.data(),
+                                                  static_cast<UINT>(rects.size()),
+                                                  rects.data());
+   }
+
+   void clear_unordered_access_view_float(
+      const D3D12_GPU_DESCRIPTOR_HANDLE view_gpu_handle_in_current_heap,
+      const D3D12_CPU_DESCRIPTOR_HANDLE view_cpu_handle, ID3D12Resource& resource,
+      const float4& values, const std::span<const D3D12_RECT> rects = {})
+   {
+      _command_list->ClearUnorderedAccessViewFloat(view_gpu_handle_in_current_heap,
+                                                   view_cpu_handle, &resource,
+                                                   &values[0],
+                                                   static_cast<UINT>(rects.size()),
+                                                   rects.data());
+   }
+
+   void discard_resource(ID3D12Resource& resource,
+                         const std::optional<D3D12_DISCARD_REGION> discard_region = std::nullopt)
+   {
+      _command_list->DiscardResource(&resource, discard_region
+                                                   ? &discard_region.value()
+                                                   : nullptr);
+   }
+};
+
+struct graphics_command_list : compute_command_list {
+   using compute_command_list::compute_command_list;
+
+   void draw_instanced(const uint32 vertex_count_per_instance,
+                       const uint32 instance_count, const uint32 start_vertex_location,
+                       const uint32 start_instance_location)
+   {
+      _command_list->DrawInstanced(vertex_count_per_instance, instance_count,
+                                   start_vertex_location, start_instance_location);
+   }
+
+   void draw_indexed_instanced(const uint32 index_count_per_instance,
+                               const uint32 instance_count,
+                               const uint32 start_index_location,
+                               const int32 base_vertex_location,
+                               const uint32 start_instance_location)
+   {
+      _command_list->DrawIndexedInstanced(index_count_per_instance, instance_count,
+                                          start_index_location, base_vertex_location,
+                                          start_instance_location);
+   }
+
+   void resolve_subresource(ID3D12Resource& dst_resource,
+                            const uint32 dst_subresource, ID3D12Resource& src_resource,
+                            const uint32 src_subresource, const DXGI_FORMAT format)
+   {
+      _command_list->ResolveSubresource(&dst_resource, dst_subresource,
+                                        &src_resource, src_subresource, format);
+   }
+
+   void execute_bundle(ID3D12GraphicsCommandList& bundle)
+   {
+      _command_list->ExecuteBundle(&bundle);
+   }
+
+   void set_graphics_root_signature(ID3D12RootSignature& root_signature)
+   {
+      _command_list->SetGraphicsRootSignature(&root_signature);
+   }
+
+   void set_graphics_root_descriptor_table(const uint32 root_parameter_index,
+                                           const D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor)
+   {
+      _command_list->SetGraphicsRootDescriptorTable(root_parameter_index,
+                                                    base_descriptor);
+   }
+
+   void set_graphics_root_descriptor_table(const uint32 root_parameter_index,
+                                           const descriptor_range& range)
+   {
+      _command_list->SetGraphicsRootDescriptorTable(root_parameter_index,
+                                                    range[0].gpu);
+   }
+
+   void set_graphics_root_32bit_constant(const uint32 root_parameter_index,
+                                         const uint32 constant,
+                                         const uint32 dest_offset_in_32bit_values)
+   {
+      _command_list->SetGraphicsRoot32BitConstant(root_parameter_index, constant,
                                                   dest_offset_in_32bit_values);
    }
 
@@ -244,13 +358,6 @@ public:
                                                    dest_offset_in_32bit_values);
    }
 
-   void set_compute_root_constant_buffer_view(const uint32 root_parameter_index,
-                                              const gpu_virtual_address buffer_location)
-   {
-      _command_list->SetComputeRootConstantBufferView(root_parameter_index,
-                                                      buffer_location);
-   }
-
    void set_graphics_root_constant_buffer_view(const uint32 root_parameter_index,
                                                const gpu_virtual_address buffer_location)
    {
@@ -258,24 +365,10 @@ public:
                                                        buffer_location);
    }
 
-   void set_compute_root_shader_resource_view(const uint32 root_parameter_index,
-                                              const gpu_virtual_address buffer_location)
-   {
-      _command_list->SetComputeRootShaderResourceView(root_parameter_index,
-                                                      buffer_location);
-   }
-
    void set_graphics_root_shader_resource_view(const uint32 root_parameter_index,
                                                const gpu_virtual_address buffer_location)
    {
       _command_list->SetGraphicsRootShaderResourceView(root_parameter_index,
-                                                       buffer_location);
-   }
-
-   void set_compute_root_unordered_access_view(const uint32 root_parameter_index,
-                                               const gpu_virtual_address buffer_location)
-   {
-      _command_list->SetComputeRootUnorderedAccessView(root_parameter_index,
                                                        buffer_location);
    }
 
@@ -287,19 +380,11 @@ public:
    }
 
    template<typename Type>
-   void set_compute_root_constant_buffer(const uint32 root_parameter_index,
-                                         const Type& constant_buffer)
-   {
-      set_root_constant_buffer<Type, true>(root_parameter_index, constant_buffer);
-   }
-
-   template<typename Type>
    void set_graphics_root_constant_buffer(const uint32 root_parameter_index,
                                           const Type& constant_buffer)
    {
       set_root_constant_buffer<Type, false>(root_parameter_index, constant_buffer);
    }
-
    void ia_set_primitive_topology(const D3D12_PRIMITIVE_TOPOLOGY primitive_topology)
    {
       _command_list->IASetPrimitiveTopology(primitive_topology);
@@ -404,71 +489,6 @@ public:
                                            static_cast<UINT>(rects.size()),
                                            rects.data());
    }
-
-   void clear_unordered_access_view_uint(
-      const D3D12_GPU_DESCRIPTOR_HANDLE view_gpu_handle_in_current_heap,
-      const D3D12_CPU_DESCRIPTOR_HANDLE view_cpu_handle,
-      ID3D12Resource& resource, const std::span<const uint32, 4> values,
-      const std::span<const D3D12_RECT> rects = {})
-   {
-      _command_list->ClearUnorderedAccessViewUint(view_gpu_handle_in_current_heap,
-                                                  view_cpu_handle, &resource,
-                                                  values.data(),
-                                                  static_cast<UINT>(rects.size()),
-                                                  rects.data());
-   }
-
-   void clear_unordered_access_view_float(
-      const D3D12_GPU_DESCRIPTOR_HANDLE view_gpu_handle_in_current_heap,
-      const D3D12_CPU_DESCRIPTOR_HANDLE view_cpu_handle, ID3D12Resource& resource,
-      const float4& values, const std::span<const D3D12_RECT> rects = {})
-   {
-      _command_list->ClearUnorderedAccessViewFloat(view_gpu_handle_in_current_heap,
-                                                   view_cpu_handle, &resource,
-                                                   &values[0],
-                                                   static_cast<UINT>(rects.size()),
-                                                   rects.data());
-   }
-
-   void discard_resource(ID3D12Resource& resource,
-                         const std::optional<D3D12_DISCARD_REGION> discard_region = std::nullopt)
-   {
-      _command_list->DiscardResource(&resource, discard_region
-                                                   ? &discard_region.value()
-                                                   : nullptr);
-   }
-
-   auto get_underlying() const noexcept -> ID3D12GraphicsCommandList5*
-   {
-      return _command_list.get();
-   }
-
-private:
-   template<typename Type, bool compute>
-   void set_root_constant_buffer(const uint32 root_parameter_index,
-                                 const Type& constant_buffer)
-   {
-      static_assert(std::is_trivially_copyable_v<Type>,
-                    "Constant buffer type should be trivially copyable.");
-
-      auto allocation = _dynamic_buffer_allocator->allocate(sizeof(Type));
-
-      std::memcpy(allocation.cpu_address, &constant_buffer, sizeof(Type));
-
-      if constexpr (compute) {
-         _command_list->SetComputeRootConstantBufferView(root_parameter_index,
-                                                         allocation.gpu_address);
-      }
-      else {
-         _command_list->SetGraphicsRootConstantBufferView(root_parameter_index,
-                                                          allocation.gpu_address);
-      }
-   }
-
-   utility::com_ptr<ID3D12GraphicsCommandList5> _command_list;
-   dynamic_buffer_allocator* _dynamic_buffer_allocator = nullptr;
-
-   boost::container::small_vector<D3D12_RESOURCE_BARRIER, 64> _deferred_barriers;
 };
 
 }

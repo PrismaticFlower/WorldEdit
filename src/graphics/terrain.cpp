@@ -77,7 +77,8 @@ terrain::terrain(gpu::device& device, texture_manager& texture_manager)
                                  D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
 }
 
-void terrain::init(const world::terrain& terrain, gpu::command_list& command_list,
+void terrain::init(const world::terrain& terrain,
+                   gpu::graphics_command_list& command_list,
                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    _terrain_length = terrain.length;
@@ -96,7 +97,7 @@ void terrain::init(const world::terrain& terrain, gpu::command_list& command_lis
 void terrain::draw(const frustrum& view_frustrum,
                    gpu::descriptor_range camera_constant_buffer_view,
                    gpu::descriptor_range light_descriptors,
-                   gpu::command_list& command_list,
+                   gpu::graphics_command_list& command_list,
                    root_signature_library& root_signatures, pipeline_library& pipelines,
                    gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
@@ -158,7 +159,7 @@ void terrain::process_updated_texture(updated_texture updated)
 }
 
 void terrain::init_gpu_resources(const world::terrain& terrain,
-                                 gpu::command_list& command_list,
+                                 gpu::graphics_command_list& command_list,
                                  gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    init_textures(terrain);
@@ -231,7 +232,7 @@ void terrain::init_gpu_resources(const world::terrain& terrain,
 }
 
 void terrain::init_gpu_height_map(const world::terrain& terrain,
-                                  gpu::command_list& command_list)
+                                  gpu::graphics_command_list& command_list)
 {
    _height_map =
       _gpu_device->create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
@@ -287,7 +288,7 @@ void terrain::init_gpu_height_map(const world::terrain& terrain,
 }
 
 void terrain::init_gpu_texture_weight_map(const world::terrain& terrain,
-                                          gpu::command_list& command_list)
+                                          gpu::graphics_command_list& command_list)
 {
    _texture_weight_maps =
       _gpu_device->create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
@@ -350,9 +351,9 @@ void terrain::init_gpu_texture_weight_map(const world::terrain& terrain,
                                  D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 }
 
-void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
-                                                gpu::command_list& command_list,
-                                                gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
+void terrain::init_gpu_terrain_constants_buffer(
+   const world::terrain& terrain, gpu::graphics_command_list& command_list,
+   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    using namespace ranges::views;
 

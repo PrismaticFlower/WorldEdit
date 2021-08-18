@@ -666,5 +666,8 @@
     <ClCompile Include="src\graphics\pipeline_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\gpu\dynamic_buffer_allocator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
