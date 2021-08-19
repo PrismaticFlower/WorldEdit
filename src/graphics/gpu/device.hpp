@@ -4,6 +4,7 @@
 #include "buffer.hpp"
 #include "command_allocator.hpp"
 #include "command_list.hpp"
+#include "command_queue.hpp"
 #include "common.hpp"
 #include "d3d12_mem_alloc.hpp"
 #include "descriptor_allocation.hpp"
@@ -228,7 +229,7 @@ public:
    UINT64 completed_fence_value = 0;
    UINT64 frame_index = 0;
    wil::unique_event fence_event{CreateEventW(nullptr, false, false, nullptr)};
-   utility::com_ptr<ID3D12CommandQueue> command_queue;
+   command_queue command_queue;
 
    command_allocator_factory command_allocator_factory{device_d3d};
 

@@ -203,6 +203,7 @@
     <ClInclude Include="src\graphics\gpu\buffer.hpp" />
     <ClInclude Include="src\graphics\gpu\command_allocator.hpp" />
     <ClInclude Include="src\graphics\gpu\command_list.hpp" />
+    <ClInclude Include="src\graphics\gpu\command_queue.hpp" />
     <ClInclude Include="src\graphics\gpu\common.hpp" />
     <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp" />
     <ClInclude Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.h" />

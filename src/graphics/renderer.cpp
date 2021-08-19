@@ -106,7 +106,7 @@ void renderer::draw_frame(
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
 
-   _device.copy_manager.enqueue_fence_wait_if_needed(*_device.command_queue);
+   _device.copy_manager.enqueue_fence_wait_if_needed(_device.command_queue);
 
    update_textures();
 
@@ -177,9 +177,7 @@ void renderer::draw_frame(
 
    command_list.close();
 
-   ID3D12CommandList* exec_command_list = command_list.get_underlying();
-
-   _device.command_queue->ExecuteCommandLists(1, &exec_command_list);
+   _device.command_queue.execute_command_lists(command_list);
 
    swap_chain.present();
 

@@ -131,13 +131,17 @@ device::device(const HWND window)
 
    fence_event = wil::unique_event{CreateEventW(nullptr, false, false, nullptr)};
 
+   utility::com_ptr<ID3D12CommandQueue> d3d_command_queue;
+
    throw_if_failed(
       device_d3d->CreateCommandQueue(&queue_desc,
-                                     IID_PPV_ARGS(command_queue.clear_and_assign())));
+                                     IID_PPV_ARGS(d3d_command_queue.clear_and_assign())));
 
-   set_debug_name(*command_queue, "Renderer Queue");
+   set_debug_name(*d3d_command_queue, "Renderer Queue");
 
-   swap_chain = {window, *factory, *device_d3d, *command_queue, descriptor_heap_rtv};
+   command_queue = {d3d_command_queue};
+
+   swap_chain = {window, *factory, *device_d3d, *d3d_command_queue, descriptor_heap_rtv};
 
    if (utility::com_ptr<ID3D12InfoQueue> info_queue;
        SUCCEEDED(device_d3d->QueryInterface(info_queue.clear_and_assign()))) {
@@ -155,7 +159,7 @@ device::~device()
 void device::wait_for_idle()
 {
    const UINT64 wait_value = fence_value++;
-   throw_if_failed(command_queue->Signal(fence.get(), wait_value));
+   command_queue.signal(*fence, wait_value);
    completed_fence_value = fence->GetCompletedValue();
 
    if (completed_fence_value < wait_value) {
@@ -170,7 +174,7 @@ void device::end_frame()
    copy_manager.update_completed();
 
    const UINT64 wait_value = previous_frame_fence_value;
-   throw_if_failed(command_queue->Signal(fence.get(), wait_value));
+   command_queue.signal(*fence, wait_value);
    previous_frame_fence_value = fence_value++;
    frame_index = fence_value % render_latency;
    completed_fence_value = fence->GetCompletedValue();

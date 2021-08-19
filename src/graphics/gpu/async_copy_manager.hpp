@@ -1,6 +1,7 @@
 #pragma once
 
 #include "command_list.hpp"
+#include "command_queue.hpp"
 #include "d3d12_mem_alloc.hpp"
 #include "hresult_error.hpp"
 #include "set_debug_name.hpp"
@@ -146,10 +147,10 @@ public:
       return *_fence;
    }
 
-   void enqueue_fence_wait_if_needed(ID3D12CommandQueue& queue) noexcept
+   void enqueue_fence_wait_if_needed(command_queue& queue) noexcept
    {
       if (_queued_copy.exchange(false, std::memory_order_relaxed)) {
-         queue.Wait(_fence.get(), _fence_value.load(std::memory_order_relaxed));
+         queue.wait(*_fence, _fence_value.load(std::memory_order_relaxed));
       }
    }
 
