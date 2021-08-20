@@ -665,7 +665,7 @@ void renderer::build_world_mesh_list(
    std::byte* const constants_upload_data = static_cast<std::byte*>(mapped_ptr);
    std::size_t constants_data_size = 0;
 
-   for (std::size_t i = 0; i < world.objects.size(); ++i) {
+   for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
       const auto& object = world.objects[i];
       const auto& model =
          _model_manager[world_classes.at(object.class_name)->model_name];
