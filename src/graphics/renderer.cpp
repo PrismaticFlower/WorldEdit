@@ -99,10 +99,18 @@ renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries
                                        _camera_constant_buffer_view[0]);
 
    // create object constants upload buffers
-   for (auto& buffer : _object_constants_upload_buffers) {
+   for (auto [buffer, cpu_ptr] :
+        ranges::views::zip(_object_constants_upload_buffers,
+                           _object_constants_upload_cpu_ptrs)) {
       buffer = _device.create_buffer({.size = objects_constants_buffer_size},
                                      D3D12_HEAP_TYPE_UPLOAD,
                                      D3D12_RESOURCE_STATE_GENERIC_READ);
+
+      const D3D12_RANGE read_range{0, 0};
+      void* mapped_ptr = nullptr;
+      buffer.view_resource()->Map(0, &read_range, &mapped_ptr);
+
+      cpu_ptr = static_cast<std::byte*>(mapped_ptr);
    }
 }
 
@@ -656,13 +664,10 @@ void renderer::build_world_mesh_list(
 
    auto& upload_buffer = _object_constants_upload_buffers[_device.frame_index];
 
-   const D3D12_RANGE read_range{0, 0};
-   void* mapped_ptr = nullptr;
-   upload_buffer.view_resource()->Map(0, &read_range, &mapped_ptr);
-
    const gpu::virtual_address constants_upload_gpu_address =
       _object_constants_buffer.gpu_virtual_address();
-   std::byte* const constants_upload_data = static_cast<std::byte*>(mapped_ptr);
+   std::byte* const constants_upload_data =
+      _object_constants_upload_cpu_ptrs[_device.frame_index];
    std::size_t constants_data_size = 0;
 
    for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
@@ -701,9 +706,6 @@ void renderer::build_world_mesh_list(
                        .start_vertex = mesh.start_vertex});
       }
    }
-
-   const D3D12_RANGE write_range{0, constants_data_size};
-   upload_buffer.view_resource()->Unmap(0, &write_range);
 
    command_list.copy_buffer_region(*_object_constants_buffer.view_resource(), 0,
                                    *upload_buffer.view_resource(), 0,

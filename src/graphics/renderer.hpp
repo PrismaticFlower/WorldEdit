@@ -110,6 +110,7 @@ private:
       max_drawn_objects * sizeof(world_mesh_constants);
 
    std::array<gpu::buffer, gpu::render_latency> _object_constants_upload_buffers;
+   std::array<std::byte*, gpu::render_latency> _object_constants_upload_cpu_ptrs;
    gpu::buffer _object_constants_buffer =
       _device.create_buffer({.size = objects_constants_buffer_size},
                             D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
