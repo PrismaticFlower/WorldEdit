@@ -64,7 +64,7 @@ private:
       gpu::graphics_command_list& command_list);
 
    void build_world_mesh_list(
-      const world::world& world,
+      gpu::graphics_command_list& command_list, const world::world& world,
       const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes);
 
    void build_object_render_list(const frustrum& view_frustrum);
@@ -105,9 +105,17 @@ private:
    light_clusters _light_clusters{_device};
    terrain _terrain{_device, _texture_manager};
 
+   constexpr static std::size_t max_drawn_objects = 2048;
+   constexpr static std::size_t objects_constants_buffer_size =
+      max_drawn_objects * sizeof(world_mesh_constants);
+
+   std::array<gpu::buffer, gpu::render_latency> _object_constants_upload_buffers;
+   gpu::buffer _object_constants_buffer =
+      _device.create_buffer({.size = objects_constants_buffer_size},
+                            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+
    world_mesh_list _world_mesh_list;
    std::vector<render_list_item> _opaque_object_render_list;
    std::vector<render_list_item> _transparent_object_render_list;
 };
-
 }

@@ -97,6 +97,13 @@ renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries
                                            _camera_constant_buffer.gpu_virtual_address(),
                                         .size = _camera_constant_buffer.size()},
                                        _camera_constant_buffer_view[0]);
+
+   // create object constants upload buffers
+   for (auto& buffer : _object_constants_upload_buffers) {
+      buffer = _device.create_buffer({.size = objects_constants_buffer_size},
+                                     D3D12_HEAP_TYPE_UPLOAD,
+                                     D3D12_RESOURCE_STATE_GENERIC_READ);
+   }
 }
 
 void renderer::draw_frame(
@@ -111,9 +118,6 @@ void renderer::draw_frame(
    update_textures();
 
    const frustrum view_frustrum{camera};
-
-   build_world_mesh_list(world, world_classes);
-   build_object_render_list(view_frustrum);
 
    gpu::command_allocator_scoped command_allocator{_device.command_allocator_factory,
                                                    D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -133,6 +137,9 @@ void renderer::draw_frame(
    if (std::exchange(_terrain_dirty, false)) {
       _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
    }
+
+   build_world_mesh_list(command_list, world, world_classes);
+   build_object_render_list(view_frustrum);
 
    update_camera_constant_buffer(camera, command_list);
 
@@ -641,32 +648,43 @@ void renderer::draw_world_meta_objects(
 }
 
 void renderer::build_world_mesh_list(
-   const world::world& world,
+   gpu::graphics_command_list& command_list, const world::world& world,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
 {
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
 
-   for (auto& object : world.objects) {
+   auto& upload_buffer = _object_constants_upload_buffers[_device.frame_index];
+
+   const D3D12_RANGE read_range{0, 0};
+   void* mapped_ptr = nullptr;
+   upload_buffer.view_resource()->Map(0, &read_range, &mapped_ptr);
+
+   const gpu::virtual_address constants_upload_gpu_address =
+      _object_constants_buffer.gpu_virtual_address();
+   std::byte* const constants_upload_data = static_cast<std::byte*>(mapped_ptr);
+   std::size_t constants_data_size = 0;
+
+   for (std::size_t i = 0; i < world.objects.size(); ++i) {
+      const auto& object = world.objects[i];
       const auto& model =
          _model_manager[world_classes.at(object.class_name)->model_name];
 
       const auto object_bbox = object.rotation * model.bbox + object.position;
 
-      const gpu::virtual_address object_constants_address = [&] {
-         auto allocation =
-            _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+      const std::size_t object_constants_offset = constants_data_size;
+      const gpu::virtual_address object_constants_address =
+         constants_upload_gpu_address + object_constants_offset;
 
-         world_mesh_constants constants;
+      world_mesh_constants constants;
 
-         constants.object_to_world = static_cast<float4x4>(object.rotation);
-         constants.object_to_world[3] = float4{object.position, 1.0f};
+      constants.object_to_world = static_cast<float4x4>(object.rotation);
+      constants.object_to_world[3] = float4{object.position, 1.0f};
 
-         std::memcpy(allocation.cpu_address, &constants.object_to_world,
-                     sizeof(world_mesh_constants));
+      std::memcpy(constants_upload_data + object_constants_offset,
+                  &constants.object_to_world, sizeof(world_mesh_constants));
 
-         return allocation.gpu_address;
-      }();
+      constants_data_size += sizeof(world_mesh_constants);
 
       for (const auto& mesh : model.parts) {
          ID3D12PipelineState* const pipeline =
@@ -683,6 +701,19 @@ void renderer::build_world_mesh_list(
                        .start_vertex = mesh.start_vertex});
       }
    }
+
+   const D3D12_RANGE write_range{0, constants_data_size};
+   upload_buffer.view_resource()->Unmap(0, &write_range);
+
+   command_list.copy_buffer_region(*_object_constants_buffer.view_resource(), 0,
+                                   *upload_buffer.view_resource(), 0,
+                                   constants_data_size);
+   command_list.deferred_resource_barrier(
+      gpu::transition_barrier(*_object_constants_buffer.view_resource(),
+                              D3D12_RESOURCE_STATE_COPY_DEST,
+                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER |
+                                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE |
+                                 D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE));
 }
 
 void renderer::build_object_render_list(const frustrum& view_frustrum)

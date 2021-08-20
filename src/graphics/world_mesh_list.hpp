@@ -11,11 +11,11 @@
 
 namespace we::graphics {
 
-struct world_mesh_constants {
+struct alignas(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT) world_mesh_constants {
    float4x4 object_to_world;
 };
 
-static_assert(sizeof(world_mesh_constants) == 64);
+static_assert(sizeof(world_mesh_constants) == 256);
 
 struct world_mesh {
    D3D12_INDEX_BUFFER_VIEW index_buffer_view;
