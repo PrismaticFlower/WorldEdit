@@ -233,7 +233,7 @@ const gpu::root_signature_desc
                 .flags = D3D12_ROOT_SIGNATURE_FLAG_NONE};
 
 const gpu::root_signature_desc meta_mesh_desc{
-   .name = "meta_object_root_signature",
+   .name = "meta_mesh_root_signature",
 
    .parameters =
       {
@@ -301,7 +301,7 @@ const gpu::root_signature_desc meta_line_desc{
    .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
 const gpu::root_signature_desc mesh_shadow_desc{
-   .name = "shadow_mesh_root_signature",
+   .name = "mesh_shadow_root_signature",
 
    .parameters =
       {
