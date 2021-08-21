@@ -43,6 +43,9 @@ struct pipeline_library {
 
    utility::com_ptr<ID3D12PipelineState> shadow_mesh;
 
+   utility::com_ptr<ID3D12PipelineState> depth_prepass_mesh;
+   utility::com_ptr<ID3D12PipelineState> depth_prepass_alpha_cutout_mesh;
+
    utility::com_ptr<ID3D12PipelineState> basic_object_mesh;
    utility::com_ptr<ID3D12PipelineState> basic_mesh_lighting;
 

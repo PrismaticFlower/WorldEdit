@@ -277,7 +277,7 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
 
       pipelines[i] = create_graphics_pipeline(
          device, {.pRootSignature = root_signature_library.object_mesh.get(),
-                  .VS = shader_library["basic_object_meshVS"sv],
+                  .VS = shader_library["meshVS"sv],
                   .PS = shader_library[ps_name],
                   .StreamOutput = stream_output_disabled,
                   .BlendState = blend_state,
@@ -304,7 +304,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 {
    shadow_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.depth_only_mesh.get(),
-               .VS = shader_library["depth_only_meshVS"sv],
+               .VS = shader_library["mesh_shadowVS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -320,8 +320,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    basic_object_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library["basic_object_meshVS"sv],
-               .PS = shader_library["basic_object_meshPS"sv],
+               .VS = shader_library["meshVS"sv],
+               .PS = shader_library["mesh_basicPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -337,8 +337,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    basic_mesh_lighting = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library["basic_object_meshVS"sv],
-               .PS = shader_library["basic_mesh_lightingPS"sv],
+               .VS = shader_library["meshVS"sv],
+               .PS = shader_library["mesh_basic_lightingPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -402,8 +402,8 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    meta_object_transparent_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
-               .VS = shader_library["meta_object_meshVS"sv],
-               .PS = shader_library["meta_object_meshPS"sv],
+               .VS = shader_library["meta_meshVS"sv],
+               .PS = shader_library["meta_meshPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_additive,
                .SampleMask = sample_mask_default,
@@ -419,9 +419,9 @@ pipeline_library::pipeline_library(ID3D12Device& device,
 
    meta_object_mesh_outlined = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
-               .VS = shader_library["meta_object_meshVS"sv],
-               .PS = shader_library["meta_object_mesh_outlinedPS"sv],
-               .GS = shader_library["meta_object_mesh_outlinedGS"sv],
+               .VS = shader_library["meta_meshVS"sv],
+               .PS = shader_library["meta_mesh_outlinedPS"sv],
+               .GS = shader_library["meta_mesh_outlinedGS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
@@ -438,7 +438,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
    meta_line = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_line.get(),
                .VS = shader_library["meta_lineVS"sv],
-               .PS = shader_library["meta_object_meshPS"sv],
+               .PS = shader_library["meta_meshPS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_alpha,
                .SampleMask = sample_mask_default,
@@ -452,7 +452,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
-   normal_mesh = create_material_pipelines("normal{}_meshPS"sv, device,
+   normal_mesh = create_material_pipelines("mesh_normal{}PS"sv, device,
                                            shader_library, root_signature_library);
 }
 

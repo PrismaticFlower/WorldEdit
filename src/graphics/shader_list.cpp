@@ -42,17 +42,17 @@ auto material_shader(const std::string_view name, const std::string_view file_na
 }
 
 std::initializer_list<shader_description> shader_list =
-   {shader("depth_only_meshVS"),
+   {shader("mesh_shadowVS"),
 
-    shader("basic_object_meshVS"),
-    shader("basic_object_meshPS"),
-    shader("basic_mesh_lightingPS"),
+    shader("meshVS"),
+    shader("mesh_basicPS"),
+    shader("mesh_basic_lightingPS"),
 
-    material_shader("normal_meshPS", "normal_meshPS",
+    material_shader("mesh_normalPS", "mesh_normalPS",
                     {{"MATERIAL_ALPHA_CUTOUT", 0}, {"MATERIAL_TRANSPARENT", 0}}),
-    material_shader("normal_cutout_meshPS", "normal_meshPS",
+    material_shader("mesh_normal_cutoutPS", "mesh_normalPS",
                     {{"MATERIAL_ALPHA_CUTOUT", 1}, {"MATERIAL_TRANSPARENT", 0}}),
-    material_shader("normal_transparent_meshPS", "normal_meshPS",
+    material_shader("mesh_normal_transparentPS", "mesh_normalPS",
                     {{"MATERIAL_ALPHA_CUTOUT", 0}, {"MATERIAL_TRANSPARENT", 1}}),
 
     shader("terrain_patchVS"),
@@ -62,9 +62,9 @@ std::initializer_list<shader_description> shader_list =
 
     shader("meta_lineVS"),
 
-    shader("meta_object_meshVS"),
-    shader("meta_object_meshPS"),
+    shader("meta_meshVS"),
+    shader("meta_meshPS"),
 
-    shader("meta_object_mesh_outlinedGS"),
-    shader("meta_object_mesh_outlinedPS")};
+    shader("meta_mesh_outlinedGS"),
+    shader("meta_mesh_outlinedPS")};
 }
