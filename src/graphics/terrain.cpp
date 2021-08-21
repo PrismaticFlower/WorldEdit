@@ -125,11 +125,16 @@ void terrain::draw(const frustrum& view_frustrum,
    command_list.set_pipeline_state(*pipelines.terrain_normal);
 
    command_list.set_graphics_root_signature(*root_signatures.terrain);
-   command_list.set_graphics_root_descriptor_table(0, camera_constant_buffer_view);
-   command_list.set_graphics_root_descriptor_table(1, light_descriptors);
-   command_list.set_graphics_root_descriptor_table(2, _resource_views.descriptors());
-   command_list.set_graphics_root_shader_resource_view(3, patches_srv_allocation.gpu_address);
-   command_list.set_graphics_root_descriptor_table(4, _texture_resource_views.descriptors());
+   command_list.set_graphics_root_descriptor_table(rs::terrain::camera_descriptor_table,
+                                                   camera_constant_buffer_view);
+   command_list.set_graphics_root_descriptor_table(rs::terrain::lights_descriptor_table,
+                                                   light_descriptors);
+   command_list.set_graphics_root_descriptor_table(rs::terrain::terrain_descriptor_table,
+                                                   _resource_views.descriptors());
+   command_list.set_graphics_root_shader_resource_view(rs::terrain::terrain_patch_data_srv,
+                                                       patches_srv_allocation.gpu_address);
+   command_list.set_graphics_root_descriptor_table(rs::terrain::material_descriptor_table,
+                                                   _texture_resource_views.descriptors());
 
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
    command_list.ia_set_index_buffer(

@@ -558,7 +558,8 @@ void light_clusters::TEMP_render_shadow_maps(
                                             D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0x0);
 
       command_list.set_graphics_root_signature(*root_signatures.mesh_shadow);
-      command_list.set_graphics_root_constant_buffer(1, shadow_camera.view_projection_matrix());
+      command_list.set_graphics_root_constant_buffer(rs::mesh_shadow::camera_cbv,
+                                                     shadow_camera.view_projection_matrix());
       command_list.set_pipeline_state(*pipelines.mesh_shadow);
 
       command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -578,7 +579,8 @@ void light_clusters::TEMP_render_shadow_maps(
             continue;
          }
 
-         command_list.set_graphics_root_constant_buffer_view(0, meshes.gpu_constants[i]);
+         command_list.set_graphics_root_constant_buffer_view(rs::mesh_shadow::object_cbv,
+                                                             meshes.gpu_constants[i]);
 
          command_list.ia_set_index_buffer(meshes.mesh[i].index_buffer_view);
          command_list.ia_set_vertex_buffers(0, meshes.mesh[i].vertex_buffer_views[0]);

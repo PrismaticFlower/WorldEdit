@@ -254,8 +254,10 @@ void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
                                       gpu::graphics_command_list& command_list)
 {
    command_list.set_graphics_root_signature(*_root_signatures.mesh);
-   command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
-   command_list.set_graphics_root_descriptor_table(3, _light_clusters.light_descriptors());
+   command_list.set_graphics_root_descriptor_table(rs::mesh::camera_descriptor_table,
+                                                   _camera_constant_buffer_view);
+   command_list.set_graphics_root_descriptor_table(rs::mesh::lights_descriptor_table,
+                                                   _light_clusters.light_descriptors());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    ID3D12PipelineState* pipeline_state = nullptr;
@@ -265,8 +267,10 @@ void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
          command_list.set_pipeline_state(*object.pipeline);
       }
 
-      command_list.set_graphics_root_constant_buffer_view(0, object.object_constants_address);
-      command_list.set_graphics_root_descriptor_table(1, object.material_descriptor_range);
+      command_list.set_graphics_root_constant_buffer_view(rs::mesh::object_cbv,
+                                                          object.object_constants_address);
+      command_list.set_graphics_root_descriptor_table(rs::mesh::material_descriptor_table,
+                                                      object.material_descriptor_range);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
       command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
@@ -282,7 +286,8 @@ void renderer::draw_world_meta_objects(
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
    command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
-   command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
+   command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                   _camera_constant_buffer_view);
 
    static bool draw_paths = false;
 
@@ -314,7 +319,8 @@ void renderer::draw_world_meta_objects(
                                             static_cast<float>(
                                                _device.swap_chain.height())};
 
-            command_list.set_graphics_root_constant_buffer(1, temp_constants);
+            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                           temp_constants);
          }
 
          command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
@@ -331,7 +337,8 @@ void renderer::draw_world_meta_objects(
 
                   transform[3] = {node.position, 1.0f};
 
-                  command_list.set_graphics_root_constant_buffer(0, transform);
+                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                                 transform);
                }
 
                const geometric_shape shape = _geometric_shapes.octahedron();
@@ -403,7 +410,8 @@ void renderer::draw_world_meta_objects(
    command_list.set_pipeline_state(*_pipelines.meta_mesh);
    command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
 
-   command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
+   command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                   _camera_constant_buffer_view);
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    // Draws a region, requires camera CBV, colour CBV, IA topplogy, pipeline state and root signature to be set.
@@ -440,7 +448,8 @@ void renderer::draw_world_meta_objects(
 
          transform[3] = {region.position, 1.0f};
 
-         command_list.set_graphics_root_constant_buffer(0, transform);
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                        transform);
       }
 
       const geometric_shape shape = [&] {
@@ -469,7 +478,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{0.25f, 0.4f, 1.0f, 0.3f};
 
-         command_list.set_graphics_root_constant_buffer(1, color);
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv, color);
       }
 
       for (auto& region : world.regions) {
@@ -486,7 +495,7 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{1.0f, 0.1f, 0.5f, 0.3f};
 
-         command_list.set_graphics_root_constant_buffer(1, color);
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv, color);
       }
 
       // Set Barriers IA State
@@ -517,7 +526,8 @@ void renderer::draw_world_meta_objects(
 
             transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
-            command_list.set_graphics_root_constant_buffer(0, transform);
+            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                           transform);
          }
 
          command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
@@ -534,14 +544,15 @@ void renderer::draw_world_meta_objects(
       {
          const float4 color{0.0f, 1.0f, 0.0f, 0.3f};
 
-         command_list.set_graphics_root_constant_buffer(1, color);
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv, color);
       }
 
       // Set Barriers IA State
       {
          const geometric_shape shape = _geometric_shapes.cube();
 
-         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+         command_list.ia_set_vertex_buffers(rs::meta_mesh::object_cbv,
+                                            shape.position_vertex_buffer_view);
          command_list.ia_set_index_buffer(shape.index_buffer_view);
       }
 
@@ -561,7 +572,8 @@ void renderer::draw_world_meta_objects(
 
             transform[3] = {bbox_centre, 1.0f};
 
-            command_list.set_graphics_root_constant_buffer(0, transform);
+            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                           transform);
          }
 
          command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
@@ -581,7 +593,8 @@ void renderer::draw_world_meta_objects(
                                                ? 0.025f
                                                : 0.05f};
 
-            command_list.set_graphics_root_constant_buffer(1, color);
+            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                           color);
          }
 
          switch (light.light_type) {
@@ -606,7 +619,8 @@ void renderer::draw_world_meta_objects(
 
                transform[3] = {light.position, 1.0f};
 
-               command_list.set_graphics_root_constant_buffer(0, transform);
+               command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                              transform);
             }
 
             auto shape = _geometric_shapes.icosphere();
@@ -633,7 +647,8 @@ void renderer::draw_world_meta_objects(
 
                transform[3] += float4{light.position, 0.0f};
 
-               command_list.set_graphics_root_constant_buffer(0, transform);
+               command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                              transform);
             };
 
             bind_cone_transform(light.outer_cone_angle);
