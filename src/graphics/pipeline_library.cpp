@@ -302,7 +302,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                                    const shader_library& shader_library,
                                    const root_signature_library& root_signature_library)
 {
-   shadow_mesh = create_graphics_pipeline(
+   mesh_shadow = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.depth_only_mesh.get(),
                .VS = shader_library["mesh_shadowVS"sv],
                .StreamOutput = stream_output_disabled,
@@ -351,6 +351,9 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
+
+   mesh_normal = create_material_pipelines("mesh_normal{}PS"sv, device,
+                                           shader_library, root_signature_library);
 
    terrain_basic = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.terrain.get(),
@@ -451,9 +454,6 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
-
-   mesh_normal = create_material_pipelines("mesh_normal{}PS"sv, device,
-                                           shader_library, root_signature_library);
 }
 
 }

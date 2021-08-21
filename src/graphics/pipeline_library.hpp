@@ -41,13 +41,10 @@ struct pipeline_library {
    pipeline_library(ID3D12Device& device, const shader_library& shader_library,
                     const root_signature_library& root_signature_library);
 
-   utility::com_ptr<ID3D12PipelineState> shadow_mesh;
-
-   utility::com_ptr<ID3D12PipelineState> depth_prepass_mesh;
-   utility::com_ptr<ID3D12PipelineState> depth_prepass_alpha_cutout_mesh;
-
+   utility::com_ptr<ID3D12PipelineState> mesh_shadow;
    utility::com_ptr<ID3D12PipelineState> mesh_basic;
    utility::com_ptr<ID3D12PipelineState> mesh_basic_lighting;
+   material_pipelines mesh_normal;
 
    utility::com_ptr<ID3D12PipelineState> terrain_basic;
    utility::com_ptr<ID3D12PipelineState> terrain_lighting;
@@ -56,8 +53,6 @@ struct pipeline_library {
    utility::com_ptr<ID3D12PipelineState> meta_mesh;
    utility::com_ptr<ID3D12PipelineState> meta_mesh_outlined;
    utility::com_ptr<ID3D12PipelineState> meta_line;
-
-   material_pipelines mesh_normal;
 };
 
 }
