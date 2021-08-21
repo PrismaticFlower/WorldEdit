@@ -12,8 +12,6 @@
 #include "device.hpp"
 #include "resource.hpp"
 #include "resource_view_set.hpp"
-#include "shader_library.hpp"
-#include "shader_list.hpp"
 #include "swap_chain.hpp"
 #include "texture.hpp"
 #include "utility/com_ptr.hpp"
@@ -247,8 +245,6 @@ public:
    async_copy_manager copy_manager{*device_d3d, *allocator};
 
    swap_chain swap_chain;
-
-   shader_library shaders{shader_list};
 
 private:
    auto create_resource(const D3D12_RESOURCE_DESC& desc, const D3D12_HEAP_TYPE heap_type,

@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <span>
 
-namespace we::graphics::gpu {
+namespace we::graphics {
 
 struct shader_cache_entry {
    utility::com_ptr<ID3DBlob> bytecode;

@@ -6,6 +6,7 @@
 
 #include <ranges>
 
+#include <boost/container/static_vector.hpp>
 #include <d3dx12.h>
 
 namespace we::graphics::gpu {

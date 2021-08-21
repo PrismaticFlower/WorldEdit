@@ -11,7 +11,7 @@
 
 #include <boost/container/static_vector.hpp>
 
-namespace we::graphics::gpu {
+namespace we::graphics {
 
 constexpr static auto max_shader_defines = 64;
 
@@ -84,8 +84,8 @@ private:
 namespace std {
 
 template<>
-struct hash<we::graphics::gpu::shader_description> {
-   auto operator()(const we::graphics::gpu::shader_description& entry) const noexcept
+struct hash<we::graphics::shader_description> {
+   auto operator()(const we::graphics::shader_description& entry) const noexcept
       -> std::size_t;
 };
 

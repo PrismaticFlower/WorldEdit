@@ -13,6 +13,8 @@
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
+#include "shader_library.hpp"
+#include "shader_list.hpp"
 #include "terrain.hpp"
 #include "texture_manager.hpp"
 #include "world/object_class.hpp"
@@ -96,8 +98,9 @@ private:
                                  .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
       D3D12_RESOURCE_STATE_DEPTH_WRITE};
 
+   shader_library _shaders{shader_list};
    root_signature_library _root_signatures{_device};
-   pipeline_library _pipelines{*_device.device_d3d, _device.shaders, _root_signatures};
+   pipeline_library _pipelines{*_device.device_d3d, _shaders, _root_signatures};
 
    texture_manager _texture_manager;
    model_manager _model_manager;

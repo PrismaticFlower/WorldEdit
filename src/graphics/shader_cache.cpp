@@ -10,7 +10,7 @@
 
 #include <d3dcompiler.h>
 
-namespace we::graphics::gpu {
+namespace we::graphics {
 
 namespace {
 

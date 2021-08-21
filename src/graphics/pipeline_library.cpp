@@ -1,8 +1,8 @@
 
 #include "pipeline_library.hpp"
-#include "gpu/shader_library.hpp"
 #include "hresult_error.hpp"
 #include "root_signature_library.hpp"
+#include "shader_library.hpp"
 
 #include <array>
 #include <stdexcept>
@@ -234,7 +234,7 @@ constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
     .NumElements = static_cast<UINT>(meta_mesh_input_layout_elements.size())};
 
 auto create_material_pipelines(const std::string_view name, ID3D12Device& device,
-                               const gpu::shader_library& shader_library,
+                               const shader_library& shader_library,
                                const root_signature_library& root_signature_library)
    -> material_pipelines
 {
@@ -299,7 +299,7 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
 }
 
 pipeline_library::pipeline_library(ID3D12Device& device,
-                                   const gpu::shader_library& shader_library,
+                                   const shader_library& shader_library,
                                    const root_signature_library& root_signature_library)
 {
    shadow_mesh = create_graphics_pipeline(

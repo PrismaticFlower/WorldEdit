@@ -297,9 +297,6 @@
     <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\shader_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\gpu\swap_chain.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -441,12 +438,6 @@
     <ClInclude Include="src\graphics\terrain.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\shader_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\shader_cache.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\utility\binary_writer.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -505,6 +496,15 @@
     <ClInclude Include="src\graphics\gpu\command_queue.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\shader_cache.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\shader_library.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\shader_list.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -535,9 +535,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\shader_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\swap_chain.cpp">
@@ -636,12 +633,6 @@
     <ClCompile Include="src\graphics\terrain.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\gpu\shader_list.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\shader_cache.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\assets\option_file.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -670,6 +661,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\dynamic_buffer_allocator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\shader_cache.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\shader_library.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\shader_list.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
