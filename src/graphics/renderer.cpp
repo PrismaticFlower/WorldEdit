@@ -253,7 +253,7 @@ void renderer::draw_world(const frustrum& view_frustrum,
 void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
                                       gpu::graphics_command_list& command_list)
 {
-   command_list.set_graphics_root_signature(*_root_signatures.object_mesh);
+   command_list.set_graphics_root_signature(*_root_signatures.mesh);
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
    command_list.set_graphics_root_descriptor_table(3, _light_clusters.light_descriptors());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -281,7 +281,7 @@ void renderer::draw_world_meta_objects(
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
-   command_list.set_graphics_root_signature(*_root_signatures.meta_object_mesh);
+   command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
 
    static bool draw_paths = false;
@@ -401,7 +401,7 @@ void renderer::draw_world_meta_objects(
    }
 
    command_list.set_pipeline_state(*_pipelines.meta_mesh);
-   command_list.set_graphics_root_signature(*_root_signatures.meta_object_mesh);
+   command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
 
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

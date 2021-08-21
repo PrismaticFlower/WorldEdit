@@ -276,7 +276,7 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
             : depth_stencil_enabled;
 
       pipelines[i] = create_graphics_pipeline(
-         device, {.pRootSignature = root_signature_library.object_mesh.get(),
+         device, {.pRootSignature = root_signature_library.mesh.get(),
                   .VS = shader_library["meshVS"sv],
                   .PS = shader_library[ps_name],
                   .StreamOutput = stream_output_disabled,
@@ -303,7 +303,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                                    const root_signature_library& root_signature_library)
 {
    mesh_shadow = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.depth_only_mesh.get(),
+      device, {.pRootSignature = root_signature_library.mesh_shadow.get(),
                .VS = shader_library["mesh_shadowVS"sv],
                .StreamOutput = stream_output_disabled,
                .BlendState = blend_disabled,
@@ -318,39 +318,41 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D32_FLOAT,
                .SampleDesc = {1, 0}});
 
-   mesh_basic = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library["meshVS"sv],
-               .PS = shader_library["mesh_basicPS"sv],
-               .StreamOutput = stream_output_disabled,
-               .BlendState = blend_disabled,
-               .SampleMask = sample_mask_default,
-               .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_enabled,
-               .InputLayout = mesh_input_layout,
-               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-               .NumRenderTargets = 1,
-               .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-               .SampleDesc = {1, 0}});
+   mesh_basic =
+      create_graphics_pipeline(device,
+                               {.pRootSignature = root_signature_library.mesh.get(),
+                                .VS = shader_library["meshVS"sv],
+                                .PS = shader_library["mesh_basicPS"sv],
+                                .StreamOutput = stream_output_disabled,
+                                .BlendState = blend_disabled,
+                                .SampleMask = sample_mask_default,
+                                .RasterizerState = rasterizer_cull_backfacing,
+                                .DepthStencilState = depth_stencil_enabled,
+                                .InputLayout = mesh_input_layout,
+                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+                                .NumRenderTargets = 1,
+                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                .SampleDesc = {1, 0}});
 
-   mesh_basic_lighting = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.object_mesh.get(),
-               .VS = shader_library["meshVS"sv],
-               .PS = shader_library["mesh_basic_lightingPS"sv],
-               .StreamOutput = stream_output_disabled,
-               .BlendState = blend_disabled,
-               .SampleMask = sample_mask_default,
-               .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_enabled,
-               .InputLayout = mesh_input_layout,
-               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-               .NumRenderTargets = 1,
-               .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-               .SampleDesc = {1, 0}});
+   mesh_basic_lighting =
+      create_graphics_pipeline(device,
+                               {.pRootSignature = root_signature_library.mesh.get(),
+                                .VS = shader_library["meshVS"sv],
+                                .PS = shader_library["mesh_basic_lightingPS"sv],
+                                .StreamOutput = stream_output_disabled,
+                                .BlendState = blend_disabled,
+                                .SampleMask = sample_mask_default,
+                                .RasterizerState = rasterizer_cull_backfacing,
+                                .DepthStencilState = depth_stencil_enabled,
+                                .InputLayout = mesh_input_layout,
+                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+                                .NumRenderTargets = 1,
+                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                .SampleDesc = {1, 0}});
 
    mesh_normal = create_material_pipelines("mesh_normal{}PS"sv, device,
                                            shader_library, root_signature_library);
@@ -404,7 +406,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .SampleDesc = {1, 0}});
 
    meta_mesh = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
+      device, {.pRootSignature = root_signature_library.meta_mesh.get(),
                .VS = shader_library["meta_meshVS"sv],
                .PS = shader_library["meta_meshPS"sv],
                .StreamOutput = stream_output_disabled,
@@ -421,7 +423,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .SampleDesc = {1, 0}});
 
    meta_mesh_outlined = create_graphics_pipeline(
-      device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
+      device, {.pRootSignature = root_signature_library.meta_mesh.get(),
                .VS = shader_library["meta_meshVS"sv],
                .PS = shader_library["meta_mesh_outlinedPS"sv],
                .GS = shader_library["meta_mesh_outlinedGS"sv],

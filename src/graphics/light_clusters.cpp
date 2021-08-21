@@ -557,7 +557,7 @@ void light_clusters::TEMP_render_shadow_maps(
       command_list.clear_depth_stencil_view(depth_stencil_view,
                                             D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0x0);
 
-      command_list.set_graphics_root_signature(*root_signatures.depth_only_mesh);
+      command_list.set_graphics_root_signature(*root_signatures.mesh_shadow);
       command_list.set_graphics_root_constant_buffer(1, shadow_camera.view_projection_matrix());
       command_list.set_pipeline_state(*pipelines.mesh_shadow);
 
