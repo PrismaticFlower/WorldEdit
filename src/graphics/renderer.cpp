@@ -317,7 +317,7 @@ void renderer::draw_world_meta_objects(
             command_list.set_graphics_root_constant_buffer(1, temp_constants);
          }
 
-         command_list.set_pipeline_state(*_pipelines.meta_object_mesh_outlined);
+         command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
 
          for (auto& path : world.paths) {
             for (auto& node : path.nodes) {
@@ -400,7 +400,7 @@ void renderer::draw_world_meta_objects(
       }
    }
 
-   command_list.set_pipeline_state(*_pipelines.meta_object_transparent_mesh);
+   command_list.set_pipeline_state(*_pipelines.meta_mesh);
    command_list.set_graphics_root_signature(*_root_signatures.meta_object_mesh);
 
    command_list.set_graphics_root_descriptor_table(2, _camera_constant_buffer_view);
@@ -693,7 +693,7 @@ void renderer::build_world_mesh_list(
 
       for (const auto& mesh : model.parts) {
          ID3D12PipelineState* const pipeline =
-            _pipelines.normal_mesh[mesh.material.flags].get();
+            _pipelines.mesh_normal[mesh.material.flags].get();
 
          _world_mesh_list.push_back(
             object_bbox, object_constants_address, object.position, pipeline,

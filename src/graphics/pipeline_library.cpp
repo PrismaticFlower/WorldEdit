@@ -318,7 +318,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D32_FLOAT,
                .SampleDesc = {1, 0}});
 
-   basic_object_mesh = create_graphics_pipeline(
+   mesh_basic = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
                .VS = shader_library["meshVS"sv],
                .PS = shader_library["mesh_basicPS"sv],
@@ -335,7 +335,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
-   basic_mesh_lighting = create_graphics_pipeline(
+   mesh_basic_lighting = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.object_mesh.get(),
                .VS = shader_library["meshVS"sv],
                .PS = shader_library["mesh_basic_lightingPS"sv],
@@ -400,7 +400,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
-   meta_object_transparent_mesh = create_graphics_pipeline(
+   meta_mesh = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
                .VS = shader_library["meta_meshVS"sv],
                .PS = shader_library["meta_meshPS"sv],
@@ -417,7 +417,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
-   meta_object_mesh_outlined = create_graphics_pipeline(
+   meta_mesh_outlined = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.meta_object_mesh.get(),
                .VS = shader_library["meta_meshVS"sv],
                .PS = shader_library["meta_mesh_outlinedPS"sv],
@@ -452,7 +452,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
-   normal_mesh = create_material_pipelines("mesh_normal{}PS"sv, device,
+   mesh_normal = create_material_pipelines("mesh_normal{}PS"sv, device,
                                            shader_library, root_signature_library);
 }
 
