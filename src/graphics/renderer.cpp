@@ -241,6 +241,7 @@ void renderer::update_camera_constant_buffer(const camera& camera,
 void renderer::draw_world(const frustrum& view_frustrum,
                           gpu::graphics_command_list& command_list)
 {
+   draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
    draw_world_render_list(_opaque_object_render_list, command_list);
 
    _terrain.draw(view_frustrum, _camera_constant_buffer_view,
@@ -270,6 +271,32 @@ void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
       command_list.set_graphics_root_constant_buffer_view(rs::mesh::object_cbv,
                                                           object.object_constants_address);
       command_list.set_graphics_root_descriptor_table(rs::mesh::material_descriptor_table,
+                                                      object.material_descriptor_range);
+      command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
+      command_list.ia_set_index_buffer(object.index_buffer_view);
+      command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
+                                          object.start_vertex, 0);
+   }
+}
+
+void renderer::draw_world_render_list_depth_prepass(
+   const std::vector<render_list_item>& list, gpu::graphics_command_list& command_list)
+{
+   command_list.set_graphics_root_signature(*_root_signatures.mesh_depth_prepass);
+   command_list.set_graphics_root_descriptor_table(rs::mesh_depth_prepass::camera_descriptor_table,
+                                                   _camera_constant_buffer_view);
+   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+   ID3D12PipelineState* pipeline_state = nullptr;
+
+   for (auto& object : list) {
+      if (pipeline_state != object.depth_prepass_pipeline) {
+         command_list.set_pipeline_state(*object.depth_prepass_pipeline);
+      }
+
+      command_list.set_graphics_root_constant_buffer_view(rs::mesh_depth_prepass::object_cbv,
+                                                          object.object_constants_address);
+      command_list.set_graphics_root_descriptor_table(rs::mesh_depth_prepass::material_descriptor_table,
                                                       object.material_descriptor_range);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
@@ -750,11 +777,30 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
                              ? _transparent_object_render_list
                              : _opaque_object_render_list;
 
+      ID3D12PipelineState* const depth_prepass_pipeline = [&]() {
+         if (are_flags_set(meshes.pipeline_flags[i],
+                           material_pipeline_flags::alpha_cutout |
+                              material_pipeline_flags::doublesided)) {
+            return _pipelines.mesh_depth_prepass_alpha_cutout_doublesided.get();
+         }
+         if (are_flags_set(meshes.pipeline_flags[i],
+                           material_pipeline_flags::alpha_cutout)) {
+            return _pipelines.mesh_depth_prepass_alpha_cutout.get();
+         }
+         if (are_flags_set(meshes.pipeline_flags[i],
+                           material_pipeline_flags::doublesided)) {
+            return _pipelines.mesh_depth_prepass_doublesided.get();
+         }
+
+         return _pipelines.mesh_depth_prepass.get();
+      }();
+
       render_list.push_back({
          .distance = glm::dot(view_frustrum.planes[frustrum_planes::near_],
                               float4{meshes.position[i], 1.0f}),
 
          .pipeline = meshes.pipeline[i],
+         .depth_prepass_pipeline = depth_prepass_pipeline,
 
          .index_buffer_view = meshes.mesh[i].index_buffer_view,
          .vertex_buffer_views = {meshes.mesh[i].vertex_buffer_views},

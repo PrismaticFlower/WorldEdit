@@ -170,7 +170,17 @@ constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_enabled =
     .FrontFace = stencilop_disabled,
     .BackFace = stencilop_disabled};
 
-constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_enabled =
+constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_equal =
+   {.DepthEnable = true,
+    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
+    .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
+    .StencilEnable = false,
+    .StencilReadMask = 0,
+    .StencilWriteMask = 0,
+    .FrontFace = stencilop_disabled,
+    .BackFace = stencilop_disabled};
+
+constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_less_equal =
    {.DepthEnable = true,
     .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
     .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
@@ -217,7 +227,7 @@ constexpr D3D12_INPUT_LAYOUT_DESC mesh_input_layout =
    {.pInputElementDescs = mesh_input_layout_elements.data(),
     .NumElements = static_cast<UINT>(mesh_input_layout_elements.size())};
 
-constexpr D3D12_INPUT_LAYOUT_DESC depth_only_mesh_input_layout =
+constexpr D3D12_INPUT_LAYOUT_DESC position_only_mesh_input_layout =
    {.pInputElementDescs = mesh_input_layout_elements.data(),
     .NumElements = static_cast<UINT>(1)};
 
@@ -272,8 +282,8 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
 
       const auto depth_stencil_state =
          are_flags_set(flags, material_pipeline_flags::transparent)
-            ? depth_stencil_readonly_enabled
-            : depth_stencil_enabled;
+            ? depth_stencil_readonly_less_equal
+            : depth_stencil_equal;
 
       pipelines[i] = create_graphics_pipeline(
          device, {.pRootSignature = root_signature_library.mesh.get(),
@@ -310,12 +320,78 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_none,
                .DepthStencilState = depth_stencil_enabled,
-               .InputLayout = depth_only_mesh_input_layout,
+               .InputLayout = position_only_mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
                .NumRenderTargets = 0,
                .RTVFormats = {},
                .DSVFormat = DXGI_FORMAT_D32_FLOAT,
+               .SampleDesc = {1, 0}});
+
+   mesh_depth_prepass = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.mesh_depth_prepass.get(),
+               .VS = shader_library["mesh_depth_prepassVS"sv],
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_backfacing,
+               .DepthStencilState = depth_stencil_enabled,
+               .InputLayout = position_only_mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 0,
+               .RTVFormats = {},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
+   mesh_depth_prepass_doublesided = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.mesh_depth_prepass.get(),
+               .VS = shader_library["mesh_depth_prepassVS"sv],
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_none,
+               .DepthStencilState = depth_stencil_enabled,
+               .InputLayout = position_only_mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 0,
+               .RTVFormats = {},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
+   mesh_depth_prepass_alpha_cutout = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.mesh_depth_prepass.get(),
+               .VS = shader_library["meshVS"sv],
+               .PS = shader_library["mesh_depth_cutoutPS"sv],
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_backfacing,
+               .DepthStencilState = depth_stencil_enabled,
+               .InputLayout = mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 0,
+               .RTVFormats = {},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
+   mesh_depth_prepass_alpha_cutout_doublesided = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.mesh_depth_prepass.get(),
+               .VS = shader_library["meshVS"sv],
+               .PS = shader_library["mesh_depth_cutoutPS"sv],
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_backfacing,
+               .DepthStencilState = depth_stencil_enabled,
+               .InputLayout = mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 0,
+               .RTVFormats = {},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
    mesh_basic =
@@ -413,7 +489,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .BlendState = blend_additive,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_readonly_enabled,
+               .DepthStencilState = depth_stencil_readonly_less_equal,
                .InputLayout = meta_mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
@@ -448,7 +524,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .BlendState = blend_alpha,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_line_antialiased,
-               .DepthStencilState = depth_stencil_readonly_enabled,
+               .DepthStencilState = depth_stencil_readonly_less_equal,
                .InputLayout = meta_mesh_input_layout,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE,

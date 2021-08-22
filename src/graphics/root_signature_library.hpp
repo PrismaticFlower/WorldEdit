@@ -12,6 +12,7 @@ struct root_signature_library {
    explicit root_signature_library(gpu::device& device);
 
    utility::com_ptr<ID3D12RootSignature> mesh_shadow;
+   utility::com_ptr<ID3D12RootSignature> mesh_depth_prepass;
    utility::com_ptr<ID3D12RootSignature> mesh;
    utility::com_ptr<ID3D12RootSignature> terrain;
    utility::com_ptr<ID3D12RootSignature> meta_mesh;
@@ -23,6 +24,12 @@ namespace rs {
 namespace mesh_shadow {
 constexpr uint32 object_cbv = 0;
 constexpr uint32 camera_cbv = 1;
+}
+
+namespace mesh_depth_prepass {
+constexpr uint32 object_cbv = 0;
+constexpr uint32 material_descriptor_table = 1;
+constexpr uint32 camera_descriptor_table = 2;
 }
 
 namespace mesh {

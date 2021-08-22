@@ -10,13 +10,6 @@
 namespace we::graphics {
 
 class shader_library;
-
-enum class blend_modes { none, additive, alpha_blended };
-
-enum class rasterizer_cull_mode { singlesided, doublesided };
-
-enum class depth_test_mode { disabled, read_write, read };
-
 struct root_signature_library;
 
 enum class material_pipeline_flags : uint8 {
@@ -41,6 +34,10 @@ struct pipeline_library {
    pipeline_library(ID3D12Device& device, const shader_library& shader_library,
                     const root_signature_library& root_signature_library);
 
+   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass;
+   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_doublesided;
+   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_alpha_cutout;
+   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_alpha_cutout_doublesided;
    utility::com_ptr<ID3D12PipelineState> mesh_shadow;
    utility::com_ptr<ID3D12PipelineState> mesh_basic;
    utility::com_ptr<ID3D12PipelineState> mesh_basic_lighting;

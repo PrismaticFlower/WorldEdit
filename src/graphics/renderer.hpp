@@ -42,6 +42,7 @@ private:
    struct render_list_item {
       float distance;
       ID3D12PipelineState* pipeline;
+      ID3D12PipelineState* depth_prepass_pipeline;
       D3D12_INDEX_BUFFER_VIEW index_buffer_view;
       std::array<D3D12_VERTEX_BUFFER_VIEW, 2> vertex_buffer_views;
       gpu::virtual_address object_constants_address;
@@ -56,6 +57,9 @@ private:
 
    void draw_world(const frustrum& view_frustrum,
                    gpu::graphics_command_list& command_list);
+
+   void draw_world_render_list_depth_prepass(const std::vector<render_list_item>& list,
+                                             gpu::graphics_command_list& command_list);
 
    void draw_world_render_list(const std::vector<render_list_item>& list,
                                gpu::graphics_command_list& command_list);

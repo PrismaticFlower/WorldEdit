@@ -47,6 +47,8 @@ std::initializer_list<shader_description> shader_list =
     shader("meshVS"),
     shader("mesh_basicPS"),
     shader("mesh_basic_lightingPS"),
+    shader("mesh_depth_prepassVS"),
+    shader("mesh_depth_cutoutPS"),
 
     material_shader("mesh_normalPS", "mesh_normalPS",
                     {{"MATERIAL_ALPHA_CUTOUT", 0}, {"MATERIAL_TRANSPARENT", 0}}),
