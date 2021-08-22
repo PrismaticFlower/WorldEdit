@@ -43,6 +43,7 @@ struct pipeline_library {
    utility::com_ptr<ID3D12PipelineState> mesh_basic_lighting;
    material_pipelines mesh_normal;
 
+   utility::com_ptr<ID3D12PipelineState> terrain_depth_prepass;
    utility::com_ptr<ID3D12PipelineState> terrain_basic;
    utility::com_ptr<ID3D12PipelineState> terrain_lighting;
    utility::com_ptr<ID3D12PipelineState> terrain_normal;

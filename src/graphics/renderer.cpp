@@ -242,9 +242,14 @@ void renderer::draw_world(const frustrum& view_frustrum,
                           gpu::graphics_command_list& command_list)
 {
    draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
+
+   _terrain.draw(terrain_draw::depth_prepass, view_frustrum, _camera_constant_buffer_view,
+                 _light_clusters.light_descriptors(), command_list,
+                 _root_signatures, _pipelines, _dynamic_buffer_allocator);
+
    draw_world_render_list(_opaque_object_render_list, command_list);
 
-   _terrain.draw(view_frustrum, _camera_constant_buffer_view,
+   _terrain.draw(terrain_draw::main, view_frustrum, _camera_constant_buffer_view,
                  _light_clusters.light_descriptors(), command_list,
                  _root_signatures, _pipelines, _dynamic_buffer_allocator);
 

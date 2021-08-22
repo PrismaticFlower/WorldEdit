@@ -67,6 +67,19 @@ constexpr auto generate_patch_indices()
 
 constexpr auto terrain_patch_indices = generate_patch_indices();
 
+auto select_pipeline(const terrain_draw draw, pipeline_library& pipelines)
+   -> ID3D12PipelineState*
+{
+   switch (draw) {
+   case terrain_draw::depth_prepass:
+      return pipelines.terrain_depth_prepass.get();
+   case terrain_draw::main:
+      return pipelines.terrain_normal.get();
+   }
+
+   return nullptr;
+}
+
 }
 
 terrain::terrain(gpu::device& device, texture_manager& texture_manager)
@@ -94,7 +107,7 @@ void terrain::init(const world::terrain& terrain,
    init_patches_info(terrain);
 }
 
-void terrain::draw(const frustrum& view_frustrum,
+void terrain::draw(const terrain_draw draw, const frustrum& view_frustrum,
                    gpu::descriptor_range camera_constant_buffer_view,
                    gpu::descriptor_range light_descriptors,
                    gpu::graphics_command_list& command_list,
@@ -122,7 +135,7 @@ void terrain::draw(const frustrum& view_frustrum,
       ++visible_patch_count;
    }
 
-   command_list.set_pipeline_state(*pipelines.terrain_normal);
+   command_list.set_pipeline_state(*select_pipeline(draw, pipelines));
 
    command_list.set_graphics_root_signature(*root_signatures.terrain);
    command_list.set_graphics_root_descriptor_table(rs::terrain::camera_descriptor_table,
@@ -548,4 +561,5 @@ void terrain::init_patches_info(const world::terrain& terrain)
       }
    }
 }
+
 }

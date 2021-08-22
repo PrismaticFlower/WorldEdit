@@ -170,7 +170,7 @@ constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_enabled =
     .FrontFace = stencilop_disabled,
     .BackFace = stencilop_disabled};
 
-constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_equal =
+constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_equal =
    {.DepthEnable = true,
     .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
     .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
@@ -283,7 +283,7 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
       const auto depth_stencil_state =
          are_flags_set(flags, material_pipeline_flags::transparent)
             ? depth_stencil_readonly_less_equal
-            : depth_stencil_equal;
+            : depth_stencil_readonly_equal;
 
       pipelines[i] = create_graphics_pipeline(
          device, {.pRootSignature = root_signature_library.mesh.get(),
@@ -433,6 +433,21 @@ pipeline_library::pipeline_library(ID3D12Device& device,
    mesh_normal = create_material_pipelines("mesh_normal{}PS"sv, device,
                                            shader_library, root_signature_library);
 
+   terrain_depth_prepass = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.terrain.get(),
+               .VS = shader_library["terrain_patchVS"sv],
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_cull_backfacing,
+               .DepthStencilState = depth_stencil_enabled,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 0,
+               .RTVFormats = {},
+               .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+               .SampleDesc = {1, 0}});
+
    terrain_basic = create_graphics_pipeline(
       device, {.pRootSignature = root_signature_library.terrain.get(),
                .VS = shader_library["terrain_patchVS"sv],
@@ -441,7 +456,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_enabled,
+               .DepthStencilState = depth_stencil_readonly_equal,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
                .NumRenderTargets = 1,
@@ -457,7 +472,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_enabled,
+               .DepthStencilState = depth_stencil_readonly_equal,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
                .NumRenderTargets = 1,
@@ -473,7 +488,7 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .BlendState = blend_disabled,
                .SampleMask = sample_mask_default,
                .RasterizerState = rasterizer_cull_backfacing,
-               .DepthStencilState = depth_stencil_enabled,
+               .DepthStencilState = depth_stencil_readonly_equal,
                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
                .NumRenderTargets = 1,

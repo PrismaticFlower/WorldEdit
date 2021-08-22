@@ -16,6 +16,8 @@
 
 namespace we::graphics {
 
+enum class terrain_draw { depth_prepass, main };
+
 class terrain {
 public:
    constexpr static std::size_t texture_count = assets::terrain::terrain::texture_count;
@@ -25,7 +27,7 @@ public:
    void init(const world::terrain& terrain, gpu::graphics_command_list& command_list,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void draw(const frustrum& view_frustrum,
+   void draw(const terrain_draw draw, const frustrum& view_frustrum,
              gpu::descriptor_range camera_constant_buffer_view,
              gpu::descriptor_range light_descriptors,
              gpu::graphics_command_list& command_list,
