@@ -31,8 +31,8 @@ public:
 
    /// @brief Gets a model.
    /// @param name The name of the model.
-   /// @return A const reference to the model or the default model.
-   auto operator[](const lowercase_string& name) -> const model&
+   /// @return A reference to the model or the default model.
+   auto operator[](const lowercase_string& name) -> model&
    {
       if (name.empty()) return _placeholder_model;
 

@@ -77,6 +77,9 @@ private:
 
    void update_textures();
 
+   auto create_raytacing_blas(gpu::graphics_command_list& command_list,
+                              const model& model, const mesh_part& part) -> gpu::buffer;
+
    const HWND _window;
 
    bool _terrain_dirty = true; // ughhhh, this feels so ugly

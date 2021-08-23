@@ -18,4 +18,13 @@ namespace we::graphics::gpu {
                           .StateAfter = state_after}};
 }
 
+[[nodiscard]] inline auto uav_barrier(ID3D12Resource& resource,
+                                      const D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE)
+   -> D3D12_RESOURCE_BARRIER
+{
+   return {.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
+           .Flags = flags,
+           .UAV = {.pResource = &resource}};
+}
+
 }

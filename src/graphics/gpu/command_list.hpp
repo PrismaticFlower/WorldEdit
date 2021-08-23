@@ -289,6 +289,34 @@ public:
                                                    ? &discard_region.value()
                                                    : nullptr);
    }
+
+   void build_raytracing_acceleration_structure(
+      const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& desc,
+      const std::span<const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC>
+         postbuild_info_descs = {})
+   {
+      _command_list->BuildRaytracingAccelerationStructure(
+         &desc, to_uint32(postbuild_info_descs.size()), postbuild_info_descs.data());
+   }
+
+   void emit_raytracing_acceleration_structure_postbuild_info(
+      const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC& desc,
+      const std::span<gpu_virtual_address> source_acceleration_structure_data)
+   {
+      _command_list->EmitRaytracingAccelerationStructurePostbuildInfo(
+         &desc, to_uint32(source_acceleration_structure_data.size()),
+         source_acceleration_structure_data.data());
+   }
+
+   void copy_raytracing_acceleration_structure(
+      gpu_virtual_address dest_acceleration_structure_data,
+      gpu_virtual_address source_acceleration_structure_data,
+      D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE mode)
+   {
+      _command_list->CopyRaytracingAccelerationStructure(dest_acceleration_structure_data,
+                                                         source_acceleration_structure_data,
+                                                         mode);
+   }
 };
 
 struct graphics_command_list : compute_command_list {

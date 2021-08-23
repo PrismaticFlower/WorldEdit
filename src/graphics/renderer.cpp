@@ -719,8 +719,7 @@ void renderer::build_world_mesh_list(
 
    for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
       const auto& object = world.objects[i];
-      const auto& model =
-         _model_manager[world_classes.at(object.class_name)->model_name];
+      auto& model = _model_manager[world_classes.at(object.class_name)->model_name];
 
       const auto object_bbox = object.rotation * model.bbox + object.position;
 
@@ -738,7 +737,7 @@ void renderer::build_world_mesh_list(
 
       constants_data_size += sizeof(world_mesh_constants);
 
-      for (const auto& mesh : model.parts) {
+      for (auto& mesh : model.parts) {
          ID3D12PipelineState* const pipeline =
             _pipelines.mesh_normal[mesh.material.flags].get();
 
@@ -751,6 +750,10 @@ void renderer::build_world_mesh_list(
                        .index_count = mesh.index_count,
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});
+
+         if (not mesh.raytracing_blas) {
+            mesh.raytracing_blas = create_raytacing_blas(command_list, model, mesh);
+         }
       }
    }
 
@@ -838,4 +841,65 @@ void renderer::update_textures()
       _terrain.process_updated_texture(updated);
    });
 }
+
+auto renderer::create_raytacing_blas(gpu::graphics_command_list& command_list,
+                                     const model& model, const mesh_part& part)
+   -> gpu::buffer
+{
+   D3D12_RAYTRACING_GEOMETRY_DESC geometry_desc{
+      .Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
+      .Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE,
+      .Triangles =
+         {.IndexFormat = DXGI_FORMAT_R16_UINT,
+          .VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT,
+          .IndexCount = part.index_count,
+          .VertexCount = part.vertex_count,
+          .IndexBuffer = model.gpu_buffer.index_buffer_view.BufferLocation +
+                         part.start_index * sizeof(uint16),
+          .VertexBuffer = {.StartAddress =
+                              model.gpu_buffer.position_vertex_buffer_view.BufferLocation +
+                              part.start_vertex * sizeof(float3),
+                           .StrideInBytes = sizeof(float3)}}};
+
+   D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs{
+      .Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL,
+      .Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
+      .NumDescs = 1,
+      .DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
+      .pGeometryDescs = &geometry_desc};
+
+   ID3D12Device8& device = *_device.device_d3d;
+
+   D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuild;
+
+   device.GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuild);
+
+   gpu::buffer scratch_buffer =
+      _device.create_buffer({.size = to_uint32(prebuild.ScratchDataSizeInBytes),
+                             .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS},
+                            D3D12_HEAP_TYPE_DEFAULT,
+                            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+   gpu::buffer result_buffer =
+      _device.create_buffer({.size = to_uint32(prebuild.ResultDataMaxSizeInBytes),
+                             .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS},
+                            D3D12_HEAP_TYPE_DEFAULT,
+                            D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+
+   D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC build_desc{
+      .DestAccelerationStructureData = result_buffer.gpu_virtual_address(),
+      .Inputs = inputs,
+      .ScratchAccelerationStructureData = scratch_buffer.gpu_virtual_address()};
+
+   command_list.build_raytracing_acceleration_structure(build_desc);
+   command_list.deferred_resource_barrier(
+      gpu::uav_barrier(*scratch_buffer.view_resource()));
+   command_list.deferred_resource_barrier(
+      gpu::uav_barrier(*result_buffer.view_resource()));
+
+   // TODO: Compaction solution!
+
+   return result_buffer;
+}
+
 }

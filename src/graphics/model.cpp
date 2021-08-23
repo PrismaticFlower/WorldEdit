@@ -75,6 +75,7 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
       parts.push_back({.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
                        .start_index = triangle_offset * 3,
                        .start_vertex = vertex_offset,
+                       .vertex_count = static_cast<uint32>(mesh.positions.size()),
                        .material = {mesh.material, device, texture_manager}});
 
       std::uninitialized_copy_n(mesh.triangles.cbegin(), mesh.triangles.size(),

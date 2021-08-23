@@ -31,7 +31,10 @@ struct mesh_part {
    uint32 index_count;
    uint32 start_index;
    uint32 start_vertex;
+   uint32 vertex_count;
    material material;
+
+   gpu::buffer raytracing_blas;
 };
 
 struct mesh_data_offsets {
