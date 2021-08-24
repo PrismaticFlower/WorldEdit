@@ -78,6 +78,37 @@ auto create_allocator(ID3D12Device& device, IDXGIAdapter4& adapter)
    return allocator;
 }
 
+auto create_root_signature(ID3D12Device& device, const D3D12_ROOT_SIGNATURE_DESC& desc,
+                           const std::string_view name)
+   -> utility::com_ptr<ID3D12RootSignature>
+{
+   utility::com_ptr<ID3DBlob> root_signature_blob;
+
+   if (utility::com_ptr<ID3DBlob> root_signature_error_blob; FAILED(
+          D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0,
+                                      root_signature_blob.clear_and_assign(),
+                                      root_signature_error_blob.clear_and_assign()))) {
+      std::string message{static_cast<const char*>(
+                             root_signature_error_blob->GetBufferPointer()),
+                          root_signature_error_blob->GetBufferSize()};
+
+      throw std::runtime_error{std::move(message)};
+   }
+
+   utility::com_ptr<ID3D12RootSignature> root_sig;
+
+   throw_if_failed(
+      device.CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
+                                 root_signature_blob->GetBufferSize(),
+                                 IID_PPV_ARGS(root_sig.clear_and_assign())));
+
+   if (not name.empty()) {
+      set_debug_name(*root_sig, name);
+   }
+
+   return root_sig;
+}
+
 auto create_root_signature(ID3D12Device& device,
                            const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& desc,
                            const std::string_view name)
@@ -108,6 +139,112 @@ auto create_root_signature(ID3D12Device& device,
    }
 
    return root_sig;
+}
+
+auto create_root_signature_1_0_from_desc(ID3D12Device& device,
+                                         const root_signature_desc& desc)
+   -> utility::com_ptr<ID3D12RootSignature>
+{
+   boost::container::static_vector<D3D12_DESCRIPTOR_RANGE, 256> descriptor_ranges_stack;
+   boost::container::small_vector<D3D12_ROOT_PARAMETER, 16> parameters;
+   boost::container::small_vector<D3D12_STATIC_SAMPLER_DESC, 16> samplers;
+
+   for (auto& param : desc.parameters) {
+      auto d3d12_param = boost::variant2::visit(
+         [&]<typename T>(const T& param) -> D3D12_ROOT_PARAMETER {
+            if constexpr (std::is_same_v<T, gpu::root_parameter_descriptor_table>) {
+               const auto ranges_stack_offset = descriptor_ranges_stack.size();
+
+               descriptor_ranges_stack.resize(ranges_stack_offset +
+                                              param.ranges.size());
+
+               std::copy_n(param.ranges.begin(), param.ranges.size(),
+                           descriptor_ranges_stack.begin() + ranges_stack_offset);
+
+               return D3D12_ROOT_PARAMETER{
+                  .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                  .DescriptorTable =
+                     {
+                        .NumDescriptorRanges = to_uint32(param.ranges.size()),
+                        .pDescriptorRanges = &descriptor_ranges_stack[ranges_stack_offset],
+                     },
+                  .ShaderVisibility = param.visibility};
+            }
+            else {
+               return param;
+            }
+         },
+         param);
+
+      parameters.push_back(d3d12_param);
+   }
+
+   samplers.resize(desc.samplers.size());
+
+   std::ranges::copy(desc.samplers, samplers.begin());
+
+   const D3D12_ROOT_SIGNATURE_DESC d3d12_desc{.NumParameters =
+                                                 to_uint32(parameters.size()),
+                                              .pParameters = parameters.data(),
+                                              .NumStaticSamplers =
+                                                 to_uint32(samplers.size()),
+                                              .pStaticSamplers = samplers.data(),
+                                              .Flags = desc.flags};
+
+   return gpu::create_root_signature(device, d3d12_desc, desc.name);
+}
+
+auto create_root_signature_1_1_from_desc(ID3D12Device& device,
+                                         const root_signature_desc& desc)
+   -> utility::com_ptr<ID3D12RootSignature>
+{
+   boost::container::static_vector<D3D12_DESCRIPTOR_RANGE1, 256> descriptor_ranges_stack;
+   boost::container::small_vector<D3D12_ROOT_PARAMETER1, 16> parameters;
+   boost::container::small_vector<D3D12_STATIC_SAMPLER_DESC, 16> samplers;
+
+   for (auto& param : desc.parameters) {
+      auto d3d12_param = boost::variant2::visit(
+         [&]<typename T>(const T& param) -> D3D12_ROOT_PARAMETER1 {
+            if constexpr (std::is_same_v<T, gpu::root_parameter_descriptor_table>) {
+               const auto ranges_stack_offset = descriptor_ranges_stack.size();
+
+               descriptor_ranges_stack.resize(ranges_stack_offset +
+                                              param.ranges.size());
+
+               std::copy_n(param.ranges.begin(), param.ranges.size(),
+                           descriptor_ranges_stack.begin() + ranges_stack_offset);
+
+               return D3D12_ROOT_PARAMETER1{
+                  .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                  .DescriptorTable =
+                     {
+                        .NumDescriptorRanges = to_uint32(param.ranges.size()),
+                        .pDescriptorRanges = &descriptor_ranges_stack[ranges_stack_offset],
+                     },
+                  .ShaderVisibility = param.visibility};
+            }
+            else {
+               return param;
+            }
+         },
+         param);
+
+      parameters.push_back(d3d12_param);
+   }
+
+   samplers.resize(desc.samplers.size());
+
+   std::ranges::copy(desc.samplers, samplers.begin());
+
+   const D3D12_VERSIONED_ROOT_SIGNATURE_DESC
+      d3d12_desc{.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
+                 .Desc_1_1 = {.NumParameters = to_uint32(parameters.size()),
+                              .pParameters = parameters.data(),
+                              .NumStaticSamplers = to_uint32(samplers.size()),
+                              .pStaticSamplers = samplers.data(),
+                              .Flags = desc.flags}};
+
+   return gpu::create_root_signature(device, d3d12_desc, desc.name);
 }
 
 }
@@ -235,53 +372,11 @@ auto device::create_graphics_command_list(const std::string_view debug_name)
 auto device::create_root_signature(const root_signature_desc& desc)
    -> utility::com_ptr<ID3D12RootSignature>
 {
-   boost::container::static_vector<D3D12_DESCRIPTOR_RANGE1, 256> descriptor_ranges_stack;
-   boost::container::small_vector<D3D12_ROOT_PARAMETER1, 16> parameters;
-   boost::container::small_vector<D3D12_STATIC_SAMPLER_DESC, 16> samplers;
-
-   for (auto& param : desc.parameters) {
-      auto d3d12_param = boost::variant2::visit(
-         [&]<typename T>(const T& param) -> D3D12_ROOT_PARAMETER1 {
-            if constexpr (std::is_same_v<T, gpu::root_parameter_descriptor_table>) {
-               const auto ranges_stack_offset = descriptor_ranges_stack.size();
-
-               descriptor_ranges_stack.resize(ranges_stack_offset +
-                                              param.ranges.size());
-
-               std::copy_n(param.ranges.begin(), param.ranges.size(),
-                           descriptor_ranges_stack.begin() + ranges_stack_offset);
-
-               return D3D12_ROOT_PARAMETER1{
-                  .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-                  .DescriptorTable =
-                     {
-                        .NumDescriptorRanges = to_uint32(param.ranges.size()),
-                        .pDescriptorRanges = &descriptor_ranges_stack[ranges_stack_offset],
-                     },
-                  .ShaderVisibility = param.visibility};
-            }
-            else {
-               return param;
-            }
-         },
-         param);
-
-      parameters.push_back(d3d12_param);
+   if (root_signature_version_support(*device_d3d, D3D_ROOT_SIGNATURE_VERSION_1_1)) {
+      return create_root_signature_1_1_from_desc(*device_d3d, desc);
    }
 
-   samplers.resize(desc.samplers.size());
-
-   std::ranges::copy(desc.samplers, samplers.begin());
-
-   const D3D12_VERSIONED_ROOT_SIGNATURE_DESC
-      d3d12_desc{.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
-                 .Desc_1_1 = {.NumParameters = to_uint32(parameters.size()),
-                              .pParameters = parameters.data(),
-                              .NumStaticSamplers = to_uint32(samplers.size()),
-                              .pStaticSamplers = samplers.data(),
-                              .Flags = desc.flags}};
-
-   return gpu::create_root_signature(*device_d3d, d3d12_desc, desc.name);
+   return create_root_signature_1_0_from_desc(*device_d3d, desc);
 }
 
 void device::process_deferred_resource_destructions()

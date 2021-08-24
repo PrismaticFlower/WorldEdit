@@ -445,6 +445,16 @@ struct root_parameter_descriptor_range {
    D3D12_DESCRIPTOR_RANGE_FLAGS flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
    uint32 offset_in_descriptors_from_table_start = 0;
 
+   operator D3D12_DESCRIPTOR_RANGE() const noexcept
+   {
+      return {.RangeType = type,
+              .NumDescriptors = count,
+              .BaseShaderRegister = base_shader_register,
+              .RegisterSpace = register_space,
+              .OffsetInDescriptorsFromTableStart =
+                 offset_in_descriptors_from_table_start};
+   }
+
    operator D3D12_DESCRIPTOR_RANGE1() const noexcept
    {
       return {.RangeType = type,
@@ -470,6 +480,15 @@ struct root_parameter_32bit_constants {
    uint32 values_count = 0;
    D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
 
+   operator D3D12_ROOT_PARAMETER() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+              .Constants = {.ShaderRegister = shader_register,
+                            .RegisterSpace = register_space,
+                            .Num32BitValues = values_count},
+              .ShaderVisibility = visibility};
+   }
+
    operator D3D12_ROOT_PARAMETER1() const noexcept
    {
       return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
@@ -485,6 +504,14 @@ struct root_parameter_cbv {
    uint32 register_space = 0;
    D3D12_ROOT_DESCRIPTOR_FLAGS flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
    D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+   operator D3D12_ROOT_PARAMETER() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
+              .Descriptor = {.ShaderRegister = shader_register,
+                             .RegisterSpace = register_space},
+              .ShaderVisibility = visibility};
+   }
 
    operator D3D12_ROOT_PARAMETER1() const noexcept
    {
@@ -502,6 +529,14 @@ struct root_parameter_srv {
    D3D12_ROOT_DESCRIPTOR_FLAGS flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
    D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
 
+   operator D3D12_ROOT_PARAMETER() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV,
+              .Descriptor = {.ShaderRegister = shader_register,
+                             .RegisterSpace = register_space},
+              .ShaderVisibility = visibility};
+   }
+
    operator D3D12_ROOT_PARAMETER1() const noexcept
    {
       return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV,
@@ -517,6 +552,14 @@ struct root_parameter_uav {
    uint32 register_space = 0;
    D3D12_ROOT_DESCRIPTOR_FLAGS flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
    D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+
+   operator D3D12_ROOT_PARAMETER() const noexcept
+   {
+      return {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV,
+              .Descriptor = {.ShaderRegister = shader_register,
+                             .RegisterSpace = register_space},
+              .ShaderVisibility = visibility};
+   }
 
    operator D3D12_ROOT_PARAMETER1() const noexcept
    {
