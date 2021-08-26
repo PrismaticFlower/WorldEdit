@@ -751,7 +751,7 @@ void renderer::build_world_mesh_list(
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});
 
-         if (not mesh.raytracing_blas) {
+         if (_config.use_raytracing && not mesh.raytracing_blas) {
             mesh.raytracing_blas = create_raytacing_blas(command_list, model, mesh);
          }
       }

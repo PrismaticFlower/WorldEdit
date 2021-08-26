@@ -28,6 +28,10 @@
 
 namespace we::graphics {
 
+struct renderer_config {
+   bool use_raytracing = true;
+};
+
 class renderer {
 public:
    renderer(const HWND window, assets::libraries_manager& asset_libraries);
@@ -128,5 +132,7 @@ private:
    world_mesh_list _world_mesh_list;
    std::vector<render_list_item> _opaque_object_render_list;
    std::vector<render_list_item> _transparent_object_render_list;
+
+   renderer_config _config;
 };
 }
