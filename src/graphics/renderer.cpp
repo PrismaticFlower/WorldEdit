@@ -67,15 +67,6 @@ const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
 
    return arrow;
 }();
-
-// TODO: Put this somewhere.
-
-struct object_constants {
-   float4x4 object_to_world;
-};
-
-static_assert(sizeof(object_constants) == 64);
-
 }
 
 renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries)
