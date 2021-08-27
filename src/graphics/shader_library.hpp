@@ -25,6 +25,26 @@ enum class shader_type {
    library
 };
 
+enum class shader_model {
+   shader_model_5_1,
+   shader_model_6_0,
+   shader_model_6_1,
+   shader_model_6_2,
+   shader_model_6_3,
+   shader_model_6_4,
+   shader_model_6_5,
+   shader_model_6_6
+};
+
+constexpr auto shader_model_5_1 = shader_model::shader_model_5_1;
+constexpr auto shader_model_6_0 = shader_model::shader_model_6_0;
+constexpr auto shader_model_6_1 = shader_model::shader_model_6_1;
+constexpr auto shader_model_6_2 = shader_model::shader_model_6_2;
+constexpr auto shader_model_6_3 = shader_model::shader_model_6_3;
+constexpr auto shader_model_6_4 = shader_model::shader_model_6_4;
+constexpr auto shader_model_6_5 = shader_model::shader_model_6_5;
+constexpr auto shader_model_6_6 = shader_model::shader_model_6_6;
+
 struct shader_define_value : std::string {
    shader_define_value() = default;
 
@@ -51,6 +71,7 @@ struct shader_description {
    std::string name;
    std::string entrypoint;
    shader_type type;
+   shader_model model;
    std::filesystem::path file;
 
    shader_defines defines;

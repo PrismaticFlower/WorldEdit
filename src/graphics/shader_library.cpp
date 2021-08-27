@@ -84,6 +84,42 @@ private:
 
 namespace fxc {
 
+auto get_type_string(const shader_description& desc) -> std::string_view
+{
+   switch (desc.type) { // clang-format off
+   case shader_type::vertex:   return "vs";
+   case shader_type::hull:     return "hs";
+   case shader_type::domain:   return "ds";
+   case shader_type::geometry: return "gs";
+   case shader_type::pixel:    return "ps";
+   case shader_type::compute:  return "cs";
+   case shader_type::library:  return "lib";  
+   } // clang-format on
+
+   std::terminate();
+}
+
+auto get_model_string(const shader_description& desc) -> std::string_view
+{
+   switch (desc.model) { // clang-format off
+   case shader_model_5_1: return "5_1";
+   case shader_model_6_0: return "6_0";
+   case shader_model_6_1: return "6_1";
+   case shader_model_6_2: return "6_2";
+   case shader_model_6_3: return "6_3";
+   case shader_model_6_4: return "6_4";
+   case shader_model_6_5: return "6_5";  
+   case shader_model_6_6: return "6_6";  
+   } // clang-format on
+
+   std::terminate();
+}
+
+auto get_target(const shader_description& desc) noexcept -> std::string
+{
+   return fmt::format("{}_{}", get_type_string(desc), get_model_string(desc));
+}
+
 auto get_shader_macros(const shader_description& desc)
    -> boost::container::static_vector<D3D_SHADER_MACRO, max_shader_defines + 1>
 {
@@ -99,21 +135,6 @@ auto get_shader_macros(const shader_description& desc)
    macros.back() = D3D_SHADER_MACRO{nullptr, nullptr};
 
    return macros;
-}
-
-auto get_target(const shader_description& desc) noexcept -> const char*
-{
-   switch (desc.type) { // clang-format off
-   case shader_type::vertex:   return "vs_5_1";
-   case shader_type::hull:     return "hs_5_1";
-   case shader_type::domain:   return "ds_5_1";
-   case shader_type::geometry: return "gs_5_1";
-   case shader_type::pixel:    return "ps_5_1";
-   case shader_type::compute:  return "cs_5_1";
-   case shader_type::library:  return "lib_5_1";  
-   } // clang-format on
-
-   std::terminate();
 }
 
 auto compile(const shader_description& desc)
@@ -137,8 +158,9 @@ auto compile(const shader_description& desc)
 
    if (const auto hr =
           D3DCompileFromFile(desc.file.c_str(), macros.data(), &file_includer,
-                             desc.entrypoint.data(), get_target(desc), flags, 0,
-                             bytecode.clear_and_assign(), error.clear_and_assign());
+                             desc.entrypoint.data(), get_target(desc).c_str(),
+                             flags, 0, bytecode.clear_and_assign(),
+                             error.clear_and_assign());
        FAILED(hr)) {
       if (error) {
          std::cerr << std::string_view{static_cast<const char*>(error->GetBufferPointer()),

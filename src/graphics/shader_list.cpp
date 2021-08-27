@@ -26,6 +26,7 @@ auto shader(const std::string_view name) -> shader_description
    return {.name = std::string{name},
            .entrypoint = "main",
            .type = type_from_name(name),
+           .model = shader_model_5_1,
            .file = fmt::format("worldedit/shaders/{}.hlsl", name)};
 }
 
@@ -35,6 +36,7 @@ auto material_shader(const std::string_view name, const std::string_view file_na
    return {.name = std::string{name},
            .entrypoint = "main",
            .type = type_from_name(name),
+           .model = shader_model_5_1,
            .file = fmt::format("worldedit/shaders/{}.hlsl", file_name),
            .defines = defines};
 }
