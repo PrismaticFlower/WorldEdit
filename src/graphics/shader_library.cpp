@@ -5,8 +5,11 @@
 #include "utility/read_file.hpp"
 
 #include <algorithm>
+#include <array>
 #include <exception>
 #include <execution>
+#include <format>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <tuple>
@@ -16,8 +19,7 @@
 
 #include <boost/container/small_vector.hpp>
 #include <boost/functional/hash.hpp>
-#include <d3dcompiler.h>
-#include <fmt/format.h>
+#include <dxcapi.h>
 
 #include <range/v3/algorithm.hpp>
 
@@ -27,13 +29,12 @@ namespace we::graphics {
 
 namespace {
 
-#ifdef NDEBUG
-const std::filesystem::path shader_cache_path = L"worldedit/shaders/cache/release.bin"sv;
-#else
-const std::filesystem::path shader_cache_path = L"worldedit/shaders/cache/debug.bin"sv;
-#endif
+const std::filesystem::path shader_cache_path = L"shaders.bin"sv;
+const std::filesystem::path shader_pdb_path = L"worldedit/shaders/pdb/"sv;
 
-struct file_includer final : public ID3DInclude {
+namespace dxc {
+
+struct file_includer final : public IDxcIncludeHandler {
    constexpr static auto dependencies_hasher = [](const shader_dependency& dependency) {
       return std::hash<std::wstring>{}(dependency.path.native());
    };
@@ -43,141 +44,213 @@ struct file_includer final : public ID3DInclude {
       return l.path == r.path;
    };
 
-   std::filesystem::path base_path;
    std::unordered_set<shader_dependency, decltype(dependencies_hasher), decltype(dependencies_equals)> dependencies;
+   utility::com_ptr<IDxcUtils> utils;
 
 private:
-   HRESULT Open(D3D_INCLUDE_TYPE, LPCSTR file_name, LPCVOID, LPCVOID* data,
-                UINT* bytes) override
+   HRESULT STDMETHODCALLTYPE LoadSource(LPCWSTR filename, IDxcBlob** include_source) override
    {
-      try {
-         const std::filesystem::path path = base_path / file_name;
+      utility::com_ptr<IDxcBlobEncoding> blob;
 
-         auto& file = _open_files.emplace_back(utility::read_file_to_string(path));
-
-         *data = file.data();
-         *bytes = static_cast<UINT>(file.size());
-
-         dependencies.insert(
-            shader_dependency{.path = path,
-                              .last_write =
-                                 std::filesystem::last_write_time(path).time_since_epoch()});
-
-         return S_OK;
+      if (auto hr = utils->LoadFile(filename, nullptr, blob.clear_and_assign());
+          FAILED(hr)) {
+         return hr;
       }
-      catch (std::exception&) {
-         return E_FAIL;
-      }
-   }
 
-   HRESULT Close(LPCVOID data)
-   {
-      _open_files.erase(ranges::find_if(_open_files, [data](const std::string& str) {
-         return str.data() == data;
-      }));
+      *include_source = blob.release();
+
+      const auto path = std::filesystem::relative(filename);
+
+      dependencies.insert(
+         shader_dependency{.path = path,
+                           .last_write =
+                              std::filesystem::last_write_time(path).time_since_epoch()});
 
       return S_OK;
    }
 
-   boost::container::small_vector<std::string, 4> _open_files;
+   HRESULT STDMETHODCALLTYPE QueryInterface(const IID& iid, void** object) override
+   {
+      if (iid == __uuidof(IUnknown)) {
+         *object = static_cast<IUnknown*>(this);
+
+         return S_OK;
+      }
+      else if (iid == __uuidof(IDxcIncludeHandler)) {
+         *object = static_cast<IDxcIncludeHandler*>(this);
+
+         return S_OK;
+      }
+
+      return E_NOINTERFACE;
+   }
+
+   ULONG STDMETHODCALLTYPE AddRef() override
+   {
+      return ++_ref_count;
+   }
+
+   ULONG STDMETHODCALLTYPE Release() override
+   {
+      return --_ref_count;
+   }
+
+   ULONG _ref_count = 1;
 };
 
-namespace fxc {
-
-auto get_type_string(const shader_description& desc) -> std::string_view
+auto get_type_string(const shader_description& desc) -> std::wstring_view
 {
    switch (desc.type) { // clang-format off
-   case shader_type::vertex:   return "vs";
-   case shader_type::hull:     return "hs";
-   case shader_type::domain:   return "ds";
-   case shader_type::geometry: return "gs";
-   case shader_type::pixel:    return "ps";
-   case shader_type::compute:  return "cs";
-   case shader_type::library:  return "lib";  
+   case shader_type::vertex:   return L"vs";
+   case shader_type::hull:     return L"hs";
+   case shader_type::domain:   return L"ds";
+   case shader_type::geometry: return L"gs";
+   case shader_type::pixel:    return L"ps";
+   case shader_type::compute:  return L"cs";
+   case shader_type::library:  return L"lib";  
    } // clang-format on
 
    std::terminate();
 }
 
-auto get_model_string(const shader_description& desc) -> std::string_view
+auto get_model_string(const shader_description& desc) -> std::wstring_view
 {
    switch (desc.model) { // clang-format off
-   case shader_model_5_1: return "5_1";
-   case shader_model_6_0: return "6_0";
-   case shader_model_6_1: return "6_1";
-   case shader_model_6_2: return "6_2";
-   case shader_model_6_3: return "6_3";
-   case shader_model_6_4: return "6_4";
-   case shader_model_6_5: return "6_5";  
-   case shader_model_6_6: return "6_6";  
+   case shader_model_6_0: return L"6_0";
+   case shader_model_6_1: return L"6_1";
+   case shader_model_6_2: return L"6_2";
+   case shader_model_6_3: return L"6_3";
+   case shader_model_6_4: return L"6_4";
+   case shader_model_6_5: return L"6_5";  
+   case shader_model_6_6: return L"6_6";  
    } // clang-format on
 
    std::terminate();
 }
 
-auto get_target(const shader_description& desc) noexcept -> std::string
+auto get_target(const shader_description& desc) noexcept -> std::wstring
 {
-   return fmt::format("{}_{}", get_type_string(desc), get_model_string(desc));
+   return std::format(L"{}_{}", get_type_string(desc), get_model_string(desc));
 }
 
-auto get_shader_macros(const shader_description& desc)
-   -> boost::container::static_vector<D3D_SHADER_MACRO, max_shader_defines + 1>
+auto get_shader_defines(const shader_description& desc)
+   -> boost::container::static_vector<std::wstring, max_shader_defines>
 {
-   boost::container::static_vector<D3D_SHADER_MACRO, max_shader_defines + 1> macros;
+   boost::container::static_vector<std::wstring, max_shader_defines> macros;
 
-   macros.resize(desc.defines.size() + 1);
+   macros.resize(desc.defines.size());
 
    ranges::transform(desc.defines, macros.begin(), [](const shader_define& define) {
-      return D3D_SHADER_MACRO{.Name = define.var.c_str(),
-                              .Definition = define.value.c_str()};
+      return std::format(L"{}={}", define.var, define.value);
    });
 
-   macros.back() = D3D_SHADER_MACRO{nullptr, nullptr};
-
    return macros;
+}
+
+auto get_shader_pdb_path(const shader_description& desc) -> std::filesystem::path
+{
+   return std::filesystem::current_path() / shader_pdb_path / desc.name += L".pdb"sv;
 }
 
 auto compile(const shader_description& desc)
    -> std::pair<utility::com_ptr<ID3DBlob>, std::vector<shader_dependency>>
 {
-   auto macros = get_shader_macros(desc);
+   utility::com_ptr<IDxcUtils> utils;
+   utility::com_ptr<IDxcCompiler3> compiler;
+   DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.clear_and_assign()));
+   DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(compiler.clear_and_assign()));
 
-   utility::com_ptr<ID3DBlob> bytecode;
-   utility::com_ptr<ID3DBlob> error;
+   file_includer includer;
 
-   auto flags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3 |
-                D3DCOMPILE_ALL_RESOURCES_BOUND;
+   includer.utils = utils;
 
-#ifndef NDEBUG
-   flags |= D3DCOMPILE_DEBUG;
-#endif
+   const auto shader_defines = get_shader_defines(desc);
+   const auto target = get_target(desc);
+   const auto pdb_path = get_shader_pdb_path(desc);
 
-   file_includer file_includer;
+   const std::array static_compile_args = {
+      desc.file.c_str(), // shader name
+      L"-E",
+      desc.entrypoint.c_str(),
+      L"-T",
+      target.c_str(),
+      L"-Zi", // enable debug information
+      L"-Fd",
+      pdb_path.c_str(),
+      L"-Qstrip_reflect",
+   };
 
-   file_includer.base_path = desc.file.parent_path();
+   boost::container::small_vector<const wchar_t*, 64> compile_args;
+   compile_args.reserve(static_compile_args.size() + shader_defines.size() * 2);
 
-   if (const auto hr =
-          D3DCompileFromFile(desc.file.c_str(), macros.data(), &file_includer,
-                             desc.entrypoint.data(), get_target(desc).c_str(),
-                             flags, 0, bytecode.clear_and_assign(),
-                             error.clear_and_assign());
-       FAILED(hr)) {
-      if (error) {
-         std::cerr << std::string_view{static_cast<const char*>(error->GetBufferPointer()),
-                                       error->GetBufferSize()}
-                   << "\n";
-      }
-      else {
-         std::cerr << "Error while compiling shader!\n"; // TODO: HR printing.
-      }
+   compile_args.insert(compile_args.begin(), static_compile_args.begin(),
+                       static_compile_args.end());
+
+   for (auto& define : shader_defines) {
+      compile_args.push_back(L"-D");
+      compile_args.push_back(define.c_str());
+   }
+
+   // open source file
+   utility::com_ptr<IDxcBlobEncoding> source_blob;
+
+   if (FAILED(utils->LoadFile(desc.file.c_str(), nullptr,
+                              source_blob.clear_and_assign()))) {
+      std::cerr << std::format("Unable to load file {} for shader {}\n"sv,
+                               desc.file.string(), desc.name);
 
       return {nullptr, {}};
    }
 
-   std::cout << fmt::format("Compiled '{}' {}\n", desc.name, desc.file.string());
+   const DxcBuffer source{.Ptr = source_blob->GetBufferPointer(),
+                          .Size = source_blob->GetBufferSize(),
+                          .Encoding = DXC_CP_ACP};
 
-   return {bytecode,
-           {file_includer.dependencies.begin(), file_includer.dependencies.end()}};
+   utility::com_ptr<IDxcResult> results;
+   compiler->Compile(&source, compile_args.data(),
+                     static_cast<UINT32>(compile_args.size()), &includer,
+                     IID_PPV_ARGS(results.clear_and_assign()));
+
+   utility::com_ptr<IDxcBlobUtf8> errors;
+   results->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(errors.clear_and_assign()), nullptr);
+
+   if (errors != nullptr && errors->GetStringLength() != 0) {
+      std::cerr << std::format("Warnings and Errors from Compiling {}:\n{}\n"sv,
+                               desc.name, errors->GetStringPointer());
+   }
+
+   HRESULT status;
+   results->GetStatus(&status);
+
+   if (FAILED(status)) {
+      std::cerr << std::format("Compiling {} failed!\n"sv, desc.name);
+
+      return {nullptr, {}};
+   }
+
+   utility::com_ptr<IDxcBlob> dxc_shader;
+   utility::com_ptr<IDxcBlobUtf16> shader_name;
+   results->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(dxc_shader.clear_and_assign()),
+                      shader_name.clear_and_assign());
+
+   utility::com_ptr<IDxcBlob> pdb_blob;
+   utility::com_ptr<IDxcBlobUtf16> pdb_name;
+   results->GetOutput(DXC_OUT_PDB, IID_PPV_ARGS(pdb_blob.clear_and_assign()),
+                      pdb_name.clear_and_assign());
+
+   if (pdb_blob != nullptr) {
+      std::ofstream file{pdb_name->GetStringPointer(), std::ios::binary};
+
+      file.write(static_cast<const char*>(pdb_blob->GetBufferPointer()),
+                 pdb_blob->GetBufferSize());
+   }
+
+   utility::com_ptr<ID3DBlob> shader;
+   dxc_shader->QueryInterface(shader.clear_and_assign());
+
+   std::cout << std::format("Compiled {}\n"sv, desc.name);
+
+   return {shader, {includer.dependencies.begin(), includer.dependencies.end()}};
 }
 
 }
@@ -187,6 +260,8 @@ auto compile(const shader_description& desc)
 shader_library::shader_library(std::initializer_list<shader_description> shaders)
 {
    const auto shader_cache = load_shader_cache(shader_cache_path);
+
+   std::filesystem::create_directories(shader_pdb_path);
 
    std::mutex compiled_mutex;
    _compiled_shaders.reserve(shaders.size());
@@ -204,7 +279,7 @@ shader_library::shader_library(std::initializer_list<shader_description> shaders
                        compiled.file_last_write =
                           std::filesystem::last_write_time(desc.file).time_since_epoch();
                        std::tie(compiled.bytecode, compiled.dependencies) =
-                          fxc::compile(desc);
+                          dxc::compile(desc);
                     }
 
                     if (not compiled.bytecode) return;
@@ -232,7 +307,7 @@ auto shader_library::operator[](const std::string_view name) const noexcept
       return {shader->bytecode->GetBufferPointer(), shader->bytecode->GetBufferSize()};
    }
    else {
-      std::cerr << fmt::format("Unable to find shader named '{}'\n", name);
+      std::cerr << std::format("Unable to find shader named '{}'\n", name);
       std::terminate();
    }
 }

@@ -24,9 +24,9 @@ auto type_from_name(const std::string_view name) -> shader_type
 auto shader(const std::string_view name) -> shader_description
 {
    return {.name = std::string{name},
-           .entrypoint = "main",
+           .entrypoint = L"main",
            .type = type_from_name(name),
-           .model = shader_model_5_1,
+           .model = shader_model_6_0,
            .file = fmt::format("worldedit/shaders/{}.hlsl", name)};
 }
 
@@ -34,9 +34,9 @@ auto material_shader(const std::string_view name, const std::string_view file_na
                      std::initializer_list<shader_define> defines) -> shader_description
 {
    return {.name = std::string{name},
-           .entrypoint = "main",
+           .entrypoint = L"main",
            .type = type_from_name(name),
-           .model = shader_model_5_1,
+           .model = shader_model_6_0,
            .file = fmt::format("worldedit/shaders/{}.hlsl", file_name),
            .defines = defines};
 }
@@ -53,11 +53,11 @@ std::initializer_list<shader_description> shader_list =
     shader("mesh_depth_cutoutPS"),
 
     material_shader("mesh_normalPS", "mesh_normalPS",
-                    {{"MATERIAL_ALPHA_CUTOUT", 0}, {"MATERIAL_TRANSPARENT", 0}}),
+                    {{L"MATERIAL_ALPHA_CUTOUT", 0}, {L"MATERIAL_TRANSPARENT", 0}}),
     material_shader("mesh_normal_cutoutPS", "mesh_normalPS",
-                    {{"MATERIAL_ALPHA_CUTOUT", 1}, {"MATERIAL_TRANSPARENT", 0}}),
+                    {{L"MATERIAL_ALPHA_CUTOUT", 1}, {L"MATERIAL_TRANSPARENT", 0}}),
     material_shader("mesh_normal_transparentPS", "mesh_normalPS",
-                    {{"MATERIAL_ALPHA_CUTOUT", 0}, {"MATERIAL_TRANSPARENT", 1}}),
+                    {{L"MATERIAL_ALPHA_CUTOUT", 0}, {L"MATERIAL_TRANSPARENT", 1}}),
 
     shader("terrain_patchVS"),
     shader("terrain_basicPS"),

@@ -26,7 +26,6 @@ enum class shader_type {
 };
 
 enum class shader_model {
-   shader_model_5_1,
    shader_model_6_0,
    shader_model_6_1,
    shader_model_6_2,
@@ -36,7 +35,6 @@ enum class shader_model {
    shader_model_6_6
 };
 
-constexpr auto shader_model_5_1 = shader_model::shader_model_5_1;
 constexpr auto shader_model_6_0 = shader_model::shader_model_6_0;
 constexpr auto shader_model_6_1 = shader_model::shader_model_6_1;
 constexpr auto shader_model_6_2 = shader_model::shader_model_6_2;
@@ -45,20 +43,20 @@ constexpr auto shader_model_6_4 = shader_model::shader_model_6_4;
 constexpr auto shader_model_6_5 = shader_model::shader_model_6_5;
 constexpr auto shader_model_6_6 = shader_model::shader_model_6_6;
 
-struct shader_define_value : std::string {
+struct shader_define_value : std::wstring {
    shader_define_value() = default;
 
-   shader_define_value(long long v) : std::string{std::to_string(v)} {}
+   shader_define_value(long long v) : std::wstring{std::to_wstring(v)} {}
 
    template<typename... T,
             typename = std::enable_if_t<not(... and std::is_integral_v<std::decay_t<T>>)>>
-   shader_define_value(T&&... args) : std::string{std::forward<T>(args)...}
+   shader_define_value(T&&... args) : std::wstring{std::forward<T>(args)...}
    {
    }
 };
 
 struct shader_define {
-   std::string var;
+   std::wstring var;
    shader_define_value value;
 
    bool operator==(const shader_define&) const noexcept = default;
@@ -69,7 +67,7 @@ using shader_defines =
 
 struct shader_description {
    std::string name;
-   std::string entrypoint;
+   std::wstring entrypoint;
    shader_type type;
    shader_model model;
    std::filesystem::path file;

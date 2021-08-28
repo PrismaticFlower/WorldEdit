@@ -8,8 +8,6 @@
 
 #include <fstream>
 
-#include <d3dcompiler.h>
-
 namespace we::graphics {
 
 namespace {
@@ -96,7 +94,7 @@ auto load_shader_cache(const std::filesystem::path& path)
 
       for (std::size_t i = 0; i < shader_count; ++i) {
          shader_description desc{.name = read_string(reader),
-                                 .entrypoint = read_string(reader),
+                                 .entrypoint = read_wstring(reader),
                                  .type = shader_type{reader.read<uint8>()},
                                  .file = read_wstring(reader)};
 
@@ -106,7 +104,7 @@ auto load_shader_cache(const std::filesystem::path& path)
 
          for (std::size_t j = 0; j < define_count; ++j) {
             desc.defines.push_back(
-               {.var = read_string(reader), .value = read_string(reader)});
+               {.var = read_wstring(reader), .value = read_wstring(reader)});
          }
 
          const auto bytecode_size = reader.read<uint32>();
@@ -149,7 +147,6 @@ auto load_shader_cache(const std::filesystem::path& path)
 void save_shader_cache(const std::filesystem::path& path,
                        const std::span<const compiled_shader> shaders)
 {
-   std::filesystem::create_directories(path.parent_path());
    std::ofstream out_file{path, std::ios::binary};
    utility::binary_stream_writer out{out_file};
 
@@ -159,15 +156,15 @@ void save_shader_cache(const std::filesystem::path& path,
 
    for (auto& shader : shaders) {
       write_string(out, shader.name);
-      write_string(out, shader.entrypoint);
+      write_wstring(out, shader.entrypoint);
       out.write(static_cast<uint8>(shader.type));
       write_wstring(out, shader.file.native());
 
       out.write(static_cast<uint32>(shader.defines.size()));
 
       for (auto& define : shader.defines) {
-         write_string(out, define.var);
-         write_string(out, define.value);
+         write_wstring(out, define.var);
+         write_wstring(out, define.value);
       }
 
       out.write(static_cast<uint32>(shader.bytecode->GetBufferSize()));
