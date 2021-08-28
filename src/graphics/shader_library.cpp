@@ -174,7 +174,7 @@ auto compile(const shader_description& desc)
       desc.entrypoint.c_str(),
       L"-T",
       target.c_str(),
-      L"-Zi", // enable debug information
+      L"-Zs", // enable debug information
       L"-Fd",
       pdb_path.c_str(),
       L"-Qstrip_reflect",
