@@ -30,7 +30,7 @@ namespace we::graphics {
 namespace {
 
 const std::filesystem::path shader_cache_path = L"shaders.bin"sv;
-const std::filesystem::path shader_pdb_path = L"worldedit/shaders/pdb/"sv;
+const std::filesystem::path shader_pdb_path = L"shaders/pdb/"sv;
 
 namespace dxc {
 
