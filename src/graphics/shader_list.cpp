@@ -52,12 +52,9 @@ std::initializer_list<shader_description> shader_list =
     shader("mesh_depth_prepassVS"),
     shader("mesh_depth_cutoutPS"),
 
-    material_shader("mesh_normalPS", "mesh_normalPS",
-                    {{L"MATERIAL_ALPHA_CUTOUT", 0}, {L"MATERIAL_TRANSPARENT", 0}}),
-    material_shader("mesh_normal_cutoutPS", "mesh_normalPS",
-                    {{L"MATERIAL_ALPHA_CUTOUT", 1}, {L"MATERIAL_TRANSPARENT", 0}}),
+    material_shader("mesh_normalPS", "mesh_normalPS", {{L"MATERIAL_TRANSPARENT", 0}}),
     material_shader("mesh_normal_transparentPS", "mesh_normalPS",
-                    {{L"MATERIAL_ALPHA_CUTOUT", 0}, {L"MATERIAL_TRANSPARENT", 1}}),
+                    {{L"MATERIAL_TRANSPARENT", 1}}),
 
     shader("terrain_patchVS"),
     shader("terrain_basicPS"),

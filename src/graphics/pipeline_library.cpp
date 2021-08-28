@@ -172,8 +172,8 @@ constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_enabled =
 
 constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_equal =
    {.DepthEnable = true,
-    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
-    .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
+    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
+    .DepthFunc = D3D12_COMPARISON_FUNC_EQUAL,
     .StencilEnable = false,
     .StencilReadMask = 0,
     .StencilWriteMask = 0,
@@ -254,10 +254,7 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
       const auto flags = static_cast<material_pipeline_flags>(i);
 
       const auto ps_name = fmt::format(name, [&] {
-         if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) {
-            return "_cutout";
-         }
-         else if (are_flags_set(flags, material_pipeline_flags::transparent)) {
+         if (are_flags_set(flags, material_pipeline_flags::transparent)) {
             return "_transparent";
          }
 
