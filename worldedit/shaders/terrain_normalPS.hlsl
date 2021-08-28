@@ -15,11 +15,10 @@ float4 main(input_vertex input) : SV_Target0
    float total_weight = 0.0;
 
    for (uint i = 0; i < terrain_max_textures; ++i) {
-      [branch] if (!input.active_textures & (1 << i)) continue;
+      [branch] if (!input.active_textures & (1u << i)) continue;
 
       const float weight =
-         texture_weight_maps.Sample(bilinear_clamp_sampler,
-                                    float3(input.terrain_coords, i));
+         texture_weight_maps.Sample(bilinear_clamp_sampler, float3(input.terrain_coords, i));
 
       const float2 texcoords = get_terrain_texcoords(i, positionWS);
 
