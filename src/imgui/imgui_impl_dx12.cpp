@@ -30,10 +30,9 @@
 // DirectX
 #include <d3d12.h>
 #include <dxgi1_4.h>
-#include <d3dcompiler.h>
-#ifdef _MSC_VER
-#pragma comment(lib, "d3dcompiler") // Automatically link with d3dcompiler.lib as we are using D3DCompile() below.
-#endif
+
+#include "g_imgui_vs_main.inl"
+#include "g_imgui_ps_main.inl"
 
 // DirectX data
 static ID3D12Device*                g_pd3dDevice = NULL;
@@ -475,6 +474,7 @@ bool    ImGui_ImplDX12_CreateDeviceObjects()
 
     // Create the vertex shader
     {
+        #if 0
         static const char* vertexShader =
             "cbuffer vertexBuffer : register(b0) \
             {\
@@ -503,11 +503,9 @@ bool    ImGui_ImplDX12_CreateDeviceObjects()
               output.uv  = input.uv;\
               return output;\
             }";
-
-        D3DCompile(vertexShader, strlen(vertexShader), NULL, NULL, NULL, "main", "vs_5_0", 0, 0, &g_pVertexShaderBlob, NULL);
-        if (g_pVertexShaderBlob == NULL) // NB: Pass ID3D10Blob* pErrorBlob to D3DCompile() to get error showing in (const char*)pErrorBlob->GetBufferPointer(). Make sure to Release() the blob!
-            return false;
-        psoDesc.VS = { g_pVertexShaderBlob->GetBufferPointer(), g_pVertexShaderBlob->GetBufferSize() };
+        #endif
+        
+        psoDesc.VS = { &g_imgui_vs_main, sizeof(g_imgui_vs_main) };
 
         // Create the input layout
         static D3D12_INPUT_ELEMENT_DESC local_layout[] = {
@@ -520,6 +518,7 @@ bool    ImGui_ImplDX12_CreateDeviceObjects()
 
     // Create the pixel shader
     {
+        #if 0
         static const char* pixelShader =
             "struct PS_INPUT\
             {\
@@ -535,11 +534,9 @@ bool    ImGui_ImplDX12_CreateDeviceObjects()
               float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
               return out_col; \
             }";
+        #endif
 
-        D3DCompile(pixelShader, strlen(pixelShader), NULL, NULL, NULL, "main", "ps_5_0", 0, 0, &g_pPixelShaderBlob, NULL);
-        if (g_pPixelShaderBlob == NULL)  // NB: Pass ID3D10Blob* pErrorBlob to D3DCompile() to get error showing in (const char*)pErrorBlob->GetBufferPointer(). Make sure to Release() the blob!
-            return false;
-        psoDesc.PS = { g_pPixelShaderBlob->GetBufferPointer(), g_pPixelShaderBlob->GetBufferSize() };
+        psoDesc.PS = { &g_imgui_ps_main, sizeof(g_imgui_ps_main) };
     }
 
     // Create the blending setup

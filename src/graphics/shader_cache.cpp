@@ -8,6 +8,8 @@
 
 #include <fstream>
 
+#include <dxcapi.h>
+
 namespace we::graphics {
 
 namespace {
@@ -69,12 +71,28 @@ bool out_of_date(const std::filesystem::path& path,
    return false;
 }
 
+auto make_blob(IDxcUtils& utils, std::span<const std::byte> dxil)
+   -> utility::com_ptr<ID3DBlob>
+{
+   utility::com_ptr<IDxcBlobEncoding> dxc_blob;
+   throw_if_failed(utils.CreateBlob(dxil.data(), to_uint32(dxil.size()),
+                                    DXC_CP_ACP, dxc_blob.clear_and_assign()));
+
+   utility::com_ptr<ID3DBlob> blob;
+   dxc_blob->QueryInterface(blob.clear_and_assign());
+
+   return blob;
+}
+
 }
 
 auto load_shader_cache(const std::filesystem::path& path)
    -> std::unordered_map<shader_description, shader_cache_entry>
 {
    if (not std::filesystem::exists(path)) return {};
+
+   utility::com_ptr<IDxcUtils> utils;
+   DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.clear_and_assign()));
 
    try {
       auto file = utility::read_file_to_bytes(path);
@@ -107,16 +125,10 @@ auto load_shader_cache(const std::filesystem::path& path)
                {.var = read_wstring(reader), .value = read_wstring(reader)});
          }
 
-         const auto bytecode_size = reader.read<uint32>();
-         const auto bytecode_span = reader.read_bytes(bytecode_size);
+         const auto dxil_size = reader.read<uint32>();
+         const auto dxil_span = reader.read_bytes(dxil_size);
 
          shader_cache_entry entry;
-
-         throw_if_failed(D3DCreateBlob(bytecode_span.size(),
-                                       entry.bytecode.clear_and_assign()));
-
-         std::memcpy(entry.bytecode->GetBufferPointer(), bytecode_span.data(),
-                     bytecode_span.size());
 
          entry.file_last_write =
             reader.read<std::filesystem::file_time_type::duration>();
@@ -133,6 +145,8 @@ auto load_shader_cache(const std::filesystem::path& path)
          }
 
          if (not out_of_date(desc.file, entry.file_last_write, entry.dependencies)) {
+            entry.bytecode = make_blob(*utils, dxil_span);
+
             result.emplace(std::move(desc), std::move(entry));
          }
       }

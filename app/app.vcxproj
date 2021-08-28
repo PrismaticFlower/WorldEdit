@@ -79,7 +79,7 @@
     <PostBuildEvent>
       <Command>copy "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(OutputPath)"
 copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"</Command>
-      <Message>Copying D3D Compilers...</Message>
+      <Message>Copying dxcompiler...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -111,7 +111,7 @@ copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"</Command>
     <PostBuildEvent>
       <Command>copy "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(OutputPath)"
 copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"</Command>
-      <Message>Copying D3D Compilers...</Message>
+      <Message>Copying dxcompiler...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
