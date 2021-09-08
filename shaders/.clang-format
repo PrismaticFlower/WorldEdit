@@ -22,7 +22,6 @@ SpaceAfterTemplateKeyword: 'false'
 Cpp11BracedListStyle: 'true'
 ConstructorInitializerIndentWidth: '3'
 ContinuationIndentWidth: '3'
-PenaltyReturnTypeOnItsOwnLine: '200'
 PenaltyBreakBeforeFirstCallParameter: '200'
 PenaltyExcessCharacter: '2'
 ...

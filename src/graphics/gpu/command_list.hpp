@@ -150,6 +150,8 @@ public:
 
    void flush_deferred_resource_barriers()
    {
+      if (_deferred_barriers.empty()) return;
+
       _command_list->ResourceBarrier(static_cast<UINT>(_deferred_barriers.size()),
                                      _deferred_barriers.data());
 

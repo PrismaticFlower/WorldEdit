@@ -1,6 +1,7 @@
 
 #include "light_clusters.hpp"
 #include "gpu/barrier_helpers.hpp"
+#include "math/align.hpp"
 #include "world/world_utilities.hpp"
 
 #include <cmath>
@@ -12,8 +13,48 @@ namespace we::graphics {
 
 namespace {
 
+constexpr auto shadow_res = 2048;
+constexpr auto cascade_count = 4;
+constexpr auto light_tile_size = 8;
+constexpr auto light_description_size = 64;
+constexpr auto max_tile_lights = 32;
+constexpr auto max_lights =
+   (D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16) / light_description_size;
+constexpr auto max_regional_lights = 512;
+
 enum class light_type : uint32 { directional, point, spot };
 enum class directional_region_type : uint32 { none, box, sphere, cylinder };
+
+struct alignas(16) tiles_position_info {
+   float2 tiles_startVS;
+   float2 tile_lengthVS;
+};
+
+struct alignas(256) tile_culling_inputs {
+   std::array<uint32, 2> tile_counts;
+   uint32 light_count;
+   uint32 padding0{};
+
+   tiles_position_info tiles_position_info;
+
+   std::array<float4, max_lights> light_bounding_spheresVS;
+};
+
+static_assert(sizeof(tile_culling_inputs) == 16640);
+
+struct alignas(256) light_constants {
+   uint32 light_count = 0;
+   std::array<uint32, 3> padding0;
+   float3 sky_ambient_color;
+   uint32 padding1;
+   float3 ground_ambient_color;
+   uint32 padding2;
+   std::array<float4x4, 4> shadow_transforms;
+   float2 shadow_resolution;
+   float2 inv_shadow_resolution;
+};
+
+static_assert(sizeof(light_constants) == 512);
 
 struct light_description {
    float3 direction;
@@ -28,34 +69,7 @@ struct light_description {
    uint32 padding;
 };
 
-static_assert(sizeof(light_description) == 64);
-
-struct global_light_constants {
-   uint32 light_count = 0;
-   std::array<uint32, 3> padding0;
-   float3 sky_ambient_color;
-   uint32 padding1;
-   float3 ground_ambient_color;
-   uint32 padding2;
-   std::array<float4x4, 4> shadow_transforms;
-   float2 shadow_resolution;
-   float2 inv_shadow_resolution;
-};
-
-static_assert(sizeof(global_light_constants) == 320);
-
-constexpr auto max_lights =
-   ((D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16) - sizeof(global_light_constants)) /
-   sizeof(light_description);
-constexpr auto max_regional_lights = 512;
-
-struct light_constants {
-   global_light_constants global;
-
-   std::array<light_description, max_lights> lights;
-};
-
-static_assert(sizeof(light_constants) == D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16);
+static_assert(sizeof(light_description) == light_description_size);
 
 struct light_region_description {
    float4x4 inverse_transform;
@@ -67,18 +81,77 @@ struct light_region_description {
 
 static_assert(sizeof(light_region_description) == 96);
 
-constexpr auto shadow_res = 2048;
-constexpr auto cascade_count = 4;
+struct light_index {
+   std::array<uint16, 32> light_index;
+};
+
+static_assert(sizeof(light_index) == 64);
+
+auto transform(const float4x4& matrix, float4 position) -> float4
+{
+   position = matrix * position;
+   position /= position.w;
+
+   return position;
+}
+
+auto transform(const float4x4& matrix, float3 position) -> float3
+{
+   return transform(matrix, float4{position, 1.0f});
+}
+
+auto make_tiles_position_info(const camera& view_camera, const float width,
+                              const float height) noexcept -> tiles_position_info
+{
+   constexpr float tile_size = light_tile_size;
+
+   float4 top{0.0f, 0.0f, 1.0f, 1.0f};
+   float4 bottom{tile_size, tile_size, 1.0f, 1.0f};
+
+   // normalize screen space coords
+   bottom.x /= width;
+   bottom.y /= height;
+
+   // flip Y axis for NDC coords
+   top.y = 1.0f - top.y;
+   bottom.y = 1.0f - bottom.y;
+
+   // make NDC coords
+   top.x = top.x * 2.0f - 1.0f;
+   top.y = top.y * 2.0f - 1.0f;
+   bottom.x = bottom.x * 2.0f - 1.0f;
+   bottom.y = bottom.y * 2.0f - 1.0f;
+
+   // make view space coords
+   top = transform(view_camera.inv_projection_matrix(), top);
+   bottom = transform(view_camera.inv_projection_matrix(), bottom);
+
+   float2 tile_lengthVS{glm::distance(top.x, bottom.x),
+                        glm::distance(top.y, bottom.y)};
+   float2 tiles_startVS = float2{top.x, top.y} + tile_lengthVS * 0.5f;
+
+   return {.tiles_startVS = tiles_startVS, .tile_lengthVS = tile_lengthVS};
+}
 
 }
 
-light_clusters::light_clusters(gpu::device& gpu_device)
+light_clusters::light_clusters(gpu::device& gpu_device, uint32 render_width,
+                               uint32 render_height)
    : _gpu_device{&gpu_device}
 {
-   _lights_constant_buffer =
-      gpu_device.create_buffer({.size = sizeof(light_constants)},
+   _tile_culling_inputs =
+      gpu_device.create_buffer({.size = sizeof(tile_culling_inputs)},
                                D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
-   _regional_lights_buffer =
+
+   _lights_constants = gpu_device.create_buffer({.size = sizeof(light_constants)},
+                                                D3D12_HEAP_TYPE_DEFAULT,
+                                                D3D12_RESOURCE_STATE_COMMON);
+
+   _lights_list =
+      gpu_device.create_buffer({.size = sizeof(light_description) * max_lights},
+                               D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+
+   _lights_region_list =
       gpu_device.create_buffer({.size = sizeof(light_region_description) *
                                         max_regional_lights},
                                D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
@@ -108,6 +181,48 @@ light_clusters::light_clusters(gpu::device& gpu_device)
                                                       &desc, _shadow_map_dsv[i].cpu);
    }
 
+   update_render_resolution(render_width, render_height, false);
+   update_descriptors();
+}
+
+void light_clusters::update_render_resolution(uint32 width, uint32 height)
+{
+   update_render_resolution(width, height, true);
+}
+
+void light_clusters::update_render_resolution(uint32 width, uint32 height,
+                                              bool recreate_descriptors)
+{
+   const uint32 aligned_width = math::align_up(width, light_tile_size);
+   const uint32 aligned_height = math::align_up(height, light_tile_size);
+   const uint32 tiles_width = aligned_width / light_tile_size;
+   const uint32 tiles_height = aligned_height / light_tile_size;
+   const uint32 tiles_count = tiles_width * tiles_height;
+
+   _lights_tiles =
+      _gpu_device->create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+                                   .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+                                   .format = DXGI_FORMAT_R32_UINT,
+                                   .width = tiles_width,
+                                   .height = tiles_height},
+                                  D3D12_RESOURCE_STATE_COMMON);
+
+   _lights_index =
+      _gpu_device->create_buffer({.size = sizeof(light_index) * tiles_count,
+                                  .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS},
+                                 D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+
+   _tiles_count = tiles_count;
+   _tiles_width = tiles_width;
+   _tiles_height = tiles_height;
+   _render_width = static_cast<float>(width);
+   _render_height = static_cast<float>(height);
+
+   if (recreate_descriptors) update_descriptors();
+}
+
+void light_clusters::update_descriptors()
+{
    // _resource_views = _gpu_device->create_resource_view_set(std::array{
    // gpu::resource_view_desc{
    //    .resource = *_lights_constant_buffer.resource(),
@@ -131,51 +246,96 @@ light_clusters::light_clusters(gpu::device& gpu_device)
    //                            .type_description = gpu::texture2d_srv{}}}});
 
    // Above ICEs, convoluted workaround below
-   std::array resource_view_descs{
-      gpu::resource_view_desc{.resource = _lights_constant_buffer.resource()},
 
-      gpu::resource_view_desc{.resource = _regional_lights_buffer.resource()},
+   std::array resource_view_descs{
+      gpu::resource_view_desc{.resource = _lights_constants.resource()},
+
+      gpu::resource_view_desc{.resource = _lights_tiles.resource()},
+
+      gpu::resource_view_desc{.resource = _lights_index.resource()},
+
+      gpu::resource_view_desc{.resource = _lights_list.resource()},
+
+      gpu::resource_view_desc{.resource = _lights_region_list.resource()},
 
       gpu::resource_view_desc{.resource = _shadow_map.resource()}};
 
    resource_view_descs[0].view_desc =
       gpu::constant_buffer_view{.buffer_location =
-                                   _lights_constant_buffer.gpu_virtual_address(),
-                                .size = _lights_constant_buffer.size()};
+                                   _lights_constants.gpu_virtual_address(),
+                                .size = _lights_constants.size()};
 
-   resource_view_descs[1].view_desc = gpu::shader_resource_view_desc{
+   resource_view_descs[1].view_desc =
+      gpu::shader_resource_view_desc{.format = DXGI_FORMAT_R32_UINT,
+                                     .type_description = gpu::texture2d_srv{}};
+
+   resource_view_descs[2].view_desc = gpu::shader_resource_view_desc{
+      .type_description =
+         gpu::buffer_srv{.first_element = 0,
+                         .number_elements = _tiles_count,
+                         .structure_byte_stride = sizeof(light_index)}};
+
+   resource_view_descs[3].view_desc =
+      gpu::constant_buffer_view{.buffer_location = _lights_list.gpu_virtual_address(),
+                                .size = _lights_list.size()};
+
+   resource_view_descs[4].view_desc = gpu::shader_resource_view_desc{
       .type_description = gpu::buffer_srv{.first_element = 0,
                                           .number_elements = max_regional_lights,
                                           .structure_byte_stride =
-
                                              sizeof(light_region_description)}};
-   resource_view_descs[2].view_desc =
+
+   resource_view_descs[5].view_desc =
       gpu::shader_resource_view_desc{.format = DXGI_FORMAT_R32_FLOAT,
                                      .type_description = gpu::texture2d_array_srv{
                                         .array_size = cascade_count}};
 
    _resource_views = _gpu_device->create_resource_view_set(resource_view_descs);
+
+   std::array tile_culling_resource_views_descs{
+      gpu::resource_view_desc{.resource = _tile_culling_inputs.resource()},
+
+      gpu::resource_view_desc{.resource = _lights_tiles.resource()},
+
+      gpu::resource_view_desc{.resource = _lights_index.resource()}};
+
+   tile_culling_resource_views_descs[0].view_desc =
+      gpu::constant_buffer_view{.buffer_location =
+                                   _tile_culling_inputs.gpu_virtual_address(),
+                                .size = _tile_culling_inputs.size()};
+
+   tile_culling_resource_views_descs[1].view_desc =
+      gpu::unordered_access_view_desc{.format = DXGI_FORMAT_R32_UINT,
+                                      .type_description = gpu::texture2d_uav{}};
+
+   tile_culling_resource_views_descs[2].view_desc = gpu::unordered_access_view_desc{
+      .type_description =
+         gpu::buffer_uav{.first_element = 0,
+                         .number_elements = _tiles_count,
+                         .structure_byte_stride = sizeof(light_index)}};
+
+   _tile_culling_resource_views =
+      _gpu_device->create_resource_view_set(tile_culling_resource_views_descs);
 }
 
-void light_clusters::update_lights(const frustrum& view_frustrum,
-                                   const world::world& world,
-                                   gpu::graphics_command_list& command_list,
-                                   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
+void light_clusters::update_lights(
+   const camera& view_camera, const frustrum& view_frustrum,
+   const world::world& world, root_signature_library& root_signatures,
+   pipeline_library& pipelines, gpu::graphics_command_list& command_list,
+   gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   light_constants light_constants{
-      .global = {.light_count = 0,
-                 .sky_ambient_color = world.lighting_settings.ambient_sky_color,
-                 .ground_ambient_color = world.lighting_settings.ambient_ground_color,
-                 .shadow_transforms = _shadow_cascade_transforms,
-                 .shadow_resolution = {shadow_res, shadow_res},
-                 .inv_shadow_resolution = {1.0f / shadow_res, 1.0f / shadow_res}}};
-
+   boost::container::static_vector<light_description, max_lights> lights;
    boost::container::static_vector<light_region_description, max_regional_lights> regional_lights_descriptions;
 
-   uint32& light_count = light_constants.global.light_count;
+   tile_culling_inputs tile_culling_inputs{.tile_counts = {_tiles_width, _tiles_height},
+                                           .tiles_position_info =
+                                              make_tiles_position_info(view_camera, _render_width,
+                                                                       _render_height)};
 
    for (auto& light : world.lights) {
-      if (light_count >= light_constants.lights.size()) break;
+      if (lights.size() >= max_lights) break;
+
+      const std::size_t light_index = lights.size();
 
       switch (light.light_type) {
       case world::light_type::directional: {
@@ -212,12 +372,16 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                    .type = directional_region_type::box,
                    .size = region->size});
 
-               light_constants.lights[light_count++] =
-                  {.direction = light_direction,
-                   .type = light_type::directional,
-                   .color = light.color,
-                   .region_type = directional_region_type::box,
-                   .directional_region_index = region_description_index};
+               lights.push_back({.direction = light_direction,
+                                 .type = light_type::directional,
+                                 .color = light.color,
+                                 .region_type = directional_region_type::box,
+                                 .directional_region_index = region_description_index});
+
+               tile_culling_inputs.light_bounding_spheresVS[light_index] =
+                  {transform(view_camera.view_matrix(), region->position),
+                   std::max({region->size.x, region->size.y, region->size.z})};
+
                break;
             }
             case world::region_shape::sphere: {
@@ -227,12 +391,16 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                    .type = directional_region_type::sphere,
                    .size = float3{glm::length(region->size)}});
 
-               light_constants.lights[light_count++] =
-                  {.direction = light_direction,
-                   .type = light_type::directional,
-                   .color = light.color,
-                   .region_type = directional_region_type::sphere,
-                   .directional_region_index = region_description_index};
+               lights.push_back({.direction = light_direction,
+                                 .type = light_type::directional,
+                                 .color = light.color,
+                                 .region_type = directional_region_type::sphere,
+                                 .directional_region_index = region_description_index});
+
+               tile_culling_inputs.light_bounding_spheresVS[light_index] =
+                  {transform(view_camera.view_matrix(), region->position),
+                   glm::length(region->size)};
+
                break;
             }
             case world::region_shape::cylinder: {
@@ -245,22 +413,28 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
                    .type = directional_region_type::cylinder,
                    .size = float3{radius, region->size.y, radius}});
 
-               light_constants.lights[light_count++] =
-                  {.direction = light_direction,
-                   .type = light_type::directional,
-                   .color = light.color,
-                   .region_type = directional_region_type::cylinder,
-                   .directional_region_index = region_description_index};
+               lights.push_back({.direction = light_direction,
+                                 .type = light_type::directional,
+                                 .color = light.color,
+                                 .region_type = directional_region_type::cylinder,
+                                 .directional_region_index = region_description_index});
+
+               tile_culling_inputs.light_bounding_spheresVS[light_index] =
+                  {transform(view_camera.view_matrix(), region->position),
+                   std::max(radius, region->size.y)};
+
                break;
             }
             }
          }
          else {
-            light_constants.lights[light_count++] = {.direction = light_direction,
-                                                     .type = light_type::directional,
-                                                     .color = light.color,
-                                                     .region_type =
-                                                        directional_region_type::none};
+            lights.push_back({.direction = light_direction,
+                              .type = light_type::directional,
+                              .color = light.color,
+                              .region_type = directional_region_type::none});
+
+            tile_culling_inputs.light_bounding_spheresVS[light_index] = {float3{0.0f},
+                                                                         1e10f};
          }
 
          break;
@@ -270,10 +444,13 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
             continue;
          }
 
-         light_constants.lights[light_count++] = {.type = light_type::point,
-                                                  .position = light.position,
-                                                  .range = light.range,
-                                                  .color = light.color};
+         lights.push_back({.type = light_type::point,
+                           .position = light.position,
+                           .range = light.range,
+                           .color = light.color});
+
+         tile_culling_inputs.light_bounding_spheresVS[light_index] =
+            {transform(view_camera.view_matrix(), light.position), light.range};
 
          break;
       }
@@ -293,7 +470,7 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
             continue;
          }
 
-         light_constants.lights[light_count++] =
+         lights.push_back(
             {.direction = light_direction,
              .type = light_type::spot,
              .position = light.position,
@@ -301,54 +478,119 @@ void light_clusters::update_lights(const frustrum& view_frustrum,
              .color = light.color,
              .spot_outer_param = std::cos(light.outer_cone_angle / 2.0f),
              .spot_inner_param = 1.0f / (std::cos(light.inner_cone_angle / 2.0f) -
-                                         std::cos(light.outer_cone_angle / 2.0f))};
+                                         std::cos(light.outer_cone_angle / 2.0f))});
+
+         tile_culling_inputs.light_bounding_spheresVS[light_index] =
+            {transform(view_camera.view_matrix(), light_centre), light_bounds_radius};
 
          break;
       }
       }
    }
 
+   // copy tile culling inputs
    {
+      tile_culling_inputs.light_count = to_uint32(lights.size());
+
+      auto upload_buffer =
+         dynamic_buffer_allocator.allocate(sizeof(tile_culling_inputs));
+
+      std::memcpy(upload_buffer.cpu_address, &tile_culling_inputs,
+                  sizeof(tile_culling_inputs));
+
+      command_list.copy_buffer_region(*_tile_culling_inputs.resource(), 0,
+                                      *dynamic_buffer_allocator.view_resource(),
+                                      upload_buffer.gpu_address -
+                                         dynamic_buffer_allocator.gpu_base_address(),
+                                      sizeof(tile_culling_inputs));
    }
 
-   auto upload_buffer = dynamic_buffer_allocator.allocate(sizeof(light_constants));
+   // copy global light constants
+   {
+      light_constants light_constants{
+         .light_count = to_uint32(lights.size()),
+         .sky_ambient_color = world.lighting_settings.ambient_sky_color,
+         .ground_ambient_color = world.lighting_settings.ambient_ground_color,
+         .shadow_transforms = _shadow_cascade_transforms,
+         .shadow_resolution = {shadow_res, shadow_res},
+         .inv_shadow_resolution = {1.0f / shadow_res, 1.0f / shadow_res}};
 
-   std::memcpy(upload_buffer.cpu_address, &light_constants, sizeof(light_constants));
+      auto upload_buffer = dynamic_buffer_allocator.allocate(sizeof(light_constants));
 
-   command_list.copy_buffer_region(*_lights_constant_buffer.resource(), 0,
-                                   *dynamic_buffer_allocator.view_resource(),
-                                   upload_buffer.gpu_address -
-                                      dynamic_buffer_allocator.gpu_base_address(),
-                                   sizeof(light_constants));
+      std::memcpy(upload_buffer.cpu_address, &light_constants, sizeof(light_constants));
 
-   const auto regional_lights_descriptions_size =
-      sizeof(light_region_description) * regional_lights_descriptions.size();
+      command_list.copy_buffer_region(*_lights_constants.resource(), 0,
+                                      *dynamic_buffer_allocator.view_resource(),
+                                      upload_buffer.gpu_address -
+                                         dynamic_buffer_allocator.gpu_base_address(),
+                                      sizeof(light_constants));
+   }
 
-   upload_buffer =
-      dynamic_buffer_allocator.allocate(regional_lights_descriptions_size);
+   // copy light list
+   {
+      const auto lights_list_size = sizeof(light_description) * lights.size();
 
-   std::memcpy(upload_buffer.cpu_address, regional_lights_descriptions.data(),
-               regional_lights_descriptions_size);
+      auto upload_buffer = dynamic_buffer_allocator.allocate(lights_list_size);
 
-   command_list.copy_buffer_region(*_regional_lights_buffer.resource(), 0,
-                                   *dynamic_buffer_allocator.view_resource(),
-                                   upload_buffer.gpu_address -
-                                      dynamic_buffer_allocator.gpu_base_address(),
-                                   regional_lights_descriptions_size);
+      std::memcpy(upload_buffer.cpu_address, lights.data(), lights_list_size);
 
-   const std::array barriers{
-      gpu::transition_barrier(*_lights_constant_buffer.resource(),
-                              D3D12_RESOURCE_STATE_COPY_DEST,
+      command_list.copy_buffer_region(*_lights_list.resource(), 0,
+                                      *dynamic_buffer_allocator.view_resource(),
+                                      upload_buffer.gpu_address -
+                                         dynamic_buffer_allocator.gpu_base_address(),
+                                      lights_list_size);
+   }
+
+   // copy regional lights
+   {
+      const auto regional_lights_descriptions_size =
+         sizeof(light_region_description) * regional_lights_descriptions.size();
+
+      auto upload_buffer =
+         dynamic_buffer_allocator.allocate(regional_lights_descriptions_size);
+
+      std::memcpy(upload_buffer.cpu_address, regional_lights_descriptions.data(),
+                  regional_lights_descriptions_size);
+
+      command_list.copy_buffer_region(*_lights_region_list.resource(), 0,
+                                      *dynamic_buffer_allocator.view_resource(),
+                                      upload_buffer.gpu_address -
+                                         dynamic_buffer_allocator.gpu_base_address(),
+                                      regional_lights_descriptions_size);
+   }
+
+   command_list.deferred_resource_barrier(std::array{
+      gpu::transition_barrier(*_tile_culling_inputs.resource(), D3D12_RESOURCE_STATE_COPY_DEST,
                               D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER),
-      gpu::transition_barrier(*_regional_lights_buffer.resource(),
-                              D3D12_RESOURCE_STATE_COPY_DEST,
-                              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)};
+      gpu::transition_barrier(*_lights_constants.resource(), D3D12_RESOURCE_STATE_COPY_DEST,
+                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER),
+      gpu::transition_barrier(*_lights_list.resource(), D3D12_RESOURCE_STATE_COPY_DEST,
+                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER),
+      gpu::transition_barrier(*_lights_region_list.resource(), D3D12_RESOURCE_STATE_COPY_DEST,
+                              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+      gpu::transition_barrier(*_lights_tiles.resource(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                              D3D12_RESOURCE_STATE_UNORDERED_ACCESS)});
+   command_list.flush_deferred_resource_barriers();
 
-   command_list.deferred_resource_barrier(barriers);
+   command_list.set_compute_root_signature(*root_signatures.tile_lights);
+   command_list.set_compute_root_descriptor_table(rs::tile_lights::descriptor_table,
+                                                  _tile_culling_resource_views.descriptors());
+
+   command_list.set_pipeline_state(*pipelines.tile_lights);
+
+   command_list.dispatch(math::align_up(_tiles_width, 8) / 8,
+                         math::align_up(_tiles_height, 8) / 8, 1);
+
+   command_list.deferred_resource_barrier(
+      std::array{gpu::transition_barrier(*_lights_tiles.resource(),
+                                         D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                                         D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE),
+                 gpu::transition_barrier(*_lights_index.resource(),
+                                         D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                                         D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)});
 }
 
 namespace {
-
 class shadow_camera : public camera {
 public:
    shadow_camera() noexcept
@@ -410,6 +652,7 @@ private:
       _view_projection_matrix[3].x += _stabilization.x;
       _view_projection_matrix[3].y += _stabilization.y;
 
+      _inv_projection_matrix = glm::inverse(double4x4{_projection_matrix});
       _inv_view_projection_matrix = glm::inverse(double4x4{_view_projection_matrix});
 
       constexpr float4x4 bias_matrix{0.5f, 0.0f,  0.0f, 0.0f, //

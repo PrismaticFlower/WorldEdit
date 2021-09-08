@@ -1,5 +1,6 @@
 
-#define MAX_LIGHTS 1019
+#define MAX_LIGHTS 1024
+#define LIGHT_REGISTER_SPACE space3
 
 namespace light_type {
 const static uint directional = 0;
@@ -27,6 +28,10 @@ struct light_description {
    uint padding;
 };
 
+struct light_descriptions {
+   light_description lights[MAX_LIGHTS];
+};
+
 struct light_constant_buffer {
    uint light_count;
    uint3 padding0;
@@ -37,8 +42,6 @@ struct light_constant_buffer {
    float4x4 shadow_cascade_transforms[4];
    float2 shadow_map_resolution;
    float2 inv_shadow_map_resolution;
-
-   light_description lights[MAX_LIGHTS];
 };
 
 struct light_region_description {
@@ -47,6 +50,25 @@ struct light_region_description {
    uint type;
    float3 size;
    uint padding;
+};
+
+struct light_index {
+   uint light_index[16];
+
+   uint get(uint i)
+   {
+      return (i & 1 ? (light_index[i / 2] >> 16) : (light_index[i / 2])) & 0xffff;
+   }
+
+   void set(uint i, uint value)
+   {
+      if (i & 1) {
+         light_index[i / 2] |= (value << 16);
+      }
+      else {
+         light_index[i / 2] |= value;
+      }
+   }
 };
 
 struct calculate_light_inputs {
@@ -59,10 +81,13 @@ const static float region_fade_distance_sq = 0.1 * 0.1;
 const static float cascade_fade_distance = 0.1;
 const static int shadow_cascade_count = 4;
 
-ConstantBuffer<light_constant_buffer> light_constants : register(b0, space3);
-StructuredBuffer<light_region_description> light_region_descriptions : register(t0, space3);
-Texture2DArray<float> TEMP_shadowmap : register(t1, space3);
-SamplerComparisonState shadow_sampler : register(s2, space3);
+ConstantBuffer<light_constant_buffer> light_constants : register(b0, LIGHT_REGISTER_SPACE);
+Texture2D<uint> light_tiles : register(t1, LIGHT_REGISTER_SPACE);
+StructuredBuffer<light_index> light_tile_indices : register(t2, LIGHT_REGISTER_SPACE);
+ConstantBuffer<light_descriptions> light_list : register(b3, LIGHT_REGISTER_SPACE);
+StructuredBuffer<light_region_description> light_region_list : register(t4, LIGHT_REGISTER_SPACE);
+Texture2DArray<float> TEMP_shadowmap : register(t5, LIGHT_REGISTER_SPACE);
+SamplerComparisonState shadow_sampler : register(s2, LIGHT_REGISTER_SPACE);
 const static float temp_shadow_bias = 0.001;
 
 float shadow_cascade_signed_distance(float3 positionLS)
@@ -222,8 +247,7 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
          region_fade = 1.0;
       }
       else {
-         light_region_description region_desc =
-            light_region_descriptions.Load(light.directional_region_index);
+         light_region_description region_desc = light_region_list.Load(light.directional_region_index);
 
          const float3 positionRS = mul(region_desc.world_to_region, float4(positionWS, 1.0)).xyz;
 
@@ -304,7 +328,7 @@ float3 calculate_lighting(calculate_light_inputs input)
    float3 total_light = calc_ambient_light(input.normalWS);
 
    for (int i = 0; i < light_constants.light_count; ++i) {
-      light_description light = light_constants.lights[i];
+      light_description light = light_list.lights[i];
 
       float strength = calc_light_strength(light, input);
 

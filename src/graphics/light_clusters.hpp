@@ -22,9 +22,13 @@ namespace we::graphics {
 
 class light_clusters {
 public:
-   light_clusters(gpu::device& gpu_device);
+   light_clusters(gpu::device& gpu_device, uint32 render_width, uint32 render_height);
 
-   void update_lights(const frustrum& view_frustrum, const world::world& world,
+   void update_render_resolution(uint32 width, uint32 height);
+
+   void update_lights(const camera& view_camera, const frustrum& view_frustrum,
+                      const world::world& world, root_signature_library& root_signatures,
+                      pipeline_library& pipelines,
                       gpu::graphics_command_list& command_list,
                       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
@@ -38,16 +42,32 @@ public:
    auto light_descriptors() const noexcept -> gpu::descriptor_range;
 
 private:
+   void update_render_resolution(uint32 width, uint32 height, bool recreate_descriptors);
+
+   void update_descriptors();
+
    gsl::not_null<gpu::device*> _gpu_device;
 
-   gpu::buffer _lights_constant_buffer;
-   gpu::buffer _regional_lights_buffer;
+   gpu::buffer _tile_culling_inputs;
+
+   gpu::buffer _lights_constants;
+   gpu::texture _lights_tiles;
+   gpu::buffer _lights_index;
+   gpu::buffer _lights_list;
+   gpu::buffer _lights_region_list;
 
    gpu::texture _shadow_map;
    gpu::descriptor_allocation _shadow_map_dsv;
    std::array<float4x4, 4> _shadow_cascade_transforms;
 
+   gpu::resource_view_set _tile_culling_resource_views;
    gpu::resource_view_set _resource_views;
+
+   uint32 _tiles_count = 0;
+   uint32 _tiles_width = 0;
+   uint32 _tiles_height = 0;
+   float _render_width = 0.0f;
+   float _render_height = 0.0f;
 };
 
 }

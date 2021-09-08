@@ -19,7 +19,7 @@ using gpu_virtual_address = virtual_address;
 
 struct buffer_desc {
    uint32 alignment = 0;
-   uint32 size = 0;
+   uint64 size = 0;
    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 
    operator D3D12_RESOURCE_DESC() const noexcept
@@ -288,11 +288,11 @@ struct shader_resource_view_desc {
 
 struct constant_buffer_view {
    gpu_virtual_address buffer_location;
-   uint32 size;
+   uint64 size;
 
    operator D3D12_CONSTANT_BUFFER_VIEW_DESC() const noexcept
    {
-      return {.BufferLocation = buffer_location, .SizeInBytes = size};
+      return {.BufferLocation = buffer_location, .SizeInBytes = to_uint32(size)};
    }
 };
 

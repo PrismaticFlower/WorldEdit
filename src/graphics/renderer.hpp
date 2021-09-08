@@ -116,7 +116,8 @@ private:
    texture_manager _texture_manager;
    model_manager _model_manager;
    geometric_shapes _geometric_shapes{_device};
-   light_clusters _light_clusters{_device};
+   light_clusters _light_clusters{_device, _device.swap_chain.width(),
+                                  _device.swap_chain.height()};
    terrain _terrain{_device, _texture_manager};
 
    constexpr static std::size_t max_drawn_objects = 2048;

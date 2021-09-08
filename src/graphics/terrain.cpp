@@ -152,7 +152,7 @@ void terrain::draw(const terrain_draw draw, const frustrum& view_frustrum,
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
    command_list.ia_set_index_buffer(
       {.BufferLocation = _index_buffer.gpu_virtual_address(),
-       .SizeInBytes = _index_buffer.size(),
+       .SizeInBytes = _index_buffer.size_u32(),
        .Format = DXGI_FORMAT_R16_UINT});
 
    command_list.draw_indexed_instanced(static_cast<uint32>(

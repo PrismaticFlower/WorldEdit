@@ -67,5 +67,7 @@ std::initializer_list<shader_description> shader_list =
     shader("meta_meshPS"),
 
     shader("meta_mesh_outlinedGS"),
-    shader("meta_mesh_outlinedPS")};
+    shader("meta_mesh_outlinedPS"),
+
+    shader("tile_lightsCS")};
 }

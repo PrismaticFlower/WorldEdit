@@ -27,6 +27,18 @@ auto create_graphics_pipeline(ID3D12Device& device,
    return pso;
 }
 
+auto create_compute_pipeline(ID3D12Device& device,
+                             const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc)
+   -> utility::com_ptr<ID3D12PipelineState>
+{
+   utility::com_ptr<ID3D12PipelineState> pso;
+
+   throw_if_failed(
+      device.CreateComputePipelineState(&desc, IID_PPV_ARGS(pso.clear_and_assign())));
+
+   return pso;
+}
+
 constexpr D3D12_STREAM_OUTPUT_DESC stream_output_disabled{.pSODeclaration = nullptr,
                                                           .NumEntries = 0,
                                                           .pBufferStrides = nullptr,
@@ -544,6 +556,11 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
+
+   tile_lights =
+      create_compute_pipeline(device, {.pRootSignature =
+                                          root_signature_library.tile_lights.get(),
+                                       .CS = shader_library["tile_lightsCS"sv]});
 }
 
 }

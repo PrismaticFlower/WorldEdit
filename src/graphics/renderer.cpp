@@ -145,8 +145,8 @@ void renderer::draw_frame(
    _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum, _world_mesh_list,
                                            world, _root_signatures, _pipelines,
                                            command_list, _dynamic_buffer_allocator);
-   _light_clusters.update_lights(view_frustrum, world, command_list,
-                                 _dynamic_buffer_allocator);
+   _light_clusters.update_lights(camera, view_frustrum, world, _root_signatures,
+                                 _pipelines, command_list, _dynamic_buffer_allocator);
 
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_PRESENT,
@@ -207,6 +207,8 @@ void renderer::window_resized(uint16 width, uint16 height)
         .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                   .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
        D3D12_RESOURCE_STATE_DEPTH_WRITE};
+
+   _light_clusters.update_render_resolution(width, height);
 }
 
 void renderer::update_camera_constant_buffer(const camera& camera,

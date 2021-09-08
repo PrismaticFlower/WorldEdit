@@ -53,6 +53,11 @@ public:
       return _view_projection_matrix;
    }
 
+   auto inv_projection_matrix() const noexcept -> const float4x4&
+   {
+      return _inv_projection_matrix;
+   }
+
    auto inv_view_projection_matrix() const noexcept -> const float4x4&
    {
       return _inv_view_projection_matrix;
@@ -73,6 +78,7 @@ protected:
    float4x4 _view_matrix;
    float4x4 _projection_matrix;
    float4x4 _view_projection_matrix;
+   float4x4 _inv_projection_matrix;
    float4x4 _inv_view_projection_matrix;
 
    float _near_clip = 1.0f;

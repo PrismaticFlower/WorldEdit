@@ -51,6 +51,8 @@ struct pipeline_library {
    utility::com_ptr<ID3D12PipelineState> meta_mesh;
    utility::com_ptr<ID3D12PipelineState> meta_mesh_outlined;
    utility::com_ptr<ID3D12PipelineState> meta_line;
+
+   utility::com_ptr<ID3D12PipelineState> tile_lights;
 };
 
 }

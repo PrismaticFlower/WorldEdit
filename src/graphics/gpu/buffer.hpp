@@ -47,9 +47,14 @@ public:
       return _resource.get();
    }
 
-   auto size() const noexcept -> uint32
+   auto size() const noexcept -> uint64
    {
       return _size;
+   }
+
+   auto size_u32() const noexcept -> uint32
+   {
+      return to_uint32(_size);
    }
 
    auto gpu_virtual_address() const noexcept -> gpu_virtual_address
@@ -60,13 +65,13 @@ public:
 private:
    friend device;
 
-   buffer(std::shared_ptr<ID3D12Resource> resource, const uint32 size)
+   buffer(std::shared_ptr<ID3D12Resource> resource, const uint64 size)
       : _resource{resource}, _size{size}
    {
    }
 
    std::shared_ptr<ID3D12Resource> _resource = nullptr;
-   uint32 _size = 0;
+   uint64 _size = 0;
 };
 
 }
