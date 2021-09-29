@@ -14,6 +14,7 @@
 #include "world_mesh_list.hpp"
 
 #include <array>
+#include <memory>
 #include <vector>
 
 #include <absl/container/flat_hash_map.h>
@@ -46,21 +47,25 @@ private:
 
    void update_descriptors();
 
+   void init_proxy_geometry(gpu::device& device);
+
    gsl::not_null<gpu::device*> _gpu_device;
 
-   gpu::buffer _tile_culling_inputs;
+   gpu::buffer _tiling_inputs;
 
    gpu::buffer _lights_constants;
-   gpu::texture _lights_tiles;
-   gpu::buffer _lights_index;
+   gpu::buffer _lights_tiles;
    gpu::buffer _lights_list;
    gpu::buffer _lights_region_list;
+
+   gpu::buffer _sphere_proxy_indices;
+   gpu::buffer _sphere_proxy_vertices;
 
    gpu::texture _shadow_map;
    gpu::descriptor_allocation _shadow_map_dsv;
    std::array<float4x4, 4> _shadow_cascade_transforms;
 
-   gpu::resource_view_set _tile_culling_resource_views;
+   gpu::resource_view_set _tiling_resource_views;
    gpu::resource_view_set _resource_views;
 
    uint32 _tiles_count = 0;

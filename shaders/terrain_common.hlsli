@@ -1,3 +1,5 @@
+#ifndef TERRAIN_COMMON_INCLUDE
+#define TERRAIN_COMMON_INCLUDE
 
 #define TERRAIN_MAX_TEXTURES 16
 
@@ -21,6 +23,8 @@ struct input_vertex {
    float3 positionWS : POSITIONWS;
    float2 terrain_coords : TERRAINCOORDS;
    nointerpolation uint active_textures : ACTIVETEXTURES;
+
+   float4 positionSS : SV_Position;
 };
 
 ConstantBuffer<terrain_constants_> terrain_constants : register(b0, space2);
@@ -55,3 +59,5 @@ float2 get_terrain_texcoords(uint i, float3 positionWS)
    return float2(dot(positionWS, terrain_constants.texture_transform_x[i]),
                  dot(positionWS, terrain_constants.texture_transform_y[i]));
 }
+
+#endif

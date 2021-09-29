@@ -153,6 +153,19 @@ constexpr D3D12_RASTERIZER_DESC rasterizer_cull_backfacing =
     .ForcedSampleCount = 0,
     .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
 
+constexpr D3D12_RASTERIZER_DESC rasterizer_conservative_cull_frontfacing =
+   {.FillMode = D3D12_FILL_MODE_SOLID,
+    .CullMode = D3D12_CULL_MODE_FRONT,
+    .FrontCounterClockwise = true,
+    .DepthBias = 0,
+    .DepthBiasClamp = 0.0f,
+    .SlopeScaledDepthBias = 0.0f,
+    .DepthClipEnable = true,
+    .MultisampleEnable = false,
+    .AntialiasedLineEnable = false,
+    .ForcedSampleCount = 0,
+    .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON};
+
 constexpr D3D12_RASTERIZER_DESC rasterizer_line_antialiased =
    {.FillMode = D3D12_FILL_MODE_SOLID,
     .CullMode = D3D12_CULL_MODE_NONE,
@@ -195,6 +208,16 @@ constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_equal =
 constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_less_equal =
    {.DepthEnable = true,
     .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
+    .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
+    .StencilEnable = false,
+    .StencilReadMask = 0,
+    .StencilWriteMask = 0,
+    .FrontFace = stencilop_disabled,
+    .BackFace = stencilop_disabled};
+
+constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_disabled =
+   {.DepthEnable = false,
+    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
     .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
     .StencilEnable = false,
     .StencilReadMask = 0,
@@ -557,10 +580,28 @@ pipeline_library::pipeline_library(ID3D12Device& device,
                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                .SampleDesc = {1, 0}});
 
-   tile_lights =
-      create_compute_pipeline(device, {.pRootSignature =
-                                          root_signature_library.tile_lights.get(),
-                                       .CS = shader_library["tile_lightsCS"sv]});
+   tile_lights_clear =
+      create_compute_pipeline(device,
+                              {.pRootSignature =
+                                  root_signature_library.tile_lights_clear.get(),
+                               .CS = shader_library["tile_lights_clearCS"sv]});
+
+   tile_lights_spheres = create_graphics_pipeline(
+      device, {.pRootSignature = root_signature_library.tile_lights.get(),
+               .VS = shader_library["tile_lightsVS"sv],
+               .PS = shader_library["tile_lightsPS"sv],
+               .StreamOutput = stream_output_disabled,
+               .BlendState = blend_disabled,
+               .SampleMask = sample_mask_default,
+               .RasterizerState = rasterizer_conservative_cull_frontfacing,
+               .DepthStencilState = depth_stencil_disabled,
+               .InputLayout = meta_mesh_input_layout,
+               .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+               .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+               .NumRenderTargets = 0,
+               .RTVFormats = {},
+               .DSVFormat = DXGI_FORMAT_UNKNOWN,
+               .SampleDesc = {1, 0}});
 }
 
 }

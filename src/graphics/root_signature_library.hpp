@@ -18,6 +18,7 @@ struct root_signature_library {
    utility::com_ptr<ID3D12RootSignature> meta_mesh;
    utility::com_ptr<ID3D12RootSignature> meta_line;
 
+   utility::com_ptr<ID3D12RootSignature> tile_lights_clear;
    utility::com_ptr<ID3D12RootSignature> tile_lights;
 };
 
@@ -60,8 +61,14 @@ constexpr uint32 color_cbv = 0;
 constexpr uint32 camera_descriptor_table = 1;
 }
 
+namespace tile_lights_clear {
+constexpr uint32 input_cbv = 0;
+constexpr uint32 light_tiles_uav = 1;
+}
+
 namespace tile_lights {
-constexpr uint32 descriptor_table = 0;
+constexpr uint32 instance_data_srv = 0;
+constexpr uint32 descriptor_table = 1;
 }
 
 }

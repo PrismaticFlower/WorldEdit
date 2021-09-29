@@ -43,31 +43,47 @@ auto material_shader(const std::string_view name, const std::string_view file_na
 
 }
 
-std::initializer_list<shader_description> shader_list =
-   {shader("mesh_shadowVS"),
+std::initializer_list<shader_description> shader_list = {
+   shader("mesh_shadowVS"),
 
-    shader("meshVS"),
-    shader("mesh_basicPS"),
-    shader("mesh_basic_lightingPS"),
-    shader("mesh_depth_prepassVS"),
-    shader("mesh_depth_cutoutPS"),
+   shader("meshVS"),
+   shader("mesh_basicPS"),
+   shader("mesh_basic_lightingPS"),
+   shader("mesh_depth_prepassVS"),
+   shader("mesh_depth_cutoutPS"),
 
-    material_shader("mesh_normalPS", "mesh_normalPS", {{L"MATERIAL_TRANSPARENT", 0}}),
-    material_shader("mesh_normal_transparentPS", "mesh_normalPS",
-                    {{L"MATERIAL_TRANSPARENT", 1}}),
+   material_shader("mesh_normalPS", "mesh_normalPS", {{L"MATERIAL_TRANSPARENT", 0}}),
+   material_shader("mesh_normal_transparentPS", "mesh_normalPS",
+                   {{L"MATERIAL_TRANSPARENT", 1}}),
 
-    shader("terrain_patchVS"),
-    shader("terrain_basicPS"),
-    shader("terrain_lightingPS"),
-    shader("terrain_normalPS"),
+   shader("terrain_patchVS"),
+   shader("terrain_basicPS"),
+   shader("terrain_lightingPS"),
+   shader("terrain_normalPS"),
 
-    shader("meta_lineVS"),
+   shader("meta_lineVS"),
 
-    shader("meta_meshVS"),
-    shader("meta_meshPS"),
+   shader("meta_meshVS"),
+   shader("meta_meshPS"),
 
-    shader("meta_mesh_outlinedGS"),
-    shader("meta_mesh_outlinedPS"),
+   shader("meta_mesh_outlinedGS"),
+   shader("meta_mesh_outlinedPS"),
 
-    shader("tile_lightsCS")};
+   shader("tile_lights_clearCS"),
+
+   shader_description{
+      .name = "tile_lightsVS",
+      .entrypoint = L"mainVS",
+      .type = shader_type::vertex,
+      .model = shader_model_6_0,
+      .file = "shaders/tile_lights.hlsl",
+   },
+   shader_description{
+      .name = "tile_lightsPS",
+      .entrypoint = L"mainPS",
+      .type = shader_type::pixel,
+      .model = shader_model_6_0,
+      .file = "shaders/tile_lights.hlsl",
+   },
+};
 }

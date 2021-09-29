@@ -1,5 +1,8 @@
+#ifndef LIGHTS_COMMON_INCLUDE
+#define LIGHTS_COMMON_INCLUDE
 
-#define MAX_LIGHTS 1024
+#define MAX_LIGHTS 256
+#define TILE_LIGHT_WORDS 8
 #define LIGHT_REGISTER_SPACE space3
 
 namespace light_type {
@@ -33,7 +36,7 @@ struct light_descriptions {
 };
 
 struct light_constant_buffer {
-   uint light_count;
+   uint light_tiles_width;
    uint3 padding0;
    float3 sky_ambient_color;
    uint padding1;
@@ -52,41 +55,24 @@ struct light_region_description {
    uint padding;
 };
 
-struct light_index {
-   uint light_index[16];
-
-   uint get(uint i)
-   {
-      return (i & 1 ? (light_index[i / 2] >> 16) : (light_index[i / 2])) & 0xffff;
-   }
-
-   void set(uint i, uint value)
-   {
-      if (i & 1) {
-         light_index[i / 2] |= (value << 16);
-      }
-      else {
-         light_index[i / 2] |= value;
-      }
-   }
-};
-
 struct calculate_light_inputs {
    float3 positionWS;
    float3 normalWS;
    float3 diffuse_color;
+   uint2 positionSS;
 };
 
 const static float region_fade_distance_sq = 0.1 * 0.1;
 const static float cascade_fade_distance = 0.1;
 const static int shadow_cascade_count = 4;
+const static uint light_tile_size = 8;
+const static uint light_tile_word_bits = 32;
 
 ConstantBuffer<light_constant_buffer> light_constants : register(b0, LIGHT_REGISTER_SPACE);
-Texture2D<uint> light_tiles : register(t1, LIGHT_REGISTER_SPACE);
-StructuredBuffer<light_index> light_tile_indices : register(t2, LIGHT_REGISTER_SPACE);
-ConstantBuffer<light_descriptions> light_list : register(b3, LIGHT_REGISTER_SPACE);
-StructuredBuffer<light_region_description> light_region_list : register(t4, LIGHT_REGISTER_SPACE);
-Texture2DArray<float> TEMP_shadowmap : register(t5, LIGHT_REGISTER_SPACE);
+StructuredBuffer<uint[TILE_LIGHT_WORDS]> light_tiles : register(t1, LIGHT_REGISTER_SPACE);
+ConstantBuffer<light_descriptions> light_list : register(b2, LIGHT_REGISTER_SPACE);
+StructuredBuffer<light_region_description> light_region_list : register(t3, LIGHT_REGISTER_SPACE);
+Texture2DArray<float> TEMP_shadowmap : register(t4, LIGHT_REGISTER_SPACE);
 SamplerComparisonState shadow_sampler : register(s2, LIGHT_REGISTER_SPACE);
 const static float temp_shadow_bias = 0.001;
 
@@ -241,26 +227,26 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
 
    switch (light.type) {
    case light_type::directional: {
-      float region_fade = 1.0;
+      float region_fade_or_shadow = 1.0;
 
       if (light.region_type == directional_region_type::none) {
-         region_fade = 1.0;
+         region_fade_or_shadow = sample_cascaded_shadow_map(positionWS, normalWS);
       }
       else {
          light_region_description region_desc = light_region_list.Load(light.directional_region_index);
 
-         const float3 positionRS = mul(region_desc.world_to_region, float4(positionWS, 1.0)).xyz;
+         const float3 positionRS = mul(float4(positionWS, 1.0), region_desc.world_to_region).xyz;
 
          switch (light.region_type) {
          case directional_region_type::none: {
-            region_fade = 1.0;
+            region_fade_or_shadow = 1.0;
             break;
          }
          case directional_region_type::box: {
             const float3 region_to_position = max(abs(positionRS) - region_desc.size, 0.0);
             const float region_distance_sq = dot(region_to_position, region_to_position);
 
-            region_fade = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
+            region_fade_or_shadow = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
 
             break;
          }
@@ -268,7 +254,7 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
             const float region_distance = max(length(positionRS) - region_desc.size.x, 0.0);
             const float region_distance_sq = region_distance * region_distance;
 
-            region_fade = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
+            region_fade_or_shadow = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
 
             break;
          }
@@ -281,17 +267,16 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
             const float region_distance = max(cap_distance, edge_distance);
             const float region_distance_sq = region_distance * region_distance;
 
-            region_fade = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
+            region_fade_or_shadow = 1.0 - saturate(region_distance_sq / region_fade_distance_sq);
 
             break;
          }
          }
       }
 
-      const float shadow = sample_cascaded_shadow_map(positionWS, normalWS);
       const float falloff = saturate(dot(normalWS, light.directionWS));
 
-      return falloff * region_fade * shadow;
+      return falloff * region_fade_or_shadow;
    }
    case light_type::point_: {
       const float3 light_directionWS = normalize(light.positionWS - positionWS);
@@ -327,13 +312,30 @@ float3 calculate_lighting(calculate_light_inputs input)
 {
    float3 total_light = calc_ambient_light(input.normalWS);
 
-   for (int i = 0; i < light_constants.light_count; ++i) {
-      light_description light = light_list.lights[i];
+   const uint2 tile_position = input.positionSS / light_tile_size;
+   const uint tile_index = tile_position.x + tile_position.y * light_constants.light_tiles_width;
 
-      float strength = calc_light_strength(light, input);
+   for (uint i = 0; i < TILE_LIGHT_WORDS; ++i) {
+      uint light_mask = WaveActiveBitOr(light_tiles[tile_index][i]);
 
-      total_light += light.color * strength;
+      while (light_mask != 0) {
+         uint active_bit_index = firstbitlow(light_mask); // get active bit
+
+         light_mask &= ~(1u << active_bit_index); // clear bit from mask
+
+         // process light
+
+         uint light_index = (i * light_tile_word_bits) + active_bit_index;
+
+         light_description light = light_list.lights[light_index];
+
+         float strength = calc_light_strength(light, input);
+
+         total_light += light.color * strength;
+      }
    }
 
    return total_light * input.diffuse_color;
 }
+
+#endif

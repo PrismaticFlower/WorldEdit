@@ -1,12 +1,10 @@
-struct global_matrices {
-   float4x4 view_projection_matrix;
-};
+#include "world_constants.hlsli"
 
 struct object_constants {
    float4x4 world_matrix;
 };
 
-ConstantBuffer<global_matrices> cb_global_matrices : register(b0);
+ConstantBuffer<world_constants> world_constants : register(b0);
 ConstantBuffer<object_constants> cb_object_constants : register(b1);
 
 struct input_vertex {
@@ -31,17 +29,14 @@ output_vertex main(input_vertex input)
 {
    output_vertex output;
 
-   const float3 positionWS =
-      mul(cb_object_constants.world_matrix, float4(input.positionOS, 1.0)).xyz;
+   const float3 positionWS = mul(cb_object_constants.world_matrix, float4(input.positionOS, 1.0)).xyz;
 
    output.positionWS = positionWS;
    output.normalWS = mul((float3x3)cb_object_constants.world_matrix, input.normalOS);
    output.tangentWS = mul((float3x3)cb_object_constants.world_matrix, input.tangentOS);
-   output.bitangentWS =
-      mul((float3x3)cb_object_constants.world_matrix, input.bitangentOS);
+   output.bitangentWS = mul((float3x3)cb_object_constants.world_matrix, input.bitangentOS);
    output.texcoords = input.texcoords;
-   output.positionPS =
-      mul(cb_global_matrices.view_projection_matrix, float4(positionWS, 1.0));
+   output.positionPS = mul(world_constants.view_projection_matrix, float4(positionWS, 1.0));
 
    return output;
 }

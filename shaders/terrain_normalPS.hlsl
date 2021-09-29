@@ -33,6 +33,7 @@ float4 main(input_vertex input) : SV_Target0
    lighting_inputs.positionWS = positionWS;
    lighting_inputs.normalWS = normalWS;
    lighting_inputs.diffuse_color = diffuse_color;
+   lighting_inputs.positionSS = input.positionSS.xy;
 
    const float3 lighting = calculate_lighting(lighting_inputs);
 

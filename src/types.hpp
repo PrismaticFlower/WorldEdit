@@ -89,7 +89,7 @@ constexpr auto to_float(const std::convertible_to<float> auto& value) noexcept -
    return static_cast<float>(value);
 }
 
-constexpr auto to_float(const std::convertible_to<double> auto& value) noexcept -> double
+constexpr auto to_double(const std::convertible_to<double> auto& value) noexcept -> double
 {
    return static_cast<double>(value);
 }

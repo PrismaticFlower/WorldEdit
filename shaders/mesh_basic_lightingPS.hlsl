@@ -7,6 +7,8 @@ struct input_vertex {
    float3 tangentWS : TANGENT;
    float3 bitangentWS : BITANGENT;
    float2 texcoords : TEXCOORD;
+
+   float4 positionSS : SV_Position;
 };
 
 const static float3 surface_color = 0.75;
@@ -21,6 +23,7 @@ float4 main(input_vertex input_vertex) : SV_TARGET
    lighting_inputs.positionWS = positionWS;
    lighting_inputs.normalWS = normalWS;
    lighting_inputs.diffuse_color = surface_color;
+   lighting_inputs.positionSS = input_vertex.positionSS.xy;
 
    const float3 lighting = calculate_lighting(lighting_inputs);
 

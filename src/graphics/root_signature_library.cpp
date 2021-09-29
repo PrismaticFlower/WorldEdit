@@ -68,14 +68,14 @@ const gpu::root_parameter_descriptor_table lights_input_descriptor_table{
           .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
           .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
 
-         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
           .count = 1,
           .base_shader_register = 2,
           .register_space = lights_register_space,
           .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
           .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
 
-         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
           .count = 1,
           .base_shader_register = 3,
           .register_space = lights_register_space,
@@ -85,13 +85,6 @@ const gpu::root_parameter_descriptor_table lights_input_descriptor_table{
          {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
           .count = 1,
           .base_shader_register = 4,
-          .register_space = lights_register_space,
-          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-          .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
-
-         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-          .count = 1,
-          .base_shader_register = 5,
           .register_space = lights_register_space,
           .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
           .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
@@ -389,35 +382,52 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
 
    .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
+const gpu::root_signature_desc
+   tile_lights_clear_desc{.name = "tile_lights_clear_root_signature",
+
+                          .parameters = {
+                             // input cbv
+                             gpu::root_parameter_cbv{
+                                .shader_register = 0,
+                                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+                             },
+
+                             // tiles uav
+                             gpu::root_parameter_uav{
+                                .shader_register = 0,
+                                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
+                             },
+                          }};
+
 const gpu::root_signature_desc tile_lights_desc{
    .name = "tile_lights_root_signature",
 
-   .parameters = {
-      // camera descriptors
-      gpu::root_parameter_descriptor_table{
-         .ranges = {{.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-                     .count = 1,
-                     .base_shader_register = 0,
-                     .register_space = lights_tile_register_space,
-                     .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-                     .offset_in_descriptors_from_table_start = 0},
+   .parameters =
+      {
+         // instance data srv
+         gpu::root_parameter_srv{
+            .shader_register = 0,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+         },
 
-                    {.type = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
-                     .count = 1,
-                     .base_shader_register = 1,
-                     .register_space = lights_tile_register_space,
-                     .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE,
-                     .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
+         // descriptors
+         gpu::root_parameter_descriptor_table{
+            .ranges = {{.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                        .count = 1,
+                        .base_shader_register = 0,
+                        .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                        .offset_in_descriptors_from_table_start = 0},
 
-                    {.type = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
-                     .count = 1,
-                     .base_shader_register = 2,
-                     .register_space = lights_tile_register_space,
-                     .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE,
-                     .offset_in_descriptors_from_table_start =
-                        D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND}},
+                       {.type = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+                        .count = 1,
+                        .base_shader_register = 0,
+                        .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE,
+                        .offset_in_descriptors_from_table_start =
+                           D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND}},
+         },
       },
-   }};
+
+   .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
 }
 
@@ -430,6 +440,7 @@ root_signature_library::root_signature_library(gpu::device& device)
    mesh_shadow = device.create_root_signature(mesh_shadow_desc);
    mesh_depth_prepass = device.create_root_signature(mesh_depth_prepass_desc);
 
+   tile_lights_clear = device.create_root_signature(tile_lights_clear_desc);
    tile_lights = device.create_root_signature(tile_lights_desc);
 }
 
