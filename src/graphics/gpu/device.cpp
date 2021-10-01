@@ -60,7 +60,7 @@ auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device8>
 
    utility::com_ptr<ID3D12Device8> device;
 
-   throw_if_failed(D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_0,
+   throw_if_failed(D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_12_0,
                                      IID_PPV_ARGS(device.clear_and_assign())));
 
    return device;
