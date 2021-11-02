@@ -67,7 +67,8 @@ auto descriptor_heap::allocate_static(const uint32 count) -> descriptor_range
    const uint32 range_offset = _used_count.fetch_add(count, std::memory_order_relaxed);
 
    if ((range_offset + count) <= _count) {
-      return {index_descriptor_handle(_root_handle, range_offset, _descriptor_size),
+      return {range_offset,
+              index_descriptor_handle(_root_handle, range_offset, _descriptor_size),
               count, _descriptor_size};
    }
 
@@ -81,11 +82,12 @@ auto descriptor_heap::allocate_static(const uint32 count) -> descriptor_range
          descriptor_range range = *match;
 
          if (range.size() > count) {
-            *match = {index_descriptor_handle(range.start(), count, _descriptor_size),
+            *match = {range.base_index() + count,
+                      index_descriptor_handle(range.start(), count, _descriptor_size),
                       range.size() - count, _descriptor_size};
          }
 
-         return {range.start(), count, _descriptor_size};
+         return {range.base_index(), range.start(), count, _descriptor_size};
       }
    }
 

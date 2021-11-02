@@ -84,13 +84,16 @@ public:
       return _placeholder_model;
    }
 
-   void process_updated_texture(gpu::device& gpu_device, updated_texture updated)
+   void process_updated_texture(gpu::graphics_command_list& command_list,
+                                gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
+                                updated_texture updated)
    {
       std::shared_lock lock{_mutex};
 
       for (auto& [name, state] : _models) {
          for (auto& part : state.model->parts) {
-            part.material.process_updated_texture(gpu_device, updated);
+            part.material.process_updated_texture(command_list,
+                                                  dynamic_buffer_allocator, updated);
          }
       }
    }

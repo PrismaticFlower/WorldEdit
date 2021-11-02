@@ -457,9 +457,9 @@ void terrain::init_gpu_terrain_constants_buffer(
 void terrain::init_textures_resource_views()
 {
    const auto diffuse_map_view_desc = [&](const int i) {
-      return gpu::resource_view_desc{.resource = _diffuse_maps[i]->resource(),
+      return gpu::resource_view_desc{.resource = _diffuse_maps[i]->texture->resource(),
                                      .view_desc = gpu::shader_resource_view_desc{
-                                        .format = _diffuse_maps[i]->format(),
+                                        .format = _diffuse_maps[i]->texture->format(),
                                         .type_description = gpu::texture2d_srv{}}};
    };
 

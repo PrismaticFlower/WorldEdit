@@ -87,7 +87,7 @@ private:
    gpu::resource_view_set _texture_resource_views;
 
    std::array<lowercase_string, texture_count> _diffuse_maps_names;
-   std::array<std::shared_ptr<const gpu::texture>, texture_count> _diffuse_maps;
+   std::array<std::shared_ptr<const world_texture>, texture_count> _diffuse_maps;
 };
 
 }

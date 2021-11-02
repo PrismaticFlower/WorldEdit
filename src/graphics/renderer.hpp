@@ -79,7 +79,7 @@ private:
 
    void build_object_render_list(const frustrum& view_frustrum);
 
-   void update_textures();
+   void update_textures(gpu::graphics_command_list& command_list);
 
    auto create_raytacing_blas(gpu::graphics_command_list& command_list,
                               const model& model, const mesh_part& part) -> gpu::buffer;

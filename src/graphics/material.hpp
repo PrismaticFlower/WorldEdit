@@ -2,6 +2,7 @@
 
 #include "assets/msh/material.hpp"
 #include "gpu/device.hpp"
+#include "gpu/dynamic_buffer_allocator.hpp"
 #include "pipeline_library.hpp"
 #include "texture_manager.hpp"
 
@@ -13,14 +14,20 @@ struct material {
    material(const assets::msh::material& material, gpu::device& gpu_device,
             texture_manager& texture_manager);
 
-   void init_resource_views(gpu::device& gpu_device);
+   void init_resources(gpu::device& gpu_device);
 
-   void process_updated_texture(gpu::device& gpu_device, updated_texture updated);
+   void update_constant_buffer(gpu::graphics_command_list& command_list,
+                               gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+
+   void process_updated_texture(gpu::graphics_command_list& command_list,
+                                gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
+                                updated_texture updated);
 
    material_pipeline_flags flags = material_pipeline_flags::none;
-   gpu::resource_view_set resource_views;
+   gpu::buffer constant_buffer;
+   gpu::resource_view_set constant_buffer_view;
 
-   std::vector<std::shared_ptr<const gpu::texture>> textures;
+   std::vector<std::shared_ptr<const world_texture>> textures;
    std::vector<lowercase_string> texture_names;
 };
 

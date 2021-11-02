@@ -114,8 +114,6 @@ void renderer::draw_frame(
 
    _device.copy_manager.enqueue_fence_wait_if_needed(_device.command_queue);
 
-   update_textures();
-
    const frustrum view_frustrum{camera};
 
    gpu::command_allocator_scoped command_allocator{_device.command_allocator_factory,
@@ -137,6 +135,7 @@ void renderer::draw_frame(
       _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
    }
 
+   update_textures(command_list);
    build_world_mesh_list(command_list, world, world_classes);
    build_object_render_list(view_frustrum);
 
@@ -736,7 +735,7 @@ void renderer::build_world_mesh_list(
 
          _world_mesh_list.push_back(
             object_bbox, object_constants_address, object.position, pipeline,
-            mesh.material.flags, mesh.material.resource_views.descriptors(),
+            mesh.material.flags, mesh.material.constant_buffer_view.descriptors(),
             world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
                        .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
                                                model.gpu_buffer.attributes_vertex_buffer_view},
@@ -827,10 +826,11 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
              });
 }
 
-void renderer::update_textures()
+void renderer::update_textures(gpu::graphics_command_list& command_list)
 {
    _texture_manager.process_updated_textures([&](updated_texture updated) {
-      _model_manager.process_updated_texture(_device, updated);
+      _model_manager.process_updated_texture(command_list,
+                                             _dynamic_buffer_allocator, updated);
       _terrain.process_updated_texture(updated);
    });
 }

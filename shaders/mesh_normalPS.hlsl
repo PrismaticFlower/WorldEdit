@@ -1,7 +1,7 @@
 
 #include "lights_common.hlsli"
 
-namespace material {
+namespace flags {
 const static bool transparent = MATERIAL_TRANSPARENT;
 }
 
@@ -15,10 +15,15 @@ struct input_vertex {
    float4 positionSS : SV_Position;
 };
 
-Texture2D<float4> diffuse_map : register(t0, space1);
-Texture2D<float4> normal_map : register(t1, space1);
+struct material_input {
+   uint flags;
+   uint diffuse_map;
+   uint normal_map;
+};
 
-SamplerState trilinear_sampler : register(s0);
+ConstantBuffer<material_input> material : register(b0, space1);
+
+SamplerState texture_sampler : register(s0);
 
 float3 transform_normalWS(const input_vertex input, const float3 normalTS)
 {
@@ -27,13 +32,16 @@ float3 transform_normalWS(const input_vertex input, const float3 normalTS)
 
 float4 main(input_vertex input_vertex) : SV_TARGET
 {
-   const float3 normalTS = normal_map.Sample(trilinear_sampler, input_vertex.texcoords).xyz * 2.0 - 1.0;
+   Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map];
+   Texture2D<float4> normal_map = ResourceDescriptorHeap[material.normal_map];
+
+   const float3 normalTS = normal_map.Sample(texture_sampler, input_vertex.texcoords).xyz * 2.0 - 1.0;
    const float3 normalWS = transform_normalWS(input_vertex, normalTS);
 
    const float3 positionWS = input_vertex.positionWS;
-   float4 diffuse_color = diffuse_map.Sample(trilinear_sampler, input_vertex.texcoords);
+   float4 diffuse_color = diffuse_map.Sample(texture_sampler, input_vertex.texcoords);
 
-   if (material::transparent) diffuse_color.rgb *= diffuse_color.a;
+   if (flags::transparent) diffuse_color.rgb *= diffuse_color.a;
 
    calculate_light_inputs lighting_inputs;
 
@@ -44,5 +52,5 @@ float4 main(input_vertex input_vertex) : SV_TARGET
 
    const float3 lighting = calculate_lighting(lighting_inputs);
 
-   return float4(lighting, material::transparent ? diffuse_color.a : 1.0);
+   return float4(lighting, diffuse_color.a);
 }

@@ -7,11 +7,19 @@ struct input_vertex {
    float2 texcoords : TEXCOORD;
 };
 
-Texture2D<float4> diffuse_map : register(t0, space1);
+struct material_input {
+   uint flags;
+   uint diffuse_map;
+   uint normal_map;
+};
+
+ConstantBuffer<material_input> material : register(b0, space1);
 SamplerState texture_sampler : register(s0);
 
 void main(input_vertex input_vertex)
 {
+   Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map];
+
    float4 diffuse_color = diffuse_map.Sample(texture_sampler, input_vertex.texcoords);
 
    if (diffuse_color.a < 0.5) discard;

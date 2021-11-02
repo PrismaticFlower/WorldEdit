@@ -16,9 +16,15 @@
 
 namespace we::graphics {
 
+struct world_texture {
+   uint32 srv_index = 0;
+   uint32 srv_srgb_index = 0;
+   std::shared_ptr<const gpu::texture> texture;
+};
+
 struct updated_texture {
    const lowercase_string& name;
-   std::shared_ptr<const gpu::texture> texture;
+   std::shared_ptr<const world_texture> texture;
 };
 
 class texture_manager {
@@ -35,13 +41,31 @@ public:
 
          cpu_null_texture.store({.mip_level = 0}, {0, 0}, v);
 
-         auto result = std::make_shared<gpu::texture>(
-            gpu_device.create_texture({.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-                                       .format = cpu_null_texture.dxgi_format()},
-                                      D3D12_RESOURCE_STATE_COMMON));
+         const gpu::texture_desc texture_desc = [&] {
+            gpu::texture_desc texture_desc;
 
-         init_texture_async(*result, cpu_null_texture);
+            texture_desc.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            texture_desc.format = cpu_null_texture.dxgi_format();
+            texture_desc.width = cpu_null_texture.width();
+            texture_desc.height = cpu_null_texture.height();
+            texture_desc.mip_levels = cpu_null_texture.mip_levels();
 
+            return texture_desc;
+         }();
+
+         auto resources = std::make_shared<texture_resources>(
+            _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COPY_DEST),
+            _gpu_device->allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2));
+
+         init_texture_async(resources->texture, cpu_null_texture);
+         init_texture_descriptors(resources->texture, resources->descriptors);
+
+         auto result = std::make_shared<world_texture>(
+            world_texture{.srv_index = resources->descriptors.base_index(),
+                          .srv_srgb_index = resources->descriptors.base_index() + 1,
+                          .texture =
+                             std::shared_ptr<const gpu::texture>{resources,
+                                                                 &resources->texture}});
          return result;
       };
 
@@ -57,8 +81,8 @@ public:
    /// @param default_texture Texture to return if the requested texture is not available.
    /// @return The texture or default_texture.
    auto at_or(const lowercase_string& name,
-              std::shared_ptr<const gpu::texture> default_texture)
-      -> std::shared_ptr<const gpu::texture>
+              std::shared_ptr<const world_texture> default_texture)
+      -> std::shared_ptr<const world_texture>
    {
       if (name.empty()) return default_texture;
 
@@ -79,14 +103,14 @@ public:
 
    /// @brief Texture with a color value of 0.75, 0.75, 0.75, 1.0.
    /// @return The texture.
-   auto null_diffuse_map() -> std::shared_ptr<gpu::texture>
+   auto null_diffuse_map() -> std::shared_ptr<const world_texture>
    {
       return _null_diffuse_map;
    }
 
    /// @brief Texture with a color value of 0.5, 0.5, 1.0, 1.0.
    /// @return The texture.
-   auto null_normal_map() -> std::shared_ptr<gpu::texture>
+   auto null_normal_map() -> std::shared_ptr<const world_texture>
    {
       return _null_normal_map;
    }
@@ -179,6 +203,21 @@ private:
       _gpu_device->copy_manager.close_and_execute(copy_context);
    }
 
+   void init_texture_descriptors(gpu::texture& texture, gpu::descriptor_range descriptors)
+   {
+      _gpu_device->create_shader_resource_view(
+         *texture.view_resource(),
+         gpu::shader_resource_view_desc{.format = texture.format(),
+                                        .type_description = gpu::texture2d_srv{}},
+         descriptors[0]);
+
+      _gpu_device->create_shader_resource_view(
+         *texture.view_resource(),
+         gpu::shader_resource_view_desc{.format = get_srgb_format(texture.format()),
+                                        .type_description = gpu::texture2d_srv{}},
+         descriptors[1]);
+   }
+
    void texture_loaded(const lowercase_string& name,
                        asset_ref<assets::texture::texture> asset,
                        asset_data<assets::texture::texture> data) noexcept
@@ -195,10 +234,19 @@ private:
          return texture_desc;
       }();
 
-      auto texture = std::make_shared<gpu::texture>(
-         _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COMMON));
+      auto resources = std::make_shared<texture_resources>(
+         _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COPY_DEST),
+         _gpu_device->allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2));
 
-      init_texture_async(*texture, *data);
+      init_texture_async(resources->texture, *data);
+      init_texture_descriptors(resources->texture, resources->descriptors);
+
+      auto texture = std::make_shared<world_texture>(
+         world_texture{.srv_index = resources->descriptors.base_index(),
+                       .srv_srgb_index = resources->descriptors.base_index() + 1,
+                       .texture =
+                          std::shared_ptr<const gpu::texture>{resources,
+                                                              &resources->texture}});
 
       std::scoped_lock lock{_shared_mutex};
 
@@ -207,8 +255,28 @@ private:
       _copied_textures.emplace_back(name, texture);
    }
 
+   static auto get_srgb_format(const DXGI_FORMAT format) noexcept -> DXGI_FORMAT
+   {
+      // clang-format off
+      if (format == DXGI_FORMAT_R8G8B8A8_UNORM) return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+      if (format == DXGI_FORMAT_BC1_UNORM) return DXGI_FORMAT_BC1_UNORM_SRGB;
+      if (format == DXGI_FORMAT_BC2_UNORM) return DXGI_FORMAT_BC2_UNORM_SRGB;
+      if (format == DXGI_FORMAT_BC3_UNORM) return DXGI_FORMAT_BC3_UNORM_SRGB;
+      if (format == DXGI_FORMAT_B8G8R8A8_UNORM) return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+      if (format == DXGI_FORMAT_B8G8R8X8_UNORM) return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+      if (format == DXGI_FORMAT_BC7_UNORM) return DXGI_FORMAT_BC7_UNORM_SRGB;
+      // clang-format on
+
+      return format;
+   }
+
+   struct texture_resources {
+      gpu::texture texture;
+      gpu::descriptor_allocation descriptors;
+   };
+
    struct texture_state {
-      std::weak_ptr<gpu::texture> texture;
+      std::weak_ptr<world_texture> texture;
       asset_ref<assets::texture::texture> asset;
    };
 
@@ -218,12 +286,12 @@ private:
    std::shared_mutex _shared_mutex;
    absl::flat_hash_map<lowercase_string, texture_state> _textures;
    absl::flat_hash_map<lowercase_string, asset_ref<assets::texture::texture>> _pending_textures;
-   std::vector<std::pair<lowercase_string, std::shared_ptr<gpu::texture>>> _copied_textures;
+   std::vector<std::pair<lowercase_string, std::shared_ptr<world_texture>>> _copied_textures;
 
    tbb::task_group _creation_tasks;
 
-   std::shared_ptr<gpu::texture> _null_diffuse_map;
-   std::shared_ptr<gpu::texture> _null_normal_map;
+   std::shared_ptr<world_texture> _null_diffuse_map;
+   std::shared_ptr<world_texture> _null_normal_map;
 
    event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>,
                        asset_data<assets::texture::texture>)>

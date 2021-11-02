@@ -25,9 +25,14 @@ class descriptor_range {
 public:
    descriptor_range() = default;
 
-   descriptor_range(const descriptor_handle handle, const uint32 count,
-                    const uint32 descriptor_size) noexcept
-      : _handle{handle}, _count{count}, _descriptor_size{descriptor_size} {};
+   descriptor_range(const uint32 base_index, const descriptor_handle handle,
+                    const uint32 count, const uint32 descriptor_size) noexcept
+      : _handle{handle}, _count{count}, _descriptor_size{descriptor_size}, _base_index{base_index} {};
+
+   auto base_index() const noexcept -> uint32
+   {
+      return _base_index;
+   }
 
    auto start() const noexcept -> descriptor_handle
    {
@@ -48,6 +53,7 @@ private:
    descriptor_handle _handle{};
    uint32 _count = 0;
    uint32 _descriptor_size = 0;
+   uint32 _base_index = 0;
 };
 
 }
