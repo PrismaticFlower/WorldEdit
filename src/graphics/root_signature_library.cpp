@@ -58,35 +58,35 @@ const gpu::root_parameter_descriptor_table lights_input_descriptor_table{
           .count = 1,
           .base_shader_register = 0,
           .register_space = lights_register_space,
-          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
           .offset_in_descriptors_from_table_start = 0},
 
          {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
           .count = 1,
           .base_shader_register = 1,
           .register_space = lights_register_space,
-          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
           .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
 
          {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
           .count = 1,
           .base_shader_register = 2,
           .register_space = lights_register_space,
-          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
           .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
 
          {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
           .count = 1,
           .base_shader_register = 3,
           .register_space = lights_register_space,
-          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
           .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
 
          {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
           .count = 1,
           .base_shader_register = 4,
           .register_space = lights_register_space,
-          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
           .offset_in_descriptors_from_table_start = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND},
       },
    .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
@@ -101,7 +101,7 @@ const gpu::root_signature_desc mesh_desc{
          gpu::root_parameter_cbv{
             .shader_register = 1,
             .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
          },
 
@@ -113,7 +113,7 @@ const gpu::root_signature_desc mesh_desc{
                    .count = 1,
                    .base_shader_register = 0,
                    .register_space = material_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                    .offset_in_descriptors_from_table_start = 0},
                },
             .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
@@ -127,7 +127,7 @@ const gpu::root_signature_desc mesh_desc{
                    .count = 1,
                    .base_shader_register = 0,
                    .register_space = mesh_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                    .offset_in_descriptors_from_table_start = 0},
                },
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
@@ -153,91 +153,91 @@ const gpu::root_signature_desc mesh_desc{
    .flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
-const gpu::root_signature_desc
-   terrain_desc{.name = "terrain_root_signature",
+const gpu::root_signature_desc terrain_desc{
+   .name = "terrain_root_signature",
 
-                .parameters =
-                   {
-                      // camera descriptor
-                      gpu::root_parameter_descriptor_table{
-                         .ranges =
-                            {
-                               {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-                                .count = 1,
-                                .base_shader_register = 0,
-                                .register_space = mesh_register_space,
-                                .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-                                .offset_in_descriptors_from_table_start = 0},
-                            },
-                         .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
-                      },
+   .parameters =
+      {
+         // camera descriptor
+         gpu::root_parameter_descriptor_table{
+            .ranges =
+               {
+                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                   .count = 1,
+                   .base_shader_register = 0,
+                   .register_space = mesh_register_space,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                   .offset_in_descriptors_from_table_start = 0},
+               },
+            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+         },
 
-                      // lights descriptors
-                      lights_input_descriptor_table,
+         // lights descriptors
+         lights_input_descriptor_table,
 
-                      // terrain descriptors
-                      gpu::root_parameter_descriptor_table{
-                         .ranges =
-                            {
-                               {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-                                .count = 1,
-                                .base_shader_register = 0,
-                                .register_space = terrain_register_space,
-                                .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-                                .offset_in_descriptors_from_table_start = 0},
+         // terrain descriptors
+         gpu::root_parameter_descriptor_table{
+            .ranges =
+               {
+                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                   .count = 1,
+                   .base_shader_register = 0,
+                   .register_space = terrain_register_space,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                   .offset_in_descriptors_from_table_start = 0},
 
-                               {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-                                .count = 2,
-                                .base_shader_register = 0,
-                                .register_space = terrain_register_space,
-                                .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-                                .offset_in_descriptors_from_table_start = 1},
-                            },
-                         .visibility = D3D12_SHADER_VISIBILITY_ALL,
-                      },
+                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                   .count = 2,
+                   .base_shader_register = 0,
+                   .register_space = terrain_register_space,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                   .offset_in_descriptors_from_table_start = 1},
+               },
+            .visibility = D3D12_SHADER_VISIBILITY_ALL,
+         },
 
-                      // terrain patch data
-                      gpu::root_parameter_srv{
-                         .shader_register = 2,
-                         .register_space = terrain_register_space,
-                         .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
-                         .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
-                      },
+         // terrain patch data
+         gpu::root_parameter_srv{
+            .shader_register = 2,
+            .register_space = terrain_register_space,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+         },
 
-                      // material descriptors
-                      gpu::root_parameter_descriptor_table{
-                         .ranges =
-                            {
-                               {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-                                .count = 16,
-                                .base_shader_register = 0,
-                                .register_space = material_register_space,
-                                .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
-                                .offset_in_descriptors_from_table_start = 0},
-                            },
-                         .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
-                      },
-                   },
+         // material descriptors
+         gpu::root_parameter_descriptor_table{
+            .ranges =
+               {
+                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                   .count = 16,
+                   .base_shader_register = 0,
+                   .register_space = material_register_space,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                   .offset_in_descriptors_from_table_start = 0},
+               },
+            .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+         },
+      },
 
-                .samplers =
-                   {
-                      {.sampler = bilinear_sampler,
-                       .shader_register = 0,
-                       .register_space = 0,
-                       .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
+   .samplers =
+      {
+         {.sampler = bilinear_sampler,
+          .shader_register = 0,
+          .register_space = 0,
+          .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
 
-                      {.sampler = trilinear_sampler,
-                       .shader_register = 1,
-                       .register_space = 0,
-                       .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
+         {.sampler = trilinear_sampler,
+          .shader_register = 1,
+          .register_space = 0,
+          .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
 
-                      {.sampler = shadow_sampler,
-                       .shader_register = 2,
-                       .register_space = lights_register_space,
-                       .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
-                   },
+         {.sampler = shadow_sampler,
+          .shader_register = 2,
+          .register_space = lights_register_space,
+          .visibility = D3D12_SHADER_VISIBILITY_PIXEL},
+      },
 
-                .flags = D3D12_ROOT_SIGNATURE_FLAG_NONE};
+   .flags = D3D12_ROOT_SIGNATURE_FLAG_NONE};
 
 const gpu::root_signature_desc meta_mesh_desc{
    .name = "meta_mesh_root_signature",
@@ -248,7 +248,7 @@ const gpu::root_signature_desc meta_mesh_desc{
          gpu::root_parameter_cbv{
             .shader_register = 1,
             .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
          },
 
@@ -256,7 +256,7 @@ const gpu::root_signature_desc meta_mesh_desc{
          gpu::root_parameter_cbv{
             .shader_register = 0,
             .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
             .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
          },
 
@@ -268,7 +268,7 @@ const gpu::root_signature_desc meta_mesh_desc{
                    .count = 1,
                    .base_shader_register = 0,
                    .register_space = mesh_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                    .offset_in_descriptors_from_table_start = 0},
                },
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
@@ -286,7 +286,7 @@ const gpu::root_signature_desc meta_line_desc{
          gpu::root_parameter_cbv{
             .shader_register = 0,
             .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
             .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
          },
 
@@ -298,7 +298,7 @@ const gpu::root_signature_desc meta_line_desc{
                    .count = 1,
                    .base_shader_register = 0,
                    .register_space = mesh_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                    .offset_in_descriptors_from_table_start = 0},
                },
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
@@ -316,7 +316,7 @@ const gpu::root_signature_desc mesh_shadow_desc{
          gpu::root_parameter_cbv{
             .shader_register = 0,
             .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
          },
 
@@ -324,7 +324,7 @@ const gpu::root_signature_desc mesh_shadow_desc{
          gpu::root_parameter_cbv{
             .shader_register = 1,
             .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
          },
       },
@@ -340,7 +340,7 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
          gpu::root_parameter_cbv{
             .shader_register = 1,
             .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
          },
 
@@ -352,7 +352,7 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
                    .count = 1,
                    .base_shader_register = 0,
                    .register_space = material_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                    .offset_in_descriptors_from_table_start = 0},
                },
             .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
@@ -366,7 +366,7 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
                    .count = 1,
                    .base_shader_register = 0,
                    .register_space = mesh_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                    .offset_in_descriptors_from_table_start = 0},
                },
             .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
@@ -384,22 +384,22 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
    .flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
-const gpu::root_signature_desc
-   tile_lights_clear_desc{.name = "tile_lights_clear_root_signature",
+const gpu::root_signature_desc tile_lights_clear_desc{
+   .name = "tile_lights_clear_root_signature",
 
-                          .parameters = {
-                             // input cbv
-                             gpu::root_parameter_cbv{
-                                .shader_register = 0,
-                                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
-                             },
+   .parameters = {
+      // input cbv
+      gpu::root_parameter_cbv{
+         .shader_register = 0,
+         .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+      },
 
-                             // tiles uav
-                             gpu::root_parameter_uav{
-                                .shader_register = 0,
-                                .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
-                             },
-                          }};
+      // tiles uav
+      gpu::root_parameter_uav{
+         .shader_register = 0,
+         .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
+      },
+   }};
 
 const gpu::root_signature_desc tile_lights_desc{
    .name = "tile_lights_root_signature",
@@ -409,7 +409,7 @@ const gpu::root_signature_desc tile_lights_desc{
          // instance data srv
          gpu::root_parameter_srv{
             .shader_register = 0,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
          },
 
          // descriptors
@@ -417,7 +417,7 @@ const gpu::root_signature_desc tile_lights_desc{
             .ranges = {{.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
                         .count = 1,
                         .base_shader_register = 0,
-                        .flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC,
+                        .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                         .offset_in_descriptors_from_table_start = 0},
 
                        {.type = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
