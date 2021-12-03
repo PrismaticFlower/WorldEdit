@@ -122,11 +122,6 @@ TEST_CASE("srgb compress", "[Utility][sRGBConversion]")
 
 TEST_CASE("srgb brga unpack", "[Utility][sRGBConversion]")
 {
-   constexpr float gamma_test_value = 0.21404114048223255f;
-   constexpr float gamma_test_expected = 0.9911021f;
-   constexpr float linear_toe_test_value = 0.0003035269835488375f;
-   constexpr float linear_toe_test_expected = 0.0039215686274509803921568627451f;
-
    const float4 unpacked = unpack_srgb_bgra(0xff'fe'00'01);
 
    CHECK(unpacked.r == 0.9911021_a);
