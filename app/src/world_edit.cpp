@@ -6,6 +6,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "imgui/imgui_impl_win32.h"
+#include "utility/file_pickers.hpp"
 #include "world/world_io_load.hpp"
 
 #include "graphics/frustrum.hpp"
@@ -15,6 +16,8 @@
 #include <utility>
 
 using namespace std::literals;
+
+#include <shobjidl.h>
 
 namespace we {
 
@@ -66,11 +69,8 @@ bool world_edit::update()
 
    if (not _focused) return true;
 
-   ImGui_ImplDX12_NewFrame();
-   ImGui_ImplWin32_NewFrame();
-   ImGui::NewFrame();
-   imgui_update_io(mouse_state, keyboard_state, ImGui::GetIO());
-   ImGui::ShowDemoWindow(nullptr);
+   // UI!
+   update_ui(mouse_state, keyboard_state);
 
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);
@@ -133,6 +133,43 @@ void world_edit::update_camera(const float delta_time, const mouse_state& mouse_
    }
 }
 
+void world_edit::update_ui(const mouse_state& mouse_state,
+                           const keyboard_state& keyboard_state) noexcept
+{
+   ImGui_ImplDX12_NewFrame();
+   ImGui_ImplWin32_NewFrame();
+   ImGui::NewFrame();
+   imgui_update_io(mouse_state, keyboard_state, ImGui::GetIO());
+   ImGui::ShowDemoWindow(nullptr);
+
+   if (ImGui::BeginMainMenuBar()) {
+      if (ImGui::BeginMenu("File")) {
+         if (ImGui::MenuItem("Open Project")) open_project();
+
+         ImGui::MenuItem("Load World");
+         ImGui::MenuItem("Save World", "Ctrl + S");
+         ImGui::MenuItem("Save World As...");
+
+         ImGui::EndMenu();
+      }
+
+      if (ImGui::BeginMenu("Edit")) {
+         ImGui::MenuItem("Undo", "Ctrl + Z");
+         ImGui::MenuItem("Redo", "Ctrl + Y");
+
+         ImGui::Separator();
+
+         ImGui::MenuItem("Cut", "Ctrl + X");
+         ImGui::MenuItem("Copy", "Ctrl + C");
+         ImGui::MenuItem("Paste", "Ctrl + V");
+
+         ImGui::EndMenu();
+      }
+
+      ImGui::EndMainMenuBar();
+   }
+}
+
 void world_edit::object_definition_loaded(const lowercase_string& name,
                                           asset_ref<assets::odf::definition> asset,
                                           asset_data<assets::odf::definition> data)
@@ -150,6 +187,45 @@ void world_edit::model_loaded(const lowercase_string& name,
       object_class->model_asset = asset;
       object_class->model = data;
    }
+}
+
+void world_edit::open_project() noexcept
+{
+
+   static constexpr GUID open_project_picker_guid = {0xe66983ff,
+                                                     0x54e0,
+                                                     0x4520,
+                                                     {0x9c, 0xb5, 0xa0, 0x71,
+                                                      0x65, 0x1d, 0x42, 0xa4}};
+
+   auto path = utility::show_folder_picker({.title = L"Open Project",
+                                            .ok_button_label = L"Open",
+                                            .picker_guid = open_project_picker_guid,
+                                            .window = _window});
+
+   if (not path && not std::filesystem::exists(*path)) return;
+
+   if (not std::filesystem::exists(*path / L"Worlds")) {
+      if (MessageBoxW(_window, L"The selected folder does not appear to be a project folder. Are you sure you wish to open it?",
+                      L"Not a Project Folder", MB_YESNO) != IDYES) {
+         return;
+      }
+   }
+
+   _project_dir = *path;
+   std::filesystem::current_path(_project_dir);
+   _asset_libraries.source_directory(_project_dir);
+
+   unload_world();
+}
+
+void world_edit::unload_world() noexcept
+{
+   _object_classes.clear();
+   _world = {};
+   _camera = {};
+
+   _renderer.mark_dirty_terrain();
 }
 
 void world_edit::resized(uint16 width, uint16 height)

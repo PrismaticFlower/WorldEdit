@@ -42,6 +42,8 @@ public:
 
    void window_resized(uint16 width, uint16 height);
 
+   void mark_dirty_terrain() noexcept;
+
 private:
    struct render_list_item {
       float distance;

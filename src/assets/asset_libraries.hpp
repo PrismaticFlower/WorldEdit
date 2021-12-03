@@ -104,6 +104,21 @@ public:
       return _load_event.listen(std::move(callback));
    }
 
+   /// @brief Clears the asset library.
+   void clear() noexcept
+   {
+      {
+         std::scoped_lock lock{_mutex};
+
+         for (auto& [name, stop_source] : _loading_assets) {
+            stop_source.request_stop();
+         }
+
+         _assets.clear();
+         _loading_assets.clear();
+      }
+   }
+
 private:
    auto make_asset_state(const lowercase_string& name, std::filesystem::path asset_path)
       -> std::shared_ptr<asset_state<T>>
@@ -214,6 +229,8 @@ public:
    library<texture::texture> textures;
 
 private:
+   void clear() noexcept;
+
    void register_asset(const std::filesystem::path& path) noexcept;
 
    std::unique_ptr<utility::file_watcher> _file_watcher;

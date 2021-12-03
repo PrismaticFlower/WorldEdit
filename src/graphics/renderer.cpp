@@ -210,6 +210,11 @@ void renderer::window_resized(uint16 width, uint16 height)
    _light_clusters.update_render_resolution(width, height);
 }
 
+void renderer::mark_dirty_terrain() noexcept
+{
+   _terrain_dirty = true;
+}
+
 void renderer::update_camera_constant_buffer(const camera& camera,
                                              gpu::graphics_command_list& command_list)
 {

@@ -46,6 +46,9 @@ private:
    void update_camera(const float delta_time, const mouse_state& mouse_state,
                       const keyboard_state& keyboard_state);
 
+   void update_ui(const mouse_state& mouse_state,
+                  const keyboard_state& keyboard_state) noexcept;
+
    void object_definition_loaded(const lowercase_string& name,
                                  asset_ref<assets::odf::definition> asset,
                                  asset_data<assets::odf::definition> data);
@@ -53,6 +56,10 @@ private:
    void model_loaded(const lowercase_string& name,
                      asset_ref<assets::msh::flat_model> asset,
                      asset_data<assets::msh::flat_model> data);
+
+   void open_project() noexcept;
+
+   void unload_world() noexcept;
 
    standard_output_stream _stream;
    HWND _window{};

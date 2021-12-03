@@ -29,6 +29,8 @@ libraries_manager::~libraries_manager() = default;
 
 void libraries_manager::source_directory(const std::filesystem::path& source_directory) noexcept
 {
+   clear();
+
    for (auto entry =
            std::filesystem::recursive_directory_iterator{
               source_directory,
@@ -60,6 +62,13 @@ void libraries_manager::update_modified() noexcept
    if (_file_watcher->unknown_files_changed()) {
       // TODO: manual scan here
    }
+}
+
+void libraries_manager::clear() noexcept
+{
+   odfs.clear();
+   models.clear();
+   textures.clear();
 }
 
 void libraries_manager::register_asset(const std::filesystem::path& path) noexcept

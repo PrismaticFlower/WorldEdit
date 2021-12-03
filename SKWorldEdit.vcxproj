@@ -267,8 +267,8 @@
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4456;4201;4127;4275;4324;4459;5105</DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.cpp">
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4100;4127;4275;4324;4459;5105</DisableSpecificWarnings>
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4100;4324;4127;4275;4459;5105</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4100;4189;4127;4275;4324;4459;5105</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4100;4189;4324;4127;4275;4459;5105</DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="src\graphics\gpu\dynamic_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\gpu\resource.cpp" />
@@ -277,8 +277,10 @@
     <ClCompile Include="src\graphics\shader_cache.cpp" />
     <ClCompile Include="src\graphics\shader_library.cpp" />
     <ClCompile Include="src\graphics\shader_list.cpp" />
+    <ClCompile Include="src\utility\file_pickers.cpp" />
     <ClCompile Include="src\utility\file_watcher.cpp" />
     <ClInclude Include="src\utility\event.hpp" />
+    <ClInclude Include="src\utility\file_pickers.hpp" />
     <ClInclude Include="src\utility\file_watcher.hpp">
       <FileType>CppHeader</FileType>
     </ClInclude>
