@@ -36,12 +36,7 @@ world_edit::world_edit(const HWND window)
 
    _asset_libraries.source_directory(_project_dir);
 
-   try {
-      _world =
-         world::load_world("D:/BF2_ModTools/data_SPT/Worlds/SPT/World1/spt.wld", _stream);
-   }
-   catch (std::exception&) {
-   }
+   load_world("D:/BF2_ModTools/data_SPT/Worlds/SPT/World1/spt.wld");
 
    RECT rect{};
    GetWindowRect(window, &rect);
@@ -169,14 +164,16 @@ void world_edit::update_ui(const mouse_state& mouse_state,
             ImGui::EndMenu();
          }
 
-         // TODO: Disable these if no world is active.
+         const bool loaded_world = not _world_path.empty();
 
-         ImGui::MenuItem("Save World", "Ctrl + S");
-         ImGui::MenuItem("Save World As...");
+         ImGui::MenuItem("Save World", "Ctrl + S", nullptr, loaded_world);
+         ImGui::MenuItem("Save World As...", nullptr, nullptr, loaded_world);
 
          ImGui::Separator();
 
-         if (ImGui::MenuItem("Close World")) close_world();
+         if (ImGui::MenuItem("Close World", nullptr, nullptr, loaded_world)) {
+            close_world();
+         }
 
          ImGui::EndMenu();
       }
@@ -255,6 +252,7 @@ void world_edit::load_world(std::filesystem::path path) noexcept
 
    try {
       _world = world::load_world(path, _stream);
+      _world_path = path;
    }
    catch (std::exception& e) {
       _stream.write(fmt::format("Failed to load world '{}' reason: ",
@@ -289,6 +287,7 @@ void world_edit::close_world() noexcept
    _object_classes.clear();
    _world = {};
    _camera = {};
+   _world_path.clear();
 
    _renderer.mark_dirty_terrain();
 }

@@ -79,6 +79,7 @@ private:
 
    std::filesystem::path _project_dir =
       L"D:/BF2_ModTools/data_SPT"; // TODO: Decide on project dir handling.
+   std::filesystem::path _world_path;
 
    std::vector<std::filesystem::path> _project_world_paths;
 
