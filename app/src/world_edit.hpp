@@ -11,6 +11,7 @@
 #include <chrono>
 #include <filesystem>
 #include <memory>
+#include <vector>
 
 #include <Windows.h>
 
@@ -59,7 +60,13 @@ private:
 
    void open_project() noexcept;
 
-   void unload_world() noexcept;
+   void load_world(std::filesystem::path path) noexcept;
+
+   void load_world_with_picker() noexcept;
+
+   void close_world() noexcept;
+
+   void enumerate_project_worlds() noexcept;
 
    standard_output_stream _stream;
    HWND _window{};
@@ -72,6 +79,8 @@ private:
 
    std::filesystem::path _project_dir =
       L"D:/BF2_ModTools/data_SPT"; // TODO: Decide on project dir handling.
+
+   std::vector<std::filesystem::path> _project_world_paths;
 
    assets::libraries_manager _asset_libraries{_stream};
    absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>> _object_classes;

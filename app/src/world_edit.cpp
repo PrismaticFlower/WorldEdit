@@ -34,11 +34,11 @@ world_edit::world_edit(const HWND window)
    ImGui_ImplWin32_Init(window);
    imgui_keymap_init(ImGui::GetIO());
 
-   std::filesystem::current_path(_project_dir);
    _asset_libraries.source_directory(_project_dir);
 
    try {
-      _world = world::load_world("Worlds/SPT/World1/spt.wld", _stream);
+      _world =
+         world::load_world("D:/BF2_ModTools/data_SPT/Worlds/SPT/World1/spt.wld", _stream);
    }
    catch (std::exception&) {
    }
@@ -61,16 +61,16 @@ bool world_edit::update()
    const auto keyboard_state = get_keyboard_state();
    const auto mouse_state = get_mouse_state(_window);
 
+   if (not _focused) return true;
+
+   // UI!
+   update_ui(mouse_state, keyboard_state);
+
    // Logic!
    update_object_classes();
 
    _asset_libraries.update_modified();
    _asset_load_queue.execute();
-
-   if (not _focused) return true;
-
-   // UI!
-   update_ui(mouse_state, keyboard_state);
 
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);
@@ -146,9 +146,37 @@ void world_edit::update_ui(const mouse_state& mouse_state,
       if (ImGui::BeginMenu("File")) {
          if (ImGui::MenuItem("Open Project")) open_project();
 
-         ImGui::MenuItem("Load World");
+         ImGui::Separator();
+
+         // TODO: Disable these if no project is active.
+
+         if (ImGui::BeginMenu("Load World")) {
+            auto worlds_path = _project_dir / L"Worlds"sv;
+
+            for (auto& known_world : _project_world_paths) {
+               auto relative_path =
+                  std::filesystem::relative(known_world, worlds_path);
+
+               if (ImGui::MenuItem(relative_path.string().c_str())) {
+                  load_world(known_world);
+               }
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Browse...")) load_world_with_picker();
+
+            ImGui::EndMenu();
+         }
+
+         // TODO: Disable these if no world is active.
+
          ImGui::MenuItem("Save World", "Ctrl + S");
          ImGui::MenuItem("Save World As...");
+
+         ImGui::Separator();
+
+         if (ImGui::MenuItem("Close World")) close_world();
 
          ImGui::EndMenu();
       }
@@ -191,7 +219,6 @@ void world_edit::model_loaded(const lowercase_string& name,
 
 void world_edit::open_project() noexcept
 {
-
    static constexpr GUID open_project_picker_guid = {0xe66983ff,
                                                      0x54e0,
                                                      0x4520,
@@ -213,19 +240,81 @@ void world_edit::open_project() noexcept
    }
 
    _project_dir = *path;
-   std::filesystem::current_path(_project_dir);
    _asset_libraries.source_directory(_project_dir);
+   _project_world_paths.clear();
 
-   unload_world();
+   close_world();
+   enumerate_project_worlds();
 }
 
-void world_edit::unload_world() noexcept
+void world_edit::load_world(std::filesystem::path path) noexcept
+{
+   if (not std::filesystem::exists(path)) return;
+
+   close_world();
+
+   try {
+      _world = world::load_world(path, _stream);
+   }
+   catch (std::exception& e) {
+      _stream.write(fmt::format("Failed to load world '{}' reason: ",
+                                path.filename().string(), e.what()));
+   }
+}
+
+void world_edit::load_world_with_picker() noexcept
+{
+   static constexpr GUID load_world_picker_guid = {0xa552d07d,
+                                                   0xb0c9,
+                                                   0x4aca,
+                                                   {0x8e, 0x49, 0xdc, 0xe9,
+                                                    0x96, 0x51, 0xa1, 0x3e}};
+
+   auto path = utility::show_file_open_picker(
+      {.title = L"Load World"s,
+       .ok_button_label = L"Load"s,
+       .forced_start_folder = _project_dir,
+       .filters = {utility::file_picker_filter{.name = L"World"s, .filter = L"*.wld"s}},
+       .picker_guid = load_world_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+
+   load_world(*path);
+}
+
+void world_edit::close_world() noexcept
 {
    _object_classes.clear();
    _world = {};
    _camera = {};
 
    _renderer.mark_dirty_terrain();
+}
+
+void world_edit::enumerate_project_worlds() noexcept
+{
+   try {
+      for (auto& file : std::filesystem::recursive_directory_iterator{
+              _project_dir / L"Worlds"}) {
+         if (not file.is_regular_file()) continue;
+
+         auto extension = file.path().extension();
+         constexpr auto wld_extension = L".wld"sv;
+
+         if (CompareStringEx(LOCALE_NAME_INVARIANT, NORM_IGNORECASE,
+                             extension.native().c_str(), (int)extension.native().size(),
+                             wld_extension.data(), (int)wld_extension.size(),
+                             nullptr, nullptr, 0) == CSTR_EQUAL) {
+            _project_world_paths.push_back(file.path());
+         }
+      }
+   }
+   catch (std::filesystem::filesystem_error&) {
+      MessageBoxW(_window, L"Unable to enumerate project worlds. Loading worlds will require manual navigation.",
+                  L"Error", MB_OK);
+   }
 }
 
 void world_edit::resized(uint16 width, uint16 height)
@@ -287,5 +376,4 @@ void world_edit::char_input(const char16_t c) noexcept
 {
    ImGui::GetIO().AddInputCharacterUTF16(static_cast<ImWchar16>(c));
 }
-
 }
