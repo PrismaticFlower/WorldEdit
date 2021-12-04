@@ -17,8 +17,6 @@
 
 using namespace std::literals;
 
-#include <shobjidl.h>
-
 namespace we {
 
 namespace {
@@ -253,6 +251,10 @@ void world_edit::load_world(std::filesystem::path path) noexcept
    try {
       _world = world::load_world(path, _stream);
       _world_path = path;
+
+      SetWindowTextA(_window,
+                     fmt::format("WorldEdit - {}", _world_path.filename().string())
+                        .c_str());
    }
    catch (std::exception& e) {
       _stream.write(fmt::format("Failed to load world '{}' reason: ",
@@ -290,6 +292,8 @@ void world_edit::close_world() noexcept
    _world_path.clear();
 
    _renderer.mark_dirty_terrain();
+
+   SetWindowTextA(_window, "WorldEdit");
 }
 
 void world_edit::enumerate_project_worlds() noexcept
