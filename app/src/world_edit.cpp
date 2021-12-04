@@ -252,6 +252,10 @@ void world_edit::load_world(std::filesystem::path path) noexcept
       _world = world::load_world(path, _stream);
       _world_path = path;
 
+      _camera.position({0.0f, 0.0f, 0.0f});
+      _camera.pitch(0.0f);
+      _camera.yaw(0.0f);
+
       SetWindowTextA(_window,
                      fmt::format("WorldEdit - {}", _world_path.filename().string())
                         .c_str());
@@ -288,7 +292,6 @@ void world_edit::close_world() noexcept
 {
    _object_classes.clear();
    _world = {};
-   _camera = {};
    _world_path.clear();
 
    _renderer.mark_dirty_terrain();
