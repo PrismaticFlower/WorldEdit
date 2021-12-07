@@ -254,6 +254,7 @@
     <ClInclude Include="src\ucfb\reader.hpp" />
     <ClInclude Include="src\utility\binary_reader.hpp" />
     <ClInclude Include="src\utility\binary_writer.hpp" />
+    <ClInclude Include="src\utility\command_line.hpp" />
     <ClInclude Include="src\utility\com_ptr.hpp" />
     <ClInclude Include="src\utility\enum_bitflags.hpp" />
     <ClInclude Include="src\assets\msh\generate_tangents.hpp">

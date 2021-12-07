@@ -508,6 +508,9 @@
     <ClInclude Include="src\utility\file_pickers.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\utility\command_line.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
