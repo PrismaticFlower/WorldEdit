@@ -147,9 +147,9 @@ void world_edit::update_ui(const mouse_state& mouse_state,
 
          ImGui::Separator();
 
-         // TODO: Disable these if no project is active.
+         const bool loaded_project = not _project_dir.empty();
 
-         if (ImGui::BeginMenu("Load World")) {
+         if (ImGui::BeginMenu("Load World", loaded_project)) {
             auto worlds_path = _project_dir / L"Worlds"sv;
 
             for (auto& known_world : _project_world_paths) {
@@ -182,7 +182,9 @@ void world_edit::update_ui(const mouse_state& mouse_state,
          ImGui::EndMenu();
       }
 
-      if (ImGui::BeginMenu("Edit")) {
+      // TODO: Enable once world editing is actually a thing.
+
+      if (ImGui::BeginMenu("Edit", false)) {
          ImGui::MenuItem("Undo", "Ctrl + Z");
          ImGui::MenuItem("Redo", "Ctrl + Y");
 
