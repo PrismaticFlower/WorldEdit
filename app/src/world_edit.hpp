@@ -4,6 +4,7 @@
 #include "graphics/renderer.hpp"
 #include "input_state.hpp"
 #include "output_stream.hpp"
+#include "utility/command_line.hpp"
 #include "utility/synchronous_task_queue.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
@@ -23,7 +24,7 @@ namespace we {
 
 class world_edit {
 public:
-   explicit world_edit(const HWND window);
+   world_edit(const HWND window, utility::command_line command_line);
 
    bool update();
 
@@ -58,7 +59,9 @@ private:
                      asset_ref<assets::msh::flat_model> asset,
                      asset_data<assets::msh::flat_model> data);
 
-   void open_project() noexcept;
+   void open_project(std::filesystem::path path) noexcept;
+
+   void open_project_with_picker() noexcept;
 
    void load_world(std::filesystem::path path) noexcept;
 
@@ -77,8 +80,7 @@ private:
 
    std::unique_ptr<ImGuiContext, void (*)(ImGuiContext*)> _imgui_context;
 
-   std::filesystem::path _project_dir =
-      L"D:/BF2_ModTools/data_SPT"; // TODO: Decide on project dir handling.
+   std::filesystem::path _project_dir;
    std::filesystem::path _world_path;
 
    std::vector<std::filesystem::path> _project_world_paths;

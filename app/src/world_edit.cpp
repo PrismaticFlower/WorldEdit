@@ -26,15 +26,21 @@ constexpr float camera_look_sensitivity = 0.18f;
 
 }
 
-world_edit::world_edit(const HWND window)
+world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}, _renderer{window, _asset_libraries}
 {
    ImGui_ImplWin32_Init(window);
    imgui_keymap_init(ImGui::GetIO());
 
-   _asset_libraries.source_directory(_project_dir);
+   if (auto start_project = command_line.get_or("-project"sv, ""sv);
+       not start_project.empty()) {
+      open_project(start_project);
+   }
 
-   load_world("D:/BF2_ModTools/data_SPT/Worlds/SPT/World1/spt.wld");
+   if (auto start_world = command_line.get_or("-world"sv, ""sv);
+       not start_world.empty()) {
+      load_world(start_world);
+   }
 
    RECT rect{};
    GetWindowRect(window, &rect);
@@ -137,7 +143,7 @@ void world_edit::update_ui(const mouse_state& mouse_state,
 
    if (ImGui::BeginMainMenuBar()) {
       if (ImGui::BeginMenu("File")) {
-         if (ImGui::MenuItem("Open Project")) open_project();
+         if (ImGui::MenuItem("Open Project")) open_project_with_picker();
 
          ImGui::Separator();
 
@@ -212,7 +218,24 @@ void world_edit::model_loaded(const lowercase_string& name,
    }
 }
 
-void world_edit::open_project() noexcept
+void world_edit::open_project(std::filesystem::path path) noexcept
+{
+   if (not std::filesystem::exists(path / L"Worlds")) {
+      if (MessageBoxW(_window, L"The selected folder does not appear to be a project folder. Are you sure you wish to open it?",
+                      L"Not a Project Folder", MB_YESNO) != IDYES) {
+         return;
+      }
+   }
+
+   _project_dir = path;
+   _asset_libraries.source_directory(_project_dir);
+   _project_world_paths.clear();
+
+   close_world();
+   enumerate_project_worlds();
+}
+
+void world_edit::open_project_with_picker() noexcept
 {
    static constexpr GUID open_project_picker_guid = {0xe66983ff,
                                                      0x54e0,
@@ -227,19 +250,7 @@ void world_edit::open_project() noexcept
 
    if (not path && not std::filesystem::exists(*path)) return;
 
-   if (not std::filesystem::exists(*path / L"Worlds")) {
-      if (MessageBoxW(_window, L"The selected folder does not appear to be a project folder. Are you sure you wish to open it?",
-                      L"Not a Project Folder", MB_YESNO) != IDYES) {
-         return;
-      }
-   }
-
-   _project_dir = *path;
-   _asset_libraries.source_directory(_project_dir);
-   _project_world_paths.clear();
-
-   close_world();
-   enumerate_project_worlds();
+   open_project(*path);
 }
 
 void world_edit::load_world(std::filesystem::path path) noexcept

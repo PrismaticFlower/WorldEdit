@@ -1,0 +1,5 @@
+-project <path>
+   Sets a project to be automatically loaded.
+   
+-world <path>
+   Sets a world to be automatically loaded.

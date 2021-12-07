@@ -53,6 +53,8 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
 
 void libraries_manager::update_modified() noexcept
 {
+   if (not _file_watcher) return;
+
    _file_watcher->evaluate_modified_files([this](const std::filesystem::path& path) {
       // TODO: Skip path if parent path is ignored.
 

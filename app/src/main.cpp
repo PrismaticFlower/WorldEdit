@@ -1,4 +1,5 @@
 
+#include "utility/command_line.hpp"
 #include "world_edit.hpp"
 
 #include <atomic>
@@ -12,11 +13,13 @@
 #include <wil/resource.h>
 #include <wil/result.h>
 
+using we::utility::command_line;
+
 // clang-format off
 
 template<typename App>
-concept application = requires(App app, HWND window, int size, float movement, char16_t char16) {
-   { App{window} };
+concept application = requires(App app, HWND window, command_line command_line, int size, float movement, char16_t char16) {
+   { App{window, command_line} };
    { app.update() } -> std::convertible_to<bool>;
    { app.resized(size, size) };
    { app.focused() };
@@ -30,7 +33,7 @@ concept application = requires(App app, HWND window, int size, float movement, c
 // clang-format on
 
 template<application Application>
-void run_application()
+void run_application(command_line command_line)
 {
    static std::atomic_flag entered{};
 
@@ -77,7 +80,7 @@ void run_application()
 
    if (window_handle == nullptr) std::terminate();
 
-   Application app{window_handle.get()};
+   Application app{window_handle.get(), command_line};
 
    window_procedure = [&](HWND window, UINT message, WPARAM wparam,
                           LPARAM lparam) noexcept -> LRESULT {
@@ -147,9 +150,9 @@ void run_application()
    } while (app.update());
 }
 
-int main()
+int main(int arg_count, const char** args)
 {
    std::ios_base::sync_with_stdio(false);
 
-   run_application<we::world_edit>();
+   run_application<we::world_edit>(command_line{arg_count, args});
 }
