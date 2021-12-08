@@ -13,7 +13,7 @@ namespace we::graphics::gpu {
 
 namespace {
 
-constexpr bool use_debug_layer = true;
+constexpr bool use_debug_layer = false;
 
 auto create_factory() -> utility::com_ptr<IDXGIFactory7>
 {
@@ -258,14 +258,9 @@ device::device(const HWND window)
    throw_if_failed(device_d3d->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                            IID_PPV_ARGS(fence.clear_and_assign())));
 
-   D3D12_COMMAND_QUEUE_DESC queue_desc{
-      .Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
-      .Priority = command_queue_priority_supported(*device_d3d.get(),
-                                                   D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                   D3D12_COMMAND_QUEUE_PRIORITY_HIGH)
-                     ? D3D12_COMMAND_QUEUE_PRIORITY_HIGH
-                     : D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
-      .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE};
+   D3D12_COMMAND_QUEUE_DESC queue_desc{.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                       .Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
+                                       .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE};
 
    fence_event = wil::unique_event{CreateEventW(nullptr, false, false, nullptr)};
 
