@@ -34,7 +34,7 @@ public:
              root_signature_library& root_signatures, pipeline_library& pipelines,
              gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void process_updated_texture(updated_texture updated);
+   void process_updated_texture(const updated_textures& updated);
 
 private:
    struct terrain_patch {

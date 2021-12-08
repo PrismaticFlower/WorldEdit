@@ -160,17 +160,17 @@ void terrain::draw(const terrain_draw draw, const frustrum& view_frustrum,
                                        visible_patch_count, 0, 0, 0);
 }
 
-void terrain::process_updated_texture(updated_texture updated)
+void terrain::process_updated_texture(const updated_textures& updated)
 {
    using namespace ranges::views;
 
    bool reinit_views = false;
 
    for (auto [name, texture] : zip(_diffuse_maps_names, _diffuse_maps)) {
-      if (name != updated.name) continue;
-
-      texture = updated.texture;
-      reinit_views = true;
+      if (auto new_texture = updated.find(name); new_texture != updated.end()) {
+         texture = new_texture->second;
+         reinit_views = true;
+      }
    }
 
    if (reinit_views) init_textures_resource_views();

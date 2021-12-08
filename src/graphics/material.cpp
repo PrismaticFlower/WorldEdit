@@ -151,19 +151,19 @@ void material::update_constant_buffer(gpu::graphics_command_list& command_list,
                               D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 }
 
-void material::process_updated_texture(gpu::graphics_command_list& command_list,
-                                       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
-                                       updated_texture updated)
+void material::process_updated_textures(gpu::graphics_command_list& command_list,
+                                        gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
+                                        const updated_textures& updated)
 {
    using namespace ranges::views;
 
    bool update = false;
 
    for (auto [name, texture] : zip(texture_names, textures)) {
-      if (name != updated.name) continue;
-
-      texture = updated.texture;
-      update = true;
+      if (auto new_texture = updated.find(name); new_texture != updated.end()) {
+         texture = new_texture->second;
+         update = true;
+      }
    }
 
    if (update) update_constant_buffer(command_list, dynamic_buffer_allocator);

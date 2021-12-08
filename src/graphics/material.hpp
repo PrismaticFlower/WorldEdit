@@ -19,9 +19,9 @@ struct material {
    void update_constant_buffer(gpu::graphics_command_list& command_list,
                                gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void process_updated_texture(gpu::graphics_command_list& command_list,
-                                gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
-                                updated_texture updated);
+   void process_updated_textures(gpu::graphics_command_list& command_list,
+                                 gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
+                                 const updated_textures& updated);
 
    material_pipeline_flags flags = material_pipeline_flags::none;
    gpu::buffer constant_buffer;

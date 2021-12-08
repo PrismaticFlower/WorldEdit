@@ -22,10 +22,8 @@ struct world_texture {
    std::shared_ptr<const gpu::texture> texture;
 };
 
-struct updated_texture {
-   const lowercase_string& name;
-   std::shared_ptr<const world_texture> texture;
-};
+using updated_textures =
+   absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>;
 
 class texture_manager {
 public:
@@ -115,16 +113,13 @@ public:
       return _null_normal_map;
    }
 
-   /// @brief Process textures that have been updated since the last frame.
-   /// @param callback A function to call with a updated_texture on the updated textures.
-   void process_updated_textures(std::invocable<updated_texture> auto&& callback)
+   /// @brief Allows processing updated textures through a callback.
+   /// @param callback The callback to invoke with a reference to the updated textures. The reference is only safe to use until the callback returns.
+   void eval_updated_textures(std::invocable<const updated_textures&> auto callback) noexcept
    {
       std::scoped_lock lock{_shared_mutex};
 
-      for (auto& texture : _copied_textures) {
-         std::invoke(callback, updated_texture{.name = texture.first,
-                                               .texture = texture.second});
-      }
+      callback(_copied_textures);
 
       _copied_textures.clear();
    }
@@ -252,7 +247,7 @@ private:
 
       _textures[name] = texture_state{.texture = texture, .asset = asset};
       _pending_textures.erase(name);
-      _copied_textures.emplace_back(name, texture);
+      _copied_textures.emplace(name, texture);
    }
 
    static auto get_srgb_format(const DXGI_FORMAT format) noexcept -> DXGI_FORMAT
@@ -286,7 +281,7 @@ private:
    std::shared_mutex _shared_mutex;
    absl::flat_hash_map<lowercase_string, texture_state> _textures;
    absl::flat_hash_map<lowercase_string, asset_ref<assets::texture::texture>> _pending_textures;
-   std::vector<std::pair<lowercase_string, std::shared_ptr<world_texture>>> _copied_textures;
+   absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>> _copied_textures;
 
    tbb::task_group _creation_tasks;
 

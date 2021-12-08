@@ -84,18 +84,13 @@ public:
       return _placeholder_model;
    }
 
-   void process_updated_texture(gpu::graphics_command_list& command_list,
-                                gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
-                                updated_texture updated)
+   /// @brief Permits safe iteration over active models.
+   /// @param callback The function to call for each model.
+   void for_each(std::invocable<model&> auto callback)
    {
       std::shared_lock lock{_mutex};
 
-      for (auto& [name, state] : _models) {
-         for (auto& part : state.model->parts) {
-            part.material.process_updated_texture(command_list,
-                                                  dynamic_buffer_allocator, updated);
-         }
-      }
+      for (auto& [name, state] : _models) callback(*state.model);
    }
 
    /// @brief Call at the end of a frame to destroy models that may have been updated and replaced midframe.

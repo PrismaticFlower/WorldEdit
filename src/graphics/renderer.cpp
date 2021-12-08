@@ -833,11 +833,18 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
 
 void renderer::update_textures(gpu::graphics_command_list& command_list)
 {
-   _texture_manager.process_updated_textures([&](updated_texture updated) {
-      _model_manager.process_updated_texture(command_list,
-                                             _dynamic_buffer_allocator, updated);
-      _terrain.process_updated_texture(updated);
-   });
+   _texture_manager.eval_updated_textures(
+      [&](const absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>& updated) {
+         _model_manager.for_each([&](model& model) {
+            for (auto& part : model.parts) {
+               part.material.process_updated_textures(command_list,
+                                                      _dynamic_buffer_allocator,
+                                                      updated);
+            }
+         });
+
+         _terrain.process_updated_texture(updated);
+      });
 }
 
 auto renderer::create_raytacing_blas(gpu::graphics_command_list& command_list,
