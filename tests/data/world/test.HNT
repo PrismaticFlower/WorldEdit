@@ -1,0 +1,18 @@
+
+Hint("HintNode0", "5")
+{
+	Position(-70.045296, 1.000582, -19.298828);
+	Rotation(0.303753, 0.399004, -0.569245, -0.651529);
+	Radius(7.692307);
+	Mode(1);
+	CommandPost("cp1");
+}
+
+Hint("HintNode1", "5")
+{
+	Position(-136.048569, 0.500000, -25.761259);
+	Rotation(0.090763, -0.000000, -0.995872, -0.000000);
+	PrimaryStance(7);
+	Mode(3);
+	CommandPost("cp2");
+}

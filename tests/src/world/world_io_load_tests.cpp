@@ -239,7 +239,40 @@ TEST_CASE("world loading", "[World][Load]")
 
    // hintnodes checks
    {
-      // TODO: create a test .hnt file
+      REQUIRE(world.hintnodes.size() == 2);
+
+      // HintNode0
+      {
+         CHECK(world.hintnodes[0].name == "HintNode0"sv);
+         CHECK(world.hintnodes[0].layer == 0);
+         CHECK(approx_equals(world.hintnodes[0].position,
+                             {-70.045296f, 1.000582f, 19.298828f}));
+         CHECK(approx_equals(world.hintnodes[0].rotation,
+                             {-0.569245f, 0.651529f, 0.303753f, -0.399004f}));
+         CHECK(world.hintnodes[0].radius == 7.692307_a);
+         CHECK(world.hintnodes[0].type == hintnode_type::mine);
+         CHECK(world.hintnodes[0].mode == hintnode_mode::attack);
+         CHECK(world.hintnodes[0].primary_stance == stance_flags::none);
+         CHECK(world.hintnodes[0].secondary_stance == stance_flags::none);
+         CHECK(world.hintnodes[0].command_post == "cp1"sv);
+      }
+
+      // HintNode1
+      {
+         CHECK(world.hintnodes[1].name == "HintNode1"sv);
+         CHECK(world.hintnodes[1].layer == 0);
+         CHECK(approx_equals(world.hintnodes[1].position,
+                             {-136.048569f, 0.500000f, 25.761259f}));
+         CHECK(approx_equals(world.hintnodes[1].rotation,
+                             {-0.995872f, 0.000000f, 0.090763f, 0.000000f}));
+         CHECK(world.hintnodes[1].radius == 0.0f);
+         CHECK(world.hintnodes[1].type == hintnode_type::mine);
+         CHECK(world.hintnodes[1].mode == hintnode_mode::both);
+         CHECK(world.hintnodes[1].primary_stance ==
+               (stance_flags::stand | stance_flags::crouch | stance_flags::prone));
+         CHECK(world.hintnodes[1].secondary_stance == stance_flags::none);
+         CHECK(world.hintnodes[1].command_post == "cp2"sv);
+      }
    }
 
    // barriers checks

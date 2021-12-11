@@ -508,6 +508,58 @@ void load_boundaries(const std::filesystem::path& filepath,
    }
 }
 
+void load_hintnodes(const std::filesystem::path& filepath, output_stream& output,
+                    world& world_out, layer_remap& layer_remap)
+{
+   using namespace assets;
+
+   try {
+      for (auto& key_node :
+           config::read_config(utility::read_file_to_string(filepath))) {
+         if (key_node.key != "Hint"sv) continue;
+
+         if (key_node.key != "Hint"sv) continue;
+
+         auto& hint = world_out.hintnodes.emplace_back();
+
+         hint.name = key_node.values.get<std::string>(0);
+         hint.type = static_cast<hintnode_type>(
+            std::stol(key_node.values.get<std::string>(1)));
+         std::tie(hint.rotation, hint.position) =
+            read_location(key_node, "Rotation"sv, "Position"sv);
+
+         for (auto& prop : key_node) {
+            if (prop.key == "Layer"sv) {
+               hint.layer = layer_remap[prop.values.get<int>(0)];
+            }
+            else if (prop.key == "Radius"sv) {
+               hint.radius = prop.values.get<float>(0);
+            }
+            else if (prop.key == "PrimaryStance"sv) {
+               hint.primary_stance =
+                  static_cast<stance_flags>(prop.values.get<int>(0));
+            }
+            else if (prop.key == "SecondaryStance"sv) {
+               hint.secondary_stance =
+                  static_cast<stance_flags>(prop.values.get<int>(0));
+            }
+            else if (prop.key == "Mode"sv) {
+               hint.mode = static_cast<hintnode_mode>(prop.values.get<int>(0));
+            }
+            else if (prop.key == "CommandPost"sv) {
+               hint.command_post = prop.values.get<std::string>(0);
+            }
+         }
+
+         output.write(fmt::format("Loaded world hint node '{}'\n"sv, hint.name));
+      }
+   }
+   catch (std::exception& e) {
+      throw file_load_failure{"Failed to load layer boundaries.",
+                              filepath.string(), e.what()};
+   }
+}
+
 void load_layer(const std::filesystem::path& world_dir,
                 const std::string_view layer_name, const std::string_view world_ext,
                 output_stream& output, world& world_out, layer_remap& layer_remap)
@@ -542,6 +594,11 @@ void load_layer(const std::filesystem::path& world_dir,
    if (const auto bnd_path = world_dir / layer_name += ".bnd"sv;
        std::filesystem::exists(bnd_path)) {
       load_boundaries(bnd_path, output, world_out);
+   }
+
+   if (const auto hnt_path = world_dir / layer_name += ".hnt"sv;
+       std::filesystem::exists(hnt_path)) {
+      load_hintnodes(hnt_path, output, world_out, layer_remap);
    }
 }
 
