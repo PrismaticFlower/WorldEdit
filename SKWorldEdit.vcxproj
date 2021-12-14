@@ -121,6 +121,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\io\output_file.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
     <ClInclude Include="include\assets\config\values.hpp" />
@@ -246,6 +247,7 @@
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\input_state.hpp" />
+    <ClInclude Include="src\io\output_file.hpp" />
     <ClInclude Include="src\lowercase_string.hpp" />
     <ClInclude Include="src\math\align.hpp" />
     <ClInclude Include="src\math\bounding_box.hpp" />

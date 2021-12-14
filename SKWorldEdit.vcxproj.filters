@@ -511,6 +511,9 @@
     <ClInclude Include="src\utility\command_line.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\io\output_file.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -679,6 +682,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utility\file_pickers.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io\output_file.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
