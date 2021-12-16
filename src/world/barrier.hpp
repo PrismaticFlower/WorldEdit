@@ -10,7 +10,6 @@ namespace we::world {
 
 struct barrier {
    std::string name;
-   int layer = 0;
 
    std::array<float2, 4> corners{};
    ai_path_flags flags = ai_path_flags::soldier | ai_path_flags::hover |

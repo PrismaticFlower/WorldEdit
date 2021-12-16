@@ -13,7 +13,7 @@ TEST_CASE("output file create mode", "[IO][OuputFile]")
 {
    // write out file
    {
-      output_file file{test_file_path, output_mode::create};
+      output_file file{test_file_path, output_open_mode::create};
 
       const char array[] = "Raw Data";
 
@@ -38,14 +38,14 @@ TEST_CASE("output file append mode", "[IO][OuputFile]")
 {
    // write out file
    {
-      output_file file{test_file_path, output_mode::create};
+      output_file file{test_file_path, output_open_mode::create};
 
       file.write("Hello ");
    }
 
    // append to out file
    {
-      output_file file{test_file_path, output_mode::append};
+      output_file file{test_file_path, output_open_mode::append};
 
       file.write("World!");
    }

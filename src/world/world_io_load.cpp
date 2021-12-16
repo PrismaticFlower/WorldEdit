@@ -3,7 +3,6 @@
 #include "assets/config/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
 #include "exceptions.hpp"
-#include "utility/make_range.hpp"
 #include "utility/read_file.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_ops.hpp"
@@ -189,7 +188,7 @@ void load_objects(const std::filesystem::path& path, output_stream& output,
 }
 
 void load_lights(const std::filesystem::path& path, output_stream& output,
-                 world& world_out, layer_remap& layer_remap)
+                 world& world_out, const int layer)
 {
    using namespace assets;
 
@@ -199,7 +198,7 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
             auto& light = world_out.lights.emplace_back();
 
             light.name = key_node.values.get<std::string>(0);
-            light.layer = read_layer_index(key_node, layer_remap);
+            light.layer = layer;
             std::tie(light.rotation, light.position) =
                read_location(key_node, "Rotation"sv, "Position"sv);
 
@@ -376,8 +375,8 @@ void load_regions(const std::filesystem::path& filepath, output_stream& output,
    }
 }
 
-void load_portals_sectors(const std::filesystem::path& filepath, output_stream& output,
-                          world& world_out, layer_remap& layer_remap)
+void load_portals_sectors(const std::filesystem::path& filepath,
+                          output_stream& output, world& world_out)
 {
    using namespace assets;
 
@@ -388,7 +387,6 @@ void load_portals_sectors(const std::filesystem::path& filepath, output_stream& 
             auto& sector = world_out.sectors.emplace_back();
 
             sector.name = key_node.values.get<std::string>(0);
-            sector.layer = read_layer_index(key_node, layer_remap);
 
             for (auto& sector_prop : key_node) {
                if (sector_prop.key == "Base"sv) {
@@ -399,7 +397,7 @@ void load_portals_sectors(const std::filesystem::path& filepath, output_stream& 
                }
                else if (sector_prop.key == "Point"sv) {
                   sector.points.push_back({sector_prop.values.get<float>(0),
-                                           sector_prop.values.get<float>(1)});
+                                           -sector_prop.values.get<float>(1)});
                }
                else if (sector_prop.key == "Object"sv) {
                   sector.objects.emplace_back(sector_prop.values.get<std::string>(0));
@@ -412,7 +410,6 @@ void load_portals_sectors(const std::filesystem::path& filepath, output_stream& 
             auto& portal = world_out.portals.emplace_back();
 
             portal.name = key_node.values.get<std::string>(0);
-            portal.layer = read_layer_index(key_node, layer_remap);
             std::tie(portal.rotation, portal.position) =
                read_location(key_node, "Rotation"sv, "Position"sv);
             portal.width = key_node.at("Width"sv).values.get<float>(0);
@@ -437,7 +434,7 @@ void load_portals_sectors(const std::filesystem::path& filepath, output_stream& 
 }
 
 void load_barriers(const std::filesystem::path& filepath, output_stream& output,
-                   world& world_out, layer_remap& layer_remap)
+                   world& world_out)
 {
    using namespace assets;
 
@@ -449,7 +446,6 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
          auto& barrier = world_out.barriers.emplace_back();
 
          barrier.name = key_node.values.get<std::string>(0);
-         barrier.layer = read_layer_index(key_node, layer_remap);
          barrier.flags = ai_path_flags{key_node.at("Flag"sv).values.get<int>(0)};
 
          const auto is_corner = [](const config::key_node& child_key_node) {
@@ -508,8 +504,8 @@ void load_boundaries(const std::filesystem::path& filepath,
    }
 }
 
-void load_hintnodes(const std::filesystem::path& filepath, output_stream& output,
-                    world& world_out, layer_remap& layer_remap)
+void load_hintnodes(const std::filesystem::path& filepath,
+                    output_stream& output, world& world_out, const int layer)
 {
    using namespace assets;
 
@@ -523,16 +519,14 @@ void load_hintnodes(const std::filesystem::path& filepath, output_stream& output
          auto& hint = world_out.hintnodes.emplace_back();
 
          hint.name = key_node.values.get<std::string>(0);
+         hint.layer = layer;
          hint.type = static_cast<hintnode_type>(
             std::stol(key_node.values.get<std::string>(1)));
          std::tie(hint.rotation, hint.position) =
             read_location(key_node, "Rotation"sv, "Position"sv);
 
          for (auto& prop : key_node) {
-            if (prop.key == "Layer"sv) {
-               hint.layer = layer_remap[prop.values.get<int>(0)];
-            }
-            else if (prop.key == "Radius"sv) {
+            if (prop.key == "Radius"sv) {
                hint.radius = prop.values.get<float>(0);
             }
             else if (prop.key == "PrimaryStance"sv) {
@@ -560,9 +554,9 @@ void load_hintnodes(const std::filesystem::path& filepath, output_stream& output
    }
 }
 
-void load_layer(const std::filesystem::path& world_dir,
-                const std::string_view layer_name, const std::string_view world_ext,
-                output_stream& output, world& world_out, layer_remap& layer_remap)
+void load_layer(const std::filesystem::path& world_dir, const std::string_view layer_name,
+                const std::string_view world_ext, output_stream& output,
+                world& world_out, layer_remap& layer_remap, const int layer)
 {
    load_objects(world_dir / layer_name += world_ext, output, world_out, layer_remap);
 
@@ -578,17 +572,17 @@ void load_layer(const std::filesystem::path& world_dir,
 
    if (const auto lights_path = world_dir / layer_name += ".lgt"sv;
        std::filesystem::exists(lights_path)) {
-      load_lights(lights_path, output, world_out, layer_remap);
+      load_lights(lights_path, output, world_out, layer);
    }
 
    if (const auto pvs_path = world_dir / layer_name += ".pvs"sv;
        std::filesystem::exists(pvs_path)) {
-      load_portals_sectors(pvs_path, output, world_out, layer_remap);
+      load_portals_sectors(pvs_path, output, world_out);
    }
 
    if (const auto bar_path = world_dir / layer_name += ".bar"sv;
        std::filesystem::exists(bar_path)) {
-      load_barriers(bar_path, output, world_out, layer_remap);
+      load_barriers(bar_path, output, world_out);
    }
 
    if (const auto bnd_path = world_dir / layer_name += ".bnd"sv;
@@ -598,7 +592,7 @@ void load_layer(const std::filesystem::path& world_dir,
 
    if (const auto hnt_path = world_dir / layer_name += ".hnt"sv;
        std::filesystem::exists(hnt_path)) {
-      load_hintnodes(hnt_path, output, world_out, layer_remap);
+      load_hintnodes(hnt_path, output, world_out, layer);
    }
 }
 
@@ -616,13 +610,13 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       auto layer_remap =
          load_layer_index(world_dir / world.name += ".ldx"sv, output, world);
 
-      load_layer(world_dir, world.name, ".wld"sv, output, world, layer_remap);
+      load_layer(world_dir, world.name, ".wld"sv, output, world, layer_remap, 0);
 
-      for (const auto& layer :
-           utility::make_range(world.layer_descriptions.begin() + 1,
-                               world.layer_descriptions.end())) {
+      for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
+         auto layer = world.layer_descriptions[i];
+
          load_layer(world_dir, fmt::format("{}_{}"sv, world.name, layer.name),
-                    ".lyr"sv, output, world, layer_remap);
+                    ".lyr"sv, output, world, layer_remap, to_int32(i));
       }
 
       world.terrain = read_terrain(

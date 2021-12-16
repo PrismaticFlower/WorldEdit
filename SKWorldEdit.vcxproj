@@ -122,6 +122,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\io\output_file.cpp" />
+    <ClCompile Include="src\world\world_io_save.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
     <ClInclude Include="include\assets\config\values.hpp" />
@@ -312,6 +313,7 @@
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />
+    <ClInclude Include="src\world\world_io_save.hpp" />
     <ClInclude Include="src\world\world_utilities.hpp" />
   </ItemGroup>
   <ItemGroup>

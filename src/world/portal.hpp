@@ -9,7 +9,6 @@ namespace we::world {
 
 struct portal {
    std::string name;
-   int layer = 0;
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    float3 position{};

@@ -44,4 +44,10 @@ struct file_picker {
 [[nodiscard]] auto show_file_open_picker(const file_picker options) noexcept
    -> std::optional<std::filesystem::path>;
 
+/// @brief Creates and shows a file picker. This functions calls CoInitializeEx and CoUninitialize.
+/// @param options The options for the file picker.
+/// @return The path selected or nullopt.
+[[nodiscard]] auto show_file_save_picker(const file_picker options) noexcept
+   -> std::optional<std::filesystem::path>;
+
 }

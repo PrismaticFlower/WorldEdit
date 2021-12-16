@@ -12,7 +12,7 @@ using namespace Catch::literals;
 
 namespace we::world::tests {
 
-TEST_CASE("world loading", "[World][Load]")
+TEST_CASE("world loading", "[World][IO]")
 {
    null_output_stream out;
    const auto world = load_world("data/world/test.wld"sv, out);

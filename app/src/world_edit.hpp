@@ -67,6 +67,10 @@ private:
 
    void load_world_with_picker() noexcept;
 
+   void save_world(std::filesystem::path path) noexcept;
+
+   void save_world_with_picker() noexcept;
+
    void close_world() noexcept;
 
    void enumerate_project_worlds() noexcept;

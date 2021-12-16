@@ -8,6 +8,7 @@
 #include "imgui/imgui_impl_win32.h"
 #include "utility/file_pickers.hpp"
 #include "world/world_io_load.hpp"
+#include "world/world_io_save.hpp"
 
 #include "graphics/frustrum.hpp"
 
@@ -170,8 +171,11 @@ void world_edit::update_ui(const mouse_state& mouse_state,
 
          const bool loaded_world = not _world_path.empty();
 
-         ImGui::MenuItem("Save World", "Ctrl + S", nullptr, loaded_world);
-         ImGui::MenuItem("Save World As...", nullptr, nullptr, loaded_world);
+         ImGui::MenuItem("Save World", "Ctrl + S", nullptr, false);
+
+         if (ImGui::MenuItem("Save World As...", nullptr, nullptr, loaded_world)) {
+            save_world_with_picker();
+         }
 
          ImGui::Separator();
 
@@ -274,7 +278,7 @@ void world_edit::load_world(std::filesystem::path path) noexcept
                         .c_str());
    }
    catch (std::exception& e) {
-      _stream.write(fmt::format("Failed to load world '{}' reason: ",
+      _stream.write(fmt::format("Failed to load world '{}'! Reason: {}",
                                 path.filename().string(), e.what()));
    }
 }
@@ -299,6 +303,49 @@ void world_edit::load_world_with_picker() noexcept
    if (not path) return;
 
    load_world(*path);
+}
+
+void world_edit::save_world(std::filesystem::path path) noexcept
+{
+   try {
+      if (not std::filesystem::exists(path.parent_path())) {
+         std::filesystem::create_directories(path.parent_path());
+      }
+
+      world::save_world(path, _world);
+   }
+   catch (std::exception& e) {
+      auto message =
+         fmt::format("Failed to save world!\n   Reason: \n{}\n"
+                     "   Incomplete save data maybe present on disk.\n",
+                     utility::string::indent(2, e.what()));
+
+      _stream.write(message);
+
+      MessageBoxA(_window, message.data(), "Failed to save world!", MB_OK);
+   }
+}
+
+void world_edit::save_world_with_picker() noexcept
+{
+   static constexpr GUID save_world_picker_guid = {0xe458b1ee,
+                                                   0xf22a,
+                                                   0x4a19,
+                                                   {0x8a, 0xed, 0xa0, 0x77,
+                                                    0x98, 0xa3, 0xb0, 0x53}};
+
+   auto path = utility::show_file_save_picker(
+      {.title = L"Save World"s,
+       .ok_button_label = L"Save"s,
+       .forced_start_folder = _world_path,
+       .filters = {utility::file_picker_filter{.name = L"World"s, .filter = L"*.wld"s}},
+       .picker_guid = save_world_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+
+   save_world(*path);
 }
 
 void world_edit::close_world() noexcept

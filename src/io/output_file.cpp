@@ -81,7 +81,7 @@ output_file::output_file(const std::filesystem::path& path, output_open_mode out
       const DWORD system_error = GetLastError();
 
       throw std::runtime_error{fmt::format(
-         "Failed to open file '{}'. Reason: {}", path.string(),
+         "Failed to open file '{}'.\n   Reason: {}", path.string(),
          std::system_category().default_error_condition(system_error).message())};
    }
 
