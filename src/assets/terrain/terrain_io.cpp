@@ -97,6 +97,66 @@ struct terrain_decal_tile {
 
 static_assert(sizeof(terrain_decal_tile) == 44);
 
+struct clusters_info {
+   container::dynamic_array_2d<int16> min_heights;
+   container::dynamic_array_2d<int16> max_heights;
+   container::dynamic_array_2d<uint32> flags;
+};
+
+auto build_clusters_info(const terrain& terrain) -> clusters_info
+{
+   const auto clusters_length = terrain.length / cluster_size;
+
+   clusters_info info{.min_heights{clusters_length, clusters_length},
+                      .max_heights{clusters_length, clusters_length},
+                      .flags{clusters_length, clusters_length}};
+
+   for (int y = 0; y < terrain.length; y += cluster_size) {
+      for (int x = 0; x < terrain.length; x += cluster_size) {
+         int16 min_height = std::numeric_limits<int16>::min();
+         int16 max_height = std::numeric_limits<int16>::max();
+
+         for (int local_y = 0; local_y < cluster_size; ++local_y) {
+            for (int local_x = 0; local_x < cluster_size; ++local_x) {
+               const int16 height = terrain.height_map[{x + local_x, y + local_y}];
+
+               min_height = std::min(height, min_height);
+               max_height = std::max(height, max_height);
+            }
+         }
+
+         info.min_heights[{x / cluster_size, (terrain.length - 1 - y) / cluster_size}] =
+            min_height;
+         info.max_heights[{x / cluster_size, (terrain.length - 1 - y) / cluster_size}] =
+            max_height;
+      }
+   }
+
+   for (int y = 0; y < terrain.length; y += cluster_size) {
+      for (int x = 0; x < terrain.length; x += cluster_size) {
+         uint32 flags = 0;
+
+         // build texture vis mask
+         for (int local_y = 0; local_y < cluster_size; ++local_y) {
+            for (int local_x = 0; local_x < cluster_size; ++local_x) {
+               for (uint32 i = 0; i < terrain::texture_count; ++i) {
+                  const uint8 weight =
+                     terrain.texture_weight_maps[i][{x + local_x, y + local_y}];
+
+                  flags |= (1 & (weight > 0)) << i;
+               }
+            }
+         }
+
+         // TODO: Water flag.
+
+         info.flags[{x / cluster_size, (terrain.length - 1 - y) / cluster_size}] = flags;
+      }
+   }
+
+   return info;
+}
+
 }
 
 auto read_terrain(const std::span<const std::byte> bytes) -> terrain
@@ -346,30 +406,20 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain)
       }
    }
 
-   const std::size_t terrain_clusters_length = terrain.length / cluster_size;
-   const std::size_t unused_cluster_data_size =
-      terrain_clusters_length * terrain_clusters_length * sizeof(int16);
-   const std::size_t cluster_info_size =
-      terrain_clusters_length * terrain_clusters_length * sizeof(uint32);
+   const clusters_info info = build_clusters_info(terrain);
+
+   file.write(std::as_bytes(std::span{info.min_heights}));
+   file.write(std::as_bytes(std::span{info.max_heights}));
+   file.write(std::as_bytes(std::span{info.flags}));
+
    const std::size_t foliage_map_size = foliage_map_length * foliage_map_length / 2;
    const std::size_t unused_sections_size = 262'144 + 131'072;
 
    const std::size_t make_dummy_data_size =
-      std::max({unused_cluster_data_size, cluster_info_size, foliage_map_size,
-                unused_sections_size});
+      std::max(foliage_map_size, unused_sections_size);
 
    const std::vector<std::byte> dummy_data{make_dummy_data_size};
    const std::span<const std::byte> dummy_data_span{dummy_data};
-
-   file.write(dummy_data_span.subspan(0, unused_cluster_data_size));
-   file.write(dummy_data_span.subspan(0, unused_cluster_data_size));
-
-   // water placement is stored here
-   for (std::size_t y = 0; y < terrain_clusters_length; ++y) {
-      for (std::size_t x = 0; x < terrain_clusters_length; ++x) {
-         file.write_object(uint32{0xffff});
-      }
-   }
 
    // foliage
    file.write(dummy_data_span.subspan(0, foliage_map_size));
