@@ -4,6 +4,7 @@
 #include <cctype>
 #include <numeric>
 
+#include "assets/terrain/terrain_io.hpp"
 #include "io/output_file.hpp"
 #include "utility/srgb_conversion.hpp"
 
@@ -488,7 +489,7 @@ void save_world(const std::filesystem::path& path, const world& world)
       save_layer(world_dir, world_name + "_"s + layer.name, to_int32(i), world);
    }
 
-   // TODO: Save terrain.
+   save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv), world.terrain);
 }
 
 }

@@ -67,6 +67,8 @@ struct terrain {
 
    active_flags active_flags;
 
+   bool prelit = false;
+
    water_settings water_settings;
 
    std::array<std::string, texture_count> texture_names;

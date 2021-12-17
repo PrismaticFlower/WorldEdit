@@ -6,6 +6,7 @@
 #include <memory>
 #include <span>
 #include <string_view>
+#include <type_traits>
 
 #include <fmt/core.h>
 
@@ -65,9 +66,18 @@ public:
    /// @param bytes The bytes to write.
    void write(const std::span<const std::byte> bytes) noexcept;
 
-private:
-   void vwrite_ln(const fmt::string_view format, fmt::format_args args) noexcept;
+   /// @brief Writes a trivially copyable object to the file as raw bytes. Take
+   ///        care not to accidentally write out structures with pointers in.
+   /// @tparam T The type of the object.
+   /// @param object The object to write.
+   template<typename T>
+   void write_object(const T& object) noexcept
+      requires(std::is_trivially_copyable_v<T> and not std::is_pointer_v<T>)
+   {
+      write(std::span{reinterpret_cast<const std::byte*>(&object), sizeof(T)});
+   }
 
+private : void vwrite_ln(const fmt::string_view format, fmt::format_args args) noexcept;
    void vwrite(const fmt::string_view format, fmt::format_args args) noexcept;
 
    void write_impl(const void* data, std::int64_t size) noexcept;
