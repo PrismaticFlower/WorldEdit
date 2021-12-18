@@ -77,12 +77,17 @@ public:
       write(std::span{reinterpret_cast<const std::byte*>(&object), sizeof(T)});
    }
 
-private : void vwrite_ln(const fmt::string_view format, fmt::format_args args) noexcept;
+   // clang-format off
+private:
+   void vwrite_ln(const fmt::string_view format, fmt::format_args args) noexcept;
+
    void vwrite(const fmt::string_view format, fmt::format_args args) noexcept;
 
    void write_impl(const void* data, std::int64_t size) noexcept;
 
    void flush() noexcept;
+
+   // clang-format on
 
    struct output_iterator;
 
