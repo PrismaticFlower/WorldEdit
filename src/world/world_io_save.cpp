@@ -105,7 +105,7 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
       file.write_ln("Path(\"{}\")", path.name);
       file.write_ln("{");
 
-      file.write_ln("\tData(0);");
+      file.write_ln("\tData(1);");
       file.write_ln("\tPathType(0);");
       file.write_ln("\tPathSpeedType(0);");
       file.write_ln("\tPathTime(0.000000);");
@@ -152,10 +152,10 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
 
          file.write_ln("\t\t\tPosition({:f}, {:f}, {:f});", position.x,
                        position.y, position.z);
-         file.write_ln("\t\t\tKnot(0.0);");
+         file.write_ln("\t\t\tKnot(0.000000);");
          file.write_ln("\t\t\tData(1);");
-         file.write_ln("\t\t\tTime(1.0);");
-         file.write_ln("\t\t\tPauseTime(1.0);");
+         file.write_ln("\t\t\tTime(1.000000);");
+         file.write_ln("\t\t\tPauseTime(0.000000);");
          file.write_ln("\t\t\tRotation({:f}, {:f}, {:f}, {:f});", rotation.w,
                        rotation.x, rotation.y, rotation.z);
 
