@@ -1,8 +1,8 @@
 
 #include "texture_io.hpp"
 #include "../option_file.hpp"
+#include "io/read_file.hpp"
 #include "texture_transforms.hpp"
-#include "utility/read_file.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -34,7 +34,7 @@ auto load_options(std::filesystem::path path) -> texture_options
 
    texture_options opts;
 
-   for (auto& opt : parse_options(utility::read_file_to_string(path))) {
+   for (auto& opt : parse_options(io::read_file_to_string(path))) {
       using boost::iequals;
 
       if (iequals(opt.name, "-format"sv) or iequals(opt.name, "-forceformat"sv)) {

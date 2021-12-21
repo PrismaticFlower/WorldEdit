@@ -219,16 +219,10 @@
     <ClInclude Include="src\utility\make_range.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\utility\read_file.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\utility\srgb_conversion.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\utility\string_ops.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\exceptions.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\hresult_error.hpp">
@@ -526,9 +520,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\read_file.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utility\string_ops.cpp">

@@ -2,7 +2,7 @@
 
 #include "approx_test_helpers.hpp"
 #include "assets/terrain/terrain_io.hpp"
-#include "utility/read_file.hpp"
+#include "io/read_file.hpp"
 
 using namespace std::literals;
 using namespace Catch::literals;
@@ -11,7 +11,7 @@ namespace we::assets::terrain::tests {
 
 TEST_CASE("terrain io valid tests", "[Assets][Terrain]")
 {
-   auto terrain = read_terrain(utility::read_file_to_bytes("data/test.ter"sv));
+   auto terrain = read_terrain(io::read_file_to_bytes("data/test.ter"sv));
 
    REQUIRE(terrain.version == version::swbf2);
 

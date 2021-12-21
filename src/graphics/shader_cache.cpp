@@ -1,10 +1,10 @@
 
 #include "shader_cache.hpp"
 #include "hresult_error.hpp"
+#include "io/read_file.hpp"
 #include "types.hpp"
 #include "utility/binary_reader.hpp"
 #include "utility/binary_writer.hpp"
-#include "utility/read_file.hpp"
 
 #include <fstream>
 
@@ -95,7 +95,7 @@ auto load_shader_cache(const std::filesystem::path& path)
    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.clear_and_assign()));
 
    try {
-      auto file = utility::read_file_to_bytes(path);
+      auto file = io::read_file_to_bytes(path);
       utility::binary_reader reader{file};
 
       const auto file_cache_version = reader.read<uint32>();

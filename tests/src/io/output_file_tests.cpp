@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "io/output_file.hpp"
-#include "utility/read_file.hpp"
+#include "io/read_file.hpp"
 
 using namespace std::literals;
 
@@ -24,7 +24,7 @@ TEST_CASE("output file create mode", "[IO][OutputFile]")
       file.write(std::as_bytes(std::span{array}));
    }
 
-   const auto written_contents = utility::read_file_to_string(test_file_path);
+   const auto written_contents = io::read_file_to_string(test_file_path);
    const auto expected_contents = "Hello World!\n"
                                   "number: 37\n"
                                   "This is another line.\n"
@@ -50,7 +50,7 @@ TEST_CASE("output file append mode", "[IO][OutputFile]")
       file.write("World!");
    }
 
-   const auto written_contents = utility::read_file_to_string(test_file_path);
+   const auto written_contents = io::read_file_to_string(test_file_path);
    const auto expected_contents = "Hello World!"sv;
 
    REQUIRE(written_contents == expected_contents);
@@ -75,7 +75,7 @@ TEST_CASE("output file trivially copyable object", "[IO][OutputFile]")
       file.write_object(test_data);
    }
 
-   const auto written_contents = utility::read_file_to_bytes(test_file_path);
+   const auto written_contents = io::read_file_to_bytes(test_file_path);
 
    test_struct read;
    std::memcpy(&read, written_contents.data(), written_contents.size());

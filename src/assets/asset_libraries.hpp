@@ -3,7 +3,6 @@
 #include "asset_ref.hpp"
 #include "asset_state.hpp"
 #include "asset_traits.hpp"
-#include "exceptions.hpp"
 #include "lowercase_string.hpp"
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"

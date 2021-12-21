@@ -1,8 +1,8 @@
 
 #include "scene_io.hpp"
 #include "../option_file.hpp"
+#include "io/read_file.hpp"
 #include "ucfb/reader.hpp"
-#include "utility/read_file.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "validate_scene.hpp"
 
@@ -379,7 +379,7 @@ auto read_scene(const std::span<const std::byte> bytes) -> scene
 
 auto read_scene(const std::filesystem::path& path) -> scene
 {
-   auto file = utility::read_file_to_bytes(path);
+   auto file = io::read_file_to_bytes(path);
    auto scene = read_scene(file);
 
    if (auto option_path = std::filesystem::path{path} += ".option"sv;
@@ -394,7 +394,7 @@ auto read_scene_options(const std::filesystem::path& path) -> options
 {
    options results;
 
-   for (auto& opt : parse_options(utility::read_file_to_string(path))) {
+   for (auto& opt : parse_options(io::read_file_to_string(path))) {
       using boost::iequals;
 
       if (iequals(opt.name, "-bump"sv)) {

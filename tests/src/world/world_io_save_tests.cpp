@@ -1,7 +1,7 @@
 
 #include "pch.h"
 
-#include "utility/read_file.hpp"
+#include "io/read_file.hpp"
 #include "world/world_io_save.hpp"
 
 namespace we::world::tests {
@@ -292,43 +292,35 @@ TEST_CASE("world saving", "[World][IO]")
 
    save_world(L"temp/world/test.wld", world);
 
-   const auto written_wld =
-      utility::read_file_to_string(L"temp/world/test.wld");
+   const auto written_wld = io::read_file_to_string(L"temp/world/test.wld");
 
    CHECK(written_wld == expected_wld);
 
-   const auto written_lgt =
-      utility::read_file_to_string(L"temp/world/test.lgt");
+   const auto written_lgt = io::read_file_to_string(L"temp/world/test.lgt");
 
    CHECK(written_lgt == expected_lgt);
 
-   const auto written_pth =
-      utility::read_file_to_string(L"temp/world/test.pth");
+   const auto written_pth = io::read_file_to_string(L"temp/world/test.pth");
 
    CHECK(written_pth == expected_pth);
 
-   const auto written_rgn =
-      utility::read_file_to_string(L"temp/world/test.rgn");
+   const auto written_rgn = io::read_file_to_string(L"temp/world/test.rgn");
 
    CHECK(written_rgn == expected_rgn);
 
-   const auto written_pvs =
-      utility::read_file_to_string(L"temp/world/test.pvs");
+   const auto written_pvs = io::read_file_to_string(L"temp/world/test.pvs");
 
    CHECK(written_pvs == expected_pvs);
 
-   const auto written_hnt =
-      utility::read_file_to_string(L"temp/world/test.hnt");
+   const auto written_hnt = io::read_file_to_string(L"temp/world/test.hnt");
 
    CHECK(written_hnt == expected_hnt);
 
-   const auto written_bar =
-      utility::read_file_to_string(L"temp/world/test.bar");
+   const auto written_bar = io::read_file_to_string(L"temp/world/test.bar");
 
    CHECK(written_bar == expected_bar);
 
-   const auto written_bnd =
-      utility::read_file_to_string(L"temp/world/test.bnd");
+   const auto written_bnd = io::read_file_to_string(L"temp/world/test.bnd");
 
    CHECK(written_bnd == expected_bnd);
 }

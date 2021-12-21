@@ -13,9 +13,6 @@
     <ClCompile Include="src\assets\msh\scene_io_tests.cpp">
       <Filter>src\assets\msh</Filter>
     </ClCompile>
-    <ClCompile Include="src\utility\read_file_tests.cpp">
-      <Filter>src\utility</Filter>
-    </ClCompile>
     <ClCompile Include="src\ucfb\reader_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
     <ClCompile Include="src\assets\odf\properties_tests.cpp" />

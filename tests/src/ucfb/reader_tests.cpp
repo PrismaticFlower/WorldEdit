@@ -1,8 +1,8 @@
 
 #include "pch.h"
 
+#include "io/read_file.hpp"
 #include "ucfb/reader.hpp"
-#include "utility/read_file.hpp"
 
 using namespace std::literals;
 
@@ -10,7 +10,7 @@ namespace we::ucfb::tests {
 
 TEST_CASE("ucfb reading", "[ucfb][reader]")
 {
-   const auto bytes = utility::read_file_to_bytes("data/ucfb_read_test.lvl");
+   const auto bytes = io::read_file_to_bytes("data/ucfb_read_test.lvl");
 
    ucfb::reader reader{bytes};
 

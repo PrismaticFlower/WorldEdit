@@ -200,7 +200,6 @@
     <ClInclude Include="src\assets\texture\texture_transforms.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
-    <ClInclude Include="src\exceptions.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\frustrum.hpp" />
     <ClInclude Include="src\graphics\gpu\barrier_helpers.hpp" />
@@ -293,7 +292,6 @@
     </ClInclude>
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
     <ClInclude Include="src\utility\make_range.hpp" />
-    <ClInclude Include="src\utility\read_file.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />
     <ClInclude Include="src\utility\string_ops.hpp" />
     <ClInclude Include="src\utility\synchronous_task_queue.hpp" />
@@ -358,7 +356,6 @@
     <ClCompile Include="src\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\input_state.cpp" />
     <ClCompile Include="src\output_stream.cpp" />
-    <ClCompile Include="src\utility\read_file.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\object_class.cpp" />
     <ClCompile Include="src\world\world_io_load.cpp" />

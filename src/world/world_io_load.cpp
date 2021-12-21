@@ -2,8 +2,7 @@
 #include "world_io_load.hpp"
 #include "assets/config/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
-#include "exceptions.hpp"
-#include "utility/read_file.hpp"
+#include "io/read_file.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_ops.hpp"
 
@@ -19,6 +18,15 @@ namespace we::world {
 namespace {
 
 using layer_remap = boost::container::flat_map<int, int, std::less<>>;
+
+void throw_layer_load_failure(std::string_view type,
+                              const std::filesystem::path& filepath, std::exception& e)
+{
+   throw load_failure{fmt::format("Failed to load layer {}.\n   "
+                                  "File: {}\n   Message: {}\n"sv,
+                                  type, filepath.string(),
+                                  utility::string::indent(2, e.what()))};
+}
 
 auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap) -> int
 {
@@ -80,8 +88,7 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
    using namespace assets;
 
    try {
-      config::node layer_index =
-         config::read_config(utility::read_file_to_string(path));
+      config::node layer_index = config::read_config(io::read_file_to_string(path));
 
       if (not std::any_of(layer_index.cbegin(), layer_index.cend(),
                           [](const config::key_node& node) {
@@ -89,8 +96,11 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
                                     node.values.get<std::string_view>(0) == "[Base]"sv and
                                     node.values.get<int>(1) == 0;
                           })) {
-         throw file_load_failure{"Failed to load layer index.", path.string(),
-                                 "Layer index did not contain a valid entry for the [Base] layer!"s};
+         throw load_failure{
+            fmt::format("Failed to load layer index.\n   File: {}\n   Layer "
+                        "index did "
+                        "not contain a valid entry for the [Base] layer!\n"sv,
+                        path.string())};
       }
 
       layer_remap layer_remap;
@@ -138,7 +148,10 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
       return layer_remap;
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer index.", path.string(), e.what()};
+      throw load_failure{fmt::format("Failed to layer index.\n   "
+                                     "File: {}\n   Message: {}\n"sv,
+                                     path.string(),
+                                     utility::string::indent(2, e.what()))};
    }
 }
 
@@ -148,7 +161,7 @@ void load_objects(const std::filesystem::path& path, output_stream& output,
    using namespace assets;
 
    try {
-      for (auto& key_node : config::read_config(utility::read_file_to_string(path))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(path))) {
          if (key_node.key != "Object"sv) continue;
 
          auto& object = world_out.objects.emplace_back();
@@ -182,8 +195,7 @@ void load_objects(const std::filesystem::path& path, output_stream& output,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer objects.", path.string(),
-                              e.what()};
+      throw_layer_load_failure("objects", path.string(), e);
    }
 }
 
@@ -193,7 +205,7 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
    using namespace assets;
 
    try {
-      for (auto& key_node : config::read_config(utility::read_file_to_string(path))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(path))) {
          if (key_node.key == "Light"sv) {
             auto& light = world_out.lights.emplace_back();
 
@@ -288,8 +300,7 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer objects.", path.string(),
-                              e.what()};
+      throw_layer_load_failure("lights", path.string(), e);
    }
 }
 
@@ -299,8 +310,7 @@ void load_paths(const std::filesystem::path& filepath, output_stream& output,
    using namespace assets;
 
    try {
-      for (auto& key_node :
-           config::read_config(utility::read_file_to_string(filepath))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Path"sv) continue;
 
          auto& path = world_out.paths.emplace_back();
@@ -328,8 +338,7 @@ void load_paths(const std::filesystem::path& filepath, output_stream& output,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer paths.", filepath.string(),
-                              e.what()};
+      throw_layer_load_failure("paths", filepath.string(), e);
    }
 }
 
@@ -339,8 +348,7 @@ void load_regions(const std::filesystem::path& filepath, output_stream& output,
    using namespace assets;
 
    try {
-      for (auto& key_node :
-           config::read_config(utility::read_file_to_string(filepath))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Region"sv) continue;
 
          auto& region = world_out.regions.emplace_back();
@@ -370,8 +378,7 @@ void load_regions(const std::filesystem::path& filepath, output_stream& output,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer regions.",
-                              filepath.string(), e.what()};
+      throw_layer_load_failure("regions", filepath.string(), e);
    }
 }
 
@@ -381,8 +388,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
    using namespace assets;
 
    try {
-      for (auto& key_node :
-           config::read_config(utility::read_file_to_string(filepath))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key == "Sector"sv) {
             auto& sector = world_out.sectors.emplace_back();
 
@@ -428,8 +434,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer portals and sectors.",
-                              filepath.string(), e.what()};
+      throw_layer_load_failure("portals and sectors", filepath.string(), e);
    }
 }
 
@@ -439,8 +444,7 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
    using namespace assets;
 
    try {
-      for (auto& key_node :
-           config::read_config(utility::read_file_to_string(filepath))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Barrier"sv) continue;
 
          auto& barrier = world_out.barriers.emplace_back();
@@ -472,8 +476,7 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer barriers.",
-                              filepath.string(), e.what()};
+      throw_layer_load_failure("barriers", filepath.string(), e);
    }
 }
 
@@ -483,8 +486,7 @@ void load_boundaries(const std::filesystem::path& filepath,
    using namespace assets;
 
    try {
-      for (auto& key_node :
-           config::read_config(utility::read_file_to_string(filepath))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Boundary"sv) continue;
 
          for (auto& child_key_node : key_node) {
@@ -499,8 +501,7 @@ void load_boundaries(const std::filesystem::path& filepath,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer boundaries.",
-                              filepath.string(), e.what()};
+      throw_layer_load_failure("boundaries", filepath.string(), e);
    }
 }
 
@@ -510,8 +511,7 @@ void load_hintnodes(const std::filesystem::path& filepath,
    using namespace assets;
 
    try {
-      for (auto& key_node :
-           config::read_config(utility::read_file_to_string(filepath))) {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Hint"sv) continue;
 
          if (key_node.key != "Hint"sv) continue;
@@ -549,8 +549,7 @@ void load_hintnodes(const std::filesystem::path& filepath,
       }
    }
    catch (std::exception& e) {
-      throw file_load_failure{"Failed to load layer boundaries.",
-                              filepath.string(), e.what()};
+      throw_layer_load_failure("hint nodes", filepath.string(), e);
    }
 }
 
@@ -619,14 +618,13 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
                     ".lyr"sv, output, world, layer_remap, to_int32(i));
       }
 
-      world.terrain = read_terrain(
-         utility::read_file_to_bytes(world_dir / world.name += ".ter"sv));
+      world.terrain =
+         read_terrain(io::read_file_to_bytes(world_dir / world.name += ".ter"sv));
    }
-   catch (file_load_failure& load_failure) {
+   catch (load_failure& failure) {
       output.write(
-         fmt::format("Error while loading world:\n   File: {}\n   Message: \n{}\n"sv,
-                     load_failure.filepath,
-                     utility::string::indent(2, load_failure.description)));
+         fmt::format("Error while loading world:\n   World: {}\n   Message: \n{}\n"sv,
+                     path.string(), utility::string::indent(2, failure.what())));
 
       throw;
    }
