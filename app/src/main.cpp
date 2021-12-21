@@ -127,26 +127,16 @@ void run_application(command_line command_line)
    ShowWindowAsync(window_handle.get(), SW_SHOWDEFAULT);
 
    do {
-      if (app.idling()) {
-         MSG message{};
-         if (const auto result = GetMessageW(&message, nullptr, 0, 0); result > 0) {
-            TranslateMessage(&message);
-            DispatchMessageW(&message);
-         }
-         else {
-            return;
-         }
-      }
-      else {
-         MSG message{};
+      MSG message{};
 
-         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
-            TranslateMessage(&message);
-            DispatchMessageW(&message);
+      while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
+         TranslateMessage(&message);
+         DispatchMessageW(&message);
 
-            if (message.message == WM_QUIT) return;
-         }
+         if (message.message == WM_QUIT) return;
       }
+
+      if (app.idling()) WaitMessage();
    } while (app.update());
 }
 
