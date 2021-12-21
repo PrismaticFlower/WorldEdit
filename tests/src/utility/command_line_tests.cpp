@@ -2,6 +2,8 @@
 
 #include "utility/command_line.hpp"
 
+#include <array>
+
 using namespace std::literals;
 
 namespace we::utility::tests {

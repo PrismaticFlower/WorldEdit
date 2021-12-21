@@ -157,7 +157,6 @@ private:
 
       std::shared_lock lock{asset->mutex};
 
-      const bool block = (name == lowercase_string{"metalroughspheres"sv});
       auto path = _assets.at(name)->path;
 
       _tasks.run([this, asset_path = _assets.at(name)->path, asset, name,
