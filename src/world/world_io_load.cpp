@@ -618,8 +618,18 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
                     ".lyr"sv, output, world, layer_remap, to_int32(i));
       }
 
-      world.terrain =
-         read_terrain(io::read_file_to_bytes(world_dir / world.name += ".ter"sv));
+      try {
+         world.terrain =
+            read_terrain(io::read_file_to_bytes(world_dir / world.name += ".ter"sv));
+      }
+      catch (std::exception& e) {
+         auto message = fmt::format("Error while loading terrain:\n   Message: \n{}\n"sv,
+                                    utility::string::indent(2, e.what()));
+
+         output.write(message);
+
+         throw load_failure{message};
+      }
    }
    catch (load_failure& failure) {
       output.write(
