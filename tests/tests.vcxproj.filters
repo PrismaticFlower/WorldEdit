@@ -44,6 +44,7 @@
     <ClCompile Include="src\utility\command_line_tests.cpp" />
     <ClCompile Include="src\io\output_file_tests.cpp" />
     <ClCompile Include="src\world\world_io_save_tests.cpp" />
+    <ClCompile Include="src\io\read_file_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

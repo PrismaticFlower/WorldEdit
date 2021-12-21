@@ -1,8 +1,8 @@
 
 #include "output_file.hpp"
+#include "error.hpp"
 
 #include <cstring>
-#include <stdexcept>
 #include <system_error>
 #include <utility>
 
@@ -80,7 +80,7 @@ output_file::output_file(const std::filesystem::path& path, output_open_mode out
    if (_file.get() == INVALID_HANDLE_VALUE) {
       const DWORD system_error = GetLastError();
 
-      throw std::runtime_error{fmt::format(
+      throw open_error{fmt::format(
          "Failed to open file '{}'.\n   Reason: {}", path.string(),
          std::system_category().default_error_condition(system_error).message())};
    }
