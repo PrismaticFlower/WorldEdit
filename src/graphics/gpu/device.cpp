@@ -300,6 +300,9 @@ void device::wait_for_idle()
       WaitForSingleObject(fence_event.get(), INFINITE);
       completed_fence_value = fence->GetCompletedValue();
    }
+
+   copy_manager.update_completed();
+   process_deferred_resource_destructions();
 }
 
 void device::end_frame()
