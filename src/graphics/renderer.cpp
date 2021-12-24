@@ -69,11 +69,13 @@ const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
 }();
 }
 
-renderer::renderer(const HWND window, assets::libraries_manager& asset_libraries)
+renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
+                   assets::libraries_manager& asset_libraries)
    : _window{window},
      _device{window},
      _texture_manager{_device, asset_libraries.textures},
-     _model_manager{_device, _texture_manager, asset_libraries.models}
+     _model_manager{_device, _texture_manager, asset_libraries.models},
+     _settings{settings}
 {
    auto imgui_font_descriptor =
       _device.descriptor_heap_srv_cbv_uav.allocate_static(1);
@@ -337,11 +339,15 @@ void renderer::draw_world_meta_objects(
          // Set Path Nodes Constants
          {
             struct {
-               float4 color{0.15f, 1.0f, 0.3f, 1.0f};
-               float4 outline_color{0.1125f, 0.6f, 0.2225f, 1.0f};
+               float4 color;
+               float4 outline_color;
                float2 viewport_size;
                float2 viewport_topleft = {0.0f, 0.0f};
             } temp_constants;
+
+            temp_constants.color = float4{_settings->path_node_color(), 1.0f};
+            temp_constants.outline_color =
+               float4{_settings->path_node_outline_color(), 1.0f};
 
             temp_constants.viewport_size = {static_cast<float>(
                                                _device.swap_chain.width()),
@@ -381,7 +387,7 @@ void renderer::draw_world_meta_objects(
 
       if (draw_connections) {
          draw_lines(command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
-                    {.line_color = {0.1f, 0.1f, 0.75f},
+                    {.line_color = _settings->path_node_connection_color(),
 
                      .camera_constant_buffer_view = _camera_constant_buffer_view,
 
@@ -406,7 +412,7 @@ void renderer::draw_world_meta_objects(
       if (draw_orientation) {
          draw_lines(
             command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
-            {.line_color = {1.0f, 1.0f, 0.1f},
+            {.line_color = _settings->path_node_orientation_color(),
 
              .camera_constant_buffer_view = _camera_constant_buffer_view,
 
@@ -505,9 +511,8 @@ void renderer::draw_world_meta_objects(
    if (draw_regions) {
       // Set Regions Color
       {
-         const float4 color{0.25f, 0.4f, 1.0f, 0.3f};
-
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv, color);
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                        _settings->region_color());
       }
 
       for (auto& region : world.regions) {
@@ -522,9 +527,8 @@ void renderer::draw_world_meta_objects(
    if (draw_barriers) {
       // Set Barriers Color
       {
-         const float4 color{1.0f, 0.1f, 0.5f, 0.3f};
-
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv, color);
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                        _settings->barrier_color());
       }
 
       // Set Barriers IA State
@@ -571,9 +575,8 @@ void renderer::draw_world_meta_objects(
    if (draw_aabbs) {
       // Set AABBs Color
       {
-         const float4 color{0.0f, 1.0f, 0.0f, 0.3f};
-
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv, color);
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                        _settings->aabb_color());
       }
 
       // Set Barriers IA State
@@ -615,12 +618,14 @@ void renderer::draw_world_meta_objects(
    ImGui::Checkbox("Draw Light Volumes", &draw_draw_light_volumes);
 
    if (draw_draw_light_volumes) {
+      const float volume_alpha = _settings->light_volume_alpha();
+
       for (auto& light : world.lights) {
          // Set Color
          {
             const float4 color{light.color, light.light_type == world::light_type::spot
-                                               ? 0.025f
-                                               : 0.05f};
+                                               ? volume_alpha * 0.5f
+                                               : volume_alpha};
 
             command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
                                                            color);

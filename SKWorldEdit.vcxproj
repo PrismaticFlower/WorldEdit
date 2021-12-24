@@ -255,6 +255,8 @@
     <ClInclude Include="src\math\align.hpp" />
     <ClInclude Include="src\math\bounding_box.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
+    <ClInclude Include="src\settings\graphics.hpp" />
+    <ClInclude Include="src\settings\settings.hpp" />
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ucfb\reader.hpp" />
     <ClInclude Include="src\utility\binary_reader.hpp" />

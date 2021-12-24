@@ -13,6 +13,7 @@
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
+#include "settings/graphics.hpp"
 #include "shader_library.hpp"
 #include "shader_list.hpp"
 #include "terrain.hpp"
@@ -34,7 +35,8 @@ struct renderer_config {
 
 class renderer {
 public:
-   renderer(const HWND window, assets::libraries_manager& asset_libraries);
+   renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
+            assets::libraries_manager& asset_libraries);
 
    void draw_frame(
       const camera& camera, const world::world& world,
@@ -137,5 +139,6 @@ private:
    std::vector<render_list_item> _transparent_object_render_list;
 
    renderer_config _config;
+   std::shared_ptr<settings::graphics> _settings;
 };
 }

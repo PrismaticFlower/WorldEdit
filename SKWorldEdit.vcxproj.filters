@@ -517,6 +517,12 @@
     <ClInclude Include="src\io\error.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\settings\graphics.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\settings\settings.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

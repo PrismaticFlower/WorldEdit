@@ -4,6 +4,7 @@
 #include "graphics/renderer.hpp"
 #include "input_state.hpp"
 #include "output_stream.hpp"
+#include "settings/settings.hpp"
 #include "utility/command_line.hpp"
 #include "utility/synchronous_task_queue.hpp"
 #include "world/object_class.hpp"
@@ -77,6 +78,8 @@ private:
 
    standard_output_stream _stream;
    HWND _window{};
+   std::shared_ptr<settings::settings> _settings =
+      std::make_shared<settings::settings>();
 
    bool _focused = true;
    std::chrono::steady_clock::time_point _last_update =
