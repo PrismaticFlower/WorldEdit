@@ -278,8 +278,8 @@ constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
    {.pInputElementDescs = meta_mesh_input_layout_elements.data(),
     .NumElements = static_cast<UINT>(meta_mesh_input_layout_elements.size())};
 
-auto create_material_pipelines(const std::string_view name, ID3D12Device& device,
-                               const shader_library& shader_library,
+auto create_material_pipelines(const fmt::format_string<std::string_view> name,
+                               ID3D12Device& device, const shader_library& shader_library,
                                const root_signature_library& root_signature_library)
    -> material_pipelines
 {
@@ -290,10 +290,10 @@ auto create_material_pipelines(const std::string_view name, ID3D12Device& device
 
       const auto ps_name = fmt::format(name, [&] {
          if (are_flags_set(flags, material_pipeline_flags::transparent)) {
-            return "_transparent";
+            return "_transparent"sv;
          }
 
-         return "";
+         return ""sv;
       }());
 
       const auto blend_state = [&] {
