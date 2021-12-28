@@ -35,6 +35,9 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    ImGui_ImplWin32_Init(window);
    imgui_keymap_init(ImGui::GetIO());
 
+   // Call this to initialize the ImGui font and display scaling values.
+   dpi_changed(GetDpiForWindow(_window));
+
    if (auto start_project = command_line.get_or("-project"sv, ""sv);
        not start_project.empty()) {
       open_project(start_project);
@@ -444,4 +447,19 @@ void world_edit::char_input(const char16_t c) noexcept
 {
    ImGui::GetIO().AddInputCharacterUTF16(static_cast<ImWchar16>(c));
 }
+
+void world_edit::dpi_changed(const int new_dpi) noexcept
+{
+   const float old_dpi = std::exchange(_current_dpi, static_cast<float>(new_dpi));
+
+   _display_scale = _current_dpi / 96.0f;
+
+   ImGui::GetIO().Fonts->Clear();
+   ImGui::GetIO().Fonts->AddFontFromFileTTF("fonts/Roboto-Regular.ttf",
+                                            std::floor(16.0f * _display_scale));
+   ImGui::GetStyle().ScaleAllSizes(new_dpi / old_dpi);
+
+   ImGui_ImplDX12_InvalidateDeviceObjects();
+}
+
 }

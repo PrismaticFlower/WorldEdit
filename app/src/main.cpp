@@ -28,6 +28,7 @@ concept application = requires(App app, HWND window, command_line command_line, 
    { app.mouse_wheel_movement(movement) };
    { app.update_cursor() };
    { app.char_input(char16) };
+   { app.dpi_changed(size) };
 };
 
 // clang-format on
@@ -119,6 +120,17 @@ void run_application(command_line command_line)
          app.char_input(static_cast<char16_t>(wparam));
 
          return 0;
+
+      case WM_DPICHANGED: {
+         auto& rect = *reinterpret_cast<const RECT*>(lparam);
+
+         SetWindowPos(window, nullptr, rect.left, rect.top, rect.right,
+                      rect.bottom, SWP_ASYNCWINDOWPOS);
+
+         app.dpi_changed(LOWORD(wparam));
+
+         return 0;
+      }
       }
 
       return DefWindowProcW(window, message, wparam, lparam);

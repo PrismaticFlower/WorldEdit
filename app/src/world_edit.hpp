@@ -43,6 +43,8 @@ public:
 
    void char_input(const char16_t c) noexcept;
 
+   void dpi_changed(const int new_dpi) noexcept;
+
 private:
    void update_object_classes();
 
@@ -82,6 +84,8 @@ private:
       std::make_shared<settings::settings>();
 
    bool _focused = true;
+   float _current_dpi = 96.0f;
+   float _display_scale = 1.0f;
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
 
