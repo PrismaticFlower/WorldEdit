@@ -526,6 +526,12 @@
     <ClInclude Include="src\imgui\imgui_freetype.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\actions\action.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\selection_context.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

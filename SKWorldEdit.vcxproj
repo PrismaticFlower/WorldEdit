@@ -171,6 +171,7 @@
     <ClInclude Include="include\world\sector.hpp" />
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
+    <ClInclude Include="src\actions\action.hpp" />
     <ClInclude Include="src\assets\asset_ref.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />
     <ClInclude Include="src\assets\asset_state.hpp" />
@@ -316,6 +317,7 @@
     <ClInclude Include="src\world\portal.hpp" />
     <ClInclude Include="src\world\region.hpp" />
     <ClInclude Include="src\world\sector.hpp" />
+    <ClInclude Include="src\world\selection_context.hpp" />
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />
