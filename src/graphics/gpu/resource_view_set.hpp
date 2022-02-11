@@ -11,7 +11,6 @@
 
 #include <d3d12.h>
 #include <gsl/gsl>
-#include <object_ptr.hpp>
 
 namespace we::graphics::gpu {
 
@@ -62,7 +61,7 @@ public:
 
    auto parent_device() const noexcept -> device*
    {
-      return _parent_device.get();
+      return _parent_device;
    }
 
    auto descriptors() const noexcept -> descriptor_range
@@ -79,7 +78,7 @@ private:
    {
    }
 
-   jss::object_ptr<device> _parent_device = nullptr;
+   device* _parent_device = nullptr;
 
    descriptor_range _descriptor_range;
    std::vector<std::shared_ptr<ID3D12Resource>> _resources;

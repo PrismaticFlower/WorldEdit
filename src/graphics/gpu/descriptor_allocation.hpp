@@ -4,8 +4,6 @@
 
 #include <utility>
 
-#include <object_ptr.hpp>
-
 namespace we::graphics::gpu {
 
 class device;
@@ -56,7 +54,7 @@ public:
 
    auto parent_device() const noexcept -> device*
    {
-      return _parent_device.get();
+      return _parent_device;
    }
 
    auto type() const noexcept -> D3D12_DESCRIPTOR_HEAP_TYPE
@@ -71,7 +69,7 @@ private:
                          const descriptor_range range) noexcept
       : descriptor_range{range}, _parent_device{&device}, _type{type} {};
 
-   jss::object_ptr<device> _parent_device = nullptr;
+   device* _parent_device = nullptr;
    D3D12_DESCRIPTOR_HEAP_TYPE _type{};
 };
 

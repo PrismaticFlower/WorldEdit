@@ -7,7 +7,6 @@
 
 #include <d3d12.h>
 #include <gsl/gsl>
-#include <object_ptr.hpp>
 
 namespace we::graphics::gpu {
 
@@ -72,7 +71,7 @@ private:
 
    gsl::owner<ID3D12Resource*> _resource = nullptr;
    gsl::owner<D3D12MA::Allocation*> _allocation = nullptr;
-   jss::object_ptr<device> _parent_device = nullptr;
+   device* _parent_device = nullptr;
 };
 
 }

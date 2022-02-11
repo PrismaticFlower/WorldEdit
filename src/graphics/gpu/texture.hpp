@@ -11,7 +11,6 @@
 
 #include <d3d12.h>
 #include <gsl/gsl>
-#include <object_ptr.hpp>
 
 namespace we::graphics::gpu {
 
