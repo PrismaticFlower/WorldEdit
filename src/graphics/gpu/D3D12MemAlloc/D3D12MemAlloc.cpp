@@ -4481,10 +4481,11 @@ void PoolPimpl::FreeName()
 
 void Pool::Release()
 {
-    if(this == NULL)
-    {
-        return;
-    }
+    // clang found this
+    // if(this == NULL)
+    // {
+    //     return;
+    // }
 
     D3D12MA_DEBUG_GLOBAL_MUTEX_LOCK
 
