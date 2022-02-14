@@ -15,12 +15,30 @@
 
 namespace we::graphics::gpu {
 
-struct command_allocator_id : std::string_view {
+struct command_allocator_id {
    command_allocator_id() = default;
 
-   consteval command_allocator_id(std::string_view str)
-      : std::string_view{str} {};
-   consteval command_allocator_id(const char* str) : std::string_view{str} {};
+   consteval command_allocator_id(const char* str, std::size_t len)
+      : _str{str}, _len{len} {};
+
+   /// @brief Get the ID as a string.
+   /// @return A string view of the ID.
+   constexpr auto as_string() const noexcept -> std::string_view
+   {
+      return {_str, _len};
+   }
+
+   constexpr bool operator==(const command_allocator_id&) const noexcept = default;
+
+   template<typename H>
+   friend H AbslHashValue(H h, const command_allocator_id& id)
+   {
+      return H::combine(std::move(h), std::string_view{id._str});
+   }
+
+private:
+   const char* _str = nullptr;
+   std::size_t _len = 0;
 };
 
 class command_allocator {
@@ -159,7 +177,7 @@ private:
          _device->CreateCommandAllocator(type,
                                          IID_PPV_ARGS(allocator.clear_and_assign())));
 
-      set_debug_name(*allocator, id);
+      set_debug_name(*allocator, id.as_string());
 
       return allocator;
    }
@@ -206,9 +224,9 @@ private:
 
 namespace literals {
 
-consteval auto operator"" _id(const char* str, size_t len) noexcept -> command_allocator_id
+consteval auto operator"" _id(const char* str, std::size_t len) noexcept -> command_allocator_id
 {
-   return command_allocator_id{std::string_view{str, len}};
+   return command_allocator_id{str, len};
 }
 
 }
