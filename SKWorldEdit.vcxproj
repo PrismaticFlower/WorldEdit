@@ -315,6 +315,7 @@
     <ClInclude Include="src\world\ai_path_flags.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
+    <ClInclude Include="src\world\id.hpp" />
     <ClInclude Include="src\world\gamemode_description.hpp" />
     <ClInclude Include="src\world\hintnode.hpp" />
     <ClInclude Include="src\world\layer_description.hpp" />

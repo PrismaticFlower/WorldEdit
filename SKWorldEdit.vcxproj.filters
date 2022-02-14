@@ -532,6 +532,9 @@
     <ClInclude Include="src\world\selection_context.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\id.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
