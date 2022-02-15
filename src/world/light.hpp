@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 
 #include <optional>
@@ -34,7 +35,11 @@ struct light {
    std::optional<std::string> texture = std::nullopt;
    std::optional<std::string> directional_region = std::nullopt;
 
+   id<light> id{};
+
    bool operator==(const light&) const noexcept = default;
 };
+
+using light_id = id<light>;
 
 }

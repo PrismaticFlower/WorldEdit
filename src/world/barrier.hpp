@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ai_path_flags.hpp"
+#include "id.hpp"
 #include "types.hpp"
 
 #include <array>
@@ -16,7 +17,11 @@ struct barrier {
                          ai_path_flags::small | ai_path_flags::medium |
                          ai_path_flags::huge | ai_path_flags::flyer;
 
+   id<barrier> id{};
+
    bool operator==(const barrier&) const noexcept = default;
 };
+
+using barrier_id = id<barrier>;
 
 }

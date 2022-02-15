@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 
 #include <string>
@@ -33,7 +34,11 @@ struct path {
    std::vector<property> properties;
    std::vector<node> nodes;
 
+   id<path> id{};
+
    bool operator==(const path&) const noexcept = default;
 };
+
+using path_id = id<path>;
 
 }

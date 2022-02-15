@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 #include "utility/enum_bitflags.hpp"
 
@@ -63,7 +64,11 @@ struct hintnode {
 
    std::string command_post;
 
+   id<hintnode> id{};
+
    bool operator==(const hintnode&) const noexcept = default;
 };
+
+using hintnode_id = id<hintnode>;
 
 }

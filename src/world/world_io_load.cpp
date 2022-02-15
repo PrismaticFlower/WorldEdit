@@ -170,6 +170,7 @@ void load_objects(const std::filesystem::path& path, output_stream& output,
          object.class_name = lowercase_string{key_node.values.get<std::string>(1)};
          std::tie(object.rotation, object.position) =
             read_location(key_node, "ChildRotation"sv, "ChildPosition"sv);
+         object.id = world_out.next_id.objects.aquire();
 
          for (auto& obj_prop : key_node) {
             if (obj_prop.key == "ChildRotation"sv or obj_prop.key == "ChildPosition"sv) {
@@ -233,6 +234,7 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
             light.static_ = key_node.contains("Static"sv);
             light.shadow_caster = key_node.contains("CastShadow"sv);
             light.specular_caster = key_node.contains("CastSpecular"sv);
+            light.id = world_out.next_id.lights.aquire();
 
             if (auto texture = key_node.find("Texture"sv); texture != key_node.cend()) {
                light.texture = texture->values.get<std::string>(0);
@@ -318,6 +320,7 @@ void load_paths(const std::filesystem::path& filepath, output_stream& output,
          path.name = key_node.values.get<std::string>(0);
          path.layer = read_layer_index(key_node, layer_remap);
          path.properties = read_path_properties(key_node.at("Properties"sv));
+         path.id = world_out.next_id.paths.aquire();
 
          // path nodes
          {
@@ -361,6 +364,7 @@ void load_regions(const std::filesystem::path& filepath, output_stream& output,
                         key_node.at("Size"sv).values.get<float>(1),
                         key_node.at("Size"sv).values.get<float>(2)};
          region.description = key_node.values.get<std::string>(0);
+         region.id = world_out.next_id.regions.aquire();
 
          switch (const int shape = key_node.values.get<int>(1); shape) {
          case 0:
@@ -393,6 +397,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
             auto& sector = world_out.sectors.emplace_back();
 
             sector.name = key_node.values.get<std::string>(0);
+            sector.id = world_out.next_id.sectors.aquire();
 
             for (auto& sector_prop : key_node) {
                if (sector_prop.key == "Base"sv) {
@@ -420,6 +425,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
                read_location(key_node, "Rotation"sv, "Position"sv);
             portal.width = key_node.at("Width"sv).values.get<float>(0);
             portal.height = key_node.at("Height"sv).values.get<float>(0);
+            portal.id = world_out.next_id.portals.aquire();
 
             if (auto sector = key_node.find("Sector1"sv); sector != key_node.cend()) {
                portal.sector1 = sector->values.get<std::string>(0);
@@ -451,6 +457,7 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
 
          barrier.name = key_node.values.get<std::string>(0);
          barrier.flags = ai_path_flags{key_node.at("Flag"sv).values.get<int>(0)};
+         barrier.id = world_out.next_id.barriers.aquire();
 
          const auto is_corner = [](const config::key_node& child_key_node) {
             return child_key_node.key == "Corner"sv;
@@ -495,6 +502,7 @@ void load_boundaries(const std::filesystem::path& filepath,
             auto& boundary = world_out.boundaries.emplace_back();
 
             boundary.name = child_key_node.values.get<std::string>(0);
+            boundary.id = world_out.next_id.boundaries.aquire();
 
             output.write(fmt::format("Loaded world boundary '{}'\n"sv, boundary.name));
          }
@@ -524,6 +532,7 @@ void load_hintnodes(const std::filesystem::path& filepath,
             std::stol(key_node.values.get<std::string>(1)));
          std::tie(hint.rotation, hint.position) =
             read_location(key_node, "Rotation"sv, "Position"sv);
+         hint.id = world_out.next_id.hintnodes.aquire();
 
          for (auto& prop : key_node) {
             if (prop.key == "Radius"sv) {

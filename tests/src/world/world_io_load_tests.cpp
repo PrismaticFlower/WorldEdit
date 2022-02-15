@@ -6,11 +6,35 @@
 #include "world/world_io_load.hpp"
 
 #include <iostream>
+#include <span>
 
 using namespace std::literals;
 using namespace Catch::literals;
 
 namespace we::world::tests {
+
+namespace {
+
+/// @brief Checks if the entity at index has a unique ID across all other entities.
+/// @param index The index of the entity to check.
+/// @param entities All world entities.
+/// @return If the entity is unique or not.
+bool is_unique_id(std::size_t index, const auto& entities)
+{
+   if (index >= entities.size()) throw std::out_of_range{"out of range"};
+
+   const auto entity_id = entities[index].id;
+
+   for (std::size_t i = 0; i < entities.size(); ++i) {
+      if (i == index) continue;
+
+      if (entity_id == entities[i].id) return false;
+   }
+
+   return true;
+}
+
+}
 
 TEST_CASE("world loading", "[World][IO]")
 {
@@ -39,6 +63,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(approx_equals(world.objects[0].rotation, {0.000, 0.000, 1.000, 0.000}));
          CHECK(world.objects[0].team == 0);
          CHECK(world.objects[0].layer == 0);
+         CHECK(is_unique_id(0, world.objects));
 
          REQUIRE(world.objects[0].instance_properties.size() == 2);
          CHECK(world.objects[0].instance_properties[0].key == "EffectRegion"sv);
@@ -55,6 +80,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(approx_equals(world.objects[1].rotation, {0.000, 0.000, 1.000, 0.000}));
          CHECK(world.objects[1].team == 0);
          CHECK(world.objects[1].layer == 1);
+         CHECK(is_unique_id(1, world.objects));
          CHECK(world.objects[1].instance_properties.size() == 0);
       }
    }
@@ -85,6 +111,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(not world.lights[0].shadow_caster);
          CHECK(world.lights[0].range == 5.0_a);
          CHECK(world.lights[0].texture == std::nullopt);
+         CHECK(is_unique_id(0, world.lights));
       }
 
       // sun
@@ -105,6 +132,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(approx_equals(world.lights[1].directional_texture_tiling, {1.0f, 1.0f}));
          CHECK(approx_equals(world.lights[1].directional_texture_offset, {0.0f, 0.0f}));
          CHECK(world.lights[1].directional_region == std::nullopt);
+         CHECK(is_unique_id(1, world.lights));
       }
 
       // Light 3
@@ -124,6 +152,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[2].inner_cone_angle == 0.785398_a);
          CHECK(world.lights[2].outer_cone_angle == 0.872665_a);
          CHECK(world.lights[2].texture == std::nullopt);
+         CHECK(is_unique_id(2, world.lights));
       }
 
       // Light 2
@@ -141,6 +170,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(not world.lights[3].shadow_caster);
          CHECK(world.lights[3].range == 16.0_a);
          CHECK(world.lights[3].texture == std::nullopt);
+         CHECK(is_unique_id(3, world.lights));
       }
    }
 
@@ -153,6 +183,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.paths[0].name == "boundary"sv);
          CHECK(world.paths[0].layer == 0);
          CHECK(world.paths[0].properties.empty());
+         CHECK(is_unique_id(0, world.paths));
 
          constexpr std::array<float3, 12> expected_positions{
             {{383.557434f, 0.000000f, 4.797800f},
@@ -186,6 +217,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.paths[1].properties.size() == 1);
          CHECK(world.paths[1].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
+         CHECK(is_unique_id(1, world.paths));
 
          constexpr std::array<float3, 3> expected_positions{
             {{-16.041691, 0.000000, 31.988783},
@@ -225,6 +257,7 @@ TEST_CASE("world loading", "[World][IO]")
                           {-32.000000, 16.000000, 32.000000}));
       CHECK(approx_equals(world.regions[0].rotation, {0.000, 0.000, 1.000, 0.000}));
       CHECK(approx_equals(world.regions[0].size, {16.000000, 16.000000, 16.000000}));
+      CHECK(is_unique_id(0, world.regions));
    }
 
    // sector checks
@@ -255,6 +288,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.hintnodes[0].primary_stance == stance_flags::none);
          CHECK(world.hintnodes[0].secondary_stance == stance_flags::none);
          CHECK(world.hintnodes[0].command_post == "cp1"sv);
+         CHECK(is_unique_id(0, world.hintnodes));
       }
 
       // HintNode1
@@ -272,6 +306,7 @@ TEST_CASE("world loading", "[World][IO]")
                (stance_flags::stand | stance_flags::crouch | stance_flags::prone));
          CHECK(world.hintnodes[1].secondary_stance == stance_flags::none);
          CHECK(world.hintnodes[1].command_post == "cp2"sv);
+         CHECK(is_unique_id(1, world.hintnodes));
       }
    }
 
@@ -284,6 +319,7 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(approx_equals(world.barriers[0].corners[1], {86.691795, 0.198154}));
       CHECK(approx_equals(world.barriers[0].corners[2], {99.806587, 6.168838}));
       CHECK(approx_equals(world.barriers[0].corners[3], {85.710938, 37.130379}));
+      CHECK(is_unique_id(0, world.barriers));
    }
 
    // planning hubs checks
@@ -300,6 +336,7 @@ TEST_CASE("world loading", "[World][IO]")
    {
       REQUIRE(world.boundaries.size() == 1);
       CHECK(world.boundaries[0].name == "boundary"sv);
+      CHECK(is_unique_id(0, world.boundaries));
    }
 }
 

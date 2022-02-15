@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 
 #include <string>
@@ -16,7 +17,11 @@ struct sector {
    std::vector<float2> points;
    std::vector<std::string> objects;
 
+   id<sector> id{};
+
    bool operator==(const sector&) const noexcept = default;
 };
+
+using sector_id = id<sector>;
 
 }

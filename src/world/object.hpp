@@ -21,6 +21,8 @@ struct object {
    lowercase_string class_name;
    std::vector<instance_property> instance_properties;
 
+   id<object> id{};
+
    bool operator==(const object&) const noexcept = default;
 };
 

@@ -4,6 +4,7 @@
 #include "boundary.hpp"
 #include "gamemode_description.hpp"
 #include "hintnode.hpp"
+#include "id.hpp"
 #include "layer_description.hpp"
 #include "light.hpp"
 #include "lighting_settings.hpp"
@@ -39,6 +40,21 @@ struct world {
    std::vector<planning_hub> planning_hubs;
    std::vector<planning_connection> planning_connections;
    std::vector<boundary> boundaries;
+
+   struct next_ids {
+      id_generator<gamemode_description> gamemode_descriptions;
+      id_generator<object> objects;
+      id_generator<light> lights;
+      id_generator<path> paths;
+      id_generator<region> regions;
+      id_generator<sector> sectors;
+      id_generator<portal> portals;
+      id_generator<hintnode> hintnodes;
+      id_generator<barrier> barriers;
+      id_generator<planning_hub> planning_hubs;
+      id_generator<planning_connection> planning_connections;
+      id_generator<boundary> boundaries;
+   } next_id;
 
    bool operator==(const world&) const noexcept = default;
 };

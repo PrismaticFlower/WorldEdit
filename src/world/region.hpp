@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 
 #include <string>
@@ -19,7 +20,11 @@ struct region {
 
    std::string description;
 
+   id<region> id{};
+
    bool operator==(const region&) const noexcept = default;
 };
+
+using region_id = id<region>;
 
 }

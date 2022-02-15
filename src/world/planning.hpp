@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ai_path_flags.hpp"
+#include "id.hpp"
 #include "types.hpp"
 
 #include <optional>
@@ -27,8 +28,12 @@ struct planning_hub {
 
    std::vector<branch_weight> branch_weights;
 
+   id<planning_hub> id{};
+
    bool operator==(const planning_hub&) const noexcept = default;
 };
+
+using planning_hub_id = id<planning_hub>;
 
 struct planning_connection {
    std::string name;
@@ -46,7 +51,11 @@ struct planning_connection {
    bool oneway = false;
    std::optional<int> dynamic_group;
 
+   id<planning_connection> id{};
+
    bool operator==(const planning_connection&) const noexcept = default;
 };
+
+using planning_connection_id = id<planning_connection>;
 
 }
