@@ -16,7 +16,7 @@
     <ProjectGuid>{1943E7FA-AB50-42EA-8F2F-BDFE6254890E}</ProjectGuid>
     <RootNamespace>app</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>SKWorldEditApp</ProjectName>
+    <ProjectName>WorldEditApp</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
