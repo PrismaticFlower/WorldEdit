@@ -165,7 +165,7 @@
     <ClCompile Include="src\utility\make_from_bytes_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SKWorldEdit.vcxproj">
+    <ProjectReference Include="..\WorldEdit.vcxproj">
       <Project>{058233ed-26e5-4477-9d28-ee08e423bb95}</Project>
     </ProjectReference>
   </ItemGroup>

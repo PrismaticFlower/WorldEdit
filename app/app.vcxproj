@@ -47,11 +47,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
@@ -135,7 +137,7 @@ copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"</Command>
     <ClInclude Include="src\world_edit.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SKWorldEdit.vcxproj">
+    <ProjectReference Include="..\WorldEdit.vcxproj">
       <Project>{058233ed-26e5-4477-9d28-ee08e423bb95}</Project>
     </ProjectReference>
   </ItemGroup>

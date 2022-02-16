@@ -15,7 +15,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{058233ED-26E5-4477-9D28-EE08E423BB95}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>SKWorldEdit</RootNamespace>
+    <RootNamespace>WorldEdit</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>WorldEdit</ProjectName>
   </PropertyGroup>
