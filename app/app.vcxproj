@@ -85,15 +85,17 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>dxcompiler.lib;d3d12.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/HIGHENTROPYVA %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/HIGHENTROPYVA /NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
     <PostBuildEvent>
       <Command>copy "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(OutputPath)"
-copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"</Command>
-      <Message>Copying dxcompiler...</Message>
+copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"
+xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
+xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
+      <Message>Copying dxcompiler and assets...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -120,14 +122,17 @@ copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>dxcompiler.lib;d3d12.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/HIGHENTROPYVA /NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
     <PostBuildEvent>
       <Command>copy "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(OutputPath)"
-copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"</Command>
-      <Message>Copying dxcompiler...</Message>
+copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"
+xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
+xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
+      <Message>Copying dxcompiler and assets...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
