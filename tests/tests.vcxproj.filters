@@ -43,6 +43,7 @@
     <ClCompile Include="src\world\world_io_save_tests.cpp" />
     <ClCompile Include="src\io\read_file_tests.cpp" />
     <ClCompile Include="src\world\id_tests.cpp" />
+    <ClCompile Include="src\async\thread_pool_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

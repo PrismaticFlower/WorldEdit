@@ -132,6 +132,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\imgui\imgui_freetype.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
@@ -212,6 +213,7 @@
     <ClInclude Include="src\assets\texture\texture_format.hpp" />
     <ClInclude Include="src\assets\texture\texture_io.hpp" />
     <ClInclude Include="src\assets\texture\texture_transforms.hpp" />
+    <ClInclude Include="src\async\thread_pool.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />

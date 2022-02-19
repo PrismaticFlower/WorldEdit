@@ -535,6 +535,9 @@
     <ClInclude Include="src\world\id.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\async\thread_pool.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -715,6 +718,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_freetype.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\async\thread_pool.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
