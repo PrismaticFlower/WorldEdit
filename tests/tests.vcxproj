@@ -131,6 +131,7 @@
     <ClCompile Include="src\assets\texture\texture_io_tests.cpp" />
     <ClCompile Include="src\assets\texture\texture_tests.cpp" />
     <ClCompile Include="src\async\thread_pool_tests.cpp" />
+    <ClCompile Include="src\async\wait_all_tests.cpp" />
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
     <ClCompile Include="src\container\enum_array_tests.cpp" />
     <ClCompile Include="src\hresult_error_tests.cpp" />
