@@ -213,6 +213,7 @@
     <ClInclude Include="src\assets\texture\texture_format.hpp" />
     <ClInclude Include="src\assets\texture\texture_io.hpp" />
     <ClInclude Include="src\assets\texture\texture_transforms.hpp" />
+    <ClInclude Include="src\async\get_all.hpp" />
     <ClInclude Include="src\async\thread_pool.hpp" />
     <ClInclude Include="src\async\wait_all.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />

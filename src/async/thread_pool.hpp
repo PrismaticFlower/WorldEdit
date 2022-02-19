@@ -100,6 +100,9 @@ public:
    static_assert(std::is_move_assignable_v<T> or std::is_void_v<T>,
                  "T must be move assignable or void.");
 
+   /// @brief The type of the result of the task. Can be void.
+   using result_type = T;
+
    /// @brief Construct an empty task. Calling any method but valid() on an empty task results in std::terminate being called.
    task() noexcept = default;
 

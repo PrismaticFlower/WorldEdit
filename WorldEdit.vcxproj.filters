@@ -541,6 +541,9 @@
     <ClInclude Include="src\async\wait_all.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\async\get_all.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
