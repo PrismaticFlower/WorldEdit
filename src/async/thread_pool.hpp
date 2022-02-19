@@ -151,7 +151,7 @@ public:
 
    /// @brief Gets the result of the task, waiting or executing the task directly if needed. Throws any exception thrown by the task. Calling this twice results in std::terminate being called.
    /// @return The result of the task.
-   auto get() -> T requires(not std::same_as<T, void>)
+   [[nodiscard]] auto get() -> T requires(not std::same_as<T, void>)
    {
       if (not _context or std::exchange(_context->result_obtained, true)) {
          std::terminate();
@@ -190,7 +190,7 @@ public:
 
    /// @brief Checks if the task object refers to a task scheduled on a thread_pool.
    /// @return True if the task object is valid, false otherwise.
-   bool valid() const noexcept
+   [[nodiscard]] bool valid() const noexcept
    {
       return _context != nullptr;
    }
@@ -216,7 +216,7 @@ struct thread_pool_init {
 class thread_pool : public std::enable_shared_from_this<thread_pool> {
 public:
    /// @brief Initialize the thread_pool with a default number of threads.
-   static auto make() noexcept -> std::shared_ptr<thread_pool>
+   [[nodiscard]] static auto make() noexcept -> std::shared_ptr<thread_pool>
    {
       return make(thread_pool_init{.thread_count =
                                       std::thread::hardware_concurrency() - 1,
@@ -225,7 +225,8 @@ public:
    }
 
    /// @brief Initialize the thread_pool explicit settings.
-   static auto make(const thread_pool_init init) noexcept -> std::shared_ptr<thread_pool>
+   [[nodiscard]] static auto make(const thread_pool_init init) noexcept
+      -> std::shared_ptr<thread_pool>
    {
       return std::shared_ptr<thread_pool>{new thread_pool{init}};
    }
@@ -244,7 +245,8 @@ public:
    /// @param func The task's function.
    /// @return The task.
    template<std::invocable Fn, typename T = std::invoke_result_t<Fn>>
-   auto exec(const task_priority priority, Fn func) noexcept -> task<T>
+   [[nodiscard]] auto exec(const task_priority priority, Fn func) noexcept
+      -> task<T>
    {
       priority_level_context& priority_context =
          select_priority_level_context(priority);
@@ -291,7 +293,7 @@ public:
    /// @param func The task's function.
    /// @return The task.
    template<std::invocable Fn, typename T = std::invoke_result_t<Fn>>
-   auto exec(Fn&& func) noexcept -> task<T>
+   [[nodiscard]] auto exec(Fn&& func) noexcept -> task<T>
    {
       return exec(task_priority::normal, std::forward<Fn>(func));
    }
@@ -303,7 +305,8 @@ public:
    /// @brief Gets the thread count for a priority level.
    /// @param priority The priority level to get the thread count for.
    /// @return The thread count.
-   auto thread_count(const task_priority priority) const noexcept -> std::size_t
+   [[nodiscard]] auto thread_count(const task_priority priority) const noexcept
+      -> std::size_t
    {
       return select_priority_level_context(priority).threads.size();
    }
