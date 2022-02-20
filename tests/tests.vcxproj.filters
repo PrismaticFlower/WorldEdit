@@ -46,6 +46,7 @@
     <ClCompile Include="src\async\thread_pool_tests.cpp" />
     <ClCompile Include="src\async\wait_all_tests.cpp" />
     <ClCompile Include="src\async\get_all_tests.cpp" />
+    <ClCompile Include="src\assets\asset_ref_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

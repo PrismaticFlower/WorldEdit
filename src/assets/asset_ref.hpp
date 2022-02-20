@@ -45,6 +45,8 @@ public:
 
       this->_state = other._state;
 
+      increment_ref_count();
+
       return *this;
    }
 
