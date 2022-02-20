@@ -20,8 +20,9 @@ const std::unordered_set ignored_folders = {L"_BUILD"sv,    L"_LVL_PC"sv,
 
 }
 
-libraries_manager::libraries_manager(output_stream& stream) noexcept
-   : odfs{stream}, models{stream}, textures{stream}
+libraries_manager::libraries_manager(output_stream& stream,
+                                     std::shared_ptr<async::thread_pool> thread_pool) noexcept
+   : odfs{stream, thread_pool}, models{stream, thread_pool}, textures{stream, thread_pool}
 {
 }
 

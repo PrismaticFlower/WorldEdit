@@ -1,6 +1,7 @@
 #pragma once
 
 #include "assets/asset_libraries.hpp"
+#include "async/thread_pool.hpp"
 #include "camera.hpp"
 #include "frustrum.hpp"
 #include "geometric_shapes.hpp"
@@ -36,6 +37,7 @@ struct renderer_config {
 class renderer {
 public:
    renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
+            std::shared_ptr<async::thread_pool> thread_pool,
             assets::libraries_manager& asset_libraries);
 
    void draw_frame(
@@ -91,6 +93,8 @@ private:
    const HWND _window;
 
    bool _terrain_dirty = true; // ughhhh, this feels so ugly
+
+   std::shared_ptr<async::thread_pool> _thread_pool;
 
    gpu::device _device{_window};
    gpu::graphics_command_list _world_command_list =

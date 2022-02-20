@@ -14,6 +14,11 @@ void task_context_base::cancel() noexcept
    if (auto thread_pool = owning_thread_pool.lock(); thread_pool) {
       thread_pool->cancel_task(*this);
    }
+
+   // If execution has started on the task then we must wait for it to finish
+   // before returning as a task may be being canceled because objects it's
+   // callback references are about to be destroyed.
+   if (execution_started.load()) wait();
 }
 
 }

@@ -1,5 +1,6 @@
 
 #include "assets/asset_libraries.hpp"
+#include "async/thread_pool.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
 #include "input_state.hpp"
@@ -82,6 +83,7 @@ private:
    HWND _window{};
    std::shared_ptr<settings::settings> _settings =
       std::make_shared<settings::settings>();
+   std::shared_ptr<async::thread_pool> _thread_pool = async::thread_pool::make();
 
    bool _focused = true;
    float _current_dpi = 96.0f;
@@ -96,7 +98,7 @@ private:
 
    std::vector<std::filesystem::path> _project_world_paths;
 
-   assets::libraries_manager _asset_libraries{_stream};
+   assets::libraries_manager _asset_libraries{_stream, _thread_pool};
    absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>> _object_classes;
    world::world _world;
 

@@ -70,11 +70,13 @@ const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
 }
 
 renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
+                   std::shared_ptr<async::thread_pool> thread_pool,
                    assets::libraries_manager& asset_libraries)
    : _window{window},
+     _thread_pool{thread_pool},
      _device{window},
-     _texture_manager{_device, asset_libraries.textures},
-     _model_manager{_device, _texture_manager, asset_libraries.models},
+     _texture_manager{_device, thread_pool, asset_libraries.textures},
+     _model_manager{_device, _texture_manager, asset_libraries.models, thread_pool},
      _settings{settings}
 {
    auto imgui_font_descriptor =
@@ -136,6 +138,8 @@ void renderer::draw_frame(
    if (std::exchange(_terrain_dirty, false)) {
       _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
    }
+
+   _model_manager.update_models();
 
    update_textures(command_list);
    build_world_mesh_list(command_list, world, world_classes);

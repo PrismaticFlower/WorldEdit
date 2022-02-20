@@ -24,7 +24,6 @@
     "glm",
     "ms-gsl",
     "range-v3",
-    "tbb",
     "wil"
   ]
 }

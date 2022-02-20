@@ -1,6 +1,7 @@
 #pragma once
 
 #include "assets/asset_libraries.hpp"
+#include "async/thread_pool.hpp"
 #include "gpu/device.hpp"
 #include "gpu/texture.hpp"
 
@@ -9,10 +10,7 @@
 #include <shared_mutex>
 #include <vector>
 
-#include <DirectXTex.h>
 #include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
-#include <tbb/tbb.h>
 
 namespace we::graphics {
 
@@ -28,8 +26,9 @@ using updated_textures =
 class texture_manager {
 public:
    texture_manager(gpu::device& gpu_device,
+                   std::shared_ptr<async::thread_pool> thread_pool,
                    assets::library<assets::texture::texture>& texture_assets)
-      : _texture_assets{texture_assets}, _gpu_device{&gpu_device}
+      : _texture_assets{texture_assets}, _gpu_device{&gpu_device}, _thread_pool{thread_pool}
    {
       using assets::texture::texture_format;
 
@@ -87,14 +86,19 @@ public:
       {
          std::shared_lock lock{_shared_mutex};
 
-         if (auto it = _textures.find(name); it != _textures.end()) {
-            if (auto texture = it->second.texture.lock(); texture) {
-               return texture;
+         auto& state = _textures[name];
+
+         if (auto texture = state.texture.lock(); texture) {
+            return texture;
+         }
+         else {
+            state.asset = _texture_assets[name];
+
+            if (auto asset_data = state.asset.get_if(); asset_data) {
+               create_texture_async(name, state.asset, asset_data);
             }
          }
       }
-
-      enqueue_create_texture(name);
 
       return default_texture;
    }
@@ -117,6 +121,8 @@ public:
    /// @param callback The callback to invoke with a reference to the updated textures. The reference is only safe to use until the callback returns.
    void eval_updated_textures(std::invocable<const updated_textures&> auto callback) noexcept
    {
+      update_textures();
+
       std::scoped_lock lock{_shared_mutex};
 
       callback(_copied_textures);
@@ -124,24 +130,29 @@ public:
       _copied_textures.clear();
    }
 
-private:
-   void enqueue_create_texture(const lowercase_string& name)
+   /// @brief Call at the start of a frame to update textures that have been created asynchronously. eval_updated_textures() implicitly calls this.
+   void update_textures() noexcept
    {
-      auto texture_asset = _texture_assets[name];
-      auto texture_data = _texture_assets[name].get_if();
+      std::scoped_lock lock{_shared_mutex};
 
-      if (auto [it, inserted] = _pending_textures.emplace(name, texture_asset);
-          not inserted) {
-         return;
+      for (auto it = _pending_textures.begin(); it != _pending_textures.end();) {
+         auto elem_it = it++;
+         auto& [name, pending_create] = *elem_it;
+
+         if (pending_create.task.ready()) {
+            auto texture = pending_create.task.get();
+
+            _textures.insert_or_assign(name,
+                                       texture_state{.texture = texture,
+                                                     .asset = pending_create.asset});
+            _copied_textures.insert_or_assign(name, texture);
+
+            _pending_textures.erase(elem_it);
+         }
       }
-
-      if (not texture_data) return;
-
-      _creation_tasks.run([this, texture_asset, texture_data, name = name] {
-         texture_loaded(name, texture_asset, texture_data);
-      });
    }
 
+private:
    void init_texture_async(gpu::texture& texture, const assets::texture::texture& cpu_texture)
    {
       auto copy_context = _gpu_device->copy_manager.aquire_context();
@@ -213,41 +224,57 @@ private:
          descriptors[1]);
    }
 
+   /// @brief Creates a texture asynchronously. _shared_mutex must be held before calling this.
+   void create_texture_async(const lowercase_string& name,
+                             asset_ref<assets::texture::texture> asset,
+                             asset_data<assets::texture::texture> data)
+   {
+      pending_texture& pending = _pending_textures[name];
+
+      if (pending.task.valid()) pending.task.cancel();
+
+      pending =
+         {.task = _thread_pool->exec(
+             async::task_priority::low,
+             [=]() -> std::shared_ptr<const world_texture> {
+                const gpu::texture_desc texture_desc = [&] {
+                   gpu::texture_desc texture_desc;
+
+                   texture_desc.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+                   texture_desc.format = data->dxgi_format();
+                   texture_desc.width = data->width();
+                   texture_desc.height = data->height();
+                   texture_desc.mip_levels = data->mip_levels();
+
+                   return texture_desc;
+                }();
+
+                auto resources = std::make_shared<texture_resources>(
+                   _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COPY_DEST),
+                   _gpu_device->allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+                                                     2));
+
+                init_texture_async(resources->texture, *data);
+                init_texture_descriptors(resources->texture, resources->descriptors);
+
+                return std::make_shared<const world_texture>(world_texture{
+                   .srv_index = resources->descriptors.base_index(),
+                   .srv_srgb_index = resources->descriptors.base_index() + 1,
+                   .texture = std::shared_ptr<const gpu::texture>{resources,
+                                                                  &resources->texture}});
+             }),
+          .asset = asset};
+
+      if (pending.asset.use_count() == 0) __debugbreak();
+   }
+
    void texture_loaded(const lowercase_string& name,
                        asset_ref<assets::texture::texture> asset,
                        asset_data<assets::texture::texture> data) noexcept
    {
-      const gpu::texture_desc texture_desc = [&] {
-         gpu::texture_desc texture_desc;
-
-         texture_desc.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-         texture_desc.format = data->dxgi_format();
-         texture_desc.width = data->width();
-         texture_desc.height = data->height();
-         texture_desc.mip_levels = data->mip_levels();
-
-         return texture_desc;
-      }();
-
-      auto resources = std::make_shared<texture_resources>(
-         _gpu_device->create_texture(texture_desc, D3D12_RESOURCE_STATE_COPY_DEST),
-         _gpu_device->allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2));
-
-      init_texture_async(resources->texture, *data);
-      init_texture_descriptors(resources->texture, resources->descriptors);
-
-      auto texture = std::make_shared<world_texture>(
-         world_texture{.srv_index = resources->descriptors.base_index(),
-                       .srv_srgb_index = resources->descriptors.base_index() + 1,
-                       .texture =
-                          std::shared_ptr<const gpu::texture>{resources,
-                                                              &resources->texture}});
-
       std::scoped_lock lock{_shared_mutex};
 
-      _textures[name] = texture_state{.texture = texture, .asset = asset};
-      _pending_textures.erase(name);
-      _copied_textures.emplace(name, texture);
+      create_texture_async(name, asset, data);
    }
 
    static auto get_srgb_format(const DXGI_FORMAT format) noexcept -> DXGI_FORMAT
@@ -271,7 +298,12 @@ private:
    };
 
    struct texture_state {
-      std::weak_ptr<world_texture> texture;
+      std::weak_ptr<const world_texture> texture;
+      asset_ref<assets::texture::texture> asset;
+   };
+
+   struct pending_texture {
+      async::task<std::shared_ptr<const world_texture>> task;
       asset_ref<assets::texture::texture> asset;
    };
 
@@ -280,10 +312,10 @@ private:
 
    std::shared_mutex _shared_mutex;
    absl::flat_hash_map<lowercase_string, texture_state> _textures;
-   absl::flat_hash_map<lowercase_string, asset_ref<assets::texture::texture>> _pending_textures;
+   absl::flat_hash_map<lowercase_string, pending_texture> _pending_textures;
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>> _copied_textures;
 
-   tbb::task_group _creation_tasks;
+   std::shared_ptr<async::thread_pool> _thread_pool;
 
    std::shared_ptr<world_texture> _null_diffuse_map;
    std::shared_ptr<world_texture> _null_normal_map;

@@ -2,6 +2,7 @@
 
 #include "assets/asset_libraries.hpp"
 #include "assets/msh/default_missing_scene.hpp"
+#include "async/thread_pool.hpp"
 #include "lowercase_string.hpp"
 #include "model.hpp"
 #include "texture_manager.hpp"
@@ -13,20 +14,25 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <gsl/gsl>
-#include <tbb/task_group.h>
 
 namespace we::graphics {
 
 class model_manager {
 public:
    model_manager(gpu::device& gpu_device, texture_manager& texture_manager,
-                 assets::library<assets::msh::flat_model>& model_assets)
-      : _gpu_device{&gpu_device}, _model_assets{model_assets}, _texture_manager{texture_manager} {};
+                 assets::library<assets::msh::flat_model>& model_assets,
+                 std::shared_ptr<async::thread_pool> thread_pool)
+      : _gpu_device{&gpu_device}, _model_assets{model_assets}, _texture_manager{texture_manager}, _thread_pool{thread_pool}
+   {
+   }
 
    ~model_manager()
    {
-      _creation_tasks.cancel();
-      _creation_tasks.wait();
+      std::shared_lock lock{_mutex};
+
+      for (auto& [name, pending_creation] : _pending_creations) {
+         pending_creation.task.cancel();
+      }
    }
 
    /// @brief Gets a model.
@@ -65,21 +71,7 @@ public:
 
       if (flat_model == nullptr) return _placeholder_model;
 
-      _pending_creations.insert(name);
-
-      _creation_tasks.run([this, name = name, asset, flat_model] {
-         auto new_model =
-            std::make_unique<model>(*flat_model, *_gpu_device, _texture_manager);
-
-         std::scoped_lock lock{_mutex};
-
-         // Nake sure an asset load event hasn't loaded a new asset before us.
-         // This stops us replacing a new asset with an out of date one.
-         if (_pending_creations.erase(name) == 0) return;
-
-         _models.emplace(name, model_state{.model = std::move(new_model),
-                                           .asset = asset});
-      });
+      enqueue_create_model(name, asset, flat_model);
 
       return _placeholder_model;
    }
@@ -93,9 +85,27 @@ public:
       for (auto& [name, state] : _models) callback(*state.model);
    }
 
+   /// @brief Call at the start of a frame to update models that have been created asynchronously.
+   void update_models() noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      for (auto it = _pending_creations.begin(); it != _pending_creations.end();) {
+         auto elem_it = it++;
+         auto& [name, pending_create] = *elem_it;
+
+         if (pending_create.task.ready()) {
+            // TODO: Currently we don't have to worry about model lifetime here but if in the future we're rendering
+            // thumbnails in the background we may have to revist this.
+            _models[name] = pending_create.task.get();
+
+            _pending_creations.erase(elem_it);
+         }
+      }
+   }
+
    /// @brief Call at the end of a frame to destroy models that may have been updated and replaced midframe.
    ///        Also destroys models for which model_manager is the only remaining reference for the asset.
-   /// @return None.
    void trim_models() noexcept
    {
       std::lock_guard lock{_mutex};
@@ -115,35 +125,63 @@ private:
       asset_ref<assets::msh::flat_model> asset;
    };
 
+   struct pending_create_model {
+      async::task<model_state> task;
+      asset_data<assets::msh::flat_model> flat_model;
+   };
+
    void model_loaded(const lowercase_string& name,
                      asset_ref<assets::msh::flat_model> asset,
                      asset_data<assets::msh::flat_model> data) noexcept
    {
-      auto new_model = std::make_unique<model>(*data, *_gpu_device, _texture_manager);
-
       std::scoped_lock lock{_mutex};
 
-      auto& state = _models[name];
+      if (_pending_creations.contains(name)) {
+         _pending_creations[name].task.cancel();
+      }
 
-      state.asset = asset;
-
-      std::swap(state.model, _pending_destroys.emplace_back());
-      std::swap(state.model, new_model);
-
-      _pending_creations.erase(name);
+      enqueue_create_model(name, asset, data);
    }
 
-   gsl::not_null<gpu::device*> _gpu_device; // Do NOT change while _creation_tasks has active tasks queued or while _asset_load_listener is active.
+   /// @brief Creates a model asynchronously. _mutex **MUST** be held with exclusive ownership before calling this funciton.
+   void enqueue_create_model(const lowercase_string& name,
+                             asset_ref<assets::msh::flat_model> asset,
+                             asset_data<assets::msh::flat_model> flat_model) noexcept
+   {
+      _pending_creations[name] =
+         {.task =
+             _thread_pool->exec(async::task_priority::low,
+                                [this, name = name, asset, flat_model]() -> model_state {
+                                   auto new_model =
+                                      std::make_unique<model>(*flat_model, *_gpu_device,
+                                                              _texture_manager);
+
+                                   std::shared_lock lock{_mutex};
+
+                                   // Nake sure an asset load event hasn't loaded a new asset before us.
+                                   // This stops us replacing a new asset with an out of date one.
+                                   if (not _pending_creations.contains(name) or
+                                       _pending_creations[name].flat_model != flat_model) {
+                                      return {};
+                                   }
+
+                                   return {.model = std::move(new_model),
+                                           .asset = asset};
+                                }),
+          .flat_model = flat_model};
+   }
+
+   gsl::not_null<gpu::device*> _gpu_device;
    assets::library<assets::msh::flat_model>& _model_assets;
    texture_manager& _texture_manager;
 
    std::shared_mutex _mutex;
 
    absl::flat_hash_map<lowercase_string, model_state> _models;
-   absl::flat_hash_set<lowercase_string> _pending_creations;
+   absl::flat_hash_map<lowercase_string, pending_create_model> _pending_creations;
    std::vector<std::unique_ptr<model>> _pending_destroys;
 
-   tbb::task_group _creation_tasks;
+   std::shared_ptr<async::thread_pool> _thread_pool;
 
    model _placeholder_model{*assets::msh::default_missing_scene(), *_gpu_device,
                             _texture_manager};
