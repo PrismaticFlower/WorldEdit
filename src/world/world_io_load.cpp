@@ -4,6 +4,7 @@
 #include "assets/terrain/terrain_io.hpp"
 #include "io/read_file.hpp"
 #include "utility/srgb_conversion.hpp"
+#include "utility/stopwatch.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
@@ -16,6 +17,9 @@ using namespace std::literals;
 namespace we::world {
 
 namespace {
+
+// This can provide more clues as to when something went wrong with loading but also makes it 50x to 100x slower.
+constexpr bool verbose_output = false;
 
 using layer_remap = boost::container::flat_map<int, int, std::less<>>;
 
@@ -155,10 +159,12 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
    }
 }
 
-void load_objects(const std::filesystem::path& path, output_stream& output,
-                  world& world_out, layer_remap& layer_remap)
+void load_objects(const std::filesystem::path& path, const std::string_view layer_name,
+                  output_stream& output, world& world_out, layer_remap& layer_remap)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(path))) {
@@ -191,19 +197,27 @@ void load_objects(const std::filesystem::path& path, output_stream& output,
             }
          }
 
-         output.write(fmt::format("Loaded world object '{}' with class '{}'\n"sv,
-                                  object.name, object.class_name));
+         if (verbose_output) {
+            output.write(fmt::format("Loaded world object '{}' with class '{}'\n"sv,
+                                     object.name, object.class_name));
+         }
       }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("objects", path.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded layer '{}' objects (time taken {:f}ms)\n"sv, layer_name,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
-void load_lights(const std::filesystem::path& path, output_stream& output,
-                 world& world_out, const int layer)
+void load_lights(const std::filesystem::path& path, const std::string_view layer_name,
+                 output_stream& output, world& world_out, const int layer)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(path))) {
@@ -278,7 +292,9 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
                light.outer_cone_angle = cone->values.get<float>(1);
             }
 
-            output.write(fmt::format("Loaded world light '{}'\n"sv, light.name));
+            if (verbose_output) {
+               output.write(fmt::format("Loaded world light '{}'\n"sv, light.name));
+            }
          }
          else if (key_node.key == "GlobalLights"sv) {
             world_out.lighting_settings.global_lights[0] =
@@ -304,12 +320,18 @@ void load_lights(const std::filesystem::path& path, output_stream& output,
    catch (std::exception& e) {
       throw_layer_load_failure("lights", path.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded layer '{}' lights (time taken {:f}ms)\n"sv, layer_name,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
-void load_paths(const std::filesystem::path& filepath, output_stream& output,
-                world& world_out, layer_remap& layer_remap)
+void load_paths(const std::filesystem::path& filepath, const std::string_view layer_name,
+                output_stream& output, world& world_out, layer_remap& layer_remap)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
@@ -337,18 +359,27 @@ void load_paths(const std::filesystem::path& filepath, output_stream& output,
             }
          }
 
-         output.write(fmt::format("Loaded world path '{}'\n"sv, path.name));
+         if (verbose_output) {
+            output.write(fmt::format("Loaded world path '{}'\n"sv, path.name));
+         }
       }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("paths", filepath.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded layer '{}' paths (time taken {:f}ms)\n"sv, layer_name,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
-void load_regions(const std::filesystem::path& filepath, output_stream& output,
+void load_regions(const std::filesystem::path& filepath,
+                  const std::string_view layer_name, output_stream& output,
                   world& world_out, layer_remap& layer_remap)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
@@ -378,18 +409,26 @@ void load_regions(const std::filesystem::path& filepath, output_stream& output,
             region.shape = region_shape::box;
          }
 
-         output.write(fmt::format("Loaded world region '{}'\n"sv, region.name));
+         if (verbose_output) {
+            output.write(fmt::format("Loaded world region '{}'\n"sv, region.name));
+         }
       }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("regions", filepath.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded layer '{}' regions (time taken {:f}ms)\n"sv, layer_name,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
 void load_portals_sectors(const std::filesystem::path& filepath,
                           output_stream& output, world& world_out)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
@@ -415,7 +454,9 @@ void load_portals_sectors(const std::filesystem::path& filepath,
                }
             }
 
-            output.write(fmt::format("Loaded world sector '{}'\n"sv, sector.name));
+            if (verbose_output) {
+               output.write(fmt::format("Loaded world sector '{}'\n"sv, sector.name));
+            }
          }
          else if (key_node.key == "Portal"sv) {
             auto& portal = world_out.portals.emplace_back();
@@ -435,19 +476,27 @@ void load_portals_sectors(const std::filesystem::path& filepath,
                portal.sector1 = sector->values.get<std::string>(0);
             }
 
-            output.write(fmt::format("Loaded world portal '{}'\n"sv, portal.name));
+            if (verbose_output) {
+               output.write(fmt::format("Loaded world portal '{}'\n"sv, portal.name));
+            }
          }
       }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("portals and sectors", filepath.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded world portals and sectors (time taken {:f}ms)\n"sv,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
 void load_barriers(const std::filesystem::path& filepath, output_stream& output,
                    world& world_out)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
@@ -479,18 +528,26 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
             }
          }
 
-         output.write(fmt::format("Loaded world barrier '{}'\n"sv, barrier.name));
+         if (verbose_output) {
+            output.write(fmt::format("Loaded world barrier '{}'\n"sv, barrier.name));
+         }
       }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("barriers", filepath.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded world barriers (time taken {:f}ms)\n"sv,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
 void load_boundaries(const std::filesystem::path& filepath,
                      output_stream& output, world& world_out)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
@@ -504,19 +561,29 @@ void load_boundaries(const std::filesystem::path& filepath,
             boundary.name = child_key_node.values.get<std::string>(0);
             boundary.id = world_out.next_id.boundaries.aquire();
 
-            output.write(fmt::format("Loaded world boundary '{}'\n"sv, boundary.name));
+            if (verbose_output) {
+               output.write(
+                  fmt::format("Loaded world boundary '{}'\n"sv, boundary.name));
+            }
          }
       }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("boundaries", filepath.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded world boundaries (time taken {:f}ms)\n"sv,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
 void load_hintnodes(const std::filesystem::path& filepath,
-                    output_stream& output, world& world_out, const int layer)
+                    const std::string_view layer_name, output_stream& output,
+                    world& world_out, const int layer)
 {
    using namespace assets;
+
+   utility::stopwatch load_timer;
 
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
@@ -554,33 +621,40 @@ void load_hintnodes(const std::filesystem::path& filepath,
             }
          }
 
-         output.write(fmt::format("Loaded world hint node '{}'\n"sv, hint.name));
+         if (verbose_output) {
+            output.write(fmt::format("Loaded world hint node '{}'\n"sv, hint.name));
+         }
       }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("hint nodes", filepath.string(), e);
    }
+
+   output.write(fmt::format(
+      "Loaded layer '{}' hint nodes (time taken {:f}ms)\n"sv, layer_name,
+      load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
 }
 
 void load_layer(const std::filesystem::path& world_dir, const std::string_view layer_name,
                 const std::string_view world_ext, output_stream& output,
                 world& world_out, layer_remap& layer_remap, const int layer)
 {
-   load_objects(world_dir / layer_name += world_ext, output, world_out, layer_remap);
+   load_objects(world_dir / layer_name += world_ext, layer_name, output,
+                world_out, layer_remap);
 
    if (const auto paths_path = world_dir / layer_name += ".pth"sv;
        std::filesystem::exists(paths_path)) {
-      load_paths(paths_path, output, world_out, layer_remap);
+      load_paths(paths_path, layer_name, output, world_out, layer_remap);
    }
 
    if (const auto regions_path = world_dir / layer_name += ".rgn"sv;
        std::filesystem::exists(regions_path)) {
-      load_regions(regions_path, output, world_out, layer_remap);
+      load_regions(regions_path, layer_name, output, world_out, layer_remap);
    }
 
    if (const auto lights_path = world_dir / layer_name += ".lgt"sv;
        std::filesystem::exists(lights_path)) {
-      load_lights(lights_path, output, world_out, layer);
+      load_lights(lights_path, layer_name, output, world_out, layer);
    }
 
    if (const auto pvs_path = world_dir / layer_name += ".pvs"sv;
@@ -600,7 +674,7 @@ void load_layer(const std::filesystem::path& world_dir, const std::string_view l
 
    if (const auto hnt_path = world_dir / layer_name += ".hnt"sv;
        std::filesystem::exists(hnt_path)) {
-      load_hintnodes(hnt_path, output, world_out, layer);
+      load_hintnodes(hnt_path, layer_name, output, world_out, layer);
    }
 }
 
@@ -628,8 +702,14 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       }
 
       try {
+         utility::stopwatch load_timer;
+
          world.terrain =
             read_terrain(io::read_file_to_bytes(world_dir / world.name += ".ter"sv));
+
+         output.write(fmt::format(
+            "Loaded world terrain (time taken {:f}ms)\n"sv,
+            load_timer.elapsed<std::chrono::duration<double, std::milli>>().count()));
       }
       catch (std::exception& e) {
          auto message = fmt::format("Error while loading terrain:\n   Message: \n{}\n"sv,
