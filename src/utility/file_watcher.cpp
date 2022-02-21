@@ -55,6 +55,9 @@ file_watcher::file_watcher(const std::filesystem::path& path) : _path{path}
 
    _thread =
       std::jthread{[this](std::stop_token stop_token) { query_loop(stop_token); }};
+
+   SetThreadDescription(_thread.native_handle(),
+                        L"WorldEdit File Watcher Thread");
 }
 
 void file_watcher::query_loop(std::stop_token stop_token) noexcept

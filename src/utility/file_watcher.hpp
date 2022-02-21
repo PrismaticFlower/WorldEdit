@@ -10,7 +10,6 @@
 #include <span>
 #include <thread>
 
-#include <absl/container/flat_hash_set.h>
 #include <wil/resource.h>
 
 namespace we::utility {
