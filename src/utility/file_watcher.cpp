@@ -84,7 +84,7 @@ void file_watcher::query_loop(std::stop_token stop_token) noexcept
             process_changes(buffer);
          }
          else {
-            _unknown_files_changed.store(true, std::memory_order_relaxed);
+            _unknown_files_changed_event.broadcast();
          }
 
          break;
@@ -98,8 +98,6 @@ void file_watcher::query_loop(std::stop_token stop_token) noexcept
 
 void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noexcept
 {
-   std::scoped_lock lock{_changed_files_mutex};
-
    std::size_t head = 0;
 
    constexpr auto notify_base_size =
@@ -131,19 +129,19 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
 
       switch (info.Action) {
       case FILE_ACTION_ADDED:
-         _changed_files.emplace(std::move(path));
+         _file_changed_event.broadcast(path);
          break;
       case FILE_ACTION_REMOVED:
          // File removed.
          break;
       case FILE_ACTION_MODIFIED:
-         _changed_files.emplace(std::move(path));
+         _file_changed_event.broadcast(path);
          break;
       case FILE_ACTION_RENAMED_OLD_NAME:
          // File removed.
          break;
       case FILE_ACTION_RENAMED_NEW_NAME:
-         _changed_files.emplace(std::move(path));
+         _file_changed_event.broadcast(path);
          break;
       }
    }

@@ -50,21 +50,15 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
    }
 
    _file_watcher = std::make_unique<utility::file_watcher>(source_directory);
-}
+   _file_changed_event =
+      _file_watcher->listen_file_changed([this](const std::filesystem::path& path) {
+         // TODO: Skip path if parent path is ignored.
 
-void libraries_manager::update_modified() noexcept
-{
-   if (not _file_watcher) return;
-
-   _file_watcher->evaluate_modified_files([this](const std::filesystem::path& path) {
-      // TODO: Skip path if parent path is ignored.
-
-      register_asset(path);
+         register_asset(path);
+      });
+   _unknown_files_changed = _file_watcher->listen_unknown_files_changed([this]() {
+      // TODO: manual scan here.
    });
-
-   if (_file_watcher->unknown_files_changed()) {
-      // TODO: manual scan here
-   }
 }
 
 void libraries_manager::clear() noexcept

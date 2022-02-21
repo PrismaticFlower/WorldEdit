@@ -251,9 +251,6 @@ public:
    /// @param path The directory to search through for assets.
    void source_directory(const std::filesystem::path& path) noexcept;
 
-   /// @brief Updates assets that have been modified on disk.
-   void update_modified() noexcept;
-
    library<odf::definition> odfs;
    library<msh::flat_model> models;
    library<texture::texture> textures;
@@ -264,6 +261,8 @@ private:
    void register_asset(const std::filesystem::path& path) noexcept;
 
    std::unique_ptr<utility::file_watcher> _file_watcher;
+   event_listener<void(const std::filesystem::path& path)> _file_changed_event;
+   event_listener<void()> _unknown_files_changed;
 };
 
 }

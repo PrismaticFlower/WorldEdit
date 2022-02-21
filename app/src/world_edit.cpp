@@ -74,7 +74,6 @@ bool world_edit::update()
    // Logic!
    update_object_classes();
 
-   _asset_libraries.update_modified();
    _asset_load_queue.execute();
 
    // Render!

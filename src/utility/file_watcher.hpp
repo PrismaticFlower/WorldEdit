@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utility/event.hpp"
+
 #include <atomic>
 #include <concepts>
 #include <cstddef>
@@ -21,20 +23,16 @@ class file_watcher {
 public:
    explicit file_watcher(const std::filesystem::path& path);
 
-   void evaluate_modified_files(file_watcher_callback auto callback) noexcept
+   auto listen_file_changed(std::function<void(const std::filesystem::path& path)> callback) noexcept
+      -> event_listener<void(const std::filesystem::path& path)>
    {
-      std::lock_guard lock{_changed_files_mutex};
-
-      for (const auto& path : _changed_files) {
-         callback(path);
-      }
-
-      _changed_files.clear();
+      return _file_changed_event.listen(callback);
    }
 
-   bool unknown_files_changed() noexcept
+   auto listen_unknown_files_changed(std::function<void()> callback) noexcept
+      -> event_listener<void()>
    {
-      return _unknown_files_changed.exchange(false, std::memory_order_relaxed);
+      return _unknown_files_changed_event.listen(callback);
    }
 
 private:
@@ -49,12 +47,8 @@ private:
    wil::event_set_scope_exit _destroy_event_setter =
       _destroy_event.SetEvent_scope_exit();
 
-   std::mutex _changed_files_mutex;
-   absl::flat_hash_set<std::filesystem::path, decltype([](const std::filesystem::path& path) {
-                          return std::hash<std::wstring_view>{}(path.native());
-                       })>
-      _changed_files;
-   std::atomic_bool _unknown_files_changed;
+   utility::event<void(const std::filesystem::path& path)> _file_changed_event;
+   utility::event<void()> _unknown_files_changed_event;
 };
 
 }
