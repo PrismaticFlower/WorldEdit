@@ -2,21 +2,14 @@
 
 #include "utility/event.hpp"
 
-#include <atomic>
-#include <concepts>
 #include <cstddef>
 #include <filesystem>
-#include <mutex>
 #include <span>
 #include <thread>
 
 #include <wil/resource.h>
 
 namespace we::utility {
-
-template<typename Callback>
-concept file_watcher_callback =
-   std::invocable<Callback, const std::filesystem::path&>;
 
 class file_watcher {
 public:
