@@ -146,6 +146,7 @@
     <ClCompile Include="src\utility\command_line_tests.cpp" />
     <ClCompile Include="src\utility\event_tests.cpp" />
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
+    <ClCompile Include="src\utility\stopwatch_tests.cpp" />
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
     <ClCompile Include="src\utility\synchronous_task_queue_tests.cpp" />
     <ClCompile Include="src\world\id_tests.cpp" />
