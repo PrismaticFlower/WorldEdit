@@ -2,6 +2,8 @@
 
 #include "async/thread_pool.hpp"
 
+#include <array>
+
 using namespace std::literals;
 
 namespace we::async::tests {
@@ -242,13 +244,11 @@ TEST_CASE("async thread_pool", "[Async][ThreadPool]")
 
    // Verify the tasks run in the background.
 
-   while (not get_32.ready())
-      ;
+   while (not get_32.ready()) std::this_thread::yield();
 
    REQUIRE(get_32.get() == 32);
 
-   while (not get_exception.ready())
-      ;
+   while (not get_exception.ready()) std::this_thread::yield();
 
    REQUIRE_THROWS(get_exception.get());
 
@@ -301,6 +301,70 @@ TEST_CASE("async thread_pool singlethreaded mode", "[Async][ThreadPool]")
 
    REQUIRE(void_task_exception.ready());
    REQUIRE_THROWS(void_task_exception.get());
+}
+
+TEST_CASE("async thread_pool for_each_n", "[Async][ThreadPool]")
+{
+   auto thread_pool =
+      thread_pool::make({.thread_count = 1, .low_priority_thread_count = 0});
+
+   std::vector<int> processed_counts;
+
+   processed_counts.resize(1'000'000);
+
+   thread_pool->for_each_n(task_priority::normal, processed_counts.size(),
+                           [&](const std::size_t i) noexcept {
+                              if (i >= processed_counts.size()) {
+                                 std::terminate();
+                              }
+
+                              std::atomic_ref<int>{processed_counts[i]}.fetch_add(1);
+                           });
+
+   REQUIRE(std::ranges::all_of(processed_counts, [](const std::atomic_int& value) {
+      return value == 1;
+   }));
+}
+
+TEST_CASE("async thread_pool for_each_n low count", "[Async][ThreadPool]")
+{
+   auto thread_pool =
+      thread_pool::make({.thread_count = 7, .low_priority_thread_count = 0});
+
+   std::array<int, 6> processed_counts{};
+
+   thread_pool->for_each_n(task_priority::normal, processed_counts.size(),
+                           [&](const std::size_t i) noexcept {
+                              if (i >= processed_counts.size()) {
+                                 std::terminate();
+                              }
+
+                              processed_counts[i] += 1;
+                           });
+
+   REQUIRE(std::ranges::all_of(processed_counts,
+                               [](const int value) { return value == 1; }));
+}
+
+TEST_CASE("async thread_pool for_each_n singlethreaded mode",
+          "[Async][ThreadPool]")
+{
+   auto thread_pool =
+      thread_pool::make({.thread_count = 0, .low_priority_thread_count = 0});
+
+   std::array<int, 128> processed_counts{};
+
+   thread_pool->for_each_n(task_priority::normal, processed_counts.size(),
+                           [&](const std::size_t i) noexcept {
+                              if (i >= processed_counts.size()) {
+                                 std::terminate();
+                              }
+
+                              processed_counts[i] += 1;
+                           });
+
+   REQUIRE(std::ranges::all_of(processed_counts,
+                               [](const int value) { return value == 1; }));
 }
 
 }

@@ -301,6 +301,117 @@ public:
       return exec(task_priority::normal, std::forward<Fn>(func));
    }
 
+   /// @brief Executes a function over a range of indices.
+   /// @tparam Fn The function to invoke for each index. Must be nothrow invocable.
+   /// @param priority The return type of the task.
+   /// @param size The size of the range, exlucsive. Used as if for (std::size_t i = 0; i < size; ++i) { ... }.
+   /// @param func The function processes the index.
+   template<std::invocable<std::size_t> Fn>
+   void for_each_n(const task_priority priority, const std::size_t size,
+                   const Fn& func) noexcept
+      requires(std::is_nothrow_invocable_v<Fn, std::size_t>)
+   {
+      if (thread_count(priority) == 0) {
+         for (std::size_t i = 0; i < size; ++i) func(i);
+
+         return;
+      }
+
+      // If we're being called from the "main" thread add an extra task for it to process.
+      const std::size_t desired_task_count =
+         std::max(std::this_thread::get_id() == _creating_thread_id
+                     ? thread_count(priority) + 1
+                     : thread_count(priority),
+                  std::size_t{1});
+
+      priority_level_context& priority_context =
+         select_priority_level_context(priority);
+
+      if (size <= desired_task_count) {
+         auto tasks = std::make_shared<detail::task_context_base[]>(size);
+
+         // Schedule the tasks!
+         {
+            std::shared_lock lock{priority_context.tasks_mutex};
+
+            for (std::size_t i = 0; i < size; ++i) {
+               auto& task = tasks[i];
+
+               task.execute_function = [&task, &func, i]() noexcept {
+                  func(i);
+
+                  task.executed_latch.count_down();
+               };
+               task.owning_thread_pool = shared_from_this();
+
+               priority_context.tasks.emplace_back(tasks, &task);
+
+               priority_context.pending_tasks.fetch_add(1);
+               priority_context.pending_tasks.notify_one();
+            }
+         }
+
+         for (std::size_t i = 0; i < size; ++i) {
+            tasks[i].wait();
+         }
+      }
+      else {
+         const std::size_t task_work_size = size / desired_task_count;
+         const std::size_t remainder_task_work_size =
+            size - (desired_task_count * task_work_size);
+         const std::size_t final_task_count = remainder_task_work_size != 0
+                                                 ? desired_task_count + 1
+                                                 : desired_task_count;
+
+         auto tasks = std::make_shared<detail::task_context_base[]>(final_task_count);
+
+         // Schedule the tasks!
+         {
+            std::shared_lock lock{priority_context.tasks_mutex};
+
+            for (std::size_t i = 0; i < desired_task_count; ++i) {
+               auto& task = tasks[i];
+
+               task.execute_function = [&task, &func, start = i * task_work_size,
+                                        end = (i + 1) * task_work_size]() noexcept {
+                  for (std::size_t i = start; i < end; ++i) {
+                     func(i);
+                  }
+
+                  task.executed_latch.count_down();
+               };
+               task.owning_thread_pool = shared_from_this();
+
+               priority_context.tasks.emplace_back(tasks, &task);
+            }
+
+            if (remainder_task_work_size != 0) {
+               auto& task = tasks[desired_task_count];
+
+               task.execute_function = [&task, &func,
+                                        start = desired_task_count * task_work_size,
+                                        end = size]() noexcept {
+                  for (std::size_t i = start; i < end; ++i) {
+                     func(i);
+                  }
+
+                  task.executed_latch.count_down();
+               };
+               task.owning_thread_pool = shared_from_this();
+
+               priority_context.tasks.emplace_back(tasks, &task);
+            }
+         }
+
+         priority_context.pending_tasks.fetch_add(final_task_count);
+         priority_context.pending_tasks.notify_all();
+
+         for (std::size_t i = 0; i < final_task_count; ++i) {
+            tasks[i].wait();
+         }
+      }
+   }
+
    /// @brief Cancel a task. Directly calling is not needed (it is called from inside task).
    /// @param task_context The context of the task to cancel.
    void cancel_task(detail::task_context_base& task_context) noexcept;
@@ -358,6 +469,8 @@ private:
 
    priority_level_context _lowp_context;
    priority_level_context _normalp_context;
+
+   const std::thread::id _creating_thread_id = std::this_thread::get_id();
 };
 
 }

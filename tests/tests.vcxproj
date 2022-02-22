@@ -131,6 +131,7 @@
     <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
     <ClCompile Include="src\assets\texture\texture_io_tests.cpp" />
     <ClCompile Include="src\assets\texture\texture_tests.cpp" />
+    <ClCompile Include="src\async\for_each_tests.cpp" />
     <ClCompile Include="src\async\get_all_tests.cpp" />
     <ClCompile Include="src\async\thread_pool_tests.cpp" />
     <ClCompile Include="src\async\wait_all_tests.cpp" />
