@@ -1,5 +1,6 @@
 #pragma once
 
+#include "async/thread_pool.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <filesystem>
@@ -90,12 +91,14 @@ struct compiled_shader : shader_description {
 
 class shader_library {
 public:
-   explicit shader_library(std::initializer_list<shader_description> shaders);
+   explicit shader_library(std::initializer_list<shader_description> shaders,
+                           std::shared_ptr<async::thread_pool> thread_pool);
 
    auto operator[](const std::string_view name) const noexcept -> D3D12_SHADER_BYTECODE;
 
 private:
    std::vector<compiled_shader> _compiled_shaders;
+   std::shared_ptr<async::thread_pool> _thread_pool;
 };
 
 }

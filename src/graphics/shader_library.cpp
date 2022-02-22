@@ -1,5 +1,6 @@
 
 #include "shader_library.hpp"
+#include "async/for_each.hpp"
 #include "hresult_error.hpp"
 #include "io/read_file.hpp"
 #include "shader_cache.hpp"
@@ -7,7 +8,6 @@
 #include <algorithm>
 #include <array>
 #include <exception>
-#include <execution>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -257,7 +257,9 @@ auto compile(const shader_description& desc)
 
 }
 
-shader_library::shader_library(std::initializer_list<shader_description> shaders)
+shader_library::shader_library(std::initializer_list<shader_description> shaders,
+                               std::shared_ptr<async::thread_pool> thread_pool)
+   : _thread_pool{thread_pool}
 {
    const auto shader_cache = load_shader_cache(shader_cache_path);
 
@@ -266,31 +268,31 @@ shader_library::shader_library(std::initializer_list<shader_description> shaders
    std::mutex compiled_mutex;
    _compiled_shaders.reserve(shaders.size());
 
-   std::for_each(std::execution::par, shaders.begin(), shaders.end(),
-                 [&](const shader_description& desc) {
-                    compiled_shader compiled{desc};
+   async::for_each(*_thread_pool, async::task_priority::normal, shaders,
+                   [&](const shader_description& desc) noexcept {
+                      compiled_shader compiled{desc};
 
-                    if (auto it = shader_cache.find(desc); it != shader_cache.end()) {
-                       compiled.bytecode = it->second.bytecode;
-                       compiled.file_last_write = it->second.file_last_write;
-                       compiled.dependencies = it->second.dependencies;
-                    }
-                    else {
-                       compiled.file_last_write =
-                          std::filesystem::last_write_time(desc.file).time_since_epoch();
-                       std::tie(compiled.bytecode, compiled.dependencies) =
-                          dxc::compile(desc);
-                    }
+                      if (auto it = shader_cache.find(desc); it != shader_cache.end()) {
+                         compiled.bytecode = it->second.bytecode;
+                         compiled.file_last_write = it->second.file_last_write;
+                         compiled.dependencies = it->second.dependencies;
+                      }
+                      else {
+                         compiled.file_last_write =
+                            std::filesystem::last_write_time(desc.file).time_since_epoch();
+                         std::tie(compiled.bytecode, compiled.dependencies) =
+                            dxc::compile(desc);
+                      }
 
-                    if (not compiled.bytecode) return;
+                      if (not compiled.bytecode) return;
 
-                    std::scoped_lock lock{compiled_mutex};
-                    _compiled_shaders.emplace_back(std::move(compiled));
-                 });
+                      std::scoped_lock lock{compiled_mutex};
+                      _compiled_shaders.emplace_back(std::move(compiled));
+                   });
 
    save_shader_cache(shader_cache_path, _compiled_shaders);
 
-   std::sort(std::execution::par, _compiled_shaders.begin(), _compiled_shaders.end(),
+   std::sort(_compiled_shaders.begin(), _compiled_shaders.end(),
              [](const compiled_shader& l, const compiled_shader& r) {
                 return l.name < r.name;
              });
