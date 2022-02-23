@@ -48,7 +48,7 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
    return adapter;
 }
 
-auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device8>
+auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device10>
 {
    if (use_debug_layer) {
       utility::com_ptr<ID3D12Debug> d3d_debug;
@@ -58,7 +58,7 @@ auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device8>
       d3d_debug->EnableDebugLayer();
    }
 
-   utility::com_ptr<ID3D12Device8> device;
+   utility::com_ptr<ID3D12Device10> device;
 
    throw_if_failed(D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_12_0,
                                      IID_PPV_ARGS(device.clear_and_assign())));
