@@ -7,6 +7,11 @@
 
 namespace we::async {
 
+/// @brief Iterate over a range in parallel using a thread_pool.
+/// @param thread_pool The thread_pool.
+/// @param priority The priority for the iteration on the thread_pool.
+/// @param range The random access range to iterate over.
+/// @param callback The callback to invoke for each item in the range.
 template<std::ranges::random_access_range random_access_range,
          std::invocable<std::ranges::range_reference_t<random_access_range>> callback_t>
 inline void for_each(thread_pool& thread_pool, task_priority priority,
