@@ -36,7 +36,9 @@ descriptor_heap::descriptor_heap(const D3D12_DESCRIPTOR_HEAP_TYPE type,
 
    const descriptor_handle
       root_handle{.cpu = _descriptor_heap->GetCPUDescriptorHandleForHeapStart(),
-                  .gpu = _descriptor_heap->GetGPUDescriptorHandleForHeapStart()};
+                  .gpu = (flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+                            ? _descriptor_heap->GetGPUDescriptorHandleForHeapStart()
+                            : D3D12_GPU_DESCRIPTOR_HANDLE{}};
 
    _root_handle = root_handle;
 }
