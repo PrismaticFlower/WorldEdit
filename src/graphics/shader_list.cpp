@@ -30,17 +30,6 @@ auto shader(const std::string_view name) -> shader_description
            .file = fmt::format("shaders/{}.hlsl", name)};
 }
 
-auto material_shader(const std::string_view name, const std::string_view file_name,
-                     std::initializer_list<shader_define> defines) -> shader_description
-{
-   return {.name = std::string{name},
-           .entrypoint = L"main",
-           .type = type_from_name(name),
-           .model = shader_model_6_6,
-           .file = fmt::format("shaders/{}.hlsl", file_name),
-           .defines = defines};
-}
-
 }
 
 std::initializer_list<shader_description> shader_list = {
@@ -49,12 +38,9 @@ std::initializer_list<shader_description> shader_list = {
    shader("meshVS"),
    shader("mesh_basicPS"),
    shader("mesh_basic_lightingPS"),
+   shader("mesh_normalPS"),
    shader("mesh_depth_prepassVS"),
    shader("mesh_depth_cutoutPS"),
-
-   material_shader("mesh_normalPS", "mesh_normalPS", {{L"MATERIAL_TRANSPARENT", 0}}),
-   material_shader("mesh_normal_transparentPS", "mesh_normalPS",
-                   {{L"MATERIAL_TRANSPARENT", 1}}),
 
    shader("terrain_patchVS"),
    shader("terrain_basicPS"),

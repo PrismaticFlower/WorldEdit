@@ -258,8 +258,7 @@ constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
    {.pInputElementDescs = meta_mesh_input_layout_elements.data(),
     .NumElements = static_cast<UINT>(meta_mesh_input_layout_elements.size())};
 
-auto create_material_pipelines(std::string_view pixel_shader_name_base,
-                               std::wstring_view pipeline_name_base,
+auto create_material_pipelines(std::wstring_view pipeline_name_base,
                                pipeline_library& library,
                                const shader_library& shader_library,
                                const root_signature_library& root_signature_library)
@@ -270,23 +269,18 @@ auto create_material_pipelines(std::string_view pixel_shader_name_base,
    for (auto i = 0u; i < pipelines.size(); ++i) {
       const auto flags = static_cast<material_pipeline_flags>(i);
 
-      if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) continue;
-
-      std::string pixel_shader_name{pixel_shader_name_base};
-
-      pixel_shader_name += are_flags_set(flags, material_pipeline_flags::transparent)
-                              ? "_transparent"sv
-                              : ""sv;
-      pixel_shader_name += "PS"sv;
+      if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) {
+         continue;
+      }
 
       std::wstring pipeline_name{pipeline_name_base};
 
-      if (are_flags_set(flags, material_pipeline_flags::additive)) {
-         pipeline_name += L"_additive"sv;
-      }
-
       if (are_flags_set(flags, material_pipeline_flags::transparent)) {
          pipeline_name += L"_transparent"sv;
+      }
+
+      if (are_flags_set(flags, material_pipeline_flags::additive)) {
+         pipeline_name += L"_additive"sv;
       }
 
       if (are_flags_set(flags, material_pipeline_flags::doublesided)) {
@@ -318,7 +312,7 @@ auto create_material_pipelines(std::string_view pixel_shader_name_base,
          pipeline_name.data(),
          {.pRootSignature = root_signature_library.mesh.get(),
           .VS = shader_library["meshVS"sv],
-          .PS = shader_library[pixel_shader_name],
+          .PS = shader_library["mesh_normalPS"sv],
           .StreamOutput = stream_output_disabled,
           .BlendState = blend_state,
           .SampleMask = sample_mask_default,
@@ -334,6 +328,11 @@ auto create_material_pipelines(std::string_view pixel_shader_name_base,
 
       // Duplicate to alpha cutout pipeline.
       pipelines[flags | material_pipeline_flags::alpha_cutout] = pipelines[i];
+
+      // Duplicate to transparent additive pipeline.
+      // if (are_flags_set(flags, material_pipeline_flags::additive)) {
+      //    pipelines[flags | material_pipeline_flags::transparent] = pipelines[i];
+      // }
    }
 
    return pipelines;
@@ -521,8 +520,8 @@ pipeline_library::pipeline_library(utility::com_ptr<ID3D12Device10> device,
                                 .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                 .SampleDesc = {1, 0}});
 
-   mesh_normal = create_material_pipelines("mesh_normal", L"mesh_normal", *this,
-                                           shader_library, root_signature_library);
+   mesh_normal = create_material_pipelines(L"mesh_normal", *this, shader_library,
+                                           root_signature_library);
 
    terrain_depth_prepass =
       create_graphics_pipeline(L"terrain_depth_prepass",

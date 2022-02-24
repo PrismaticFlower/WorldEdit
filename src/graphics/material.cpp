@@ -9,6 +9,13 @@ namespace we::graphics {
 
 namespace {
 
+enum class shader_flags : uint32 { none = 0b0, transparent = 0b1 };
+
+constexpr bool marked_as_enum_bitflag(shader_flags)
+{
+   return true;
+}
+
 constexpr bool has_normalmap(const assets::msh::material& material)
 {
    using assets::msh::material_flags;
@@ -23,8 +30,20 @@ constexpr bool has_normalmap(const assets::msh::material& material)
           material.rendertype == (rendertype::normalmap_envmapped);
 }
 
+constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags) noexcept
+   -> shader_flags
+{
+   shader_flags flags = shader_flags::none;
+
+   if (are_flags_set(pipeline_flags, material_pipeline_flags::transparent)) {
+      flags |= shader_flags::transparent;
+   }
+
+   return flags;
+}
+
 struct alignas(256) normal_material_constants {
-   uint32 flags;
+   shader_flags flags;
    uint32 diffuse_map;
    uint32 normal_map;
 };
@@ -91,7 +110,7 @@ void material::init_resources(gpu::device& gpu_device)
    constant_buffer_view =
       gpu_device.create_resource_view_set(resource_view_descriptions);
 
-   normal_material_constants constants{.flags = 0,
+   normal_material_constants constants{.flags = make_shader_flags(flags),
                                        .diffuse_map = textures[0]->srv_srgb_index,
                                        .normal_map = textures[1]->srv_index};
 
@@ -132,7 +151,7 @@ void material::init_resources(gpu::device& gpu_device)
 void material::update_constant_buffer(gpu::graphics_command_list& command_list,
                                       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   normal_material_constants constants{.flags = 0,
+   normal_material_constants constants{.flags = make_shader_flags(flags),
                                        .diffuse_map = textures[0]->srv_srgb_index,
                                        .normal_map = textures[1]->srv_index};
 

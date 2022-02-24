@@ -1,9 +1,7 @@
 
 #include "lights_common.hlsli"
 
-namespace flags {
-const static bool transparent = MATERIAL_TRANSPARENT;
-}
+enum flags { none = 0b0, transparent = 0b1 };
 
 struct input_vertex {
    float3 positionWS : POSITIONWS;
@@ -41,7 +39,7 @@ float4 main(input_vertex input_vertex) : SV_TARGET
    const float3 positionWS = input_vertex.positionWS;
    float4 diffuse_color = diffuse_map.Sample(texture_sampler, input_vertex.texcoords);
 
-   if (flags::transparent) diffuse_color.rgb *= diffuse_color.a;
+   if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
 
    calculate_light_inputs lighting_inputs;
 
