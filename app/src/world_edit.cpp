@@ -258,7 +258,7 @@ void world_edit::open_project_with_picker() noexcept
                                             .picker_guid = open_project_picker_guid,
                                             .window = _window});
 
-   if (not path && not std::filesystem::exists(*path)) return;
+   if (not path or not std::filesystem::exists(*path)) return;
 
    open_project(*path);
 }
