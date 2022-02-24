@@ -52,7 +52,7 @@ public:
       }
       else {
          static_assert(
-            false,
+            std::is_same_v<std::void_t<Type>, Type>,
             "Values in config files can only be ints, floats or strings.");
       }
    }

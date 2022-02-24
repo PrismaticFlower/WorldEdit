@@ -168,9 +168,7 @@ enum class keyboard_keys {
    count
 };
 
-// VS 17.0 takes issue with these being constexpr where 16.11 didn't.
-
-inline const container::enum_array<int, keyboard_keys> keyboard_keys_vk_mapping =
+inline constexpr container::enum_array<int, keyboard_keys> keyboard_keys_vk_mapping =
    container::make_enum_array<int, keyboard_keys>(
       {{keyboard_keys::_0, 0x30},
        {keyboard_keys::_1, 0x31},
@@ -309,7 +307,7 @@ inline const container::enum_array<int, keyboard_keys> keyboard_keys_vk_mapping 
        {keyboard_keys::y, 0x59},
        {keyboard_keys::z, 0x5a}});
 
-inline const container::enum_array<std::string_view, keyboard_keys> keyboard_keys_names_mapping =
+inline constexpr container::enum_array<std::string_view, keyboard_keys> keyboard_keys_names_mapping =
    container::make_enum_array<std::string_view, keyboard_keys>({
       {keyboard_keys::_0, "0"},
       {keyboard_keys::_1, "1"},
