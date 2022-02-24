@@ -269,9 +269,7 @@ auto create_material_pipelines(std::wstring_view pipeline_name_base,
    for (auto i = 0u; i < pipelines.size(); ++i) {
       const auto flags = static_cast<material_pipeline_flags>(i);
 
-      if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) {
-         continue;
-      }
+      if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) continue;
 
       std::wstring pipeline_name{pipeline_name_base};
 
@@ -328,11 +326,6 @@ auto create_material_pipelines(std::wstring_view pipeline_name_base,
 
       // Duplicate to alpha cutout pipeline.
       pipelines[flags | material_pipeline_flags::alpha_cutout] = pipelines[i];
-
-      // Duplicate to transparent additive pipeline.
-      // if (are_flags_set(flags, material_pipeline_flags::additive)) {
-      //    pipelines[flags | material_pipeline_flags::transparent] = pipelines[i];
-      // }
    }
 
    return pipelines;
