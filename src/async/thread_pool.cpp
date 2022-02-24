@@ -62,10 +62,13 @@ void thread_pool::cancel_task(detail::task_context_base& task_context) noexcept
    const auto cancel_task = [&](priority_level_context& level_context) noexcept {
       std::scoped_lock lock{level_context.tasks_mutex};
 
-      std::erase_if(level_context.tasks,
-                    [&](std::shared_ptr<detail::task_context_base>& queued_context) noexcept {
-                       return &task_context == queued_context.get();
-                    });
+      const std::size_t erased =
+         std::erase_if(level_context.tasks,
+                       [&](std::shared_ptr<detail::task_context_base>& queued_context) noexcept {
+                          return &task_context == queued_context.get();
+                       });
+
+      level_context.pending_tasks.fetch_sub(erased);
    };
 
    cancel_task(_lowp_context);
