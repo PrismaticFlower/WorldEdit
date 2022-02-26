@@ -83,19 +83,37 @@ public:
    {
       if (name.empty()) return default_texture;
 
+      // Try to find an already existing texture using a shared lock.
       {
          std::shared_lock lock{_shared_mutex};
+
+         if (auto state_entry = _textures.find(name); state_entry != _textures.end()) {
+            const auto& [_, state] = *state_entry;
+
+            if (auto texture = state.texture.lock(); texture) {
+               return texture;
+            }
+         }
+      }
+
+      // Try and create a new texture.
+      {
+         std::scoped_lock lock{_shared_mutex};
 
          auto& state = _textures[name];
 
          if (auto texture = state.texture.lock(); texture) {
+            // Not a mistake, the texture could've been created inbetween releasing the shared lock and retaking it exlcusively.
+
             return texture;
          }
          else {
             state.asset = _texture_assets[name];
 
             if (auto asset_data = state.asset.get_if(); asset_data) {
-               create_texture_async(name, state.asset, asset_data);
+               if (not _pending_textures.contains(name)) {
+                  create_texture_async(name, state.asset, asset_data);
+               }
             }
          }
       }
