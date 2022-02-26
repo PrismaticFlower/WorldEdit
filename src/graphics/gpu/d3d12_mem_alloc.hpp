@@ -68,6 +68,11 @@ public:
       return _ptr;
    }
 
+   [[nodiscard]] explicit operator bool() const noexcept
+   {
+      return _ptr;
+   }
+
    void swap(release_ptr& other) noexcept
    {
       std::swap(this->_ptr, other._ptr);
