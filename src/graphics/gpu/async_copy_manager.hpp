@@ -103,7 +103,14 @@ public:
    async_copy_manager(async_copy_manager&&) = delete;
    auto operator=(async_copy_manager&&) -> async_copy_manager& = delete;
 
-   ~async_copy_manager() = default;
+   ~async_copy_manager()
+   {
+      // Flush the queue, resources are about to be destroyed!
+      const UINT64 fence_value = _fence_value.fetch_add(1);
+
+      _command_queue->Signal(_fence.get(), fence_value);
+      _fence->SetEventOnCompletion(fence_value, nullptr);
+   }
 
    [[nodiscard]] auto aquire_context() -> copy_context
    {
