@@ -26,15 +26,6 @@ public:
    {
    }
 
-   ~model_manager()
-   {
-      std::shared_lock lock{_mutex};
-
-      for (auto& [name, pending_creation] : _pending_creations) {
-         pending_creation.task.cancel();
-      }
-   }
-
    /// @brief Gets a model.
    /// @param name The name of the model.
    /// @return A reference to the model or the default model.

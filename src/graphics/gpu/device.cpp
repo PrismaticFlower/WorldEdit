@@ -13,7 +13,7 @@ namespace we::graphics::gpu {
 
 namespace {
 
-constexpr bool use_debug_layer = false;
+constexpr bool use_debug_layer = true;
 
 auto create_factory() -> utility::com_ptr<IDXGIFactory7>
 {

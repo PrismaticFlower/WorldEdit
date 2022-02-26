@@ -83,14 +83,7 @@ struct task_context<void> : task_context_base {
 /// @brief A simple async task class.
 /// @tparam T The type returned by the task.
 ///
-/// Abandoning a task that returns a value without calling get() or cancel()
-/// will result in std::terminate being called.
-///
-/// While abandoning a task that returns nothing (task<void>) will only result
-/// in std::terminate being called if it causes an exception thrown by the task
-/// to be ignored. Though this is not guaranteed to happen if the task object is
-/// destroyed before the task finishes execution. (The behaviour is provided
-/// still to try and help catch some bugs rather than none.)
+/// Abandoning a task causes cancel() to be called for that task in it's destructor.
 template<typename T>
 class task {
 public:
@@ -108,15 +101,8 @@ public:
 
    ~task()
    {
-      if constexpr (not std::is_same_v<T, void>) {
-         if (_context and not _context->result_obtained) {
-            std::terminate(); // Abandoning task without calling cancel or obtaining result.
-         }
-      }
-      else {
-         if (_context and _context->task_exception_ptr != nullptr) {
-            std::terminate(); // Abandoning void task that threw exception without calling cancel or obtaining result.
-         }
+      if (_context and not ready()) {
+         cancel();
       }
    }
 

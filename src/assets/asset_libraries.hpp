@@ -114,11 +114,17 @@ public:
          std::scoped_lock lock{_mutex};
 
          for (auto& [name, loading] : _loading_assets) {
-            loading.cancel();
+            loading.request_stop();
          }
 
          _assets.clear();
          _loading_assets.clear();
+      }
+
+      {
+         std::scoped_lock lock{_load_tasks_mutex};
+
+         _load_tasks.clear();
       }
    }
 
@@ -150,9 +156,9 @@ private:
       if (preempt_current_load) {
          if (auto inprogress_load = _loading_assets.find(name);
              inprogress_load != _loading_assets.end()) {
-            auto& loading = inprogress_load->second;
+            auto& [_, stop_source] = *inprogress_load;
 
-            loading.cancel();
+            stop_source.request_stop();
 
             _loading_assets.erase(inprogress_load);
          }
@@ -161,77 +167,68 @@ private:
          return;
       }
 
-      std::shared_lock lock{asset->mutex};
+      std::scoped_lock tasks_lock{_load_tasks_mutex};
+      std::shared_lock asset_lock{asset->mutex};
 
       auto path = _assets.at(name)->path;
 
       std::stop_source stop_source;
 
-      _loading_assets[name] = loading_asset{
-         .task = _thread_pool->exec(
-            async::task_priority::low,
-            [this, asset_path = _assets.at(name)->path, asset, name,
-             stop_token = stop_source.get_token()]() {
-               try {
-                  if (stop_token.stop_requested()) return;
+      _loading_assets[name] = stop_source;
+      _load_tasks[name] = _thread_pool->exec(
+         async::task_priority::low, [this, asset_path = _assets.at(name)->path, asset,
+                                     name, stop_token = stop_source.get_token()]() {
+            try {
+               if (stop_token.stop_requested()) return;
 
-                  utility::stopwatch load_timer;
+               utility::stopwatch load_timer;
 
-                  auto asset_data =
-                     std::make_shared<const T>(asset_traits<T>::load(asset_path));
+               auto asset_data =
+                  std::make_shared<const T>(asset_traits<T>::load(asset_path));
 
-                  _output_stream.write(
-                     fmt::format("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
-                                 asset_path.string(),
-                                 load_timer
-                                    .elapsed<std::chrono::duration<double, std::milli>>()
-                                    .count()));
+               _output_stream.write(
+                  fmt::format("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
+                              asset_path.string(),
+                              load_timer
+                                 .elapsed<std::chrono::duration<double, std::milli>>()
+                                 .count()));
 
-                  if (stop_token.stop_requested()) return;
+               if (stop_token.stop_requested()) return;
 
-                  // update the asset state's data ref
-                  {
-                     std::scoped_lock lock{asset->mutex};
+               // update the asset state's data ref
+               {
+                  std::scoped_lock lock{asset->mutex};
 
-                     asset->data = asset_data;
-                  }
-
-                  // erase the loading marker/state
-                  {
-                     std::scoped_lock lock{_mutex};
-
-                     _loading_assets.erase(name);
-                  }
-
-                  _load_event.broadcast(name, asset, asset_data);
+                  asset->data = asset_data;
                }
-               catch (std::exception& e) {
-                  _output_stream.write(
-                     fmt::format("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
-                                 asset_path.string(),
-                                 utility::string::indent(2, e.what())));
+
+               // erase the loading marker/state
+               {
+                  std::scoped_lock lock{_mutex};
+
+                  _loading_assets.erase(name);
                }
-            }),
-         .stop_source = stop_source};
+
+               _load_event.broadcast(name, asset, asset_data);
+            }
+            catch (std::exception& e) {
+               _output_stream.write(
+                  fmt::format("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
+                              asset_path.string(),
+                              utility::string::indent(2, e.what())));
+            }
+         });
    }
-
-   struct loading_asset {
-      async::task<void> task;
-      std::stop_source stop_source;
-
-      void cancel()
-      {
-         task.cancel();
-         stop_source.request_stop();
-      }
-   };
 
    we::output_stream& _output_stream;
 
-   std::shared_mutex _mutex;
+   std::shared_mutex _mutex; // guards _assets, _loading_assets
 
    absl::flat_hash_map<lowercase_string, std::shared_ptr<asset_state<T>>> _assets;
-   absl::flat_hash_map<lowercase_string, loading_asset> _loading_assets;
+   absl::flat_hash_map<lowercase_string, std::stop_source> _loading_assets;
+
+   std::shared_mutex _load_tasks_mutex;
+   absl::flat_hash_map<lowercase_string, async::task<void>> _load_tasks;
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 
