@@ -1,7 +1,7 @@
 
 #include "lights_common.hlsli"
 
-enum flags { none = 0b0, transparent = 0b1 };
+enum flags { none = 0b0, transparent = 0b1, unlit = 0b10 };
 
 struct input_vertex {
    float3 positionWS : POSITIONWS;
@@ -40,6 +40,8 @@ float4 main(input_vertex input_vertex) : SV_TARGET
    float4 diffuse_color = diffuse_map.Sample(texture_sampler, input_vertex.texcoords);
 
    if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
+
+   if (material.flags & flags::unlit) return diffuse_color;
 
    calculate_light_inputs lighting_inputs;
 

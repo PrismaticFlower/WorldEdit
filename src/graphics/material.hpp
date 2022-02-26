@@ -29,6 +29,8 @@ struct material {
 
    std::vector<std::shared_ptr<const world_texture>> textures;
    std::vector<lowercase_string> texture_names;
+
+   assets::msh::material_flags msh_flags = assets::msh::material_flags::none;
 };
 
 }

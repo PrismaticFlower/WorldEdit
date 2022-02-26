@@ -9,7 +9,11 @@ namespace we::graphics {
 
 namespace {
 
-enum class shader_flags : uint32 { none = 0b0, transparent = 0b1 };
+enum class shader_flags : uint32 {
+   none = 0b0,
+   transparent = 0b1,
+   unlit = 0b10
+};
 
 constexpr bool marked_as_enum_bitflag(shader_flags)
 {
@@ -30,13 +34,21 @@ constexpr bool has_normalmap(const assets::msh::material& material)
           material.rendertype == (rendertype::normalmap_envmapped);
 }
 
-constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags) noexcept
-   -> shader_flags
+constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
+                                 assets::msh::material_flags msh_flags) noexcept -> shader_flags
 {
    shader_flags flags = shader_flags::none;
 
    if (are_flags_set(pipeline_flags, material_pipeline_flags::transparent)) {
       flags |= shader_flags::transparent;
+   }
+
+   if (are_flags_set(msh_flags, assets::msh::material_flags::unlit)) {
+      flags |= shader_flags::unlit;
+   }
+
+   if (are_flags_set(msh_flags, assets::msh::material_flags::glow)) {
+      flags |= shader_flags::unlit; // Actually implementing this properly is fairly pointless without a bloom pass.
    }
 
    return flags;
@@ -74,6 +86,8 @@ material::material(const assets::msh::material& material,
 
    using assets::msh::material_flags;
 
+   msh_flags = material.flags;
+
    if (are_flags_set(material.flags, material_flags::transparent)) {
       flags |= material_pipeline_flags::transparent;
    }
@@ -110,7 +124,7 @@ void material::init_resources(gpu::device& gpu_device)
    constant_buffer_view =
       gpu_device.create_resource_view_set(resource_view_descriptions);
 
-   normal_material_constants constants{.flags = make_shader_flags(flags),
+   normal_material_constants constants{.flags = make_shader_flags(flags, msh_flags),
                                        .diffuse_map = textures[0]->srv_srgb_index,
                                        .normal_map = textures[1]->srv_index};
 
@@ -151,7 +165,7 @@ void material::init_resources(gpu::device& gpu_device)
 void material::update_constant_buffer(gpu::graphics_command_list& command_list,
                                       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   normal_material_constants constants{.flags = make_shader_flags(flags),
+   normal_material_constants constants{.flags = make_shader_flags(flags, msh_flags),
                                        .diffuse_map = textures[0]->srv_srgb_index,
                                        .normal_map = textures[1]->srv_index};
 
