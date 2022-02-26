@@ -18,27 +18,15 @@ public:
 
    resource(device& device, utility::com_ptr<ID3D12Resource> resource,
             release_ptr<D3D12MA::Allocation> allocation)
-      : _resource{resource.release()}, _allocation{allocation.release()}, _parent_device{&device}
+      : _resource{resource}, _allocation{std::move(allocation)}, _parent_device{&device}
    {
    }
 
    resource(const resource&) noexcept = delete;
    auto operator=(const resource&) noexcept -> resource& = delete;
 
-   resource(resource&& other) noexcept
-   {
-      this->swap(other);
-   }
-
-   auto operator=(resource&& other) noexcept -> resource&
-   {
-      resource discarded;
-
-      discarded.swap(*this);
-      this->swap(other);
-
-      return *this;
-   }
+   resource(resource&& other) noexcept = default;
+   auto operator=(resource&& other) noexcept -> resource& = default;
 
    ~resource();
 
@@ -54,7 +42,7 @@ public:
 
    auto get() const noexcept -> ID3D12Resource*
    {
-      return _resource;
+      return _resource.get();
    }
 
    void swap(resource& other) noexcept
@@ -69,9 +57,14 @@ public:
 private:
    friend device;
 
-   gsl::owner<ID3D12Resource*> _resource = nullptr;
-   gsl::owner<D3D12MA::Allocation*> _allocation = nullptr;
+   utility::com_ptr<ID3D12Resource> _resource = nullptr;
+   release_ptr<D3D12MA::Allocation> _allocation = nullptr;
    device* _parent_device = nullptr;
 };
+
+inline void swap(resource& l, resource& r) noexcept
+{
+   l.swap(r);
+}
 
 }

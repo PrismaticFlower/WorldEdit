@@ -170,8 +170,8 @@ public:
       }
    }
 
-   void deferred_destroy_resource(gsl::owner<ID3D12Resource*> resource,
-                                  gsl::owner<D3D12MA::Allocation*> allocation)
+   void deferred_destroy_resource(utility::com_ptr<ID3D12Resource> resource,
+                                  release_ptr<D3D12MA::Allocation> allocation)
    {
       assert(resource);
 
@@ -179,8 +179,8 @@ public:
 
       _deferred_destructions.push_back(
          {.last_used_frame = fence_value,
-          .resource = resource_owner{.allocation = release_ptr{allocation},
-                                     .resource = utility::com_ptr{resource}}});
+          .resource = resource_owner{.allocation = std::move(allocation),
+                                     .resource = std::move(resource)}});
    }
 
    void deferred_free_descriptors(const D3D12_DESCRIPTOR_HEAP_TYPE type,
