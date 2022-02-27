@@ -119,7 +119,7 @@ private:
 
    shader_library _shaders{shader_list, _thread_pool};
    root_signature_library _root_signatures{_device};
-   pipeline_library _pipelines{_device.device_d3d, _shaders, _root_signatures};
+   pipeline_library _pipelines{*_device.device_d3d, _shaders, _root_signatures};
 
    texture_manager _texture_manager;
    model_manager _model_manager;
