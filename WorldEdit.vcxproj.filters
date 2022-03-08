@@ -529,7 +529,7 @@
     <ClInclude Include="src\actions\action.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\selection_context.hpp">
+    <ClInclude Include="src\world\interaction_context.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\id.hpp">
@@ -548,6 +548,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\async\for_each.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\overload.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\look_for.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

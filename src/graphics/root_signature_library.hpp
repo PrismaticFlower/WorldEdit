@@ -14,8 +14,11 @@ struct root_signature_library {
    utility::com_ptr<ID3D12RootSignature> mesh_shadow;
    utility::com_ptr<ID3D12RootSignature> mesh_depth_prepass;
    utility::com_ptr<ID3D12RootSignature> mesh;
+   utility::com_ptr<ID3D12RootSignature> mesh_wireframe;
    utility::com_ptr<ID3D12RootSignature> terrain;
+
    utility::com_ptr<ID3D12RootSignature> meta_mesh;
+   utility::com_ptr<ID3D12RootSignature> meta_mesh_wireframe;
    utility::com_ptr<ID3D12RootSignature> meta_line;
 
    utility::com_ptr<ID3D12RootSignature> tile_lights_clear;
@@ -42,6 +45,12 @@ constexpr uint32 camera_descriptor_table = 2;
 constexpr uint32 lights_descriptor_table = 3;
 }
 
+namespace mesh_wireframe {
+constexpr uint32 object_cbv = 0;
+constexpr uint32 wireframe_cbv = 1;
+constexpr uint32 camera_descriptor_table = 2;
+}
+
 namespace terrain {
 constexpr uint32 camera_descriptor_table = 0;
 constexpr uint32 lights_descriptor_table = 1;
@@ -53,6 +62,12 @@ constexpr uint32 material_descriptor_table = 4;
 namespace meta_mesh {
 constexpr uint32 object_cbv = 0;
 constexpr uint32 color_cbv = 1;
+constexpr uint32 camera_descriptor_table = 2;
+}
+
+namespace meta_mesh_wireframe {
+constexpr uint32 object_cbv = 0;
+constexpr uint32 wireframe_cbv = 1;
 constexpr uint32 camera_descriptor_table = 2;
 }
 

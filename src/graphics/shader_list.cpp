@@ -41,6 +41,8 @@ std::initializer_list<shader_description> shader_list = {
    shader("mesh_normalPS"),
    shader("mesh_depth_prepassVS"),
    shader("mesh_depth_cutoutPS"),
+   shader("mesh_wireframeGS"),
+   shader("mesh_wireframePS"),
 
    shader("terrain_patchVS"),
    shader("terrain_basicPS"),

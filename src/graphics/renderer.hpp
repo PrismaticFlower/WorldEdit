@@ -19,6 +19,7 @@
 #include "shader_list.hpp"
 #include "terrain.hpp"
 #include "texture_manager.hpp"
+#include "world/interaction_context.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
 #include "world_mesh_list.hpp"
@@ -42,6 +43,7 @@ public:
 
    void draw_frame(
       const camera& camera, const world::world& world,
+      const world::interaction_targets& interaction_targets,
       const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes);
 
    void window_resized(uint16 width, uint16 height);
@@ -76,6 +78,12 @@ private:
 
    void draw_world_meta_objects(
       const frustrum& view_frustrum, const world::world& world,
+      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
+      gpu::graphics_command_list& command_list);
+
+   void draw_interaction_targets(
+      const frustrum& view_frustrum, const world::world& world,
+      const world::interaction_targets& interaction_targets,
       const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
       gpu::graphics_command_list& command_list);
 

@@ -24,6 +24,10 @@ public:
    virtual auto aabb_color() const noexcept -> float4 = 0;
 
    virtual auto light_volume_alpha() const noexcept -> float = 0;
+
+   virtual auto hover_color() const noexcept -> float3 = 0;
+
+   virtual auto line_width() const noexcept -> float = 0;
 };
 
 }

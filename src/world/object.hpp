@@ -26,4 +26,6 @@ struct object {
    bool operator==(const object&) const noexcept = default;
 };
 
+using object_id = id<object>;
+
 }

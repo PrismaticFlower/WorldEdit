@@ -4,6 +4,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "line_drawer.hpp"
+#include "utility/look_for.hpp"
+#include "utility/overload.hpp"
 #include "world/world_utilities.hpp"
 
 #include <d3dx12.h>
@@ -15,6 +17,16 @@ namespace we::graphics {
 using namespace gpu::literals;
 
 namespace {
+
+// TODO: Put this somewhere.
+struct alignas(256) wireframe_constant_buffer {
+   float3 color;
+   float line_width;
+   float2 viewport_size;
+   float2 viewport_topleft;
+};
+
+static_assert(sizeof(wireframe_constant_buffer) == 256);
 
 // TODO: Put this somewhere.
 constexpr float temp_barrier_height = 64.0f;
@@ -111,6 +123,7 @@ renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settin
 
 void renderer::draw_frame(
    const camera& camera, const world::world& world,
+   const world::interaction_targets& interaction_targets,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
 {
    auto& swap_chain = _device.swap_chain;
@@ -177,6 +190,9 @@ void renderer::draw_frame(
 
    // Render World Meta Objects
    draw_world_meta_objects(view_frustrum, world, world_classes, command_list);
+
+   draw_interaction_targets(view_frustrum, world, interaction_targets,
+                            world_classes, command_list);
 
    // Render ImGui
    ImGui::Render();
@@ -708,6 +724,373 @@ void renderer::draw_world_meta_objects(
    }
 }
 
+void renderer::draw_interaction_targets(
+   const frustrum& view_frustrum, const world::world& world,
+   const world::interaction_targets& interaction_targets,
+   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
+   gpu::graphics_command_list& command_list)
+{
+   (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for interaction targets?)
+
+   using boost::variant2::visit;
+
+   if (interaction_targets.hovered_entity) {
+      gpu::virtual_address wireframe_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+         wireframe_constant_buffer
+            constants{.color = _settings->hover_color(),
+                      .line_width = _settings->line_width(),
+                      .viewport_size = {to_float(_device.swap_chain.width()),
+                                        to_float(_device.swap_chain.height())},
+                      .viewport_topleft = {0.0f, 0.0f}};
+
+         std::memcpy(allocation.cpu_address, &constants,
+                     sizeof(wireframe_constant_buffer));
+
+         return allocation.gpu_address;
+      }();
+
+      const auto meta_mesh_common_setup = [&] {
+         command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
+         command_list.set_graphics_root_signature(*_root_signatures.mesh_wireframe);
+         command_list.set_graphics_root_constant_buffer_view(rs::meta_mesh_wireframe::wireframe_cbv,
+                                                             wireframe_constants);
+         command_list.set_graphics_root_descriptor_table(rs::meta_mesh_wireframe::camera_descriptor_table,
+                                                         _camera_constant_buffer_view);
+
+         command_list.set_pipeline_state(*_pipelines.meta_mesh_wireframe);
+
+         command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      };
+
+      const auto draw_path_node = [&](const world::path::node& node) {
+         float4x4 transform = static_cast<float4x4>(node.rotation) *
+                              float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
+                                       {0.0f, 0.5f, 0.0f, 0.0f},
+                                       {0.0f, 0.0f, 0.5f, 0.0f},
+                                       {0.0f, 0.0f, 0.0f, 1.0f}};
+
+         transform[3] = {node.position, 1.0f};
+
+         command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
+                                                        transform);
+
+         const geometric_shape shape = _geometric_shapes.octahedron();
+
+         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+         command_list.ia_set_index_buffer(shape.index_buffer_view);
+         command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+      };
+
+      visit(
+         overload{
+            [&](world::object_id id) {
+               const world::object* object =
+                  look_for(world.objects, [id](const world::object& object) {
+                     return id == object.id;
+                  });
+
+               if (not object) return;
+
+               gpu::virtual_address object_constants = [&] {
+                  auto allocation =
+                     _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+                  world_mesh_constants constants{};
+
+                  constants.object_to_world = static_cast<float4x4>(object->rotation);
+                  constants.object_to_world[3] = float4{object->position, 1.0f};
+
+                  std::memcpy(allocation.cpu_address, &constants,
+                              sizeof(world_mesh_constants));
+
+                  return allocation.gpu_address;
+               }();
+
+               model& model =
+                  _model_manager[world_classes.at(object->class_name)->model_name];
+
+               command_list.set_graphics_root_signature(*_root_signatures.mesh_wireframe);
+               command_list.set_graphics_root_constant_buffer_view(rs::mesh_wireframe::object_cbv,
+                                                                   object_constants);
+               command_list.set_graphics_root_constant_buffer_view(rs::mesh_wireframe::wireframe_cbv,
+                                                                   wireframe_constants);
+               command_list.set_graphics_root_descriptor_table(rs::mesh_wireframe::camera_descriptor_table,
+                                                               _camera_constant_buffer_view);
+
+               command_list.set_pipeline_state(*_pipelines.mesh_wireframe);
+
+               command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+               command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+               command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
+
+               for (auto& part : model.parts) {
+                  command_list.draw_indexed_instanced(part.index_count, 1,
+                                                      part.start_index,
+                                                      part.start_vertex, 0);
+               }
+            },
+            [&](world::light_id id) {
+               const world::light* light =
+                  look_for(world.lights, [id](const world::light& light) {
+                     return id == light.id;
+                  });
+
+               if (not light) return;
+
+               meta_mesh_common_setup();
+
+               if (light->light_type == world::light_type::directional) {
+                  if (not light->directional_region) {
+                     return; // TODO: Directional light visualizers.
+                  }
+
+                  const world::region* const region =
+                     world::find_region_by_description(world, *light->directional_region);
+
+                  if (not region) return;
+
+                  const float3 scale = [&] {
+                     switch (region->shape) {
+                     default:
+                     case world::region_shape::box: {
+                        return region->size;
+                     }
+                     case world::region_shape::sphere: {
+                        return float3{glm::length(region->size)};
+                     }
+                     case world::region_shape::cylinder: {
+                        const float cylinder_length =
+                           glm::length(float2{region->size.x, region->size.z});
+                        return float3{cylinder_length, region->size.y, cylinder_length};
+                     }
+                     }
+                  }();
+
+                  float4x4 transform = static_cast<float4x4>(region->rotation) *
+                                       float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                                {0.0f, scale.y, 0.0f, 0.0f},
+                                                {0.0f, 0.0f, scale.z, 0.0f},
+                                                {0.0f, 0.0f, 0.0f, 1.0f}};
+
+                  transform[3] = {region->position, 1.0f};
+
+                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
+                                                                 transform);
+
+                  const geometric_shape shape = [&] {
+                     switch (region->shape) {
+                     default:
+                     case world::region_shape::box:
+                        return _geometric_shapes.cube();
+                     case world::region_shape::sphere:
+                        return _geometric_shapes.icosphere();
+                     case world::region_shape::cylinder:
+                        return _geometric_shapes.cylinder();
+                     }
+                  }();
+
+                  command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+                  command_list.ia_set_index_buffer(shape.index_buffer_view);
+                  command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+               }
+               else if (light->light_type == world::light_type::point) {
+                  float4x4 transform = float4x4{{light->range, 0.0f, 0.0f, 0.0f},
+                                                {0.0f, light->range, 0.0f, 0.0f},
+                                                {0.0f, 0.0f, light->range, 0.0f},
+                                                {0.0f, 0.0f, 0.0f, 1.0f}};
+
+                  transform[3] = {light->position, 1.0f};
+
+                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
+                                                                 transform);
+
+                  auto shape = _geometric_shapes.icosphere();
+
+                  command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+                  command_list.ia_set_index_buffer(shape.index_buffer_view);
+                  command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+               }
+               else if (light->light_type == world::light_type::spot) {
+                  const float half_range = light->range / 2.0f;
+                  const float cone_radius =
+                     half_range * std::tan(light->outer_cone_angle);
+
+                  float4x4 transform =
+                     static_cast<float4x4>(light->rotation) *
+                     static_cast<float4x4>(glm::quat{0.707107f, -0.707107f, 0.0f, 0.0f}) *
+                     float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
+                              {0.0f, half_range, 0.0f, 0.0f},
+                              {0.0f, 0.0f, cone_radius, 0.0f},
+                              {0.0f, -half_range, 0.0f, 1.0f}};
+
+                  transform[3] += float4{light->position, 0.0f};
+
+                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                                 transform);
+
+                  auto shape = _geometric_shapes.cone();
+
+                  command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+                  command_list.ia_set_index_buffer(shape.index_buffer_view);
+                  command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+               }
+            },
+            [&](world::path_id id) {
+               const world::path* path =
+                  look_for(world.paths, [id](const world::path& path) {
+                     return id == path.id;
+                  });
+
+               if (not path) return;
+
+               meta_mesh_common_setup();
+
+               for (auto& node : path->nodes) draw_path_node(node);
+
+               draw_lines(command_list, _root_signatures, _pipelines,
+                          _dynamic_buffer_allocator,
+                          {.line_color = _settings->hover_color(),
+
+                           .camera_constant_buffer_view = _camera_constant_buffer_view,
+
+                           .connect_mode = line_connect_mode::linear},
+                          [&](line_draw_context& draw_context) {
+                             using namespace ranges::views;
+
+                             const auto get_position = [](const world::path::node& node) {
+                                return node.position;
+                             };
+
+                             for (const auto [a, b] :
+                                  zip(path->nodes | transform(get_position),
+                                      path->nodes | drop(1) | transform(get_position))) {
+                                draw_context.add(a, b);
+                             }
+                          });
+            },
+            [&](world::path_id_node_pair id_node) {
+               auto [id, node_index] = id_node;
+
+               const world::path* path =
+                  look_for(world.paths, [id](const world::path& path) {
+                     return id == path.id;
+                  });
+
+               if (not path) return;
+
+               if (node_index >= path->nodes.size()) return;
+
+               meta_mesh_common_setup();
+
+               draw_path_node(path->nodes[node_index]);
+            },
+            [&](world::region_id id) {
+               const world::region* region =
+                  look_for(world.regions, [id](const world::region& region) {
+                     return id == region.id;
+                  });
+
+               if (not region) return;
+
+               meta_mesh_common_setup();
+
+               const float3 scale = [&] {
+                  switch (region->shape) {
+                  default:
+                  case world::region_shape::box: {
+                     return region->size;
+                  }
+                  case world::region_shape::sphere: {
+                     return float3{glm::length(region->size)};
+                  }
+                  case world::region_shape::cylinder: {
+                     const float cylinder_length =
+                        glm::length(float2{region->size.x, region->size.z});
+                     return float3{cylinder_length, region->size.y, cylinder_length};
+                  }
+                  }
+               }();
+
+               float4x4 transform = static_cast<float4x4>(region->rotation) *
+                                    float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, scale.y, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, scale.z, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+
+               transform[3] = {region->position, 1.0f};
+
+               command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
+                                                              transform);
+
+               const geometric_shape shape = [&] {
+                  switch (region->shape) {
+                  default:
+                  case world::region_shape::box:
+                     return _geometric_shapes.cube();
+                  case world::region_shape::sphere:
+                     return _geometric_shapes.icosphere();
+                  case world::region_shape::cylinder:
+                     return _geometric_shapes.cylinder();
+                  }
+               }();
+
+               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+               command_list.ia_set_index_buffer(shape.index_buffer_view);
+               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+            },
+            [&](world::sector_id id) { (void)id; },
+            [&](world::portal_id id) { (void)id; },
+            [&](world::hintnode_id id) { (void)id; },
+            [&](world::barrier_id id) {
+               const world::barrier* barrier =
+                  look_for(world.barriers, [id](const world::barrier& barrier) {
+                     return id == barrier.id;
+                  });
+
+               if (not barrier) return;
+
+               meta_mesh_common_setup();
+
+               const geometric_shape shape = _geometric_shapes.cube();
+
+               const float2 position =
+                  (barrier->corners[0] + barrier->corners[2]) / 2.0f;
+               const float2 size{glm::distance(barrier->corners[0],
+                                               barrier->corners[3]),
+                                 glm::distance(barrier->corners[0],
+                                               barrier->corners[1])};
+               const float angle =
+                  std::atan2(barrier->corners[1].x - barrier->corners[0].x,
+                             barrier->corners[1].y - barrier->corners[0].y);
+
+               const quaternion rotation{float3{0.0f, angle, 0.0f}};
+
+               float4x4 transform = static_cast<float4x4>(rotation) *
+                                    float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, temp_barrier_height, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               transform[3] = {position.x, 0.0f, position.y, 1.0f};
+
+               command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
+                                                              transform);
+
+               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+               command_list.ia_set_index_buffer(shape.index_buffer_view);
+               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+            },
+            [&](world::planning_hub_id id) { (void)id; },
+            [&](world::planning_connection_id id) { (void)id; },
+            [&](world::boundary_id id) { (void)id; },
+         },
+         *interaction_targets.hovered_entity);
+   }
+}
+
 void renderer::build_world_mesh_list(
    gpu::graphics_command_list& command_list, const world::world& world,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
@@ -915,5 +1298,4 @@ auto renderer::create_raytacing_blas(gpu::graphics_command_list& command_list,
 
    return result_buffer;
 }
-
 }

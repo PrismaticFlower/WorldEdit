@@ -514,6 +514,25 @@ pipeline_library::pipeline_library(ID3D12Device10& device,
    mesh_normal = create_material_pipelines(device, "mesh_normal"sv, shader_library,
                                            root_signature_library);
 
+   mesh_wireframe = create_graphics_pipeline(
+      device, "mesh_wireframe"sv,
+      {.pRootSignature = root_signature_library.mesh_wireframe.get(),
+       .VS = shader_library["mesh_depth_prepassVS"sv],
+       .PS = shader_library["mesh_wireframePS"sv],
+       .GS = shader_library["mesh_wireframeGS"sv],
+       .StreamOutput = stream_output_disabled,
+       .BlendState = blend_alpha,
+       .SampleMask = sample_mask_default,
+       .RasterizerState = rasterizer_cull_none,
+       .DepthStencilState = depth_stencil_readonly_less_equal,
+       .InputLayout = position_only_mesh_input_layout,
+       .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+       .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+       .NumRenderTargets = 1,
+       .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+       .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+       .SampleDesc = {1, 0}});
+
    terrain_depth_prepass =
       create_graphics_pipeline(device, "terrain_depth_prepass"sv,
                                {.pRootSignature = root_signature_library.terrain.get(),
@@ -618,6 +637,25 @@ pipeline_library::pipeline_library(ID3D12Device10& device,
                                 .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
                                 .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                 .SampleDesc = {1, 0}});
+
+   meta_mesh_wireframe = create_graphics_pipeline(
+      device, "mesh_wireframe"sv,
+      {.pRootSignature = root_signature_library.meta_mesh_wireframe.get(),
+       .VS = shader_library["meta_meshVS"sv],
+       .PS = shader_library["mesh_wireframePS"sv],
+       .GS = shader_library["mesh_wireframeGS"sv],
+       .StreamOutput = stream_output_disabled,
+       .BlendState = blend_alpha,
+       .SampleMask = sample_mask_default,
+       .RasterizerState = rasterizer_cull_none,
+       .DepthStencilState = depth_stencil_readonly_less_equal,
+       .InputLayout = position_only_mesh_input_layout,
+       .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
+       .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+       .NumRenderTargets = 1,
+       .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+       .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
+       .SampleDesc = {1, 0}});
 
    meta_line =
       create_graphics_pipeline(device, "meta_line"sv,

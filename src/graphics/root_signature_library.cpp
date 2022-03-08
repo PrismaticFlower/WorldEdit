@@ -277,6 +277,44 @@ const gpu::root_signature_desc meta_mesh_desc{
 
    .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
+const gpu::root_signature_desc meta_mesh_wireframe_desc{
+   .name = "meta_mesh_wireframe_root_signature",
+
+   .parameters =
+      {
+         // per-object constants
+         gpu::root_parameter_cbv{
+            .shader_register = 1,
+            .register_space = mesh_register_space,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+         },
+
+         // wireframe constants
+         gpu::root_parameter_cbv{
+            .shader_register = 0,
+            .register_space = 0,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+            .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+         },
+
+         // camera descriptors
+         gpu::root_parameter_descriptor_table{
+            .ranges =
+               {
+                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                   .count = 1,
+                   .base_shader_register = 0,
+                   .register_space = mesh_register_space,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                   .offset_in_descriptors_from_table_start = 0},
+               },
+            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+         },
+      },
+
+   .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
+
 const gpu::root_signature_desc meta_line_desc{
    .name = "meta_line_root_signature",
 
@@ -384,6 +422,44 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
    .flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
 
+const gpu::root_signature_desc mesh_wireframe_desc{
+   .name = "mesh_wireframe_root_signature",
+
+   .parameters =
+      {
+         // per-object constants
+         gpu::root_parameter_cbv{
+            .shader_register = 1,
+            .register_space = mesh_register_space,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+         },
+
+         // wireframe constants
+         gpu::root_parameter_cbv{
+            .shader_register = 0,
+            .register_space = 0,
+            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+            .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+         },
+
+         // camera descriptors
+         gpu::root_parameter_descriptor_table{
+            .ranges =
+               {
+                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                   .count = 1,
+                   .base_shader_register = 0,
+                   .register_space = mesh_register_space,
+                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                   .offset_in_descriptors_from_table_start = 0},
+               },
+            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+         },
+      },
+
+   .flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT};
+
 const gpu::root_signature_desc tile_lights_clear_desc{
    .name = "tile_lights_clear_root_signature",
 
@@ -438,9 +514,11 @@ root_signature_library::root_signature_library(gpu::device& device)
    mesh = device.create_root_signature(mesh_desc);
    terrain = device.create_root_signature(terrain_desc);
    meta_mesh = device.create_root_signature(meta_mesh_desc);
+   meta_mesh_wireframe = device.create_root_signature(meta_mesh_wireframe_desc);
    meta_line = device.create_root_signature(meta_line_desc);
    mesh_shadow = device.create_root_signature(mesh_shadow_desc);
    mesh_depth_prepass = device.create_root_signature(mesh_depth_prepass_desc);
+   mesh_wireframe = device.create_root_signature(mesh_wireframe_desc);
 
    tile_lights_clear = device.create_root_signature(tile_lights_clear_desc);
    tile_lights = device.create_root_signature(tile_lights_desc);

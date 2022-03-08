@@ -44,6 +44,16 @@ class settings final : public graphics {
    {
       return 0.05f;
    }
+
+   auto hover_color() const noexcept -> float3 override
+   {
+      return {1.0f, 1.0f, 0.07f};
+   }
+
+   auto line_width() const noexcept -> float override
+   {
+      return 2.5f;
+   }
 };
 
 }

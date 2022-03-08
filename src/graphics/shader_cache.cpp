@@ -87,7 +87,7 @@ auto make_blob(IDxcUtils& utils, std::span<const std::byte> dxil)
 }
 
 auto load_shader_cache(const std::filesystem::path& path)
-   -> std::unordered_map<shader_description, shader_cache_entry>
+   -> absl::flat_hash_map<shader_description, shader_cache_entry>
 {
    if (not std::filesystem::exists(path)) return {};
 
@@ -107,7 +107,7 @@ auto load_shader_cache(const std::filesystem::path& path)
 
       const auto shader_count = reader.read<uint32>();
 
-      std::unordered_map<shader_description, shader_cache_entry> result;
+      absl::flat_hash_map<shader_description, shader_cache_entry> result;
       result.reserve(shader_count);
 
       for (std::size_t i = 0; i < shader_count; ++i) {

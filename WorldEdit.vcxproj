@@ -312,8 +312,10 @@
     <ClInclude Include="src\utility\file_watcher.hpp">
       <FileType>CppHeader</FileType>
     </ClInclude>
+    <ClInclude Include="src\utility\look_for.hpp" />
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
     <ClInclude Include="src\utility\make_range.hpp" />
+    <ClInclude Include="src\utility\overload.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />
     <ClInclude Include="src\utility\string_ops.hpp" />
     <ClInclude Include="src\utility\synchronous_task_queue.hpp" />
@@ -335,7 +337,7 @@
     <ClInclude Include="src\world\portal.hpp" />
     <ClInclude Include="src\world\region.hpp" />
     <ClInclude Include="src\world\sector.hpp" />
-    <ClInclude Include="src\world\selection_context.hpp" />
+    <ClInclude Include="src\world\interaction_context.hpp" />
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />

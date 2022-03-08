@@ -49,6 +49,8 @@
     <ClCompile Include="src\assets\asset_ref_tests.cpp" />
     <ClCompile Include="src\utility\stopwatch_tests.cpp" />
     <ClCompile Include="src\async\for_each_tests.cpp" />
+    <ClCompile Include="src\utility\overload_tests.cpp" />
+    <ClCompile Include="src\utility\look_for_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

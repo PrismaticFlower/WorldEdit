@@ -79,7 +79,7 @@ bool world_edit::update()
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);
 
-   _renderer.draw_frame(_camera, _world, _object_classes);
+   _renderer.draw_frame(_camera, _world, _interaction_targets, _object_classes);
 
    return true;
 }
@@ -207,6 +207,104 @@ void world_edit::update_ui(const mouse_state& mouse_state,
 
       ImGui::EndMainMenuBar();
    }
+
+   ImGui::Begin("Highlight TEMP");
+
+   if (ImGui::CollapsingHeader("Objects")) {
+      for (auto& object : _world.objects) {
+         ImGui::PushID(std::to_underlying(object.id));
+
+         if (ImGui::Selectable(object.name.c_str(),
+                               _interaction_targets.hovered_entity ==
+                                  world::hovered_entity{object.id})) {
+            _interaction_targets.hovered_entity = object.id;
+         }
+
+         ImGui::PopID();
+      }
+   }
+
+   if (ImGui::CollapsingHeader("Lights")) {
+      for (auto& light : _world.lights) {
+         ImGui::PushID(std::to_underlying(light.id));
+
+         if (ImGui::Selectable(light.name.c_str(),
+                               _interaction_targets.hovered_entity ==
+                                  world::hovered_entity{light.id})) {
+            _interaction_targets.hovered_entity = light.id;
+         }
+
+         ImGui::PopID();
+      }
+   }
+
+   if (ImGui::CollapsingHeader("Paths")) {
+      for (auto& path : _world.paths) {
+         ImGui::PushID(std::to_underlying(path.id));
+
+         if (ImGui::Selectable(path.name.c_str(), _interaction_targets.hovered_entity ==
+                                                     world::hovered_entity{path.id})) {
+            _interaction_targets.hovered_entity = path.id;
+         }
+
+         ImGui::PopID();
+      }
+   }
+
+   if (ImGui::CollapsingHeader("Paths Nodes")) {
+      for (auto& path : _world.paths) {
+         ImGui::PushID(std::to_underlying(path.id));
+         ImGui::PushID(path.name.c_str());
+
+         ImGui::TextUnformatted(path.name.c_str());
+         ImGui::Indent();
+
+         for (std::size_t i = 0; i < path.nodes.size(); ++i) {
+
+            if (ImGui::Selectable(fmt::format("Node {}", i).c_str(),
+                                  _interaction_targets.hovered_entity ==
+                                     world::hovered_entity{
+                                        world::path_id_node_pair{path.id, i}})) {
+               _interaction_targets.hovered_entity =
+                  world::path_id_node_pair{path.id, i};
+            }
+         }
+
+         ImGui::Unindent();
+         ImGui::PopID();
+         ImGui::PopID();
+      }
+   }
+
+   if (ImGui::CollapsingHeader("Regions")) {
+      for (auto& region : _world.regions) {
+         ImGui::PushID(std::to_underlying(region.id));
+
+         if (ImGui::Selectable(region.name.c_str(),
+                               _interaction_targets.hovered_entity ==
+                                  world::hovered_entity{region.id})) {
+            _interaction_targets.hovered_entity = region.id;
+         }
+
+         ImGui::PopID();
+      }
+   }
+
+   if (ImGui::CollapsingHeader("Barriers")) {
+      for (auto& barrier : _world.barriers) {
+         ImGui::PushID(std::to_underlying(barrier.id));
+
+         if (ImGui::Selectable(barrier.name.c_str(),
+                               _interaction_targets.hovered_entity ==
+                                  world::hovered_entity{barrier.id})) {
+            _interaction_targets.hovered_entity = barrier.id;
+         }
+
+         ImGui::PopID();
+      }
+   }
+
+   ImGui::End();
 }
 
 void world_edit::object_definition_loaded(const lowercase_string& name,
@@ -356,6 +454,7 @@ void world_edit::close_world() noexcept
 {
    _object_classes.clear();
    _world = {};
+   _interaction_targets = {};
    _world_path.clear();
 
    _renderer.mark_dirty_terrain();

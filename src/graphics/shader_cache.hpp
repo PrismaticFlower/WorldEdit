@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <span>
 
+#include <absl/container/flat_hash_map.h>
+
 namespace we::graphics {
 
 struct shader_cache_entry {
@@ -14,7 +16,7 @@ struct shader_cache_entry {
 };
 
 auto load_shader_cache(const std::filesystem::path& path)
-   -> std::unordered_map<shader_description, shader_cache_entry>;
+   -> absl::flat_hash_map<shader_description, shader_cache_entry>;
 
 void save_shader_cache(const std::filesystem::path& path,
                        const std::span<const compiled_shader> shaders);

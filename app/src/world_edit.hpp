@@ -101,6 +101,7 @@ private:
    assets::libraries_manager _asset_libraries{_stream, _thread_pool};
    absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>> _object_classes;
    world::world _world;
+   world::interaction_targets _interaction_targets;
 
    graphics::renderer _renderer;
    graphics::controllable_perspective_camera _camera;
