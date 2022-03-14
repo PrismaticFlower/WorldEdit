@@ -4,6 +4,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "line_drawer.hpp"
+#include "triangle_drawer.hpp"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
 #include "world/world_utilities.hpp"
@@ -28,8 +29,14 @@ struct alignas(256) wireframe_constant_buffer {
 
 static_assert(sizeof(wireframe_constant_buffer) == 256);
 
-// TODO: Put this somewhere.
-constexpr float temp_barrier_height = 64.0f;
+struct alignas(256) meta_outlined_constant_buffer {
+   float4 color;
+   float4 outline_color;
+   float2 viewport_size;
+   float2 viewport_topleft;
+};
+
+static_assert(sizeof(meta_outlined_constant_buffer) == 256);
 
 // TODO: Put this somewhere.
 const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
@@ -356,27 +363,14 @@ void renderer::draw_world_meta_objects(
       ImGui::Unindent();
 
       if (draw_nodes) {
-         // Set Path Nodes Constants
-         {
-            struct {
-               float4 color;
-               float4 outline_color;
-               float2 viewport_size;
-               float2 viewport_topleft = {0.0f, 0.0f};
-            } temp_constants;
-
-            temp_constants.color = float4{_settings->path_node_color(), 1.0f};
-            temp_constants.outline_color =
-               float4{_settings->path_node_outline_color(), 1.0f};
-
-            temp_constants.viewport_size = {static_cast<float>(
-                                               _device.swap_chain.width()),
-                                            static_cast<float>(
-                                               _device.swap_chain.height())};
-
-            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                           temp_constants);
-         }
+         command_list.set_graphics_root_constant_buffer(
+            rs::meta_mesh::color_cbv,
+            meta_outlined_constant_buffer{
+               .color = float4{_settings->path_node_color(), 1.0f},
+               .outline_color = float4{_settings->path_node_outline_color(), 1.0f},
+               .viewport_size = {static_cast<float>(_device.swap_chain.width()),
+                                 static_cast<float>(_device.swap_chain.height())},
+               .viewport_topleft = {0.0f, 0.0f}});
 
          command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
 
@@ -559,6 +553,8 @@ void renderer::draw_world_meta_objects(
          command_list.ia_set_index_buffer(shape.index_buffer_view);
       }
 
+      const float barrier_height = _settings->barrier_height();
+
       for (auto& barrier : world.barriers) {
          // TEMP constants setup
          {
@@ -573,7 +569,7 @@ void renderer::draw_world_meta_objects(
 
             float4x4 transform = static_cast<float4x4>(rotation) *
                                  float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                                          {0.0f, temp_barrier_height, 0.0f, 0.0f},
+                                          {0.0f, barrier_height, 0.0f, 0.0f},
                                           {0.0f, 0.0f, size.y / 2.0f, 0.0f},
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
 
@@ -721,6 +717,172 @@ void renderer::draw_world_meta_objects(
          }
          }
       }
+   }
+
+   triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
+
+   static bool draw_sectors = false;
+
+   ImGui::Checkbox("Draw Sectors", &draw_sectors);
+
+   if (draw_sectors) {
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                     float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                              {0.0f, 1.0f, 0.0f, 0.0f},
+                                                              {0.0f, 0.0f, 1.0f, 0.0f},
+                                                              {0.0f, 0.0f, 0.0f, 1.0f}});
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                     _settings->sector_color());
+
+      for (auto& sector : world.sectors) {
+         using namespace ranges::views;
+
+         float2 centre =
+            not sector.points.empty() ? sector.points[0] : float2{0.0f, 0.0f};
+
+         for (const auto& point : sector.points | drop(1)) {
+            centre += point;
+         }
+
+         centre /= to_float(sector.points.size());
+
+         for (const auto [a, b] :
+              zip(sector.points,
+                  concat(sector.points | drop(1), sector.points | take(1)))) {
+            const std::array quad = {float3{a.x, sector.base, a.y},
+                                     float3{b.x, sector.base, b.y},
+                                     float3{a.x, sector.base + sector.height, a.y},
+                                     float3{b.x, sector.base + sector.height, b.y}};
+
+            triangle_drawer.add(quad[0], quad[1], quad[2]);
+            triangle_drawer.add(quad[2], quad[1], quad[3]);
+
+            triangle_drawer.add(float3{centre.x, sector.base, centre.y},
+                                quad[1], quad[0]);
+            triangle_drawer.add(float3{centre.x, sector.base + sector.height,
+                                       centre.y},
+                                quad[2], quad[3]);
+         }
+      }
+
+      triangle_drawer.submit();
+   }
+
+   static bool draw_portals = false;
+
+   ImGui::Checkbox("Draw Portals", &draw_portals);
+
+   if (draw_portals) {
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                     float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                              {0.0f, 1.0f, 0.0f, 0.0f},
+                                                              {0.0f, 0.0f, 1.0f, 0.0f},
+                                                              {0.0f, 0.0f, 0.0f, 1.0f}});
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                     _settings->portal_color());
+
+      for (auto& portal : world.portals) {
+         using namespace ranges::views;
+
+         const float half_width = portal.width * 0.5f;
+         const float half_height = portal.height * 0.5f;
+
+         std::array quad = {float3{-half_width, -half_height, 0.0f},
+                            float3{half_width, -half_height, 0.0f},
+                            float3{-half_width, half_height, 0.0f},
+                            float3{half_width, half_height, 0.0f}};
+
+         for (auto& v : quad) {
+            v = portal.rotation * v;
+            v += portal.position;
+         }
+
+         triangle_drawer.add(quad[0], quad[1], quad[2]);
+         triangle_drawer.add(quad[2], quad[1], quad[3]);
+         triangle_drawer.add(quad[0], quad[2], quad[1]);
+         triangle_drawer.add(quad[2], quad[3], quad[1]);
+      }
+
+      triangle_drawer.submit();
+   }
+
+   command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
+
+   static bool draw_hintnodes = false;
+
+   ImGui::Checkbox("Draw Hintnodes", &draw_hintnodes);
+
+   if (draw_hintnodes) {
+      command_list.set_graphics_root_constant_buffer(
+         rs::meta_mesh::color_cbv,
+         meta_outlined_constant_buffer{
+            .color = float4{_settings->hintnode_color(), 1.0f},
+            .outline_color = float4{_settings->hintnode_outline_color(), 1.0f},
+            .viewport_size = {static_cast<float>(_device.swap_chain.width()),
+                              static_cast<float>(_device.swap_chain.height())},
+            .viewport_topleft = {0.0f, 0.0f}});
+
+      for (auto& hintnode : world.hintnodes) {
+
+         // TEMP constants setup
+         {
+            float4x4 transform = static_cast<float4x4>(hintnode.rotation);
+
+            transform[3] = {hintnode.position, 1.0f};
+
+            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                           transform);
+         }
+
+         const geometric_shape shape = _geometric_shapes.octahedron();
+
+         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+         command_list.ia_set_index_buffer(shape.index_buffer_view);
+         command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+      }
+   }
+
+   command_list.set_pipeline_state(*_pipelines.meta_mesh);
+
+   static bool draw_boundaries = false;
+
+   ImGui::Checkbox("Draw Boundaries", &draw_boundaries);
+
+   if (draw_boundaries) {
+      const float boundary_height = _settings->boundary_height();
+
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
+                                                     float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                              {0.0f, 1.0f, 0.0f, 0.0f},
+                                                              {0.0f, 0.0f, 1.0f, 0.0f},
+                                                              {0.0f, 0.0f, 0.0f, 1.0f}});
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                     _settings->boundary_color());
+
+      for (auto& boundary : world.boundaries) {
+         using namespace ranges::views;
+
+         const world::path* path = look_for(world.paths, [&](const world::path& path) {
+            return path.name == boundary.name;
+         });
+
+         if (not path) continue;
+
+         for (const auto [a, b] :
+              zip(path->nodes, concat(path->nodes | drop(1), path->nodes | take(1)))) {
+
+            const std::array quad = {a.position, b.position,
+                                     a.position + float3{0.0f, boundary_height, 0.0f},
+                                     b.position + float3{0.0f, boundary_height, 0.0f}};
+
+            triangle_drawer.add(quad[0], quad[1], quad[2]);
+            triangle_drawer.add(quad[2], quad[1], quad[3]);
+            triangle_drawer.add(quad[0], quad[2], quad[1]);
+            triangle_drawer.add(quad[2], quad[3], quad[1]);
+         }
+      }
+
+      triangle_drawer.submit();
    }
 }
 
@@ -1067,11 +1229,13 @@ void renderer::draw_interaction_targets(
                   std::atan2(barrier->corners[1].x - barrier->corners[0].x,
                              barrier->corners[1].y - barrier->corners[0].y);
 
+               const float barrier_height = _settings->barrier_height();
+
                const quaternion rotation{float3{0.0f, angle, 0.0f}};
 
                float4x4 transform = static_cast<float4x4>(rotation) *
                                     float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                                             {0.0f, temp_barrier_height, 0.0f, 0.0f},
+                                             {0.0f, barrier_height, 0.0f, 0.0f},
                                              {0.0f, 0.0f, size.y / 2.0f, 0.0f},
                                              {0.0f, 0.0f, 0.0f, 1.0f}};
                transform[3] = {position.x, 0.0f, position.y, 1.0f};

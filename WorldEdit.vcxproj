@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\async\thread_pool.cpp" />
+    <ClCompile Include="src\graphics\triangle_drawer.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\imgui\imgui_freetype.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
@@ -256,6 +257,7 @@
     <ClInclude Include="src\graphics\shader_list.hpp" />
     <ClInclude Include="src\graphics\terrain.hpp" />
     <ClInclude Include="src\graphics\texture_manager.hpp" />
+    <ClInclude Include="src\graphics\triangle_drawer.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
     <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\imgui\imconfig.h" />
