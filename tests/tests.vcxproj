@@ -103,7 +103,7 @@
       <PreprocessorDefinitions>GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <DisableSpecificWarnings>4127;4275;4324;4459;5105</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4127;4275;4324;4459;4702;5105</DisableSpecificWarnings>
       <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
       <LanguageStandard_C>stdc17</LanguageStandard_C>

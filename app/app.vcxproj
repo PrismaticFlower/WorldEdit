@@ -109,7 +109,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <AdditionalIncludeDirectories>$(SolutionDir)third_party\D3DX12;../src</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <DisableSpecificWarnings>4127;4275;4324;4459;5105</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4127;4275;4324;4459;4702;5105</DisableSpecificWarnings>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>

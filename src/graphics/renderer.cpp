@@ -737,15 +737,6 @@ void renderer::draw_world_meta_objects(
       for (auto& sector : world.sectors) {
          using namespace ranges::views;
 
-         float2 centre =
-            not sector.points.empty() ? sector.points[0] : float2{0.0f, 0.0f};
-
-         for (const auto& point : sector.points | drop(1)) {
-            centre += point;
-         }
-
-         centre /= to_float(sector.points.size());
-
          for (const auto [a, b] :
               zip(sector.points,
                   concat(sector.points | drop(1), sector.points | take(1)))) {
@@ -756,12 +747,8 @@ void renderer::draw_world_meta_objects(
 
             triangle_drawer.add(quad[0], quad[1], quad[2]);
             triangle_drawer.add(quad[2], quad[1], quad[3]);
-
-            triangle_drawer.add(float3{centre.x, sector.base, centre.y},
-                                quad[1], quad[0]);
-            triangle_drawer.add(float3{centre.x, sector.base + sector.height,
-                                       centre.y},
-                                quad[2], quad[3]);
+            triangle_drawer.add(quad[0], quad[2], quad[1]);
+            triangle_drawer.add(quad[2], quad[3], quad[1]);
          }
       }
 
@@ -895,6 +882,8 @@ void renderer::draw_interaction_targets(
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for interaction targets?)
 
    using boost::variant2::visit;
+
+   triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
    if (interaction_targets.hovered_entity) {
       gpu::virtual_address wireframe_constants = [&] {
@@ -1204,9 +1193,100 @@ void renderer::draw_interaction_targets(
                command_list.ia_set_index_buffer(shape.index_buffer_view);
                command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
             },
-            [&](world::sector_id id) { (void)id; },
-            [&](world::portal_id id) { (void)id; },
-            [&](world::hintnode_id id) { (void)id; },
+            [&](world::sector_id id) {
+               const world::sector* sector =
+                  look_for(world.sectors, [id](const world::sector& sector) {
+                     return id == sector.id;
+                  });
+
+               if (not sector) return;
+
+               meta_mesh_common_setup();
+
+               command_list.set_graphics_root_constant_buffer(
+                  rs::meta_mesh_wireframe::object_cbv,
+                  float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                           {0.0f, 1.0f, 0.0f, 0.0f},
+                           {0.0f, 0.0f, 1.0f, 0.0f},
+                           {0.0f, 0.0f, 0.0f, 1.0f}});
+
+               using namespace ranges::views;
+
+               for (auto& points = sector->points;
+                    const auto [a, b] :
+                    zip(points, concat(points | drop(1), points | take(1)))) {
+                  const std::array quad =
+                     {float3{a.x, sector->base, a.y}, float3{b.x, sector->base, b.y},
+                      float3{a.x, sector->base + sector->height, a.y},
+                      float3{b.x, sector->base + sector->height, b.y}};
+
+                  triangle_drawer.add(quad[0], quad[1], quad[2]);
+                  triangle_drawer.add(quad[2], quad[1], quad[3]);
+                  triangle_drawer.add(quad[0], quad[2], quad[1]);
+                  triangle_drawer.add(quad[2], quad[3], quad[1]);
+               }
+
+               triangle_drawer.submit();
+            },
+            [&](world::portal_id id) {
+               const world::portal* portal =
+                  look_for(world.portals, [id](const world::portal& portal) {
+                     return id == portal.id;
+                  });
+
+               if (not portal) return;
+
+               meta_mesh_common_setup();
+
+               command_list.set_graphics_root_constant_buffer(
+                  rs::meta_mesh_wireframe::object_cbv,
+                  float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                           {0.0f, 1.0f, 0.0f, 0.0f},
+                           {0.0f, 0.0f, 1.0f, 0.0f},
+                           {0.0f, 0.0f, 0.0f, 1.0f}});
+
+               const float half_width = portal->width * 0.5f;
+               const float half_height = portal->height * 0.5f;
+
+               std::array quad = {float3{-half_width, -half_height, 0.0f},
+                                  float3{half_width, -half_height, 0.0f},
+                                  float3{-half_width, half_height, 0.0f},
+                                  float3{half_width, half_height, 0.0f}};
+
+               for (auto& v : quad) {
+                  v = portal->rotation * v;
+                  v += portal->position;
+               }
+
+               triangle_drawer.add(quad[0], quad[1], quad[2]);
+               triangle_drawer.add(quad[2], quad[1], quad[3]);
+               triangle_drawer.add(quad[0], quad[2], quad[1]);
+               triangle_drawer.add(quad[2], quad[3], quad[1]);
+
+               triangle_drawer.submit();
+            },
+            [&](world::hintnode_id id) {
+               const world::hintnode* hintnode =
+                  look_for(world.hintnodes, [id](const world::hintnode& hintnode) {
+                     return id == hintnode.id;
+                  });
+
+               if (not hintnode) return;
+
+               meta_mesh_common_setup();
+
+               float4x4 transform = static_cast<float4x4>(hintnode->rotation);
+               transform[3] = {hintnode->position, 1.0f};
+
+               command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
+                                                              transform);
+
+               const geometric_shape shape = _geometric_shapes.octahedron();
+
+               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+               command_list.ia_set_index_buffer(shape.index_buffer_view);
+               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+            },
             [&](world::barrier_id id) {
                const world::barrier* barrier =
                   look_for(world.barriers, [id](const world::barrier& barrier) {
@@ -1249,7 +1329,52 @@ void renderer::draw_interaction_targets(
             },
             [&](world::planning_hub_id id) { (void)id; },
             [&](world::planning_connection_id id) { (void)id; },
-            [&](world::boundary_id id) { (void)id; },
+            [&](world::boundary_id id) {
+               const world::boundary* boundary =
+                  look_for(world.boundaries, [id](const world::boundary& boundary) {
+                     return id == boundary.id;
+                  });
+
+               if (not boundary) return;
+
+               const world::path* path =
+                  look_for(world.paths, [&](const world::path& path) {
+                     return path.name == boundary->name;
+                  });
+
+               if (not path) return;
+
+               meta_mesh_common_setup();
+
+               command_list.set_graphics_root_constant_buffer(
+                  rs::meta_mesh_wireframe::object_cbv,
+                  float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                           {0.0f, 1.0f, 0.0f, 0.0f},
+                           {0.0f, 0.0f, 1.0f, 0.0f},
+                           {0.0f, 0.0f, 0.0f, 1.0f}});
+
+               const float boundary_height = _settings->boundary_height();
+
+               using namespace ranges::views;
+
+               for (const auto [a, b] :
+                    zip(path->nodes,
+                        concat(path->nodes | drop(1), path->nodes | take(1)))) {
+
+                  const std::array quad = {a.position, b.position,
+                                           a.position +
+                                              float3{0.0f, boundary_height, 0.0f},
+                                           b.position +
+                                              float3{0.0f, boundary_height, 0.0f}};
+
+                  triangle_drawer.add(quad[0], quad[1], quad[2]);
+                  triangle_drawer.add(quad[2], quad[1], quad[3]);
+                  triangle_drawer.add(quad[0], quad[2], quad[1]);
+                  triangle_drawer.add(quad[2], quad[3], quad[1]);
+               }
+
+               triangle_drawer.submit();
+            },
          },
          *interaction_targets.hovered_entity);
    }
