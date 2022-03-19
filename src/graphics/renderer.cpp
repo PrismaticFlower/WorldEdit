@@ -199,7 +199,7 @@ void renderer::draw_frame(
 
    // Render World Meta Objects
    draw_world_meta_objects(view_frustrum, world, active_entity_types,
-                           active_layers, world_classes, command_list);
+                           active_layers, command_list);
 
    draw_interaction_targets(view_frustrum, world, interaction_targets,
                             world_classes, command_list);
@@ -339,12 +339,11 @@ void renderer::draw_world_render_list_depth_prepass(
    }
 }
 
-void renderer::draw_world_meta_objects(
-   const frustrum& view_frustrum, const world::world& world,
-   const world::active_entity_types active_entity_types,
-   const world::active_layers active_layers,
-   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
-   gpu::graphics_command_list& command_list)
+void renderer::draw_world_meta_objects(const frustrum& view_frustrum,
+                                       const world::world& world,
+                                       const world::active_entity_types active_entity_types,
+                                       const world::active_layers active_layers,
+                                       gpu::graphics_command_list& command_list)
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 

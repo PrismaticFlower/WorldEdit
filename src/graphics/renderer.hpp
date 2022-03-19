@@ -79,12 +79,10 @@ private:
    void draw_world_render_list(const std::vector<render_list_item>& list,
                                gpu::graphics_command_list& command_list);
 
-   void draw_world_meta_objects(
-      const frustrum& view_frustrum, const world::world& world,
-      const world::active_entity_types active_entity_types,
-      const world::active_layers active_layers,
-      const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
-      gpu::graphics_command_list& command_list);
+   void draw_world_meta_objects(const frustrum& view_frustrum, const world::world& world,
+                                const world::active_entity_types active_entity_types,
+                                const world::active_layers active_layers,
+                                gpu::graphics_command_list& command_list);
 
    void draw_interaction_targets(
       const frustrum& view_frustrum, const world::world& world,
