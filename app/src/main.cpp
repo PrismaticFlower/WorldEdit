@@ -136,7 +136,7 @@ void run_application(command_line command_line)
       return DefWindowProcW(window, message, wparam, lparam);
    };
 
-   ShowWindowAsync(window_handle.get(), SW_SHOWDEFAULT);
+   ShowWindowAsync(window_handle.get(), SW_SHOWMAXIMIZED);
 
    do {
       MSG message{};
