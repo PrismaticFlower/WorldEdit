@@ -586,54 +586,6 @@ void renderer::draw_world_meta_objects(
       }
    }
 
-   // TODO: Remove this?
-   static bool draw_aabbs = false;
-
-   ImGui::Checkbox("Draw AABBs", &draw_aabbs);
-
-   if (draw_aabbs) {
-      // Set AABBs Color
-      {
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                        _settings->aabb_color());
-      }
-
-      // Set Barriers IA State
-      {
-         const geometric_shape shape = _geometric_shapes.cube();
-
-         command_list.ia_set_vertex_buffers(rs::meta_mesh::object_cbv,
-                                            shape.position_vertex_buffer_view);
-         command_list.ia_set_index_buffer(shape.index_buffer_view);
-      }
-
-      for (auto& object : world.objects) {
-         if (not active_layers[object.layer]) continue;
-
-         // TEMP constants setup
-         {
-            const auto& model = world_classes.at(object.class_name)->model;
-            const auto object_bbox =
-               object.rotation * model->bounding_box + object.position;
-            const auto bbox_centre = (object_bbox.min + object_bbox.max) / 2.0f;
-            const auto bbox_size = (object_bbox.max - object_bbox.min) / 2.0f;
-
-            float4x4 transform = float4x4{{bbox_size.x, 0.0f, 0.0f, 0.0f},
-                                          {0.0f, bbox_size.y, 0.0f, 0.0f},
-                                          {0.0f, 0.0f, bbox_size.z, 0.0f},
-                                          {0.0f, 0.0f, 0.0f, 1.0f}};
-
-            transform[3] = {bbox_centre, 1.0f};
-
-            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                           transform);
-         }
-
-         command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
-                                             1, 0, 0, 0);
-      }
-   }
-
    if (active_entity_types.lights) {
       const float volume_alpha = _settings->light_volume_alpha();
 
