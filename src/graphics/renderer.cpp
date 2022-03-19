@@ -131,6 +131,8 @@ renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settin
 void renderer::draw_frame(
    const camera& camera, const world::world& world,
    const world::interaction_targets& interaction_targets,
+   const world::active_entity_types active_entity_types,
+   const world::active_layers active_layers,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
 {
    auto& swap_chain = _device.swap_chain;
@@ -162,7 +164,7 @@ void renderer::draw_frame(
    _model_manager.update_models();
 
    update_textures(command_list);
-   build_world_mesh_list(command_list, world, world_classes);
+   build_world_mesh_list(command_list, world, active_layers, world_classes);
    build_object_render_list(view_frustrum);
 
    update_camera_constant_buffer(camera, command_list);
@@ -193,10 +195,11 @@ void renderer::draw_frame(
    command_list.om_set_render_targets(back_buffer_rtv, depth_stencil_view);
 
    // Render World
-   draw_world(view_frustrum, command_list);
+   if (active_entity_types.objects) draw_world(view_frustrum, command_list);
 
    // Render World Meta Objects
-   draw_world_meta_objects(view_frustrum, world, world_classes, command_list);
+   draw_world_meta_objects(view_frustrum, world, active_entity_types,
+                           active_layers, world_classes, command_list);
 
    draw_interaction_targets(view_frustrum, world, interaction_targets,
                             world_classes, command_list);
@@ -338,6 +341,8 @@ void renderer::draw_world_render_list_depth_prepass(
 
 void renderer::draw_world_meta_objects(
    const frustrum& view_frustrum, const world::world& world,
+   const world::active_entity_types active_entity_types,
+   const world::active_layers active_layers,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
    gpu::graphics_command_list& command_list)
 {
@@ -347,19 +352,16 @@ void renderer::draw_world_meta_objects(
    command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
                                                    _camera_constant_buffer_view);
 
-   static bool draw_paths = false;
-
-   ImGui::Checkbox("Draw Paths", &draw_paths);
-
-   if (draw_paths) {
+   if (active_entity_types.paths) {
       static bool draw_nodes = true;
       static bool draw_connections = true;
       static bool draw_orientation = false;
 
+      // TODO: Move theses to _settings
       ImGui::Indent();
-      ImGui::Checkbox("Draw Nodes", &draw_nodes);
-      ImGui::Checkbox("Draw Connections", &draw_connections);
-      ImGui::Checkbox("Draw Orientation", &draw_orientation);
+      ImGui::Checkbox("Draw Paths Nodes", &draw_nodes);
+      ImGui::Checkbox("Draw Paths Connections", &draw_connections);
+      ImGui::Checkbox("Draw Paths Orientation", &draw_orientation);
       ImGui::Unindent();
 
       if (draw_nodes) {
@@ -375,6 +377,8 @@ void renderer::draw_world_meta_objects(
          command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
 
          for (auto& path : world.paths) {
+            if (not active_layers[path.layer]) continue;
+
             for (auto& node : path.nodes) {
                // TEMP constants setup
                {
@@ -408,6 +412,8 @@ void renderer::draw_world_meta_objects(
                      .connect_mode = line_connect_mode::linear},
                     [&](line_draw_context& draw_context) {
                        for (auto& path : world.paths) {
+                          if (not active_layers[path.layer]) continue;
+
                           using namespace ranges::views;
 
                           const auto get_position = [](const world::path::node& node) {
@@ -440,6 +446,8 @@ void renderer::draw_world_meta_objects(
                   };
 
                   for (auto& node : path.nodes) {
+                     if (not active_layers[path.layer]) continue;
+
                      float4x4 transform = static_cast<float4x4>(node.rotation);
 
                      transform[3] = {node.position, 1.0f};
@@ -518,11 +526,7 @@ void renderer::draw_world_meta_objects(
       command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
    };
 
-   static bool draw_regions = false;
-
-   ImGui::Checkbox("Draw Regions", &draw_regions);
-
-   if (draw_regions) {
+   if (active_entity_types.regions) {
       // Set Regions Color
       {
          command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
@@ -530,15 +534,13 @@ void renderer::draw_world_meta_objects(
       }
 
       for (auto& region : world.regions) {
+         if (not active_layers[region.layer]) continue;
+
          draw_region(region);
       }
    }
 
-   static bool draw_barriers = false;
-
-   ImGui::Checkbox("Draw Barriers", &draw_barriers);
-
-   if (draw_barriers) {
+   if (active_entity_types.barriers) {
       // Set Barriers Color
       {
          command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
@@ -584,6 +586,7 @@ void renderer::draw_world_meta_objects(
       }
    }
 
+   // TODO: Remove this?
    static bool draw_aabbs = false;
 
    ImGui::Checkbox("Draw AABBs", &draw_aabbs);
@@ -605,6 +608,8 @@ void renderer::draw_world_meta_objects(
       }
 
       for (auto& object : world.objects) {
+         if (not active_layers[object.layer]) continue;
+
          // TEMP constants setup
          {
             const auto& model = world_classes.at(object.class_name)->model;
@@ -629,14 +634,12 @@ void renderer::draw_world_meta_objects(
       }
    }
 
-   static bool draw_draw_light_volumes = false;
-
-   ImGui::Checkbox("Draw Light Volumes", &draw_draw_light_volumes);
-
-   if (draw_draw_light_volumes) {
+   if (active_entity_types.lights) {
       const float volume_alpha = _settings->light_volume_alpha();
 
       for (auto& light : world.lights) {
+         if (not active_layers[light.layer]) continue;
+
          // Set Color
          {
             const float4 color{light.color, light.light_type == world::light_type::spot
@@ -721,11 +724,7 @@ void renderer::draw_world_meta_objects(
 
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
-   static bool draw_sectors = false;
-
-   ImGui::Checkbox("Draw Sectors", &draw_sectors);
-
-   if (draw_sectors) {
+   if (active_entity_types.sectors) {
       command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
                                                      float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
                                                               {0.0f, 1.0f, 0.0f, 0.0f},
@@ -755,11 +754,7 @@ void renderer::draw_world_meta_objects(
       triangle_drawer.submit();
    }
 
-   static bool draw_portals = false;
-
-   ImGui::Checkbox("Draw Portals", &draw_portals);
-
-   if (draw_portals) {
+   if (active_entity_types.portals) {
       command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
                                                      float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
                                                               {0.0f, 1.0f, 0.0f, 0.0f},
@@ -795,11 +790,7 @@ void renderer::draw_world_meta_objects(
 
    command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
 
-   static bool draw_hintnodes = false;
-
-   ImGui::Checkbox("Draw Hintnodes", &draw_hintnodes);
-
-   if (draw_hintnodes) {
+   if (active_entity_types.hintnodes) {
       command_list.set_graphics_root_constant_buffer(
          rs::meta_mesh::color_cbv,
          meta_outlined_constant_buffer{
@@ -810,6 +801,7 @@ void renderer::draw_world_meta_objects(
             .viewport_topleft = {0.0f, 0.0f}});
 
       for (auto& hintnode : world.hintnodes) {
+         if (not active_layers[hintnode.layer]) continue;
 
          // TEMP constants setup
          {
@@ -831,11 +823,7 @@ void renderer::draw_world_meta_objects(
 
    command_list.set_pipeline_state(*_pipelines.meta_mesh);
 
-   static bool draw_boundaries = false;
-
-   ImGui::Checkbox("Draw Boundaries", &draw_boundaries);
-
-   if (draw_boundaries) {
+   if (active_entity_types.boundaries) {
       const float boundary_height = _settings->boundary_height();
 
       command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
@@ -1382,6 +1370,7 @@ void renderer::draw_interaction_targets(
 
 void renderer::build_world_mesh_list(
    gpu::graphics_command_list& command_list, const world::world& world,
+   const world::active_layers active_layers,
    const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
 {
    _world_mesh_list.clear();
@@ -1398,6 +1387,8 @@ void renderer::build_world_mesh_list(
    for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
       const auto& object = world.objects[i];
       auto& model = _model_manager[world_classes.at(object.class_name)->model_name];
+
+      if (not active_layers[object.layer]) continue;
 
       const auto object_bbox = object.rotation * model.bbox + object.position;
 

@@ -55,8 +55,6 @@ struct world {
       id_generator<planning_connection> planning_connections;
       id_generator<boundary> boundaries;
    } next_id;
-
-   bool operator==(const world&) const noexcept = default;
 };
 
 }

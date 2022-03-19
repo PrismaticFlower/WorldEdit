@@ -6,6 +6,8 @@
 
 namespace we::world {
 
+constexpr std::size_t max_layers = 64;
+
 enum class layer_flags { none = 0, inactive = 1, hidden = 2 };
 
 constexpr bool marked_as_enum_bitflag(layer_flags) noexcept

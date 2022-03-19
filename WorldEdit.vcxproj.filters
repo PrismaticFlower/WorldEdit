@@ -559,6 +559,12 @@
     <ClInclude Include="src\graphics\triangle_drawer.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\active_elements.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\container\slim_bitset.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

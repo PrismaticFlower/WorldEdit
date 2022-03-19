@@ -220,6 +220,7 @@
     <ClInclude Include="src\async\wait_all.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
+    <ClInclude Include="src\container\slim_bitset.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\frustrum.hpp" />
     <ClInclude Include="src\graphics\gpu\barrier_helpers.hpp" />
@@ -322,6 +323,7 @@
     <ClInclude Include="src\utility\string_ops.hpp" />
     <ClInclude Include="src\utility\synchronous_task_queue.hpp" />
     <ClInclude Include="src\utility\stopwatch.hpp" />
+    <ClInclude Include="src\world\active_elements.hpp" />
     <ClInclude Include="src\world\ai_path_flags.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />

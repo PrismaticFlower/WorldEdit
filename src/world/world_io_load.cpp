@@ -149,6 +149,12 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
          }
       }
 
+      if (world_out.layer_descriptions.size() > max_layers) {
+         throw load_failure{fmt::format("Failed to load layer index.\n   File: {}\n   Too many layers!\n      Max Supported: {}\n      World Count: {}\n"sv,
+                                        path.string(), max_layers,
+                                        world_out.layer_descriptions.size())};
+      }
+
       return layer_remap;
    }
    catch (std::exception& e) {

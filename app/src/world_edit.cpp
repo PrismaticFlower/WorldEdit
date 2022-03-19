@@ -16,7 +16,10 @@
 #include <type_traits>
 #include <utility>
 
+#include <range/v3/view/enumerate.hpp>
+
 using namespace std::literals;
+using ranges::views::enumerate;
 
 namespace we {
 
@@ -79,7 +82,8 @@ bool world_edit::update()
    // Render!
    update_camera(delta_time, mouse_state, keyboard_state);
 
-   _renderer.draw_frame(_camera, _world, _interaction_targets, _object_classes);
+   _renderer.draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
+                        _world_layers_draw_mask, _object_classes);
 
    return true;
 }
@@ -207,6 +211,77 @@ void world_edit::update_ui(const mouse_state& mouse_state,
 
       ImGui::EndMainMenuBar();
    }
+
+   ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});
+   ImGui::SetNextWindowSize({224.0f * _display_scale, 512.0f * _display_scale});
+
+   ImGui::Begin("World Active Context", nullptr,
+                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                   ImGuiWindowFlags_NoMove);
+
+   ImGui::TextUnformatted("Active Layers");
+   ImGui::Separator();
+   ImGui::BeginChild("Active Layers", ImVec2{0.0f, 208.0f * _display_scale});
+
+   for (auto [i, layer] : enumerate(_world.layer_descriptions)) {
+      if (ImGui::Selectable(layer.name.c_str(), _world_layers_draw_mask[i])) {
+         _world_layers_draw_mask[i] = not _world_layers_draw_mask[i];
+      }
+   }
+
+   ImGui::EndChild();
+
+   ImGui::TextUnformatted("Active Entities");
+   ImGui::Separator();
+   ImGui::BeginChild("Active Entities", ImVec2{0.0f, 236.0f * _display_scale});
+
+   if (ImGui::Selectable("Objects", _world_draw_mask.objects)) {
+      _world_draw_mask.objects = not _world_draw_mask.objects;
+   }
+
+   if (ImGui::Selectable("Lights", _world_draw_mask.lights)) {
+      _world_draw_mask.lights = not _world_draw_mask.lights;
+   }
+
+   if (ImGui::Selectable("Paths", _world_draw_mask.paths)) {
+      _world_draw_mask.paths = not _world_draw_mask.paths;
+   }
+
+   if (ImGui::Selectable("Regions", _world_draw_mask.regions)) {
+      _world_draw_mask.regions = not _world_draw_mask.regions;
+   }
+
+   if (ImGui::Selectable("Sectors", _world_draw_mask.sectors)) {
+      _world_draw_mask.sectors = not _world_draw_mask.sectors;
+   }
+
+   if (ImGui::Selectable("Portals", _world_draw_mask.portals)) {
+      _world_draw_mask.portals = not _world_draw_mask.portals;
+   }
+
+   if (ImGui::Selectable("Hintnodes", _world_draw_mask.hintnodes)) {
+      _world_draw_mask.hintnodes = not _world_draw_mask.hintnodes;
+   }
+
+   if (ImGui::Selectable("Barriers", _world_draw_mask.barriers)) {
+      _world_draw_mask.barriers = not _world_draw_mask.barriers;
+   }
+
+   if (ImGui::Selectable("Planning Hubs", _world_draw_mask.planning_hubs)) {
+      _world_draw_mask.planning_hubs = not _world_draw_mask.planning_hubs;
+   }
+
+   if (ImGui::Selectable("Planning Connections", _world_draw_mask.planning_connections)) {
+      _world_draw_mask.planning_connections = not _world_draw_mask.planning_connections;
+   }
+
+   if (ImGui::Selectable("Boundaries", _world_draw_mask.boundaries)) {
+      _world_draw_mask.boundaries = not _world_draw_mask.boundaries;
+   }
+
+   ImGui::EndChild();
+
+   ImGui::End();
 
    ImGui::Begin("Highlight TEMP");
 
@@ -414,6 +489,8 @@ void world_edit::close_world() noexcept
    _object_classes.clear();
    _world = {};
    _interaction_targets = {};
+   _world_draw_mask = {};
+   _world_layers_draw_mask = {true};
    _world_path.clear();
 
    _renderer.mark_dirty_terrain();
