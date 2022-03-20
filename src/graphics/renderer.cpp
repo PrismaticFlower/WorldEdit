@@ -293,6 +293,9 @@ void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
                                                    _camera_constant_buffer_view);
    command_list.set_graphics_root_descriptor_table(rs::mesh::lights_descriptor_table,
                                                    _light_clusters.light_descriptors());
+   command_list.set_graphics_root_descriptor_table(
+      rs::mesh::bindless_srv_table,
+      _device.descriptor_heap_srv_cbv_uav.get().GetGPUDescriptorHandleForHeapStart());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    ID3D12PipelineState* pipeline_state = nullptr;
@@ -319,6 +322,9 @@ void renderer::draw_world_render_list_depth_prepass(
    command_list.set_graphics_root_signature(*_root_signatures.mesh_depth_prepass);
    command_list.set_graphics_root_descriptor_table(rs::mesh_depth_prepass::camera_descriptor_table,
                                                    _camera_constant_buffer_view);
+   command_list.set_graphics_root_descriptor_table(
+      rs::mesh_depth_prepass::bindless_srv_table,
+      _device.descriptor_heap_srv_cbv_uav.get().GetGPUDescriptorHandleForHeapStart());
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
    ID3D12PipelineState* pipeline_state = nullptr;

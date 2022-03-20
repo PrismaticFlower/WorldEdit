@@ -14,6 +14,7 @@ constexpr uint32 material_register_space = 1;
 constexpr uint32 terrain_register_space = 2;
 constexpr uint32 lights_register_space = 3;
 constexpr uint32 lights_tile_register_space = 4;
+constexpr uint32 bindless_srv_space = 1000;
 
 const gpu::static_sampler_desc
    trilinear_sampler{.filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR,
@@ -50,6 +51,54 @@ const gpu::static_sampler_desc
                   .border_color = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
                   .min_lod = 0.0f,
                   .max_lod = D3D12_FLOAT32_MAX};
+
+const gpu::root_parameter_descriptor_table bindless_srv_table{
+   .ranges =
+      {
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+          .count = UINT_MAX,
+          .base_shader_register = 0,
+          .register_space = bindless_srv_space + 0,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+          .offset_in_descriptors_from_table_start = 0},
+
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+          .count = UINT_MAX,
+          .base_shader_register = 0,
+          .register_space = bindless_srv_space + 1,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+          .offset_in_descriptors_from_table_start = 0},
+
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+          .count = UINT_MAX,
+          .base_shader_register = 0,
+          .register_space = bindless_srv_space + 2,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+          .offset_in_descriptors_from_table_start = 0},
+
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+          .count = UINT_MAX,
+          .base_shader_register = 0,
+          .register_space = bindless_srv_space + 3,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+          .offset_in_descriptors_from_table_start = 0},
+
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+          .count = UINT_MAX,
+          .base_shader_register = 0,
+          .register_space = bindless_srv_space + 4,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+          .offset_in_descriptors_from_table_start = 0},
+
+         {.type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+          .count = UINT_MAX,
+          .base_shader_register = 0,
+          .register_space = bindless_srv_space + 5,
+          .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+          .offset_in_descriptors_from_table_start = 0},
+      },
+   .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+};
 
 const gpu::root_parameter_descriptor_table lights_input_descriptor_table{
    .ranges =
@@ -96,45 +145,48 @@ const gpu::root_signature_desc mesh_desc{
    .name = "mesh_root_signature",
 
    .parameters =
-      {
-         // per-object constants
-         gpu::root_parameter_cbv{
-            .shader_register = 1,
-            .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
-            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
-         },
+      {// per-object constants
+       gpu::root_parameter_cbv{
+          .shader_register = 1,
+          .register_space = mesh_register_space,
+          .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+          .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+       },
 
-         // material constants
-         gpu::root_parameter_descriptor_table{
-            .ranges =
-               {
-                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-                   .count = 1,
-                   .base_shader_register = 0,
-                   .register_space = material_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-                   .offset_in_descriptors_from_table_start = 0},
-               },
-            .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
-         },
+       // material constants
+       gpu::root_parameter_descriptor_table{
+          .ranges =
+             {
+                {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                 .count = 1,
+                 .base_shader_register = 0,
+                 .register_space = material_register_space,
+                 .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                 .offset_in_descriptors_from_table_start = 0},
+             },
+          .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+       },
 
-         // camera descriptors
-         gpu::root_parameter_descriptor_table{
-            .ranges =
-               {
-                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-                   .count = 1,
-                   .base_shader_register = 0,
-                   .register_space = mesh_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-                   .offset_in_descriptors_from_table_start = 0},
-               },
-            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
-         },
+       // camera descriptors
+       gpu::root_parameter_descriptor_table{
+          .ranges =
+             {
+                {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                 .count = 1,
+                 .base_shader_register = 0,
+                 .register_space = mesh_register_space,
+                 .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                 .offset_in_descriptors_from_table_start = 0},
+             },
+          .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+       },
 
-         // lights descriptors
-         lights_input_descriptor_table,
+       // lights descriptors
+       lights_input_descriptor_table,
+
+       // bindless descriptors
+       bindless_srv_table
+
       },
 
    .samplers =
@@ -373,43 +425,44 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
    .name = "mesh_depth_prepass_root_signature",
 
    .parameters =
-      {
-         // per-object constants
-         gpu::root_parameter_cbv{
-            .shader_register = 1,
-            .register_space = mesh_register_space,
-            .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
-            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
-         },
+      {// per-object constants
+       gpu::root_parameter_cbv{
+          .shader_register = 1,
+          .register_space = mesh_register_space,
+          .flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
+          .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+       },
 
-         // material constants
-         gpu::root_parameter_descriptor_table{
-            .ranges =
-               {
-                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-                   .count = 1,
-                   .base_shader_register = 0,
-                   .register_space = material_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-                   .offset_in_descriptors_from_table_start = 0},
-               },
-            .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
-         },
+       // material constants
+       gpu::root_parameter_descriptor_table{
+          .ranges =
+             {
+                {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                 .count = 1,
+                 .base_shader_register = 0,
+                 .register_space = material_register_space,
+                 .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                 .offset_in_descriptors_from_table_start = 0},
+             },
+          .visibility = D3D12_SHADER_VISIBILITY_PIXEL,
+       },
 
-         // camera descriptors
-         gpu::root_parameter_descriptor_table{
-            .ranges =
-               {
-                  {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-                   .count = 1,
-                   .base_shader_register = 0,
-                   .register_space = mesh_register_space,
-                   .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
-                   .offset_in_descriptors_from_table_start = 0},
-               },
-            .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
-         },
-      },
+       // camera descriptors
+       gpu::root_parameter_descriptor_table{
+          .ranges =
+             {
+                {.type = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+                 .count = 1,
+                 .base_shader_register = 0,
+                 .register_space = mesh_register_space,
+                 .flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
+                 .offset_in_descriptors_from_table_start = 0},
+             },
+          .visibility = D3D12_SHADER_VISIBILITY_VERTEX,
+       },
+
+       // bindless descriptors
+       bindless_srv_table},
 
    .samplers =
       {

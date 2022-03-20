@@ -1,4 +1,6 @@
 
+#include "bindless.hlsli"
+
 struct input_vertex {
    float3 positionWS : POSITIONWS;
    float3 normalWS : NORMAL;
@@ -18,7 +20,7 @@ SamplerState texture_sampler : register(s0);
 
 void main(input_vertex input_vertex)
 {
-   Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map];
+   Texture2D<float4> diffuse_map = GetTexture2D(material.diffuse_map);
 
    float4 diffuse_color = diffuse_map.Sample(texture_sampler, input_vertex.texcoords);
 

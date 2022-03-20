@@ -36,6 +36,7 @@ namespace mesh_depth_prepass {
 constexpr uint32 object_cbv = 0;
 constexpr uint32 material_descriptor_table = 1;
 constexpr uint32 camera_descriptor_table = 2;
+constexpr uint32 bindless_srv_table = 3;
 }
 
 namespace mesh {
@@ -43,6 +44,7 @@ constexpr uint32 object_cbv = 0;
 constexpr uint32 material_descriptor_table = 1;
 constexpr uint32 camera_descriptor_table = 2;
 constexpr uint32 lights_descriptor_table = 3;
+constexpr uint32 bindless_srv_table = 4;
 }
 
 namespace mesh_wireframe {
