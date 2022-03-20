@@ -33,7 +33,7 @@
 namespace we::graphics {
 
 struct renderer_config {
-   bool use_raytracing = true;
+   bool use_raytracing = false;
 };
 
 class renderer {
