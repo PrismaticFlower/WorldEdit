@@ -15,6 +15,8 @@
 
 using we::utility::command_line;
 
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg,
+                                              WPARAM wParam, LPARAM lParam);
 // clang-format off
 
 template<typename App>
@@ -25,9 +27,6 @@ concept application = requires(App app, HWND window, command_line command_line, 
    { app.focused() };
    { app.unfocused() };
    { app.idling() } -> std::convertible_to<bool>;
-   { app.mouse_wheel_movement(movement) };
-   { app.update_cursor() };
-   { app.char_input(char16) };
    { app.dpi_changed(size) };
 };
 
@@ -85,6 +84,12 @@ void run_application(command_line command_line)
 
    window_procedure = [&](HWND window, UINT message, WPARAM wparam,
                           LPARAM lparam) noexcept -> LRESULT {
+      if (LRESULT result =
+             ImGui_ImplWin32_WndProcHandler(window, message, wparam, lparam);
+          result != 0) {
+         return result;
+      }
+
       switch (message) {
       case WM_DESTROY:
          PostQuitMessage(0);
@@ -103,24 +108,6 @@ void run_application(command_line command_line)
          }
 
          return 0;
-      case WM_SETCURSOR:
-         if (LOWORD(lparam) != HTCLIENT) break;
-
-         app.update_cursor();
-
-         return TRUE;
-      case WM_MOUSEWHEEL: {
-         const float delta = GET_WHEEL_DELTA_WPARAM(wparam);
-
-         app.mouse_wheel_movement(delta / float{WHEEL_DELTA});
-
-         return 0;
-      }
-      case WM_CHAR:
-         app.char_input(static_cast<char16_t>(wparam));
-
-         return 0;
-
       case WM_DPICHANGED: {
          auto& rect = *reinterpret_cast<const RECT*>(lparam);
 

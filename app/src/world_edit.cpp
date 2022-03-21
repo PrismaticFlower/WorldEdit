@@ -36,7 +36,6 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
      _renderer{window, _settings, _thread_pool, _asset_libraries}
 {
    ImGui_ImplWin32_Init(window);
-   imgui_keymap_init(ImGui::GetIO());
 
    // Call this to initialize the ImGui font and display scaling values.
    dpi_changed(GetDpiForWindow(_window));
@@ -72,7 +71,7 @@ bool world_edit::update()
    if (not _focused) return true;
 
    // UI!
-   update_ui(mouse_state, keyboard_state);
+   update_ui();
 
    // Logic!
    update_object_classes();
@@ -141,13 +140,11 @@ void world_edit::update_camera(const float delta_time, const mouse_state& mouse_
    }
 }
 
-void world_edit::update_ui(const mouse_state& mouse_state,
-                           const keyboard_state& keyboard_state) noexcept
+void world_edit::update_ui() noexcept
 {
    ImGui_ImplDX12_NewFrame();
    ImGui_ImplWin32_NewFrame();
    ImGui::NewFrame();
-   imgui_update_io(mouse_state, keyboard_state, ImGui::GetIO());
    ImGui::ShowDemoWindow(nullptr);
 
    if (ImGui::BeginMainMenuBar()) {
@@ -543,43 +540,6 @@ void world_edit::unfocused()
 bool world_edit::idling() const noexcept
 {
    return not _focused;
-}
-
-void world_edit::mouse_wheel_movement(const float movement) noexcept
-{
-   ImGui::GetIO().MouseWheel += movement;
-}
-
-void world_edit::update_cursor() noexcept
-{
-   SetCursor(LoadCursorW(nullptr, [] {
-      switch (ImGui::GetMouseCursor()) {
-      default:
-      case ImGuiMouseCursor_Arrow:
-         return IDC_ARROW;
-      case ImGuiMouseCursor_TextInput:
-         return IDC_IBEAM;
-      case ImGuiMouseCursor_ResizeAll:
-         return IDC_SIZEALL;
-      case ImGuiMouseCursor_ResizeNS:
-         return IDC_SIZEWE;
-      case ImGuiMouseCursor_ResizeEW:
-         return IDC_SIZEWE;
-      case ImGuiMouseCursor_ResizeNESW:
-         return IDC_SIZENESW;
-      case ImGuiMouseCursor_ResizeNWSE:
-         return IDC_SIZENWSE;
-      case ImGuiMouseCursor_Hand:
-         return IDC_HAND;
-      case ImGuiMouseCursor_NotAllowed:
-         return IDC_NO;
-      }
-   }()));
-}
-
-void world_edit::char_input(const char16_t c) noexcept
-{
-   ImGui::GetIO().AddInputCharacterUTF16(static_cast<ImWchar16>(c));
 }
 
 void world_edit::dpi_changed(const int new_dpi) noexcept

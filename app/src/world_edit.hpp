@@ -38,12 +38,6 @@ public:
 
    bool idling() const noexcept;
 
-   void mouse_wheel_movement(const float movement) noexcept;
-
-   void update_cursor() noexcept;
-
-   void char_input(const char16_t c) noexcept;
-
    void dpi_changed(const int new_dpi) noexcept;
 
 private:
@@ -52,8 +46,7 @@ private:
    void update_camera(const float delta_time, const mouse_state& mouse_state,
                       const keyboard_state& keyboard_state);
 
-   void update_ui(const mouse_state& mouse_state,
-                  const keyboard_state& keyboard_state) noexcept;
+   void update_ui() noexcept;
 
    void object_definition_loaded(const lowercase_string& name,
                                  asset_ref<assets::odf::definition> asset,

@@ -453,9 +453,4 @@ auto get_mouse_state(const HWND window) -> mouse_state; // NOT thread safe!
 
 auto get_keyboard_state() -> keyboard_state;
 
-void imgui_keymap_init(ImGuiIO& io) noexcept;
-
-void imgui_update_io(const mouse_state& mouse_state,
-                     const keyboard_state& keyboard_state, ImGuiIO& io) noexcept;
-
 }
