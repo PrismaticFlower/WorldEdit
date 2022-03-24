@@ -3,7 +3,6 @@
 #include "async/thread_pool.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
-#include "input_state.hpp"
 #include "key_input_manager.hpp"
 #include "output_stream.hpp"
 #include "settings/settings.hpp"

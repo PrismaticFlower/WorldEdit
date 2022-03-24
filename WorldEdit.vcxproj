@@ -333,7 +333,6 @@
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\imgui\imgui_freetype.h" />
     <ClInclude Include="src\key_input_manager.hpp" />
-    <ClInclude Include="src\input_state.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />
     <ClInclude Include="src\io\read_file.hpp" />
@@ -451,7 +450,6 @@
     <ClCompile Include="src\imgui\imgui_impl_dx12.cpp" />
     <ClCompile Include="src\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="src\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\input_state.cpp" />
     <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\object_class.cpp" />

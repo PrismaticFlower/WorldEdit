@@ -82,9 +82,6 @@ bool world_edit::update()
          std::exchange(_last_update, std::chrono::steady_clock::now()))
          .count();
 
-   [[maybe_unused]] const auto keyboard_state = get_keyboard_state();
-   [[maybe_unused]] const auto mouse_state = get_mouse_state(_window);
-
    if (not _focused) return true;
 
    // Input!
