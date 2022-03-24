@@ -45,13 +45,14 @@ public:
 
    void key_up(const key key) noexcept;
 
+   void mouse_movement(const int32 x_movement, const int32 y_movement) noexcept;
+
 private:
    void update_object_classes();
 
    void update_input() noexcept;
 
-   void update_camera(const float delta_time, const mouse_state& mouse_state,
-                      const keyboard_state& keyboard_state);
+   void update_camera(const float delta_time);
 
    void update_ui() noexcept;
 
@@ -90,6 +91,11 @@ private:
    float _display_scale = 1.0f;
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
+
+   int32 _queued_mouse_movement_x = 0;
+   int32 _queued_mouse_movement_y = 0;
+   int32 _mouse_movement_x = 0;
+   int32 _mouse_movement_y = 0;
 
    std::unique_ptr<ImGuiContext, void (*)(ImGuiContext*)> _imgui_context;
 

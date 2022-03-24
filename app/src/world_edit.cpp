@@ -82,8 +82,8 @@ bool world_edit::update()
          std::exchange(_last_update, std::chrono::steady_clock::now()))
          .count();
 
-   const auto keyboard_state = get_keyboard_state();
-   const auto mouse_state = get_mouse_state(_window);
+   [[maybe_unused]] const auto keyboard_state = get_keyboard_state();
+   [[maybe_unused]] const auto mouse_state = get_mouse_state(_window);
 
    if (not _focused) return true;
 
@@ -99,7 +99,7 @@ bool world_edit::update()
    _asset_load_queue.execute();
 
    // Render!
-   update_camera(delta_time, mouse_state, keyboard_state);
+   update_camera(delta_time);
 
    _renderer.draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
                         _world_layers_draw_mask, _object_classes);
@@ -130,10 +130,12 @@ void world_edit::update_input() noexcept
    }
 
    _key_input_manager.update(_imgui_wants_input_capture);
+
+   _mouse_movement_x = std::exchange(_queued_mouse_movement_x, 0);
+   _mouse_movement_y = std::exchange(_queued_mouse_movement_y, 0);
 }
 
-void world_edit::update_camera(const float delta_time, const mouse_state& mouse_state,
-                               [[maybe_unused]] const keyboard_state& keyboard_state)
+void world_edit::update_camera(const float delta_time)
 {
    float3 camera_position = _camera.position();
 
@@ -163,8 +165,8 @@ void world_edit::update_camera(const float delta_time, const mouse_state& mouse_
    if (_rotate_camera) {
       const float camera_look_scale = delta_time * camera_look_sensitivity;
 
-      _camera.yaw(_camera.yaw() + (mouse_state.x_movement * camera_look_scale));
-      _camera.pitch(_camera.pitch() + (mouse_state.y_movement * camera_look_scale));
+      _camera.yaw(_camera.yaw() + (-_mouse_movement_x * camera_look_scale));
+      _camera.pitch(_camera.pitch() + (-_mouse_movement_y * camera_look_scale));
    }
 }
 
@@ -579,6 +581,12 @@ void world_edit::key_down(const key key) noexcept
 void world_edit::key_up(const key key) noexcept
 {
    _key_input_manager.notify_key_up(key);
+}
+
+void world_edit::mouse_movement(const int32 x_movement, const int32 y_movement) noexcept
+{
+   _queued_mouse_movement_x += x_movement;
+   _queued_mouse_movement_y += y_movement;
 }
 
 void world_edit::dpi_changed(const int new_dpi) noexcept

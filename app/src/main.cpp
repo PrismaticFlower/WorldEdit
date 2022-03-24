@@ -65,6 +65,15 @@ void run_application(command_line command_line)
 
    if (window_handle == nullptr) std::terminate();
 
+   RAWINPUTDEVICE raw_input_device{.usUsagePage = 0x01, // HID_USAGE_PAGE_GENERIC
+                                   .usUsage = 0x02, // HID_USAGE_GENERIC_MOUSE
+                                   .dwFlags = 0x0,
+                                   .hwndTarget = window_handle.get()};
+
+   if (RegisterRawInputDevices(&raw_input_device, 1, sizeof(raw_input_device)) == false) {
+      std::terminate();
+   }
+
    we::world_edit app{window_handle.get(), command_line};
 
    window_procedure = [&](HWND window, UINT message, WPARAM wparam,
@@ -161,6 +170,28 @@ void run_application(command_line command_line)
          }
          else if (button == XBUTTON2) {
             app.key_up(we::key::mouse5);
+         }
+
+         return 0;
+      }
+      case WM_INPUT: {
+         const HRAWINPUT raw_input_handle = reinterpret_cast<HRAWINPUT>(lparam);
+
+         UINT data_size = 0;
+
+         GetRawInputData(raw_input_handle, RID_INPUT, nullptr, &data_size,
+                         sizeof(RAWINPUTHEADER));
+
+         std::byte* const header_bytes = static_cast<std::byte*>(alloca(data_size));
+         RAWINPUT* raw = new (header_bytes) RAWINPUT;
+
+         if (GetRawInputData(raw_input_handle, RID_INPUT, raw, &data_size,
+                             sizeof(RAWINPUTHEADER)) == static_cast<UINT>(-1)) {
+            return 0;
+         }
+
+         if (raw->header.dwType == RIM_TYPEMOUSE) {
+            app.mouse_movement(raw->data.mouse.lLastX, raw->data.mouse.lLastY);
          }
 
          return 0;
