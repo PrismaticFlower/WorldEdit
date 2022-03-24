@@ -565,6 +565,9 @@
     <ClInclude Include="src\container\slim_bitset.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\key_input_manager.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -751,6 +754,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\triangle_drawer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\key_input_manager.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

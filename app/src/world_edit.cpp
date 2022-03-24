@@ -55,6 +55,23 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 
    _camera.aspect_ratio(static_cast<float>(rect.right - rect.left) /
                         static_cast<float>(rect.bottom - rect.top));
+
+   // TEMP: Hotkey initialization.
+   _key_input_manager.bind({.key = key::w}, {.toggle = true}, [&] {
+      _move_camera_forward = not _move_camera_forward;
+   });
+   _key_input_manager.bind({.key = key::s}, {.toggle = true},
+                           [&] { _move_camera_back = not _move_camera_back; });
+   _key_input_manager.bind({.key = key::a}, {.toggle = true},
+                           [&] { _move_camera_left = not _move_camera_left; });
+   _key_input_manager.bind({.key = key::d}, {.toggle = true},
+                           [&] { _move_camera_right = not _move_camera_right; });
+   _key_input_manager.bind({.key = key::r}, {.toggle = true},
+                           [&] { _move_camera_up = not _move_camera_up; });
+   _key_input_manager.bind({.key = key::f}, {.toggle = true},
+                           [&] { _move_camera_down = not _move_camera_down; });
+   _key_input_manager.bind({.key = key::mouse2}, {.toggle = true},
+                           [&] { _rotate_camera = not _rotate_camera; });
 }
 
 bool world_edit::update()
@@ -69,6 +86,9 @@ bool world_edit::update()
    const auto mouse_state = get_mouse_state(_window);
 
    if (not _focused) return true;
+
+   // Input!
+   update_input();
 
    // UI!
    update_ui();
@@ -100,39 +120,47 @@ void world_edit::update_object_classes()
    }
 }
 
-void world_edit::update_camera(const float delta_time, const mouse_state& mouse_state,
-                               const keyboard_state& keyboard_state)
+void world_edit::update_input() noexcept
 {
+   _imgui_wants_input_capture =
+      ImGui::GetIO().WantCaptureMouse or ImGui::GetIO().WantCaptureKeyboard;
 
-   if (not ImGui::GetIO().WantCaptureKeyboard) {
-      float3 camera_position = _camera.position();
-
-      const float camera_movement_scale = delta_time * camera_movement_sensitivity;
-
-      if (keyboard_state[keyboard_keys::w]) {
-         camera_position += (_camera.forward() * camera_movement_scale);
-      }
-      if (keyboard_state[keyboard_keys::s]) {
-         camera_position += (_camera.back() * camera_movement_scale);
-      }
-      if (keyboard_state[keyboard_keys::a]) {
-         camera_position += (_camera.left() * camera_movement_scale);
-      }
-      if (keyboard_state[keyboard_keys::d]) {
-         camera_position += (_camera.right() * camera_movement_scale);
-      }
-      if (keyboard_state[keyboard_keys::r]) {
-         camera_position += (_camera.up() * camera_movement_scale);
-      }
-      if (keyboard_state[keyboard_keys::f]) {
-         camera_position += (_camera.down() * camera_movement_scale);
-      }
-
-      _camera.position(camera_position);
+   if (_imgui_wants_input_capture) {
+      _key_input_manager.release_unmodified_toggles();
    }
 
-   if (mouse_state.over_window and mouse_state.right_button and
-       not ImGui::GetIO().WantCaptureMouse) {
+   _key_input_manager.update(_imgui_wants_input_capture);
+}
+
+void world_edit::update_camera(const float delta_time, const mouse_state& mouse_state,
+                               [[maybe_unused]] const keyboard_state& keyboard_state)
+{
+   float3 camera_position = _camera.position();
+
+   const float camera_movement_scale = delta_time * camera_movement_sensitivity;
+
+   if (_move_camera_forward) {
+      camera_position += (_camera.forward() * camera_movement_scale);
+   }
+   if (_move_camera_back) {
+      camera_position += (_camera.back() * camera_movement_scale);
+   }
+   if (_move_camera_left) {
+      camera_position += (_camera.left() * camera_movement_scale);
+   }
+   if (_move_camera_right) {
+      camera_position += (_camera.right() * camera_movement_scale);
+   }
+   if (_move_camera_up) {
+      camera_position += (_camera.up() * camera_movement_scale);
+   }
+   if (_move_camera_down) {
+      camera_position += (_camera.down() * camera_movement_scale);
+   }
+
+   _camera.position(camera_position);
+
+   if (_rotate_camera) {
       const float camera_look_scale = delta_time * camera_look_sensitivity;
 
       _camera.yaw(_camera.yaw() + (mouse_state.x_movement * camera_look_scale));
@@ -535,11 +563,22 @@ void world_edit::focused()
 void world_edit::unfocused()
 {
    _focused = false;
+   _key_input_manager.release_toggles();
 }
 
 bool world_edit::idling() const noexcept
 {
    return not _focused;
+}
+
+void world_edit::key_down(const key key) noexcept
+{
+   _key_input_manager.notify_key_down(key);
+}
+
+void world_edit::key_up(const key key) noexcept
+{
+   _key_input_manager.notify_key_up(key);
 }
 
 void world_edit::dpi_changed(const int new_dpi) noexcept

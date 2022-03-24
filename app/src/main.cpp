@@ -17,22 +17,7 @@ using we::utility::command_line;
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg,
                                               WPARAM wParam, LPARAM lParam);
-// clang-format off
 
-template<typename App>
-concept application = requires(App app, HWND window, command_line command_line, int size, float movement, char16_t char16) {
-   { App{window, command_line} };
-   { app.update() } -> std::convertible_to<bool>;
-   { app.resized(size, size) };
-   { app.focused() };
-   { app.unfocused() };
-   { app.idling() } -> std::convertible_to<bool>;
-   { app.dpi_changed(size) };
-};
-
-// clang-format on
-
-template<application Application>
 void run_application(command_line command_line)
 {
    static std::atomic_flag entered{};
@@ -80,7 +65,7 @@ void run_application(command_line command_line)
 
    if (window_handle == nullptr) std::terminate();
 
-   Application app{window_handle.get(), command_line};
+   we::world_edit app{window_handle.get(), command_line};
 
    window_procedure = [&](HWND window, UINT message, WPARAM wparam,
                           LPARAM lparam) noexcept -> LRESULT {
@@ -118,6 +103,68 @@ void run_application(command_line command_line)
 
          return 0;
       }
+      case WM_KEYDOWN: {
+         app.key_down(we::translate_virtual_key(wparam));
+
+         return 0;
+      }
+      case WM_KEYUP: {
+         app.key_up(we::translate_virtual_key(wparam));
+
+         return 0;
+      }
+      case WM_LBUTTONDOWN: {
+         app.key_down(we::key::mouse1);
+
+         return 0;
+      }
+      case WM_LBUTTONUP: {
+         app.key_up(we::key::mouse1);
+
+         return 0;
+      }
+      case WM_RBUTTONDOWN: {
+         app.key_down(we::key::mouse2);
+
+         return 0;
+      }
+      case WM_RBUTTONUP: {
+         app.key_up(we::key::mouse2);
+
+         return 0;
+      }
+      case WM_MBUTTONDOWN: {
+         app.key_down(we::key::mouse3);
+
+         return 0;
+      }
+      case WM_MBUTTONUP: {
+         app.key_up(we::key::mouse3);
+
+         return 0;
+      }
+      case WM_XBUTTONDOWN: {
+         if (const int button = GET_XBUTTON_WPARAM(wparam) == XBUTTON1;
+             button == XBUTTON1) {
+            app.key_down(we::key::mouse4);
+         }
+         else if (button == XBUTTON2) {
+            app.key_down(we::key::mouse5);
+         }
+
+         return 0;
+      }
+      case WM_XBUTTONUP: {
+         if (const int button = GET_XBUTTON_WPARAM(wparam) == XBUTTON1;
+             button == XBUTTON1) {
+            app.key_up(we::key::mouse4);
+         }
+         else if (button == XBUTTON2) {
+            app.key_up(we::key::mouse5);
+         }
+
+         return 0;
+      }
       }
 
       return DefWindowProcW(window, message, wparam, lparam);
@@ -143,5 +190,5 @@ int main(int arg_count, const char** args)
 {
    std::ios_base::sync_with_stdio(false);
 
-   run_application<we::world_edit>(command_line{arg_count, args});
+   run_application(command_line{arg_count, args});
 }

@@ -199,6 +199,7 @@
     <ClCompile Include="src\imgui\imgui_freetype.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
+    <ClCompile Include="src\key_input_manager.cpp" />
     <ClCompile Include="src\world\world_io_save.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
@@ -331,6 +332,7 @@
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\imgui\imgui_freetype.h" />
+    <ClInclude Include="src\key_input_manager.hpp" />
     <ClInclude Include="src\input_state.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />

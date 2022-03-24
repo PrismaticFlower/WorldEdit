@@ -198,6 +198,7 @@
     <ClCompile Include="src\hresult_error_tests.cpp" />
     <ClCompile Include="src\io\output_file_tests.cpp" />
     <ClCompile Include="src\io\read_file_tests.cpp" />
+    <ClCompile Include="src\key_input_manager_tests.cpp" />
     <ClCompile Include="src\lowercase_string_tests.cpp" />
     <ClCompile Include="src\math\align_tests.cpp" />
     <ClCompile Include="src\math\bounding_box_tests.cpp" />

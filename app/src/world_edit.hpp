@@ -4,6 +4,7 @@
 #include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
 #include "input_state.hpp"
+#include "key_input_manager.hpp"
 #include "output_stream.hpp"
 #include "settings/settings.hpp"
 #include "utility/command_line.hpp"
@@ -40,8 +41,14 @@ public:
 
    void dpi_changed(const int new_dpi) noexcept;
 
+   void key_down(const key key) noexcept;
+
+   void key_up(const key key) noexcept;
+
 private:
    void update_object_classes();
+
+   void update_input() noexcept;
 
    void update_camera(const float delta_time, const mouse_state& mouse_state,
                       const keyboard_state& keyboard_state);
@@ -101,6 +108,15 @@ private:
    graphics::renderer _renderer;
    graphics::controllable_perspective_camera _camera;
 
+   bool _imgui_wants_input_capture = false;
+   bool _move_camera_forward = false;
+   bool _move_camera_back = false;
+   bool _move_camera_left = false;
+   bool _move_camera_right = false;
+   bool _move_camera_up = false;
+   bool _move_camera_down = false;
+   bool _rotate_camera = false;
+
    utility::synchronous_task_queue _asset_load_queue;
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,
                        asset_data<assets::odf::definition>)>
@@ -117,6 +133,8 @@ private:
                 asset_data<assets::msh::flat_model> data) {
             _asset_load_queue.enqueue([=] { model_loaded(name, asset, data); });
          });
+
+   key_input_manager _key_input_manager;
 };
 
 }
