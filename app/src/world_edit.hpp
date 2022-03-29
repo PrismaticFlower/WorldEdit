@@ -1,6 +1,7 @@
 
 #include "assets/asset_libraries.hpp"
 #include "async/thread_pool.hpp"
+#include "commands.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/renderer.hpp"
 #include "key_input_manager.hpp"
@@ -79,6 +80,8 @@ private:
 
    void enumerate_project_worlds() noexcept;
 
+   void initialize_commands() noexcept;
+
    standard_output_stream _stream;
    HWND _window{};
    std::shared_ptr<settings::settings> _settings =
@@ -140,6 +143,8 @@ private:
          });
 
    key_input_manager _key_input_manager;
+   commands _commands;
+   commands_key_binder _commands_binder{_commands, _key_input_manager, _stream};
 };
 
 }

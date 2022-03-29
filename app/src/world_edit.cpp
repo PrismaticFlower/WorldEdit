@@ -35,6 +35,8 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
      _window{window},
      _renderer{window, _settings, _thread_pool, _asset_libraries}
 {
+   initialize_commands();
+
    ImGui_ImplWin32_Init(window);
 
    // Call this to initialize the ImGui font and display scaling values.
@@ -55,23 +57,6 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 
    _camera.aspect_ratio(static_cast<float>(rect.right - rect.left) /
                         static_cast<float>(rect.bottom - rect.top));
-
-   // TEMP: Hotkey initialization.
-   _key_input_manager.bind({.key = key::w}, {.toggle = true}, [&] {
-      _move_camera_forward = not _move_camera_forward;
-   });
-   _key_input_manager.bind({.key = key::s}, {.toggle = true},
-                           [&] { _move_camera_back = not _move_camera_back; });
-   _key_input_manager.bind({.key = key::a}, {.toggle = true},
-                           [&] { _move_camera_left = not _move_camera_left; });
-   _key_input_manager.bind({.key = key::d}, {.toggle = true},
-                           [&] { _move_camera_right = not _move_camera_right; });
-   _key_input_manager.bind({.key = key::r}, {.toggle = true},
-                           [&] { _move_camera_up = not _move_camera_up; });
-   _key_input_manager.bind({.key = key::f}, {.toggle = true},
-                           [&] { _move_camera_down = not _move_camera_down; });
-   _key_input_manager.bind({.key = key::mouse2}, {.toggle = true},
-                           [&] { _rotate_camera = not _rotate_camera; });
 }
 
 bool world_edit::update()

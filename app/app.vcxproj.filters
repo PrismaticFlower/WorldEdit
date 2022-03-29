@@ -4,6 +4,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\world_edit.cpp" />
     <ClCompile Include="src\dx_agility_sdk_exports.cpp" />
+    <ClCompile Include="src\world_edit_commands.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

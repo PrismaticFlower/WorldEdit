@@ -162,11 +162,22 @@ enum class key : uint8 {
 struct keyboard_modifiers {
    bool ctrl = false;
    bool shift = false;
+
+   constexpr bool operator==(const keyboard_modifiers&) const noexcept = default;
 };
 
 struct bind_key {
    key key;
    keyboard_modifiers modifiers;
+
+   template<typename H>
+   friend H AbslHashValue(H h, const bind_key& bind_key)
+   {
+      return H::combine(std::move(h), bind_key.key, bind_key.modifiers.ctrl,
+                        bind_key.modifiers.shift);
+   }
+
+   constexpr bool operator==(const bind_key&) const noexcept = default;
 };
 
 struct bind_config {

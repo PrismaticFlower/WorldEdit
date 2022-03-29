@@ -53,6 +53,7 @@
     <ClCompile Include="src\utility\look_for_tests.cpp" />
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
     <ClCompile Include="src\key_input_manager_tests.cpp" />
+    <ClCompile Include="src\commands_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

@@ -194,6 +194,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\async\thread_pool.cpp" />
+    <ClCompile Include="src\commands.cpp" />
     <ClCompile Include="src\graphics\triangle_drawer.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\imgui\imgui_freetype.cpp" />
@@ -280,6 +281,7 @@
     <ClInclude Include="src\async\get_all.hpp" />
     <ClInclude Include="src\async\thread_pool.hpp" />
     <ClInclude Include="src\async\wait_all.hpp" />
+    <ClInclude Include="src\commands.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
     <ClInclude Include="src\container\slim_bitset.hpp" />
