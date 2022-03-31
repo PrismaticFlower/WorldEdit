@@ -125,6 +125,8 @@ private:
    bool _move_camera_down = false;
    bool _rotate_camera = false;
 
+   POINT _rotate_camera_cursor_position = {0, 0};
+
    utility::synchronous_task_queue _asset_load_queue;
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,
                        asset_data<assets::odf::definition>)>

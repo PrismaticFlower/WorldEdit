@@ -13,7 +13,10 @@ void world_edit::initialize_commands() noexcept
    _commands.add("camera.move_right"s, _move_camera_right);
    _commands.add("camera.move_up"s, _move_camera_up);
    _commands.add("camera.move_down"s, _move_camera_down);
-   _commands.add("camera.rotate_with_mouse"s, _rotate_camera);
+   _commands.add("camera.rotate_with_mouse"s, [this]() {
+      _rotate_camera = not _rotate_camera;
+      GetCursorPos(&_rotate_camera_cursor_position);
+   });
 
    _commands_binder.set_default_bindings({
       {"camera.move_forward"s, {.key = key::w}, {.toggle = true}},

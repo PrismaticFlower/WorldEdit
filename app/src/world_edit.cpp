@@ -149,6 +149,10 @@ void world_edit::update_camera(const float delta_time)
 
       _camera.yaw(_camera.yaw() + (-_mouse_movement_x * camera_look_scale));
       _camera.pitch(_camera.pitch() + (-_mouse_movement_y * camera_look_scale));
+
+      SetCursor(nullptr);
+      SetCursorPos(_rotate_camera_cursor_position.x,
+                   _rotate_camera_cursor_position.y);
    }
 }
 
