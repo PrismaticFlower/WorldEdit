@@ -201,6 +201,7 @@
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
     <ClCompile Include="src\key_input_manager.cpp" />
+    <ClCompile Include="src\world\raycast.cpp" />
     <ClCompile Include="src\world\world_io_save.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
@@ -341,6 +342,7 @@
     <ClInclude Include="src\lowercase_string.hpp" />
     <ClInclude Include="src\math\align.hpp" />
     <ClInclude Include="src\math\bounding_box.hpp" />
+    <ClInclude Include="src\math\intersectors.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
     <ClInclude Include="src\settings\graphics.hpp" />
     <ClInclude Include="src\settings\settings.hpp" />
@@ -406,6 +408,7 @@
     <ClInclude Include="src\world\path.hpp" />
     <ClInclude Include="src\world\planning.hpp" />
     <ClInclude Include="src\world\portal.hpp" />
+    <ClInclude Include="src\world\raycast.hpp" />
     <ClInclude Include="src\world\region.hpp" />
     <ClInclude Include="src\world\sector.hpp" />
     <ClInclude Include="src\world\interaction_context.hpp" />

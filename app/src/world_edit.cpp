@@ -7,6 +7,7 @@
 #include "imgui/imgui_impl_dx12.h"
 #include "imgui/imgui_impl_win32.h"
 #include "utility/file_pickers.hpp"
+#include "world/raycast.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
 
@@ -77,6 +78,7 @@ bool world_edit::update()
 
    // Logic!
    update_object_classes();
+   update_hovered_entity();
 
    _asset_load_queue.execute();
 
@@ -115,6 +117,111 @@ void world_edit::update_input() noexcept
 
    _mouse_movement_x = std::exchange(_queued_mouse_movement_x, 0);
    _mouse_movement_y = std::exchange(_queued_mouse_movement_y, 0);
+}
+
+void world_edit::update_hovered_entity() noexcept
+{
+   graphics::camera_ray ray =
+      make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                      {ImGui::GetMainViewport()->Size.x,
+                       ImGui::GetMainViewport()->Size.y});
+
+   _interaction_targets.hovered_entity = {};
+   float hovered_entity_distance = std::numeric_limits<float>::max();
+
+   if (_imgui_wants_input_capture) return;
+
+   // TODO: interaction mask instead of reusing draw mask
+
+   if (_world_draw_mask.lights) {
+      if (std::optional<world::raycast_result<world::light>> hit =
+             world::raycast(ray.origin, ray.direction, _world.lights, _world.regions);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
+   if (_world_draw_mask.paths) {
+      if (std::optional<world::raycast_result<world::path>> hit =
+             world::raycast(ray.origin, ray.direction, _world.paths);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
+   if (_world_draw_mask.regions) {
+      if (std::optional<world::raycast_result<world::region>> hit =
+             world::raycast(ray.origin, ray.direction, _world.regions);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
+   if (_world_draw_mask.sectors) {
+      if (std::optional<world::raycast_result<world::sector>> hit =
+             world::raycast(ray.origin, ray.direction, _world.sectors);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
+   if (_world_draw_mask.portals) {
+      if (std::optional<world::raycast_result<world::portal>> hit =
+             world::raycast(ray.origin, ray.direction, _world.portals);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
+   if (_world_draw_mask.hintnodes) {
+      if (std::optional<world::raycast_result<world::hintnode>> hit =
+             world::raycast(ray.origin, ray.direction, _world.hintnodes);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
+   if (_world_draw_mask.barriers) {
+      if (std::optional<world::raycast_result<world::barrier>> hit =
+             world::raycast(ray.origin, ray.direction, _world.barriers,
+                            _settings->barrier_height());
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
+   if (_world_draw_mask.boundaries) {
+      if (std::optional<world::raycast_result<world::boundary>> hit =
+             world::raycast(ray.origin, ray.direction, _world.boundaries,
+                            _world.paths, _settings->boundary_height());
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
 }
 
 void world_edit::update_camera(const float delta_time)

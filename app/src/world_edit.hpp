@@ -52,6 +52,8 @@ private:
 
    void update_input() noexcept;
 
+   void update_hovered_entity() noexcept;
+
    void update_camera(const float delta_time);
 
    void update_ui() noexcept;

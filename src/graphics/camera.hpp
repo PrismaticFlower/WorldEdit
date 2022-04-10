@@ -6,6 +6,11 @@
 
 namespace we::graphics {
 
+struct camera_ray {
+   float3 origin;
+   float3 direction;
+};
+
 class camera {
 public:
    auto right() const noexcept -> float3
@@ -36,6 +41,11 @@ public:
    auto back() const noexcept -> float3
    {
       return _world_matrix[2];
+   }
+
+   auto world_matrix() const noexcept -> const float4x4&
+   {
+      return _world_matrix;
    }
 
    auto view_matrix() const noexcept -> const float4x4&
@@ -240,5 +250,9 @@ private:
 };
 
 using controllable_perspective_camera = basic_controllable_camera<perspective_camera>;
+
+auto make_camera_ray(const controllable_perspective_camera& camera,
+                     const float2 cursor_position,
+                     const float2 window_size) noexcept -> camera_ray;
 
 }

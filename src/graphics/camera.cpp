@@ -59,4 +59,21 @@ void shadow_orthographic_camera::update() noexcept
    _inv_view_projection_matrix = glm::inverse(double4x4{_view_projection_matrix});
 }
 
+auto make_camera_ray(const controllable_perspective_camera& camera,
+                     const float2 cursor_position,
+                     const float2 window_size) noexcept -> camera_ray
+{
+   float2 ndc_pos =
+      ((cursor_position + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
+
+   float4 corner = float4{ndc_pos, 1.0f, 1.0f};
+
+   corner = camera.inv_view_projection_matrix() * corner;
+   corner /= corner.w;
+
+   float3 ray_direction = glm::normalize(float3{corner} - camera.position());
+
+   return {.origin = camera.position(), .direction = ray_direction};
+}
+
 }

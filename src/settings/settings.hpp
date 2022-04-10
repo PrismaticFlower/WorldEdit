@@ -5,6 +5,7 @@
 namespace we::settings {
 
 class settings final : public graphics {
+public:
    auto path_node_color() const noexcept -> float3 override
    {
       return {0.15f, 1.0f, 0.3f};
