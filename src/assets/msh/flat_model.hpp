@@ -1,5 +1,6 @@
 #pragma once
 
+#include "flat_model_bvh.hpp"
 #include "math/bounding_box.hpp"
 #include "scene.hpp"
 
@@ -66,6 +67,8 @@ struct flat_model {
    std::vector<mesh> meshes;
    std::vector<flat_model_collision> collision;
    std::vector<flat_model_node> node_hierarchy;
+
+   flat_model_bvh bvh;
 
    void regenerate_bounding_boxes() noexcept;
 

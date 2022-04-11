@@ -53,9 +53,9 @@ void object_class::update_from_definition(assets::libraries_manager& assets_libr
    if (not model_name.empty()) {
       model_asset = assets_libraries.models[model_name];
       model = model_asset.get_if();
-
-      if (not model) model = assets::msh::default_missing_scene();
    }
+
+   if (not model) model = assets::msh::default_missing_scene();
 }
 
 }

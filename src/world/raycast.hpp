@@ -1,6 +1,7 @@
 #pragma once
 
 #include "active_elements.hpp"
+#include "object_class.hpp"
 #include "world.hpp"
 
 #include <optional>
@@ -29,15 +30,21 @@ struct raycast_result<barrier> {
 };
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const light> lights, std::span<const region> regions) noexcept
+             const active_layers active_layers, std::span<const object> objects,
+             const absl::flat_hash_map<lowercase_string, std::shared_ptr<object_class>>& object_classes) noexcept
+   -> std::optional<raycast_result<object>>;
+
+auto raycast(const float3 ray_origin, const float3 ray_direction,
+             const active_layers active_layers, std::span<const light> lights,
+             std::span<const region> regions) noexcept
    -> std::optional<raycast_result<light>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const path> paths) noexcept
+             const active_layers active_layers, std::span<const path> paths) noexcept
    -> std::optional<raycast_result<path>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const region> regions) noexcept
+             const active_layers active_layers, std::span<const region> regions) noexcept
    -> std::optional<raycast_result<region>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -49,7 +56,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<portal>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const hintnode> hintnodes) noexcept
+             const active_layers active_layers, std::span<const hintnode> hintnodes) noexcept
    -> std::optional<raycast_result<hintnode>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

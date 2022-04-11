@@ -11,13 +11,68 @@ using namespace ranges::views;
 namespace we::world {
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const light> lights, std::span<const region> regions) noexcept
+             const active_layers active_layers, std::span<const object> objects,
+             const absl::flat_hash_map<lowercase_string, std::shared_ptr<object_class>>& object_classes) noexcept
+   -> std::optional<raycast_result<object>>
+{
+   using namespace assets;
+
+   std::optional<object_id> hit;
+   float min_distance = std::numeric_limits<float>::max();
+
+   for (auto& object : objects) {
+      if (not active_layers[object.layer]) continue;
+
+      [[maybe_unused]] float3 box_normal{};
+
+      quaternion inverse_object_rotation = glm::conjugate(object.rotation);
+
+      float4x4 world_to_obj{inverse_object_rotation};
+      world_to_obj[3] = {inverse_object_rotation * -object.position, 1.0f};
+
+      float3 obj_ray_origin = world_to_obj * float4{ray_origin, 1.0f};
+      float3 obj_ray_direction =
+         glm::normalize(float3x3{world_to_obj} * ray_direction);
+
+      const msh::flat_model& model = *object_classes.at(object.class_name)->model;
+
+      float3 box_centre = (model.bounding_box.min + model.bounding_box.max) * 0.5f;
+      float3 box_size = model.bounding_box.max - model.bounding_box.min;
+
+      const float box_intersection =
+         boxIntersection(obj_ray_origin - box_centre, obj_ray_direction,
+                         box_size, box_normal)
+            .x;
+
+      if (box_intersection < 0.0f) continue;
+
+      std::optional<msh::ray_hit> model_hit =
+         model.bvh.query(obj_ray_origin, obj_ray_direction);
+
+      if (not model_hit) continue;
+
+      if (model_hit->distance < min_distance) {
+         hit = object.id;
+         min_distance = model_hit->distance;
+      }
+   }
+
+   if (not hit) return std::nullopt;
+
+   return raycast_result<object>{.distance = min_distance, .id = *hit};
+}
+
+auto raycast(const float3 ray_origin, const float3 ray_direction,
+             const active_layers active_layers, std::span<const light> lights,
+             std::span<const region> regions) noexcept
    -> std::optional<raycast_result<light>>
 {
    std::optional<light_id> hit;
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& light : lights) {
+      if (not active_layers[light.layer]) continue;
+
       if (light.light_type == light_type::directional) {
          // TODO: World proxies for region-less directional lights.
 
@@ -128,7 +183,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const path> paths) noexcept
+             const active_layers active_layers, std::span<const path> paths) noexcept
    -> std::optional<raycast_result<path>>
 {
    std::optional<path_id> hit;
@@ -136,6 +191,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& path : paths) {
+      if (not active_layers[path.layer]) continue;
+
       for (const auto& [i, node] : enumerate(path.nodes)) {
 
          const float intersection =
@@ -157,13 +214,15 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const region> regions) noexcept
+             const active_layers active_layers, std::span<const region> regions) noexcept
    -> std::optional<raycast_result<region>>
 {
    std::optional<region_id> hit;
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& region : regions) {
+      if (not active_layers[region.layer]) continue;
+
       if (region.shape == region_shape::box) {
          [[maybe_unused]] float3 box_normal{};
 
@@ -298,13 +357,15 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const hintnode> hintnodes) noexcept
+             const active_layers active_layers, std::span<const hintnode> hintnodes) noexcept
    -> std::optional<raycast_result<hintnode>>
 {
    std::optional<hintnode_id> hit;
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& hintnode : hintnodes) {
+      if (not active_layers[hintnode.layer]) continue;
+
       const float intersection =
          sphIntersect(ray_origin, ray_direction, hintnode.position, 1.4142f);
 

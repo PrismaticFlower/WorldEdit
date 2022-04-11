@@ -19,17 +19,17 @@ namespace we {
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-float cross2d(float2 a, float2 b)
+inline float cross2d(float2 a, float2 b)
 {
    return a.x * b.y - a.y * b.x;
 }
 
-float dot2(float3 v)
+inline float dot2(float3 v)
 {
    return dot(v, v);
 }
 
-float sphIntersect(float3 ro, float3 rd, float3 sph, float radius)
+inline float sphIntersect(float3 ro, float3 rd, float3 sph, float radius)
 {
    float3 oc = ro - sph;
    float b = glm::dot(oc, rd);
@@ -39,7 +39,7 @@ float sphIntersect(float3 ro, float3 rd, float3 sph, float radius)
    return -b - sqrt(h);
 }
 
-float2 boxIntersection(float3 ro, float3 rd, float3 boxSize, float3& outNormal)
+inline float2 boxIntersection(float3 ro, float3 rd, float3 boxSize, float3& outNormal)
 {
    float3 m = 1.0f / rd; // can precompute if traversing a set of aligned boxes
    float3 n = m * ro;    // can precompute if traversing a set of aligned boxes
@@ -54,7 +54,8 @@ float2 boxIntersection(float3 ro, float3 rd, float3 boxSize, float3& outNormal)
    return float2(tN, tF);
 }
 
-float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2, float3 v3)
+inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
+                            float3 v2, float3 v3)
 {
    const int lut[4] = {1, 2, 0, 1};
 
@@ -120,7 +121,7 @@ float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2, floa
    return float3(t, u, v);
 }
 
-float4 iCappedCone(float3 ro, float3 rd, float3 pa, float3 pb, float ra, float rb)
+inline float4 iCappedCone(float3 ro, float3 rd, float3 pa, float3 pb, float ra, float rb)
 {
    float3 ba = pb - pa;
    float3 oa = ro - pa;
@@ -164,8 +165,8 @@ float4 iCappedCone(float3 ro, float3 rd, float3 pa, float3 pb, float ra, float r
    return float4(-1.0f);
 }
 
-float4 iCylinder(float3 ro, float3 rd, float3 pa, float3 pb,
-                 float ra) // extreme a, extreme b, radius
+inline float4 iCylinder(float3 ro, float3 rd, float3 pa, float3 pb,
+                        float ra) // extreme a, extreme b, radius
 {
    float3 ba = pb - pa;
 
@@ -196,6 +197,21 @@ float4 iCylinder(float3 ro, float3 rd, float3 pa, float3 pb,
    }
 
    return float4(-1.0);
+}
+
+inline float3 triIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2)
+{
+   float3 v1v0 = v1 - v0;
+   float3 v2v0 = v2 - v0;
+   float3 rov0 = ro - v0;
+   float3 n = cross(v1v0, v2v0);
+   float3 q = cross(rov0, rd);
+   float d = 1.0f / dot(rd, n);
+   float u = d * dot(-q, v2v0);
+   float v = d * dot(q, v1v0);
+   float t = d * dot(-n, rov0);
+   if (u < 0.0f || v < 0.0f || (u + v) > 1.0f) t = -1.0f;
+   return float3(t, u, v);
 }
 
 }

@@ -133,9 +133,22 @@ void world_edit::update_hovered_entity() noexcept
 
    // TODO: interaction mask instead of reusing draw mask
 
+   if (_world_draw_mask.objects) {
+      if (std::optional<world::raycast_result<world::object>> hit =
+             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+                            _world.objects, _object_classes);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
    if (_world_draw_mask.lights) {
       if (std::optional<world::raycast_result<world::light>> hit =
-             world::raycast(ray.origin, ray.direction, _world.lights, _world.regions);
+             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+                            _world.lights, _world.regions);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
@@ -146,7 +159,8 @@ void world_edit::update_hovered_entity() noexcept
 
    if (_world_draw_mask.paths) {
       if (std::optional<world::raycast_result<world::path>> hit =
-             world::raycast(ray.origin, ray.direction, _world.paths);
+             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+                            _world.paths);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
@@ -157,7 +171,8 @@ void world_edit::update_hovered_entity() noexcept
 
    if (_world_draw_mask.regions) {
       if (std::optional<world::raycast_result<world::region>> hit =
-             world::raycast(ray.origin, ray.direction, _world.regions);
+             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+                            _world.regions);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
@@ -190,7 +205,8 @@ void world_edit::update_hovered_entity() noexcept
 
    if (_world_draw_mask.hintnodes) {
       if (std::optional<world::raycast_result<world::hintnode>> hit =
-             world::raycast(ray.origin, ray.direction, _world.hintnodes);
+             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+                            _world.hintnodes);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;

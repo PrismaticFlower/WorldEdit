@@ -181,6 +181,8 @@ flat_model::flat_model(const scene& scene) noexcept
    generate_tangents_for_meshes();
    patch_materials_with_options(meshes, scene.options);
    regenerate_bounding_boxes();
+
+   bvh.build(meshes);
 }
 
 void flat_model::regenerate_bounding_boxes() noexcept
