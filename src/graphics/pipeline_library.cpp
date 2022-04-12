@@ -253,7 +253,7 @@ constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
    {.pInputElementDescs = meta_mesh_input_layout_elements.data(),
     .NumElements = static_cast<UINT>(meta_mesh_input_layout_elements.size())};
 
-auto create_graphics_pipeline(ID3D12Device10& device, const std::string_view name,
+auto create_graphics_pipeline(ID3D12Device9& device, const std::string_view name,
                               const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
    -> utility::com_ptr<ID3D12PipelineState>
 {
@@ -267,7 +267,7 @@ auto create_graphics_pipeline(ID3D12Device10& device, const std::string_view nam
    return pso;
 }
 
-auto create_compute_pipeline(ID3D12Device10& device, const std::string_view name,
+auto create_compute_pipeline(ID3D12Device9& device, const std::string_view name,
                              const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc)
    -> utility::com_ptr<ID3D12PipelineState>
 {
@@ -281,7 +281,7 @@ auto create_compute_pipeline(ID3D12Device10& device, const std::string_view name
    return pso;
 }
 
-auto create_material_pipelines(ID3D12Device10& device, const std::string_view name_base,
+auto create_material_pipelines(ID3D12Device9& device, const std::string_view name_base,
                                const shader_library& shader_library,
                                const root_signature_library& root_signature_library)
    -> material_pipelines
@@ -361,7 +361,7 @@ struct async_init {
 
 }
 
-pipeline_library::pipeline_library(ID3D12Device10& device,
+pipeline_library::pipeline_library(ID3D12Device9& device,
                                    const shader_library& shader_library,
                                    const root_signature_library& root_signature_library)
 

@@ -34,7 +34,7 @@ using material_pipelines =
    container::enum_array<utility::com_ptr<ID3D12PipelineState>, material_pipeline_flags>;
 
 struct pipeline_library {
-   pipeline_library(ID3D12Device10& device, const shader_library& shader_library,
+   pipeline_library(ID3D12Device9& device, const shader_library& shader_library,
                     const root_signature_library& root_signature_library);
 
    utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass;

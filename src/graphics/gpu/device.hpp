@@ -219,7 +219,7 @@ public:
 
    utility::com_ptr<IDXGIFactory7> factory;
    utility::com_ptr<IDXGIAdapter4> adapter;
-   utility::com_ptr<ID3D12Device10> device_d3d;
+   utility::com_ptr<ID3D12Device9> device_d3d;
    release_ptr<D3D12MA::Allocator> allocator;
    utility::com_ptr<ID3D12Fence> fence;
    UINT64 fence_value = 1;

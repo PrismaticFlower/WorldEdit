@@ -37,7 +37,7 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
            factory.EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
                                               IID_PPV_ARGS(adapter.clear_and_assign())));
         ++i) {
-      if (SUCCEEDED(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_11_0,
+      if (SUCCEEDED(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_0,
                                       __uuidof(ID3D12Device), nullptr))) {
          return adapter;
       }
@@ -48,7 +48,7 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
    return adapter;
 }
 
-auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device10>
+auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device9>
 {
    if (use_debug_layer) {
       utility::com_ptr<ID3D12Debug> d3d_debug;
@@ -58,7 +58,7 @@ auto create_device(IDXGIAdapter4& adapter) -> utility::com_ptr<ID3D12Device10>
       d3d_debug->EnableDebugLayer();
    }
 
-   utility::com_ptr<ID3D12Device10> device;
+   utility::com_ptr<ID3D12Device9> device;
 
    throw_if_failed(D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_12_0,
                                      IID_PPV_ARGS(device.clear_and_assign())));
