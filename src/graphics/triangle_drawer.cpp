@@ -47,7 +47,7 @@ void triangle_drawer::submit()
    _command_list.ia_set_vertex_buffers(0, vbv);
    _command_list.draw_instanced(_batch_vertices, 1, _batch_offset, 0);
 
-   _batch_offset = _batch_vertices;
+   _batch_offset += _batch_vertices;
    _batch_vertices = 0;
 }
 
