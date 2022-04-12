@@ -418,63 +418,6 @@ void world_edit::update_ui() noexcept
    ImGui::EndChild();
 
    ImGui::End();
-
-   ImGui::Begin("Highlight TEMP");
-
-   const auto build_temp_highlight_selection =
-      [&]<typename T>(const char* name, std::vector<T>& entities) {
-         if (ImGui::CollapsingHeader(name)) {
-            for (auto& entity : entities) {
-               ImGui::PushID(std::to_underlying(entity.id));
-
-               if (ImGui::Selectable(entity.name.c_str(),
-                                     _interaction_targets.hovered_entity ==
-                                        world::hovered_entity{entity.id})) {
-                  _interaction_targets.hovered_entity = entity.id;
-               }
-
-               ImGui::PopID();
-            }
-         }
-      };
-
-   build_temp_highlight_selection("Objects", _world.objects);
-   build_temp_highlight_selection("Lights", _world.lights);
-   build_temp_highlight_selection("Paths", _world.paths);
-
-   if (ImGui::CollapsingHeader("Paths Nodes")) {
-      for (auto& path : _world.paths) {
-         ImGui::PushID(std::to_underlying(path.id));
-         ImGui::PushID(path.name.c_str());
-
-         ImGui::TextUnformatted(path.name.c_str());
-         ImGui::Indent();
-
-         for (std::size_t i = 0; i < path.nodes.size(); ++i) {
-
-            if (ImGui::Selectable(fmt::format("Node {}", i).c_str(),
-                                  _interaction_targets.hovered_entity ==
-                                     world::hovered_entity{
-                                        world::path_id_node_pair{path.id, i}})) {
-               _interaction_targets.hovered_entity =
-                  world::path_id_node_pair{path.id, i};
-            }
-         }
-
-         ImGui::Unindent();
-         ImGui::PopID();
-         ImGui::PopID();
-      }
-   }
-
-   build_temp_highlight_selection("Regions", _world.regions);
-   build_temp_highlight_selection("Sectors", _world.sectors);
-   build_temp_highlight_selection("Portals", _world.portals);
-   build_temp_highlight_selection("Hintnodes", _world.hintnodes);
-   build_temp_highlight_selection("Barriers", _world.barriers);
-   build_temp_highlight_selection("Boundaries", _world.boundaries);
-
-   ImGui::End();
 }
 
 void world_edit::object_definition_loaded(const lowercase_string& name,
