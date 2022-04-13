@@ -577,6 +577,9 @@
     <ClInclude Include="src\assets\msh\flat_model_bvh.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\imgui\imgui_stdlib.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -772,6 +775,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_stdlib.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

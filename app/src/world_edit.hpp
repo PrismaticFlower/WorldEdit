@@ -58,6 +58,8 @@ private:
 
    void update_ui() noexcept;
 
+   void select_hovered_entity() noexcept;
+
    void object_definition_loaded(const lowercase_string& name,
                                  asset_ref<assets::odf::definition> asset,
                                  asset_data<assets::odf::definition> data);

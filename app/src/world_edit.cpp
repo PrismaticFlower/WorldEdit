@@ -6,7 +6,10 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_stdlib.h"
 #include "utility/file_pickers.hpp"
+#include "utility/look_for.hpp"
+#include "utility/overload.hpp"
 #include "world/raycast.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
@@ -418,6 +421,310 @@ void world_edit::update_ui() noexcept
    ImGui::EndChild();
 
    ImGui::End();
+
+   if (not _interaction_targets.selection.empty()) {
+      ImGui::Begin("Selection");
+
+      boost::variant2::visit(
+         overload{
+            [&](world::object_id id) {
+               world::object* object =
+                  look_for(_world.objects, [id](const world::object& object) {
+                     return id == object.id;
+                  });
+
+               if (not object) return;
+
+               ImGui::InputText("Name", &object->name);
+               ImGui::InputInt("Layer", &object->layer);
+
+               ImGui::Separator();
+
+               ImGui::DragFloat4("Rotation", &object->rotation[0]);
+               ImGui::DragFloat3("Position", &object->position[0]);
+
+               ImGui::Separator();
+
+               ImGui::InputInt("Team", &object->team);
+
+               ImGui::TextUnformatted("Class Name: ");
+               ImGui::SameLine();
+               ImGui::TextUnformatted(object->class_name.c_str());
+
+               ImGui::Separator();
+
+               for (auto& prop : object->instance_properties) {
+                  ImGui::InputText(prop.key.c_str(), &prop.value);
+               }
+            },
+            [&](world::light_id id) {
+               world::light* light =
+                  look_for(_world.lights, [id](const world::light& light) {
+                     return id == light.id;
+                  });
+
+               if (not light) return;
+
+               ImGui::InputText("Name", &light->name);
+               ImGui::InputInt("Layer", &light->layer);
+
+               ImGui::Separator();
+
+               ImGui::DragFloat4("Rotation", &light->rotation[0]);
+               ImGui::DragFloat3("Position", &light->position[0]);
+
+               ImGui::Separator();
+
+               ImGui::ColorEdit3("Color", &light->color[0],
+                                 ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR);
+
+               ImGui::Checkbox("Static", &light->static_);
+               ImGui::SameLine();
+               ImGui::Checkbox("Shadow Caster", &light->shadow_caster);
+               ImGui::SameLine();
+               ImGui::Checkbox("Specular Caster", &light->shadow_caster);
+
+               if (ImGui::BeginCombo("Light Type", [&] {
+                      switch (light->light_type) {
+                      case world::light_type::directional:
+                         return "Directional";
+                      case world::light_type::point:
+                      default:
+                         return "Point";
+                      case world::light_type::spot:
+                         return "Spot";
+                      }
+                   }())) {
+                  if (ImGui::Selectable("Directional")) {
+                     light->light_type = world::light_type::directional;
+                  }
+
+                  if (ImGui::Selectable("Point")) {
+                     light->light_type = world::light_type::point;
+                  }
+
+                  if (ImGui::Selectable("Spot")) {
+                     light->light_type = world::light_type::spot;
+                  }
+
+                  ImGui::EndCombo();
+               }
+
+               ImGui::Separator();
+
+               ImGui::DragFloat("Range", &light->range);
+               ImGui::DragFloat("Inner Cone Angle", &light->inner_cone_angle);
+               ImGui::DragFloat("Outer Cone Angle", &light->inner_cone_angle);
+
+               ImGui::Separator();
+
+               ImGui::DragFloat2("Directional Texture Tiling",
+                                 &light->directional_texture_tiling[0]);
+               ImGui::DragFloat2("Directional Texture Offset",
+                                 &light->directional_texture_offset[0]);
+            },
+            [&](world::path_id id) {
+               world::path* path =
+                  look_for(_world.paths, [id](const world::path& path) {
+                     return id == path.id;
+                  });
+
+               if (not path) return;
+
+               ImGui::InputText("Name", &path->name);
+               ImGui::InputInt("Layer", &path->layer);
+
+               ImGui::Separator();
+
+               if (ImGui::BeginCombo("Spline Type", [&] {
+                      switch (path->spline_type) {
+                      case world::path_spline_type::none:
+                      default:
+                         return "None";
+                      case world::path_spline_type::linear:
+                         return "Linear";
+                      case world::path_spline_type::hermite:
+                         return "Hermite";
+                      case world::path_spline_type::catmull_rom:
+                         return "Catmull-Rom";
+                      }
+                   }())) {
+                  if (ImGui::Selectable("None")) {
+                     path->spline_type = world::path_spline_type::none;
+                  }
+
+                  if (ImGui::Selectable("Linear")) {
+                     path->spline_type = world::path_spline_type::linear;
+                  }
+
+                  if (ImGui::Selectable("Hermite")) {
+                     path->spline_type = world::path_spline_type::hermite;
+                  }
+
+                  if (ImGui::Selectable("Catmull-Rom")) {
+                     path->spline_type = world::path_spline_type::catmull_rom;
+                  }
+
+                  ImGui::EndCombo();
+               }
+
+               ImGui::Text("Nodes");
+               ImGui::BeginChild("Nodes", {}, true);
+
+               for (auto [i, node] : enumerate(path->nodes)) {
+                  ImGui::PushID(static_cast<int>(i));
+
+                  ImGui::Text("Node %i", static_cast<int>(i));
+                  ImGui::Separator();
+
+                  ImGui::DragFloat4("Rotation", &node.rotation[0]);
+                  ImGui::DragFloat3("Position", &node.position[0]);
+
+                  ImGui::Separator();
+
+                  for (auto& prop : node.properties) {
+                     ImGui::InputText(prop.key.c_str(), &prop.value);
+                  }
+
+                  ImGui::PopID();
+               }
+
+               ImGui::EndChild();
+
+               if (not path->properties.empty()) ImGui::Separator();
+
+               for (auto& prop : path->properties) {
+                  ImGui::InputText(prop.key.c_str(), &prop.value);
+               }
+            },
+            [&](world::path_id_node_pair id_node) {
+               auto [id, node_index] = id_node;
+
+               world::path* path =
+                  look_for(_world.paths, [id](const world::path& path) {
+                     return id == path.id;
+                  });
+
+               if (not path) return;
+
+               if (node_index >= path->nodes.size()) return;
+            },
+            [&](world::region_id id) {
+               world::region* region =
+                  look_for(_world.regions, [id](const world::region& region) {
+                     return id == region.id;
+                  });
+
+               if (not region) return;
+
+               ImGui::InputText("Name", &region->name);
+               ImGui::InputInt("Layer", &region->layer);
+
+               ImGui::Separator();
+
+               ImGui::DragFloat4("Rotation", &region->rotation[0]);
+               ImGui::DragFloat3("Position", &region->position[0]);
+               ImGui::DragFloat3("Size", &region->size[0]);
+               if (ImGui::BeginCombo("Shape", [&] {
+                      switch (region->shape) {
+                      case world::region_shape::box:
+                      default:
+                         return "Box";
+                      case world::region_shape::sphere:
+                         return "Sphere";
+                      case world::region_shape::cylinder:
+                         return "Cylinder";
+                      }
+                   }())) {
+                  if (ImGui::Selectable("Box")) {
+                     region->shape = world::region_shape::box;
+                  }
+
+                  if (ImGui::Selectable("Sphere")) {
+                     region->shape = world::region_shape::sphere;
+                  }
+
+                  if (ImGui::Selectable("Cylinder")) {
+                     region->shape = world::region_shape::cylinder;
+                  }
+
+                  ImGui::EndCombo();
+               }
+
+               ImGui::Separator();
+
+               ImGui::InputText("Description", &region->description);
+            },
+            [&](world::sector_id id) {
+               world::sector* sector =
+                  look_for(_world.sectors, [id](const world::sector& sector) {
+                     return id == sector.id;
+                  });
+
+               if (not sector) return;
+            },
+            [&](world::portal_id id) {
+               world::portal* portal =
+                  look_for(_world.portals, [id](const world::portal& portal) {
+                     return id == portal.id;
+                  });
+
+               if (not portal) return;
+            },
+            [&](world::hintnode_id id) {
+               world::hintnode* hintnode =
+                  look_for(_world.hintnodes, [id](const world::hintnode& hintnode) {
+                     return id == hintnode.id;
+                  });
+
+               if (not hintnode) return;
+
+               ImGui::InputText("Name", &hintnode->name);
+               ImGui::InputInt("Layer", &hintnode->layer);
+
+               ImGui::Separator();
+
+               ImGui::DragFloat4("Rotation", &hintnode->rotation[0]);
+               ImGui::DragFloat3("Position", &hintnode->position[0]);
+            },
+            [&](world::barrier_id id) {
+               world::barrier* barrier =
+                  look_for(_world.barriers, [id](const world::barrier& barrier) {
+                     return id == barrier.id;
+                  });
+
+               if (not barrier) return;
+            },
+            [&](world::planning_hub_id id) { (void)id; },
+            [&](world::planning_connection_id id) { (void)id; },
+            [&](world::boundary_id id) {
+               world::boundary* boundary =
+                  look_for(_world.boundaries, [id](const world::boundary& boundary) {
+                     return id == boundary.id;
+                  });
+
+               if (not boundary) return;
+
+               world::path* path =
+                  look_for(_world.paths, [&](const world::path& path) {
+                     return path.name == boundary->name;
+                  });
+
+               if (not path) return;
+            },
+         },
+         _interaction_targets.selection.front());
+
+      ImGui::End();
+   }
+}
+
+void world_edit::select_hovered_entity() noexcept
+{
+   if (not _interaction_targets.hovered_entity) return;
+
+   _interaction_targets.selection.clear();
+   _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
 }
 
 void world_edit::object_definition_loaded(const lowercase_string& name,

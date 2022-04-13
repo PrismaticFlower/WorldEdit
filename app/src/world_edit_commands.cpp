@@ -17,6 +17,7 @@ void world_edit::initialize_commands() noexcept
       _rotate_camera = not _rotate_camera;
       GetCursorPos(&_rotate_camera_cursor_position);
    });
+   _commands.add("selection.add"s, [this]() { select_hovered_entity(); });
 
    _commands_binder.set_default_bindings({
       {"camera.move_forward"s, {.key = key::w}, {.toggle = true}},
@@ -26,6 +27,8 @@ void world_edit::initialize_commands() noexcept
       {"camera.move_up"s, {.key = key::r}, {.toggle = true}},
       {"camera.move_down"s, {.key = key::f}, {.toggle = true}},
       {"camera.rotate_with_mouse"s, {.key = key::mouse2}, {.toggle = true}},
+
+      {"selection.add"s, {.key = key::mouse1}},
    });
 }
 }
