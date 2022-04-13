@@ -830,24 +830,8 @@ void renderer::draw_interaction_targets(
 
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
-   if (interaction_targets.hovered_entity) {
-      gpu::virtual_address wireframe_constants = [&] {
-         auto allocation =
-            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
-
-         wireframe_constant_buffer
-            constants{.color = _settings->hover_color(),
-                      .line_width = _settings->line_width(),
-                      .viewport_size = {to_float(_device.swap_chain.width()),
-                                        to_float(_device.swap_chain.height())},
-                      .viewport_topleft = {0.0f, 0.0f}};
-
-         std::memcpy(allocation.cpu_address, &constants,
-                     sizeof(wireframe_constant_buffer));
-
-         return allocation.gpu_address;
-      }();
-
+   const auto draw_target = [&](world::interaction_target target,
+                                gpu::virtual_address wireframe_constants) {
       const auto meta_mesh_common_setup = [&] {
          command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
          command_list.set_graphics_root_signature(*_root_signatures.mesh_wireframe);
@@ -1321,7 +1305,51 @@ void renderer::draw_interaction_targets(
                triangle_drawer.submit();
             },
          },
-         *interaction_targets.hovered_entity);
+         target);
+   };
+
+   if (interaction_targets.hovered_entity) {
+      gpu::virtual_address wireframe_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+         wireframe_constant_buffer
+            constants{.color = _settings->hover_color(),
+                      .line_width = _settings->line_width(),
+                      .viewport_size = {to_float(_device.swap_chain.width()),
+                                        to_float(_device.swap_chain.height())},
+                      .viewport_topleft = {0.0f, 0.0f}};
+
+         std::memcpy(allocation.cpu_address, &constants,
+                     sizeof(wireframe_constant_buffer));
+
+         return allocation.gpu_address;
+      }();
+
+      draw_target(*interaction_targets.hovered_entity, wireframe_constants);
+   }
+
+   if (not interaction_targets.selection.empty()) {
+      gpu::virtual_address wireframe_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+         wireframe_constant_buffer
+            constants{.color = _settings->selected_color(),
+                      .line_width = _settings->line_width(),
+                      .viewport_size = {to_float(_device.swap_chain.width()),
+                                        to_float(_device.swap_chain.height())},
+                      .viewport_topleft = {0.0f, 0.0f}};
+
+         std::memcpy(allocation.cpu_address, &constants,
+                     sizeof(wireframe_constant_buffer));
+
+         return allocation.gpu_address;
+      }();
+
+      for (auto target : interaction_targets.selection) {
+         draw_target(target, wireframe_constants);
+      }
    }
 }
 

@@ -37,6 +37,8 @@ public:
 
    virtual auto hover_color() const noexcept -> float3 = 0;
 
+   virtual auto selected_color() const noexcept -> float3 = 0;
+
    virtual auto barrier_height() const noexcept -> float = 0;
 
    virtual auto boundary_height() const noexcept -> float = 0;

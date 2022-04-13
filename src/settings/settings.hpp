@@ -76,6 +76,11 @@ public:
       return {1.0f, 1.0f, 0.07f};
    }
 
+   auto selected_color() const noexcept -> float3 override
+   {
+      return {1.0f, 1.0f, 1.0f};
+   }
+
    auto barrier_height() const noexcept -> float override
    {
       return 64.0f;
