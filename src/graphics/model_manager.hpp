@@ -5,7 +5,9 @@
 #include "async/thread_pool.hpp"
 #include "lowercase_string.hpp"
 #include "model.hpp"
+#include "output_stream.hpp"
 #include "texture_manager.hpp"
+#include "utility/string_ops.hpp"
 
 #include <memory>
 #include <shared_mutex>
@@ -13,6 +15,7 @@
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
+#include <fmt/format.h>
 #include <gsl/gsl>
 
 namespace we::graphics {
@@ -21,8 +24,13 @@ class model_manager {
 public:
    model_manager(gpu::device& gpu_device, texture_manager& texture_manager,
                  assets::library<assets::msh::flat_model>& model_assets,
-                 std::shared_ptr<async::thread_pool> thread_pool)
-      : _gpu_device{&gpu_device}, _model_assets{model_assets}, _texture_manager{texture_manager}, _thread_pool{thread_pool}
+                 std::shared_ptr<async::thread_pool> thread_pool,
+                 output_stream& error_output)
+      : _gpu_device{&gpu_device},
+        _model_assets{model_assets},
+        _texture_manager{texture_manager},
+        _thread_pool{thread_pool},
+        _error_output{error_output}
    {
    }
 
@@ -41,7 +49,9 @@ public:
             return *state->second.model;
          }
 
-         if (_pending_creations.contains(name)) return _placeholder_model;
+         if (_pending_creations.contains(name) or _failed_creations.contains(name)) {
+            return _placeholder_model;
+         }
       }
 
       auto asset = _model_assets[name];
@@ -86,9 +96,18 @@ public:
          auto& [name, pending_create] = *elem_it;
 
          if (pending_create.task.ready()) {
-            // TODO: Currently we don't have to worry about model lifetime here but if in the future we're rendering
-            // thumbnails in the background we may have to revist this.
-            _models[name] = pending_create.task.get();
+            try {
+               // TODO: Currently we don't have to worry about model lifetime here but if in the future we're rendering
+               // thumbnails in the background we may have to revist this.
+               _models[name] = pending_create.task.get();
+            }
+            catch (std::exception& e) {
+               _error_output.write(fmt::format(
+                  "Failed to create model:\n   Name: {}\n   Message: \n{}\n",
+                  std::string_view{name}, utility::string::indent(2, e.what())));
+
+               _failed_creations.insert(name);
+            }
 
             _pending_creations.erase(elem_it);
          }
@@ -131,6 +150,8 @@ private:
          _pending_creations[name].task.cancel();
       }
 
+      _failed_creations.erase(name);
+
       enqueue_create_model(name, asset, data);
    }
 
@@ -149,7 +170,7 @@ private:
 
                                    std::shared_lock lock{_mutex};
 
-                                   // Nake sure an asset load event hasn't loaded a new asset before us.
+                                   // Make sure an asset load event hasn't loaded a new asset before us.
                                    // This stops us replacing a new asset with an out of date one.
                                    if (not _pending_creations.contains(name) or
                                        _pending_creations[name].flat_model != flat_model) {
@@ -165,11 +186,13 @@ private:
    gsl::not_null<gpu::device*> _gpu_device;
    assets::library<assets::msh::flat_model>& _model_assets;
    texture_manager& _texture_manager;
+   output_stream& _error_output;
 
    std::shared_mutex _mutex;
 
    absl::flat_hash_map<lowercase_string, model_state> _models;
    absl::flat_hash_map<lowercase_string, pending_create_model> _pending_creations;
+   absl::flat_hash_set<lowercase_string> _failed_creations;
    std::vector<std::unique_ptr<model>> _pending_destroys;
 
    std::shared_ptr<async::thread_pool> _thread_pool;

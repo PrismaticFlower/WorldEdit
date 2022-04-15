@@ -43,6 +43,9 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
       }
    }
 
+   MessageBoxA(nullptr, "Failed to a GPU with nessary feature support! If you want (and intend to) use WorldEdit please complain in the Discord. Include what kind of GPU you have!\n\nWill now fall back on WARP device (CPU rendering), this will be unbearably slow.",
+               "Unsupported GPU!", MB_OK | MB_ICONERROR);
+
    factory.EnumWarpAdapter(IID_PPV_ARGS(adapter.clear_and_assign()));
 
    return adapter;

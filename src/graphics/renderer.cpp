@@ -90,12 +90,15 @@ const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
 
 renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
                    std::shared_ptr<async::thread_pool> thread_pool,
-                   assets::libraries_manager& asset_libraries)
+                   assets::libraries_manager& asset_libraries,
+                   output_stream& error_output)
    : _window{window},
+     _error_output{error_output},
      _thread_pool{thread_pool},
      _device{window},
      _texture_manager{_device, thread_pool, asset_libraries.textures},
-     _model_manager{_device, _texture_manager, asset_libraries.models, thread_pool},
+     _model_manager{_device, _texture_manager, asset_libraries.models,
+                    thread_pool, _error_output},
      _settings{settings}
 {
    auto imgui_font_descriptor =

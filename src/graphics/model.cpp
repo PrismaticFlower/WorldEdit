@@ -19,6 +19,12 @@ namespace we::graphics {
 model::model(const assets::msh::flat_model& model, gpu::device& device,
              texture_manager& texture_manager)
 {
+   if (model.meshes.size() == 0) {
+      throw std::runtime_error{
+         "Can't create empty model! This may be a terrain cutter only model in "
+         "which case this can be safely ignored."};
+   }
+
    parts.reserve(model.meshes.size());
 
    const auto vertex_count =

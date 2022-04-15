@@ -12,6 +12,7 @@
 #include "gpu/dynamic_buffer_allocator.hpp"
 #include "light_clusters.hpp"
 #include "model_manager.hpp"
+#include "output_stream.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
 #include "settings/graphics.hpp"
@@ -40,7 +41,7 @@ class renderer {
 public:
    renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
             std::shared_ptr<async::thread_pool> thread_pool,
-            assets::libraries_manager& asset_libraries);
+            assets::libraries_manager& asset_libraries, output_stream& error_output);
 
    void draw_frame(
       const camera& camera, const world::world& world,
@@ -107,6 +108,7 @@ private:
    bool _terrain_dirty = true; // ughhhh, this feels so ugly
 
    std::shared_ptr<async::thread_pool> _thread_pool;
+   output_stream& _error_output;
 
    gpu::device _device{_window};
    gpu::graphics_command_list _world_command_list =

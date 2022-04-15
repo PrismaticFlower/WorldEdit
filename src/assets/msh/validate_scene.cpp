@@ -180,6 +180,25 @@ void check_geometry_segment_triangles_index_validity(const scene& scene)
    }
 }
 
+void check_geometry_segment_non_empty(const scene& scene)
+{
+   bool empty = true;
+
+   for (const auto& node : scene.nodes | ranges::views::filter([](const auto& node) {
+                              return node.type == node_type::skinned_mesh or
+                                     node.type == node_type::static_mesh;
+                           })) {
+      for (const auto& segment : node.segments) {
+         if (not segment.triangles.empty()) empty = false;
+      }
+   }
+
+   if (empty) {
+      throw std::runtime_error{fmt::format(
+         ".msh file validation failure! No node contains mesh data."sv)};
+   }
+}
+
 void check_collision_primitive_shape_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -213,6 +232,7 @@ void validate_scene(const scene& scene)
                                           check_geometry_segment_attibutes_count_matches,
                                           check_geometry_segment_vertex_count_limit,
                                           check_geometry_segment_triangles_index_validity,
+                                          check_geometry_segment_non_empty,
                                           check_collision_primitive_shape_validity};
 
    for (auto check : validation_checks) {

@@ -208,6 +208,8 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
                                             const std::vector<material>& scene_materials)
 {
    for (const auto& segment : segments) {
+      if (segment.triangles.empty()) continue;
+
       auto& mesh =
          select_mesh_for_segment(segment, scene_materials.at(segment.material_index));
 
