@@ -393,7 +393,9 @@ void load_regions(const std::filesystem::path& filepath,
 
          auto& region = world_out.regions.emplace_back();
 
-         region.name = key_node.at("Name"sv).values.get<std::string>(0);
+         region.name = key_node.contains("Name"sv)
+                          ? key_node.at("Name"sv).values.get<std::string>(0)
+                          : ""s;
          region.layer = read_layer_index(key_node, layer_remap);
          std::tie(region.rotation, region.position) =
             read_location(key_node, "Rotation"sv, "Position"sv);
