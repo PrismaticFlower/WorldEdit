@@ -68,18 +68,18 @@ TEST_CASE("ucfb reading", "[ucfb][reader]")
 
       auto info = shdr.read_child_strict<"INFO"_id>();
 
-      // the read head is aligned to four bytes after a read
+      // unaligned reads (the default)
       REQUIRE(info.read<uint16>() == 1);
+      REQUIRE(info.read<uint16>() == 0);
       REQUIRE(info.read<uint16>() == 26);
-      REQUIRE_THROWS(info.read<uint32>() == 0);
+      REQUIRE(info.read<uint16>() == 0);
 
       info.reset_head();
 
-      // unless we use unaligned reads
-      REQUIRE(info.read_unaligned<uint16>() == 1);
-      REQUIRE(info.read_unaligned<uint16>() == 0);
-      REQUIRE(info.read_unaligned<uint16>() == 26);
-      REQUIRE(info.read_unaligned<uint16>() == 0);
+      // the read head is aligned to four bytes after an aligned read
+      REQUIRE(info.read_aligned<uint16>() == 1);
+      REQUIRE(info.read_aligned<uint16>() == 26);
+      REQUIRE_THROWS(info.read_aligned<uint32>() == 0);
    }
 
    SECTION("consume tests")
@@ -90,14 +90,14 @@ TEST_CASE("ucfb reading", "[ucfb][reader]")
 
       auto info = shdr.read_child_strict<"INFO"_id>();
 
-      info.consume(4);
+      info.consume(2);
+      REQUIRE(info.read<uint16>() == 0);
       REQUIRE(info.read<uint32>() == 26);
 
       info.reset_head();
 
-      // consumes can be unaligned as well.
-      info.consume_unaligned(2);
-      REQUIRE(info.read<uint16>() == 0);
+      // consumes can be aligned as well.
+      info.consume_aligned(1);
       REQUIRE(info.read<uint32>() == 26);
    }
 

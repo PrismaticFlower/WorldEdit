@@ -69,7 +69,7 @@ public:
    }
 
    template<typename Type>
-   auto read(const bool unaligned = false) -> Type
+   auto read(const bool aligned = false) -> Type
    {
       static_assert(std::is_trivially_copyable_v<Type>,
                     "Type must be trivially copyable.");
@@ -80,13 +80,13 @@ public:
 
       check_head();
 
-      if (!unaligned) align_head();
+      if (aligned) align_head();
 
       return utility::make_from_bytes<Type>(std::span{&_data[cur_pos], sizeof(Type)});
    }
 
    template<typename Type>
-   auto read_unaligned() -> Type
+   auto read_aligned() -> Type
    {
       return read<Type>(true);
    }
@@ -99,12 +99,12 @@ public:
    }
 
    template<typename... Types>
-   auto read_multi_unaligned() -> std::tuple<Types...>
+   auto read_multi_aligned() -> std::tuple<Types...>
    {
       return read_multi<Types...>(std::array{(sizeof(Types), true)...});
    }
 
-   auto read_string(const bool unaligned = false) -> std::string_view
+   auto read_string(const bool aligned = false) -> std::string_view
    {
       const char* const string = reinterpret_cast<const char*>(_data + _head);
       const auto string_length = cstring_length(string, _size - _head);
@@ -113,12 +113,12 @@ public:
 
       check_head();
 
-      if (!unaligned) align_head();
+      if (aligned) align_head();
 
       return {string, string_length};
    }
 
-   auto read_string_unaligned() -> std::string_view
+   auto read_string_aligned() -> std::string_view
    {
       return read_string(true);
    }
@@ -134,8 +134,6 @@ public:
 
       check_head();
 
-      align_head();
-
       auto child_trace_stack = _trace_stack;
       child_trace_stack.push_back({.id = child_id, .offset = child_header_abs_offset});
 
@@ -150,16 +148,16 @@ public:
               typename reader_strict<type_id>::unchecked_tag{}};
    }
 
-   void consume(const std::size_t amount, const bool unaligned = false)
+   void consume(const std::size_t amount, const bool aligned = false)
    {
       _head += amount;
 
       check_head();
 
-      if (!unaligned) align_head();
+      if (aligned) align_head();
    }
 
-   void consume_unaligned(const std::size_t amount)
+   void consume_aligned(const std::size_t amount)
    {
       consume(amount, true);
    }

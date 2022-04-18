@@ -106,15 +106,15 @@ auto read_strp(ucfb::reader_strict<"STRP"_id> strp)
    if (count < 3) return {};
 
    std::vector<std::vector<uint16>> strips;
-   strips.push_back({static_cast<uint16>(strp.read_unaligned<uint16>() & 0x7fff),
-                     static_cast<uint16>(strp.read_unaligned<uint16>() & 0x7fff)});
+   strips.push_back({static_cast<uint16>(strp.read<uint16>() & 0x7fff),
+                     static_cast<uint16>(strp.read<uint16>() & 0x7fff)});
 
    for (int i = 2; i < count; ++i) {
-      auto index = strp.read_unaligned<uint16>();
+      auto index = strp.read<uint16>();
 
       if (index & 0x8000) {
          strips.push_back({static_cast<uint16>(index & 0x7fff),
-                           static_cast<uint16>(strp.read_unaligned<uint16>() & 0x7fff)});
+                           static_cast<uint16>(strp.read<uint16>() & 0x7fff)});
 
          i += 1;
          continue;
@@ -287,10 +287,10 @@ auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
          child.read<float>(); // Specular Exponent/Decay (Gets ignored by RedEngine in SWBFII for all known materials)
          continue;
       case "ATRB"_id:
-         material.flags = child.read_unaligned<material_flags>();
-         material.rendertype = child.read_unaligned<rendertype>();
-         material.data0 = child.read_unaligned<uint8>();
-         material.data1 = child.read_unaligned<uint8>();
+         material.flags = child.read<material_flags>();
+         material.rendertype = child.read<rendertype>();
+         material.data0 = child.read<uint8>();
+         material.data1 = child.read<uint8>();
          continue;
       case "TX0D"_id:
          material.textures[0] = read_txnd(child);
