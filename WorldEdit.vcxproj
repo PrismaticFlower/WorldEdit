@@ -193,6 +193,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\actions\stack.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
@@ -251,6 +252,7 @@
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
     <ClInclude Include="src\actions\action.hpp" />
+    <ClInclude Include="src\actions\stack.hpp" />
     <ClInclude Include="src\assets\asset_ref.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />
     <ClInclude Include="src\assets\asset_state.hpp" />

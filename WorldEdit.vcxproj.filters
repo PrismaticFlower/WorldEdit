@@ -580,6 +580,9 @@
     <ClInclude Include="src\imgui\imgui_stdlib.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\actions\stack.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -778,6 +781,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_stdlib.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\actions\stack.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
