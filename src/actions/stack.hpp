@@ -37,7 +37,7 @@ public:
    /// @param world The world used with the actions.
    void revert(const std::size_t count, world::world& world) noexcept;
 
-   /// @brief Reapplies a number of actions. Does nothing if there is no action to revert.
+   /// @brief Reapplies a number of actions. Does nothing if there is no action to reapply.
    /// @param count The number of actions to revert.
    /// @param world The world used with the actions.
    void reapply(const std::size_t count, world::world& world) noexcept;
