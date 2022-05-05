@@ -192,4 +192,53 @@ TEST_CASE("actions stack ordering tests", "[Commands]")
    REQUIRE(not c_active);
 }
 
+TEST_CASE("actions stack empty function tests", "[Commands]")
+{
+   stack stack;
+   world::world world;
+
+   REQUIRE(stack.applied_empty());
+   REQUIRE(stack.reverted_empty());
+
+   int apply_call_count = 0;
+   int revert_call_count = 0;
+
+   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
+               world);
+   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
+               world);
+   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
+               world);
+
+   REQUIRE(not stack.applied_empty());
+   REQUIRE(stack.reverted_empty());
+
+   stack.revert(2, world);
+
+   REQUIRE(not stack.applied_empty());
+   REQUIRE(not stack.reverted_empty());
+
+   stack.revert(1, world);
+
+   REQUIRE(stack.applied_empty());
+   REQUIRE(not stack.reverted_empty());
+}
+
+TEST_CASE("actions stack applied_top", "[Commands]")
+{
+   stack stack;
+   world::world world;
+
+   REQUIRE(stack.applied_top() == nullptr);
+
+   int apply_call_count = 0;
+   int revert_call_count = 0;
+
+   auto unique_action =
+      std::make_unique<dummy_action>(apply_call_count, revert_call_count);
+   auto* action = unique_action.get();
+
+   stack.apply(std::move(unique_action), world);
+
+   REQUIRE(stack.applied_top() == action);
 }

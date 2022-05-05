@@ -583,6 +583,12 @@
     <ClInclude Include="src\actions\stack.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\actions\imgui_ext.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\actions\ui_action.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

@@ -79,4 +79,18 @@ auto stack::reverted_size() const noexcept -> std::size_t
    return _reverted.size();
 }
 
+bool stack::applied_empty() const noexcept
+{
+   return _applied.empty();
+}
+
+bool stack::reverted_empty() const noexcept
+{
+   return _reverted.empty();
+}
+auto stack::applied_top() noexcept -> action*
+{
+   return _applied.empty() ? nullptr : _applied.back().get();
+}
+
 }

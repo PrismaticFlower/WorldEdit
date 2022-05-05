@@ -1,5 +1,6 @@
 
 #include "world_edit.hpp"
+#include "actions/imgui_ext.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
 #include "hresult_error.hpp"
@@ -440,8 +441,10 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::DragFloat4("Rotation", &object->rotation[0]);
-               ImGui::DragFloat3("Position", &object->position[0]);
+               ImGui::DragQuat("Rotation", object, &world::object::rotation,
+                               &_undo_stack, &_world);
+               ImGui::DragFloat3("Position", object, &world::object::position,
+                                 &_undo_stack, &_world);
 
                ImGui::Separator();
 
@@ -470,8 +473,10 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::DragFloat4("Rotation", &light->rotation[0]);
-               ImGui::DragFloat3("Position", &light->position[0]);
+               ImGui::DragQuat("Rotation", light, &world::light::rotation,
+                               &_undo_stack, &_world);
+               ImGui::DragFloat3("Position", light, &world::light::position,
+                                 &_undo_stack, &_world);
 
                ImGui::Separator();
 
@@ -622,9 +627,13 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::DragFloat4("Rotation", &region->rotation[0]);
-               ImGui::DragFloat3("Position", &region->position[0]);
-               ImGui::DragFloat3("Size", &region->size[0]);
+               ImGui::DragQuat("Rotation", region, &world::region::rotation,
+                               &_undo_stack, &_world);
+               ImGui::DragFloat3("Position", region, &world::region::position,
+                                 &_undo_stack, &_world);
+               ImGui::DragFloat3("Size", region, &world::region::size,
+                                 &_undo_stack, &_world);
+
                if (ImGui::BeginCombo("Shape", [&] {
                       switch (region->shape) {
                       case world::region_shape::box:
@@ -684,8 +693,10 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::DragFloat4("Rotation", &hintnode->rotation[0]);
-               ImGui::DragFloat3("Position", &hintnode->position[0]);
+               ImGui::DragQuat("Rotation", hintnode, &world::hintnode::rotation,
+                               &_undo_stack, &_world);
+               ImGui::DragFloat3("Position", hintnode, &world::hintnode::position,
+                                 &_undo_stack, &_world);
             },
             [&](world::barrier_id id) {
                world::barrier* barrier =
@@ -717,6 +728,12 @@ void world_edit::update_ui() noexcept
 
       ImGui::End();
    }
+
+   ImGui::Value("Undo Stack Size", (unsigned)_undo_stack.applied_size());
+   ImGui::Value("Redo Stack Size", (unsigned)_undo_stack.reverted_size());
+
+   if (ImGui::Button("Undo")) _undo_stack.revert(_world);
+   if (ImGui::Button("Redo")) _undo_stack.reapply(_world);
 }
 
 void world_edit::select_hovered_entity() noexcept
@@ -878,6 +895,8 @@ void world_edit::close_world() noexcept
    _world_draw_mask = {};
    _world_layers_draw_mask = {true};
    _world_path.clear();
+
+   _undo_stack = {};
 
    _renderer.mark_dirty_terrain();
 

@@ -56,6 +56,16 @@ public:
    /// @brief Number of actions in the reverted stack.
    auto reverted_size() const noexcept -> std::size_t;
 
+   /// @brief Check if the applied stack is empty.
+   bool applied_empty() const noexcept;
+
+   /// @brief Check if the reverted stack is empty.
+   bool reverted_empty() const noexcept;
+
+   /// @brief Gets the pointer to the action at the top of the applied stack. If changes are made to the action drop_reverted should be called.
+   /// @return The pointer to the action or nullptr if no action is on the stack.
+   auto applied_top() noexcept -> action*;
+
 private:
    std::vector<std::unique_ptr<action>> _applied;
    std::vector<std::unique_ptr<action>> _reverted;

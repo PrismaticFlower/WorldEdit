@@ -252,7 +252,9 @@
     <ClInclude Include="include\world\terrain.hpp" />
     <ClInclude Include="include\world\world.hpp" />
     <ClInclude Include="src\actions\action.hpp" />
+    <ClInclude Include="src\actions\imgui_ext.hpp" />
     <ClInclude Include="src\actions\stack.hpp" />
+    <ClInclude Include="src\actions\ui_action.hpp" />
     <ClInclude Include="src\assets\asset_ref.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />
     <ClInclude Include="src\assets\asset_state.hpp" />

@@ -1,4 +1,5 @@
 
+#include "actions/stack.hpp"
 #include "assets/asset_libraries.hpp"
 #include "async/thread_pool.hpp"
 #include "commands.hpp"
@@ -116,6 +117,8 @@ private:
    world::interaction_targets _interaction_targets;
    world::active_entity_types _world_draw_mask;
    world::active_layers _world_layers_draw_mask{true};
+
+   actions::stack _undo_stack;
 
    graphics::renderer _renderer;
    graphics::controllable_perspective_camera _camera;
