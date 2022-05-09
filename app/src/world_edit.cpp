@@ -436,8 +436,9 @@ void world_edit::update_ui() noexcept
 
                if (not object) return;
 
-               ImGui::InputText("Name", &object->name);
-               ImGui::InputInt("Layer", &object->layer);
+               ImGui::InputText("Name", object, &world::object::name,
+                                &_undo_stack, &_world);
+               ImGui::LayerPick("Layer", object, &_undo_stack, &_world);
 
                ImGui::Separator();
 
@@ -448,7 +449,8 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::InputInt("Team", &object->team);
+               ImGui::SliderInt("Team", object, &world::object::team, &_undo_stack,
+                                &_world, 0, 15, "%d", ImGuiSliderFlags_AlwaysClamp);
 
                ImGui::TextUnformatted("Class Name: ");
                ImGui::SameLine();
@@ -456,8 +458,9 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               for (auto& prop : object->instance_properties) {
-                  ImGui::InputText(prop.key.c_str(), &prop.value);
+               for (auto [i, prop] : enumerate(object->instance_properties)) {
+                  ImGui::InputKeyValue(object, &world::object::instance_properties,
+                                       i, &_undo_stack, &_world);
                }
             },
             [&](world::light_id id) {
@@ -468,8 +471,9 @@ void world_edit::update_ui() noexcept
 
                if (not light) return;
 
-               ImGui::InputText("Name", &light->name);
-               ImGui::InputInt("Layer", &light->layer);
+               ImGui::InputText("Name", light, &world::light::name,
+                                &_undo_stack, &_world);
+               ImGui::LayerPick("Layer", light, &_undo_stack, &_world);
 
                ImGui::Separator();
 
@@ -480,53 +484,47 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::ColorEdit3("Color", &light->color[0],
+               ImGui::ColorEdit3("Color", light, &world::light::color,
+                                 &_undo_stack, &_world,
                                  ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR);
 
-               ImGui::Checkbox("Static", &light->static_);
+               ImGui::Checkbox("Static", light, &world::light::static_,
+                               &_undo_stack, &_world);
                ImGui::SameLine();
-               ImGui::Checkbox("Shadow Caster", &light->shadow_caster);
+               ImGui::Checkbox("Shadow Caster", light, &world::light::shadow_caster,
+                               &_undo_stack, &_world);
                ImGui::SameLine();
-               ImGui::Checkbox("Specular Caster", &light->shadow_caster);
+               ImGui::Checkbox("Specular Caster", light,
+                               &world::light::specular_caster, &_undo_stack, &_world);
 
-               if (ImGui::BeginCombo("Light Type", [&] {
-                      switch (light->light_type) {
-                      case world::light_type::directional:
-                         return "Directional";
-                      case world::light_type::point:
-                      default:
-                         return "Point";
-                      case world::light_type::spot:
-                         return "Spot";
-                      }
-                   }())) {
-                  if (ImGui::Selectable("Directional")) {
-                     light->light_type = world::light_type::directional;
-                  }
-
-                  if (ImGui::Selectable("Point")) {
-                     light->light_type = world::light_type::point;
-                  }
-
-                  if (ImGui::Selectable("Spot")) {
-                     light->light_type = world::light_type::spot;
-                  }
-
-                  ImGui::EndCombo();
-               }
+               ImGui::EnumSelect("Light Type", light, &world::light::light_type,
+                                 &_undo_stack, &_world,
+                                 {enum_select_option{"Directional",
+                                                     world::light_type::directional},
+                                  enum_select_option{"Point", world::light_type::point},
+                                  enum_select_option{"Spot", world::light_type::spot}});
 
                ImGui::Separator();
 
-               ImGui::DragFloat("Range", &light->range);
-               ImGui::DragFloat("Inner Cone Angle", &light->inner_cone_angle);
-               ImGui::DragFloat("Outer Cone Angle", &light->inner_cone_angle);
+               ImGui::DragFloat("Range", light, &world::light::range,
+                                &_undo_stack, &_world);
+               ImGui::DragFloat("Inner Cone Angle", light,
+                                &world::light::inner_cone_angle, &_undo_stack,
+                                &_world, 0.01f, 0.0f, light->outer_cone_angle,
+                                "%.3f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Outer Cone Angle", light,
+                                &world::light::outer_cone_angle, &_undo_stack,
+                                &_world, 0.01f, light->inner_cone_angle, 1.570f,
+                                "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
                ImGui::Separator();
 
-               ImGui::DragFloat2("Directional Texture Tiling",
-                                 &light->directional_texture_tiling[0]);
-               ImGui::DragFloat2("Directional Texture Offset",
-                                 &light->directional_texture_offset[0]);
+               ImGui::DragFloat2("Directional Texture Tiling", light,
+                                 &world::light::directional_texture_tiling,
+                                 &_undo_stack, &_world, 0.01f);
+               ImGui::DragFloat2("Directional Texture Offset", light,
+                                 &world::light::directional_texture_offset,
+                                 &_undo_stack, &_world, 0.01f);
             },
             [&](world::path_id id) {
                world::path* path =
@@ -536,41 +534,22 @@ void world_edit::update_ui() noexcept
 
                if (not path) return;
 
-               ImGui::InputText("Name", &path->name);
-               ImGui::InputInt("Layer", &path->layer);
+               ImGui::InputText("Name", path, &world::path::name, &_undo_stack, &_world);
+               ImGui::LayerPick("Layer", path, &_undo_stack, &_world);
 
                ImGui::Separator();
 
-               if (ImGui::BeginCombo("Spline Type", [&] {
-                      switch (path->spline_type) {
-                      case world::path_spline_type::none:
-                      default:
-                         return "None";
-                      case world::path_spline_type::linear:
-                         return "Linear";
-                      case world::path_spline_type::hermite:
-                         return "Hermite";
-                      case world::path_spline_type::catmull_rom:
-                         return "Catmull-Rom";
-                      }
-                   }())) {
-                  if (ImGui::Selectable("None")) {
-                     path->spline_type = world::path_spline_type::none;
-                  }
+               ImGui::EnumSelect(
+                  "Spline Type", path, &world::path::spline_type, &_undo_stack, &_world,
+                  {enum_select_option{"None", world::path_spline_type::none},
+                   enum_select_option{"Linear", world::path_spline_type::linear},
+                   enum_select_option{"Hermite", world::path_spline_type::hermite},
+                   enum_select_option{"Catmull-Rom",
+                                      world::path_spline_type::catmull_rom}});
 
-                  if (ImGui::Selectable("Linear")) {
-                     path->spline_type = world::path_spline_type::linear;
-                  }
-
-                  if (ImGui::Selectable("Hermite")) {
-                     path->spline_type = world::path_spline_type::hermite;
-                  }
-
-                  if (ImGui::Selectable("Catmull-Rom")) {
-                     path->spline_type = world::path_spline_type::catmull_rom;
-                  }
-
-                  ImGui::EndCombo();
+               for (auto [i, prop] : enumerate(path->properties)) {
+                  ImGui::InputKeyValue(path, &world::path::properties, i,
+                                       &_undo_stack, &_world);
                }
 
                ImGui::Text("Nodes");
@@ -582,25 +561,19 @@ void world_edit::update_ui() noexcept
                   ImGui::Text("Node %i", static_cast<int>(i));
                   ImGui::Separator();
 
-                  ImGui::DragFloat4("Rotation", &node.rotation[0]);
-                  ImGui::DragFloat3("Position", &node.position[0]);
+                  ImGui::DragQuat("Rotation", path, i, &world::path::node::rotation,
+                                  &_undo_stack, &_world);
+                  ImGui::DragFloat3("Position", path, i, &world::path::node::position,
+                                    &_undo_stack, &_world);
 
-                  ImGui::Separator();
-
-                  for (auto& prop : node.properties) {
-                     ImGui::InputText(prop.key.c_str(), &prop.value);
+                  for (auto [prop_index, prop] : enumerate(node.properties)) {
+                     ImGui::InputKeyValue(path, i, prop_index, &_undo_stack, &_world);
                   }
 
                   ImGui::PopID();
                }
 
                ImGui::EndChild();
-
-               if (not path->properties.empty()) ImGui::Separator();
-
-               for (auto& prop : path->properties) {
-                  ImGui::InputText(prop.key.c_str(), &prop.value);
-               }
             },
             [&](world::path_id_node_pair id_node) {
                auto [id, node_index] = id_node;
@@ -622,8 +595,9 @@ void world_edit::update_ui() noexcept
 
                if (not region) return;
 
-               ImGui::InputText("Name", &region->name);
-               ImGui::InputInt("Layer", &region->layer);
+               ImGui::InputText("Name", region, &world::region::name,
+                                &_undo_stack, &_world);
+               ImGui::LayerPick("Layer", region, &_undo_stack, &_world);
 
                ImGui::Separator();
 
@@ -634,35 +608,16 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat3("Size", region, &world::region::size,
                                  &_undo_stack, &_world);
 
-               if (ImGui::BeginCombo("Shape", [&] {
-                      switch (region->shape) {
-                      case world::region_shape::box:
-                      default:
-                         return "Box";
-                      case world::region_shape::sphere:
-                         return "Sphere";
-                      case world::region_shape::cylinder:
-                         return "Cylinder";
-                      }
-                   }())) {
-                  if (ImGui::Selectable("Box")) {
-                     region->shape = world::region_shape::box;
-                  }
-
-                  if (ImGui::Selectable("Sphere")) {
-                     region->shape = world::region_shape::sphere;
-                  }
-
-                  if (ImGui::Selectable("Cylinder")) {
-                     region->shape = world::region_shape::cylinder;
-                  }
-
-                  ImGui::EndCombo();
-               }
+               ImGui::EnumSelect(
+                  "Shape", region, &world::region::shape, &_undo_stack, &_world,
+                  {enum_select_option{"Box", world::region_shape::box},
+                   enum_select_option{"Sphere", world::region_shape::sphere},
+                   enum_select_option{"Cylinder", world::region_shape::cylinder}});
 
                ImGui::Separator();
 
-               ImGui::InputText("Description", &region->description);
+               ImGui::InputText("Description", region, &world::region::description,
+                                &_undo_stack, &_world);
             },
             [&](world::sector_id id) {
                world::sector* sector =
@@ -688,8 +643,9 @@ void world_edit::update_ui() noexcept
 
                if (not hintnode) return;
 
-               ImGui::InputText("Name", &hintnode->name);
-               ImGui::InputInt("Layer", &hintnode->layer);
+               ImGui::InputText("Name", hintnode, &world::hintnode::name,
+                                &_undo_stack, &_world);
+               ImGui::LayerPick("Layer", hintnode, &_undo_stack, &_world);
 
                ImGui::Separator();
 
