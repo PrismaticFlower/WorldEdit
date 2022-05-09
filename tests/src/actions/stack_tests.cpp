@@ -47,7 +47,7 @@ struct dummy_ordering_action : action {
 
 }
 
-TEST_CASE("actions stack core tests", "[Commands]")
+TEST_CASE("actions stack core tests", "[Actions]")
 {
    stack stack;
    world::world world;
@@ -78,7 +78,7 @@ TEST_CASE("actions stack core tests", "[Commands]")
    REQUIRE(stack.reverted_size() == 0);
 }
 
-TEST_CASE("actions stack count function tests", "[Commands]")
+TEST_CASE("actions stack count function tests", "[Actions]")
 {
    stack stack;
    world::world world;
@@ -127,7 +127,7 @@ TEST_CASE("actions stack count function tests", "[Commands]")
    REQUIRE(stack.reverted_size() == 0);
 }
 
-TEST_CASE("actions stack _all function tests", "[Commands]")
+TEST_CASE("actions stack _all function tests", "[Actions]")
 {
    stack stack;
    world::world world;
@@ -162,7 +162,7 @@ TEST_CASE("actions stack _all function tests", "[Commands]")
    REQUIRE(stack.reverted_size() == 0);
 }
 
-TEST_CASE("actions stack ordering tests", "[Commands]")
+TEST_CASE("actions stack ordering tests", "[Actions]")
 {
    stack stack;
    world::world world;
@@ -192,7 +192,7 @@ TEST_CASE("actions stack ordering tests", "[Commands]")
    REQUIRE(not c_active);
 }
 
-TEST_CASE("actions stack empty function tests", "[Commands]")
+TEST_CASE("actions stack empty function tests", "[Actions]")
 {
    stack stack;
    world::world world;
@@ -224,7 +224,7 @@ TEST_CASE("actions stack empty function tests", "[Commands]")
    REQUIRE(not stack.reverted_empty());
 }
 
-TEST_CASE("actions stack applied_top", "[Commands]")
+TEST_CASE("actions stack applied_top", "[Actions]")
 {
    stack stack;
    world::world world;
@@ -241,4 +241,6 @@ TEST_CASE("actions stack applied_top", "[Commands]")
    stack.apply(std::move(unique_action), world);
 
    REQUIRE(stack.applied_top() == action);
+}
+
 }

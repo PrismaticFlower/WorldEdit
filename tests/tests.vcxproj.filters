@@ -55,6 +55,8 @@
     <ClCompile Include="src\key_input_manager_tests.cpp" />
     <ClCompile Include="src\commands_test.cpp" />
     <ClCompile Include="src\actions\stack_tests.cpp" />
+    <ClCompile Include="src\actions\ui_action_tests.cpp" />
+    <ClCompile Include="src\actions\world_test_data.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -75,6 +77,7 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\approx_test_helpers.hpp" />
+    <ClInclude Include="src\actions\world_test_data.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Catch2Adapter.runsettings" />

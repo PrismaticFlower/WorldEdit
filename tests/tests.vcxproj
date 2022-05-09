@@ -177,6 +177,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\actions\stack_tests.cpp" />
+    <ClCompile Include="src\actions\ui_action_tests.cpp" />
+    <ClCompile Include="src\actions\world_test_data.cpp" />
     <ClCompile Include="src\assets\asset_ref_tests.cpp" />
     <ClCompile Include="src\assets\config\io_tests.cpp" />
     <ClCompile Include="src\assets\config\key_node_tests.cpp" />
@@ -217,6 +219,7 @@
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
     <ClCompile Include="src\world\world_io_save_tests.cpp" />
     <ClCompile Include="src\world\world_utilities_tests.cpp" />
+    <ClInclude Include="src\actions\world_test_data.hpp" />
     <ClInclude Include="src\approx_test_helpers.hpp" />
     <ClInclude Include="src\pch.h" />
     <ClCompile Include="src\ucfb\reader_tests.cpp">

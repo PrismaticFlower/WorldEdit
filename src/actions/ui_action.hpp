@@ -7,6 +7,8 @@
 
 namespace we::actions {
 
+// Classes for integrating ImGui controls with the Undo-Redo stack.
+
 template<typename Entity, typename T>
 struct ui_action final : action {
    using entity_type = Entity;

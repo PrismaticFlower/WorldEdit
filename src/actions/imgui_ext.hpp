@@ -12,32 +12,9 @@
 #include <memory>
 #include <type_traits>
 
-namespace we::actions::imgui {
+// Wrappers for ImGui controls that integrate with the Undo-Redo stack.
 
-template<typename T, typename U>
-inline bool drag_any(const char* label, T* value, float v_speed, U v_min,
-                     U v_max, const char* format, ImGuiSliderFlags flags)
-{
-   if constexpr (std::is_same_v<float, T>) {
-      return ImGui::DragFloat(label, value, v_speed, v_min, v_max, format, flags);
-   }
-   else if constexpr (std::is_same_v<float2, T>) {
-      return ImGui::DragFloat2(label, &value->x, v_speed, v_min, v_max, format, flags);
-   }
-   else if constexpr (std::is_same_v<float3, T>) {
-      return ImGui::DragFloat3(label, &value->x, v_speed, v_min, v_max, format, flags);
-   }
-   else if constexpr (std::is_same_v<float4, T>) {
-      return ImGui::DragFloat4(label, &value->x, v_speed, v_min, v_max, format, flags);
-   }
-   else if constexpr (std::is_same_v<quaternion, T>) {
-      return ImGui::DragFloat4(label, &value->x, v_speed, v_min, v_max, format, flags);
-   }
-   else {
-      static_assert(std::is_same_v<void, T>,
-                    "Unsupported type!"); // Add more types as needed.
-   }
-}
+namespace we::actions::imgui {
 
 struct edit_widget_result {
    bool value_changed;
