@@ -31,7 +31,7 @@ struct raycast_result<barrier> {
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const object> objects,
-             const absl::flat_hash_map<lowercase_string, std::shared_ptr<object_class>>& object_classes) noexcept
+             const absl::flat_hash_map<lowercase_string, object_class>& object_classes) noexcept
    -> std::optional<raycast_result<object>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

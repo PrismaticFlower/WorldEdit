@@ -6,13 +6,12 @@
 #include "lowercase_string.hpp"
 #include "object_instance_property.hpp"
 
-#include <memory>
 #include <string>
 #include <vector>
 
 namespace we::world {
 
-struct object_class : std::enable_shared_from_this<object_class> {
+struct object_class {
    object_class() = default;
 
    object_class(assets::libraries_manager& assets_libraries,

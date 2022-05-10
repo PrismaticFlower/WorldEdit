@@ -12,7 +12,7 @@ namespace we::world {
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const object> objects,
-             const absl::flat_hash_map<lowercase_string, std::shared_ptr<object_class>>& object_classes) noexcept
+             const absl::flat_hash_map<lowercase_string, object_class>& object_classes) noexcept
    -> std::optional<raycast_result<object>>
 {
    using namespace assets;
@@ -34,7 +34,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       float3 obj_ray_direction =
          glm::normalize(float3x3{world_to_obj} * ray_direction);
 
-      const msh::flat_model& model = *object_classes.at(object.class_name)->model;
+      const msh::flat_model& model = *object_classes.at(object.class_name).model;
 
       float3 box_centre = (model.bounding_box.min + model.bounding_box.max) * 0.5f;
       float3 box_size = model.bounding_box.max - model.bounding_box.min;

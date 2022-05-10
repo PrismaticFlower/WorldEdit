@@ -103,8 +103,7 @@ void world_edit::update_object_classes()
       auto definition = _asset_libraries.odfs[object.class_name];
 
       _object_classes.emplace(object.class_name,
-                              std::make_shared<world::object_class>(_asset_libraries,
-                                                                    definition));
+                              world::object_class{_asset_libraries, definition});
    }
 }
 
@@ -702,7 +701,7 @@ void world_edit::object_definition_loaded(const lowercase_string& name,
                                           asset_ref<assets::odf::definition> asset,
                                           asset_data<assets::odf::definition> data)
 {
-   _object_classes[name]->update_definition(_asset_libraries, asset);
+   _object_classes[name].update_definition(_asset_libraries, asset);
 }
 
 void world_edit::model_loaded(const lowercase_string& name,
@@ -710,10 +709,10 @@ void world_edit::model_loaded(const lowercase_string& name,
                               asset_data<assets::msh::flat_model> data)
 {
    for (auto& [object_class_name, object_class] : _object_classes) {
-      if (object_class->model_name != name) continue;
+      if (object_class.model_name != name) continue;
 
-      object_class->model_asset = asset;
-      object_class->model = data;
+      object_class.model_asset = asset;
+      object_class.model = data;
    }
 }
 

@@ -131,12 +131,11 @@ renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settin
    }
 }
 
-void renderer::draw_frame(
-   const camera& camera, const world::world& world,
-   const world::interaction_targets& interaction_targets,
-   const world::active_entity_types active_entity_types,
-   const world::active_layers active_layers,
-   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
+void renderer::draw_frame(const camera& camera, const world::world& world,
+                          const world::interaction_targets& interaction_targets,
+                          const world::active_entity_types active_entity_types,
+                          const world::active_layers active_layers,
+                          const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
 {
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
@@ -824,7 +823,7 @@ void renderer::draw_world_meta_objects(const frustrum& view_frustrum,
 void renderer::draw_interaction_targets(
    const frustrum& view_frustrum, const world::world& world,
    const world::interaction_targets& interaction_targets,
-   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes,
+   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
    gpu::graphics_command_list& command_list)
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for interaction targets?)
@@ -893,7 +892,7 @@ void renderer::draw_interaction_targets(
                }();
 
                model& model =
-                  _model_manager[world_classes.at(object->class_name)->model_name];
+                  _model_manager[world_classes.at(object->class_name).model_name];
 
                command_list.set_graphics_root_signature(*_root_signatures.mesh_wireframe);
                command_list.set_graphics_root_constant_buffer_view(rs::mesh_wireframe::object_cbv,
@@ -1359,7 +1358,7 @@ void renderer::draw_interaction_targets(
 void renderer::build_world_mesh_list(
    gpu::graphics_command_list& command_list, const world::world& world,
    const world::active_layers active_layers,
-   const absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>>& world_classes)
+   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
 {
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
@@ -1374,7 +1373,7 @@ void renderer::build_world_mesh_list(
 
    for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
       const auto& object = world.objects[i];
-      auto& model = _model_manager[world_classes.at(object.class_name)->model_name];
+      auto& model = _model_manager[world_classes.at(object.class_name).model_name];
 
       if (not active_layers[object.layer]) continue;
 

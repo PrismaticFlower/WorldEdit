@@ -112,7 +112,7 @@ private:
    std::vector<std::filesystem::path> _project_world_paths;
 
    assets::libraries_manager _asset_libraries{_stream, _thread_pool};
-   absl::flat_hash_map<lowercase_string, std::shared_ptr<world::object_class>> _object_classes;
+   absl::flat_hash_map<lowercase_string, world::object_class> _object_classes;
    world::world _world;
    world::interaction_targets _interaction_targets;
    world::active_entity_types _world_draw_mask;
