@@ -438,6 +438,8 @@ void world_edit::update_ui() noexcept
 
                ImGui::InputText("Name", object, &world::object::name,
                                 &_undo_stack, &_world);
+               ImGui::InputText("Class Name", object, &world::object::class_name,
+                                &_undo_stack, &_world);
                ImGui::LayerPick("Layer", object, &_undo_stack, &_world);
 
                ImGui::Separator();
@@ -451,10 +453,6 @@ void world_edit::update_ui() noexcept
 
                ImGui::SliderInt("Team", object, &world::object::team, &_undo_stack,
                                 &_world, 0, 15, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-               ImGui::TextUnformatted("Class Name: ");
-               ImGui::SameLine();
-               ImGui::TextUnformatted(object->class_name.c_str());
 
                ImGui::Separator();
 

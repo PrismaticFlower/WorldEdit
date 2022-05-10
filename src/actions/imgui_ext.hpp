@@ -219,6 +219,24 @@ inline bool InputText(const char* label, Entity* entity,
 }
 
 template<typename Entity>
+inline bool InputText(const char* label, Entity* entity,
+                      we::lowercase_string Entity::*value_member_ptr,
+                      we::actions::stack* action_stack, we::world::world* world,
+                      ImGuiInputTextFlags flags = 0,
+                      ImGuiInputTextCallback callback = nullptr,
+                      void* user_data = nullptr) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](std::string* value) {
+      bool value_changed =
+         ImGui::InputText(label, value, flags | ImGuiInputTextFlags_NoUndoRedo,
+                          callback, user_data);
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
 inline bool LayerPick(const char* label, Entity* entity,
                       we::actions::stack* action_stack, we::world::world* world) noexcept
 {
