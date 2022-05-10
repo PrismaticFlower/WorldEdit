@@ -160,8 +160,12 @@ inline bool DragQuat(const char* label, Entity* entity,
                      ImGuiSliderFlags flags = 0) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](we::quaternion* value) {
-      bool value_changed =
-         ImGui::DragFloat4(label, &(*value)[0], v_speed, 0.0f, 1.0f, format, flags);
+      bool value_changed = ImGui::DragFloat4(label, &(*value)[0], v_speed * 0.01f,
+                                             0.0f, 1.0f, format, flags);
+
+      if (value_changed) {
+         *value = glm::normalize(*value);
+      }
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
@@ -413,6 +417,10 @@ inline bool DragQuat(const char* label, we::world::path* entity,
                           bool value_changed =
                              ImGui::DragFloat4(label, &(*value)[0], v_speed,
                                                0.0f, 1.0f, format, flags);
+
+                          if (value_changed) {
+                             *value = glm::normalize(*value);
+                          }
 
                           return we::edit_widget_result{.value_changed = value_changed,
                                                         .item_deactivated =
