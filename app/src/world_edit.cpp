@@ -92,6 +92,9 @@ bool world_edit::update()
    _renderer.draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
                         _world_layers_draw_mask, _object_classes);
 
+   // Garbage Collection! (not memory)
+   garbage_collect_assets();
+
    return true;
 }
 
@@ -687,6 +690,30 @@ void world_edit::update_ui() noexcept
 
    if (ImGui::Button("Undo")) _undo_stack.revert(_world);
    if (ImGui::Button("Redo")) _undo_stack.reapply(_world);
+}
+
+void world_edit::garbage_collect_assets() noexcept
+{
+   for (auto& [name, object_class] : _object_classes) {
+      object_class.world_frame_references = 0;
+   }
+
+   for (const auto& object : _world.objects) {
+      if (auto name_object_class = _object_classes.find(object.class_name);
+          name_object_class != _object_classes.end()) {
+         auto& [name, object_class] = *name_object_class;
+
+         object_class.world_frame_references += 1;
+      }
+
+      continue; // Don't care about missing object classes here, leave that for update_object_classes().
+   }
+
+   absl::erase_if(_object_classes, [](const auto& name_object_class) {
+      auto& [name, object_class] = name_object_class;
+
+      return object_class.world_frame_references == 0;
+   });
 }
 
 void world_edit::select_hovered_entity() noexcept

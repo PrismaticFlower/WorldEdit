@@ -59,6 +59,8 @@ private:
 
    void update_ui() noexcept;
 
+   void garbage_collect_assets() noexcept;
+
    void select_hovered_entity() noexcept;
 
    void object_definition_loaded(const lowercase_string& name,
