@@ -159,7 +159,7 @@ template<typename Entity>
 inline bool DragQuat(const char* label, Entity* entity,
                      we::quaternion Entity::*value_member_ptr,
                      we::actions::stack* action_stack, we::world::world* world,
-                     float v_speed = 0.01f, const char* format = "%.3f",
+                     float v_speed = 0.01f, const char* format = "%.4f",
                      ImGuiSliderFlags flags = 0) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](we::quaternion* value) {
@@ -584,7 +584,7 @@ inline bool DragQuat(const char* label, we::world::path* entity,
                      const std::size_t node_index,
                      we::quaternion we::world::path::node::*value_member_ptr,
                      we::actions::stack* action_stack, we::world::world* world,
-                     float v_speed = 0.01f, const char* format = "%.3f",
+                     float v_speed = 0.01f, const char* format = "%.4f",
                      ImGuiSliderFlags flags = 0) noexcept
 {
    return EditWithUndo(entity, node_index, value_member_ptr, action_stack,
