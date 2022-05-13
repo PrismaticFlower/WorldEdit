@@ -62,18 +62,21 @@
     <LinkIncremental>true</LinkIncremental>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <TargetName>WorldEdit</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <TargetName>WorldEdit</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <TargetName>WorldEdit</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
