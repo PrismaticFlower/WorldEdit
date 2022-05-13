@@ -22,6 +22,8 @@
 
 #include <absl/container/flat_hash_map.h>
 #include <fmt/format.h>
+#include <range/v3/view/filter.hpp>
+#include <range/v3/view/transform.hpp>
 
 namespace we::utility {
 class file_watcher;
@@ -126,6 +128,22 @@ public:
 
          _load_tasks.clear();
       }
+   }
+
+   void enumerate_known(const auto callback) noexcept
+   {
+      std::shared_lock lock{_mutex};
+
+      using namespace ranges::views;
+
+      callback(_assets | filter([](const auto& name_asset) {
+                  asset_state<T>& state = *name_asset.second;
+
+                  std::shared_lock lock{state.mutex};
+
+                  return state.exists;
+               }) |
+               transform([](const auto& name_asset) { return name_asset.first; }));
    }
 
 private:

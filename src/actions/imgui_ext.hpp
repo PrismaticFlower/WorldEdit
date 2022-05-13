@@ -8,9 +8,12 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_stdlib.h"
 
+#include <array>
 #include <initializer_list>
 #include <memory>
+#include <optional>
 #include <type_traits>
+#include <utility>
 
 // Wrappers for ImGui controls that integrate with the Undo-Redo stack.
 
@@ -233,6 +236,83 @@ inline bool InputText(const char* label, Entity* entity,
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity, typename T, typename Fill>
+inline bool InputTextAutoComplete(const char* label, Entity* entity,
+                                  T Entity::*value_member_ptr,
+                                  we::actions::stack* action_stack,
+                                  we::world::world* world,
+                                  const Fill& fill_entries_callback) noexcept
+   requires std::is_invocable_r_v<std::array<T, 6>, Fill>
+{
+   using string_type = T;
+
+   return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](std::string* value) {
+      std::optional<std::array<string_type, 6>> autocomplete_entries;
+
+      std::pair<const Fill&, decltype(autocomplete_entries)&>
+         callback_userdata{fill_entries_callback, autocomplete_entries};
+
+      ImGui::BeginGroup();
+
+      bool value_changed = ImGui::InputText(
+         label, value,
+         ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
+         [](ImGuiInputTextCallbackData* data) {
+            if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+               auto& user_data =
+                  *static_cast<decltype(callback_userdata)*>(data->UserData);
+
+               user_data.second.emplace(user_data.first());
+
+               string_type& autofill = (*user_data.second)[0];
+
+               if (not autofill.empty()) {
+                  data->DeleteChars(0, data->BufTextLen);
+                  data->InsertChars(0, autofill.c_str(),
+                                    autofill.c_str() + autofill.size());
+               }
+            }
+
+            return 0;
+         },
+         &callback_userdata);
+
+      bool is_deactivated = ImGui::IsItemDeactivated();
+
+      if (ImGui::IsItemActive()) {
+         ImGui::SetNextWindowPos(
+            ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+         ImGui::SetNextWindowSize(
+            ImVec2{ImGui::GetItemRectMax().x - ImGui::GetItemRectMin().x -
+                      ImGui::CalcTextSize(label, nullptr, true).x -
+                      ImGui::GetStyle().ItemInnerSpacing.x,
+                   9.0f * ImGui::GetFontSize()});
+
+         ImGui::BeginTooltip();
+
+         if (not autocomplete_entries) {
+            autocomplete_entries.emplace(fill_entries_callback());
+         }
+
+         if ((*autocomplete_entries)[0].empty()) {
+            ImGui::TextUnformatted("No matches.");
+         }
+         else {
+            for (const string_type& asset : *autocomplete_entries) {
+               ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
+            }
+         }
+
+         ImGui::EndTooltip();
+      }
+
+      ImGui::EndGroup();
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = is_deactivated};
    });
 }
 

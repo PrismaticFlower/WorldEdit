@@ -440,8 +440,29 @@ void world_edit::update_ui() noexcept
 
                ImGui::InputText("Name", object, &world::object::name,
                                 &_undo_stack, &_world);
-               ImGui::InputText("Class Name", object, &world::object::class_name,
-                                &_undo_stack, &_world);
+               ImGui::InputTextAutoComplete(
+                  "Class Name", object, &world::object::class_name,
+                  &_undo_stack, &_world, [&] {
+                     std::array<we::lowercase_string, 6> entries;
+
+                     _asset_libraries.odfs.enumerate_known([&](auto range) {
+                        std::size_t matching_count = 0;
+
+                        for (const lowercase_string& asset : range) {
+                           if (not asset.contains(object->class_name)) {
+                              continue;
+                           }
+
+                           entries[matching_count] = asset;
+
+                           ++matching_count;
+
+                           if (matching_count == entries.size()) break;
+                        }
+                     });
+
+                     return entries;
+                  });
                ImGui::LayerPick("Layer", object, &_undo_stack, &_world);
 
                ImGui::Separator();
