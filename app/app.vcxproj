@@ -204,6 +204,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\world_edit.cpp" />
     <ClCompile Include="src\world_edit_commands.cpp" />
+    <ClCompile Include="src\world_edit_ui.cpp" />
     <ClInclude Include="src\world_edit.hpp" />
   </ItemGroup>
   <ItemGroup>
