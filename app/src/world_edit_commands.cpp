@@ -17,7 +17,11 @@ void world_edit::initialize_commands() noexcept
       _rotate_camera = not _rotate_camera;
       GetCursorPos(&_rotate_camera_cursor_position);
    });
+
    _commands.add("selection.add"s, [this]() { select_hovered_entity(); });
+
+   _commands.add("edit.undo"s, [this]() { _undo_stack.revert(_world); });
+   _commands.add("edit.redo"s, [this]() { _undo_stack.reapply(_world); });
 
    _commands_binder.set_default_bindings({
       {"camera.move_forward"s, {.key = key::w}, {.toggle = true}},
@@ -29,6 +33,9 @@ void world_edit::initialize_commands() noexcept
       {"camera.rotate_with_mouse"s, {.key = key::mouse2}, {.toggle = true}},
 
       {"selection.add"s, {.key = key::mouse1}},
+
+      {"edit.undo"s, {.key = key::z, .modifiers = {.ctrl = true}}},
+      {"edit.redo"s, {.key = key::y, .modifiers = {.ctrl = true}}},
    });
 }
 }

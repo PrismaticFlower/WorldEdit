@@ -67,17 +67,15 @@ void world_edit::update_ui() noexcept
          ImGui::EndMenu();
       }
 
-      // TODO: Enable once world editing is actually a thing.
-
-      if (ImGui::BeginMenu("Edit", false)) {
-         ImGui::MenuItem("Undo", "Ctrl + Z");
-         ImGui::MenuItem("Redo", "Ctrl + Y");
+      if (ImGui::BeginMenu("Edit")) {
+         if (ImGui::MenuItem("Undo", "Ctrl + Z")) _undo_stack.revert(_world);
+         if (ImGui::MenuItem("Redo", "Ctrl + Y")) _undo_stack.reapply(_world);
 
          ImGui::Separator();
 
-         ImGui::MenuItem("Cut", "Ctrl + X");
-         ImGui::MenuItem("Copy", "Ctrl + C");
-         ImGui::MenuItem("Paste", "Ctrl + V");
+         ImGui::MenuItem("Cut", "Ctrl + X", nullptr, false);
+         ImGui::MenuItem("Copy", "Ctrl + C", nullptr, false);
+         ImGui::MenuItem("Paste", "Ctrl + V", nullptr, false);
 
          ImGui::EndMenu();
       }
@@ -531,12 +529,6 @@ void world_edit::update_ui() noexcept
 
       ImGui::End();
    }
-
-   ImGui::Value("Undo Stack Size", (unsigned)_undo_stack.applied_size());
-   ImGui::Value("Redo Stack Size", (unsigned)_undo_stack.reverted_size());
-
-   if (ImGui::Button("Undo")) _undo_stack.revert(_world);
-   if (ImGui::Button("Redo")) _undo_stack.reapply(_world);
 }
 
 }
