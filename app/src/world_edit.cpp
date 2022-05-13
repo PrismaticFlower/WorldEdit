@@ -480,8 +480,56 @@ void world_edit::update_ui() noexcept
                ImGui::Separator();
 
                for (auto [i, prop] : enumerate(object->instance_properties)) {
-                  ImGui::InputKeyValue(object, &world::object::instance_properties,
-                                       i, &_undo_stack, &_world);
+                  if (prop.key.contains("Path")) {
+                     ImGui::InputKeyValueAutoComplete(
+                        object, &world::object::instance_properties, i,
+                        &_undo_stack, &_world, [&] {
+                           std::array<std::string, 6> entries;
+
+                           std::size_t matching_count = 0;
+
+                           for (auto& path : _world.paths) {
+                              if (not path.name.contains(prop.value)) {
+                                 continue;
+                              }
+
+                              entries[matching_count] = path.name;
+
+                              ++matching_count;
+
+                              if (matching_count == entries.size()) break;
+                           }
+
+                           return entries;
+                        });
+                  }
+                  else if (prop.key.contains("Region")) {
+                     ImGui::InputKeyValueAutoComplete(
+                        object, &world::object::instance_properties, i,
+                        &_undo_stack, &_world, [&] {
+                           std::array<std::string, 6> entries;
+
+                           std::size_t matching_count = 0;
+
+                           for (auto& region : _world.regions) {
+                              if (not region.description.contains(prop.value)) {
+                                 continue;
+                              }
+
+                              entries[matching_count] = region.description;
+
+                              ++matching_count;
+
+                              if (matching_count == entries.size()) break;
+                           }
+
+                           return entries;
+                        });
+                  }
+                  else {
+                     ImGui::InputKeyValue(object, &world::object::instance_properties,
+                                          i, &_undo_stack, &_world);
+                  }
                }
             },
             [&](world::light_id id) {
@@ -546,6 +594,53 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat2("Directional Texture Offset", light,
                                  &world::light::directional_texture_offset,
                                  &_undo_stack, &_world, 0.01f);
+
+               ImGui::InputTextAutoComplete(
+                  "Texture", light, &world::light::texture, &_undo_stack, &_world, [&] {
+                     std::array<std::string, 6> entries;
+
+                     _asset_libraries.textures.enumerate_known([&](auto range) {
+                        std::size_t matching_count = 0;
+
+                        for (const std::string& asset : range) {
+                           if (not asset.contains(light->texture)) {
+                              continue;
+                           }
+
+                           entries[matching_count] = asset;
+
+                           ++matching_count;
+
+                           if (matching_count == entries.size()) break;
+                        }
+                     });
+
+                     return entries;
+                  });
+               ImGui::InputTextAutoComplete("Directional Region", light,
+                                            &world::light::directional_region,
+                                            &_undo_stack, &_world, [&] {
+                                               std::array<std::string, 6> entries;
+
+                                               std::size_t matching_count = 0;
+
+                                               for (auto& region : _world.regions) {
+                                                  if (not region.description.contains(
+                                                         light->directional_region)) {
+                                                     continue;
+                                                  }
+
+                                                  entries[matching_count] =
+                                                     region.description;
+
+                                                  ++matching_count;
+
+                                                  if (matching_count == entries.size())
+                                                     break;
+                                               }
+
+                                               return entries;
+                                            });
             },
             [&](world::path_id id) {
                world::path* path =

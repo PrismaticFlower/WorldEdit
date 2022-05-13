@@ -438,6 +438,83 @@ inline bool InputKeyValue(Entity* entity, std::vector<T> Entity::*value_member_p
    });
 }
 
+template<typename Entity, we::actions::imgui::input_key_value_type T, typename Fill>
+inline bool InputKeyValueAutoComplete(Entity* entity,
+                                      std::vector<T> Entity::*value_member_ptr,
+                                      const std::size_t item_index,
+                                      we::actions::stack* action_stack,
+                                      we::world::world* world,
+                                      const Fill& fill_entries_callback) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, item_index, action_stack, world, [=](T* kv) {
+      using string_type = decltype(kv->value);
+
+      std::optional<std::array<string_type, 6>> autocomplete_entries;
+
+      std::pair<const Fill&, decltype(autocomplete_entries)&>
+         callback_userdata{fill_entries_callback, autocomplete_entries};
+
+      ImGui::BeginGroup();
+
+      bool value_changed = ImGui::InputText(
+         kv->key.c_str(), &kv->value,
+         ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
+         [](ImGuiInputTextCallbackData* data) {
+            if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+               auto& user_data =
+                  *static_cast<decltype(callback_userdata)*>(data->UserData);
+
+               user_data.second.emplace(user_data.first());
+
+               string_type& autofill = (*user_data.second)[0];
+
+               if (not autofill.empty()) {
+                  data->DeleteChars(0, data->BufTextLen);
+                  data->InsertChars(0, autofill.c_str(),
+                                    autofill.c_str() + autofill.size());
+               }
+            }
+
+            return 0;
+         },
+         &callback_userdata);
+
+      bool is_deactivated = ImGui::IsItemDeactivated();
+
+      if (ImGui::IsItemActive()) {
+         ImGui::SetNextWindowPos(
+            ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+         ImGui::SetNextWindowSize(
+            ImVec2{ImGui::GetItemRectMax().x - ImGui::GetItemRectMin().x -
+                      ImGui::CalcTextSize(kv->key.c_str(), nullptr, true).x -
+                      ImGui::GetStyle().ItemInnerSpacing.x,
+                   9.0f * ImGui::GetFontSize()});
+
+         ImGui::BeginTooltip();
+
+         if (not autocomplete_entries) {
+            autocomplete_entries.emplace(fill_entries_callback());
+         }
+
+         if ((*autocomplete_entries)[0].empty()) {
+            ImGui::TextUnformatted("No matches.");
+         }
+         else {
+            for (const string_type& asset : *autocomplete_entries) {
+               ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
+            }
+         }
+
+         ImGui::EndTooltip();
+      }
+
+      ImGui::EndGroup();
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = is_deactivated};
+   });
+}
+
 // Path Node Property Editors
 
 template<typename T>
