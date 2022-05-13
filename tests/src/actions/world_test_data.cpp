@@ -52,8 +52,8 @@ const we::world::world test_world = {
       .directional_texture_tiling = {1.0f, 1.0f},
       .directional_texture_offset = {0.0f, 0.0f},
 
-      .texture = std::nullopt,
-      .directional_region = std::nullopt,
+      .texture = ""s,
+      .directional_region = ""s,
    }},
 
    .paths = {path{
@@ -100,7 +100,7 @@ const we::world::world test_world = {
       .height = 5.0f,
 
       .sector1 = "test_sector"s,
-      .sector2 = std::nullopt,
+      .sector2 = ""s,
    }},
 
    .hintnodes = {hintnode{

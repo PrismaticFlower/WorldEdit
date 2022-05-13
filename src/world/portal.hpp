@@ -3,7 +3,6 @@
 #include "id.hpp"
 #include "types.hpp"
 
-#include <optional>
 #include <string>
 
 namespace we::world {
@@ -17,8 +16,8 @@ struct portal {
    float width = 0.0f;
    float height = 0.0f;
 
-   std::optional<std::string> sector1;
-   std::optional<std::string> sector2;
+   std::string sector1;
+   std::string sector2;
 
    id<portal> id{};
 

@@ -110,7 +110,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[0].specular_caster);
          CHECK(not world.lights[0].shadow_caster);
          CHECK(world.lights[0].range == 5.0_a);
-         CHECK(world.lights[0].texture == std::nullopt);
+         CHECK(world.lights[0].texture.empty());
          CHECK(is_unique_id(0, world.lights));
       }
 
@@ -128,10 +128,10 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[1].static_);
          CHECK(world.lights[1].specular_caster);
          CHECK(world.lights[1].shadow_caster);
-         CHECK(world.lights[1].texture == std::nullopt);
+         CHECK(world.lights[1].texture.empty());
          CHECK(approx_equals(world.lights[1].directional_texture_tiling, {1.0f, 1.0f}));
          CHECK(approx_equals(world.lights[1].directional_texture_offset, {0.0f, 0.0f}));
-         CHECK(world.lights[1].directional_region == std::nullopt);
+         CHECK(world.lights[1].directional_region.empty());
          CHECK(is_unique_id(1, world.lights));
       }
 
@@ -151,7 +151,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[2].range == 5.0_a);
          CHECK(world.lights[2].inner_cone_angle == 0.785398_a);
          CHECK(world.lights[2].outer_cone_angle == 0.872665_a);
-         CHECK(world.lights[2].texture == std::nullopt);
+         CHECK(world.lights[2].texture.empty());
          CHECK(is_unique_id(2, world.lights));
       }
 
@@ -169,7 +169,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[3].specular_caster);
          CHECK(not world.lights[3].shadow_caster);
          CHECK(world.lights[3].range == 16.0_a);
-         CHECK(world.lights[3].texture == std::nullopt);
+         CHECK(world.lights[3].texture.empty());
          CHECK(is_unique_id(3, world.lights));
       }
    }

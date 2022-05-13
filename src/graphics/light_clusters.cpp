@@ -379,13 +379,13 @@ void light_clusters::update_lights(
          const float3 light_direction =
             glm::normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
-         if (light.directional_region) {
+         if (not light.directional_region.empty()) {
             if (regional_lights_count == max_regional_lights) {
                break;
             }
 
             const world::region* const region =
-               world::find_region_by_description(world, *light.directional_region);
+               world::find_region_by_description(world, light.directional_region);
 
             if (not region) break;
 

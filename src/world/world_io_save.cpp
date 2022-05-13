@@ -247,12 +247,14 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
 
       if (light.shadow_caster) file.write_ln("\tCastShadow();");
       if (light.static_) file.write_ln("\tStatic();");
-      if (light.texture) file.write_ln("\tTexture(\"{}\")", *light.texture);
+      if (not light.texture.empty()) {
+         file.write_ln("\tTexture(\"{}\")", light.texture);
+      }
       if (light.specular_caster) file.write_ln("\tCastSpecular(1);");
 
       if (light.light_type == light_type::directional) {
-         if (light.directional_region) {
-            file.write_ln("\tRegion(\"{}\");", *light.directional_region);
+         if (not light.directional_region.empty()) {
+            file.write_ln("\tRegion(\"{}\");", light.directional_region);
          }
 
          file.write_ln("\tPS2BlendMode(0);");
@@ -296,8 +298,8 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
                     static_cast<int>(ambient_ground_color.g * 255.0f + 0.5f),
                     static_cast<int>(ambient_ground_color.b * 255.0f + 0.5f));
 
-      if (world.lighting_settings.env_map_texture) {
-         file.write_ln("\tEnvMap(\"{}\");", *world.lighting_settings.env_map_texture);
+      if (not world.lighting_settings.env_map_texture.empty()) {
+         file.write_ln("\tEnvMap(\"{}\");", world.lighting_settings.env_map_texture);
       }
 
       file.write_ln("}");
@@ -381,8 +383,8 @@ void save_portals_sectors(const std::filesystem::path& path, const world& world)
       file.write_ln("\tWidth({:f});", portal.width);
       file.write_ln("\tHeight({:f});", portal.height);
 
-      file.write_ln("\tSector1(\"{}\");", portal.sector1.value_or(""s));
-      file.write_ln("\tSector2(\"{}\");", portal.sector2.value_or(""s));
+      file.write_ln("\tSector1(\"{}\");", portal.sector1);
+      file.write_ln("\tSector2(\"{}\");", portal.sector2);
 
       file.write_ln("}");
    }

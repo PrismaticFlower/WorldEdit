@@ -611,10 +611,10 @@ void renderer::draw_world_meta_objects(const frustrum& view_frustrum,
 
          switch (light.light_type) {
          case world::light_type::directional: {
-            if (not light.directional_region) break;
+            if (light.directional_region.empty()) break;
 
             if (const world::region* const region =
-                   world::find_region_by_description(world, *light.directional_region);
+                   world::find_region_by_description(world, light.directional_region);
                 region) {
                draw_region(*region);
             }
@@ -926,12 +926,12 @@ void renderer::draw_interaction_targets(
                meta_mesh_common_setup();
 
                if (light->light_type == world::light_type::directional) {
-                  if (not light->directional_region) {
+                  if (light->directional_region.empty()) {
                      return; // TODO: Directional light visualizers.
                   }
 
                   const world::region* const region =
-                     world::find_region_by_description(world, *light->directional_region);
+                     world::find_region_by_description(world, light->directional_region);
 
                   if (not region) return;
 

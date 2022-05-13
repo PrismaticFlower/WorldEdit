@@ -3,7 +3,6 @@
 #include "id.hpp"
 #include "types.hpp"
 
-#include <optional>
 #include <string>
 
 namespace we::world {
@@ -32,8 +31,8 @@ struct light {
    float2 directional_texture_tiling = {1.0f, 1.0f};
    float2 directional_texture_offset = {0.0f, 0.0f};
 
-   std::optional<std::string> texture = std::nullopt;
-   std::optional<std::string> directional_region = std::nullopt;
+   std::string texture;
+   std::string directional_region;
 
    id<light> id{};
 
