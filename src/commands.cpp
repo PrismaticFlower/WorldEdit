@@ -2,7 +2,7 @@
 #include "commands.hpp"
 #include "utility/string_ops.hpp"
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 using namespace std::literals;
 
@@ -95,9 +95,9 @@ void commands_key_binder::bind(std::string command, const bind_key binding,
          _commands.execute(command);
       }
       catch (invalid_command_argument& e) {
-         _error_output_stream.write(
-            fmt::format("Failed to execute command '{}'\n   Error: {}\n",
-                        command, e.what()));
+         _error_output_stream
+            .write("Failed to execute command '{}'\n   Error: {}\n", command,
+                   e.what());
       }
    });
 

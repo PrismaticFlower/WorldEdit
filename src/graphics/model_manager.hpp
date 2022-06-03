@@ -102,9 +102,9 @@ public:
                _models[name] = pending_create.task.get();
             }
             catch (std::exception& e) {
-               _error_output.write(fmt::format(
+               _error_output.write(
                   "Failed to create model:\n   Name: {}\n   Message: \n{}\n",
-                  std::string_view{name}, utility::string::indent(2, e.what())));
+                  std::string_view{name}, utility::string::indent(2, e.what()));
 
                _failed_creations.insert(name);
             }
