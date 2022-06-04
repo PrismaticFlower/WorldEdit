@@ -1,12 +1,33 @@
 
 #include "renderer.hpp"
+#include "assets/asset_libraries.hpp"
+#include "async/thread_pool.hpp"
+#include "camera.hpp"
+#include "frustrum.hpp"
+#include "geometric_shapes.hpp"
 #include "gpu/barrier_helpers.hpp"
+#include "gpu/buffer.hpp"
+#include "gpu/command_list.hpp"
+#include "gpu/depth_stencil_texture.hpp"
+#include "gpu/device.hpp"
+#include "gpu/dynamic_buffer_allocator.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
+#include "light_clusters.hpp"
 #include "line_drawer.hpp"
+#include "model_manager.hpp"
+#include "output_stream.hpp"
+#include "pipeline_library.hpp"
+#include "root_signature_library.hpp"
+#include "settings/graphics.hpp"
+#include "shader_library.hpp"
+#include "shader_list.hpp"
+#include "terrain.hpp"
+#include "texture_manager.hpp"
 #include "triangle_drawer.hpp"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
+#include "world/world.hpp"
 #include "world/world_utilities.hpp"
 
 #include <d3dx12.h>
@@ -88,10 +109,138 @@ const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
 }();
 }
 
-renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
-                   std::shared_ptr<async::thread_pool> thread_pool,
-                   assets::libraries_manager& asset_libraries,
-                   output_stream& error_output)
+struct renderer_config {
+   bool use_raytracing = false;
+};
+
+class renderer_impl {
+public:
+   renderer_impl(const HWND window, std::shared_ptr<settings::graphics> settings,
+                 std::shared_ptr<async::thread_pool> thread_pool,
+                 assets::libraries_manager& asset_libraries,
+                 output_stream& error_output);
+
+   void draw_frame(const camera& camera, const world::world& world,
+                   const world::interaction_targets& interaction_targets,
+                   const world::active_entity_types active_entity_types,
+                   const world::active_layers active_layers,
+                   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes);
+
+   void window_resized(uint16 width, uint16 height);
+
+   void mark_dirty_terrain() noexcept;
+
+private:
+   struct render_list_item {
+      float distance;
+      ID3D12PipelineState* pipeline;
+      ID3D12PipelineState* depth_prepass_pipeline;
+      D3D12_INDEX_BUFFER_VIEW index_buffer_view;
+      std::array<D3D12_VERTEX_BUFFER_VIEW, 2> vertex_buffer_views;
+      gpu::virtual_address object_constants_address;
+      gpu::descriptor_range material_descriptor_range;
+      uint32 index_count;
+      uint32 start_index;
+      uint32 start_vertex;
+   };
+
+   void update_camera_constant_buffer(const camera& camera,
+                                      gpu::graphics_command_list& command_list);
+
+   void draw_world(const frustrum& view_frustrum,
+                   gpu::graphics_command_list& command_list);
+
+   void draw_world_render_list_depth_prepass(const std::vector<render_list_item>& list,
+                                             gpu::graphics_command_list& command_list);
+
+   void draw_world_render_list(const std::vector<render_list_item>& list,
+                               gpu::graphics_command_list& command_list);
+
+   void draw_world_meta_objects(const frustrum& view_frustrum, const world::world& world,
+                                const world::active_entity_types active_entity_types,
+                                const world::active_layers active_layers,
+                                gpu::graphics_command_list& command_list);
+
+   void draw_interaction_targets(
+      const frustrum& view_frustrum, const world::world& world,
+      const world::interaction_targets& interaction_targets,
+      const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+      gpu::graphics_command_list& command_list);
+
+   void build_world_mesh_list(
+      gpu::graphics_command_list& command_list, const world::world& world,
+      const world::active_layers active_layers,
+      const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes);
+
+   void build_object_render_list(const frustrum& view_frustrum);
+
+   void update_textures(gpu::graphics_command_list& command_list);
+
+   auto create_raytacing_blas(gpu::graphics_command_list& command_list,
+                              const model& model, const mesh_part& part) -> gpu::buffer;
+
+   const HWND _window;
+
+   bool _terrain_dirty = true; // ughhhh, this feels so ugly
+
+   std::shared_ptr<async::thread_pool> _thread_pool;
+   output_stream& _error_output;
+
+   gpu::device _device{_window};
+   gpu::graphics_command_list _world_command_list =
+      _device.create_graphics_command_list("World Command List");
+
+   gpu::dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
+
+   gpu::buffer _camera_constant_buffer =
+      _device.create_buffer({.size = math::align_up((uint32)sizeof(float4x4), 256)},
+                            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+   gpu::descriptor_allocation _camera_constant_buffer_view =
+      _device.allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
+
+   gpu::depth_stencil_texture _depth_stencil_texture{
+      _device,
+      {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+       .width = _device.swap_chain.width(),
+       .height = _device.swap_chain.height(),
+       .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                 .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
+      D3D12_RESOURCE_STATE_DEPTH_WRITE};
+
+   shader_library _shaders{shader_list, _thread_pool};
+   root_signature_library _root_signatures{_device};
+   pipeline_library _pipelines{*_device.device_d3d, _shaders, _root_signatures};
+
+   texture_manager _texture_manager;
+   model_manager _model_manager;
+   geometric_shapes _geometric_shapes{_device};
+   light_clusters _light_clusters{_device, _device.swap_chain.width(),
+                                  _device.swap_chain.height()};
+   terrain _terrain{_device, _texture_manager};
+
+   constexpr static std::size_t max_drawn_objects = 2048;
+   constexpr static std::size_t objects_constants_buffer_size =
+      max_drawn_objects * sizeof(world_mesh_constants);
+
+   std::array<gpu::buffer, gpu::render_latency> _object_constants_upload_buffers;
+   std::array<std::byte*, gpu::render_latency> _object_constants_upload_cpu_ptrs;
+   gpu::buffer _object_constants_buffer =
+      _device.create_buffer({.size = objects_constants_buffer_size},
+                            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+
+   world_mesh_list _world_mesh_list;
+   std::vector<render_list_item> _opaque_object_render_list;
+   std::vector<render_list_item> _transparent_object_render_list;
+
+   renderer_config _config;
+   std::shared_ptr<settings::graphics> _settings;
+};
+
+renderer_impl::renderer_impl(const HWND window,
+                             std::shared_ptr<settings::graphics> settings,
+                             std::shared_ptr<async::thread_pool> thread_pool,
+                             assets::libraries_manager& asset_libraries,
+                             output_stream& error_output)
    : _window{window},
      _error_output{error_output},
      _thread_pool{thread_pool},
@@ -131,11 +280,12 @@ renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settin
    }
 }
 
-void renderer::draw_frame(const camera& camera, const world::world& world,
-                          const world::interaction_targets& interaction_targets,
-                          const world::active_entity_types active_entity_types,
-                          const world::active_layers active_layers,
-                          const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
+void renderer_impl::draw_frame(
+   const camera& camera, const world::world& world,
+   const world::interaction_targets& interaction_targets,
+   const world::active_entity_types active_entity_types,
+   const world::active_layers active_layers,
+   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
 {
    auto& swap_chain = _device.swap_chain;
    swap_chain.wait_for_ready();
@@ -224,7 +374,7 @@ void renderer::draw_frame(const camera& camera, const world::world& world,
    _model_manager.trim_models();
 }
 
-void renderer::window_resized(uint16 width, uint16 height)
+void renderer_impl::window_resized(uint16 width, uint16 height)
 {
    if (width == _device.swap_chain.width() and height == _device.swap_chain.height()) {
       return;
@@ -244,13 +394,13 @@ void renderer::window_resized(uint16 width, uint16 height)
    _light_clusters.update_render_resolution(width, height);
 }
 
-void renderer::mark_dirty_terrain() noexcept
+void renderer_impl::mark_dirty_terrain() noexcept
 {
    _terrain_dirty = true;
 }
 
-void renderer::update_camera_constant_buffer(const camera& camera,
-                                             gpu::graphics_command_list& command_list)
+void renderer_impl::update_camera_constant_buffer(const camera& camera,
+                                                  gpu::graphics_command_list& command_list)
 {
    auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
 
@@ -269,8 +419,8 @@ void renderer::update_camera_constant_buffer(const camera& camera,
                               D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 }
 
-void renderer::draw_world(const frustrum& view_frustrum,
-                          gpu::graphics_command_list& command_list)
+void renderer_impl::draw_world(const frustrum& view_frustrum,
+                               gpu::graphics_command_list& command_list)
 {
    draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
 
@@ -287,8 +437,8 @@ void renderer::draw_world(const frustrum& view_frustrum,
    draw_world_render_list(_transparent_object_render_list, command_list);
 }
 
-void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
-                                      gpu::graphics_command_list& command_list)
+void renderer_impl::draw_world_render_list(const std::vector<render_list_item>& list,
+                                           gpu::graphics_command_list& command_list)
 {
    command_list.set_graphics_root_signature(*_root_signatures.mesh);
    command_list.set_graphics_root_descriptor_table(rs::mesh::camera_descriptor_table,
@@ -318,7 +468,7 @@ void renderer::draw_world_render_list(const std::vector<render_list_item>& list,
    }
 }
 
-void renderer::draw_world_render_list_depth_prepass(
+void renderer_impl::draw_world_render_list_depth_prepass(
    const std::vector<render_list_item>& list, gpu::graphics_command_list& command_list)
 {
    command_list.set_graphics_root_signature(*_root_signatures.mesh_depth_prepass);
@@ -347,11 +497,10 @@ void renderer::draw_world_render_list_depth_prepass(
    }
 }
 
-void renderer::draw_world_meta_objects(const frustrum& view_frustrum,
-                                       const world::world& world,
-                                       const world::active_entity_types active_entity_types,
-                                       const world::active_layers active_layers,
-                                       gpu::graphics_command_list& command_list)
+void renderer_impl::draw_world_meta_objects(
+   const frustrum& view_frustrum, const world::world& world,
+   const world::active_entity_types active_entity_types,
+   const world::active_layers active_layers, gpu::graphics_command_list& command_list)
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
@@ -820,7 +969,7 @@ void renderer::draw_world_meta_objects(const frustrum& view_frustrum,
    }
 }
 
-void renderer::draw_interaction_targets(
+void renderer_impl::draw_interaction_targets(
    const frustrum& view_frustrum, const world::world& world,
    const world::interaction_targets& interaction_targets,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
@@ -1355,7 +1504,7 @@ void renderer::draw_interaction_targets(
    }
 }
 
-void renderer::build_world_mesh_list(
+void renderer_impl::build_world_mesh_list(
    gpu::graphics_command_list& command_list, const world::world& world,
    const world::active_layers active_layers,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
@@ -1424,7 +1573,7 @@ void renderer::build_world_mesh_list(
                                  D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE));
 }
 
-void renderer::build_object_render_list(const frustrum& view_frustrum)
+void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
 {
    auto& meshes = _world_mesh_list;
 
@@ -1490,7 +1639,7 @@ void renderer::build_object_render_list(const frustrum& view_frustrum)
              });
 }
 
-void renderer::update_textures(gpu::graphics_command_list& command_list)
+void renderer_impl::update_textures(gpu::graphics_command_list& command_list)
 {
    _texture_manager.eval_updated_textures(
       [&](const absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>& updated) {
@@ -1506,9 +1655,9 @@ void renderer::update_textures(gpu::graphics_command_list& command_list)
       });
 }
 
-auto renderer::create_raytacing_blas(gpu::graphics_command_list& command_list,
-                                     const model& model, const mesh_part& part)
-   -> gpu::buffer
+auto renderer_impl::create_raytacing_blas(gpu::graphics_command_list& command_list,
+                                          const model& model,
+                                          const mesh_part& part) -> gpu::buffer
 {
    D3D12_RAYTRACING_GEOMETRY_DESC geometry_desc{
       .Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
@@ -1565,4 +1714,36 @@ auto renderer::create_raytacing_blas(gpu::graphics_command_list& command_list,
 
    return result_buffer;
 }
+
+renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
+                   std::shared_ptr<async::thread_pool> thread_pool,
+                   assets::libraries_manager& asset_libraries,
+                   output_stream& error_output)
+   : _impl{std::make_unique<renderer_impl>(window, settings, thread_pool,
+                                           asset_libraries, error_output)}
+{
+}
+
+renderer::~renderer() = default;
+
+void renderer::draw_frame(const camera& camera, const world::world& world,
+                          const world::interaction_targets& interaction_targets,
+                          const world::active_entity_types active_entity_types,
+                          const world::active_layers active_layers,
+                          const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
+{
+   _impl->draw_frame(camera, world, interaction_targets, active_entity_types,
+                     active_layers, world_classes);
+}
+
+void renderer::window_resized(uint16 width, uint16 height)
+{
+   _impl->window_resized(width, height);
+}
+
+void renderer::mark_dirty_terrain() noexcept
+{
+   _impl->mark_dirty_terrain();
+}
+
 }
