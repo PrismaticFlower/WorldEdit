@@ -302,9 +302,10 @@ void world_edit::garbage_collect_assets() noexcept
 
 void world_edit::select_hovered_entity() noexcept
 {
+   _interaction_targets.selection.clear();
+
    if (not _interaction_targets.hovered_entity) return;
 
-   _interaction_targets.selection.clear();
    _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
 }
 
