@@ -16,6 +16,40 @@ using ranges::views::transform;
 
 namespace we::graphics {
 
+namespace {
+
+auto pack_snorm(float3 value) -> std::array<int16, 4>
+{
+   value = glm::clamp(value, -1.0f, 1.0f);
+   value = value * 32767.0f;
+
+   if (value.x >= 0.0f) {
+      value.x += 0.5f;
+   }
+   else {
+      value.x -= 0.5f;
+   }
+
+   if (value.y >= 0.0f) {
+      value.y += 0.5f;
+   }
+   else {
+      value.y -= 0.5f;
+   }
+
+   if (value.z >= 0.0f) {
+      value.z += 0.5f;
+   }
+   else {
+      value.z -= 0.5f;
+   }
+
+   return {static_cast<int16>(value.x), static_cast<int16>(value.y),
+           static_cast<int16>(value.z), 0};
+}
+
+}
+
 model::model(const assets::msh::flat_model& model, gpu::device& device,
              texture_manager& texture_manager)
 {
@@ -91,9 +125,9 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
 
       auto attributes =
          iota(std::size_t{0}, mesh.positions.size()) | transform([&](std::size_t i) {
-            return mesh_attributes{.normals = mesh.normals[i],
-                                   .tangents = mesh.tangents[i],
-                                   .bitangents = mesh.bitangents[i],
+            return mesh_attributes{.normals = pack_snorm(mesh.normals[i]),
+                                   .tangents = pack_snorm(mesh.tangents[i]),
+                                   .bitangents = pack_snorm(mesh.bitangents[i]),
                                    .texcoords = mesh.texcoords[i]};
          });
 

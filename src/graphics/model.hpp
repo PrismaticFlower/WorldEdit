@@ -16,9 +16,9 @@
 namespace we::graphics {
 
 struct mesh_attributes {
-   float3 normals;
-   float3 tangents;
-   float3 bitangents;
+   std::array<int16, 4> normals;
+   std::array<int16, 4> tangents;
+   std::array<int16, 4> bitangents;
    float2 texcoords;
 };
 
