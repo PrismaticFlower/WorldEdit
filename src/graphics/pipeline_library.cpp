@@ -366,6 +366,12 @@ pipeline_library::pipeline_library(ID3D12Device9& device,
                                    const root_signature_library& root_signature_library)
 
 {
+   reload(device, shader_library, root_signature_library);
+}
+
+void pipeline_library::reload(ID3D12Device9& device, const shader_library& shader_library,
+                              const root_signature_library& root_signature_library)
+{
    mesh_shadow =
       create_graphics_pipeline(device, "mesh_shadow"sv,
                                {.pRootSignature =

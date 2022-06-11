@@ -37,6 +37,9 @@ struct pipeline_library {
    pipeline_library(ID3D12Device9& device, const shader_library& shader_library,
                     const root_signature_library& root_signature_library);
 
+   void reload(ID3D12Device9& device, const shader_library& shader_library,
+               const root_signature_library& root_signature_library);
+
    utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass;
    utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_doublesided;
    utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_alpha_cutout;

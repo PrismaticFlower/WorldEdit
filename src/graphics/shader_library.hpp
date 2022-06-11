@@ -96,6 +96,8 @@ public:
 
    auto operator[](const std::string_view name) const noexcept -> D3D12_SHADER_BYTECODE;
 
+   void reload(std::initializer_list<shader_description> shaders) noexcept;
+
 private:
    std::vector<compiled_shader> _compiled_shaders;
    std::shared_ptr<async::thread_pool> _thread_pool;

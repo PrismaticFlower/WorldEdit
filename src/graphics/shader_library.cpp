@@ -11,7 +11,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <mutex>
+#include <shared_mutex>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -261,11 +261,33 @@ shader_library::shader_library(std::initializer_list<shader_description> shaders
                                std::shared_ptr<async::thread_pool> thread_pool)
    : _thread_pool{thread_pool}
 {
+   reload(shaders);
+}
+
+auto shader_library::operator[](const std::string_view name) const noexcept
+   -> D3D12_SHADER_BYTECODE
+{
+   if (auto shader =
+          std::lower_bound(_compiled_shaders.cbegin(), _compiled_shaders.cend(), name,
+                           [](const compiled_shader& l,
+                              const std::string_view r) { return l.name < r; });
+       shader != _compiled_shaders.cend() and shader->name == name) {
+      return {shader->bytecode->GetBufferPointer(), shader->bytecode->GetBufferSize()};
+   }
+   else {
+      std::cerr << std::format("Unable to find shader named '{}'\n", name);
+      std::terminate();
+   }
+}
+
+void shader_library::reload(std::initializer_list<shader_description> shaders) noexcept
+{
    const auto shader_cache = load_shader_cache(shader_cache_path);
 
    std::filesystem::create_directories(shader_pdb_path);
 
-   std::mutex compiled_mutex;
+   std::shared_mutex compiled_mutex;
+   _compiled_shaders.clear();
    _compiled_shaders.reserve(shaders.size());
 
    async::for_each(*_thread_pool, async::task_priority::normal, shaders,
@@ -296,22 +318,6 @@ shader_library::shader_library(std::initializer_list<shader_description> shaders
              [](const compiled_shader& l, const compiled_shader& r) {
                 return l.name < r.name;
              });
-}
-
-auto shader_library::operator[](const std::string_view name) const noexcept
-   -> D3D12_SHADER_BYTECODE
-{
-   if (auto shader =
-          std::lower_bound(_compiled_shaders.cbegin(), _compiled_shaders.cend(), name,
-                           [](const compiled_shader& l,
-                              const std::string_view r) { return l.name < r; });
-       shader != _compiled_shaders.cend() and shader->name == name) {
-      return {shader->bytecode->GetBufferPointer(), shader->bytecode->GetBufferSize()};
-   }
-   else {
-      std::cerr << std::format("Unable to find shader named '{}'\n", name);
-      std::terminate();
-   }
 }
 
 }

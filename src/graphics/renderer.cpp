@@ -130,6 +130,13 @@ public:
 
    void mark_dirty_terrain() noexcept;
 
+   void reload_shaders() noexcept
+   {
+      _device.wait_for_idle();
+      _shaders.reload(shader_list);
+      _pipelines.reload(*_device.device_d3d, _shaders, _root_signatures);
+   }
+
 private:
    struct render_list_item {
       float distance;
@@ -1744,6 +1751,11 @@ void renderer::window_resized(uint16 width, uint16 height)
 void renderer::mark_dirty_terrain() noexcept
 {
    _impl->mark_dirty_terrain();
+}
+
+void renderer::reload_shaders() noexcept
+{
+   _impl->reload_shaders();
 }
 
 }

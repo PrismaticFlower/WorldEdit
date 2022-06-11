@@ -80,6 +80,12 @@ void world_edit::update_ui() noexcept
          ImGui::EndMenu();
       }
 
+      if (ImGui::BeginMenu("Developer")) {
+         if (ImGui::MenuItem("Reload Shaders")) _renderer.reload_shaders();
+
+         ImGui::EndMenu();
+      }
+
       ImGui::EndMainMenuBar();
    }
 

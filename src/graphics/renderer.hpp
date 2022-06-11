@@ -61,6 +61,8 @@ public:
 
    void mark_dirty_terrain() noexcept;
 
+   void reload_shaders() noexcept;
+
 private:
    std::unique_ptr<renderer_impl> _impl;
 };
