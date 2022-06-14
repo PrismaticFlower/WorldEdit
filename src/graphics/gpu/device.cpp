@@ -40,10 +40,58 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
            factory.EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
                                               IID_PPV_ARGS(adapter.clear_and_assign())));
         ++i) {
-      if (SUCCEEDED(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_0,
-                                      __uuidof(ID3D12Device), nullptr))) {
-         return adapter;
+      utility::com_ptr<ID3D12Device10> device;
+
+      if (FAILED(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_0,
+                                   IID_PPV_ARGS(device.clear_and_assign())))) {
+         continue;
       }
+
+      D3D12_FEATURE_DATA_D3D12_OPTIONS options;
+
+      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS,
+                                             &options, sizeof(options)))) {
+         continue;
+      }
+
+      // Require support for "bindless" SRV usage.
+      if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_2) {
+         continue;
+      }
+
+      // Used for light culling. TODO: Remove this requirement.
+      if (options.ConservativeRasterizationTier ==
+          D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED) {
+         continue;
+      }
+
+      // We use Root Signature Version 1.1
+      D3D12_FEATURE_DATA_ROOT_SIGNATURE root_signature_support{
+         .HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1};
+
+      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &root_signature_support,
+                                             sizeof(root_signature_support)))) {
+         continue;
+      }
+
+      if (root_signature_support.HighestVersion < D3D_ROOT_SIGNATURE_VERSION_1_1) {
+         continue;
+      }
+
+      // We target SM 6.0 as the minimum
+      D3D12_FEATURE_DATA_SHADER_MODEL shader_model_support{
+         .HighestShaderModel = D3D_SHADER_MODEL_6_0};
+
+      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shader_model_support,
+                                             sizeof(shader_model_support)))) {
+         continue;
+      }
+
+      if (shader_model_support.HighestShaderModel < D3D_SHADER_MODEL_6_0) {
+         continue;
+      }
+
+      return adapter;
    }
 
    MessageBoxA(nullptr, "Failed to a GPU with nessary feature support! If you want (and intend to) use WorldEdit please complain in the Discord. Include what kind of GPU you have!\n\nWill now fall back on WARP device (CPU rendering), this will be unbearably slow.",
