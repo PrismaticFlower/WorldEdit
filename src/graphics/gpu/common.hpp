@@ -442,25 +442,11 @@ constexpr uint32 descriptor_range_offset_append = 0xffffffff;
 
 enum class descriptor_range_type { srv, uav, cbv, sampler };
 
-struct descriptor_flags {
-   /// Mark the data referenced by the range as volatile. (D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE).
-   bool data_volatile : 1 = false;
-
-   /// Apply D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS to the range.
-   bool keep_buffer_bounds_checks : 1 = false;
-};
-
-struct root_descriptor_flags {
-   /// Mark the data referenced by the range as volatile. (D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE).
-   bool data_volatile : 1 = false;
-};
-
 struct root_parameter_descriptor_range {
    descriptor_range_type type;
    uint32 count = 0;
    uint32 base_shader_register = 0;
    uint32 register_space = 0;
-   descriptor_flags flags = {};
    uint32 offset_in_descriptors_from_table_start = 0;
 };
 
@@ -483,14 +469,12 @@ struct root_parameter_32bit_constants {
 struct root_parameter_cbv {
    uint32 shader_register = 0;
    uint32 register_space = 0;
-   root_descriptor_flags flags = {};
    shader_visibility visibility = shader_visibility::all;
 };
 
 struct root_parameter_srv {
    uint32 shader_register = 0;
    uint32 register_space = 0;
-   root_descriptor_flags flags = {};
    shader_visibility visibility = shader_visibility::all;
 };
 

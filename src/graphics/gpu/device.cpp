@@ -16,7 +16,7 @@ static_assert(D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND == descriptor_range_offset_ap
 
 namespace {
 
-constexpr bool use_debug_layer = false;
+constexpr bool use_debug_layer = true;
 
 auto create_factory() -> utility::com_ptr<IDXGIFactory7>
 {
@@ -195,63 +195,6 @@ auto create_root_signature(ID3D12Device& device,
    return root_sig;
 }
 
-#if 0
-
-auto create_root_signature_1_0_from_desc(ID3D12Device& device,
-                                         const root_signature_desc& desc)
-   -> utility::com_ptr<ID3D12RootSignature>
-{
-   boost::container::static_vector<D3D12_DESCRIPTOR_RANGE, 256> descriptor_ranges_stack;
-   boost::container::small_vector<D3D12_ROOT_PARAMETER, 16> parameters;
-   boost::container::small_vector<D3D12_STATIC_SAMPLER_DESC, 16> samplers;
-
-   for (auto& param : desc.parameters) {
-      auto d3d12_param = boost::variant2::visit(
-         [&]<typename T>(const T& param) -> D3D12_ROOT_PARAMETER {
-            if constexpr (std::is_same_v<T, gpu::root_parameter_descriptor_table>) {
-               const auto ranges_stack_offset = descriptor_ranges_stack.size();
-
-               descriptor_ranges_stack.resize(ranges_stack_offset +
-                                              param.ranges.size());
-
-               std::copy_n(param.ranges.begin(), param.ranges.size(),
-                           descriptor_ranges_stack.begin() + ranges_stack_offset);
-
-               return D3D12_ROOT_PARAMETER{
-                  .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-                  .DescriptorTable =
-                     {
-                        .NumDescriptorRanges = to_uint32(param.ranges.size()),
-                        .pDescriptorRanges = &descriptor_ranges_stack[ranges_stack_offset],
-                     },
-                  .ShaderVisibility = param.visibility};
-            }
-            else {
-               return param;
-            }
-         },
-         param);
-
-      parameters.push_back(d3d12_param);
-   }
-
-   samplers.resize(desc.samplers.size());
-
-   std::ranges::copy(desc.samplers, samplers.begin());
-
-   const D3D12_ROOT_SIGNATURE_DESC d3d12_desc{.NumParameters =
-                                                 to_uint32(parameters.size()),
-                                              .pParameters = parameters.data(),
-                                              .NumStaticSamplers =
-                                                 to_uint32(samplers.size()),
-                                              .pStaticSamplers = samplers.data(),
-                                              .Flags = desc.flags};
-
-   return gpu::create_root_signature(device, d3d12_desc, desc.name);
-}
-
-#endif
-
 auto create_root_signature_1_1_from_desc(ID3D12Device& device,
                                          const root_signature_desc& desc)
    -> utility::com_ptr<ID3D12RootSignature>
@@ -275,16 +218,6 @@ auto create_root_signature_1_1_from_desc(ID3D12Device& device,
       default:
          std::unreachable();
       }
-   };
-
-   constexpr static auto to_d3d12_flags = [](root_descriptor_flags flags) {
-      D3D12_ROOT_DESCRIPTOR_FLAGS d3d12_flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
-
-      if (flags.data_volatile) {
-         d3d12_flags |= D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE;
-      }
-
-      return d3d12_flags;
    };
 
    for (auto& param : desc.parameters) {
@@ -316,22 +249,7 @@ auto create_root_signature_1_1_from_desc(ID3D12Device& device,
                      .NumDescriptors = range.count,
                      .BaseShaderRegister = range.base_shader_register,
                      .RegisterSpace = range.register_space,
-                     .Flags =
-                        [](const descriptor_flags& flags) {
-                           D3D12_DESCRIPTOR_RANGE_FLAGS d3d12_flags =
-                              D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-
-                           if (flags.data_volatile) {
-                              d3d12_flags |= D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
-                           }
-
-                           if (flags.keep_buffer_bounds_checks) {
-                              d3d12_flags |=
-                                 D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS;
-                           }
-
-                           return d3d12_flags;
-                        }(range.flags),
+                     .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE,
                      .OffsetInDescriptorsFromTableStart =
                         range.offset_in_descriptors_from_table_start}});
                }
@@ -359,7 +277,7 @@ auto create_root_signature_1_1_from_desc(ID3D12Device& device,
                   .ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
                   .Descriptor = {.ShaderRegister = param.shader_register,
                                  .RegisterSpace = param.register_space,
-                                 .Flags = to_d3d12_flags(param.flags)},
+                                 .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE},
                   .ShaderVisibility = to_d3d12_shader_visibility(param.visibility)};
             },
             [](const root_parameter_srv& param) {
@@ -367,7 +285,7 @@ auto create_root_signature_1_1_from_desc(ID3D12Device& device,
                   .ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV,
                   .Descriptor = {.ShaderRegister = param.shader_register,
                                  .RegisterSpace = param.register_space,
-                                 .Flags = to_d3d12_flags(param.flags)},
+                                 .Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE},
                   .ShaderVisibility = to_d3d12_shader_visibility(param.visibility)};
             },
             [](const root_parameter_uav& param) {
