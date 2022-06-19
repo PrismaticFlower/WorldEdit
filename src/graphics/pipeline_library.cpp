@@ -353,12 +353,6 @@ auto create_material_pipelines(ID3D12Device9& device, const std::string_view nam
    return pipelines;
 }
 
-struct async_init {
-   utility::com_ptr<ID3D12PipelineState>& out;
-   std::string_view name;
-   D3D12_GRAPHICS_PIPELINE_STATE_DESC desc;
-};
-
 }
 
 pipeline_library::pipeline_library(ID3D12Device9& device,
