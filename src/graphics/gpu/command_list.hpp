@@ -298,7 +298,8 @@ public:
          postbuild_info_descs = {})
    {
       _command_list->BuildRaytracingAccelerationStructure(
-         &desc, to_uint32(postbuild_info_descs.size()), postbuild_info_descs.data());
+         &desc, static_cast<uint32>(postbuild_info_descs.size()),
+         postbuild_info_descs.data());
    }
 
    void emit_raytracing_acceleration_structure_postbuild_info(
@@ -306,7 +307,7 @@ public:
       const std::span<gpu_virtual_address> source_acceleration_structure_data)
    {
       _command_list->EmitRaytracingAccelerationStructurePostbuildInfo(
-         &desc, to_uint32(source_acceleration_structure_data.size()),
+         &desc, static_cast<uint32>(source_acceleration_structure_data.size()),
          source_acceleration_structure_data.data());
    }
 

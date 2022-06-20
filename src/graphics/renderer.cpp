@@ -1471,12 +1471,12 @@ void renderer_impl::draw_interaction_targets(
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
-         wireframe_constant_buffer
-            constants{.color = _settings->hover_color(),
-                      .line_width = _settings->line_width(),
-                      .viewport_size = {to_float(_device.swap_chain.width()),
-                                        to_float(_device.swap_chain.height())},
-                      .viewport_topleft = {0.0f, 0.0f}};
+         wireframe_constant_buffer constants{
+            .color = _settings->hover_color(),
+            .line_width = _settings->line_width(),
+            .viewport_size = {static_cast<float>(_device.swap_chain.width()),
+                              static_cast<float>(_device.swap_chain.height())},
+            .viewport_topleft = {0.0f, 0.0f}};
 
          std::memcpy(allocation.cpu_address, &constants,
                      sizeof(wireframe_constant_buffer));
@@ -1492,12 +1492,12 @@ void renderer_impl::draw_interaction_targets(
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
-         wireframe_constant_buffer
-            constants{.color = _settings->selected_color(),
-                      .line_width = _settings->line_width(),
-                      .viewport_size = {to_float(_device.swap_chain.width()),
-                                        to_float(_device.swap_chain.height())},
-                      .viewport_topleft = {0.0f, 0.0f}};
+         wireframe_constant_buffer constants{
+            .color = _settings->selected_color(),
+            .line_width = _settings->line_width(),
+            .viewport_size = {static_cast<float>(_device.swap_chain.width()),
+                              static_cast<float>(_device.swap_chain.height())},
+            .viewport_topleft = {0.0f, 0.0f}};
 
          std::memcpy(allocation.cpu_address, &constants,
                      sizeof(wireframe_constant_buffer));
@@ -1695,13 +1695,13 @@ auto renderer_impl::create_raytacing_blas(gpu::graphics_command_list& command_li
    device.GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuild);
 
    gpu::buffer scratch_buffer =
-      _device.create_buffer({.size = to_uint32(prebuild.ScratchDataSizeInBytes),
+      _device.create_buffer({.size = static_cast<uint32>(prebuild.ScratchDataSizeInBytes),
                              .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS},
                             D3D12_HEAP_TYPE_DEFAULT,
                             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
    gpu::buffer result_buffer =
-      _device.create_buffer({.size = to_uint32(prebuild.ResultDataMaxSizeInBytes),
+      _device.create_buffer({.size = static_cast<uint32>(prebuild.ResultDataMaxSizeInBytes),
                              .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS},
                             D3D12_HEAP_TYPE_DEFAULT,
                             D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);

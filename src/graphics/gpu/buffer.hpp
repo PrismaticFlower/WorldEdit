@@ -53,7 +53,7 @@ public:
 
    auto size_u32() const noexcept -> uint32
    {
-      return to_uint32(_size);
+      return static_cast<uint32>(_size);
    }
 
    auto gpu_virtual_address() const noexcept -> gpu_virtual_address

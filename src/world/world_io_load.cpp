@@ -696,7 +696,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
          auto layer = world.layer_descriptions[i];
 
          load_layer(world_dir, fmt::format("{}_{}"sv, world.name, layer.name),
-                    ".lyr"sv, output, world, layer_remap, to_int32(i));
+                    ".lyr"sv, output, world, layer_remap, static_cast<int32>(i));
       }
 
       try {

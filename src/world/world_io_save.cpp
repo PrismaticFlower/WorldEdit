@@ -488,7 +488,8 @@ void save_world(const std::filesystem::path& path, const world& world)
    for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
       auto& layer = world.layer_descriptions[i];
 
-      save_layer(world_dir, world_name + "_"s + layer.name, to_int32(i), world);
+      save_layer(world_dir, world_name + "_"s + layer.name,
+                 static_cast<uint32>(i), world);
    }
 
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv), world.terrain);

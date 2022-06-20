@@ -75,7 +75,7 @@ auto make_blob(IDxcUtils& utils, std::span<const std::byte> dxil)
    -> utility::com_ptr<ID3DBlob>
 {
    utility::com_ptr<IDxcBlobEncoding> dxc_blob;
-   throw_if_failed(utils.CreateBlob(dxil.data(), to_uint32(dxil.size()),
+   throw_if_failed(utils.CreateBlob(dxil.data(), static_cast<uint32>(dxil.size()),
                                     DXC_CP_ACP, dxc_blob.clear_and_assign()));
 
    utility::com_ptr<ID3DBlob> blob;

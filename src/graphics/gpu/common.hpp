@@ -292,7 +292,8 @@ struct constant_buffer_view {
 
    operator D3D12_CONSTANT_BUFFER_VIEW_DESC() const noexcept
    {
-      return {.BufferLocation = buffer_location, .SizeInBytes = to_uint32(size)};
+      return {.BufferLocation = buffer_location,
+              .SizeInBytes = static_cast<uint32>(size)};
    }
 };
 

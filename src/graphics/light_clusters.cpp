@@ -648,10 +648,10 @@ void light_clusters::update_lights(
 
    command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-   command_list.rs_set_scissor_rects(
-      {0, 0, to_int32(_tiles_width), to_int32(_tiles_height)});
-   command_list.rs_set_viewports(
-      {0.0f, 0.0f, to_float(_tiles_width), to_float(_tiles_height), 0.0f, 1.0f});
+   command_list.rs_set_scissor_rects({0, 0, static_cast<int32>(_tiles_width),
+                                      static_cast<int32>(_tiles_height)});
+   command_list.rs_set_viewports({0.0f, 0.0f, static_cast<float>(_tiles_width),
+                                  static_cast<float>(_tiles_height), 0.0f, 1.0f});
 
    command_list.om_set_render_targets({}, false, std::nullopt);
 
@@ -671,7 +671,8 @@ void light_clusters::update_lights(
                                              .SizeInBytes = sizeof(sphere_proxy_vertices),
                                              .StrideInBytes = sizeof(float3)});
 
-      command_list.draw_indexed_instanced(to_uint32(sphere_proxy_indices.size()),
+      command_list.draw_indexed_instanced(static_cast<uint32>(
+                                             sphere_proxy_indices.size()),
                                           light_count, 0, 0, 0);
    }
 
