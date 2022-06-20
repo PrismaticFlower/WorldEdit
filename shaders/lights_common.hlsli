@@ -62,6 +62,11 @@ struct calculate_light_inputs {
    uint2 positionSS;
 };
 
+struct light_info {
+   float3 light_directionWS;
+   float falloff;
+};
+
 const static float region_fade_distance_sq = 0.1 * 0.1;
 const static float cascade_fade_distance = 0.1;
 const static int shadow_cascade_count = 4;
@@ -220,10 +225,15 @@ float3 calc_ambient_light(float3 normalWS)
    return color;
 }
 
-float calc_light_strength(light_description light, calculate_light_inputs input)
+light_info get_light_info(light_description light, calculate_light_inputs input)
 {
    const float3 normalWS = input.normalWS;
    const float3 positionWS = input.positionWS;
+
+   light_info info;
+
+   info.light_directionWS = 0.0;
+   info.falloff = 0.0;
 
    switch (light.type) {
    case light_type::directional: {
@@ -274,9 +284,10 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
          }
       }
 
-      const float falloff = saturate(dot(normalWS, light.directionWS));
+      info.light_directionWS = light.directionWS;
+      info.falloff = region_fade_or_shadow;
 
-      return falloff * region_fade_or_shadow;
+      break;
    }
    case light_type::point_: {
       const float3 light_directionWS = normalize(light.positionWS - positionWS);
@@ -285,9 +296,10 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
       const float attenuation =
          saturate(1.0 - ((light_distance * light_distance) / (light.range * light.range)));
 
-      const float falloff = saturate(dot(normalWS, light_directionWS));
+      info.light_directionWS = light_directionWS;
+      info.falloff = attenuation;
 
-      return falloff * attenuation;
+      break;
    }
    case light_type::spot: {
       const float3 light_directionWS = normalize(light.positionWS - positionWS);
@@ -299,18 +311,26 @@ float calc_light_strength(light_description light, calculate_light_inputs input)
       const float theta = saturate(dot(light_directionWS, light.directionWS));
       const float cone_falloff = saturate((theta - light.spot_outer_param) * light.spot_inner_param);
 
-      const float falloff = saturate(dot(normalWS, light_directionWS));
+      info.light_directionWS = light_directionWS;
+      info.falloff = attenuation;
 
-      return falloff * cone_falloff * attenuation;
+      break;
    }
    }
 
-   return 0.0;
+   return info;
+}
+
+float3 calculate_light(calculate_light_inputs input, light_description light, light_info light_info)
+{
+   const float3 diffuse = saturate(dot(input.normalWS, light_info.light_directionWS)) * input.diffuse_color;
+
+   return light.color * diffuse * light_info.falloff;
 }
 
 float3 calculate_lighting(calculate_light_inputs input)
 {
-   float3 total_light = calc_ambient_light(input.normalWS);
+   float3 total_light = calc_ambient_light(input.normalWS) * input.diffuse_color;
 
    const uint2 tile_position = input.positionSS / light_tile_size;
    const uint tile_index = tile_position.x + tile_position.y * light_constants.light_tiles_width;
@@ -328,14 +348,13 @@ float3 calculate_lighting(calculate_light_inputs input)
          uint light_index = (i * light_tile_word_bits) + active_bit_index;
 
          light_description light = light_list.lights[light_index];
+         light_info light_info = get_light_info(light, input);
 
-         float strength = calc_light_strength(light, input);
-
-         total_light += light.color * strength;
+         total_light += calculate_light(input, light, light_info);
       }
    }
 
-   return total_light * input.diffuse_color;
+   return total_light;
 }
 
 #endif
