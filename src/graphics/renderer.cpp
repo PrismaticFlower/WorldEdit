@@ -529,11 +529,12 @@ void renderer_impl::draw_world_meta_objects(
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
-   command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
-   command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                   _camera_constant_buffer_view);
+   if (active_entity_types.paths and not world.paths.empty()) {
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-   if (active_entity_types.paths) {
       static bool draw_nodes = true;
       static bool draw_connections = true;
       static bool draw_orientation = false;
@@ -642,13 +643,6 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   command_list.set_pipeline_state(*_pipelines.meta_mesh);
-   command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
-
-   command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                   _camera_constant_buffer_view);
-   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
    // Draws a region, requires camera CBV, colour CBV, IA topplogy, pipeline state and root signature to be set.
    //
    // Shared between light volume drawing and region drawing.
@@ -704,12 +698,16 @@ void renderer_impl::draw_world_meta_objects(
       command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
    };
 
-   if (active_entity_types.regions) {
-      // Set Regions Color
-      {
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                        _settings->region_color());
-      }
+   if (active_entity_types.regions and not world.regions.empty()) {
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                     _settings->region_color());
 
       for (auto& region : world.regions) {
          if (not active_layers[region.layer]) continue;
@@ -718,20 +716,20 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.barriers) {
-      // Set Barriers Color
-      {
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                        _settings->barrier_color());
-      }
+   if (active_entity_types.barriers and not world.barriers.empty()) {
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
 
-      // Set Barriers IA State
-      {
-         const geometric_shape shape = _geometric_shapes.cube();
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
+                                                     _settings->barrier_color());
 
-         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-         command_list.ia_set_index_buffer(shape.index_buffer_view);
-      }
+      const geometric_shape shape = _geometric_shapes.cube();
+
+      command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+      command_list.ia_set_index_buffer(shape.index_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
       const float barrier_height = _settings->barrier_height();
 
@@ -764,7 +762,14 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.lights) {
+   if (active_entity_types.lights and not world.lights.empty()) {
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
       const float volume_alpha = _settings->light_volume_alpha();
 
       for (auto& light : world.lights) {
@@ -854,7 +859,14 @@ void renderer_impl::draw_world_meta_objects(
 
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
-   if (active_entity_types.sectors) {
+   if (active_entity_types.sectors and not world.sectors.empty()) {
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
       command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
                                                      float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
                                                               {0.0f, 1.0f, 0.0f, 0.0f},
@@ -884,7 +896,14 @@ void renderer_impl::draw_world_meta_objects(
       triangle_drawer.submit();
    }
 
-   if (active_entity_types.portals) {
+   if (active_entity_types.portals and not world.portals.empty()) {
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
       command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
                                                      float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
                                                               {0.0f, 1.0f, 0.0f, 0.0f},
@@ -918,9 +937,16 @@ void renderer_impl::draw_world_meta_objects(
       triangle_drawer.submit();
    }
 
-   command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
+   if (active_entity_types.hintnodes and not world.hintnodes.empty()) {
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
 
-   if (active_entity_types.hintnodes) {
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+
       command_list.set_graphics_root_constant_buffer(
          rs::meta_mesh::color_cbv,
          meta_outlined_constant_buffer{
@@ -951,9 +977,14 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   command_list.set_pipeline_state(*_pipelines.meta_mesh);
+   if (active_entity_types.boundaries and not world.boundaries.empty()) {
+      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
 
-   if (active_entity_types.boundaries) {
+      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
+                                                      _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
       const float boundary_height = _settings->boundary_height();
 
       command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
