@@ -621,7 +621,7 @@ void pipeline_library::reload(ID3D12Device9& device, const shader_library& shade
    meta_mesh_outlined =
       create_graphics_pipeline(device, "meta_mesh_outlined"sv,
                                {.pRootSignature =
-                                   root_signature_library.meta_mesh.get(),
+                                   root_signature_library.meta_mesh_wireframe.get(),
                                 .VS = shader_library["meta_meshVS"sv],
                                 .PS = shader_library["meta_mesh_outlinedPS"sv],
                                 .GS = shader_library["meta_mesh_outlinedGS"sv],

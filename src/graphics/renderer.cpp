@@ -62,8 +62,6 @@ static_assert(sizeof(wireframe_constant_buffer) == 256);
 struct alignas(256) meta_outlined_constant_buffer {
    float4 color;
    float4 outline_color;
-   float2 viewport_size;
-   float2 viewport_topleft;
 };
 
 static_assert(sizeof(meta_outlined_constant_buffer) == 256);
@@ -530,11 +528,6 @@ void renderer_impl::draw_world_meta_objects(
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
 
    if (active_entity_types.paths and not world.paths.empty()) {
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
       static bool draw_nodes = true;
       static bool draw_connections = true;
       static bool draw_orientation = false;
@@ -547,13 +540,17 @@ void renderer_impl::draw_world_meta_objects(
       ImGui::Unindent();
 
       if (draw_nodes) {
+         command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
+         command_list.set_graphics_root_descriptor_table(rs::meta_mesh_wireframe::camera_descriptor_table,
+                                                         _camera_constant_buffer_view);
          command_list.set_graphics_root_constant_buffer(
-            rs::meta_mesh::color_cbv,
+            rs::meta_mesh_wireframe::wireframe_cbv,
             meta_outlined_constant_buffer{
                .color = float4{_settings->path_node_color(), 1.0f},
                .outline_color = float4{_settings->path_node_outline_color(), 1.0f}});
 
          command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
+         command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
          for (auto& path : world.paths) {
             if (not active_layers[path.layer]) continue;
@@ -939,7 +936,7 @@ void renderer_impl::draw_world_meta_objects(
 
    if (active_entity_types.hintnodes and not world.hintnodes.empty()) {
       command_list.set_pipeline_state(*_pipelines.meta_mesh);
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
 
       command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
                                                       _camera_constant_buffer_view);
@@ -949,12 +946,10 @@ void renderer_impl::draw_world_meta_objects(
 
       command_list.set_graphics_root_constant_buffer(
          rs::meta_mesh::color_cbv,
-         meta_outlined_constant_buffer{
-            .color = float4{_settings->hintnode_color(), 1.0f},
-            .outline_color = float4{_settings->hintnode_outline_color(), 1.0f},
-            .viewport_size = {static_cast<float>(_device.swap_chain.width()),
-                              static_cast<float>(_device.swap_chain.height())},
-            .viewport_topleft = {0.0f, 0.0f}});
+         meta_outlined_constant_buffer{.color = float4{_settings->hintnode_color(), 1.0f},
+                                       .outline_color =
+                                          float4{_settings->hintnode_outline_color(),
+                                                 1.0f}});
 
       for (auto& hintnode : world.hintnodes) {
          if (not active_layers[hintnode.layer]) continue;
