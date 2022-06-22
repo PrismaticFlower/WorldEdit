@@ -1,11 +1,11 @@
+#include "frame_constants.hlsli"
+
 struct wireframe_constants {
    float3 color;
-   float line_width;
-   float2 viewport_size;
-   float2 viewport_topleft;
 };
 
-ConstantBuffer<wireframe_constants> cb_wireframe_constants : register(b0);
+ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
+ConstantBuffer<wireframe_constants> cb_wireframe_constants : register(b1);
 
 struct input_vertex {
    float4 positionRT : SV_Position;
@@ -16,8 +16,8 @@ struct input_vertex {
 float2 to_rendertarget_position(float4 positionPS)
 {
    const float2 positionNDC = positionPS.xy / positionPS.w;
-   const float2 viewport_size = cb_wireframe_constants.viewport_size;
-   const float2 viewport_topleft = cb_wireframe_constants.viewport_topleft;
+   const float2 viewport_size = cb_frame.viewport_size;
+   const float2 viewport_topleft = cb_frame.viewport_topleft;
 
    float2 positionRT;
 
@@ -35,8 +35,7 @@ float line_distance(float2 p, float2 a, float2 b)
 
 float line_alpha(float distance)
 {
-   const float remapped_distance =
-      clamp(distance - (cb_wireframe_constants.line_width * 0.5 - 1.0), 0.0, 2.0);
+   const float remapped_distance = clamp(distance - (cb_frame.line_width * 0.5 - 1.0), 0.0, 2.0);
    const float remapped_distance_sq = remapped_distance * remapped_distance;
 
    return exp2(-2.0 * remapped_distance_sq);

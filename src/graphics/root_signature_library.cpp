@@ -298,7 +298,7 @@ const gpu::root_signature_desc meta_mesh_wireframe_desc{
 
          // wireframe constants
          gpu::root_parameter_cbv{
-            .shader_register = 0,
+            .shader_register = 1,
             .register_space = 0,
             .visibility = gpu::shader_visibility::pixel,
          },
@@ -313,7 +313,7 @@ const gpu::root_signature_desc meta_mesh_wireframe_desc{
                    .register_space = mesh_register_space,
                    .offset_in_descriptors_from_table_start = 0},
                },
-            .visibility = gpu::shader_visibility::vertex,
+            .visibility = gpu::shader_visibility::all,
          },
       },
 
@@ -437,7 +437,7 @@ const gpu::root_signature_desc mesh_wireframe_desc{
 
          // wireframe constants
          gpu::root_parameter_cbv{
-            .shader_register = 0,
+            .shader_register = 1,
             .register_space = 0,
             .visibility = gpu::shader_visibility::pixel,
          },
@@ -452,7 +452,7 @@ const gpu::root_signature_desc mesh_wireframe_desc{
                    .register_space = mesh_register_space,
                    .offset_in_descriptors_from_table_start = 0},
                },
-            .visibility = gpu::shader_visibility::vertex,
+            .visibility = gpu::shader_visibility::all,
          },
       },
 

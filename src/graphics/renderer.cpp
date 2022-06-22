@@ -41,11 +41,20 @@ using namespace gpu::literals;
 namespace {
 
 // TODO: Put this somewhere.
-struct alignas(256) wireframe_constant_buffer {
-   float3 color;
-   float line_width;
+struct alignas(256) frame_constant_buffer {
+   float4x4 view_projection_matrix;
+
    float2 viewport_size;
    float2 viewport_topleft;
+
+   float line_width;
+};
+
+static_assert(sizeof(frame_constant_buffer) == 256);
+
+// TODO: Put this somewhere.
+struct alignas(256) wireframe_constant_buffer {
+   float3 color;
 };
 
 static_assert(sizeof(wireframe_constant_buffer) == 256);
@@ -151,8 +160,8 @@ private:
       uint32 start_vertex;
    };
 
-   void update_camera_constant_buffer(const camera& camera,
-                                      gpu::graphics_command_list& command_list);
+   void update_frame_constant_buffer(const camera& camera,
+                                     gpu::graphics_command_list& command_list);
 
    void draw_world(const frustrum& view_frustrum,
                    gpu::graphics_command_list& command_list);
@@ -326,7 +335,7 @@ void renderer_impl::draw_frame(
    build_world_mesh_list(command_list, world, active_layers, world_classes);
    build_object_render_list(view_frustrum);
 
-   update_camera_constant_buffer(camera, command_list);
+   update_frame_constant_buffer(camera, command_list);
 
    _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum, _world_mesh_list,
                                            world, _root_signatures, _pipelines,
@@ -406,19 +415,28 @@ void renderer_impl::mark_dirty_terrain() noexcept
    _terrain_dirty = true;
 }
 
-void renderer_impl::update_camera_constant_buffer(const camera& camera,
-                                                  gpu::graphics_command_list& command_list)
+void renderer_impl::update_frame_constant_buffer(const camera& camera,
+                                                 gpu::graphics_command_list& command_list)
 {
-   auto allocation = _dynamic_buffer_allocator.allocate(sizeof(float4x4));
+   frame_constant_buffer
+      constants{.view_projection_matrix = camera.view_projection_matrix(),
 
-   std::memcpy(allocation.cpu_address, &camera.view_projection_matrix(),
-               sizeof(float4x4));
+                .viewport_size = {static_cast<float>(_device.swap_chain.width()),
+                                  static_cast<float>(_device.swap_chain.height())},
+                .viewport_topleft = {0.0f, 0.0f},
+
+                .line_width = _settings->line_width()};
+
+   auto allocation =
+      _dynamic_buffer_allocator.allocate(sizeof(frame_constant_buffer));
+
+   std::memcpy(allocation.cpu_address, &constants, sizeof(frame_constant_buffer));
 
    command_list.copy_buffer_region(*_camera_constant_buffer.resource(), 0,
                                    *_dynamic_buffer_allocator.view_resource(),
                                    allocation.gpu_address -
                                       _dynamic_buffer_allocator.gpu_base_address(),
-                                   sizeof(float4x4));
+                                   sizeof(frame_constant_buffer));
 
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(*_camera_constant_buffer.resource(),
@@ -532,10 +550,7 @@ void renderer_impl::draw_world_meta_objects(
             rs::meta_mesh::color_cbv,
             meta_outlined_constant_buffer{
                .color = float4{_settings->path_node_color(), 1.0f},
-               .outline_color = float4{_settings->path_node_outline_color(), 1.0f},
-               .viewport_size = {static_cast<float>(_device.swap_chain.width()),
-                                 static_cast<float>(_device.swap_chain.height())},
-               .viewport_topleft = {0.0f, 0.0f}});
+               .outline_color = float4{_settings->path_node_outline_color(), 1.0f}});
 
          command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
 
@@ -1471,12 +1486,7 @@ void renderer_impl::draw_interaction_targets(
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
-         wireframe_constant_buffer constants{
-            .color = _settings->hover_color(),
-            .line_width = _settings->line_width(),
-            .viewport_size = {static_cast<float>(_device.swap_chain.width()),
-                              static_cast<float>(_device.swap_chain.height())},
-            .viewport_topleft = {0.0f, 0.0f}};
+         wireframe_constant_buffer constants{.color = _settings->hover_color()};
 
          std::memcpy(allocation.cpu_address, &constants,
                      sizeof(wireframe_constant_buffer));
@@ -1492,12 +1502,7 @@ void renderer_impl::draw_interaction_targets(
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
-         wireframe_constant_buffer constants{
-            .color = _settings->selected_color(),
-            .line_width = _settings->line_width(),
-            .viewport_size = {static_cast<float>(_device.swap_chain.width()),
-                              static_cast<float>(_device.swap_chain.height())},
-            .viewport_topleft = {0.0f, 0.0f}};
+         wireframe_constant_buffer constants{.color = _settings->selected_color()};
 
          std::memcpy(allocation.cpu_address, &constants,
                      sizeof(wireframe_constant_buffer));

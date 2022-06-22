@@ -1,8 +1,6 @@
-struct global_matrices {
-   float4x4 view_projection_matrix;
-};
+#include "frame_constants.hlsli"
 
-ConstantBuffer<global_matrices> cb_global_matrices : register(b0);
+ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
 
 struct input_vertex {
    float3 positionWS : POSITION;
@@ -10,5 +8,5 @@ struct input_vertex {
 
 float4 main(input_vertex input) : SV_POSITION
 {
-   return mul(cb_global_matrices.view_projection_matrix, float4(input.positionWS, 1.0));
+   return mul(cb_frame.view_projection_matrix, float4(input.positionWS, 1.0));
 }
