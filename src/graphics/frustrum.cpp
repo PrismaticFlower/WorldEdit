@@ -35,7 +35,7 @@ bool outside_plane(const float4& plane, const float3& point, const float radius)
 
 }
 
-frustrum::frustrum(const camera& camera) noexcept
+frustrum::frustrum(const float4x4& inv_view_projection_matrix) noexcept
 {
    constexpr container::enum_array<float4, frustrum_corner> corners_proj =
       container::make_enum_array<float4, frustrum_corner>(
@@ -52,7 +52,7 @@ frustrum::frustrum(const camera& camera) noexcept
           {frustrum_corner::top_right_far, {1.0f, 1.0f, 1.0f, 1.0f}}});
 
    ranges::copy(corners_proj | ranges::views::transform([&](float4 position) {
-                   position = camera.inv_view_projection_matrix() * position;
+                   position = inv_view_projection_matrix * position;
 
                    return float3{position} / position.w;
                 }),

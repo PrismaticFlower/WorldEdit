@@ -1,6 +1,5 @@
 #pragma once
 
-#include "camera.hpp"
 #include "container/enum_array.hpp"
 #include "math/bounding_box.hpp"
 #include "types.hpp"
@@ -33,7 +32,7 @@ enum class frustrum_planes {
 };
 
 struct frustrum {
-   explicit frustrum(const camera& camera) noexcept;
+   explicit frustrum(const float4x4& inv_view_projection_matrix) noexcept;
 
    container::enum_array<float3, frustrum_corner> corners;
    container::enum_array<float4, frustrum_planes> planes;

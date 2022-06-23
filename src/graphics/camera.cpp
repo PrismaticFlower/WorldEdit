@@ -6,7 +6,7 @@
 
 namespace we::graphics {
 
-void perspective_camera::update() noexcept
+void camera::update() noexcept
 {
    _world_matrix = float4x4{_rotation};
    _world_matrix[3] = {_position, 1.0f};
@@ -35,32 +35,7 @@ void perspective_camera::update() noexcept
    _inv_view_projection_matrix = glm::inverse(double4x4{_view_projection_matrix});
 }
 
-void shadow_orthographic_camera::update() noexcept
-{
-   _projection_matrix = {1.0f, 0.0f, 0.0f, 0.0f, //
-                         0.0f, 1.0f, 0.0f, 0.0f, //
-                         0.0f, 0.0f, 1.0f, 0.0f, //
-                         0.0f, 0.0f, 0.0f, 1.0f};
-
-   const auto inv_x_range = 1.0f / (_min.x - _max.x);
-   const auto inv_y_range = 1.0f / (_max.y - _min.y);
-   const auto inv_z_range = 1.0f / (_max.z - _min.z);
-
-   _projection_matrix[0][0] = inv_x_range + inv_x_range;
-   _projection_matrix[1][1] = inv_y_range + inv_y_range;
-   _projection_matrix[2][2] = inv_z_range;
-
-   _projection_matrix[3][0] = -(_max.x + _min.x) * inv_x_range;
-   _projection_matrix[3][1] = -(_max.y + _min.y) * inv_y_range;
-   _projection_matrix[3][2] = -_min.z * inv_z_range;
-
-   _view_projection_matrix = _projection_matrix * _view_matrix;
-
-   _inv_view_projection_matrix = glm::inverse(double4x4{_view_projection_matrix});
-}
-
-auto make_camera_ray(const controllable_perspective_camera& camera,
-                     const float2 cursor_position,
+auto make_camera_ray(const camera& camera, const float2 cursor_position,
                      const float2 window_size) noexcept -> camera_ray
 {
    float2 ndc_pos =

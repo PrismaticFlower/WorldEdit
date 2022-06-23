@@ -306,7 +306,7 @@ void renderer_impl::draw_frame(
 
    _device.copy_manager.enqueue_fence_wait_if_needed(_device.command_queue);
 
-   const frustrum view_frustrum{camera};
+   const frustrum view_frustrum{camera.inv_view_projection_matrix()};
 
    gpu::command_allocator_scoped command_allocator{_device.command_allocator_factory,
                                                    D3D12_COMMAND_LIST_TYPE_DIRECT,

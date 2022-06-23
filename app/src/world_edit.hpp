@@ -123,7 +123,7 @@ private:
    actions::stack _undo_stack;
 
    graphics::renderer _renderer;
-   graphics::controllable_perspective_camera _camera;
+   graphics::camera _camera;
 
    bool _imgui_wants_input_capture = false;
    bool _move_camera_forward = false;

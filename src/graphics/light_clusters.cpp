@@ -2,6 +2,7 @@
 #include "light_clusters.hpp"
 #include "gpu/barrier_helpers.hpp"
 #include "math/align.hpp"
+#include "shadow_camera.hpp"
 #include "world/world_utilities.hpp"
 
 #include <cmath>
@@ -682,80 +683,6 @@ void light_clusters::update_lights(
 }
 
 namespace {
-class shadow_camera : public camera {
-public:
-   shadow_camera() noexcept
-   {
-      update();
-   }
-
-   void look_at(const float3 eye, const float3 at, const float3 up) noexcept
-   {
-      _view_matrix = glm::lookAtLH(eye, at, up);
-      _world_matrix = glm::inverse(_view_matrix);
-
-      update();
-   }
-
-   void set_projection(const float min_x, const float min_y, const float max_x,
-                       const float max_y, const float min_z, const float max_z)
-   {
-      _projection_matrix = {1.0f, 0.0f, 0.0f, 0.0f, //
-                            0.0f, 1.0f, 0.0f, 0.0f, //
-                            0.0f, 0.0f, 1.0f, 0.0f, //
-                            0.0f, 0.0f, 0.0f, 1.0f};
-
-      _near_clip = min_z;
-      _far_clip = max_z;
-
-      const auto inv_x_range = 1.0f / (min_x - max_x);
-      const auto inv_y_range = 1.0f / (max_y - min_y);
-      const auto inv_z_range = 1.0f / (max_z - min_z);
-
-      _projection_matrix[0][0] = inv_x_range + inv_x_range;
-      _projection_matrix[1][1] = inv_y_range + inv_y_range;
-      _projection_matrix[2][2] = inv_z_range;
-
-      _projection_matrix[3][0] = -(max_x + min_x) * inv_x_range;
-      _projection_matrix[3][1] = -(max_y + min_y) * inv_y_range;
-      _projection_matrix[3][2] = -min_z * inv_z_range;
-
-      update();
-   }
-
-   void set_stabilization(const float2 stabilization)
-   {
-      _stabilization = stabilization;
-
-      update();
-   }
-
-   auto texture_matrix() const noexcept -> const float4x4&
-   {
-      return _texture_matrix;
-   }
-
-private:
-   void update() noexcept
-   {
-      _view_projection_matrix = _projection_matrix * _view_matrix;
-
-      _view_projection_matrix[3].x += _stabilization.x;
-      _view_projection_matrix[3].y += _stabilization.y;
-
-      _inv_view_projection_matrix = glm::inverse(double4x4{_view_projection_matrix});
-
-      constexpr float4x4 bias_matrix{0.5f, 0.0f,  0.0f, 0.0f, //
-                                     0.0f, -0.5f, 0.0f, 0.0f, //
-                                     0.0f, 0.0f,  1.0f, 0.0f, //
-                                     0.5f, 0.5f,  0.0f, 1.0f};
-
-      _texture_matrix = bias_matrix * _view_projection_matrix;
-   }
-
-   float2 _stabilization = {0.0f, 0.0f};
-   float4x4 _texture_matrix;
-};
 
 auto sun_rotation(const world::world& world) -> quaternion
 {
@@ -788,7 +715,7 @@ auto make_shadow_cascade_splits(const camera& camera)
 
 auto make_cascade_shadow_camera(const float3 light_direction,
                                 const float near_split, const float far_split,
-                                const frustrum& view_frustrum) -> shadow_camera
+                                const frustrum& view_frustrum) -> shadow_ortho_camera
 {
    auto view_frustrum_corners = view_frustrum.corners;
 
@@ -821,7 +748,7 @@ auto make_cascade_shadow_camera(const float3 light_direction,
    float3 shadow_camera_position =
       view_frustrum_center + light_direction * -bounds_min.z;
 
-   shadow_camera shadow_camera;
+   shadow_ortho_camera shadow_camera;
    shadow_camera.set_projection(bounds_min.x, bounds_min.y, bounds_max.x,
                                 bounds_max.y, 0.0f, casecase_extents.z);
    shadow_camera.look_at(shadow_camera_position, view_frustrum_center,
@@ -844,14 +771,14 @@ auto make_cascade_shadow_camera(const float3 light_direction,
 
 auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
                           const frustrum& view_frustrum)
-   -> std::array<shadow_camera, cascade_count>
+   -> std::array<shadow_ortho_camera, cascade_count>
 {
    const float3 light_direction =
       glm::normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
 
    const std::array cascade_splits = make_shadow_cascade_splits(camera);
 
-   std::array<shadow_camera, cascade_count> cameras;
+   std::array<shadow_ortho_camera, cascade_count> cameras;
 
    for (int i = 0; i < cascade_count; ++i) {
       cameras[i] = make_cascade_shadow_camera(light_direction, cascade_splits[i],
@@ -883,7 +810,7 @@ void light_clusters::TEMP_render_shadow_maps(
 
       _shadow_cascade_transforms[cascade_index] = shadow_camera.texture_matrix();
 
-      frustrum shadow_frustrum{shadow_camera};
+      frustrum shadow_frustrum{shadow_camera.inv_view_projection_matrix()};
 
       auto depth_stencil_view = _shadow_map_dsv[cascade_index].cpu;
 

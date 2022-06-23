@@ -328,6 +328,7 @@
     <ClInclude Include="src\graphics\shader_cache.hpp" />
     <ClInclude Include="src\graphics\shader_library.hpp" />
     <ClInclude Include="src\graphics\shader_list.hpp" />
+    <ClInclude Include="src\graphics\shadow_camera.hpp" />
     <ClInclude Include="src\graphics\terrain.hpp" />
     <ClInclude Include="src\graphics\texture_manager.hpp" />
     <ClInclude Include="src\graphics\triangle_drawer.hpp" />

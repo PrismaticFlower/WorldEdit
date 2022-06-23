@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.hpp"
 #include "frustrum.hpp"
 #include "gpu/buffer.hpp"
 #include "gpu/command_list.hpp"
