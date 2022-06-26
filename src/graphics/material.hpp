@@ -23,6 +23,8 @@ struct material {
                                  gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
                                  const updated_textures& updated);
 
+   float3 specular_color;
+
    material_pipeline_flags flags = material_pipeline_flags::none;
    gpu::buffer constant_buffer;
    gpu::resource_view_set constant_buffer_view;

@@ -40,7 +40,7 @@ auto create_adapter(IDXGIFactory7& factory) -> utility::com_ptr<IDXGIAdapter4>
            factory.EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
                                               IID_PPV_ARGS(adapter.clear_and_assign())));
         ++i) {
-      utility::com_ptr<ID3D12Device10> device;
+      utility::com_ptr<ID3D12Device9> device;
 
       if (FAILED(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_0,
                                    IID_PPV_ARGS(device.clear_and_assign())))) {

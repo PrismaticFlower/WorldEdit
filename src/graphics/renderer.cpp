@@ -44,6 +44,9 @@ namespace {
 struct alignas(256) frame_constant_buffer {
    float4x4 view_projection_matrix;
 
+   float3 view_positionWS;
+   uint32 pad0 = 0;
+
    float2 viewport_size;
    float2 viewport_topleft;
 
@@ -418,6 +421,8 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 {
    frame_constant_buffer
       constants{.view_projection_matrix = camera.view_projection_matrix(),
+
+                .view_positionWS = camera.position(),
 
                 .viewport_size = {static_cast<float>(_device.swap_chain.width()),
                                   static_cast<float>(_device.swap_chain.height())},

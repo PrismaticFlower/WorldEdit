@@ -12,7 +12,8 @@ namespace {
 enum class shader_flags : uint32 {
    none = 0b0,
    transparent = 0b1,
-   unlit = 0b10
+   unlit = 0b10,
+   specular_visibility_in_diffuse_map = 0b100
 };
 
 constexpr bool marked_as_enum_bitflag(shader_flags)
@@ -35,7 +36,9 @@ constexpr bool has_normalmap(const assets::msh::material& material)
 }
 
 constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
-                                 assets::msh::material_flags msh_flags) noexcept -> shader_flags
+                                 assets::msh::material_flags msh_flags,
+                                 const bool specular_visibility_in_diffuse_map) noexcept
+   -> shader_flags
 {
    shader_flags flags = shader_flags::none;
 
@@ -51,6 +54,10 @@ constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
       flags |= shader_flags::unlit; // Actually implementing this properly is fairly pointless without a bloom pass.
    }
 
+   if (specular_visibility_in_diffuse_map) {
+      flags |= shader_flags::specular_visibility_in_diffuse_map;
+   }
+
    return flags;
 }
 
@@ -58,6 +65,8 @@ struct alignas(256) normal_material_constants {
    shader_flags flags;
    uint32 diffuse_map;
    uint32 normal_map;
+   uint32 pad;
+   float3 specular_color;
 };
 
 }
@@ -82,8 +91,6 @@ material::material(const assets::msh::material& material,
    if (not textures[0]) textures[0] = texture_manager.null_diffuse_map();
    if (not textures[1]) textures[1] = texture_manager.null_normal_map();
 
-   init_resources(gpu_device);
-
    using assets::msh::material_flags;
 
    msh_flags = material.flags;
@@ -105,6 +112,17 @@ material::material(const assets::msh::material& material,
    if (are_flags_set(material.flags, material_flags::additive)) {
       flags |= material_pipeline_flags::additive;
    }
+
+   if (are_flags_set(material.flags, material_flags::specular) or
+       material.rendertype == assets::msh::rendertype::specular or
+       material.rendertype == assets::msh::rendertype::normalmap_specular) {
+      specular_color = material.specular_color;
+   }
+   else {
+      specular_color = float3{0.0f};
+   }
+
+   init_resources(gpu_device);
 }
 
 void material::init_resources(gpu::device& gpu_device)
@@ -124,9 +142,12 @@ void material::init_resources(gpu::device& gpu_device)
    constant_buffer_view =
       gpu_device.create_resource_view_set(resource_view_descriptions);
 
-   normal_material_constants constants{.flags = make_shader_flags(flags, msh_flags),
+   normal_material_constants constants{.flags =
+                                          make_shader_flags(flags, msh_flags,
+                                                            texture_names[1].empty()),
                                        .diffuse_map = textures[0]->srv_srgb_index,
-                                       .normal_map = textures[1]->srv_index};
+                                       .normal_map = textures[1]->srv_index,
+                                       .specular_color = specular_color};
 
    auto copy_context = gpu_device.copy_manager.aquire_context();
 
@@ -165,9 +186,12 @@ void material::init_resources(gpu::device& gpu_device)
 void material::update_constant_buffer(gpu::graphics_command_list& command_list,
                                       gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   normal_material_constants constants{.flags = make_shader_flags(flags, msh_flags),
+   normal_material_constants constants{.flags =
+                                          make_shader_flags(flags, msh_flags,
+                                                            texture_names[1].empty()),
                                        .diffuse_map = textures[0]->srv_srgb_index,
-                                       .normal_map = textures[1]->srv_index};
+                                       .normal_map = textures[1]->srv_index,
+                                       .specular_color = specular_color};
 
    auto allocation = dynamic_buffer_allocator.allocate(sizeof(constants));
 

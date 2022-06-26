@@ -1,5 +1,8 @@
 
+#include "frame_constants.hlsli"
 #include "lights_common.hlsli"
+
+ConstantBuffer<frame_constant_buffer> cb_frame : register(b0, space0);
 
 struct input_vertex {
    float3 positionWS : POSITIONWS;
@@ -17,12 +20,15 @@ float4 main(input_vertex input_vertex) : SV_TARGET
 {
    const float3 normalWS = normalize(input_vertex.normalWS);
    const float3 positionWS = input_vertex.positionWS;
+   const float3 viewWS = normalize(cb_frame.view_positionWS - positionWS);
 
    calculate_light_inputs lighting_inputs;
 
    lighting_inputs.positionWS = positionWS;
    lighting_inputs.normalWS = normalWS;
+   lighting_inputs.viewWS = viewWS;
    lighting_inputs.diffuse_color = surface_color;
+   lighting_inputs.specular_color = 0.0;
    lighting_inputs.positionSS = input_vertex.positionSS.xy;
 
    const float3 lighting = calculate_lighting(lighting_inputs);

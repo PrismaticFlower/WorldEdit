@@ -139,7 +139,7 @@ const gpu::root_signature_desc mesh_desc{
                  .register_space = mesh_register_space,
                  .offset_in_descriptors_from_table_start = 0},
              },
-          .visibility = gpu::shader_visibility::vertex,
+          .visibility = gpu::shader_visibility::all,
        },
 
        // lights descriptors
@@ -181,7 +181,7 @@ const gpu::root_signature_desc terrain_desc{
                    .register_space = mesh_register_space,
                    .offset_in_descriptors_from_table_start = 0},
                },
-            .visibility = gpu::shader_visibility::vertex,
+            .visibility = gpu::shader_visibility::all,
          },
 
          // lights descriptors

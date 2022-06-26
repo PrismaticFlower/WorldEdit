@@ -58,7 +58,9 @@ struct light_region_description {
 struct calculate_light_inputs {
    float3 positionWS;
    float3 normalWS;
+   float3 viewWS;
    float3 diffuse_color;
+   float3 specular_color;
    uint2 positionSS;
 };
 
@@ -325,7 +327,11 @@ float3 calculate_light(calculate_light_inputs input, light_description light, li
 {
    const float3 diffuse = saturate(dot(input.normalWS, light_info.light_directionWS)) * input.diffuse_color;
 
-   return light.color * diffuse * light_info.falloff;
+   const float3 half_vectorWS = normalize(light_info.light_directionWS + input.viewWS);
+   const float NdotH = saturate(dot(input.normalWS, half_vectorWS));
+   const float3 specular = pow(NdotH, 64.0) * input.specular_color;
+
+   return (diffuse + specular) * light.color * light_info.falloff;
 }
 
 float3 calculate_lighting(calculate_light_inputs input)

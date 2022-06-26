@@ -1,6 +1,9 @@
 
+#include "frame_constants.hlsli"
 #include "lights_common.hlsli"
 #include "terrain_common.hlsli"
+
+ConstantBuffer<frame_constant_buffer> cb_frame : register(b0, space0);
 
 Texture2D<float3> diffuse_maps[TERRAIN_MAX_TEXTURES] : register(t0, space1);
 
@@ -8,6 +11,7 @@ float4 main(input_vertex input) : SV_Target0
 {
    const float3 normalWS = get_terrain_normalWS(input.terrain_coords);
    const float3 positionWS = input.positionWS;
+   const float3 viewWS = normalize(cb_frame.view_positionWS - positionWS);
 
    float3 diffuse_color = 0.0;
 
@@ -32,7 +36,9 @@ float4 main(input_vertex input) : SV_Target0
 
    lighting_inputs.positionWS = positionWS;
    lighting_inputs.normalWS = normalWS;
+   lighting_inputs.viewWS = viewWS;
    lighting_inputs.diffuse_color = diffuse_color;
+   lighting_inputs.specular_color = 0.0;
    lighting_inputs.positionSS = input.positionSS.xy;
 
    const float3 lighting = calculate_lighting(lighting_inputs);
