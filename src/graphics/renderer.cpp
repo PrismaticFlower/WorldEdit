@@ -1688,9 +1688,7 @@ void renderer_impl::update_textures(gpu::graphics_command_list& command_list)
       [&](const absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>& updated) {
          _model_manager.for_each([&](model& model) {
             for (auto& part : model.parts) {
-               part.material.process_updated_textures(command_list,
-                                                      _dynamic_buffer_allocator,
-                                                      updated);
+               part.material.process_updated_textures(command_list, updated);
             }
          });
 

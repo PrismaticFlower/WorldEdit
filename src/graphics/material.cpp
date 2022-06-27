@@ -1,8 +1,6 @@
 #include "material.hpp"
 #include "gpu/barrier_helpers.hpp"
 
-#include <range/v3/view.hpp>
-
 using namespace std::literals;
 
 namespace we::graphics {
@@ -74,22 +72,23 @@ struct alignas(256) normal_material_constants {
 material::material(const assets::msh::material& material,
                    gpu::device& gpu_device, texture_manager& texture_manager)
 {
-   texture_names.resize(2);
-   texture_names[0] = lowercase_string{material.textures[0]};
-   texture_names[1] = lowercase_string{material.textures[1]};
+   texture_names.diffuse_map = lowercase_string{material.textures[0]};
+   texture_names.normal_map = lowercase_string{material.textures[1]};
 
-   textures.resize(2);
+   textures.diffuse_map = texture_manager.at_or(texture_names.diffuse_map,
+                                                texture_manager.null_diffuse_map());
 
-   textures[0] =
-      texture_manager.at_or(texture_names[0], texture_manager.null_diffuse_map());
-
-   if (has_normalmap(material) and not texture_names[1].empty()) {
-      textures[1] = texture_manager.at_or(texture_names[1],
-                                          texture_manager.null_normal_map());
+   if (has_normalmap(material) and not texture_names.normal_map.empty()) {
+      textures.normal_map = texture_manager.at_or(texture_names.normal_map,
+                                                  texture_manager.null_normal_map());
    }
 
-   if (not textures[0]) textures[0] = texture_manager.null_diffuse_map();
-   if (not textures[1]) textures[1] = texture_manager.null_normal_map();
+   if (not textures.diffuse_map) {
+      textures.diffuse_map = texture_manager.null_diffuse_map();
+   }
+   if (not textures.normal_map) {
+      textures.normal_map = texture_manager.null_normal_map();
+   }
 
    using assets::msh::material_flags;
 
@@ -142,12 +141,11 @@ void material::init_resources(gpu::device& gpu_device)
    constant_buffer_view =
       gpu_device.create_resource_view_set(resource_view_descriptions);
 
-   normal_material_constants constants{.flags =
-                                          make_shader_flags(flags, msh_flags,
-                                                            texture_names[1].empty()),
-                                       .diffuse_map = textures[0]->srv_srgb_index,
-                                       .normal_map = textures[1]->srv_index,
-                                       .specular_color = specular_color};
+   normal_material_constants constants{
+      .flags = make_shader_flags(flags, msh_flags, texture_names.normal_map.empty()),
+      .diffuse_map = textures.diffuse_map->srv_srgb_index,
+      .normal_map = textures.normal_map->srv_index,
+      .specular_color = specular_color};
 
    auto copy_context = gpu_device.copy_manager.aquire_context();
 
@@ -183,46 +181,40 @@ void material::init_resources(gpu::device& gpu_device)
    gpu_device.copy_manager.close_and_execute(copy_context);
 }
 
-void material::update_constant_buffer(gpu::graphics_command_list& command_list,
-                                      gpu::dynamic_buffer_allocator& dynamic_buffer_allocator)
-{
-   normal_material_constants constants{.flags =
-                                          make_shader_flags(flags, msh_flags,
-                                                            texture_names[1].empty()),
-                                       .diffuse_map = textures[0]->srv_srgb_index,
-                                       .normal_map = textures[1]->srv_index,
-                                       .specular_color = specular_color};
-
-   auto allocation = dynamic_buffer_allocator.allocate(sizeof(constants));
-
-   std::memcpy(allocation.cpu_address, &constants, sizeof(constants));
-
-   command_list.copy_buffer_region(*constant_buffer.resource(), 0,
-                                   *dynamic_buffer_allocator.view_resource(),
-                                   allocation.gpu_address -
-                                      dynamic_buffer_allocator.gpu_base_address(),
-                                   sizeof(constants));
-
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(*constant_buffer.resource(), D3D12_RESOURCE_STATE_COPY_DEST,
-                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
-}
-
 void material::process_updated_textures(gpu::graphics_command_list& command_list,
-                                        gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
                                         const updated_textures& updated)
 {
    using namespace ranges::views;
 
    bool update = false;
 
-   for (auto [name, texture] : zip(texture_names, textures)) {
-      if (auto new_texture = updated.find(name); new_texture != updated.end()) {
-         texture = new_texture->second;
-         update = true;
-      }
+   if (auto new_texture = updated.find(texture_names.diffuse_map);
+       new_texture != updated.end()) {
+      textures.diffuse_map = new_texture->second;
+
+      command_list.write_buffer_immediate(constant_buffer.gpu_virtual_address() +
+                                             offsetof(normal_material_constants,
+                                                      diffuse_map),
+                                          textures.diffuse_map->srv_srgb_index);
+
+      update = true;
    }
 
-   if (update) update_constant_buffer(command_list, dynamic_buffer_allocator);
+   if (auto new_texture = updated.find(texture_names.normal_map);
+       new_texture != updated.end()) {
+      textures.normal_map = new_texture->second;
+
+      command_list.write_buffer_immediate(constant_buffer.gpu_virtual_address() +
+                                             offsetof(normal_material_constants, normal_map),
+                                          textures.normal_map->srv_index);
+
+      update = true;
+   }
+
+   if (update) {
+      command_list.deferred_resource_barrier(
+         gpu::transition_barrier(*constant_buffer.resource(), D3D12_RESOURCE_STATE_COPY_DEST,
+                                 D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+   }
 }
 }

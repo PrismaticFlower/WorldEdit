@@ -6,8 +6,6 @@
 #include "pipeline_library.hpp"
 #include "texture_manager.hpp"
 
-#include <vector>
-
 namespace we::graphics {
 
 struct material {
@@ -16,21 +14,27 @@ struct material {
 
    void init_resources(gpu::device& gpu_device);
 
-   void update_constant_buffer(gpu::graphics_command_list& command_list,
-                               gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
-
    void process_updated_textures(gpu::graphics_command_list& command_list,
-                                 gpu::dynamic_buffer_allocator& dynamic_buffer_allocator,
                                  const updated_textures& updated);
-
-   float3 specular_color;
 
    material_pipeline_flags flags = material_pipeline_flags::none;
    gpu::buffer constant_buffer;
    gpu::resource_view_set constant_buffer_view;
 
-   std::vector<std::shared_ptr<const world_texture>> textures;
-   std::vector<lowercase_string> texture_names;
+   struct textures {
+      std::shared_ptr<const world_texture> diffuse_map;
+      std::shared_ptr<const world_texture> normal_map;
+   };
+
+   struct texture_names {
+      lowercase_string diffuse_map;
+      lowercase_string normal_map;
+   };
+
+   textures textures;
+   texture_names texture_names;
+
+   float3 specular_color;
 
    assets::msh::material_flags msh_flags = assets::msh::material_flags::none;
 };

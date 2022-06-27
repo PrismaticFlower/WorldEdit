@@ -126,6 +126,14 @@ public:
                                buffer_start_offset_in_bytes, flags);
    }
 
+   void write_buffer_immediate(const gpu_virtual_address address, const uint32 value)
+   {
+      D3D12_WRITEBUFFERIMMEDIATE_PARAMETER param{.Dest = address, .Value = value};
+      D3D12_WRITEBUFFERIMMEDIATE_MODE mode = D3D12_WRITEBUFFERIMMEDIATE_MODE_DEFAULT;
+
+      _command_list->WriteBufferImmediate(1, &param, &mode);
+   }
+
    void resource_barrier(const std::span<const D3D12_RESOURCE_BARRIER> barriers)
    {
       _command_list->ResourceBarrier(static_cast<UINT>(barriers.size()),
