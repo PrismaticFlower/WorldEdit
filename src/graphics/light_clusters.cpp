@@ -623,7 +623,7 @@ void light_clusters::update_lights(
       gpu::transition_barrier(*_lights_tiles.resource(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                               D3D12_RESOURCE_STATE_UNORDERED_ACCESS)});
 
-   command_list.flush_deferred_resource_barriers();
+   command_list.flush_resource_barriers();
 
    // clear light tiles
    {
@@ -641,7 +641,8 @@ void light_clusters::update_lights(
                             math::align_up(_tiles_height, 32) / 32, 1);
    }
 
-   command_list.resource_barrier(gpu::uav_barrier(*_lights_tiles.resource()));
+   command_list.deferred_resource_barrier(gpu::uav_barrier(*_lights_tiles.resource()));
+   command_list.flush_resource_barriers();
 
    command_list.set_graphics_root_signature(*root_signatures.tile_lights);
    command_list.set_graphics_root_descriptor_table(rs::tile_lights::descriptor_table,
@@ -800,7 +801,7 @@ void light_clusters::TEMP_render_shadow_maps(
       gpu::transition_barrier(*_shadow_map.resource(),
                               D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                               D3D12_RESOURCE_STATE_DEPTH_WRITE));
-   command_list.flush_deferred_resource_barriers();
+   command_list.flush_resource_barriers();
 
    auto shadow_cascade_cameras =
       make_shadow_cascades(sun_rotation(world), view_camera, view_frustrum);

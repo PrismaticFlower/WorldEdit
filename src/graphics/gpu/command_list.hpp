@@ -134,17 +134,6 @@ public:
       _command_list->WriteBufferImmediate(1, &param, &mode);
    }
 
-   void resource_barrier(const std::span<const D3D12_RESOURCE_BARRIER> barriers)
-   {
-      _command_list->ResourceBarrier(static_cast<UINT>(barriers.size()),
-                                     barriers.data());
-   }
-
-   void resource_barrier(const D3D12_RESOURCE_BARRIER& barrier)
-   {
-      _command_list->ResourceBarrier(1, &barrier);
-   }
-
    void deferred_resource_barrier(const std::span<const D3D12_RESOURCE_BARRIER> barriers)
    {
       _deferred_barriers.insert(_deferred_barriers.end(), barriers.begin(),
@@ -156,7 +145,7 @@ public:
       _deferred_barriers.emplace_back(barrier);
    }
 
-   void flush_deferred_resource_barriers()
+   void flush_resource_barriers()
    {
       if (_deferred_barriers.empty()) return;
 

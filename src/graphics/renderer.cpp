@@ -347,7 +347,7 @@ void renderer_impl::draw_frame(
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_PRESENT,
                               D3D12_RESOURCE_STATE_RENDER_TARGET));
-   command_list.flush_deferred_resource_barriers();
+   command_list.flush_resource_barriers();
 
    command_list.clear_render_target_view(back_buffer_rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
@@ -377,9 +377,10 @@ void renderer_impl::draw_frame(
    ImGui::Render();
    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command_list.get_underlying());
 
-   command_list.resource_barrier(
+   command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
                               D3D12_RESOURCE_STATE_PRESENT));
+   command_list.flush_resource_barriers();
 
    command_list.close();
 
