@@ -457,7 +457,7 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat3("Position", region, &world::region::position,
                                  &_undo_stack, &_world);
                ImGui::DragFloat3("Size", region, &world::region::size,
-                                 &_undo_stack, &_world);
+                                 &_undo_stack, &_world, 1.0f, 0.0f, 1e10f);
 
                ImGui::EnumSelect(
                   "Shape", region, &world::region::shape, &_undo_stack, &_world,
