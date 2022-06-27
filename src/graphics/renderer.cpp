@@ -941,14 +941,13 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.hintnodes and not world.hintnodes.empty()) {
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
       command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
 
       command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
                                                       _camera_constant_buffer_view);
       command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
+      command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
 
       command_list.set_graphics_root_constant_buffer(
          rs::meta_mesh::color_cbv,
