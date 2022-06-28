@@ -51,6 +51,8 @@ public:
 
    ~renderer();
 
+   void wait_for_swap_chain_ready() noexcept;
+
    void draw_frame(const camera& camera, const world::world& world,
                    const world::interaction_targets& interaction_targets,
                    const world::active_entity_types active_entity_types,

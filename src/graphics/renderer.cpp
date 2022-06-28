@@ -130,6 +130,8 @@ public:
                  assets::libraries_manager& asset_libraries,
                  output_stream& error_output);
 
+   void wait_for_swap_chain_ready() noexcept;
+
    void draw_frame(const camera& camera, const world::world& world,
                    const world::interaction_targets& interaction_targets,
                    const world::active_entity_types active_entity_types,
@@ -297,6 +299,11 @@ renderer_impl::renderer_impl(const HWND window,
    }
 }
 
+void renderer_impl::wait_for_swap_chain_ready() noexcept
+{
+   _device.swap_chain.wait_for_ready();
+}
+
 void renderer_impl::draw_frame(
    const camera& camera, const world::world& world,
    const world::interaction_targets& interaction_targets,
@@ -305,7 +312,6 @@ void renderer_impl::draw_frame(
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
 {
    auto& swap_chain = _device.swap_chain;
-   swap_chain.wait_for_ready();
 
    _device.copy_manager.enqueue_fence_wait_if_needed(_device.command_queue);
 
@@ -1766,6 +1772,11 @@ renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settin
 }
 
 renderer::~renderer() = default;
+
+void renderer::wait_for_swap_chain_ready() noexcept
+{
+   _impl->wait_for_swap_chain_ready();
+}
 
 void renderer::draw_frame(const camera& camera, const world::world& world,
                           const world::interaction_targets& interaction_targets,

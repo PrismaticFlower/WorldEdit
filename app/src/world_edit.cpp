@@ -65,6 +65,8 @@ bool world_edit::update()
 
    if (not _focused) return true;
 
+   _renderer.wait_for_swap_chain_ready();
+
    // Input!
    update_input();
 
