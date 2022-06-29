@@ -61,6 +61,13 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
    });
 }
 
+void libraries_manager::update_loaded() noexcept
+{
+   odfs.update_loaded();
+   models.update_loaded();
+   textures.update_loaded();
+}
+
 void libraries_manager::clear() noexcept
 {
    odfs.clear();

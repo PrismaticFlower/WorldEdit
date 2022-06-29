@@ -50,9 +50,11 @@ public:
 
       auto new_state = make_asset_state(name, asset_path);
 
-      std::scoped_lock lock{_mutex};
+      auto [state_pair, inserted] = [&] {
+         std::scoped_lock lock{_assets_mutex};
 
-      auto [state_pair, inserted] = _assets.emplace(name, new_state);
+         return _assets.emplace(name, new_state);
+      }();
 
       auto state = state_pair->second;
 
@@ -60,12 +62,9 @@ public:
          std::scoped_lock state_lock{state->mutex};
 
          state->exists = true;
+         state->load_failure = false;
          state->path = asset_path;
-         state->start_load = [this, name] {
-            std::scoped_lock lock{_mutex};
-
-            enqueue_create_asset(name, false);
-         };
+         state->start_load = [this, name] { enqueue_create_asset(name, false); };
       }
 
       if (state->ref_count.load(std::memory_order_relaxed) > 0) {
@@ -82,7 +81,7 @@ public:
 
       // Take a shared_lock to try and get an already existing asset state.
       {
-         std::shared_lock lock{_mutex};
+         std::shared_lock lock{_assets_mutex};
 
          if (auto asset = _assets.find(name); asset != _assets.end()) {
             return asset_ref{asset->second};
@@ -91,7 +90,7 @@ public:
 
       auto placeholder_state = make_placeholder_asset_state();
 
-      std::lock_guard lock{_mutex};
+      std::lock_guard lock{_assets_mutex};
 
       auto [state_pair, inserted] = _assets.emplace(name, placeholder_state);
 
@@ -108,30 +107,63 @@ public:
       return _load_event.listen(std::move(callback));
    }
 
+   /// @brief Handles broadcasting notifications of any loaded or updated assets.
+   void update_loaded() noexcept
+   {
+   restart_loop:
+      std::unique_lock lock{_load_tasks_mutex};
+
+      for (auto& [task_name, task] : _load_tasks) {
+         if (not task.ready()) continue;
+
+         asset_data<T> asset_data = task.get();
+         lowercase_string name = task_name;
+
+         _load_tasks.erase(name);
+         lock.unlock(); // After thise line accessing _load_tasks is no longer safe.
+
+         asset_ref<T> asset;
+         std::shared_ptr<asset_state<T>> asset_state;
+
+         // Get the asset_state.
+         {
+            std::scoped_lock assets_lock{_assets_mutex};
+
+            asset_state = _assets[name];
+         }
+
+         // Update the asset data.
+         {
+            std::scoped_lock asset_lock{asset_state->mutex};
+
+            asset_state->data = asset_data;
+         }
+
+         asset = asset_ref<T>{asset_state};
+
+         if (asset_data != nullptr) {
+            _load_event.broadcast(name, asset, asset_data);
+         }
+         else {
+            asset_state->load_failure = true;
+         }
+
+         goto restart_loop; // Hehehe, couldn't resist (sorry)
+      }
+   }
+
    /// @brief Clears the asset library.
    void clear() noexcept
    {
-      {
-         std::scoped_lock lock{_mutex};
+      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex};
 
-         for (auto& [name, loading] : _loading_assets) {
-            loading.request_stop();
-         }
-
-         _assets.clear();
-         _loading_assets.clear();
-      }
-
-      {
-         std::scoped_lock lock{_load_tasks_mutex};
-
-         _load_tasks.clear();
-      }
+      _load_tasks.clear();
+      _assets.clear();
    }
 
    void enumerate_known(const auto callback) noexcept
    {
-      std::shared_lock lock{_mutex};
+      std::shared_lock lock{_assets_mutex};
 
       using namespace ranges::views;
 
@@ -152,8 +184,6 @@ private:
       return std::make_shared<asset_state<T>>(std::weak_ptr<T>{},
                                               not asset_path.empty(),
                                               asset_path, [this, name = name] {
-                                                 std::scoped_lock lock{_mutex};
-
                                                  enqueue_create_asset(name, false);
                                               });
    }
@@ -168,36 +198,41 @@ private:
    {
       using namespace std::literals;
 
-      auto asset = _assets.at(name);
+      auto asset = [&] {
+         std::scoped_lock lock{_assets_mutex};
+
+         return _assets.at(name);
+      }();
+
+      // Do not try reload assets that previously failed loading.
+      if (asset->load_failure) return;
+
+      std::filesystem::path asset_path = [&] {
+         std::shared_lock asset_lock{asset->mutex};
+
+         return asset->path;
+      }();
+
+      std::scoped_lock tasks_lock{_load_tasks_mutex};
 
       if (preempt_current_load) {
-         if (auto inprogress_load = _loading_assets.find(name);
-             inprogress_load != _loading_assets.end()) {
-            auto& [_, stop_source] = *inprogress_load;
+         if (auto inprogress_load = _load_tasks.find(name);
+             inprogress_load != _load_tasks.end()) {
+            auto& [_, load_task] = *inprogress_load;
 
-            stop_source.request_stop();
+            load_task.cancel();
 
-            _loading_assets.erase(inprogress_load);
+            _load_tasks.erase(inprogress_load);
          }
       }
-      else if (_loading_assets.contains(name)) {
+      else if (_load_tasks.contains(name)) {
          return;
       }
 
-      std::scoped_lock tasks_lock{_load_tasks_mutex};
-      std::shared_lock asset_lock{asset->mutex};
-
-      auto path = _assets.at(name)->path;
-
-      std::stop_source stop_source;
-
-      _loading_assets[name] = stop_source;
       _load_tasks[name] = _thread_pool->exec(
-         async::task_priority::low, [this, asset_path = _assets.at(name)->path, asset,
-                                     name, stop_token = stop_source.get_token()]() {
+         async::task_priority::low,
+         [this, asset_path = std::move(asset_path), asset, name]() -> asset_data<T> {
             try {
-               if (stop_token.stop_requested()) return;
-
                utility::stopwatch load_timer;
 
                auto asset_data =
@@ -209,41 +244,25 @@ private:
                                        .elapsed<std::chrono::duration<double, std::milli>>()
                                        .count());
 
-               if (stop_token.stop_requested()) return;
-
-               // update the asset state's data ref
-               {
-                  std::scoped_lock lock{asset->mutex};
-
-                  asset->data = asset_data;
-               }
-
-               // erase the loading marker/state
-               {
-                  std::scoped_lock lock{_mutex};
-
-                  _loading_assets.erase(name);
-               }
-
-               _load_event.broadcast(name, asset, asset_data);
+               return asset_data;
             }
             catch (std::exception& e) {
                _output_stream.write("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
                                     asset_path.string(),
                                     utility::string::indent(2, e.what()));
+
+               return nullptr;
             }
          });
    }
 
    we::output_stream& _output_stream;
 
-   std::shared_mutex _mutex; // guards _assets, _loading_assets
-
-   absl::flat_hash_map<lowercase_string, std::shared_ptr<asset_state<T>>> _assets;
-   absl::flat_hash_map<lowercase_string, std::stop_source> _loading_assets;
+   std::shared_mutex _assets_mutex;
+   absl::flat_hash_map<lowercase_string, std::shared_ptr<asset_state<T>>> _assets; // guarded by _assets_mutex
 
    std::shared_mutex _load_tasks_mutex;
-   absl::flat_hash_map<lowercase_string, async::task<void>> _load_tasks;
+   absl::flat_hash_map<lowercase_string, async::task<asset_data<T>>> _load_tasks; // guarded by _load_tasks_mutex
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 
@@ -262,6 +281,9 @@ public:
    /// @brief Sets the source directory for assets.
    /// @param path The directory to search through for assets.
    void source_directory(const std::filesystem::path& path) noexcept;
+
+   /// @brief Handles broadcasting notifications of any loaded or updated assets.
+   void update_loaded() noexcept;
 
    library<odf::definition> odfs;
    library<msh::flat_model> models;

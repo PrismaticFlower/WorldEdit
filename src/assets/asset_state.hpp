@@ -19,11 +19,12 @@ struct asset_state {
    }
 
    std::shared_mutex mutex;
-   std::weak_ptr<const T> data;
-   bool exists;
-   std::filesystem::path path;
-   std::function<void()> start_load;
-   std::atomic_size_t ref_count = 0;
+   std::weak_ptr<const T> data;           // guarded by mutex
+   bool exists = false;                   // guarded by mutex
+   std::atomic_bool load_failure = false; // trivial state, no need to guard
+   std::filesystem::path path;            // guarded by mutex
+   std::function<void()> start_load;      // guarded by mutex
+   std::atomic_size_t ref_count = 0;      // trivial state, no need to guard
 };
 
 }

@@ -77,6 +77,7 @@ bool world_edit::update()
    update_object_classes();
    update_hovered_entity();
 
+   _asset_libraries.update_loaded();
    _asset_load_queue.execute();
 
    // Render!
