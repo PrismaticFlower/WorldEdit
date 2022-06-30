@@ -242,7 +242,8 @@ public:
 
       auto task_context = std::make_shared<detail::task_context<T>>();
 
-      task_context->execute_function = [task_context, func = std::move(func)]() noexcept {
+      task_context->execute_function = [task_context = task_context.get(),
+                                        func = std::move(func)]() noexcept {
          try {
             if constexpr (std::is_void_v<T>) {
                func();
