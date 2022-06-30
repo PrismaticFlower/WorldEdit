@@ -41,5 +41,13 @@ TEST_CASE("asset_ref use count", "[Assets][AssetRef]")
    REQUIRE(ref.use_count() == 2);
    REQUIRE(ref_copy.use_count() == 0);
    REQUIRE(ref_move.use_count() == 2);
+
+   ref = asset_ref<odf::definition>{}; // empty assignment
+   ref_copy = asset_ref<odf::definition>{};
+   ref_move = asset_ref<odf::definition>{};
+
+   REQUIRE(ref.use_count() == 0);
+   REQUIRE(ref_copy.use_count() == 0);
+   REQUIRE(ref_move.use_count() == 0);
 }
 }
