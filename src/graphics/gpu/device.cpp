@@ -16,7 +16,7 @@ static_assert(D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND == descriptor_range_offset_ap
 
 namespace {
 
-constexpr bool use_debug_layer = true;
+constexpr bool use_debug_layer = false;
 
 auto create_factory() -> utility::com_ptr<IDXGIFactory7>
 {
