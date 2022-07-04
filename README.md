@@ -1,0 +1,1 @@
+An incomplete (but functional) world editor for SWBF2 (2004). See [here](./docs/BUILDING.md) for build instructions.
