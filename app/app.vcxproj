@@ -113,13 +113,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>dxcompiler.lib;d3d12.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/HIGHENTROPYVA /NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>$(SolutionDir)third_party\dxc\lib\$(Platform)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
     <PostBuildEvent>
-      <Command>copy "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(OutputPath)"
-copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"
+      <Command>copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxcompiler.dll" "$(OutputPath)"
+copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxil.dll" "$(OutputPath)"
 xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
 xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <Message>Copying dxcompiler and assets...</Message>
@@ -152,13 +153,14 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <AdditionalDependencies>dxcompiler.lib;d3d12.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/HIGHENTROPYVA /NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
       <Profile>true</Profile>
+      <AdditionalLibraryDirectories>$(SolutionDir)third_party\dxc\lib\$(Platform)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
     <PostBuildEvent>
-      <Command>copy "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(OutputPath)"
-copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"
+      <Command>copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxcompiler.dll" "$(OutputPath)"
+copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxil.dll" "$(OutputPath)"
 xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
 xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <Message>Copying dxcompiler and assets...</Message>
@@ -191,13 +193,14 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <AdditionalDependencies>dxcompiler.lib;d3d12.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/HIGHENTROPYVA /NOIMPLIB /NOEXP %(AdditionalOptions)</AdditionalOptions>
       <OptimizeReferences>false</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)third_party\dxc\lib\$(Platform)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
     <PostBuildEvent>
-      <Command>copy "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(OutputPath)"
-copy "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(OutputPath)"
+      <Command>copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxcompiler.dll" "$(OutputPath)"
+copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxil.dll" "$(OutputPath)"
 xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
 xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <Message>Copying dxcompiler and assets...</Message>
