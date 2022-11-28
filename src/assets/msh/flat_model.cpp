@@ -348,8 +348,8 @@ void mesh::regenerate_bounding_box() noexcept
 
 void flat_model_collision::regenerate_bounding_box() noexcept
 {
-   if (boost::variant2::holds_alternative<mesh>(geometry)) {
-      auto& coll_mesh = boost::variant2::get<mesh>(geometry);
+   if (std::holds_alternative<mesh>(geometry)) {
+      auto& coll_mesh = std::get<mesh>(geometry);
 
       bounding_box = {.min = float3{std::numeric_limits<float>::max()},
                       .max = float3{std::numeric_limits<float>::lowest()}};
@@ -359,7 +359,7 @@ void flat_model_collision::regenerate_bounding_box() noexcept
       }
    }
    else {
-      auto& coll_primitive = boost::variant2::get<primitive>(geometry);
+      auto& coll_primitive = std::get<primitive>(geometry);
 
       switch (coll_primitive.shape) {
       case collision_primitive_shape::sphere:

@@ -6,8 +6,7 @@
 
 #include <memory>
 #include <optional>
-
-#include <boost/variant2/variant.hpp>
+#include <variant>
 
 namespace we::assets::msh {
 
@@ -54,7 +53,7 @@ struct flat_model_collision {
       float length = 0.0f;
    };
 
-   boost::variant2::variant<primitive, mesh> geometry;
+   std::variant<primitive, mesh> geometry;
 
    void regenerate_bounding_box() noexcept;
 };

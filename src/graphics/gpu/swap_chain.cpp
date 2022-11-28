@@ -36,7 +36,7 @@ auto create_dxgi_swapchain(const HWND window, IDXGIFactory7& factory,
 
    throw_if_failed(swap_chain_1->QueryInterface(swap_chain_4.clear_and_assign()));
 
-   throw_if_failed(factory.MakeWindowAssociation(window, DXGI_MWA_NO_ALT_ENTER));
+   // throw_if_failed(factory.MakeWindowAssociation(window, DXGI_MWA_NO_ALT_ENTER));
 
    return swap_chain_4;
 }

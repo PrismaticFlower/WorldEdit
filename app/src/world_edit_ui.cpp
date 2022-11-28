@@ -163,7 +163,7 @@ void world_edit::update_ui() noexcept
    if (not _interaction_targets.selection.empty()) {
       ImGui::Begin("Selection");
 
-      boost::variant2::visit(
+      std::visit(
          overload{
             [&](world::object_id id) {
                world::object* object =

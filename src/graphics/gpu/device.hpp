@@ -23,9 +23,9 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <variant>
 #include <vector>
 
-#include <boost/variant2/variant.hpp>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wil/resource.h>
@@ -131,7 +131,7 @@ public:
 
          if (desc.counter_resource) resources.push_back(desc.counter_resource);
 
-         boost::variant2::visit(
+         std::visit(
             [&](const auto& view_desc) {
                using Type = std::remove_cvref_t<decltype(view_desc)>;
 
@@ -303,7 +303,7 @@ private:
    struct deferred_destruction {
       UINT64 last_used_frame = 0;
 
-      boost::variant2::variant<resource_owner, std::unique_ptr<descriptor_range_owner>> resource;
+      std::variant<resource_owner, std::unique_ptr<descriptor_range_owner>> resource;
    };
 
    std::mutex _deferred_destruction_mutex;

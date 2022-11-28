@@ -37,7 +37,7 @@ public:
       -> std::optional<ray_hit>;
 
 private:
-   std::unique_ptr<detail::flat_model_bvh_impl> _impl = nullptr;
+   std::unique_ptr<detail::flat_model_bvh_impl> _impl;
 };
 
 }

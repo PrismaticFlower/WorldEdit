@@ -71,7 +71,7 @@ auto read_path_properties(const assets::config::node& node)
    for (auto& prop : node) {
       properties.push_back(
          {.key = prop.key,
-          .value = boost::variant2::visit(
+          .value = std::visit(
              [](const auto& v) noexcept -> std::string {
                 if constexpr (std::is_same_v<decltype(v), const std::string&>) {
                    return v;

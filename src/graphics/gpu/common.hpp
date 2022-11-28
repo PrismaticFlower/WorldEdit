@@ -2,12 +2,13 @@
 
 #include "types.hpp"
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <type_traits>
+#include <variant>
 
 #include <boost/container/small_vector.hpp>
-#include <boost/variant2/variant.hpp>
 #include <d3d12.h>
 
 namespace we::graphics::gpu {
@@ -219,9 +220,9 @@ struct shader_resource_view_desc {
    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
    uint32 shader_4_component_mapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-   boost::variant2::variant<buffer_srv, texture1d_srv, texture1d_array_srv, texture2d_srv,
-                            texture2d_array_srv, texture2d_ms_srv, texture2d_ms_array_srv,
-                            texture3d_srv, texture_cube_srv, texture_cube_array_srv, raytracing_acceleration_structure_srv>
+   std::variant<buffer_srv, texture1d_srv, texture1d_array_srv, texture2d_srv,
+                texture2d_array_srv, texture2d_ms_srv, texture2d_ms_array_srv, texture3d_srv,
+                texture_cube_srv, texture_cube_array_srv, raytracing_acceleration_structure_srv>
       type_description;
 
    operator D3D12_SHADER_RESOURCE_VIEW_DESC() const noexcept
@@ -230,7 +231,7 @@ struct shader_resource_view_desc {
                                            .Shader4ComponentMapping =
                                               shader_4_component_mapping};
 
-      boost::variant2::visit(
+      std::visit(
          [&](const auto& type_desc) {
             using Type = std::remove_cvref_t<decltype(type_desc)>;
 
@@ -375,15 +376,15 @@ struct texture3d_uav {
 struct unordered_access_view_desc {
    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
 
-   boost::variant2::variant<buffer_uav, texture1d_uav, texture1d_array_uav, texture2d_uav,
-                            texture2d_uav, texture2d_array_uav, texture3d_uav>
+   std::variant<buffer_uav, texture1d_uav, texture1d_array_uav, texture2d_uav,
+                texture2d_uav, texture2d_array_uav, texture3d_uav>
       type_description;
 
    operator D3D12_UNORDERED_ACCESS_VIEW_DESC() const noexcept
    {
       D3D12_UNORDERED_ACCESS_VIEW_DESC desc{.Format = format};
 
-      boost::variant2::visit(
+      std::visit(
          [&](const auto& type_desc) {
             using Type = std::remove_cvref_t<decltype(type_desc)>;
 
@@ -422,7 +423,7 @@ struct resource_view_desc {
    std::shared_ptr<ID3D12Resource> resource;
    std::shared_ptr<ID3D12Resource> counter_resource = nullptr;
 
-   boost::variant2::variant<shader_resource_view_desc, constant_buffer_view, unordered_access_view_desc> view_desc;
+   std::variant<shader_resource_view_desc, constant_buffer_view, unordered_access_view_desc> view_desc;
 };
 
 enum class filter { point, bilinear, trilinear, anisotropic };
@@ -504,8 +505,8 @@ struct root_signature_flags {
 
 struct root_signature_desc {
    using parameter =
-      boost::variant2::variant<root_parameter_descriptor_table, root_parameter_32bit_constants,
-                               root_parameter_cbv, root_parameter_srv, root_parameter_uav>;
+      std::variant<root_parameter_descriptor_table, root_parameter_32bit_constants,
+                   root_parameter_cbv, root_parameter_srv, root_parameter_uav>;
 
    std::string name;
 

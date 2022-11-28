@@ -221,7 +221,7 @@ auto create_root_signature_1_1_from_desc(ID3D12Device& device,
    };
 
    for (auto& param : desc.parameters) {
-      auto d3d12_param = boost::variant2::visit(
+      auto d3d12_param = std::visit(
          overload{
             [&descriptor_ranges_stack](const root_parameter_descriptor_table& param) {
                const auto ranges_stack_offset = descriptor_ranges_stack.size();

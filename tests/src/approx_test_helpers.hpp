@@ -1,6 +1,7 @@
 #pragma once
 
-#include <catch2/catch.hpp>
+#include "catch.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/epsilon.hpp>
 

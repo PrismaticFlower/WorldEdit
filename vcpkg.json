@@ -17,8 +17,6 @@
 
     "boost-algorithm",
     "boost-container",
-    "boost-variant2",
-    "catch2",
     "directxtex",
     "fmt",
     "glm",

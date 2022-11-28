@@ -253,11 +253,11 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
 
       // primitive
       {
-         REQUIRE(boost::variant2::holds_alternative<flat_model_collision::primitive>(
+         REQUIRE(std::holds_alternative<flat_model_collision::primitive>(
             model.collision[0].geometry));
 
-         auto& primitive = boost::variant2::get<flat_model_collision::primitive>(
-            model.collision[0].geometry);
+         auto& primitive =
+            std::get<flat_model_collision::primitive>(model.collision[0].geometry);
 
          CHECK(primitive.radius ==
                Approx(input_scene.nodes[3].collision_primitive->radius));
@@ -281,11 +281,11 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
 
       // mesh
       {
-         REQUIRE(boost::variant2::holds_alternative<flat_model_collision::mesh>(
+         REQUIRE(std::holds_alternative<flat_model_collision::mesh>(
             model.collision[1].geometry));
 
-         auto& mesh = boost::variant2::get<flat_model_collision::mesh>(
-            model.collision[1].geometry);
+         auto& mesh =
+            std::get<flat_model_collision::mesh>(model.collision[1].geometry);
 
          CHECK(mesh.triangles == input_scene.nodes[4].segments[0].triangles);
 

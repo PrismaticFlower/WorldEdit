@@ -1036,8 +1036,6 @@ void renderer_impl::draw_interaction_targets(
 {
    (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for interaction targets?)
 
-   using boost::variant2::visit;
-
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
    const auto draw_target = [&](world::interaction_target target,
@@ -1074,7 +1072,7 @@ void renderer_impl::draw_interaction_targets(
          command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
       };
 
-      visit(
+      std::visit(
          overload{
             [&](world::object_id id) {
                const world::object* object =

@@ -1,54 +1,53 @@
 #pragma once
 
 #include <initializer_list>
+#include <string>
 #include <type_traits>
+#include <variant>
 
 #include <boost/container/small_vector.hpp>
-#include <boost/variant2/variant.hpp>
 
 namespace we::assets::config {
 
 using values_container_type =
-   boost::container::small_vector<boost::variant2::variant<int, long long, double, std::string>, 4>;
+   boost::container::small_vector<std::variant<int, long long, double, std::string>, 4>;
 
 class values : values_container_type {
 public:
    using container_type = values_container_type;
-   using variant_type = boost::variant2::variant<int, long long, double, std::string>;
+   using variant_type = std::variant<int, long long, double, std::string>;
 
    static_assert(std::is_same_v<container_type::value_type, variant_type>);
 
    template<typename Type>
    auto get(const std::size_t index) const -> Type
    {
-      namespace variant2 = boost::variant2;
-
       if constexpr (std::is_integral_v<Type>) {
          if (holds_alternative<int>(at(index))) {
-            return static_cast<Type>(variant2::get<int>(at(index)));
+            return static_cast<Type>(std::get<int>(at(index)));
          }
          else if (holds_alternative<double>(at(index))) {
-            return static_cast<Type>(variant2::get<double>(at(index)));
+            return static_cast<Type>(std::get<double>(at(index)));
          }
          else {
-            return static_cast<Type>(variant2::get<long long>(at(index)));
+            return static_cast<Type>(std::get<long long>(at(index)));
          }
       }
       else if constexpr (std::is_floating_point_v<Type>) {
          if (holds_alternative<int>(at(index))) {
-            return static_cast<Type>(variant2::get<int>(at(index)));
+            return static_cast<Type>(std::get<int>(at(index)));
          }
          else if (holds_alternative<long long>(at(index))) {
-            return static_cast<Type>(variant2::get<long long>(at(index)));
+            return static_cast<Type>(std::get<long long>(at(index)));
          }
 
-         return static_cast<Type>(variant2::get<double>(at(index)));
+         return static_cast<Type>(std::get<double>(at(index)));
       }
       else if constexpr (std::is_same_v<Type, std::string_view>) {
-         return std::string_view{variant2::get<std::string>(at(index))};
+         return std::string_view{std::get<std::string>(at(index))};
       }
       else if constexpr (std::is_same_v<Type, std::string>) {
-         return variant2::get<std::string>(at(index));
+         return std::get<std::string>(at(index));
       }
       else {
          static_assert(
