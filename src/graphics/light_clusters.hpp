@@ -9,6 +9,7 @@
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
+#include "shadow_camera.hpp"
 #include "terrain.hpp"
 #include "world/object_class.hpp"
 #include "world/world.hpp"
@@ -17,8 +18,6 @@
 #include <array>
 #include <memory>
 #include <vector>
-
-#include <absl/container/flat_hash_map.h>
 
 namespace we::graphics {
 
@@ -29,20 +28,23 @@ public:
 
    void update_render_resolution(uint32 width, uint32 height);
 
-   void update_lights(const camera& view_camera, const frustrum& view_frustrum,
-                      const world::world& world, root_signature_library& root_signatures,
-                      pipeline_library& pipelines,
-                      gpu::graphics_command_list& command_list,
-                      dynamic_buffer_allocator& dynamic_buffer_allocator);
+   void prepare_lights(const camera& view_camera, const frustrum& view_frustrum,
+                       const world::world& world, gpu::copy_command_list& command_list,
+                       dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void TEMP_render_shadow_maps(const camera& view_camera, const frustrum& view_frustrum,
-                                const world_mesh_list& meshes, const world::world& world,
-                                root_signature_library& root_signatures,
-                                pipeline_library& pipelines,
-                                gpu::graphics_command_list& command_list,
-                                dynamic_buffer_allocator& dynamic_buffer_allocator);
+   void tile_lights(root_signature_library& root_signatures, pipeline_library& pipelines,
+                    gpu::graphics_command_list& command_list,
+                    dynamic_buffer_allocator& dynamic_buffer_allocator);
+
+   void draw_shadow_maps(const world_mesh_list& meshes,
+                         root_signature_library& root_signatures,
+                         pipeline_library& pipelines,
+                         gpu::graphics_command_list& command_list,
+                         dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    auto lights_constant_buffer_view() const noexcept -> gpu_virtual_address;
+
+   constexpr static uint32 sun_cascade_count = 4;
 
 private:
    void update_render_resolution(uint32 width, uint32 height, bool recreate_descriptors);
@@ -65,7 +67,6 @@ private:
 
    gpu::unique_resource_handle _shadow_map;
    std::array<gpu::unique_dsv_handle, 4> _shadow_map_dsv;
-   std::array<float4x4, 4> _shadow_cascade_transforms;
 
    gpu_virtual_address _tiling_inputs_cbv;
 
@@ -79,6 +80,12 @@ private:
    uint32 _tiles_height = 0;
    float _render_width = 0.0f;
    float _render_height = 0.0f;
+
+   std::array<uint32, 8> _tiles_start_value;
+   uint32 _light_count = 0;
+   gpu_virtual_address _sphere_light_proxies_srv = 0;
+
+   std::array<shadow_ortho_camera, sun_cascade_count> _sun_shadow_cascades;
 };
 
 }

@@ -25,7 +25,7 @@ public:
 
    explicit terrain(gpu::device& device, texture_manager& texture_manager);
 
-   void init(const world::terrain& terrain, gpu::graphics_command_list& command_list,
+   void init(const world::terrain& terrain, gpu::copy_command_list& command_list,
              dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void draw(const terrain_draw draw, const frustrum& view_frustrum,
@@ -35,7 +35,7 @@ public:
              root_signature_library& root_signatures, pipeline_library& pipelines,
              dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void process_updated_texture(gpu::graphics_command_list& command_list,
+   void process_updated_texture(gpu::copy_command_list& command_list,
                                 const updated_textures& updated);
 
 private:
@@ -47,17 +47,17 @@ private:
    };
 
    void init_gpu_resources(const world::terrain& terrain,
-                           gpu::graphics_command_list& command_list,
+                           gpu::copy_command_list& command_list,
                            dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void init_gpu_height_map(const world::terrain& terrain,
-                            gpu::graphics_command_list& command_list);
+                            gpu::copy_command_list& command_list);
 
    void init_gpu_texture_weight_map(const world::terrain& terrain,
-                                    gpu::graphics_command_list& command_list);
+                                    gpu::copy_command_list& command_list);
 
    void init_gpu_terrain_constants_buffer(const world::terrain& terrain,
-                                          gpu::graphics_command_list& command_list,
+                                          gpu::copy_command_list& command_list,
                                           dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void init_textures(const world::terrain& terrain);

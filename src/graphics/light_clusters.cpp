@@ -2,20 +2,16 @@
 #include "light_clusters.hpp"
 #include "gpu/barrier.hpp"
 #include "math/align.hpp"
-#include "shadow_camera.hpp"
 #include "world/world_utilities.hpp"
 
 #include <cmath>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/container/static_vector.hpp>
 
 namespace we::graphics {
 
 namespace {
 
 constexpr auto shadow_res = 2048;
-constexpr auto cascade_count = 4;
+constexpr auto cascade_count = light_clusters::sun_cascade_count;
 constexpr auto light_tile_size = 8;
 constexpr auto max_lights = 256;
 constexpr auto tile_light_word_bits = 32;
@@ -195,6 +191,99 @@ constexpr std::array<uint16, 144> sphere_proxy_indices{
    9,  11, 19, 13, 8,  9,  7, 16, 9,  6,  8,  13, 22, 5,  6,  4,  17, 6,
    3,  5,  22, 21, 2,  3,  1, 18, 3,  0,  2,  21, 19, 11, 0,  10, 25, 0};
 
+auto make_shadow_cascade_splits(const camera& camera)
+   -> std::array<float, cascade_count + 1>
+{
+   const float clip_ratio = camera.far_clip() / camera.near_clip();
+   const float clip_range = camera.far_clip() - camera.near_clip();
+
+   std::array<float, 5> cascade_splits{};
+
+   for (int i = 0; i < cascade_splits.size(); ++i) {
+      const float split = (camera.near_clip() * std::pow(clip_ratio, i / 4.0f));
+      const float split_normalized = (split - camera.near_clip()) / clip_range;
+
+      cascade_splits[i] = split_normalized;
+   }
+
+   return cascade_splits;
+}
+
+auto make_cascade_shadow_camera(const float3 light_direction,
+                                const float near_split, const float far_split,
+                                const frustrum& view_frustrum) -> shadow_ortho_camera
+{
+   auto view_frustrum_corners = view_frustrum.corners;
+
+   for (int i = 0; i < 4; ++i) {
+      float3 corner_ray = view_frustrum_corners[i + 4] - view_frustrum_corners[i];
+
+      view_frustrum_corners[i + 4] =
+         view_frustrum_corners[i] + (corner_ray * far_split);
+      view_frustrum_corners[i] += (corner_ray * near_split);
+   }
+
+   float3 view_frustrum_center{0.0f, 0.0f, 0.0f};
+
+   for (const auto& corner : view_frustrum_corners) {
+      view_frustrum_center += corner;
+   }
+
+   view_frustrum_center /= 8.0f;
+
+   float radius = std::numeric_limits<float>::lowest();
+
+   for (const auto& corner : view_frustrum_corners) {
+      radius = glm::max(glm::distance(corner, view_frustrum_center), radius);
+   }
+
+   float3 bounds_max{radius};
+   float3 bounds_min{-radius};
+   float3 casecase_extents{bounds_max - bounds_min};
+
+   float3 shadow_camera_position =
+      view_frustrum_center + light_direction * -bounds_min.z;
+
+   shadow_ortho_camera shadow_camera;
+   shadow_camera.set_projection(bounds_min.x, bounds_min.y, bounds_max.x,
+                                bounds_max.y, 0.0f, casecase_extents.z);
+   shadow_camera.look_at(shadow_camera_position, view_frustrum_center,
+                         float3{0.0f, 1.0f, 0.0f});
+
+   auto shadow_view_projection = shadow_camera.view_projection_matrix();
+
+   float4 shadow_origin = shadow_view_projection * float4{0.0f, 0.0f, 0.0f, 1.0f};
+   shadow_origin /= shadow_origin.w;
+   shadow_origin *= float{shadow_res} / 2.0f;
+
+   float2 rounded_origin = glm::round(shadow_origin);
+   float2 rounded_offset = rounded_origin - float2{shadow_origin};
+   rounded_offset *= 2.0f / float{shadow_res};
+
+   shadow_camera.set_stabilization(rounded_offset);
+
+   return shadow_camera;
+}
+
+auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
+                          const frustrum& view_frustrum)
+   -> std::array<shadow_ortho_camera, cascade_count>
+{
+   const float3 light_direction =
+      glm::normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
+
+   const std::array cascade_splits = make_shadow_cascade_splits(camera);
+
+   std::array<shadow_ortho_camera, cascade_count> cameras;
+
+   for (int i = 0; i < cascade_count; ++i) {
+      cameras[i] = make_cascade_shadow_camera(light_direction, cascade_splits[i],
+                                              cascade_splits[i + 1], view_frustrum);
+   }
+
+   return cameras;
+}
+
 }
 
 light_clusters::light_clusters(gpu::device& device,
@@ -306,18 +395,19 @@ void light_clusters::update_descriptors()
    _tiling_inputs_cbv = _device.get_gpu_virtual_address(_tiling_inputs.get());
 }
 
-void light_clusters::update_lights(const camera& view_camera,
-                                   const frustrum& view_frustrum,
-                                   const world::world& world,
-                                   root_signature_library& root_signatures,
-                                   pipeline_library& pipelines,
-                                   gpu::graphics_command_list& command_list,
-                                   dynamic_buffer_allocator& dynamic_buffer_allocator)
+void light_clusters::prepare_lights(const camera& view_camera,
+                                    const frustrum& view_frustrum,
+                                    const world::world& world,
+                                    gpu::copy_command_list& command_list,
+                                    dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    upload_data upload_data{dynamic_buffer_allocator};
 
-   std::array<uint32, tile_light_words> tiles_start_value{};
-   uint32 light_count = 0;
+   static_assert((sizeof(_tiles_start_value) / sizeof(uint32)) == tile_light_words);
+
+   _tiles_start_value = {};
+   _light_count = 0;
+   _sphere_light_proxies_srv = upload_data.sphere_light_proxies_gpu;
    uint32 regional_lights_count = 0;
 
    // Upload light constants.
@@ -331,7 +421,6 @@ void light_clusters::update_lights(const camera& view_camera,
                 &upload_data.constants->sky_ambient_color);
       upload_to(world.lighting_settings.ambient_ground_color,
                 &upload_data.constants->ground_ambient_color);
-      upload_to(_shadow_cascade_transforms, &upload_data.constants->shadow_transforms);
       upload_to({shadow_res, shadow_res}, &upload_data.constants->shadow_resolution);
       upload_to({1.0f / shadow_res, 1.0f / shadow_res},
                 &upload_data.constants->inv_shadow_resolution);
@@ -339,9 +428,9 @@ void light_clusters::update_lights(const camera& view_camera,
 
    // frustrum cull lights
    for (auto& light : world.lights) {
-      if (light_count >= max_lights) break;
+      if (_light_count >= max_lights) break;
 
-      const uint32 light_index = light_count;
+      const uint32 light_index = _light_count;
 
       switch (light.light_type) {
       case world::light_type::directional: {
@@ -391,7 +480,7 @@ void light_clusters::update_lights(const camera& view_camera,
                           .light_index = light_index},
                          upload_data.sphere_light_proxies + light_index);
 
-               light_count += 1;
+               _light_count += 1;
                regional_lights_count += 1;
 
                break;
@@ -417,7 +506,7 @@ void light_clusters::update_lights(const camera& view_camera,
                           .light_index = light_index},
                          upload_data.sphere_light_proxies + light_index);
 
-               light_count += 1;
+               _light_count += 1;
                regional_lights_count += 1;
 
                break;
@@ -446,7 +535,7 @@ void light_clusters::update_lights(const camera& view_camera,
                           .light_index = light_index},
                          upload_data.sphere_light_proxies + light_index);
 
-               light_count += 1;
+               _light_count += 1;
                regional_lights_count += 1;
 
                break;
@@ -454,16 +543,21 @@ void light_clusters::update_lights(const camera& view_camera,
             }
          }
          else {
+            if (light.shadow_caster) {
+               _sun_shadow_cascades =
+                  make_shadow_cascades(light.rotation, view_camera, view_frustrum);
+            }
+
             upload_to({.direction = light_direction,
                        .type = light_type::directional,
                        .color = light.color,
                        .region_type = directional_region_type::none},
                       &upload_data.constants->lights[light_index]);
 
-            light_count += 1;
+            _light_count += 1;
 
             // Set the directional light as part of the tile clear pass.
-            tiles_start_value[light_index / tile_light_word_bits] |=
+            _tiles_start_value[light_index / tile_light_word_bits] |=
                (1u << (light_index % tile_light_word_bits));
          }
 
@@ -485,7 +579,7 @@ void light_clusters::update_lights(const camera& view_camera,
                     .light_index = light_index},
                    upload_data.sphere_light_proxies + light_index);
 
-         light_count += 1;
+         _light_count += 1;
 
          break;
       }
@@ -520,11 +614,23 @@ void light_clusters::update_lights(const camera& view_camera,
                     .light_index = light_index},
                    upload_data.sphere_light_proxies + light_index);
 
-         light_count += 1;
+         _light_count += 1;
 
          break;
       }
       }
+   }
+
+   // Upload shadow transform.
+   {
+      upload_to(_sun_shadow_cascades[0].texture_matrix(),
+                &upload_data.constants->shadow_transforms[0]);
+      upload_to(_sun_shadow_cascades[1].texture_matrix(),
+                &upload_data.constants->shadow_transforms[1]);
+      upload_to(_sun_shadow_cascades[2].texture_matrix(),
+                &upload_data.constants->shadow_transforms[2]);
+      upload_to(_sun_shadow_cascades[3].texture_matrix(),
+                &upload_data.constants->shadow_transforms[3]);
    }
 
    // copy tile culling inputs
@@ -552,14 +658,14 @@ void light_clusters::update_lights(const camera& view_camera,
                                    upload_data.regional_lights_descriptions_offset,
                                    sizeof(light_region_description) *
                                       regional_lights_count);
+}
 
+void light_clusters::tile_lights(root_signature_library& root_signatures,
+                                 pipeline_library& pipelines,
+                                 gpu::graphics_command_list& command_list,
+                                 dynamic_buffer_allocator& dynamic_buffer_allocator)
+{
    command_list.deferred_resource_barrier(std::array{
-      gpu::transition_barrier(_tiling_inputs.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::vertex_and_constant_buffer),
-      gpu::transition_barrier(_lights_constants.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::vertex_and_constant_buffer),
-      gpu::transition_barrier(_lights_region_list.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::pixel_shader_resource),
       gpu::transition_barrier(_lights_tiles.get(), gpu::resource_state::all_shader_resource,
                               gpu::resource_state::unordered_access)});
 
@@ -572,7 +678,7 @@ void light_clusters::update_lights(const camera& view_camera,
                                    dynamic_buffer_allocator
                                       .allocate_and_copy(light_tile_clear_inputs{
                                          .tile_counts = {_tiles_width, _tiles_height},
-                                         .clear_value = tiles_start_value})
+                                         .clear_value = _tiles_start_value})
                                       .gpu_address);
       command_list.set_compute_uav(rs::tile_lights_clear::light_tiles_uav,
                                    _device.get_gpu_virtual_address(_lights_tiles.get()));
@@ -602,7 +708,7 @@ void light_clusters::update_lights(const camera& view_camera,
    // draw sphere lights
    {
       command_list.set_graphics_srv(rs::tile_lights::instance_data_srv,
-                                    upload_data.sphere_light_proxies_gpu);
+                                    _sphere_light_proxies_srv);
 
       command_list.set_pipeline_state(pipelines.tile_lights_spheres.get());
 
@@ -618,7 +724,7 @@ void light_clusters::update_lights(const camera& view_camera,
 
       command_list.draw_indexed_instanced(static_cast<uint32>(
                                              sphere_proxy_indices.size()),
-                                          light_count, 0, 0, 0);
+                                          _light_count, 0, 0, 0);
    }
 
    command_list.deferred_resource_barrier(std::array{
@@ -626,132 +732,19 @@ void light_clusters::update_lights(const camera& view_camera,
                               gpu::resource_state::all_shader_resource)});
 }
 
-namespace {
-
-auto sun_rotation(const world::world& world) -> quaternion
-{
-   for (auto& light : world.lights) {
-      if (boost::iequals(light.name, world.lighting_settings.global_lights[0])) {
-         return light.rotation;
-      }
-   }
-
-   return quaternion{1.0f, 0.0f, 0.0f, 0.0f};
-}
-
-auto make_shadow_cascade_splits(const camera& camera)
-   -> std::array<float, cascade_count + 1>
-{
-   const float clip_ratio = camera.far_clip() / camera.near_clip();
-   const float clip_range = camera.far_clip() - camera.near_clip();
-
-   std::array<float, 5> cascade_splits{};
-
-   for (int i = 0; i < cascade_splits.size(); ++i) {
-      const float split = (camera.near_clip() * std::pow(clip_ratio, i / 4.0f));
-      const float split_normalized = (split - camera.near_clip()) / clip_range;
-
-      cascade_splits[i] = split_normalized;
-   }
-
-   return cascade_splits;
-}
-
-auto make_cascade_shadow_camera(const float3 light_direction,
-                                const float near_split, const float far_split,
-                                const frustrum& view_frustrum) -> shadow_ortho_camera
-{
-   auto view_frustrum_corners = view_frustrum.corners;
-
-   for (int i = 0; i < 4; ++i) {
-      float3 corner_ray = view_frustrum_corners[i + 4] - view_frustrum_corners[i];
-
-      view_frustrum_corners[i + 4] =
-         view_frustrum_corners[i] + (corner_ray * far_split);
-      view_frustrum_corners[i] += (corner_ray * near_split);
-   }
-
-   float3 view_frustrum_center{0.0f, 0.0f, 0.0f};
-
-   for (const auto& corner : view_frustrum_corners) {
-      view_frustrum_center += corner;
-   }
-
-   view_frustrum_center /= 8.0f;
-
-   float radius = std::numeric_limits<float>::lowest();
-
-   for (const auto& corner : view_frustrum_corners) {
-      radius = glm::max(glm::distance(corner, view_frustrum_center), radius);
-   }
-
-   float3 bounds_max{radius};
-   float3 bounds_min{-radius};
-   float3 casecase_extents{bounds_max - bounds_min};
-
-   float3 shadow_camera_position =
-      view_frustrum_center + light_direction * -bounds_min.z;
-
-   shadow_ortho_camera shadow_camera;
-   shadow_camera.set_projection(bounds_min.x, bounds_min.y, bounds_max.x,
-                                bounds_max.y, 0.0f, casecase_extents.z);
-   shadow_camera.look_at(shadow_camera_position, view_frustrum_center,
-                         float3{0.0f, 1.0f, 0.0f});
-
-   auto shadow_view_projection = shadow_camera.view_projection_matrix();
-
-   float4 shadow_origin = shadow_view_projection * float4{0.0f, 0.0f, 0.0f, 1.0f};
-   shadow_origin /= shadow_origin.w;
-   shadow_origin *= float{shadow_res} / 2.0f;
-
-   float2 rounded_origin = glm::round(shadow_origin);
-   float2 rounded_offset = rounded_origin - float2{shadow_origin};
-   rounded_offset *= 2.0f / float{shadow_res};
-
-   shadow_camera.set_stabilization(rounded_offset);
-
-   return shadow_camera;
-}
-
-auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
-                          const frustrum& view_frustrum)
-   -> std::array<shadow_ortho_camera, cascade_count>
-{
-   const float3 light_direction =
-      glm::normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
-
-   const std::array cascade_splits = make_shadow_cascade_splits(camera);
-
-   std::array<shadow_ortho_camera, cascade_count> cameras;
-
-   for (int i = 0; i < cascade_count; ++i) {
-      cameras[i] = make_cascade_shadow_camera(light_direction, cascade_splits[i],
-                                              cascade_splits[i + 1], view_frustrum);
-   }
-
-   return cameras;
-}
-}
-
-void light_clusters::TEMP_render_shadow_maps(
-   const camera& view_camera, const frustrum& view_frustrum,
-   const world_mesh_list& meshes, const world::world& world,
-   root_signature_library& root_signatures, pipeline_library& pipelines,
-   gpu::graphics_command_list& command_list,
-   dynamic_buffer_allocator& dynamic_buffer_allocator)
+void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
+                                      root_signature_library& root_signatures,
+                                      pipeline_library& pipelines,
+                                      gpu::graphics_command_list& command_list,
+                                      dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(_shadow_map.get(), gpu::resource_state::pixel_shader_resource,
                               gpu::resource_state::depth_write));
    command_list.flush_resource_barriers();
 
-   auto shadow_cascade_cameras =
-      make_shadow_cascades(sun_rotation(world), view_camera, view_frustrum);
-
    for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
-      auto& shadow_camera = shadow_cascade_cameras[cascade_index];
-
-      _shadow_cascade_transforms[cascade_index] = shadow_camera.texture_matrix();
+      auto& shadow_camera = _sun_shadow_cascades[cascade_index];
 
       frustrum shadow_frustrum{shadow_camera.inv_view_projection_matrix()};
 

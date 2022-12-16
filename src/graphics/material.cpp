@@ -163,13 +163,11 @@ void material::init_resources(gpu::device& device,
    device.background_copy_queue.execute_command_lists(command_list.get());
 }
 
-void material::process_updated_textures(gpu::graphics_command_list& command_list,
+void material::process_updated_textures(gpu::copy_command_list& command_list,
                                         const updated_textures& updated,
                                         gpu::device& device)
 {
    using namespace ranges::views;
-
-   bool update = false;
 
    const gpu_virtual_address constant_buffer_address =
       device.get_gpu_virtual_address(constant_buffer.get());
@@ -182,8 +180,6 @@ void material::process_updated_textures(gpu::graphics_command_list& command_list
                                              offsetof(normal_material_constants,
                                                       diffuse_map),
                                           textures.diffuse_map->srv_srgb.index);
-
-      update = true;
    }
 
    if (auto new_texture = updated.find(texture_names.normal_map);
@@ -193,14 +189,6 @@ void material::process_updated_textures(gpu::graphics_command_list& command_list
       command_list.write_buffer_immediate(constant_buffer_address +
                                              offsetof(normal_material_constants, normal_map),
                                           textures.normal_map->srv.index);
-
-      update = true;
-   }
-
-   if (update) {
-      command_list.deferred_resource_barrier(
-         gpu::transition_barrier(constant_buffer.get(), gpu::resource_state::copy_dest,
-                                 gpu::resource_state::vertex_and_constant_buffer));
    }
 }
 }

@@ -17,7 +17,7 @@ struct material {
    void init_resources(gpu::device& device,
                        copy_command_list_pool& copy_command_list_pool);
 
-   void process_updated_textures(gpu::graphics_command_list& command_list,
+   void process_updated_textures(gpu::copy_command_list& command_list,
                                  const updated_textures& updated, gpu::device& device);
 
    material_pipeline_flags flags = material_pipeline_flags::none;

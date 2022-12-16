@@ -160,7 +160,7 @@ private:
    };
 
    void update_frame_constant_buffer(const camera& camera,
-                                     gpu::graphics_command_list& command_list);
+                                     gpu::copy_command_list& command_list);
 
    void draw_world(const frustrum& view_frustrum,
                    gpu::graphics_command_list& command_list);
@@ -183,13 +183,13 @@ private:
       gpu::graphics_command_list& command_list);
 
    void build_world_mesh_list(
-      gpu::graphics_command_list& command_list, const world::world& world,
+      gpu::copy_command_list& command_list, const world::world& world,
       const world::active_layers active_layers,
       const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes);
 
    void build_object_render_list(const frustrum& view_frustrum);
 
-   void update_textures(gpu::graphics_command_list& command_list);
+   void update_textures(gpu::copy_command_list& command_list);
 
    bool _terrain_dirty = true; // ughhhh, this feels so ugly
 
@@ -198,6 +198,8 @@ private:
 
    gpu::device _device{gpu::device_desc{.enable_debug_layer = true}};
    gpu::swap_chain _swap_chain;
+   gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(
+      {.allocator_name = "World Allocator", .debug_name = "Pre-Render Copy Command List"});
    gpu::graphics_command_list _world_command_list = _device.create_graphics_command_list(
       {.allocator_name = "World Allocator", .debug_name = "World Command List"});
 
@@ -319,29 +321,45 @@ void renderer_impl::draw_frame(
 {
    const frustrum view_frustrum{camera.inv_view_projection_matrix()};
 
-   auto& command_list = _world_command_list;
    auto [back_buffer, back_buffer_rtv] = _swap_chain.current_back_buffer();
-
-   command_list.reset(_sampler_heap.get());
    _dynamic_buffer_allocator.reset(_device.frame_index());
-
-   if (std::exchange(_terrain_dirty, false)) {
-      _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
-   }
 
    _model_manager.update_models();
 
-   update_textures(command_list);
-   build_world_mesh_list(command_list, world, active_layers, world_classes);
+   // Pre-Render Work
+   {
+      _pre_render_command_list.reset();
+
+      if (std::exchange(_terrain_dirty, false)) {
+         _terrain.init(world.terrain, _pre_render_command_list,
+                       _dynamic_buffer_allocator);
+      }
+
+      update_textures(_pre_render_command_list);
+      build_world_mesh_list(_pre_render_command_list, world, active_layers,
+                            world_classes);
+      update_frame_constant_buffer(camera, _pre_render_command_list);
+
+      _light_clusters.prepare_lights(camera, view_frustrum, world,
+                                     _pre_render_command_list,
+                                     _dynamic_buffer_allocator);
+
+      _pre_render_command_list.close();
+
+      _device.copy_queue.execute_command_lists(_pre_render_command_list);
+      _device.direct_queue.sync_with(_device.copy_queue);
+   }
+
    build_object_render_list(view_frustrum);
 
-   update_frame_constant_buffer(camera, command_list);
+   auto& command_list = _world_command_list;
 
-   _light_clusters.TEMP_render_shadow_maps(camera, view_frustrum, _world_mesh_list,
-                                           world, _root_signatures, _pipelines,
-                                           command_list, _dynamic_buffer_allocator);
-   _light_clusters.update_lights(camera, view_frustrum, world, _root_signatures,
-                                 _pipelines, command_list, _dynamic_buffer_allocator);
+   command_list.reset(_sampler_heap.get());
+
+   _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
+                               _dynamic_buffer_allocator);
+   _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures, _pipelines,
+                                    command_list, _dynamic_buffer_allocator);
 
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, gpu::resource_state::present,
@@ -422,7 +440,7 @@ void renderer_impl::mark_dirty_terrain() noexcept
 }
 
 void renderer_impl::update_frame_constant_buffer(const camera& camera,
-                                                 gpu::graphics_command_list& command_list)
+                                                 gpu::copy_command_list& command_list)
 {
    frame_constant_buffer
       constants{.view_projection_matrix = camera.view_projection_matrix(),
@@ -440,10 +458,6 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
    command_list.copy_buffer_region(_camera_constant_buffer.get(), 0,
                                    _dynamic_buffer_allocator.resource(),
                                    allocation.offset, sizeof(frame_constant_buffer));
-
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_camera_constant_buffer.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::vertex_and_constant_buffer));
 }
 
 void renderer_impl::draw_world(const frustrum& view_frustrum,
@@ -1590,7 +1604,7 @@ void renderer_impl::draw_interaction_targets(
 }
 
 void renderer_impl::build_world_mesh_list(
-   gpu::graphics_command_list& command_list, const world::world& world,
+   gpu::copy_command_list& command_list, const world::world& world,
    const world::active_layers active_layers,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
 {
@@ -1645,10 +1659,6 @@ void renderer_impl::build_world_mesh_list(
 
    command_list.copy_buffer_region(_object_constants_buffer.get(), 0,
                                    upload_buffer.get(), 0, constants_data_size);
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_object_constants_buffer.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::vertex_and_constant_buffer |
-                                 gpu::resource_state::all_shader_resource));
 }
 
 void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
@@ -1717,7 +1727,7 @@ void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
              });
 }
 
-void renderer_impl::update_textures(gpu::graphics_command_list& command_list)
+void renderer_impl::update_textures(gpu::copy_command_list& command_list)
 {
    _texture_manager.eval_updated_textures(
       [&](const absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>& updated) {

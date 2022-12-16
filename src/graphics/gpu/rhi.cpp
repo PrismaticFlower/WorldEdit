@@ -239,6 +239,9 @@ device::device(const device_desc& desc)
      compute_queue{command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_COMPUTE,
                                       .device_state = &state.get(),
                                       .debug_name = "Compute Queue"}},
+     copy_queue{command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_COPY,
+                                   .device_state = &state.get(),
+                                   .debug_name = "Copy Queue"}},
      background_copy_queue{
         command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_COPY,
                            .device_state = &state.get(),

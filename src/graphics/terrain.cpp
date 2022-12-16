@@ -1,5 +1,4 @@
 #include "terrain.hpp"
-#include "gpu/barrier.hpp"
 #include "math/align.hpp"
 
 #include <limits>
@@ -96,8 +95,7 @@ terrain::terrain(gpu::device& device, texture_manager& texture_manager)
                     device.direct_queue};
 }
 
-void terrain::init(const world::terrain& terrain,
-                   gpu::graphics_command_list& command_list,
+void terrain::init(const world::terrain& terrain, gpu::copy_command_list& command_list,
                    dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    _terrain_length = terrain.length;
@@ -160,14 +158,13 @@ void terrain::draw(const terrain_draw draw, const frustrum& view_frustrum,
                                        visible_patch_count, 0, 0, 0);
 }
 
-void terrain::process_updated_texture(gpu::graphics_command_list& command_list,
+void terrain::process_updated_texture(gpu::copy_command_list& command_list,
                                       const updated_textures& updated)
 {
    using namespace ranges::views;
 
    const gpu_virtual_address constant_buffer_address =
       _device.get_gpu_virtual_address(_terrain_constants_buffer.get());
-   bool need_barrier = false;
 
    for (auto [i, name, texture] : zip(iota(std::size_t{0}, texture_count),
                                       _diffuse_maps_names, _diffuse_maps)) {
@@ -178,21 +175,12 @@ void terrain::process_updated_texture(gpu::graphics_command_list& command_list,
                                                 offsetof(terrain_constants, diffuse_maps) +
                                                 i * sizeof(std::array<uint32, 4>),
                                              texture->srv_srgb.index);
-
-         need_barrier = true;
       }
-   }
-
-   if (need_barrier) {
-      command_list.deferred_resource_barrier(
-         gpu::transition_barrier(_terrain_constants_buffer.get(),
-                                 gpu::resource_state::copy_dest,
-                                 gpu::resource_state::vertex_and_constant_buffer));
    }
 }
 
 void terrain::init_gpu_resources(const world::terrain& terrain,
-                                 gpu::graphics_command_list& command_list,
+                                 gpu::copy_command_list& command_list,
                                  dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    init_textures(terrain);
@@ -212,21 +200,17 @@ void terrain::init_gpu_resources(const world::terrain& terrain,
                                    dynamic_buffer_allocator.resource(),
                                    indices_allocation.offset,
                                    sizeof(terrain_patch_indices));
-
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_index_buffer.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::index_buffer));
 }
 
 void terrain::init_gpu_height_map(const world::terrain& terrain,
-                                  gpu::graphics_command_list& command_list)
+                                  gpu::copy_command_list& command_list)
 {
    _height_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                           .format = DXGI_FORMAT_R16_SNORM,
                                           .width = _terrain_length,
                                           .height = _terrain_length},
                                          gpu::resource_state::copy_dest),
-                  _device.direct_queue};
+                  _device.copy_queue};
 
    const uint32 row_pitch = math::align_up(_terrain_length * uint32{sizeof(uint16)},
                                            gpu::texture_data_pitch_alignment);
@@ -236,7 +220,7 @@ void terrain::init_gpu_height_map(const world::terrain& terrain,
       {_device.create_buffer({.size = texture_data_size,
                               .debug_name = "Height Map Upload Buffer"},
                              gpu::heap_type::upload),
-       _device.direct_queue};
+       _device.copy_queue};
 
    std::byte* const upload_buffer_ptr =
       static_cast<std::byte*>(_device.map(_height_map_upload_buffer.get(), 0, {}));
@@ -256,17 +240,13 @@ void terrain::init_gpu_height_map(const world::terrain& terrain,
                                         .depth = 1,
                                         .row_pitch = row_pitch});
 
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_height_map.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::all_shader_resource));
-
    _height_map_srv = {_device.create_shader_resource_view(_height_map.get(),
                                                           {.format = DXGI_FORMAT_R16_SNORM}),
                       _device.direct_queue};
 }
 
 void terrain::init_gpu_texture_weight_map(const world::terrain& terrain,
-                                          gpu::graphics_command_list& command_list)
+                                          gpu::copy_command_list& command_list)
 {
    _texture_weight_maps = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                                    .format = DXGI_FORMAT_R8_UNORM,
@@ -286,7 +266,7 @@ void terrain::init_gpu_texture_weight_map(const world::terrain& terrain,
       {_device.create_buffer({.size = texture_data_size,
                               .debug_name = "Texture Weight Map Upload Buffer"},
                              gpu::heap_type::upload),
-       _device.direct_queue};
+       _device.copy_queue};
 
    std::byte* const upload_buffer_ptr = static_cast<std::byte*>(
       _device.map(_texture_weight_upload_buffer.get(), 0, {}));
@@ -313,18 +293,14 @@ void terrain::init_gpu_texture_weight_map(const world::terrain& terrain,
                                            .row_pitch = row_pitch});
    }
 
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_texture_weight_maps.get(), gpu::resource_state::copy_dest,
-                              gpu::resource_state::all_shader_resource));
-
    _texture_weight_maps_srv =
       {_device.create_shader_resource_view(_texture_weight_maps.get(),
                                            {.format = DXGI_FORMAT_R8_UNORM}),
-       _device.direct_queue};
+       _device.copy_queue};
 }
 
 void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
-                                                gpu::graphics_command_list& command_list,
+                                                gpu::copy_command_list& command_list,
                                                 dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
    using namespace ranges::views;
@@ -410,11 +386,6 @@ void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
    command_list.copy_buffer_region(_terrain_constants_buffer.get(), 0,
                                    dynamic_buffer_allocator.resource(),
                                    upload_allocation.offset, sizeof(constants));
-
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_terrain_constants_buffer.get(),
-                              gpu::resource_state::copy_dest,
-                              gpu::resource_state::vertex_and_constant_buffer));
 }
 
 void terrain::init_textures(const world::terrain& terrain)
