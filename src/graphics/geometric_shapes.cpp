@@ -4,16 +4,13 @@
 
 #include <array>
 
-#include <d3dx12.h>
-
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
 
 namespace we::graphics {
 
 namespace {
 struct geometric_shapes_buffer {
-
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<float3, 162> icosphere_vertices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 162> icosphere_vertices{
       {{0.000000f, -1.000000f, 0.000000f},
        {-0.203181f, -0.967950f, -0.147618f},
        {0.077607f, -0.967950f, -0.238853f},
@@ -177,7 +174,7 @@ struct geometric_shapes_buffer {
        {-0.138199f, -0.894429f, -0.425321f},
        {-0.361805f, -0.723611f, -0.587779f}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT)
+   alignas(gpu::raw_uav_srv_byte_alignment)
       const std::array<std::array<uint16, 3>, 320> icosphere_indices = {
          {{0, 1, 2},       {3, 4, 5},       {0, 2, 6},       {0, 6, 7},
           {0, 7, 8},       {3, 5, 9},       {10, 11, 12},    {13, 14, 15},
@@ -260,7 +257,7 @@ struct geometric_shapes_buffer {
           {159, 161, 131}, {161, 132, 131}, {2, 1, 160},     {1, 158, 160},
           {160, 158, 161}, {158, 4, 161},   {161, 4, 132},   {4, 3, 132}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<float3, 66> cylinder_vertices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 66> cylinder_vertices{
       {{0.000000f, -1.000000f, 0.000000f},
        {0.000000f, -1.000000f, 1.000000f},
        {-0.195090f, -1.000000f, 0.980785f},
@@ -328,7 +325,7 @@ struct geometric_shapes_buffer {
        {0.195089f, -1.000000f, 0.980786f},
        {0.195089f, 1.000000f, 0.980786f}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<std::array<uint16, 3>, 128> cylinder_indices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<std::array<uint16, 3>, 128> cylinder_indices{
       {{0, 1, 2},    {3, 4, 5},    {5, 2, 1},    {0, 2, 6},    {3, 7, 4},
        {4, 6, 2},    {0, 6, 8},    {3, 9, 7},    {7, 8, 6},    {0, 8, 10},
        {3, 11, 9},   {9, 10, 8},   {0, 10, 12},  {3, 13, 11},  {11, 12, 10},
@@ -356,7 +353,7 @@ struct geometric_shapes_buffer {
        {51, 53, 52}, {53, 55, 54}, {55, 57, 56}, {57, 59, 58}, {59, 61, 60},
        {61, 63, 62}, {63, 65, 64}, {65, 5, 1}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<float3, 8> cube_vertices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 8> cube_vertices{
       {{1.000000f, 1.000000f, 1.000000f},
        {-1.000000f, 1.000000f, -1.000000f},
        {-1.000000f, 1.000000f, 1.000000f},
@@ -366,7 +363,7 @@ struct geometric_shapes_buffer {
        {1.000000f, -1.000000f, 1.000000f},
        {-1.000000f, -1.000000f, 1.000000f}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT)
+   alignas(gpu::raw_uav_srv_byte_alignment)
       const std::array<std::array<uint16, 3>, 12> cube_indices{{{0, 1, 2},
                                                                 {1, 3, 4},
                                                                 {5, 6, 3},
@@ -380,7 +377,7 @@ struct geometric_shapes_buffer {
                                                                 {2, 1, 4},
                                                                 {0, 2, 7}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<float3, 6> octahedron_vertices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 6> octahedron_vertices{
       {{1.000000f, 0.000000f, 1.000000f},
        {0.000000f, 1.000000f, 0.000000f},
        {-1.000000f, 0.000000f, 1.000000f},
@@ -388,10 +385,10 @@ struct geometric_shapes_buffer {
        {1.000000f, 0.000000f, -1.000000f},
        {0.000000f, -1.000000f, 0.000000f}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<std::array<uint16, 3>, 8> octahedron_indices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<std::array<uint16, 3>, 8> octahedron_indices{
       {{0, 1, 2}, {2, 1, 3}, {3, 1, 4}, {4, 1, 0}, {4, 5, 3}, {0, 5, 4}, {2, 5, 0}, {3, 5, 2}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<float3, 33> cone_vertices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 33> cone_vertices{
       {{0.000000f, -1.000000f, -1.000000f},
        {0.000000f, 1.000000f, 0.000000f},
        {0.195090f, -1.000000f, -0.980785f},
@@ -426,7 +423,7 @@ struct geometric_shapes_buffer {
        {-0.382682f, -1.000000f, -0.923880f},
        {-0.195089f, -1.000000f, -0.980786f}}};
 
-   alignas(D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT) const std::array<std::array<uint16, 3>, 62> cone_indices{
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<std::array<uint16, 3>, 62> cone_indices{
       {{0, 1, 2},    {2, 1, 3},    {3, 1, 4},    {4, 1, 5},    {5, 1, 6},
        {6, 1, 7},    {7, 1, 8},    {8, 1, 9},    {9, 1, 10},   {10, 1, 11},
        {11, 1, 12},  {12, 1, 13},  {13, 1, 14},  {14, 1, 15},  {15, 1, 16},
@@ -446,108 +443,130 @@ constexpr geometric_shapes_buffer shapes_buffer;
 
 }
 
-geometric_shapes::geometric_shapes(gpu::device& device)
+geometric_shapes::geometric_shapes(gpu::device& device,
+                                   copy_command_list_pool& copy_command_list_pool)
 {
-   init_gpu_buffer(device);
-   init_shapes();
+   init_gpu_buffer(device, copy_command_list_pool);
+   init_shapes(device);
 }
 
-void geometric_shapes::init_gpu_buffer(gpu::device& device)
+void geometric_shapes::init_gpu_buffer(gpu::device& device,
+                                       copy_command_list_pool& copy_command_list_pool)
 {
-   _gpu_buffer =
-      device.create_buffer({.size = sizeof(shapes_buffer)},
-                           D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+   pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
-   auto copy_context = device.copy_manager.aquire_context();
+   _gpu_buffer = {device.create_buffer({.size = sizeof(shapes_buffer),
+                                        .debug_name =
+                                           "Geometric Shapes Meshes Buffer"},
+                                       gpu::heap_type::default_),
+                  device.direct_queue};
 
-   ID3D12Resource& upload_buffer = copy_context.create_upload_resource(
-      CD3DX12_RESOURCE_DESC::Buffer(sizeof(shapes_buffer)));
+   gpu::unique_resource_handle upload_buffer =
+      {device.create_buffer({.size = sizeof(shapes_buffer),
+                             .debug_name =
+                                "Geometric Shapes Meshes Upload Buffer"},
+                            gpu::heap_type::upload),
+       device.background_copy_queue};
 
-   std::byte* const upload_buffer_ptr = [&] {
-      const D3D12_RANGE read_range{};
-      void* map_void_ptr = nullptr;
-
-      throw_if_failed(upload_buffer.Map(0, &read_range, &map_void_ptr));
-
-      return static_cast<std::byte*>(map_void_ptr);
-   }();
+   std::byte* const upload_buffer_ptr =
+      static_cast<std::byte*>(device.map(upload_buffer.get(), 0, {0, 0}));
 
    std::memcpy(upload_buffer_ptr, &shapes_buffer, sizeof(shapes_buffer));
 
-   const D3D12_RANGE write_range{0, sizeof(shapes_buffer)};
-   upload_buffer.Unmap(0, &write_range);
+   device.unmap(upload_buffer.get(), 0, {0, sizeof(shapes_buffer)});
 
-   copy_context.command_list().copy_resource(*_gpu_buffer.view_resource(), upload_buffer);
+   command_list->copy_resource(_gpu_buffer.get(), upload_buffer.get());
 
-   (void)device.copy_manager.close_and_execute(copy_context);
+   command_list->close();
+
+   device.background_copy_queue.execute_command_lists(command_list.get());
 }
 
-void geometric_shapes::init_shapes()
+void geometric_shapes::init_shapes(gpu::device& device)
 {
-   const gpu::virtual_address gpu_address = _gpu_buffer.gpu_virtual_address();
+   const gpu_virtual_address gpu_address =
+      device.get_gpu_virtual_address(_gpu_buffer.get());
 
    _icosphere =
       {.index_count = static_cast<uint32>(shapes_buffer.icosphere_indices.size()) * 3,
-       .index_buffer_view = {.BufferLocation =
-                                gpu_address + offsetof(geometric_shapes_buffer,
-                                                       icosphere_indices),
-                             .SizeInBytes = sizeof(geometric_shapes_buffer::icosphere_indices),
-                             .Format = DXGI_FORMAT_R16_UINT},
-       .position_vertex_buffer_view =
-          {.BufferLocation =
-              gpu_address + offsetof(geometric_shapes_buffer, icosphere_vertices),
-           .SizeInBytes = sizeof(geometric_shapes_buffer::icosphere_vertices),
-           .StrideInBytes = sizeof(float3)}};
+       .index_buffer_view =
+          {
+             .buffer_location =
+                gpu_address + offsetof(geometric_shapes_buffer, icosphere_indices),
+             .size_in_bytes = sizeof(geometric_shapes_buffer::icosphere_indices),
+          },
+       .position_vertex_buffer_view = {
+          .buffer_location =
+             gpu_address + offsetof(geometric_shapes_buffer, icosphere_vertices),
+          .size_in_bytes = sizeof(geometric_shapes_buffer::icosphere_vertices),
+          .stride_in_bytes = sizeof(float3),
+       }};
 
-   _cylinder =
-      {.index_count = static_cast<uint32>(shapes_buffer.cylinder_indices.size()) * 3,
-       .index_buffer_view = {.BufferLocation =
-                                gpu_address + offsetof(geometric_shapes_buffer,
-                                                       cylinder_indices),
-                             .SizeInBytes = sizeof(geometric_shapes_buffer::cylinder_indices),
-                             .Format = DXGI_FORMAT_R16_UINT},
-       .position_vertex_buffer_view =
-          {.BufferLocation =
-              gpu_address + offsetof(geometric_shapes_buffer, cylinder_vertices),
-           .SizeInBytes = sizeof(geometric_shapes_buffer::cylinder_vertices),
-           .StrideInBytes = sizeof(float3)}};
+   _cylinder = {
+      .index_count = static_cast<uint32>(shapes_buffer.cylinder_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, cylinder_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::cylinder_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, cylinder_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::cylinder_vertices),
+            .stride_in_bytes = sizeof(float3),
+         },
+   };
 
-   _cube = {.index_count = static_cast<uint32>(shapes_buffer.cube_indices.size()) * 3,
-            .index_buffer_view = {.BufferLocation =
-                                     gpu_address + offsetof(geometric_shapes_buffer,
-                                                            cube_indices),
-                                  .SizeInBytes = sizeof(geometric_shapes_buffer::cube_indices),
-                                  .Format = DXGI_FORMAT_R16_UINT},
-            .position_vertex_buffer_view =
-               {.BufferLocation =
-                   gpu_address + offsetof(geometric_shapes_buffer, cube_vertices),
-                .SizeInBytes = sizeof(geometric_shapes_buffer::cube_vertices),
-                .StrideInBytes = sizeof(float3)}};
+   _cube = {
+      .index_count = static_cast<uint32>(shapes_buffer.cube_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer, cube_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::cube_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, cube_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::cube_vertices),
+            .stride_in_bytes = sizeof(float3),
+         },
+   };
 
-   _octahedron =
-      {.index_count = static_cast<uint32>(shapes_buffer.octahedron_indices.size()) * 3,
-       .index_buffer_view = {.BufferLocation =
-                                gpu_address + offsetof(geometric_shapes_buffer,
-                                                       octahedron_indices),
-                             .SizeInBytes = sizeof(geometric_shapes_buffer::octahedron_indices),
-                             .Format = DXGI_FORMAT_R16_UINT},
-       .position_vertex_buffer_view =
-          {.BufferLocation =
-              gpu_address + offsetof(geometric_shapes_buffer, octahedron_vertices),
-           .SizeInBytes = sizeof(geometric_shapes_buffer::octahedron_vertices),
-           .StrideInBytes = sizeof(float3)}};
+   _octahedron = {
+      .index_count = static_cast<uint32>(shapes_buffer.octahedron_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, octahedron_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::octahedron_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, octahedron_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::octahedron_vertices),
+            .stride_in_bytes = sizeof(float3),
+         },
+   };
 
-   _cone = {.index_count = static_cast<uint32>(shapes_buffer.cone_indices.size()) * 3,
-            .index_buffer_view = {.BufferLocation =
-                                     gpu_address + offsetof(geometric_shapes_buffer,
-                                                            cone_indices),
-                                  .SizeInBytes = sizeof(geometric_shapes_buffer::cone_indices),
-                                  .Format = DXGI_FORMAT_R16_UINT},
-            .position_vertex_buffer_view =
-               {.BufferLocation =
-                   gpu_address + offsetof(geometric_shapes_buffer, cone_vertices),
-                .SizeInBytes = sizeof(geometric_shapes_buffer::cone_vertices),
-                .StrideInBytes = sizeof(float3)}};
+   _cone = {
+      .index_count = static_cast<uint32>(shapes_buffer.cone_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer, cone_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::cone_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location =
+               gpu_address + offsetof(geometric_shapes_buffer, cone_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::cone_vertices),
+            .stride_in_bytes = sizeof(float3),
+         },
+   };
 }
 
 }

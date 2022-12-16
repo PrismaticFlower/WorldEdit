@@ -1,5 +1,7 @@
 #pragma once
 
+#include "bindings.hlsli"
+
 struct frame_constant_buffer {
    float4x4 view_projection_matrix;
 
@@ -10,3 +12,5 @@ struct frame_constant_buffer {
 
    float line_width;
 };
+
+ConstantBuffer<frame_constant_buffer> cb_frame : register(FRAME_CB_REGISTER);

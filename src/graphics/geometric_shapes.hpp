@@ -1,22 +1,23 @@
 #pragma once
 
-#include "gpu/buffer.hpp"
-#include "gpu/device.hpp"
 #include "types.hpp"
 
-#include <d3d12.h>
+#include "copy_command_list_pool.hpp"
+#include "gpu/resource.hpp"
+#include "gpu/rhi.hpp"
 
 namespace we::graphics {
 
 struct geometric_shape {
    uint32 index_count;
-   D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-   D3D12_VERTEX_BUFFER_VIEW position_vertex_buffer_view;
+   gpu::index_buffer_view index_buffer_view;
+   gpu::vertex_buffer_view position_vertex_buffer_view;
 };
 
 class geometric_shapes {
 public:
-   explicit geometric_shapes(gpu::device& device);
+   explicit geometric_shapes(gpu::device& device,
+                             copy_command_list_pool& copy_command_list_pool);
 
    auto cube() noexcept -> geometric_shape
    {
@@ -44,11 +45,12 @@ public:
    }
 
 private:
-   void init_gpu_buffer(gpu::device& device);
+   void init_gpu_buffer(gpu::device& device,
+                        copy_command_list_pool& copy_command_list_pool);
 
-   void init_shapes();
+   void init_shapes(gpu::device& device);
 
-   gpu::buffer _gpu_buffer;
+   gpu::unique_resource_handle _gpu_buffer;
 
    geometric_shape _icosphere;
    geometric_shape _cylinder;

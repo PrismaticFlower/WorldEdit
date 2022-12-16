@@ -1,6 +1,5 @@
 
 #include "pipeline_library.hpp"
-#include "gpu/set_debug_name.hpp"
 #include "hresult_error.hpp"
 #include "root_signature_library.hpp"
 #include "shader_library.hpp"
@@ -14,274 +13,96 @@ namespace we::graphics {
 
 namespace {
 
-constexpr D3D12_STREAM_OUTPUT_DESC stream_output_disabled{.pSODeclaration = nullptr,
-                                                          .NumEntries = 0,
-                                                          .pBufferStrides = nullptr,
-                                                          .NumStrides = 0,
-                                                          .RasterizedStream = 0};
+constexpr gpu::blend_state_desc blend_disabled = {
+   .render_target = {gpu::render_target_blend::disabled},
+};
 
-constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_blend_disabled =
-   {.BlendEnable = false,
-    .LogicOpEnable = false,
-    .SrcBlend = D3D12_BLEND_ONE,
-    .DestBlend = D3D12_BLEND_ZERO,
-    .BlendOp = D3D12_BLEND_OP_ADD,
-    .SrcBlendAlpha = D3D12_BLEND_ONE,
-    .DestBlendAlpha = D3D12_BLEND_ZERO,
-    .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-    .LogicOp = D3D12_LOGIC_OP_NOOP,
-    .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
+constexpr gpu::blend_state_desc blend_premult_alpha = {
+   .render_target = {gpu::render_target_blend::premult_alpha_blend},
+};
 
-constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_premult_alpha_belnd =
-   {.BlendEnable = true,
-    .LogicOpEnable = false,
-    .SrcBlend = D3D12_BLEND_ONE,
-    .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
-    .BlendOp = D3D12_BLEND_OP_ADD,
-    .SrcBlendAlpha = D3D12_BLEND_ONE,
-    .DestBlendAlpha = D3D12_BLEND_ZERO,
-    .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-    .LogicOp = D3D12_LOGIC_OP_NOOP,
-    .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
+constexpr gpu::blend_state_desc blend_alpha = {
+   .render_target = {gpu::render_target_blend::alpha_belnd},
+};
 
-constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_additive_belnd =
-   {.BlendEnable = true,
-    .LogicOpEnable = false,
-    .SrcBlend = D3D12_BLEND_ONE,
-    .DestBlend = D3D12_BLEND_ONE,
-    .BlendOp = D3D12_BLEND_OP_ADD,
-    .SrcBlendAlpha = D3D12_BLEND_ONE,
-    .DestBlendAlpha = D3D12_BLEND_ZERO,
-    .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-    .LogicOp = D3D12_LOGIC_OP_NOOP,
-    .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
+constexpr gpu::blend_state_desc blend_additive = {
+   .render_target = {gpu::render_target_blend::additive_blend},
+};
 
-constexpr D3D12_RENDER_TARGET_BLEND_DESC render_target_alpha_belnd =
-   {.BlendEnable = true,
-    .LogicOpEnable = false,
-    .SrcBlend = D3D12_BLEND_SRC_ALPHA,
-    .DestBlend = D3D12_BLEND_INV_SRC_ALPHA,
-    .BlendOp = D3D12_BLEND_OP_ADD,
-    .SrcBlendAlpha = D3D12_BLEND_ONE,
-    .DestBlendAlpha = D3D12_BLEND_ZERO,
-    .BlendOpAlpha = D3D12_BLEND_OP_ADD,
-    .LogicOp = D3D12_LOGIC_OP_NOOP,
-    .RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL};
+constexpr gpu::rasterizer_state_desc rasterizer_cull_none = {
+   .cull_mode = gpu::cull_mode::none,
+};
 
-constexpr D3D12_BLEND_DESC blend_disabled =
-   {.AlphaToCoverageEnable = false,
-    .IndependentBlendEnable = false,
-    .RenderTarget = {render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled}};
+constexpr gpu::rasterizer_state_desc rasterizer_cull_backfacing = {
+   .cull_mode = gpu::cull_mode::back,
+};
 
-constexpr D3D12_BLEND_DESC blend_premult_alpha =
-   {.AlphaToCoverageEnable = false,
-    .IndependentBlendEnable = false,
-    .RenderTarget = {render_target_premult_alpha_belnd, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled}};
+constexpr gpu::rasterizer_state_desc rasterizer_conservative_cull_frontfacing = {
+   .cull_mode = gpu::cull_mode::front,
+   .conservative_raster = true,
+};
 
-constexpr D3D12_BLEND_DESC blend_alpha =
-   {.AlphaToCoverageEnable = false,
-    .IndependentBlendEnable = false,
-    .RenderTarget = {render_target_alpha_belnd, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled}};
+constexpr gpu::rasterizer_state_desc rasterizer_line_antialiased = {
+   .cull_mode = gpu::cull_mode::none,
+   .antialiased_lines = true,
+};
 
-constexpr D3D12_BLEND_DESC blend_additive =
-   {.AlphaToCoverageEnable = false,
-    .IndependentBlendEnable = false,
-    .RenderTarget = {render_target_additive_belnd, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled,
-                     render_target_blend_disabled, render_target_blend_disabled}};
+constexpr gpu::depth_stencil_state_desc depth_stencil_enabled = {
+   .depth_test_enabled = true,
+   .depth_test_func = gpu::comparison_func::less_equal,
+};
 
-constexpr UINT sample_mask_default = 0xffffffff;
+constexpr gpu::depth_stencil_state_desc depth_stencil_readonly_equal = {
+   .depth_test_enabled = true,
+   .depth_test_func = gpu::comparison_func::equal,
+   .write_depth = false,
+};
 
-constexpr D3D12_RASTERIZER_DESC rasterizer_cull_none =
-   {.FillMode = D3D12_FILL_MODE_SOLID,
-    .CullMode = D3D12_CULL_MODE_NONE,
-    .FrontCounterClockwise = true,
-    .DepthBias = 0,
-    .DepthBiasClamp = 0.0f,
-    .SlopeScaledDepthBias = 0.0f,
-    .DepthClipEnable = true,
-    .MultisampleEnable = false,
-    .AntialiasedLineEnable = false,
-    .ForcedSampleCount = 0,
-    .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
+constexpr gpu::depth_stencil_state_desc depth_stencil_readonly_less_equal = {
+   .depth_test_enabled = true,
+   .depth_test_func = gpu::comparison_func::less_equal,
+   .write_depth = false,
+};
 
-constexpr D3D12_RASTERIZER_DESC rasterizer_cull_backfacing =
-   {.FillMode = D3D12_FILL_MODE_SOLID,
-    .CullMode = D3D12_CULL_MODE_BACK,
-    .FrontCounterClockwise = true,
-    .DepthBias = 0,
-    .DepthBiasClamp = 0.0f,
-    .SlopeScaledDepthBias = 0.0f,
-    .DepthClipEnable = true,
-    .MultisampleEnable = false,
-    .AntialiasedLineEnable = false,
-    .ForcedSampleCount = 0,
-    .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
+constexpr gpu::depth_stencil_state_desc depth_stencil_disabled = {
+   .depth_test_enabled = false,
+};
 
-constexpr D3D12_RASTERIZER_DESC rasterizer_conservative_cull_frontfacing =
-   {.FillMode = D3D12_FILL_MODE_SOLID,
-    .CullMode = D3D12_CULL_MODE_FRONT,
-    .FrontCounterClockwise = true,
-    .DepthBias = 0,
-    .DepthBiasClamp = 0.0f,
-    .SlopeScaledDepthBias = 0.0f,
-    .DepthClipEnable = true,
-    .MultisampleEnable = false,
-    .AntialiasedLineEnable = false,
-    .ForcedSampleCount = 0,
-    .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON};
+constexpr std::array mesh_input_layout = {
+   gpu::input_element_desc{.semantic_name = "POSITION",
+                           .semantic_index = 0,
+                           .format = DXGI_FORMAT_R32G32B32_FLOAT,
+                           .input_slot = 0},
+   gpu::input_element_desc{.semantic_name = "NORMAL",
+                           .semantic_index = 0,
+                           .format = DXGI_FORMAT_R16G16B16A16_SNORM,
+                           .input_slot = 1},
+   gpu::input_element_desc{.semantic_name = "TANGENT",
+                           .semantic_index = 0,
+                           .format = DXGI_FORMAT_R16G16B16A16_SNORM,
+                           .input_slot = 1},
+   gpu::input_element_desc{.semantic_name = "BITANGENT",
+                           .semantic_index = 0,
+                           .format = DXGI_FORMAT_R16G16B16A16_SNORM,
+                           .input_slot = 1},
+   gpu::input_element_desc{.semantic_name = "TEXCOORD",
+                           .semantic_index = 0,
+                           .format = DXGI_FORMAT_R32G32_FLOAT,
+                           .input_slot = 1},
+};
 
-constexpr D3D12_RASTERIZER_DESC rasterizer_line_antialiased =
-   {.FillMode = D3D12_FILL_MODE_SOLID,
-    .CullMode = D3D12_CULL_MODE_NONE,
-    .FrontCounterClockwise = true,
-    .DepthBias = 0,
-    .DepthBiasClamp = 0.0f,
-    .SlopeScaledDepthBias = 0.0f,
-    .DepthClipEnable = true,
-    .MultisampleEnable = false,
-    .AntialiasedLineEnable = true,
-    .ForcedSampleCount = 0,
-    .ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF};
+constexpr std::array mesh_input_layout_position_only = {
+   mesh_input_layout[0],
+};
 
-constexpr D3D12_DEPTH_STENCILOP_DESC stencilop_disabled =
-   {.StencilFailOp = D3D12_STENCIL_OP_KEEP,
-    .StencilDepthFailOp = D3D12_STENCIL_OP_KEEP,
-    .StencilPassOp = D3D12_STENCIL_OP_KEEP,
-    .StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS};
+constexpr std::array meta_mesh_input_layout = {
+   gpu::input_element_desc{.semantic_name = "POSITION",
+                           .semantic_index = 0,
+                           .format = DXGI_FORMAT_R32G32B32_FLOAT,
+                           .input_slot = 0},
+};
 
-constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_enabled =
-   {.DepthEnable = true,
-    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
-    .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
-    .StencilEnable = false,
-    .StencilReadMask = 0,
-    .StencilWriteMask = 0,
-    .FrontFace = stencilop_disabled,
-    .BackFace = stencilop_disabled};
-
-constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_equal =
-   {.DepthEnable = true,
-    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
-    .DepthFunc = D3D12_COMPARISON_FUNC_EQUAL,
-    .StencilEnable = false,
-    .StencilReadMask = 0,
-    .StencilWriteMask = 0,
-    .FrontFace = stencilop_disabled,
-    .BackFace = stencilop_disabled};
-
-constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_readonly_less_equal =
-   {.DepthEnable = true,
-    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO,
-    .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
-    .StencilEnable = false,
-    .StencilReadMask = 0,
-    .StencilWriteMask = 0,
-    .FrontFace = stencilop_disabled,
-    .BackFace = stencilop_disabled};
-
-constexpr D3D12_DEPTH_STENCIL_DESC depth_stencil_disabled =
-   {.DepthEnable = false,
-    .DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL,
-    .DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL,
-    .StencilEnable = false,
-    .StencilReadMask = 0,
-    .StencilWriteMask = 0,
-    .FrontFace = stencilop_disabled,
-    .BackFace = stencilop_disabled};
-
-constexpr std::array mesh_input_layout_elements =
-   {D3D12_INPUT_ELEMENT_DESC{.SemanticName = "POSITION",
-                             .SemanticIndex = 0,
-                             .Format = DXGI_FORMAT_R32G32B32_FLOAT,
-                             .InputSlot = 0,
-                             .AlignedByteOffset = 0,
-                             .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA},
-    D3D12_INPUT_ELEMENT_DESC{.SemanticName = "NORMAL",
-                             .SemanticIndex = 0,
-                             .Format = DXGI_FORMAT_R16G16B16A16_SNORM,
-                             .InputSlot = 1,
-                             .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT,
-                             .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA},
-    D3D12_INPUT_ELEMENT_DESC{.SemanticName = "TANGENT",
-                             .SemanticIndex = 0,
-                             .Format = DXGI_FORMAT_R16G16B16A16_SNORM,
-                             .InputSlot = 1,
-                             .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT,
-                             .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA},
-    D3D12_INPUT_ELEMENT_DESC{.SemanticName = "BITANGENT",
-                             .SemanticIndex = 0,
-                             .Format = DXGI_FORMAT_R16G16B16A16_SNORM,
-                             .InputSlot = 1,
-                             .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT,
-                             .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA},
-    D3D12_INPUT_ELEMENT_DESC{.SemanticName = "TEXCOORD",
-                             .SemanticIndex = 0,
-                             .Format = DXGI_FORMAT_R32G32_FLOAT,
-                             .InputSlot = 1,
-                             .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT,
-                             .InputSlotClass =
-                                D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA}};
-
-constexpr D3D12_INPUT_LAYOUT_DESC mesh_input_layout =
-   {.pInputElementDescs = mesh_input_layout_elements.data(),
-    .NumElements = static_cast<UINT>(mesh_input_layout_elements.size())};
-
-constexpr D3D12_INPUT_LAYOUT_DESC position_only_mesh_input_layout =
-   {.pInputElementDescs = mesh_input_layout_elements.data(),
-    .NumElements = static_cast<UINT>(1)};
-
-constexpr std::array meta_mesh_input_layout_elements = {
-   D3D12_INPUT_ELEMENT_DESC{.SemanticName = "POSITION",
-                            .SemanticIndex = 0,
-                            .Format = DXGI_FORMAT_R32G32B32_FLOAT,
-                            .InputSlot = 0,
-                            .AlignedByteOffset = 0,
-                            .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA}};
-
-constexpr D3D12_INPUT_LAYOUT_DESC meta_mesh_input_layout =
-   {.pInputElementDescs = meta_mesh_input_layout_elements.data(),
-    .NumElements = static_cast<UINT>(meta_mesh_input_layout_elements.size())};
-
-auto create_graphics_pipeline(ID3D12Device9& device, const std::string_view name,
-                              const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
-   -> utility::com_ptr<ID3D12PipelineState>
-{
-   utility::com_ptr<ID3D12PipelineState> pso;
-
-   throw_if_failed(
-      device.CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(pso.clear_and_assign())));
-
-   gpu::set_debug_name(*pso, name);
-
-   return pso;
-}
-
-auto create_compute_pipeline(ID3D12Device9& device, const std::string_view name,
-                             const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc)
-   -> utility::com_ptr<ID3D12PipelineState>
-{
-   utility::com_ptr<ID3D12PipelineState> pso;
-
-   throw_if_failed(
-      device.CreateComputePipelineState(&desc, IID_PPV_ARGS(pso.clear_and_assign())));
-
-   gpu::set_debug_name(*pso, name);
-
-   return pso;
-}
-
-auto create_material_pipelines(ID3D12Device9& device, const std::string_view name_base,
+auto create_material_pipelines(gpu::device& device, const std::string_view name_base,
                                const shader_library& shader_library,
                                const root_signature_library& root_signature_library)
    -> material_pipelines
@@ -290,8 +111,6 @@ auto create_material_pipelines(ID3D12Device9& device, const std::string_view nam
 
    for (auto i = 0u; i < pipelines.size(); ++i) {
       const auto flags = static_cast<material_pipeline_flags>(i);
-
-      if (are_flags_set(flags, material_pipeline_flags::alpha_cutout)) continue;
 
       std::string pipeline_name{name_base};
 
@@ -307,7 +126,7 @@ auto create_material_pipelines(ID3D12Device9& device, const std::string_view nam
          pipeline_name += "_doublesided"sv;
       }
 
-      const auto blend_state = [&] {
+      const gpu::blend_state_desc blend_state = [&] {
          if (are_flags_set(flags, material_pipeline_flags::additive)) {
             return blend_additive;
          }
@@ -318,36 +137,33 @@ auto create_material_pipelines(ID3D12Device9& device, const std::string_view nam
          return blend_disabled;
       }();
 
-      const auto rasterizer_state =
+      const gpu::rasterizer_state_desc rasterizer_state =
          are_flags_set(flags, material_pipeline_flags::doublesided)
             ? rasterizer_cull_none
             : rasterizer_cull_backfacing;
 
-      const auto depth_stencil_state =
+      const gpu::depth_stencil_state_desc depth_stencil_state =
          are_flags_set(flags, material_pipeline_flags::transparent)
             ? depth_stencil_readonly_less_equal
             : depth_stencil_readonly_equal;
 
-      pipelines[i] =
-         create_graphics_pipeline(device, pipeline_name,
-                                  {.pRootSignature = root_signature_library.mesh.get(),
-                                   .VS = shader_library["meshVS"sv],
-                                   .PS = shader_library["mesh_normalPS"sv],
-                                   .StreamOutput = stream_output_disabled,
-                                   .BlendState = blend_state,
-                                   .SampleMask = sample_mask_default,
-                                   .RasterizerState = rasterizer_state,
-                                   .DepthStencilState = depth_stencil_state,
-                                   .InputLayout = mesh_input_layout,
-                                   .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                   .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                   .NumRenderTargets = 1,
-                                   .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                   .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                   .SampleDesc = {1, 0}});
+      pipelines[i] = {device.create_graphics_pipeline(
+                         {.root_signature = root_signature_library.mesh.get(),
 
-      // Duplicate to alpha cutout pipeline.
-      pipelines[flags | material_pipeline_flags::alpha_cutout] = pipelines[i];
+                          .vs_bytecode = shader_library["meshVS"sv],
+                          .ps_bytecode = shader_library["mesh_normalPS"sv],
+
+                          .blend_state = blend_state,
+                          .rasterizer_state = rasterizer_state,
+                          .depth_stencil_state = depth_stencil_state,
+                          .input_layout = mesh_input_layout,
+
+                          .render_target_count = 1,
+                          .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                          .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                          .debug_name = pipeline_name}),
+                      device.direct_queue};
    }
 
    return pipelines;
@@ -355,7 +171,7 @@ auto create_material_pipelines(ID3D12Device9& device, const std::string_view nam
 
 }
 
-pipeline_library::pipeline_library(ID3D12Device9& device,
+pipeline_library::pipeline_library(gpu::device& device,
                                    const shader_library& shader_library,
                                    const root_signature_library& root_signature_library)
 
@@ -363,342 +179,313 @@ pipeline_library::pipeline_library(ID3D12Device9& device,
    reload(device, shader_library, root_signature_library);
 }
 
-void pipeline_library::reload(ID3D12Device9& device, const shader_library& shader_library,
+void pipeline_library::reload(gpu::device& device, const shader_library& shader_library,
                               const root_signature_library& root_signature_library)
 {
-   mesh_shadow =
-      create_graphics_pipeline(device, "mesh_shadow"sv,
-                               {.pRootSignature =
-                                   root_signature_library.mesh_shadow.get(),
-                                .VS = shader_library["mesh_shadowVS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_none,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = position_only_mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 0,
-                                .RTVFormats = {},
-                                .DSVFormat = DXGI_FORMAT_D32_FLOAT,
-                                .SampleDesc = {1, 0}});
+   mesh_shadow = {device.create_graphics_pipeline({
+                     .root_signature = root_signature_library.mesh_shadow.get(),
 
-   mesh_shadow =
-      create_graphics_pipeline(device, "mesh_shadow"sv,
-                               {.pRootSignature =
-                                   root_signature_library.mesh_shadow.get(),
-                                .VS = shader_library["mesh_shadowVS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_none,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = position_only_mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 0,
-                                .RTVFormats = {},
-                                .DSVFormat = DXGI_FORMAT_D32_FLOAT,
-                                .SampleDesc = {1, 0}});
+                     .vs_bytecode = shader_library["mesh_shadowVS"sv],
 
-   mesh_depth_prepass =
-      create_graphics_pipeline(device, "mesh_depth_prepass"sv,
-                               {.pRootSignature =
-                                   root_signature_library.mesh_depth_prepass.get(),
-                                .VS = shader_library["mesh_depth_prepassVS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = position_only_mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 0,
-                                .RTVFormats = {},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+                     .rasterizer_state = rasterizer_cull_none,
+                     .depth_stencil_state = depth_stencil_enabled,
+                     .input_layout = mesh_input_layout_position_only,
+
+                     .dsv_format = DXGI_FORMAT_D32_FLOAT,
+
+                     .debug_name = "mesh_shadow"sv,
+                  }),
+                  device.direct_queue};
+
+   mesh_shadow = {device.create_graphics_pipeline(
+                     {.root_signature = root_signature_library.mesh_shadow.get(),
+
+                      .vs_bytecode = shader_library["mesh_shadowVS"sv],
+
+                      .rasterizer_state = rasterizer_cull_none,
+                      .depth_stencil_state = depth_stencil_enabled,
+                      .input_layout = mesh_input_layout_position_only,
+
+                      .dsv_format = DXGI_FORMAT_D32_FLOAT,
+
+                      .debug_name = "mesh_shadow"sv}),
+                  device.direct_queue};
+
+   mesh_depth_prepass = {device.create_graphics_pipeline(
+                            {.root_signature =
+                                root_signature_library.mesh_depth_prepass.get(),
+
+                             .vs_bytecode = shader_library["mesh_depth_prepassVS"sv],
+
+                             .rasterizer_state = rasterizer_cull_backfacing,
+                             .depth_stencil_state = depth_stencil_enabled,
+                             .input_layout = mesh_input_layout_position_only,
+
+                             .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                             .debug_name = "mesh_depth_prepass"sv}),
+                         device.direct_queue};
 
    mesh_depth_prepass_doublesided =
-      create_graphics_pipeline(device, "mesh_depth_prepass_doublesided"sv,
-                               {.pRootSignature =
-                                   root_signature_library.mesh_depth_prepass.get(),
-                                .VS = shader_library["mesh_depth_prepassVS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_none,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = position_only_mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 0,
-                                .RTVFormats = {},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.mesh_depth_prepass.get(),
+
+           .vs_bytecode = shader_library["mesh_depth_prepassVS"sv],
+
+           .rasterizer_state = rasterizer_cull_none,
+           .depth_stencil_state = depth_stencil_enabled,
+           .input_layout = mesh_input_layout_position_only,
+
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "mesh_depth_prepass_doublesided"sv}),
+       device.direct_queue};
 
    mesh_depth_prepass_alpha_cutout =
-      create_graphics_pipeline(device, "mesh_depth_prepass_alpha_cutout"sv,
-                               {.pRootSignature =
-                                   root_signature_library.mesh_depth_prepass.get(),
-                                .VS = shader_library["meshVS"sv],
-                                .PS = shader_library["mesh_depth_cutoutPS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 0,
-                                .RTVFormats = {},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.mesh_depth_prepass.get(),
 
-   mesh_depth_prepass_alpha_cutout_doublesided = create_graphics_pipeline(
-      device, "mesh_depth_prepass_alpha_cutout_doublesided"sv,
-      {.pRootSignature = root_signature_library.mesh_depth_prepass.get(),
-       .VS = shader_library["meshVS"sv],
-       .PS = shader_library["mesh_depth_cutoutPS"sv],
-       .StreamOutput = stream_output_disabled,
-       .BlendState = blend_disabled,
-       .SampleMask = sample_mask_default,
-       .RasterizerState = rasterizer_cull_backfacing,
-       .DepthStencilState = depth_stencil_enabled,
-       .InputLayout = mesh_input_layout,
-       .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-       .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-       .NumRenderTargets = 0,
-       .RTVFormats = {},
-       .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-       .SampleDesc = {1, 0}});
+           .vs_bytecode = shader_library["meshVS"sv],
+           .ps_bytecode = shader_library["mesh_depth_cutoutPS"sv],
 
-   mesh_basic =
-      create_graphics_pipeline(device, "mesh_basic"sv,
-                               {.pRootSignature = root_signature_library.mesh.get(),
-                                .VS = shader_library["meshVS"sv],
-                                .PS = shader_library["mesh_basicPS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 1,
-                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .depth_stencil_state = depth_stencil_enabled,
+           .input_layout = mesh_input_layout,
 
-   mesh_basic_lighting =
-      create_graphics_pipeline(device, "mesh_basic_lighting"sv,
-                               {.pRootSignature = root_signature_library.mesh.get(),
-                                .VS = shader_library["meshVS"sv],
-                                .PS = shader_library["mesh_basic_lightingPS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 1,
-                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "mesh_depth_prepass_alpha_cutout"sv}),
+       device.direct_queue};
+
+   mesh_depth_prepass_alpha_cutout_doublesided =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.mesh_depth_prepass.get(),
+
+           .vs_bytecode = shader_library["meshVS"sv],
+           .ps_bytecode = shader_library["mesh_depth_cutoutPS"sv],
+
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .depth_stencil_state = depth_stencil_enabled,
+           .input_layout = mesh_input_layout,
+
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "mesh_depth_prepass_alpha_cutout_doublesided"sv}),
+       device.direct_queue};
+
+   mesh_basic = {device.create_graphics_pipeline(
+                    {.root_signature = root_signature_library.mesh.get(),
+
+                     .vs_bytecode = shader_library["meshVS"sv],
+                     .ps_bytecode = shader_library["mesh_basicPS"sv],
+
+                     .rasterizer_state = rasterizer_cull_backfacing,
+                     .depth_stencil_state = depth_stencil_enabled,
+                     .input_layout = mesh_input_layout,
+
+                     .render_target_count = 1,
+                     .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                     .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                     .debug_name = "mesh_basic"sv}),
+                 device.direct_queue};
+
+   mesh_basic_lighting = {device.create_graphics_pipeline(
+                             {.root_signature = root_signature_library.mesh.get(),
+
+                              .vs_bytecode = shader_library["meshVS"sv],
+                              .ps_bytecode = shader_library["mesh_basic_lightingPS"sv],
+
+                              .rasterizer_state = rasterizer_cull_backfacing,
+                              .depth_stencil_state = depth_stencil_enabled,
+
+                              .input_layout = mesh_input_layout,
+
+                              .render_target_count = 1,
+                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                              .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                              .debug_name = "mesh_basic_lighting"sv}),
+                          device.direct_queue};
 
    mesh_normal = create_material_pipelines(device, "mesh_normal"sv, shader_library,
                                            root_signature_library);
 
-   mesh_wireframe = create_graphics_pipeline(
-      device, "mesh_wireframe"sv,
-      {.pRootSignature = root_signature_library.mesh_wireframe.get(),
-       .VS = shader_library["mesh_depth_prepassVS"sv],
-       .PS = shader_library["mesh_wireframePS"sv],
-       .GS = shader_library["mesh_wireframeGS"sv],
-       .StreamOutput = stream_output_disabled,
-       .BlendState = blend_alpha,
-       .SampleMask = sample_mask_default,
-       .RasterizerState = rasterizer_cull_none,
-       .DepthStencilState = depth_stencil_readonly_less_equal,
-       .InputLayout = position_only_mesh_input_layout,
-       .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-       .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-       .NumRenderTargets = 1,
-       .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-       .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-       .SampleDesc = {1, 0}});
+   mesh_wireframe = {device.create_graphics_pipeline(
+                        {.root_signature = root_signature_library.mesh_wireframe.get(),
 
-   terrain_depth_prepass =
-      create_graphics_pipeline(device, "terrain_depth_prepass"sv,
-                               {.pRootSignature = root_signature_library.terrain.get(),
-                                .VS = shader_library["terrain_patchVS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 0,
-                                .RTVFormats = {},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+                         .vs_bytecode = shader_library["mesh_depth_prepassVS"sv],
+                         .ps_bytecode = shader_library["mesh_wireframePS"sv],
+                         .gs_bytecode = shader_library["mesh_wireframeGS"sv],
 
-   terrain_basic =
-      create_graphics_pipeline(device, "terrain_basic"sv,
-                               {.pRootSignature = root_signature_library.terrain.get(),
-                                .VS = shader_library["terrain_patchVS"sv],
-                                .PS = shader_library["terrain_basicPS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_readonly_equal,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 1,
-                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+                         .blend_state = blend_alpha,
+                         .rasterizer_state = rasterizer_cull_none,
+                         .depth_stencil_state = depth_stencil_readonly_less_equal,
+                         .input_layout = mesh_input_layout_position_only,
 
-   terrain_lighting =
-      create_graphics_pipeline(device, "terrain_lighting"sv,
-                               {.pRootSignature = root_signature_library.terrain.get(),
-                                .VS = shader_library["terrain_patchVS"sv],
-                                .PS = shader_library["terrain_lightingPS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_readonly_equal,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 1,
-                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+                         .render_target_count = 1,
+                         .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                         .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
 
-   terrain_normal =
-      create_graphics_pipeline(device, "terrain_normal"sv,
-                               {.pRootSignature = root_signature_library.terrain.get(),
-                                .VS = shader_library["terrain_patchVS"sv],
-                                .PS = shader_library["terrain_normalPS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_readonly_equal,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 1,
-                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+                         .debug_name = "mesh_wireframe"sv}),
+                     device.direct_queue};
 
-   meta_mesh = create_graphics_pipeline(
-      device, "meta_mesh"sv,
-      {.pRootSignature = root_signature_library.meta_mesh.get(),
-       .VS = shader_library["meta_meshVS"sv],
-       .PS = shader_library["meta_meshPS"sv],
-       .StreamOutput = stream_output_disabled,
-       .BlendState = blend_additive,
-       .SampleMask = sample_mask_default,
-       .RasterizerState = rasterizer_cull_backfacing,
-       .DepthStencilState = depth_stencil_readonly_less_equal,
-       .InputLayout = meta_mesh_input_layout,
-       .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-       .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-       .NumRenderTargets = 1,
-       .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-       .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-       .SampleDesc = {1, 0}});
+   terrain_depth_prepass = {device.create_graphics_pipeline(
+                               {.root_signature = root_signature_library.terrain.get(),
 
-   meta_mesh_outlined =
-      create_graphics_pipeline(device, "meta_mesh_outlined"sv,
-                               {.pRootSignature =
-                                   root_signature_library.meta_mesh_wireframe.get(),
-                                .VS = shader_library["meta_meshVS"sv],
-                                .PS = shader_library["meta_mesh_outlinedPS"sv],
-                                .GS = shader_library["meta_mesh_outlinedGS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_disabled,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_cull_backfacing,
-                                .DepthStencilState = depth_stencil_enabled,
-                                .InputLayout = meta_mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-                                .NumRenderTargets = 1,
-                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+                                .vs_bytecode = shader_library["terrain_patchVS"sv],
 
-   meta_mesh_wireframe = create_graphics_pipeline(
-      device, "mesh_wireframe"sv,
-      {.pRootSignature = root_signature_library.meta_mesh_wireframe.get(),
-       .VS = shader_library["meta_meshVS"sv],
-       .PS = shader_library["mesh_wireframePS"sv],
-       .GS = shader_library["mesh_wireframeGS"sv],
-       .StreamOutput = stream_output_disabled,
-       .BlendState = blend_alpha,
-       .SampleMask = sample_mask_default,
-       .RasterizerState = rasterizer_cull_none,
-       .DepthStencilState = depth_stencil_readonly_less_equal,
-       .InputLayout = position_only_mesh_input_layout,
-       .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-       .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-       .NumRenderTargets = 1,
-       .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-       .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-       .SampleDesc = {1, 0}});
+                                .rasterizer_state = rasterizer_cull_backfacing,
+                                .depth_stencil_state = depth_stencil_enabled,
 
-   meta_line =
-      create_graphics_pipeline(device, "meta_line"sv,
-                               {.pRootSignature =
-                                   root_signature_library.meta_line.get(),
-                                .VS = shader_library["meta_lineVS"sv],
-                                .PS = shader_library["meta_meshPS"sv],
-                                .StreamOutput = stream_output_disabled,
-                                .BlendState = blend_alpha,
-                                .SampleMask = sample_mask_default,
-                                .RasterizerState = rasterizer_line_antialiased,
-                                .DepthStencilState = depth_stencil_readonly_less_equal,
-                                .InputLayout = meta_mesh_input_layout,
-                                .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-                                .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE,
-                                .NumRenderTargets = 1,
-                                .RTVFormats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
-                                .DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                .SampleDesc = {1, 0}});
+                                .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
 
-   tile_lights_clear =
-      create_compute_pipeline(device, "tile_lights_clear",
-                              {.pRootSignature =
-                                  root_signature_library.tile_lights_clear.get(),
-                               .CS = shader_library["tile_lights_clearCS"sv]});
+                                .debug_name = "terrain_depth_prepass"sv}),
+                            device.direct_queue};
 
-   tile_lights_spheres = create_graphics_pipeline(
-      device, "tile_lights_spheres"sv,
-      {.pRootSignature = root_signature_library.tile_lights.get(),
-       .VS = shader_library["tile_lightsVS"sv],
-       .PS = shader_library["tile_lightsPS"sv],
-       .StreamOutput = stream_output_disabled,
-       .BlendState = blend_disabled,
-       .SampleMask = sample_mask_default,
-       .RasterizerState = rasterizer_conservative_cull_frontfacing,
-       .DepthStencilState = depth_stencil_disabled,
-       .InputLayout = meta_mesh_input_layout,
-       .IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED,
-       .PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-       .NumRenderTargets = 0,
-       .RTVFormats = {},
-       .DSVFormat = DXGI_FORMAT_UNKNOWN,
-       .SampleDesc = {1, 0}});
+   terrain_basic = {device.create_graphics_pipeline(
+                       {.root_signature = root_signature_library.terrain.get(),
+
+                        .vs_bytecode = shader_library["terrain_patchVS"sv],
+                        .ps_bytecode = shader_library["terrain_basicPS"sv],
+
+                        .rasterizer_state = rasterizer_cull_backfacing,
+                        .depth_stencil_state = depth_stencil_readonly_equal,
+
+                        .render_target_count = 1,
+                        .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                        .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                        .debug_name = "terrain_basic"sv}),
+                    device.direct_queue};
+
+   terrain_lighting = {device.create_graphics_pipeline(
+                          {.root_signature = root_signature_library.terrain.get(),
+
+                           .vs_bytecode = shader_library["terrain_patchVS"sv],
+                           .ps_bytecode = shader_library["terrain_lightingPS"sv],
+
+                           .rasterizer_state = rasterizer_cull_backfacing,
+                           .depth_stencil_state = depth_stencil_readonly_equal,
+
+                           .render_target_count = 1,
+                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                           .debug_name = "terrain_lighting"sv}),
+                       device.direct_queue};
+
+   terrain_normal = {device.create_graphics_pipeline(
+                        {.root_signature = root_signature_library.terrain.get(),
+
+                         .vs_bytecode = shader_library["terrain_patchVS"sv],
+                         .ps_bytecode = shader_library["terrain_normalPS"sv],
+
+                         .rasterizer_state = rasterizer_cull_backfacing,
+                         .depth_stencil_state = depth_stencil_readonly_equal,
+
+                         .render_target_count = 1,
+                         .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                         .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                         .debug_name = "terrain_normal"sv}),
+                     device.direct_queue};
+
+   meta_mesh = {device.create_graphics_pipeline(
+                   {.root_signature = root_signature_library.meta_mesh.get(),
+
+                    .vs_bytecode = shader_library["meta_meshVS"sv],
+                    .ps_bytecode = shader_library["meta_meshPS"sv],
+
+                    .blend_state = blend_additive,
+                    .rasterizer_state = rasterizer_cull_backfacing,
+                    .depth_stencil_state = depth_stencil_readonly_less_equal,
+                    .input_layout = meta_mesh_input_layout,
+
+                    .render_target_count = 1,
+                    .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                    .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                    .debug_name = "meta_mesh"sv}),
+                device.direct_queue};
+
+   meta_mesh_outlined = {device.create_graphics_pipeline(
+                            {.root_signature =
+                                root_signature_library.meta_mesh_wireframe.get(),
+
+                             .vs_bytecode = shader_library["meta_meshVS"sv],
+                             .ps_bytecode = shader_library["meta_mesh_outlinedPS"sv],
+                             .gs_bytecode = shader_library["meta_mesh_outlinedGS"sv],
+
+                             .rasterizer_state = rasterizer_cull_backfacing,
+                             .depth_stencil_state = depth_stencil_enabled,
+                             .input_layout = meta_mesh_input_layout,
+
+                             .render_target_count = 1,
+                             .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                             .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                             .debug_name = "meta_mesh_outlined"sv}),
+                         device.direct_queue};
+
+   meta_mesh_wireframe = {device.create_graphics_pipeline(
+                             {.root_signature =
+                                 root_signature_library.meta_mesh_wireframe.get(),
+
+                              .vs_bytecode = shader_library["meta_meshVS"sv],
+                              .ps_bytecode = shader_library["mesh_wireframePS"sv],
+                              .gs_bytecode = shader_library["mesh_wireframeGS"sv],
+
+                              .blend_state = blend_alpha,
+                              .rasterizer_state = rasterizer_cull_none,
+                              .depth_stencil_state = depth_stencil_readonly_less_equal,
+                              .input_layout = mesh_input_layout_position_only,
+
+                              .render_target_count = 1,
+                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                              .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                              .debug_name = "mesh_wireframe"sv}),
+                          device.direct_queue};
+
+   meta_line = {device.create_graphics_pipeline(
+                   {.root_signature = root_signature_library.meta_line.get(),
+
+                    .vs_bytecode = shader_library["meta_lineVS"sv],
+                    .ps_bytecode = shader_library["meta_meshPS"sv],
+
+                    .blend_state = blend_alpha,
+                    .rasterizer_state = rasterizer_line_antialiased,
+                    .depth_stencil_state = depth_stencil_readonly_less_equal,
+                    .input_layout = meta_mesh_input_layout,
+
+                    .render_target_count = 1,
+                    .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                    .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                    .debug_name = "meta_line"sv}),
+                device.direct_queue};
+
+   tile_lights_clear = {device.create_compute_pipeline(
+                           {.root_signature =
+                               root_signature_library.tile_lights_clear.get(),
+                            .cs_bytecode = shader_library["tile_lights_clearCS"sv],
+
+                            .debug_name = "tile_lights_clear"sv}),
+                        device.direct_queue};
+
+   tile_lights_spheres = {device.create_graphics_pipeline(
+                             {.root_signature =
+                                 root_signature_library.tile_lights.get(),
+
+                              .vs_bytecode = shader_library["tile_lightsVS"sv],
+                              .ps_bytecode = shader_library["tile_lightsPS"sv],
+
+                              .rasterizer_state = rasterizer_conservative_cull_frontfacing,
+                              .depth_stencil_state = depth_stencil_disabled,
+                              .input_layout = meta_mesh_input_layout,
+
+                              .debug_name = "tile_lights_spheres"sv}),
+                          device.direct_queue};
 }
-
 }

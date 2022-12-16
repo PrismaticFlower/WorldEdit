@@ -1,8 +1,6 @@
 #include "frame_constants.hlsli"
 #include "terrain_common.hlsli"
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
-
 struct output_vertex {
    float3 positionWS : POSITIONWS;
    float2 terrain_coords : TERRAINCOORDS;

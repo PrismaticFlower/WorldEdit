@@ -4,6 +4,7 @@
 #include "hresult_error.hpp"
 #include "io/read_file.hpp"
 #include "shader_cache.hpp"
+#include "utility/com_ptr.hpp"
 
 #include <algorithm>
 #include <array>
@@ -19,9 +20,11 @@
 
 #include <boost/container/small_vector.hpp>
 #include <boost/functional/hash.hpp>
-#include <dxcapi.h>
 
 #include <range/v3/algorithm.hpp>
+
+#include <D3DCommon.h>
+#include <dxcapi.h>
 
 using namespace std::literals;
 
@@ -153,7 +156,7 @@ auto get_shader_pdb_path(const shader_description& desc) -> std::filesystem::pat
 }
 
 auto compile(const shader_description& desc)
-   -> std::pair<utility::com_ptr<ID3DBlob>, std::vector<shader_dependency>>
+   -> std::pair<std::vector<std::byte>, std::vector<shader_dependency>>
 {
    utility::com_ptr<IDxcUtils> utils;
    utility::com_ptr<IDxcCompiler3> compiler;
@@ -199,7 +202,7 @@ auto compile(const shader_description& desc)
       std::cerr << std::format("Unable to load file {} for shader {}\n"sv,
                                desc.file.string(), desc.name);
 
-      return {nullptr, {}};
+      return {};
    }
 
    const DxcBuffer source{.Ptr = source_blob->GetBufferPointer(),
@@ -225,7 +228,7 @@ auto compile(const shader_description& desc)
    if (FAILED(status)) {
       std::cerr << std::format("Compiling {} failed!\n"sv, desc.name);
 
-      return {nullptr, {}};
+      return {};
    }
 
    utility::com_ptr<IDxcBlob> dxc_shader;
@@ -245,12 +248,12 @@ auto compile(const shader_description& desc)
                  pdb_blob->GetBufferSize());
    }
 
-   utility::com_ptr<ID3DBlob> shader;
-   dxc_shader->QueryInterface(shader.clear_and_assign());
-
    std::cout << std::format("Compiled {}\n"sv, desc.name);
 
-   return {shader, {includer.dependencies.begin(), includer.dependencies.end()}};
+   return {{static_cast<std::byte*>(dxc_shader->GetBufferPointer()),
+            static_cast<std::byte*>(dxc_shader->GetBufferPointer()) +
+               dxc_shader->GetBufferSize()},
+           {includer.dependencies.begin(), includer.dependencies.end()}};
 }
 
 }
@@ -265,14 +268,14 @@ shader_library::shader_library(std::initializer_list<shader_description> shaders
 }
 
 auto shader_library::operator[](const std::string_view name) const noexcept
-   -> D3D12_SHADER_BYTECODE
+   -> std::span<const std::byte>
 {
    if (auto shader =
           std::lower_bound(_compiled_shaders.cbegin(), _compiled_shaders.cend(), name,
                            [](const compiled_shader& l,
                               const std::string_view r) { return l.name < r; });
        shader != _compiled_shaders.cend() and shader->name == name) {
-      return {shader->bytecode->GetBufferPointer(), shader->bytecode->GetBufferSize()};
+      return shader->bytecode;
    }
    else {
       std::cerr << std::format("Unable to find shader named '{}'\n", name);
@@ -306,7 +309,7 @@ void shader_library::reload(std::initializer_list<shader_description> shaders) n
                             dxc::compile(desc);
                       }
 
-                      if (not compiled.bytecode) return;
+                      if (compiled.bytecode.empty()) return;
 
                       std::scoped_lock lock{compiled_mutex};
                       _compiled_shaders.emplace_back(std::move(compiled));

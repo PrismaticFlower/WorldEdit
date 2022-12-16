@@ -1,5 +1,7 @@
-#ifndef LIGHTS_COMMON_INCLUDE
-#define LIGHTS_COMMON_INCLUDE
+#pragma once
+
+#include "bindings.hlsli"
+#include "samplers.hlsli"
 
 #define MAX_LIGHTS 256
 #define TILE_LIGHT_WORDS 8
@@ -31,13 +33,11 @@ struct light_description {
    uint padding;
 };
 
-struct light_descriptions {
-   light_description lights[MAX_LIGHTS];
-};
-
 struct light_constant_buffer {
    uint light_tiles_width;
-   uint3 padding0;
+   uint light_tiles_index;
+   uint light_region_list_index;
+   uint TEMP_shadowmap_index;
    float3 sky_ambient_color;
    uint padding1;
    float3 ground_ambient_color;
@@ -45,6 +45,8 @@ struct light_constant_buffer {
    float4x4 shadow_cascade_transforms[4];
    float2 shadow_map_resolution;
    float2 inv_shadow_map_resolution;
+
+   light_description lights[MAX_LIGHTS];
 };
 
 struct light_region_description {
@@ -75,12 +77,12 @@ const static int shadow_cascade_count = 4;
 const static uint light_tile_size = 8;
 const static uint light_tile_word_bits = 32;
 
-ConstantBuffer<light_constant_buffer> light_constants : register(b0, LIGHT_REGISTER_SPACE);
-StructuredBuffer<uint[TILE_LIGHT_WORDS]> light_tiles : register(t1, LIGHT_REGISTER_SPACE);
-ConstantBuffer<light_descriptions> light_list : register(b2, LIGHT_REGISTER_SPACE);
-StructuredBuffer<light_region_description> light_region_list : register(t3, LIGHT_REGISTER_SPACE);
-Texture2DArray<float> TEMP_shadowmap : register(t4, LIGHT_REGISTER_SPACE);
-SamplerComparisonState shadow_sampler : register(s2, LIGHT_REGISTER_SPACE);
+ConstantBuffer<light_constant_buffer> light_constants : register(LIGHTS_CB_REGISTER);
+static StructuredBuffer<uint[TILE_LIGHT_WORDS]> light_tiles =
+   ResourceDescriptorHeap[light_constants.light_tiles_index];
+static StructuredBuffer<light_region_description> light_region_list =
+   ResourceDescriptorHeap[light_constants.light_region_list_index];
+static Texture2DArray<float> TEMP_shadowmap = ResourceDescriptorHeap[light_constants.TEMP_shadowmap_index];
 const static float temp_shadow_bias = 0.001;
 
 float shadow_cascade_signed_distance(float3 positionLS)
@@ -112,7 +114,7 @@ float sample_shadow_map(float2 base_uv, float u, float v, float2 inv_shadow_map_
 {
    float2 uv = base_uv + float2(u, v) * inv_shadow_map_resolution;
 
-   return TEMP_shadowmap.SampleCmpLevelZero(shadow_sampler, float3(uv, cascade_index), light_depth);
+   return TEMP_shadowmap.SampleCmpLevelZero(sampler_shadow, float3(uv, cascade_index), light_depth);
 }
 
 float sample_shadow_map_optimized_pcfx5(float3 positionLS, uint cascade_index,
@@ -353,7 +355,7 @@ float3 calculate_lighting(calculate_light_inputs input)
 
          uint light_index = (i * light_tile_word_bits) + active_bit_index;
 
-         light_description light = light_list.lights[light_index];
+         light_description light = light_constants.lights[light_index];
          light_info light_info = get_light_info(light, input);
 
          total_light += calculate_light(input, light, light_info);
@@ -362,5 +364,3 @@ float3 calculate_lighting(calculate_light_inputs input)
 
    return total_light;
 }
-
-#endif

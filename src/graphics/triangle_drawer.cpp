@@ -4,7 +4,7 @@
 namespace we::graphics {
 
 triangle_drawer::triangle_drawer(gpu::graphics_command_list& command_list,
-                                 gpu::dynamic_buffer_allocator& buffer_allocator,
+                                 dynamic_buffer_allocator& buffer_allocator,
                                  const uint32 max_buffered_triangles)
    : _command_list{command_list},
      _buffer_allocator{buffer_allocator},
@@ -39,10 +39,10 @@ void triangle_drawer::submit()
 {
    if (_batch_vertices == 0) return;
 
-   const D3D12_VERTEX_BUFFER_VIEW vbv{.BufferLocation = _current_allocation.gpu_address,
-                                      .SizeInBytes =
-                                         static_cast<UINT>(_current_allocation.size),
-                                      .StrideInBytes = sizeof(float3)};
+   const gpu::vertex_buffer_view vbv{.buffer_location = _current_allocation.gpu_address,
+                                     .size_in_bytes =
+                                        static_cast<uint32>(_current_allocation.size),
+                                     .stride_in_bytes = sizeof(float3)};
 
    _command_list.ia_set_vertex_buffers(0, vbv);
    _command_list.draw_instanced(_batch_vertices, 1, _batch_offset, 0);

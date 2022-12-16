@@ -1,6 +1,5 @@
+#include "bindings.hlsli"
 #include "frame_constants.hlsli"
-
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
 
 struct input_vertex {
    float3 positionWS : POSITION;

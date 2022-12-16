@@ -45,7 +45,9 @@ class camera;
 
 class renderer {
 public:
-   renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
+   using window_handle = void*;
+
+   renderer(const window_handle window, std::shared_ptr<settings::graphics> settings,
             std::shared_ptr<async::thread_pool> thread_pool,
             assets::libraries_manager& asset_libraries, output_stream& error_output);
 

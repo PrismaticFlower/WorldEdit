@@ -1,11 +1,11 @@
+#include "bindings.hlsli"
 #include "frame_constants.hlsli"
 
 struct object_constants {
    float4x4 world_matrix;
 };
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
-ConstantBuffer<object_constants> cb_object_constants : register(b1);
+ConstantBuffer<object_constants> cb_object_constants : register(OBJECT_CB_REGISTER);
 
 struct input_vertex {
    float3 positionOS : POSITION;
@@ -19,10 +19,8 @@ output_vertex main(input_vertex input)
 {
    output_vertex output;
 
-   const float3 positionWS =
-      mul(cb_object_constants.world_matrix, float4(input.positionOS, 1.0)).xyz;
-   const float4 positionPS =
-      mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+   const float3 positionWS = mul(cb_object_constants.world_matrix, float4(input.positionOS, 1.0)).xyz;
+   const float4 positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
 
    output.positionPS = positionPS;
 

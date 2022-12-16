@@ -8,7 +8,6 @@
 #include <span>
 #include <vector>
 
-#include <d3d12.h>
 #include <glm/glm.hpp>
 
 namespace we::assets::texture {
@@ -59,9 +58,8 @@ private:
 
 class texture {
 public:
-   constexpr static std::size_t pitch_alignment = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
-   constexpr static std::size_t subresource_alignment =
-      D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
+   constexpr static std::size_t pitch_alignment = 256;
+   constexpr static std::size_t subresource_alignment = 512;
 
    struct init_params {
       uint32 width = 1;

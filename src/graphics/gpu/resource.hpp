@@ -1,70 +1,141 @@
 #pragma once
 
-#include "d3d12_mem_alloc.hpp"
-#include "utility/com_ptr.hpp"
+#include "rhi.hpp"
 
 #include <utility>
 
-#include <d3d12.h>
-#include <gsl/gsl>
-
 namespace we::graphics::gpu {
 
-class device;
+/// @brief Convenience helper for managing GPU handles. Owns a handle and calls release on it when destroyed.
+/// Care must be taken when destroying unsynchronized handles.
+template<typename H, H null_value, auto releaser, typename queue>
+struct unique_handle {
+   using handle_type = H;
 
-class resource {
-public:
-   resource() = default;
+   constexpr unique_handle() = default;
 
-   resource(device& device, utility::com_ptr<ID3D12Resource> resource,
-            release_ptr<D3D12MA::Allocation> allocation)
-      : _resource{resource}, _allocation{std::move(allocation)}, _parent_device{&device}
+   constexpr ~unique_handle()
+   {
+      if (_handle != null_value) {
+         releaser(*_queue, _handle);
+      }
+   }
+
+   constexpr unique_handle(handle_type handle, queue& queue) noexcept
+      : _handle{handle}, _queue{&queue}
    {
    }
 
-   resource(const resource&) noexcept = delete;
-   auto operator=(const resource&) noexcept -> resource& = delete;
-
-   resource(resource&& other) noexcept = default;
-   auto operator=(resource&& other) noexcept -> resource& = default;
-
-   ~resource();
-
-   bool alive() const noexcept
+   constexpr unique_handle(unique_handle&& other) noexcept
    {
-      return _resource != nullptr;
+      this->swap(other);
    }
 
-   explicit operator bool() const noexcept
+   constexpr auto operator=(unique_handle&& other) noexcept -> unique_handle&
    {
-      return alive();
+      unique_handle discard;
+
+      discard.swap(other);
+      this->swap(discard);
+
+      return *this;
    }
 
-   auto get() const noexcept -> ID3D12Resource*
+   constexpr unique_handle(const unique_handle&) = delete;
+
+   constexpr auto operator=(const unique_handle&) -> unique_handle& = delete;
+
+   [[nodiscard]] constexpr auto get() const noexcept -> handle_type
    {
-      return _resource.get();
+      return _handle;
    }
 
-   void swap(resource& other) noexcept
+   constexpr void reset() noexcept
+   {
+      unique_handle discard;
+
+      discard.swap(*this);
+   }
+
+   constexpr auto release() noexcept -> handle_type
+   {
+      _queue = nullptr;
+
+      return std::exchange(_handle, null_value);
+   }
+
+   constexpr void swap(unique_handle& other) noexcept
    {
       using std::swap;
 
-      swap(this->_resource, other._resource);
-      swap(this->_allocation, other._allocation);
-      swap(this->_parent_device, other._parent_device);
+      swap(this->_handle, other._handle);
+      swap(this->_queue, other._queue);
+   }
+
+   [[nodiscard]] constexpr explicit operator bool() const noexcept
+   {
+      return _handle != null_value;
+   }
+
+   [[nodiscard]] constexpr bool operator==(const unique_handle&) const noexcept = default;
+
+   [[nodiscard]] constexpr bool operator==(handle_type other) const noexcept
+   {
+      return other == _handle;
    }
 
 private:
-   friend device;
-
-   utility::com_ptr<ID3D12Resource> _resource = nullptr;
-   release_ptr<D3D12MA::Allocation> _allocation = nullptr;
-   device* _parent_device = nullptr;
+   handle_type _handle = null_value;
+   queue* _queue = nullptr;
 };
 
-inline void swap(resource& l, resource& r) noexcept
-{
-   l.swap(r);
-}
+using unique_resource_handle =
+   unique_handle<resource_handle, null_resource_handle,
+                 [](command_queue& queue, resource_handle handle) {
+                    queue.release_resource(handle);
+                 },
+                 command_queue>;
+
+using unique_rtv_handle =
+   unique_handle<rtv_handle, null_rtv_handle,
+                 [](command_queue& queue, rtv_handle handle) {
+                    queue.release_render_target_view(handle);
+                 },
+                 command_queue>;
+
+using unique_dsv_handle =
+   unique_handle<dsv_handle, null_dsv_handle,
+                 [](command_queue& queue, dsv_handle handle) {
+                    queue.release_depth_stencil_view(handle);
+                 },
+                 command_queue>;
+
+using unique_resource_view =
+   unique_handle<resource_view, invalid_resource_view,
+                 [](command_queue& queue, resource_view handle) {
+                    queue.release_resource_view(handle);
+                 },
+                 command_queue>;
+
+using unique_root_signature_handle =
+   unique_handle<root_signature_handle, null_root_signature_handle,
+                 [](command_queue& queue, root_signature_handle handle) {
+                    queue.release_root_signature(handle);
+                 },
+                 command_queue>;
+
+using unique_pipeline_handle =
+   unique_handle<pipeline_handle, null_pipeline_handle,
+                 [](command_queue& queue, pipeline_handle handle) {
+                    queue.release_pipeline(handle);
+                 },
+                 command_queue>;
+
+using unique_sampler_heap_handle =
+   unique_handle<sampler_heap_handle, null_sampler_heap_handle,
+                 [](command_queue& queue, sampler_heap_handle handle) {
+                    queue.release_sampler_heap(handle);
+                 },
+                 command_queue>;
 
 }

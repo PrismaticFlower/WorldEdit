@@ -1,5 +1,5 @@
 #include "material.hpp"
-#include "gpu/barrier_helpers.hpp"
+#include "gpu/barrier.hpp"
 
 using namespace std::literals;
 
@@ -59,7 +59,7 @@ constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
    return flags;
 }
 
-struct alignas(256) normal_material_constants {
+struct alignas(16) normal_material_constants {
    shader_flags flags;
    uint32 diffuse_map;
    uint32 normal_map;
@@ -69,8 +69,9 @@ struct alignas(256) normal_material_constants {
 
 }
 
-material::material(const assets::msh::material& material,
-                   gpu::device& gpu_device, texture_manager& texture_manager)
+material::material(const assets::msh::material& material, gpu::device& device,
+                   copy_command_list_pool& copy_command_list_pool,
+                   texture_manager& texture_manager)
 {
    texture_names.diffuse_map = lowercase_string{material.textures[0]};
    texture_names.normal_map = lowercase_string{material.textures[1]};
@@ -121,81 +122,66 @@ material::material(const assets::msh::material& material,
       specular_color = float3{0.0f};
    }
 
-   init_resources(gpu_device);
+   init_resources(device, copy_command_list_pool);
 }
 
-void material::init_resources(gpu::device& gpu_device)
+void material::init_resources(gpu::device& device,
+                              copy_command_list_pool& copy_command_list_pool)
 {
-   constant_buffer =
-      gpu_device.create_buffer({.size = sizeof(normal_material_constants)},
-                               D3D12_HEAP_TYPE_DEFAULT,
-                               D3D12_RESOURCE_STATE_COPY_DEST);
+   pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
-   std::array resource_view_descriptions{gpu::resource_view_desc{
-      .resource = constant_buffer.resource(),
-
-      .view_desc = gpu::constant_buffer_view{.buffer_location =
-                                                constant_buffer.gpu_virtual_address(),
-                                             .size = constant_buffer.size()}}};
-
-   constant_buffer_view =
-      gpu_device.create_resource_view_set(resource_view_descriptions);
+   constant_buffer = {device.create_buffer({.size = sizeof(normal_material_constants),
+                                            .debug_name =
+                                               "Material Constant Buffer"},
+                                           gpu::heap_type::default_),
+                      device.direct_queue};
+   constant_buffer_view = device.get_gpu_virtual_address(constant_buffer.get());
 
    normal_material_constants constants{
       .flags = make_shader_flags(flags, msh_flags, texture_names.normal_map.empty()),
-      .diffuse_map = textures.diffuse_map->srv_srgb_index,
-      .normal_map = textures.normal_map->srv_index,
+      .diffuse_map = textures.diffuse_map->srv_srgb.index,
+      .normal_map = textures.normal_map->srv.index,
       .specular_color = specular_color};
 
-   auto copy_context = gpu_device.copy_manager.aquire_context();
+   gpu::unique_resource_handle upload_buffer =
+      {device.create_buffer({.size = sizeof(normal_material_constants),
+                             .debug_name = "Material Constant Upload Buffer"},
+                            gpu::heap_type::upload),
+       device.background_copy_queue};
 
-   const gpu::buffer_desc upload_buffer_desc = [&] {
-      gpu::buffer_desc upload_buffer_desc;
-
-      upload_buffer_desc.size = sizeof(normal_material_constants);
-
-      return upload_buffer_desc;
-   }();
-
-   ID3D12Resource& upload_buffer =
-      copy_context.create_upload_resource(upload_buffer_desc);
-
-   std::byte* const upload_buffer_ptr = [&] {
-      const D3D12_RANGE read_range{};
-      void* map_void_ptr = nullptr;
-
-      throw_if_failed(upload_buffer.Map(0, &read_range, &map_void_ptr));
-
-      return static_cast<std::byte*>(map_void_ptr);
-   }();
+   std::byte* const upload_buffer_ptr =
+      static_cast<std::byte*>(device.map(upload_buffer.get(), 0, {}));
 
    std::memcpy(upload_buffer_ptr, &constants, sizeof(constants));
 
-   const D3D12_RANGE write_range{0, sizeof(constants)};
-   upload_buffer.Unmap(0, &write_range);
+   device.unmap(upload_buffer.get(), 0, {0, sizeof(constants)});
 
-   gpu::copy_command_list& command_list = copy_context.command_list();
+   command_list->copy_resource(constant_buffer.get(), upload_buffer.get());
 
-   command_list.copy_resource(*constant_buffer.resource(), upload_buffer);
+   command_list->close();
 
-   gpu_device.copy_manager.close_and_execute(copy_context);
+   device.background_copy_queue.execute_command_lists(command_list.get());
 }
 
 void material::process_updated_textures(gpu::graphics_command_list& command_list,
-                                        const updated_textures& updated)
+                                        const updated_textures& updated,
+                                        gpu::device& device)
 {
    using namespace ranges::views;
 
    bool update = false;
 
+   const gpu_virtual_address constant_buffer_address =
+      device.get_gpu_virtual_address(constant_buffer.get());
+
    if (auto new_texture = updated.find(texture_names.diffuse_map);
        new_texture != updated.end()) {
       textures.diffuse_map = new_texture->second;
 
-      command_list.write_buffer_immediate(constant_buffer.gpu_virtual_address() +
+      command_list.write_buffer_immediate(constant_buffer_address +
                                              offsetof(normal_material_constants,
                                                       diffuse_map),
-                                          textures.diffuse_map->srv_srgb_index);
+                                          textures.diffuse_map->srv_srgb.index);
 
       update = true;
    }
@@ -204,17 +190,17 @@ void material::process_updated_textures(gpu::graphics_command_list& command_list
        new_texture != updated.end()) {
       textures.normal_map = new_texture->second;
 
-      command_list.write_buffer_immediate(constant_buffer.gpu_virtual_address() +
+      command_list.write_buffer_immediate(constant_buffer_address +
                                              offsetof(normal_material_constants, normal_map),
-                                          textures.normal_map->srv_index);
+                                          textures.normal_map->srv.index);
 
       update = true;
    }
 
    if (update) {
       command_list.deferred_resource_barrier(
-         gpu::transition_barrier(*constant_buffer.resource(), D3D12_RESOURCE_STATE_COPY_DEST,
-                                 D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+         gpu::transition_barrier(constant_buffer.get(), gpu::resource_state::copy_dest,
+                                 gpu::resource_state::vertex_and_constant_buffer));
    }
 }
 }

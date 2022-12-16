@@ -18,7 +18,17 @@ namespace we {
 
 void world_edit::update_ui() noexcept
 {
-   ImGui_ImplDX12_NewFrame();
+   static bool init = false;
+
+   if (not std::exchange(init, true)) {
+      unsigned char* pixels = nullptr;
+      int width = 0;
+      int height = 0;
+
+      ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+   }
+
+   // ImGui_ImplDX12_NewFrame();
    ImGui_ImplWin32_NewFrame();
    ImGui::NewFrame();
    ImGui::ShowDemoWindow(nullptr);

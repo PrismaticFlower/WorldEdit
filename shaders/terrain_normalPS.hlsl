@@ -3,10 +3,6 @@
 #include "lights_common.hlsli"
 #include "terrain_common.hlsli"
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0, space0);
-
-Texture2D<float3> diffuse_maps[TERRAIN_MAX_TEXTURES] : register(t0, space1);
-
 float4 main(input_vertex input) : SV_Target0
 {
    const float3 normalWS = get_terrain_normalWS(input.terrain_coords);
@@ -22,11 +18,13 @@ float4 main(input_vertex input) : SV_Target0
       [branch] if (!input.active_textures & (1u << i)) continue;
 
       const float weight =
-         texture_weight_maps.Sample(bilinear_clamp_sampler, float3(input.terrain_coords, i));
+         texture_weight_maps.Sample(sampler_bilinear_clamp, float3(input.terrain_coords, i));
 
       const float2 texcoords = get_terrain_texcoords(i, positionWS);
 
-      diffuse_color += weight * diffuse_maps[i].Sample(trilinear_sampler, texcoords);
+      Texture2D<float3> diffuse_map = ResourceDescriptorHeap[terrain_constants.diffuse_maps_index[i]];
+
+      diffuse_color += weight * diffuse_map.Sample(sampler_anisotropic_wrap, texcoords);
       total_weight += weight;
    }
 

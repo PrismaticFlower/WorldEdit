@@ -1,11 +1,14 @@
 #pragma once
 
 #include "types.hpp"
+#include "utility/enum_bitflags.hpp"
+#include "utility/implementation_storage.hpp"
 
 #include <array>
 #include <concepts>
 #include <cstddef>
 #include <span>
+#include <string_view>
 
 #include <dxgiformat.h>
 
@@ -13,12 +16,24 @@ namespace we::graphics::gpu {
 
 /// Constants ///
 
-constexpr uint32 append_aligned_input_element = 0xffffffffu;
-constexpr uint32 resource_barrier_all_subresources = 0xffffffffu;
+constexpr inline uint32 frame_pipeline_length = 2;
+constexpr inline uint32 max_root_parameters = 6;
+constexpr inline uint32 append_aligned_input_element = 0xffffffffu;
+constexpr inline uint32 resource_barrier_all_subresources = 0xffffffffu;
+constexpr inline uint32 raw_uav_srv_byte_alignment = 16;
+constexpr inline uint32 constant_buffer_data_placement_alignment = 256;
+constexpr inline uint32 texture_data_pitch_alignment = 256;
+constexpr inline uint32 texture_data_placement_alignment = 512;
 
 /// Enums & Typedefs ///
 
 using gpu_virtual_address = uint64;
+
+enum class gpu_preference {
+   unspecified = 0,
+   minimum_power = 1,
+   high_performance = 2
+};
 
 enum class heap_type {
    default_ = 1,
@@ -49,7 +64,12 @@ enum class resource_state {
    predication = 0x200
 };
 
-enum class texture_dimension { t_1d, t_2d, t_3d, t_cube };
+constexpr bool marked_as_enum_bitflag(resource_state) noexcept
+{
+   return true;
+}
+
+enum class texture_dimension { t_1d = 2, t_2d = 3, t_3d = 4 };
 
 enum class uav_dimension {
    buffer = 1,
@@ -88,11 +108,10 @@ enum class root_shader_visibility {
 };
 
 enum class root_parameter_type {
-   constant_buffer_view,
    _32bit_constants,
-   constant_buffer_view_address,
-   shader_resource_view_address,
-   unordered_access_view_address,
+   constant_buffer_view,
+   shader_resource_view,
+   unordered_access_view,
 
    paramters_end
 };
@@ -110,13 +129,15 @@ enum class cull_mode {
    back = 3,  // Clockwise
 };
 
-enum class depth_test_func {
-   equal = 3,
-   not_equal = 6,
+enum class comparison_func {
+   never = 1,
    less = 2,
+   equal = 3,
    less_equal = 4,
    greater = 5,
+   not_equal = 6,
    greater_equal = 7,
+   always = 8
 };
 
 enum class primitive_type {
@@ -134,7 +155,7 @@ enum class primitive_topology {
 
 enum class barrier_split { none, begin, end };
 
-enum class barrier_type { transition = 0, aliasing = 1, uav = 2, uav_any = -1 };
+enum class barrier_type { transition = 0, aliasing = 1, uav = 2 };
 
 enum class filter {
    point = 0,
@@ -143,7 +164,7 @@ enum class filter {
    anisotropic = 0x55,
 
    comparison_point = 0x80,
-   comparison_bilinear_mip = 0x94,
+   comparison_bilinear = 0x94,
    comparison_trilinear = 0x95,
    comparison_anisotropic = 0xd5,
 
@@ -167,13 +188,13 @@ enum class texture_address_mode {
 };
 
 enum class comparison_mode {
-   none = 8,
    equal = 3,
    not_equal = 6,
    less = 2,
    less_equal = 4,
    greater = 5,
    greater_equal = 7,
+   always = 8,
 };
 
 struct memory_range {
@@ -197,38 +218,44 @@ struct box {
    uint32 back;
 };
 
-struct debug_name {
-   debug_name() = default;
+// Internal forward declares.
 
-   debug_name(const char* name) noexcept : name{name} {}
+struct device;
+struct command_queue;
 
-   debug_name(std::nullptr_t) noexcept = delete;
-
-   [[nodiscard]] auto c_str() const noexcept -> const char*
-   {
-      return name;
-   }
-
-private:
-   const char* name = "";
-};
+struct command_queue_init;
+struct command_list_state;
+struct command_queue_state;
+struct swap_chain_state;
+struct device_state;
 
 /// GPU Data Handles ///
 
 enum class resource_handle : std::uintptr_t {};
-enum class cbv_handle : std::uintptr_t {};
+constexpr inline resource_handle null_resource_handle = resource_handle{0};
+
 enum class rtv_handle : std::uintptr_t {};
+constexpr inline auto null_rtv_handle = rtv_handle{0};
+
 enum class dsv_handle : std::uintptr_t {};
-enum class resource_view_handle : std::uint32_t {};
+constexpr inline auto null_dsv_handle = dsv_handle{0};
 
 struct resource_view {
    uint32 index = 0xffffffffu;
+
+   constexpr bool operator==(const resource_view&) const noexcept = default;
 };
 
+constexpr inline auto invalid_resource_view = resource_view{.index = 0xffffffffu};
+
 enum class root_signature_handle : std::uintptr_t {};
+constexpr inline auto null_root_signature_handle = root_signature_handle{0};
+
 enum class pipeline_handle : std::uintptr_t {};
+constexpr inline auto null_pipeline_handle = pipeline_handle{0};
 
 enum class sampler_heap_handle : std::uintptr_t {};
+constexpr inline auto null_sampler_heap_handle = sampler_heap_handle{0};
 
 /// Pipeline Desc Structures ///
 
@@ -252,11 +279,11 @@ struct root_signature_flags {
 };
 
 struct root_signature_desc {
-   std::array<root_parameter, 8> parameters;
+   std::array<root_parameter, max_root_parameters> parameters;
 
    root_signature_flags flags;
 
-   debug_name debug_name;
+   std::string_view debug_name;
 };
 
 struct blend_state_desc {
@@ -275,7 +302,7 @@ struct rasterizer_state_desc {
 
 struct depth_stencil_state_desc {
    bool depth_test_enabled = false;
-   depth_test_func depth_test_func = depth_test_func::less;
+   comparison_func depth_test_func = comparison_func::less_equal;
    bool write_depth = true;
 };
 
@@ -295,7 +322,7 @@ struct graphics_pipeline_desc {
 
    blend_state_desc blend_state{};
    rasterizer_state_desc rasterizer_state{};
-   depth_stencil_state_desc depth_test_state{};
+   depth_stencil_state_desc depth_stencil_state{};
    std::span<const input_element_desc> input_layout;
    primitive_type primitive_type = primitive_type::triangle;
 
@@ -305,17 +332,21 @@ struct graphics_pipeline_desc {
 
    uint32 sample_count = 1;
 
-   debug_name debug_name;
+   std::string_view debug_name;
 };
 
 struct compute_pipeline_desc {
    root_signature_handle root_signature;
-   std::span<std::byte> cs_bytecode;
+   std::span<const std::byte> cs_bytecode;
 
-   debug_name debug_name;
+   std::string_view debug_name;
 };
 
 /// Resource Desc Structures ///
+
+struct buffer_flags {
+   bool allow_unordered_access : 1 = false;
+};
 
 struct texture_flags {
    bool allow_render_target : 1 = false;
@@ -338,10 +369,10 @@ struct texture_clear_value {
 };
 
 struct buffer_desc {
-   uint32 alignment = 0;
    uint64 size = 0;
+   buffer_flags flags{};
 
-   debug_name debug_name;
+   std::string_view debug_name;
 };
 
 struct texture_desc {
@@ -358,15 +389,10 @@ struct texture_desc {
 
    texture_clear_value optimized_clear_value = {.format = DXGI_FORMAT_UNKNOWN};
 
-   debug_name debug_name;
+   std::string_view debug_name;
 };
 
 /// Resource View Desc Structures ///
-
-struct constant_buffer_view_desc {
-   gpu_virtual_address location = 0;
-   uint64 size = 0;
-};
 
 struct shader_resource_view_desc {
    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
@@ -375,8 +401,16 @@ struct shader_resource_view_desc {
       uint32 first_element = 0;
       uint32 number_elements = 0;
       uint32 structure_byte_stride = 0;
-      bool raw_buffer = true;
+      bool raw_buffer = false;
    } buffer;
+
+   struct {
+      bool texture_cube_view = false;
+   } texture2d;
+
+   struct {
+      bool texture_cube_view = false;
+   } texture2d_array;
 };
 
 struct unordered_access_view_desc {
@@ -390,7 +424,8 @@ struct unordered_access_view_desc {
          uint32 structure_byte_stride = 0;
          bool raw_buffer = true;
 
-         const resource_handle* const counter_resource = nullptr;
+         /// @brief The resource handle for a counter for the UAV. Maybe null.
+         resource_handle counter_resource = null_resource_handle;
          uint64 counter_offset_in_bytes = 0;
       } buffer = {};
 
@@ -406,14 +441,12 @@ struct unordered_access_view_desc {
 
       struct texture2d_uav {
          uint32 mip_slice = 0;
-         uint32 plane_slice = 0;
       } texture2d;
 
       struct texture2d_array_uav {
          uint32 mip_slice = 0;
          uint32 first_array_slice = 0;
          uint32 array_size = 0;
-         uint32 plane_slice = 0;
       } texture2d_array;
 
       struct texture3d_uav {
@@ -450,11 +483,9 @@ struct render_target_view_desc {
       } texture2d_array;
 
       struct texture2d_ms_rtv {
-         uint32 mip_slice = 0;
       } texture2d_ms;
 
       struct texture2d_ms_array_rtv {
-         uint32 mip_slice = 0;
          uint32 first_array_slice = 0;
          uint32 array_size = 0;
       } texture2d_ms_array;
@@ -507,14 +538,18 @@ struct depth_stencil_view_desc {
 /// Sampler Desc Structures ///
 
 struct sampler_desc {
-   filter filter;
-   texture_address_mode address_u = texture_address_mode::wrap;
-   texture_address_mode address_v = texture_address_mode::wrap;
-   texture_address_mode address_w = texture_address_mode::wrap;
+   filter filter = filter::point;
+
+   union {
+      texture_address_mode address, address_u = texture_address_mode::wrap;
+   };
+
+   texture_address_mode address_v = address;
+   texture_address_mode address_w = address;
    float mip_lod_bias = 0.0f;
    uint32 max_anisotropy = 1;
-   comparison_mode comparison = comparison_mode::none;
-   float4 BorderColor = {0.0f, 0.0f, 0.0f, 0.0f};
+   comparison_func comparison = comparison_func::never;
+   float4 border_color = {0.0f, 0.0f, 0.0f, 0.0f};
 };
 
 /// Swapchain Desc Structure ///
@@ -563,8 +598,6 @@ struct resource_uav_barrier {
    resource_handle resource;
 };
 
-struct resource_uav_any_barrier {};
-
 struct resource_barrier {
    barrier_type type = barrier_type::transition;
    barrier_split split = barrier_split::none; /// See Split Barriers in D3D12 docs
@@ -573,11 +606,22 @@ struct resource_barrier {
       resource_transition_barrier transition = {};
       resource_aliasing_barrier aliasing;
       resource_uav_barrier uav;
-      resource_uav_any_barrier uav_any;
    };
 };
 
 /// Command List Structures and Definitions ///
+
+struct command_list_desc {
+   /// @brief Command allocators will be assigned to command lists based off
+   /// this name.
+   ///
+   /// Multiple command lists can share the same name. However they should only
+   /// share the same name if their workload is roughly the same size to avoid
+   /// wasting memory.
+   std::string_view allocator_name = "";
+
+   std::string_view debug_name = "";
+};
 
 struct texture_copy_buffer_footprint {
    uint64 offset = 0;
@@ -605,8 +649,8 @@ struct viewport {
    float top_left_y;
    float width;
    float height;
-   float min_depth;
-   float max_depth;
+   float min_depth = 0.0f;
+   float max_depth = 1.0f;
 };
 
 struct depth_stencil_clear_flags {
@@ -614,12 +658,40 @@ struct depth_stencil_clear_flags {
    bool clear_stencil : 1 = true;
 };
 
+/// Command List Definitions ///
+
 struct command_list {
    void close();
 
    void reset();
 
+   /// @brief Reset the command list and bind the supplied sampler heap.
+   /// @param sampler_heap This will be set on the command list as part of it being reset.
+   void reset(sampler_heap_handle sampler_heap);
+
    void clear_state();
+
+   /// Constructors/Destructor ///
+
+   command_list();
+
+   ~command_list();
+
+   command_list(command_list&& other) noexcept;
+
+   auto operator=(command_list&& other) noexcept -> command_list&;
+
+   command_list(const command_list& other) noexcept = delete;
+
+   auto operator=(const command_list& other) noexcept -> command_list& = delete;
+
+protected:
+   void reset_common();
+
+   friend device;
+   friend command_queue;
+
+   implementation_storage<command_list_state, 120> state;
 };
 
 struct copy_command_list : command_list {
@@ -659,10 +731,6 @@ struct copy_command_list : command_list {
 };
 
 struct compute_command_list : copy_command_list {
-   /// @brief Reset the command list and bind the supplied sampler heap.
-   /// @param sampler_heap This will be set on the command list as part of it being reset.
-   void reset(sampler_heap_handle sampler_heap);
-
    void dispatch(const uint32 thread_group_count_x, const uint32 thread_group_count_y,
                  const uint32 thread_group_count_z);
 
@@ -670,33 +738,25 @@ struct compute_command_list : copy_command_list {
 
    void set_compute_root_signature(const root_signature_handle root_signature);
 
-   void set_compute_root_cbv(const uint32 root_parameter_index, cbv_handle cbv);
+   void set_compute_32bit_constant(const uint32 parameter_index, const uint32 constant,
+                                   const uint32 dest_offset_in_32bit_values);
 
-   void set_compute_root_32bit_constant(const uint32 root_parameter_index,
-                                        const uint32 constant,
-                                        const uint32 dest_offset_in_32bit_values);
+   void set_compute_32bit_constants(const uint32 parameter_index,
+                                    const std::span<const std::byte> constants,
+                                    const uint32 dest_offset_in_32bit_values);
 
-   void set_compute_root_32bit_constants(const uint32 root_parameter_index,
-                                         const std::span<const std::byte> constants,
-                                         const uint32 dest_offset_in_32bit_values);
+   void set_compute_cbv(const uint32 parameter_index,
+                        const gpu_virtual_address buffer_location);
 
-   void set_compute_root_cbv_address(const uint32 root_parameter_index,
-                                     const gpu_virtual_address buffer_location);
+   void set_compute_srv(const uint32 parameter_index,
+                        const gpu_virtual_address buffer_location);
 
-   void set_compute_root_srv_address(const uint32 root_parameter_index,
-                                     const gpu_virtual_address buffer_location);
-
-   void set_compute_root_uav_address(const uint32 root_parameter_index,
-                                     const gpu_virtual_address buffer_location);
-
-   void clear_uav_uint(const resource_view_handle uav_handle, resource_handle resource,
-                       const std::array<const uint32, 4>& values,
-                       const rect* const rect = nullptr);
-
-   void clear_uav_float(const resource_view_handle uav_handle, resource_handle resource,
-                        const float4& values, const rect* const rect = nullptr);
+   void set_compute_uav(const uint32 parameter_index,
+                        const gpu_virtual_address buffer_location);
 
    void discard_resource(const resource_handle resource);
+
+   friend device;
 };
 
 struct graphics_command_list : compute_command_list {
@@ -710,30 +770,27 @@ struct graphics_command_list : compute_command_list {
                                const int32 base_vertex_location,
                                const uint32 start_instance_location);
 
-   void resolve_subresource(resource_handle& dst_resource,
-                            const uint32 dst_subresource, resource_handle& src_resource,
+   void resolve_subresource(resource_handle dst_resource,
+                            const uint32 dst_subresource, resource_handle src_resource,
                             const uint32 src_subresource, const DXGI_FORMAT format);
 
    void set_graphics_root_signature(const root_signature_handle root_signature);
 
-   void set_graphics_root_cbv(const uint32 root_parameter_index, cbv_handle cbv);
+   void set_graphics_32bit_constant(const uint32 parameter_index, const uint32 constant,
+                                    const uint32 dest_offset_in_32bit_values);
 
-   void set_graphics_root_32bit_constant(const uint32 root_parameter_index,
-                                         const uint32 constant,
-                                         const uint32 dest_offset_in_32bit_values);
+   void set_graphics_32bit_constants(const uint32 parameter_index,
+                                     const std::span<const std::byte> constants,
+                                     const uint32 dest_offset_in_32bit_values);
 
-   void set_graphics_root_32bit_constants(const uint32 root_parameter_index,
-                                          const std::span<const std::byte> constants,
-                                          const uint32 dest_offset_in_32bit_values);
+   void set_graphics_cbv(const uint32 parameter_index,
+                         const gpu_virtual_address buffer_location);
 
-   void set_graphics_root_cbv_address(const uint32 root_parameter_index,
-                                      const gpu_virtual_address buffer_location);
+   void set_graphics_srv(const uint32 parameter_index,
+                         const gpu_virtual_address buffer_location);
 
-   void set_graphics_root_srv_address(const uint32 root_parameter_index,
-                                      const gpu_virtual_address buffer_location);
-
-   void set_graphics_root_uav_address(const uint32 root_parameter_index,
-                                      const gpu_virtual_address buffer_location);
+   void set_graphics_uav(const uint32 parameter_index,
+                         const gpu_virtual_address buffer_location);
 
    void ia_set_primitive_topology(const primitive_topology primitive_topology);
 
@@ -754,8 +811,6 @@ struct graphics_command_list : compute_command_list {
 
    void om_set_blend_factor(const float4& blend_factor);
 
-   void om_set_stencil_ref(const uint32 stencil_ref);
-
    void om_set_render_targets(const std::span<const rtv_handle> render_targets);
 
    void om_set_render_targets(const std::span<const rtv_handle> render_targets,
@@ -766,6 +821,8 @@ struct graphics_command_list : compute_command_list {
    void om_set_render_targets(const rtv_handle render_target,
                               const dsv_handle depth_stencil);
 
+   void om_set_render_targets(const dsv_handle depth_stencil);
+
    void clear_depth_stencil_view(const dsv_handle depth_stencil,
                                  const depth_stencil_clear_flags flags,
                                  const float depth, const uint8 stencil,
@@ -773,6 +830,8 @@ struct graphics_command_list : compute_command_list {
 
    void clear_render_target_view(const rtv_handle rendertarget, const float4& color,
                                  const rect* const rect = nullptr);
+
+   friend device;
 };
 
 /// Command Queue Definitions ///
@@ -783,21 +842,54 @@ struct command_queue {
    /// @param command_lists The command lists to execute.
    void execute_command_lists(std::derived_from<command_list> auto&... command_lists)
    {
-      std::array command_lists_array{static_cast<command_list&>(command_lists)...};
+      std::array command_lists_array{static_cast<command_list*>(&command_lists)...};
 
       execute_command_lists(command_lists_array);
    }
 
    /// @brief Submits command lists for execution to the queue.
    /// @param command_lists The command lists to execute.
-   void execute_command_lists(std::span<command_list&> command_lists);
+   void execute_command_lists(std::span<command_list*> command_lists);
 
    /// @brief Insert a fence on this queue to synchronize with another queue.
    /// @param other The queue to synchronize with.
    void sync_with(command_queue& other);
 
-   // @brief Wait for all currently submited work to this queue to finish before returning.
+   /// @brief Wait for all currently submited work to this queue to finish before returning.
    void wait_for_idle();
+
+   void release_root_signature(root_signature_handle root_signature);
+
+   void release_pipeline(pipeline_handle pipeline);
+
+   void release_resource(resource_handle resource);
+
+   void release_resource_view(resource_view resource_view);
+
+   void release_render_target_view(rtv_handle render_target_view);
+
+   void release_depth_stencil_view(dsv_handle depth_stencil_view);
+
+   void release_sampler_heap(sampler_heap_handle sampler_heap);
+
+private:
+   friend device;
+
+   command_queue();
+
+   explicit command_queue(const command_queue_init& init);
+
+   ~command_queue();
+
+   command_queue(const command_queue& other) noexcept = delete;
+
+   auto operator=(const command_queue& other) noexcept -> command_queue& = delete;
+
+   command_queue(command_queue&& other) noexcept = delete;
+
+   auto operator=(command_queue&& other) noexcept -> command_queue& = delete;
+
+   implementation_storage<command_queue_state, 112> state;
 };
 
 /// Swapchain Definitions ///
@@ -811,7 +903,7 @@ struct swap_chain {
    /// @brief Wait for the swap chain to be ready for rendering. Or does nothing if swap_chain_desc::frame_latency_waitable is false.
    void wait_for_ready();
 
-   /// @brief Wait for the swap chain to be ready for rendering. Or does nothing if swap_chain_desc::frame_latency_waitable is false.
+   /// @brief Present the frame.
    /// @param allow_tearing Allow tearing/disable V-Sync.
    void present(bool allow_tearing);
 
@@ -829,27 +921,73 @@ struct swap_chain {
 
    /// @brief Gets the current height of the back buffer.
    auto height() -> uint32;
+
+   /// Constructors/Destructor ///
+
+   swap_chain();
+
+   ~swap_chain();
+
+   swap_chain(swap_chain&& other) noexcept;
+
+   auto operator=(swap_chain&& other) noexcept -> swap_chain&;
+
+   swap_chain(const swap_chain& other) noexcept = delete;
+
+   auto operator=(const swap_chain& other) noexcept -> swap_chain& = delete;
+
+private:
+   friend device;
+
+   implementation_storage<swap_chain_state, 144> state;
+};
+
+/// Device Structures ///
+
+struct device_desc {
+   /// @brief The preferred type of GPU to select.
+   gpu_preference gpu_preference = gpu_preference::unspecified;
+
+   /// @brief Enable D3D12 debug layer.
+   bool enable_debug_layer = false;
+
+   /// @brief Enable GPU based validation from the D3D12 debug layer.
+   bool enable_gpu_based_validation = false;
+
+   /// @brief Enable state tracking when GPU based validation is enabled.
+   bool enable_gpu_based_validation_state_tracking = false;
 };
 
 /// Device Definitions ///
 
 struct device {
+private:
+   implementation_storage<device_state, 440> state;
+
+public:
    command_queue direct_queue;
    command_queue compute_queue;
    command_queue background_copy_queue;
+
+   /// @brief Return the index to use for buffered resources (exluding swap chains) this frame.
+   /// @return The index in the range [0, frame_pipeline_length - 1].
+   auto frame_index() -> uint64;
+
+   /// @brief Perform necessary end-of-frame tasks and synchronization.
+   void end_frame();
 
    /// @brief Wait for all currently submited work to the command queues to finish before returning
    void wait_for_idle();
 
    /// Command List Functions ///
 
-   [[nodiscard]] auto create_copy_command_list(const debug_name debug_name = "")
+   [[nodiscard]] auto create_copy_command_list(const command_list_desc& desc)
       -> copy_command_list;
 
-   [[nodiscard]] auto create_compute_command_list(const debug_name debug_name = "")
+   [[nodiscard]] auto create_compute_command_list(const command_list_desc& desc)
       -> compute_command_list;
 
-   [[nodiscard]] auto create_graphics_command_list(const debug_name debug_name = "")
+   [[nodiscard]] auto create_graphics_command_list(const command_list_desc& desc)
       -> graphics_command_list;
 
    /// Pipeline Functions ///
@@ -857,71 +995,77 @@ struct device {
    [[nodiscard]] auto create_root_signature(const root_signature_desc& desc)
       -> root_signature_handle;
 
-   void release_root_signature(root_signature_handle root_signature);
+   [[nodiscard]] auto create_graphics_pipeline(const graphics_pipeline_desc& desc)
+      -> pipeline_handle;
 
-   [[nodiscard]] auto create_graphics_pipeline(const root_signature_desc& desc)
-      -> root_signature_handle;
-
-   void release_pipeline(pipeline_handle pipeline);
+   [[nodiscard]] auto create_compute_pipeline(const compute_pipeline_desc& desc)
+      -> pipeline_handle;
 
    /// Resource Functions ///
 
-   [[nodiscard]] auto create_buffer(const buffer_desc& desc, const heap_type heap_type,
-                                    const resource_state initial_resource_state)
-      -> resource_handle;
+   [[nodiscard]] auto create_buffer(const buffer_desc& desc,
+                                    const heap_type heap_type) -> resource_handle;
 
    [[nodiscard]] auto create_texture(const texture_desc& desc,
                                      const resource_state initial_resource_state)
       -> resource_handle;
 
-   void release_resource(resource_handle resource);
-
    [[nodiscard]] auto get_gpu_virtual_address(resource_handle resource)
       -> gpu_virtual_address;
 
-   [[nodiscard]] auto map(resource_handle resource, memory_range read_range) -> void*;
+   [[nodiscard]] auto map(resource_handle resource, uint32 subresource,
+                          memory_range read_range) -> void*;
 
-   void unmap(resource_handle resource, memory_range write_range);
+   void unmap(resource_handle resource, uint32 subresource, memory_range write_range);
 
    /// Resource View Functions ///
 
-   [[nodiscard]] auto create_constant_buffer_view(const constant_buffer_view_desc& desc)
-      -> cbv_handle;
+   [[nodiscard]] auto create_shader_resource_view(resource_handle resource,
+                                                  const shader_resource_view_desc& desc)
+      -> resource_view;
 
-   void release_constant_buffer_view(cbv_handle view);
-
-   [[nodiscard]] auto create_shader_resource_view(
-      resource_handle resource,
-      const shader_resource_view_desc* const desc = nullptr) -> resource_view;
-
-   [[nodiscard]] auto create_unordered_access_view(
-      resource_handle resource,
-      const unordered_access_view_desc* const desc = nullptr) -> resource_view;
-
-   void release_resource_view(resource_view resource_view);
+   [[nodiscard]] auto create_unordered_access_view(resource_handle resource,
+                                                   const unordered_access_view_desc& desc)
+      -> resource_view;
 
    [[nodiscard]] auto create_render_target_view(resource_handle resource,
                                                 const render_target_view_desc& desc)
       -> rtv_handle;
 
-   void release_render_target_view(rtv_handle render_target_view);
-
    [[nodiscard]] auto create_depth_stencil_view(resource_handle resource,
                                                 const depth_stencil_view_desc& desc)
       -> dsv_handle;
-
-   void release_depth_stencil_view(dsv_handle depth_stencil_view);
 
    /// Sampler Functions ///
 
    [[nodiscard]] auto create_sampler_heap(std::span<const sampler_desc> sampler_descs)
       -> sampler_heap_handle;
 
-   void release_sampler_heap(sampler_heap_handle sampler_heap);
-
    /// Swapchain Functions ///
 
    [[nodiscard]] auto create_swap_chain(const swap_chain_desc& desc) -> swap_chain;
+
+   /// Constructors/Destructor ///
+
+   device(const device_desc& desc);
+
+   ~device();
+
+   device(const device& other) noexcept = delete;
+
+   auto operator=(const device& other) noexcept -> device& = delete;
+
+   device(device&& other) noexcept = delete;
+
+   auto operator=(device&& other) noexcept -> device& = delete;
 };
+
+}
+
+namespace we::graphics {
+
+// No one wants to read gpu::gpu_virtual_address
+
+using gpu::gpu_virtual_address;
 
 }

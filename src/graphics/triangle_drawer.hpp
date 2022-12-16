@@ -1,8 +1,7 @@
 #pragma once
 
-#include "gpu/command_list.hpp"
-#include "gpu/device.hpp"
-#include "gpu/dynamic_buffer_allocator.hpp"
+#include "dynamic_buffer_allocator.hpp"
+#include "gpu/rhi.hpp"
 #include "types.hpp"
 
 namespace we::graphics {
@@ -15,7 +14,7 @@ public:
    /// @param buffer_allocator The allocator to use for allocating space for the triangles.
    /// @param max_buffered_triangles The max number of triangles that can be buffered before automatically calling submit.
    triangle_drawer(gpu::graphics_command_list& command_list,
-                   gpu::dynamic_buffer_allocator& buffer_allocator,
+                   dynamic_buffer_allocator& buffer_allocator,
                    const uint32 max_buffered_triangles);
 
    /// @brief Add a triangle.
@@ -29,10 +28,10 @@ public:
 
 private:
    gpu::graphics_command_list& _command_list;
-   gpu::dynamic_buffer_allocator& _buffer_allocator;
+   dynamic_buffer_allocator& _buffer_allocator;
    const uint32 _max_buffered_triangles = 0;
 
-   gpu::dynamic_buffer_allocator::allocation _current_allocation;
+   dynamic_buffer_allocator::allocation _current_allocation;
    uint32 _batch_vertices = 0;
    uint32 _batch_offset = 0;
    uint32 _buffered_triangles = 0;

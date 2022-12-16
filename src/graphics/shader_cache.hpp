@@ -10,7 +10,7 @@
 namespace we::graphics {
 
 struct shader_cache_entry {
-   utility::com_ptr<ID3DBlob> bytecode;
+   std::vector<std::byte> bytecode;
    std::filesystem::file_time_type::duration file_last_write;
    std::vector<shader_dependency> dependencies;
 };

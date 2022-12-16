@@ -3,14 +3,12 @@
 #include "assets/asset_libraries.hpp"
 #include "async/thread_pool.hpp"
 #include "camera.hpp"
+#include "copy_command_list_pool.hpp"
+#include "dynamic_buffer_allocator.hpp"
 #include "frustrum.hpp"
 #include "geometric_shapes.hpp"
-#include "gpu/barrier_helpers.hpp"
-#include "gpu/buffer.hpp"
-#include "gpu/command_list.hpp"
-#include "gpu/depth_stencil_texture.hpp"
-#include "gpu/device.hpp"
-#include "gpu/dynamic_buffer_allocator.hpp"
+#include "gpu/barrier.hpp"
+#include "gpu/rhi.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "light_clusters.hpp"
@@ -19,6 +17,7 @@
 #include "output_stream.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
+#include "sampler_list.hpp"
 #include "settings/graphics.hpp"
 #include "shader_library.hpp"
 #include "shader_list.hpp"
@@ -30,13 +29,9 @@
 #include "world/world.hpp"
 #include "world/world_utilities.hpp"
 
-#include <d3dx12.h>
-
 #include <range/v3/view.hpp>
 
 namespace we::graphics {
-
-using namespace gpu::literals;
 
 namespace {
 
@@ -125,7 +120,8 @@ struct renderer_config {
 
 class renderer_impl {
 public:
-   renderer_impl(const HWND window, std::shared_ptr<settings::graphics> settings,
+   renderer_impl(const renderer::window_handle window,
+                 std::shared_ptr<settings::graphics> settings,
                  std::shared_ptr<async::thread_pool> thread_pool,
                  assets::libraries_manager& asset_libraries,
                  output_stream& error_output);
@@ -146,18 +142,18 @@ public:
    {
       _device.wait_for_idle();
       _shaders.reload(shader_list);
-      _pipelines.reload(*_device.device_d3d, _shaders, _root_signatures);
+      _pipelines.reload(_device, _shaders, _root_signatures);
    }
 
 private:
    struct render_list_item {
       float distance;
-      ID3D12PipelineState* pipeline;
-      ID3D12PipelineState* depth_prepass_pipeline;
-      D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-      std::array<D3D12_VERTEX_BUFFER_VIEW, 2> vertex_buffer_views;
-      gpu::virtual_address object_constants_address;
-      gpu::descriptor_range material_descriptor_range;
+      gpu::pipeline_handle pipeline;
+      gpu::pipeline_handle depth_prepass_pipeline;
+      gpu::index_buffer_view index_buffer_view;
+      std::array<gpu::vertex_buffer_view, 2> vertex_buffer_views;
+      gpu_virtual_address object_constants_address;
+      gpu_virtual_address material_cbv;
       uint32 index_count;
       uint32 start_index;
       uint32 start_vertex;
@@ -195,57 +191,70 @@ private:
 
    void update_textures(gpu::graphics_command_list& command_list);
 
-   auto create_raytacing_blas(gpu::graphics_command_list& command_list,
-                              const model& model, const mesh_part& part) -> gpu::buffer;
-
-   const HWND _window;
-
    bool _terrain_dirty = true; // ughhhh, this feels so ugly
 
    std::shared_ptr<async::thread_pool> _thread_pool;
    output_stream& _error_output;
 
-   gpu::device _device{_window};
-   gpu::graphics_command_list _world_command_list =
-      _device.create_graphics_command_list("World Command List");
+   gpu::device _device{gpu::device_desc{.enable_debug_layer = true}};
+   gpu::swap_chain _swap_chain;
+   gpu::graphics_command_list _world_command_list = _device.create_graphics_command_list(
+      {.allocator_name = "World Allocator", .debug_name = "World Command List"});
 
-   gpu::dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
+   dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
+   copy_command_list_pool _copy_command_list_pool{_device};
 
-   gpu::buffer _camera_constant_buffer =
-      _device.create_buffer({.size = math::align_up((uint32)sizeof(float4x4), 256)},
-                            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
-   gpu::descriptor_allocation _camera_constant_buffer_view =
-      _device.allocate_descriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
+   gpu::unique_resource_handle _camera_constant_buffer =
+      {_device.create_buffer({.size = sizeof(frame_constant_buffer),
+                              .debug_name = "Frame Constant Buffer"},
+                             gpu::heap_type::default_),
+       _device.direct_queue};
+   gpu_virtual_address _camera_constant_buffer_view =
+      _device.get_gpu_virtual_address(_camera_constant_buffer.get());
 
-   gpu::depth_stencil_texture _depth_stencil_texture{
-      _device,
-      {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-       .width = _device.swap_chain.width(),
-       .height = _device.swap_chain.height(),
-       .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                 .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
-      D3D12_RESOURCE_STATE_DEPTH_WRITE};
+   gpu::unique_resource_handle _depth_stencil_texture =
+      {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                               .flags = {.allow_depth_stencil = true},
+                               .format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                               .width = _swap_chain.width(),
+                               .height = _swap_chain.height(),
+                               .optimized_clear_value =
+                                  {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                   .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
+                              gpu::resource_state::depth_write),
+       _device.direct_queue};
+   gpu::unique_dsv_handle _depth_stencil_view =
+      {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
+                                         {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                          .dimension = gpu::dsv_dimension::texture2d}),
+       _device.direct_queue};
+
+   gpu::unique_sampler_heap_handle _sampler_heap = {_device.create_sampler_heap(
+                                                       sampler_descriptions()),
+                                                    _device.direct_queue};
 
    shader_library _shaders{shader_list, _thread_pool};
    root_signature_library _root_signatures{_device};
-   pipeline_library _pipelines{*_device.device_d3d, _shaders, _root_signatures};
+   pipeline_library _pipelines{_device, _shaders, _root_signatures};
 
    texture_manager _texture_manager;
    model_manager _model_manager;
-   geometric_shapes _geometric_shapes{_device};
-   light_clusters _light_clusters{_device, _device.swap_chain.width(),
-                                  _device.swap_chain.height()};
+   geometric_shapes _geometric_shapes{_device, _copy_command_list_pool};
+   light_clusters _light_clusters{_device, _copy_command_list_pool,
+                                  _swap_chain.width(), _swap_chain.height()};
    terrain _terrain{_device, _texture_manager};
 
    constexpr static std::size_t max_drawn_objects = 2048;
    constexpr static std::size_t objects_constants_buffer_size =
       max_drawn_objects * sizeof(world_mesh_constants);
 
-   std::array<gpu::buffer, gpu::render_latency> _object_constants_upload_buffers;
-   std::array<std::byte*, gpu::render_latency> _object_constants_upload_cpu_ptrs;
-   gpu::buffer _object_constants_buffer =
-      _device.create_buffer({.size = objects_constants_buffer_size},
-                            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+   std::array<gpu::unique_resource_handle, gpu::frame_pipeline_length> _object_constants_upload_buffers;
+   std::array<std::byte*, gpu::frame_pipeline_length> _object_constants_upload_cpu_ptrs;
+   gpu::unique_resource_handle _object_constants_buffer =
+      {_device.create_buffer({.size = objects_constants_buffer_size,
+                              .debug_name = "Object Constant Buffers"},
+                             gpu::heap_type::default_),
+       _device.direct_queue};
 
    world_mesh_list _world_mesh_list;
    std::vector<render_list_item> _opaque_object_render_list;
@@ -255,53 +264,50 @@ private:
    std::shared_ptr<settings::graphics> _settings;
 };
 
-renderer_impl::renderer_impl(const HWND window,
+renderer_impl::renderer_impl(const renderer::window_handle window,
                              std::shared_ptr<settings::graphics> settings,
                              std::shared_ptr<async::thread_pool> thread_pool,
                              assets::libraries_manager& asset_libraries,
                              output_stream& error_output)
-   : _window{window},
+   : _thread_pool{thread_pool},
      _error_output{error_output},
-     _thread_pool{thread_pool},
-     _device{window},
-     _texture_manager{_device, thread_pool, asset_libraries.textures},
-     _model_manager{_device, _texture_manager, asset_libraries.models,
-                    thread_pool, _error_output},
+     _swap_chain{_device.create_swap_chain({.window = window})},
+     _texture_manager{_device, _copy_command_list_pool, thread_pool,
+                      asset_libraries.textures},
+     _model_manager{_device,          _copy_command_list_pool,
+                    _texture_manager, asset_libraries.models,
+                    thread_pool,      _error_output},
      _settings{settings}
 {
-   auto imgui_font_descriptor =
-      _device.descriptor_heap_srv_cbv_uav.allocate_static(1);
-
-   ImGui_ImplDX12_Init(_device.device_d3d.get(), gpu::render_latency,
-                       gpu::swap_chain::format_rtv,
-                       &_device.descriptor_heap_srv_cbv_uav.get(),
-                       imgui_font_descriptor.start().cpu,
-                       imgui_font_descriptor.start().gpu);
-
-   _device.create_constant_buffer_view({.buffer_location =
-                                           _camera_constant_buffer.gpu_virtual_address(),
-                                        .size = _camera_constant_buffer.size()},
-                                       _camera_constant_buffer_view[0]);
+   // auto imgui_font_descriptor =
+   //    _device.descriptor_heap_srv_cbv_uav.allocate_static(1);
+   //
+   // ImGui_ImplDX12_Init(_device.device_d3d.get(), gpu::render_latency,
+   //                     gpu::swap_chain::format_rtv,
+   //                     &_device.descriptor_heap_srv_cbv_uav.get(),
+   //                     imgui_font_descriptor.start().cpu,
+   //                     imgui_font_descriptor.start().gpu);
 
    // create object constants upload buffers
    for (auto [buffer, cpu_ptr] :
         ranges::views::zip(_object_constants_upload_buffers,
                            _object_constants_upload_cpu_ptrs)) {
-      buffer = _device.create_buffer({.size = objects_constants_buffer_size},
-                                     D3D12_HEAP_TYPE_UPLOAD,
-                                     D3D12_RESOURCE_STATE_GENERIC_READ);
+      buffer = {_device.create_buffer({.size = objects_constants_buffer_size,
+                                       .debug_name =
+                                          "Object Constant Upload Buffers"},
+                                      gpu::heap_type::upload),
+                _device.direct_queue};
 
-      const D3D12_RANGE read_range{0, 0};
-      void* mapped_ptr = nullptr;
-      buffer.view_resource()->Map(0, &read_range, &mapped_ptr);
-
-      cpu_ptr = static_cast<std::byte*>(mapped_ptr);
+      cpu_ptr = static_cast<std::byte*>(_device.map(buffer.get(), 0, {}));
    }
+
+   // Sync with background uploads being done to initialize resources.
+   _device.direct_queue.sync_with(_device.background_copy_queue);
 }
 
 void renderer_impl::wait_for_swap_chain_ready() noexcept
 {
-   _device.swap_chain.wait_for_ready();
+   _swap_chain.wait_for_ready();
 }
 
 void renderer_impl::draw_frame(
@@ -311,26 +317,13 @@ void renderer_impl::draw_frame(
    const world::active_layers active_layers,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
 {
-   auto& swap_chain = _device.swap_chain;
-
-   _device.copy_manager.enqueue_fence_wait_if_needed(_device.command_queue);
-
    const frustrum view_frustrum{camera.inv_view_projection_matrix()};
 
-   gpu::command_allocator_scoped command_allocator{_device.command_allocator_factory,
-                                                   D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                   "World Command Allocator"_id,
-                                                   _device.fence,
-                                                   _device.fence_value + 1};
-
    auto& command_list = _world_command_list;
-   auto [back_buffer, back_buffer_rtv] = swap_chain.current_back_buffer();
-   auto depth_stencil_view = _depth_stencil_texture.depth_stencil_view[0].cpu;
+   auto [back_buffer, back_buffer_rtv] = _swap_chain.current_back_buffer();
 
-   command_list.reset(command_allocator, _dynamic_buffer_allocator, nullptr);
-   _dynamic_buffer_allocator.reset(_device.frame_index);
-
-   command_list.set_descriptor_heaps(_device.descriptor_heap_srv_cbv_uav.get());
+   command_list.reset(_sampler_heap.get());
+   _dynamic_buffer_allocator.reset(_device.frame_index());
 
    if (std::exchange(_terrain_dirty, false)) {
       _terrain.init(world.terrain, command_list, _dynamic_buffer_allocator);
@@ -351,23 +344,21 @@ void renderer_impl::draw_frame(
                                  _pipelines, command_list, _dynamic_buffer_allocator);
 
    command_list.deferred_resource_barrier(
-      gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_PRESENT,
-                              D3D12_RESOURCE_STATE_RENDER_TARGET));
+      gpu::transition_barrier(back_buffer, gpu::resource_state::present,
+                              gpu::resource_state::render_target));
    command_list.flush_resource_barriers();
 
    command_list.clear_render_target_view(back_buffer_rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
-   command_list.clear_depth_stencil_view(depth_stencil_view,
-                                         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0x0);
+   command_list.clear_depth_stencil_view(_depth_stencil_view.get(),
+                                         {.clear_depth = true}, 1.0f, 0x0);
 
    command_list.rs_set_viewports(
-      {.Width = static_cast<float>(_device.swap_chain.width()),
-       .Height = static_cast<float>(_device.swap_chain.height()),
-       .MaxDepth = 1.0f});
+      gpu::viewport{.width = static_cast<float>(_swap_chain.width()),
+                    .height = static_cast<float>(_swap_chain.height())});
    command_list.rs_set_scissor_rects(
-      {.right = static_cast<LONG>(_device.swap_chain.width()),
-       .bottom = static_cast<LONG>(_device.swap_chain.height())});
-   command_list.om_set_render_targets(back_buffer_rtv, depth_stencil_view);
+      {.right = _swap_chain.width(), .bottom = _swap_chain.height()});
+   command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
 
    // Render World
    if (active_entity_types.objects) draw_world(view_frustrum, command_list);
@@ -381,18 +372,18 @@ void renderer_impl::draw_frame(
 
    // Render ImGui
    ImGui::Render();
-   ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command_list.get_underlying());
+   // ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command_list.get_underlying());
 
    command_list.deferred_resource_barrier(
-      gpu::transition_barrier(back_buffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
-                              D3D12_RESOURCE_STATE_PRESENT));
+      gpu::transition_barrier(back_buffer, gpu::resource_state::render_target,
+                              gpu::resource_state::present));
    command_list.flush_resource_barriers();
 
    command_list.close();
 
-   _device.command_queue.execute_command_lists(command_list);
+   _device.direct_queue.execute_command_lists(command_list);
 
-   swap_chain.present();
+   _swap_chain.present(false);
 
    _device.end_frame();
    _model_manager.trim_models();
@@ -400,20 +391,27 @@ void renderer_impl::draw_frame(
 
 void renderer_impl::window_resized(uint16 width, uint16 height)
 {
-   if (width == _device.swap_chain.width() and height == _device.swap_chain.height()) {
+   if (width == _swap_chain.width() and height == _swap_chain.height()) {
       return;
    }
 
-   _device.wait_for_idle();
-   _device.swap_chain.resize(width, height);
+   _swap_chain.resize(width, height);
    _depth_stencil_texture =
-      {_device,
-       {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-        .width = _device.swap_chain.width(),
-        .height = _device.swap_chain.height(),
-        .optimized_clear_value = {.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                  .DepthStencil = {.Depth = 1.0f, .Stencil = 0x0}}},
-       D3D12_RESOURCE_STATE_DEPTH_WRITE};
+      {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                               .flags = {.allow_depth_stencil = true},
+                               .format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                               .width = _swap_chain.width(),
+                               .height = _swap_chain.height(),
+                               .optimized_clear_value =
+                                  {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                   .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
+                              gpu::resource_state::depth_write),
+       _device.direct_queue};
+   _depth_stencil_view =
+      {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
+                                         {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                          .dimension = gpu::dsv_dimension::texture2d}),
+       _device.direct_queue};
 
    _light_clusters.update_render_resolution(width, height);
 }
@@ -431,27 +429,21 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 
                 .view_positionWS = camera.position(),
 
-                .viewport_size = {static_cast<float>(_device.swap_chain.width()),
-                                  static_cast<float>(_device.swap_chain.height())},
+                .viewport_size = {static_cast<float>(_swap_chain.width()),
+                                  static_cast<float>(_swap_chain.height())},
                 .viewport_topleft = {0.0f, 0.0f},
 
                 .line_width = _settings->line_width()};
 
-   auto allocation =
-      _dynamic_buffer_allocator.allocate(sizeof(frame_constant_buffer));
+   auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 
-   std::memcpy(allocation.cpu_address, &constants, sizeof(frame_constant_buffer));
-
-   command_list.copy_buffer_region(*_camera_constant_buffer.resource(), 0,
-                                   *_dynamic_buffer_allocator.view_resource(),
-                                   allocation.gpu_address -
-                                      _dynamic_buffer_allocator.gpu_base_address(),
-                                   sizeof(frame_constant_buffer));
+   command_list.copy_buffer_region(_camera_constant_buffer.get(), 0,
+                                   _dynamic_buffer_allocator.resource(),
+                                   allocation.offset, sizeof(frame_constant_buffer));
 
    command_list.deferred_resource_barrier(
-      gpu::transition_barrier(*_camera_constant_buffer.resource(),
-                              D3D12_RESOURCE_STATE_COPY_DEST,
-                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+      gpu::transition_barrier(_camera_constant_buffer.get(), gpu::resource_state::copy_dest,
+                              gpu::resource_state::vertex_and_constant_buffer));
 }
 
 void renderer_impl::draw_world(const frustrum& view_frustrum,
@@ -460,13 +452,13 @@ void renderer_impl::draw_world(const frustrum& view_frustrum,
    draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
 
    _terrain.draw(terrain_draw::depth_prepass, view_frustrum, _camera_constant_buffer_view,
-                 _light_clusters.light_descriptors(), command_list,
+                 _light_clusters.lights_constant_buffer_view(), command_list,
                  _root_signatures, _pipelines, _dynamic_buffer_allocator);
 
    draw_world_render_list(_opaque_object_render_list, command_list);
 
    _terrain.draw(terrain_draw::main, view_frustrum, _camera_constant_buffer_view,
-                 _light_clusters.light_descriptors(), command_list,
+                 _light_clusters.lights_constant_buffer_view(), command_list,
                  _root_signatures, _pipelines, _dynamic_buffer_allocator);
 
    draw_world_render_list(_transparent_object_render_list, command_list);
@@ -475,27 +467,22 @@ void renderer_impl::draw_world(const frustrum& view_frustrum,
 void renderer_impl::draw_world_render_list(const std::vector<render_list_item>& list,
                                            gpu::graphics_command_list& command_list)
 {
-   command_list.set_graphics_root_signature(*_root_signatures.mesh);
-   command_list.set_graphics_root_descriptor_table(rs::mesh::camera_descriptor_table,
-                                                   _camera_constant_buffer_view);
-   command_list.set_graphics_root_descriptor_table(rs::mesh::lights_descriptor_table,
-                                                   _light_clusters.light_descriptors());
-   command_list.set_graphics_root_descriptor_table(
-      rs::mesh::bindless_srv_table,
-      _device.descriptor_heap_srv_cbv_uav.get().GetGPUDescriptorHandleForHeapStart());
-   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+   command_list.set_graphics_root_signature(_root_signatures.mesh.get());
+   command_list.set_graphics_cbv(rs::mesh::frame_cbv, _camera_constant_buffer_view);
+   command_list.set_graphics_cbv(rs::mesh::lights_cbv,
+                                 _light_clusters.lights_constant_buffer_view());
+   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-   ID3D12PipelineState* pipeline_state = nullptr;
+   gpu::pipeline_handle pipeline_state = gpu::null_pipeline_handle;
 
    for (auto& object : list) {
       if (pipeline_state != object.pipeline) {
-         command_list.set_pipeline_state(*object.pipeline);
+         command_list.set_pipeline_state(object.pipeline);
       }
 
-      command_list.set_graphics_root_constant_buffer_view(rs::mesh::object_cbv,
-                                                          object.object_constants_address);
-      command_list.set_graphics_root_descriptor_table(rs::mesh::material_descriptor_table,
-                                                      object.material_descriptor_range);
+      command_list.set_graphics_cbv(rs::mesh::object_cbv,
+                                    object.object_constants_address);
+      command_list.set_graphics_cbv(rs::mesh::material_cbv, object.material_cbv);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
       command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
@@ -506,25 +493,22 @@ void renderer_impl::draw_world_render_list(const std::vector<render_list_item>& 
 void renderer_impl::draw_world_render_list_depth_prepass(
    const std::vector<render_list_item>& list, gpu::graphics_command_list& command_list)
 {
-   command_list.set_graphics_root_signature(*_root_signatures.mesh_depth_prepass);
-   command_list.set_graphics_root_descriptor_table(rs::mesh_depth_prepass::camera_descriptor_table,
-                                                   _camera_constant_buffer_view);
-   command_list.set_graphics_root_descriptor_table(
-      rs::mesh_depth_prepass::bindless_srv_table,
-      _device.descriptor_heap_srv_cbv_uav.get().GetGPUDescriptorHandleForHeapStart());
-   command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+   command_list.set_graphics_root_signature(_root_signatures.mesh_depth_prepass.get());
+   command_list.set_graphics_cbv(rs::mesh_depth_prepass::frame_cbv,
+                                 _camera_constant_buffer_view);
+   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-   ID3D12PipelineState* pipeline_state = nullptr;
+   gpu::pipeline_handle pipeline_state = gpu::null_pipeline_handle;
 
    for (auto& object : list) {
       if (pipeline_state != object.depth_prepass_pipeline) {
-         command_list.set_pipeline_state(*object.depth_prepass_pipeline);
+         command_list.set_pipeline_state(object.depth_prepass_pipeline);
       }
 
-      command_list.set_graphics_root_constant_buffer_view(rs::mesh_depth_prepass::object_cbv,
-                                                          object.object_constants_address);
-      command_list.set_graphics_root_descriptor_table(rs::mesh_depth_prepass::material_descriptor_table,
-                                                      object.material_descriptor_range);
+      command_list.set_graphics_cbv(rs::mesh_depth_prepass::object_cbv,
+                                    object.object_constants_address);
+      command_list.set_graphics_cbv(rs::mesh_depth_prepass::material_cbv,
+                                    object.material_cbv);
       command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
       command_list.ia_set_index_buffer(object.index_buffer_view);
       command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
@@ -552,17 +536,20 @@ void renderer_impl::draw_world_meta_objects(
       ImGui::Unindent();
 
       if (draw_nodes) {
-         command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
-         command_list.set_graphics_root_descriptor_table(rs::meta_mesh_wireframe::camera_descriptor_table,
-                                                         _camera_constant_buffer_view);
-         command_list.set_graphics_root_constant_buffer(
+         command_list.set_graphics_root_signature(
+            _root_signatures.meta_mesh_wireframe.get());
+         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::frame_cbv,
+                                       _camera_constant_buffer_view);
+         command_list.set_graphics_cbv(
             rs::meta_mesh_wireframe::wireframe_cbv,
-            meta_outlined_constant_buffer{
-               .color = float4{_settings->path_node_color(), 1.0f},
-               .outline_color = float4{_settings->path_node_outline_color(), 1.0f}});
+            _dynamic_buffer_allocator
+               .allocate_and_copy(meta_outlined_constant_buffer{
+                  .color = float4{_settings->path_node_color(), 1.0f},
+                  .outline_color = float4{_settings->path_node_outline_color(), 1.0f}})
+               .gpu_address);
 
-         command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
-         command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+         command_list.set_pipeline_state(_pipelines.meta_mesh_outlined.get());
+         command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
          for (auto& path : world.paths) {
             if (not active_layers[path.layer]) continue;
@@ -578,8 +565,10 @@ void renderer_impl::draw_world_meta_objects(
 
                   transform[3] = {node.position, 1.0f};
 
-                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                                 transform);
+                  command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                                                _dynamic_buffer_allocator
+                                                   .allocate_and_copy(transform)
+                                                   .gpu_address);
                }
 
                const geometric_shape shape = _geometric_shapes.octahedron();
@@ -686,8 +675,9 @@ void renderer_impl::draw_world_meta_objects(
 
          transform[3] = {region.position, 1.0f};
 
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                        transform);
+         command_list.set_graphics_cbv(
+            rs::meta_mesh::object_cbv,
+            _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
       }
 
       const geometric_shape shape = [&] {
@@ -708,15 +698,17 @@ void renderer_impl::draw_world_meta_objects(
    };
 
    if (active_entity_types.regions and not world.regions.empty()) {
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
+      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
 
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
+                                    _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                     _settings->region_color());
+      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(_settings->region_color())
+                                       .gpu_address);
 
       for (auto& region : world.regions) {
          if (not active_layers[region.layer]) continue;
@@ -726,19 +718,21 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.barriers and not world.barriers.empty()) {
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
+      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
 
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                     _settings->barrier_color());
+      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
+                                    _camera_constant_buffer_view);
+      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(_settings->barrier_color())
+                                       .gpu_address);
 
       const geometric_shape shape = _geometric_shapes.cube();
 
       command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
       command_list.ia_set_index_buffer(shape.index_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
       const float barrier_height = _settings->barrier_height();
 
@@ -762,8 +756,9 @@ void renderer_impl::draw_world_meta_objects(
 
             transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
-            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                           transform);
+            command_list.set_graphics_cbv(
+               rs::meta_mesh::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
          }
 
          command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
@@ -772,12 +767,12 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.lights and not world.lights.empty()) {
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
+      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
 
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
+                                    _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
       const float volume_alpha = _settings->light_volume_alpha();
 
@@ -790,8 +785,9 @@ void renderer_impl::draw_world_meta_objects(
                                                ? volume_alpha * 0.5f
                                                : volume_alpha};
 
-            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                           color);
+            command_list.set_graphics_cbv(
+               rs::meta_mesh::color_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(color).gpu_address);
          }
 
          switch (light.light_type) {
@@ -816,8 +812,10 @@ void renderer_impl::draw_world_meta_objects(
 
                transform[3] = {light.position, 1.0f};
 
-               command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                              transform);
+               command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(transform)
+                                                .gpu_address);
             }
 
             auto shape = _geometric_shapes.icosphere();
@@ -844,8 +842,10 @@ void renderer_impl::draw_world_meta_objects(
 
                transform[3] += float4{light.position, 0.0f};
 
-               command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                              transform);
+               command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(transform)
+                                                .gpu_address);
             };
 
             bind_cone_transform(light.outer_cone_angle);
@@ -869,20 +869,25 @@ void renderer_impl::draw_world_meta_objects(
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
    if (active_entity_types.sectors and not world.sectors.empty()) {
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
+      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
 
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
+                                    _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                     float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                              {0.0f, 1.0f, 0.0f, 0.0f},
-                                                              {0.0f, 0.0f, 1.0f, 0.0f},
-                                                              {0.0f, 0.0f, 0.0f, 1.0f}});
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                     _settings->sector_color());
+      command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(
+                                          float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                   {0.0f, 1.0f, 0.0f, 0.0f},
+                                                   {0.0f, 0.0f, 1.0f, 0.0f},
+                                                   {0.0f, 0.0f, 0.0f, 1.0f}})
+                                       .gpu_address);
+      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(_settings->sector_color())
+                                       .gpu_address);
 
       for (auto& sector : world.sectors) {
          using namespace ranges::views;
@@ -906,20 +911,25 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.portals and not world.portals.empty()) {
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
+      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
 
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
+                                    _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                     float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                              {0.0f, 1.0f, 0.0f, 0.0f},
-                                                              {0.0f, 0.0f, 1.0f, 0.0f},
-                                                              {0.0f, 0.0f, 0.0f, 1.0f}});
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                     _settings->portal_color());
+      command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(
+                                          float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                   {0.0f, 1.0f, 0.0f, 0.0f},
+                                                   {0.0f, 0.0f, 1.0f, 0.0f},
+                                                   {0.0f, 0.0f, 0.0f, 1.0f}})
+                                       .gpu_address);
+      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(_settings->portal_color())
+                                       .gpu_address);
 
       for (auto& portal : world.portals) {
          using namespace ranges::views;
@@ -947,20 +957,22 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.hintnodes and not world.hintnodes.empty()) {
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
+      command_list.set_graphics_root_signature(
+         _root_signatures.meta_mesh_wireframe.get());
 
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
+                                    _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-      command_list.set_pipeline_state(*_pipelines.meta_mesh_outlined);
+      command_list.set_pipeline_state(_pipelines.meta_mesh_outlined.get());
 
-      command_list.set_graphics_root_constant_buffer(
+      command_list.set_graphics_cbv(
          rs::meta_mesh::color_cbv,
-         meta_outlined_constant_buffer{.color = float4{_settings->hintnode_color(), 1.0f},
-                                       .outline_color =
-                                          float4{_settings->hintnode_outline_color(),
-                                                 1.0f}});
+         _dynamic_buffer_allocator
+            .allocate_and_copy(meta_outlined_constant_buffer{
+               .color = float4{_settings->hintnode_color(), 1.0f},
+               .outline_color = float4{_settings->hintnode_outline_color(), 1.0f}})
+            .gpu_address);
 
       for (auto& hintnode : world.hintnodes) {
          if (not active_layers[hintnode.layer]) continue;
@@ -971,8 +983,9 @@ void renderer_impl::draw_world_meta_objects(
 
             transform[3] = {hintnode.position, 1.0f};
 
-            command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                           transform);
+            command_list.set_graphics_cbv(
+               rs::meta_mesh::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
          }
 
          const geometric_shape shape = _geometric_shapes.octahedron();
@@ -984,22 +997,27 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.boundaries and not world.boundaries.empty()) {
-      command_list.set_pipeline_state(*_pipelines.meta_mesh);
-      command_list.set_graphics_root_signature(*_root_signatures.meta_mesh);
+      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
+      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
 
-      command_list.set_graphics_root_descriptor_table(rs::meta_mesh::camera_descriptor_table,
-                                                      _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
+                                    _camera_constant_buffer_view);
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
       const float boundary_height = _settings->boundary_height();
 
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                     float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                              {0.0f, 1.0f, 0.0f, 0.0f},
-                                                              {0.0f, 0.0f, 1.0f, 0.0f},
-                                                              {0.0f, 0.0f, 0.0f, 1.0f}});
-      command_list.set_graphics_root_constant_buffer(rs::meta_mesh::color_cbv,
-                                                     _settings->boundary_color());
+      command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(
+                                          float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                   {0.0f, 1.0f, 0.0f, 0.0f},
+                                                   {0.0f, 0.0f, 1.0f, 0.0f},
+                                                   {0.0f, 0.0f, 0.0f, 1.0f}})
+                                       .gpu_address);
+      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
+                                    _dynamic_buffer_allocator
+                                       .allocate_and_copy(_settings->boundary_color())
+                                       .gpu_address);
 
       for (auto& boundary : world.boundaries) {
          using namespace ranges::views;
@@ -1039,18 +1057,18 @@ void renderer_impl::draw_interaction_targets(
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
    const auto draw_target = [&](world::interaction_target target,
-                                gpu::virtual_address wireframe_constants) {
+                                gpu_virtual_address wireframe_constants) {
       const auto meta_mesh_common_setup = [&] {
-         command_list.set_graphics_root_signature(*_root_signatures.meta_mesh_wireframe);
-         command_list.set_graphics_root_signature(*_root_signatures.mesh_wireframe);
-         command_list.set_graphics_root_constant_buffer_view(rs::meta_mesh_wireframe::wireframe_cbv,
-                                                             wireframe_constants);
-         command_list.set_graphics_root_descriptor_table(rs::meta_mesh_wireframe::camera_descriptor_table,
-                                                         _camera_constant_buffer_view);
+         command_list.set_graphics_root_signature(
+            _root_signatures.mesh_wireframe.get());
+         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::wireframe_cbv,
+                                       wireframe_constants);
+         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::frame_cbv,
+                                       _camera_constant_buffer_view);
 
-         command_list.set_pipeline_state(*_pipelines.meta_mesh_wireframe);
+         command_list.set_pipeline_state(_pipelines.meta_mesh_wireframe.get());
 
-         command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+         command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
       };
 
       const auto draw_path_node = [&](const world::path::node& node) {
@@ -1062,8 +1080,9 @@ void renderer_impl::draw_interaction_targets(
 
          transform[3] = {node.position, 1.0f};
 
-         command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
-                                                        transform);
+         command_list.set_graphics_cbv(
+            rs::meta_mesh_wireframe::object_cbv,
+            _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
 
          const geometric_shape shape = _geometric_shapes.octahedron();
 
@@ -1082,7 +1101,7 @@ void renderer_impl::draw_interaction_targets(
 
                if (not object) return;
 
-               gpu::virtual_address object_constants = [&] {
+               gpu_virtual_address object_constants = [&] {
                   auto allocation =
                      _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
 
@@ -1100,17 +1119,18 @@ void renderer_impl::draw_interaction_targets(
                model& model =
                   _model_manager[world_classes.at(object->class_name).model_name];
 
-               command_list.set_graphics_root_signature(*_root_signatures.mesh_wireframe);
-               command_list.set_graphics_root_constant_buffer_view(rs::mesh_wireframe::object_cbv,
-                                                                   object_constants);
-               command_list.set_graphics_root_constant_buffer_view(rs::mesh_wireframe::wireframe_cbv,
-                                                                   wireframe_constants);
-               command_list.set_graphics_root_descriptor_table(rs::mesh_wireframe::camera_descriptor_table,
-                                                               _camera_constant_buffer_view);
+               command_list.set_graphics_root_signature(
+                  _root_signatures.mesh_wireframe.get());
+               command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv,
+                                             object_constants);
+               command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                             wireframe_constants);
+               command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                             _camera_constant_buffer_view);
 
-               command_list.set_pipeline_state(*_pipelines.mesh_wireframe);
+               command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
 
-               command_list.ia_set_primitive_topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+               command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
                command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
                command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
@@ -1166,8 +1186,10 @@ void renderer_impl::draw_interaction_targets(
 
                   transform[3] = {region->position, 1.0f};
 
-                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
-                                                                 transform);
+                  command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                                _dynamic_buffer_allocator
+                                                   .allocate_and_copy(transform)
+                                                   .gpu_address);
 
                   const geometric_shape shape = [&] {
                      switch (region->shape) {
@@ -1193,8 +1215,10 @@ void renderer_impl::draw_interaction_targets(
 
                   transform[3] = {light->position, 1.0f};
 
-                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
-                                                                 transform);
+                  command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                                _dynamic_buffer_allocator
+                                                   .allocate_and_copy(transform)
+                                                   .gpu_address);
 
                   auto shape = _geometric_shapes.icosphere();
 
@@ -1217,8 +1241,10 @@ void renderer_impl::draw_interaction_targets(
 
                   transform[3] += float4{light->position, 0.0f};
 
-                  command_list.set_graphics_root_constant_buffer(rs::meta_mesh::object_cbv,
-                                                                 transform);
+                  command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                                                _dynamic_buffer_allocator
+                                                   .allocate_and_copy(transform)
+                                                   .gpu_address);
 
                   auto shape = _geometric_shapes.cone();
 
@@ -1311,8 +1337,10 @@ void renderer_impl::draw_interaction_targets(
 
                transform[3] = {region->position, 1.0f};
 
-               command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
-                                                              transform);
+               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(transform)
+                                                .gpu_address);
 
                const geometric_shape shape = [&] {
                   switch (region->shape) {
@@ -1340,12 +1368,14 @@ void renderer_impl::draw_interaction_targets(
 
                meta_mesh_common_setup();
 
-               command_list.set_graphics_root_constant_buffer(
-                  rs::meta_mesh_wireframe::object_cbv,
-                  float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                           {0.0f, 1.0f, 0.0f, 0.0f},
-                           {0.0f, 0.0f, 1.0f, 0.0f},
-                           {0.0f, 0.0f, 0.0f, 1.0f}});
+               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(
+                                                   float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                            {0.0f, 1.0f, 0.0f, 0.0f},
+                                                            {0.0f, 0.0f, 1.0f, 0.0f},
+                                                            {0.0f, 0.0f, 0.0f, 1.0f}})
+                                                .gpu_address);
 
                using namespace ranges::views;
 
@@ -1375,12 +1405,14 @@ void renderer_impl::draw_interaction_targets(
 
                meta_mesh_common_setup();
 
-               command_list.set_graphics_root_constant_buffer(
-                  rs::meta_mesh_wireframe::object_cbv,
-                  float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                           {0.0f, 1.0f, 0.0f, 0.0f},
-                           {0.0f, 0.0f, 1.0f, 0.0f},
-                           {0.0f, 0.0f, 0.0f, 1.0f}});
+               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(
+                                                   float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                            {0.0f, 1.0f, 0.0f, 0.0f},
+                                                            {0.0f, 0.0f, 1.0f, 0.0f},
+                                                            {0.0f, 0.0f, 0.0f, 1.0f}})
+                                                .gpu_address);
 
                const float half_width = portal->width * 0.5f;
                const float half_height = portal->height * 0.5f;
@@ -1415,8 +1447,10 @@ void renderer_impl::draw_interaction_targets(
                float4x4 transform = static_cast<float4x4>(hintnode->rotation);
                transform[3] = {hintnode->position, 1.0f};
 
-               command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
-                                                              transform);
+               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(transform)
+                                                .gpu_address);
 
                const geometric_shape shape = _geometric_shapes.octahedron();
 
@@ -1457,8 +1491,10 @@ void renderer_impl::draw_interaction_targets(
                                              {0.0f, 0.0f, 0.0f, 1.0f}};
                transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
-               command_list.set_graphics_root_constant_buffer(rs::meta_mesh_wireframe::object_cbv,
-                                                              transform);
+               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(transform)
+                                                .gpu_address);
 
                command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
                command_list.ia_set_index_buffer(shape.index_buffer_view);
@@ -1483,12 +1519,14 @@ void renderer_impl::draw_interaction_targets(
 
                meta_mesh_common_setup();
 
-               command_list.set_graphics_root_constant_buffer(
-                  rs::meta_mesh_wireframe::object_cbv,
-                  float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                           {0.0f, 1.0f, 0.0f, 0.0f},
-                           {0.0f, 0.0f, 1.0f, 0.0f},
-                           {0.0f, 0.0f, 0.0f, 1.0f}});
+               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                             _dynamic_buffer_allocator
+                                                .allocate_and_copy(
+                                                   float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                            {0.0f, 1.0f, 0.0f, 0.0f},
+                                                            {0.0f, 0.0f, 1.0f, 0.0f},
+                                                            {0.0f, 0.0f, 0.0f, 1.0f}})
+                                                .gpu_address);
 
                const float boundary_height = _settings->boundary_height();
 
@@ -1517,7 +1555,7 @@ void renderer_impl::draw_interaction_targets(
    };
 
    if (interaction_targets.hovered_entity) {
-      gpu::virtual_address wireframe_constants = [&] {
+      gpu_virtual_address wireframe_constants = [&] {
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
@@ -1533,7 +1571,7 @@ void renderer_impl::draw_interaction_targets(
    }
 
    if (not interaction_targets.selection.empty()) {
-      gpu::virtual_address wireframe_constants = [&] {
+      gpu_virtual_address wireframe_constants = [&] {
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
@@ -1559,12 +1597,12 @@ void renderer_impl::build_world_mesh_list(
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
 
-   auto& upload_buffer = _object_constants_upload_buffers[_device.frame_index];
+   auto& upload_buffer = _object_constants_upload_buffers[_device.frame_index()];
 
-   const gpu::virtual_address constants_upload_gpu_address =
-      _object_constants_buffer.gpu_virtual_address();
+   const gpu_virtual_address constants_upload_gpu_address =
+      _device.get_gpu_virtual_address(_object_constants_buffer.get());
    std::byte* const constants_upload_data =
-      _object_constants_upload_cpu_ptrs[_device.frame_index];
+      _object_constants_upload_cpu_ptrs[_device.frame_index()];
    std::size_t constants_data_size = 0;
 
    for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
@@ -1576,7 +1614,7 @@ void renderer_impl::build_world_mesh_list(
       const auto object_bbox = object.rotation * model.bbox + object.position;
 
       const std::size_t object_constants_offset = constants_data_size;
-      const gpu::virtual_address object_constants_address =
+      const gpu_virtual_address object_constants_address =
          constants_upload_gpu_address + object_constants_offset;
 
       world_mesh_constants constants;
@@ -1590,34 +1628,27 @@ void renderer_impl::build_world_mesh_list(
       constants_data_size += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
-         ID3D12PipelineState* const pipeline =
+         const gpu::pipeline_handle pipeline =
             _pipelines.mesh_normal[mesh.material.flags].get();
 
          _world_mesh_list.push_back(
             object_bbox, object_constants_address, object.position, pipeline,
-            mesh.material.flags, mesh.material.constant_buffer_view.descriptors(),
+            mesh.material.flags, mesh.material.constant_buffer_view,
             world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
                        .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
                                                model.gpu_buffer.attributes_vertex_buffer_view},
                        .index_count = mesh.index_count,
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});
-
-         if (_config.use_raytracing && not mesh.raytracing_blas) {
-            mesh.raytracing_blas = create_raytacing_blas(command_list, model, mesh);
-         }
       }
    }
 
-   command_list.copy_buffer_region(*_object_constants_buffer.view_resource(), 0,
-                                   *upload_buffer.view_resource(), 0,
-                                   constants_data_size);
+   command_list.copy_buffer_region(_object_constants_buffer.get(), 0,
+                                   upload_buffer.get(), 0, constants_data_size);
    command_list.deferred_resource_barrier(
-      gpu::transition_barrier(*_object_constants_buffer.view_resource(),
-                              D3D12_RESOURCE_STATE_COPY_DEST,
-                              D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER |
-                                 D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE |
-                                 D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE));
+      gpu::transition_barrier(_object_constants_buffer.get(), gpu::resource_state::copy_dest,
+                              gpu::resource_state::vertex_and_constant_buffer |
+                                 gpu::resource_state::all_shader_resource));
 }
 
 void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
@@ -1637,7 +1668,7 @@ void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
                              ? _transparent_object_render_list
                              : _opaque_object_render_list;
 
-      ID3D12PipelineState* const depth_prepass_pipeline = [&]() {
+      const gpu::pipeline_handle depth_prepass_pipeline = [&]() {
          if (are_flags_set(meshes.pipeline_flags[i],
                            material_pipeline_flags::alpha_cutout |
                               material_pipeline_flags::doublesided)) {
@@ -1666,7 +1697,7 @@ void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
          .vertex_buffer_views = {meshes.mesh[i].vertex_buffer_views},
 
          .object_constants_address = meshes.gpu_constants[i],
-         .material_descriptor_range = meshes.material_descriptor_range[i],
+         .material_cbv = meshes.material_constant_buffer[i],
 
          .index_count = meshes.mesh[i].index_count,
          .start_index = meshes.mesh[i].start_index,
@@ -1692,75 +1723,16 @@ void renderer_impl::update_textures(gpu::graphics_command_list& command_list)
       [&](const absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>& updated) {
          _model_manager.for_each([&](model& model) {
             for (auto& part : model.parts) {
-               part.material.process_updated_textures(command_list, updated);
+               part.material.process_updated_textures(command_list, updated, _device);
             }
          });
 
-         _terrain.process_updated_texture(updated);
+         _terrain.process_updated_texture(command_list, updated);
       });
 }
 
-auto renderer_impl::create_raytacing_blas(gpu::graphics_command_list& command_list,
-                                          const model& model,
-                                          const mesh_part& part) -> gpu::buffer
-{
-   D3D12_RAYTRACING_GEOMETRY_DESC geometry_desc{
-      .Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
-      .Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE,
-      .Triangles =
-         {.IndexFormat = DXGI_FORMAT_R16_UINT,
-          .VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT,
-          .IndexCount = part.index_count,
-          .VertexCount = part.vertex_count,
-          .IndexBuffer = model.gpu_buffer.index_buffer_view.BufferLocation +
-                         part.start_index * sizeof(uint16),
-          .VertexBuffer = {.StartAddress =
-                              model.gpu_buffer.position_vertex_buffer_view.BufferLocation +
-                              part.start_vertex * sizeof(float3),
-                           .StrideInBytes = sizeof(float3)}}};
-
-   D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs{
-      .Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL,
-      .Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE,
-      .NumDescs = 1,
-      .DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
-      .pGeometryDescs = &geometry_desc};
-
-   ID3D12Device8& device = *_device.device_d3d;
-
-   D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuild;
-
-   device.GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuild);
-
-   gpu::buffer scratch_buffer =
-      _device.create_buffer({.size = static_cast<uint32>(prebuild.ScratchDataSizeInBytes),
-                             .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS},
-                            D3D12_HEAP_TYPE_DEFAULT,
-                            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-   gpu::buffer result_buffer =
-      _device.create_buffer({.size = static_cast<uint32>(prebuild.ResultDataMaxSizeInBytes),
-                             .flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS},
-                            D3D12_HEAP_TYPE_DEFAULT,
-                            D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
-
-   D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC build_desc{
-      .DestAccelerationStructureData = result_buffer.gpu_virtual_address(),
-      .Inputs = inputs,
-      .ScratchAccelerationStructureData = scratch_buffer.gpu_virtual_address()};
-
-   command_list.build_raytracing_acceleration_structure(build_desc);
-   command_list.deferred_resource_barrier(
-      gpu::uav_barrier(*scratch_buffer.view_resource()));
-   command_list.deferred_resource_barrier(
-      gpu::uav_barrier(*result_buffer.view_resource()));
-
-   // TODO: Compaction solution!
-
-   return result_buffer;
-}
-
-renderer::renderer(const HWND window, std::shared_ptr<settings::graphics> settings,
+renderer::renderer(const window_handle window,
+                   std::shared_ptr<settings::graphics> settings,
                    std::shared_ptr<async::thread_pool> thread_pool,
                    assets::libraries_manager& asset_libraries,
                    output_stream& error_output)
@@ -1800,5 +1772,4 @@ void renderer::reload_shaders() noexcept
 {
    _impl->reload_shaders();
 }
-
 }

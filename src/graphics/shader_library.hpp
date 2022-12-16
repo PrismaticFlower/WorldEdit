@@ -1,14 +1,12 @@
 #pragma once
 
 #include "async/thread_pool.hpp"
-#include "utility/com_ptr.hpp"
 
 #include <filesystem>
 #include <initializer_list>
+#include <span>
 #include <string>
 #include <vector>
-
-#include <d3d12.h>
 
 #include <boost/container/static_vector.hpp>
 
@@ -84,7 +82,7 @@ struct shader_dependency {
 };
 
 struct compiled_shader : shader_description {
-   utility::com_ptr<ID3DBlob> bytecode;
+   std::vector<std::byte> bytecode;
    std::filesystem::file_time_type::duration file_last_write;
    std::vector<shader_dependency> dependencies;
 };
@@ -94,7 +92,8 @@ public:
    explicit shader_library(std::initializer_list<shader_description> shaders,
                            std::shared_ptr<async::thread_pool> thread_pool);
 
-   auto operator[](const std::string_view name) const noexcept -> D3D12_SHADER_BYTECODE;
+   auto operator[](const std::string_view name) const noexcept
+      -> std::span<const std::byte>;
 
    void reload(std::initializer_list<shader_description> shaders) noexcept;
 

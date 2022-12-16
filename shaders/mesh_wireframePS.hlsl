@@ -1,11 +1,11 @@
+#include "bindings.hlsli"
 #include "frame_constants.hlsli"
 
 struct wireframe_constants {
    float3 color;
 };
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
-ConstantBuffer<wireframe_constants> cb_wireframe_constants : register(b1);
+ConstantBuffer<wireframe_constants> cb_wireframe_constants : register(META_MESH_CB_REGISTER);
 
 struct input_vertex {
    float4 positionRT : SV_Position;

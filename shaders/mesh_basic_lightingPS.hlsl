@@ -2,8 +2,6 @@
 #include "frame_constants.hlsli"
 #include "lights_common.hlsli"
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0, space0);
-
 struct input_vertex {
    float3 positionWS : POSITIONWS;
    float3 normalWS : NORMAL;

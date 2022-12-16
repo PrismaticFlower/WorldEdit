@@ -1,8 +1,9 @@
 #pragma once
 
+#include "dynamic_buffer_allocator.hpp"
 #include "frustrum.hpp"
-#include "gpu/command_list.hpp"
-#include "gpu/device.hpp"
+#include "gpu/resource.hpp"
+#include "gpu/rhi.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
 #include "texture_manager.hpp"
@@ -25,16 +26,17 @@ public:
    explicit terrain(gpu::device& device, texture_manager& texture_manager);
 
    void init(const world::terrain& terrain, gpu::graphics_command_list& command_list,
-             gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+             dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void draw(const terrain_draw draw, const frustrum& view_frustrum,
-             gpu::descriptor_range camera_constant_buffer_view,
-             gpu::descriptor_range light_descriptors,
+             gpu_virtual_address camera_constant_buffer_view,
+             gpu_virtual_address lights_constant_buffer_view,
              gpu::graphics_command_list& command_list,
              root_signature_library& root_signatures, pipeline_library& pipelines,
-             gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+             dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void process_updated_texture(const updated_textures& updated);
+   void process_updated_texture(gpu::graphics_command_list& command_list,
+                                const updated_textures& updated);
 
 private:
    struct terrain_patch {
@@ -46,7 +48,7 @@ private:
 
    void init_gpu_resources(const world::terrain& terrain,
                            gpu::graphics_command_list& command_list,
-                           gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+                           dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void init_gpu_height_map(const world::terrain& terrain,
                             gpu::graphics_command_list& command_list);
@@ -54,17 +56,15 @@ private:
    void init_gpu_texture_weight_map(const world::terrain& terrain,
                                     gpu::graphics_command_list& command_list);
 
-   void init_gpu_terrain_constants_buffer(
-      const world::terrain& terrain, gpu::graphics_command_list& command_list,
-      gpu::dynamic_buffer_allocator& dynamic_buffer_allocator);
+   void init_gpu_terrain_constants_buffer(const world::terrain& terrain,
+                                          gpu::graphics_command_list& command_list,
+                                          dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void init_textures(const world::terrain& terrain);
 
-   void init_textures_resource_views();
-
    void init_patches_info(const world::terrain& terrain);
 
-   gsl::not_null<gpu::device*> _gpu_device;
+   gpu::device& _device;
    texture_manager& _texture_manager;
 
    bool _active = false;
@@ -78,16 +78,20 @@ private:
 
    std::vector<terrain_patch> _patches;
 
-   gpu::buffer _index_buffer;
-   gpu::buffer _terrain_constants_buffer;
-   gpu::texture _height_map;
-   gpu::texture _texture_weight_maps;
+   gpu::unique_resource_handle _index_buffer;
+   gpu::unique_resource_handle _terrain_constants_buffer;
+   gpu::unique_resource_handle _height_map;
+   gpu::unique_resource_handle _texture_weight_maps;
 
-   gpu::resource_view_set _resource_views;
-   gpu::resource_view_set _texture_resource_views;
+   gpu_virtual_address _terrain_cbv;
+   gpu::unique_resource_view _height_map_srv;
+   gpu::unique_resource_view _texture_weight_maps_srv;
 
    std::array<lowercase_string, texture_count> _diffuse_maps_names;
    std::array<std::shared_ptr<const world_texture>, texture_count> _diffuse_maps;
+
+   gpu::unique_resource_handle _height_map_upload_buffer;
+   gpu::unique_resource_handle _texture_weight_upload_buffer;
 };
 
 }

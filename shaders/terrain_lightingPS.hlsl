@@ -3,8 +3,6 @@
 #include "lights_common.hlsli"
 #include "terrain_common.hlsli"
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0, space0);
-
 const static float3 surface_color = 0.75;
 
 float4 main(input_vertex input) : SV_Target0

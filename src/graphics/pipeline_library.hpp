@@ -3,12 +3,12 @@
 #include "async/thread_pool.hpp"
 #include "container/enum_array.hpp"
 #include "types.hpp"
-#include "utility/com_ptr.hpp"
 #include "utility/enum_bitflags.hpp"
 
-#include <vector>
+#include "gpu/resource.hpp"
+#include "gpu/rhi.hpp"
 
-#include <d3d12.h>
+#include <vector>
 
 namespace we::graphics {
 
@@ -31,37 +31,37 @@ constexpr bool marked_as_enum_bitflag(material_pipeline_flags)
 }
 
 using material_pipelines =
-   container::enum_array<utility::com_ptr<ID3D12PipelineState>, material_pipeline_flags>;
+   container::enum_array<gpu::unique_pipeline_handle, material_pipeline_flags>;
 
 struct pipeline_library {
-   pipeline_library(ID3D12Device9& device, const shader_library& shader_library,
+   pipeline_library(gpu::device& device, const shader_library& shader_library,
                     const root_signature_library& root_signature_library);
 
-   void reload(ID3D12Device9& device, const shader_library& shader_library,
+   void reload(gpu::device& device, const shader_library& shader_library,
                const root_signature_library& root_signature_library);
 
-   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass;
-   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_doublesided;
-   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_alpha_cutout;
-   utility::com_ptr<ID3D12PipelineState> mesh_depth_prepass_alpha_cutout_doublesided;
-   utility::com_ptr<ID3D12PipelineState> mesh_shadow;
-   utility::com_ptr<ID3D12PipelineState> mesh_basic;
-   utility::com_ptr<ID3D12PipelineState> mesh_basic_lighting;
+   gpu::unique_pipeline_handle mesh_depth_prepass;
+   gpu::unique_pipeline_handle mesh_depth_prepass_doublesided;
+   gpu::unique_pipeline_handle mesh_depth_prepass_alpha_cutout;
+   gpu::unique_pipeline_handle mesh_depth_prepass_alpha_cutout_doublesided;
+   gpu::unique_pipeline_handle mesh_shadow;
+   gpu::unique_pipeline_handle mesh_basic;
+   gpu::unique_pipeline_handle mesh_basic_lighting;
    material_pipelines mesh_normal;
-   utility::com_ptr<ID3D12PipelineState> mesh_wireframe;
+   gpu::unique_pipeline_handle mesh_wireframe;
 
-   utility::com_ptr<ID3D12PipelineState> terrain_depth_prepass;
-   utility::com_ptr<ID3D12PipelineState> terrain_basic;
-   utility::com_ptr<ID3D12PipelineState> terrain_lighting;
-   utility::com_ptr<ID3D12PipelineState> terrain_normal;
+   gpu::unique_pipeline_handle terrain_depth_prepass;
+   gpu::unique_pipeline_handle terrain_basic;
+   gpu::unique_pipeline_handle terrain_lighting;
+   gpu::unique_pipeline_handle terrain_normal;
 
-   utility::com_ptr<ID3D12PipelineState> meta_mesh;
-   utility::com_ptr<ID3D12PipelineState> meta_mesh_outlined;
-   utility::com_ptr<ID3D12PipelineState> meta_mesh_wireframe;
-   utility::com_ptr<ID3D12PipelineState> meta_line;
+   gpu::unique_pipeline_handle meta_mesh;
+   gpu::unique_pipeline_handle meta_mesh_outlined;
+   gpu::unique_pipeline_handle meta_mesh_wireframe;
+   gpu::unique_pipeline_handle meta_line;
 
-   utility::com_ptr<ID3D12PipelineState> tile_lights_clear;
-   utility::com_ptr<ID3D12PipelineState> tile_lights_spheres;
+   gpu::unique_pipeline_handle tile_lights_clear;
+   gpu::unique_pipeline_handle tile_lights_spheres;
 };
 
 }

@@ -26,7 +26,7 @@ auto shader(const std::string_view name) -> shader_description
    return {.name = std::string{name},
            .entrypoint = L"main",
            .type = type_from_name(name),
-           .model = shader_model_6_0,
+           .model = shader_model_6_6,
            .file = fmt::format("shaders/{}.hlsl", name)};
 }
 

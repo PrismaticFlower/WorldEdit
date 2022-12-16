@@ -3,6 +3,7 @@
 #include "assets/asset_libraries.hpp"
 #include "assets/msh/default_missing_scene.hpp"
 #include "async/thread_pool.hpp"
+#include "copy_command_list_pool.hpp"
 #include "lowercase_string.hpp"
 #include "model.hpp"
 #include "output_stream.hpp"
@@ -16,20 +17,23 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <fmt/format.h>
-#include <gsl/gsl>
 
 namespace we::graphics {
 
 class model_manager {
 public:
-   model_manager(gpu::device& gpu_device, texture_manager& texture_manager,
+   model_manager(gpu::device& gpu_device, copy_command_list_pool& copy_command_list_pool,
+                 texture_manager& texture_manager,
                  assets::library<assets::msh::flat_model>& model_assets,
                  std::shared_ptr<async::thread_pool> thread_pool,
                  output_stream& error_output)
-      : _gpu_device{&gpu_device},
+      : _gpu_device{gpu_device},
+        _copy_command_list_pool{copy_command_list_pool},
         _model_assets{model_assets},
         _texture_manager{texture_manager},
         _thread_pool{thread_pool},
+        _placeholder_model{*assets::msh::default_missing_scene(), _gpu_device,
+                           copy_command_list_pool, _texture_manager},
         _error_output{error_output}
    {
    }
@@ -161,29 +165,31 @@ private:
                              asset_data<assets::msh::flat_model> flat_model) noexcept
    {
       _pending_creations[name] =
-         {.task =
-             _thread_pool->exec(async::task_priority::low,
-                                [this, name = name, asset, flat_model]() -> model_state {
-                                   auto new_model =
-                                      std::make_unique<model>(*flat_model, *_gpu_device,
-                                                              _texture_manager);
+         {.task = _thread_pool->exec(
+             async::task_priority::low,
+             [this, name = name, asset, flat_model]() -> model_state {
+                auto new_model = std::make_unique<model>(*flat_model, _gpu_device,
+                                                         _copy_command_list_pool,
+                                                         _texture_manager);
 
-                                   std::shared_lock lock{_mutex};
+                _gpu_device.background_copy_queue.wait_for_idle();
 
-                                   // Make sure an asset load event hasn't loaded a new asset before us.
-                                   // This stops us replacing a new asset with an out of date one.
-                                   if (not _pending_creations.contains(name) or
-                                       _pending_creations[name].flat_model != flat_model) {
-                                      return {};
-                                   }
+                std::shared_lock lock{_mutex};
 
-                                   return {.model = std::move(new_model),
-                                           .asset = asset};
-                                }),
+                // Make sure an asset load event hasn't loaded a new asset before us.
+                // This stops us replacing a new asset with an out of date one.
+                if (not _pending_creations.contains(name) or
+                    _pending_creations[name].flat_model != flat_model) {
+                   return {};
+                }
+
+                return {.model = std::move(new_model), .asset = asset};
+             }),
           .flat_model = flat_model};
    }
 
-   gsl::not_null<gpu::device*> _gpu_device;
+   gpu::device& _gpu_device;
+   copy_command_list_pool& _copy_command_list_pool;
    assets::library<assets::msh::flat_model>& _model_assets;
    texture_manager& _texture_manager;
    output_stream& _error_output;
@@ -197,8 +203,7 @@ private:
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 
-   model _placeholder_model{*assets::msh::default_missing_scene(), *_gpu_device,
-                            _texture_manager};
+   model _placeholder_model;
 
    event_listener<void(const lowercase_string&, asset_ref<assets::msh::flat_model>,
                        asset_data<assets::msh::flat_model>)>

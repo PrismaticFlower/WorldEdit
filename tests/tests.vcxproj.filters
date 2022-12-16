@@ -57,6 +57,9 @@
     <ClCompile Include="src\actions\stack_tests.cpp" />
     <ClCompile Include="src\actions\ui_action_tests.cpp" />
     <ClCompile Include="src\actions\world_test_data.cpp" />
+    <ClCompile Include="src\graphics\gpu\resource_tests.cpp" />
+    <ClCompile Include="src\utility\implementation_storage_tests.cpp" />
+    <ClCompile Include="src\graphics\gpu\detail\descriptor_allocator_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -81,5 +84,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Catch2Adapter.runsettings" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

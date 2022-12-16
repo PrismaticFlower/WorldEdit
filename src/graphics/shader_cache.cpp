@@ -8,8 +8,6 @@
 
 #include <fstream>
 
-#include <dxcapi.h>
-
 namespace we::graphics {
 
 namespace {
@@ -71,28 +69,12 @@ bool out_of_date(const std::filesystem::path& path,
    return false;
 }
 
-auto make_blob(IDxcUtils& utils, std::span<const std::byte> dxil)
-   -> utility::com_ptr<ID3DBlob>
-{
-   utility::com_ptr<IDxcBlobEncoding> dxc_blob;
-   throw_if_failed(utils.CreateBlob(dxil.data(), static_cast<uint32>(dxil.size()),
-                                    DXC_CP_ACP, dxc_blob.clear_and_assign()));
-
-   utility::com_ptr<ID3DBlob> blob;
-   dxc_blob->QueryInterface(blob.clear_and_assign());
-
-   return blob;
-}
-
 }
 
 auto load_shader_cache(const std::filesystem::path& path)
    -> absl::flat_hash_map<shader_description, shader_cache_entry>
 {
    if (not std::filesystem::exists(path)) return {};
-
-   utility::com_ptr<IDxcUtils> utils;
-   DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.clear_and_assign()));
 
    try {
       auto file = io::read_file_to_bytes(path);
@@ -145,7 +127,7 @@ auto load_shader_cache(const std::filesystem::path& path)
          }
 
          if (not out_of_date(desc.file, entry.file_last_write, entry.dependencies)) {
-            entry.bytecode = make_blob(*utils, dxil_span);
+            entry.bytecode = {dxil_span.begin(), dxil_span.end()};
 
             result.emplace(std::move(desc), std::move(entry));
          }
@@ -181,9 +163,8 @@ void save_shader_cache(const std::filesystem::path& path,
          write_wstring(out, define.value);
       }
 
-      out.write(static_cast<uint32>(shader.bytecode->GetBufferSize()));
-      out.write(std::span{static_cast<const std::byte*>(shader.bytecode->GetBufferPointer()),
-                          shader.bytecode->GetBufferSize()});
+      out.write(static_cast<uint32>(shader.bytecode.size()));
+      out.write(std::span{shader.bytecode});
 
       out.write(shader.file_last_write);
 

@@ -1,3 +1,4 @@
+#include "bindings.hlsli"
 #include "frame_constants.hlsli"
 
 struct meta_object_constants {
@@ -5,8 +6,7 @@ struct meta_object_constants {
    float4 outline_color;
 };
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
-ConstantBuffer<meta_object_constants> cb_meta_object_constants : register(b1);
+ConstantBuffer<meta_object_constants> cb_meta_object_constants : register(META_MESH_CB_REGISTER);
 
 struct input_vertex {
    float4 positionRT : SV_Position;

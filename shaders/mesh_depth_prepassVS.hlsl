@@ -1,11 +1,11 @@
+#include "bindings.hlsli"
 #include "frame_constants.hlsli"
 
 struct object_constants {
    float4x4 world_matrix;
 };
 
-ConstantBuffer<frame_constant_buffer> cb_frame : register(b0);
-ConstantBuffer<object_constants> cb_object_constants : register(b1);
+ConstantBuffer<object_constants> cb_object_constants : register(OBJECT_CB_REGISTER);
 
 struct input_vertex {
    float3 positionOS : POSITION;

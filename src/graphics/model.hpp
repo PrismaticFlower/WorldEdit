@@ -1,7 +1,9 @@
 #pragma once
 
 #include "assets/msh/flat_model.hpp"
-#include "gpu/device.hpp"
+#include "copy_command_list_pool.hpp"
+#include "gpu/resource.hpp"
+#include "gpu/rhi.hpp"
 #include "material.hpp"
 #include "math/bounding_box.hpp"
 #include "texture_manager.hpp"
@@ -33,8 +35,6 @@ struct mesh_part {
    uint32 start_vertex;
    uint32 vertex_count;
    material material;
-
-   gpu::buffer raytracing_blas;
 };
 
 struct mesh_data_offsets {
@@ -44,15 +44,16 @@ struct mesh_data_offsets {
 };
 
 struct mesh_gpu_buffer {
-   gpu::buffer buffer;
+   gpu::index_buffer_view index_buffer_view;
+   gpu::vertex_buffer_view position_vertex_buffer_view;
+   gpu::vertex_buffer_view attributes_vertex_buffer_view;
 
-   D3D12_INDEX_BUFFER_VIEW index_buffer_view;
-   D3D12_VERTEX_BUFFER_VIEW position_vertex_buffer_view;
-   D3D12_VERTEX_BUFFER_VIEW attributes_vertex_buffer_view;
+   gpu::unique_resource_handle buffer;
 };
 
 struct model {
    explicit model(const assets::msh::flat_model& model, gpu::device& device,
+                  copy_command_list_pool& copy_command_list_pool,
                   texture_manager& texture_manager);
 
    math::bounding_box bbox;
@@ -63,7 +64,9 @@ struct model {
    boost::container::small_vector<mesh_part, 8> parts;
 
 private:
-   void init_gpu_buffer_async(gpu::device& device, std::span<const std::byte> buffer,
+   void init_gpu_buffer_async(gpu::device& device,
+                              copy_command_list_pool& copy_command_list_pool,
+                              std::span<const std::byte> buffer,
                               std::span<std::array<uint16, 3>> indices,
                               mesh_vertices vertices);
 };

@@ -285,31 +285,10 @@
     <ClInclude Include="src\world\world_io_load.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\buffer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\descriptor_heap.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\swap_chain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\device.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\renderer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\camera.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\container\enum_array.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\common.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\dynamic_buffer_allocator.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\object_class.hpp">
@@ -325,15 +304,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\object_instance_property.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\texture.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\depth_stencil_texture.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\async_copy_manager.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\model_manager.hpp">
@@ -402,25 +372,10 @@
     <ClInclude Include="src\world\world_utilities.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\command_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\barrier_helpers.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\assets\texture\texture_io.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\descriptor_allocation.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\descriptor_range.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\material.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\resource_view_set.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\texture_manager.hpp">
@@ -456,15 +411,6 @@
     <ClInclude Include="src\graphics\world_mesh_list.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\d3d12_mem_alloc.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\resource.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\assets\msh\generate_tangents.hpp" />
     <ClInclude Include="src\assets\msh\mikktspace\mikktspace.h">
       <Filter>include</Filter>
@@ -473,18 +419,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\pipeline_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\feature_tests.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\set_debug_name.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\command_allocator.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\command_queue.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\shader_cache.hpp">
@@ -595,6 +529,51 @@
     <ClInclude Include="src\graphics\gpu\rhi.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\gpu\resource.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\barrier.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\renderer.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\sampler_list.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\implementation_storage.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\exception.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\detail\descriptor_allocator.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\detail\descriptor_heap.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\detail\error.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\detail\handle_packing.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\detail\release_queue.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\gpu\detail\command_allocator_pool.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\copy_command_list_pool.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\imgui.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -619,18 +598,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\world_io_load.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\descriptor_heap.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\swap_chain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\device.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\renderer.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\camera.cpp">
@@ -705,12 +672,6 @@
     <ClCompile Include="src\assets\texture\texture_io.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\gpu\descriptor_allocation.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\resource_view_set.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\material.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -726,12 +687,6 @@
     <ClCompile Include="src\utility\file_watcher.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\gpu\D3D12MemAlloc\D3D12MemAlloc.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\resource.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\assets\msh\generate_tangents.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -742,9 +697,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\pipeline_library.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\dynamic_buffer_allocator.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\shader_cache.cpp">
@@ -798,9 +750,27 @@
     <ClCompile Include="src\actions\stack.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\texture_manager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\renderer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\gpu\rhi.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\copy_command_list_pool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="third_party\licenses\vcpkg.json" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="src\utility\implementation_storage.natvis" />
   </ItemGroup>
 </Project>
