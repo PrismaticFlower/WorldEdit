@@ -4,6 +4,7 @@
 #include "async/thread_pool.hpp"
 #include "commands.hpp"
 #include "graphics/camera.hpp"
+#include "graphics/gpu/exception.hpp"
 #include "graphics/renderer.hpp"
 #include "key_input_manager.hpp"
 #include "output_stream.hpp"
@@ -49,6 +50,8 @@ public:
    void mouse_movement(const int32 x_movement, const int32 y_movement) noexcept;
 
 private:
+   void wait_for_swap_chain_ready() noexcept;
+
    void update_object_classes();
 
    void update_input() noexcept;
@@ -89,6 +92,8 @@ private:
 
    void initialize_commands() noexcept;
 
+   void handle_gpu_error(graphics::gpu::exception& e) noexcept;
+
    standard_output_stream _stream;
    HWND _window{};
    std::shared_ptr<settings::settings> _settings =
@@ -122,7 +127,7 @@ private:
 
    actions::stack _undo_stack;
 
-   graphics::renderer _renderer;
+   std::unique_ptr<graphics::renderer> _renderer;
    graphics::camera _camera;
 
    bool _imgui_wants_input_capture = false;

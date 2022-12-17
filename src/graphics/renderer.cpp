@@ -126,7 +126,7 @@ public:
                  assets::libraries_manager& asset_libraries,
                  output_stream& error_output);
 
-   void wait_for_swap_chain_ready() noexcept;
+   void wait_for_swap_chain_ready();
 
    void draw_frame(const camera& camera, const world::world& world,
                    const world::interaction_targets& interaction_targets,
@@ -305,7 +305,7 @@ renderer_impl::renderer_impl(const renderer::window_handle window,
    _device.direct_queue.sync_with(_device.background_copy_queue);
 }
 
-void renderer_impl::wait_for_swap_chain_ready() noexcept
+void renderer_impl::wait_for_swap_chain_ready()
 {
    _swap_chain.wait_for_ready();
 }
@@ -1752,7 +1752,7 @@ renderer::renderer(const window_handle window,
 
 renderer::~renderer() = default;
 
-void renderer::wait_for_swap_chain_ready() noexcept
+void renderer::wait_for_swap_chain_ready()
 {
    _impl->wait_for_swap_chain_ready();
 }

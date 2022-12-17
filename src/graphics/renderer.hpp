@@ -53,7 +53,7 @@ public:
 
    ~renderer();
 
-   void wait_for_swap_chain_ready() noexcept;
+   void wait_for_swap_chain_ready();
 
    void draw_frame(const camera& camera, const world::world& world,
                    const world::interaction_targets& interaction_targets,

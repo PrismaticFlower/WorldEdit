@@ -330,6 +330,11 @@ void device::wait_for_idle()
 
    static_assert(fences.size() == last_work_items.size());
 
+   // Make sure we're not about to wait on a lost device.
+   for (ID3D12Fence* const fence : fences) {
+      if (fence->GetCompletedValue() == UINT64_MAX) return;
+   }
+
    throw_if_fail(state->device->SetEventOnMultipleFenceCompletion(
       fences.data(), last_work_items.data(), static_cast<uint32>(fences.size()),
       D3D12_MULTIPLE_FENCE_WAIT_FLAG_ALL, nullptr));

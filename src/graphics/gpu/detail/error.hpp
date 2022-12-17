@@ -27,7 +27,6 @@ void throw_if_fail(const HRESULT hresult)
                          "The GPU ran out of accessible memory."};
       case DXGI_ERROR_DEVICE_REMOVED:
       case DXGI_ERROR_DEVICE_RESET:
-      case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
          throw exception{
             error::device_removed,
             "The GPU was removed, reset or it's driver was updated."};

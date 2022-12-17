@@ -79,7 +79,14 @@ void world_edit::update_ui() noexcept
       }
 
       if (ImGui::BeginMenu("Developer")) {
-         if (ImGui::MenuItem("Reload Shaders")) _renderer.reload_shaders();
+         if (ImGui::MenuItem("Reload Shaders")) {
+            try {
+               _renderer->reload_shaders();
+            }
+            catch (graphics::gpu::exception& e) {
+               handle_gpu_error(e);
+            }
+         }
 
          ImGui::EndMenu();
       }

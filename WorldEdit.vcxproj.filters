@@ -339,9 +339,6 @@
     <ClInclude Include="src\imgui\imgui.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui\imgui_impl_dx12.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\imgui\imgui_impl_win32.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -571,7 +568,7 @@
     <ClInclude Include="src\graphics\copy_command_list_pool.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\imgui.hpp">
+    <ClInclude Include="src\graphics\imgui_renderer.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -646,9 +643,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_draw.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_impl_dx12.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_impl_win32.cpp">
@@ -763,6 +757,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\copy_command_list_pool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\imgui_renderer.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

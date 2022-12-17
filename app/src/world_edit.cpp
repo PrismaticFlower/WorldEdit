@@ -28,7 +28,8 @@ constexpr float camera_look_sensitivity = 0.18f;
 world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
      _window{window},
-     _renderer{window, _settings, _thread_pool, _asset_libraries, _stream}
+     _renderer{std::make_unique<graphics::renderer>(window, _settings, _thread_pool,
+                                                    _asset_libraries, _stream)}
 {
    initialize_commands();
 
@@ -64,7 +65,7 @@ bool world_edit::update()
 
    if (not _focused) return true;
 
-   _renderer.wait_for_swap_chain_ready();
+   wait_for_swap_chain_ready();
 
    // Input!
    update_input();
@@ -82,13 +83,28 @@ bool world_edit::update()
    // Render!
    update_camera(delta_time);
 
-   _renderer.draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
-                        _world_layers_draw_mask, _object_classes);
+   try {
+      _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
+                            _world_layers_draw_mask, _object_classes);
+   }
+   catch (graphics::gpu::exception& e) {
+      handle_gpu_error(e);
+   }
 
    // Garbage Collection! (not memory)
    garbage_collect_assets();
 
    return true;
+}
+
+void world_edit::wait_for_swap_chain_ready() noexcept
+{
+   try {
+      _renderer->wait_for_swap_chain_ready();
+   }
+   catch (graphics::gpu::exception& e) {
+      handle_gpu_error(e);
+   }
 }
 
 void world_edit::update_object_classes()
@@ -465,7 +481,7 @@ void world_edit::close_world() noexcept
 
    _undo_stack = {};
 
-   _renderer.mark_dirty_terrain();
+   _renderer->mark_dirty_terrain();
 
    SetWindowTextA(_window, "WorldEdit");
 }
@@ -499,7 +515,13 @@ void world_edit::resized(uint16 width, uint16 height)
    if (width == 0 or height == 0) return;
 
    _camera.aspect_ratio(float(width) / float(height));
-   _renderer.window_resized(width, height);
+
+   try {
+      _renderer->window_resized(width, height);
+   }
+   catch (graphics::gpu::exception& e) {
+      handle_gpu_error(e);
+   }
 }
 
 void world_edit::focused()
@@ -545,7 +567,42 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
                                             std::floor(16.0f * _display_scale));
    ImGui::GetStyle().ScaleAllSizes(new_dpi / old_dpi);
 
-   _renderer.recreate_imgui_font_atlas();
+   try {
+      _renderer->recreate_imgui_font_atlas();
+   }
+   catch (graphics::gpu::exception& e) {
+      handle_gpu_error(e);
+   }
+}
+
+void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
+{
+   using graphics::gpu::error;
+
+   switch (e.error()) {
+   case error::out_of_memory: {
+      switch (MessageBoxA(_window,
+                          fmt::format("Run out of GPU Memory: {}\n\nThe editor "
+                                      "will now exit.\n\nSave world?",
+                                      e.what())
+                             .c_str(),
+                          "GPU Memory Exhausted", MB_YESNO | MB_ICONERROR)) {
+      case IDYES:
+         save_world_with_picker();
+
+      case IDNO:
+      default:
+         std::terminate();
+      }
+   } break;
+   case error::device_removed: {
+      _renderer = nullptr;
+
+      _renderer = std::make_unique<graphics::renderer>(_window, _settings, _thread_pool,
+                                                       _asset_libraries, _stream);
+
+   } break;
+   }
 }
 
 }
