@@ -231,6 +231,27 @@ const gpu::root_signature_desc tile_lights_desc{
    .debug_name = "tile_lights_root_signature",
 };
 
+const gpu::root_signature_desc imgui_desc{
+   .parameters =
+      {
+         // texture
+         gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
+                             .shader_register = 0,
+                             .values_count = 1,
+                             .visibility = gpu::root_shader_visibility::pixel},
+
+         // inv viewport size
+         gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
+                             .shader_register = 1,
+                             .values_count = 2,
+                             .visibility = gpu::root_shader_visibility::vertex},
+      },
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "dear_imgui_root_signature",
+};
+
 }
 
 root_signature_library::root_signature_library(gpu::device& device)
@@ -250,6 +271,8 @@ root_signature_library::root_signature_library(gpu::device& device)
    tile_lights_clear = {device.create_root_signature(tile_lights_clear_desc),
                         device.direct_queue};
    tile_lights = {device.create_root_signature(tile_lights_desc), device.direct_queue};
+
+   imgui = {device.create_root_signature(imgui_desc), device.direct_queue};
 }
 
 }

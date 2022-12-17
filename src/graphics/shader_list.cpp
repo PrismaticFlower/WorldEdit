@@ -63,15 +63,30 @@ std::initializer_list<shader_description> shader_list = {
       .name = "tile_lightsVS",
       .entrypoint = L"mainVS",
       .type = shader_type::vertex,
-      .model = shader_model_6_0,
+      .model = shader_model_6_6,
       .file = "shaders/tile_lights.hlsl",
    },
    shader_description{
       .name = "tile_lightsPS",
       .entrypoint = L"mainPS",
       .type = shader_type::pixel,
-      .model = shader_model_6_0,
+      .model = shader_model_6_6,
       .file = "shaders/tile_lights.hlsl",
+   },
+
+   shader_description{
+      .name = "imguiVS",
+      .entrypoint = L"mainVS",
+      .type = shader_type::vertex,
+      .model = shader_model_6_6,
+      .file = "shaders/imgui.hlsl",
+   },
+   shader_description{
+      .name = "imguiPS",
+      .entrypoint = L"mainPS",
+      .type = shader_type::pixel,
+      .model = shader_model_6_6,
+      .file = "shaders/imgui.hlsl",
    },
 };
 }

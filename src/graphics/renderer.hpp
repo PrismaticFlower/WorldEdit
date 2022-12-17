@@ -65,6 +65,8 @@ public:
 
    void mark_dirty_terrain() noexcept;
 
+   void recreate_imgui_font_atlas();
+
    void reload_shaders() noexcept;
 
 private:

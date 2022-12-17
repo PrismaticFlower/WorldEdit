@@ -21,6 +21,8 @@ struct root_signature_library {
 
    gpu::unique_root_signature_handle tile_lights_clear;
    gpu::unique_root_signature_handle tile_lights;
+
+   gpu::unique_root_signature_handle imgui;
 };
 
 namespace rs {
@@ -82,6 +84,11 @@ namespace tile_lights {
 constexpr uint32 instance_data_srv = 0;
 constexpr uint32 light_tiles_uav = 1;
 constexpr uint32 cbv = 2;
+}
+
+namespace imgui {
+constexpr uint32 texture = 0;
+constexpr uint32 inv_viewport_size = 1;
 }
 
 }

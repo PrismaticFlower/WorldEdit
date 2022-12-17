@@ -4,7 +4,6 @@
 #include "assets/odf/default_object_class_definition.hpp"
 #include "hresult_error.hpp"
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_dx12.h"
 #include "imgui/imgui_impl_win32.h"
 #include "utility/file_pickers.hpp"
 #include "world/raycast.hpp"
@@ -546,7 +545,7 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
                                             std::floor(16.0f * _display_scale));
    ImGui::GetStyle().ScaleAllSizes(new_dpi / old_dpi);
 
-   ImGui_ImplDX12_InvalidateDeviceObjects();
+   _renderer.recreate_imgui_font_atlas();
 }
 
 }

@@ -37,6 +37,10 @@ constexpr gpu::rasterizer_state_desc rasterizer_cull_backfacing = {
    .cull_mode = gpu::cull_mode::back,
 };
 
+constexpr gpu::rasterizer_state_desc rasterizer_cull_frontfacing = {
+   .cull_mode = gpu::cull_mode::front,
+};
+
 constexpr gpu::rasterizer_state_desc rasterizer_conservative_cull_frontfacing = {
    .cull_mode = gpu::cull_mode::front,
    .conservative_raster = true,
@@ -70,23 +74,18 @@ constexpr gpu::depth_stencil_state_desc depth_stencil_disabled = {
 
 constexpr std::array mesh_input_layout = {
    gpu::input_element_desc{.semantic_name = "POSITION",
-                           .semantic_index = 0,
                            .format = DXGI_FORMAT_R32G32B32_FLOAT,
                            .input_slot = 0},
    gpu::input_element_desc{.semantic_name = "NORMAL",
-                           .semantic_index = 0,
                            .format = DXGI_FORMAT_R16G16B16A16_SNORM,
                            .input_slot = 1},
    gpu::input_element_desc{.semantic_name = "TANGENT",
-                           .semantic_index = 0,
                            .format = DXGI_FORMAT_R16G16B16A16_SNORM,
                            .input_slot = 1},
    gpu::input_element_desc{.semantic_name = "BITANGENT",
-                           .semantic_index = 0,
                            .format = DXGI_FORMAT_R16G16B16A16_SNORM,
                            .input_slot = 1},
    gpu::input_element_desc{.semantic_name = "TEXCOORD",
-                           .semantic_index = 0,
                            .format = DXGI_FORMAT_R32G32_FLOAT,
                            .input_slot = 1},
 };
@@ -97,9 +96,13 @@ constexpr std::array mesh_input_layout_position_only = {
 
 constexpr std::array meta_mesh_input_layout = {
    gpu::input_element_desc{.semantic_name = "POSITION",
-                           .semantic_index = 0,
-                           .format = DXGI_FORMAT_R32G32B32_FLOAT,
-                           .input_slot = 0},
+                           .format = DXGI_FORMAT_R32G32B32_FLOAT},
+};
+
+constexpr std::array imgui_input_layout = {
+   gpu::input_element_desc{.semantic_name = "POSITION", .format = DXGI_FORMAT_R32G32_FLOAT},
+   gpu::input_element_desc{.semantic_name = "TEXCOORDS", .format = DXGI_FORMAT_R32G32_FLOAT},
+   gpu::input_element_desc{.semantic_name = "COLOR", .format = DXGI_FORMAT_R8G8B8A8_UNORM},
 };
 
 auto create_material_pipelines(gpu::device& device, const std::string_view name_base,
@@ -487,5 +490,22 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                               .debug_name = "tile_lights_spheres"sv}),
                           device.direct_queue};
+
+   imgui = {device.create_graphics_pipeline(
+               {.root_signature = root_signature_library.imgui.get(),
+
+                .vs_bytecode = shader_library["imguiVS"sv],
+                .ps_bytecode = shader_library["imguiPS"sv],
+
+                .blend_state = blend_alpha,
+                .rasterizer_state = rasterizer_cull_none,
+                .depth_stencil_state = depth_stencil_disabled,
+                .input_layout = imgui_input_layout,
+
+                .render_target_count = 1,
+                .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+
+                .debug_name = "imgui"sv}),
+            device.direct_queue};
 }
 }

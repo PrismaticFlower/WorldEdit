@@ -10,7 +10,7 @@
 #include "gpu/barrier.hpp"
 #include "gpu/rhi.hpp"
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_dx12.h"
+#include "imgui_renderer.hpp"
 #include "light_clusters.hpp"
 #include "line_drawer.hpp"
 #include "model_manager.hpp"
@@ -138,6 +138,11 @@ public:
 
    void mark_dirty_terrain() noexcept;
 
+   void recreate_imgui_font_atlas()
+   {
+      _imgui_renderer.recreate_font_atlas(_copy_command_list_pool);
+   }
+
    void reload_shaders() noexcept
    {
       _device.wait_for_idle();
@@ -196,7 +201,7 @@ private:
    std::shared_ptr<async::thread_pool> _thread_pool;
    output_stream& _error_output;
 
-   gpu::device _device{gpu::device_desc{.enable_debug_layer = true}};
+   gpu::device _device{gpu::device_desc{.enable_debug_layer = false}};
    gpu::swap_chain _swap_chain;
    gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(
       {.allocator_name = "World Allocator", .debug_name = "Pre-Render Copy Command List"});
@@ -262,6 +267,8 @@ private:
    std::vector<render_list_item> _opaque_object_render_list;
    std::vector<render_list_item> _transparent_object_render_list;
 
+   imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
+
    renderer_config _config;
    std::shared_ptr<settings::graphics> _settings;
 };
@@ -281,15 +288,6 @@ renderer_impl::renderer_impl(const renderer::window_handle window,
                     thread_pool,      _error_output},
      _settings{settings}
 {
-   // auto imgui_font_descriptor =
-   //    _device.descriptor_heap_srv_cbv_uav.allocate_static(1);
-   //
-   // ImGui_ImplDX12_Init(_device.device_d3d.get(), gpu::render_latency,
-   //                     gpu::swap_chain::format_rtv,
-   //                     &_device.descriptor_heap_srv_cbv_uav.get(),
-   //                     imgui_font_descriptor.start().cpu,
-   //                     imgui_font_descriptor.start().gpu);
-
    // create object constants upload buffers
    for (auto [buffer, cpu_ptr] :
         ranges::views::zip(_object_constants_upload_buffers,
@@ -390,7 +388,8 @@ void renderer_impl::draw_frame(
 
    // Render ImGui
    ImGui::Render();
-   // ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), command_list.get_underlying());
+   _imgui_renderer.render_draw_data(ImGui::GetDrawData(), _root_signatures,
+                                    _pipelines, command_list);
 
    command_list.deferred_resource_barrier(
       gpu::transition_barrier(back_buffer, gpu::resource_state::render_target,
@@ -1776,6 +1775,11 @@ void renderer::window_resized(uint16 width, uint16 height)
 void renderer::mark_dirty_terrain() noexcept
 {
    _impl->mark_dirty_terrain();
+}
+
+void renderer::recreate_imgui_font_atlas()
+{
+   _impl->recreate_imgui_font_atlas();
 }
 
 void renderer::reload_shaders() noexcept

@@ -3,7 +3,6 @@
 
 #include "actions/imgui_ext.hpp"
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_dx12.h"
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_stdlib.h"
 #include "utility/look_for.hpp"
@@ -18,17 +17,6 @@ namespace we {
 
 void world_edit::update_ui() noexcept
 {
-   static bool init = false;
-
-   if (not std::exchange(init, true)) {
-      unsigned char* pixels = nullptr;
-      int width = 0;
-      int height = 0;
-
-      ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
-   }
-
-   // ImGui_ImplDX12_NewFrame();
    ImGui_ImplWin32_NewFrame();
    ImGui::NewFrame();
    ImGui::ShowDemoWindow(nullptr);
