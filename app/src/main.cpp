@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include <Windows.h>
+#include <dxgi1_6.h>
 
 #include <wil/resource.h>
 #include <wil/result.h>
@@ -220,6 +221,8 @@ void run_application(command_line command_line)
 int main(int arg_count, const char** args)
 {
    std::ios_base::sync_with_stdio(false);
+
+   DXGIDeclareAdapterRemovalSupport();
 
    run_application(command_line{arg_count, args});
 }
