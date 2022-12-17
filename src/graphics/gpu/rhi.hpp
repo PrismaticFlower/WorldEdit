@@ -394,8 +394,29 @@ struct texture_desc {
 
 /// Resource View Desc Structures ///
 
+enum class shader_component_mapping : uint32 {
+   from_memory_component_0 = 0,
+   from_memory_component_1 = 1,
+   from_memory_component_2 = 2,
+   from_memory_component_3 = 3,
+   force_value_0 = 4,
+   force_value_1 = 5
+};
+
+struct shader_4_component_mapping {
+   shader_component_mapping component_0 : 3 =
+      shader_component_mapping::from_memory_component_0;
+   shader_component_mapping component_1 : 3 =
+      shader_component_mapping::from_memory_component_1;
+   shader_component_mapping component_2 : 3 =
+      shader_component_mapping::from_memory_component_2;
+   shader_component_mapping component_3 : 3 =
+      shader_component_mapping::from_memory_component_3;
+};
+
 struct shader_resource_view_desc {
    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+   shader_4_component_mapping shader_4_component_mapping = {};
 
    struct {
       uint32 first_element = 0;

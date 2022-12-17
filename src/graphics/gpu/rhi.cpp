@@ -286,6 +286,8 @@ void device::end_frame()
       direct_queue.state->work_fence->GetCompletedValue();
    const uint64 compute_queue_completed_work_item =
       compute_queue.state->work_fence->GetCompletedValue();
+   const uint64 copy_queue_completed_work_item =
+      copy_queue.state->work_fence->GetCompletedValue();
    const uint64 background_copy_queue_completed_work_item =
       background_copy_queue.state->work_fence->GetCompletedValue();
 
@@ -296,6 +298,9 @@ void device::end_frame()
    compute_queue.state->release_queue_device_children.process(
       compute_queue_completed_work_item);
    compute_queue.state->release_queue_descriptors.process(compute_queue_completed_work_item);
+
+   copy_queue.state->release_queue_device_children.process(copy_queue_completed_work_item);
+   copy_queue.state->release_queue_descriptors.process(copy_queue_completed_work_item);
 
    background_copy_queue.state->release_queue_device_children.process(
       background_copy_queue_completed_work_item);
@@ -309,14 +314,18 @@ void device::wait_for_idle()
       direct_queue.state->last_work_item.load(std::memory_order_acquire);
    const uint64 compute_queue_last_work_item =
       compute_queue.state->last_work_item.load(std::memory_order_acquire);
+   const uint64 copy_queue_last_work_item =
+      copy_queue.state->last_work_item.load(std::memory_order_acquire);
    const uint64 background_copy_queue_last_work_item =
       background_copy_queue.state->last_work_item.load(std::memory_order_acquire);
 
    std::array fences{direct_queue.state->work_fence.get(),
                      compute_queue.state->work_fence.get(),
+                     copy_queue.state->work_fence.get(),
                      background_copy_queue.state->work_fence.get()};
 
-   std::array last_work_items{direct_queue_last_work_item, compute_queue_last_work_item,
+   std::array last_work_items{direct_queue_last_work_item,
+                              compute_queue_last_work_item, copy_queue_last_work_item,
                               background_copy_queue_last_work_item};
 
    static_assert(fences.size() == last_work_items.size());
@@ -332,6 +341,9 @@ void device::wait_for_idle()
 
    compute_queue.state->release_queue_device_children.process(compute_queue_last_work_item);
    compute_queue.state->release_queue_descriptors.process(compute_queue_last_work_item);
+
+   copy_queue.state->release_queue_device_children.process(copy_queue_last_work_item);
+   copy_queue.state->release_queue_descriptors.process(copy_queue_last_work_item);
 
    background_copy_queue.state->release_queue_device_children.process(
       background_copy_queue_last_work_item);
@@ -786,9 +798,13 @@ auto device::create_shader_resource_view(resource_handle resource,
 
    D3D12_RESOURCE_DESC1 resource_desc = d3d12_resource->GetDesc1();
 
-   D3D12_SHADER_RESOURCE_VIEW_DESC d3d12_desc{.Format = desc.format,
-                                              .Shader4ComponentMapping =
-                                                 D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING};
+   D3D12_SHADER_RESOURCE_VIEW_DESC d3d12_desc{
+      .Format = desc.format,
+      .Shader4ComponentMapping = D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(
+         std::to_underlying(desc.shader_4_component_mapping.component_0),
+         std::to_underlying(desc.shader_4_component_mapping.component_1),
+         std::to_underlying(desc.shader_4_component_mapping.component_2),
+         std::to_underlying(desc.shader_4_component_mapping.component_3))};
 
    switch (resource_desc.Dimension) {
    case D3D12_RESOURCE_DIMENSION_UNKNOWN: {
@@ -1394,6 +1410,7 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 
    state->command_allocator = state->allocator_pool->aquire(state->allocator_name);
 
+   throw_if_fail(state->command_allocator->Reset());
    throw_if_fail(state->command_list->Reset(state->command_allocator.get(), nullptr));
 }
 
