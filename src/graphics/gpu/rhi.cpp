@@ -1246,6 +1246,8 @@ void swap_chain::resize(uint32 new_width, uint32 new_height)
       terminate_if_fail(
          swap_chain.GetBuffer(i, IID_PPV_ARGS(state->buffers[i].clear_and_assign())));
 
+      state->rtv_descriptor_heap->allocator.free(state->rtv_descriptor_heap->to_index(
+         unpack_rtv_handle(state->buffer_rtvs[i])));
       state->buffer_rtvs[i] = state->device->create_render_target_view(
          pack_resource_handle(state->buffers[i].get()),
          {.format = desc.format_rtv, .dimension = rtv_dimension::texture2d});
