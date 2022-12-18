@@ -522,6 +522,8 @@ void world_edit::resized(uint16 width, uint16 height)
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
    }
+
+   update();
 }
 
 void world_edit::focused()
