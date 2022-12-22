@@ -1,11 +1,9 @@
-
 #include "pch.h"
 
 #include "approx_test_helpers.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "world/world_io_load.hpp"
 
-#include <iostream>
 #include <span>
 
 using namespace std::literals;
@@ -59,8 +57,9 @@ TEST_CASE("world loading", "[World][IO]")
       {
          CHECK(world.objects[0].name == "com_item_healthrecharge"sv);
          CHECK(world.objects[0].class_name == "com_item_healthrecharge"sv);
-         CHECK(approx_equals(world.objects[0].position, {-32.000, 0.008, 32.000}));
-         CHECK(approx_equals(world.objects[0].rotation, {0.000, 0.000, 1.000, 0.000}));
+         CHECK(approx_equals(world.objects[0].position, {-32.000f, 0.008f, 32.000f}));
+         CHECK(approx_equals(world.objects[0].rotation,
+                             {0.000f, 0.000f, 1.000f, 0.000f}));
          CHECK(world.objects[0].team == 0);
          CHECK(world.objects[0].layer == 0);
          CHECK(is_unique_id(0, world.objects));
@@ -76,8 +75,9 @@ TEST_CASE("world loading", "[World][IO]")
       {
          CHECK(world.objects[1].name == "com_inv_col_8"sv);
          CHECK(world.objects[1].class_name == "com_inv_col_8"sv);
-         CHECK(approx_equals(world.objects[1].position, {68.000, 0.000, -4.000}));
-         CHECK(approx_equals(world.objects[1].rotation, {0.000, 0.000, 1.000, 0.000}));
+         CHECK(approx_equals(world.objects[1].position, {68.000f, 0.000f, -4.000f}));
+         CHECK(approx_equals(world.objects[1].rotation,
+                             {0.000f, 0.000f, 1.000f, 0.000f}));
          CHECK(world.objects[1].team == 0);
          CHECK(world.objects[1].layer == 1);
          CHECK(is_unique_id(1, world.objects));
@@ -90,9 +90,9 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(world.lighting_settings.global_lights[0] == "sun"sv);
       CHECK(world.lighting_settings.global_lights[1] == ""sv);
       CHECK(approx_equals(world.lighting_settings.ambient_sky_color,
-                          utility::decompress_srgb({0.5490196, 0.3098039, 0.2470588})));
+                          utility::decompress_srgb({0.5490196f, 0.3098039f, 0.2470588f})));
       CHECK(approx_equals(world.lighting_settings.ambient_ground_color,
-                          utility::decompress_srgb({0.3137254, 0.1568627, 0.1176470})));
+                          utility::decompress_srgb({0.3137254f, 0.1568627f, 0.1176470f})));
 
       REQUIRE(world.lights.size() == 4);
 
@@ -100,12 +100,12 @@ TEST_CASE("world loading", "[World][IO]")
       {
          CHECK(world.lights[0].name == "Light 2"sv);
          CHECK(approx_equals(world.lights[0].position,
-                             {-128.463806, 0.855094, 22.575970}));
+                             {-128.463806f, 0.855094f, 22.575970f}));
          CHECK(approx_equals(world.lights[0].rotation,
                              {0.000000f, 0.054843f, 0.998519f, 0.000000f}));
          CHECK(world.lights[0].layer == 0);
          CHECK(world.lights[0].light_type == light_type::point);
-         CHECK(approx_equals(world.lights[0].color, {0.501961, 0.376471, 0.376471}));
+         CHECK(approx_equals(world.lights[0].color, {0.501961f, 0.376471f, 0.376471f}));
          CHECK(world.lights[0].static_);
          CHECK(world.lights[0].specular_caster);
          CHECK(not world.lights[0].shadow_caster);
@@ -119,12 +119,12 @@ TEST_CASE("world loading", "[World][IO]")
 
          CHECK(world.lights[1].name == "sun"sv);
          CHECK(approx_equals(world.lights[1].position,
-                             {-159.264923, 19.331013, 66.727310}));
+                             {-159.264923f, 19.331013f, 66.727310f}));
          CHECK(approx_equals(world.lights[1].rotation,
                              {-0.039542f, 0.008615f, 0.922373f, -0.384204f}));
          CHECK(world.lights[1].layer == 0);
          CHECK(world.lights[1].light_type == light_type::directional);
-         CHECK(approx_equals(world.lights[1].color, {1.000000, 0.882353, 0.752941}));
+         CHECK(approx_equals(world.lights[1].color, {1.000000f, 0.882353f, 0.752941f}));
          CHECK(world.lights[1].static_);
          CHECK(world.lights[1].specular_caster);
          CHECK(world.lights[1].shadow_caster);
@@ -139,9 +139,9 @@ TEST_CASE("world loading", "[World][IO]")
       {
          CHECK(world.lights[2].name == "Light 3"sv);
          CHECK(approx_equals(world.lights[2].position,
-                             {-149.102463, 0.469788, -22.194153}));
+                             {-149.102463f, 0.469788f, -22.194153f}));
          CHECK(approx_equals(world.lights[2].rotation,
-                             {0.000000, 0.000000, 1.000000, 0.000000}));
+                             {0.000000f, 0.000000f, 1.000000f, 0.000000f}));
          CHECK(world.lights[2].layer == 0);
          CHECK(world.lights[2].light_type == light_type::spot);
          CHECK(approx_equals(world.lights[2].color, {1.000000, 1.000000, 1.000000}));
@@ -159,12 +159,12 @@ TEST_CASE("world loading", "[World][IO]")
       {
          CHECK(world.lights[3].name == "Light 1"sv);
          CHECK(approx_equals(world.lights[3].position,
-                             {-129.618546, 5.019108, 27.300539}));
+                             {-129.618546f, 5.019108f, 27.300539f}));
          CHECK(approx_equals(world.lights[3].rotation,
                              {0.380202f, 0.000000f, 0.924904f, 0.000000f}));
          CHECK(world.lights[3].layer == 0);
          CHECK(world.lights[3].light_type == light_type::point);
-         CHECK(approx_equals(world.lights[3].color, {0.498039, 0.498039, 0.627451}));
+         CHECK(approx_equals(world.lights[3].color, {0.498039f, 0.498039f, 0.627451f}));
          CHECK(world.lights[3].static_);
          CHECK(world.lights[3].specular_caster);
          CHECK(not world.lights[3].shadow_caster);
@@ -220,9 +220,9 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(is_unique_id(1, world.paths));
 
          constexpr std::array<float3, 3> expected_positions{
-            {{-16.041691, 0.000000, 31.988783},
-             {-31.982189, 0.000000, 48.033310},
-             {-48.012756, 0.000000, 31.962399}}};
+            {{-16.041691f, 0.000000f, 31.988783f},
+             {-31.982189f, 0.000000f, 48.033310f},
+             {-48.012756f, 0.000000f, 31.962399f}}};
 
          REQUIRE(world.paths[1].nodes.size() == 3);
 
@@ -254,9 +254,9 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(world.regions[0].description == "foleyfx water"sv);
       CHECK(world.regions[0].shape == region_shape::box);
       CHECK(approx_equals(world.regions[0].position,
-                          {-32.000000, 16.000000, 32.000000}));
-      CHECK(approx_equals(world.regions[0].rotation, {0.000, 0.000, 1.000, 0.000}));
-      CHECK(approx_equals(world.regions[0].size, {16.000000, 16.000000, 16.000000}));
+                          {-32.000000f, 16.000000f, 32.000000f}));
+      CHECK(approx_equals(world.regions[0].rotation, {0.000f, 0.000f, 1.000f, 0.000f}));
+      CHECK(approx_equals(world.regions[0].size, {16.000000f, 16.000000f, 16.000000f}));
       CHECK(is_unique_id(0, world.regions));
    }
 
@@ -315,10 +315,10 @@ TEST_CASE("world loading", "[World][IO]")
       REQUIRE(world.barriers.size() == 1);
       CHECK(world.barriers[0].name == "Barrier0"sv);
       CHECK(world.barriers[0].flags == ai_path_flags::flyer);
-      CHECK(approx_equals(world.barriers[0].corners[0], {72.596146, 31.159695}));
-      CHECK(approx_equals(world.barriers[0].corners[1], {86.691795, 0.198154}));
-      CHECK(approx_equals(world.barriers[0].corners[2], {99.806587, 6.168838}));
-      CHECK(approx_equals(world.barriers[0].corners[3], {85.710938, 37.130379}));
+      CHECK(approx_equals(world.barriers[0].corners[0], {72.596146f, 31.159695f}));
+      CHECK(approx_equals(world.barriers[0].corners[1], {86.691795f, 0.198154f}));
+      CHECK(approx_equals(world.barriers[0].corners[2], {99.806587f, 6.168838f}));
+      CHECK(approx_equals(world.barriers[0].corners[3], {85.710938f, 37.130379f}));
       CHECK(is_unique_id(0, world.barriers));
    }
 

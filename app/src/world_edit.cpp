@@ -5,6 +5,7 @@
 #include "hresult_error.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
+#include "math/vector_funcs.hpp"
 #include "utility/file_pickers.hpp"
 #include "world/raycast.hpp"
 #include "world/world_io_load.hpp"

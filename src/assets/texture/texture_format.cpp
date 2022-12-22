@@ -1,13 +1,17 @@
 
 #include "texture_format.hpp"
+#include "utility/float16_packing.hpp"
 #include "utility/srgb_conversion.hpp"
 
 #include <cassert>
+#include <cmath>
 #include <stdexcept>
-
-#include <glm/gtc/packing.hpp>
+#include <utility>
 
 namespace we::assets::texture {
+
+using utility::pack_float16;
+using utility::unpack_float16;
 
 namespace {
 
@@ -26,10 +30,10 @@ auto get_texel_bytes(const texture_format format, const uint32 x, const uint32 y
 
 auto clamp_unorm(const float4 value) noexcept -> float4
 {
-   return {glm::isnan(value.r) ? 0.0 : glm::clamp(value.r, 0.0f, 1.0f),
-           glm::isnan(value.g) ? 0.0 : glm::clamp(value.g, 0.0f, 1.0f),
-           glm::isnan(value.b) ? 0.0 : glm::clamp(value.b, 0.0f, 1.0f),
-           glm::isnan(value.a) ? 0.0 : glm::clamp(value.a, 0.0f, 1.0f)};
+   return {std::isnan(value.x) ? 0.0f : std::clamp(value.x, 0.0f, 1.0f),
+           std::isnan(value.y) ? 0.0f : std::clamp(value.y, 0.0f, 1.0f),
+           std::isnan(value.z) ? 0.0f : std::clamp(value.z, 0.0f, 1.0f),
+           std::isnan(value.w) ? 0.0f : std::clamp(value.w, 0.0f, 1.0f)};
 }
 
 auto load_r8g8b8a8_unorm(const std::span<const std::byte> texel_bytes) noexcept -> float4
@@ -56,7 +60,7 @@ auto load_b8g8r8a8_unorm(const std::span<const std::byte> texel_bytes) noexcept 
 {
    const float4 rgba = load_r8g8b8a8_unorm(texel_bytes);
 
-   return {rgba.b, rgba.g, rgba.r, rgba.a};
+   return {rgba.z, rgba.y, rgba.x, rgba.w};
 }
 
 auto load_b8g8r8a8_unorm_srgb(const std::span<const std::byte> texel_bytes) noexcept
@@ -81,16 +85,13 @@ auto load_r16g16b16a16_unorm(const std::span<const std::byte> texel_bytes) noexc
 
 auto load_r16g16b16a16_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
 {
-   assert(texel_bytes.size() >= sizeof(uint64));
+   assert(texel_bytes.size() >= sizeof(std::array<uint16, 4>));
 
-   uint64 packed{};
+   std::array<uint16, 4> packed{};
 
-   std::memcpy(&packed, texel_bytes.data(), sizeof(uint64));
+   std::memcpy(&packed, texel_bytes.data(), sizeof(std::array<uint16, 4>));
 
-   return {glm::unpackHalf1x16(packed & 0xffff),         //
-           glm::unpackHalf1x16((packed >> 16) & 0xffff), //
-           glm::unpackHalf1x16((packed >> 32) & 0xffff), //
-           glm::unpackHalf1x16((packed >> 48) & 0xffff)};
+   return unpack_float16(packed);
 }
 
 auto load_r32g32b32_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
@@ -123,10 +124,10 @@ void store_r8g8b8a8_unorm(const float4 value, const std::span<std::byte> texel_b
 
    uint32 packed{};
 
-   packed |= (static_cast<uint32>(clamped.r * 255.f + 0.5f));
-   packed |= (static_cast<uint32>(clamped.g * 255.f + 0.5f) << 8);
-   packed |= (static_cast<uint32>(clamped.b * 255.f + 0.5f) << 16);
-   packed |= (static_cast<uint32>(clamped.a * 255.f + 0.5f) << 24);
+   packed |= (static_cast<uint32>(clamped.x * 255.f + 0.5f));
+   packed |= (static_cast<uint32>(clamped.y * 255.f + 0.5f) << 8);
+   packed |= (static_cast<uint32>(clamped.z * 255.f + 0.5f) << 16);
+   packed |= (static_cast<uint32>(clamped.w * 255.f + 0.5f) << 24);
 
    std::memcpy(texel_bytes.data(), &packed, sizeof(uint32));
 }
@@ -139,7 +140,7 @@ void store_r8g8b8a8_unorm_srgb(const float4 value,
 
 void store_b8g8r8a8_unorm(const float4 value, const std::span<std::byte> texel_bytes) noexcept
 {
-   store_r8g8b8a8_unorm({value.b, value.g, value.r, value.a}, texel_bytes);
+   store_r8g8b8a8_unorm({value.z, value.y, value.x, value.w}, texel_bytes);
 }
 
 void store_b8g8r8a8_unorm_srgb(const float4 value,
@@ -157,10 +158,10 @@ void store_r16g16b16a16_unorm(const float4 value,
 
    uint64 packed{};
 
-   packed |= (static_cast<uint64>(clamped.r * 65535.f + 0.5f));
-   packed |= (static_cast<uint64>(clamped.g * 65535.f + 0.5f) << 16);
-   packed |= (static_cast<uint64>(clamped.b * 65535.f + 0.5f) << 32);
-   packed |= (static_cast<uint64>(clamped.a * 65535.f + 0.5f) << 48);
+   packed |= (static_cast<uint64>(clamped.x * 65535.f + 0.5f));
+   packed |= (static_cast<uint64>(clamped.y * 65535.f + 0.5f) << 16);
+   packed |= (static_cast<uint64>(clamped.z * 65535.f + 0.5f) << 32);
+   packed |= (static_cast<uint64>(clamped.w * 65535.f + 0.5f) << 48);
 
    std::memcpy(texel_bytes.data(), &packed, sizeof(uint64));
 }
@@ -170,14 +171,9 @@ void store_r16g16b16a16_float(const float4 value,
 {
    assert(texel_bytes.size() >= sizeof(uint64));
 
-   uint64 packed{};
+   const std::array<uint16, 4> packed = pack_float16(value);
 
-   packed |= (uint64{glm::packHalf1x16(value.r)});
-   packed |= (uint64{glm::packHalf1x16(value.g)} << 16);
-   packed |= (uint64{glm::packHalf1x16(value.b)} << 32);
-   packed |= (uint64{glm::packHalf1x16(value.a)} << 48);
-
-   std::memcpy(texel_bytes.data(), &packed, sizeof(uint64));
+   std::memcpy(texel_bytes.data(), &packed, sizeof(std::array<uint16, 4>));
 }
 
 void store_r32g32b32_float(const float4 value, const std::span<std::byte> texel_bytes) noexcept

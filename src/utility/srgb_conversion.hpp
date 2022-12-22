@@ -18,14 +18,14 @@ inline auto decompress_srgb(const Float v) -> Float
 
 inline auto decompress_srgb(const float3 color) -> float3
 {
-   return {decompress_srgb(color.r), decompress_srgb(color.g),
-           decompress_srgb(color.b)};
+   return {decompress_srgb(color.x), decompress_srgb(color.y),
+           decompress_srgb(color.z)};
 }
 
 inline auto decompress_srgb(const float4 color) -> float4
 {
-   return {decompress_srgb(color.r), decompress_srgb(color.g),
-           decompress_srgb(color.b), color.a};
+   return {decompress_srgb(color.x), decompress_srgb(color.y),
+           decompress_srgb(color.z), color.w};
 }
 
 template<typename Float>
@@ -39,13 +39,13 @@ inline auto compress_srgb(const Float v)
 
 inline auto compress_srgb(const float3 color) -> float3
 {
-   return {compress_srgb(color.r), compress_srgb(color.g), compress_srgb(color.b)};
+   return {compress_srgb(color.x), compress_srgb(color.y), compress_srgb(color.z)};
 }
 
 inline auto compress_srgb(const float4 color) -> float4
 {
-   return {compress_srgb(color.r), compress_srgb(color.g),
-           compress_srgb(color.b), color.a};
+   return {compress_srgb(color.x), compress_srgb(color.y),
+           compress_srgb(color.z), color.w};
 }
 
 inline constexpr std::array srgb_unorm_to_float_lut = {
@@ -118,10 +118,10 @@ inline auto pack_srgb_bgra(const float4 color) -> uint32
 
    uint32 packed = 0;
 
-   packed |= pack_unorm(compress_srgb(color.b));
-   packed |= pack_unorm(compress_srgb(color.g)) << 8;
-   packed |= pack_unorm(compress_srgb(color.r)) << 16;
-   packed |= pack_unorm(compress_srgb(color.a)) << 24;
+   packed |= pack_unorm(compress_srgb(color.z));
+   packed |= pack_unorm(compress_srgb(color.y)) << 8;
+   packed |= pack_unorm(compress_srgb(color.x)) << 16;
+   packed |= pack_unorm(compress_srgb(color.w)) << 24;
 
    return packed;
 }

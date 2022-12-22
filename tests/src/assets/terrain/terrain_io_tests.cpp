@@ -29,10 +29,10 @@ TEST_CASE("terrain io valid tests", "[Assets][Terrain]")
    CHECK(terrain.water_settings.v_velocity == 0.0_a);
    CHECK(terrain.water_settings.u_repeat == 1.0_a);
    CHECK(terrain.water_settings.v_repeat == 1.0_a);
-   CHECK(terrain.water_settings.color.r == Approx(0.00972).margin(0.0025));
-   CHECK(terrain.water_settings.color.g == 1.0_a);
-   CHECK(terrain.water_settings.color.b == Approx(0.00972).margin(0.0025));
-   CHECK(terrain.water_settings.color.a == 1.0_a);
+   CHECK(terrain.water_settings.color.x == Approx(0.00972).margin(0.0025));
+   CHECK(terrain.water_settings.color.y == 1.0_a);
+   CHECK(terrain.water_settings.color.z == Approx(0.00972).margin(0.0025));
+   CHECK(terrain.water_settings.color.w == 1.0_a);
    CHECK(terrain.water_settings.texture == "white.tga"sv);
 
    CHECK(terrain.texture_names[0] == "white.tga"sv);

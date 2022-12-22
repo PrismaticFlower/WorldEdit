@@ -210,9 +210,12 @@
     <ClCompile Include="src\lowercase_string_tests.cpp" />
     <ClCompile Include="src\math\align_tests.cpp" />
     <ClCompile Include="src\math\bounding_box_tests.cpp" />
+    <ClCompile Include="src\math\matrix_funcs_tests.cpp" />
+    <ClCompile Include="src\math\vector_funcs_tests.cpp" />
     <ClCompile Include="src\utility\binary_reader_tests.cpp" />
     <ClCompile Include="src\utility\command_line_tests.cpp" />
     <ClCompile Include="src\utility\event_tests.cpp" />
+    <ClCompile Include="src\utility\float16_packing_tests.cpp" />
     <ClCompile Include="src\utility\implementation_storage_tests.cpp" />
     <ClCompile Include="src\utility\look_for_tests.cpp" />
     <ClCompile Include="src\utility\overload_tests.cpp" />

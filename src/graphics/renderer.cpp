@@ -13,6 +13,9 @@
 #include "imgui_renderer.hpp"
 #include "light_clusters.hpp"
 #include "line_drawer.hpp"
+#include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
+#include "math/vector_funcs.hpp"
 #include "model_manager.hpp"
 #include "output_stream.hpp"
 #include "pipeline_library.hpp"
@@ -570,7 +573,7 @@ void renderer_impl::draw_world_meta_objects(
             for (auto& node : path.nodes) {
                // TEMP constants setup
                {
-                  float4x4 transform = static_cast<float4x4>(node.rotation) *
+                  float4x4 transform = to_matrix(node.rotation) *
                                        float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
                                                 {0.0f, 0.5f, 0.0f, 0.0f},
                                                 {0.0f, 0.0f, 0.5f, 0.0f},
@@ -620,37 +623,36 @@ void renderer_impl::draw_world_meta_objects(
       }
 
       if (draw_orientation) {
-         draw_lines(
-            command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
-            {.line_color = _settings->path_node_orientation_color(),
+         draw_lines(command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
+                    {.line_color = _settings->path_node_orientation_color(),
 
-             .camera_constant_buffer_view = _camera_constant_buffer_view,
+                     .camera_constant_buffer_view = _camera_constant_buffer_view,
 
-             .connect_mode = line_connect_mode::linear},
-            [&](line_draw_context& draw_context) {
-               for (auto& path : world.paths) {
-                  using namespace ranges::views;
+                     .connect_mode = line_connect_mode::linear},
+                    [&](line_draw_context& draw_context) {
+                       for (auto& path : world.paths) {
+                          using namespace ranges::views;
 
-                  const auto get_position = [](const world::path::node& node) {
-                     return node.position;
-                  };
+                          const auto get_position = [](const world::path::node& node) {
+                             return node.position;
+                          };
 
-                  for (auto& node : path.nodes) {
-                     if (not active_layers[path.layer]) continue;
+                          for (auto& node : path.nodes) {
+                             if (not active_layers[path.layer]) continue;
 
-                     float4x4 transform = static_cast<float4x4>(node.rotation);
+                             float4x4 transform = to_matrix(node.rotation);
 
-                     transform[3] = {node.position, 1.0f};
+                             transform[3] = {node.position, 1.0f};
 
-                     for (const auto line : path_node_arrow_wireframe) {
-                        const float3 a = transform * float4{line[0], 1.0f};
-                        const float3 b = transform * float4{line[1], 1.0f};
+                             for (const auto line : path_node_arrow_wireframe) {
+                                const float3 a = transform * line[0];
+                                const float3 b = transform * line[1];
 
-                        draw_context.add(a, b);
-                     }
-                  }
-               }
-            });
+                                draw_context.add(a, b);
+                             }
+                          }
+                       }
+                    });
       }
    }
 
@@ -670,21 +672,23 @@ void renderer_impl::draw_world_meta_objects(
                return region.size;
             }
             case world::region_shape::sphere: {
-               return float3{glm::length(region.size)};
+               const float sphere_radius = length(region.size);
+
+               return float3{sphere_radius, sphere_radius, sphere_radius};
             }
             case world::region_shape::cylinder: {
                const float cylinder_length =
-                  glm::length(float2{region.size.x, region.size.z});
+                  length(float2{region.size.x, region.size.z});
                return float3{cylinder_length, region.size.y, cylinder_length};
             }
             }
          }();
 
-         float4x4 transform = static_cast<float4x4>(region.rotation) *
-                              float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
-                                       {0.0f, scale.y, 0.0f, 0.0f},
-                                       {0.0f, 0.0f, scale.z, 0.0f},
-                                       {0.0f, 0.0f, 0.0f, 1.0f}};
+         float4x4 transform =
+            to_matrix(region.rotation) * float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                                  {0.0f, scale.y, 0.0f, 0.0f},
+                                                  {0.0f, 0.0f, scale.z, 0.0f},
+                                                  {0.0f, 0.0f, 0.0f, 1.0f}};
 
          transform[3] = {region.position, 1.0f};
 
@@ -753,19 +757,18 @@ void renderer_impl::draw_world_meta_objects(
          // TEMP constants setup
          {
             const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
-            const float2 size{glm::distance(barrier.corners[0], barrier.corners[3]),
-                              glm::distance(barrier.corners[0], barrier.corners[1])};
+            const float2 size{distance(barrier.corners[0], barrier.corners[3]),
+                              distance(barrier.corners[0], barrier.corners[1])};
             const float angle =
                std::atan2(barrier.corners[1].x - barrier.corners[0].x,
                           barrier.corners[1].y - barrier.corners[0].y);
 
-            const quaternion rotation{float3{0.0f, angle, 0.0f}};
-
-            float4x4 transform = static_cast<float4x4>(rotation) *
-                                 float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                                          {0.0f, barrier_height, 0.0f, 0.0f},
-                                          {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                                          {0.0f, 0.0f, 0.0f, 1.0f}};
+            float4x4 transform =
+               make_rotation_matrix_from_euler({0.0f, angle, 0.0f}) *
+               float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                        {0.0f, barrier_height, 0.0f, 0.0f},
+                        {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}};
 
             transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
@@ -846,8 +849,8 @@ void renderer_impl::draw_world_meta_objects(
                const float cone_radius = half_range * std::tan(angle);
 
                float4x4 transform =
-                  static_cast<float4x4>(light.rotation) *
-                  static_cast<float4x4>(glm::quat{0.707107f, -0.707107f, 0.0f, 0.0f}) *
+                  to_matrix(light.rotation) *
+                  to_matrix(quaternion{0.707107f, -0.707107f, 0.0f, 0.0f}) *
                   float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
                            {0.0f, half_range, 0.0f, 0.0f},
                            {0.0f, 0.0f, cone_radius, 0.0f},
@@ -992,7 +995,7 @@ void renderer_impl::draw_world_meta_objects(
 
          // TEMP constants setup
          {
-            float4x4 transform = static_cast<float4x4>(hintnode.rotation);
+            float4x4 transform = to_matrix(hintnode.rotation);
 
             transform[3] = {hintnode.position, 1.0f};
 
@@ -1085,11 +1088,11 @@ void renderer_impl::draw_interaction_targets(
       };
 
       const auto draw_path_node = [&](const world::path::node& node) {
-         float4x4 transform = static_cast<float4x4>(node.rotation) *
-                              float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
-                                       {0.0f, 0.5f, 0.0f, 0.0f},
-                                       {0.0f, 0.0f, 0.5f, 0.0f},
-                                       {0.0f, 0.0f, 0.0f, 1.0f}};
+         float4x4 transform =
+            to_matrix(node.rotation) * float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
+                                                {0.0f, 0.5f, 0.0f, 0.0f},
+                                                {0.0f, 0.0f, 0.5f, 0.0f},
+                                                {0.0f, 0.0f, 0.0f, 1.0f}};
 
          transform[3] = {node.position, 1.0f};
 
@@ -1120,7 +1123,7 @@ void renderer_impl::draw_interaction_targets(
 
                   world_mesh_constants constants{};
 
-                  constants.object_to_world = static_cast<float4x4>(object->rotation);
+                  constants.object_to_world = to_matrix(object->rotation);
                   constants.object_to_world[3] = float4{object->position, 1.0f};
 
                   std::memcpy(allocation.cpu_address, &constants,
@@ -1181,17 +1184,19 @@ void renderer_impl::draw_interaction_targets(
                         return region->size;
                      }
                      case world::region_shape::sphere: {
-                        return float3{glm::length(region->size)};
+                        const float sphere_radius = length(region->size);
+
+                        return float3{sphere_radius, sphere_radius, sphere_radius};
                      }
                      case world::region_shape::cylinder: {
                         const float cylinder_length =
-                           glm::length(float2{region->size.x, region->size.z});
+                           length(float2{region->size.x, region->size.z});
                         return float3{cylinder_length, region->size.y, cylinder_length};
                      }
                      }
                   }();
 
-                  float4x4 transform = static_cast<float4x4>(region->rotation) *
+                  float4x4 transform = to_matrix(region->rotation) *
                                        float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
                                                 {0.0f, scale.y, 0.0f, 0.0f},
                                                 {0.0f, 0.0f, scale.z, 0.0f},
@@ -1245,8 +1250,8 @@ void renderer_impl::draw_interaction_targets(
                      half_range * std::tan(light->outer_cone_angle);
 
                   float4x4 transform =
-                     static_cast<float4x4>(light->rotation) *
-                     static_cast<float4x4>(glm::quat{0.707107f, -0.707107f, 0.0f, 0.0f}) *
+                     to_matrix(light->rotation) *
+                     to_matrix(quaternion{0.707107f, -0.707107f, 0.0f, 0.0f}) *
                      float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
                               {0.0f, half_range, 0.0f, 0.0f},
                               {0.0f, 0.0f, cone_radius, 0.0f},
@@ -1332,17 +1337,19 @@ void renderer_impl::draw_interaction_targets(
                      return region->size;
                   }
                   case world::region_shape::sphere: {
-                     return float3{glm::length(region->size)};
+                     const float sphere_radius = length(region->size);
+
+                     return float3{sphere_radius, sphere_radius, sphere_radius};
                   }
                   case world::region_shape::cylinder: {
                      const float cylinder_length =
-                        glm::length(float2{region->size.x, region->size.z});
+                        length(float2{region->size.x, region->size.z});
                      return float3{cylinder_length, region->size.y, cylinder_length};
                   }
                   }
                }();
 
-               float4x4 transform = static_cast<float4x4>(region->rotation) *
+               float4x4 transform = to_matrix(region->rotation) *
                                     float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
                                              {0.0f, scale.y, 0.0f, 0.0f},
                                              {0.0f, 0.0f, scale.z, 0.0f},
@@ -1457,7 +1464,7 @@ void renderer_impl::draw_interaction_targets(
 
                meta_mesh_common_setup();
 
-               float4x4 transform = static_cast<float4x4>(hintnode->rotation);
+               float4x4 transform = to_matrix(hintnode->rotation);
                transform[3] = {hintnode->position, 1.0f};
 
                command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
@@ -1485,23 +1492,20 @@ void renderer_impl::draw_interaction_targets(
 
                const float2 position =
                   (barrier->corners[0] + barrier->corners[2]) / 2.0f;
-               const float2 size{glm::distance(barrier->corners[0],
-                                               barrier->corners[3]),
-                                 glm::distance(barrier->corners[0],
-                                               barrier->corners[1])};
+               const float2 size{distance(barrier->corners[0], barrier->corners[3]),
+                                 distance(barrier->corners[0], barrier->corners[1])};
                const float angle =
                   std::atan2(barrier->corners[1].x - barrier->corners[0].x,
                              barrier->corners[1].y - barrier->corners[0].y);
 
                const float barrier_height = _settings->barrier_height();
 
-               const quaternion rotation{float3{0.0f, angle, 0.0f}};
-
-               float4x4 transform = static_cast<float4x4>(rotation) *
-                                    float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                                             {0.0f, barrier_height, 0.0f, 0.0f},
-                                             {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+               float4x4 transform =
+                  make_rotation_matrix_from_euler({0.0f, angle, 0.0f}) *
+                  float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                           {0.0f, barrier_height, 0.0f, 0.0f},
+                           {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                           {0.0f, 0.0f, 0.0f, 1.0f}};
                transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
                command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
@@ -1632,7 +1636,7 @@ void renderer_impl::build_world_mesh_list(
 
       world_mesh_constants constants;
 
-      constants.object_to_world = static_cast<float4x4>(object.rotation);
+      constants.object_to_world = to_matrix(object.rotation);
       constants.object_to_world[3] = float4{object.position, 1.0f};
 
       std::memcpy(constants_upload_data + object_constants_offset,
@@ -1696,8 +1700,8 @@ void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
       }();
 
       render_list.push_back({
-         .distance = glm::dot(view_frustrum.planes[frustrum_planes::near_],
-                              float4{meshes.position[i], 1.0f}),
+         .distance = dot(view_frustrum.planes[frustrum_planes::near_],
+                         float4{meshes.position[i], 1.0f}),
 
          .pipeline = meshes.pipeline[i],
          .depth_prepass_pipeline = depth_prepass_pipeline,

@@ -571,6 +571,18 @@
     <ClInclude Include="src\graphics\imgui_renderer.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\math\vector_funcs.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\matrix_funcs.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\quaternion_funcs.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utility\float16_packing.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -760,6 +772,21 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\imgui_renderer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\msh\scene.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\matrix_funcs.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\bounding_box.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\shadow_camera.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utility\float16_packing.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,6 +1,9 @@
 
 #include "flat_model.hpp"
 #include "generate_tangents.hpp"
+#include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
+#include "math/vector_funcs.hpp"
 #include "utility/enum_bitflags.hpp"
 #include "utility/string_ops.hpp"
 
@@ -118,18 +121,18 @@ auto generate_normals(std::span<const float3> positions,
                       std::span<const std::array<uint16, 3>> triangles)
    -> std::vector<float3>
 {
-   std::vector<float3> normals{positions.size(), float3{0.0f}};
+   std::vector<float3> normals{positions.size(), float3{}};
 
    for (const auto [i0, i1, i2] : triangles) {
       const float3 normal =
-         glm::cross(positions[i0] - positions[i1], positions[i2] - positions[i1]);
+         cross(positions[i0] - positions[i1], positions[i2] - positions[i1]);
 
       normals[i0] += normal;
       normals[i1] += normal;
       normals[i2] += normal;
    }
 
-   for (auto& normal : normals) normal = glm::normalize(normal);
+   for (auto& normal : normals) normal = normalize(normal);
 
    return normals;
 }
@@ -187,8 +190,12 @@ flat_model::flat_model(const scene& scene) noexcept
 
 void flat_model::regenerate_bounding_boxes() noexcept
 {
-   bounding_box = {.min = float3{std::numeric_limits<float>::max()},
-                   .max = float3{std::numeric_limits<float>::lowest()}};
+   bounding_box = {.min = float3{std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max()},
+                   .max = float3{std::numeric_limits<float>::lowest(),
+                                 std::numeric_limits<float>::lowest(),
+                                 std::numeric_limits<float>::lowest()}};
 
    for (auto& mesh : meshes) {
       mesh.regenerate_bounding_box();
@@ -216,17 +223,17 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
       const auto vertex_offset = mesh.positions.size();
 
       for (auto pos : segment.positions) {
-         mesh.positions.emplace_back(node_to_object * float4{pos, 1.0f});
+         mesh.positions.emplace_back(node_to_object * pos);
       }
 
-      const float3x3 normal_node_to_object = node_to_object;
+      const float3x3 normal_node_to_object{node_to_object};
 
       if (not segment.normals) {
          mesh.normals = generate_normals(mesh.positions, mesh.triangles);
       }
       else {
          for (auto normal : *segment.normals) {
-            mesh.normals.emplace_back(normal_node_to_object * float4{normal, 1.0f});
+            mesh.normals.emplace_back(normal_node_to_object * normal);
          }
       }
 
@@ -290,8 +297,10 @@ void flat_model::flatten_node_to_collision(const node& node, const float4x4& nod
       auto& primitive =
          flat_collision.geometry.emplace<flat_model_collision::primitive>();
 
-      primitive.transform = {.translation = node_to_object[3],
-                             .rotation = node_to_object};
+      primitive.transform = {.translation =
+                                float3{node_to_object[3].x, node_to_object[3].y,
+                                       node_to_object[3].z},
+                             .rotation = make_quat_from_matrix(node_to_object)};
       primitive.shape = node.collision_primitive->shape;
       primitive.radius = node.collision_primitive->radius;
       primitive.height = node.collision_primitive->height;
@@ -304,7 +313,7 @@ void flat_model::flatten_node_to_collision(const node& node, const float4x4& nod
          const auto base_vertex = mesh.positions.size();
 
          for (auto pos : segment.positions) {
-            mesh.positions.emplace_back(node_to_object * float4{pos, 1.0f});
+            mesh.positions.emplace_back(node_to_object * pos);
          }
 
          for (auto [i0, i1, i2] : segment.triangles) {
@@ -338,8 +347,12 @@ void flat_model::generate_tangents_for_meshes()
 
 void mesh::regenerate_bounding_box() noexcept
 {
-   bounding_box = {.min = float3{std::numeric_limits<float>::max()},
-                   .max = float3{std::numeric_limits<float>::lowest()}};
+   bounding_box = {.min = float3{std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max()},
+                   .max = float3{std::numeric_limits<float>::lowest(),
+                                 std::numeric_limits<float>::lowest(),
+                                 std::numeric_limits<float>::lowest()}};
 
    for (const auto& pos : positions) {
       bounding_box = math::integrate(bounding_box, pos);
@@ -351,8 +364,12 @@ void flat_model_collision::regenerate_bounding_box() noexcept
    if (std::holds_alternative<mesh>(geometry)) {
       auto& coll_mesh = std::get<mesh>(geometry);
 
-      bounding_box = {.min = float3{std::numeric_limits<float>::max()},
-                      .max = float3{std::numeric_limits<float>::lowest()}};
+      bounding_box = {.min = float3{std::numeric_limits<float>::max(),
+                                    std::numeric_limits<float>::max(),
+                                    std::numeric_limits<float>::max()},
+                      .max = float3{std::numeric_limits<float>::lowest(),
+                                    std::numeric_limits<float>::lowest(),
+                                    std::numeric_limits<float>::lowest()}};
 
       for (const auto& pos : coll_mesh.positions) {
          bounding_box = math::integrate(bounding_box, pos);

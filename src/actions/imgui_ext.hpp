@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/quaternion_funcs.hpp"
 #include "stack.hpp"
 #include "types.hpp"
 #include "ui_action.hpp"
@@ -164,10 +165,10 @@ inline bool DragQuat(const char* label, Entity* entity,
 {
    return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](we::quaternion* value) {
       bool value_changed =
-         ImGui::DragFloat4(label, &(*value)[0], v_speed, 0.0f, 0.0f, format, flags);
+         ImGui::DragFloat4(label, &(*value).w, v_speed, 0.0f, 0.0f, format, flags);
 
       if (value_changed) {
-         *value = glm::normalize(*value);
+         *value = normalize(*value);
       }
 
       return we::edit_widget_result{.value_changed = value_changed,
@@ -590,11 +591,11 @@ inline bool DragQuat(const char* label, we::world::path* entity,
    return EditWithUndo(entity, node_index, value_member_ptr, action_stack,
                        world, [=](we::quaternion* value) {
                           bool value_changed =
-                             ImGui::DragFloat4(label, &(*value)[0], v_speed,
+                             ImGui::DragFloat4(label, &(*value).w, v_speed,
                                                0.0f, 0.0f, format, flags);
 
                           if (value_changed) {
-                             *value = glm::normalize(*value);
+                             *value = normalize(*value);
                           }
 
                           return we::edit_widget_result{.value_changed = value_changed,

@@ -4,8 +4,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include <glm/glm.hpp>
-
 #include <range/v3/view.hpp>
 
 namespace we::graphics {
@@ -101,7 +99,9 @@ void terrain::init(const world::terrain& terrain, gpu::copy_command_list& comman
    _terrain_length = terrain.length;
    _patch_count = _terrain_length / patch_grid_count;
 
-   _terrain_half_world_size = float2{(_terrain_length / 2.0f) * terrain.grid_scale};
+   const float terrain_half_world_size = (_terrain_length / 2.0f) * terrain.grid_scale;
+
+   _terrain_half_world_size = float2{terrain_half_world_size, terrain_half_world_size};
    _terrain_grid_size = terrain.grid_scale;
    _terrain_height_scale = std::numeric_limits<int16>::max() * terrain.height_scale;
 

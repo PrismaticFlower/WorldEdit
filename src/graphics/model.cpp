@@ -2,6 +2,7 @@
 #include "model.hpp"
 #include "hresult_error.hpp"
 #include "math/align.hpp"
+#include "math/vector_funcs.hpp"
 
 #include <memory>
 
@@ -18,7 +19,7 @@ namespace {
 
 auto pack_snorm(float3 value) -> std::array<int16, 4>
 {
-   value = glm::clamp(value, -1.0f, 1.0f);
+   value = clamp(value, -1.0f, 1.0f);
    value = value * 32767.0f;
 
    if (value.x >= 0.0f) {

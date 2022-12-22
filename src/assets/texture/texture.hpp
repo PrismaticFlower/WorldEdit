@@ -8,9 +8,12 @@
 #include <span>
 #include <vector>
 
-#include <glm/glm.hpp>
-
 namespace we::assets::texture {
+
+struct texture_index {
+   uint32 x = 0;
+   uint32 y = 0;
+};
 
 class texture_subresource_view {
 public:
@@ -43,9 +46,9 @@ public:
 
    [[nodiscard]] auto dxgi_format() const noexcept -> DXGI_FORMAT;
 
-   [[nodiscard]] auto load(const glm::uvec2 index) const noexcept -> float4;
+   [[nodiscard]] auto load(const texture_index index) const noexcept -> float4;
 
-   void store(const glm::uvec2 index, const float4 value) noexcept;
+   void store(const texture_index index, const float4 value) noexcept;
 
 private:
    std::span<std::byte> _data_span;
@@ -109,9 +112,9 @@ public:
    [[nodiscard]] auto dxgi_format() const noexcept -> DXGI_FORMAT;
 
    [[nodiscard]] auto load(const subresource_index subresource,
-                           const glm::uvec2 index) const -> float4;
+                           const texture_index index) const -> float4;
 
-   void store(const subresource_index subresource, const glm::uvec2 index,
+   void store(const subresource_index subresource, const texture_index index,
               const float4 value);
 
 private:

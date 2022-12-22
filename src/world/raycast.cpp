@@ -1,5 +1,8 @@
 #include "raycast.hpp"
 #include "math/intersectors.hpp"
+#include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
+#include "math/vector_funcs.hpp"
 #include "utility/look_for.hpp"
 
 #include <limits>
@@ -25,14 +28,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
       [[maybe_unused]] float3 box_normal{};
 
-      quaternion inverse_object_rotation = glm::conjugate(object.rotation);
+      quaternion inverse_object_rotation = conjugate(object.rotation);
 
-      float4x4 world_to_obj{inverse_object_rotation};
+      float4x4 world_to_obj = to_matrix(inverse_object_rotation);
       world_to_obj[3] = {inverse_object_rotation * -object.position, 1.0f};
 
-      float3 obj_ray_origin = world_to_obj * float4{ray_origin, 1.0f};
-      float3 obj_ray_direction =
-         glm::normalize(float3x3{world_to_obj} * ray_direction);
+      float3 obj_ray_origin = world_to_obj * ray_origin;
+      float3 obj_ray_direction = normalize(float3x3{world_to_obj} * ray_direction);
 
       const msh::flat_model& model = *object_classes.at(object.class_name).model;
 
@@ -86,15 +88,15 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
             [[maybe_unused]] float3 box_normal{};
 
             quaternion inverse_light_region_rotation =
-               glm::conjugate(light_region->rotation);
+               conjugate(light_region->rotation);
 
-            float4x4 world_to_box{inverse_light_region_rotation};
+            float4x4 world_to_box = to_matrix(inverse_light_region_rotation);
             world_to_box[3] = {inverse_light_region_rotation * -light_region->position,
                                1.0f};
 
-            float3 box_ray_origin = world_to_box * float4{ray_origin, 1.0f};
+            float3 box_ray_origin = world_to_box * ray_origin;
             float3 box_ray_direction =
-               glm::normalize(float3x3{world_to_box} * ray_direction);
+               normalize(float3x3{world_to_box} * ray_direction);
 
             const float intersection =
                boxIntersection(box_ray_origin, box_ray_direction,
@@ -111,7 +113,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          else if (light_region->shape == region_shape::sphere) {
             const float intersection =
                sphIntersect(ray_origin, ray_direction, light_region->position,
-                            glm::length(light_region->size));
+                            length(light_region->size));
 
             if (intersection < 0.0f) continue;
 
@@ -122,9 +124,9 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          }
          else if (light_region->shape == region_shape::cylinder) {
             const float cylinder_radius =
-               glm::length(float2{light_region->size.x, light_region->size.z});
+               length(float2{light_region->size.x, light_region->size.z});
             const float3 region_direction =
-               glm::normalize(light_region->rotation * float3{0.0f, 1.0f, 0.0f});
+               normalize(light_region->rotation * float3{0.0f, 1.0f, 0.0f});
 
             const float intersection =
                iCylinder(ray_origin, ray_direction,
@@ -156,7 +158,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       }
       else if (light.light_type == light_type::spot) {
          const float3 light_direction =
-            glm::normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
+            normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
          const float cone_radius =
             (light.range / 2.0f) * std::tan(light.outer_cone_angle);
 
@@ -226,14 +228,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (region.shape == region_shape::box) {
          [[maybe_unused]] float3 box_normal{};
 
-         quaternion inverse_light_region_rotation = glm::conjugate(region.rotation);
+         quaternion inverse_light_region_rotation = conjugate(region.rotation);
 
-         float4x4 world_to_box{inverse_light_region_rotation};
+         float4x4 world_to_box = to_matrix(inverse_light_region_rotation);
          world_to_box[3] = {inverse_light_region_rotation * -region.position, 1.0f};
 
-         float3 box_ray_origin = world_to_box * float4{ray_origin, 1.0f};
-         float3 box_ray_direction =
-            glm::normalize(float3x3{world_to_box} * ray_direction);
+         float3 box_ray_origin = world_to_box * ray_origin;
+         float3 box_ray_direction = normalize(float3x3{world_to_box} * ray_direction);
 
          const float intersection =
             boxIntersection(box_ray_origin, box_ray_direction, region.size, box_normal)
@@ -249,7 +250,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       else if (region.shape == region_shape::sphere) {
          const float intersection =
             sphIntersect(ray_origin, ray_direction, region.position,
-                         glm::length(region.size));
+                         length(region.size));
 
          if (intersection < 0.0f) continue;
 
@@ -259,10 +260,9 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          }
       }
       else if (region.shape == region_shape::cylinder) {
-         const float cylinder_radius =
-            glm::length(float2{region.size.x, region.size.z});
+         const float cylinder_radius = length(float2{region.size.x, region.size.z});
          const float3 region_direction =
-            glm::normalize(region.rotation * float3{0.0f, 1.0f, 0.0f});
+            normalize(region.rotation * float3{0.0f, 1.0f, 0.0f});
 
          const float intersection =
             iCylinder(ray_origin, ray_direction,

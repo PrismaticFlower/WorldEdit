@@ -136,9 +136,7 @@ auto read_clrl(ucfb::reader_strict<"CLRL"_id> clrl) -> std::vector<float4>
    for (int i = 0; i < count; ++i) {
       const auto packed_color = clrl.read<uint32>();
 
-      colors.emplace_back(utility::decompress_srgb(
-         float4{(packed_color >> 8) & 0xff, (packed_color >> 16) & 0xff,
-                packed_color & 0xff, (packed_color >> 24) & 0xff}));
+      colors.emplace_back(utility::unpack_srgb_bgra(packed_color));
    }
 
    return colors;
@@ -282,7 +280,8 @@ auto read_matd(ucfb::reader_strict<"MATD"_id> matd) -> material
          continue;
       case "DATA"_id:
          child.read<float4>(); // Diffuse Colour, seams to get ignored by modelmunge
-         material.specular_color = child.read<float4>();
+         material.specular_color = child.read<float3>();
+         child.read<float>(); // Specular Colour Alpha, effectively just padding
          child.read<float4>(); // Ambient Colour, ignored by modelmunge and Zero(?)
          child.read<float>(); // Specular Exponent/Decay (Gets ignored by RedEngine in SWBFII for all known materials)
          continue;

@@ -242,8 +242,8 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
       file.write_ln("\tPosition({:f}, {:f}, {:f});", position.x, position.y,
                     position.z);
       file.write_ln("\tType({});", static_cast<int>(light.light_type));
-      file.write_ln("\tColor({:f}, {:f}, {:f});", light.color.r, light.color.g,
-                    light.color.b);
+      file.write_ln("\tColor({:f}, {:f}, {:f});", light.color.x, light.color.y,
+                    light.color.z);
 
       if (light.shadow_caster) file.write_ln("\tCastShadow();");
       if (light.static_) file.write_ln("\tStatic();");
@@ -290,13 +290,13 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
       file.write_ln("\tLight1(\"{}\");", world.lighting_settings.global_lights[0]);
       file.write_ln("\tLight2(\"{}\");", world.lighting_settings.global_lights[1]);
       file.write_ln("\tTop({}, {}, {});",
-                    static_cast<int>(ambient_sky_color.r * 255.0f + 0.5f),
-                    static_cast<int>(ambient_sky_color.g * 255.0f + 0.5f),
-                    static_cast<int>(ambient_sky_color.b * 255.0f + 0.5f));
+                    static_cast<int>(ambient_sky_color.x * 255.0f + 0.5f),
+                    static_cast<int>(ambient_sky_color.y * 255.0f + 0.5f),
+                    static_cast<int>(ambient_sky_color.z * 255.0f + 0.5f));
       file.write_ln("\tBottom({}, {}, {});",
-                    static_cast<int>(ambient_ground_color.r * 255.0f + 0.5f),
-                    static_cast<int>(ambient_ground_color.g * 255.0f + 0.5f),
-                    static_cast<int>(ambient_ground_color.b * 255.0f + 0.5f));
+                    static_cast<int>(ambient_ground_color.x * 255.0f + 0.5f),
+                    static_cast<int>(ambient_ground_color.y * 255.0f + 0.5f),
+                    static_cast<int>(ambient_ground_color.z * 255.0f + 0.5f));
 
       if (not world.lighting_settings.env_map_texture.empty()) {
          file.write_ln("\tEnvMap(\"{}\");", world.lighting_settings.env_map_texture);
@@ -358,7 +358,7 @@ void save_portals_sectors(const std::filesystem::path& path, const world& world)
       file.write_ln("\tHeight({:f});", sector.height);
 
       for (auto& point : sector.points) {
-         file.write_ln("\tPoint({:f}, {:f});", point[0], -point[1]);
+         file.write_ln("\tPoint({:f}, {:f});", point.x, -point.y);
       }
 
       for (auto& object : sector.objects) {
@@ -401,7 +401,7 @@ void save_barriers(const std::filesystem::path& path, const world& world)
       file.write_ln("{");
 
       for (auto& corner : barrier.corners) {
-         file.write_ln("\tCorner({:f}, 0.000000, {:f});", corner[0], -corner[1]);
+         file.write_ln("\tCorner({:f}, 0.000000, {:f});", corner.x, -corner.y);
       }
 
       file.write_ln("\tFlag({});", static_cast<int>(barrier.flags));

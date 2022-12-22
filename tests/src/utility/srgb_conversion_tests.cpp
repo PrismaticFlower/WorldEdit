@@ -19,10 +19,10 @@ TEST_CASE("srgb decompress", "[Utility][sRGBConversion]")
       const float4 gamma_test_vec4 = decompress_srgb(
          {gamma_test_value, gamma_test_value, gamma_test_value, 0.5f});
 
-      CHECK(gamma_test_vec4.r == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec4.g == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec4.b == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec4.a == 0.5_a);
+      CHECK(gamma_test_vec4.x == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec4.y == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec4.z == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec4.w == 0.5_a);
    }
 
    // float3 gamma checks
@@ -30,9 +30,9 @@ TEST_CASE("srgb decompress", "[Utility][sRGBConversion]")
       const float3 gamma_test_vec3 =
          decompress_srgb({gamma_test_value, gamma_test_value, gamma_test_value});
 
-      CHECK(gamma_test_vec3.r == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec3.g == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec3.b == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec3.x == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec3.y == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec3.z == Approx{gamma_test_expected});
    }
 
    constexpr float linear_toe_test_value = 0.0039215686274509803921568627451f;
@@ -46,10 +46,10 @@ TEST_CASE("srgb decompress", "[Utility][sRGBConversion]")
       const float4 gamma_test_vec4 = decompress_srgb(
          {linear_toe_test_value, linear_toe_test_value, linear_toe_test_value, 0.5f});
 
-      CHECK(gamma_test_vec4.r == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec4.g == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec4.b == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec4.a == 0.5_a);
+      CHECK(gamma_test_vec4.x == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec4.y == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec4.z == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec4.w == 0.5_a);
    }
 
    // float4 linear toe checks
@@ -57,9 +57,9 @@ TEST_CASE("srgb decompress", "[Utility][sRGBConversion]")
       const float3 gamma_test_vec3 = decompress_srgb(
          {linear_toe_test_value, linear_toe_test_value, linear_toe_test_value});
 
-      CHECK(gamma_test_vec3.r == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec3.g == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec3.b == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec3.x == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec3.y == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec3.z == Approx{linear_toe_test_expected});
    }
 }
 
@@ -76,10 +76,10 @@ TEST_CASE("srgb compress", "[Utility][sRGBConversion]")
       const float4 gamma_test_vec4 =
          compress_srgb({gamma_test_value, gamma_test_value, gamma_test_value, 0.5f});
 
-      CHECK(gamma_test_vec4.r == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec4.g == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec4.b == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec4.a == 0.5_a);
+      CHECK(gamma_test_vec4.x == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec4.y == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec4.z == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec4.w == 0.5_a);
    }
 
    // float3 gamma checks
@@ -87,9 +87,9 @@ TEST_CASE("srgb compress", "[Utility][sRGBConversion]")
       const float3 gamma_test_vec3 =
          compress_srgb({gamma_test_value, gamma_test_value, gamma_test_value});
 
-      CHECK(gamma_test_vec3.r == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec3.g == Approx{gamma_test_expected});
-      CHECK(gamma_test_vec3.b == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec3.x == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec3.y == Approx{gamma_test_expected});
+      CHECK(gamma_test_vec3.z == Approx{gamma_test_expected});
    }
 
    constexpr float linear_toe_test_value = 0.0003035269835488375f;
@@ -103,10 +103,10 @@ TEST_CASE("srgb compress", "[Utility][sRGBConversion]")
       const float4 gamma_test_vec4 = compress_srgb(
          {linear_toe_test_value, linear_toe_test_value, linear_toe_test_value, 0.5f});
 
-      CHECK(gamma_test_vec4.r == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec4.g == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec4.b == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec4.a == 0.5_a);
+      CHECK(gamma_test_vec4.x == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec4.y == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec4.z == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec4.w == 0.5_a);
    }
 
    // float4 linear toe checks
@@ -114,9 +114,9 @@ TEST_CASE("srgb compress", "[Utility][sRGBConversion]")
       const float3 gamma_test_vec3 = compress_srgb(
          {linear_toe_test_value, linear_toe_test_value, linear_toe_test_value});
 
-      CHECK(gamma_test_vec3.r == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec3.g == Approx{linear_toe_test_expected});
-      CHECK(gamma_test_vec3.b == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec3.x == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec3.y == Approx{linear_toe_test_expected});
+      CHECK(gamma_test_vec3.z == Approx{linear_toe_test_expected});
    }
 }
 
@@ -124,10 +124,10 @@ TEST_CASE("srgb brga unpack", "[Utility][sRGBConversion]")
 {
    const float4 unpacked = unpack_srgb_bgra(0xff'fe'00'01);
 
-   CHECK(unpacked.r == 0.9911021_a);
-   CHECK(unpacked.g == 0.0_a);
-   CHECK(unpacked.b == 0.000303527_a);
-   CHECK(unpacked.a == 1.0_a);
+   CHECK(unpacked.x == 0.9911021_a);
+   CHECK(unpacked.y == 0.0_a);
+   CHECK(unpacked.z == 0.000303527_a);
+   CHECK(unpacked.w == 1.0_a);
 }
 
 TEST_CASE("srgb brga pack", "[Utility][sRGBConversion]")

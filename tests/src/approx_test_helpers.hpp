@@ -1,31 +1,41 @@
 #pragma once
 
 #include "catch.hpp"
+#include "types.hpp"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/epsilon.hpp>
-
+#include <cmath>
 #include <type_traits>
 
 namespace we {
 
-template<typename GLM_type>
-inline bool approx_equals(const GLM_type& l, const std::type_identity_t<GLM_type>& r)
+inline bool approx_equals(const float2& l, const float2& r)
 {
-   for (int i = 0; i < l.length(); ++i) {
-      if (l[i] != Approx(r[i])) {
-         return false;
-      }
-   }
-
-   return true;
+   return l.x == Approx(r.x) and l.y == Approx(r.y);
 }
 
-template<typename GLM_type>
-inline bool approx_equals(const GLM_type& l, const std::type_identity_t<GLM_type>& r,
-                          const typename GLM_type::value_type epsilon)
+inline bool approx_equals(const float3& l, const float3& r)
 {
-   return glm::all(glm::epsilonEqual(l, r, epsilon));
+   return l.x == Approx(r.x) and l.y == Approx(r.y) and l.z == Approx(r.z);
+}
+
+inline bool approx_equals(const float4& l, const float4& r)
+{
+   return l.x == Approx(r.x) and l.y == Approx(r.y) and l.z == Approx(r.z) and
+          l.w == Approx(r.w);
+}
+
+inline bool approx_equals(const quaternion& l, const quaternion& r)
+{
+   return l.x == Approx(r.x) and l.y == Approx(r.y) and l.z == Approx(r.z) and
+          l.w == Approx(r.w);
+}
+
+inline bool approx_equals(const float4& l, const float4& r, const float epsilon)
+{
+   using std::abs;
+
+   return abs(l.x - r.x) < epsilon and abs(l.y - r.y) < epsilon and
+          abs(l.z - r.z) < epsilon and abs(l.w - r.w) < epsilon;
 }
 
 }

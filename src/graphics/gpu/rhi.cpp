@@ -752,10 +752,10 @@ auto device::create_texture(const texture_desc& desc,
    else if (desc.flags.allow_render_target) {
       has_clear_value = true;
 
-      clear_value.Color[0] = desc.optimized_clear_value.color[0];
-      clear_value.Color[1] = desc.optimized_clear_value.color[1];
-      clear_value.Color[2] = desc.optimized_clear_value.color[2];
-      clear_value.Color[3] = desc.optimized_clear_value.color[3];
+      clear_value.Color[0] = desc.optimized_clear_value.color.x;
+      clear_value.Color[1] = desc.optimized_clear_value.color.y;
+      clear_value.Color[2] = desc.optimized_clear_value.color.z;
+      clear_value.Color[3] = desc.optimized_clear_value.color.w;
    }
 
    com_ptr<ID3D12Resource2> resource;
@@ -1104,8 +1104,8 @@ auto device::create_sampler_heap(std::span<const sampler_desc> sampler_descs)
          .MaxAnisotropy = sampler_descs[i].max_anisotropy,
          .ComparisonFunc =
             static_cast<D3D12_COMPARISON_FUNC>(sampler_descs[i].comparison),
-         .BorderColor = {border_color[0], border_color[1], border_color[2],
-                         border_color[3]},
+         .BorderColor = {border_color.x, border_color.y, border_color.z,
+                         border_color.w},
          .MinLOD = 0.0f,
          .MaxLOD = D3D12_FLOAT32_MAX};
 

@@ -1,15 +1,14 @@
 
 #include "frustrum.hpp"
+#include "math/matrix_funcs.hpp"
+#include "math/vector_funcs.hpp"
 
 #include <array>
 
 #include <range/v3/algorithm.hpp>
 #include <range/v3/view.hpp>
 
-#include <fstream>
 #include <functional>
-
-#include <fmt/format.h>
 
 namespace we::graphics {
 
@@ -18,19 +17,19 @@ namespace {
 auto get_plane(std::array<float3, 3> points) noexcept -> float4
 {
    const std::array edges{points[1] - points[0], points[2] - points[0]};
-   const float3 normal = glm::normalize(glm::cross(edges[0], edges[1]));
+   const float3 normal = normalize(cross(edges[0], edges[1]));
 
-   return float4{normal, -glm::dot(normal, points[0])};
+   return float4{normal, -dot(normal, points[0])};
 }
 
 bool outside_plane(const float4& plane, const float3& point) noexcept
 {
-   return glm::dot(plane, float4{point, 1.0f}) < 0.0f;
+   return dot(plane, float4{point, 1.0f}) < 0.0f;
 }
 
 bool outside_plane(const float4& plane, const float3& point, const float radius) noexcept
 {
-   return glm::dot(plane, float4{point, 1.0f}) < -radius;
+   return dot(plane, float4{point, 1.0f}) < -radius;
 }
 
 }
@@ -51,12 +50,13 @@ frustrum::frustrum(const float4x4& inv_view_projection_matrix) noexcept
           {frustrum_corner::top_left_far, {-1.0f, 1.0f, 1.0f, 1.0f}},
           {frustrum_corner::top_right_far, {1.0f, 1.0f, 1.0f, 1.0f}}});
 
-   ranges::copy(corners_proj | ranges::views::transform([&](float4 position) {
-                   position = inv_view_projection_matrix * position;
+   ranges::copy(
+      corners_proj | ranges::views::transform([&](float4 position) {
+         position = inv_view_projection_matrix * position;
 
-                   return float3{position} / position.w;
-                }),
-                corners.begin());
+         return float3{position.x, position.y, position.z} / position.w;
+      }),
+      corners.begin());
 
    planes[frustrum_planes::near_] =
       get_plane({corners[frustrum_corner::top_left_near],
@@ -104,12 +104,12 @@ bool intersects(const frustrum& frustrum, const math::bounding_box& bbox)
       }
    }
 
-   const auto outside_corner = [&](const glm::length_t index, auto comparator,
+   const auto outside_corner = [&](const std::size_t i, auto comparator,
                                    const float corner) {
       bool outside = true;
 
       for (const auto& frustrum_corner : frustrum.corners) {
-         outside &= comparator(frustrum_corner[index], corner);
+         outside &= comparator(index(frustrum_corner, i), corner);
       }
 
       return outside;

@@ -1,10 +1,6 @@
 #pragma once
 
-#include <concepts>
 #include <cstdint>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
 
 namespace we {
 
@@ -18,30 +14,103 @@ using uint16 = std::uint16_t;
 using uint32 = std::uint32_t;
 using uint64 = std::uint64_t;
 
-using float2 = glm::vec2;
-using float3 = glm::vec3;
-using float4 = glm::vec4;
+struct float2 {
+   float x = 0.0f;
+   float y = 0.0f;
 
-using double2 = glm::dvec2;
-using double3 = glm::dvec3;
-using double4 = glm::dvec4;
+   constexpr float2() = default;
+   constexpr float2(float x, float y) : x{x}, y{y} {};
 
-using quaternion = glm::quat;
-using float4x4 = glm::mat4;
-using double4x4 = glm::dmat4;
-using float3x3 = glm::mat3;
-using double3x3 = glm::dmat4;
+   friend constexpr auto operator==(const float2& l, const float2& r) noexcept
+      -> bool = default;
+};
+
+struct float3 {
+   float x = 0.0f;
+   float y = 0.0f;
+   float z = 0.0f;
+
+   constexpr float3() = default;
+   constexpr float3(float x, float y, float z) : x{x}, y{y}, z{z} {};
+
+   friend constexpr auto operator==(const float3& l, const float3& r) noexcept
+      -> bool = default;
+};
+
+struct alignas(16) float4 {
+   float x = 0.0f;
+   float y = 0.0f;
+   float z = 0.0f;
+   float w = 0.0f;
+
+   constexpr float4() = default;
+   constexpr float4(float3 xyz, float w)
+      : x{xyz.x}, y{xyz.y}, z{xyz.z}, w{w} {};
+   constexpr float4(float x, float y, float z, float w)
+      : x{x}, y{y}, z{z}, w{w} {};
+
+   friend constexpr auto operator==(const float4& l, const float4& r) noexcept
+      -> bool = default;
+};
+
+struct float4x4 {
+   float4 rows[4] = {{1.0f, 0.0f, 0.0f, 0.0f},
+                     {0.0f, 1.0f, 0.0f, 0.0f},
+                     {0.0f, 0.0f, 1.0f, 0.0f},
+                     {0.0f, 0.0f, 0.0f, 1.0f}};
+
+   constexpr float4x4() = default;
+   constexpr float4x4(float4 m0, float4 m1, float4 m2, float4 m3)
+      : rows{m0, m1, m2, m3}
+   {
+   }
+
+   constexpr auto operator[](this auto&& self, const uint64 i) noexcept -> auto&
+   {
+      return self.rows[i];
+   }
+
+   friend constexpr auto operator==(const float4x4& l, const float4x4& r) noexcept
+      -> bool = default;
+};
+
+struct float3x3 {
+   float3 rows[3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
+
+   constexpr float3x3() = default;
+   constexpr float3x3(float3 m0, float3 m1, float3 m2) : rows{m0, m1, m2} {}
+   explicit constexpr float3x3(const float4x4& mat)
+      : float3x3{{mat[0].x, mat[0].y, mat[0].z},
+                 {mat[1].x, mat[1].y, mat[1].z},
+                 {mat[2].x, mat[2].y, mat[2].z}}
+   {
+   }
+
+   constexpr auto operator[](this auto&& self, const uint64 i) noexcept -> auto&
+   {
+      return self.rows[i];
+   }
+
+   friend constexpr auto operator==(const float3x3& l, const float3x3& r) noexcept
+      -> bool = default;
+};
+
+struct quaternion {
+   float w = 1.0f;
+   float x = 0.0f;
+   float y = 0.0f;
+   float z = 0.0f;
+
+   friend constexpr auto operator==(const quaternion& l, const quaternion& r) noexcept
+      -> bool = default;
+};
 
 static_assert(sizeof(float2) == 8);
 static_assert(sizeof(float3) == 12);
 static_assert(sizeof(float4) == 16);
 
-static_assert(sizeof(double2) == 16);
-static_assert(sizeof(double3) == 24);
-static_assert(sizeof(double4) == 32);
-
 static_assert(sizeof(quaternion) == 16);
 static_assert(sizeof(float4x4) == 64);
-static_assert(sizeof(double4x4) == 128);
+static_assert(sizeof(float3x3) == 36);
 
 }

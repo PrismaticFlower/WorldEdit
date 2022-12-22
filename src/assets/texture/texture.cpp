@@ -5,8 +5,6 @@
 #include <cassert>
 #include <stdexcept>
 
-#include <glm/glm.hpp>
-
 #include <range/v3/numeric.hpp>
 #include <range/v3/view.hpp>
 
@@ -24,8 +22,8 @@ struct texture_mip_level_desc {
 auto get_mip_level_desc(const uint32 width, const uint32 height, const uint32 mip_level,
                         const texture_format format) -> texture_mip_level_desc
 {
-   auto mip_width = glm::max(width >> mip_level, 1u);
-   auto mip_height = glm::max(height >> mip_level, 1u);
+   auto mip_width = std::max(width >> mip_level, 1u);
+   auto mip_height = std::max(height >> mip_level, 1u);
    auto mip_row_pitch = static_cast<uint32>(
       math::align_up(mip_width * format_size(format), texture::pitch_alignment));
 
@@ -102,14 +100,14 @@ auto texture_subresource_view::dxgi_format() const noexcept -> DXGI_FORMAT
    return to_dxgi_format(_format);
 }
 
-auto texture_subresource_view::load(const glm::uvec2 index) const noexcept -> float4
+auto texture_subresource_view::load(const texture_index index) const noexcept -> float4
 {
    assert(index.x < _width and index.y < _height);
 
    return load_texel(_format, index.x, index.y, _data_span, _width, _height, _row_pitch);
 }
 
-void texture_subresource_view::store(const glm::uvec2 index, const float4 value) noexcept
+void texture_subresource_view::store(const texture_index index, const float4 value) noexcept
 {
    assert(index.x < _width and index.y < _height);
 
@@ -246,14 +244,14 @@ auto texture::dxgi_format() const noexcept -> DXGI_FORMAT
    return to_dxgi_format(_format);
 }
 
-auto texture::load(const subresource_index subresource, const glm::uvec2 index) const
-   -> float4
+auto texture::load(const subresource_index subresource,
+                   const texture_index index) const -> float4
 {
    return _subresources[flatten_subresource_index(subresource)].load(index);
 }
 
-void texture::store(const subresource_index subresource, const glm::uvec2 index,
-                    const float4 value)
+void texture::store(const subresource_index subresource,
+                    const texture_index index, const float4 value)
 {
    _subresources[flatten_subresource_index(subresource)].store(index, value);
 }

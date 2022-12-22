@@ -2,6 +2,9 @@
 #include "light_clusters.hpp"
 #include "gpu/barrier.hpp"
 #include "math/align.hpp"
+#include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
+#include "math/vector_funcs.hpp"
 #include "world/world_utilities.hpp"
 
 #include <cmath>
@@ -10,7 +13,7 @@ namespace we::graphics {
 
 namespace {
 
-constexpr auto shadow_res = 2048;
+constexpr auto shadow_res = 1024;
 constexpr auto cascade_count = light_clusters::sun_cascade_count;
 constexpr auto light_tile_size = 8;
 constexpr auto max_lights = 256;
@@ -97,12 +100,12 @@ static_assert(sizeof(light_proxy_instance) == 64);
 auto make_sphere_light_proxy_transform(const world::light& light, const float radius)
    -> std::array<float4, 3>
 {
-   float4x4 light_transform = {radius, 0.0f,   0.0f,   0.0f, //
-                               0.0f,   radius, 0.0f,   0.0f, //
-                               0.0f,   0.0f,   radius, 0.0f, //
-                               0.0f,   0.0f,   0.0f,   1.0f};
+   float4x4 light_transform = {{radius, 0.0f, 0.0f, 0.0f}, //
+                               {0.0f, radius, 0.0f, 0.0f}, //
+                               {0.0f, 0.0f, radius, 0.0f}, //
+                               {0.0f, 0.0f, 0.0f, 1.0f}};
    light_transform[3] = {light.position, 1.0f};
-   light_transform = glm::transpose(
+   light_transform = transpose(
       light_transform); // transpose so we have good alignment for a float3x4 in HLSL
 
    return {light_transform[0], light_transform[1], light_transform[2]};
@@ -111,12 +114,12 @@ auto make_sphere_light_proxy_transform(const world::light& light, const float ra
 auto make_sphere_light_proxy_transform(const world::region& light, const float radius)
    -> std::array<float4, 3>
 {
-   float4x4 light_transform = {radius, 0.0f,   0.0f,   0.0f, //
-                               0.0f,   radius, 0.0f,   0.0f, //
-                               0.0f,   0.0f,   radius, 0.0f, //
-                               0.0f,   0.0f,   0.0f,   1.0f};
+   float4x4 light_transform = {{radius, 0.0f, 0.0f, 0.0f}, //
+                               {0.0f, radius, 0.0f, 0.0f}, //
+                               {0.0f, 0.0f, radius, 0.0f}, //
+                               {0.0f, 0.0f, 0.0f, 1.0f}};
    light_transform[3] = {light.position, 1.0f};
-   light_transform = glm::transpose(
+   light_transform = transpose(
       light_transform); // transpose so we have good alignment for a float3x4 in HLSL
 
    return {light_transform[0], light_transform[1], light_transform[2]};
@@ -234,11 +237,11 @@ auto make_cascade_shadow_camera(const float3 light_direction,
    float radius = std::numeric_limits<float>::lowest();
 
    for (const auto& corner : view_frustrum_corners) {
-      radius = glm::max(glm::distance(corner, view_frustrum_center), radius);
+      radius = std::max(distance(corner, view_frustrum_center), radius);
    }
 
-   float3 bounds_max{radius};
-   float3 bounds_min{-radius};
+   float3 bounds_max{radius, radius, radius};
+   float3 bounds_min{-radius, -radius, -radius};
    float3 casecase_extents{bounds_max - bounds_min};
 
    float3 shadow_camera_position =
@@ -256,8 +259,10 @@ auto make_cascade_shadow_camera(const float3 light_direction,
    shadow_origin /= shadow_origin.w;
    shadow_origin *= float{shadow_res} / 2.0f;
 
-   float2 rounded_origin = glm::round(shadow_origin);
-   float2 rounded_offset = rounded_origin - float2{shadow_origin};
+   float2 shadow_origin_xy = {shadow_origin.x, shadow_origin.y};
+
+   float2 rounded_origin = round(shadow_origin_xy);
+   float2 rounded_offset = rounded_origin - shadow_origin_xy;
    rounded_offset *= 2.0f / float{shadow_res};
 
    shadow_camera.set_stabilization(rounded_offset);
@@ -270,7 +275,7 @@ auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
    -> std::array<shadow_ortho_camera, cascade_count>
 {
    const float3 light_direction =
-      glm::normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
+      normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
 
    const std::array cascade_splits = make_shadow_cascade_splits(camera);
 
@@ -435,7 +440,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
       switch (light.light_type) {
       case world::light_type::directional: {
          const float3 light_direction =
-            glm::normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+            normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
          if (not light.directional_region.empty()) {
             if (regional_lights_count == max_regional_lights) {
@@ -447,13 +452,12 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
             if (not region) break;
 
-            const quaternion region_rotation_inverse =
-               glm::conjugate(region->rotation);
-            float4x4 inverse_region_transform{region_rotation_inverse};
+            const quaternion region_rotation_inverse = conjugate(region->rotation);
+            float4x4 inverse_region_transform = to_matrix(region_rotation_inverse);
             inverse_region_transform[3] = {region_rotation_inverse * -region->position,
                                            1.0f};
 
-            inverse_region_transform = glm::transpose(inverse_region_transform);
+            inverse_region_transform = transpose(inverse_region_transform);
 
             const uint32 region_description_index = regional_lights_count;
 
@@ -486,10 +490,12 @@ void light_clusters::prepare_lights(const camera& view_camera,
                break;
             }
             case world::region_shape::sphere: {
+               const float sphere_radius = length(region->size);
+
                upload_to({.inverse_transform = inverse_region_transform,
                           .position = region->position,
                           .type = directional_region_type::sphere,
-                          .size = float3{glm::length(region->size)}},
+                          .size = float3{sphere_radius, sphere_radius, sphere_radius}},
                          upload_data.regional_lights_descriptions +
                             region_description_index);
 
@@ -500,8 +506,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
                           .directional_region_index = region_description_index},
                          &upload_data.constants->lights[light_index]);
 
-               upload_to({.transform = make_sphere_light_proxy_transform(
-                             *region, glm::length(region->size)),
+               upload_to({.transform = make_sphere_light_proxy_transform(*region, sphere_radius),
 
                           .light_index = light_index},
                          upload_data.sphere_light_proxies + light_index);
@@ -512,8 +517,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
                break;
             }
             case world::region_shape::cylinder: {
-               const float radius =
-                  glm::length(float2{region->size.x, region->size.z});
+               const float radius = length(float2{region->size.x, region->size.z});
 
                upload_to({.inverse_transform = inverse_region_transform,
                           .position = region->position,
@@ -585,7 +589,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
       }
       case world::light_type::spot: {
          const float3 light_direction =
-            glm::normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+            normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
          const float half_range = light.range / 2.0f;
          const float cone_radius = half_range * std::tan(light.outer_cone_angle);

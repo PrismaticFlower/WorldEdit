@@ -1,5 +1,6 @@
 
 #include "texture_transforms.hpp"
+#include "math/vector_funcs.hpp"
 
 namespace we::assets::texture {
 
@@ -16,16 +17,16 @@ void generate_normal_map(const texture_subresource_view& input,
          const uint32 x0 = (x - 1) % input.width();
          const uint32 x1 = (x + 1) % input.width();
 
-         const float height0x = input.load({x0, y}).r;
-         const float height1x = input.load({x1, y}).r;
-         const float height0y = input.load({x, y0}).r;
-         const float height1y = input.load({x, y1}).r;
+         const float height0x = input.load({x0, y}).x;
+         const float height1x = input.load({x1, y}).x;
+         const float height0y = input.load({x, y0}).x;
+         const float height1y = input.load({x, y1}).x;
 
          const float3 normal =
-            glm::normalize(float3{(height0x - height1x) * scale / 2.0f,
-                                  (height0y - height1y) * scale / 2.0f, 1.0f});
+            normalize(float3{(height0x - height1x) * scale / 2.0f,
+                             (height0y - height1y) * scale / 2.0f, 1.0f});
 
-         output.store({x, y}, float4{normal * 0.5f + 0.5f, input.load({x, y}).a});
+         output.store({x, y}, float4{normal * 0.5f + 0.5f, input.load({x, y}).w});
       }
    }
 }

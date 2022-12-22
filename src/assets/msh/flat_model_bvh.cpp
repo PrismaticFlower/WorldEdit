@@ -24,12 +24,16 @@ public:
 
          _bvhs.emplace_back(
             build_strategy(mesh.triangles, [&](const std::array<uint16, 3>& tri) {
-               float3 min{std::numeric_limits<float>::max()};
-               float3 max{std::numeric_limits<float>::lowest()};
+               float3 min{std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max()};
+               float3 max{std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest()};
 
                for (auto& v : tri) {
-                  min = glm::min(mesh.positions[v], min);
-                  max = glm::max(mesh.positions[v], max);
+                  min = we::min(mesh.positions[v], min);
+                  max = we::max(mesh.positions[v], max);
                }
 
                return FastBVH::BBox{FastBVH::Vector3{min.x, min.y, min.z},

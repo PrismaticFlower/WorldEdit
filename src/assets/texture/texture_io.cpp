@@ -10,7 +10,6 @@
 
 #include <DirectXTex.h>
 #include <boost/algorithm/string.hpp>
-#include <glm/gtc/integer.hpp>
 
 #include <range/v3/view.hpp>
 
@@ -63,7 +62,7 @@ auto load_options(std::filesystem::path path) -> texture_options
 
 auto get_mip_count(const std::size_t length) noexcept -> uint16
 {
-   return static_cast<uint16>(glm::log2(length) + 1);
+   return static_cast<uint16>(std::log2(length) + 1);
 }
 
 auto get_texture_format(const DXGI_FORMAT dxgi_format) -> texture_format
@@ -116,7 +115,7 @@ void init_texture_data(texture_subresource_view texture, DirectX::Image image)
    assert(texture.height() == image.height);
 
    const std::size_t row_pitch =
-      glm::min(std::size_t{texture.row_pitch()}, image.rowPitch);
+      std::min(std::size_t{texture.row_pitch()}, image.rowPitch);
    const std::byte* src_pixels = reinterpret_cast<const std::byte*>(image.pixels);
 
    for (std::size_t y = 0; y < image.height; ++y) {

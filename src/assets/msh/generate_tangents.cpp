@@ -119,13 +119,13 @@ struct cached_vertex {
    template<typename H>
    friend H AbslHashValue(H h, const cached_vertex& cached)
    {
-      return H::combine(std::move(h), cached.position[0], cached.position[1],
-                        cached.position[2], cached.normal[0], cached.normal[1],
-                        cached.normal[2], cached.tangent[0], cached.tangent[1],
-                        cached.tangent[2], cached.bitangent[0],
-                        cached.bitangent[1], cached.bitangent[2],
-                        cached.texcoord[0], cached.texcoord[1], cached.color[0],
-                        cached.color[1], cached.color[2], cached.color[3]);
+      return H::combine(std::move(h), cached.position.x, cached.position.y,
+                        cached.position.z, cached.normal.x, cached.normal.y,
+                        cached.normal.z, cached.tangent.x, cached.tangent.y,
+                        cached.tangent.z, cached.bitangent.x,
+                        cached.bitangent.y, cached.bitangent.z,
+                        cached.texcoord.x, cached.texcoord.y, cached.color.x,
+                        cached.color.y, cached.color.z, cached.color.w);
    }
 };
 

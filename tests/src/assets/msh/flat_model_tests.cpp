@@ -2,6 +2,8 @@
 
 #include "approx_test_helpers.hpp"
 #include "assets/msh/flat_model.hpp"
+#include "math/quaternion_funcs.hpp"
+#include "math/vector_funcs.hpp"
 
 #include <string_view>
 

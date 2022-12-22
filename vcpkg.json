@@ -19,7 +19,6 @@
     "boost-container",
     "directxtex",
     "fmt",
-    "glm",
     "ms-gsl",
     "range-v3",
     "wil"

@@ -119,7 +119,7 @@ material::material(const assets::msh::material& material, gpu::device& device,
       specular_color = material.specular_color;
    }
    else {
-      specular_color = float3{0.0f};
+      specular_color = float3{};
    }
 
    init_resources(device, copy_command_list_pool);

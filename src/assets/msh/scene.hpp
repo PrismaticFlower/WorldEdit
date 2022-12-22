@@ -28,14 +28,7 @@ struct transform {
    float3 translation = {0.0f, 0.0f, 0.0f};
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
 
-   explicit operator float4x4() const noexcept
-   {
-      float4x4 matrix{quaternion{rotation}};
-
-      matrix[3] = {translation, 1.0f};
-
-      return matrix;
-   }
+   explicit operator float4x4() const noexcept;
 };
 
 struct geometry_segment {
