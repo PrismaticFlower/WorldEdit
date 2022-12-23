@@ -789,6 +789,9 @@
     <ClCompile Include="src\utility\float16_packing.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\model_manager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />

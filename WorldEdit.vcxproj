@@ -203,6 +203,7 @@
     <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\gpu\rhi.cpp" />
     <ClCompile Include="src\graphics\imgui_renderer.cpp" />
+    <ClCompile Include="src\graphics\model_manager.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
