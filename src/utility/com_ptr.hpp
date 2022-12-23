@@ -1,8 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <iosfwd>
-#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -12,26 +9,19 @@ namespace we::utility {
 
 namespace detail {
 
-template<typename Type, typename = void>
-struct is_com_class : std::false_type {
+// clang-format off
+template<typename T>
+concept com_class = requires(T t) {
+   { t.AddRef() };
+   { t.Release() }; 
 };
+// clang-format on
 
-template<typename Type>
-struct is_com_class<Type, std::void_t<decltype(std::declval<Type>().AddRef()),
-                                      decltype(std::declval<Type>().Release())>>
-   : std::true_type {
-};
-
-template<typename Type>
-constexpr bool is_com_class_v = is_com_class<Type>::value;
 }
 
-template<typename Class>
+template<detail::com_class Class>
 class com_ptr {
 public:
-   static_assert(detail::is_com_class_v<Class>,
-                 "Class does not implement AddRef and Release.");
-
    using element_type = Class;
 
    com_ptr() = default;
@@ -189,6 +179,9 @@ public:
       return (_pointer != nullptr);
    }
 
+   friend bool operator==(const com_ptr& left, const com_ptr& right) noexcept = default;
+   friend auto operator<=>(const com_ptr& left, const com_ptr& right) noexcept = default;
+
 private:
    gsl::owner<Class*> _pointer = nullptr;
 };
@@ -200,39 +193,9 @@ inline void swap(com_ptr<Class>& left, com_ptr<Class>& right) noexcept
 }
 
 template<typename Class>
-inline bool operator==(const com_ptr<Class>& left, const com_ptr<Class>& right) noexcept
-{
-   return (left.get() == right.get());
-}
-
-template<typename Class>
-inline bool operator!=(const com_ptr<Class>& left, const com_ptr<Class>& right) noexcept
-{
-   return (left.get() != right.get());
-}
-
-template<typename Class>
 inline bool operator==(const com_ptr<Class>& left, std::nullptr_t) noexcept
 {
    return (left.get() == nullptr);
-}
-
-template<typename Class>
-inline bool operator!=(const com_ptr<Class>& left, std::nullptr_t) noexcept
-{
-   return (left.get() != nullptr);
-}
-
-template<typename Class>
-inline bool operator==(std::nullptr_t, const com_ptr<Class>& right) noexcept
-{
-   return (right == nullptr);
-}
-
-template<typename Class>
-inline bool operator!=(std::nullptr_t, const com_ptr<Class>& right) noexcept
-{
-   return (right != nullptr);
 }
 
 template<typename Class>
@@ -241,39 +204,6 @@ inline bool operator==(const com_ptr<Class>& left, Class* const right) noexcept
    return (left.get() == right);
 }
 
-template<typename Class>
-inline bool operator!=(const com_ptr<Class>& left, Class* const right) noexcept
-{
-   return (left.get() != right);
-}
-
-template<typename Class>
-inline bool operator==(Class* const left, const com_ptr<Class>& right) noexcept
-{
-   return (right == left);
-}
-
-template<typename Class>
-inline bool operator!=(Class* const left, const com_ptr<Class>& right) noexcept
-{
-   return (right != left);
-}
-
-template<typename Class, typename Char, typename Traits>
-inline auto operator<<(std::basic_ostream<Char, Traits>& ostream,
-                       const com_ptr<Class>& com_ptr)
-   -> std::basic_ostream<Char, Traits>&
-{
-   return ostream << com_ptr.get();
-}
-
-template<typename Class>
-inline auto make_shared_com_ptr(com_ptr<Class> com_ptr) -> std::shared_ptr<Class>
-{
-   return {com_ptr.release(), [](Class* ptr) {
-              if (ptr) ptr->Release();
-           }};
-}
 }
 
 template<typename Class>
