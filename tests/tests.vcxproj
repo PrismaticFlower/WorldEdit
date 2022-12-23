@@ -203,7 +203,6 @@
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
     <ClCompile Include="src\graphics\gpu\detail\descriptor_allocator_tests.cpp" />
     <ClCompile Include="src\graphics\gpu\resource_tests.cpp" />
-    <ClCompile Include="src\hresult_error_tests.cpp" />
     <ClCompile Include="src\io\output_file_tests.cpp" />
     <ClCompile Include="src\io\read_file_tests.cpp" />
     <ClCompile Include="src\key_input_manager_tests.cpp" />

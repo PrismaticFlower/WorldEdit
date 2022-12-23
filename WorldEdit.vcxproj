@@ -339,7 +339,6 @@
     <ClInclude Include="src\graphics\triangle_drawer.hpp" />
     <ClInclude Include="src\graphics\copy_command_list_pool.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
-    <ClInclude Include="src\hresult_error.hpp" />
     <ClInclude Include="src\imgui\imconfig.h" />
     <ClInclude Include="src\imgui\imgui.h" />
     <ClInclude Include="src\imgui\imgui_impl_win32.h" />
@@ -454,7 +453,6 @@
     <ClCompile Include="src\graphics\material.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\terrain.cpp" />
-    <ClCompile Include="src\hresult_error.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />

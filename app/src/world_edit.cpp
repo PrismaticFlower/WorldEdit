@@ -2,7 +2,6 @@
 #include "world_edit.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
-#include "hresult_error.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"

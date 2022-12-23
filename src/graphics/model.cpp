@@ -1,6 +1,5 @@
 
 #include "model.hpp"
-#include "hresult_error.hpp"
 #include "math/align.hpp"
 #include "math/vector_funcs.hpp"
 

@@ -1,6 +1,5 @@
 
 #include "pipeline_library.hpp"
-#include "hresult_error.hpp"
 #include "root_signature_library.hpp"
 #include "shader_library.hpp"
 

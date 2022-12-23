@@ -225,9 +225,6 @@
     <ClInclude Include="src\utility\string_ops.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\hresult_error.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\output_stream.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -610,9 +607,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\camera.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\hresult_error.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\output_stream.cpp">

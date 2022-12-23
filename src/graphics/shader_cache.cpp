@@ -1,6 +1,5 @@
 
 #include "shader_cache.hpp"
-#include "hresult_error.hpp"
 #include "io/read_file.hpp"
 #include "types.hpp"
 #include "utility/binary_reader.hpp"

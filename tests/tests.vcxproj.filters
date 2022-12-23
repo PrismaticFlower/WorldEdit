@@ -25,7 +25,6 @@
     <ClCompile Include="src\utility\srgb_conversion_tests.cpp" />
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
-    <ClCompile Include="src\hresult_error_tests.cpp" />
     <ClCompile Include="src\container\enum_array_tests.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_tests.cpp" />
     <ClCompile Include="src\math\bounding_box_tests.cpp" />
