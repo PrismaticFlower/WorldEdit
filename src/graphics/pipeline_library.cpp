@@ -457,6 +457,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                     .rasterizer_state = rasterizer_line_antialiased,
                     .depth_stencil_state = depth_stencil_readonly_less_equal,
                     .input_layout = meta_mesh_input_layout,
+                    .primitive_type = gpu::primitive_type::line,
 
                     .render_target_count = 1,
                     .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
