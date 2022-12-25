@@ -2,7 +2,6 @@
 
 #include "async/thread_pool.hpp"
 
-#include <filesystem>
 #include <initializer_list>
 #include <span>
 #include <string>
@@ -69,22 +68,16 @@ struct shader_description {
    std::wstring entrypoint;
    shader_type type;
    shader_model model;
-   std::filesystem::path file;
+   std::string file;
 
    shader_defines defines;
 
    bool operator==(const shader_description&) const noexcept = default;
 };
 
-struct shader_dependency {
-   std::filesystem::path path;
-   std::filesystem::file_time_type::duration last_write;
-};
-
-struct compiled_shader : shader_description {
+struct compiled_shader {
+   std::string name;
    std::vector<std::byte> bytecode;
-   std::filesystem::file_time_type::duration file_last_write;
-   std::vector<shader_dependency> dependencies;
 };
 
 class shader_library {
@@ -100,16 +93,6 @@ public:
 private:
    std::vector<compiled_shader> _compiled_shaders;
    std::shared_ptr<async::thread_pool> _thread_pool;
-};
-
-}
-
-namespace std {
-
-template<>
-struct hash<we::graphics::shader_description> {
-   auto operator()(const we::graphics::shader_description& entry) const noexcept
-      -> std::size_t;
 };
 
 }

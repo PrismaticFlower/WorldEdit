@@ -7,6 +7,8 @@
 #include <optional>
 #include <span>
 
+#include <absl/container/flat_hash_map.h>
+
 namespace we::world {
 
 template<typename T>

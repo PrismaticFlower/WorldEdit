@@ -167,8 +167,6 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
                                         const updated_textures& updated,
                                         gpu::device& device)
 {
-   using namespace ranges::views;
-
    const gpu_virtual_address constant_buffer_address =
       device.get_gpu_virtual_address(constant_buffer.get());
 

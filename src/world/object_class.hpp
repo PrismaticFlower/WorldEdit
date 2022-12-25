@@ -1,6 +1,6 @@
 #pragma once
 
-#include "assets/asset_libraries.hpp"
+#include "assets/asset_ref.hpp"
 #include "assets/msh/flat_model.hpp"
 #include "assets/odf/definition.hpp"
 #include "lowercase_string.hpp"
@@ -8,6 +8,12 @@
 
 #include <string>
 #include <vector>
+
+namespace we::assets {
+
+struct libraries_manager;
+
+}
 
 namespace we::world {
 

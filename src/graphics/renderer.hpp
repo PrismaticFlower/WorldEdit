@@ -8,6 +8,12 @@
 
 #include <absl/container/flat_hash_map.h>
 
+namespace we {
+
+class output_stream;
+
+}
+
 namespace we::settings {
 
 class graphics;
@@ -22,7 +28,7 @@ class thread_pool;
 
 namespace we::assets {
 
-class libraries_manager;
+struct libraries_manager;
 
 }
 

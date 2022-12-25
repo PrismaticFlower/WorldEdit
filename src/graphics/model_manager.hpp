@@ -7,7 +7,7 @@
 #include "model.hpp"
 #include "output_stream.hpp"
 #include "texture_manager.hpp"
-#include "utility/event.hpp"
+#include "utility/event_listener.hpp"
 
 #include <memory>
 #include <shared_mutex>

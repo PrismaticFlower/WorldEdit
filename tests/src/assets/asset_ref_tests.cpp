@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "assets/asset_ref.hpp"
+#include "assets/asset_state.hpp"
 #include "assets/odf/definition.hpp"
 
 using namespace std::literals;

@@ -1,22 +1,17 @@
 
 #include "shader_library.hpp"
 #include "async/for_each.hpp"
-#include "hresult_error.hpp"
+#include "io/output_file.hpp"
 #include "io/read_file.hpp"
-#include "shader_cache.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <algorithm>
 #include <array>
 #include <exception>
+#include <filesystem>
 #include <format>
-#include <fstream>
 #include <iostream>
 #include <shared_mutex>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 #include <boost/container/small_vector.hpp>
 #include <boost/functional/hash.hpp>
@@ -32,74 +27,9 @@ namespace we::graphics {
 
 namespace {
 
-const std::filesystem::path shader_cache_path = L"shaders.bin"sv;
 const std::filesystem::path shader_pdb_path = L"shaders/pdb/"sv;
 
 namespace dxc {
-
-struct file_includer final : public IDxcIncludeHandler {
-   constexpr static auto dependencies_hasher = [](const shader_dependency& dependency) {
-      return std::hash<std::wstring>{}(dependency.path.native());
-   };
-
-   constexpr static auto dependencies_equals = [](const shader_dependency& l,
-                                                  const shader_dependency& r) {
-      return l.path == r.path;
-   };
-
-   std::unordered_set<shader_dependency, decltype(dependencies_hasher), decltype(dependencies_equals)> dependencies;
-   utility::com_ptr<IDxcUtils> utils;
-
-private:
-   HRESULT STDMETHODCALLTYPE LoadSource(LPCWSTR filename, IDxcBlob** include_source) override
-   {
-      utility::com_ptr<IDxcBlobEncoding> blob;
-
-      if (auto hr = utils->LoadFile(filename, nullptr, blob.clear_and_assign());
-          FAILED(hr)) {
-         return hr;
-      }
-
-      *include_source = blob.release();
-
-      const auto path = std::filesystem::relative(filename);
-
-      dependencies.insert(
-         shader_dependency{.path = path,
-                           .last_write =
-                              std::filesystem::last_write_time(path).time_since_epoch()});
-
-      return S_OK;
-   }
-
-   HRESULT STDMETHODCALLTYPE QueryInterface(const IID& iid, void** object) override
-   {
-      if (iid == __uuidof(IUnknown)) {
-         *object = static_cast<IUnknown*>(this);
-
-         return S_OK;
-      }
-      else if (iid == __uuidof(IDxcIncludeHandler)) {
-         *object = static_cast<IDxcIncludeHandler*>(this);
-
-         return S_OK;
-      }
-
-      return E_NOINTERFACE;
-   }
-
-   ULONG STDMETHODCALLTYPE AddRef() override
-   {
-      return ++_ref_count;
-   }
-
-   ULONG STDMETHODCALLTYPE Release() override
-   {
-      return --_ref_count;
-   }
-
-   ULONG _ref_count = 1;
-};
 
 auto get_type_string(const shader_description& desc) -> std::wstring_view
 {
@@ -144,7 +74,8 @@ auto get_shader_defines(const shader_description& desc)
    macros.resize(desc.defines.size());
 
    ranges::transform(desc.defines, macros.begin(), [](const shader_define& define) {
-      return std::format(L"{}={}", define.var, define.value);
+      return std::format(L"{}={}", define.var,
+                         static_cast<const std::wstring&>(define.value));
    });
 
    return macros;
@@ -155,31 +86,31 @@ auto get_shader_pdb_path(const shader_description& desc) -> std::filesystem::pat
    return std::filesystem::current_path() / shader_pdb_path / desc.name += L".pdb"sv;
 }
 
-auto compile(const shader_description& desc)
-   -> std::pair<std::vector<std::byte>, std::vector<shader_dependency>>
+auto compile(const shader_description& desc) -> std::vector<std::byte>
 {
-   utility::com_ptr<IDxcUtils> utils;
-   utility::com_ptr<IDxcCompiler3> compiler;
+   using utility::com_ptr;
+
+   com_ptr<IDxcUtils> utils;
+   com_ptr<IDxcCompiler3> compiler;
+   com_ptr<IDxcIncludeHandler> include_handler;
    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.clear_and_assign()));
    DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(compiler.clear_and_assign()));
-
-   file_includer includer;
-
-   includer.utils = utils;
+   utils->CreateDefaultIncludeHandler(include_handler.clear_and_assign());
 
    const auto shader_defines = get_shader_defines(desc);
    const auto target = get_target(desc);
    const auto pdb_path = get_shader_pdb_path(desc);
+   std::filesystem::path file{desc.file};
 
    const std::array static_compile_args = {
-      desc.file.c_str(), // shader name
+      file.c_str(), // shader name
       L"-E",
       desc.entrypoint.c_str(),
       L"-T",
       target.c_str(),
       L"-Zs", // enable debug information
       L"-Fd",
-      pdb_path.c_str(),
+      pdb_path.c_str(), //
       L"-Qstrip_reflect",
    };
 
@@ -195,12 +126,11 @@ auto compile(const shader_description& desc)
    }
 
    // open source file
-   utility::com_ptr<IDxcBlobEncoding> source_blob;
+   com_ptr<IDxcBlobEncoding> source_blob;
 
-   if (FAILED(utils->LoadFile(desc.file.c_str(), nullptr,
-                              source_blob.clear_and_assign()))) {
+   if (FAILED(utils->LoadFile(file.c_str(), nullptr, source_blob.clear_and_assign()))) {
       std::cerr << std::format("Unable to load file {} for shader {}\n"sv,
-                               desc.file.string(), desc.name);
+                               file.make_preferred().string(), desc.name);
 
       return {};
    }
@@ -209,12 +139,12 @@ auto compile(const shader_description& desc)
                           .Size = source_blob->GetBufferSize(),
                           .Encoding = DXC_CP_ACP};
 
-   utility::com_ptr<IDxcResult> results;
+   com_ptr<IDxcResult> results;
    compiler->Compile(&source, compile_args.data(),
-                     static_cast<UINT32>(compile_args.size()), &includer,
+                     static_cast<UINT32>(compile_args.size()), include_handler.get(),
                      IID_PPV_ARGS(results.clear_and_assign()));
 
-   utility::com_ptr<IDxcBlobUtf8> errors;
+   com_ptr<IDxcBlobUtf8> errors;
    results->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(errors.clear_and_assign()), nullptr);
 
    if (errors != nullptr && errors->GetStringLength() != 0) {
@@ -231,29 +161,29 @@ auto compile(const shader_description& desc)
       return {};
    }
 
-   utility::com_ptr<IDxcBlob> dxc_shader;
-   utility::com_ptr<IDxcBlobUtf16> shader_name;
+   com_ptr<IDxcBlob> dxc_shader;
+   com_ptr<IDxcBlobUtf16> shader_name;
    results->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(dxc_shader.clear_and_assign()),
                       shader_name.clear_and_assign());
 
-   utility::com_ptr<IDxcBlob> pdb_blob;
-   utility::com_ptr<IDxcBlobUtf16> pdb_name;
+   com_ptr<IDxcBlob> pdb_blob;
+   com_ptr<IDxcBlobUtf16> pdb_name;
    results->GetOutput(DXC_OUT_PDB, IID_PPV_ARGS(pdb_blob.clear_and_assign()),
                       pdb_name.clear_and_assign());
 
    if (pdb_blob != nullptr) {
-      std::ofstream file{pdb_name->GetStringPointer(), std::ios::binary};
+      io::output_file pbd_out{pdb_name->GetStringPointer()};
 
-      file.write(static_cast<const char*>(pdb_blob->GetBufferPointer()),
-                 pdb_blob->GetBufferSize());
+      pbd_out.write(
+         std::span{static_cast<const std::byte*>(pdb_blob->GetBufferPointer()),
+                   pdb_blob->GetBufferSize()});
    }
 
    std::cout << std::format("Compiled {}\n"sv, desc.name);
 
-   return {{static_cast<std::byte*>(dxc_shader->GetBufferPointer()),
-            static_cast<std::byte*>(dxc_shader->GetBufferPointer()) +
-               dxc_shader->GetBufferSize()},
-           {includer.dependencies.begin(), includer.dependencies.end()}};
+   return {static_cast<std::byte*>(dxc_shader->GetBufferPointer()),
+           static_cast<std::byte*>(dxc_shader->GetBufferPointer()) +
+              dxc_shader->GetBufferSize()};
 }
 
 }
@@ -285,8 +215,6 @@ auto shader_library::operator[](const std::string_view name) const noexcept
 
 void shader_library::reload(std::initializer_list<shader_description> shaders) noexcept
 {
-   const auto shader_cache = load_shader_cache(shader_cache_path);
-
    std::filesystem::create_directories(shader_pdb_path);
 
    std::shared_mutex compiled_mutex;
@@ -295,19 +223,9 @@ void shader_library::reload(std::initializer_list<shader_description> shaders) n
 
    async::for_each(*_thread_pool, async::task_priority::normal, shaders,
                    [&](const shader_description& desc) noexcept {
-                      compiled_shader compiled{desc};
+                      compiled_shader compiled{.name = desc.name};
 
-                      if (auto it = shader_cache.find(desc); it != shader_cache.end()) {
-                         compiled.bytecode = it->second.bytecode;
-                         compiled.file_last_write = it->second.file_last_write;
-                         compiled.dependencies = it->second.dependencies;
-                      }
-                      else {
-                         compiled.file_last_write =
-                            std::filesystem::last_write_time(desc.file).time_since_epoch();
-                         std::tie(compiled.bytecode, compiled.dependencies) =
-                            dxc::compile(desc);
-                      }
+                      compiled.bytecode = dxc::compile(desc);
 
                       if (compiled.bytecode.empty()) return;
 
@@ -315,30 +233,10 @@ void shader_library::reload(std::initializer_list<shader_description> shaders) n
                       _compiled_shaders.emplace_back(std::move(compiled));
                    });
 
-   save_shader_cache(shader_cache_path, _compiled_shaders);
-
    std::sort(_compiled_shaders.begin(), _compiled_shaders.end(),
              [](const compiled_shader& l, const compiled_shader& r) {
                 return l.name < r.name;
              });
 }
 
-}
-
-auto std::hash<we::graphics::shader_description>::operator()(
-   const we::graphics::shader_description& desc) const noexcept -> std::size_t
-{
-   std::size_t hash = 0;
-
-   boost::hash_combine(hash, desc.name);
-   boost::hash_combine(hash, desc.entrypoint);
-   boost::hash_combine(hash, desc.type);
-   boost::hash_combine(hash, desc.file);
-
-   for (auto& define : desc.defines) {
-      boost::hash_combine(hash, define.var);
-      boost::hash_combine(hash, define.value);
-   }
-
-   return 0;
 }

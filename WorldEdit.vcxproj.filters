@@ -378,9 +378,6 @@
     <ClInclude Include="src\graphics\terrain.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\utility\binary_writer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\assets\option_file.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -413,9 +410,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\pipeline_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\shader_cache.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\shader_library.hpp">
@@ -580,6 +574,9 @@
     <ClInclude Include="src\utility\float16_packing.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\utility\event_listener.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -699,9 +696,6 @@
     <ClCompile Include="src\graphics\pipeline_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\shader_cache.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\shader_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -784,6 +778,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\model_manager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\asset_ref.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

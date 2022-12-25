@@ -1,5 +1,6 @@
 
 #include "texture_manager.hpp"
+#include "assets/texture/texture.hpp"
 
 namespace we::graphics {
 

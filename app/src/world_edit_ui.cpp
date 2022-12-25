@@ -184,22 +184,17 @@ void world_edit::update_ui() noexcept
                   "Class Name", object, &world::object::class_name,
                   &_undo_stack, &_world, [&] {
                      std::array<we::lowercase_string, 6> entries;
+                     std::size_t matching_count = 0;
 
-                     _asset_libraries.odfs.enumerate_known([&](auto range) {
-                        std::size_t matching_count = 0;
-
-                        for (const lowercase_string& asset : range) {
-                           if (not asset.contains(object->class_name)) {
-                              continue;
-                           }
+                     _asset_libraries.odfs.enumerate_known(
+                        [&](const lowercase_string& asset) {
+                           if (matching_count == entries.size()) return;
+                           if (not asset.contains(object->class_name)) return;
 
                            entries[matching_count] = asset;
 
                            ++matching_count;
-
-                           if (matching_count == entries.size()) break;
-                        }
-                     });
+                        });
 
                      return entries;
                   });
@@ -338,22 +333,17 @@ void world_edit::update_ui() noexcept
                ImGui::InputTextAutoComplete(
                   "Texture", light, &world::light::texture, &_undo_stack, &_world, [&] {
                      std::array<std::string, 6> entries;
+                     std::size_t matching_count = 0;
 
-                     _asset_libraries.textures.enumerate_known([&](auto range) {
-                        std::size_t matching_count = 0;
-
-                        for (const std::string& asset : range) {
-                           if (not asset.contains(light->texture)) {
-                              continue;
-                           }
+                     _asset_libraries.textures.enumerate_known(
+                        [&](const lowercase_string& asset) {
+                           if (matching_count == entries.size()) return;
+                           if (not asset.contains(light->texture)) return;
 
                            entries[matching_count] = asset;
 
                            ++matching_count;
-
-                           if (matching_count == entries.size()) break;
-                        }
-                     });
+                        });
 
                      return entries;
                   });

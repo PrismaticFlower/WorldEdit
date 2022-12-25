@@ -195,6 +195,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\actions\stack.cpp" />
+    <ClCompile Include="src\assets\asset_ref.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
     <ClCompile Include="src\assets\msh\scene.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
@@ -330,7 +331,6 @@
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\graphics\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\sampler_list.hpp" />
-    <ClInclude Include="src\graphics\shader_cache.hpp" />
     <ClInclude Include="src\graphics\shader_library.hpp" />
     <ClInclude Include="src\graphics\shader_list.hpp" />
     <ClInclude Include="src\graphics\shadow_camera.hpp" />
@@ -365,7 +365,6 @@
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ucfb\reader.hpp" />
     <ClInclude Include="src\utility\binary_reader.hpp" />
-    <ClInclude Include="src\utility\binary_writer.hpp" />
     <ClInclude Include="src\utility\command_line.hpp" />
     <ClInclude Include="src\utility\com_ptr.hpp" />
     <ClInclude Include="src\utility\enum_bitflags.hpp" />
@@ -383,12 +382,12 @@
     </ClCompile>
     <ClCompile Include="src\graphics\pipeline_library.cpp" />
     <ClCompile Include="src\graphics\root_signature_library.cpp" />
-    <ClCompile Include="src\graphics\shader_cache.cpp" />
     <ClCompile Include="src\graphics\shader_library.cpp" />
     <ClCompile Include="src\graphics\shader_list.cpp" />
     <ClCompile Include="src\utility\file_pickers.cpp" />
     <ClCompile Include="src\utility\file_watcher.cpp" />
     <ClInclude Include="src\utility\event.hpp" />
+    <ClInclude Include="src\utility\event_listener.hpp" />
     <ClInclude Include="src\utility\file_pickers.hpp" />
     <ClInclude Include="src\utility\file_watcher.hpp">
       <FileType>CppHeader</FileType>

@@ -6,6 +6,7 @@
 #include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"
 #include "utility/file_pickers.hpp"
+#include "utility/string_ops.hpp"
 #include "world/raycast.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
