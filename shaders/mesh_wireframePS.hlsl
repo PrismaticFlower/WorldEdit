@@ -9,8 +9,7 @@ ConstantBuffer<wireframe_constants> cb_wireframe_constants : register(META_MESH_
 
 struct input_vertex {
    float4 positionRT : SV_Position;
-
-   nointerpolation float4 tri_positionPS[3] : TRIPOSITIONPS;
+   nointerpolation float4 positionPS : FLAT_POSITIONPS;
 };
 
 float2 to_rendertarget_position(float4 positionPS)
@@ -43,9 +42,10 @@ float line_alpha(float distance)
 
 float4 main(input_vertex input_vertex) : SV_TARGET
 {
-   const float4 positionPS0 = input_vertex.tri_positionPS[0];
-   const float4 positionPS1 = input_vertex.tri_positionPS[1];
-   const float4 positionPS2 = input_vertex.tri_positionPS[2];
+
+   const float4 positionPS0 = GetAttributeAtVertex(input_vertex.positionPS, 0);
+   const float4 positionPS1 = GetAttributeAtVertex(input_vertex.positionPS, 1);
+   const float4 positionPS2 = GetAttributeAtVertex(input_vertex.positionPS, 2);
 
    const float2 positionRT0 = to_rendertarget_position(positionPS0);
    const float2 positionRT1 = to_rendertarget_position(positionPS1);

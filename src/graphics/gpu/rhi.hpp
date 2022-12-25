@@ -318,7 +318,6 @@ struct graphics_pipeline_desc {
    root_signature_handle root_signature;
    std::span<const std::byte> vs_bytecode;
    std::span<const std::byte> ps_bytecode;
-   std::span<const std::byte> gs_bytecode;
 
    blend_state_desc blend_state{};
    rasterizer_state_desc rasterizer_state{};

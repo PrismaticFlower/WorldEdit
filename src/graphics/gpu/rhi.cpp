@@ -612,8 +612,6 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
              .BytecodeLength = desc.vs_bytecode.size()},
       .PS = {.pShaderBytecode = desc.ps_bytecode.data(),
              .BytecodeLength = desc.ps_bytecode.size()},
-      .GS = {.pShaderBytecode = desc.gs_bytecode.data(),
-             .BytecodeLength = desc.gs_bytecode.size()},
 
       .BlendState = blend_state,
       .SampleMask = 0xffffffffu,

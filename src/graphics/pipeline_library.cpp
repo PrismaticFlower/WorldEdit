@@ -316,9 +316,8 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
    mesh_wireframe = {device.create_graphics_pipeline(
                         {.root_signature = root_signature_library.mesh_wireframe.get(),
 
-                         .vs_bytecode = shader_library["mesh_depth_prepassVS"sv],
+                         .vs_bytecode = shader_library["mesh_wireframeVS"sv],
                          .ps_bytecode = shader_library["mesh_wireframePS"sv],
-                         .gs_bytecode = shader_library["mesh_wireframeGS"sv],
 
                          .blend_state = blend_alpha,
                          .rasterizer_state = rasterizer_cull_none,
@@ -417,7 +416,6 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                              .vs_bytecode = shader_library["meta_meshVS"sv],
                              .ps_bytecode = shader_library["meta_mesh_outlinedPS"sv],
-                             .gs_bytecode = shader_library["meta_mesh_outlinedGS"sv],
 
                              .rasterizer_state = rasterizer_cull_backfacing,
                              .depth_stencil_state = depth_stencil_enabled,
@@ -436,7 +434,6 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                               .vs_bytecode = shader_library["meta_meshVS"sv],
                               .ps_bytecode = shader_library["mesh_wireframePS"sv],
-                              .gs_bytecode = shader_library["mesh_wireframeGS"sv],
 
                               .blend_state = blend_alpha,
                               .rasterizer_state = rasterizer_cull_none,

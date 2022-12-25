@@ -41,7 +41,7 @@ std::initializer_list<shader_description> shader_list = {
    shader("mesh_normalPS"),
    shader("mesh_depth_prepassVS"),
    shader("mesh_depth_cutoutPS"),
-   shader("mesh_wireframeGS"),
+   shader("mesh_wireframeVS"),
    shader("mesh_wireframePS"),
 
    shader("terrain_patchVS"),
@@ -53,8 +53,6 @@ std::initializer_list<shader_description> shader_list = {
 
    shader("meta_meshVS"),
    shader("meta_meshPS"),
-
-   shader("meta_mesh_outlinedGS"),
    shader("meta_mesh_outlinedPS"),
 
    shader("tile_lights_clearCS"),
