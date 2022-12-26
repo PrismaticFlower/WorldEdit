@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dynamic_buffer_allocator.hpp"
-#include "frustrum.hpp"
+#include "frustum.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
 #include "pipeline_library.hpp"
@@ -28,7 +28,7 @@ public:
    void init(const world::terrain& terrain, gpu::copy_command_list& command_list,
              dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void draw(const terrain_draw draw, const frustrum& view_frustrum,
+   void draw(const terrain_draw draw, const frustum& view_frustum,
              gpu_virtual_address camera_constant_buffer_view,
              gpu_virtual_address lights_constant_buffer_view,
              gpu::graphics_command_list& command_list,

@@ -4,7 +4,7 @@
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
 #include "dynamic_buffer_allocator.hpp"
-#include "frustrum.hpp"
+#include "frustum.hpp"
 #include "geometric_shapes.hpp"
 #include "gpu/barrier.hpp"
 #include "gpu/rhi.hpp"
@@ -152,38 +152,24 @@ struct renderer_impl final : renderer {
    }
 
 private:
-   struct render_list_item {
-      float distance;
-      gpu::pipeline_handle pipeline;
-      gpu::pipeline_handle depth_prepass_pipeline;
-      gpu::index_buffer_view index_buffer_view;
-      std::array<gpu::vertex_buffer_view, 2> vertex_buffer_views;
-      gpu_virtual_address object_constants_address;
-      gpu_virtual_address material_cbv;
-      uint32 index_count;
-      uint32 start_index;
-      uint32 start_vertex;
-   };
-
    void update_frame_constant_buffer(const camera& camera,
                                      gpu::copy_command_list& command_list);
 
-   void draw_world(const frustrum& view_frustrum,
-                   gpu::graphics_command_list& command_list);
+   void draw_world(const frustum& view_frustum, gpu::graphics_command_list& command_list);
 
-   void draw_world_render_list_depth_prepass(const std::vector<render_list_item>& list,
+   void draw_world_render_list_depth_prepass(const std::vector<uint16>& list,
                                              gpu::graphics_command_list& command_list);
 
-   void draw_world_render_list(const std::vector<render_list_item>& list,
+   void draw_world_render_list(const std::vector<uint16>& list,
                                gpu::graphics_command_list& command_list);
 
-   void draw_world_meta_objects(const frustrum& view_frustrum, const world::world& world,
+   void draw_world_meta_objects(const frustum& view_frustum, const world::world& world,
                                 const world::active_entity_types active_entity_types,
                                 const world::active_layers active_layers,
                                 gpu::graphics_command_list& command_list);
 
    void draw_interaction_targets(
-      const frustrum& view_frustrum, const world::world& world,
+      const frustum& view_frustum, const world::world& world,
       const world::interaction_targets& interaction_targets,
       const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
       gpu::graphics_command_list& command_list);
@@ -193,7 +179,7 @@ private:
       const world::active_layers active_layers,
       const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes);
 
-   void build_object_render_list(const frustrum& view_frustrum);
+   void build_object_render_list(const frustum& view_frustum);
 
    void update_textures(gpu::copy_command_list& command_list);
 
@@ -265,8 +251,8 @@ private:
        _device.direct_queue};
 
    world_mesh_list _world_mesh_list;
-   std::vector<render_list_item> _opaque_object_render_list;
-   std::vector<render_list_item> _transparent_object_render_list;
+   std::vector<uint16> _opaque_object_render_list;
+   std::vector<uint16> _transparent_object_render_list;
 
    imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
 
@@ -318,7 +304,7 @@ void renderer_impl::draw_frame(
    const world::active_layers active_layers,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
 {
-   const frustrum view_frustrum{camera.inv_view_projection_matrix()};
+   const frustum view_frustum{camera.inv_view_projection_matrix()};
 
    auto [back_buffer, back_buffer_rtv] = _swap_chain.current_back_buffer();
    _dynamic_buffer_allocator.reset(_device.frame_index());
@@ -339,7 +325,7 @@ void renderer_impl::draw_frame(
                             world_classes);
       update_frame_constant_buffer(camera, _pre_render_command_list);
 
-      _light_clusters.prepare_lights(camera, view_frustrum, world,
+      _light_clusters.prepare_lights(camera, view_frustum, world,
                                      _pre_render_command_list,
                                      _dynamic_buffer_allocator);
 
@@ -349,7 +335,7 @@ void renderer_impl::draw_frame(
       _device.direct_queue.sync_with(_device.copy_queue);
    }
 
-   build_object_render_list(view_frustrum);
+   build_object_render_list(view_frustum);
 
    auto& command_list = _world_command_list;
 
@@ -378,13 +364,13 @@ void renderer_impl::draw_frame(
    command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
 
    // Render World
-   if (active_entity_types.objects) draw_world(view_frustrum, command_list);
+   if (active_entity_types.objects) draw_world(view_frustum, command_list);
 
    // Render World Meta Objects
-   draw_world_meta_objects(view_frustrum, world, active_entity_types,
+   draw_world_meta_objects(view_frustum, world, active_entity_types,
                            active_layers, command_list);
 
-   draw_interaction_targets(view_frustrum, world, interaction_targets,
+   draw_interaction_targets(view_frustum, world, interaction_targets,
                             world_classes, command_list);
 
    // Render ImGui
@@ -460,25 +446,25 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
                                    allocation.offset, sizeof(frame_constant_buffer));
 }
 
-void renderer_impl::draw_world(const frustrum& view_frustrum,
+void renderer_impl::draw_world(const frustum& view_frustum,
                                gpu::graphics_command_list& command_list)
 {
    draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
 
-   _terrain.draw(terrain_draw::depth_prepass, view_frustrum, _camera_constant_buffer_view,
+   _terrain.draw(terrain_draw::depth_prepass, view_frustum, _camera_constant_buffer_view,
                  _light_clusters.lights_constant_buffer_view(), command_list,
                  _root_signatures, _pipelines, _dynamic_buffer_allocator);
 
    draw_world_render_list(_opaque_object_render_list, command_list);
 
-   _terrain.draw(terrain_draw::main, view_frustrum, _camera_constant_buffer_view,
+   _terrain.draw(terrain_draw::main, view_frustum, _camera_constant_buffer_view,
                  _light_clusters.lights_constant_buffer_view(), command_list,
                  _root_signatures, _pipelines, _dynamic_buffer_allocator);
 
    draw_world_render_list(_transparent_object_render_list, command_list);
 }
 
-void renderer_impl::draw_world_render_list(const std::vector<render_list_item>& list,
+void renderer_impl::draw_world_render_list(const std::vector<uint16>& list,
                                            gpu::graphics_command_list& command_list)
 {
    command_list.set_graphics_root_signature(_root_signatures.mesh.get());
@@ -489,53 +475,85 @@ void renderer_impl::draw_world_render_list(const std::vector<render_list_item>& 
 
    gpu::pipeline_handle pipeline_state = gpu::null_pipeline_handle;
 
-   for (auto& object : list) {
-      if (pipeline_state != object.pipeline) {
-         command_list.set_pipeline_state(object.pipeline);
+   auto& meshes = _world_mesh_list;
+
+   for (auto& i : list) {
+      if (std::exchange(pipeline_state, meshes.pipeline[i]) != meshes.pipeline[i]) {
+         command_list.set_pipeline_state(meshes.pipeline[i]);
       }
 
-      command_list.set_graphics_cbv(rs::mesh::object_cbv,
-                                    object.object_constants_address);
-      command_list.set_graphics_cbv(rs::mesh::material_cbv, object.material_cbv);
-      command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
-      command_list.ia_set_index_buffer(object.index_buffer_view);
-      command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
-                                          object.start_vertex, 0);
+      command_list.set_graphics_cbv(rs::mesh::object_cbv, meshes.gpu_constants[i]);
+      command_list.set_graphics_cbv(rs::mesh::material_cbv,
+                                    meshes.material_constant_buffer[i]);
+
+      auto& mesh = meshes.mesh[i];
+
+      command_list.ia_set_index_buffer(mesh.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, mesh.vertex_buffer_views);
+      command_list.draw_indexed_instanced(mesh.index_count, 1, mesh.start_index,
+                                          mesh.start_vertex, 0);
    }
 }
 
 void renderer_impl::draw_world_render_list_depth_prepass(
-   const std::vector<render_list_item>& list, gpu::graphics_command_list& command_list)
+   const std::vector<uint16>& list, gpu::graphics_command_list& command_list)
 {
    command_list.set_graphics_root_signature(_root_signatures.mesh_depth_prepass.get());
    command_list.set_graphics_cbv(rs::mesh_depth_prepass::frame_cbv,
                                  _camera_constant_buffer_view);
    command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-   gpu::pipeline_handle pipeline_state = gpu::null_pipeline_handle;
+   material_pipeline_flags pipeline_flags = material_pipeline_flags::none;
 
-   for (auto& object : list) {
-      if (pipeline_state != object.depth_prepass_pipeline) {
-         command_list.set_pipeline_state(object.depth_prepass_pipeline);
+   command_list.set_pipeline_state(_pipelines.mesh_depth_prepass.get());
+
+   auto& meshes = _world_mesh_list;
+
+   for (auto& i : list) {
+      if (std::exchange(pipeline_flags, meshes.pipeline_flags[i]) !=
+          meshes.pipeline_flags[i]) {
+
+         if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout |
+                                              material_pipeline_flags::doublesided)) {
+            command_list.set_pipeline_state(
+               _pipelines.mesh_depth_prepass_alpha_cutout_doublesided.get());
+         }
+         else if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout)) {
+            command_list.set_pipeline_state(
+               _pipelines.mesh_depth_prepass_alpha_cutout.get());
+         }
+         else if (are_flags_set(pipeline_flags, material_pipeline_flags::doublesided)) {
+            command_list.set_pipeline_state(
+               _pipelines.mesh_depth_prepass_doublesided.get());
+         }
+         else {
+            command_list.set_pipeline_state(_pipelines.mesh_depth_prepass.get());
+         }
       }
 
       command_list.set_graphics_cbv(rs::mesh_depth_prepass::object_cbv,
-                                    object.object_constants_address);
-      command_list.set_graphics_cbv(rs::mesh_depth_prepass::material_cbv,
-                                    object.material_cbv);
-      command_list.ia_set_vertex_buffers(0, object.vertex_buffer_views);
-      command_list.ia_set_index_buffer(object.index_buffer_view);
-      command_list.draw_indexed_instanced(object.index_count, 1, object.start_index,
-                                          object.start_vertex, 0);
+                                    meshes.gpu_constants[i]);
+
+      if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout)) {
+         command_list.set_graphics_cbv(rs::mesh_depth_prepass::material_cbv,
+                                       meshes.material_constant_buffer[i]);
+      }
+
+      auto& mesh = meshes.mesh[i];
+
+      command_list.ia_set_index_buffer(mesh.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, mesh.vertex_buffer_views);
+      command_list.draw_indexed_instanced(mesh.index_count, 1, mesh.start_index,
+                                          mesh.start_vertex, 0);
    }
 }
 
 void renderer_impl::draw_world_meta_objects(
-   const frustrum& view_frustrum, const world::world& world,
+   const frustum& view_frustum, const world::world& world,
    const world::active_entity_types active_entity_types,
    const world::active_layers active_layers, gpu::graphics_command_list& command_list)
 {
-   (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for meta objects?)
+   (void)view_frustum; // TODO: frustum Culling (Is it worth it for meta objects?)
 
    if (active_entity_types.paths and not world.paths.empty()) {
       static bool draw_nodes = true;
@@ -1061,12 +1079,12 @@ void renderer_impl::draw_world_meta_objects(
 }
 
 void renderer_impl::draw_interaction_targets(
-   const frustrum& view_frustrum, const world::world& world,
+   const frustum& view_frustum, const world::world& world,
    const world::interaction_targets& interaction_targets,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
    gpu::graphics_command_list& command_list)
 {
-   (void)view_frustrum; // TODO: Frustrum Culling (Is it worth it for interaction targets?)
+   (void)view_frustum; // TODO: frustum Culling (Is it worth it for interaction targets?)
 
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
@@ -1662,7 +1680,7 @@ void renderer_impl::build_world_mesh_list(
                                    upload_buffer.get(), 0, constants_data_size);
 }
 
-void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
+void renderer_impl::build_object_render_list(const frustum& view_frustum)
 {
    auto& meshes = _world_mesh_list;
 
@@ -1672,59 +1690,33 @@ void renderer_impl::build_object_render_list(const frustrum& view_frustrum)
    _transparent_object_render_list.reserve(meshes.size());
 
    for (std::size_t i = 0; i < meshes.size(); ++i) {
-      if (not intersects(view_frustrum, meshes.bbox[i])) continue;
+      if (not intersects(view_frustum, meshes.bbox[i])) continue;
 
-      auto& render_list = are_flags_set(meshes.pipeline_flags[i],
-                                        material_pipeline_flags::transparent)
-                             ? _transparent_object_render_list
-                             : _opaque_object_render_list;
+      auto& render_list =
+         are_flags_set(meshes.pipeline_flags[i], material_pipeline_flags::transparent) or
+               are_flags_set(meshes.pipeline_flags[i], material_pipeline_flags::additive)
+            ? _transparent_object_render_list
+            : _opaque_object_render_list;
 
-      const gpu::pipeline_handle depth_prepass_pipeline = [&]() {
-         if (are_flags_set(meshes.pipeline_flags[i],
-                           material_pipeline_flags::alpha_cutout |
-                              material_pipeline_flags::doublesided)) {
-            return _pipelines.mesh_depth_prepass_alpha_cutout_doublesided.get();
-         }
-         if (are_flags_set(meshes.pipeline_flags[i],
-                           material_pipeline_flags::alpha_cutout)) {
-            return _pipelines.mesh_depth_prepass_alpha_cutout.get();
-         }
-         if (are_flags_set(meshes.pipeline_flags[i],
-                           material_pipeline_flags::doublesided)) {
-            return _pipelines.mesh_depth_prepass_doublesided.get();
-         }
-
-         return _pipelines.mesh_depth_prepass.get();
-      }();
-
-      render_list.push_back({
-         .distance = dot(view_frustrum.planes[frustrum_planes::near_],
-                         float4{meshes.position[i], 1.0f}),
-
-         .pipeline = meshes.pipeline[i],
-         .depth_prepass_pipeline = depth_prepass_pipeline,
-
-         .index_buffer_view = meshes.mesh[i].index_buffer_view,
-         .vertex_buffer_views = {meshes.mesh[i].vertex_buffer_views},
-
-         .object_constants_address = meshes.gpu_constants[i],
-         .material_cbv = meshes.material_constant_buffer[i],
-
-         .index_count = meshes.mesh[i].index_count,
-         .start_index = meshes.mesh[i].start_index,
-         .start_vertex = meshes.mesh[i].start_vertex,
-      });
+      render_list.push_back(static_cast<uint16>(i));
    }
 
    std::sort(_opaque_object_render_list.begin(), _opaque_object_render_list.end(),
-             [](const render_list_item& l, const render_list_item& r) {
-                return std::tie(l.distance, l.pipeline) <
-                       std::tie(r.distance, r.pipeline);
+             [&](const uint16 l, const uint16 r) {
+                return std::tuple{dot(view_frustum.planes[frustum_planes::near_],
+                                      float4{meshes.position[l], 1.0f}),
+                                  meshes.pipeline[l]} <
+                       std::tuple{dot(view_frustum.planes[frustum_planes::near_],
+                                      float4{meshes.position[r], 1.0f}),
+                                  meshes.pipeline[r]};
              });
    std::sort(_transparent_object_render_list.begin(),
              _transparent_object_render_list.end(),
-             [](const render_list_item& l, const render_list_item& r) {
-                return l.distance > r.distance;
+             [&](const uint16 l, const uint16 r) {
+                return dot(view_frustum.planes[frustum_planes::near_],
+                           float4{meshes.position[l], 1.0f}) >
+                       dot(view_frustum.planes[frustum_planes::near_],
+                           float4{meshes.position[r], 1.0f});
              });
 }
 

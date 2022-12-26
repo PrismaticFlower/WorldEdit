@@ -3,7 +3,7 @@
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
 #include "dynamic_buffer_allocator.hpp"
-#include "frustrum.hpp"
+#include "frustum.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
 #include "model_manager.hpp"
@@ -28,7 +28,7 @@ public:
 
    void update_render_resolution(uint32 width, uint32 height);
 
-   void prepare_lights(const camera& view_camera, const frustrum& view_frustrum,
+   void prepare_lights(const camera& view_camera, const frustum& view_frustum,
                        const world::world& world, gpu::copy_command_list& command_list,
                        dynamic_buffer_allocator& dynamic_buffer_allocator);
 

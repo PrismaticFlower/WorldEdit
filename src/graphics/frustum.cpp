@@ -1,5 +1,5 @@
 
-#include "frustrum.hpp"
+#include "frustum.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -34,21 +34,21 @@ bool outside_plane(const float4& plane, const float3& point, const float radius)
 
 }
 
-frustrum::frustrum(const float4x4& inv_view_projection_matrix) noexcept
+frustum::frustum(const float4x4& inv_view_projection_matrix) noexcept
 {
-   constexpr container::enum_array<float4, frustrum_corner> corners_proj =
-      container::make_enum_array<float4, frustrum_corner>(
-         {{frustrum_corner::bottom_left_near, {-1.0f, -1.0f, 0.0f, 1.0f}},
-          {frustrum_corner::bottom_right_near, {1.0f, -1.0f, 0.0f, 1.0f}},
+   constexpr container::enum_array<float4, frustum_corner> corners_proj =
+      container::make_enum_array<float4, frustum_corner>(
+         {{frustum_corner::bottom_left_near, {-1.0f, -1.0f, 0.0f, 1.0f}},
+          {frustum_corner::bottom_right_near, {1.0f, -1.0f, 0.0f, 1.0f}},
 
-          {frustrum_corner::top_left_near, {-1.0f, 1.0f, 0.0f, 1.0f}},
-          {frustrum_corner::top_right_near, {1.0f, 1.0f, 0.0f, 1.0f}},
+          {frustum_corner::top_left_near, {-1.0f, 1.0f, 0.0f, 1.0f}},
+          {frustum_corner::top_right_near, {1.0f, 1.0f, 0.0f, 1.0f}},
 
-          {frustrum_corner::bottom_left_far, {-1.0f, -1.0f, 1.0f, 1.0f}},
-          {frustrum_corner::bottom_right_far, {1.0f, -1.0f, 1.0f, 1.0f}},
+          {frustum_corner::bottom_left_far, {-1.0f, -1.0f, 1.0f, 1.0f}},
+          {frustum_corner::bottom_right_far, {1.0f, -1.0f, 1.0f, 1.0f}},
 
-          {frustrum_corner::top_left_far, {-1.0f, 1.0f, 1.0f, 1.0f}},
-          {frustrum_corner::top_right_far, {1.0f, 1.0f, 1.0f, 1.0f}}});
+          {frustum_corner::top_left_far, {-1.0f, 1.0f, 1.0f, 1.0f}},
+          {frustum_corner::top_right_far, {1.0f, 1.0f, 1.0f, 1.0f}}});
 
    ranges::copy(
       corners_proj | ranges::views::transform([&](float4 position) {
@@ -58,40 +58,39 @@ frustrum::frustrum(const float4x4& inv_view_projection_matrix) noexcept
       }),
       corners.begin());
 
-   planes[frustrum_planes::near_] =
-      get_plane({corners[frustrum_corner::top_left_near],
-                 corners[frustrum_corner::top_right_near],
-                 corners[frustrum_corner::bottom_left_near]});
+   planes[frustum_planes::near_] =
+      get_plane({corners[frustum_corner::top_left_near],
+                 corners[frustum_corner::top_right_near],
+                 corners[frustum_corner::bottom_left_near]});
 
-   planes[frustrum_planes::far_] =
-      get_plane({corners[frustrum_corner::top_left_far],
-                 corners[frustrum_corner::bottom_left_far],
-                 corners[frustrum_corner::top_right_far]});
+   planes[frustum_planes::far_] =
+      get_plane({corners[frustum_corner::top_left_far],
+                 corners[frustum_corner::bottom_left_far],
+                 corners[frustum_corner::top_right_far]});
 
-   planes[frustrum_planes::bottom] =
-      get_plane({corners[frustrum_corner::bottom_left_near],
-                 corners[frustrum_corner::bottom_right_far],
-                 corners[frustrum_corner::bottom_left_far]});
+   planes[frustum_planes::bottom] =
+      get_plane({corners[frustum_corner::bottom_left_near],
+                 corners[frustum_corner::bottom_right_far],
+                 corners[frustum_corner::bottom_left_far]});
 
-   planes[frustrum_planes::top] =
-      get_plane({corners[frustrum_corner::top_left_near],
-                 corners[frustrum_corner::top_left_far],
-                 corners[frustrum_corner::top_right_far]});
+   planes[frustum_planes::top] = get_plane(
+      {corners[frustum_corner::top_left_near], corners[frustum_corner::top_left_far],
+       corners[frustum_corner::top_right_far]});
 
-   planes[frustrum_planes::left] =
-      get_plane({corners[frustrum_corner::top_left_near],
-                 corners[frustrum_corner::bottom_left_far],
-                 corners[frustrum_corner::top_left_far]});
+   planes[frustum_planes::left] =
+      get_plane({corners[frustum_corner::top_left_near],
+                 corners[frustum_corner::bottom_left_far],
+                 corners[frustum_corner::top_left_far]});
 
-   planes[frustrum_planes::right] =
-      get_plane({corners[frustrum_corner::top_right_near],
-                 corners[frustrum_corner::top_right_far],
-                 corners[frustrum_corner::bottom_right_far]});
+   planes[frustum_planes::right] =
+      get_plane({corners[frustum_corner::top_right_near],
+                 corners[frustum_corner::top_right_far],
+                 corners[frustum_corner::bottom_right_far]});
 }
 
-bool intersects(const frustrum& frustrum, const math::bounding_box& bbox)
+bool intersects(const frustum& frustum, const math::bounding_box& bbox)
 {
-   for (const auto& plane : frustrum.planes) {
+   for (const auto& plane : frustum.planes) {
       if (outside_plane(plane, {bbox.min.x, bbox.min.y, bbox.min.z}) &
           outside_plane(plane, {bbox.max.x, bbox.min.y, bbox.min.z}) &
           outside_plane(plane, {bbox.min.x, bbox.max.y, bbox.min.z}) &
@@ -108,8 +107,8 @@ bool intersects(const frustrum& frustrum, const math::bounding_box& bbox)
                                    const float corner) {
       bool outside = true;
 
-      for (const auto& frustrum_corner : frustrum.corners) {
-         outside &= comparator(index(frustrum_corner, i), corner);
+      for (const auto& frustum_corner : frustum.corners) {
+         outside &= comparator(index(frustum_corner, i), corner);
       }
 
       return outside;
@@ -125,9 +124,9 @@ bool intersects(const frustrum& frustrum, const math::bounding_box& bbox)
    return true;
 }
 
-bool intersects_shadow_cascade(const frustrum& frustrum, const math::bounding_box& bbox)
+bool intersects_shadow_cascade(const frustum& frustum, const math::bounding_box& bbox)
 {
-   for (auto& plane : frustrum.planes | ranges::views::drop(1)) {
+   for (auto& plane : frustum.planes | ranges::views::drop(1)) {
       if (outside_plane(plane, {bbox.min.x, bbox.min.y, bbox.min.z}) &
           outside_plane(plane, {bbox.max.x, bbox.min.y, bbox.min.z}) &
           outside_plane(plane, {bbox.min.x, bbox.max.y, bbox.min.z}) &
@@ -143,9 +142,9 @@ bool intersects_shadow_cascade(const frustrum& frustrum, const math::bounding_bo
    return true;
 }
 
-bool intersects(const frustrum& frustrum, const float3& position, const float radius)
+bool intersects(const frustum& frustum, const float3& position, const float radius)
 {
-   for (const auto& plane : frustrum.planes) {
+   for (const auto& plane : frustum.planes) {
       if (outside_plane(plane, position, radius)) {
          return false;
       }

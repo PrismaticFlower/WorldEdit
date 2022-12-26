@@ -214,30 +214,30 @@ auto make_shadow_cascade_splits(const camera& camera)
 
 auto make_cascade_shadow_camera(const float3 light_direction,
                                 const float near_split, const float far_split,
-                                const frustrum& view_frustrum) -> shadow_ortho_camera
+                                const frustum& view_frustum) -> shadow_ortho_camera
 {
-   auto view_frustrum_corners = view_frustrum.corners;
+   auto view_frustum_corners = view_frustum.corners;
 
    for (int i = 0; i < 4; ++i) {
-      float3 corner_ray = view_frustrum_corners[i + 4] - view_frustrum_corners[i];
+      float3 corner_ray = view_frustum_corners[i + 4] - view_frustum_corners[i];
 
-      view_frustrum_corners[i + 4] =
-         view_frustrum_corners[i] + (corner_ray * far_split);
-      view_frustrum_corners[i] += (corner_ray * near_split);
+      view_frustum_corners[i + 4] =
+         view_frustum_corners[i] + (corner_ray * far_split);
+      view_frustum_corners[i] += (corner_ray * near_split);
    }
 
-   float3 view_frustrum_center{0.0f, 0.0f, 0.0f};
+   float3 view_frustum_center{0.0f, 0.0f, 0.0f};
 
-   for (const auto& corner : view_frustrum_corners) {
-      view_frustrum_center += corner;
+   for (const auto& corner : view_frustum_corners) {
+      view_frustum_center += corner;
    }
 
-   view_frustrum_center /= 8.0f;
+   view_frustum_center /= 8.0f;
 
    float radius = std::numeric_limits<float>::lowest();
 
-   for (const auto& corner : view_frustrum_corners) {
-      radius = std::max(distance(corner, view_frustrum_center), radius);
+   for (const auto& corner : view_frustum_corners) {
+      radius = std::max(distance(corner, view_frustum_center), radius);
    }
 
    float3 bounds_max{radius, radius, radius};
@@ -245,12 +245,12 @@ auto make_cascade_shadow_camera(const float3 light_direction,
    float3 casecase_extents{bounds_max - bounds_min};
 
    float3 shadow_camera_position =
-      view_frustrum_center + light_direction * -bounds_min.z;
+      view_frustum_center + light_direction * -bounds_min.z;
 
    shadow_ortho_camera shadow_camera;
    shadow_camera.set_projection(bounds_min.x, bounds_min.y, bounds_max.x,
                                 bounds_max.y, 0.0f, casecase_extents.z);
-   shadow_camera.look_at(shadow_camera_position, view_frustrum_center,
+   shadow_camera.look_at(shadow_camera_position, view_frustum_center,
                          float3{0.0f, 1.0f, 0.0f});
 
    auto shadow_view_projection = shadow_camera.view_projection_matrix();
@@ -271,7 +271,7 @@ auto make_cascade_shadow_camera(const float3 light_direction,
 }
 
 auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
-                          const frustrum& view_frustrum)
+                          const frustum& view_frustum)
    -> std::array<shadow_ortho_camera, cascade_count>
 {
    const float3 light_direction =
@@ -283,7 +283,7 @@ auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
 
    for (int i = 0; i < cascade_count; ++i) {
       cameras[i] = make_cascade_shadow_camera(light_direction, cascade_splits[i],
-                                              cascade_splits[i + 1], view_frustrum);
+                                              cascade_splits[i + 1], view_frustum);
    }
 
    return cameras;
@@ -401,7 +401,7 @@ void light_clusters::update_descriptors()
 }
 
 void light_clusters::prepare_lights(const camera& view_camera,
-                                    const frustrum& view_frustrum,
+                                    const frustum& view_frustum,
                                     const world::world& world,
                                     gpu::copy_command_list& command_list,
                                     dynamic_buffer_allocator& dynamic_buffer_allocator)
@@ -431,7 +431,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
                 &upload_data.constants->inv_shadow_resolution);
    }
 
-   // frustrum cull lights
+   // frustum cull lights
    for (auto& light : world.lights) {
       if (_light_count >= max_lights) break;
 
@@ -549,7 +549,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
          else {
             if (light.shadow_caster) {
                _sun_shadow_cascades =
-                  make_shadow_cascades(light.rotation, view_camera, view_frustrum);
+                  make_shadow_cascades(light.rotation, view_camera, view_frustum);
             }
 
             upload_to({.direction = light_direction,
@@ -568,7 +568,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
          break;
       }
       case world::light_type::point: {
-         if (not intersects(view_frustrum, light.position, light.range)) {
+         if (not intersects(view_frustum, light.position, light.range)) {
             continue;
          }
 
@@ -598,8 +598,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
          const float3 light_centre =
             light.position - (light_direction * (half_range));
 
-         // TODO: Cone-frustrum intersection (but how much of a problem is it?)
-         if (not intersects(view_frustrum, light_centre, light_bounds_radius)) {
+         // TODO: Cone-frustum intersection (but how much of a problem is it?)
+         if (not intersects(view_frustum, light_centre, light_bounds_radius)) {
             continue;
          }
 
@@ -750,7 +750,7 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
    for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
       auto& shadow_camera = _sun_shadow_cascades[cascade_index];
 
-      frustrum shadow_frustrum{shadow_camera.inv_view_projection_matrix()};
+      frustum shadow_frustum{shadow_camera.inv_view_projection_matrix()};
 
       gpu::dsv_handle depth_stencil_view = _shadow_map_dsv[cascade_index].get();
 
@@ -772,7 +772,7 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
       command_list.om_set_render_targets(depth_stencil_view);
 
       for (std::size_t i = 0; i < meshes.size(); ++i) {
-         if (not intersects_shadow_cascade(shadow_frustrum, meshes.bbox[i])) {
+         if (not intersects_shadow_cascade(shadow_frustum, meshes.bbox[i])) {
             continue;
          }
 

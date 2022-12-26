@@ -357,7 +357,7 @@
     <ClInclude Include="src\graphics\line_drawer.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\frustrum.hpp">
+    <ClInclude Include="src\graphics\frustum.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\light_clusters.hpp">
@@ -660,7 +660,7 @@
     <ClCompile Include="src\graphics\line_drawer.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\frustrum.cpp">
+    <ClCompile Include="src\graphics\frustum.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\light_clusters.cpp">

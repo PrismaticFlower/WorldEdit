@@ -111,7 +111,7 @@ void terrain::init(const world::terrain& terrain, gpu::copy_command_list& comman
    init_patches_info(terrain);
 }
 
-void terrain::draw(const terrain_draw draw, const frustrum& view_frustrum,
+void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
                    gpu_virtual_address camera_constant_buffer_view,
                    gpu_virtual_address lights_constant_buffer_view,
                    gpu::graphics_command_list& command_list,
@@ -126,7 +126,7 @@ void terrain::draw(const terrain_draw draw, const frustrum& view_frustrum,
    uint32 visible_patch_count = 0;
 
    for (const auto& patch : _patches) {
-      if (not intersects(view_frustrum, patch.bbox)) continue;
+      if (not intersects(view_frustum, patch.bbox)) continue;
 
       patch_info_shader info{.x = patch.x * patch_grid_count,
                              .y = patch.y * patch_grid_count,
