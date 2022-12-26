@@ -1,6 +1,5 @@
 
 #include "renderer.hpp"
-#include "assets/asset_libraries.hpp"
 #include "async/thread_pool.hpp"
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
@@ -121,32 +120,31 @@ struct renderer_config {
    bool use_raytracing = false;
 };
 
-class renderer_impl {
-public:
+struct renderer_impl final : renderer {
    renderer_impl(const renderer::window_handle window,
                  std::shared_ptr<settings::graphics> settings,
                  std::shared_ptr<async::thread_pool> thread_pool,
                  assets::libraries_manager& asset_libraries,
                  output_stream& error_output);
 
-   void wait_for_swap_chain_ready();
+   void wait_for_swap_chain_ready() override;
 
    void draw_frame(const camera& camera, const world::world& world,
                    const world::interaction_targets& interaction_targets,
                    const world::active_entity_types active_entity_types,
                    const world::active_layers active_layers,
-                   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes);
+                   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes) override;
 
-   void window_resized(uint16 width, uint16 height);
+   void window_resized(uint16 width, uint16 height) override;
 
-   void mark_dirty_terrain() noexcept;
+   void mark_dirty_terrain() noexcept override;
 
-   void recreate_imgui_font_atlas()
+   void recreate_imgui_font_atlas() override
    {
       _imgui_renderer.recreate_font_atlas(_copy_command_list_pool);
    }
 
-   void reload_shaders() noexcept
+   void reload_shaders() noexcept override
    {
       _device.wait_for_idle();
       _shaders.reload(shader_list);
@@ -1744,50 +1742,14 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
       });
 }
 
-renderer::renderer(const window_handle window,
+auto make_renderer(const renderer::window_handle window,
                    std::shared_ptr<settings::graphics> settings,
                    std::shared_ptr<async::thread_pool> thread_pool,
                    assets::libraries_manager& asset_libraries,
-                   output_stream& error_output)
-   : _impl{std::make_unique<renderer_impl>(window, settings, thread_pool,
-                                           asset_libraries, error_output)}
+                   output_stream& error_output) -> std::unique_ptr<renderer>
 {
+   return std::make_unique<renderer_impl>(window, settings, thread_pool,
+                                          asset_libraries, error_output);
 }
 
-renderer::~renderer() = default;
-
-void renderer::wait_for_swap_chain_ready()
-{
-   _impl->wait_for_swap_chain_ready();
-}
-
-void renderer::draw_frame(const camera& camera, const world::world& world,
-                          const world::interaction_targets& interaction_targets,
-                          const world::active_entity_types active_entity_types,
-                          const world::active_layers active_layers,
-                          const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
-{
-   _impl->draw_frame(camera, world, interaction_targets, active_entity_types,
-                     active_layers, world_classes);
-}
-
-void renderer::window_resized(uint16 width, uint16 height)
-{
-   _impl->window_resized(width, height);
-}
-
-void renderer::mark_dirty_terrain() noexcept
-{
-   _impl->mark_dirty_terrain();
-}
-
-void renderer::recreate_imgui_font_atlas()
-{
-   _impl->recreate_imgui_font_atlas();
-}
-
-void renderer::reload_shaders() noexcept
-{
-   _impl->reload_shaders();
-}
 }

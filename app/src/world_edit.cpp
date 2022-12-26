@@ -29,8 +29,8 @@ constexpr float camera_look_sensitivity = 0.18f;
 world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
      _window{window},
-     _renderer{std::make_unique<graphics::renderer>(window, _settings, _thread_pool,
-                                                    _asset_libraries, _stream)}
+     _renderer{graphics::make_renderer(window, _settings, _thread_pool,
+                                       _asset_libraries, _stream)}
 {
    initialize_commands();
 
@@ -601,8 +601,8 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
    case error::device_removed: {
       _renderer = nullptr;
 
-      _renderer = std::make_unique<graphics::renderer>(_window, _settings, _thread_pool,
-                                                       _asset_libraries, _stream);
+      _renderer = graphics::make_renderer(_window, _settings, _thread_pool,
+                                          _asset_libraries, _stream);
 
    } break;
    }

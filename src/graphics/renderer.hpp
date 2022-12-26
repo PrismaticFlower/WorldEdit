@@ -46,37 +46,35 @@ struct world;
 
 namespace we::graphics {
 
-class renderer_impl;
 class camera;
 
-class renderer {
-public:
+struct renderer {
    using window_handle = void*;
 
-   renderer(const window_handle window, std::shared_ptr<settings::graphics> settings,
-            std::shared_ptr<async::thread_pool> thread_pool,
-            assets::libraries_manager& asset_libraries, output_stream& error_output);
+   virtual ~renderer() = default;
 
-   ~renderer();
+   virtual void wait_for_swap_chain_ready() = 0;
 
-   void wait_for_swap_chain_ready();
+   virtual void draw_frame(
+      const camera& camera, const world::world& world,
+      const world::interaction_targets& interaction_targets,
+      const world::active_entity_types active_entity_types,
+      const world::active_layers active_layers,
+      const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes) = 0;
 
-   void draw_frame(const camera& camera, const world::world& world,
-                   const world::interaction_targets& interaction_targets,
-                   const world::active_entity_types active_entity_types,
-                   const world::active_layers active_layers,
-                   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes);
+   virtual void window_resized(uint16 width, uint16 height) = 0;
 
-   void window_resized(uint16 width, uint16 height);
+   virtual void mark_dirty_terrain() noexcept = 0;
 
-   void mark_dirty_terrain() noexcept;
+   virtual void recreate_imgui_font_atlas() = 0;
 
-   void recreate_imgui_font_atlas();
-
-   void reload_shaders() noexcept;
-
-private:
-   std::unique_ptr<renderer_impl> _impl;
+   virtual void reload_shaders() noexcept = 0;
 };
+
+auto make_renderer(const renderer::window_handle window,
+                   std::shared_ptr<settings::graphics> settings,
+                   std::shared_ptr<async::thread_pool> thread_pool,
+                   assets::libraries_manager& asset_libraries,
+                   output_stream& error_output) -> std::unique_ptr<renderer>;
 
 }
