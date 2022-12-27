@@ -86,6 +86,7 @@ private:
    gpu_virtual_address _sphere_light_proxies_srv = 0;
 
    std::array<shadow_ortho_camera, sun_cascade_count> _sun_shadow_cascades;
+   std::vector<uint16> _shadow_render_list;
 };
 
 }

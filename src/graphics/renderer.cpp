@@ -3,6 +3,7 @@
 #include "async/thread_pool.hpp"
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
+#include "cull_objects.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "frustum.hpp"
 #include "geometric_shapes.hpp"
@@ -28,6 +29,7 @@
 #include "triangle_drawer.hpp"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
+#include "utility/stopwatch.hpp"
 #include "world/world.hpp"
 #include "world/world_utilities.hpp"
 
@@ -1684,22 +1686,10 @@ void renderer_impl::build_object_render_list(const frustum& view_frustum)
 {
    auto& meshes = _world_mesh_list;
 
-   _opaque_object_render_list.clear();
-   _transparent_object_render_list.clear();
-   _opaque_object_render_list.reserve(meshes.size());
-   _transparent_object_render_list.reserve(meshes.size());
-
-   for (std::size_t i = 0; i < meshes.size(); ++i) {
-      if (not intersects(view_frustum, meshes.bbox[i])) continue;
-
-      auto& render_list =
-         are_flags_set(meshes.pipeline_flags[i], material_pipeline_flags::transparent) or
-               are_flags_set(meshes.pipeline_flags[i], material_pipeline_flags::additive)
-            ? _transparent_object_render_list
-            : _opaque_object_render_list;
-
-      render_list.push_back(static_cast<uint16>(i));
-   }
+   cull_objects_avx2(view_frustum, meshes.bbox.min.x, meshes.bbox.min.y,
+                     meshes.bbox.min.z, meshes.bbox.max.x, meshes.bbox.max.y,
+                     meshes.bbox.max.z, meshes.pipeline_flags,
+                     _opaque_object_render_list, _transparent_object_render_list);
 
    std::sort(_opaque_object_render_list.begin(), _opaque_object_render_list.end(),
              [&](const uint16 l, const uint16 r) {

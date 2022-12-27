@@ -1,7 +1,7 @@
 #pragma once
 
+#include "allocators/aligned_allocator.hpp"
 #include "gpu/rhi.hpp"
-#include "math/bounding_box.hpp"
 #include "model.hpp"
 #include "pipeline_library.hpp"
 #include "types.hpp"
@@ -28,8 +28,24 @@ struct world_mesh {
 
 static_assert(std::is_trivially_copyable_v<world_mesh>, "Performance issue!");
 
+struct world_bbox_soa {
+   using float_soa_vector = std::vector<float, aligned_allocator<float, 32>>;
+
+   struct {
+      float_soa_vector x;
+      float_soa_vector y;
+      float_soa_vector z;
+   } min;
+
+   struct {
+      float_soa_vector x;
+      float_soa_vector y;
+      float_soa_vector z;
+   } max;
+};
+
 struct world_mesh_list {
-   std::vector<math::bounding_box> bbox;
+   world_bbox_soa bbox;
    std::vector<gpu_virtual_address> gpu_constants;
    std::vector<float3> position;
    std::vector<gpu::pipeline_handle> pipeline;
@@ -43,7 +59,12 @@ struct world_mesh_list {
                   gpu_virtual_address mesh_material_constant_buffer,
                   world_mesh world_mesh) noexcept
    {
-      bbox.push_back(mesh_bbox);
+      bbox.min.x.push_back(mesh_bbox.min.x);
+      bbox.min.y.push_back(mesh_bbox.min.y);
+      bbox.min.z.push_back(mesh_bbox.min.z);
+      bbox.max.x.push_back(mesh_bbox.max.x);
+      bbox.max.y.push_back(mesh_bbox.max.y);
+      bbox.max.z.push_back(mesh_bbox.max.z);
       gpu_constants.push_back(mesh_gpu_constants);
       position.push_back(mesh_position);
       pipeline.push_back(mesh_pipeline);
@@ -64,7 +85,7 @@ struct world_mesh_list {
 
    auto size() const noexcept -> std::size_t
    {
-      return bbox.size();
+      return bbox.min.x.size();
    }
 
 private:
@@ -74,7 +95,8 @@ private:
          (callback(container), ...);
       };
 
-      invoke_all(bbox, gpu_constants, position, pipeline, pipeline_flags,
+      invoke_all(bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x, bbox.max.y,
+                 bbox.max.z, gpu_constants, position, pipeline, pipeline_flags,
                  material_constant_buffer, mesh);
    }
 };

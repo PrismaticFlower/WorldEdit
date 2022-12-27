@@ -1,5 +1,6 @@
 
 #include "light_clusters.hpp"
+#include "cull_objects.hpp"
 #include "gpu/barrier.hpp"
 #include "math/align.hpp"
 #include "math/matrix_funcs.hpp"
@@ -221,8 +222,7 @@ auto make_cascade_shadow_camera(const float3 light_direction,
    for (int i = 0; i < 4; ++i) {
       float3 corner_ray = view_frustum_corners[i + 4] - view_frustum_corners[i];
 
-      view_frustum_corners[i + 4] =
-         view_frustum_corners[i] + (corner_ray * far_split);
+      view_frustum_corners[i + 4] = view_frustum_corners[i] + (corner_ray * far_split);
       view_frustum_corners[i] += (corner_ray * near_split);
    }
 
@@ -752,6 +752,12 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
 
       frustum shadow_frustum{shadow_camera.inv_view_projection_matrix()};
 
+      cull_objects_shadow_cascade_avx2(shadow_frustum, meshes.bbox.min.x,
+                                       meshes.bbox.min.y, meshes.bbox.min.z,
+                                       meshes.bbox.max.x, meshes.bbox.max.y,
+                                       meshes.bbox.max.z, meshes.pipeline_flags,
+                                       _shadow_render_list);
+
       gpu::dsv_handle depth_stencil_view = _shadow_map_dsv[cascade_index].get();
 
       command_list.clear_depth_stencil_view(depth_stencil_view, {}, 1.0f, 0x0);
@@ -771,16 +777,7 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
 
       command_list.om_set_render_targets(depth_stencil_view);
 
-      for (std::size_t i = 0; i < meshes.size(); ++i) {
-         if (not intersects_shadow_cascade(shadow_frustum, meshes.bbox[i])) {
-            continue;
-         }
-
-         if (are_flags_set(meshes.pipeline_flags[i],
-                           material_pipeline_flags::transparent)) {
-            continue;
-         }
-
+      for (const uint16 i : _shadow_render_list) {
          command_list.set_graphics_cbv(rs::mesh_shadow::object_cbv,
                                        meshes.gpu_constants[i]);
 
