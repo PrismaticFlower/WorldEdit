@@ -181,6 +181,7 @@
     <ClCompile Include="src\actions\stack_tests.cpp" />
     <ClCompile Include="src\actions\ui_action_tests.cpp" />
     <ClCompile Include="src\actions\world_test_data.cpp" />
+    <ClCompile Include="src\allocators\aligned_allocator_tests.cpp" />
     <ClCompile Include="src\assets\asset_ref_tests.cpp" />
     <ClCompile Include="src\assets\config\io_tests.cpp" />
     <ClCompile Include="src\assets\config\key_node_tests.cpp" />
