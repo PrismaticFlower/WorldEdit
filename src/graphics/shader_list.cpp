@@ -34,6 +34,8 @@ auto shader(const std::string_view name) -> shader_description
 
 std::initializer_list<shader_description> shader_list = {
    shader("mesh_shadowVS"),
+   shader("mesh_shadow_cutoutVS"),
+   shader("mesh_shadow_cutoutPS"),
 
    shader("meshVS"),
    shader("mesh_basicPS"),

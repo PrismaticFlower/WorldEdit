@@ -29,7 +29,8 @@ namespace rs {
 
 namespace mesh_shadow {
 constexpr uint32 object_cbv = 0;
-constexpr uint32 camera_cbv = 1;
+constexpr uint32 material_cbv = 1;
+constexpr uint32 camera_cbv = 2;
 }
 
 namespace mesh_depth_prepass {

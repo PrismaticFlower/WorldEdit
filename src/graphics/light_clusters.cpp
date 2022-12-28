@@ -768,7 +768,6 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
                                        .allocate_and_copy(
                                           shadow_camera.view_projection_matrix())
                                        .gpu_address);
-      command_list.set_pipeline_state(pipelines.mesh_shadow.get());
 
       command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
@@ -777,12 +776,34 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
 
       command_list.om_set_render_targets(depth_stencil_view);
 
+      material_pipeline_flags pipeline_flags = material_pipeline_flags::none;
+
+      command_list.set_pipeline_state(pipelines.mesh_shadow.get());
+
       for (const uint16 i : _shadow_render_list) {
+         if (std::exchange(pipeline_flags, meshes.pipeline_flags[i]) !=
+             meshes.pipeline_flags[i]) {
+
+            if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout)) {
+               command_list.set_pipeline_state(
+                  pipelines.mesh_shadow_alpha_cutout.get());
+            }
+            else {
+               command_list.set_pipeline_state(pipelines.mesh_shadow.get());
+            }
+         }
+
          command_list.set_graphics_cbv(rs::mesh_shadow::object_cbv,
                                        meshes.gpu_constants[i]);
 
+         if (are_flags_set(meshes.pipeline_flags[i],
+                           material_pipeline_flags::alpha_cutout)) {
+            command_list.set_graphics_cbv(rs::mesh_shadow::material_cbv,
+                                          meshes.material_constant_buffer[i]);
+         }
+
          command_list.ia_set_index_buffer(meshes.mesh[i].index_buffer_view);
-         command_list.ia_set_vertex_buffers(0, meshes.mesh[i].vertex_buffer_views[0]);
+         command_list.ia_set_vertex_buffers(0, meshes.mesh[i].vertex_buffer_views);
 
          command_list.draw_indexed_instanced(meshes.mesh[i].index_count, 1,
                                              meshes.mesh[i].start_index,

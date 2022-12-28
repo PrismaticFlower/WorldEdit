@@ -45,6 +45,7 @@ struct pipeline_library {
    gpu::unique_pipeline_handle mesh_depth_prepass_alpha_cutout;
    gpu::unique_pipeline_handle mesh_depth_prepass_alpha_cutout_doublesided;
    gpu::unique_pipeline_handle mesh_shadow;
+   gpu::unique_pipeline_handle mesh_shadow_alpha_cutout;
    gpu::unique_pipeline_handle mesh_basic;
    gpu::unique_pipeline_handle mesh_basic_lighting;
    material_pipelines mesh_normal;

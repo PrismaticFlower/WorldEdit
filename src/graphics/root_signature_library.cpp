@@ -150,6 +150,7 @@ const gpu::root_signature_desc mesh_shadow_desc{
    .parameters =
       {
          object_constant_buffer,
+         material_constant_buffer,
          frame_constant_buffer,
       },
 
