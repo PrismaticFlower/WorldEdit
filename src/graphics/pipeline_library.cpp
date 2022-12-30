@@ -479,6 +479,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                .vs_bytecode = shader_library["meta_draw_primitiveVS"sv],
                                .ps_bytecode = shader_library["meta_drawPS"sv],
 
+                               .blend_state = blend_alpha,
                                .rasterizer_state = rasterizer_line_antialiased,
                                .depth_stencil_state = depth_stencil_readonly_less_equal,
                                .input_layout = meta_draw_primitive_input_layout,
