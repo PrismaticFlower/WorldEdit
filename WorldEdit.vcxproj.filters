@@ -354,9 +354,6 @@
     <ClInclude Include="src\graphics\geometric_shapes.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\line_drawer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\frustum.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -583,6 +580,9 @@
     <ClInclude Include="src\graphics\cull_objects.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\meta_draw_batcher.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -661,9 +661,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\geometric_shapes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\line_drawer.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\frustum.cpp">
@@ -790,6 +787,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\cull_objects.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\meta_draw_batcher.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

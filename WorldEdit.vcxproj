@@ -207,6 +207,7 @@
     <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\gpu\rhi.cpp" />
     <ClCompile Include="src\graphics\imgui_renderer.cpp" />
+    <ClCompile Include="src\graphics\meta_draw_batcher.cpp" />
     <ClCompile Include="src\graphics\model_manager.cpp" />
     <ClCompile Include="src\graphics\cull_objects.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
@@ -327,8 +328,8 @@
     <ClInclude Include="src\graphics\gpu\rhi.hpp" />
     <ClInclude Include="src\graphics\imgui_renderer.hpp" />
     <ClInclude Include="src\graphics\light_clusters.hpp" />
-    <ClInclude Include="src\graphics\line_drawer.hpp" />
     <ClInclude Include="src\graphics\material.hpp" />
+    <ClInclude Include="src\graphics\meta_draw_batcher.hpp" />
     <ClInclude Include="src\graphics\model.hpp" />
     <ClInclude Include="src\graphics\model_manager.hpp" />
     <ClInclude Include="src\graphics\geometric_shapes.hpp" />
@@ -454,7 +455,6 @@
     <ClCompile Include="src\graphics\frustum.cpp" />
     <ClCompile Include="src\graphics\geometric_shapes.cpp" />
     <ClCompile Include="src\graphics\light_clusters.cpp" />
-    <ClCompile Include="src\graphics\line_drawer.cpp" />
     <ClCompile Include="src\graphics\material.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\terrain.cpp" />

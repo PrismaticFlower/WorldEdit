@@ -15,9 +15,9 @@ struct root_signature_library {
    gpu::unique_root_signature_handle mesh_wireframe;
    gpu::unique_root_signature_handle terrain;
 
-   gpu::unique_root_signature_handle meta_mesh;
    gpu::unique_root_signature_handle meta_mesh_wireframe;
-   gpu::unique_root_signature_handle meta_line;
+
+   gpu::unique_root_signature_handle meta_draw;
 
    gpu::unique_root_signature_handle tile_lights_clear;
    gpu::unique_root_signature_handle tile_lights;
@@ -59,20 +59,14 @@ constexpr uint32 terrain_cbv = 2;
 constexpr uint32 terrain_patch_data_srv = 3;
 }
 
-namespace meta_mesh {
-constexpr uint32 object_cbv = 0;
-constexpr uint32 color_cbv = 1;
-constexpr uint32 frame_cbv = 2;
-}
-
 namespace meta_mesh_wireframe {
 constexpr uint32 object_cbv = 0;
 constexpr uint32 wireframe_cbv = 1;
 constexpr uint32 frame_cbv = 2;
 }
 
-namespace meta_line {
-constexpr uint32 color_cbv = 0;
+namespace meta_draw {
+constexpr uint32 instance_data_srv = 0;
 constexpr uint32 frame_cbv = 1;
 }
 

@@ -12,10 +12,10 @@
 #include "imgui/imgui.h"
 #include "imgui_renderer.hpp"
 #include "light_clusters.hpp"
-#include "line_drawer.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+#include "meta_draw_batcher.hpp"
 #include "model_manager.hpp"
 #include "output_stream.hpp"
 #include "pipeline_library.hpp"
@@ -29,6 +29,7 @@
 #include "triangle_drawer.hpp"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
 #include "world/world.hpp"
 #include "world/world_utilities.hpp"
@@ -255,6 +256,8 @@ private:
    world_mesh_list _world_mesh_list;
    std::vector<uint16> _opaque_object_render_list;
    std::vector<uint16> _transparent_object_render_list;
+
+   meta_draw_batcher _meta_draw_batcher;
 
    imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
 
@@ -555,7 +558,7 @@ void renderer_impl::draw_world_meta_objects(
    const world::active_entity_types active_entity_types,
    const world::active_layers active_layers, gpu::graphics_command_list& command_list)
 {
-   (void)view_frustum; // TODO: frustum Culling (Is it worth it for meta objects?)
+   _meta_draw_batcher.clear();
 
    if (active_entity_types.paths and not world.paths.empty()) {
       static bool draw_nodes = true;
@@ -564,144 +567,68 @@ void renderer_impl::draw_world_meta_objects(
 
       // TODO: Move theses to _settings
       ImGui::Indent();
-      ImGui::Checkbox("Draw Paths Nodes", &draw_nodes);
       ImGui::Checkbox("Draw Paths Connections", &draw_connections);
       ImGui::Checkbox("Draw Paths Orientation", &draw_orientation);
       ImGui::Unindent();
 
-      if (draw_nodes) {
-         command_list.set_graphics_root_signature(
-            _root_signatures.meta_mesh_wireframe.get());
-         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::frame_cbv,
-                                       _camera_constant_buffer_view);
-         command_list.set_graphics_cbv(
-            rs::meta_mesh_wireframe::wireframe_cbv,
-            _dynamic_buffer_allocator
-               .allocate_and_copy(meta_outlined_constant_buffer{
-                  .color = float4{_settings->path_node_color(), 1.0f},
-                  .outline_color = float4{_settings->path_node_outline_color(), 1.0f}})
-               .gpu_address);
+      const float4 path_node_color = {_settings->path_node_color(), 1.0f};
+      const float4 path_node_outline_color = {_settings->path_node_outline_color(), 1.0f};
 
-         command_list.set_pipeline_state(_pipelines.meta_mesh_outlined.get());
-         command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+      for (auto& path : world.paths) {
+         if (not active_layers[path.layer]) continue;
 
-         for (auto& path : world.paths) {
-            if (not active_layers[path.layer]) continue;
+         for (auto& node : path.nodes) {
+            if (not intersects(view_frustum, node.position, 0.5f)) continue;
 
-            for (auto& node : path.nodes) {
-               // TEMP constants setup
-               {
-                  float4x4 transform = to_matrix(node.rotation) *
-                                       float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
-                                                {0.0f, 0.5f, 0.0f, 0.0f},
-                                                {0.0f, 0.0f, 0.5f, 0.0f},
-                                                {0.0f, 0.0f, 0.0f, 1.0f}};
+            const float4x4 rotation = to_matrix(node.rotation);
+            float4x4 transform = rotation * float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
+                                                     {0.0f, 0.5f, 0.0f, 0.0f},
+                                                     {0.0f, 0.0f, 0.5f, 0.0f},
+                                                     {0.0f, 0.0f, 0.0f, 1.0f}};
 
-                  transform[3] = {node.position, 1.0f};
+            transform[3] = {node.position, 1.0f};
 
-                  command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
-                                                _dynamic_buffer_allocator
-                                                   .allocate_and_copy(transform)
-                                                   .gpu_address);
+            _meta_draw_batcher.add_octahedron_outlined(transform, path_node_color,
+                                                       path_node_outline_color);
+
+            if (draw_orientation) {
+               const uint32 path_node_orientation_color = utility::pack_srgb_bgra(
+                  float4{_settings->path_node_orientation_color(), 1.0f});
+
+               float4x4 orientation_transform = rotation;
+               orientation_transform[3] = {node.position, 1.0f};
+
+               for (const auto line : path_node_arrow_wireframe) {
+                  const float3 a = orientation_transform * line[0];
+                  const float3 b = orientation_transform * line[1];
+
+                  _meta_draw_batcher.add_line_solid(a, b, path_node_orientation_color);
                }
+            }
+         }
 
-               const geometric_shape shape = _geometric_shapes.octahedron();
+         if (draw_connections) {
+            const uint32 path_node_connection_color = utility::pack_srgb_bgra(
+               float4{_settings->path_node_connection_color(), 1.0f});
 
-               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-               command_list.ia_set_index_buffer(shape.index_buffer_view);
-               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+            using namespace ranges::views;
+
+            const auto get_position = [](const world::path::node& node) {
+               return node.position;
+            };
+
+            for (const auto [a, b] :
+                 zip(path.nodes | transform(get_position),
+                     path.nodes | drop(1) | transform(get_position))) {
+               _meta_draw_batcher.add_line_solid(a, b, path_node_connection_color);
             }
          }
       }
-
-      if (draw_connections) {
-         draw_lines(command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
-                    {.line_color = _settings->path_node_connection_color(),
-
-                     .camera_constant_buffer_view = _camera_constant_buffer_view,
-
-                     .connect_mode = line_connect_mode::linear},
-                    [&](line_draw_context& draw_context) {
-                       for (auto& path : world.paths) {
-                          if (not active_layers[path.layer]) continue;
-
-                          using namespace ranges::views;
-
-                          const auto get_position = [](const world::path::node& node) {
-                             return node.position;
-                          };
-
-                          for (const auto [a, b] :
-                               zip(path.nodes | transform(get_position),
-                                   path.nodes | drop(1) | transform(get_position))) {
-                             draw_context.add(a, b);
-                          }
-                       }
-                    });
-      }
-
-      if (draw_orientation) {
-         draw_lines(command_list, _root_signatures, _pipelines, _dynamic_buffer_allocator,
-                    {.line_color = _settings->path_node_orientation_color(),
-
-                     .camera_constant_buffer_view = _camera_constant_buffer_view,
-
-                     .connect_mode = line_connect_mode::linear},
-                    [&](line_draw_context& draw_context) {
-                       for (auto& path : world.paths) {
-                          using namespace ranges::views;
-
-                          const auto get_position = [](const world::path::node& node) {
-                             return node.position;
-                          };
-
-                          for (auto& node : path.nodes) {
-                             if (not active_layers[path.layer]) continue;
-
-                             float4x4 transform = to_matrix(node.rotation);
-
-                             transform[3] = {node.position, 1.0f};
-
-                             for (const auto line : path_node_arrow_wireframe) {
-                                const float3 a = transform * line[0];
-                                const float3 b = transform * line[1];
-
-                                draw_context.add(a, b);
-                             }
-                          }
-                       }
-                    });
-      }
    }
 
-   // Draws a region, requires camera CBV, colour CBV, IA topplogy, pipeline state and root signature to be set.
-   //
-   // Shared between light volume drawing and region drawing.
-   //
-   // Should probably be moved to a proper function once draw_world_meta_objects
-   // isn't just for debugging and get's the love it deserves.
-   const auto draw_region = [&](const world::region& region) {
-      // TEMP constants setup
-      {
-         const float3 scale = [&] {
-            switch (region.shape) {
-            default:
-            case world::region_shape::box: {
-               return region.size;
-            }
-            case world::region_shape::sphere: {
-               const float sphere_radius = length(region.size);
-
-               return float3{sphere_radius, sphere_radius, sphere_radius};
-            }
-            case world::region_shape::cylinder: {
-               const float cylinder_length =
-                  length(float2{region.size.x, region.size.z});
-               return float3{cylinder_length, region.size.y, cylinder_length};
-            }
-            }
-         }();
-
+   // Adds a region to _meta_draw_batcher. Shared between light volume drawing and region drawing.
+   const auto add_region = [&](const world::region& region, const float4 color) {
+      const auto make_region_transform = [&](const float3 scale) {
          float4x4 transform =
             to_matrix(region.rotation) * float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
                                                   {0.0f, scale.y, 0.0f, 0.0f},
@@ -710,218 +637,176 @@ void renderer_impl::draw_world_meta_objects(
 
          transform[3] = {region.position, 1.0f};
 
-         command_list.set_graphics_cbv(
-            rs::meta_mesh::object_cbv,
-            _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
-      }
+         return transform;
+      };
 
-      const geometric_shape shape = [&] {
-         switch (region.shape) {
-         default:
-         case world::region_shape::box:
-            return _geometric_shapes.cube();
-         case world::region_shape::sphere:
-            return _geometric_shapes.icosphere();
-         case world::region_shape::cylinder:
-            return _geometric_shapes.cylinder();
+      switch (region.shape) {
+      default:
+      case world::region_shape::box: {
+         math::bounding_box bbox{.min = {-region.size}, .max = {region.size}};
+
+         bbox = region.rotation * bbox + region.position;
+
+         if (not intersects(view_frustum, bbox)) {
+            return;
          }
-      }();
 
-      command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-      command_list.ia_set_index_buffer(shape.index_buffer_view);
-      command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         const float4x4 transform = make_region_transform(region.size);
+
+         _meta_draw_batcher.add_box(transform, color);
+      } break;
+      case world::region_shape::sphere: {
+         const float sphere_radius = length(region.size);
+
+         if (not intersects(view_frustum, region.position, sphere_radius)) {
+            return;
+         }
+
+         _meta_draw_batcher.add_sphere(region.position, sphere_radius, color);
+      } break;
+      case world::region_shape::cylinder: {
+         const float cylinder_length = length(float2{region.size.x, region.size.z});
+
+         math::bounding_box bbox{.min = {-cylinder_length, -region.size.y, -cylinder_length},
+                                 .max = {cylinder_length, region.size.y, cylinder_length}};
+
+         bbox = region.rotation * bbox + region.position;
+
+         if (not intersects(view_frustum, bbox)) {
+            return;
+         }
+
+         const float4x4 transform = make_region_transform(
+            float3{cylinder_length, region.size.y, cylinder_length});
+
+         _meta_draw_batcher.add_cylinder(transform, color);
+      } break;
+      }
    };
 
    if (active_entity_types.regions and not world.regions.empty()) {
-      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
-      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
-
-      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
-                                    _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
-      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(_settings->region_color())
-                                       .gpu_address);
+      const float4 region_color = _settings->region_color();
 
       for (auto& region : world.regions) {
          if (not active_layers[region.layer]) continue;
 
-         draw_region(region);
+         add_region(region, region_color);
       }
    }
 
    if (active_entity_types.barriers and not world.barriers.empty()) {
-      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
-      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
-
-      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
-                                    _camera_constant_buffer_view);
-      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(_settings->barrier_color())
-                                       .gpu_address);
-
-      const geometric_shape shape = _geometric_shapes.cube();
-
-      command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-      command_list.ia_set_index_buffer(shape.index_buffer_view);
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
       const float barrier_height = _settings->barrier_height();
+      const float4 barrier_color = _settings->barrier_color();
 
       for (auto& barrier : world.barriers) {
-         // TEMP constants setup
-         {
-            const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
-            const float2 size{distance(barrier.corners[0], barrier.corners[3]),
-                              distance(barrier.corners[0], barrier.corners[1])};
-            const float angle =
-               std::atan2(barrier.corners[1].x - barrier.corners[0].x,
-                          barrier.corners[1].y - barrier.corners[0].y);
 
-            float4x4 transform =
-               make_rotation_matrix_from_euler({0.0f, angle, 0.0f}) *
-               float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                        {0.0f, barrier_height, 0.0f, 0.0f},
-                        {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                        {0.0f, 0.0f, 0.0f, 1.0f}};
+         const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
+         const float2 size{distance(barrier.corners[0], barrier.corners[3]),
+                           distance(barrier.corners[0], barrier.corners[1])};
+         const float angle =
+            std::atan2(barrier.corners[1].x - barrier.corners[0].x,
+                       barrier.corners[1].y - barrier.corners[0].y);
 
-            transform[3] = {position.x, 0.0f, position.y, 1.0f};
+         const float4x4 rotation =
+            make_rotation_matrix_from_euler({0.0f, angle, 0.0f});
 
-            command_list.set_graphics_cbv(
-               rs::meta_mesh::object_cbv,
-               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+         math::bounding_box bbox{.min = {position.x - size.x, -barrier_height,
+                                         position.y - size.y},
+                                 .max = {position.x + size.x, barrier_height,
+                                         position.y + size.y}};
+
+         bbox.min = rotation * bbox.min;
+         bbox.max = rotation * bbox.max;
+
+         float4x4 transform =
+            rotation * float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                                {0.0f, barrier_height, 0.0f, 0.0f},
+                                {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                                {0.0f, 0.0f, 0.0f, 1.0f}};
+
+         transform[3] = {position.x, 0.0f, position.y, 1.0f};
+
+         if (intersects(view_frustum, bbox)) {
+            _meta_draw_batcher.add_box(transform, barrier_color);
          }
-
-         command_list.draw_indexed_instanced(_geometric_shapes.cube().index_count,
-                                             1, 0, 0, 0);
       }
    }
 
    if (active_entity_types.lights and not world.lights.empty()) {
-      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
-      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
-
-      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
-                                    _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
       const float volume_alpha = _settings->light_volume_alpha();
 
       for (auto& light : world.lights) {
          if (not active_layers[light.layer]) continue;
 
-         // Set Color
-         {
-            const float4 color{light.color, light.light_type == world::light_type::spot
-                                               ? volume_alpha * 0.5f
-                                               : volume_alpha};
-
-            command_list.set_graphics_cbv(
-               rs::meta_mesh::color_cbv,
-               _dynamic_buffer_allocator.allocate_and_copy(color).gpu_address);
-         }
+         const float4 color{light.color, light.light_type == world::light_type::spot
+                                            ? volume_alpha * 0.5f
+                                            : volume_alpha};
 
          switch (light.light_type) {
          case world::light_type::directional: {
-            if (light.directional_region.empty()) break;
+            if (light.directional_region.empty()) continue;
 
             if (const world::region* const region =
                    world::find_region_by_description(world, light.directional_region);
                 region) {
-               draw_region(*region);
+               add_region(*region, color);
             }
 
-            break;
-         }
+         } break;
          case world::light_type::point: {
-            // TEMP constants setup
-            {
-               float4x4 transform = float4x4{{light.range, 0.0f, 0.0f, 0.0f},
-                                             {0.0f, light.range, 0.0f, 0.0f},
-                                             {0.0f, 0.0f, light.range, 0.0f},
-                                             {0.0f, 0.0f, 0.0f, 1.0f}};
-
-               transform[3] = {light.position, 1.0f};
-
-               command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(transform)
-                                                .gpu_address);
+            if (not intersects(view_frustum, light.position, light.range)) {
+               continue;
             }
 
-            auto shape = _geometric_shapes.icosphere();
-
-            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-            command_list.ia_set_index_buffer(shape.index_buffer_view);
-            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
-
-            break;
-         }
+            _meta_draw_batcher.add_sphere(light.position, light.range, color);
+         } break;
          case world::light_type::spot: {
-            // TEMP constants setup
-            const auto bind_cone_transform = [&](const float angle) {
-               const float half_range = light.range / 2.0f;
-               const float cone_radius = half_range * std::tan(angle);
+            const float half_range = light.range / 2.0f;
+            const float outer_cone_radius =
+               half_range * std::tan(light.outer_cone_angle);
+            const float inner_cone_radius =
+               half_range * std::tan(light.outer_cone_angle);
 
-               float4x4 transform =
-                  to_matrix(light.rotation) *
-                  to_matrix(quaternion{0.707107f, -0.707107f, 0.0f, 0.0f}) *
-                  float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
-                           {0.0f, half_range, 0.0f, 0.0f},
-                           {0.0f, 0.0f, cone_radius, 0.0f},
-                           {0.0f, -half_range, 0.0f, 1.0f}};
+            const float3 light_direction =
+               normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
-               transform[3] += float4{light.position, 0.0f};
+            const float light_bounds_radius = std::max(outer_cone_radius, half_range);
+            const float3 light_centre =
+               light.position - (light_direction * (half_range));
 
-               command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(transform)
-                                                .gpu_address);
-            };
+            // TODO: Better cone culling
+            if (not intersects(view_frustum, light_centre, light_bounds_radius)) {
+               continue;
+            }
 
-            bind_cone_transform(light.outer_cone_angle);
+            const float4x4 rotation = to_matrix(
+               light.rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
 
-            auto shape = _geometric_shapes.cone();
+            float4x4 outer_transform =
+               rotation * float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},
+                                   {0.0f, half_range, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, outer_cone_radius, 0.0f},
+                                   {0.0f, -half_range, 0.0f, 1.0f}};
 
-            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-            command_list.ia_set_index_buffer(shape.index_buffer_view);
-            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+            outer_transform[3] += float4{light.position, 0.0f};
 
-            bind_cone_transform(light.inner_cone_angle);
+            float4x4 inner_transform =
+               rotation * float4x4{{inner_cone_radius, 0.0f, 0.0f, 0.0f},
+                                   {0.0f, half_range, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, inner_cone_radius, 0.0f},
+                                   {0.0f, -half_range, 0.0f, 1.0f}};
 
-            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+            inner_transform[3] += float4{light.position, 0.0f};
 
-            break;
-         }
+            _meta_draw_batcher.add_cone(outer_transform, color);
+            _meta_draw_batcher.add_cone(inner_transform, color);
+         } break;
          }
       }
    }
 
-   triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
-
    if (active_entity_types.sectors and not world.sectors.empty()) {
-      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
-      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
-
-      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
-                                    _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
-      command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(
-                                          float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                   {0.0f, 1.0f, 0.0f, 0.0f},
-                                                   {0.0f, 0.0f, 1.0f, 0.0f},
-                                                   {0.0f, 0.0f, 0.0f, 1.0f}})
-                                       .gpu_address);
-      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(_settings->sector_color())
-                                       .gpu_address);
+      const uint32 sector_color = utility::pack_srgb_bgra(_settings->sector_color());
 
       for (auto& sector : world.sectors) {
          using namespace ranges::views;
@@ -934,42 +819,33 @@ void renderer_impl::draw_world_meta_objects(
                                      float3{a.x, sector.base + sector.height, a.y},
                                      float3{b.x, sector.base + sector.height, b.y}};
 
-            triangle_drawer.add(quad[0], quad[1], quad[2]);
-            triangle_drawer.add(quad[2], quad[1], quad[3]);
-            triangle_drawer.add(quad[0], quad[2], quad[1]);
-            triangle_drawer.add(quad[2], quad[3], quad[1]);
+            math::bounding_box bbox{.min = quad[0], .max = quad[0]};
+
+            for (auto v : quad | drop(1)) bbox = integrate(bbox, v);
+
+            if (not intersects(view_frustum, bbox)) continue;
+
+            _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], sector_color);
+            _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], sector_color);
+            _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], sector_color);
+            _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], sector_color);
          }
       }
-
-      triangle_drawer.submit();
    }
 
    if (active_entity_types.portals and not world.portals.empty()) {
-      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
-      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
-
-      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
-                                    _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
-      command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(
-                                          float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                   {0.0f, 1.0f, 0.0f, 0.0f},
-                                                   {0.0f, 0.0f, 1.0f, 0.0f},
-                                                   {0.0f, 0.0f, 0.0f, 1.0f}})
-                                       .gpu_address);
-      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(_settings->portal_color())
-                                       .gpu_address);
+      const uint32 portal_color = utility::pack_srgb_bgra(_settings->portal_color());
 
       for (auto& portal : world.portals) {
          using namespace ranges::views;
 
          const float half_width = portal.width * 0.5f;
          const float half_height = portal.height * 0.5f;
+
+         if (not intersects(view_frustum, portal.position,
+                            std::max(half_width, half_height))) {
+            continue;
+         }
 
          std::array quad = {float3{-half_width, -half_height, 0.0f},
                             float3{half_width, -half_height, 0.0f},
@@ -981,77 +857,36 @@ void renderer_impl::draw_world_meta_objects(
             v += portal.position;
          }
 
-         triangle_drawer.add(quad[0], quad[1], quad[2]);
-         triangle_drawer.add(quad[2], quad[1], quad[3]);
-         triangle_drawer.add(quad[0], quad[2], quad[1]);
-         triangle_drawer.add(quad[2], quad[3], quad[1]);
+         _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], portal_color);
+         _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], portal_color);
+         _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], portal_color);
+         _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], portal_color);
       }
-
-      triangle_drawer.submit();
    }
 
    if (active_entity_types.hintnodes and not world.hintnodes.empty()) {
-      command_list.set_graphics_root_signature(
-         _root_signatures.meta_mesh_wireframe.get());
-
-      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
-                                    _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
-      command_list.set_pipeline_state(_pipelines.meta_mesh_outlined.get());
-
-      command_list.set_graphics_cbv(
-         rs::meta_mesh::color_cbv,
-         _dynamic_buffer_allocator
-            .allocate_and_copy(meta_outlined_constant_buffer{
-               .color = float4{_settings->hintnode_color(), 1.0f},
-               .outline_color = float4{_settings->hintnode_outline_color(), 1.0f}})
-            .gpu_address);
+      const float4 hintnode_color = float4{_settings->hintnode_color(), 1.0f};
+      const float4 hintnode_outline_color =
+         float4{_settings->hintnode_outline_color(), 1.0f};
 
       for (auto& hintnode : world.hintnodes) {
          if (not active_layers[hintnode.layer]) continue;
 
-         // TEMP constants setup
-         {
-            float4x4 transform = to_matrix(hintnode.rotation);
+         if (not intersects(view_frustum, hintnode.position, 1.0f)) continue;
 
-            transform[3] = {hintnode.position, 1.0f};
+         float4x4 transform = to_matrix(hintnode.rotation);
 
-            command_list.set_graphics_cbv(
-               rs::meta_mesh::object_cbv,
-               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
-         }
+         transform[3] = {hintnode.position, 1.0f};
 
-         const geometric_shape shape = _geometric_shapes.octahedron();
-
-         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-         command_list.ia_set_index_buffer(shape.index_buffer_view);
-         command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         _meta_draw_batcher.add_octahedron_outlined(transform, hintnode_color,
+                                                    hintnode_outline_color);
       }
    }
 
    if (active_entity_types.boundaries and not world.boundaries.empty()) {
-      command_list.set_pipeline_state(_pipelines.meta_mesh.get());
-      command_list.set_graphics_root_signature(_root_signatures.meta_mesh.get());
-
-      command_list.set_graphics_cbv(rs::meta_mesh::frame_cbv,
-                                    _camera_constant_buffer_view);
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
       const float boundary_height = _settings->boundary_height();
-
-      command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(
-                                          float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                   {0.0f, 1.0f, 0.0f, 0.0f},
-                                                   {0.0f, 0.0f, 1.0f, 0.0f},
-                                                   {0.0f, 0.0f, 0.0f, 1.0f}})
-                                       .gpu_address);
-      command_list.set_graphics_cbv(rs::meta_mesh::color_cbv,
-                                    _dynamic_buffer_allocator
-                                       .allocate_and_copy(_settings->boundary_color())
-                                       .gpu_address);
+      const uint32 boundary_color =
+         utility::pack_srgb_bgra(_settings->boundary_color());
 
       for (auto& boundary : world.boundaries) {
          using namespace ranges::views;
@@ -1069,15 +904,17 @@ void renderer_impl::draw_world_meta_objects(
                                      a.position + float3{0.0f, boundary_height, 0.0f},
                                      b.position + float3{0.0f, boundary_height, 0.0f}};
 
-            triangle_drawer.add(quad[0], quad[1], quad[2]);
-            triangle_drawer.add(quad[2], quad[1], quad[3]);
-            triangle_drawer.add(quad[0], quad[2], quad[1]);
-            triangle_drawer.add(quad[2], quad[3], quad[1]);
+            _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], boundary_color);
+            _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], boundary_color);
+            _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], boundary_color);
+            _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], boundary_color);
          }
       }
-
-      triangle_drawer.submit();
    }
+
+   _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
+                           _root_signatures, _pipelines, _geometric_shapes,
+                           _dynamic_buffer_allocator);
 }
 
 void renderer_impl::draw_interaction_targets(
@@ -1277,7 +1114,7 @@ void renderer_impl::draw_interaction_targets(
 
                   transform[3] += float4{light->position, 0.0f};
 
-                  command_list.set_graphics_cbv(rs::meta_mesh::object_cbv,
+                  command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
                                                 _dynamic_buffer_allocator
                                                    .allocate_and_copy(transform)
                                                    .gpu_address);
@@ -1301,26 +1138,26 @@ void renderer_impl::draw_interaction_targets(
 
                for (auto& node : path->nodes) draw_path_node(node);
 
-               draw_lines(command_list, _root_signatures, _pipelines,
-                          _dynamic_buffer_allocator,
-                          {.line_color = _settings->hover_color(),
+               _meta_draw_batcher.clear();
 
-                           .camera_constant_buffer_view = _camera_constant_buffer_view,
+               using namespace ranges::views;
 
-                           .connect_mode = line_connect_mode::linear},
-                          [&](line_draw_context& draw_context) {
-                             using namespace ranges::views;
+               const auto get_position = [](const world::path::node& node) {
+                  return node.position;
+               };
 
-                             const auto get_position = [](const world::path::node& node) {
-                                return node.position;
-                             };
+               const uint32 hover_color =
+                  utility::pack_srgb_bgra({_settings->hover_color(), 1.0f});
 
-                             for (const auto [a, b] :
-                                  zip(path->nodes | transform(get_position),
-                                      path->nodes | drop(1) | transform(get_position))) {
-                                draw_context.add(a, b);
-                             }
-                          });
+               for (const auto [a, b] :
+                    zip(path->nodes | transform(get_position),
+                        path->nodes | drop(1) | transform(get_position))) {
+                  _meta_draw_batcher.add_line_solid(a, b, hover_color);
+               }
+
+               _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
+                                       _root_signatures, _pipelines,
+                                       _geometric_shapes, _dynamic_buffer_allocator);
             },
             [&](world::path_id_node_pair id_node) {
                auto [id, node_index] = id_node;

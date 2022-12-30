@@ -93,9 +93,15 @@ constexpr std::array mesh_input_layout_position_only = {
    mesh_input_layout[0],
 };
 
-constexpr std::array meta_mesh_input_layout = {
+constexpr std::array meta_draw_input_layout = {
    gpu::input_element_desc{.semantic_name = "POSITION",
                            .format = DXGI_FORMAT_R32G32B32_FLOAT},
+};
+
+constexpr std::array meta_draw_primitive_input_layout = {
+   gpu::input_element_desc{.semantic_name = "POSITION",
+                           .format = DXGI_FORMAT_R32G32B32_FLOAT},
+   gpu::input_element_desc{.semantic_name = "COLOR", .format = DXGI_FORMAT_B8G8R8A8_UNORM},
 };
 
 constexpr std::array imgui_input_layout = {
@@ -393,42 +399,6 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                          .debug_name = "terrain_normal"sv}),
                      device.direct_queue};
 
-   meta_mesh = {device.create_graphics_pipeline(
-                   {.root_signature = root_signature_library.meta_mesh.get(),
-
-                    .vs_bytecode = shader_library["meta_meshVS"sv],
-                    .ps_bytecode = shader_library["meta_meshPS"sv],
-
-                    .blend_state = blend_additive,
-                    .rasterizer_state = rasterizer_cull_backfacing,
-                    .depth_stencil_state = depth_stencil_readonly_less_equal,
-                    .input_layout = meta_mesh_input_layout,
-
-                    .render_target_count = 1,
-                    .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                    .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-
-                    .debug_name = "meta_mesh"sv}),
-                device.direct_queue};
-
-   meta_mesh_outlined = {device.create_graphics_pipeline(
-                            {.root_signature =
-                                root_signature_library.meta_mesh_wireframe.get(),
-
-                             .vs_bytecode = shader_library["meta_meshVS"sv],
-                             .ps_bytecode = shader_library["meta_mesh_outlinedPS"sv],
-
-                             .rasterizer_state = rasterizer_cull_backfacing,
-                             .depth_stencil_state = depth_stencil_enabled,
-                             .input_layout = meta_mesh_input_layout,
-
-                             .render_target_count = 1,
-                             .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                             .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-
-                             .debug_name = "meta_mesh_outlined"sv}),
-                         device.direct_queue};
-
    meta_mesh_wireframe = {device.create_graphics_pipeline(
                              {.root_signature =
                                  root_signature_library.meta_mesh_wireframe.get(),
@@ -448,24 +418,96 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               .debug_name = "mesh_wireframe"sv}),
                           device.direct_queue};
 
-   meta_line = {device.create_graphics_pipeline(
-                   {.root_signature = root_signature_library.meta_line.get(),
+   meta_draw_shape = {device.create_graphics_pipeline(
+                         {.root_signature = root_signature_library.meta_draw.get(),
 
-                    .vs_bytecode = shader_library["meta_lineVS"sv],
-                    .ps_bytecode = shader_library["meta_meshPS"sv],
+                          .vs_bytecode = shader_library["meta_draw_shapeVS"sv],
+                          .ps_bytecode = shader_library["meta_drawPS"sv],
 
-                    .blend_state = blend_alpha,
-                    .rasterizer_state = rasterizer_line_antialiased,
-                    .depth_stencil_state = depth_stencil_readonly_less_equal,
-                    .input_layout = meta_mesh_input_layout,
-                    .primitive_type = gpu::primitive_type::line,
+                          .blend_state = blend_additive,
+                          .rasterizer_state = rasterizer_cull_backfacing,
+                          .depth_stencil_state = depth_stencil_readonly_less_equal,
+                          .input_layout = meta_draw_input_layout,
 
-                    .render_target_count = 1,
-                    .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                    .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                          .render_target_count = 1,
+                          .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                          .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
 
-                    .debug_name = "meta_line"sv}),
-                device.direct_queue};
+                          .debug_name = "meta_draw_shape"sv}),
+                      device.direct_queue};
+
+   meta_draw_shape_outlined =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.meta_draw.get(),
+
+           .vs_bytecode = shader_library["meta_draw_shape_outlinedVS"sv],
+           .ps_bytecode = shader_library["meta_draw_outlinedPS"sv],
+
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .depth_stencil_state = depth_stencil_enabled,
+           .input_layout = meta_draw_input_layout,
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "meta_draw_shape_outlined"sv}),
+       device.direct_queue};
+
+   meta_draw_sphere = {device.create_graphics_pipeline(
+                          {.root_signature = root_signature_library.meta_draw.get(),
+
+                           .vs_bytecode = shader_library["meta_draw_sphereVS"sv],
+                           .ps_bytecode = shader_library["meta_drawPS"sv],
+
+                           .blend_state = blend_additive,
+                           .rasterizer_state = rasterizer_cull_backfacing,
+                           .depth_stencil_state = depth_stencil_readonly_less_equal,
+                           .input_layout = meta_draw_input_layout,
+
+                           .render_target_count = 1,
+                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                           .debug_name = "meta_draw_shape_outlined"sv}),
+                       device.direct_queue};
+
+   meta_draw_line_solid = {device.create_graphics_pipeline(
+                              {.root_signature =
+                                  root_signature_library.meta_draw.get(),
+
+                               .vs_bytecode = shader_library["meta_draw_primitiveVS"sv],
+                               .ps_bytecode = shader_library["meta_drawPS"sv],
+
+                               .rasterizer_state = rasterizer_line_antialiased,
+                               .depth_stencil_state = depth_stencil_readonly_less_equal,
+                               .input_layout = meta_draw_primitive_input_layout,
+                               .primitive_type = gpu::primitive_type::line,
+
+                               .render_target_count = 1,
+                               .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                               .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                               .debug_name = "meta_draw_line_solid"sv}),
+                           device.direct_queue};
+
+   meta_draw_triangle = {device.create_graphics_pipeline(
+                            {.root_signature = root_signature_library.meta_draw.get(),
+
+                             .vs_bytecode = shader_library["meta_draw_primitiveVS"sv],
+                             .ps_bytecode = shader_library["meta_drawPS"sv],
+
+                             .blend_state = blend_additive,
+                             .rasterizer_state = rasterizer_cull_backfacing,
+                             .depth_stencil_state = depth_stencil_readonly_less_equal,
+                             .input_layout = meta_draw_primitive_input_layout,
+
+                             .render_target_count = 1,
+                             .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                             .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                             .debug_name = "meta_draw_triangle"sv}),
+                         device.direct_queue};
 
    tile_lights_clear = {device.create_compute_pipeline(
                            {.root_signature =
@@ -484,7 +526,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                               .rasterizer_state = rasterizer_conservative_cull_frontfacing,
                               .depth_stencil_state = depth_stencil_disabled,
-                              .input_layout = meta_mesh_input_layout,
+                              .input_layout = meta_draw_input_layout,
 
                               .debug_name = "tile_lights_spheres"sv}),
                           device.direct_queue};

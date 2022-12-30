@@ -56,10 +56,13 @@ struct pipeline_library {
    gpu::unique_pipeline_handle terrain_lighting;
    gpu::unique_pipeline_handle terrain_normal;
 
-   gpu::unique_pipeline_handle meta_mesh;
-   gpu::unique_pipeline_handle meta_mesh_outlined;
    gpu::unique_pipeline_handle meta_mesh_wireframe;
-   gpu::unique_pipeline_handle meta_line;
+
+   gpu::unique_pipeline_handle meta_draw_shape;
+   gpu::unique_pipeline_handle meta_draw_shape_outlined;
+   gpu::unique_pipeline_handle meta_draw_sphere;
+   gpu::unique_pipeline_handle meta_draw_line_solid;
+   gpu::unique_pipeline_handle meta_draw_triangle;
 
    gpu::unique_pipeline_handle tile_lights_clear;
    gpu::unique_pipeline_handle tile_lights_spheres;

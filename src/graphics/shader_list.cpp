@@ -51,11 +51,14 @@ std::initializer_list<shader_description> shader_list = {
    shader("terrain_lightingPS"),
    shader("terrain_normalPS"),
 
-   shader("meta_lineVS"),
-
    shader("meta_meshVS"),
-   shader("meta_meshPS"),
-   shader("meta_mesh_outlinedPS"),
+
+   shader("meta_drawPS"),
+   shader("meta_draw_outlinedPS"),
+   shader("meta_draw_primitiveVS"),
+   shader("meta_draw_shape_outlinedVS"),
+   shader("meta_draw_shapeVS"),
+   shader("meta_draw_sphereVS"),
 
    shader("tile_lights_clearCS"),
 
