@@ -753,8 +753,8 @@ struct vertex_buffer_view {
 };
 
 struct viewport {
-   float top_left_x;
-   float top_left_y;
+   float top_left_x = 0.0f;
+   float top_left_y = 0.0f;
    float width;
    float height;
    float min_depth = 0.0f;
