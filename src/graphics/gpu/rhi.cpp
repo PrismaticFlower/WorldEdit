@@ -50,7 +50,7 @@ auto create_dxgi_factory(const device_desc& device_desc) -> com_ptr<IDXGIFactory
 }
 
 auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
-   -> com_ptr<ID3D12Device9>
+   -> com_ptr<ID3D12Device10>
 {
    if (device_desc.enable_debug_layer) {
       com_ptr<ID3D12Debug5> debug;
@@ -69,7 +69,7 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
    }
 
    com_ptr<IDXGIAdapter4> adapter;
-   com_ptr<ID3D12Device9> device;
+   com_ptr<ID3D12Device10> device;
 
    for (int i = 0; SUCCEEDED(factory.EnumAdapterByGpuPreference(
            i, static_cast<DXGI_GPU_PREFERENCE>(device_desc.gpu_preference),
@@ -120,6 +120,15 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          continue;
       }
 
+      D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12{};
+
+      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12,
+                                             &options12, sizeof(options12)))) {
+         continue;
+      }
+
+      if (not options12.EnhancedBarriersSupported) continue;
+
       return device;
    }
 
@@ -157,7 +166,7 @@ struct device_state {
    }
 
    com_ptr<IDXGIFactory7> factory;
-   com_ptr<ID3D12Device9> device;
+   com_ptr<ID3D12Device10> device;
 
    com_ptr<ID3D12Fence> frame_fence =
       create_fence(*device, frame_pipeline_length - 1);
@@ -213,8 +222,22 @@ struct command_queue_state {
 
 struct command_list_state {
    com_ptr<ID3D12GraphicsCommandList7> command_list;
-   std::vector<D3D12_RESOURCE_BARRIER> deferred_barriers = [] {
-      std::vector<D3D12_RESOURCE_BARRIER> init;
+   std::vector<D3D12_GLOBAL_BARRIER> deferred_global_barriers = [] {
+      std::vector<D3D12_GLOBAL_BARRIER> init;
+
+      init.reserve(128);
+
+      return init;
+   }();
+   std::vector<D3D12_TEXTURE_BARRIER> deferred_texture_barriers = [] {
+      std::vector<D3D12_TEXTURE_BARRIER> init;
+
+      init.reserve(128);
+
+      return init;
+   }();
+   std::vector<D3D12_BUFFER_BARRIER> deferred_buffer_barriers = [] {
+      std::vector<D3D12_BUFFER_BARRIER> init;
 
       init.reserve(128);
 
@@ -701,9 +724,9 @@ auto device::create_buffer(const buffer_desc& desc, const heap_type heap_type) -
 
    com_ptr<ID3D12Resource2> resource;
 
-   throw_if_fail(state->device->CreateCommittedResource2(
+   throw_if_fail(state->device->CreateCommittedResource3(
       &heap_properties, D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, &d3d12_desc,
-      D3D12_RESOURCE_STATE_COMMON, nullptr, nullptr,
+      D3D12_BARRIER_LAYOUT_UNDEFINED, nullptr, nullptr, 0, nullptr,
       IID_PPV_ARGS(resource.clear_and_assign())));
 
    set_debug_name(*resource, desc.debug_name);
@@ -712,7 +735,7 @@ auto device::create_buffer(const buffer_desc& desc, const heap_type heap_type) -
 }
 
 auto device::create_texture(const texture_desc& desc,
-                            const resource_state initial_resource_state) -> resource_handle
+                            const barrier_layout initial_resource_layout) -> resource_handle
 {
    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 
@@ -759,10 +782,10 @@ auto device::create_texture(const texture_desc& desc,
 
    com_ptr<ID3D12Resource2> resource;
 
-   throw_if_fail(state->device->CreateCommittedResource2(
+   throw_if_fail(state->device->CreateCommittedResource3(
       &heap_properties, D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, &d3d12_desc,
-      static_cast<D3D12_RESOURCE_STATES>(initial_resource_state),
-      has_clear_value ? &clear_value : nullptr, nullptr,
+      static_cast<D3D12_BARRIER_LAYOUT>(initial_resource_layout),
+      has_clear_value ? &clear_value : nullptr, nullptr, 0, nullptr,
       IID_PPV_ARGS(resource.clear_and_assign())));
 
    set_debug_name(*resource, desc.debug_name);
@@ -1452,70 +1475,107 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
    state->command_list->ClearState(nullptr);
 }
 
-[[msvc::forceinline]] void copy_command_list::deferred_resource_barrier(
-   const std::span<const resource_barrier> barriers)
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const std::span<const global_barrier> barriers)
 {
-   state->deferred_barriers.reserve(state->deferred_barriers.size() + barriers.size());
+   state->deferred_global_barriers.reserve(
+      state->deferred_global_barriers.size() + barriers.size());
 
-   for (auto barrier : barriers) {
-      deferred_resource_barrier(barrier);
-   }
+   for (auto barrier : barriers) deferred_barrier(barrier);
 }
 
-[[msvc::forceinline]] void copy_command_list::deferred_resource_barrier(const resource_barrier& barrier)
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(const global_barrier& barrier)
 {
-   D3D12_RESOURCE_BARRIER d3d12_barrier{
-      .Type = static_cast<D3D12_RESOURCE_BARRIER_TYPE>(barrier.type),
-      .Flags =
-         [&] {
-            switch (barrier.split) {
-            case barrier_split::none:
-               return D3D12_RESOURCE_BARRIER_FLAG_NONE;
-            case barrier_split::begin:
-               return D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
-            case barrier_split::end:
-               return D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
-            default:
-               std::unreachable();
-            }
-         }(),
-   };
-
-   switch (barrier.type) {
-   case barrier_type::transition: {
-      d3d12_barrier.Transition = {
-         .pResource = unpack_resource_handle(barrier.transition.resource),
-         .Subresource = barrier.transition.subresource,
-         .StateBefore =
-            static_cast<D3D12_RESOURCE_STATES>(barrier.transition.state_before),
-         .StateAfter = static_cast<D3D12_RESOURCE_STATES>(barrier.transition.state_after),
-      };
-   } break;
-   case barrier_type::aliasing: {
-      d3d12_barrier.Aliasing = {
-         .pResourceBefore = unpack_resource_handle(barrier.aliasing.resource_before),
-         .pResourceAfter = unpack_resource_handle(barrier.aliasing.resource_after),
-      };
-   } break;
-   case barrier_type::uav: {
-      d3d12_barrier.UAV = {
-         .pResource = unpack_resource_handle(barrier.uav.resource),
-      };
-   } break;
-   default:
-      std::unreachable();
-   }
-
-   state->deferred_barriers.push_back(d3d12_barrier);
+   state->deferred_global_barriers.push_back(
+      {.SyncBefore = static_cast<D3D12_BARRIER_SYNC>(barrier.sync_before),
+       .SyncAfter = static_cast<D3D12_BARRIER_SYNC>(barrier.sync_after),
+       .AccessBefore = static_cast<D3D12_BARRIER_ACCESS>(barrier.access_before),
+       .AccessAfter = static_cast<D3D12_BARRIER_ACCESS>(barrier.access_after)});
 }
 
-[[msvc::forceinline]] void copy_command_list::flush_resource_barriers()
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const std::span<const texture_barrier> barriers)
 {
-   state->command_list->ResourceBarrier(static_cast<uint32>(
-                                           state->deferred_barriers.size()),
-                                        state->deferred_barriers.data());
+   state->deferred_texture_barriers.reserve(
+      state->deferred_texture_barriers.size() + barriers.size());
 
-   state->deferred_barriers.clear();
+   for (auto barrier : barriers) deferred_barrier(barrier);
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(const texture_barrier& barrier)
+{
+   static_assert(
+      std::is_layout_compatible_v<barrier_subresource_range, D3D12_BARRIER_SUBRESOURCE_RANGE>);
+
+   state->deferred_texture_barriers.push_back(
+      {.SyncBefore = static_cast<D3D12_BARRIER_SYNC>(barrier.sync_before),
+       .SyncAfter = static_cast<D3D12_BARRIER_SYNC>(barrier.sync_after),
+       .AccessBefore = static_cast<D3D12_BARRIER_ACCESS>(barrier.access_before),
+       .AccessAfter = static_cast<D3D12_BARRIER_ACCESS>(barrier.access_after),
+       .LayoutBefore = static_cast<D3D12_BARRIER_LAYOUT>(barrier.layout_before),
+       .LayoutAfter = static_cast<D3D12_BARRIER_LAYOUT>(barrier.layout_after),
+       .pResource = unpack_resource_handle(barrier.resource),
+       .Subresources = std::bit_cast<D3D12_BARRIER_SUBRESOURCE_RANGE>(barrier.subresources),
+       .Flags = static_cast<D3D12_TEXTURE_BARRIER_FLAGS>(barrier.flags)});
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const std::span<const buffer_barrier> barriers)
+{
+   state->deferred_buffer_barriers.reserve(
+      state->deferred_buffer_barriers.size() + barriers.size());
+
+   for (auto barrier : barriers) deferred_barrier(barrier);
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(const buffer_barrier& barrier)
+{
+   state->deferred_buffer_barriers.push_back(
+      {.SyncBefore = static_cast<D3D12_BARRIER_SYNC>(barrier.sync_before),
+       .SyncAfter = static_cast<D3D12_BARRIER_SYNC>(barrier.sync_after),
+       .AccessBefore = static_cast<D3D12_BARRIER_ACCESS>(barrier.access_before),
+       .AccessAfter = static_cast<D3D12_BARRIER_ACCESS>(barrier.access_after),
+       .pResource = unpack_resource_handle(barrier.resource),
+       .Offset = barrier.offset,
+       .Size = barrier.size});
+}
+
+[[msvc::forceinline]] void copy_command_list::flush_barriers()
+{
+   absl::InlinedVector<D3D12_BARRIER_GROUP, 4> barriers;
+
+   if (not state->deferred_global_barriers.empty()) {
+      barriers.push_back(
+         D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_GLOBAL,
+                             .NumBarriers = static_cast<uint32>(
+                                state->deferred_global_barriers.size()),
+                             .pGlobalBarriers =
+                                state->deferred_global_barriers.data()});
+   }
+
+   if (not state->deferred_texture_barriers.empty()) {
+      barriers.push_back(
+         D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_TEXTURE,
+                             .NumBarriers = static_cast<uint32>(
+                                state->deferred_texture_barriers.size()),
+                             .pTextureBarriers =
+                                state->deferred_texture_barriers.data()});
+   }
+
+   if (not state->deferred_buffer_barriers.empty()) {
+      barriers.push_back(
+         D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_BUFFER,
+                             .NumBarriers = static_cast<uint32>(
+                                state->deferred_buffer_barriers.size()),
+                             .pBufferBarriers =
+                                state->deferred_buffer_barriers.data()});
+   }
+
+   state->command_list->Barrier(static_cast<uint32>(barriers.size()), barriers.data());
+
+   state->deferred_global_barriers.clear();
+   state->deferred_buffer_barriers.clear();
+   state->deferred_texture_barriers.clear();
 }
 
 [[msvc::forceinline]] void copy_command_list::copy_buffer_region(

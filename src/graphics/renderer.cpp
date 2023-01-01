@@ -7,7 +7,6 @@
 #include "dynamic_buffer_allocator.hpp"
 #include "frustum.hpp"
 #include "geometric_shapes.hpp"
-#include "gpu/barrier.hpp"
 #include "gpu/rhi.hpp"
 #include "imgui/imgui.h"
 #include "imgui_renderer.hpp"
@@ -218,7 +217,7 @@ private:
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                    .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
-                              gpu::resource_state::depth_write),
+                              gpu::barrier_layout::depth_stencil_write),
        _device.direct_queue};
    gpu::unique_dsv_handle _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
@@ -351,10 +350,15 @@ void renderer_impl::draw_frame(
    _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures, _pipelines,
                                     command_list, _dynamic_buffer_allocator);
 
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(back_buffer, gpu::resource_state::present,
-                              gpu::resource_state::render_target));
-   command_list.flush_resource_barriers();
+   command_list.deferred_barrier(
+      gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
+                           .sync_after = gpu::barrier_sync::render_target,
+                           .access_before = gpu::barrier_access::no_access,
+                           .access_after = gpu::barrier_access::render_target,
+                           .layout_before = gpu::barrier_layout::present,
+                           .layout_after = gpu::barrier_layout::render_target,
+                           .resource = back_buffer});
+   command_list.flush_barriers();
 
    command_list.clear_render_target_view(back_buffer_rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
@@ -383,10 +387,16 @@ void renderer_impl::draw_frame(
    _imgui_renderer.render_draw_data(ImGui::GetDrawData(), _root_signatures,
                                     _pipelines, command_list);
 
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(back_buffer, gpu::resource_state::render_target,
-                              gpu::resource_state::present));
-   command_list.flush_resource_barriers();
+   command_list.deferred_barrier(
+      gpu::texture_barrier{.sync_before = gpu::barrier_sync::render_target,
+                           .sync_after = gpu::barrier_sync::none,
+                           .access_before = gpu::barrier_access::render_target,
+                           .access_after = gpu::barrier_access::no_access,
+                           .layout_before = gpu::barrier_layout::render_target,
+                           .layout_after = gpu::barrier_layout::present,
+                           .resource = back_buffer});
+
+   command_list.flush_barriers();
 
    command_list.close();
 
@@ -414,7 +424,7 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                    .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
-                              gpu::resource_state::depth_write),
+                              gpu::barrier_layout::depth_stencil_write),
        _device.direct_queue};
    _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),

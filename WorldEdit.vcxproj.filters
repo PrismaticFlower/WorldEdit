@@ -520,9 +520,6 @@
     <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\gpu\barrier.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\renderer.hpp">
       <Filter>include</Filter>
     </ClInclude>

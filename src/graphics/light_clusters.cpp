@@ -1,7 +1,6 @@
 
 #include "light_clusters.hpp"
 #include "cull_objects.hpp"
-#include "gpu/barrier.hpp"
 #include "math/align.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
@@ -324,7 +323,7 @@ light_clusters::light_clusters(gpu::device& device,
                       .optimized_clear_value =
                          gpu::texture_clear_value{.format = DXGI_FORMAT_D32_FLOAT,
                                                   .depth_stencil = {.depth = 1.0f}}},
-                     gpu::resource_state::pixel_shader_resource),
+                     gpu::barrier_layout::direct_queue_shader_resource),
                   device.direct_queue};
 
    for (uint32 i = 0; i < cascade_count; ++i) {
@@ -669,12 +668,6 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
                                  gpu::graphics_command_list& command_list,
                                  dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   command_list.deferred_resource_barrier(std::array{
-      gpu::transition_barrier(_lights_tiles.get(), gpu::resource_state::all_shader_resource,
-                              gpu::resource_state::unordered_access)});
-
-   command_list.flush_resource_barriers();
-
    // clear light tiles
    {
       command_list.set_compute_root_signature(root_signatures.tile_lights_clear.get());
@@ -693,8 +686,13 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
                             math::align_up(_tiles_height, 32) / 32, 1);
    }
 
-   command_list.deferred_resource_barrier(gpu::uav_barrier(_lights_tiles.get()));
-   command_list.flush_resource_barriers();
+   command_list.deferred_barrier(
+      gpu::buffer_barrier{.sync_before = gpu::barrier_sync::compute_shading,
+                          .sync_after = gpu::barrier_sync::pixel_shading,
+                          .access_before = gpu::barrier_access::unordered_access,
+                          .access_after = gpu::barrier_access::unordered_access,
+                          .resource = _lights_tiles.get()});
+   command_list.flush_barriers();
 
    command_list.set_graphics_root_signature(root_signatures.tile_lights.get());
    command_list.set_graphics_uav(rs::tile_lights::light_tiles_uav,
@@ -731,9 +729,12 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
                                           _light_count, 0, 0, 0);
    }
 
-   command_list.deferred_resource_barrier(std::array{
-      gpu::transition_barrier(_lights_tiles.get(), gpu::resource_state::unordered_access,
-                              gpu::resource_state::all_shader_resource)});
+   command_list.deferred_barrier(
+      gpu::buffer_barrier{.sync_before = gpu::barrier_sync::pixel_shading,
+                          .sync_after = gpu::barrier_sync::pixel_shading,
+                          .access_before = gpu::barrier_access::unordered_access,
+                          .access_after = gpu::barrier_access::shader_resource,
+                          .resource = _lights_tiles.get()});
 }
 
 void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
@@ -742,10 +743,15 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
                                       gpu::graphics_command_list& command_list,
                                       dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_shadow_map.get(), gpu::resource_state::pixel_shader_resource,
-                              gpu::resource_state::depth_write));
-   command_list.flush_resource_barriers();
+   command_list.deferred_barrier(
+      gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
+                           .sync_after = gpu::barrier_sync::depth_stencil,
+                           .access_before = gpu::barrier_access::no_access,
+                           .access_after = gpu::barrier_access::depth_stencil_write,
+                           .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
+                           .layout_after = gpu::barrier_layout::depth_stencil_write,
+                           .resource = _shadow_map.get()});
+   command_list.flush_barriers();
 
    for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
       auto& shadow_camera = _sun_shadow_cascades[cascade_index];
@@ -811,9 +817,14 @@ void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
       }
    }
 
-   command_list.deferred_resource_barrier(
-      gpu::transition_barrier(_shadow_map.get(), gpu::resource_state::depth_write,
-                              gpu::resource_state::pixel_shader_resource));
+   command_list.deferred_barrier(
+      gpu::texture_barrier{.sync_before = gpu::barrier_sync::depth_stencil,
+                           .sync_after = gpu::barrier_sync::pixel_shading,
+                           .access_before = gpu::barrier_access::depth_stencil_write,
+                           .access_after = gpu::barrier_access::shader_resource,
+                           .layout_before = gpu::barrier_layout::depth_stencil_write,
+                           .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
+                           .resource = _shadow_map.get()});
 }
 
 auto light_clusters::lights_constant_buffer_view() const noexcept -> gpu_virtual_address

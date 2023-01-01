@@ -81,7 +81,7 @@ texture_manager::texture_manager(gpu::device& device,
                                   .width = cpu_null_texture.width(),
                                   .height = cpu_null_texture.height(),
                                   .mip_levels = cpu_null_texture.mip_levels()},
-                                 gpu::resource_state::copy_dest),
+                                 gpu::barrier_layout::common),
           _device.direct_queue};
 
       init_texture(texture.get(), cpu_null_texture);
@@ -215,7 +215,7 @@ void texture_manager::create_texture_async(const lowercase_string& name,
                                                 .width = data->width(),
                                                 .height = data->height(),
                                                 .mip_levels = data->mip_levels()},
-                                               gpu::resource_state::copy_dest),
+                                               gpu::barrier_layout::common),
                         _device.direct_queue};
 
                     init_texture(texture.get(), *data);

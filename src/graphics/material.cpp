@@ -1,5 +1,4 @@
 #include "material.hpp"
-#include "gpu/barrier.hpp"
 
 using namespace std::literals;
 

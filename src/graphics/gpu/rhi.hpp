@@ -19,7 +19,7 @@ namespace we::graphics::gpu {
 constexpr inline uint32 frame_pipeline_length = 2;
 constexpr inline uint32 max_root_parameters = 6;
 constexpr inline uint32 append_aligned_input_element = 0xffffffffu;
-constexpr inline uint32 resource_barrier_all_subresources = 0xffffffffu;
+constexpr inline uint32 texture_barrier_all_subresources = 0xffffffffu;
 constexpr inline uint32 raw_uav_srv_byte_alignment = 16;
 constexpr inline uint32 constant_buffer_data_placement_alignment = 256;
 constexpr inline uint32 texture_data_pitch_alignment = 256;
@@ -40,34 +40,6 @@ enum class heap_type {
    upload = 2,
    readback = 3,
 };
-
-enum class resource_state {
-   common = 0,
-   vertex_and_constant_buffer = 0x1,
-   index_buffer = 0x2,
-   render_target = 0x4,
-   unordered_access = 0x8,
-   depth_write = 0x10,
-   depth_read = 0x20,
-   non_pixel_shader_resource = 0x40,
-   pixel_shader_resource = 0x80,
-   indirect_argument = 0x200,
-   copy_dest = 0x400,
-   copy_source = 0x800,
-   resolve_dest = 0x1000,
-   resolve_source = 0x2000,
-   raytracing_acceleration_structure = 0x400000,
-   shading_rate_source = 0x1000000,
-   generic_read = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
-   all_shader_resource = (0x40 | 0x80),
-   present = 0,
-   predication = 0x200
-};
-
-constexpr bool marked_as_enum_bitflag(resource_state) noexcept
-{
-   return true;
-}
 
 enum class texture_dimension { t_1d = 2, t_2d = 3, t_3d = 4 };
 
@@ -153,9 +125,114 @@ enum class primitive_topology {
    trianglelist = 4
 };
 
-enum class barrier_split { none, begin, end };
+enum class barrier_layout : uint32 {
+   undefined = 0xffffffff,
+   common = 0,
+   present = 0,
+   generic_read,
+   render_target,
+   unordered_access,
+   depth_stencil_write,
+   depth_stencil_read,
+   shader_resource,
+   copy_source,
+   copy_dest,
+   resolve_source,
+   resolve_dest,
+   shading_rate_source,
+   video_decode_read,
+   video_decode_write,
+   video_process_read,
+   video_process_write,
+   video_encode_read,
+   video_encode_write,
+   direct_queue_common,
+   direct_queue_generic_read,
+   direct_queue_unordered_access,
+   direct_queue_shader_resource,
+   direct_queue_copy_source,
+   direct_queue_copy_dest,
+   compute_queue_common,
+   compute_queue_generic_read,
+   compute_queue_unordered_access,
+   compute_queue_shader_resource,
+   compute_queue_copy_source,
+   compute_queue_copy_dest,
+   video_queue_common
+};
 
-enum class barrier_type { transition = 0, aliasing = 1, uav = 2 };
+enum class barrier_sync : uint32 {
+   none = 0,
+   all = 0x1,
+   draw = 0x2,
+   input_assembler = 0x4,
+   vertex_shading = 0x8,
+   pixel_shading = 0x10,
+   depth_stencil = 0x20,
+   render_target = 0x40,
+   compute_shading = 0x80,
+   raytracing = 0x100,
+   copy = 0x200,
+   resolve = 0x400,
+   execute_indirect = 0x800,
+   predication = 0x800,
+   all_shading = 0x1000,
+   non_pixel_shading = 0x2000,
+   emit_raytracing_acceleration_structure_postbuild_info = 0x4000,
+   clear_unordered_access_view = 0x8000,
+   video_decode = 0x100000,
+   video_process = 0x200000,
+   video_encode = 0x400000,
+   build_raytracing_acceleration_structure = 0x800000,
+   copy_raytracing_acceleration_structure = 0x1000000,
+   split = 0x80000000
+};
+
+constexpr bool marked_as_enum_bitflag(barrier_sync) noexcept
+{
+   return true;
+}
+
+enum class barrier_access : uint32 {
+   common = 0,
+   vertex_buffer = 0x1,
+   constant_buffer = 0x2,
+   index_buffer = 0x4,
+   render_target = 0x8,
+   unordered_access = 0x10,
+   depth_stencil_write = 0x20,
+   depth_stencil_read = 0x40,
+   shader_resource = 0x80,
+   stream_output = 0x100,
+   indirect_argument = 0x200,
+   predication = 0x200,
+   copy_dest = 0x400,
+   copy_source = 0x800,
+   resolve_dest = 0x1000,
+   resolve_source = 0x2000,
+   raytracing_acceleration_structure_read = 0x4000,
+   raytracing_acceleration_structure_write = 0x8000,
+   shading_rate_source = 0x10000,
+   video_decode_read = 0x20000,
+   video_decode_write = 0x40000,
+   video_process_read = 0x80000,
+   video_process_write = 0x100000,
+   video_encode_read = 0x200000,
+   video_encode_write = 0x400000,
+   no_access = 0x80000000
+};
+
+constexpr bool marked_as_enum_bitflag(barrier_access) noexcept
+{
+   return true;
+}
+
+enum texture_barrier_flags { none = 0, discard = 0x1 };
+
+constexpr bool marked_as_enum_bitflag(texture_barrier_flags) noexcept
+{
+   return true;
+}
 
 enum class filter {
    point = 0,
@@ -602,31 +679,42 @@ struct swap_chain_desc {
 
 /// Barriers Structures ///
 
-struct resource_transition_barrier {
+struct barrier_subresource_range {
+   uint32 index_or_first_mip_level = texture_barrier_all_subresources;
+   uint32 num_mip_levels = 0;
+   uint32 first_array_slice = 0;
+   uint32 num_array_slices = 0;
+   uint32 first_plane = 0;
+   uint32 num_planes = 0;
+};
+
+struct global_barrier {
+   barrier_sync sync_before;
+   barrier_sync sync_after;
+   barrier_access access_before;
+   barrier_access access_after;
+};
+
+struct texture_barrier {
+   barrier_sync sync_before;
+   barrier_sync sync_after;
+   barrier_access access_before;
+   barrier_access access_after;
+   barrier_layout layout_before;
+   barrier_layout layout_after;
    resource_handle resource;
-   uint32 subresource = resource_barrier_all_subresources;
-   resource_state state_before;
-   resource_state state_after;
+   barrier_subresource_range subresources{};
+   texture_barrier_flags flags = texture_barrier_flags::none;
 };
 
-struct resource_aliasing_barrier {
-   resource_handle resource_before;
-   resource_handle resource_after;
-};
-
-struct resource_uav_barrier {
+struct buffer_barrier {
+   barrier_sync sync_before;
+   barrier_sync sync_after;
+   barrier_access access_before;
+   barrier_access access_after;
    resource_handle resource;
-};
-
-struct resource_barrier {
-   barrier_type type = barrier_type::transition;
-   barrier_split split = barrier_split::none; /// See Split Barriers in D3D12 docs
-
-   union {
-      resource_transition_barrier transition = {};
-      resource_aliasing_barrier aliasing;
-      resource_uav_barrier uav;
-   };
+   uint64 offset = 0;
+   uint64 size = UINT64_MAX;
 };
 
 /// Command List Structures and Definitions ///
@@ -711,15 +799,23 @@ protected:
    friend device;
    friend command_queue;
 
-   implementation_storage<command_list_state, 120> state;
+   implementation_storage<command_list_state, 184> state;
 };
 
 struct copy_command_list : command_list {
-   void deferred_resource_barrier(const std::span<const resource_barrier> barriers);
+   void deferred_barrier(const std::span<const global_barrier> barriers);
 
-   void deferred_resource_barrier(const resource_barrier& barrier);
+   void deferred_barrier(const global_barrier& barrier);
 
-   void flush_resource_barriers();
+   void deferred_barrier(const std::span<const texture_barrier> barriers);
+
+   void deferred_barrier(const texture_barrier& barrier);
+
+   void deferred_barrier(const std::span<const buffer_barrier> barriers);
+
+   void deferred_barrier(const buffer_barrier& barrier);
+
+   void flush_barriers();
 
    void copy_buffer_region(const resource_handle dst_buffer,
                            const uint64 dst_offset, const resource_handle src_buffer,
@@ -1028,7 +1124,7 @@ public:
                                     const heap_type heap_type) -> resource_handle;
 
    [[nodiscard]] auto create_texture(const texture_desc& desc,
-                                     const resource_state initial_resource_state)
+                                     const barrier_layout initial_resource_layout)
       -> resource_handle;
 
    [[nodiscard]] auto get_gpu_virtual_address(resource_handle resource)
