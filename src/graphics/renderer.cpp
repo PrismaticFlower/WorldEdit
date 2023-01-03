@@ -313,7 +313,7 @@ renderer_impl::renderer_impl(const renderer::window_handle window,
       float4* address = static_cast<float4*>(
          _device.map(_depth_minmax_readback_buffer.get(), 0, {}));
 
-      for (auto ptr : _depth_minmax_readback_buffer_ptrs) {
+      for (auto& ptr : _depth_minmax_readback_buffer_ptrs) {
          ptr = address;
          address += 1;
       }
@@ -356,7 +356,11 @@ void renderer_impl::draw_frame(
                             world_classes);
       update_frame_constant_buffer(camera, _pre_render_command_list);
 
+      const float4 scene_depth_min_max =
+         *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
+
       _light_clusters.prepare_lights(camera, view_frustum, world,
+                                     {scene_depth_min_max.x, scene_depth_min_max.y},
                                      _pre_render_command_list,
                                      _dynamic_buffer_allocator);
 

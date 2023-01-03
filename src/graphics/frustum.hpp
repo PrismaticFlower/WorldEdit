@@ -32,6 +32,9 @@ enum class frustum_planes {
 };
 
 struct frustum {
+   explicit frustum(const float4x4& inv_view_projection_matrix,
+                    const float z_min, const float z_max) noexcept;
+
    explicit frustum(const float4x4& inv_view_projection_matrix) noexcept;
 
    container::enum_array<float3, frustum_corner> corners;

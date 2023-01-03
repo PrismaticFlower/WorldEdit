@@ -270,9 +270,12 @@ auto make_cascade_shadow_camera(const float3 light_direction,
 }
 
 auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
-                          const frustum& view_frustum)
+                          const std::array<float, 2> scene_depth_min_max)
    -> std::array<shadow_ortho_camera, cascade_count>
 {
+   const frustum view_frustum{camera.inv_view_projection_matrix(),
+                              scene_depth_min_max[0], scene_depth_min_max[1]};
+
    const float3 light_direction =
       normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
 
@@ -402,6 +405,7 @@ void light_clusters::update_descriptors()
 void light_clusters::prepare_lights(const camera& view_camera,
                                     const frustum& view_frustum,
                                     const world::world& world,
+                                    const std::array<float, 2> scene_depth_min_max,
                                     gpu::copy_command_list& command_list,
                                     dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
@@ -547,8 +551,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
          }
          else {
             if (light.shadow_caster) {
-               _sun_shadow_cascades =
-                  make_shadow_cascades(light.rotation, view_camera, view_frustum);
+               _sun_shadow_cascades = make_shadow_cascades(light.rotation, view_camera,
+                                                           scene_depth_min_max);
             }
 
             upload_to({.direction = light_direction,

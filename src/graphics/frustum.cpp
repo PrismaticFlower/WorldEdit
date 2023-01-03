@@ -34,21 +34,22 @@ bool outside_plane(const float4& plane, const float3& point, const float radius)
 
 }
 
-frustum::frustum(const float4x4& inv_view_projection_matrix) noexcept
+frustum::frustum(const float4x4& inv_view_projection_matrix, const float z_min,
+                 const float z_max) noexcept
 {
-   constexpr container::enum_array<float4, frustum_corner> corners_proj =
+   const container::enum_array<float4, frustum_corner> corners_proj =
       container::make_enum_array<float4, frustum_corner>(
-         {{frustum_corner::bottom_left_near, {-1.0f, -1.0f, 0.0f, 1.0f}},
-          {frustum_corner::bottom_right_near, {1.0f, -1.0f, 0.0f, 1.0f}},
+         {{frustum_corner::bottom_left_near, {-1.0f, -1.0f, z_min, 1.0f}},
+          {frustum_corner::bottom_right_near, {1.0f, -1.0f, z_min, 1.0f}},
 
-          {frustum_corner::top_left_near, {-1.0f, 1.0f, 0.0f, 1.0f}},
-          {frustum_corner::top_right_near, {1.0f, 1.0f, 0.0f, 1.0f}},
+          {frustum_corner::top_left_near, {-1.0f, 1.0f, z_min, 1.0f}},
+          {frustum_corner::top_right_near, {1.0f, 1.0f, z_min, 1.0f}},
 
-          {frustum_corner::bottom_left_far, {-1.0f, -1.0f, 1.0f, 1.0f}},
-          {frustum_corner::bottom_right_far, {1.0f, -1.0f, 1.0f, 1.0f}},
+          {frustum_corner::bottom_left_far, {-1.0f, -1.0f, z_max, 1.0f}},
+          {frustum_corner::bottom_right_far, {1.0f, -1.0f, z_max, 1.0f}},
 
-          {frustum_corner::top_left_far, {-1.0f, 1.0f, 1.0f, 1.0f}},
-          {frustum_corner::top_right_far, {1.0f, 1.0f, 1.0f, 1.0f}}});
+          {frustum_corner::top_left_far, {-1.0f, 1.0f, z_max, 1.0f}},
+          {frustum_corner::top_right_far, {1.0f, 1.0f, z_max, 1.0f}}});
 
    ranges::copy(
       corners_proj | ranges::views::transform([&](float4 position) {
@@ -86,6 +87,11 @@ frustum::frustum(const float4x4& inv_view_projection_matrix) noexcept
       get_plane({corners[frustum_corner::top_right_near],
                  corners[frustum_corner::top_right_far],
                  corners[frustum_corner::bottom_right_far]});
+}
+
+frustum::frustum(const float4x4& inv_view_projection_matrix) noexcept
+   : frustum{inv_view_projection_matrix, 0.0f, 1.0f}
+{
 }
 
 bool intersects(const frustum& frustum, const math::bounding_box& bbox)

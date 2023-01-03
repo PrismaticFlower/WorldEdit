@@ -29,7 +29,9 @@ public:
    void update_render_resolution(uint32 width, uint32 height);
 
    void prepare_lights(const camera& view_camera, const frustum& view_frustum,
-                       const world::world& world, gpu::copy_command_list& command_list,
+                       const world::world& world,
+                       const std::array<float, 2> scene_depth_min_max,
+                       gpu::copy_command_list& command_list,
                        dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void tile_lights(root_signature_library& root_signatures, pipeline_library& pipelines,
