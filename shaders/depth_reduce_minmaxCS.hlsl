@@ -25,7 +25,7 @@ groupshared uint shared_max_depth;
 [numthreads(8, 8, 1)]
 void main(uint2 DTid : SV_DispatchThreadID, uint group_index : SV_GroupIndex) { // clang-format on
    if (group_index == 0) {
-      shared_min_depth = 1.0;
+      shared_min_depth = asuint(1.0);
       shared_max_depth = 0.0;
    }
 
