@@ -62,6 +62,8 @@ std::initializer_list<shader_description> shader_list = {
 
    shader("tile_lights_clearCS"),
 
+   shader("depth_reduce_minmaxCS"),
+
    shader_description{
       .name = "tile_lightsVS",
       .entrypoint = L"mainVS",

@@ -67,6 +67,8 @@ struct pipeline_library {
    gpu::unique_pipeline_handle tile_lights_clear;
    gpu::unique_pipeline_handle tile_lights_spheres;
 
+   gpu::unique_pipeline_handle depth_reduce_minmax;
+
    gpu::unique_pipeline_handle imgui;
 };
 

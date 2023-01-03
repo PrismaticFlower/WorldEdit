@@ -207,6 +207,22 @@ const gpu::root_signature_desc tile_lights_desc{
    .debug_name = "tile_lights_root_signature",
 };
 
+const gpu::root_signature_desc depth_reduce_minmax_desc{
+   .parameters =
+      {
+         // input cbv
+         gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
+                             .shader_register = 0,
+                             .values_count = 3},
+
+         // output uav
+         gpu::root_parameter{.type = gpu::root_parameter_type::unordered_access_view,
+                             .shader_register = 0},
+      },
+
+   .debug_name = "depth_reduce_minmax_root_signature",
+};
+
 const gpu::root_signature_desc imgui_desc{
    .parameters =
       {
@@ -246,6 +262,9 @@ root_signature_library::root_signature_library(gpu::device& device)
    tile_lights_clear = {device.create_root_signature(tile_lights_clear_desc),
                         device.direct_queue};
    tile_lights = {device.create_root_signature(tile_lights_desc), device.direct_queue};
+
+   depth_reduce_minmax = {device.create_root_signature(depth_reduce_minmax_desc),
+                          device.direct_queue};
 
    imgui = {device.create_root_signature(imgui_desc), device.direct_queue};
 }

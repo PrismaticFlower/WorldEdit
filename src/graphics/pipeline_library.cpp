@@ -532,6 +532,14 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               .debug_name = "tile_lights_spheres"sv}),
                           device.direct_queue};
 
+   depth_reduce_minmax = {device.create_compute_pipeline(
+                             {.root_signature =
+                                 root_signature_library.depth_reduce_minmax.get(),
+                              .cs_bytecode = shader_library["depth_reduce_minmaxCS"sv],
+
+                              .debug_name = "depth_reduce_minmax"sv}),
+                          device.direct_queue};
+
    imgui = {device.create_graphics_pipeline(
                {.root_signature = root_signature_library.imgui.get(),
 

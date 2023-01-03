@@ -22,6 +22,8 @@ struct root_signature_library {
    gpu::unique_root_signature_handle tile_lights_clear;
    gpu::unique_root_signature_handle tile_lights;
 
+   gpu::unique_root_signature_handle depth_reduce_minmax;
+
    gpu::unique_root_signature_handle imgui;
 };
 
@@ -79,6 +81,11 @@ namespace tile_lights {
 constexpr uint32 instance_data_srv = 0;
 constexpr uint32 light_tiles_uav = 1;
 constexpr uint32 cbv = 2;
+}
+
+namespace depth_reduce_minmax {
+constexpr uint32 input_constants = 0;
+constexpr uint32 output_uav = 1;
 }
 
 namespace imgui {
