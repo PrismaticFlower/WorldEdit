@@ -9,12 +9,14 @@ float4 main(input_vertex input) : SV_Target0
    const float3 positionWS = input.positionWS;
    const float3 viewWS = normalize(cb_frame.view_positionWS - positionWS);
 
-   float3 diffuse_color = 0.0;
+   Texture2D<float3> base_diffuse_map = ResourceDescriptorHeap[terrain_constants.diffuse_maps_index[0]];
+
+   float3 diffuse_color =
+      base_diffuse_map.Sample(sampler_anisotropic_wrap, get_terrain_texcoords(0, positionWS));
 
    const uint active_textures = input.active_textures;
-   float total_weight = 0.0;
 
-   for (uint i = 0; i < terrain_max_textures; ++i) {
+   for (uint i = 1; i < terrain_max_textures; ++i) {
       [branch] if (!input.active_textures & (1u << i)) continue;
 
       const float weight =
@@ -24,11 +26,8 @@ float4 main(input_vertex input) : SV_Target0
 
       Texture2D<float3> diffuse_map = ResourceDescriptorHeap[terrain_constants.diffuse_maps_index[i]];
 
-      diffuse_color += weight * diffuse_map.Sample(sampler_anisotropic_wrap, texcoords);
-      total_weight += weight;
+      diffuse_color = lerp(diffuse_color, diffuse_map.Sample(sampler_anisotropic_wrap, texcoords), weight);
    }
-
-   diffuse_color /= total_weight;
 
    calculate_light_inputs lighting_inputs;
 
