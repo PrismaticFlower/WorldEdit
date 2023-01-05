@@ -30,7 +30,7 @@ struct light_description {
    float spot_inner_param;
    uint region_type;
    uint directional_region_index;
-   uint padding;
+   uint shadow_caster;
 };
 
 struct light_constant_buffer {
@@ -244,7 +244,9 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
       float region_fade_or_shadow = 1.0;
 
       if (light.region_type == directional_region_type::none) {
-         region_fade_or_shadow = sample_cascaded_shadow_map(positionWS, normalWS);
+         if (light.shadow_caster) {
+            region_fade_or_shadow = sample_cascaded_shadow_map(positionWS, normalWS);
+         }
       }
       else {
          light_region_description region_desc = light_region_list.Load(light.directional_region_index);

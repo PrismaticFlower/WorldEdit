@@ -52,7 +52,7 @@ struct alignas(16) light_description {
    float spot_inner_param;
    directional_region_type region_type;
    uint32 directional_region_index;
-   uint32 padding;
+   uint32 shadow_caster;
 };
 
 static_assert(sizeof(light_description) == 64);
@@ -61,7 +61,7 @@ struct alignas(16) light_constants {
    uint32 light_tiles_width;
    gpu::resource_view light_tiles_index;
    gpu::resource_view light_region_list_index;
-   gpu::resource_view TEMP_shadowmap_index;
+   gpu::resource_view shadow_map_index;
 
    float3 sky_ambient_color;
    uint32 padding1;
@@ -424,7 +424,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
       upload_to(_lights_tiles_srv.get(), &upload_data.constants->light_tiles_index);
       upload_to(_lights_region_list_srv.get(),
                 &upload_data.constants->light_region_list_index);
-      upload_to(_shadow_map_srv.get(), &upload_data.constants->TEMP_shadowmap_index);
+      upload_to(_shadow_map_srv.get(), &upload_data.constants->shadow_map_index);
       upload_to(world.lighting_settings.ambient_sky_color,
                 &upload_data.constants->sky_ambient_color);
       upload_to(world.lighting_settings.ambient_ground_color,
@@ -558,7 +558,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
             upload_to({.direction = light_direction,
                        .type = light_type::directional,
                        .color = light.color,
-                       .region_type = directional_region_type::none},
+                       .region_type = directional_region_type::none,
+                       .shadow_caster = light.shadow_caster},
                       &upload_data.constants->lights[light_index]);
 
             _light_count += 1;
