@@ -357,6 +357,4 @@ void libraries_manager::register_asset(const std::filesystem::path& path) noexce
    }
 }
 
-constexpr auto i = sizeof libraries_manager;
-
 }
