@@ -580,6 +580,9 @@
     <ClInclude Include="src\graphics\meta_draw_batcher.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\profiler.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -787,6 +790,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\meta_draw_batcher.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\profiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

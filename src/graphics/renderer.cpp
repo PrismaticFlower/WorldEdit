@@ -18,6 +18,7 @@
 #include "model_manager.hpp"
 #include "output_stream.hpp"
 #include "pipeline_library.hpp"
+#include "profiler.hpp"
 #include "root_signature_library.hpp"
 #include "sampler_list.hpp"
 #include "settings/graphics.hpp"
@@ -276,6 +277,8 @@ private:
 
    imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
 
+   profiler _profiler{_device, 256};
+
    renderer_config _config;
    std::shared_ptr<settings::graphics> _settings;
 };
@@ -311,7 +314,8 @@ renderer_impl::renderer_impl(const renderer::window_handle window,
    // map depth minmax readback buffer
    {
       float4* address = static_cast<float4*>(
-         _device.map(_depth_minmax_readback_buffer.get(), 0, {}));
+         _device.map(_depth_minmax_readback_buffer.get(), 0,
+                     {0, sizeof(float4) * gpu::frame_pipeline_length}));
 
       for (auto& ptr : _depth_minmax_readback_buffer_ptrs) {
          ptr = address;
@@ -341,6 +345,8 @@ void renderer_impl::draw_frame(
    _dynamic_buffer_allocator.reset(_device.frame_index());
 
    _model_manager.update_models();
+
+   _profiler.show();
 
    // Pre-Render Work
    {
@@ -377,9 +383,10 @@ void renderer_impl::draw_frame(
    command_list.reset(_sampler_heap.get());
 
    _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
-                               _dynamic_buffer_allocator);
-   _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures, _pipelines,
-                                    command_list, _dynamic_buffer_allocator);
+                               _dynamic_buffer_allocator, _profiler);
+   _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures,
+                                    _pipelines, command_list,
+                                    _dynamic_buffer_allocator, _profiler);
 
    command_list.deferred_barrier(
       gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
@@ -419,6 +426,8 @@ void renderer_impl::draw_frame(
                                     _pipelines, command_list);
 
    reduce_depth_minmax(command_list);
+
+   _profiler.end_frame(command_list);
 
    command_list.deferred_barrier(
       gpu::texture_barrier{.sync_before = gpu::barrier_sync::render_target,
@@ -501,24 +510,51 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 void renderer_impl::draw_world(const frustum& view_frustum,
                                gpu::graphics_command_list& command_list)
 {
-   draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
+   {
+      profile_section profile{"World - Draw Render List Depth Prepass",
+                              command_list, _profiler, profiler_queue::direct};
 
-   _terrain.draw(terrain_draw::depth_prepass, view_frustum, _camera_constant_buffer_view,
-                 _light_clusters.lights_constant_buffer_view(), command_list,
-                 _root_signatures, _pipelines, _dynamic_buffer_allocator);
+      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
+   }
 
-   draw_world_render_list(_opaque_object_render_list, command_list);
+   {
+      profile_section profile{"Terrain - Draw Depth Prepass", command_list,
+                              _profiler, profiler_queue::direct};
 
-   _terrain.draw(terrain_draw::main, view_frustum, _camera_constant_buffer_view,
-                 _light_clusters.lights_constant_buffer_view(), command_list,
-                 _root_signatures, _pipelines, _dynamic_buffer_allocator);
+      _terrain.draw(terrain_draw::depth_prepass, view_frustum,
+                    _camera_constant_buffer_view,
+                    _light_clusters.lights_constant_buffer_view(), command_list,
+                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
 
-   draw_world_render_list(_transparent_object_render_list, command_list);
+   {
+      profile_section profile{"World - Draw Opaque", command_list, _profiler,
+                              profiler_queue::direct};
+
+      draw_world_render_list(_opaque_object_render_list, command_list);
+   }
+
+   {
+      profile_section profile{"Terrain - Draw", command_list, _profiler,
+                              profiler_queue::direct};
+
+      _terrain.draw(terrain_draw::main, view_frustum, _camera_constant_buffer_view,
+                    _light_clusters.lights_constant_buffer_view(), command_list,
+                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
+
+   {
+      profile_section profile{"World - Draw Transparent", command_list,
+                              _profiler, profiler_queue::direct};
+
+      draw_world_render_list(_transparent_object_render_list, command_list);
+   }
 }
 
 void renderer_impl::draw_world_render_list(const std::vector<uint16>& list,
                                            gpu::graphics_command_list& command_list)
 {
+
    command_list.set_graphics_root_signature(_root_signatures.mesh.get());
    command_list.set_graphics_cbv(rs::mesh::frame_cbv, _camera_constant_buffer_view);
    command_list.set_graphics_cbv(rs::mesh::lights_cbv,
@@ -605,6 +641,9 @@ void renderer_impl::draw_world_meta_objects(
    const world::active_entity_types active_entity_types,
    const world::active_layers active_layers, gpu::graphics_command_list& command_list)
 {
+   profile_section profile{"World - Draw Meta Objects", command_list, _profiler,
+                           profiler_queue::direct};
+
    _meta_draw_batcher.clear();
 
    if (active_entity_types.paths and not world.paths.empty()) {
@@ -970,6 +1009,9 @@ void renderer_impl::draw_interaction_targets(
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
    gpu::graphics_command_list& command_list)
 {
+   profile_section profile{"World - Draw Interaction Targets", command_list,
+                           _profiler, profiler_queue::direct};
+
    (void)view_frustum; // TODO: frustum Culling (Is it worth it for interaction targets?)
 
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
@@ -1596,6 +1638,9 @@ void renderer_impl::build_object_render_list(const frustum& view_frustum)
 
 void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list)
 {
+   profile_section profile{"Reduce Depth Minmax", command_list, _profiler,
+                           profiler_queue::direct};
+
    const gpu_virtual_address depth_minmax_buffer =
       _device.get_gpu_virtual_address(_depth_minmax_buffer.get());
 

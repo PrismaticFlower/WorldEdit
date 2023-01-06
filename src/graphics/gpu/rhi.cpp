@@ -1137,6 +1137,20 @@ auto device::create_sampler_heap(std::span<const sampler_desc> sampler_descs)
    return pack_sampler_heap_handle(sampler_heap.release());
 }
 
+auto device::create_timestamp_query_heap(const uint32 count) -> query_heap_handle
+{
+   const D3D12_QUERY_HEAP_DESC desc{.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
+                                    .Count = count};
+
+   com_ptr<ID3D12QueryHeap> query_heap;
+
+   throw_if_fail(
+      state->device->CreateQueryHeap(&desc,
+                                     IID_PPV_ARGS(query_heap.clear_and_assign())));
+
+   return pack_query_heap_handle(query_heap.release());
+}
+
 auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
 {
    const HWND window = static_cast<HWND>(desc.window);
@@ -1410,6 +1424,22 @@ void command_queue::release_sampler_heap(sampler_heap_handle sampler_heap)
    state->release_queue_device_children
       .push(state->last_work_item.load(std::memory_order_acquire),
             com_ptr{unpack_sampler_heap_handle(sampler_heap)});
+}
+
+void command_queue::release_query_heap(query_heap_handle query_heap)
+{
+   state->release_queue_device_children
+      .push(state->last_work_item.load(std::memory_order_acquire),
+            com_ptr{unpack_query_heap_handle(query_heap)});
+}
+
+auto command_queue::get_timestamp_frequency() -> uint64
+{
+   uint64 frequency = 0;
+
+   terminate_if_fail(state->command_queue->GetTimestampFrequency(&frequency));
+
+   return frequency;
 }
 
 command_list::command_list() = default;
@@ -1736,6 +1766,25 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 [[msvc::forceinline]] void compute_command_list::discard_resource(const resource_handle resource)
 {
    state->command_list->DiscardResource(unpack_resource_handle(resource), nullptr);
+}
+
+[[msvc::forceinline]] void compute_command_list::query_timestamp(
+   const query_heap_handle query_heap, const uint32 query_index)
+{
+   state->command_list->EndQuery(unpack_query_heap_handle(query_heap),
+                                 D3D12_QUERY_TYPE_TIMESTAMP, query_index);
+}
+
+[[msvc::forceinline]] void compute_command_list::resolve_query_timestamp(
+   const query_heap_handle query_heap, const uint32 start_query,
+   const uint32 query_count, const resource_handle destination_buffer,
+   const uint32 aligned_destination_buffer_offset)
+{
+   state->command_list->ResolveQueryData(unpack_query_heap_handle(query_heap),
+                                         D3D12_QUERY_TYPE_TIMESTAMP,
+                                         start_query, query_count,
+                                         unpack_resource_handle(destination_buffer),
+                                         aligned_destination_buffer_offset);
 }
 
 [[msvc::forceinline]] void graphics_command_list::draw_instanced(

@@ -8,6 +8,7 @@
 #include "gpu/rhi.hpp"
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
+#include "profiler.hpp"
 #include "root_signature_library.hpp"
 #include "shadow_camera.hpp"
 #include "terrain.hpp"
@@ -36,13 +37,15 @@ public:
 
    void tile_lights(root_signature_library& root_signatures, pipeline_library& pipelines,
                     gpu::graphics_command_list& command_list,
-                    dynamic_buffer_allocator& dynamic_buffer_allocator);
+                    dynamic_buffer_allocator& dynamic_buffer_allocator,
+                    profiler& profiler);
 
    void draw_shadow_maps(const world_mesh_list& meshes,
                          root_signature_library& root_signatures,
                          pipeline_library& pipelines,
                          gpu::graphics_command_list& command_list,
-                         dynamic_buffer_allocator& dynamic_buffer_allocator);
+                         dynamic_buffer_allocator& dynamic_buffer_allocator,
+                         profiler& profiler);
 
    auto lights_constant_buffer_view() const noexcept -> gpu_virtual_address;
 

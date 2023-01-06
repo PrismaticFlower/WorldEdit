@@ -334,6 +334,9 @@ constexpr inline auto null_pipeline_handle = pipeline_handle{0};
 enum class sampler_heap_handle : std::uintptr_t {};
 constexpr inline auto null_sampler_heap_handle = sampler_heap_handle{0};
 
+enum class query_heap_handle : std::uintptr_t {};
+constexpr inline auto null_query_heap_handle = query_heap_handle{0};
+
 /// Pipeline Desc Structures ///
 
 struct root_parameter {
@@ -872,6 +875,13 @@ struct compute_command_list : copy_command_list {
 
    void discard_resource(const resource_handle resource);
 
+   void query_timestamp(const query_heap_handle query_heap, const uint32 query_index);
+
+   void resolve_query_timestamp(const query_heap_handle query_heap,
+                                const uint32 start_query, const uint32 query_count,
+                                const resource_handle destination_buffer,
+                                const uint32 aligned_destination_buffer_offset);
+
    friend device;
 };
 
@@ -987,6 +997,10 @@ struct command_queue {
    void release_depth_stencil_view(dsv_handle depth_stencil_view);
 
    void release_sampler_heap(sampler_heap_handle sampler_heap);
+
+   void release_query_heap(query_heap_handle query_heap);
+
+   auto get_timestamp_frequency() -> uint64;
 
 private:
    friend device;
@@ -1157,6 +1171,11 @@ public:
 
    [[nodiscard]] auto create_sampler_heap(std::span<const sampler_desc> sampler_descs)
       -> sampler_heap_handle;
+
+   /// Query Functions ///
+
+   [[nodiscard]] auto create_timestamp_query_heap(const uint32 count)
+      -> query_heap_handle;
 
    /// Swapchain Functions ///
 

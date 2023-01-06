@@ -138,4 +138,11 @@ using unique_sampler_heap_handle =
                  },
                  command_queue>;
 
+using unique_query_heap_handle =
+   unique_handle<query_heap_handle, null_query_heap_handle,
+                 [](command_queue& queue, query_heap_handle handle) {
+                    queue.release_query_heap(handle);
+                 },
+                 command_queue>;
+
 }

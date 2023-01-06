@@ -671,8 +671,12 @@ void light_clusters::prepare_lights(const camera& view_camera,
 void light_clusters::tile_lights(root_signature_library& root_signatures,
                                  pipeline_library& pipelines,
                                  gpu::graphics_command_list& command_list,
-                                 dynamic_buffer_allocator& dynamic_buffer_allocator)
+                                 dynamic_buffer_allocator& dynamic_buffer_allocator,
+                                 profiler& profiler)
 {
+   profile_section profile{"Lights - Tile Lights", command_list, profiler,
+                           profiler_queue::direct};
+
    // clear light tiles
    {
       command_list.set_compute_root_signature(root_signatures.tile_lights_clear.get());
@@ -742,12 +746,14 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
                           .resource = _lights_tiles.get()});
 }
 
-void light_clusters::draw_shadow_maps(const world_mesh_list& meshes,
-                                      root_signature_library& root_signatures,
-                                      pipeline_library& pipelines,
-                                      gpu::graphics_command_list& command_list,
-                                      dynamic_buffer_allocator& dynamic_buffer_allocator)
+void light_clusters::draw_shadow_maps(
+   const world_mesh_list& meshes, root_signature_library& root_signatures,
+   pipeline_library& pipelines, gpu::graphics_command_list& command_list,
+   dynamic_buffer_allocator& dynamic_buffer_allocator, profiler& profiler)
 {
+   profile_section profile{"Lights - Draw Shadow Maps", command_list, profiler,
+                           profiler_queue::direct};
+
    command_list.deferred_barrier(
       gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
                            .sync_after = gpu::barrier_sync::depth_stencil,

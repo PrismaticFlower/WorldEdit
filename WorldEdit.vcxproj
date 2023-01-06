@@ -210,6 +210,7 @@
     <ClCompile Include="src\graphics\meta_draw_batcher.cpp" />
     <ClCompile Include="src\graphics\model_manager.cpp" />
     <ClCompile Include="src\graphics\cull_objects.cpp" />
+    <ClCompile Include="src\graphics\profiler.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
@@ -334,6 +335,7 @@
     <ClInclude Include="src\graphics\geometric_shapes.hpp" />
     <ClInclude Include="src\graphics\cull_objects.hpp" />
     <ClInclude Include="src\graphics\pipeline_library.hpp" />
+    <ClInclude Include="src\graphics\profiler.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\graphics\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\sampler_list.hpp" />

@@ -114,4 +114,20 @@ auto unpack_sampler_heap_handle(sampler_heap_handle heap) -> ID3D12DescriptorHea
    return std::bit_cast<ID3D12DescriptorHeap*>(heap);
 }
 
+auto pack_query_heap_handle(ID3D12QueryHeap* heap) -> query_heap_handle
+{
+   static_assert(std::is_same_v<std::underlying_type_t<query_heap_handle>, std::uintptr_t>,
+                 "query_heap_handle's underlying type is incorrect");
+
+   return std::bit_cast<query_heap_handle>(heap);
+}
+
+auto unpack_query_heap_handle(query_heap_handle heap) -> ID3D12QueryHeap*
+{
+   static_assert(std::is_same_v<std::underlying_type_t<query_heap_handle>, std::uintptr_t>,
+                 "query_heap_handle's underlying type is incorrect");
+
+   return std::bit_cast<ID3D12QueryHeap*>(heap);
+}
+
 }
