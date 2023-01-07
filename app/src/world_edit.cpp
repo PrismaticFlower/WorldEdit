@@ -29,8 +29,7 @@ constexpr float camera_look_sensitivity = 0.18f;
 world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
      _window{window},
-     _renderer{graphics::make_renderer(window, _settings, _thread_pool,
-                                       _asset_libraries, _stream)}
+     _renderer{graphics::make_renderer(window, _thread_pool, _asset_libraries, _stream)}
 {
    initialize_commands();
 
@@ -85,8 +84,9 @@ bool world_edit::update()
    update_camera(delta_time);
 
    try {
-      _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
-                            _world_layers_draw_mask, _object_classes);
+      _renderer->draw_frame(_camera, _world, _interaction_targets,
+                            _world_draw_mask, _world_layers_draw_mask,
+                            _object_classes, _settings.graphics);
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -234,7 +234,7 @@ void world_edit::update_hovered_entity() noexcept
    if (_world_draw_mask.barriers) {
       if (std::optional<world::raycast_result<world::barrier>> hit =
              world::raycast(ray.origin, ray.direction, _world.barriers,
-                            _settings->barrier_height());
+                            _settings.graphics.barrier_height);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
@@ -246,7 +246,7 @@ void world_edit::update_hovered_entity() noexcept
    if (_world_draw_mask.boundaries) {
       if (std::optional<world::raycast_result<world::boundary>> hit =
              world::raycast(ray.origin, ray.direction, _world.boundaries,
-                            _world.paths, _settings->boundary_height());
+                            _world.paths, _settings.graphics.boundary_height);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
@@ -601,8 +601,8 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
    case error::device_removed: {
       _renderer = nullptr;
 
-      _renderer = graphics::make_renderer(_window, _settings, _thread_pool,
-                                          _asset_libraries, _stream);
+      _renderer =
+         graphics::make_renderer(_window, _thread_pool, _asset_libraries, _stream);
 
    } break;
    }

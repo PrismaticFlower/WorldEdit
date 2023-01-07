@@ -2,48 +2,42 @@
 
 #include "types.hpp"
 
-#include <array>
-
 namespace we::settings {
 
-/// @brief Exposes read only access to settings for the renderer. All methods of this interface are thread safe.
-class graphics {
-public:
-   virtual auto path_node_color() const noexcept -> float3 = 0;
+struct graphics {
+   float3 path_node_color = {0.15f, 1.0f, 0.3f};
 
-   virtual auto path_node_outline_color() const noexcept -> float3 = 0;
+   float3 path_node_outline_color = {0.1125f, 0.6f, 0.2225f};
 
-   virtual auto path_node_connection_color() const noexcept -> float3 = 0;
+   float3 path_node_connection_color = {0.1f, 0.1f, 0.75f};
 
-   virtual auto path_node_orientation_color() const noexcept -> float3 = 0;
+   float3 path_node_orientation_color = {1.0f, 1.0f, 0.1f};
 
-   virtual auto region_color() const noexcept -> float4 = 0;
+   float4 region_color = {0.25f, 0.4f, 1.0f, 0.3f};
 
-   virtual auto barrier_color() const noexcept -> float4 = 0;
+   float4 barrier_color = {1.0f, 0.1f, 0.5f, 0.3f};
 
-   virtual auto aabb_color() const noexcept -> float4 = 0;
+   float4 sector_color = {0.6f, 0.3f, 1.0f, 0.3f};
 
-   virtual auto sector_color() const noexcept -> float4 = 0;
+   float4 portal_color = {0.3f, 0.9f, 0.0f, 0.3f};
 
-   virtual auto portal_color() const noexcept -> float4 = 0;
+   float3 hintnode_color = {1.0f, 0.15f, 0.15f};
 
-   virtual auto hintnode_color() const noexcept -> float3 = 0;
+   float3 hintnode_outline_color = {0.8f, 0.04f, 0.04f};
 
-   virtual auto hintnode_outline_color() const noexcept -> float3 = 0;
+   float4 boundary_color = {1.0f, 0.0f, 0.0f, 0.2f};
 
-   virtual auto boundary_color() const noexcept -> float4 = 0;
+   float light_volume_alpha = 0.05f;
 
-   virtual auto light_volume_alpha() const noexcept -> float = 0;
+   float3 hover_color = {1.0f, 1.0f, 0.07f};
 
-   virtual auto hover_color() const noexcept -> float3 = 0;
+   float3 selected_color = {1.0f, 1.0f, 1.0f};
 
-   virtual auto selected_color() const noexcept -> float3 = 0;
+   float barrier_height = 64.0f;
 
-   virtual auto barrier_height() const noexcept -> float = 0;
+   float boundary_height = 64.0f;
 
-   virtual auto boundary_height() const noexcept -> float = 0;
-
-   virtual auto line_width() const noexcept -> float = 0;
+   float line_width = 2.5f;
 };
 
 }

@@ -96,8 +96,7 @@ private:
 
    standard_output_stream _stream;
    HWND _window{};
-   std::shared_ptr<settings::settings> _settings =
-      std::make_shared<settings::settings>();
+   settings::settings _settings;
    std::shared_ptr<async::thread_pool> _thread_pool = async::thread_pool::make();
 
    bool _focused = true;

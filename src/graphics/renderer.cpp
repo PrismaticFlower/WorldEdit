@@ -125,7 +125,6 @@ struct renderer_config {
 
 struct renderer_impl final : renderer {
    renderer_impl(const renderer::window_handle window,
-                 std::shared_ptr<settings::graphics> settings,
                  std::shared_ptr<async::thread_pool> thread_pool,
                  assets::libraries_manager& asset_libraries,
                  output_stream& error_output);
@@ -136,7 +135,8 @@ struct renderer_impl final : renderer {
                    const world::interaction_targets& interaction_targets,
                    const world::active_entity_types active_entity_types,
                    const world::active_layers active_layers,
-                   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes) override;
+                   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+                   const settings::graphics& settings) override;
 
    void window_resized(uint16 width, uint16 height) override;
 
@@ -156,6 +156,7 @@ struct renderer_impl final : renderer {
 
 private:
    void update_frame_constant_buffer(const camera& camera,
+                                     const settings::graphics& settings,
                                      gpu::copy_command_list& command_list);
 
    void draw_world(const frustum& view_frustum, gpu::graphics_command_list& command_list);
@@ -169,13 +170,14 @@ private:
    void draw_world_meta_objects(const frustum& view_frustum, const world::world& world,
                                 const world::active_entity_types active_entity_types,
                                 const world::active_layers active_layers,
+                                const settings::graphics& settings,
                                 gpu::graphics_command_list& command_list);
 
    void draw_interaction_targets(
       const frustum& view_frustum, const world::world& world,
       const world::interaction_targets& interaction_targets,
       const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
-      gpu::graphics_command_list& command_list);
+      const settings::graphics& settings, gpu::graphics_command_list& command_list);
 
    void build_world_mesh_list(
       gpu::copy_command_list& command_list, const world::world& world,
@@ -280,11 +282,9 @@ private:
    profiler _profiler{_device, 256};
 
    renderer_config _config;
-   std::shared_ptr<settings::graphics> _settings;
 };
 
 renderer_impl::renderer_impl(const renderer::window_handle window,
-                             std::shared_ptr<settings::graphics> settings,
                              std::shared_ptr<async::thread_pool> thread_pool,
                              assets::libraries_manager& asset_libraries,
                              output_stream& error_output)
@@ -295,8 +295,7 @@ renderer_impl::renderer_impl(const renderer::window_handle window,
                       asset_libraries.textures},
      _model_manager{_device,          _copy_command_list_pool,
                     _texture_manager, asset_libraries.models,
-                    thread_pool,      _error_output},
-     _settings{settings}
+                    thread_pool,      _error_output}
 {
    // create object constants upload buffers
    for (auto [buffer, cpu_ptr] :
@@ -337,7 +336,8 @@ void renderer_impl::draw_frame(
    const world::interaction_targets& interaction_targets,
    const world::active_entity_types active_entity_types,
    const world::active_layers active_layers,
-   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
+   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+   const settings::graphics& settings)
 {
    const frustum view_frustum{camera.inv_view_projection_matrix()};
 
@@ -360,7 +360,7 @@ void renderer_impl::draw_frame(
       update_textures(_pre_render_command_list);
       build_world_mesh_list(_pre_render_command_list, world, active_layers,
                             world_classes);
-      update_frame_constant_buffer(camera, _pre_render_command_list);
+      update_frame_constant_buffer(camera, settings, _pre_render_command_list);
 
       const float4 scene_depth_min_max =
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
@@ -415,10 +415,10 @@ void renderer_impl::draw_frame(
 
    // Render World Meta Objects
    draw_world_meta_objects(view_frustum, world, active_entity_types,
-                           active_layers, command_list);
+                           active_layers, settings, command_list);
 
    draw_interaction_targets(view_frustum, world, interaction_targets,
-                            world_classes, command_list);
+                            world_classes, settings, command_list);
 
    // Render ImGui
    ImGui::Render();
@@ -487,6 +487,7 @@ void renderer_impl::mark_dirty_terrain() noexcept
 }
 
 void renderer_impl::update_frame_constant_buffer(const camera& camera,
+                                                 const settings::graphics& settings,
                                                  gpu::copy_command_list& command_list)
 {
    frame_constant_buffer
@@ -498,7 +499,7 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
                                   static_cast<float>(_swap_chain.height())},
                 .viewport_topleft = {0.0f, 0.0f},
 
-                .line_width = _settings->line_width()};
+                .line_width = settings.line_width};
 
    auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 
@@ -639,7 +640,8 @@ void renderer_impl::draw_world_render_list_depth_prepass(
 void renderer_impl::draw_world_meta_objects(
    const frustum& view_frustum, const world::world& world,
    const world::active_entity_types active_entity_types,
-   const world::active_layers active_layers, gpu::graphics_command_list& command_list)
+   const world::active_layers active_layers, const settings::graphics& settings,
+   gpu::graphics_command_list& command_list)
 {
    profile_section profile{"World - Draw Meta Objects", command_list, _profiler,
                            profiler_queue::direct};
@@ -657,8 +659,8 @@ void renderer_impl::draw_world_meta_objects(
       ImGui::Checkbox("Draw Paths Orientation", &draw_orientation);
       ImGui::Unindent();
 
-      const float4 path_node_color = {_settings->path_node_color(), 1.0f};
-      const float4 path_node_outline_color = {_settings->path_node_outline_color(), 1.0f};
+      const float4 path_node_color = {settings.path_node_color, 1.0f};
+      const float4 path_node_outline_color = {settings.path_node_outline_color, 1.0f};
 
       for (auto& path : world.paths) {
          if (not active_layers[path.layer]) continue;
@@ -679,7 +681,7 @@ void renderer_impl::draw_world_meta_objects(
 
             if (draw_orientation) {
                const uint32 path_node_orientation_color = utility::pack_srgb_bgra(
-                  float4{_settings->path_node_orientation_color(), 1.0f});
+                  float4{settings.path_node_orientation_color, 1.0f});
 
                float4x4 orientation_transform = rotation;
                orientation_transform[3] = {node.position, 1.0f};
@@ -695,7 +697,7 @@ void renderer_impl::draw_world_meta_objects(
 
          if (draw_connections) {
             const uint32 path_node_connection_color = utility::pack_srgb_bgra(
-               float4{_settings->path_node_connection_color(), 1.0f});
+               float4{settings.path_node_connection_color, 1.0f});
 
             using namespace ranges::views;
 
@@ -771,7 +773,7 @@ void renderer_impl::draw_world_meta_objects(
    };
 
    if (active_entity_types.regions and not world.regions.empty()) {
-      const float4 region_color = _settings->region_color();
+      const float4 region_color = settings.region_color;
 
       for (auto& region : world.regions) {
          if (not active_layers[region.layer]) continue;
@@ -781,8 +783,8 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.barriers and not world.barriers.empty()) {
-      const float barrier_height = _settings->barrier_height();
-      const float4 barrier_color = _settings->barrier_color();
+      const float barrier_height = settings.barrier_height;
+      const float4 barrier_color = settings.barrier_color;
 
       for (auto& barrier : world.barriers) {
 
@@ -819,7 +821,7 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.lights and not world.lights.empty()) {
-      const float volume_alpha = _settings->light_volume_alpha();
+      const float volume_alpha = settings.light_volume_alpha;
 
       for (auto& light : world.lights) {
          if (not active_layers[light.layer]) continue;
@@ -892,7 +894,7 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.sectors and not world.sectors.empty()) {
-      const uint32 sector_color = utility::pack_srgb_bgra(_settings->sector_color());
+      const uint32 sector_color = utility::pack_srgb_bgra(settings.sector_color);
 
       for (auto& sector : world.sectors) {
          using namespace ranges::views;
@@ -920,7 +922,7 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.portals and not world.portals.empty()) {
-      const uint32 portal_color = utility::pack_srgb_bgra(_settings->portal_color());
+      const uint32 portal_color = utility::pack_srgb_bgra(settings.portal_color);
 
       for (auto& portal : world.portals) {
          using namespace ranges::views;
@@ -951,9 +953,9 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.hintnodes and not world.hintnodes.empty()) {
-      const float4 hintnode_color = float4{_settings->hintnode_color(), 1.0f};
+      const float4 hintnode_color = float4{settings.hintnode_color, 1.0f};
       const float4 hintnode_outline_color =
-         float4{_settings->hintnode_outline_color(), 1.0f};
+         float4{settings.hintnode_outline_color, 1.0f};
 
       for (auto& hintnode : world.hintnodes) {
          if (not active_layers[hintnode.layer]) continue;
@@ -970,9 +972,8 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.boundaries and not world.boundaries.empty()) {
-      const float boundary_height = _settings->boundary_height();
-      const uint32 boundary_color =
-         utility::pack_srgb_bgra(_settings->boundary_color());
+      const float boundary_height = settings.boundary_height;
+      const uint32 boundary_color = utility::pack_srgb_bgra(settings.boundary_color);
 
       for (auto& boundary : world.boundaries) {
          using namespace ranges::views;
@@ -1007,7 +1008,7 @@ void renderer_impl::draw_interaction_targets(
    const frustum& view_frustum, const world::world& world,
    const world::interaction_targets& interaction_targets,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
-   gpu::graphics_command_list& command_list)
+   const settings::graphics& settings, gpu::graphics_command_list& command_list)
 {
    profile_section profile{"World - Draw Interaction Targets", command_list,
                            _profiler, profiler_queue::direct};
@@ -1236,7 +1237,7 @@ void renderer_impl::draw_interaction_targets(
                };
 
                const uint32 hover_color =
-                  utility::pack_srgb_bgra({_settings->hover_color(), 1.0f});
+                  utility::pack_srgb_bgra({settings.hover_color, 1.0f});
 
                for (const auto [a, b] :
                     zip(path->nodes | transform(get_position),
@@ -1442,7 +1443,7 @@ void renderer_impl::draw_interaction_targets(
                   std::atan2(barrier->corners[1].x - barrier->corners[0].x,
                              barrier->corners[1].y - barrier->corners[0].y);
 
-               const float barrier_height = _settings->barrier_height();
+               const float barrier_height = settings.barrier_height;
 
                float4x4 transform =
                   make_rotation_matrix_from_euler({0.0f, angle, 0.0f}) *
@@ -1489,7 +1490,7 @@ void renderer_impl::draw_interaction_targets(
                                                             {0.0f, 0.0f, 0.0f, 1.0f}})
                                                 .gpu_address);
 
-               const float boundary_height = _settings->boundary_height();
+               const float boundary_height = settings.boundary_height;
 
                using namespace ranges::views;
 
@@ -1520,7 +1521,7 @@ void renderer_impl::draw_interaction_targets(
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
-         wireframe_constant_buffer constants{.color = _settings->hover_color()};
+         wireframe_constant_buffer constants{.color = settings.hover_color};
 
          std::memcpy(allocation.cpu_address, &constants,
                      sizeof(wireframe_constant_buffer));
@@ -1536,7 +1537,7 @@ void renderer_impl::draw_interaction_targets(
          auto allocation =
             _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
 
-         wireframe_constant_buffer constants{.color = _settings->selected_color()};
+         wireframe_constant_buffer constants{.color = settings.selected_color};
 
          std::memcpy(allocation.cpu_address, &constants,
                      sizeof(wireframe_constant_buffer));
@@ -1716,13 +1717,12 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
 }
 
 auto make_renderer(const renderer::window_handle window,
-                   std::shared_ptr<settings::graphics> settings,
                    std::shared_ptr<async::thread_pool> thread_pool,
                    assets::libraries_manager& asset_libraries,
                    output_stream& error_output) -> std::unique_ptr<renderer>
 {
-   return std::make_unique<renderer_impl>(window, settings, thread_pool,
-                                          asset_libraries, error_output);
+   return std::make_unique<renderer_impl>(window, thread_pool, asset_libraries,
+                                          error_output);
 }
 
 }
