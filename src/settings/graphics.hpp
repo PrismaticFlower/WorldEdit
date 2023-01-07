@@ -38,6 +38,8 @@ struct graphics {
    float boundary_height = 64.0f;
 
    float line_width = 2.5f;
+
+   bool show_profiler = false;
 };
 
 }

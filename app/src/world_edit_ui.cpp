@@ -88,6 +88,8 @@ void world_edit::update_ui() noexcept
             }
          }
 
+         ImGui::Selectable("Show GPU Profiler", &_settings.graphics.show_profiler);
+
          ImGui::EndMenu();
       }
 

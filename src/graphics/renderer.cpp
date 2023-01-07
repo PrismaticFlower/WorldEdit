@@ -346,7 +346,7 @@ void renderer_impl::draw_frame(
 
    _model_manager.update_models();
 
-   _profiler.show();
+   if (settings.show_profiler) _profiler.show();
 
    // Pre-Render Work
    {
