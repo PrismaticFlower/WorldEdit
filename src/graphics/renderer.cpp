@@ -186,6 +186,8 @@ private:
 
    void build_object_render_list(const frustum& view_frustum);
 
+   void clear_depth_minmax(gpu::copy_command_list& command_list);
+
    void reduce_depth_minmax(gpu::graphics_command_list& command_list);
 
    void update_textures(gpu::copy_command_list& command_list);
@@ -222,7 +224,7 @@ private:
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                    .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
-                              gpu::barrier_layout::depth_stencil_write),
+                              gpu::barrier_layout::direct_queue_shader_resource),
        _device.direct_queue};
    gpu::unique_dsv_handle _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
@@ -361,6 +363,7 @@ void renderer_impl::draw_frame(
       build_world_mesh_list(_pre_render_command_list, world, active_layers,
                             world_classes);
       update_frame_constant_buffer(camera, settings, _pre_render_command_list);
+      clear_depth_minmax(_pre_render_command_list);
 
       const float4 scene_depth_min_max =
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
@@ -396,6 +399,15 @@ void renderer_impl::draw_frame(
                            .layout_before = gpu::barrier_layout::present,
                            .layout_after = gpu::barrier_layout::render_target,
                            .resource = back_buffer});
+
+   command_list.deferred_barrier(
+      gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
+                           .sync_after = gpu::barrier_sync::depth_stencil,
+                           .access_before = gpu::barrier_access::no_access,
+                           .access_after = gpu::barrier_access::depth_stencil_write,
+                           .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
+                           .layout_after = gpu::barrier_layout::depth_stencil_write,
+                           .resource = _depth_stencil_texture.get()});
    command_list.flush_barriers();
 
    command_list.clear_render_target_view(back_buffer_rtv,
@@ -466,7 +478,7 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                    .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
-                              gpu::barrier_layout::depth_stencil_write),
+                              gpu::barrier_layout::direct_queue_shader_resource),
        _device.direct_queue};
    _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
@@ -1637,11 +1649,8 @@ void renderer_impl::build_object_render_list(const frustum& view_frustum)
              });
 }
 
-void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list)
+void renderer_impl::clear_depth_minmax(gpu::copy_command_list& command_list)
 {
-   profile_section profile{"Reduce Depth Minmax", command_list, _profiler,
-                           profiler_queue::direct};
-
    const gpu_virtual_address depth_minmax_buffer =
       _device.get_gpu_virtual_address(_depth_minmax_buffer.get());
 
@@ -1649,13 +1658,13 @@ void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list
                                        std::bit_cast<uint32>(1.0f));
    command_list.write_buffer_immediate(depth_minmax_buffer + sizeof(float),
                                        std::bit_cast<uint32>(0.0f));
+}
 
-   command_list.deferred_barrier(
-      gpu::buffer_barrier{.sync_before = gpu::barrier_sync::copy,
-                          .sync_after = gpu::barrier_sync::compute_shading,
-                          .access_before = gpu::barrier_access::copy_dest,
-                          .access_after = gpu::barrier_access::unordered_access,
-                          .resource = _depth_minmax_buffer.get()});
+void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list)
+{
+   profile_section profile{"Reduce Depth Minmax", command_list, _profiler,
+                           profiler_queue::direct};
+
    command_list.deferred_barrier(
       gpu::texture_barrier{.sync_before = gpu::barrier_sync::depth_stencil,
                            .sync_after = gpu::barrier_sync::compute_shading,
@@ -1665,6 +1674,9 @@ void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list
                            .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
                            .resource = _depth_stencil_texture.get()});
    command_list.flush_barriers();
+
+   const gpu_virtual_address depth_minmax_buffer =
+      _device.get_gpu_virtual_address(_depth_minmax_buffer.get());
 
    std::array reduce_depth_inputs{_depth_stencil_srv.get().index,
                                   _swap_chain.width(), _swap_chain.height()};
@@ -1691,15 +1703,6 @@ void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list
    command_list.copy_buffer_region(_depth_minmax_readback_buffer.get(),
                                    sizeof(float4) * _device.frame_index(),
                                    _depth_minmax_buffer.get(), 0, sizeof(float4));
-
-   command_list.deferred_barrier(
-      gpu::texture_barrier{.sync_before = gpu::barrier_sync::compute_shading,
-                           .sync_after = gpu::barrier_sync::none,
-                           .access_before = gpu::barrier_access::shader_resource,
-                           .access_after = gpu::barrier_access::no_access,
-                           .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
-                           .layout_after = gpu::barrier_layout::depth_stencil_write,
-                           .resource = _depth_stencil_texture.get()});
 }
 
 void renderer_impl::update_textures(gpu::copy_command_list& command_list)

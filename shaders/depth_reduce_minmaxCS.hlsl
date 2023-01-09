@@ -8,12 +8,7 @@ ConstantBuffer<input_constant_buffer> input : register(b0);
 
 static Texture2D<float> depth_texture = ResourceDescriptorHeap[input.depth_srv];
 
-struct output_buffer {
-   uint min_depth;
-   uint max_depth;
-};
-
-RWStructuredBuffer<output_buffer> output : register(u0);
+RWByteAddressBuffer output : register(u0);
 
 const static float clear_depth = 1.0f;
 
@@ -48,7 +43,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint group_index : SV_GroupIndex) { 
    if (group_index == 0) {
       GroupMemoryBarrierWithGroupSync();
 
-      InterlockedMin(output[0].min_depth, shared_min_depth);
-      InterlockedMax(output[0].max_depth, shared_max_depth);
+      output.InterlockedMin(0, shared_min_depth);
+      output.InterlockedMax(4, shared_max_depth);
    }
 }
