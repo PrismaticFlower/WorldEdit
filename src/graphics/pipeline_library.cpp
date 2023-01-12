@@ -195,7 +195,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                       .vs_bytecode = shader_library["mesh_shadowVS"sv],
 
-                      .rasterizer_state = rasterizer_cull_none,
+                      .rasterizer_state = rasterizer_cull_backfacing,
                       .depth_stencil_state = depth_stencil_enabled,
                       .input_layout = mesh_input_layout_position_only,
 
@@ -211,7 +211,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .vs_bytecode = shader_library["mesh_shadow_cutoutVS"sv],
            .ps_bytecode = shader_library["mesh_shadow_cutoutPS"sv],
 
-           .rasterizer_state = rasterizer_cull_none,
+           .rasterizer_state = rasterizer_cull_backfacing,
            .depth_stencil_state = depth_stencil_enabled,
            .input_layout = mesh_input_layout,
 

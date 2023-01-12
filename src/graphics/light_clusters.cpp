@@ -13,7 +13,7 @@ namespace we::graphics {
 
 namespace {
 
-constexpr auto shadow_res = 1024;
+constexpr auto shadow_res = 2048;
 constexpr auto cascade_count = light_clusters::sun_cascade_count;
 constexpr auto light_tile_size = 8;
 constexpr auto max_lights = 256;

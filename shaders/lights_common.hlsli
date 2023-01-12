@@ -37,7 +37,7 @@ struct light_constant_buffer {
    uint light_tiles_width;
    uint light_tiles_index;
    uint light_region_list_index;
-   uint TEMP_shadowmap_index;
+   uint shadow_map_index;
    float3 sky_ambient_color;
    uint padding1;
    float3 ground_ambient_color;
@@ -72,7 +72,6 @@ struct light_info {
 };
 
 const static float region_fade_distance_sq = 0.1 * 0.1;
-const static float cascade_fade_distance = 0.1;
 const static int shadow_cascade_count = 4;
 const static uint light_tile_size = 8;
 const static uint light_tile_word_bits = 32;
@@ -82,8 +81,7 @@ static StructuredBuffer<uint[TILE_LIGHT_WORDS]> light_tiles =
    ResourceDescriptorHeap[light_constants.light_tiles_index];
 static StructuredBuffer<light_region_description> light_region_list =
    ResourceDescriptorHeap[light_constants.light_region_list_index];
-static Texture2DArray<float> TEMP_shadowmap = ResourceDescriptorHeap[light_constants.TEMP_shadowmap_index];
-const static float temp_shadow_bias = 0.001;
+const static float shadow_map_bias = 0.001;
 
 float shadow_cascade_signed_distance(float3 positionLS)
 {
@@ -109,71 +107,41 @@ uint select_shadow_map_cascade(float3 positionWS)
    return cascade_index;
 }
 
-float sample_shadow_map(float2 base_uv, float u, float v, float2 inv_shadow_map_resolution,
-                        uint cascade_index, float light_depth)
+float sample_shadow_map(Texture2DArray<float> shadow_map, float3 positionLS, uint cascade_index,
+                        float2 inv_shadow_map_resolution)
 {
-   float2 uv = base_uv + float2(u, v) * inv_shadow_map_resolution;
+   // Sampling pattern from MiniEngine https://github.com/microsoft/DirectX-Graphics-Samples/blob/0aa79bad78992da0b6a8279ddb9002c1753cb849/MiniEngine/Model/Shaders/Lighting.hlsli#L70
 
-   return TEMP_shadowmap.SampleCmpLevelZero(sampler_shadow, float3(uv, cascade_index), light_depth);
-}
+   const float light_depth = positionLS.z - shadow_map_bias;
 
-float sample_shadow_map_optimized_pcfx5(float3 positionLS, uint cascade_index,
-                                        float2 shadow_map_resolution, float2 inv_shadow_map_resolution)
-{
-   const float light_depth = positionLS.z - temp_shadow_bias;
+   const float dilation = 2.0;
 
-   float2 uv = positionLS.xy * shadow_map_resolution;
+   float d1 = dilation * inv_shadow_map_resolution.x * 0.125;
+   float d2 = dilation * inv_shadow_map_resolution.x * 0.875;
+   float d3 = dilation * inv_shadow_map_resolution.x * 0.625;
+   float d4 = dilation * inv_shadow_map_resolution.x * 0.375;
 
-   float2 base_uv;
-   base_uv.x = floor(uv.x + 0.5);
-   base_uv.y = floor(uv.y + 0.5);
+   float shadow =
+      (2.0 * shadow_map.SampleCmpLevelZero(sampler_shadow, float3(positionLS.xy, cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow,
+                                     float3(positionLS.xy + float2(-d2, d1), cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow,
+                                     float3(positionLS.xy + float2(-d1, -d2), cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow,
+                                     float3(positionLS.xy + float2(d2, -d1), cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow,
+                                     float3(positionLS.xy + float2(d1, d2), cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow,
+                                     float3(positionLS.xy + float2(-d4, d3), cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow,
+                                     float3(positionLS.xy + float2(-d3, -d4), cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow,
+                                     float3(positionLS.xy + float2(d4, -d3), cascade_index), light_depth) +
+       shadow_map.SampleCmpLevelZero(sampler_shadow, float3(positionLS.xy + float2(d3, d4), cascade_index),
+                                     light_depth)) /
+      10.0;
 
-   float s = (uv.x + 0.5 - base_uv.x);
-   float t = (uv.y + 0.5 - base_uv.y);
-
-   base_uv -= float2(0.5, 0.5);
-   base_uv *= inv_shadow_map_resolution;
-
-   float sum = 0.0;
-
-   float uw0 = (4.0 - 3.0 * s);
-   float uw1 = 7.0;
-   float uw2 = (1.0 + 3.0 * s);
-
-   float u0 = (3.0 - 2.0 * s) / uw0 - 2.0;
-   float u1 = (3.0 + s) / uw1;
-   float u2 = s / uw2 + 2;
-
-   float vw0 = (4.0 - 3.0 * t);
-   float vw1 = 7.0;
-   float vw2 = (1.0 + 3.0 * t);
-
-   float v0 = (3.0 - 2.0 * t) / vw0 - 2.0;
-   float v1 = (3.0 + t) / vw1;
-   float v2 = t / vw2 + 2.0;
-
-   sum += uw0 * vw0 *
-          sample_shadow_map(base_uv, u0, v0, inv_shadow_map_resolution, cascade_index, light_depth);
-   sum += uw1 * vw0 *
-          sample_shadow_map(base_uv, u1, v0, inv_shadow_map_resolution, cascade_index, light_depth);
-   sum += uw2 * vw0 *
-          sample_shadow_map(base_uv, u2, v0, inv_shadow_map_resolution, cascade_index, light_depth);
-
-   sum += uw0 * vw1 *
-          sample_shadow_map(base_uv, u0, v1, inv_shadow_map_resolution, cascade_index, light_depth);
-   sum += uw1 * vw1 *
-          sample_shadow_map(base_uv, u1, v1, inv_shadow_map_resolution, cascade_index, light_depth);
-   sum += uw2 * vw1 *
-          sample_shadow_map(base_uv, u2, v1, inv_shadow_map_resolution, cascade_index, light_depth);
-
-   sum += uw0 * vw2 *
-          sample_shadow_map(base_uv, u0, v2, inv_shadow_map_resolution, cascade_index, light_depth);
-   sum += uw1 * vw2 *
-          sample_shadow_map(base_uv, u1, v2, inv_shadow_map_resolution, cascade_index, light_depth);
-   sum += uw2 * vw2 *
-          sample_shadow_map(base_uv, u2, v2, inv_shadow_map_resolution, cascade_index, light_depth);
-
-   return sum / 144.0;
+   return shadow;
 }
 
 float sample_cascaded_shadow_map(float3 positionWS, float3 normalWS)
@@ -183,36 +151,8 @@ float sample_cascaded_shadow_map(float3 positionWS, float3 normalWS)
    float3 positionLS =
       mul(light_constants.shadow_cascade_transforms[cascade_index], float4(positionWS, 1.0)).xyz;
 
-   float shadow = sample_shadow_map_optimized_pcfx5(positionLS, cascade_index,
-                                                    light_constants.shadow_map_resolution,
-                                                    light_constants.inv_shadow_map_resolution);
-
-   float cascade_edge_distance = abs(shadow_cascade_signed_distance(positionLS));
-
-   if (cascade_edge_distance < cascade_fade_distance && cascade_index != (shadow_cascade_count - 1)) {
-      float previous_cascade_signed_distance = 1.0;
-
-      if (cascade_index != 0) {
-         float3 previous_positionLS =
-            mul(light_constants.shadow_cascade_transforms[cascade_index - 1], float4(positionWS, 1.0))
-               .xyz;
-
-         previous_cascade_signed_distance = shadow_cascade_signed_distance(previous_positionLS);
-      }
-
-      if (previous_cascade_signed_distance > cascade_fade_distance) {
-         float3 position_nextLS =
-            mul(light_constants.shadow_cascade_transforms[cascade_index + 1], float4(positionWS, 1.0))
-               .xyz;
-
-         float shadow_next = sample_shadow_map_optimized_pcfx5(position_nextLS, cascade_index + 1,
-                                                               light_constants.shadow_map_resolution,
-                                                               light_constants.inv_shadow_map_resolution);
-
-         shadow =
-            lerp(shadow, shadow_next, 1.0 - saturate(cascade_edge_distance / cascade_fade_distance));
-      }
-   }
+   float shadow = sample_shadow_map(ResourceDescriptorHeap[light_constants.shadow_map_index], positionLS,
+                                    cascade_index, light_constants.inv_shadow_map_resolution);
 
    return shadow;
 }
