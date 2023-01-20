@@ -32,4 +32,17 @@ TEST_CASE("world utilities find_region_by_description", "[World][Utilities]")
    REQUIRE(find_region_by_description(world, "some_desc"sv) == &world.regions[0]);
    REQUIRE(find_region_by_description(world, "no_desc"sv) == nullptr);
 }
+
+TEST_CASE("world utilities create_unique_name", "[World][Utilities]")
+{
+   world world{.objects = {object{.name = "Amazing Object 32"s}}};
+
+   REQUIRE(create_unique_name(world.objects, "Amazing Object 32", object_id{16}) ==
+           "Amazing Object 16");
+   REQUIRE(create_unique_name(world.objects, "Amazing Object 32", object_id{32}) ==
+           "Amazing Object 33");
+   REQUIRE(create_unique_name(world.objects, "62", object_id{0}) == "Object0");
+   REQUIRE(create_unique_name(world.objects, "", object_id{32}) == "");
+}
+
 }

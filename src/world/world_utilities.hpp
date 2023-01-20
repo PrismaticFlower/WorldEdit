@@ -3,6 +3,7 @@
 #include "world.hpp"
 
 #include <span>
+#include <string>
 #include <string_view>
 
 namespace we::world {
@@ -65,5 +66,49 @@ inline auto find_region_by_description(const world& world, const std::string_vie
 
    return nullptr;
 }
+
+auto create_unique_name(const std::vector<object>& entities,
+                        const std::string_view reference_name,
+                        const object_id id) -> std::string;
+
+auto create_unique_name(const std::vector<light>& entities,
+                        const std::string_view reference_name, const light_id id)
+   -> std::string;
+
+auto create_unique_name(const std::vector<path>& entities,
+                        const std::string_view reference_name, const path_id id)
+   -> std::string;
+
+auto create_unique_name(const std::vector<region>& entities,
+                        const std::string_view reference_name,
+                        const region_id id) -> std::string;
+
+auto create_unique_name(const std::vector<sector>& entities,
+                        const std::string_view reference_name,
+                        const sector_id id) -> std::string;
+
+auto create_unique_name(const std::vector<portal>& entities,
+                        const std::string_view reference_name,
+                        const portal_id id) -> std::string;
+
+auto create_unique_name(const std::vector<hintnode>& entities,
+                        const std::string_view reference_name,
+                        const hintnode_id id) -> std::string;
+
+auto create_unique_name(const std::vector<barrier>& entities,
+                        const std::string_view reference_name,
+                        const barrier_id id) -> std::string;
+
+auto create_unique_name(const std::vector<planning_hub>& entities,
+                        const std::string_view reference_name,
+                        const planning_hub_id id) -> std::string;
+
+auto create_unique_name(const std::vector<planning_connection>& entities,
+                        const std::string_view reference_name,
+                        const planning_connection_id id) -> std::string;
+
+auto create_unique_name(const std::vector<boundary>& entities,
+                        const std::string_view reference_name,
+                        const boundary_id id) -> std::string;
 
 }

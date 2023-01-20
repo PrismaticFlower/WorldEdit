@@ -85,6 +85,13 @@ TEST_CASE("string trim trailing whitespace", "[Utility][StringOp]")
    REQUIRE(trim_trailing_whitespace(input) == "Foo Bar"sv);
 }
 
+TEST_CASE("string trim trailing digits", "[Utility][StringOp]")
+{
+   const auto input = "Foo32Bar1_64"sv;
+
+   REQUIRE(trim_trailing_digits(input) == "Foo32Bar1_"sv);
+}
+
 TEST_CASE("string trim whitespace", "[Utility][StringOp]")
 {
    const auto input = "   \f\v\r\n\n\tFoo Bar   \f\v\r\n\n\t"sv;

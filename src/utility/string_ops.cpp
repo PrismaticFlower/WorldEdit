@@ -72,6 +72,13 @@ auto trim_trailing_whitespace(std::string_view str) noexcept -> std::string_view
                                          .base()));
 }
 
+auto trim_trailing_digits(std::string_view str) noexcept -> std::string_view
+{
+   return str.substr(0, std::distance(str.begin(),
+                                      std::find_if_not(str.rbegin(), str.rend(), std::isdigit)
+                                         .base()));
+}
+
 auto trim_whitespace(std::string_view str) noexcept -> std::string_view
 {
    return trim_trailing_whitespace(trim_leading_whitespace(str));

@@ -795,6 +795,9 @@
     <ClCompile Include="src\graphics\profiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\world_utilities.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />

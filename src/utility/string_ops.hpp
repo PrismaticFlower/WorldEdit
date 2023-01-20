@@ -53,6 +53,10 @@ auto trim_trailing_whitespace(std::string_view str) noexcept -> std::string_view
 
 auto trim_trailing_whitespace(std::string&& str) noexcept -> std::string_view = delete;
 
+auto trim_trailing_digits(std::string_view str) noexcept -> std::string_view;
+
+auto trim_trailing_digits(std::string&& str) noexcept -> std::string_view = delete;
+
 auto trim_whitespace(std::string_view str) noexcept -> std::string_view;
 
 auto trim_whitespace(std::string&& str) noexcept -> std::string_view = delete;

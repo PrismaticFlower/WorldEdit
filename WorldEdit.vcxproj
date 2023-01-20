@@ -226,6 +226,7 @@
     <ClCompile Include="src\utility\float16_packing.cpp" />
     <ClCompile Include="src\world\raycast.cpp" />
     <ClCompile Include="src\world\world_io_save.cpp" />
+    <ClCompile Include="src\world\world_utilities.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
     <ClInclude Include="include\assets\config\values.hpp" />
