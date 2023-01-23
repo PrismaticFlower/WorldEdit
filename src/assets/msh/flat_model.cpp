@@ -118,8 +118,8 @@ auto make_flat_scene_node(const node& base, const std::vector<node>& nodes) -> f
 }
 
 auto generate_normals(std::span<const float3> positions,
-                      std::span<const std::array<uint16, 3>> triangles)
-   -> std::vector<float3>
+                      std::span<const std::array<uint16, 3>> triangles,
+                      const float3x3 normal_node_to_object) -> std::vector<float3>
 {
    std::vector<float3> normals{positions.size(), float3{}};
 
@@ -132,7 +132,9 @@ auto generate_normals(std::span<const float3> positions,
       normals[i2] += normal;
    }
 
-   for (auto& normal : normals) normal = normalize(normal);
+   for (auto& normal : normals) {
+      normal = normalize(normal_node_to_object * normal);
+   }
 
    return normals;
 }
@@ -229,7 +231,8 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
       const float3x3 normal_node_to_object{node_to_object};
 
       if (not segment.normals) {
-         mesh.normals = generate_normals(mesh.positions, mesh.triangles);
+         mesh.normals.append_range(generate_normals(segment.positions, segment.triangles,
+                                                    normal_node_to_object));
       }
       else {
          for (auto normal : *segment.normals) {
@@ -242,8 +245,7 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
                             float4{1.0f, 1.0f, 1.0f, 1.0f});
       }
       else {
-         mesh.colors.insert(mesh.colors.end(), segment.colors->begin(),
-                            segment.colors->end());
+         mesh.colors.append_range(*segment.colors);
       }
 
       if (not segment.texcoords) {
@@ -251,8 +253,7 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
                                float2{0.0f, 0.0f});
       }
       else {
-         mesh.texcoords.insert(mesh.texcoords.end(), segment.texcoords->begin(),
-                               segment.texcoords->end());
+         mesh.texcoords.append_range(*segment.texcoords);
       }
 
       for (auto [i0, i1, i2] : segment.triangles) {
