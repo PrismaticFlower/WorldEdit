@@ -7,6 +7,7 @@
 #include "imgui/imgui_stdlib.h"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
+#include "world/world_utilities.hpp"
 
 #include <range/v3/view/enumerate.hpp>
 
@@ -75,6 +76,48 @@ void world_edit::update_ui() noexcept
          ImGui::MenuItem("Copy", "Ctrl + C", nullptr, false);
          ImGui::MenuItem("Paste", "Ctrl + V", nullptr, false);
 
+         ImGui::EndMenu();
+      }
+
+      if (ImGui::BeginMenu("Create")) {
+         if (ImGui::MenuItem("Object")) {
+            finalize_entity_creation();
+
+            const world::object* base_object =
+               world::find_entity(_world.objects, _entity_creation_context.last_object);
+            world::object_id id = _world.next_id.objects.aquire();
+
+            if (base_object) {
+               world::object new_object = *base_object;
+
+               new_object.name =
+                  world::create_unique_name(_world.objects, base_object->name, id);
+               new_object.id = id;
+
+               _interaction_targets.creation_entity = std::move(new_object);
+            }
+            else {
+               _interaction_targets.creation_entity =
+                  world::object{.name = "",
+                                .class_name = lowercase_string{"com_bldg_controlzone"sv},
+                                .id = id};
+            }
+
+            _entity_creation_context.last_object = id;
+         }
+
+#if 0
+         if (ImGui::MenuItem("Light")) _create.light = true;
+         if (ImGui::MenuItem("Path")) _create.path = true;
+         if (ImGui::MenuItem("Region")) _create.region = true;
+         if (ImGui::MenuItem("Sector")) _create.sector = true;
+         if (ImGui::MenuItem("Portal")) _create.portal = true;
+         if (ImGui::MenuItem("Barrier")) _create.barrier = true;
+         if (ImGui::MenuItem("Planning Hub")) _create.planning_hub = true;
+         if (ImGui::MenuItem("Planning Connection"))
+            _create.planning_connection = true;
+         if (ImGui::MenuItem("Boundary")) _create.object = true;
+#endif
          ImGui::EndMenu();
       }
 
@@ -531,6 +574,69 @@ void world_edit::update_ui() noexcept
          _interaction_targets.selection.front());
 
       ImGui::End();
+   }
+
+   if (_interaction_targets.creation_entity) {
+      bool finalize_creation = true;
+
+      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+                              ImGuiCond_Once, {0.0f, 0.0f});
+
+      ImGui::Begin("Create", &finalize_creation,
+                   ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                      ImGuiWindowFlags_AlwaysAutoResize);
+
+      std::visit(overload{
+                    [&](world::object& object) {
+                       ImGui::InputText("Name", &object.name);
+                       ImGui::InputTextAutoComplete("Class Name", &object.class_name, [&] {
+                          std::array<we::lowercase_string, 6> entries;
+                          std::size_t matching_count = 0;
+
+                          _asset_libraries.odfs.enumerate_known(
+                             [&](const lowercase_string& asset) {
+                                if (matching_count == entries.size()) return;
+                                if (not asset.contains(object.class_name))
+                                   return;
+
+                                entries[matching_count] = asset;
+
+                                ++matching_count;
+                             });
+
+                          return entries;
+                       });
+                       ImGui::LayerPick("Layer", &object.layer, &_world);
+
+                       ImGui::Separator();
+
+                       ImGui::DragQuat("Rotation", &object.rotation);
+                       ImGui::DragFloat3("Position", &object.position.x);
+
+                       ImGui::Separator();
+
+                       ImGui::SliderInt("Team", &object.team, 0, 15, "%d",
+                                        ImGuiSliderFlags_AlwaysClamp);
+                    },
+                    [&](world::light& light) { (void)light; },
+                    [&](world::path& path) { (void)path; },
+                    [&](world::region& region) { (void)region; },
+                    [&](world::sector& sector) { (void)sector; },
+                    [&](world::portal& portal) { (void)portal; },
+                    [&](world::barrier& barrier) { (void)barrier; },
+                    [&](world::planning_hub& planning_hub) {
+                       (void)planning_hub;
+                    },
+                    [&](world::planning_connection& planning_connection) {
+                       (void)planning_connection;
+                    },
+                    [&](world::boundary& boundary) { (void)boundary; },
+                 },
+                 *_interaction_targets.creation_entity);
+
+      ImGui::End();
+
+      if (not finalize_creation) finalize_entity_creation();
    }
 }
 

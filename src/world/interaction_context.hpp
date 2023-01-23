@@ -27,10 +27,15 @@ using hovered_entity = interaction_target;
 /// @brief Represents an entity that is currently selected.
 using selected_entity = interaction_target;
 
+using creation_entity =
+   std::variant<object, light, path, region, sector, barrier, planning_hub, planning_connection, boundary>;
+
 /// @brief Stores references to the entities currently being interacted with.
 struct interaction_targets {
    std::optional<hovered_entity> hovered_entity;
    std::vector<selected_entity> selection;
+
+   std::optional<creation_entity> creation_entity;
 };
 
 }

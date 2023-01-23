@@ -671,4 +671,111 @@ inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
                        });
 }
 
+// Entity Creation Editors
+
+template<typename T, typename Fill>
+inline bool InputTextAutoComplete(const char* label, T* value,
+                                  const Fill& fill_entries_callback) noexcept
+   requires std::is_invocable_r_v<std::array<T, 6>, Fill>
+{
+   using string_type = T;
+
+   std::optional<std::array<string_type, 6>> autocomplete_entries;
+
+   std::pair<const Fill&, decltype(autocomplete_entries)&>
+      callback_userdata{fill_entries_callback, autocomplete_entries};
+
+   ImGui::BeginGroup();
+
+   bool value_changed = ImGui::InputText(
+      label, value,
+      ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
+      [](ImGuiInputTextCallbackData* data) {
+         if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+            auto& user_data =
+               *static_cast<decltype(callback_userdata)*>(data->UserData);
+
+            user_data.second.emplace(user_data.first());
+
+            string_type& autofill = (*user_data.second)[0];
+
+            if (not autofill.empty()) {
+               data->DeleteChars(0, data->BufTextLen);
+               data->InsertChars(0, autofill.c_str(),
+                                 autofill.c_str() + autofill.size());
+            }
+         }
+
+         return 0;
+      },
+      &callback_userdata);
+
+   if (ImGui::IsItemActive()) {
+      ImGui::SetNextWindowPos(
+         ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+      ImGui::SetNextWindowSize(
+         ImVec2{ImGui::GetItemRectMax().x - ImGui::GetItemRectMin().x -
+                   ImGui::CalcTextSize(label, nullptr, true).x -
+                   ImGui::GetStyle().ItemInnerSpacing.x,
+                9.0f * ImGui::GetFontSize()});
+
+      ImGui::BeginTooltip();
+
+      if (not autocomplete_entries) {
+         autocomplete_entries.emplace(fill_entries_callback());
+      }
+
+      if ((*autocomplete_entries)[0].empty()) {
+         ImGui::TextUnformatted("No matches.");
+      }
+      else {
+         for (const string_type& asset : *autocomplete_entries) {
+            ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
+         }
+      }
+
+      ImGui::EndTooltip();
+   }
+
+   ImGui::EndGroup();
+
+   return value_changed;
+}
+
+inline bool LayerPick(const char* label, int* layer, we::world::world* world) noexcept
+{
+   bool value_changed = false;
+
+   if (ImGui::BeginCombo(label, [&] {
+          if (*layer >= world->layer_descriptions.size()) return "";
+
+          return world->layer_descriptions[*layer].name.c_str();
+       }())) {
+
+      for (int i = 0; i < std::ssize(world->layer_descriptions); ++i) {
+         if (ImGui::Selectable(world->layer_descriptions[i].name.c_str())) {
+            *layer = i;
+            value_changed = true;
+         }
+      }
+
+      ImGui::EndCombo();
+   }
+
+   return value_changed;
+}
+
+inline bool DragQuat(const char* label, we::quaternion* value, float v_speed = 0.01f,
+                     const char* format = "%.4f", ImGuiSliderFlags flags = 0) noexcept
+{
+   bool value_changed =
+      ImGui::DragFloat4(label, &(*value).w, v_speed, 0.0f, 0.0f, format, flags);
+
+   if (value_changed) {
+      *value = normalize(*value);
+   }
+
+   return value_changed;
+}
+
 }

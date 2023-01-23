@@ -1,11 +1,13 @@
 
 #include "world_edit.hpp"
+#include "actions/insert_entity.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"
 #include "utility/file_pickers.hpp"
+#include "utility/overload.hpp"
 #include "utility/string_ops.hpp"
 #include "world/raycast.hpp"
 #include "world/world_io_load.hpp"
@@ -326,6 +328,36 @@ void world_edit::select_hovered_entity() noexcept
    if (not _interaction_targets.hovered_entity) return;
 
    _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
+}
+
+void world_edit::finalize_entity_creation() noexcept
+{
+   if (not _interaction_targets.creation_entity) return;
+
+   // TODO: Stuff!
+
+   std::visit(overload{
+                 [&](world::object& object) {
+                    _entity_creation_context.last_object = object.id;
+
+                    _undo_stack.apply(actions::make_insert_entity(std::move(object)),
+                                      _world);
+                 },
+                 [&](world::light& light) { (void)light; },
+                 [&](world::path& path) { (void)path; },
+                 [&](world::region& region) { (void)region; },
+                 [&](world::sector& sector) { (void)sector; },
+                 [&](world::portal& portal) { (void)portal; },
+                 [&](world::barrier& barrier) { (void)barrier; },
+                 [&](world::planning_hub& planning_hub) { (void)planning_hub; },
+                 [&](world::planning_connection& planning_connection) {
+                    (void)planning_connection;
+                 },
+                 [&](world::boundary& boundary) { (void)boundary; },
+              },
+              *_interaction_targets.creation_entity);
+
+   _interaction_targets.creation_entity = std::nullopt;
 }
 
 void world_edit::object_definition_loaded(const lowercase_string& name,

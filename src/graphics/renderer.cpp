@@ -182,7 +182,8 @@ private:
    void build_world_mesh_list(
       gpu::copy_command_list& command_list, const world::world& world,
       const world::active_layers active_layers,
-      const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes);
+      const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+      const world::object* const creation_object);
 
    void build_object_render_list(const frustum& view_frustum);
 
@@ -360,8 +361,11 @@ void renderer_impl::draw_frame(
       }
 
       update_textures(_pre_render_command_list);
-      build_world_mesh_list(_pre_render_command_list, world, active_layers,
-                            world_classes);
+      build_world_mesh_list(_pre_render_command_list, world, active_layers, world_classes,
+                            interaction_targets.creation_entity
+                               ? std::get_if<world::object>(
+                                    &(*interaction_targets.creation_entity))
+                               : nullptr);
       update_frame_constant_buffer(camera, settings, _pre_render_command_list);
       clear_depth_minmax(_pre_render_command_list);
 
@@ -1029,29 +1033,327 @@ void renderer_impl::draw_interaction_targets(
 
    triangle_drawer triangle_drawer{command_list, _dynamic_buffer_allocator, 1024};
 
-   const auto draw_target = [&](world::interaction_target target,
-                                gpu_virtual_address wireframe_constants) {
-      const auto meta_mesh_common_setup = [&] {
+   const auto meta_mesh_common_setup = [&](gpu_virtual_address wireframe_constants) {
+      command_list.set_graphics_root_signature(_root_signatures.mesh_wireframe.get());
+      command_list.set_graphics_cbv(rs::meta_mesh_wireframe::wireframe_cbv,
+                                    wireframe_constants);
+      command_list.set_graphics_cbv(rs::meta_mesh_wireframe::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.meta_mesh_wireframe.get());
+
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+   };
+
+   const auto draw_path_node = [&](const world::path::node& node) {
+      float4x4 transform =
+         to_matrix(node.rotation) * float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, 0.5f, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, 0.5f, 0.0f},
+                                             {0.0f, 0.0f, 0.0f, 1.0f}};
+
+      transform[3] = {node.position, 1.0f};
+
+      command_list.set_graphics_cbv(
+         rs::meta_mesh_wireframe::object_cbv,
+         _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+      const geometric_shape shape = _geometric_shapes.octahedron();
+
+      command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+      command_list.ia_set_index_buffer(shape.index_buffer_view);
+      command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+   };
+
+   const auto draw_entity = overload{
+      [&](const world::object& object, gpu_virtual_address wireframe_constants) {
+         gpu_virtual_address object_constants = [&] {
+            auto allocation =
+               _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
+
+            world_mesh_constants constants{};
+
+            constants.object_to_world = to_matrix(object.rotation);
+            constants.object_to_world[3] = float4{object.position, 1.0f};
+
+            std::memcpy(allocation.cpu_address, &constants,
+                        sizeof(world_mesh_constants));
+
+            return allocation.gpu_address;
+         }();
+
+         model& model = _model_manager[world_classes.at(object.class_name).model_name];
+
          command_list.set_graphics_root_signature(
             _root_signatures.mesh_wireframe.get());
-         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::wireframe_cbv,
+         command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, object_constants);
+         command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
                                        wireframe_constants);
-         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::frame_cbv,
+         command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
                                        _camera_constant_buffer_view);
 
-         command_list.set_pipeline_state(_pipelines.meta_mesh_wireframe.get());
+         command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
 
          command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-      };
 
-      const auto draw_path_node = [&](const world::path::node& node) {
+         command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+         command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
+
+         for (auto& part : model.parts) {
+            command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                                part.start_vertex, 0);
+         }
+      },
+      [&](const world::light& light, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
+
+         if (light.light_type == world::light_type::directional) {
+            if (light.directional_region.empty()) {
+               return; // TODO: Directional light visualizers.
+            }
+
+            const world::region* const region =
+               world::find_region_by_description(world, light.directional_region);
+
+            if (not region) return;
+
+            const float3 scale = [&] {
+               switch (region->shape) {
+               default:
+               case world::region_shape::box: {
+                  return region->size;
+               }
+               case world::region_shape::sphere: {
+                  const float sphere_radius = length(region->size);
+
+                  return float3{sphere_radius, sphere_radius, sphere_radius};
+               }
+               case world::region_shape::cylinder: {
+                  const float cylinder_length =
+                     length(float2{region->size.x, region->size.z});
+                  return float3{cylinder_length, region->size.y, cylinder_length};
+               }
+               }
+            }();
+
+            float4x4 transform = to_matrix(region->rotation) *
+                                 float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                          {0.0f, scale.y, 0.0f, 0.0f},
+                                          {0.0f, 0.0f, scale.z, 0.0f},
+                                          {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {region->position, 1.0f};
+
+            command_list.set_graphics_cbv(
+               rs::meta_mesh_wireframe::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+            const geometric_shape shape = [&] {
+               switch (region->shape) {
+               default:
+               case world::region_shape::box:
+                  return _geometric_shapes.cube();
+               case world::region_shape::sphere:
+                  return _geometric_shapes.icosphere();
+               case world::region_shape::cylinder:
+                  return _geometric_shapes.cylinder();
+               }
+            }();
+
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         }
+         else if (light.light_type == world::light_type::point) {
+            float4x4 transform = float4x4{{light.range, 0.0f, 0.0f, 0.0f},
+                                          {0.0f, light.range, 0.0f, 0.0f},
+                                          {0.0f, 0.0f, light.range, 0.0f},
+                                          {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {light.position, 1.0f};
+
+            command_list.set_graphics_cbv(
+               rs::meta_mesh_wireframe::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+            auto shape = _geometric_shapes.icosphere();
+
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         }
+         else if (light.light_type == world::light_type::spot) {
+            const float half_range = light.range / 2.0f;
+            const float cone_radius = half_range * std::tan(light.outer_cone_angle);
+
+            float4x4 transform =
+               to_matrix(light.rotation) *
+               to_matrix(quaternion{0.707107f, -0.707107f, 0.0f, 0.0f}) *
+               float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
+                        {0.0f, half_range, 0.0f, 0.0f},
+                        {0.0f, 0.0f, cone_radius, 0.0f},
+                        {0.0f, -half_range, 0.0f, 1.0f}};
+
+            transform[3] += float4{light.position, 0.0f};
+
+            command_list.set_graphics_cbv(
+               rs::meta_mesh_wireframe::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+            auto shape = _geometric_shapes.cone();
+
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         }
+      },
+      [&](const world::path& path, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
+
+         for (auto& node : path.nodes) draw_path_node(node);
+
+         _meta_draw_batcher.clear();
+
+         using namespace ranges::views;
+
+         const auto get_position = [](const world::path::node& node) {
+            return node.position;
+         };
+
+         const uint32 hover_color =
+            utility::pack_srgb_bgra({settings.hover_color, 1.0f});
+
+         for (const auto [a, b] : zip(path.nodes | transform(get_position),
+                                      path.nodes | drop(1) | transform(get_position))) {
+            _meta_draw_batcher.add_line_solid(a, b, hover_color);
+         }
+
+         _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
+                                 _root_signatures, _pipelines,
+                                 _geometric_shapes, _dynamic_buffer_allocator);
+      },
+      [&](const world::path::node& path_node, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
+
+         draw_path_node(path_node);
+      },
+      [&](const world::region& region, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
+
+         const float3 scale = [&] {
+            switch (region.shape) {
+            default:
+            case world::region_shape::box: {
+               return region.size;
+            }
+            case world::region_shape::sphere: {
+               const float sphere_radius = length(region.size);
+
+               return float3{sphere_radius, sphere_radius, sphere_radius};
+            }
+            case world::region_shape::cylinder: {
+               const float cylinder_length =
+                  length(float2{region.size.x, region.size.z});
+               return float3{cylinder_length, region.size.y, cylinder_length};
+            }
+            }
+         }();
+
          float4x4 transform =
-            to_matrix(node.rotation) * float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
-                                                {0.0f, 0.5f, 0.0f, 0.0f},
-                                                {0.0f, 0.0f, 0.5f, 0.0f},
-                                                {0.0f, 0.0f, 0.0f, 1.0f}};
+            to_matrix(region.rotation) * float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                                  {0.0f, scale.y, 0.0f, 0.0f},
+                                                  {0.0f, 0.0f, scale.z, 0.0f},
+                                                  {0.0f, 0.0f, 0.0f, 1.0f}};
 
-         transform[3] = {node.position, 1.0f};
+         transform[3] = {region.position, 1.0f};
+
+         command_list.set_graphics_cbv(
+            rs::meta_mesh_wireframe::object_cbv,
+            _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+         const geometric_shape shape = [&] {
+            switch (region.shape) {
+            default:
+            case world::region_shape::box:
+               return _geometric_shapes.cube();
+            case world::region_shape::sphere:
+               return _geometric_shapes.icosphere();
+            case world::region_shape::cylinder:
+               return _geometric_shapes.cylinder();
+            }
+         }();
+
+         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+         command_list.ia_set_index_buffer(shape.index_buffer_view);
+         command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+      },
+      [&](const world::sector& sector, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
+
+         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                       _dynamic_buffer_allocator
+                                          .allocate_and_copy(
+                                             float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                      {0.0f, 1.0f, 0.0f, 0.0f},
+                                                      {0.0f, 0.0f, 1.0f, 0.0f},
+                                                      {0.0f, 0.0f, 0.0f, 1.0f}})
+                                          .gpu_address);
+
+         using namespace ranges::views;
+
+         for (auto& points = sector.points;
+              const auto [a, b] :
+              zip(points, concat(points | drop(1), points | take(1)))) {
+            const std::array quad = {float3{a.x, sector.base, a.y},
+                                     float3{b.x, sector.base, b.y},
+                                     float3{a.x, sector.base + sector.height, a.y},
+                                     float3{b.x, sector.base + sector.height, b.y}};
+
+            triangle_drawer.add(quad[0], quad[1], quad[2]);
+            triangle_drawer.add(quad[2], quad[1], quad[3]);
+            triangle_drawer.add(quad[0], quad[2], quad[1]);
+            triangle_drawer.add(quad[2], quad[3], quad[1]);
+         }
+
+         triangle_drawer.submit();
+      },
+      [&](const world::portal& portal, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
+
+         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                       _dynamic_buffer_allocator
+                                          .allocate_and_copy(
+                                             float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                      {0.0f, 1.0f, 0.0f, 0.0f},
+                                                      {0.0f, 0.0f, 1.0f, 0.0f},
+                                                      {0.0f, 0.0f, 0.0f, 1.0f}})
+                                          .gpu_address);
+
+         const float half_width = portal.width * 0.5f;
+         const float half_height = portal.height * 0.5f;
+
+         std::array quad = {float3{-half_width, -half_height, 0.0f},
+                            float3{half_width, -half_height, 0.0f},
+                            float3{-half_width, half_height, 0.0f},
+                            float3{half_width, half_height, 0.0f}};
+
+         for (auto& v : quad) {
+            v = portal.rotation * v;
+            v += portal.position;
+         }
+
+         triangle_drawer.add(quad[0], quad[1], quad[2]);
+         triangle_drawer.add(quad[2], quad[1], quad[3]);
+         triangle_drawer.add(quad[0], quad[2], quad[1]);
+         triangle_drawer.add(quad[2], quad[3], quad[1]);
+
+         triangle_drawer.submit();
+      },
+      [&](const world::hintnode& hintnode, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
+
+         float4x4 transform = to_matrix(hintnode.rotation);
+         transform[3] = {hintnode.position, 1.0f};
 
          command_list.set_graphics_cbv(
             rs::meta_mesh_wireframe::object_cbv,
@@ -1062,8 +1364,81 @@ void renderer_impl::draw_interaction_targets(
          command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
          command_list.ia_set_index_buffer(shape.index_buffer_view);
          command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
-      };
+      },
+      [&](const world::barrier& barrier, gpu_virtual_address wireframe_constants) {
+         meta_mesh_common_setup(wireframe_constants);
 
+         const geometric_shape shape = _geometric_shapes.cube();
+
+         const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
+         const float2 size{distance(barrier.corners[0], barrier.corners[3]),
+                           distance(barrier.corners[0], barrier.corners[1])};
+         const float angle =
+            std::atan2(barrier.corners[1].x - barrier.corners[0].x,
+                       barrier.corners[1].y - barrier.corners[0].y);
+
+         const float barrier_height = settings.barrier_height;
+
+         float4x4 transform = make_rotation_matrix_from_euler({0.0f, angle, 0.0f}) *
+                              float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+                                       {0.0f, barrier_height, 0.0f, 0.0f},
+                                       {0.0f, 0.0f, size.y / 2.0f, 0.0f},
+                                       {0.0f, 0.0f, 0.0f, 1.0f}};
+         transform[3] = {position.x, 0.0f, position.y, 1.0f};
+
+         command_list.set_graphics_cbv(
+            rs::meta_mesh_wireframe::object_cbv,
+            _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+         command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+         command_list.ia_set_index_buffer(shape.index_buffer_view);
+         command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+      },
+      [&]([[maybe_unused]] const world::planning_hub& planning_hub,
+          [[maybe_unused]] gpu_virtual_address wireframe_constants) {},
+      [&]([[maybe_unused]] const world::planning_connection& planning_connection,
+          [[maybe_unused]] gpu_virtual_address wireframe_constants) {},
+      [&](const world::boundary& boundary, gpu_virtual_address wireframe_constants) {
+         const world::path* path = look_for(world.paths, [&](const world::path& path) {
+            return path.name == boundary.name;
+         });
+
+         if (not path) return;
+
+         meta_mesh_common_setup(wireframe_constants);
+
+         command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
+                                       _dynamic_buffer_allocator
+                                          .allocate_and_copy(
+                                             float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                      {0.0f, 1.0f, 0.0f, 0.0f},
+                                                      {0.0f, 0.0f, 1.0f, 0.0f},
+                                                      {0.0f, 0.0f, 0.0f, 1.0f}})
+                                          .gpu_address);
+
+         const float boundary_height = settings.boundary_height;
+
+         using namespace ranges::views;
+
+         for (const auto [a, b] :
+              zip(path->nodes, concat(path->nodes | drop(1), path->nodes | take(1)))) {
+
+            const std::array quad = {a.position, b.position,
+                                     a.position + float3{0.0f, boundary_height, 0.0f},
+                                     b.position + float3{0.0f, boundary_height, 0.0f}};
+
+            triangle_drawer.add(quad[0], quad[1], quad[2]);
+            triangle_drawer.add(quad[2], quad[1], quad[3]);
+            triangle_drawer.add(quad[0], quad[2], quad[1]);
+            triangle_drawer.add(quad[2], quad[3], quad[1]);
+         }
+
+         triangle_drawer.submit();
+      },
+   };
+
+   const auto draw_target = [&](world::interaction_target target,
+                                gpu_virtual_address wireframe_constants) {
       std::visit(
          overload{
             [&](world::object_id id) {
@@ -1072,47 +1447,7 @@ void renderer_impl::draw_interaction_targets(
                      return id == object.id;
                   });
 
-               if (not object) return;
-
-               gpu_virtual_address object_constants = [&] {
-                  auto allocation =
-                     _dynamic_buffer_allocator.allocate(sizeof(world_mesh_constants));
-
-                  world_mesh_constants constants{};
-
-                  constants.object_to_world = to_matrix(object->rotation);
-                  constants.object_to_world[3] = float4{object->position, 1.0f};
-
-                  std::memcpy(allocation.cpu_address, &constants,
-                              sizeof(world_mesh_constants));
-
-                  return allocation.gpu_address;
-               }();
-
-               model& model =
-                  _model_manager[world_classes.at(object->class_name).model_name];
-
-               command_list.set_graphics_root_signature(
-                  _root_signatures.mesh_wireframe.get());
-               command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv,
-                                             object_constants);
-               command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
-                                             wireframe_constants);
-               command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
-                                             _camera_constant_buffer_view);
-
-               command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
-
-               command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
-
-               command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
-               command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
-
-               for (auto& part : model.parts) {
-                  command_list.draw_indexed_instanced(part.index_count, 1,
-                                                      part.start_index,
-                                                      part.start_vertex, 0);
-               }
+               if (object) draw_entity(*object, wireframe_constants);
             },
             [&](world::light_id id) {
                const world::light* light =
@@ -1120,113 +1455,7 @@ void renderer_impl::draw_interaction_targets(
                      return id == light.id;
                   });
 
-               if (not light) return;
-
-               meta_mesh_common_setup();
-
-               if (light->light_type == world::light_type::directional) {
-                  if (light->directional_region.empty()) {
-                     return; // TODO: Directional light visualizers.
-                  }
-
-                  const world::region* const region =
-                     world::find_region_by_description(world, light->directional_region);
-
-                  if (not region) return;
-
-                  const float3 scale = [&] {
-                     switch (region->shape) {
-                     default:
-                     case world::region_shape::box: {
-                        return region->size;
-                     }
-                     case world::region_shape::sphere: {
-                        const float sphere_radius = length(region->size);
-
-                        return float3{sphere_radius, sphere_radius, sphere_radius};
-                     }
-                     case world::region_shape::cylinder: {
-                        const float cylinder_length =
-                           length(float2{region->size.x, region->size.z});
-                        return float3{cylinder_length, region->size.y, cylinder_length};
-                     }
-                     }
-                  }();
-
-                  float4x4 transform = to_matrix(region->rotation) *
-                                       float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
-                                                {0.0f, scale.y, 0.0f, 0.0f},
-                                                {0.0f, 0.0f, scale.z, 0.0f},
-                                                {0.0f, 0.0f, 0.0f, 1.0f}};
-
-                  transform[3] = {region->position, 1.0f};
-
-                  command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                                _dynamic_buffer_allocator
-                                                   .allocate_and_copy(transform)
-                                                   .gpu_address);
-
-                  const geometric_shape shape = [&] {
-                     switch (region->shape) {
-                     default:
-                     case world::region_shape::box:
-                        return _geometric_shapes.cube();
-                     case world::region_shape::sphere:
-                        return _geometric_shapes.icosphere();
-                     case world::region_shape::cylinder:
-                        return _geometric_shapes.cylinder();
-                     }
-                  }();
-
-                  command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-                  command_list.ia_set_index_buffer(shape.index_buffer_view);
-                  command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
-               }
-               else if (light->light_type == world::light_type::point) {
-                  float4x4 transform = float4x4{{light->range, 0.0f, 0.0f, 0.0f},
-                                                {0.0f, light->range, 0.0f, 0.0f},
-                                                {0.0f, 0.0f, light->range, 0.0f},
-                                                {0.0f, 0.0f, 0.0f, 1.0f}};
-
-                  transform[3] = {light->position, 1.0f};
-
-                  command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                                _dynamic_buffer_allocator
-                                                   .allocate_and_copy(transform)
-                                                   .gpu_address);
-
-                  auto shape = _geometric_shapes.icosphere();
-
-                  command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-                  command_list.ia_set_index_buffer(shape.index_buffer_view);
-                  command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
-               }
-               else if (light->light_type == world::light_type::spot) {
-                  const float half_range = light->range / 2.0f;
-                  const float cone_radius =
-                     half_range * std::tan(light->outer_cone_angle);
-
-                  float4x4 transform =
-                     to_matrix(light->rotation) *
-                     to_matrix(quaternion{0.707107f, -0.707107f, 0.0f, 0.0f}) *
-                     float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
-                              {0.0f, half_range, 0.0f, 0.0f},
-                              {0.0f, 0.0f, cone_radius, 0.0f},
-                              {0.0f, -half_range, 0.0f, 1.0f}};
-
-                  transform[3] += float4{light->position, 0.0f};
-
-                  command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                                _dynamic_buffer_allocator
-                                                   .allocate_and_copy(transform)
-                                                   .gpu_address);
-
-                  auto shape = _geometric_shapes.cone();
-
-                  command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-                  command_list.ia_set_index_buffer(shape.index_buffer_view);
-                  command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
-               }
+               if (light) draw_entity(*light, wireframe_constants);
             },
             [&](world::path_id id) {
                const world::path* path =
@@ -1234,32 +1463,7 @@ void renderer_impl::draw_interaction_targets(
                      return id == path.id;
                   });
 
-               if (not path) return;
-
-               meta_mesh_common_setup();
-
-               for (auto& node : path->nodes) draw_path_node(node);
-
-               _meta_draw_batcher.clear();
-
-               using namespace ranges::views;
-
-               const auto get_position = [](const world::path::node& node) {
-                  return node.position;
-               };
-
-               const uint32 hover_color =
-                  utility::pack_srgb_bgra({settings.hover_color, 1.0f});
-
-               for (const auto [a, b] :
-                    zip(path->nodes | transform(get_position),
-                        path->nodes | drop(1) | transform(get_position))) {
-                  _meta_draw_batcher.add_line_solid(a, b, hover_color);
-               }
-
-               _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
-                                       _root_signatures, _pipelines,
-                                       _geometric_shapes, _dynamic_buffer_allocator);
+               if (path) draw_entity(*path, wireframe_constants);
             },
             [&](world::path_id_node_pair id_node) {
                auto [id, node_index] = id_node;
@@ -1273,9 +1477,9 @@ void renderer_impl::draw_interaction_targets(
 
                if (node_index >= path->nodes.size()) return;
 
-               meta_mesh_common_setup();
-
-               draw_path_node(path->nodes[node_index]);
+               if (path) {
+                  draw_entity(path->nodes[node_index], wireframe_constants);
+               }
             },
             [&](world::region_id id) {
                const world::region* region =
@@ -1283,57 +1487,7 @@ void renderer_impl::draw_interaction_targets(
                      return id == region.id;
                   });
 
-               if (not region) return;
-
-               meta_mesh_common_setup();
-
-               const float3 scale = [&] {
-                  switch (region->shape) {
-                  default:
-                  case world::region_shape::box: {
-                     return region->size;
-                  }
-                  case world::region_shape::sphere: {
-                     const float sphere_radius = length(region->size);
-
-                     return float3{sphere_radius, sphere_radius, sphere_radius};
-                  }
-                  case world::region_shape::cylinder: {
-                     const float cylinder_length =
-                        length(float2{region->size.x, region->size.z});
-                     return float3{cylinder_length, region->size.y, cylinder_length};
-                  }
-                  }
-               }();
-
-               float4x4 transform = to_matrix(region->rotation) *
-                                    float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
-                                             {0.0f, scale.y, 0.0f, 0.0f},
-                                             {0.0f, 0.0f, scale.z, 0.0f},
-                                             {0.0f, 0.0f, 0.0f, 1.0f}};
-
-               transform[3] = {region->position, 1.0f};
-
-               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(transform)
-                                                .gpu_address);
-
-               const geometric_shape shape = [&] {
-                  switch (region->shape) {
-                  default:
-                  case world::region_shape::box:
-                     return _geometric_shapes.cube();
-                  case world::region_shape::sphere:
-                     return _geometric_shapes.icosphere();
-                  case world::region_shape::cylinder:
-                     return _geometric_shapes.cylinder();
-                  }
-               }();
-
-               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-               command_list.ia_set_index_buffer(shape.index_buffer_view);
-               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+               if (region) draw_entity(*region, wireframe_constants);
             },
             [&](world::sector_id id) {
                const world::sector* sector =
@@ -1341,36 +1495,7 @@ void renderer_impl::draw_interaction_targets(
                      return id == sector.id;
                   });
 
-               if (not sector) return;
-
-               meta_mesh_common_setup();
-
-               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(
-                                                   float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                            {0.0f, 1.0f, 0.0f, 0.0f},
-                                                            {0.0f, 0.0f, 1.0f, 0.0f},
-                                                            {0.0f, 0.0f, 0.0f, 1.0f}})
-                                                .gpu_address);
-
-               using namespace ranges::views;
-
-               for (auto& points = sector->points;
-                    const auto [a, b] :
-                    zip(points, concat(points | drop(1), points | take(1)))) {
-                  const std::array quad =
-                     {float3{a.x, sector->base, a.y}, float3{b.x, sector->base, b.y},
-                      float3{a.x, sector->base + sector->height, a.y},
-                      float3{b.x, sector->base + sector->height, b.y}};
-
-                  triangle_drawer.add(quad[0], quad[1], quad[2]);
-                  triangle_drawer.add(quad[2], quad[1], quad[3]);
-                  triangle_drawer.add(quad[0], quad[2], quad[1]);
-                  triangle_drawer.add(quad[2], quad[3], quad[1]);
-               }
-
-               triangle_drawer.submit();
+               if (sector) draw_entity(*sector, wireframe_constants);
             },
             [&](world::portal_id id) {
                const world::portal* portal =
@@ -1378,38 +1503,7 @@ void renderer_impl::draw_interaction_targets(
                      return id == portal.id;
                   });
 
-               if (not portal) return;
-
-               meta_mesh_common_setup();
-
-               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(
-                                                   float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                            {0.0f, 1.0f, 0.0f, 0.0f},
-                                                            {0.0f, 0.0f, 1.0f, 0.0f},
-                                                            {0.0f, 0.0f, 0.0f, 1.0f}})
-                                                .gpu_address);
-
-               const float half_width = portal->width * 0.5f;
-               const float half_height = portal->height * 0.5f;
-
-               std::array quad = {float3{-half_width, -half_height, 0.0f},
-                                  float3{half_width, -half_height, 0.0f},
-                                  float3{-half_width, half_height, 0.0f},
-                                  float3{half_width, half_height, 0.0f}};
-
-               for (auto& v : quad) {
-                  v = portal->rotation * v;
-                  v += portal->position;
-               }
-
-               triangle_drawer.add(quad[0], quad[1], quad[2]);
-               triangle_drawer.add(quad[2], quad[1], quad[3]);
-               triangle_drawer.add(quad[0], quad[2], quad[1]);
-               triangle_drawer.add(quad[2], quad[3], quad[1]);
-
-               triangle_drawer.submit();
+               if (portal) draw_entity(*portal, wireframe_constants);
             },
             [&](world::hintnode_id id) {
                const world::hintnode* hintnode =
@@ -1417,23 +1511,7 @@ void renderer_impl::draw_interaction_targets(
                      return id == hintnode.id;
                   });
 
-               if (not hintnode) return;
-
-               meta_mesh_common_setup();
-
-               float4x4 transform = to_matrix(hintnode->rotation);
-               transform[3] = {hintnode->position, 1.0f};
-
-               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(transform)
-                                                .gpu_address);
-
-               const geometric_shape shape = _geometric_shapes.octahedron();
-
-               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-               command_list.ia_set_index_buffer(shape.index_buffer_view);
-               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+               if (hintnode) draw_entity(*hintnode, wireframe_constants);
             },
             [&](world::barrier_id id) {
                const world::barrier* barrier =
@@ -1441,88 +1519,37 @@ void renderer_impl::draw_interaction_targets(
                      return id == barrier.id;
                   });
 
-               if (not barrier) return;
-
-               meta_mesh_common_setup();
-
-               const geometric_shape shape = _geometric_shapes.cube();
-
-               const float2 position =
-                  (barrier->corners[0] + barrier->corners[2]) / 2.0f;
-               const float2 size{distance(barrier->corners[0], barrier->corners[3]),
-                                 distance(barrier->corners[0], barrier->corners[1])};
-               const float angle =
-                  std::atan2(barrier->corners[1].x - barrier->corners[0].x,
-                             barrier->corners[1].y - barrier->corners[0].y);
-
-               const float barrier_height = settings.barrier_height;
-
-               float4x4 transform =
-                  make_rotation_matrix_from_euler({0.0f, angle, 0.0f}) *
-                  float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                           {0.0f, barrier_height, 0.0f, 0.0f},
-                           {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                           {0.0f, 0.0f, 0.0f, 1.0f}};
-               transform[3] = {position.x, 0.0f, position.y, 1.0f};
-
-               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(transform)
-                                                .gpu_address);
-
-               command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-               command_list.ia_set_index_buffer(shape.index_buffer_view);
-               command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+               if (barrier) draw_entity(*barrier, wireframe_constants);
             },
-            [&](world::planning_hub_id id) { (void)id; },
-            [&](world::planning_connection_id id) { (void)id; },
+            [&](world::planning_hub_id id) {
+               const world::planning_hub* planning_hub =
+                  look_for(world.planning_hubs,
+                           [id](const world::planning_hub& planning_hub) {
+                              return id == planning_hub.id;
+                           });
+
+               if (planning_hub) {
+                  draw_entity(*planning_hub, wireframe_constants);
+               }
+            },
+            [&](world::planning_connection_id id) {
+               const world::planning_connection* planning_connection =
+                  look_for(world.planning_connections,
+                           [id](const world::planning_connection& planning_connection) {
+                              return id == planning_connection.id;
+                           });
+
+               if (planning_connection) {
+                  draw_entity(*planning_connection, wireframe_constants);
+               }
+            },
             [&](world::boundary_id id) {
                const world::boundary* boundary =
                   look_for(world.boundaries, [id](const world::boundary& boundary) {
                      return id == boundary.id;
                   });
 
-               if (not boundary) return;
-
-               const world::path* path =
-                  look_for(world.paths, [&](const world::path& path) {
-                     return path.name == boundary->name;
-                  });
-
-               if (not path) return;
-
-               meta_mesh_common_setup();
-
-               command_list.set_graphics_cbv(rs::meta_mesh_wireframe::object_cbv,
-                                             _dynamic_buffer_allocator
-                                                .allocate_and_copy(
-                                                   float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
-                                                            {0.0f, 1.0f, 0.0f, 0.0f},
-                                                            {0.0f, 0.0f, 1.0f, 0.0f},
-                                                            {0.0f, 0.0f, 0.0f, 1.0f}})
-                                                .gpu_address);
-
-               const float boundary_height = settings.boundary_height;
-
-               using namespace ranges::views;
-
-               for (const auto [a, b] :
-                    zip(path->nodes,
-                        concat(path->nodes | drop(1), path->nodes | take(1)))) {
-
-                  const std::array quad = {a.position, b.position,
-                                           a.position +
-                                              float3{0.0f, boundary_height, 0.0f},
-                                           b.position +
-                                              float3{0.0f, boundary_height, 0.0f}};
-
-                  triangle_drawer.add(quad[0], quad[1], quad[2]);
-                  triangle_drawer.add(quad[2], quad[1], quad[3]);
-                  triangle_drawer.add(quad[0], quad[2], quad[1]);
-                  triangle_drawer.add(quad[2], quad[3], quad[1]);
-               }
-
-               triangle_drawer.submit();
+               if (boundary) draw_entity(*boundary, wireframe_constants);
             },
          },
          target);
@@ -1561,12 +1588,31 @@ void renderer_impl::draw_interaction_targets(
          draw_target(target, wireframe_constants);
       }
    }
+
+   if (interaction_targets.creation_entity) {
+      gpu_virtual_address wireframe_constants = [&] {
+         auto allocation =
+            _dynamic_buffer_allocator.allocate(sizeof(wireframe_constant_buffer));
+
+         wireframe_constant_buffer constants{.color = settings.creation_color};
+
+         std::memcpy(allocation.cpu_address, &constants,
+                     sizeof(wireframe_constant_buffer));
+
+         return allocation.gpu_address;
+      }();
+
+      std::visit(
+         [&](const auto& entity) { draw_entity(entity, wireframe_constants); },
+         *interaction_targets.creation_entity);
+   }
 }
 
 void renderer_impl::build_world_mesh_list(
    gpu::copy_command_list& command_list, const world::world& world,
    const world::active_layers active_layers,
-   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes)
+   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+   const world::object* const creation_object)
 {
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
@@ -1608,6 +1654,43 @@ void renderer_impl::build_world_mesh_list(
          _world_mesh_list.push_back(
             object_bbox, object_constants_address, object.position, pipeline,
             mesh.material.flags, mesh.material.constant_buffer_view,
+            world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                       .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                               model.gpu_buffer.attributes_vertex_buffer_view},
+                       .index_count = mesh.index_count,
+                       .start_index = mesh.start_index,
+                       .start_vertex = mesh.start_vertex});
+      }
+   }
+
+   if (creation_object and world.objects.size() < max_drawn_objects) {
+      auto& model =
+         _model_manager[world_classes.at(creation_object->class_name).model_name];
+
+      const auto object_bbox =
+         creation_object->rotation * model.bbox + creation_object->position;
+
+      const std::size_t object_constants_offset = constants_data_size;
+      const gpu_virtual_address object_constants_address =
+         constants_upload_gpu_address + object_constants_offset;
+
+      world_mesh_constants constants;
+
+      constants.object_to_world = to_matrix(creation_object->rotation);
+      constants.object_to_world[3] = float4{creation_object->position, 1.0f};
+
+      std::memcpy(constants_upload_data + object_constants_offset,
+                  &constants.object_to_world, sizeof(world_mesh_constants));
+
+      constants_data_size += sizeof(world_mesh_constants);
+
+      for (auto& mesh : model.parts) {
+         const gpu::pipeline_handle pipeline =
+            _pipelines.mesh_normal[mesh.material.flags].get();
+
+         _world_mesh_list.push_back(
+            object_bbox, object_constants_address, creation_object->position,
+            pipeline, mesh.material.flags, mesh.material.constant_buffer_view,
             world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
                        .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
                                                model.gpu_buffer.attributes_vertex_buffer_view},

@@ -33,6 +33,8 @@ struct graphics {
 
    float3 selected_color = {1.0f, 1.0f, 1.0f};
 
+   float3 creation_color = {0.0f, 0.5f, 1.0f};
+
    float barrier_height = 64.0f;
 
    float boundary_height = 64.0f;

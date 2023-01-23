@@ -66,6 +66,8 @@ private:
 
    void select_hovered_entity() noexcept;
 
+   void finalize_entity_creation() noexcept;
+
    void object_definition_loaded(const lowercase_string& name,
                                  asset_ref<assets::odf::definition> asset,
                                  asset_data<assets::odf::definition> data);
@@ -139,6 +141,19 @@ private:
    bool _rotate_camera = false;
 
    POINT _rotate_camera_cursor_position = {0, 0};
+
+   struct entity_creation_context {
+      world::object_id last_object = world::max_id;
+      world::light_id last_light = world::max_id;
+      world::path_id last_path = world::max_id;
+      world::region_id last_region = world::max_id;
+      world::sector_id last_sector = world::max_id;
+      world::portal_id last_portal = world::max_id;
+      world::barrier_id last_barrier = world::max_id;
+      world::planning_hub_id last_planning_hub = world::max_id;
+      world::planning_connection_id last_planning_connection = world::max_id;
+      world::boundary_id last_boundary = world::max_id;
+   } _entity_creation_context;
 
    utility::synchronous_task_queue _asset_load_queue;
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,

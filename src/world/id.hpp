@@ -15,6 +15,18 @@ struct id_type_holder {
 template<typename T>
 using id = id_type_holder<T>::entity_id;
 
+/// @brief Helper struct to assign UINT32_MAX to an ID.
+struct max_id_t {
+   template<typename T>
+   consteval operator T() const noexcept
+   {
+      return T{0xffffffffu};
+   }
+};
+
+/// @brief Can be used to assign UINT32_MAX to an ID. Useful when a sentinel value is needed.
+constexpr static max_id_t max_id;
+
 /// @brief Simple class to generate IDs in sequence (0, 1, 2, 3, etc)
 /// @tparam T The input type, the class will IDs of the type id<T>.
 template<typename T>
