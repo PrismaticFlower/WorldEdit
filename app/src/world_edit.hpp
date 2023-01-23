@@ -64,6 +64,8 @@ private:
 
    void garbage_collect_assets() noexcept;
 
+   void world_clicked() noexcept;
+
    void select_hovered_entity() noexcept;
 
    void finalize_entity_creation() noexcept;
@@ -154,6 +156,8 @@ private:
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
    } _entity_creation_context;
+
+   float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
 
    utility::synchronous_task_queue _asset_load_queue;
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,

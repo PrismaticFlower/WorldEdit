@@ -577,12 +577,12 @@ void world_edit::update_ui() noexcept
    }
 
    if (_interaction_targets.creation_entity) {
-      bool finalize_creation = true;
+      bool continue_creation = true;
 
       ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
 
-      ImGui::Begin("Create", &finalize_creation,
+      ImGui::Begin("Create", &continue_creation,
                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
                       ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -613,6 +613,8 @@ void world_edit::update_ui() noexcept
                        ImGui::DragQuat("Rotation", &object.rotation);
                        ImGui::DragFloat3("Position", &object.position.x);
 
+                       object.position = _cursor_positionWS;
+
                        ImGui::Separator();
 
                        ImGui::SliderInt("Team", &object.team, 0, 15, "%d",
@@ -634,9 +636,13 @@ void world_edit::update_ui() noexcept
                  },
                  *_interaction_targets.creation_entity);
 
+      if (ImGui::Button("Create")) finalize_entity_creation();
+
       ImGui::End();
 
-      if (not finalize_creation) finalize_entity_creation();
+      if (not continue_creation) {
+         _interaction_targets.creation_entity = std::nullopt;
+      }
    }
 }
 

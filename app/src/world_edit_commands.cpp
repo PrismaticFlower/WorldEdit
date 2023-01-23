@@ -18,7 +18,7 @@ void world_edit::initialize_commands() noexcept
       GetCursorPos(&_rotate_camera_cursor_position);
    });
 
-   _commands.add("selection.add"s, [this]() { select_hovered_entity(); });
+   _commands.add("edit.world_click"s, [this]() { world_clicked(); });
 
    _commands.add("edit.undo"s, [this]() { _undo_stack.revert(_world); });
    _commands.add("edit.redo"s, [this]() { _undo_stack.reapply(_world); });
@@ -32,7 +32,7 @@ void world_edit::initialize_commands() noexcept
       {"camera.move_down"s, {.key = key::f}, {.toggle = true}},
       {"camera.rotate_with_mouse"s, {.key = key::mouse2}, {.toggle = true}},
 
-      {"selection.add"s, {.key = key::mouse1}},
+      {"edit.world_click"s, {.key = key::mouse1}},
 
       {"edit.undo"s, {.key = key::z, .modifiers = {.ctrl = true}}},
       {"edit.redo"s, {.key = key::y, .modifiers = {.ctrl = true}}},

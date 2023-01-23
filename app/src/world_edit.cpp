@@ -256,6 +256,10 @@ void world_edit::update_hovered_entity() noexcept
          }
       }
    }
+
+   if (hovered_entity_distance != std::numeric_limits<float>::max()) {
+      _cursor_positionWS = ray.origin + ray.direction * hovered_entity_distance;
+   }
 }
 
 void world_edit::update_camera(const float delta_time)
@@ -319,6 +323,16 @@ void world_edit::garbage_collect_assets() noexcept
 
       return object_class.world_frame_references == 0;
    });
+}
+
+void world_edit::world_clicked() noexcept
+{
+   if (_interaction_targets.creation_entity) {
+      finalize_entity_creation();
+   }
+   else {
+      select_hovered_entity();
+   }
 }
 
 void world_edit::select_hovered_entity() noexcept
