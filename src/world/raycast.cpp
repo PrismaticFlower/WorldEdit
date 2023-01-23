@@ -26,8 +26,6 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& object : objects) {
       if (not active_layers[object.layer]) continue;
 
-      [[maybe_unused]] float3 box_normal{};
-
       quaternion inverse_object_rotation = conjugate(object.rotation);
 
       float4x4 world_to_obj = to_matrix(inverse_object_rotation);
@@ -42,9 +40,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       float3 box_size = model.bounding_box.max - model.bounding_box.min;
 
       const float box_intersection =
-         boxIntersection(obj_ray_origin - box_centre, obj_ray_direction,
-                         box_size, box_normal)
-            .x;
+         boxIntersection(obj_ray_origin - box_centre, obj_ray_direction, box_size);
 
       if (box_intersection < 0.0f) continue;
 
@@ -85,8 +81,6 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          if (not light_region) continue;
 
          if (light_region->shape == region_shape::box) {
-            [[maybe_unused]] float3 box_normal{};
-
             quaternion inverse_light_region_rotation =
                conjugate(light_region->rotation);
 
@@ -99,9 +93,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
                normalize(float3x3{world_to_box} * ray_direction);
 
             const float intersection =
-               boxIntersection(box_ray_origin, box_ray_direction,
-                               light_region->size, box_normal)
-                  .x;
+               boxIntersection(box_ray_origin, box_ray_direction, light_region->size);
 
             if (intersection < 0.0f) continue;
 
@@ -226,8 +218,6 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (not active_layers[region.layer]) continue;
 
       if (region.shape == region_shape::box) {
-         [[maybe_unused]] float3 box_normal{};
-
          quaternion inverse_light_region_rotation = conjugate(region.rotation);
 
          float4x4 world_to_box = to_matrix(inverse_light_region_rotation);
@@ -237,8 +227,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          float3 box_ray_direction = normalize(float3x3{world_to_box} * ray_direction);
 
          const float intersection =
-            boxIntersection(box_ray_origin, box_ray_direction, region.size, box_normal)
-               .x;
+            boxIntersection(box_ray_origin, box_ray_direction, region.size);
 
          if (intersection < 0.0f) continue;
 

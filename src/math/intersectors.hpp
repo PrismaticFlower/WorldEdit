@@ -50,19 +50,21 @@ inline float sphIntersect(float3 ro, float3 rd, float3 sph, float radius)
    return -b - sqrt(h);
 }
 
-inline float2 boxIntersection(float3 ro, float3 rd, float3 boxSize, float3& outNormal)
+inline float boxIntersection(float3 ro, float3 rd, float3 boxSize)
 {
    float3 m = 1.0f / rd; // can precompute if traversing a set of aligned boxes
    float3 n = m * ro;    // can precompute if traversing a set of aligned boxes
+
    float3 k = abs(m) * boxSize;
    float3 t1 = -n - k;
    float3 t2 = -n + k;
+
    float tN = max(max(t1.x, t1.y), t1.z);
    float tF = min(min(t2.x, t2.y), t2.z);
-   if (tN > tF || tF < 0.0f) return float2(-1.0f, -1.0f); // no intersection
-   outNormal = -sign(rd) * step(float3{t1.y, t1.z, t1.x}, float3{t1.x, t1.y, t1.z}) *
-               step(float3{t1.z, t1.x, t1.y}, float3{t1.x, t1.y, t1.z});
-   return float2(tN, tF);
+
+   if (tN > tF || tF < 0.0) return -1.0f; // no intersection
+
+   return (tN > 0.0f) ? tN : tF;
 }
 
 inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
