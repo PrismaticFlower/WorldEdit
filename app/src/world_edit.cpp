@@ -120,6 +120,19 @@ void world_edit::update_object_classes()
       _object_classes.emplace(object.class_name,
                               world::object_class{_asset_libraries, definition});
    }
+
+   if (_interaction_targets.creation_entity and
+       std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
+      const lowercase_string& class_name =
+         std::get<world::object>(*_interaction_targets.creation_entity).class_name;
+
+      if (not _object_classes.contains(class_name)) {
+         auto definition = _asset_libraries.odfs[class_name];
+
+         _object_classes.emplace(class_name,
+                                 world::object_class{_asset_libraries, definition});
+      }
+   }
 }
 
 void world_edit::update_input() noexcept
@@ -316,6 +329,19 @@ void world_edit::garbage_collect_assets() noexcept
       }
 
       continue; // Don't care about missing object classes here, leave that for update_object_classes().
+   }
+
+   if (_interaction_targets.creation_entity and
+       std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
+      const lowercase_string& class_name =
+         std::get<world::object>(*_interaction_targets.creation_entity).class_name;
+
+      if (auto name_object_class = _object_classes.find(class_name);
+          name_object_class != _object_classes.end()) {
+         auto& [name, object_class] = *name_object_class;
+
+         object_class.world_frame_references += 1;
+      }
    }
 
    absl::erase_if(_object_classes, [](const auto& name_object_class) {
