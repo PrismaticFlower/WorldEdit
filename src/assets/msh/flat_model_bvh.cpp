@@ -79,13 +79,13 @@ public:
 
          if (not intersection) continue;
 
-         if (hit and hit->distance < intersection.t) {
+         if (hit and hit->distance > intersection.t) {
             hit = ray_hit{.distance = intersection.t,
                           .normal =
                              float3{intersection.normal.x, intersection.normal.y,
                                     intersection.normal.z}};
          }
-         else {
+         else if (not hit) {
             hit = ray_hit{.distance = intersection.t,
                           .normal =
                              float3{intersection.normal.x, intersection.normal.y,
