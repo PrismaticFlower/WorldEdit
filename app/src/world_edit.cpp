@@ -548,6 +548,7 @@ void world_edit::close_world() noexcept
    _object_classes.clear();
    _world = {};
    _interaction_targets = {};
+   _entity_creation_context = {};
    _world_draw_mask = {};
    _world_layers_draw_mask = {true};
    _world_path.clear();

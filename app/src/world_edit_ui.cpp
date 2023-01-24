@@ -588,6 +588,9 @@ void world_edit::update_ui() noexcept
 
       std::visit(overload{
                     [&](world::object& object) {
+                       ImGui::Text("Object");
+                       ImGui::Separator();
+
                        ImGui::InputText("Name", &object.name);
                        ImGui::InputTextAutoComplete("Class Name", &object.class_name, [&] {
                           std::array<we::lowercase_string, 6> entries;
@@ -613,7 +616,18 @@ void world_edit::update_ui() noexcept
                        ImGui::DragQuat("Rotation", &object.rotation);
                        ImGui::DragFloat3("Position", &object.position.x);
 
-                       object.position = _cursor_positionWS;
+                       if (_entity_creation_context.placement_mode ==
+                           placement_mode::cursor) {
+                          if (not _entity_creation_context.lock_x_axis) {
+                             object.position.x = _cursor_positionWS.x;
+                          }
+                          if (not _entity_creation_context.lock_y_axis) {
+                             object.position.y = _cursor_positionWS.y;
+                          }
+                          if (not _entity_creation_context.lock_z_axis) {
+                             object.position.z = _cursor_positionWS.z;
+                          }
+                       }
 
                        ImGui::Separator();
 
@@ -635,6 +649,45 @@ void world_edit::update_ui() noexcept
                     [&](world::boundary& boundary) { (void)boundary; },
                  },
                  *_interaction_targets.creation_entity);
+
+      ImGui::Text("Placement");
+      ImGui::Separator();
+
+      ImGui::BeginTable("Placement", 2,
+                        ImGuiTableFlags_NoSavedSettings |
+                           ImGuiTableFlags_SizingStretchSame);
+
+      ImGui::TableNextColumn();
+      if (ImGui::Selectable("Manual", _entity_creation_context.placement_mode ==
+                                         placement_mode::manual)) {
+         _entity_creation_context.placement_mode = placement_mode::manual;
+      }
+
+      ImGui::TableNextColumn();
+
+      if (ImGui::Selectable("At Cursor", _entity_creation_context.placement_mode ==
+                                            placement_mode::cursor)) {
+         _entity_creation_context.placement_mode = placement_mode::cursor;
+      }
+      ImGui::EndTable();
+
+      if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+         ImGui::Text("Locked Position");
+         ImGui::Separator();
+
+         ImGui::BeginTable("Locked Position", 3,
+                           ImGuiTableFlags_NoSavedSettings |
+                              ImGuiTableFlags_SizingStretchSame);
+
+         ImGui::TableNextColumn();
+         ImGui::Selectable("X", &_entity_creation_context.lock_x_axis);
+         ImGui::TableNextColumn();
+         ImGui::Selectable("Y", &_entity_creation_context.lock_y_axis);
+         ImGui::TableNextColumn();
+         ImGui::Selectable("Z", &_entity_creation_context.lock_z_axis);
+
+         ImGui::EndTable();
+      }
 
       if (ImGui::Button("Create")) finalize_entity_creation();
 

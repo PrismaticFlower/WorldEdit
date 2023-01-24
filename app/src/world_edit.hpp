@@ -27,6 +27,8 @@ struct ImGuiContext;
 
 namespace we {
 
+enum class placement_mode : uint8 { manual, cursor };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -155,6 +157,13 @@ private:
       world::planning_hub_id last_planning_hub = world::max_id;
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
+
+      placement_mode placement_mode = placement_mode::cursor;
+
+      bool lock_x_axis = false;
+      bool lock_y_axis = false;
+      bool lock_z_axis = false;
+
    } _entity_creation_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
