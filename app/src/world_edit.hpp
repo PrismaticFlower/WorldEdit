@@ -31,6 +31,8 @@ enum class placement_mode : uint8 { manual, cursor };
 
 enum class placement_alignment : uint8 { none, grid, snapping };
 
+enum class placement_ground : uint8 { origin, bbox };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -162,6 +164,7 @@ private:
 
       placement_mode placement_mode = placement_mode::cursor;
       placement_alignment placement_alignment = placement_alignment::none;
+      placement_ground placement_ground = placement_ground::origin;
 
       bool lock_x_axis = false;
       bool lock_y_axis = false;
