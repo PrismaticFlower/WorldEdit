@@ -29,6 +29,8 @@ namespace we {
 
 enum class placement_mode : uint8 { manual, cursor };
 
+enum class placement_alignment : uint8 { none, grid, snapping };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -159,10 +161,13 @@ private:
       world::boundary_id last_boundary = world::max_id;
 
       placement_mode placement_mode = placement_mode::cursor;
+      placement_alignment placement_alignment = placement_alignment::none;
 
       bool lock_x_axis = false;
       bool lock_y_axis = false;
       bool lock_z_axis = false;
+
+      float alignment = 4.0f;
 
    } _entity_creation_context;
 

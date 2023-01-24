@@ -586,69 +586,78 @@ void world_edit::update_ui() noexcept
                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
                       ImGuiWindowFlags_AlwaysAutoResize);
 
-      std::visit(overload{
-                    [&](world::object& object) {
-                       ImGui::Text("Object");
-                       ImGui::Separator();
+      std::visit(
+         overload{
+            [&](world::object& object) {
+               ImGui::Text("Object");
+               ImGui::Separator();
 
-                       ImGui::InputText("Name", &object.name);
-                       ImGui::InputTextAutoComplete("Class Name", &object.class_name, [&] {
-                          std::array<we::lowercase_string, 6> entries;
-                          std::size_t matching_count = 0;
+               ImGui::InputText("Name", &object.name);
+               ImGui::InputTextAutoComplete("Class Name", &object.class_name, [&] {
+                  std::array<we::lowercase_string, 6> entries;
+                  std::size_t matching_count = 0;
 
-                          _asset_libraries.odfs.enumerate_known(
-                             [&](const lowercase_string& asset) {
-                                if (matching_count == entries.size()) return;
-                                if (not asset.contains(object.class_name))
-                                   return;
+                  _asset_libraries.odfs.enumerate_known([&](const lowercase_string& asset) {
+                     if (matching_count == entries.size()) return;
+                     if (not asset.contains(object.class_name)) return;
 
-                                entries[matching_count] = asset;
+                     entries[matching_count] = asset;
 
-                                ++matching_count;
-                             });
+                     ++matching_count;
+                  });
 
-                          return entries;
-                       });
-                       ImGui::LayerPick("Layer", &object.layer, &_world);
+                  return entries;
+               });
+               ImGui::LayerPick("Layer", &object.layer, &_world);
 
-                       ImGui::Separator();
+               ImGui::Separator();
 
-                       ImGui::DragQuat("Rotation", &object.rotation);
-                       ImGui::DragFloat3("Position", &object.position.x);
+               ImGui::DragQuat("Rotation", &object.rotation);
+               ImGui::DragFloat3("Position", &object.position.x);
 
-                       if (_entity_creation_context.placement_mode ==
-                           placement_mode::cursor) {
-                          if (not _entity_creation_context.lock_x_axis) {
-                             object.position.x = _cursor_positionWS.x;
-                          }
-                          if (not _entity_creation_context.lock_y_axis) {
-                             object.position.y = _cursor_positionWS.y;
-                          }
-                          if (not _entity_creation_context.lock_z_axis) {
-                             object.position.z = _cursor_positionWS.z;
-                          }
-                       }
+               if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  float3 new_position = _cursor_positionWS;
 
-                       ImGui::Separator();
+                  if (_entity_creation_context.placement_alignment ==
+                      placement_alignment::grid) {
+                     new_position =
+                        round(new_position / _entity_creation_context.alignment) *
+                        _entity_creation_context.alignment;
+                  }
+                  else if (_entity_creation_context.placement_alignment ==
+                           placement_alignment::snapping) {
+                     // magic!
+                  }
 
-                       ImGui::SliderInt("Team", &object.team, 0, 15, "%d",
-                                        ImGuiSliderFlags_AlwaysClamp);
-                    },
-                    [&](world::light& light) { (void)light; },
-                    [&](world::path& path) { (void)path; },
-                    [&](world::region& region) { (void)region; },
-                    [&](world::sector& sector) { (void)sector; },
-                    [&](world::portal& portal) { (void)portal; },
-                    [&](world::barrier& barrier) { (void)barrier; },
-                    [&](world::planning_hub& planning_hub) {
-                       (void)planning_hub;
-                    },
-                    [&](world::planning_connection& planning_connection) {
-                       (void)planning_connection;
-                    },
-                    [&](world::boundary& boundary) { (void)boundary; },
-                 },
-                 *_interaction_targets.creation_entity);
+                  if (not _entity_creation_context.lock_x_axis) {
+                     object.position.x = new_position.x;
+                  }
+                  if (not _entity_creation_context.lock_y_axis) {
+                     object.position.y = new_position.y;
+                  }
+                  if (not _entity_creation_context.lock_z_axis) {
+                     object.position.z = new_position.z;
+                  }
+               }
+
+               ImGui::Separator();
+
+               ImGui::SliderInt("Team", &object.team, 0, 15, "%d",
+                                ImGuiSliderFlags_AlwaysClamp);
+            },
+            [&](world::light& light) { (void)light; },
+            [&](world::path& path) { (void)path; },
+            [&](world::region& region) { (void)region; },
+            [&](world::sector& sector) { (void)sector; },
+            [&](world::portal& portal) { (void)portal; },
+            [&](world::barrier& barrier) { (void)barrier; },
+            [&](world::planning_hub& planning_hub) { (void)planning_hub; },
+            [&](world::planning_connection& planning_connection) {
+               (void)planning_connection;
+            },
+            [&](world::boundary& boundary) { (void)boundary; },
+         },
+         *_interaction_targets.creation_entity);
 
       ImGui::Text("Placement");
       ImGui::Separator();
@@ -687,6 +696,39 @@ void world_edit::update_ui() noexcept
          ImGui::Selectable("Z", &_entity_creation_context.lock_z_axis);
 
          ImGui::EndTable();
+
+         ImGui::Text("Align To");
+         ImGui::Separator();
+
+         ImGui::BeginTable("Align To", 3,
+                           ImGuiTableFlags_NoSavedSettings |
+                              ImGuiTableFlags_SizingStretchSame);
+
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("None", _entity_creation_context.placement_alignment ==
+                                          placement_alignment::none)) {
+            _entity_creation_context.placement_alignment = placement_alignment::none;
+         }
+
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("Grid", _entity_creation_context.placement_alignment ==
+                                          placement_alignment::grid)) {
+            _entity_creation_context.placement_alignment = placement_alignment::grid;
+         }
+
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("Snapping", _entity_creation_context.placement_alignment ==
+                                              placement_alignment::snapping)) {
+            _entity_creation_context.placement_alignment = placement_alignment::snapping;
+         }
+
+         ImGui::EndTable();
+
+         if (_entity_creation_context.placement_alignment == placement_alignment::grid) {
+            ImGui::DragFloat("Alignment Grid Size",
+                             &_entity_creation_context.alignment, 1.0f, 1.0f,
+                             1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+         }
       }
 
       if (ImGui::Button("Create")) finalize_entity_creation();
