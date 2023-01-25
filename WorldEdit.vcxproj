@@ -226,6 +226,7 @@
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
     <ClCompile Include="src\world\raycast.cpp" />
+    <ClCompile Include="src\world\snap_object.cpp" />
     <ClCompile Include="src\world\world_io_save.cpp" />
     <ClCompile Include="src\world\world_utilities.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -433,6 +434,7 @@
     <ClInclude Include="src\world\region.hpp" />
     <ClInclude Include="src\world\sector.hpp" />
     <ClInclude Include="src\world\interaction_context.hpp" />
+    <ClInclude Include="src\world\snap_object.hpp" />
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />

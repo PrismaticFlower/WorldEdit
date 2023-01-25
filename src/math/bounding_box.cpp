@@ -17,6 +17,23 @@ auto integrate(const bounding_box& box, const float3& v) noexcept -> bounding_bo
    return {.min = min(box.min, v), .max = max(box.max, v)};
 }
 
+auto to_corners(const bounding_box& box) noexcept -> std::array<float3, 8>
+{
+   const float3 centre = (box.max + box.min) / 2.0f;
+   const float3 size = (box.max - box.min) / 2.0f;
+
+   return {// top corners
+           (centre + float3{size.x, size.y, size.z}),
+           (centre + float3{-size.x, size.y, size.z}),
+           (centre + float3{-size.x, size.y, -size.z}),
+           (centre + float3{size.x, size.y, -size.z}),
+           // bottom corners
+           (centre + float3{size.x, -size.y, size.z}),
+           (centre + float3{-size.x, -size.y, size.z}),
+           (centre + float3{-size.x, -size.y, -size.z}),
+           (centre + float3{size.x, -size.y, -size.z})};
+}
+
 auto operator*(const quaternion& quat, const bounding_box& box) noexcept -> bounding_box
 {
    const float3 centre = (box.max + box.min) / 2.0f;

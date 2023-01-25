@@ -171,6 +171,7 @@ private:
       bool lock_z_axis = false;
 
       float alignment = 4.0f;
+      float snap_distance = 0.25f;
 
    } _entity_creation_context;
 

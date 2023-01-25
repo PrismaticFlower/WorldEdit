@@ -111,4 +111,8 @@ auto create_unique_name(const std::vector<boundary>& entities,
                         const std::string_view reference_name,
                         const boundary_id id) -> std::string;
 
+auto get_snapped_position(const object& snapping_object,
+                          const std::vector<object>& world_objects,
+                          const float snap_radius) -> float3;
+
 }

@@ -1,5 +1,6 @@
 
 #include "world_utilities.hpp"
+#include "math/vector_funcs.hpp"
 #include "utility/string_ops.hpp"
 
 #include <cstring>

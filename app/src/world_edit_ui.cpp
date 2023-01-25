@@ -7,6 +7,7 @@
 #include "imgui/imgui_stdlib.h"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
+#include "world/snap_object.hpp"
 #include "world/world_utilities.hpp"
 
 #include <range/v3/view/enumerate.hpp>
@@ -636,7 +637,12 @@ void world_edit::update_ui() noexcept
                   }
                   else if (_entity_creation_context.placement_alignment ==
                            placement_alignment::snapping) {
-                     // magic!
+                     const std::optional<float3> snapped_position =
+                        world::get_snapped_position(object, new_position, _world.objects,
+                                                    _entity_creation_context.snap_distance,
+                                                    _object_classes);
+
+                     if (snapped_position) new_position = *snapped_position;
                   }
 
                   if (not _entity_creation_context.lock_x_axis) {
@@ -756,9 +762,17 @@ void world_edit::update_ui() noexcept
          ImGui::EndTable();
 
          if (_entity_creation_context.placement_alignment == placement_alignment::grid) {
+            ImGui::Separator();
             ImGui::DragFloat("Alignment Grid Size",
                              &_entity_creation_context.alignment, 1.0f, 1.0f,
                              1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+         }
+         else if (_entity_creation_context.placement_alignment ==
+                  placement_alignment::snapping) {
+            ImGui::Separator();
+            ImGui::DragFloat("Snap Distance",
+                             &_entity_creation_context.snap_distance, 0.1f,
+                             0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
          }
       }
 
