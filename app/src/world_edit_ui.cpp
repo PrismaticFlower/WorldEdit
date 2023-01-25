@@ -86,14 +86,14 @@ void world_edit::update_ui() noexcept
 
             const world::object* base_object =
                world::find_entity(_world.objects, _entity_creation_context.last_object);
-            world::object_id id = _world.next_id.objects.aquire();
 
             if (base_object) {
                world::object new_object = *base_object;
 
                new_object.name =
-                  world::create_unique_name(_world.objects, base_object->name, id);
-               new_object.id = id;
+                  world::create_unique_name(_world.objects, base_object->name,
+                                            base_object->id);
+               new_object.id = world::max_id;
 
                _interaction_targets.creation_entity = std::move(new_object);
             }
@@ -101,10 +101,8 @@ void world_edit::update_ui() noexcept
                _interaction_targets.creation_entity =
                   world::object{.name = "",
                                 .class_name = lowercase_string{"com_bldg_controlzone"sv},
-                                .id = id};
+                                .id = world::max_id};
             }
-
-            _entity_creation_context.last_object = id;
          }
 
 #if 0

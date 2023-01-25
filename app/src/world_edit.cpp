@@ -377,27 +377,28 @@ void world_edit::finalize_entity_creation() noexcept
    // TODO: Stuff!
 
    std::visit(overload{
-                 [&](world::object& object) {
+                 [&](world::object object) {
+                    object.id = _world.next_id.objects.aquire();
+
                     _entity_creation_context.last_object = object.id;
 
-                    _undo_stack.apply(actions::make_insert_entity(std::move(object)),
-                                      _world);
+                    _undo_stack.apply(actions::make_insert_entity(object), _world);
                  },
-                 [&](world::light& light) { (void)light; },
-                 [&](world::path& path) { (void)path; },
-                 [&](world::region& region) { (void)region; },
-                 [&](world::sector& sector) { (void)sector; },
-                 [&](world::portal& portal) { (void)portal; },
-                 [&](world::barrier& barrier) { (void)barrier; },
-                 [&](world::planning_hub& planning_hub) { (void)planning_hub; },
-                 [&](world::planning_connection& planning_connection) {
+                 [&](world::light light) { (void)light; },
+                 [&](world::path path) { (void)path; },
+                 [&](world::region region) { (void)region; },
+                 [&](world::sector sector) { (void)sector; },
+                 [&](world::portal portal) { (void)portal; },
+                 [&](world::barrier barrier) { (void)barrier; },
+                 [&](world::planning_hub planning_hub) { (void)planning_hub; },
+                 [&](world::planning_connection planning_connection) {
                     (void)planning_connection;
                  },
-                 [&](world::boundary& boundary) { (void)boundary; },
+                 [&](world::boundary boundary) { (void)boundary; },
               },
               *_interaction_targets.creation_entity);
 
-   _interaction_targets.creation_entity = std::nullopt;
+   // _interaction_targets.creation_entity = std::nullopt;
 }
 
 void world_edit::object_definition_loaded(const lowercase_string& name,
