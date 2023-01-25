@@ -397,8 +397,6 @@ void world_edit::finalize_entity_creation() noexcept
                  [&](world::boundary boundary) { (void)boundary; },
               },
               *_interaction_targets.creation_entity);
-
-   // _interaction_targets.creation_entity = std::nullopt;
 }
 
 void world_edit::object_definition_loaded(const lowercase_string& name,
