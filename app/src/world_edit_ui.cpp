@@ -774,8 +774,6 @@ void world_edit::update_ui() noexcept
          }
       }
 
-      if (ImGui::Button("Create")) finalize_entity_creation();
-
       ImGui::End();
 
       if (not continue_creation) {
