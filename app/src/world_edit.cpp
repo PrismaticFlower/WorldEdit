@@ -270,6 +270,16 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
+   // TODO: Unique terrain mask.
+   if (_world_draw_mask.objects) {
+      if (auto hit = _terrain_collision.raycast(ray.origin, ray.direction); hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = std::nullopt;
+            hovered_entity_distance = hit->distance;
+         }
+      }
+   }
+
    if (hovered_entity_distance != std::numeric_limits<float>::max()) {
       _cursor_positionWS = ray.origin + ray.direction * hovered_entity_distance;
    }
@@ -462,6 +472,7 @@ void world_edit::load_world(std::filesystem::path path) noexcept
    try {
       _world = world::load_world(path, _stream);
       _world_path = path;
+      _terrain_collision = world::terrain_collision{_world.terrain};
 
       _camera.position({0.0f, 0.0f, 0.0f});
       _camera.pitch(0.0f);
@@ -551,6 +562,8 @@ void world_edit::close_world() noexcept
    _world_draw_mask = {};
    _world_layers_draw_mask = {true};
    _world_path.clear();
+
+   _terrain_collision = {};
 
    _undo_stack = {};
 
