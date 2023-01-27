@@ -35,14 +35,15 @@ TEST_CASE("world utilities find_region_by_description", "[World][Utilities]")
 
 TEST_CASE("world utilities create_unique_name", "[World][Utilities]")
 {
-   world world{.objects = {object{.name = "Amazing Object 32"s}}};
+   world world{.objects = {object{.name = "Amazing Object 32"s}, object{.name = "62"s}}};
 
-   REQUIRE(create_unique_name(world.objects, "Amazing Object 32", object_id{16}) ==
-           "Amazing Object 16");
-   REQUIRE(create_unique_name(world.objects, "Amazing Object 32", object_id{32}) ==
-           "Amazing Object 33");
-   REQUIRE(create_unique_name(world.objects, "62", object_id{0}) == "Object0");
-   REQUIRE(create_unique_name(world.objects, "", object_id{32}) == "");
+   REQUIRE(create_unique_name(world.objects, "Amazing Object 32") ==
+           "Amazing Object 0");
+   REQUIRE(create_unique_name(world.objects, "Amazing Object") ==
+           "Amazing Object");
+   REQUIRE(create_unique_name(world.objects, "62") == "Object0");
+   REQUIRE(create_unique_name(world.objects, "63") == "63");
+   REQUIRE(create_unique_name(world.objects, "") == "");
 }
 
 }

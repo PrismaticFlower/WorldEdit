@@ -91,8 +91,7 @@ void world_edit::update_ui() noexcept
                world::object new_object = *base_object;
 
                new_object.name =
-                  world::create_unique_name(_world.objects, base_object->name,
-                                            base_object->id);
+                  world::create_unique_name(_world.objects, base_object->name);
                new_object.id = world::max_id;
 
                _interaction_targets.creation_entity = std::move(new_object);

@@ -12,6 +12,9 @@
 #include "world/raycast.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
+#include "world/world_utilities.hpp"
+
+#include "utility/stopwatch.hpp"
 
 #include <stdexcept>
 #include <type_traits>
@@ -387,12 +390,22 @@ void world_edit::finalize_entity_creation() noexcept
    // TODO: Stuff!
 
    std::visit(overload{
-                 [&](world::object object) {
-                    object.id = _world.next_id.objects.aquire();
+                 [&](world::object& object) {
+                    utility::stopwatch time;
 
-                    _entity_creation_context.last_object = object.id;
+                    world::object new_object = object;
 
-                    _undo_stack.apply(actions::make_insert_entity(object), _world);
+                    new_object.name =
+                       world::create_unique_name(_world.objects, new_object.name);
+                    new_object.id = _world.next_id.objects.aquire();
+
+                    _entity_creation_context.last_object = new_object.id;
+
+                    _undo_stack.apply(actions::make_insert_entity(std::move(new_object)),
+                                      _world);
+
+                    object.name =
+                       world::create_unique_name(_world.objects, object.name);
                  },
                  [&](world::light light) { (void)light; },
                  [&](world::path path) { (void)path; },

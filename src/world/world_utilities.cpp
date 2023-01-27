@@ -43,8 +43,7 @@ auto create_base_name(const std::string_view name) -> std::string_view
 
 template<typename T>
 auto create_unique_name_impl(const std::vector<T>& entities,
-                             const std::string_view reference_name, const id<T> id)
-   -> std::string
+                             const std::string_view reference_name) -> std::string
 {
    if (reference_name.empty()) return "";
 
@@ -54,9 +53,13 @@ auto create_unique_name_impl(const std::vector<T>& entities,
 
    for (const auto& entity : entities) used_names.emplace(entity.name);
 
+   if (not used_names.contains(reference_name)) {
+      return std::string{reference_name};
+   }
+
    const std::string_view base_name = create_base_name<T>(reference_name);
 
-   uint32 index = std::to_underlying(id);
+   uint32 index = 0;
 
    while (true) {
       std::string candidate_name = fmt::format("{}{}", base_name, index++);
@@ -68,80 +71,69 @@ auto create_unique_name_impl(const std::vector<T>& entities,
 }
 
 auto create_unique_name(const std::vector<object>& entities,
-                        const std::string_view reference_name,
-                        const object_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<light>& entities,
-                        const std::string_view reference_name, const light_id id)
-   -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<path>& entities,
-                        const std::string_view reference_name, const path_id id)
-   -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<region>& entities,
-                        const std::string_view reference_name,
-                        const region_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<sector>& entities,
-                        const std::string_view reference_name,
-                        const sector_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<portal>& entities,
-                        const std::string_view reference_name,
-                        const portal_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<hintnode>& entities,
-                        const std::string_view reference_name,
-                        const hintnode_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<barrier>& entities,
-                        const std::string_view reference_name,
-                        const barrier_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<planning_hub>& entities,
-                        const std::string_view reference_name,
-                        const planning_hub_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<planning_connection>& entities,
-                        const std::string_view reference_name,
-                        const planning_connection_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 auto create_unique_name(const std::vector<boundary>& entities,
-                        const std::string_view reference_name,
-                        const boundary_id id) -> std::string
+                        const std::string_view reference_name) -> std::string
 {
-   return create_unique_name_impl(entities, reference_name, id);
+   return create_unique_name_impl(entities, reference_name);
 }
 
 }
