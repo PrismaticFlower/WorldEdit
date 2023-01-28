@@ -76,4 +76,18 @@ inline auto to_matrix(quaternion quat) noexcept -> float4x4
    return float4x4{{row0, 0.0f}, {row1, 0.0f}, {row2, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}};
 }
 
+inline auto make_quat_from_euler(const float3& vec) noexcept -> quaternion
+{
+   const float3 c = cos(vec * 0.5f);
+   const float3 s = sin(vec * 0.5f);
+
+   quaternion quat;
+   quat.w = c.x * c.y * c.z + s.x * s.y * s.z;
+   quat.x = s.x * c.y * c.z - c.x * s.y * s.z;
+   quat.y = c.x * s.y * c.z + s.x * c.y * s.z;
+   quat.z = c.x * c.y * s.z - s.x * s.y * c.z;
+
+   return quat;
+}
+
 }

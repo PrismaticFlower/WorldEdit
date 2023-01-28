@@ -10,6 +10,8 @@
 #include "world/snap_object.hpp"
 #include "world/world_utilities.hpp"
 
+#include <numbers>
+
 #include <range/v3/view/enumerate.hpp>
 
 using namespace std::literals;
@@ -610,7 +612,13 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::DragQuat("Rotation", &object.rotation);
+               if (ImGui::DragFloat3("Rotation",
+                                     &_entity_creation_context.rotation.x)) {
+                  object.rotation =
+                     make_quat_from_euler(_entity_creation_context.rotation *
+                                          std::numbers::pi_v<float> / 180.0f);
+               }
+
                ImGui::DragFloat3("Position", &object.position.x);
 
                if (_entity_creation_context.placement_mode == placement_mode::cursor) {

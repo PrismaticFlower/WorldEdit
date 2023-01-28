@@ -174,6 +174,7 @@ private:
       float alignment = 4.0f;
       float snap_distance = 0.5f;
 
+      float3 rotation{0.0f, 0.0f, 0.0f};
    } _entity_creation_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
