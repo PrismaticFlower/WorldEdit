@@ -619,6 +619,27 @@ void world_edit::update_ui() noexcept
                                           std::numbers::pi_v<float> / 180.0f);
                }
 
+               if (_entity_creation_context.placement_rotation ==
+                      placement_rotation::surface and
+                   _cursor_surface_normalWS and
+                   not(_cursor_surface_normalWS->x == 0.0f and
+                       _cursor_surface_normalWS->z == 0.0f)) {
+
+                  const float2 direction =
+                     normalize(float2{_cursor_surface_normalWS->x,
+                                      _cursor_surface_normalWS->z});
+
+                  const float angle = std::atan2(-direction.x, -direction.y) +
+                                      std::numbers::pi_v<float>;
+
+                  _entity_creation_context.rotation.y =
+                     std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+
+                  object.rotation =
+                     make_quat_from_euler(_entity_creation_context.rotation *
+                                          std::numbers::pi_v<float> / 180.0f);
+               }
+
                ImGui::DragFloat3("Position", &object.position.x);
 
                if (_entity_creation_context.placement_mode == placement_mode::cursor) {
@@ -679,6 +700,27 @@ void world_edit::update_ui() noexcept
             [&](world::boundary& boundary) { (void)boundary; },
          },
          *_interaction_targets.creation_entity);
+
+      ImGui::Text("Rotation");
+      ImGui::Separator();
+
+      ImGui::BeginTable("Rotation", 2,
+                        ImGuiTableFlags_NoSavedSettings |
+                           ImGuiTableFlags_SizingStretchSame);
+
+      ImGui::TableNextColumn();
+      if (ImGui::Selectable("Manual", _entity_creation_context.placement_rotation ==
+                                         placement_rotation::manual)) {
+         _entity_creation_context.placement_rotation = placement_rotation::manual;
+      }
+
+      ImGui::TableNextColumn();
+
+      if (ImGui::Selectable("Around Cursor", _entity_creation_context.placement_rotation ==
+                                                placement_rotation::surface)) {
+         _entity_creation_context.placement_rotation = placement_rotation::surface;
+      }
+      ImGui::EndTable();
 
       ImGui::Text("Placement");
       ImGui::Separator();

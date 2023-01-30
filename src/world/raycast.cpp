@@ -22,6 +22,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    std::optional<object_id> hit;
    float min_distance = std::numeric_limits<float>::max();
+   float3 surface_normalWS;
 
    for (auto& object : objects) {
       if (not active_layers[object.layer]) continue;
@@ -52,12 +53,16 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (model_hit->distance < min_distance) {
          hit = object.id;
          min_distance = model_hit->distance;
+         surface_normalWS =
+            normalize(float3x3{transpose(world_to_obj)} * model_hit->normal);
       }
    }
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<object>{.distance = min_distance, .id = *hit};
+   return raycast_result<object>{.distance = min_distance,
+                                 .normalWS = surface_normalWS,
+                                 .id = *hit};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

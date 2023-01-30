@@ -33,6 +33,8 @@ enum class placement_alignment : uint8 { none, grid, snapping };
 
 enum class placement_ground : uint8 { origin, bbox };
 
+enum class placement_rotation : uint8 { manual, surface };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -163,6 +165,7 @@ private:
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
 
+      placement_rotation placement_rotation = placement_rotation::manual;
       placement_mode placement_mode = placement_mode::cursor;
       placement_alignment placement_alignment = placement_alignment::none;
       placement_ground placement_ground = placement_ground::origin;
@@ -178,6 +181,7 @@ private:
    } _entity_creation_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
+   std::optional<float3> _cursor_surface_normalWS;
 
    utility::synchronous_task_queue _asset_load_queue;
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,

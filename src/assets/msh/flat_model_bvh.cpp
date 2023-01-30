@@ -62,9 +62,8 @@ public:
                }
 
                float3 normal =
-                  mesh.normals[tri[0]] * intersect.x +
-                  mesh.normals[tri[1]] * intersect.y +
-                  mesh.normals[tri[2]] * (1.0f - intersect.x - intersect.y);
+                  cross(mesh.positions[tri[1]] - mesh.positions[tri[0]],
+                        mesh.positions[tri[2]] - mesh.positions[tri[0]]);
 
                return FastBVH::Intersection<float, std::array<uint16, 3>>{
                   .t = intersect.x,

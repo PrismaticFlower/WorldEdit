@@ -18,6 +18,13 @@ struct raycast_result {
 };
 
 template<>
+struct raycast_result<object> {
+   float distance = 0.0f;
+   float3 normalWS;
+   object_id id;
+};
+
+template<>
 struct raycast_result<path> {
    float distance = 0.0f;
    path_id id;
