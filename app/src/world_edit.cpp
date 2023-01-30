@@ -288,10 +288,6 @@ void world_edit::update_hovered_entity() noexcept
    if (hovered_entity_distance != std::numeric_limits<float>::max()) {
       _cursor_positionWS = ray.origin + ray.direction * hovered_entity_distance;
    }
-
-   if (_cursor_surface_normalWS) {
-      ImGui::DragFloat3("Cursor Surface Normal", &_cursor_surface_normalWS->x);
-   }
 }
 
 void world_edit::update_camera(const float delta_time)
