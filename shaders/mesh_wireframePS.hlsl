@@ -13,7 +13,7 @@ struct input_vertex {
    nointerpolation float4 positionPS : FLAT_POSITIONPS;
 };
 
-float4 main(input_vertex input_vertex) : SV_TARGET
+[earlydepthstencil] float4 main(input_vertex input_vertex) : SV_TARGET
 {
 
    const float4 positionPS0 = GetAttributeAtVertex(input_vertex.positionPS, 0);
@@ -29,6 +29,9 @@ float4 main(input_vertex input_vertex) : SV_TARGET
    const float distance2 = line_distance(input_vertex.positionRT.xy, positionRT2, positionRT0);
 
    const float min_distance = min(min(distance0, distance1), distance2);
+   const float alpha = line_alpha(min_distance);
+
+   if (alpha == 0.0) discard;
 
    return float4(cb_wireframe_constants.color, line_alpha(min_distance));
 }

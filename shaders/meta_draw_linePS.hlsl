@@ -5,7 +5,11 @@ struct input_vertex {
    nointerpolation float3 color : COLOR;
 };
 
-float4 main(input_vertex input) : SV_TARGET
+[earlydepthstencil] float4 main(input_vertex input) : SV_TARGET
 {
-   return float4(input.color, line_alpha(abs(input.line_distance)));
+   const float alpha = line_alpha(abs(input.line_distance));
+
+   if (alpha == 0.0) discard;
+
+   return float4(input.color, alpha);
 }
