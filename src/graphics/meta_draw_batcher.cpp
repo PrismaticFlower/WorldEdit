@@ -63,8 +63,7 @@ void meta_draw_batcher::add_triangle(const float3& a, const float3& b,
 
 void meta_draw_batcher::add_line_solid(const float3& a, const float3& b, const uint32 color)
 {
-   _lines_solid.emplace_back(a, color);
-   _lines_solid.emplace_back(b, color);
+   _lines_solid.emplace_back(a, color, b);
 }
 
 void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
@@ -78,6 +77,8 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
    command_list.set_graphics_root_signature(root_signature_library.meta_draw.get());
    command_list.set_graphics_cbv(rs::meta_draw::frame_cbv, frame_constant_buffer);
+
+   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
    const auto draw_shapes = [&]<typename T>(const std::vector<T>& instances,
                                             gpu::pipeline_handle pipeline,
@@ -93,7 +94,6 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
       command_list.set_pipeline_state(pipeline);
 
-      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
       command_list.ia_set_index_buffer(shape.index_buffer_view);
       command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
 
@@ -102,9 +102,24 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                                           0, 0, 0);
    };
 
+   const auto draw_lines = [&](const std::vector<meta_draw_line>& lines,
+                               gpu::pipeline_handle pipeline) {
+      auto points_allocation =
+         dynamic_buffer_allocator.allocate(sizeof(meta_draw_line) * lines.size());
+
+      std::memcpy(points_allocation.cpu_address, lines.data(),
+                  sizeof(meta_draw_line) * lines.size());
+
+      command_list.set_pipeline_state(pipeline);
+
+      command_list.set_graphics_srv(rs::meta_draw::instance_data_srv,
+                                    points_allocation.gpu_address);
+
+      command_list.draw_instanced(static_cast<uint32>(lines.size()) * 6, 1, 0, 0);
+   };
+
    const auto draw_vertices = [&](const std::vector<meta_draw_vertex>& vertices,
-                                  gpu::pipeline_handle pipeline,
-                                  gpu::primitive_topology topology) {
+                                  gpu::pipeline_handle pipeline) {
       auto vertices_allocation = dynamic_buffer_allocator.allocate(
          sizeof(meta_draw_vertex) * vertices.size());
 
@@ -113,7 +128,6 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
       command_list.set_pipeline_state(pipeline);
 
-      command_list.ia_set_primitive_topology(topology);
       command_list.ia_set_vertex_buffers(
          0, gpu::vertex_buffer_view{.buffer_location = vertices_allocation.gpu_address,
                                     .size_in_bytes = static_cast<uint32>(
@@ -130,8 +144,7 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
    }
 
    if (not _lines_solid.empty()) {
-      draw_vertices(_lines_solid, pipeline_library.meta_draw_line_solid.get(),
-                    gpu::primitive_topology::linelist);
+      draw_lines(_lines_solid, pipeline_library.meta_draw_line_solid.get());
    }
 
    if (not _boxes.empty()) {
@@ -153,8 +166,7 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
    }
 
    if (not _triangles.empty()) {
-      draw_vertices(_triangles, pipeline_library.meta_draw_triangle.get(),
-                    gpu::primitive_topology::trianglelist);
+      draw_vertices(_triangles, pipeline_library.meta_draw_triangle.get());
    }
 }
 

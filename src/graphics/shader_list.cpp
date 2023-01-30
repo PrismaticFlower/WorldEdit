@@ -59,6 +59,8 @@ std::initializer_list<shader_description> shader_list = {
    shader("meta_draw_shape_outlinedVS"),
    shader("meta_draw_shapeVS"),
    shader("meta_draw_sphereVS"),
+   shader("meta_draw_linePS"),
+   shader("meta_draw_lineVS"),
 
    shader("tile_lights_clearCS"),
 

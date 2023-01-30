@@ -43,6 +43,15 @@ struct alignas(16) meta_draw_vertex {
 
 static_assert(sizeof(meta_draw_vertex) == 16);
 
+struct alignas(16) meta_draw_line {
+   float3 position0;
+   uint32 color;
+   float3 positio1;
+   uint32 pad;
+};
+
+static_assert(sizeof(meta_draw_line) == 32);
+
 struct meta_draw_batcher {
    meta_draw_batcher();
 
@@ -79,7 +88,7 @@ private:
    std::vector<meta_draw_object> _cylinders;
    std::vector<meta_draw_object> _cones;
    std::vector<meta_draw_vertex> _triangles;
-   std::vector<meta_draw_vertex> _lines_solid;
+   std::vector<meta_draw_line> _lines_solid;
 };
 
 }

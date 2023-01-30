@@ -1,5 +1,6 @@
 
 #include "samplers.hlsli"
+#include "srgb.hlsli"
 
 struct input_vertex {
    float2 position : POSITION;
@@ -12,11 +13,6 @@ struct output_vertex {
    float2 texcoords : TEXCOORDS;
    float4 color : COLOR;
 };
-
-float3 srgb_to_linear(float3 color)
-{
-   return (color < 0.04045) ? color / 12.92 : pow(abs((color + 0.055)) / 1.055, 2.4);
-}
 
 // clang-format off
 

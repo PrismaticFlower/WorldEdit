@@ -476,14 +476,13 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                               {.root_signature =
                                   root_signature_library.meta_draw.get(),
 
-                               .vs_bytecode = shader_library["meta_draw_primitiveVS"sv],
-                               .ps_bytecode = shader_library["meta_drawPS"sv],
+                               .vs_bytecode = shader_library["meta_draw_lineVS"sv],
+                               .ps_bytecode = shader_library["meta_draw_linePS"sv],
 
                                .blend_state = blend_alpha,
-                               .rasterizer_state = rasterizer_line_antialiased,
+                               .rasterizer_state = rasterizer_cull_none,
                                .depth_stencil_state = depth_stencil_readonly_less_equal,
-                               .input_layout = meta_draw_primitive_input_layout,
-                               .primitive_type = gpu::primitive_type::line,
+                               .primitive_type = gpu::primitive_type::triangle,
 
                                .render_target_count = 1,
                                .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
