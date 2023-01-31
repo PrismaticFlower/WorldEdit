@@ -211,7 +211,12 @@ void world_edit::update_ui() noexcept
    ImGui::End();
 
    if (not _interaction_targets.selection.empty()) {
-      ImGui::Begin("Selection");
+      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+                              ImGuiCond_Once, {0.0f, 0.0f});
+
+      bool selection_open = true;
+
+      ImGui::Begin("Selection", &selection_open, ImGuiWindowFlags_NoCollapse);
 
       std::visit(
          overload{
@@ -574,6 +579,8 @@ void world_edit::update_ui() noexcept
          _interaction_targets.selection.front());
 
       ImGui::End();
+
+      if (not selection_open) _interaction_targets.selection.clear();
    }
 
    if (_interaction_targets.creation_entity) {
