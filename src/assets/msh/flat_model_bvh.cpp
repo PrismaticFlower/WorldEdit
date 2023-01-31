@@ -65,6 +65,12 @@ public:
                   cross(mesh.positions[tri[1]] - mesh.positions[tri[0]],
                         mesh.positions[tri[2]] - mesh.positions[tri[0]]);
 
+               if (dot(-ray_direction, normal) < 0.0f and
+                   not are_flags_set(mesh.material.flags,
+                                     material_flags::transparent_doublesided)) {
+                  return FastBVH::Intersection<float, std::array<uint16, 3>>{};
+               }
+
                return FastBVH::Intersection<float, std::array<uint16, 3>>{
                   .t = intersect.x,
                   .object = &tri,
