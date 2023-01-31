@@ -1099,7 +1099,18 @@ void renderer_impl::draw_interaction_targets(
          command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
          command_list.ia_set_vertex_buffers(0, model.gpu_buffer.position_vertex_buffer_view);
 
+         bool doublesided = false;
+
          for (auto& part : model.parts) {
+            if (std::exchange(doublesided,
+                              are_flags_set(part.material.flags,
+                                            material_pipeline_flags::doublesided)) !=
+                doublesided) {
+               command_list.set_pipeline_state(
+                  doublesided ? _pipelines.mesh_wireframe_doublesided.get()
+                              : _pipelines.mesh_wireframe.get());
+            }
+
             command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
                                                 part.start_vertex, 0);
          }
