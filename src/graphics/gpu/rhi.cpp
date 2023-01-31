@@ -1358,9 +1358,10 @@ void command_queue::execute_command_lists(std::span<command_list*> command_lists
 
 void command_queue::sync_with(command_queue& other)
 {
-   const uint64 last_work_item = state->last_work_item.load(std::memory_order_acquire);
+   const uint64 last_work_item =
+      other.state->last_work_item.load(std::memory_order_acquire);
 
-   other.state->command_queue->Wait(state->work_fence.get(), last_work_item);
+   state->command_queue->Wait(other.state->work_fence.get(), last_work_item);
 }
 
 void command_queue::wait_for_idle()
