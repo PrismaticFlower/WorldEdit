@@ -1,12 +1,8 @@
 #pragma once
 
-#include "key_input_manager.hpp"
-#include "output_stream.hpp"
-
 #include <charconv>
 #include <concepts>
 #include <functional>
-#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -209,30 +205,6 @@ private:
    [[noreturn]] static void throw_result_out_of_range(const std::string_view arg_str);
 
    absl::flat_hash_map<std::string, std::unique_ptr<command_base>> _commands;
-};
-
-struct command_bind_args {
-   std::string command;
-   bind_key binding;
-   bind_config bind_config;
-};
-
-class commands_key_binder {
-public:
-   commands_key_binder(commands& commands, key_input_manager& key_input_manager,
-                       output_stream& error_output_stream) noexcept;
-
-   void set_default_bindings(std::initializer_list<command_bind_args> default_bindings);
-
-   void bind(std::string command, const bind_key binding, const bind_config bind_config);
-
-   void unbind(const bind_key binding) noexcept;
-
-private:
-   absl::flat_hash_map<bind_key, std::string> _bindings;
-   commands& _commands;
-   key_input_manager& _key_input_manager;
-   output_stream& _error_output_stream;
 };
 
 }

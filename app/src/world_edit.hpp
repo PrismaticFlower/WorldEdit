@@ -6,7 +6,7 @@
 #include "graphics/camera.hpp"
 #include "graphics/gpu/exception.hpp"
 #include "graphics/renderer.hpp"
-#include "key_input_manager.hpp"
+#include "hotkeys.hpp"
 #include "output_stream.hpp"
 #include "settings/settings.hpp"
 #include "utility/command_line.hpp"
@@ -104,6 +104,8 @@ private:
 
    void initialize_commands() noexcept;
 
+   void initialize_hotkeys() noexcept;
+
    void handle_gpu_error(graphics::gpu::exception& e) noexcept;
 
    standard_output_stream _stream;
@@ -142,7 +144,6 @@ private:
    std::unique_ptr<graphics::renderer> _renderer;
    graphics::camera _camera;
 
-   bool _imgui_wants_input_capture = false;
    bool _move_camera_forward = false;
    bool _move_camera_back = false;
    bool _move_camera_left = false;
@@ -200,9 +201,8 @@ private:
             _asset_load_queue.enqueue([=] { model_loaded(name, asset, data); });
          });
 
-   key_input_manager _key_input_manager;
    commands _commands;
-   commands_key_binder _commands_binder{_commands, _key_input_manager, _stream};
+   hotkeys _hotkeys{_commands, _stream};
 };
 
 }

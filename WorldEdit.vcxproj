@@ -217,12 +217,13 @@
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
     <ClCompile Include="src\graphics\triangle_drawer.cpp" />
+    <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\imgui\imgui_freetype.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
-    <ClCompile Include="src\key_input_manager.cpp" />
+    <ClCompile Include="src\key.cpp" />
     <ClCompile Include="src\math\bounding_box.cpp" />
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
@@ -353,6 +354,7 @@
     <ClInclude Include="src\graphics\triangle_drawer.hpp" />
     <ClInclude Include="src\graphics\copy_command_list_pool.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
+    <ClInclude Include="src\hotkeys.hpp" />
     <ClInclude Include="src\imgui\imconfig.h" />
     <ClInclude Include="src\imgui\imgui.h" />
     <ClInclude Include="src\imgui\imgui_impl_win32.h" />
@@ -362,7 +364,7 @@
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\imgui\imgui_freetype.h" />
-    <ClInclude Include="src\key_input_manager.hpp" />
+    <ClInclude Include="src\key.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />
     <ClInclude Include="src\io\read_file.hpp" />

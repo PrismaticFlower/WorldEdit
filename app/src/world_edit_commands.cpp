@@ -22,20 +22,25 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("edit.undo"s, [this]() { _undo_stack.revert(_world); });
    _commands.add("edit.redo"s, [this]() { _undo_stack.reapply(_world); });
-
-   _commands_binder.set_default_bindings({
-      {"camera.move_forward"s, {.key = key::w}, {.toggle = true}},
-      {"camera.move_back"s, {.key = key::s}, {.toggle = true}},
-      {"camera.move_left"s, {.key = key::a}, {.toggle = true}},
-      {"camera.move_right"s, {.key = key::d}, {.toggle = true}},
-      {"camera.move_up"s, {.key = key::r}, {.toggle = true}},
-      {"camera.move_down"s, {.key = key::f}, {.toggle = true}},
-      {"camera.rotate_with_mouse"s, {.key = key::mouse2}, {.toggle = true}},
-
-      {"edit.world_click"s, {.key = key::mouse1}},
-
-      {"edit.undo"s, {.key = key::z, .modifiers = {.ctrl = true}}},
-      {"edit.redo"s, {.key = key::y, .modifiers = {.ctrl = true}}},
-   });
 }
+
+void world_edit::initialize_hotkeys() noexcept
+{
+   _hotkeys.add_set("", [] { return true; },
+                    {
+                       {"camera.move_forward", {.key = key::w}, {.toggle = true}},
+                       {"camera.move_back", {.key = key::s}, {.toggle = true}},
+                       {"camera.move_left", {.key = key::a}, {.toggle = true}},
+                       {"camera.move_right", {.key = key::d}, {.toggle = true}},
+                       {"camera.move_up", {.key = key::r}, {.toggle = true}},
+                       {"camera.move_down", {.key = key::f}, {.toggle = true}},
+                       {"camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
+
+                       {"edit.world_click", {.key = key::mouse1}},
+
+                       {"edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
+                       {"edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
+                    });
+}
+
 }

@@ -481,9 +481,6 @@
     <ClInclude Include="src\container\slim_bitset.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\key_input_manager.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\commands.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -590,6 +587,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\assets\terrain\terrain_collision.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hotkeys.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\key.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -738,9 +741,6 @@
     <ClCompile Include="src\graphics\triangle_drawer.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\key_input_manager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\commands.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -814,6 +814,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\terrain\terrain_collision.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hotkeys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\key.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

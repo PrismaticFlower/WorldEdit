@@ -836,6 +836,22 @@ void world_edit::update_ui() noexcept
          _interaction_targets.creation_entity = std::nullopt;
       }
    }
-}
 
+   ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x, 32.0f * _display_scale},
+                           ImGuiCond_Always, {1.0f, 0.0f});
+   ImGui::SetNextWindowSizeConstraints({224.0f * _display_scale, -1.0f},
+                                       {224.0f * _display_scale, -1.0f});
+
+   ImGui::Begin("Hotkeys", nullptr,
+                ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                   ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
+                   ImGuiWindowFlags_NoBringToFrontOnFocus |
+                   ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoInputs |
+                   ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration);
+
+   ImGui::Text("Left Mouse Button");
+   ImGui::BulletText("Select");
+
+   ImGui::End();
+}
 }

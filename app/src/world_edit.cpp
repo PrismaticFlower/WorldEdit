@@ -37,6 +37,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
      _renderer{graphics::make_renderer(window, _thread_pool, _asset_libraries, _stream)}
 {
    initialize_commands();
+   initialize_hotkeys();
 
    ImGui_ImplWin32_Init(window);
 
@@ -140,14 +141,7 @@ void world_edit::update_object_classes()
 
 void world_edit::update_input() noexcept
 {
-   _imgui_wants_input_capture =
-      ImGui::GetIO().WantCaptureMouse or ImGui::GetIO().WantCaptureKeyboard;
-
-   if (_imgui_wants_input_capture) {
-      _key_input_manager.release_unmodified_toggles();
-   }
-
-   _key_input_manager.update(_imgui_wants_input_capture);
+   _hotkeys.update(ImGui::GetIO().WantCaptureMouse, ImGui::GetIO().WantCaptureKeyboard);
 
    _mouse_movement_x = std::exchange(_queued_mouse_movement_x, 0);
    _mouse_movement_y = std::exchange(_queued_mouse_movement_y, 0);
@@ -164,7 +158,7 @@ void world_edit::update_hovered_entity() noexcept
    _cursor_surface_normalWS = std::nullopt;
    float hovered_entity_distance = std::numeric_limits<float>::max();
 
-   if (_imgui_wants_input_capture) return;
+   if (ImGui::GetIO().WantCaptureMouse) return;
 
    // TODO: interaction mask instead of reusing draw mask
 
@@ -635,7 +629,7 @@ void world_edit::focused()
 void world_edit::unfocused()
 {
    _focused = false;
-   _key_input_manager.release_toggles();
+   _hotkeys.release_toggles();
 }
 
 bool world_edit::idling() const noexcept
@@ -645,12 +639,12 @@ bool world_edit::idling() const noexcept
 
 void world_edit::key_down(const key key) noexcept
 {
-   _key_input_manager.notify_key_down(key);
+   _hotkeys.notify_key_down(key);
 }
 
 void world_edit::key_up(const key key) noexcept
 {
-   _key_input_manager.notify_key_up(key);
+   _hotkeys.notify_key_up(key);
 }
 
 void world_edit::mouse_movement(const int32 x_movement, const int32 y_movement) noexcept

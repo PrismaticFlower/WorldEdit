@@ -51,7 +51,7 @@
     <ClCompile Include="src\utility\overload_tests.cpp" />
     <ClCompile Include="src\utility\look_for_tests.cpp" />
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
-    <ClCompile Include="src\key_input_manager_tests.cpp" />
+    <ClCompile Include="src\hotkeys_tests.cpp" />
     <ClCompile Include="src\commands_test.cpp" />
     <ClCompile Include="src\actions\stack_tests.cpp" />
     <ClCompile Include="src\actions\ui_action_tests.cpp" />
