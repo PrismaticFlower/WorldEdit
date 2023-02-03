@@ -38,8 +38,10 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
                       std::initializer_list<hotkey_default> default_hotkeys)
 {
    absl::flat_hash_map<hotkey_bind, hotkey> bindings;
+   absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
 
    bindings.reserve(default_hotkeys.size());
+   query_bindings.reserve(default_hotkeys.size());
 
    for (auto& default_hotkey : default_hotkeys) {
       validate_command(default_hotkey.command);
@@ -49,9 +51,10 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
                               .toggle = default_hotkey.bind_config.toggle,
                               .ignore_imgui_focus =
                                  default_hotkey.bind_config.ignore_imgui_focus});
+      query_bindings.emplace(default_hotkey.command, default_hotkey.binding);
    }
 
-   _hotkey_sets.emplace_back(set_name, std::move(activated), std::move(bindings));
+   _hotkey_sets.emplace_back(set_name, std::move(activated), std::move(bindings), std::move(query_bindings));
 }
 
 void hotkeys::notify_key_down(const key key) noexcept
@@ -87,6 +90,22 @@ void hotkeys::update(const bool imgui_has_mouse, const bool imgui_has_keyboard) 
    }
 
    _key_events.clear();
+}
+
+auto hotkeys::query_binding(std::string_view set_name, std::string_view command) const noexcept
+   -> std::optional<hotkey_bind>
+{
+   for (const auto& set : _hotkey_sets) {
+      if (set.name != set_name) continue;
+
+      if (auto it = set.query_bindings.find(command); it != set.query_bindings.end()) {
+         const auto& [hotkey_command, hotkey_bind] = *it;
+
+         if (hotkey_command == command) return hotkey_bind;
+      }
+   }
+
+   return std::nullopt;
 }
 
 void hotkeys::process_new_key_state(const key key, const key_state new_state,

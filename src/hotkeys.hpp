@@ -6,6 +6,7 @@
 #include "output_stream.hpp"
 
 #include <initializer_list>
+#include <optional>
 #include <string_view>
 
 #include <absl/container/flat_hash_map.h>
@@ -75,6 +76,14 @@ struct hotkeys {
    /// @brief Call and clear the state for all toggle bindings.
    void release_toggles() noexcept;
 
+   /// @brief Query for the key bound to a command string in a set.
+   /// @param set_name The name of the set.
+   /// @param command The command to query.
+   /// @return The key(s) bound to the command or nullopt if the command is unbound in the set.
+   auto query_binding(std::string_view set_name, std::string_view command) const noexcept
+
+      -> std::optional<hotkey_bind>;
+
 private:
    enum class key_state : bool { up, down };
 
@@ -113,6 +122,7 @@ private:
       std::string name;
       std::function<bool()> activated_predicate;
       absl::flat_hash_map<hotkey_bind, hotkey> bindings;
+      absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
    };
 
    std::vector<hotkey_set> _hotkey_sets;
