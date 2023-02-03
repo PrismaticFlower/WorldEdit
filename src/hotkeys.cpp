@@ -54,7 +54,8 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
       query_bindings.emplace(default_hotkey.command, default_hotkey.binding);
    }
 
-   _hotkey_sets.emplace_back(set_name, std::move(activated), std::move(bindings), std::move(query_bindings));
+   _hotkey_sets.emplace_back(set_name, std::move(activated),
+                             std::move(bindings), std::move(query_bindings));
 }
 
 void hotkeys::notify_key_down(const key key) noexcept
@@ -118,7 +119,7 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
    if (key == key::control) return;
    if (key == key::shift) return;
 
-   for (std::size_t i = 0; i < _hotkey_sets.size(); ++i) {
+   for (std::ptrdiff_t i = std::ssize(_hotkey_sets) - 1; i >= 0; --i) {
       hotkey_set& set = _hotkey_sets[i];
 
       if (not set.activated_predicate()) continue;
@@ -140,10 +141,10 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
             try_execute_command(hotkey.command);
 
             if (hotkey.toggle_active) {
-               _active_toggles.emplace(i, bind);
+               _active_toggles.emplace(static_cast<std::size_t>(i), bind);
             }
             else {
-               _active_toggles.erase({i, bind});
+               _active_toggles.erase({static_cast<std::size_t>(i), bind});
             }
          }
          else if (new_state == key_state::down) {
@@ -161,18 +162,22 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
           bind_hotkey != bindings.end() and is_key_down(key::control) and
           is_key_down(key::shift)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
       }
       else if (bind_hotkey = bindings.find({.key = key, .modifiers = {.ctrl = true}});
                bind_hotkey != bindings.end() and is_key_down(key::control)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
       }
       else if (bind_hotkey = bindings.find({.key = key, .modifiers = {.shift = true}});
                bind_hotkey != bindings.end() and is_key_down(key::shift)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
       }
       else if (bind_hotkey = bindings.find({.key = key});
                bind_hotkey != bindings.end()) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
       }
    }
 }

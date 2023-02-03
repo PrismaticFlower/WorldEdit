@@ -339,4 +339,103 @@ TEST_CASE("hotkeys toggle bind deactivated release test", "[Hotkeys]")
    REQUIRE(called_count == 2);
 }
 
+TEST_CASE("hotkeys basic multiset bind test", "[Hotkeys]")
+{
+   int a_called_count = 0;
+   int b_called_count = 0;
+
+   commands commands;
+   null_output_stream output;
+
+   commands.add("a_called", [&] { ++a_called_count; });
+   commands.add("b_called", [&] { ++b_called_count; });
+
+   hotkeys hotkeys{commands, output};
+
+   hotkeys.add_set("A", [] { return true; }, {{"a_called", {.key = key::a}}});
+   hotkeys.add_set("B", [] { return true; }, {{"b_called", {.key = key::a}}});
+
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(a_called_count == 0);
+   REQUIRE(b_called_count == 1);
+
+   hotkeys.notify_key_up(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(a_called_count == 0);
+   REQUIRE(b_called_count == 1);
+}
+
+TEST_CASE("hotkeys basic multiset toggle test", "[Hotkeys]")
+{
+   bool a_called = false;
+   bool b_called = false;
+
+   commands commands;
+   null_output_stream output;
+
+   commands.add("a_called", a_called);
+   commands.add("b_called", b_called);
+
+   hotkeys hotkeys{commands, output};
+
+   hotkeys.add_set("A", [] { return true; },
+                   {{"a_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set("B", [] { return true; },
+                   {{"b_called", {.key = key::a}, {.toggle = true}}});
+
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(not a_called);
+   REQUIRE(b_called);
+
+   hotkeys.notify_key_up(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(not a_called);
+   REQUIRE(not b_called);
+}
+
+TEST_CASE("hotkeys basic multiset toggle deactivate test", "[Hotkeys]")
+{
+   bool a_called = false;
+   bool b_called = false;
+
+   bool b_active = true;
+
+   commands commands;
+   null_output_stream output;
+
+   commands.add("a_called", a_called);
+   commands.add("b_called", b_called);
+
+   hotkeys hotkeys{commands, output};
+
+   hotkeys.add_set("A", [] { return true; },
+                   {{"a_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set("B", [&] { return b_active; },
+                   {{"b_called", {.key = key::a}, {.toggle = true}}});
+
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(not a_called);
+   REQUIRE(b_called);
+
+   b_active = false;
+
+   hotkeys.update(false, false);
+
+   REQUIRE(not a_called);
+   REQUIRE(not b_called);
+
+   hotkeys.notify_key_up(key::a);
+
+   REQUIRE(not a_called);
+   REQUIRE(not b_called);
+}
+
 }
