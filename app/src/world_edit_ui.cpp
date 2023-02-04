@@ -210,6 +210,22 @@ void world_edit::update_ui() noexcept
 
    ImGui::End();
 
+   if (_hotkeys_show) {
+      ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x, 32.0f * _display_scale},
+                              ImGuiCond_Always, {1.0f, 0.0f});
+      ImGui::SetNextWindowSizeConstraints({224.0f * _display_scale, -1.0f},
+                                          {224.0f * _display_scale, -1.0f});
+
+      ImGui::Begin("Hotkeys", &_hotkeys_show,
+                   ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                      ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
+                      ImGuiWindowFlags_NoBringToFrontOnFocus |
+                      ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoInputs |
+                      ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration);
+
+      ImGui::End();
+   }
+
    if (not _interaction_targets.selection.empty()) {
       ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
@@ -832,26 +848,50 @@ void world_edit::update_ui() noexcept
 
       ImGui::End();
 
+      if (_hotkeys_show) {
+         ImGui::Begin("Hotkeys");
+
+         ImGui::Text("Change Rotation Mode");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "entity_creation.cycle_rotation_mode")));
+
+         ImGui::Text("Change Placement Mode");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "entity_creation.cycle_placement_mode")));
+
+         ImGui::Text("Lock X Position");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "entity_creation.lock_x_axis")));
+
+         ImGui::Text("Lock Y Position");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "entity_creation.lock_y_axis")));
+
+         ImGui::Text("Lock Z Position");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "entity_creation.lock_z_axis")));
+
+         ImGui::Text("Change Alignment Mode");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "entity_creation.cycle_alignment_mode")));
+
+         ImGui::Text("Change Grounding Mode");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "entity_creation.cycle_ground_mode")));
+
+         ImGui::End();
+      }
+
       if (not continue_creation) {
          _interaction_targets.creation_entity = std::nullopt;
       }
    }
-
-   ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x, 32.0f * _display_scale},
-                           ImGuiCond_Always, {1.0f, 0.0f});
-   ImGui::SetNextWindowSizeConstraints({224.0f * _display_scale, -1.0f},
-                                       {224.0f * _display_scale, -1.0f});
-
-   ImGui::Begin("Hotkeys", nullptr,
-                ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                   ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
-                   ImGuiWindowFlags_NoBringToFrontOnFocus |
-                   ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoInputs |
-                   ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration);
-
-   ImGui::Text("Left Mouse Button");
-   ImGui::BulletText("Select");
-
-   ImGui::End();
 }
 }

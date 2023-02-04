@@ -151,6 +151,7 @@ private:
    bool _move_camera_up = false;
    bool _move_camera_down = false;
    bool _rotate_camera = false;
+   bool _hotkeys_show = false;
 
    POINT _rotate_camera_cursor_position = {0, 0};
 

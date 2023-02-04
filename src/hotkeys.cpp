@@ -240,4 +240,12 @@ void hotkeys::try_execute_command(const std::string_view command) const noexcept
    }
 }
 
+auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*
+{
+   if (not binding) return "<UNBOUND>";
+
+   return get_display_string(binding->key, binding->modifiers.ctrl,
+                             binding->modifiers.shift);
+}
+
 }

@@ -148,4 +148,6 @@ private:
    container::enum_array<key_state, key> _keys{};
 };
 
+auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*;
+
 }

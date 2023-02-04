@@ -125,7 +125,7 @@ auto translate_virtual_key(const std::uintptr_t vk) noexcept -> key;
 /// @param ctrl Include Ctrl + in the string.
 /// @param shift Include Shift + in the string.
 /// @return The C string for passing to ImGui for display.
-auto get_hotkey_display_string(const key key, const bool ctrl, const bool shift)
+auto get_display_string(const key key, const bool ctrl, const bool shift)
    -> const char*;
 
 }

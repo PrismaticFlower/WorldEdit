@@ -555,8 +555,7 @@ constexpr container::enum_array<const char*, key> ctrl_shift_key_display_names =
 
 }
 
-auto get_hotkey_display_string(const key key, const bool ctrl, const bool shift)
-   -> const char*
+auto get_display_string(const key key, const bool ctrl, const bool shift) -> const char*
 {
    if (ctrl and shift) return ctrl_shift_key_display_names[key];
    if (shift) return shift_key_display_names[key];
