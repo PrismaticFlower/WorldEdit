@@ -116,7 +116,7 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
    const key_state old_state = std::exchange(_keys[key], new_state);
 
    if (old_state == new_state) return;
-   if (key == key::control) return;
+   if (key == key::ctrl) return;
    if (key == key::shift) return;
 
    for (std::ptrdiff_t i = std::ssize(_hotkey_sets) - 1; i >= 0; --i) {
@@ -159,13 +159,13 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
 
       if (auto bind_hotkey =
              bindings.find({.key = key, .modifiers = {.ctrl = true, .shift = true}});
-          bind_hotkey != bindings.end() and is_key_down(key::control) and
+          bind_hotkey != bindings.end() and is_key_down(key::ctrl) and
           is_key_down(key::shift)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
          break;
       }
       else if (bind_hotkey = bindings.find({.key = key, .modifiers = {.ctrl = true}});
-               bind_hotkey != bindings.end() and is_key_down(key::control)) {
+               bind_hotkey != bindings.end() and is_key_down(key::ctrl)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
          break;
       }
