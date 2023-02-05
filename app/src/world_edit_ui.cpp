@@ -54,7 +54,11 @@ void world_edit::update_ui() noexcept
 
          const bool loaded_world = not _world_path.empty();
 
-         ImGui::MenuItem("Save World", "Ctrl + S", nullptr, false);
+         if (ImGui::MenuItem("Save World",
+                             get_display_string(
+                                _hotkeys.query_binding("", "save")))) {
+            save_world(_world_path);
+         }
 
          if (ImGui::MenuItem("Save World As...", nullptr, nullptr, loaded_world)) {
             save_world_with_picker();
@@ -70,14 +74,22 @@ void world_edit::update_ui() noexcept
       }
 
       if (ImGui::BeginMenu("Edit")) {
-         if (ImGui::MenuItem("Undo", "Ctrl + Z")) _undo_stack.revert(_world);
-         if (ImGui::MenuItem("Redo", "Ctrl + Y")) _undo_stack.reapply(_world);
+         if (ImGui::MenuItem("Undo",
+                             get_display_string(
+                                _hotkeys.query_binding("", "edit.undo")))) {
+            _undo_stack.revert(_world);
+         }
+         if (ImGui::MenuItem("Redo",
+                             get_display_string(
+                                _hotkeys.query_binding("", "edit.redo")))) {
+            _undo_stack.reapply(_world);
+         }
 
          ImGui::Separator();
 
-         ImGui::MenuItem("Cut", "Ctrl + X", nullptr, false);
-         ImGui::MenuItem("Copy", "Ctrl + C", nullptr, false);
-         ImGui::MenuItem("Paste", "Ctrl + V", nullptr, false);
+         ImGui::MenuItem("Cut", nullptr, nullptr, false);
+         ImGui::MenuItem("Copy", nullptr, nullptr, false);
+         ImGui::MenuItem("Paste", nullptr, nullptr, false);
 
          ImGui::EndMenu();
       }

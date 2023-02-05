@@ -25,6 +25,8 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("hotkeys.show"s, _hotkeys_show);
 
+   _commands.add("save"s, [this]() { save_world(_world_path); });
+
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_context.placement_rotation) {
       case placement_rotation::manual:
@@ -92,6 +94,8 @@ void world_edit::initialize_hotkeys() noexcept
                        {"edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
 
                        {"hotkeys.show", {.key = key::f1}},
+
+                       {"save", {.key = key::s, .modifiers = {.ctrl = true}}},
                     });
 
    _hotkeys.add_set("Entity Creation",
