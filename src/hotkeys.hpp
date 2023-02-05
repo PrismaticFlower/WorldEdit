@@ -92,6 +92,8 @@ private:
    void release_stale_toggles(const bool imgui_has_mouse,
                               const bool imgui_has_keyboard) noexcept;
 
+   void release_modified_toggles(const bool ctrl, const bool shift) noexcept;
+
    void process_new_key_state(const key key, const key_state new_state,
                               const bool imgui_has_mouse,
                               const bool imgui_has_keyboard);
@@ -128,7 +130,7 @@ private:
    std::vector<hotkey_set> _hotkey_sets;
 
    struct active_toggle {
-      std::size_t set_index;
+      std::ptrdiff_t set_index;
       hotkey_bind bind;
 
       template<typename H>
@@ -139,6 +141,8 @@ private:
 
       constexpr bool operator==(const active_toggle&) const noexcept = default;
    };
+
+   using activated_hotkey = active_toggle;
 
    absl::flat_hash_set<active_toggle> _active_toggles;
 

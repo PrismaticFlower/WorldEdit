@@ -116,8 +116,12 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
    const key_state old_state = std::exchange(_keys[key], new_state);
 
    if (old_state == new_state) return;
-   if (key == key::ctrl) return;
-   if (key == key::shift) return;
+
+   if (key == key::ctrl or key == key::shift) {
+      release_modified_toggles(key == key::ctrl, key == key::shift);
+   }
+
+   std::optional<activated_hotkey> activated = std::nullopt;
 
    for (std::ptrdiff_t i = std::ssize(_hotkey_sets) - 1; i >= 0; --i) {
       hotkey_set& set = _hotkey_sets[i];
@@ -141,10 +145,10 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
             try_execute_command(hotkey.command);
 
             if (hotkey.toggle_active) {
-               _active_toggles.emplace(static_cast<std::size_t>(i), bind);
+               _active_toggles.emplace(i, bind);
             }
             else {
-               _active_toggles.erase({static_cast<std::size_t>(i), bind});
+               _active_toggles.erase({i, bind});
             }
          }
          else if (new_state == key_state::down) {
@@ -162,22 +166,45 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
           bind_hotkey != bindings.end() and is_key_down(key::ctrl) and
           is_key_down(key::shift)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         activated = activated_hotkey{i, bind_hotkey->first};
          break;
       }
       else if (bind_hotkey = bindings.find({.key = key, .modifiers = {.ctrl = true}});
                bind_hotkey != bindings.end() and is_key_down(key::ctrl)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         activated = activated_hotkey{i, bind_hotkey->first};
          break;
       }
       else if (bind_hotkey = bindings.find({.key = key, .modifiers = {.shift = true}});
                bind_hotkey != bindings.end() and is_key_down(key::shift)) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         activated = activated_hotkey{i, bind_hotkey->first};
          break;
       }
       else if (bind_hotkey = bindings.find({.key = key});
                bind_hotkey != bindings.end()) {
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         activated = activated_hotkey{i, bind_hotkey->first};
          break;
+      }
+   }
+
+   if (activated) {
+      for (auto it = _active_toggles.begin(); it != _active_toggles.end();) {
+         auto active_toggle = it++;
+
+         if (*active_toggle == activated) continue;
+
+         if (active_toggle->bind.key == activated->bind.key) {
+            hotkey& hotkey =
+               _hotkey_sets[active_toggle->set_index].bindings[active_toggle->bind];
+
+            if (std::exchange(hotkey.toggle_active, false)) {
+               _commands.execute(hotkey.command);
+            }
+
+            _active_toggles.erase(active_toggle);
+         }
       }
    }
 }
@@ -221,6 +248,27 @@ void hotkeys::release_stale_toggles(const bool imgui_has_mouse,
          _commands.execute(hotkey.command);
          _active_toggles.erase(active);
       }
+   }
+}
+
+void hotkeys::release_modified_toggles(const bool ctrl, const bool shift) noexcept
+{
+   for (auto it = _active_toggles.begin(); it != _active_toggles.end();) {
+      auto active_toggle = it++;
+
+      const bool release = active_toggle->bind.modifiers.ctrl == ctrl or
+                           active_toggle->bind.modifiers.shift == shift;
+
+      if (not release) continue;
+
+      hotkey& hotkey =
+         _hotkey_sets[active_toggle->set_index].bindings[active_toggle->bind];
+
+      if (std::exchange(hotkey.toggle_active, false)) {
+         _commands.execute(hotkey.command);
+      }
+
+      _active_toggles.erase(active_toggle);
    }
 }
 

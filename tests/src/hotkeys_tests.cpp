@@ -55,6 +55,34 @@ TEST_CASE("hotkeys toggle bind test", "[Hotkeys]")
    REQUIRE(not called);
 }
 
+TEST_CASE("hotkeys modified toggle bind test", "[Hotkeys]")
+{
+   bool called = false;
+
+   commands commands;
+   null_output_stream output;
+
+   commands.add("toggle_called", called);
+
+   hotkeys hotkeys{commands, output};
+
+   hotkeys.add_set("", [] { return true; },
+                   {{"toggle_called",
+                     {.key = key::a, .modifiers = {.ctrl = true}},
+                     {.toggle = true}}});
+
+   hotkeys.notify_key_down(key::ctrl);
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(called);
+
+   hotkeys.notify_key_up(key::ctrl);
+   hotkeys.update(false, false);
+
+   REQUIRE(not called);
+}
+
 TEST_CASE("hotkeys toggle bind release_toggles test", "[Hotkeys]")
 {
    bool called = false;
@@ -436,6 +464,48 @@ TEST_CASE("hotkeys basic multiset toggle deactivate test", "[Hotkeys]")
 
    REQUIRE(not a_called);
    REQUIRE(not b_called);
+}
+
+TEST_CASE("hotkeys basic multiset overlap modified toggle test", "[Hotkeys]")
+{
+   int a_called_count = 0;
+   int b_called_count = 0;
+
+   bool b_active = false;
+
+   commands commands;
+   null_output_stream output;
+
+   commands.add("a_called", [&] { ++a_called_count; });
+   commands.add("b_called", [&] { ++b_called_count; });
+
+   hotkeys hotkeys{commands, output};
+
+   hotkeys.add_set("A", [] { return true; },
+                   {{"a_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set("B", [&] { return b_active; },
+                   {{"b_called", {.key = key::a, .modifiers = {.ctrl = true}}}});
+
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(a_called_count == 1);
+   REQUIRE(b_called_count == 0);
+
+   b_active = true;
+
+   hotkeys.notify_key_down(key::ctrl);
+   hotkeys.notify_key_up(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(a_called_count == 2);
+   REQUIRE(b_called_count == 0);
+
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(a_called_count == 2);
+   REQUIRE(b_called_count == 1);
 }
 
 }
