@@ -724,8 +724,9 @@ void world_edit::update_ui() noexcept
          },
          *_interaction_targets.creation_entity);
 
-      ImGui::Text("Rotation");
       ImGui::Separator();
+
+      ImGui::Text("Rotation");
 
       ImGui::BeginTable("Rotation", 2,
                         ImGuiTableFlags_NoSavedSettings |
@@ -744,9 +745,9 @@ void world_edit::update_ui() noexcept
          _entity_creation_context.placement_rotation = placement_rotation::surface;
       }
       ImGui::EndTable();
+      ImGui::Separator();
 
       ImGui::Text("Placement");
-      ImGui::Separator();
 
       ImGui::BeginTable("Placement", 2,
                         ImGuiTableFlags_NoSavedSettings |
@@ -765,10 +766,10 @@ void world_edit::update_ui() noexcept
          _entity_creation_context.placement_mode = placement_mode::cursor;
       }
       ImGui::EndTable();
+      ImGui::Separator();
 
       if (_entity_creation_context.placement_mode == placement_mode::cursor) {
          ImGui::Text("Locked Position");
-         ImGui::Separator();
 
          ImGui::BeginTable("Locked Position", 3,
                            ImGuiTableFlags_NoSavedSettings |
@@ -782,9 +783,9 @@ void world_edit::update_ui() noexcept
          ImGui::Selectable("Z", &_entity_creation_context.lock_z_axis);
 
          ImGui::EndTable();
+         ImGui::Separator();
 
          ImGui::Text("Align To");
-         ImGui::Separator();
 
          ImGui::BeginTable("Align To", 3,
                            ImGuiTableFlags_NoSavedSettings |
@@ -809,9 +810,9 @@ void world_edit::update_ui() noexcept
          }
 
          ImGui::EndTable();
+         ImGui::Separator();
 
          ImGui::Text("Ground With");
-         ImGui::Separator();
 
          ImGui::BeginTable("Ground With", 2,
                            ImGuiTableFlags_NoSavedSettings |
