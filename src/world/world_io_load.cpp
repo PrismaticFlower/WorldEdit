@@ -27,7 +27,7 @@ void throw_layer_load_failure(std::string_view type,
                               const std::filesystem::path& filepath, std::exception& e)
 {
    throw load_failure{fmt::format("Failed to load layer {}.\n   "
-                                  "File: {}\n   Message: {}\n"sv,
+                                  "File: {}\n   Message: {}\n",
                                   type, filepath.string(),
                                   utility::string::indent(2, e.what()))};
 }
@@ -103,7 +103,7 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
          throw load_failure{
             fmt::format("Failed to load layer index.\n   File: {}\n   Layer "
                         "index did "
-                        "not contain a valid entry for the [Base] layer!\n"sv,
+                        "not contain a valid entry for the [Base] layer!\n",
                         path.string())};
       }
 
@@ -149,16 +149,17 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
       }
 
       if (world_out.layer_descriptions.size() > max_layers) {
-         throw load_failure{fmt::format("Failed to load layer index.\n   File: {}\n   Too many layers!\n      Max Supported: {}\n      World Count: {}\n"sv,
-                                        path.string(), max_layers,
-                                        world_out.layer_descriptions.size())};
+         throw load_failure{fmt::format(
+            "Failed to load layer index.\n   File: {}\n   Too many layers!\n   "
+            "   Max Supported: {}\n      World Count: {}\n",
+            path.string(), max_layers, world_out.layer_descriptions.size())};
       }
 
       return layer_remap;
    }
    catch (std::exception& e) {
       throw load_failure{fmt::format("Failed to layer index.\n   "
-                                     "File: {}\n   Message: {}\n"sv,
+                                     "File: {}\n   Message: {}\n",
                                      path.string(),
                                      utility::string::indent(2, e.what()))};
    }
@@ -203,7 +204,7 @@ void load_objects(const std::filesystem::path& path, const std::string_view laye
          }
 
          if (verbose_output) {
-            output.write("Loaded world object '{}' with class '{}'\n"sv,
+            output.write("Loaded world object '{}' with class '{}'\n",
                          object.name, object.class_name);
          }
       }
@@ -212,7 +213,7 @@ void load_objects(const std::filesystem::path& path, const std::string_view laye
       throw_layer_load_failure("objects", path.string(), e);
    }
 
-   output.write("Loaded layer '{}' objects (time taken {:f}ms)\n"sv, layer_name,
+   output.write("Loaded layer '{}' objects (time taken {:f}ms)\n", layer_name,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -240,7 +241,8 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
                light.light_type = static_cast<light_type>(type);
                break;
             default:
-               output.write("Warning! World light '{}' has invalid light type! Defaulting to point light.\n"sv,
+               output.write("Warning! World light '{}' has invalid light type! "
+                            "Defaulting to point light.\n",
                             light.name);
                light.light_type = light_type::point;
             }
@@ -264,7 +266,8 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
                      static_cast<texture_addressing>(addressing);
                   break;
                default:
-                  output.write("Warning! World light '{}' has invalid texture addressing mode! Defaulting to clamp.\n"sv,
+                  output.write("Warning! World light '{}' has invalid texture "
+                               "addressing mode! Defaulting to clamp.\n",
                                light.name);
                   light.texture_addressing = texture_addressing::clamp;
                }
@@ -325,7 +328,7 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
       throw_layer_load_failure("lights", path.string(), e);
    }
 
-   output.write("Loaded layer '{}' lights (time taken {:f}ms)\n"sv, layer_name,
+   output.write("Loaded layer '{}' lights (time taken {:f}ms)\n", layer_name,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -363,7 +366,7 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
          }
 
          if (verbose_output) {
-            output.write("Loaded world path '{}'\n"sv, path.name);
+            output.write("Loaded world path '{}'\n", path.name);
          }
       }
    }
@@ -371,7 +374,7 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
       throw_layer_load_failure("paths", filepath.string(), e);
    }
 
-   output.write("Loaded layer '{}' paths (time taken {:f}ms)\n"sv, layer_name,
+   output.write("Loaded layer '{}' paths (time taken {:f}ms)\n", layer_name,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -408,13 +411,14 @@ void load_regions(const std::filesystem::path& filepath,
             region.shape = static_cast<region_shape>(shape);
             break;
          default:
-            output.write("Warning! World region '{}' has invalid shape! Defaulting to box.\n"sv,
+            output.write("Warning! World region '{}' has invalid shape! "
+                         "Defaulting to box.\n",
                          region.name);
             region.shape = region_shape::box;
          }
 
          if (verbose_output) {
-            output.write("Loaded world region '{}'\n"sv, region.name);
+            output.write("Loaded world region '{}'\n", region.name);
          }
       }
    }
@@ -422,7 +426,7 @@ void load_regions(const std::filesystem::path& filepath,
       throw_layer_load_failure("regions", filepath.string(), e);
    }
 
-   output.write("Loaded layer '{}' regions (time taken {:f}ms)\n"sv, layer_name,
+   output.write("Loaded layer '{}' regions (time taken {:f}ms)\n", layer_name,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -458,7 +462,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
             }
 
             if (verbose_output) {
-               output.write("Loaded world sector '{}'\n"sv, sector.name);
+               output.write("Loaded world sector '{}'\n", sector.name);
             }
          }
          else if (key_node.key == "Portal"sv) {
@@ -480,7 +484,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
             }
 
             if (verbose_output) {
-               output.write("Loaded world portal '{}'\n"sv, portal.name);
+               output.write("Loaded world portal '{}'\n", portal.name);
             }
          }
       }
@@ -489,7 +493,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
       throw_layer_load_failure("portals and sectors", filepath.string(), e);
    }
 
-   output.write("Loaded world portals and sectors (time taken {:f}ms)\n"sv,
+   output.write("Loaded world portals and sectors (time taken {:f}ms)\n",
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -524,14 +528,15 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
                corner = std::find_if(corner + 1, key_node.cend(), is_corner);
             }
             else {
-               output.write("Warning! World barrier '{}' is missing one or more corners!\n"sv,
+               output.write("Warning! World barrier '{}' is missing one or "
+                            "more corners!\n",
                             barrier.name);
                break;
             }
          }
 
          if (verbose_output) {
-            output.write("Loaded world barrier '{}'\n"sv, barrier.name);
+            output.write("Loaded world barrier '{}'\n", barrier.name);
          }
       }
    }
@@ -539,7 +544,7 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
       throw_layer_load_failure("barriers", filepath.string(), e);
    }
 
-   output.write("Loaded world barriers (time taken {:f}ms)\n"sv,
+   output.write("Loaded world barriers (time taken {:f}ms)\n",
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -563,7 +568,7 @@ void load_boundaries(const std::filesystem::path& filepath,
             boundary.id = world_out.next_id.boundaries.aquire();
 
             if (verbose_output) {
-               output.write("Loaded world boundary '{}'\n"sv, boundary.name);
+               output.write("Loaded world boundary '{}'\n", boundary.name);
             }
          }
       }
@@ -572,7 +577,7 @@ void load_boundaries(const std::filesystem::path& filepath,
       throw_layer_load_failure("boundaries", filepath.string(), e);
    }
 
-   output.write("Loaded world boundaries (time taken {:f}ms)\n"sv,
+   output.write("Loaded world boundaries (time taken {:f}ms)\n",
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -621,7 +626,7 @@ void load_hintnodes(const std::filesystem::path& filepath,
          }
 
          if (verbose_output) {
-            output.write("Loaded world hint node '{}'\n"sv, hint.name);
+            output.write("Loaded world hint node '{}'\n", hint.name);
          }
       }
    }
@@ -629,7 +634,7 @@ void load_hintnodes(const std::filesystem::path& filepath,
       throw_layer_load_failure("hint nodes", filepath.string(), e);
    }
 
-   output.write("Loaded layer '{}' hint nodes (time taken {:f}ms)\n"sv, layer_name,
+   output.write("Loaded layer '{}' hint nodes (time taken {:f}ms)\n", layer_name,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
@@ -695,7 +700,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
          auto layer = world.layer_descriptions[i];
 
-         load_layer(world_dir, fmt::format("{}_{}"sv, world.name, layer.name),
+         load_layer(world_dir, fmt::format("{}_{}", world.name, layer.name),
                     ".lyr"sv, output, world, layer_remap, static_cast<int32>(i));
       }
 
@@ -705,14 +710,15 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
          world.terrain =
             read_terrain(io::read_file_to_bytes(world_dir / world.name += ".ter"sv));
 
-         output.write("Loaded world terrain (time taken {:f}ms)\n"sv,
+         output.write("Loaded world terrain (time taken {:f}ms)\n",
                       load_timer
                          .elapsed<std::chrono::duration<double, std::milli>>()
                          .count());
       }
       catch (std::exception& e) {
-         auto message = fmt::format("Error while loading terrain:\n   Message: \n{}\n"sv,
-                                    utility::string::indent(2, e.what()));
+         auto message =
+            fmt::format("Error while loading terrain:\n   Message: \n{}\n",
+                        utility::string::indent(2, e.what()));
 
          output.write(message);
 
@@ -720,8 +726,9 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       }
    }
    catch (load_failure& failure) {
-      output.write("Error while loading world:\n   World: {}\n   Message: \n{}\n"sv,
-                   path.string(), utility::string::indent(2, failure.what()));
+      output
+         .write("Error while loading world:\n   World: {}\n   Message: \n{}\n",
+                path.string(), utility::string::indent(2, failure.what()));
 
       throw;
    }
