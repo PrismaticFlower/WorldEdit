@@ -41,6 +41,44 @@ bool is_numeric_path_property(const std::string_view str) noexcept
    return true;
 }
 
+bool is_regional_light(const light& light) noexcept
+{
+   switch (light.light_type) {
+   case light_type::directional_region_box:
+   case light_type::directional_region_sphere:
+   case light_type::directional_region_cylinder:
+      return not light.region_name.empty();
+   default:
+      return false;
+   }
+}
+
+auto flatten_light_type(const light& light) noexcept -> light_type
+{
+   switch (light.light_type) {
+   case light_type::directional_region_box:
+   case light_type::directional_region_sphere:
+   case light_type::directional_region_cylinder:
+      return light_type::directional;
+   default:
+      return light.light_type;
+   }
+}
+
+auto light_region_shape(const light& light) noexcept -> region_shape
+{
+   switch (light.light_type) {
+   case light_type::directional_region_box:
+      return region_shape::box;
+   case light_type::directional_region_sphere:
+      return region_shape::sphere;
+   case light_type::directional_region_cylinder:
+      return region_shape::cylinder;
+   default:
+      return region_shape::box;
+   }
+}
+
 void save_objects(const std::filesystem::path& path, const std::string_view layer_name,
                   const int layer_index, const world& world)
 {
@@ -191,6 +229,13 @@ void save_regions(const std::filesystem::path& path, const int layer_index,
       std::accumulate(world.regions.begin(), world.regions.end(), 0,
                       [=](int total, const region& region) {
                          return layer_index == region.layer ? total + 1 : total;
+                      }) +
+      std::accumulate(world.lights.begin(), world.lights.end(), 0,
+                      [=](int total, const light& light) {
+                         return is_regional_light(light) and
+                                      layer_index == light.layer
+                                   ? total + 1
+                                   : total;
                       });
 
    file.write_ln("Version(1);");
@@ -220,6 +265,31 @@ void save_regions(const std::filesystem::path& path, const int layer_index,
 
       file.write_ln("}\n");
    }
+
+   for (auto& light : world.lights) {
+      if (not is_regional_light(light)) continue;
+
+      if (light.layer != layer_index) continue;
+
+      const auto rotation = flip_rotation(light.region_rotation);
+      const auto position = flip_position(light.position);
+
+      file.write_ln("Region(\"{}\", {})", light.region_name,
+                    static_cast<int>(light_region_shape(light)));
+      file.write_ln("{");
+
+      if (layer_index != 0) file.write_ln("\tLayer({});", light.layer);
+
+      file.write_ln("\tPosition({:f}, {:f}, {:f});", position.x, position.y,
+                    position.z);
+      file.write_ln("\tRotation({:f}, {:f}, {:f}, {:f});", rotation.w,
+                    rotation.x, rotation.y, rotation.z);
+      file.write_ln("\tSize({:f}, {:f}, {:f});", light.region_size.x,
+                    light.region_size.y, light.region_size.z);
+      file.write_ln("\tName(\"{}\");", light.region_name);
+
+      file.write_ln("}\n");
+   }
 }
 
 void save_lights(const std::filesystem::path& path, const int layer_index,
@@ -234,6 +304,7 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
 
       const auto rotation = flip_rotation(light.rotation);
       const auto position = flip_position(light.position);
+      const light_type light_type = flatten_light_type(light);
 
       file.write_ln("Light(\"{}\", {})", light.name, i);
       file.write_ln("{");
@@ -241,7 +312,7 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
                     rotation.x, rotation.y, rotation.z);
       file.write_ln("\tPosition({:f}, {:f}, {:f});", position.x, position.y,
                     position.z);
-      file.write_ln("\tType({});", static_cast<int>(light.light_type));
+      file.write_ln("\tType({});", static_cast<int>(light_type));
       file.write_ln("\tColor({:f}, {:f}, {:f});", light.color.x, light.color.y,
                     light.color.z);
 
@@ -252,9 +323,9 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
       }
       if (light.specular_caster) file.write_ln("\tCastSpecular(1);");
 
-      if (light.light_type == light_type::directional) {
-         if (not light.directional_region.empty()) {
-            file.write_ln("\tRegion(\"{}\");", light.directional_region);
+      if (light_type == light_type::directional) {
+         if (not light.region_name.empty()) {
+            file.write_ln("\tRegion(\"{}\");", light.region_name);
          }
 
          file.write_ln("\tPS2BlendMode(0);");
@@ -264,10 +335,10 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
                        light.directional_texture_offset.x,
                        light.directional_texture_offset.y);
       }
-      else if (light.light_type == light_type::point) {
+      else if (light_type == light_type::point) {
          file.write_ln("\tRange({:f});", light.range);
       }
-      else if (light.light_type == light_type::spot) {
+      else if (light_type == light_type::spot) {
          file.write_ln("\tRange({:f});", light.range);
          file.write_ln("\tCone({:f}, {:f});", light.inner_cone_angle,
                        light.outer_cone_angle);

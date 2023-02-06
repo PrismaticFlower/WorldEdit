@@ -731,57 +731,59 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    // Adds a region to _meta_draw_batcher. Shared between light volume drawing and region drawing.
-   const auto add_region = [&](const world::region& region, const float4 color) {
+   const auto add_region = [&](const quaternion rotation, const float3 position,
+                               const float3 size, const world::region_shape shape,
+                               const float4 color) {
       const auto make_region_transform = [&](const float3 scale) {
          float4x4 transform =
-            to_matrix(region.rotation) * float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
-                                                  {0.0f, scale.y, 0.0f, 0.0f},
-                                                  {0.0f, 0.0f, scale.z, 0.0f},
-                                                  {0.0f, 0.0f, 0.0f, 1.0f}};
+            to_matrix(rotation) * float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                           {0.0f, scale.y, 0.0f, 0.0f},
+                                           {0.0f, 0.0f, scale.z, 0.0f},
+                                           {0.0f, 0.0f, 0.0f, 1.0f}};
 
-         transform[3] = {region.position, 1.0f};
+         transform[3] = {position, 1.0f};
 
          return transform;
       };
 
-      switch (region.shape) {
+      switch (shape) {
       default:
       case world::region_shape::box: {
-         math::bounding_box bbox{.min = {-region.size}, .max = {region.size}};
+         math::bounding_box bbox{.min = {-size}, .max = {size}};
 
-         bbox = region.rotation * bbox + region.position;
+         bbox = rotation * bbox + position;
 
          if (not intersects(view_frustum, bbox)) {
             return;
          }
 
-         const float4x4 transform = make_region_transform(region.size);
+         const float4x4 transform = make_region_transform(size);
 
          _meta_draw_batcher.add_box(transform, color);
       } break;
       case world::region_shape::sphere: {
-         const float sphere_radius = length(region.size);
+         const float sphere_radius = length(size);
 
-         if (not intersects(view_frustum, region.position, sphere_radius)) {
+         if (not intersects(view_frustum, position, sphere_radius)) {
             return;
          }
 
-         _meta_draw_batcher.add_sphere(region.position, sphere_radius, color);
+         _meta_draw_batcher.add_sphere(position, sphere_radius, color);
       } break;
       case world::region_shape::cylinder: {
-         const float cylinder_length = length(float2{region.size.x, region.size.z});
+         const float cylinder_length = length(float2{size.x, size.z});
 
-         math::bounding_box bbox{.min = {-cylinder_length, -region.size.y, -cylinder_length},
-                                 .max = {cylinder_length, region.size.y, cylinder_length}};
+         math::bounding_box bbox{.min = {-cylinder_length, -size.y, -cylinder_length},
+                                 .max = {cylinder_length, size.y, cylinder_length}};
 
-         bbox = region.rotation * bbox + region.position;
+         bbox = rotation * bbox + position;
 
          if (not intersects(view_frustum, bbox)) {
             return;
          }
 
-         const float4x4 transform = make_region_transform(
-            float3{cylinder_length, region.size.y, cylinder_length});
+         const float4x4 transform =
+            make_region_transform(float3{cylinder_length, size.y, cylinder_length});
 
          _meta_draw_batcher.add_cylinder(transform, color);
       } break;
@@ -794,7 +796,8 @@ void renderer_impl::draw_world_meta_objects(
       for (auto& region : world.regions) {
          if (not active_layers[region.layer]) continue;
 
-         add_region(region, region_color);
+         add_region(region.rotation, region.position, region.size, region.shape,
+                    region_color);
       }
    }
 
@@ -848,14 +851,7 @@ void renderer_impl::draw_world_meta_objects(
 
          switch (light.light_type) {
          case world::light_type::directional: {
-            if (light.directional_region.empty()) continue;
-
-            if (const world::region* const region =
-                   world::find_region_by_description(world, light.directional_region);
-                region) {
-               add_region(*region, color);
-            }
-
+            // TODO: Directional Light Visualizer!
          } break;
          case world::light_type::point: {
             if (not intersects(view_frustum, light.position, light.range)) {
@@ -904,6 +900,18 @@ void renderer_impl::draw_world_meta_objects(
 
             _meta_draw_batcher.add_cone(outer_transform, color);
             _meta_draw_batcher.add_cone(inner_transform, color);
+         } break;
+         case world::light_type::directional_region_box: {
+            add_region(light.region_rotation, light.position, light.region_size,
+                       world::region_shape::box, color);
+         } break;
+         case world::light_type::directional_region_sphere: {
+            add_region(light.region_rotation, light.position, light.region_size,
+                       world::region_shape::sphere, color);
+         } break;
+         case world::light_type::directional_region_cylinder: {
+            add_region(light.region_rotation, light.position, light.region_size,
+                       world::region_shape::cylinder, color);
          } break;
          }
       }
@@ -1119,61 +1127,7 @@ void renderer_impl::draw_interaction_targets(
          meta_mesh_common_setup(wireframe_constants);
 
          if (light.light_type == world::light_type::directional) {
-            if (light.directional_region.empty()) {
-               return; // TODO: Directional light visualizers.
-            }
-
-            const world::region* const region =
-               world::find_region_by_description(world, light.directional_region);
-
-            if (not region) return;
-
-            const float3 scale = [&] {
-               switch (region->shape) {
-               default:
-               case world::region_shape::box: {
-                  return region->size;
-               }
-               case world::region_shape::sphere: {
-                  const float sphere_radius = length(region->size);
-
-                  return float3{sphere_radius, sphere_radius, sphere_radius};
-               }
-               case world::region_shape::cylinder: {
-                  const float cylinder_length =
-                     length(float2{region->size.x, region->size.z});
-                  return float3{cylinder_length, region->size.y, cylinder_length};
-               }
-               }
-            }();
-
-            float4x4 transform = to_matrix(region->rotation) *
-                                 float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
-                                          {0.0f, scale.y, 0.0f, 0.0f},
-                                          {0.0f, 0.0f, scale.z, 0.0f},
-                                          {0.0f, 0.0f, 0.0f, 1.0f}};
-
-            transform[3] = {region->position, 1.0f};
-
-            command_list.set_graphics_cbv(
-               rs::meta_mesh_wireframe::object_cbv,
-               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
-
-            const geometric_shape shape = [&] {
-               switch (region->shape) {
-               default:
-               case world::region_shape::box:
-                  return _geometric_shapes.cube();
-               case world::region_shape::sphere:
-                  return _geometric_shapes.icosphere();
-               case world::region_shape::cylinder:
-                  return _geometric_shapes.cylinder();
-               }
-            }();
-
-            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
-            command_list.ia_set_index_buffer(shape.index_buffer_view);
-            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+            return; // TODO: Directional light visualizers.
          }
          else if (light.light_type == world::light_type::point) {
             float4x4 transform = float4x4{{light.range, 0.0f, 0.0f, 0.0f},
@@ -1212,6 +1166,71 @@ void renderer_impl::draw_interaction_targets(
                _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
 
             auto shape = _geometric_shapes.cone();
+
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         }
+         else if (light.light_type == world::light_type::directional_region_box) {
+            const float3 scale = light.region_size;
+
+            float4x4 transform = to_matrix(light.region_rotation) *
+                                 float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                          {0.0f, scale.y, 0.0f, 0.0f},
+                                          {0.0f, 0.0f, scale.z, 0.0f},
+                                          {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {light.position, 1.0f};
+
+            command_list.set_graphics_cbv(
+               rs::meta_mesh_wireframe::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+            const geometric_shape shape = _geometric_shapes.cube();
+
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         }
+         else if (light.light_type == world::light_type::directional_region_sphere) {
+            const float scale = length(light.region_size);
+
+            float4x4 transform = float4x4{{scale, 0.0f, 0.0f, 0.0f},
+                                          {0.0f, scale, 0.0f, 0.0f},
+                                          {0.0f, 0.0f, scale, 0.0f},
+                                          {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {light.position, 1.0f};
+
+            command_list.set_graphics_cbv(
+               rs::meta_mesh_wireframe::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+            const geometric_shape shape = _geometric_shapes.icosphere();
+
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+         }
+         else if (light.light_type == world::light_type::directional_region_cylinder) {
+            const float cylinder_length =
+               length(float2{light.region_size.x, light.region_size.z});
+            const float3 scale =
+               float3{cylinder_length, light.region_size.y, cylinder_length};
+
+            float4x4 transform = to_matrix(light.region_rotation) *
+                                 float4x4{{scale.x, 0.0f, 0.0f, 0.0f},
+                                          {0.0f, scale.y, 0.0f, 0.0f},
+                                          {0.0f, 0.0f, scale.z, 0.0f},
+                                          {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {light.position, 1.0f};
+
+            command_list.set_graphics_cbv(
+               rs::meta_mesh_wireframe::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+            const geometric_shape shape = _geometric_shapes.cylinder();
 
             command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
             command_list.ia_set_index_buffer(shape.index_buffer_view);

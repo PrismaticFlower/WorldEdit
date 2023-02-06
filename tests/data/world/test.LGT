@@ -49,6 +49,19 @@ Light("Light 1", 4266109616)
 	Range(16.000000);
 }
 
+Light("Light 4", 3)
+{
+	Rotation(0.581487, 0.314004, 0.435918, -0.610941);
+	Position(-216.604019, 2.231649, -18.720726);
+	Type(1);
+	Color(1.000000, 0.501961, 0.501961);
+	Static();
+	Region("lightregion1");
+	PS2BlendMode(0);
+	TileUV(1.000000, 1.000000);
+	OffsetUV(0.000000, 0.000000);
+}
+
 GlobalLights()
 {
 	Light1("sun");

@@ -5,7 +5,6 @@
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
-#include "world/world_utilities.hpp"
 
 #include <cmath>
 
@@ -98,20 +97,6 @@ struct alignas(16) light_proxy_instance {
 static_assert(sizeof(light_proxy_instance) == 64);
 
 auto make_sphere_light_proxy_transform(const world::light& light, const float radius)
-   -> std::array<float4, 3>
-{
-   float4x4 light_transform = {{radius, 0.0f, 0.0f, 0.0f}, //
-                               {0.0f, radius, 0.0f, 0.0f}, //
-                               {0.0f, 0.0f, radius, 0.0f}, //
-                               {0.0f, 0.0f, 0.0f, 1.0f}};
-   light_transform[3] = {light.position, 1.0f};
-   light_transform = transpose(
-      light_transform); // transpose so we have good alignment for a float3x4 in HLSL
-
-   return {light_transform[0], light_transform[1], light_transform[2]};
-}
-
-auto make_sphere_light_proxy_transform(const world::region& light, const float radius)
    -> std::array<float4, 3>
 {
    float4x4 light_transform = {{radius, 0.0f, 0.0f, 0.0f}, //
@@ -445,130 +430,23 @@ void light_clusters::prepare_lights(const camera& view_camera,
          const float3 light_direction =
             normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
-         if (not light.directional_region.empty()) {
-            if (regional_lights_count == max_regional_lights) {
-               break;
-            }
-
-            const world::region* const region =
-               world::find_region_by_description(world, light.directional_region);
-
-            if (not region) break;
-
-            const quaternion region_rotation_inverse = conjugate(region->rotation);
-            float4x4 inverse_region_transform = to_matrix(region_rotation_inverse);
-            inverse_region_transform[3] = {region_rotation_inverse * -region->position,
-                                           1.0f};
-
-            inverse_region_transform = transpose(inverse_region_transform);
-
-            const uint32 region_description_index = regional_lights_count;
-
-            switch (region->shape) {
-            case world::region_shape::box: {
-               upload_to({.inverse_transform = inverse_region_transform,
-                          .position = region->position,
-                          .type = directional_region_type::box,
-                          .size = region->size},
-                         upload_data.regional_lights_descriptions +
-                            region_description_index);
-
-               upload_to({.direction = light_direction,
-                          .type = light_type::directional,
-                          .color = light.color,
-                          .region_type = directional_region_type::box,
-                          .directional_region_index = region_description_index},
-                         &upload_data.constants->lights[light_index]);
-
-               upload_to({.transform = make_sphere_light_proxy_transform(
-                             *region, std::max({region->size.x, region->size.y,
-                                                region->size.z})),
-
-                          .light_index = light_index},
-                         upload_data.sphere_light_proxies + light_index);
-
-               _light_count += 1;
-               regional_lights_count += 1;
-
-               break;
-            }
-            case world::region_shape::sphere: {
-               const float sphere_radius = length(region->size);
-
-               upload_to({.inverse_transform = inverse_region_transform,
-                          .position = region->position,
-                          .type = directional_region_type::sphere,
-                          .size = float3{sphere_radius, sphere_radius, sphere_radius}},
-                         upload_data.regional_lights_descriptions +
-                            region_description_index);
-
-               upload_to({.direction = light_direction,
-                          .type = light_type::directional,
-                          .color = light.color,
-                          .region_type = directional_region_type::sphere,
-                          .directional_region_index = region_description_index},
-                         &upload_data.constants->lights[light_index]);
-
-               upload_to({.transform = make_sphere_light_proxy_transform(*region, sphere_radius),
-
-                          .light_index = light_index},
-                         upload_data.sphere_light_proxies + light_index);
-
-               _light_count += 1;
-               regional_lights_count += 1;
-
-               break;
-            }
-            case world::region_shape::cylinder: {
-               const float radius = length(float2{region->size.x, region->size.z});
-
-               upload_to({.inverse_transform = inverse_region_transform,
-                          .position = region->position,
-                          .type = directional_region_type::cylinder,
-                          .size = float3{radius, region->size.y, radius}},
-                         upload_data.regional_lights_descriptions +
-                            region_description_index);
-
-               upload_to({.direction = light_direction,
-                          .type = light_type::directional,
-                          .color = light.color,
-                          .region_type = directional_region_type::cylinder,
-                          .directional_region_index = region_description_index},
-                         &upload_data.constants->lights[light_index]);
-
-               upload_to({.transform = make_sphere_light_proxy_transform(
-                             *region, std::max(radius, region->size.y)),
-
-                          .light_index = light_index},
-                         upload_data.sphere_light_proxies + light_index);
-
-               _light_count += 1;
-               regional_lights_count += 1;
-
-               break;
-            }
-            }
-         }
-         else {
-            if (light.shadow_caster) {
-               _sun_shadow_cascades = make_shadow_cascades(light.rotation, view_camera,
-                                                           scene_depth_min_max);
-            }
-
-            upload_to({.direction = light_direction,
-                       .type = light_type::directional,
-                       .color = light.color,
-                       .region_type = directional_region_type::none,
-                       .shadow_caster = light.shadow_caster},
-                      &upload_data.constants->lights[light_index]);
-
-            _light_count += 1;
-
-            // Set the directional light as part of the tile clear pass.
-            _tiles_start_value[light_index / tile_light_word_bits] |=
-               (1u << (light_index % tile_light_word_bits));
+         if (light.shadow_caster) {
+            _sun_shadow_cascades =
+               make_shadow_cascades(light.rotation, view_camera, scene_depth_min_max);
          }
 
+         upload_to({.direction = light_direction,
+                    .type = light_type::directional,
+                    .color = light.color,
+                    .region_type = directional_region_type::none,
+                    .shadow_caster = light.shadow_caster},
+                   &upload_data.constants->lights[light_index]);
+
+         _light_count += 1;
+
+         // Set the directional light as part of the tile clear pass.
+         _tiles_start_value[light_index / tile_light_word_bits] |=
+            (1u << (light_index % tile_light_word_bits));
          break;
       }
       case world::light_type::point: {
@@ -623,6 +501,109 @@ void light_clusters::prepare_lights(const camera& view_camera,
                    upload_data.sphere_light_proxies + light_index);
 
          _light_count += 1;
+
+         break;
+      }
+      case world::light_type::directional_region_box:
+      case world::light_type::directional_region_sphere:
+      case world::light_type::directional_region_cylinder: {
+         const float3 light_direction =
+            normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+
+         if (regional_lights_count == max_regional_lights) {
+            break;
+         }
+
+         const quaternion region_rotation_inverse = conjugate(light.region_rotation);
+         float4x4 inverse_region_transform = to_matrix(region_rotation_inverse);
+         inverse_region_transform[3] = {region_rotation_inverse * -light.position, 1.0f};
+
+         inverse_region_transform = transpose(inverse_region_transform);
+
+         const uint32 region_description_index = regional_lights_count;
+
+         switch (light.light_type) {
+         case world::light_type::directional_region_box: {
+            upload_to({.inverse_transform = inverse_region_transform,
+                       .position = light.position,
+                       .type = directional_region_type::box,
+                       .size = light.region_size},
+                      upload_data.regional_lights_descriptions + region_description_index);
+
+            upload_to({.direction = light_direction,
+                       .type = light_type::directional,
+                       .color = light.color,
+                       .region_type = directional_region_type::box,
+                       .directional_region_index = region_description_index},
+                      &upload_data.constants->lights[light_index]);
+
+            upload_to({.transform = make_sphere_light_proxy_transform(
+                          light,
+                          std::max({light.region_size.x, light.region_size.y,
+                                    light.region_size.z})),
+
+                       .light_index = light_index},
+                      upload_data.sphere_light_proxies + light_index);
+
+            _light_count += 1;
+            regional_lights_count += 1;
+
+            break;
+         }
+         case world::light_type::directional_region_sphere: {
+            const float sphere_radius = length(light.region_size);
+
+            upload_to({.inverse_transform = inverse_region_transform,
+                       .position = light.position,
+                       .type = directional_region_type::sphere,
+                       .size = float3{sphere_radius, sphere_radius, sphere_radius}},
+                      upload_data.regional_lights_descriptions + region_description_index);
+
+            upload_to({.direction = light_direction,
+                       .type = light_type::directional,
+                       .color = light.color,
+                       .region_type = directional_region_type::sphere,
+                       .directional_region_index = region_description_index},
+                      &upload_data.constants->lights[light_index]);
+
+            upload_to({.transform = make_sphere_light_proxy_transform(light, sphere_radius),
+
+                       .light_index = light_index},
+                      upload_data.sphere_light_proxies + light_index);
+
+            _light_count += 1;
+            regional_lights_count += 1;
+
+            break;
+         }
+         case world::light_type::directional_region_cylinder: {
+            const float radius =
+               length(float2{light.region_size.x, light.region_size.z});
+            upload_to({.inverse_transform = inverse_region_transform,
+                       .position = light.position,
+                       .type = directional_region_type::cylinder,
+                       .size = float3{radius, light.region_size.y, radius}},
+                      upload_data.regional_lights_descriptions + region_description_index);
+
+            upload_to({.direction = light_direction,
+                       .type = light_type::directional,
+                       .color = light.color,
+                       .region_type = directional_region_type::cylinder,
+                       .directional_region_index = region_description_index},
+                      &upload_data.constants->lights[light_index]);
+
+            upload_to({.transform = make_sphere_light_proxy_transform(
+                          light, std::max(radius, light.region_size.y)),
+
+                       .light_index = light_index},
+                      upload_data.sphere_light_proxies + light_index);
+
+            _light_count += 1;
+            regional_lights_count += 1;
+
+            break;
+         }
+         }
 
          break;
       }

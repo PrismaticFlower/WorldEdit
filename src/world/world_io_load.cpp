@@ -9,7 +9,9 @@
 
 #include <algorithm>
 
-#include <boost/container/flat_map.hpp>
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
+
 #include <fmt/core.h>
 
 using namespace std::literals;
@@ -21,7 +23,7 @@ namespace {
 // This can provide more clues as to when something went wrong with loading but also makes it 50x to 100x slower.
 constexpr bool verbose_output = false;
 
-using layer_remap = boost::container::flat_map<int, int, std::less<>>;
+using layer_remap = absl::flat_hash_map<int, int>;
 
 void throw_layer_load_failure(std::string_view type,
                               const std::filesystem::path& filepath, std::exception& e)
@@ -287,7 +289,7 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
             }
 
             if (auto region = key_node.find("Region"sv); region != key_node.cend()) {
-               light.directional_region = region->values.get<std::string>(0);
+               light.region_name = region->values.get<std::string>(0);
             }
 
             if (auto range = key_node.find("Range"sv); range != key_node.cend()) {
@@ -300,7 +302,7 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
             }
 
             if (verbose_output) {
-               output.write("Loaded world light '{}'\n"sv, light.name);
+               output.write("Loaded world light '{}'\n", light.name);
             }
          }
          else if (key_node.key == "GlobalLights"sv) {
@@ -681,6 +683,48 @@ void load_layer(const std::filesystem::path& world_dir, const std::string_view l
    }
 }
 
+void convert_light_regions(world& world)
+{
+   absl::flat_hash_map<std::string_view, region*> regions;
+   regions.reserve(world.regions.size());
+
+   for (auto& region : world.regions) {
+      regions.emplace(region.description, &region);
+   }
+
+   absl::flat_hash_set<region_id> regions_to_remove;
+   regions_to_remove.reserve(64);
+
+   for (auto& light : world.lights) {
+      if (light.region_name.empty()) continue;
+      if (not regions.contains(light.region_name)) continue;
+
+      region& region = *regions[light.region_name];
+
+      light.position = regions[light.region_name]->position;
+      light.region_rotation = regions[light.region_name]->rotation;
+      light.region_size = regions[light.region_name]->size;
+
+      switch (region.shape) {
+      case region_shape::box:
+         light.light_type = light_type::directional_region_box;
+         break;
+      case region_shape::sphere:
+         light.light_type = light_type::directional_region_sphere;
+         break;
+      case region_shape::cylinder:
+         light.light_type = light_type::directional_region_cylinder;
+         break;
+      }
+
+      regions_to_remove.emplace(region.id);
+   }
+
+   std::erase_if(world.regions, [&](const region& region) {
+      return regions_to_remove.contains(region.id);
+   });
+}
+
 }
 
 auto load_world(const std::filesystem::path& path, output_stream& output) -> world
@@ -703,6 +747,8 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
          load_layer(world_dir, fmt::format("{}_{}", world.name, layer.name),
                     ".lyr"sv, output, world, layer_remap, static_cast<int32>(i));
       }
+
+      convert_light_regions(world);
 
       try {
          utility::stopwatch load_timer;

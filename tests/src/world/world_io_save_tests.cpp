@@ -44,6 +44,19 @@ constexpr auto expected_lgt = R"(Light("sun", 0)
 	OffsetUV(0.000000, 0.000000);
 }
 
+Light("Region Light", 1)
+{
+	Rotation(0.581487, 0.314004, 0.435918, -0.610941);
+	Position(-216.604019, 2.231649, -18.720726);
+	Type(1);
+	Color(1.000000, 0.501961, 0.501961);
+	Static();
+	Region("lightregion");
+	PS2BlendMode(0);
+	TileUV(1.000000, 1.000000);
+	OffsetUV(0.000000, 0.000000);
+}
+
 GlobalLights()
 {
 	EditorGlobalDirIconSize(10);
@@ -109,7 +122,7 @@ Path("The Amazing Path")
 )"sv;
 
 constexpr auto expected_rgn = R"(Version(1);
-RegionCount(1);
+RegionCount(2);
 
 Region("lightregion2", 2)
 {
@@ -117,6 +130,14 @@ Region("lightregion2", 2)
 	Rotation(0.546265, 0.038489, 0.027578, 0.836273);
 	Size(0.100000, 10.000000, 3.284148);
 	Name("lightregion2");
+}
+
+Region("lightregion", 1)
+{
+	Position(-216.604019, 2.231649, -18.720726);
+	Rotation(1.000000, -0.000000, 0.000000, -0.000000);
+	Size(4.591324, 0.100000, 1.277475);
+	Name("lightregion");
 }
 
 )"sv;
@@ -204,16 +225,29 @@ TEST_CASE("world saving", "[World][IO]")
                          .instance_properties = {{.key = "SomeProperty", .value = "An Amazing Value"}}}},
 
       .lights = {light{
-         .name = "sun",
+                    .name = "sun",
 
-         .rotation = {-0.039506f, 0.008607f, 0.922542f, -0.383802f},
-         .position = {-159.264923f, 19.331013f, 66.727310f},
-         .color = {1.0f, 0.882353f, 0.752941f},
-         .static_ = true,
-         .shadow_caster = true,
-         .specular_caster = true,
-         .light_type = light_type::directional,
-      }},
+                    .rotation = {-0.039506f, 0.008607f, 0.922542f, -0.383802f},
+                    .position = {-159.264923f, 19.331013f, 66.727310f},
+                    .color = {1.0f, 0.882353f, 0.752941f},
+                    .static_ = true,
+                    .shadow_caster = true,
+                    .specular_caster = true,
+                    .light_type = light_type::directional,
+                 },
+
+                 light{
+                    .name = "Region Light",
+
+                    .rotation = {0.435918f, 0.610941f, 0.581487f, -0.314004f},
+                    .position = {-216.604019f, 2.231649f, 18.720726f},
+                    .color = {1.0f, 0.501961f, 0.501961f},
+                    .static_ = true,
+                    .light_type = light_type::directional_region_sphere,
+                    .region_name = "lightregion",
+                    .region_size = {4.591324f, 0.100000f, 1.277475f},
+                    .region_rotation = {0.0f, 0.0f, 1.0f, 0.0f},
+                 }},
 
       .paths = {path{
          .name = "The Amazing Path",

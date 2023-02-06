@@ -7,7 +7,15 @@
 
 namespace we::world {
 
-enum class light_type : int8 { directional = 1, point = 2, spot = 3 };
+enum class light_type : int8 {
+   directional = 1,
+   point = 2,
+   spot = 3,
+
+   directional_region_box = 0 | 0b100,
+   directional_region_sphere = 1 | 0b100,
+   directional_region_cylinder = 2 | 0b100
+};
 enum class texture_addressing : int8 { wrap = 0, clamp = 1 };
 
 struct light {
@@ -32,7 +40,10 @@ struct light {
    float2 directional_texture_offset = {0.0f, 0.0f};
 
    std::string texture;
-   std::string directional_region;
+
+   std::string region_name;
+   float3 region_size{};
+   quaternion region_rotation = {1.0f, 0.0f, 0.0f, 0.0f};
 
    id<light> id{};
 

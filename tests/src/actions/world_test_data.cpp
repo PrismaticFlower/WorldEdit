@@ -53,7 +53,7 @@ const we::world::world test_world = {
       .directional_texture_offset = {0.0f, 0.0f},
 
       .texture = ""s,
-      .directional_region = ""s,
+      .region_name = ""s,
    }},
 
    .paths = {path{

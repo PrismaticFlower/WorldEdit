@@ -425,30 +425,15 @@ void world_edit::update_ui() noexcept
 
                      return entries;
                   });
-               ImGui::InputTextAutoComplete("Directional Region", light,
-                                            &world::light::directional_region,
-                                            &_undo_stack, &_world, [&] {
-                                               std::array<std::string, 6> entries;
 
-                                               std::size_t matching_count = 0;
+               ImGui::Separator();
 
-                                               for (auto& region : _world.regions) {
-                                                  if (not region.description.contains(
-                                                         light->directional_region)) {
-                                                     continue;
-                                                  }
-
-                                                  entries[matching_count] =
-                                                     region.description;
-
-                                                  ++matching_count;
-
-                                                  if (matching_count == entries.size())
-                                                     break;
-                                               }
-
-                                               return entries;
-                                            });
+               ImGui::InputText("Region Name", light, &world::light::region_name,
+                                &_undo_stack, &_world);
+               ImGui::DragQuat("Region Rotation", light,
+                               &world::light::region_rotation, &_undo_stack, &_world);
+               ImGui::DragFloat3("Region Size", light, &world::light::region_size,
+                                 &_undo_stack, &_world);
             },
             [&](world::path_id id) {
                world::path* path =

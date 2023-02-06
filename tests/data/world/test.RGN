@@ -8,3 +8,11 @@ Region("foleyfx water", 0)
 	Size(16.000000, 16.000000, 16.000000);
 	Name("Region0");
 }
+
+Region("lightregion1", 1)
+{
+	Position(-216.604019, 2.231649, -18.720726);
+	Rotation(1.000000, -0.000000, -0.000000, -0.000000);
+	Size(4.591324, 0.100000, 1.277475);
+	Name("lightregion1");
+}

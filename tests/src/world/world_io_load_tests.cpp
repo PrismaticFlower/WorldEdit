@@ -94,7 +94,7 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(approx_equals(world.lighting_settings.ambient_ground_color,
                           utility::decompress_srgb({0.3137254f, 0.1568627f, 0.1176470f})));
 
-      REQUIRE(world.lights.size() == 4);
+      REQUIRE(world.lights.size() == 5);
 
       // Light 2
       {
@@ -131,7 +131,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[1].texture.empty());
          CHECK(approx_equals(world.lights[1].directional_texture_tiling, {1.0f, 1.0f}));
          CHECK(approx_equals(world.lights[1].directional_texture_offset, {0.0f, 0.0f}));
-         CHECK(world.lights[1].directional_region.empty());
+         CHECK(world.lights[1].region_name.empty());
          CHECK(is_unique_id(1, world.lights));
       }
 
@@ -155,7 +155,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(is_unique_id(2, world.lights));
       }
 
-      // Light 2
+      // Light 1
       {
          CHECK(world.lights[3].name == "Light 1"sv);
          CHECK(approx_equals(world.lights[3].position,
@@ -171,6 +171,30 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[3].range == 16.0_a);
          CHECK(world.lights[3].texture.empty());
          CHECK(is_unique_id(3, world.lights));
+      }
+
+      // Light 4
+      {
+         CHECK(world.lights[4].name == "Light 4"sv);
+         CHECK(approx_equals(world.lights[4].position,
+                             {-216.604019f, 2.231649f, 18.720726f}));
+         CHECK(approx_equals(world.lights[4].rotation,
+                             {0.435918f, 0.610941f, 0.581487f, -0.314004f}));
+         CHECK(world.lights[4].layer == 0);
+         CHECK(world.lights[4].light_type == light_type::directional_region_sphere);
+         CHECK(approx_equals(world.lights[4].color, {1.000000f, 0.501961f, 0.501961f}));
+         CHECK(world.lights[4].static_);
+         CHECK(not world.lights[4].specular_caster);
+         CHECK(not world.lights[4].shadow_caster);
+         CHECK(world.lights[4].texture.empty());
+         CHECK(approx_equals(world.lights[4].directional_texture_tiling, {1.0f, 1.0f}));
+         CHECK(approx_equals(world.lights[4].directional_texture_offset, {0.0f, 0.0f}));
+         CHECK(world.lights[4].region_name == "lightregion1");
+         CHECK(approx_equals(world.lights[4].region_rotation,
+                             {0.000f, 0.000f, 1.000f, 0.000f}));
+         CHECK(approx_equals(world.lights[4].region_size,
+                             {4.591324f, 0.100000f, 1.277475f}));
+         CHECK(is_unique_id(4, world.lights));
       }
    }
 
@@ -258,6 +282,9 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(approx_equals(world.regions[0].rotation, {0.000f, 0.000f, 1.000f, 0.000f}));
       CHECK(approx_equals(world.regions[0].size, {16.000000f, 16.000000f, 16.000000f}));
       CHECK(is_unique_id(0, world.regions));
+
+      // lightregion1 would be here but it should've been dropped and added to it's light while loading
+      CHECK(world.regions.size() == 1);
    }
 
    // sector checks

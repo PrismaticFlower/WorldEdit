@@ -66,8 +66,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             const active_layers active_layers, std::span<const light> lights,
-             std::span<const region> regions) noexcept
+             const active_layers active_layers, std::span<const light> lights) noexcept
    -> std::optional<raycast_result<light>>
 {
    std::optional<light_id> hit;
@@ -78,69 +77,6 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
       if (light.light_type == light_type::directional) {
          // TODO: World proxies for region-less directional lights.
-
-         const region* light_region = look_for(regions, [&](const region& region) {
-            return region.description == light.directional_region;
-         });
-
-         if (not light_region) continue;
-
-         if (light_region->shape == region_shape::box) {
-            quaternion inverse_light_region_rotation =
-               conjugate(light_region->rotation);
-
-            float4x4 world_to_box = to_matrix(inverse_light_region_rotation);
-            world_to_box[3] = {inverse_light_region_rotation * -light_region->position,
-                               1.0f};
-
-            float3 box_ray_origin = world_to_box * ray_origin;
-            float3 box_ray_direction =
-               normalize(float3x3{world_to_box} * ray_direction);
-
-            const float intersection =
-               boxIntersection(box_ray_origin, box_ray_direction, light_region->size);
-
-            if (intersection < 0.0f) continue;
-
-            if (intersection < min_distance) {
-               hit = light.id;
-               min_distance = intersection;
-            }
-         }
-         else if (light_region->shape == region_shape::sphere) {
-            const float intersection =
-               sphIntersect(ray_origin, ray_direction, light_region->position,
-                            length(light_region->size));
-
-            if (intersection < 0.0f) continue;
-
-            if (intersection < min_distance) {
-               hit = light.id;
-               min_distance = intersection;
-            }
-         }
-         else if (light_region->shape == region_shape::cylinder) {
-            const float cylinder_radius =
-               length(float2{light_region->size.x, light_region->size.z});
-            const float3 region_direction =
-               normalize(light_region->rotation * float3{0.0f, 1.0f, 0.0f});
-
-            const float intersection =
-               iCylinder(ray_origin, ray_direction,
-                         light_region->position +
-                            region_direction * light_region->size.y,
-                         light_region->position +
-                            -region_direction * light_region->size.y,
-                         cylinder_radius)
-                  .x;
-
-            if (intersection < 0.0f) continue;
-
-            if (intersection < min_distance) {
-               hit = light.id;
-               min_distance = intersection;
-            }
-         }
       }
       else if (light.light_type == light_type::point) {
          const float intersection =
@@ -165,6 +101,57 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          const float intersection =
             iCappedCone(ray_origin, ray_direction, light.position,
                         cone_end_position, 0.0f, cone_radius)
+               .x;
+
+         if (intersection < 0.0f) continue;
+
+         if (intersection < min_distance) {
+            hit = light.id;
+            min_distance = intersection;
+         }
+      }
+      else if (light.light_type == light_type::directional_region_box) {
+         quaternion inverse_light_region_rotation = conjugate(light.region_rotation);
+
+         float4x4 world_to_box = to_matrix(inverse_light_region_rotation);
+         world_to_box[3] = {inverse_light_region_rotation * -light.position, 1.0f};
+
+         float3 box_ray_origin = world_to_box * ray_origin;
+         float3 box_ray_direction = normalize(float3x3{world_to_box} * ray_direction);
+
+         const float intersection =
+            boxIntersection(box_ray_origin, box_ray_direction, light.region_size);
+
+         if (intersection < 0.0f) continue;
+
+         if (intersection < min_distance) {
+            hit = light.id;
+            min_distance = intersection;
+         }
+      }
+      else if (light.light_type == light_type::directional_region_sphere) {
+         const float intersection =
+            sphIntersect(ray_origin, ray_direction, light.position,
+                         length(light.region_size));
+
+         if (intersection < 0.0f) continue;
+
+         if (intersection < min_distance) {
+            hit = light.id;
+            min_distance = intersection;
+         }
+      }
+      else if (light.light_type == light_type::directional_region_cylinder) {
+         const float cylinder_radius =
+            length(float2{light.region_size.x, light.region_size.z});
+         const float3 region_direction =
+            normalize(light.region_rotation * float3{0.0f, 1.0f, 0.0f});
+
+         const float intersection =
+            iCylinder(ray_origin, ray_direction,
+                      light.position + region_direction * light.region_size.y,
+                      light.position + -region_direction * light.region_size.y,
+                      cylinder_radius)
                .x;
 
          if (intersection < 0.0f) continue;
