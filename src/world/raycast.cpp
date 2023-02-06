@@ -76,7 +76,15 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (not active_layers[light.layer]) continue;
 
       if (light.light_type == light_type::directional) {
-         // TODO: World proxies for region-less directional lights.
+         const float intersection =
+            sphIntersect(ray_origin, ray_direction, light.position, 2.8284f);
+
+         if (intersection < 0.0f) continue;
+
+         if (intersection < min_distance) {
+            hit = light.id;
+            min_distance = intersection;
+         }
       }
       else if (light.light_type == light_type::point) {
          const float intersection =

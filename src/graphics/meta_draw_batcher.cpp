@@ -1,11 +1,64 @@
 
 #include "meta_draw_batcher.hpp"
+#include "math/matrix_funcs.hpp"
+#include "math/vector_funcs.hpp"
 
 namespace we::graphics {
+
+namespace {
+
+constexpr std::array<std::array<float3, 2>, 18> arrow_outline = [] {
+   constexpr std::array<std::array<uint16, 2>, 18> arrow_indices{{{2, 1},
+                                                                  {4, 3},
+                                                                  {4, 5},
+                                                                  {3, 5},
+                                                                  {1, 5},
+                                                                  {2, 5},
+                                                                  {8, 6},
+                                                                  {6, 7},
+                                                                  {7, 9},
+                                                                  {10, 12},
+                                                                  {13, 11},
+                                                                  {11, 10},
+                                                                  {6, 10},
+                                                                  {11, 7},
+                                                                  {2, 9},
+                                                                  {1, 8},
+                                                                  {4, 13},
+                                                                  {3, 12}}};
+
+   constexpr std::array<float3, 15> arrow_vertices{
+      {{0.0f, 0.0f, 0.0f},
+       {0.611469f, -0.366881f, 0.085396f},
+       {0.611469f, 0.366881f, 0.085396f},
+       {-0.611469f, -0.366881f, 0.085396f},
+       {-0.611469f, 0.366881f, 0.085396f},
+       {0.000000f, 0.000000f, 1.002599f},
+       {0.305735f, -0.366881f, -0.984675f},
+       {0.305735f, 0.366881f, -0.984675f},
+       {0.305735f, -0.366881f, 0.085396f},
+       {0.305735f, 0.366881f, 0.085396f},
+       {-0.305735f, -0.366881f, -0.984675f},
+       {-0.305735f, 0.366881f, -0.984675f},
+       {-0.305735f, -0.366881f, 0.085396f},
+       {-0.305735f, 0.366881f, 0.085396f},
+       {-0.305735f, 0.366881f, 0.085396f}}};
+
+   std::array<std::array<float3, 2>, 18> arrow;
+
+   for (std::size_t i = 0; i < arrow.size(); ++i) {
+      arrow[i] = {arrow_vertices[arrow_indices[i][0]],
+                  arrow_vertices[arrow_indices[i][1]]};
+   }
+
+   return arrow;
+}();
+}
 
 meta_draw_batcher::meta_draw_batcher()
 {
    _octahedrons_outlined.reserve(256);
+   _octahedrons.reserve(256);
    _boxes.reserve(256);
    _spheres.reserve(256);
    _cylinders.reserve(256);
@@ -17,6 +70,7 @@ meta_draw_batcher::meta_draw_batcher()
 void meta_draw_batcher::clear()
 {
    _octahedrons_outlined.clear();
+   _octahedrons.clear();
    _boxes.clear();
    _spheres.clear();
    _cylinders.clear();
@@ -30,6 +84,11 @@ void meta_draw_batcher::add_octahedron_outlined(const float4x4& transform,
                                                 const float4& outline_color)
 {
    _octahedrons_outlined.emplace_back(transform, color, outline_color);
+}
+
+void meta_draw_batcher::add_octahedron(const float4x4& transform, const float4& color)
+{
+   _octahedrons.emplace_back(transform, color);
 }
 
 void meta_draw_batcher::add_box(const float4x4& transform, const float4& color)
@@ -64,6 +123,16 @@ void meta_draw_batcher::add_triangle(const float3& a, const float3& b,
 void meta_draw_batcher::add_line_solid(const float3& a, const float3& b, const uint32 color)
 {
    _lines_solid.emplace_back(a, color, b);
+}
+
+void meta_draw_batcher::add_arrow_outline_solid(const float4x4& transform,
+                                                const float arrow_offset,
+                                                const uint32 color)
+{
+   for (const auto& line : arrow_outline) {
+      add_line_solid(transform * (line[0] + float3{0.0f, 0.0f, arrow_offset}),
+                     transform * (line[1] + float3{0.0f, 0.0f, arrow_offset}), color);
+   }
 }
 
 void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
@@ -143,6 +212,11 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                   shapes.octahedron());
    }
 
+   if (not _octahedrons.empty()) {
+      draw_shapes(_octahedrons, pipeline_library.meta_draw_shape.get(),
+                  shapes.octahedron());
+   }
+
    if (not _lines_solid.empty()) {
       draw_lines(_lines_solid, pipeline_library.meta_draw_line_solid.get());
    }
@@ -172,9 +246,9 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
 bool meta_draw_batcher::all_empty() const noexcept
 {
-   return _octahedrons_outlined.empty() and _boxes.empty() and
-          _spheres.empty() and _cylinders.empty() and _cones.empty() and
-          _triangles.empty() and _lines_solid.empty();
+   return _octahedrons_outlined.empty() and _octahedrons.empty() and
+          _boxes.empty() and _spheres.empty() and _cylinders.empty() and
+          _cones.empty() and _triangles.empty() and _lines_solid.empty();
 }
 
 }

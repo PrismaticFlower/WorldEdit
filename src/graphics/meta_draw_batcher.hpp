@@ -60,6 +60,8 @@ struct meta_draw_batcher {
    void add_octahedron_outlined(const float4x4& transform, const float4& color,
                                 const float4& outline_color);
 
+   void add_octahedron(const float4x4& transform, const float4& color);
+
    void add_box(const float4x4& transform, const float4& color);
 
    void add_sphere(const float3& position, const float radius, const float4& color);
@@ -73,6 +75,9 @@ struct meta_draw_batcher {
 
    void add_line_solid(const float3& a, const float3& b, const uint32 color);
 
+   void add_arrow_outline_solid(const float4x4& transform,
+                                const float arrow_offset, const uint32 color);
+
    void draw(gpu::graphics_command_list& command_list,
              gpu_virtual_address frame_constant_buffer,
              root_signature_library& root_signature_library,
@@ -83,6 +88,7 @@ private:
    bool all_empty() const noexcept;
 
    std::vector<meta_draw_outlined> _octahedrons_outlined;
+   std::vector<meta_draw_object> _octahedrons;
    std::vector<meta_draw_object> _boxes;
    std::vector<meta_draw_sphere> _spheres;
    std::vector<meta_draw_object> _cylinders;

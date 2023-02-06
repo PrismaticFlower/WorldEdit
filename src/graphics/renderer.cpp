@@ -69,54 +69,6 @@ struct alignas(256) meta_outlined_constant_buffer {
 
 static_assert(sizeof(meta_outlined_constant_buffer) == 256);
 
-// TODO: Put this somewhere.
-const std::array<std::array<float3, 2>, 18> path_node_arrow_wireframe = [] {
-   constexpr std::array<std::array<uint16, 2>, 18> arrow_indices{{{2, 1},
-                                                                  {4, 3},
-                                                                  {4, 5},
-                                                                  {3, 5},
-                                                                  {1, 5},
-                                                                  {2, 5},
-                                                                  {8, 6},
-                                                                  {6, 7},
-                                                                  {7, 9},
-                                                                  {10, 12},
-                                                                  {13, 11},
-                                                                  {11, 10},
-                                                                  {6, 10},
-                                                                  {11, 7},
-                                                                  {2, 9},
-                                                                  {1, 8},
-                                                                  {4, 13},
-                                                                  {3, 12}}};
-
-   constexpr std::array<float3, 15> arrow_vertices{
-      {{0.0f, 0.0f, 0.0f},
-       {0.611469f, -0.366881f, 0.085396f},
-       {0.611469f, 0.366881f, 0.085396f},
-       {-0.611469f, -0.366881f, 0.085396f},
-       {-0.611469f, 0.366881f, 0.085396f},
-       {0.000000f, 0.000000f, 1.002599f},
-       {0.305735f, -0.366881f, -0.984675f},
-       {0.305735f, 0.366881f, -0.984675f},
-       {0.305735f, -0.366881f, 0.085396f},
-       {0.305735f, 0.366881f, 0.085396f},
-       {-0.305735f, -0.366881f, -0.984675f},
-       {-0.305735f, 0.366881f, -0.984675f},
-       {-0.305735f, -0.366881f, 0.085396f},
-       {-0.305735f, 0.366881f, 0.085396f},
-       {-0.305735f, 0.366881f, 0.085396f}}};
-
-   std::array<std::array<float3, 2>, 18> arrow;
-
-   for (std::size_t i = 0; i < arrow.size(); ++i) {
-      arrow[i] = {arrow_vertices[arrow_indices[i][0]] * 0.25f + float3{0.0f, 0.0f, 0.8f},
-                  arrow_vertices[arrow_indices[i][1]] * 0.25f +
-                     float3{0.0f, 0.0f, 0.8f}};
-   }
-
-   return arrow;
-}();
 }
 
 struct renderer_config {
@@ -696,18 +648,18 @@ void renderer_impl::draw_world_meta_objects(
                                                        path_node_outline_color);
 
             if (draw_orientation) {
-               const uint32 path_node_orientation_color = utility::pack_srgb_bgra(
-                  float4{settings.path_node_orientation_color, 1.0f});
-
-               float4x4 orientation_transform = rotation;
+               float4x4 orientation_transform =
+                  rotation * float4x4{{0.25f, 0.0f, 0.0f, 0.0f},
+                                      {0.0f, 0.25f, 0.0f, 0.0f},
+                                      {0.0f, 0.0f, 0.25f, 0.0f},
+                                      {0.0f, 0.0f, 0.0f, 1.0f}};
                orientation_transform[3] = {node.position, 1.0f};
 
-               for (const auto line : path_node_arrow_wireframe) {
-                  const float3 a = orientation_transform * line[0];
-                  const float3 b = orientation_transform * line[1];
-
-                  _meta_draw_batcher.add_line_solid(a, b, path_node_orientation_color);
-               }
+               _meta_draw_batcher.add_arrow_outline_solid(orientation_transform,
+                                                          0.8f / 0.25f,
+                                                          utility::pack_srgb_bgra(
+                                                             float4{settings.path_node_orientation_color,
+                                                                    1.0f}));
             }
          }
 
@@ -851,7 +803,18 @@ void renderer_impl::draw_world_meta_objects(
 
          switch (light.light_type) {
          case world::light_type::directional: {
-            // TODO: Directional Light Visualizer!
+            const float4x4 rotation = to_matrix(light.rotation);
+            float4x4 transform = rotation * float4x4{{2.0f, 0.0f, 0.0f, 0.0f},
+                                                     {0.0f, 2.0f, 0.0f, 0.0f},
+                                                     {0.0f, 0.0f, 2.0f, 0.0f},
+                                                     {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {light.position, 1.0f};
+
+            _meta_draw_batcher.add_octahedron(transform, color);
+            _meta_draw_batcher.add_arrow_outline_solid(transform, 2.2f,
+                                                       utility::pack_srgb_bgra(
+                                                          float4{light.color, 1.0f}));
          } break;
          case world::light_type::point: {
             if (not intersects(view_frustum, light.position, light.range)) {
@@ -901,17 +864,30 @@ void renderer_impl::draw_world_meta_objects(
             _meta_draw_batcher.add_cone(outer_transform, color);
             _meta_draw_batcher.add_cone(inner_transform, color);
          } break;
-         case world::light_type::directional_region_box: {
-            add_region(light.region_rotation, light.position, light.region_size,
-                       world::region_shape::box, color);
-         } break;
-         case world::light_type::directional_region_sphere: {
-            add_region(light.region_rotation, light.position, light.region_size,
-                       world::region_shape::sphere, color);
-         } break;
+         case world::light_type::directional_region_box:
+         case world::light_type::directional_region_sphere:
          case world::light_type::directional_region_cylinder: {
-            add_region(light.region_rotation, light.position, light.region_size,
-                       world::region_shape::cylinder, color);
+            switch (light.light_type) {
+            case world::light_type::directional_region_box: {
+               add_region(light.region_rotation, light.position,
+                          light.region_size, world::region_shape::box, color);
+            } break;
+            case world::light_type::directional_region_sphere: {
+               add_region(light.region_rotation, light.position,
+                          light.region_size, world::region_shape::sphere, color);
+            } break;
+            case world::light_type::directional_region_cylinder: {
+               add_region(light.region_rotation, light.position, light.region_size,
+                          world::region_shape::cylinder, color);
+            } break;
+            }
+
+            float4x4 transform = to_matrix(light.rotation);
+            transform[3] = {light.position, 1.0f};
+
+            _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
+                                                       utility::pack_srgb_bgra(
+                                                          float4{light.color, 1.0f}));
          } break;
          }
       }
@@ -1127,7 +1103,23 @@ void renderer_impl::draw_interaction_targets(
          meta_mesh_common_setup(wireframe_constants);
 
          if (light.light_type == world::light_type::directional) {
-            return; // TODO: Directional light visualizers.
+            const float4x4 rotation = to_matrix(light.rotation);
+            float4x4 transform = rotation * float4x4{{2.0f, 0.0f, 0.0f, 0.0f},
+                                                     {0.0f, 2.0f, 0.0f, 0.0f},
+                                                     {0.0f, 0.0f, 2.0f, 0.0f},
+                                                     {0.0f, 0.0f, 0.0f, 1.0f}};
+
+            transform[3] = {light.position, 1.0f};
+
+            command_list.set_graphics_cbv(
+               rs::meta_mesh_wireframe::object_cbv,
+               _dynamic_buffer_allocator.allocate_and_copy(transform).gpu_address);
+
+            auto shape = _geometric_shapes.octahedron();
+
+            command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+            command_list.ia_set_index_buffer(shape.index_buffer_view);
+            command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
          }
          else if (light.light_type == world::light_type::point) {
             float4x4 transform = float4x4{{light.range, 0.0f, 0.0f, 0.0f},
