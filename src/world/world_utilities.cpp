@@ -136,4 +136,29 @@ auto create_unique_name(const std::vector<boundary>& entities,
    return create_unique_name_impl(entities, reference_name);
 }
 
+bool is_directional_light(const light& light) noexcept
+{
+   switch (light.light_type) {
+   case light_type::directional:
+   case light_type::directional_region_box:
+   case light_type::directional_region_sphere:
+   case light_type::directional_region_cylinder:
+      return true;
+   default:
+      return false;
+   }
+}
+
+bool is_region_light(const light& light) noexcept
+{
+   switch (light.light_type) {
+   case light_type::directional_region_box:
+   case light_type::directional_region_sphere:
+   case light_type::directional_region_cylinder:
+      return true;
+   default:
+      return false;
+   }
+}
+
 }

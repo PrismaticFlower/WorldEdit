@@ -100,4 +100,14 @@ auto create_unique_name(const std::vector<planning_connection>& entities,
 auto create_unique_name(const std::vector<boundary>& entities,
                         const std::string_view reference_name) -> std::string;
 
+/// @brief Check if a light is directional. (It's type is directional or one of the directional_region_* types)
+/// @param light
+/// @return
+bool is_directional_light(const light& light) noexcept;
+
+/// @brief Check if a light has a region.
+/// @param light
+/// @return
+bool is_region_light(const light& light) noexcept;
+
 }
