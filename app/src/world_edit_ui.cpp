@@ -379,12 +379,17 @@ void world_edit::update_ui() noexcept
                ImGui::Checkbox("Specular Caster", light,
                                &world::light::specular_caster, &_undo_stack, &_world);
 
-               ImGui::EnumSelect("Light Type", light, &world::light::light_type,
-                                 &_undo_stack, &_world,
-                                 {enum_select_option{"Directional",
-                                                     world::light_type::directional},
-                                  enum_select_option{"Point", world::light_type::point},
-                                  enum_select_option{"Spot", world::light_type::spot}});
+               ImGui::EnumSelect(
+                  "Light Type", light, &world::light::light_type, &_undo_stack, &_world,
+                  {enum_select_option{"Directional", world::light_type::directional},
+                   enum_select_option{"Point", world::light_type::point},
+                   enum_select_option{"Spot", world::light_type::spot},
+                   enum_select_option{"Directional Region Box",
+                                      world::light_type::directional_region_box},
+                   enum_select_option{"Directional Region Sphere",
+                                      world::light_type::directional_region_sphere},
+                   enum_select_option{"Directional Region Cylinder",
+                                      world::light_type::directional_region_cylinder}});
 
                ImGui::Separator();
 
