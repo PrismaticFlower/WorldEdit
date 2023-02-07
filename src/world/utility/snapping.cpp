@@ -1,4 +1,4 @@
-#include "snap_object.hpp"
+#include "snapping.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
