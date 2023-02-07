@@ -31,8 +31,8 @@
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
+#include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
-#include "world/world_utilities.hpp"
 
 #include <range/v3/view.hpp>
 

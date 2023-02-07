@@ -1,6 +1,6 @@
 #pragma once
 
-#include "world.hpp"
+#include "../world.hpp"
 
 #include <span>
 #include <string>

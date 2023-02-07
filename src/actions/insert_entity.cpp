@@ -1,5 +1,5 @@
 #include "insert_entity.hpp"
-#include "world/world_utilities.hpp"
+#include "world/utility/world_utilities.hpp"
 
 #include <algorithm>
 

@@ -360,9 +360,6 @@
     <ClInclude Include="src\graphics\light_clusters.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\world_utilities.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\assets\texture\texture_io.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -583,9 +580,6 @@
     <ClInclude Include="src\actions\insert_entity.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\snap_object.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\assets\terrain\terrain_collision.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -593,6 +587,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\key.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\utility\snap_object.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\utility\world_utilities.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -804,13 +804,7 @@
     <ClCompile Include="src\graphics\profiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\world_utilities.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\actions\insert_entity.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\snap_object.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\terrain\terrain_collision.cpp">
@@ -820,6 +814,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\key.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\snap_object.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\world_utilities.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

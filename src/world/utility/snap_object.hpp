@@ -1,7 +1,7 @@
 #pragma once
 
-#include "object_class.hpp"
-#include "world.hpp"
+#include "../object_class.hpp"
+#include "../world.hpp"
 
 #include <optional>
 #include <span>

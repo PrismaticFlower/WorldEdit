@@ -7,8 +7,8 @@
 #include "imgui/imgui_stdlib.h"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
-#include "world/snap_object.hpp"
-#include "world/world_utilities.hpp"
+#include "world/utility/snap_object.hpp"
+#include "world/utility/world_utilities.hpp"
 
 #include <numbers>
 

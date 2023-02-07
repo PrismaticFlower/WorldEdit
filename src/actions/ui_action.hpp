@@ -2,8 +2,8 @@
 
 #include "action.hpp"
 #include "types.hpp"
+#include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
-#include "world/world_utilities.hpp"
 
 namespace we::actions {
 

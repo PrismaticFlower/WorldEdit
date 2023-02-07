@@ -10,9 +10,9 @@
 #include "utility/overload.hpp"
 #include "utility/string_ops.hpp"
 #include "world/raycast.hpp"
+#include "world/utility/world_utilities.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
-#include "world/world_utilities.hpp"
 
 #include "utility/stopwatch.hpp"
 
