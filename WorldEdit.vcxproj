@@ -228,7 +228,7 @@
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
     <ClCompile Include="src\world\raycast.cpp" />
-    <ClCompile Include="src\world\utility\snap_object.cpp" />
+    <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
     <ClCompile Include="src\world\world_io_save.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />

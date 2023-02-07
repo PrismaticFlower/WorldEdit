@@ -816,10 +816,10 @@
     <ClCompile Include="src\key.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\utility\snap_object.cpp">
+    <ClCompile Include="src\world\utility\world_utilities.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\utility\world_utilities.cpp">
+    <ClCompile Include="src\world\utility\snapping.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
