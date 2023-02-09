@@ -3,6 +3,7 @@
 #include "world/active_elements.hpp"
 #include "world/interaction_context.hpp"
 #include "world/object_class.hpp"
+#include "world/tool_visualizers.hpp"
 
 #include <memory>
 
@@ -53,6 +54,7 @@ struct renderer {
                            const world::interaction_targets& interaction_targets,
                            const world::active_entity_types active_entity_types,
                            const world::active_layers active_layers,
+                           const world::tool_visualizers& tool_visualizers,
                            const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
                            const settings::graphics& settings) = 0;
 

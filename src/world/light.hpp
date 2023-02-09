@@ -42,7 +42,7 @@ struct light {
    std::string texture;
 
    std::string region_name;
-   float3 region_size{};
+   float3 region_size = {1.0f, 1.0f, 1.0f};
    quaternion region_rotation = {1.0f, 0.0f, 0.0f, 0.0f};
 
    id<light> id{};

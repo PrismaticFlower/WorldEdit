@@ -390,6 +390,7 @@ void light_clusters::update_descriptors()
 void light_clusters::prepare_lights(const camera& view_camera,
                                     const frustum& view_frustum,
                                     const world::world& world,
+                                    const world::light* optional_placement_light,
                                     const std::array<float, 2> scene_depth_min_max,
                                     gpu::copy_command_list& command_list,
                                     dynamic_buffer_allocator& dynamic_buffer_allocator)
@@ -419,9 +420,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
                 &upload_data.constants->inv_shadow_resolution);
    }
 
-   // frustum cull lights
-   for (auto& light : world.lights) {
-      if (_light_count >= max_lights) break;
+   const auto process_light = [&](const world::light& light) {
+      if (_light_count >= max_lights) return;
 
       const uint32 light_index = _light_count;
 
@@ -451,7 +451,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
       }
       case world::light_type::point: {
          if (not intersects(view_frustum, light.position, light.range)) {
-            continue;
+            return;
          }
 
          upload_to({.type = light_type::point,
@@ -482,7 +482,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
          // TODO: Cone-frustum intersection (but how much of a problem is it?)
          if (not intersects(view_frustum, light_centre, light_bounds_radius)) {
-            continue;
+            return;
          }
 
          upload_to({.direction = light_direction,
@@ -608,7 +608,16 @@ void light_clusters::prepare_lights(const camera& view_camera,
          break;
       }
       }
+   };
+
+   // frustum cull lights
+   for (auto& light : world.lights) {
+      if (_light_count >= max_lights) break;
+
+      process_light(light);
    }
+
+   if (optional_placement_light) process_light(*optional_placement_light);
 
    // Upload shadow transform.
    {

@@ -1,7 +1,7 @@
 #include "pch.h"
 
+#include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
-#include "world/world_utilities.hpp"
 
 #include <string_view>
 
@@ -46,4 +46,19 @@ TEST_CASE("world utilities create_unique_name", "[World][Utilities]")
    REQUIRE(create_unique_name(world.objects, "") == "");
 }
 
+TEST_CASE("world utilities create_unique_light_region_name",
+          "[World][Utilities]")
+{
+   world world{
+      .lights = {light{.name = "Light0"s}},
+      .regions = {region{.name = "Region0"s}},
+   };
+
+   REQUIRE(create_unique_light_region_name(world.lights, world.regions, "Light0") ==
+           "Light1");
+   REQUIRE(create_unique_light_region_name(world.lights, world.regions,
+                                           "Region0") == "Region1");
+   REQUIRE(create_unique_light_region_name(world.lights, world.regions, "") ==
+           "LightRegion0");
+}
 }

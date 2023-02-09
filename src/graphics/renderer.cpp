@@ -87,6 +87,7 @@ struct renderer_impl final : renderer {
                    const world::interaction_targets& interaction_targets,
                    const world::active_entity_types active_entity_types,
                    const world::active_layers active_layers,
+                   const world::tool_visualizers& tool_visualizers,
                    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
                    const settings::graphics& settings) override;
 
@@ -120,8 +121,10 @@ private:
                                gpu::graphics_command_list& command_list);
 
    void draw_world_meta_objects(const frustum& view_frustum, const world::world& world,
+                                const world::interaction_targets& interaction_targets,
                                 const world::active_entity_types active_entity_types,
                                 const world::active_layers active_layers,
+                                const world::tool_visualizers& tool_visualizers,
                                 const settings::graphics& settings,
                                 gpu::graphics_command_list& command_list);
 
@@ -291,6 +294,7 @@ void renderer_impl::draw_frame(
    const world::interaction_targets& interaction_targets,
    const world::active_entity_types active_entity_types,
    const world::active_layers active_layers,
+   const world::tool_visualizers& tool_visualizers,
    const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
    const settings::graphics& settings)
 {
@@ -324,10 +328,14 @@ void renderer_impl::draw_frame(
       const float4 scene_depth_min_max =
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
 
-      _light_clusters.prepare_lights(camera, view_frustum, world,
-                                     {scene_depth_min_max.x, scene_depth_min_max.y},
-                                     _pre_render_command_list,
-                                     _dynamic_buffer_allocator);
+      _light_clusters
+         .prepare_lights(camera, view_frustum, world,
+                         interaction_targets.creation_entity
+                            ? std::get_if<world::light>(
+                                 &interaction_targets.creation_entity.value())
+                            : nullptr,
+                         {scene_depth_min_max.x, scene_depth_min_max.y},
+                         _pre_render_command_list, _dynamic_buffer_allocator);
 
       _pre_render_command_list.close();
 
@@ -382,8 +390,9 @@ void renderer_impl::draw_frame(
    if (active_entity_types.objects) draw_world(view_frustum, command_list);
 
    // Render World Meta Objects
-   draw_world_meta_objects(view_frustum, world, active_entity_types,
-                           active_layers, settings, command_list);
+   draw_world_meta_objects(view_frustum, world, interaction_targets,
+                           active_entity_types, active_layers, tool_visualizers,
+                           settings, command_list);
 
    draw_interaction_targets(view_frustum, world, interaction_targets,
                             world_classes, settings, command_list);
@@ -607,9 +616,11 @@ void renderer_impl::draw_world_render_list_depth_prepass(
 
 void renderer_impl::draw_world_meta_objects(
    const frustum& view_frustum, const world::world& world,
+   const world::interaction_targets& interaction_targets,
    const world::active_entity_types active_entity_types,
-   const world::active_layers active_layers, const settings::graphics& settings,
-   gpu::graphics_command_list& command_list)
+   const world::active_layers active_layers,
+   const world::tool_visualizers& tool_visualizers,
+   const settings::graphics& settings, gpu::graphics_command_list& command_list)
 {
    profile_section profile{"World - Draw Meta Objects", command_list, _profiler,
                            profiler_queue::direct};
@@ -794,8 +805,8 @@ void renderer_impl::draw_world_meta_objects(
    if (active_entity_types.lights and not world.lights.empty()) {
       const float volume_alpha = settings.light_volume_alpha;
 
-      for (auto& light : world.lights) {
-         if (not active_layers[light.layer]) continue;
+      const auto add_light = [&](const world::light& light) {
+         if (not active_layers[light.layer]) return;
 
          const float4 color{light.color, light.light_type == world::light_type::spot
                                             ? volume_alpha * 0.5f
@@ -818,7 +829,7 @@ void renderer_impl::draw_world_meta_objects(
          } break;
          case world::light_type::point: {
             if (not intersects(view_frustum, light.position, light.range)) {
-               continue;
+               return;
             }
 
             _meta_draw_batcher.add_sphere(light.position, light.range, color);
@@ -839,7 +850,7 @@ void renderer_impl::draw_world_meta_objects(
 
             // TODO: Better cone culling
             if (not intersects(view_frustum, light_centre, light_bounds_radius)) {
-               continue;
+               return;
             }
 
             const float4x4 rotation = to_matrix(
@@ -890,6 +901,15 @@ void renderer_impl::draw_world_meta_objects(
                                                           float4{light.color, 1.0f}));
          } break;
          }
+      };
+
+      for (auto& light : world.lights) {
+         add_light(light);
+      }
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::light>(*interaction_targets.creation_entity)) {
+         add_light(std::get<world::light>(*interaction_targets.creation_entity));
       }
    }
 
@@ -997,6 +1017,10 @@ void renderer_impl::draw_world_meta_objects(
             _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], boundary_color);
          }
       }
+   }
+
+   for (const auto& line : tool_visualizers.lines) {
+      _meta_draw_batcher.add_line_solid(line.v0, line.v1, line.color);
    }
 
    _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,

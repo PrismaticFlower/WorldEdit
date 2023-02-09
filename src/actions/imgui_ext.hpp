@@ -778,4 +778,31 @@ inline bool DragQuat(const char* label, we::quaternion* value, float v_speed = 0
    return value_changed;
 }
 
+template<typename Enum>
+inline bool EnumSelect(const char* label, Enum* value,
+                       std::initializer_list<we::enum_select_option<Enum>> values) noexcept
+{
+   bool value_changed = false;
+
+   if (ImGui::BeginCombo(label, [&] {
+          for (auto& option : values) {
+             if (option.value == *value) return option.label;
+          }
+
+          return "";
+       }())) {
+
+      for (auto option : values) {
+         if (ImGui::Selectable(option.label)) {
+            *value = option.value;
+            value_changed = true;
+         }
+      }
+
+      ImGui::EndCombo();
+   }
+
+   return value_changed;
+}
+
 }

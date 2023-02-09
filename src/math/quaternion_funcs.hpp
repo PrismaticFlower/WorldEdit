@@ -90,4 +90,15 @@ inline auto make_quat_from_euler(const float3& vec) noexcept -> quaternion
    return quat;
 }
 
+inline auto look_at_quat(const float3& to, const float3& from) -> quaternion
+{
+   const float3 direction = normalize(to - from);
+   const float3 axis = cross(float3{0.0f, 0.0f, 1.0f}, direction);
+   const float axis_dot = dot(float3{0.0f, 0.0f, 1.0f}, direction);
+
+   quaternion quat{axis_dot + 1.0f, axis.x, axis.y, axis.z};
+
+   return normalize(quat);
+}
+
 }

@@ -31,6 +31,7 @@ public:
 
    void prepare_lights(const camera& view_camera, const frustum& view_frustum,
                        const world::world& world,
+                       const world::light* optional_placement_light,
                        const std::array<float, 2> scene_depth_min_max,
                        gpu::copy_command_list& command_list,
                        dynamic_buffer_allocator& dynamic_buffer_allocator);

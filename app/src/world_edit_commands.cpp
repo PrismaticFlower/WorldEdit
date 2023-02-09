@@ -29,11 +29,15 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_context.placement_rotation) {
-      case placement_rotation::manual:
+      case placement_rotation::manual_euler:
+         _entity_creation_context.placement_rotation =
+            placement_rotation::manual_quaternion;
+         return;
+      case placement_rotation::manual_quaternion:
          _entity_creation_context.placement_rotation = placement_rotation::surface;
          return;
       case placement_rotation::surface:
-         _entity_creation_context.placement_rotation = placement_rotation::manual;
+         _entity_creation_context.placement_rotation = placement_rotation::manual_euler;
          return;
       }
    });
@@ -70,6 +74,18 @@ void world_edit::initialize_commands() noexcept
          return;
       }
    });
+
+   _commands.add("entity_creation.toggle_point_at"s, [this] {
+      _entity_creation_context.using_point_at =
+         not _entity_creation_context.using_point_at;
+
+      if (_entity_creation_context.using_point_at) {
+         _entity_creation_context.placement_rotation =
+            placement_rotation::manual_quaternion;
+      }
+   });
+   _commands.add("entity_creation.deactivate_point_at"s,
+                 [this] { _entity_creation_context.using_point_at = false; });
 
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
@@ -112,9 +128,20 @@ void world_edit::initialize_hotkeys() noexcept
                        {"entity_creation.cycle_ground_mode",
                         {.key = key::r, .modifiers = {.ctrl = true}}},
 
+                       {"entity_creation.toggle_point_at", {.key = key::v}},
+
                        {"entity_creation.lock_x_axis", {.key = key::z}},
                        {"entity_creation.lock_y_axis", {.key = key::x}},
                        {"entity_creation.lock_z_axis", {.key = key::c}},
+                    });
+
+   _hotkeys.add_set("Entity Creation (Point At)",
+                    [this] {
+                       return _interaction_targets.creation_entity and
+                              _entity_creation_context.using_point_at;
+                    },
+                    {
+                       {"entity_creation.deactivate_point_at", {.key = key::mouse1}},
                     });
 }
 

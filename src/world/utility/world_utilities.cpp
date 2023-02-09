@@ -30,12 +30,14 @@ auto missing_name_base() -> std::string_view
 }
 
 template<typename T>
-auto create_base_name(const std::string_view name) -> std::string_view
+auto create_base_name(const std::string_view name,
+                      const std::string_view base_name = missing_name_base<T>())
+   -> std::string_view
 {
    std::string_view stripped_name = utility::string::trim_trailing_digits(name);
 
    if (stripped_name.empty()) {
-      stripped_name = missing_name_base<T>();
+      stripped_name = base_name;
    }
 
    return stripped_name;
@@ -134,6 +136,36 @@ auto create_unique_name(const std::vector<boundary>& entities,
                         const std::string_view reference_name) -> std::string
 {
    return create_unique_name_impl(entities, reference_name);
+}
+
+auto create_unique_light_region_name(const std::vector<light>& lights,
+                                     const std::vector<region>& regions,
+                                     const std::string_view reference_name) -> std::string
+{
+   absl::flat_hash_set<std::string_view> used_names;
+
+   used_names.reserve(lights.size());
+
+   for (const auto& light : lights) {
+      used_names.emplace(light.name);
+      if (is_region_light(light)) used_names.emplace(light.region_name);
+   }
+   for (const auto& region : regions) used_names.emplace(region.name);
+
+   if (not reference_name.empty() and not used_names.contains(reference_name)) {
+      return std::string{reference_name};
+   }
+
+   const std::string_view base_name =
+      create_base_name<light>(reference_name, "LightRegion");
+
+   uint32 index = 0;
+
+   while (true) {
+      std::string candidate_name = fmt::format("{}{}", base_name, index++);
+
+      if (not used_names.contains(candidate_name)) return candidate_name;
+   };
 }
 
 bool is_directional_light(const light& light) noexcept

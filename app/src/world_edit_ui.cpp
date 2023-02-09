@@ -19,11 +19,26 @@ using ranges::views::enumerate;
 
 namespace we {
 
+namespace {
+
+struct placement_traits {
+   bool has_placement_rotation = true;
+   bool has_point_at = true;
+   bool has_placement_mode = true;
+   bool has_lock_axis = true;
+   bool has_placement_alignment = true;
+   bool has_placement_ground = true;
+};
+
+}
+
 void world_edit::update_ui() noexcept
 {
    ImGui_ImplWin32_NewFrame();
    ImGui::NewFrame();
    ImGui::ShowDemoWindow(nullptr);
+
+   _tool_visualizers.clear();
 
    if (ImGui::BeginMainMenuBar()) {
       if (ImGui::BeginMenu("File")) {
@@ -96,8 +111,6 @@ void world_edit::update_ui() noexcept
 
       if (ImGui::BeginMenu("Create")) {
          if (ImGui::MenuItem("Object")) {
-            finalize_entity_creation();
-
             const world::object* base_object =
                world::find_entity(_world.objects, _entity_creation_context.last_object);
 
@@ -118,8 +131,26 @@ void world_edit::update_ui() noexcept
             }
          }
 
+         if (ImGui::MenuItem("Light")) {
+            const world::light* base_light =
+               world::find_entity(_world.lights, _entity_creation_context.last_light);
+
+            if (base_light) {
+               world::light new_light = *base_light;
+
+               new_light.name =
+                  world::create_unique_name(_world.lights, base_light->name);
+               new_light.id = world::max_id;
+
+               _interaction_targets.creation_entity = std::move(new_light);
+            }
+            else {
+               _interaction_targets.creation_entity =
+                  world::light{.name = "", .id = world::max_id};
+            }
+         }
+
 #if 0
-         if (ImGui::MenuItem("Light")) _create.light = true;
          if (ImGui::MenuItem("Path")) _create.path = true;
          if (ImGui::MenuItem("Region")) _create.region = true;
          if (ImGui::MenuItem("Sector")) _create.sector = true;
@@ -611,7 +642,7 @@ void world_edit::update_ui() noexcept
                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
                       ImGuiWindowFlags_AlwaysAutoResize);
 
-      std::visit(
+      const placement_traits traits = std::visit(
          overload{
             [&](world::object& object) {
                ImGui::Text("Object");
@@ -637,37 +668,51 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               if (ImGui::DragFloat3("Rotation",
-                                     &_entity_creation_context.rotation.x)) {
-                  object.rotation =
-                     make_quat_from_euler(_entity_creation_context.rotation *
-                                          std::numbers::pi_v<float> / 180.0f);
+               if (_entity_creation_context.placement_rotation !=
+                   placement_rotation::manual_quaternion) {
+                  if (ImGui::DragFloat3("Rotation",
+                                        &_entity_creation_context.rotation.x)) {
+                     object.rotation =
+                        make_quat_from_euler(_entity_creation_context.rotation *
+                                             std::numbers::pi_v<float> / 180.0f);
+                  }
+
+                  if (_entity_creation_context.placement_rotation ==
+                         placement_rotation::surface and
+                      _cursor_surface_normalWS and
+                      not(_cursor_surface_normalWS->x == 0.0f and
+                          _cursor_surface_normalWS->z == 0.0f)) {
+
+                     const float2 direction =
+                        normalize(float2{_cursor_surface_normalWS->x,
+                                         _cursor_surface_normalWS->z});
+
+                     const float angle = std::atan2(-direction.x, -direction.y) +
+                                         std::numbers::pi_v<float>;
+
+                     _entity_creation_context.rotation.y =
+                        std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+
+                     object.rotation =
+                        make_quat_from_euler(_entity_creation_context.rotation *
+                                             std::numbers::pi_v<float> / 180.0f);
+                  }
+               }
+               else {
+                  ImGui::DragQuat("Rotation", &object.rotation);
                }
 
-               if (_entity_creation_context.placement_rotation ==
-                      placement_rotation::surface and
-                   _cursor_surface_normalWS and
-                   not(_cursor_surface_normalWS->x == 0.0f and
-                       _cursor_surface_normalWS->z == 0.0f)) {
+               if (_entity_creation_context.using_point_at) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       object.position, 0xffffffffu);
 
-                  const float2 direction =
-                     normalize(float2{_cursor_surface_normalWS->x,
-                                      _cursor_surface_normalWS->z});
-
-                  const float angle = std::atan2(-direction.x, -direction.y) +
-                                      std::numbers::pi_v<float>;
-
-                  _entity_creation_context.rotation.y =
-                     std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
-
-                  object.rotation =
-                     make_quat_from_euler(_entity_creation_context.rotation *
-                                          std::numbers::pi_v<float> / 180.0f);
+                  object.rotation = look_at_quat(_cursor_positionWS, object.position);
                }
 
                ImGui::DragFloat3("Position", &object.position.x);
 
-               if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+                   not _entity_creation_context.using_point_at) {
                   float3 new_position = _cursor_positionWS;
 
                   if (_entity_creation_context.placement_ground == placement_ground::bbox and
@@ -711,128 +756,366 @@ void world_edit::update_ui() noexcept
 
                ImGui::SliderInt("Team", &object.team, 0, 15, "%d",
                                 ImGuiSliderFlags_AlwaysClamp);
+
+               return placement_traits{};
             },
-            [&](world::light& light) { (void)light; },
-            [&](world::path& path) { (void)path; },
-            [&](world::region& region) { (void)region; },
-            [&](world::sector& sector) { (void)sector; },
-            [&](world::portal& portal) { (void)portal; },
-            [&](world::barrier& barrier) { (void)barrier; },
-            [&](world::planning_hub& planning_hub) { (void)planning_hub; },
+            [&](world::light& light) {
+               ImGui::InputText("Name", &light.name);
+               ImGui::LayerPick("Layer", &light.layer, &_world);
+
+               ImGui::Separator();
+
+               if (_entity_creation_context.placement_rotation !=
+                   placement_rotation::manual_quaternion) {
+                  if (ImGui::DragFloat3("Rotation",
+                                        &_entity_creation_context.rotation.x)) {
+                     light.rotation =
+                        make_quat_from_euler(_entity_creation_context.rotation *
+                                             std::numbers::pi_v<float> / 180.0f);
+                  }
+
+                  if (_entity_creation_context.placement_rotation ==
+                         placement_rotation::surface and
+                      _cursor_surface_normalWS and
+                      not(_cursor_surface_normalWS->x == 0.0f and
+                          _cursor_surface_normalWS->z == 0.0f)) {
+
+                     const float2 direction =
+                        normalize(float2{_cursor_surface_normalWS->x,
+                                         _cursor_surface_normalWS->z});
+
+                     const float angle = std::atan2(-direction.x, -direction.y) +
+                                         std::numbers::pi_v<float>;
+
+                     _entity_creation_context.rotation.y =
+                        std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+
+                     light.rotation =
+                        make_quat_from_euler(_entity_creation_context.rotation *
+                                             std::numbers::pi_v<float> / 180.0f);
+                  }
+               }
+               else {
+                  ImGui::DragQuat("Rotation", &light.rotation);
+               }
+
+               if (_entity_creation_context.using_point_at) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       light.position, 0xffffffffu);
+
+                  light.rotation = look_at_quat(_cursor_positionWS, light.position);
+               }
+
+               ImGui::DragFloat3("Position", &light.position.x);
+
+               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+                   not _entity_creation_context.using_point_at) {
+                  float3 new_position = _cursor_positionWS;
+
+                  if (_entity_creation_context.placement_alignment ==
+                      placement_alignment::grid) {
+                     new_position =
+                        round(new_position / _entity_creation_context.alignment) *
+                        _entity_creation_context.alignment;
+                  }
+                  else if (_entity_creation_context.placement_alignment ==
+                           placement_alignment::snapping) {
+                     const std::optional<float3> snapped_position =
+                        world::get_snapped_position(light, new_position, _world.objects,
+                                                    _entity_creation_context.snap_distance,
+                                                    _object_classes);
+
+                     if (snapped_position) new_position = *snapped_position;
+                  }
+
+                  if (not _entity_creation_context.lock_x_axis) {
+                     light.position.x = new_position.x;
+                  }
+                  if (not _entity_creation_context.lock_y_axis) {
+                     light.position.y = new_position.y;
+                  }
+                  if (not _entity_creation_context.lock_z_axis) {
+                     light.position.z = new_position.z;
+                  }
+               }
+
+               ImGui::Separator();
+
+               ImGui::ColorEdit3("Color", &light.color.x,
+                                 ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR);
+
+               ImGui::Checkbox("Static", &light.static_);
+               ImGui::SameLine();
+               ImGui::Checkbox("Shadow Caster", &light.shadow_caster);
+               ImGui::SameLine();
+               ImGui::Checkbox("Specular Caster", &light.specular_caster);
+
+               ImGui::EnumSelect(
+                  "Light Type", &light.light_type,
+                  {enum_select_option{"Directional", world::light_type::directional},
+                   enum_select_option{"Point", world::light_type::point},
+                   enum_select_option{"Spot", world::light_type::spot},
+                   enum_select_option{"Directional Region Box",
+                                      world::light_type::directional_region_box},
+                   enum_select_option{"Directional Region Sphere",
+                                      world::light_type::directional_region_sphere},
+                   enum_select_option{"Directional Region Cylinder",
+                                      world::light_type::directional_region_cylinder}});
+
+               ImGui::Separator();
+
+               if (light.light_type == world::light_type::point or
+                   light.light_type == world::light_type::spot) {
+                  ImGui::DragFloat("Range", &light.range);
+
+                  if (light.light_type == world::light_type::spot) {
+                     ImGui::DragFloat("Inner Cone Angle", &light.inner_cone_angle,
+                                      0.01f, 0.0f, light.outer_cone_angle,
+                                      "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                     ImGui::DragFloat("Outer Cone Angle", &light.outer_cone_angle,
+                                      0.01f, light.inner_cone_angle, 1.570f,
+                                      "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                  }
+
+                  ImGui::Separator();
+               }
+
+               ImGui::InputTextAutoComplete("Texture", &light.texture, [&] {
+                  std::array<std::string, 6> entries;
+                  std::size_t matching_count = 0;
+
+                  _asset_libraries.textures.enumerate_known(
+                     [&](const lowercase_string& asset) {
+                        if (matching_count == entries.size()) return;
+                        if (not asset.contains(light.texture)) return;
+
+                        entries[matching_count] = asset;
+
+                        ++matching_count;
+                     });
+
+                  return entries;
+               });
+
+               if (world::is_directional_light(light) and not light.texture.empty()) {
+                  ImGui::DragFloat2("Directional Texture Tiling",
+                                    &light.directional_texture_tiling.x, 0.01f);
+                  ImGui::DragFloat2("Directional Texture Offset",
+                                    &light.directional_texture_offset.x, 0.01f);
+               }
+
+               if (is_region_light(light)) {
+                  ImGui::Separator();
+
+                  ImGui::InputText("Region Name", &light.region_name);
+
+                  if (_entity_creation_context.placement_rotation !=
+                      placement_rotation::manual_quaternion) {
+                     if (ImGui::DragFloat3("Rotation",
+                                           &_entity_creation_context
+                                               .light_region_rotation.x)) {
+                        light.region_rotation = make_quat_from_euler(
+                           _entity_creation_context.light_region_rotation *
+                           std::numbers::pi_v<float> / 180.0f);
+                     }
+                  }
+                  else {
+                     ImGui::DragQuat("Region Rotation", &light.region_rotation);
+                  }
+
+                  ImGui::DragFloat3("Region Size", &light.region_size.x);
+               }
+
+               return placement_traits{.has_placement_ground = false};
+            },
+            [&](world::path& path) {
+               (void)path;
+
+               return placement_traits{};
+            },
+            [&](world::region& region) {
+               (void)region;
+
+               return placement_traits{};
+            },
+            [&](world::sector& sector) {
+               (void)sector;
+
+               return placement_traits{};
+            },
+            [&](world::portal& portal) {
+               (void)portal;
+
+               return placement_traits{};
+            },
+            [&](world::barrier& barrier) {
+               (void)barrier;
+
+               return placement_traits{};
+            },
+            [&](world::planning_hub& planning_hub) {
+               (void)planning_hub;
+
+               return placement_traits{};
+            },
             [&](world::planning_connection& planning_connection) {
                (void)planning_connection;
+
+               return placement_traits{};
             },
-            [&](world::boundary& boundary) { (void)boundary; },
+            [&](world::boundary& boundary) {
+               (void)boundary;
+
+               return placement_traits{};
+            },
          },
          *_interaction_targets.creation_entity);
 
-      ImGui::Separator();
+      if (traits.has_placement_rotation) {
+         ImGui::Separator();
 
-      ImGui::Text("Rotation");
+         ImGui::Text("Rotation");
 
-      ImGui::BeginTable("Rotation", 2,
-                        ImGuiTableFlags_NoSavedSettings |
-                           ImGuiTableFlags_SizingStretchSame);
+         ImGui::BeginTable("Rotation", 3,
+                           ImGuiTableFlags_NoSavedSettings |
+                              ImGuiTableFlags_SizingStretchSame);
 
-      ImGui::TableNextColumn();
-      if (ImGui::Selectable("Manual", _entity_creation_context.placement_rotation ==
-                                         placement_rotation::manual)) {
-         _entity_creation_context.placement_rotation = placement_rotation::manual;
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("Manual", _entity_creation_context.placement_rotation ==
+                                            placement_rotation::manual_euler)) {
+            _entity_creation_context.placement_rotation =
+               placement_rotation::manual_euler;
+         }
+
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("Manual (Quat)",
+                               _entity_creation_context.placement_rotation ==
+                                  placement_rotation::manual_quaternion)) {
+            _entity_creation_context.placement_rotation =
+               placement_rotation::manual_quaternion;
+         }
+
+         ImGui::TableNextColumn();
+
+         if (ImGui::Selectable("Around Cursor", _entity_creation_context.placement_rotation ==
+                                                   placement_rotation::surface)) {
+            _entity_creation_context.placement_rotation = placement_rotation::surface;
+         }
+         ImGui::EndTable();
+
+         if (traits.has_point_at) {
+            if (ImGui::Selectable("Point At", _entity_creation_context.using_point_at)) {
+               if (_entity_creation_context.using_point_at) {
+                  _entity_creation_context.using_point_at = false;
+               }
+               else {
+                  _entity_creation_context.using_point_at = true;
+                  _entity_creation_context.placement_rotation =
+                     placement_rotation::manual_quaternion;
+               }
+            }
+         }
       }
 
-      ImGui::TableNextColumn();
+      if (traits.has_placement_mode) {
+         ImGui::Separator();
 
-      if (ImGui::Selectable("Around Cursor", _entity_creation_context.placement_rotation ==
-                                                placement_rotation::surface)) {
-         _entity_creation_context.placement_rotation = placement_rotation::surface;
+         ImGui::Text("Placement");
+
+         ImGui::BeginTable("Placement", 2,
+                           ImGuiTableFlags_NoSavedSettings |
+                              ImGuiTableFlags_SizingStretchSame);
+
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("Manual", _entity_creation_context.placement_mode ==
+                                            placement_mode::manual)) {
+            _entity_creation_context.placement_mode = placement_mode::manual;
+         }
+
+         ImGui::TableNextColumn();
+
+         if (ImGui::Selectable("At Cursor", _entity_creation_context.placement_mode ==
+                                               placement_mode::cursor)) {
+            _entity_creation_context.placement_mode = placement_mode::cursor;
+         }
+         ImGui::EndTable();
       }
-      ImGui::EndTable();
-      ImGui::Separator();
-
-      ImGui::Text("Placement");
-
-      ImGui::BeginTable("Placement", 2,
-                        ImGuiTableFlags_NoSavedSettings |
-                           ImGuiTableFlags_SizingStretchSame);
-
-      ImGui::TableNextColumn();
-      if (ImGui::Selectable("Manual", _entity_creation_context.placement_mode ==
-                                         placement_mode::manual)) {
-         _entity_creation_context.placement_mode = placement_mode::manual;
-      }
-
-      ImGui::TableNextColumn();
-
-      if (ImGui::Selectable("At Cursor", _entity_creation_context.placement_mode ==
-                                            placement_mode::cursor)) {
-         _entity_creation_context.placement_mode = placement_mode::cursor;
-      }
-      ImGui::EndTable();
-      ImGui::Separator();
 
       if (_entity_creation_context.placement_mode == placement_mode::cursor) {
-         ImGui::Text("Locked Position");
+         if (traits.has_lock_axis) {
+            ImGui::Separator();
 
-         ImGui::BeginTable("Locked Position", 3,
-                           ImGuiTableFlags_NoSavedSettings |
-                              ImGuiTableFlags_SizingStretchSame);
+            ImGui::Text("Locked Position");
 
-         ImGui::TableNextColumn();
-         ImGui::Selectable("X", &_entity_creation_context.lock_x_axis);
-         ImGui::TableNextColumn();
-         ImGui::Selectable("Y", &_entity_creation_context.lock_y_axis);
-         ImGui::TableNextColumn();
-         ImGui::Selectable("Z", &_entity_creation_context.lock_z_axis);
+            ImGui::BeginTable("Locked Position", 3,
+                              ImGuiTableFlags_NoSavedSettings |
+                                 ImGuiTableFlags_SizingStretchSame);
 
-         ImGui::EndTable();
-         ImGui::Separator();
+            ImGui::TableNextColumn();
+            ImGui::Selectable("X", &_entity_creation_context.lock_x_axis);
+            ImGui::TableNextColumn();
+            ImGui::Selectable("Y", &_entity_creation_context.lock_y_axis);
+            ImGui::TableNextColumn();
+            ImGui::Selectable("Z", &_entity_creation_context.lock_z_axis);
 
-         ImGui::Text("Align To");
-
-         ImGui::BeginTable("Align To", 3,
-                           ImGuiTableFlags_NoSavedSettings |
-                              ImGuiTableFlags_SizingStretchSame);
-
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("None", _entity_creation_context.placement_alignment ==
-                                          placement_alignment::none)) {
-            _entity_creation_context.placement_alignment = placement_alignment::none;
+            ImGui::EndTable();
          }
 
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Grid", _entity_creation_context.placement_alignment ==
-                                          placement_alignment::grid)) {
-            _entity_creation_context.placement_alignment = placement_alignment::grid;
+         if (traits.has_placement_alignment) {
+            ImGui::Separator();
+
+            ImGui::Text("Align To");
+
+            ImGui::BeginTable("Align To", 3,
+                              ImGuiTableFlags_NoSavedSettings |
+                                 ImGuiTableFlags_SizingStretchSame);
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("None", _entity_creation_context.placement_alignment ==
+                                             placement_alignment::none)) {
+               _entity_creation_context.placement_alignment =
+                  placement_alignment::none;
+            }
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Grid", _entity_creation_context.placement_alignment ==
+                                             placement_alignment::grid)) {
+               _entity_creation_context.placement_alignment =
+                  placement_alignment::grid;
+            }
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Snapping", _entity_creation_context.placement_alignment ==
+                                                 placement_alignment::snapping)) {
+               _entity_creation_context.placement_alignment =
+                  placement_alignment::snapping;
+            }
+            ImGui::EndTable();
          }
 
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Snapping", _entity_creation_context.placement_alignment ==
-                                              placement_alignment::snapping)) {
-            _entity_creation_context.placement_alignment = placement_alignment::snapping;
+         if (traits.has_placement_ground) {
+            ImGui::Separator();
+
+            ImGui::Text("Ground With");
+
+            ImGui::BeginTable("Ground With", 2,
+                              ImGuiTableFlags_NoSavedSettings |
+                                 ImGuiTableFlags_SizingStretchSame);
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Origin", _entity_creation_context.placement_ground ==
+                                               placement_ground::origin)) {
+               _entity_creation_context.placement_ground = placement_ground::origin;
+            }
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Bounding Box", _entity_creation_context.placement_ground ==
+                                                     placement_ground::bbox)) {
+               _entity_creation_context.placement_ground = placement_ground::bbox;
+            }
+
+            ImGui::EndTable();
          }
-
-         ImGui::EndTable();
-         ImGui::Separator();
-
-         ImGui::Text("Ground With");
-
-         ImGui::BeginTable("Ground With", 2,
-                           ImGuiTableFlags_NoSavedSettings |
-                              ImGuiTableFlags_SizingStretchSame);
-
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Origin", _entity_creation_context.placement_ground ==
-                                            placement_ground::origin)) {
-            _entity_creation_context.placement_ground = placement_ground::origin;
-         }
-
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Bounding Box", _entity_creation_context.placement_ground ==
-                                                  placement_ground::bbox)) {
-            _entity_creation_context.placement_ground = placement_ground::bbox;
-         }
-
-         ImGui::EndTable();
 
          if (_entity_creation_context.placement_alignment == placement_alignment::grid) {
             ImGui::Separator();
@@ -854,45 +1137,63 @@ void world_edit::update_ui() noexcept
       if (_hotkeys_show) {
          ImGui::Begin("Hotkeys");
 
-         ImGui::Text("Change Rotation Mode");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation",
-                                   "entity_creation.cycle_rotation_mode")));
+         if (traits.has_placement_rotation) {
+            ImGui::Text("Change Rotation Mode");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.cycle_rotation_mode")));
+         }
 
-         ImGui::Text("Change Placement Mode");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation",
-                                   "entity_creation.cycle_placement_mode")));
+         if (traits.has_point_at) {
+            ImGui::Text("Point At");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.toggle_point_at")));
+         }
 
-         ImGui::Text("Lock X Position");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation",
-                                   "entity_creation.lock_x_axis")));
+         if (traits.has_placement_mode) {
+            ImGui::Text("Change Placement Mode");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.cycle_placement_mode")));
+         }
 
-         ImGui::Text("Lock Y Position");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation",
-                                   "entity_creation.lock_y_axis")));
+         if (traits.has_lock_axis) {
+            ImGui::Text("Lock X Position");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.lock_x_axis")));
 
-         ImGui::Text("Lock Z Position");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation",
-                                   "entity_creation.lock_z_axis")));
+            ImGui::Text("Lock Y Position");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.lock_y_axis")));
 
-         ImGui::Text("Change Alignment Mode");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation",
-                                   "entity_creation.cycle_alignment_mode")));
+            ImGui::Text("Lock Z Position");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.lock_z_axis")));
+         }
 
-         ImGui::Text("Change Grounding Mode");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation",
-                                   "entity_creation.cycle_ground_mode")));
+         if (traits.has_placement_alignment) {
+            ImGui::Text("Change Alignment Mode");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.cycle_alignment_mode")));
+         }
+
+         if (traits.has_placement_ground) {
+            ImGui::Text("Change Grounding Mode");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.cycle_ground_mode")));
+         }
 
          ImGui::End();
       }
 
       if (not continue_creation) {
+         _entity_creation_context.using_point_at = false;
          _interaction_targets.creation_entity = std::nullopt;
       }
    }

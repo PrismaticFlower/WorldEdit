@@ -439,7 +439,8 @@
     <ClInclude Include="src\world\sector.hpp" />
     <ClInclude Include="src\world\interaction_context.hpp" />
     <ClInclude Include="src\world\terrain.hpp" />
-    <ClInclude Include="src\world\utility\snap_object.hpp" />
+    <ClInclude Include="src\world\tool_visualizers.hpp" />
+    <ClInclude Include="src\world\utility\snapping.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />

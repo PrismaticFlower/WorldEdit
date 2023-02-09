@@ -589,10 +589,13 @@
     <ClInclude Include="src\key.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\utility\snap_object.hpp">
+    <ClInclude Include="src\world\utility\world_utilities.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\utility\world_utilities.hpp">
+    <ClInclude Include="src\world\utility\snapping.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\tool_visualizers.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

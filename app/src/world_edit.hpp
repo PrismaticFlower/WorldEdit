@@ -12,6 +12,7 @@
 #include "utility/command_line.hpp"
 #include "utility/synchronous_task_queue.hpp"
 #include "world/object_class.hpp"
+#include "world/tool_visualizers.hpp"
 #include "world/world.hpp"
 
 #include <chrono>
@@ -33,7 +34,11 @@ enum class placement_alignment : uint8 { none, grid, snapping };
 
 enum class placement_ground : uint8 { origin, bbox };
 
-enum class placement_rotation : uint8 { manual, surface };
+enum class placement_rotation : uint8 {
+   manual_euler,
+   manual_quaternion,
+   surface
+};
 
 class world_edit {
 public:
@@ -138,6 +143,7 @@ private:
    world::active_entity_types _world_draw_mask;
    world::active_layers _world_layers_draw_mask{true};
    world::terrain_collision _terrain_collision;
+   world::tool_visualizers _tool_visualizers;
 
    actions::stack _undo_stack;
 
@@ -167,7 +173,7 @@ private:
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
 
-      placement_rotation placement_rotation = placement_rotation::manual;
+      placement_rotation placement_rotation = placement_rotation::manual_euler;
       placement_mode placement_mode = placement_mode::cursor;
       placement_alignment placement_alignment = placement_alignment::none;
       placement_ground placement_ground = placement_ground::origin;
@@ -176,10 +182,13 @@ private:
       bool lock_y_axis = false;
       bool lock_z_axis = false;
 
+      bool using_point_at = false;
+
       float alignment = 4.0f;
       float snap_distance = 0.5f;
 
       float3 rotation{0.0f, 0.0f, 0.0f};
+      float3 light_region_rotation{0.0f, 0.0f, 0.0f};
    } _entity_creation_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

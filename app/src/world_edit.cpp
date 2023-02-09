@@ -90,8 +90,8 @@ bool world_edit::update()
    update_camera(delta_time);
 
    try {
-      _renderer->draw_frame(_camera, _world, _interaction_targets,
-                            _world_draw_mask, _world_layers_draw_mask,
+      _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
+                            _world_layers_draw_mask, _tool_visualizers,
                             _object_classes, _settings.graphics);
    }
    catch (graphics::gpu::exception& e) {
@@ -389,37 +389,61 @@ void world_edit::finalize_entity_creation() noexcept
 
    // TODO: Stuff!
 
-   std::visit(overload{
-                 [&](world::object& object) {
-                    utility::stopwatch time;
+   std::visit(
+      overload{
+         [&](world::object& object) {
+            world::object new_object = object;
 
-                    world::object new_object = object;
+            new_object.name =
+               world::create_unique_name(_world.objects, new_object.name);
+            new_object.id = _world.next_id.objects.aquire();
 
-                    new_object.name =
-                       world::create_unique_name(_world.objects, new_object.name);
-                    new_object.id = _world.next_id.objects.aquire();
+            _entity_creation_context.last_object = new_object.id;
 
-                    _entity_creation_context.last_object = new_object.id;
+            _undo_stack.apply(actions::make_insert_entity(std::move(new_object)), _world);
 
-                    _undo_stack.apply(actions::make_insert_entity(std::move(new_object)),
-                                      _world);
+            object.name = world::create_unique_name(_world.objects, object.name);
+         },
+         [&](world::light& light) {
+            world::light new_light = light;
 
-                    object.name =
-                       world::create_unique_name(_world.objects, object.name);
-                 },
-                 [&](world::light light) { (void)light; },
-                 [&](world::path path) { (void)path; },
-                 [&](world::region region) { (void)region; },
-                 [&](world::sector sector) { (void)sector; },
-                 [&](world::portal portal) { (void)portal; },
-                 [&](world::barrier barrier) { (void)barrier; },
-                 [&](world::planning_hub planning_hub) { (void)planning_hub; },
-                 [&](world::planning_connection planning_connection) {
-                    (void)planning_connection;
-                 },
-                 [&](world::boundary boundary) { (void)boundary; },
-              },
-              *_interaction_targets.creation_entity);
+            new_light.name = world::create_unique_name(_world.lights, new_light.name);
+            new_light.id = _world.next_id.lights.aquire();
+
+            if (world::is_region_light(light)) {
+               new_light.region_name =
+                  world::create_unique_light_region_name(_world.lights, _world.regions,
+                                                         light.region_name.empty()
+                                                            ? light.name
+                                                            : light.region_name);
+            }
+
+            _entity_creation_context.last_light = new_light.id;
+
+            _undo_stack.apply(actions::make_insert_entity(std::move(new_light)), _world);
+
+            light.name = world::create_unique_name(_world.objects, light.name);
+
+            if (world::is_region_light(light)) {
+               light.region_name =
+                  world::create_unique_light_region_name(_world.lights, _world.regions,
+                                                         light.region_name.empty()
+                                                            ? light.name
+                                                            : light.region_name);
+            }
+         },
+         [&](world::path path) { (void)path; },
+         [&](world::region region) { (void)region; },
+         [&](world::sector sector) { (void)sector; },
+         [&](world::portal portal) { (void)portal; },
+         [&](world::barrier barrier) { (void)barrier; },
+         [&](world::planning_hub planning_hub) { (void)planning_hub; },
+         [&](world::planning_connection planning_connection) {
+            (void)planning_connection;
+         },
+         [&](world::boundary boundary) { (void)boundary; },
+      },
+      *_interaction_targets.creation_entity);
 }
 
 void world_edit::object_definition_loaded(const lowercase_string& name,
