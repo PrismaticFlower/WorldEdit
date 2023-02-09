@@ -258,7 +258,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
       const float cone_falloff = saturate((theta - light.spot_outer_param) * light.spot_inner_param);
 
       info.light_directionWS = light_directionWS;
-      info.falloff = attenuation;
+      info.falloff = attenuation * cone_falloff;
 
       break;
    }
