@@ -1114,6 +1114,9 @@ void renderer_impl::draw_interaction_targets(
             transform[3] = {light.position, 1.0f};
 
             _meta_draw_batcher.add_octahedron_wireframe(transform, color);
+            _meta_draw_batcher.add_arrow_outline_solid(transform, 2.2f,
+                                                       utility::pack_srgb_bgra(
+                                                          float4{color, 1.0f}));
          }
          else if (light.light_type == world::light_type::point) {
             _meta_draw_batcher.add_sphere_wireframe(light.position, light.range, color);
@@ -1143,18 +1146,24 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = float4{light.position, 0.0f};
 
+            float4x4 arrow_transform = to_matrix(light.rotation);
+            arrow_transform[3] = {light.position, 1.0f};
+
             _meta_draw_batcher.add_box_wireframe(transform, color);
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f,
+                                                       utility::pack_srgb_bgra(
+                                                          float4{color, 1.0f}));
          }
          else if (light.light_type == world::light_type::directional_region_sphere) {
             const float scale = length(light.region_size);
 
-            float4x4 transform = float4x4{{scale, 0.0f, 0.0f, 0.0f},
-                                          {0.0f, scale, 0.0f, 0.0f},
-                                          {0.0f, 0.0f, scale, 0.0f},
-                                          {0.0f, 0.0f, 0.0f, 1.0f}};
-            transform[3] = float4{light.position, 0.0f};
+            float4x4 arrow_transform = to_matrix(light.rotation);
+            arrow_transform[3] = {light.position, 1.0f};
 
             _meta_draw_batcher.add_sphere_wireframe(light.position, scale, color);
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f,
+                                                       utility::pack_srgb_bgra(
+                                                          float4{color, 1.0f}));
          }
          else if (light.light_type == world::light_type::directional_region_cylinder) {
             const float cylinder_length =
@@ -1169,7 +1178,13 @@ void renderer_impl::draw_interaction_targets(
                                           {0.0f, 0.0f, 0.0f, 1.0f}};
             transform[3] = float4{light.position, 0.0f};
 
+            float4x4 arrow_transform = to_matrix(light.rotation);
+            arrow_transform[3] = {light.position, 1.0f};
+
             _meta_draw_batcher.add_cylinder_wireframe(transform, color);
+            _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 0.0f,
+                                                       utility::pack_srgb_bgra(
+                                                          float4{color, 1.0f}));
          }
       },
       [&](const world::path& path, const float3 color) {
