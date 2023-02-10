@@ -77,11 +77,9 @@ private:
 
    void garbage_collect_assets() noexcept;
 
-   void world_clicked() noexcept;
-
    void select_hovered_entity() noexcept;
 
-   void finalize_entity_creation() noexcept;
+   void place_creation_entity() noexcept;
 
    void object_definition_loaded(const lowercase_string& name,
                                  asset_ref<assets::odf::definition> asset,

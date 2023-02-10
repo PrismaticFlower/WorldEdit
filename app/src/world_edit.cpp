@@ -364,16 +364,6 @@ void world_edit::garbage_collect_assets() noexcept
    });
 }
 
-void world_edit::world_clicked() noexcept
-{
-   if (_interaction_targets.creation_entity) {
-      finalize_entity_creation();
-   }
-   else {
-      select_hovered_entity();
-   }
-}
-
 void world_edit::select_hovered_entity() noexcept
 {
    _interaction_targets.selection.clear();
@@ -383,11 +373,9 @@ void world_edit::select_hovered_entity() noexcept
    _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
 }
 
-void world_edit::finalize_entity_creation() noexcept
+void world_edit::place_creation_entity() noexcept
 {
    if (not _interaction_targets.creation_entity) return;
-
-   // TODO: Stuff!
 
    std::visit(
       overload{
