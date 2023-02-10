@@ -121,8 +121,6 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
       release_modified_toggles(key == key::ctrl, key == key::shift);
    }
 
-   std::optional<activated_hotkey> activated = std::nullopt;
-
    for (std::ptrdiff_t i = std::ssize(_hotkey_sets) - 1; i >= 0; --i) {
       hotkey_set& set = _hotkey_sets[i];
 
@@ -161,50 +159,39 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
 
       absl::flat_hash_map<hotkey_bind, hotkey>& bindings = set.bindings;
 
-      if (auto bind_hotkey =
-             bindings.find({.key = key, .modifiers = {.ctrl = true, .shift = true}});
-          bind_hotkey != bindings.end() and is_key_down(key::ctrl) and
-          is_key_down(key::shift)) {
+      if (is_key_down(key::ctrl) and is_key_down(key::shift)) {
+         auto bind_hotkey =
+            bindings.find({.key = key, .modifiers = {.ctrl = true, .shift = true}});
+
+         if (bind_hotkey == bindings.end()) continue;
+
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         activated = activated_hotkey{i, bind_hotkey->first};
          break;
       }
-      else if (bind_hotkey = bindings.find({.key = key, .modifiers = {.ctrl = true}});
-               bind_hotkey != bindings.end() and is_key_down(key::ctrl)) {
+      else if (is_key_down(key::ctrl)) {
+         auto bind_hotkey = bindings.find({.key = key, .modifiers = {.ctrl = true}});
+
+         if (bind_hotkey == bindings.end()) continue;
+
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         activated = activated_hotkey{i, bind_hotkey->first};
          break;
       }
-      else if (bind_hotkey = bindings.find({.key = key, .modifiers = {.shift = true}});
-               bind_hotkey != bindings.end() and is_key_down(key::shift)) {
+      else if (is_key_down(key::shift)) {
+         auto bind_hotkey =
+            bindings.find({.key = key, .modifiers = {.shift = true}});
+
+         if (bind_hotkey == bindings.end()) continue;
+
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         activated = activated_hotkey{i, bind_hotkey->first};
          break;
       }
-      else if (bind_hotkey = bindings.find({.key = key});
-               bind_hotkey != bindings.end()) {
+      else {
+         auto bind_hotkey = bindings.find({.key = key});
+
+         if (bind_hotkey == bindings.end()) continue;
+
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         activated = activated_hotkey{i, bind_hotkey->first};
          break;
-      }
-   }
-
-   if (activated) {
-      for (auto it = _active_toggles.begin(); it != _active_toggles.end();) {
-         auto active_toggle = it++;
-
-         if (*active_toggle == activated) continue;
-
-         if (active_toggle->bind.key == activated->bind.key) {
-            hotkey& hotkey =
-               _hotkey_sets[active_toggle->set_index].bindings[active_toggle->bind];
-
-            if (std::exchange(hotkey.toggle_active, false)) {
-               _commands.execute(hotkey.command);
-            }
-
-            _active_toggles.erase(active_toggle);
-         }
       }
    }
 }

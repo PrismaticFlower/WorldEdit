@@ -508,4 +508,30 @@ TEST_CASE("hotkeys basic multiset overlap modified toggle test", "[Hotkeys]")
    REQUIRE(b_called_count == 1);
 }
 
+TEST_CASE("hotkeys basic modifier disables bind test", "[Hotkeys]")
+{
+   int called_count = 0;
+
+   commands commands;
+   null_output_stream output;
+
+   commands.add("called", [&] { ++called_count; });
+
+   hotkeys hotkeys{commands, output};
+
+   hotkeys.add_set("", [] { return true; }, {{"called", {.key = key::a}}});
+
+   hotkeys.notify_key_down(key::ctrl);
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(called_count == 0);
+
+   hotkeys.notify_key_up(key::ctrl);
+   hotkeys.notify_key_up(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(called_count == 0);
+}
+
 }
