@@ -766,7 +766,6 @@ void renderer_impl::draw_world_meta_objects(
       const float4 barrier_color = settings.barrier_color;
 
       for (auto& barrier : world.barriers) {
-
          const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
          const float2 size{distance(barrier.corners[0], barrier.corners[3]),
                            distance(barrier.corners[0], barrier.corners[1])};
@@ -777,14 +776,6 @@ void renderer_impl::draw_world_meta_objects(
          const float4x4 rotation =
             make_rotation_matrix_from_euler({0.0f, angle, 0.0f});
 
-         math::bounding_box bbox{.min = {position.x - size.x, -barrier_height,
-                                         position.y - size.y},
-                                 .max = {position.x + size.x, barrier_height,
-                                         position.y + size.y}};
-
-         bbox.min = rotation * bbox.min;
-         bbox.max = rotation * bbox.max;
-
          float4x4 transform =
             rotation * float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
                                 {0.0f, barrier_height, 0.0f, 0.0f},
@@ -793,9 +784,7 @@ void renderer_impl::draw_world_meta_objects(
 
          transform[3] = {position.x, 0.0f, position.y, 1.0f};
 
-         if (intersects(view_frustum, bbox)) {
-            _meta_draw_batcher.add_box(transform, barrier_color);
-         }
+         _meta_draw_batcher.add_box(transform, barrier_color); // TODO: Frustum cull
       }
    }
 
