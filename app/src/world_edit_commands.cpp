@@ -19,6 +19,11 @@ void world_edit::initialize_commands() noexcept
    });
 
    _commands.add("edit.world_click"s, [this]() { world_clicked(); });
+   _commands.add("edit.deselect"s, [this]() {
+      if (_interaction_targets.selection.empty()) return;
+
+      _interaction_targets.selection.pop_back();
+   });
 
    _commands.add("edit.undo"s, [this]() { _undo_stack.revert(_world); });
    _commands.add("edit.redo"s, [this]() { _undo_stack.reapply(_world); });
@@ -90,6 +95,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
    _commands.add("entity_creation.lock_z_axis"s, _entity_creation_context.lock_z_axis);
+
+   _commands.add("entity_creation.cancel"s,
+                 [this] { _interaction_targets.creation_entity = std::nullopt; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -105,6 +113,7 @@ void world_edit::initialize_hotkeys() noexcept
                        {"camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
 
                        {"edit.world_click", {.key = key::mouse1}},
+                       {"edit.deselect", {.key = key::escape}},
 
                        {"edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
                        {"edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
@@ -133,6 +142,8 @@ void world_edit::initialize_hotkeys() noexcept
                        {"entity_creation.lock_x_axis", {.key = key::z}},
                        {"entity_creation.lock_y_axis", {.key = key::x}},
                        {"entity_creation.lock_z_axis", {.key = key::c}},
+
+                       {"entity_creation.cancel", {.key = key::escape}},
                     });
 
    _hotkeys.add_set("Entity Creation (Point At)",
@@ -142,6 +153,7 @@ void world_edit::initialize_hotkeys() noexcept
                     },
                     {
                        {"entity_creation.deactivate_point_at", {.key = key::mouse1}},
+                       {"entity_creation.deactivate_point_at", {.key = key::escape}},
                     });
 }
 
