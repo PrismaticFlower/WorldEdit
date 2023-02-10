@@ -151,7 +151,7 @@ private:
    std::shared_ptr<async::thread_pool> _thread_pool;
    output_stream& _error_output;
 
-   gpu::device _device{gpu::device_desc{.enable_debug_layer = true}};
+   gpu::device _device{gpu::device_desc{.enable_debug_layer = false}};
    gpu::swap_chain _swap_chain;
    gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(
       {.allocator_name = "World Allocator", .debug_name = "Pre-Render Copy Command List"});
