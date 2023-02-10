@@ -78,6 +78,20 @@ struct meta_draw_batcher {
    void add_arrow_outline_solid(const float4x4& transform,
                                 const float arrow_offset, const uint32 color);
 
+   void add_octahedron_wireframe(const float4x4& transform, const float3& color);
+
+   void add_box_wireframe(const float4x4& transform, const float3& color);
+
+   void add_sphere_wireframe(const float3& position, const float radius,
+                             const float3& color);
+
+   void add_cylinder_wireframe(const float4x4& transform, const float3& color);
+
+   void add_cone_wireframe(const float4x4& transform, const float3& color);
+
+   void add_triangle_wireframe(const float3& a, const float3& b,
+                               const float3& c, const uint32 color);
+
    void draw(gpu::graphics_command_list& command_list,
              gpu_virtual_address frame_constant_buffer,
              root_signature_library& root_signature_library,
@@ -88,6 +102,7 @@ private:
    bool all_empty() const noexcept;
 
    std::vector<meta_draw_outlined> _octahedrons_outlined;
+
    std::vector<meta_draw_object> _octahedrons;
    std::vector<meta_draw_object> _boxes;
    std::vector<meta_draw_sphere> _spheres;
@@ -95,6 +110,13 @@ private:
    std::vector<meta_draw_object> _cones;
    std::vector<meta_draw_vertex> _triangles;
    std::vector<meta_draw_line> _lines_solid;
+
+   std::vector<meta_draw_object> _octahedrons_wireframe;
+   std::vector<meta_draw_object> _boxes_wireframe;
+   std::vector<meta_draw_sphere> _spheres_wireframe;
+   std::vector<meta_draw_object> _cylinders_wireframe;
+   std::vector<meta_draw_object> _cones_wireframe;
+   std::vector<meta_draw_vertex> _triangles_wireframe;
 };
 
 }

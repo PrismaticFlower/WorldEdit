@@ -17,6 +17,7 @@ struct input_vertex {
 struct output_vertex {
    float4 color : COLOR;
    float4 positionPS : SV_Position;
+   nointerpolation float4 flat_positionPS : FLAT_POSITIONPS;
 };
 
 output_vertex main(input_vertex input)
@@ -29,6 +30,7 @@ output_vertex main(input_vertex input)
    const float4 positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
 
    output.positionPS = positionPS;
+   output.flat_positionPS = positionPS;
    output.color = instance.color;
 
    return output;

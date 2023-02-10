@@ -469,9 +469,6 @@
     <ClInclude Include="src\utility\look_for.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\graphics\triangle_drawer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\world\active_elements.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -739,9 +736,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\async\thread_pool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\triangle_drawer.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\commands.cpp">

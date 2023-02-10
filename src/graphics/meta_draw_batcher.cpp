@@ -58,6 +58,7 @@ constexpr std::array<std::array<float3, 2>, 18> arrow_outline = [] {
 meta_draw_batcher::meta_draw_batcher()
 {
    _octahedrons_outlined.reserve(256);
+
    _octahedrons.reserve(256);
    _boxes.reserve(256);
    _spheres.reserve(256);
@@ -65,11 +66,19 @@ meta_draw_batcher::meta_draw_batcher()
    _cones.reserve(256);
    _triangles.reserve(2048);
    _lines_solid.reserve(2048);
+
+   _octahedrons_wireframe.reserve(32);
+   _boxes_wireframe.reserve(16);
+   _spheres_wireframe.reserve(16);
+   _cylinders_wireframe.reserve(16);
+   _cones_wireframe.reserve(16);
+   _triangles_wireframe.reserve(2048);
 }
 
 void meta_draw_batcher::clear()
 {
    _octahedrons_outlined.clear();
+
    _octahedrons.clear();
    _boxes.clear();
    _spheres.clear();
@@ -77,6 +86,13 @@ void meta_draw_batcher::clear()
    _cones.clear();
    _triangles.clear();
    _lines_solid.clear();
+
+   _octahedrons_wireframe.clear();
+   _boxes_wireframe.clear();
+   _spheres_wireframe.clear();
+   _cylinders_wireframe.clear();
+   _cones_wireframe.clear();
+   _triangles_wireframe.clear();
 }
 
 void meta_draw_batcher::add_octahedron_outlined(const float4x4& transform,
@@ -133,6 +149,42 @@ void meta_draw_batcher::add_arrow_outline_solid(const float4x4& transform,
       add_line_solid(transform * (line[0] + float3{0.0f, 0.0f, arrow_offset}),
                      transform * (line[1] + float3{0.0f, 0.0f, arrow_offset}), color);
    }
+}
+
+void meta_draw_batcher::add_octahedron_wireframe(const float4x4& transform,
+                                                 const float3& color)
+{
+   _octahedrons_wireframe.emplace_back(transform, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_box_wireframe(const float4x4& transform, const float3& color)
+{
+   _boxes_wireframe.emplace_back(transform, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_sphere_wireframe(const float3& position,
+                                             const float radius, const float3& color)
+{
+   _spheres_wireframe.emplace_back(position, radius, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_cylinder_wireframe(const float4x4& transform,
+                                               const float3& color)
+{
+   _cylinders_wireframe.emplace_back(transform, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_cone_wireframe(const float4x4& transform, const float3& color)
+{
+   _cones_wireframe.emplace_back(transform, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_triangle_wireframe(const float3& a, const float3& b,
+                                               const float3& c, const uint32 color)
+{
+   _triangles_wireframe.emplace_back(a, color);
+   _triangles_wireframe.emplace_back(b, color);
+   _triangles_wireframe.emplace_back(c, color);
 }
 
 void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
@@ -221,6 +273,44 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
       draw_lines(_lines_solid, pipeline_library.meta_draw_line_solid.get());
    }
 
+   if (not _octahedrons_wireframe.empty()) {
+      draw_shapes(_octahedrons_wireframe,
+                  pipeline_library.meta_draw_shape_wireframe.get(),
+                  shapes.octahedron());
+   }
+
+   if (not _boxes_wireframe.empty()) {
+      draw_shapes(_boxes_wireframe,
+                  pipeline_library.meta_draw_shape_wireframe.get(), shapes.cube());
+   }
+
+   if (not _spheres_wireframe.empty()) {
+      draw_shapes(_spheres_wireframe,
+                  pipeline_library.meta_draw_sphere_wireframe.get(),
+                  shapes.icosphere());
+   }
+
+   if (not _cylinders_wireframe.empty()) {
+      draw_shapes(_cylinders_wireframe,
+                  pipeline_library.meta_draw_shape_wireframe.get(),
+                  shapes.cylinder());
+   }
+
+   if (not _cones_wireframe.empty()) {
+      draw_shapes(_cones_wireframe,
+                  pipeline_library.meta_draw_shape_wireframe.get(), shapes.cone());
+   }
+
+   if (not _triangles_wireframe.empty()) {
+      draw_vertices(_triangles_wireframe,
+                    pipeline_library.meta_draw_triangle_wireframe.get());
+   }
+
+   if (not _octahedrons.empty()) {
+      draw_shapes(_octahedrons, pipeline_library.meta_draw_shape.get(),
+                  shapes.octahedron());
+   }
+
    if (not _boxes.empty()) {
       draw_shapes(_boxes, pipeline_library.meta_draw_shape.get(), shapes.cube());
    }
@@ -248,7 +338,10 @@ bool meta_draw_batcher::all_empty() const noexcept
 {
    return _octahedrons_outlined.empty() and _octahedrons.empty() and
           _boxes.empty() and _spheres.empty() and _cylinders.empty() and
-          _cones.empty() and _triangles.empty() and _lines_solid.empty();
+          _cones.empty() and _triangles.empty() and _lines_solid.empty() and
+          _octahedrons_wireframe.empty() and _boxes_wireframe.empty() and
+          _spheres_wireframe.empty() and _cylinders_wireframe.empty() and
+          _cones_wireframe.empty() and _triangles_wireframe.empty();
 }
 
 }

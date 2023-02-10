@@ -85,27 +85,6 @@ const gpu::root_signature_desc terrain_desc{
    .debug_name = "terrain_root_signature",
 };
 
-const gpu::root_signature_desc meta_mesh_wireframe_desc{
-   .parameters =
-      {
-         object_constant_buffer,
-
-         // wireframe constants
-         gpu::root_parameter{
-            .type = gpu::root_parameter_type::constant_buffer_view,
-
-            .shader_register = meta_mesh_cb_register,
-            .visibility = gpu::root_shader_visibility::pixel,
-         },
-
-         frame_constant_buffer,
-      },
-
-   .flags = {.allow_input_assembler_input_layout = true},
-
-   .debug_name = "meta_mesh_wireframe_root_signature",
-};
-
 const gpu::root_signature_desc mesh_shadow_desc{
    .parameters =
       {
@@ -250,8 +229,6 @@ root_signature_library::root_signature_library(gpu::device& device)
 {
    mesh = {device.create_root_signature(mesh_desc), device.direct_queue};
    terrain = {device.create_root_signature(terrain_desc), device.direct_queue};
-   meta_mesh_wireframe = {device.create_root_signature(meta_mesh_wireframe_desc),
-                          device.direct_queue};
    mesh_shadow = {device.create_root_signature(mesh_shadow_desc), device.direct_queue};
    mesh_depth_prepass = {device.create_root_signature(mesh_depth_prepass_desc),
                          device.direct_queue};
