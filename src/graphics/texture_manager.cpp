@@ -143,6 +143,25 @@ auto texture_manager::at_or(const lowercase_string& name,
    return default_texture;
 }
 
+auto texture_manager::acquire_load_token(const lowercase_string& name) noexcept
+   -> std::shared_ptr<const world_texture_load_token>
+{
+   std::scoped_lock lock{_texture_load_tokens_mutex};
+
+   if (auto existing = _texture_load_tokens.find(name);
+       existing != _texture_load_tokens.end()) {
+      auto token = existing->second.lock();
+
+      if (token) return token;
+   }
+
+   auto token = std::make_shared<const world_texture_load_token>();
+
+   _texture_load_tokens.insert_or_assign(name, token);
+
+   return token;
+}
+
 void texture_manager::update_textures() noexcept
 {
    std::scoped_lock lock{_shared_mutex};

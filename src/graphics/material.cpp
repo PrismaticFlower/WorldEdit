@@ -72,23 +72,7 @@ material::material(const assets::msh::material& material, gpu::device& device,
                    copy_command_list_pool& copy_command_list_pool,
                    texture_manager& texture_manager)
 {
-   texture_names.diffuse_map = lowercase_string{material.textures[0]};
-   texture_names.normal_map = lowercase_string{material.textures[1]};
-
-   textures.diffuse_map = texture_manager.at_or(texture_names.diffuse_map,
-                                                texture_manager.null_diffuse_map());
-
-   if (has_normalmap(material) and not texture_names.normal_map.empty()) {
-      textures.normal_map = texture_manager.at_or(texture_names.normal_map,
-                                                  texture_manager.null_normal_map());
-   }
-
-   if (not textures.diffuse_map) {
-      textures.diffuse_map = texture_manager.null_diffuse_map();
-   }
-   if (not textures.normal_map) {
-      textures.normal_map = texture_manager.null_normal_map();
-   }
+   init_textures(material, texture_manager);
 
    using assets::msh::material_flags;
 
@@ -122,6 +106,35 @@ material::material(const assets::msh::material& material, gpu::device& device,
    }
 
    init_resources(device, copy_command_list_pool);
+}
+
+void material::init_textures(const assets::msh::material& material,
+                             texture_manager& texture_manager)
+{
+   texture_names.diffuse_map = lowercase_string{material.textures[0]};
+   texture_names.normal_map = lowercase_string{material.textures[1]};
+
+   textures.diffuse_map = texture_manager.at_or(texture_names.diffuse_map,
+                                                texture_manager.null_diffuse_map());
+
+   if (has_normalmap(material) and not texture_names.normal_map.empty()) {
+      textures.normal_map = texture_manager.at_or(texture_names.normal_map,
+                                                  texture_manager.null_normal_map());
+   }
+   else {
+      textures.normal_map = texture_manager.null_normal_map();
+   }
+
+   if (textures.diffuse_map == texture_manager.null_diffuse_map()) {
+      texture_load_tokens.diffuse_map =
+         texture_manager.acquire_load_token(texture_names.diffuse_map);
+   }
+
+   if (not texture_names.normal_map.empty() and
+       textures.normal_map == texture_manager.null_normal_map()) {
+      texture_load_tokens.normal_map =
+         texture_manager.acquire_load_token(texture_names.normal_map);
+   }
 }
 
 void material::init_resources(gpu::device& device,
@@ -172,6 +185,7 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
    if (auto new_texture = updated.find(texture_names.diffuse_map);
        new_texture != updated.end()) {
       textures.diffuse_map = new_texture->second;
+      texture_load_tokens.diffuse_map = nullptr;
 
       command_list.write_buffer_immediate(constant_buffer_address +
                                              offsetof(normal_material_constants,
@@ -182,6 +196,7 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
    if (auto new_texture = updated.find(texture_names.normal_map);
        new_texture != updated.end()) {
       textures.normal_map = new_texture->second;
+      texture_load_tokens.normal_map = nullptr;
 
       command_list.write_buffer_immediate(constant_buffer_address +
                                              offsetof(normal_material_constants, normal_map),

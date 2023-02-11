@@ -17,6 +17,8 @@ namespace we::graphics {
 
 struct texture_manager;
 
+struct world_texture_load_token {};
+
 struct world_texture {
    world_texture(gpu::device& device, gpu::unique_resource_handle texture,
                  const DXGI_FORMAT format);
@@ -52,6 +54,12 @@ struct texture_manager {
               std::shared_ptr<const world_texture> default_texture)
       -> std::shared_ptr<const world_texture>;
 
+   /// @brief Acquire a shared_ptr to be used as a token representing interest in a texture. A texture will not be removed from the updated queue while it has load tokens outstanding.
+   /// @param name Name of the texture to get.
+   /// @return The interest token.
+   auto acquire_load_token(const lowercase_string& name) noexcept
+      -> std::shared_ptr<const world_texture_load_token>;
+
    /// @brief Texture with a color value of 0.75, 0.75, 0.75, 1.0.
    /// @return The texture.
    auto null_diffuse_map() -> std::shared_ptr<const world_texture>
@@ -72,11 +80,24 @@ struct texture_manager {
    {
       update_textures();
 
-      std::scoped_lock lock{_shared_mutex};
+      std::scoped_lock lock{_shared_mutex, _texture_load_tokens_mutex};
 
       callback(_copied_textures);
 
-      _copied_textures.clear();
+      absl::erase_if(_copied_textures,
+                     [this](const std::pair<const lowercase_string,
+                                            std::shared_ptr<const world_texture>>& copied) {
+                        if (auto token = _texture_load_tokens.find(copied.first);
+                            token != _texture_load_tokens.end()) {
+                           return token->second.expired();
+                        }
+
+                        return true;
+                     });
+
+      absl::erase_if(_texture_load_tokens,
+                     [this](const std::pair<const lowercase_string, std::weak_ptr<const world_texture_load_token>>&
+                               token) { return token.second.expired(); });
    }
 
    /// @brief Call at the start of a frame to update textures that have been created asynchronously. eval_updated_textures() implicitly calls this.
@@ -128,6 +149,9 @@ private:
    absl::flat_hash_map<lowercase_string, texture_state> _textures;
    absl::flat_hash_map<lowercase_string, pending_texture> _pending_textures;
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>> _copied_textures;
+
+   std::shared_mutex _texture_load_tokens_mutex;
+   absl::flat_hash_map<lowercase_string, std::weak_ptr<const world_texture_load_token>> _texture_load_tokens;
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 
