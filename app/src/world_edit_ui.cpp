@@ -112,6 +112,8 @@ void world_edit::update_ui() noexcept
 
       if (ImGui::BeginMenu("Create")) {
          if (ImGui::MenuItem("Object")) {
+            place_creation_entity();
+
             const world::object* base_object =
                world::find_entity(_world.objects, _entity_creation_context.last_object);
 
@@ -133,6 +135,8 @@ void world_edit::update_ui() noexcept
          }
 
          if (ImGui::MenuItem("Light")) {
+            place_creation_entity();
+
             const world::light* base_light =
                world::find_entity(_world.lights, _entity_creation_context.last_light);
 
@@ -911,8 +915,7 @@ void world_edit::update_ui() noexcept
                   if (_entity_creation_context.placement_rotation !=
                       placement_rotation::manual_quaternion) {
                      if (ImGui::DragFloat3("Rotation",
-                                           &_entity_creation_context
-                                               .light_region_rotation)) {
+                                           &_entity_creation_context.light_region_rotation)) {
                         light.region_rotation = make_quat_from_euler(
                            _entity_creation_context.light_region_rotation *
                            std::numbers::pi_v<float> / 180.0f);
