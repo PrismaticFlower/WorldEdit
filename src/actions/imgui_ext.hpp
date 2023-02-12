@@ -7,6 +7,7 @@
 #include "world/world.hpp"
 
 #include "imgui/imgui.h"
+#include "imgui/imgui_ext.hpp"
 #include "imgui/imgui_stdlib.h"
 
 #include <array>
@@ -128,12 +129,12 @@ template<typename Entity>
 inline bool DragFloat2(const char* label, Entity* entity,
                        we::float2 Entity::*value_member_ptr,
                        we::actions::stack* action_stack, we::world::world* world,
-                       float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f,
-                       const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
+                       float v_speed = 1.0f, float v_min = 0.0f,
+                       float v_max = 0.0f, ImGuiSliderFlags flags = 0) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](we::float2* value) {
       bool value_changed =
-         ImGui::DragFloat2(label, &value->x, v_speed, v_min, v_max, format, flags);
+         ImGui::DragFloat2(label, value, v_speed, v_min, v_max, flags);
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
@@ -144,12 +145,12 @@ template<typename Entity>
 inline bool DragFloat3(const char* label, Entity* entity,
                        we::float3 Entity::*value_member_ptr,
                        we::actions::stack* action_stack, we::world::world* world,
-                       float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f,
-                       const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
+                       float v_speed = 1.0f, float v_min = 0.0f,
+                       float v_max = 0.0f, ImGuiSliderFlags flags = 0) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](we::float3* value) {
       bool value_changed =
-         ImGui::DragFloat3(label, &value->x, v_speed, v_min, v_max, format, flags);
+         ImGui::DragFloat3(label, value, v_speed, v_min, v_max, flags);
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
@@ -160,16 +161,10 @@ template<typename Entity>
 inline bool DragQuat(const char* label, Entity* entity,
                      we::quaternion Entity::*value_member_ptr,
                      we::actions::stack* action_stack, we::world::world* world,
-                     float v_speed = 0.01f, const char* format = "%.4f",
-                     ImGuiSliderFlags flags = 0) noexcept
+                     float v_speed = 0.001f, ImGuiSliderFlags flags = 0) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, action_stack, world, [=](we::quaternion* value) {
-      bool value_changed =
-         ImGui::DragFloat4(label, &(*value).w, v_speed, 0.0f, 0.0f, format, flags);
-
-      if (value_changed) {
-         *value = normalize(*value);
-      }
+      bool value_changed = ImGui::DragQuat(label, value, v_speed, 0.0f, 0.0f, flags);
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
@@ -760,19 +755,6 @@ inline bool LayerPick(const char* label, int* layer, we::world::world* world) no
       }
 
       ImGui::EndCombo();
-   }
-
-   return value_changed;
-}
-
-inline bool DragQuat(const char* label, we::quaternion* value, float v_speed = 0.01f,
-                     const char* format = "%.4f", ImGuiSliderFlags flags = 0) noexcept
-{
-   bool value_changed =
-      ImGui::DragFloat4(label, &(*value).w, v_speed, 0.0f, 0.0f, format, flags);
-
-   if (value_changed) {
-      *value = normalize(*value);
    }
 
    return value_changed;

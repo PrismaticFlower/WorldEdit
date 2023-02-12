@@ -595,6 +595,9 @@
     <ClInclude Include="src\world\tool_visualizers.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\imgui\imgui_ext.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -817,6 +820,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\utility\snapping.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_ext.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -217,6 +217,7 @@
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
     <ClCompile Include="src\hotkeys.cpp" />
+    <ClCompile Include="src\imgui\imgui_ext.cpp" />
     <ClCompile Include="src\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\imgui\imgui_freetype.cpp" />
@@ -355,6 +356,7 @@
     <ClInclude Include="src\hotkeys.hpp" />
     <ClInclude Include="src\imgui\imconfig.h" />
     <ClInclude Include="src\imgui\imgui.h" />
+    <ClInclude Include="src\imgui\imgui_ext.hpp" />
     <ClInclude Include="src\imgui\imgui_impl_win32.h" />
     <ClInclude Include="src\imgui\imgui_internal.h" />
     <ClInclude Include="src\imgui\imgui_stdlib.h" />

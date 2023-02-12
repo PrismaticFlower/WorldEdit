@@ -3,6 +3,7 @@
 
 #include "actions/imgui_ext.hpp"
 #include "imgui/imgui.h"
+#include "imgui/imgui_ext.hpp"
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_stdlib.h"
 #include "utility/look_for.hpp"
@@ -670,8 +671,7 @@ void world_edit::update_ui() noexcept
 
                if (_entity_creation_context.placement_rotation !=
                    placement_rotation::manual_quaternion) {
-                  if (ImGui::DragFloat3("Rotation",
-                                        &_entity_creation_context.rotation.x)) {
+                  if (ImGui::DragFloat3("Rotation", &_entity_creation_context.rotation)) {
                      object.rotation =
                         make_quat_from_euler(_entity_creation_context.rotation *
                                              std::numbers::pi_v<float> / 180.0f);
@@ -709,7 +709,7 @@ void world_edit::update_ui() noexcept
                   object.rotation = look_at_quat(_cursor_positionWS, object.position);
                }
 
-               ImGui::DragFloat3("Position", &object.position.x);
+               ImGui::DragFloat3("Position", &object.position);
 
                if (_entity_creation_context.placement_mode == placement_mode::cursor and
                    not _entity_creation_context.using_point_at) {
@@ -767,8 +767,7 @@ void world_edit::update_ui() noexcept
 
                if (_entity_creation_context.placement_rotation !=
                    placement_rotation::manual_quaternion) {
-                  if (ImGui::DragFloat3("Rotation",
-                                        &_entity_creation_context.rotation.x)) {
+                  if (ImGui::DragFloat3("Rotation", &_entity_creation_context.rotation)) {
                      light.rotation =
                         make_quat_from_euler(_entity_creation_context.rotation *
                                              std::numbers::pi_v<float> / 180.0f);
@@ -806,7 +805,7 @@ void world_edit::update_ui() noexcept
                   light.rotation = look_at_quat(_cursor_positionWS, light.position);
                }
 
-               ImGui::DragFloat3("Position", &light.position.x);
+               ImGui::DragFloat3("Position", &light.position);
 
                if (_entity_creation_context.placement_mode == placement_mode::cursor and
                    not _entity_creation_context.using_point_at) {
@@ -899,9 +898,9 @@ void world_edit::update_ui() noexcept
 
                if (world::is_directional_light(light) and not light.texture.empty()) {
                   ImGui::DragFloat2("Directional Texture Tiling",
-                                    &light.directional_texture_tiling.x, 0.01f);
+                                    &light.directional_texture_tiling, 0.01f);
                   ImGui::DragFloat2("Directional Texture Offset",
-                                    &light.directional_texture_offset.x, 0.01f);
+                                    &light.directional_texture_offset, 0.01f);
                }
 
                if (is_region_light(light)) {
@@ -913,7 +912,7 @@ void world_edit::update_ui() noexcept
                       placement_rotation::manual_quaternion) {
                      if (ImGui::DragFloat3("Rotation",
                                            &_entity_creation_context
-                                               .light_region_rotation.x)) {
+                                               .light_region_rotation)) {
                         light.region_rotation = make_quat_from_euler(
                            _entity_creation_context.light_region_rotation *
                            std::numbers::pi_v<float> / 180.0f);
@@ -923,7 +922,7 @@ void world_edit::update_ui() noexcept
                      ImGui::DragQuat("Region Rotation", &light.region_rotation);
                   }
 
-                  ImGui::DragFloat3("Region Size", &light.region_size.x);
+                  ImGui::DragFloat3("Region Size", &light.region_size);
                }
 
                return placement_traits{.has_placement_ground = false};
