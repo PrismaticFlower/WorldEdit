@@ -61,4 +61,20 @@ TEST_CASE("world utilities create_unique_light_region_name",
    REQUIRE(create_unique_light_region_name(world.lights, world.regions, "") ==
            "LightRegion0");
 }
+
+TEST_CASE("world utilities find_closest_node", "[World][Utilities]")
+{
+   path path{.nodes = {
+                path::node{.position = {0.0f, 0.0f, 0.0f}},
+                path::node{.position = {0.0f, 1.0f, 0.0f}},
+                path::node{.position = {0.0f, 2.0f, 0.0f}},
+                path::node{.position = {0.0f, 4.0f, 0.0f}},
+             }};
+
+   REQUIRE(find_closest_node({0.0f, 0.9f, 0.0f}, path).index == 1);
+   REQUIRE(not find_closest_node({0.0f, 0.9f, 0.0f}, path).next_is_forward);
+
+   REQUIRE(find_closest_node({0.0f, 1.1f, 0.0f}, path).index == 1);
+   REQUIRE(find_closest_node({0.0f, 1.1f, 0.0f}, path).next_is_forward);
+}
 }

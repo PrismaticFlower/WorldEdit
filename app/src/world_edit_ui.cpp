@@ -23,12 +23,14 @@ namespace we {
 namespace {
 
 struct placement_traits {
+   bool has_new_path = false;
    bool has_placement_rotation = true;
    bool has_point_at = true;
    bool has_placement_mode = true;
    bool has_lock_axis = true;
    bool has_placement_alignment = true;
    bool has_placement_ground = true;
+   bool has_node_placement_insert = false;
 };
 
 }
@@ -151,8 +153,20 @@ void world_edit::update_ui() noexcept
             }
          }
 
+         if (ImGui::MenuItem("Path")) {
+            const world::path* base_path =
+               world::find_entity(_world.paths, _entity_creation_context.last_path);
+
+            _interaction_targets.creation_entity =
+               world::path{.name =
+                              world::create_unique_name(_world.paths,
+                                                        base_path ? base_path->name
+                                                                  : "Path 0"),
+                           .layer = base_path ? base_path->layer : 0,
+                           .nodes = {world::path::node{}},
+                           .id = world::max_id};
+         }
 #if 0
-         if (ImGui::MenuItem("Path")) _create.path = true;
          if (ImGui::MenuItem("Region")) _create.region = true;
          if (ImGui::MenuItem("Sector")) _create.sector = true;
          if (ImGui::MenuItem("Portal")) _create.portal = true;
@@ -820,7 +834,7 @@ void world_edit::update_ui() noexcept
                   else if (_entity_creation_context.placement_alignment ==
                            placement_alignment::snapping) {
                      const std::optional<float3> snapped_position =
-                        world::get_snapped_position(light, new_position, _world.objects,
+                        world::get_snapped_position(new_position, _world.objects,
                                                     _entity_creation_context.snap_distance,
                                                     _object_classes);
 
@@ -911,8 +925,7 @@ void world_edit::update_ui() noexcept
                   if (_entity_creation_context.placement_rotation !=
                       placement_rotation::manual_quaternion) {
                      if (ImGui::DragFloat3("Rotation",
-                                           &_entity_creation_context
-                                               .light_region_rotation)) {
+                                           &_entity_creation_context.light_region_rotation)) {
                         light.region_rotation = make_quat_from_euler(
                            _entity_creation_context.light_region_rotation *
                            std::numbers::pi_v<float> / 180.0f);
@@ -928,9 +941,118 @@ void world_edit::update_ui() noexcept
                return placement_traits{.has_placement_ground = false};
             },
             [&](world::path& path) {
-               (void)path;
+               if (ImGui::InputText("Name", &path.name)) {
+                  path.name =
+                     world::create_unique_name(_world.paths, path.name.empty()
+                                                                ? "Path 0"sv
+                                                                : path.name);
+               }
 
-               return placement_traits{};
+               ImGui::LayerPick("Layer", &path.layer, &_world);
+
+               ImGui::EnumSelect(
+                  "Spline Type", &path.spline_type,
+                  {enum_select_option{"None", world::path_spline_type::none},
+                   enum_select_option{"Linear", world::path_spline_type::linear},
+                   enum_select_option{"Hermite", world::path_spline_type::hermite},
+                   enum_select_option{"Catmull-Rom",
+                                      world::path_spline_type::catmull_rom}});
+
+               ImGui::Separator();
+
+               if (path.nodes.size() == 0) path.nodes.emplace_back();
+
+               ImGui::Text("Next Node");
+
+               world::path::node& node = path.nodes[0];
+
+               if (_entity_creation_context.placement_rotation !=
+                   placement_rotation::manual_quaternion) {
+                  if (ImGui::DragFloat3("Rotation", &_entity_creation_context.rotation)) {
+                     node.rotation =
+                        make_quat_from_euler(_entity_creation_context.rotation *
+                                             std::numbers::pi_v<float> / 180.0f);
+                  }
+
+                  if (_entity_creation_context.placement_rotation ==
+                         placement_rotation::surface and
+                      _cursor_surface_normalWS and
+                      not(_cursor_surface_normalWS->x == 0.0f and
+                          _cursor_surface_normalWS->z == 0.0f)) {
+
+                     const float2 direction =
+                        normalize(float2{_cursor_surface_normalWS->x,
+                                         _cursor_surface_normalWS->z});
+
+                     const float angle = std::atan2(-direction.x, -direction.y) +
+                                         std::numbers::pi_v<float>;
+
+                     _entity_creation_context.rotation.y =
+                        std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+
+                     node.rotation =
+                        make_quat_from_euler(_entity_creation_context.rotation *
+                                             std::numbers::pi_v<float> / 180.0f);
+                  }
+               }
+               else {
+                  ImGui::DragQuat("Rotation", &node.rotation);
+               }
+
+               if (_entity_creation_context.using_point_at) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       node.position, 0xffffffffu);
+
+                  node.rotation = look_at_quat(_cursor_positionWS, node.position);
+               }
+
+               ImGui::DragFloat3("Position", &node.position);
+
+               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+                   not _entity_creation_context.using_point_at) {
+                  float3 new_position = _cursor_positionWS;
+
+                  if (_entity_creation_context.placement_alignment ==
+                      placement_alignment::grid) {
+                     new_position =
+                        round(new_position / _entity_creation_context.alignment) *
+                        _entity_creation_context.alignment;
+                  }
+                  else if (_entity_creation_context.placement_alignment ==
+                           placement_alignment::snapping) {
+                     const std::optional<float3> snapped_position =
+                        world::get_snapped_position(new_position, _world.objects,
+                                                    _entity_creation_context.snap_distance,
+                                                    _object_classes);
+
+                     if (snapped_position) new_position = *snapped_position;
+                  }
+
+                  if (not _entity_creation_context.lock_x_axis) {
+                     node.position.x = new_position.x;
+                  }
+                  if (not _entity_creation_context.lock_y_axis) {
+                     node.position.y = new_position.y;
+                  }
+                  if (not _entity_creation_context.lock_z_axis) {
+                     node.position.z = new_position.z;
+                  }
+               }
+
+               ImGui::Separator();
+
+               if (ImGui::Button("New Path", {ImGui::CalcItemWidth(), 0.0f}) or
+                   std::exchange(_entity_creation_context.finish_current_path, false)) {
+                  path.name = world::create_unique_name(_world.paths, path.name);
+               }
+
+               if (ImGui::IsItemHovered()) {
+                  ImGui::SetTooltip("Create another new path and stop adding "
+                                    "nodes to the current one.");
+               }
+
+               return placement_traits{.has_new_path = true,
+                                       .has_node_placement_insert = true};
             },
             [&](world::region& region) {
                (void)region;
@@ -1116,6 +1238,32 @@ void world_edit::update_ui() noexcept
             ImGui::EndTable();
          }
 
+         if (traits.has_node_placement_insert) {
+            ImGui::Separator();
+
+            ImGui::Text("Node Insertion");
+
+            ImGui::BeginTable("Node Insertion", 2,
+                              ImGuiTableFlags_NoSavedSettings |
+                                 ImGuiTableFlags_SizingStretchSame);
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Nearest", _entity_creation_context.placement_node_insert ==
+                                                placement_node_insert::nearest)) {
+               _entity_creation_context.placement_node_insert =
+                  placement_node_insert::nearest;
+            }
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Append", _entity_creation_context.placement_node_insert ==
+                                               placement_node_insert::append)) {
+               _entity_creation_context.placement_node_insert =
+                  placement_node_insert::append;
+            }
+
+            ImGui::EndTable();
+         }
+
          if (_entity_creation_context.placement_alignment == placement_alignment::grid) {
             ImGui::Separator();
             ImGui::DragFloat("Alignment Grid Size",
@@ -1135,6 +1283,13 @@ void world_edit::update_ui() noexcept
 
       if (_hotkeys_show) {
          ImGui::Begin("Hotkeys");
+
+         if (traits.has_new_path) {
+            ImGui::Text("New Path");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.finish_path")));
+         }
 
          if (traits.has_placement_rotation) {
             ImGui::Text("Change Rotation Mode");

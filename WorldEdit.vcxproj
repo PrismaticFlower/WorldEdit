@@ -198,6 +198,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\actions\insert_entity.cpp" />
+    <ClCompile Include="src\actions\insert_node.cpp" />
     <ClCompile Include="src\actions\stack.cpp" />
     <ClCompile Include="src\assets\asset_ref.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
@@ -279,6 +280,7 @@
     <ClInclude Include="src\actions\action.hpp" />
     <ClInclude Include="src\actions\imgui_ext.hpp" />
     <ClInclude Include="src\actions\insert_entity.hpp" />
+    <ClInclude Include="src\actions\insert_node.hpp" />
     <ClInclude Include="src\actions\stack.hpp" />
     <ClInclude Include="src\actions\ui_action.hpp" />
     <ClInclude Include="src\allocators\aligned_allocator.hpp" />

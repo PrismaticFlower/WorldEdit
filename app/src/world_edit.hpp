@@ -40,6 +40,8 @@ enum class placement_rotation : uint8 {
    surface
 };
 
+enum class placement_node_insert : uint8 { nearest, append };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -175,12 +177,15 @@ private:
       placement_mode placement_mode = placement_mode::cursor;
       placement_alignment placement_alignment = placement_alignment::none;
       placement_ground placement_ground = placement_ground::origin;
+      placement_node_insert placement_node_insert = placement_node_insert::nearest;
 
       bool lock_x_axis = false;
       bool lock_y_axis = false;
       bool lock_z_axis = false;
 
       bool using_point_at = false;
+
+      bool finish_current_path = false;
 
       float alignment = 4.0f;
       float snap_distance = 0.5f;

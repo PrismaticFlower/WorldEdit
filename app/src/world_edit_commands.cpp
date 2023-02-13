@@ -96,6 +96,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
    _commands.add("entity_creation.lock_z_axis"s, _entity_creation_context.lock_z_axis);
 
+   _commands.add("entity_creation.finish_path"s,
+                 _entity_creation_context.finish_current_path);
+
    _commands.add("entity_creation.place"s, [this] { place_creation_entity(); });
    _commands.add("entity_creation.cancel"s,
                  [this] { _interaction_targets.creation_entity = std::nullopt; });
@@ -146,6 +149,8 @@ void world_edit::initialize_hotkeys() noexcept
 
                        {"entity_creation.place", {.key = key::mouse1}},
                        {"entity_creation.cancel", {.key = key::escape}},
+
+                       {"entity_creation.finish_path", {.key = key::g}},
                     });
 
    _hotkeys.add_set("Entity Creation (Point At)",

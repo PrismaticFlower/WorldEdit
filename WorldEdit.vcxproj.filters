@@ -598,6 +598,9 @@
     <ClInclude Include="src\imgui\imgui_ext.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\actions\insert_node.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -823,6 +826,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_ext.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\actions\insert_node.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

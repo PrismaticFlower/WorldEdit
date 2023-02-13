@@ -1,6 +1,7 @@
 
 #include "world_edit.hpp"
 #include "actions/insert_entity.hpp"
+#include "actions/insert_node.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
 #include "imgui/imgui.h"
@@ -420,7 +421,45 @@ void world_edit::place_creation_entity() noexcept
                                                             : light.region_name);
             }
          },
-         [&](world::path path) { (void)path; },
+         [&](world::path& path) {
+            if (const world::path* existing_path =
+                   world::find_entity(_world.paths, path.name);
+                existing_path) {
+               (void)existing_path; // TODO: Insert node!
+
+               if (path.nodes.empty()) std::terminate();
+
+               if (_entity_creation_context.placement_node_insert ==
+                   placement_node_insert::nearest) {
+
+                  const world::clostest_node_result closest =
+                     find_closest_node(path.nodes[0].position, *existing_path);
+
+                  _undo_stack.apply(actions::make_insert_node(existing_path->id,
+                                                              closest.next_is_forward
+                                                                 ? closest.index + 1
+                                                                 : closest.index,
+                                                              path.nodes[0]),
+                                    _world);
+               }
+               else {
+                  _undo_stack
+                     .apply(actions::make_insert_node(existing_path->id,
+                                                      existing_path->nodes.size(),
+                                                      path.nodes[0]),
+                            _world);
+               }
+            }
+            else {
+               world::path new_path = path;
+
+               new_path.name = path.name;
+               new_path.id = _world.next_id.paths.aquire();
+
+               _undo_stack.apply(actions::make_insert_entity(std::move(new_path)),
+                                 _world);
+            }
+         },
          [&](world::region region) { (void)region; },
          [&](world::sector sector) { (void)sector; },
          [&](world::portal portal) { (void)portal; },

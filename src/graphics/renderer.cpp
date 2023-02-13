@@ -625,21 +625,14 @@ void renderer_impl::draw_world_meta_objects(
    const world::tool_visualizers& tool_visualizers, const settings::graphics& settings)
 {
    if (active_entity_types.paths and not world.paths.empty()) {
-      static bool draw_nodes = true;
-      static bool draw_connections = true;
-      static bool draw_orientation = false;
-
-      // TODO: Move theses to _settings
-      ImGui::Indent();
-      ImGui::Checkbox("Draw Paths Connections", &draw_connections);
-      ImGui::Checkbox("Draw Paths Orientation", &draw_orientation);
-      ImGui::Unindent();
+      constexpr bool draw_connections = true;
+      constexpr bool draw_orientation = true;
 
       const float4 path_node_color = {settings.path_node_color, 1.0f};
       const float4 path_node_outline_color = {settings.path_node_outline_color, 1.0f};
 
-      for (auto& path : world.paths) {
-         if (not active_layers[path.layer]) continue;
+      const auto add_path = [&](const world::path& path) {
+         if (not active_layers[path.layer]) return;
 
          for (auto& node : path.nodes) {
             if (not intersects(view_frustum, node.position, 0.5f)) continue;
@@ -687,6 +680,13 @@ void renderer_impl::draw_world_meta_objects(
                _meta_draw_batcher.add_line_solid(a, b, path_node_connection_color);
             }
          }
+      };
+
+      for (const auto& path : world.paths) add_path(path);
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::path>(*interaction_targets.creation_entity)) {
+         add_path(std::get<world::path>(*interaction_targets.creation_entity));
       }
    }
 

@@ -93,10 +93,10 @@ auto get_snapped_position(
    return snapping_position + direction * closest_distance;
 }
 
-auto get_snapped_position(
-   [[maybe_unused]] const light& snapping_light, const float3 snapping_position,
-   const std::span<const object> world_objects, const float snap_radius,
-   const absl::flat_hash_map<lowercase_string, object_class>& object_classes)
+auto get_snapped_position(const float3 snapping_position,
+                          const std::span<const object> world_objects,
+                          const float snap_radius,
+                          const absl::flat_hash_map<lowercase_string, object_class>& object_classes)
    -> std::optional<float3>
 {
    float3 closest_position;

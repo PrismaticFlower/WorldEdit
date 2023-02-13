@@ -115,4 +115,18 @@ bool is_directional_light(const light& light) noexcept;
 /// @return
 bool is_region_light(const light& light) noexcept;
 
+struct clostest_node_result {
+   /// @brief The index of the closest node.
+   std::size_t index = 0;
+   /// @brief If the next closest node is forward or not.
+   bool next_is_forward = false;
+};
+
+/// @brief Find the index of the node closest to the point in the path.
+/// @param point The point to find the node closest to.
+/// @param path The path to search through.
+/// @return The closest node's index or zero if the path is empty.
+auto find_closest_node(const float3& point, const path& path) noexcept
+   -> clostest_node_result;
+
 }

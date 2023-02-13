@@ -193,4 +193,34 @@ bool is_region_light(const light& light) noexcept
    }
 }
 
+auto find_closest_node(const float3& point, const path& path) noexcept -> clostest_node_result
+{
+   if (path.nodes.size() <= 1) return {0, not path.nodes.empty()};
+
+   std::size_t closest_index = 0;
+   float closest_distance = FLT_MAX;
+
+   for (std::size_t i = 0; i < path.nodes.size(); ++i) {
+      const float point_distance = distance(path.nodes[i].position, point);
+
+      if (point_distance < closest_distance) {
+         closest_distance = point_distance;
+         closest_index = i;
+      }
+   }
+
+   if (closest_index > 0 and (closest_index + 1) < path.nodes.size()) {
+
+      const float3 back_position = path.nodes[closest_index - 1].position;
+      const float3 forward_position = path.nodes[closest_index + 1].position;
+
+      const float back_distance = distance(point, back_position);
+      const float forward_distance = distance(point, forward_position);
+
+      return {closest_index, forward_distance <= back_distance};
+   }
+
+   return {closest_index, true};
+}
+
 }

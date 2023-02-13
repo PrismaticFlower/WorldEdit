@@ -182,6 +182,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\actions\insert_entity_tests.cpp" />
+    <ClCompile Include="src\actions\insert_node_tests.cpp" />
     <ClCompile Include="src\actions\stack_tests.cpp" />
     <ClCompile Include="src\actions\ui_action_tests.cpp" />
     <ClCompile Include="src\actions\world_test_data.cpp" />
