@@ -663,7 +663,10 @@ void world_edit::update_ui() noexcept
                ImGui::Text("Object");
                ImGui::Separator();
 
-               ImGui::InputText("Name", &object.name);
+               if (ImGui::InputText("Name", &object.name)) {
+                  object.name =
+                     world::create_unique_name(_world.objects, object.name);
+               }
                ImGui::InputTextAutoComplete("Class Name", &object.class_name, [&] {
                   std::array<we::lowercase_string, 6> entries;
                   std::size_t matching_count = 0;
@@ -774,7 +777,10 @@ void world_edit::update_ui() noexcept
                return placement_traits{};
             },
             [&](world::light& light) {
-               ImGui::InputText("Name", &light.name);
+               if (ImGui::InputText("Name", &light.name)) {
+                  light.name = world::create_unique_name(_world.lights, light.name);
+               }
+
                ImGui::LayerPick("Layer", &light.layer, &_world);
 
                ImGui::Separator();
@@ -920,7 +926,14 @@ void world_edit::update_ui() noexcept
                if (is_region_light(light)) {
                   ImGui::Separator();
 
-                  ImGui::InputText("Region Name", &light.region_name);
+                  if (ImGui::InputText("Region Name", &light.region_name)) {
+                     light.region_name =
+                        world::create_unique_light_region_name(_world.lights,
+                                                               _world.regions,
+                                                               light.region_name.empty()
+                                                                  ? light.name
+                                                                  : light.region_name);
+                  }
 
                   if (_entity_creation_context.placement_rotation !=
                       placement_rotation::manual_quaternion) {
