@@ -184,6 +184,7 @@ private:
       bool lock_z_axis = false;
 
       bool using_point_at = false;
+      bool using_extend_to = false;
 
       bool finish_current_path = false;
 
@@ -192,6 +193,8 @@ private:
 
       float3 rotation{0.0f, 0.0f, 0.0f};
       float3 light_region_rotation{0.0f, 0.0f, 0.0f};
+
+      std::optional<float3> resize_start_size;
    } _entity_creation_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

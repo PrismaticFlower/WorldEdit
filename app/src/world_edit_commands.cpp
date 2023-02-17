@@ -91,6 +91,8 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("entity_creation.deactivate_point_at"s,
                  [this] { _entity_creation_context.using_point_at = false; });
+   _commands.add("entity_creation.toggle_extend_to"s,
+                 _entity_creation_context.using_extend_to);
 
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
@@ -142,6 +144,7 @@ void world_edit::initialize_hotkeys() noexcept
                         {.key = key::r, .modifiers = {.ctrl = true}}},
 
                        {"entity_creation.toggle_point_at", {.key = key::v}},
+                       {"entity_creation.toggle_extend_to", {.key = key::t}},
 
                        {"entity_creation.lock_x_axis", {.key = key::z}},
                        {"entity_creation.lock_y_axis", {.key = key::x}},
@@ -161,6 +164,16 @@ void world_edit::initialize_hotkeys() noexcept
                     {
                        {"entity_creation.deactivate_point_at", {.key = key::mouse1}},
                        {"entity_creation.deactivate_point_at", {.key = key::escape}},
+                    });
+
+   _hotkeys.add_set("Entity Creation (Extend To)",
+                    [this] {
+                       return _interaction_targets.creation_entity and
+                              _entity_creation_context.using_extend_to;
+                    },
+                    {
+                       {"entity_creation.toggle_extend_to", {.key = key::mouse1}},
+                       {"entity_creation.toggle_extend_to", {.key = key::escape}},
                     });
 }
 

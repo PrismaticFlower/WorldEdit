@@ -759,6 +759,14 @@ void renderer_impl::draw_world_meta_objects(
          add_region(region.rotation, region.position, region.size, region.shape,
                     region_color);
       }
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::region>(*interaction_targets.creation_entity)) {
+         auto& region = std::get<world::region>(*interaction_targets.creation_entity);
+
+         add_region(region.rotation, region.position, region.size, region.shape,
+                    region_color);
+      }
    }
 
    if (active_entity_types.barriers and not world.barriers.empty()) {

@@ -15,7 +15,7 @@ struct region {
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    float3 position{};
-   float3 size{};
+   float3 size = {1.0f, 1.0f, 1.0f};
    region_shape shape = region_shape::box;
 
    std::string description;
