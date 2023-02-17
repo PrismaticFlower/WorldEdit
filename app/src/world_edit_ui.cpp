@@ -31,7 +31,7 @@ struct placement_traits {
    bool has_placement_alignment = true;
    bool has_placement_ground = true;
    bool has_node_placement_insert = false;
-   bool has_extend_to = false;
+   bool has_resize_to = false;
 };
 
 }
@@ -1259,9 +1259,16 @@ void world_edit::update_ui() noexcept
                if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
                   _entity_creation_context.using_extend_to =
                      not _entity_creation_context.using_extend_to;
+                  _entity_creation_context.using_shrink_to = false;
+               }
+               if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.using_shrink_to =
+                     not _entity_creation_context.using_shrink_to;
+                  _entity_creation_context.using_extend_to = false;
                }
 
-               if (_entity_creation_context.using_extend_to) {
+               if (_entity_creation_context.using_extend_to or
+                   _entity_creation_context.using_shrink_to) {
                   _entity_creation_context.placement_mode = placement_mode::manual;
 
                   if (not _entity_creation_context.resize_start_size) {
@@ -1282,14 +1289,21 @@ void world_edit::update_ui() noexcept
                      const float3 cursorRS = inverse_region_rotation *
                                              (_cursor_positionWS - region.position);
 
-                     region.size = max(abs(cursorRS), region_start_size);
+                     if (_entity_creation_context.using_extend_to) {
+                        region.size = max(abs(cursorRS), region_start_size);
+                     }
+                     else {
+                        region.size = min(abs(cursorRS), region_start_size);
+                     }
                   } break;
                   case world::region_shape::sphere: {
                      const float start_radius = length(region_start_size);
                      const float new_radius =
                         distance(region.position, _cursor_positionWS);
 
-                     const float radius = std::max(start_radius, new_radius);
+                     const float radius = _entity_creation_context.using_extend_to
+                                             ? std::max(start_radius, new_radius)
+                                             : std::min(start_radius, new_radius);
                      const float radius_sq = radius * radius;
                      const float size = std::sqrt(radius_sq / 3.0f);
 
@@ -1318,10 +1332,10 @@ void world_edit::update_ui() noexcept
                   }
                }
                else {
-                  _entity_creation_context.resize_start = std::nullopt;
+                  _entity_creation_context.resize_start_size = std::nullopt;
                }
 
-               return placement_traits{.has_extend_to = true};
+               return placement_traits{.has_resize_to = true};
             },
             [&](world::sector& sector) {
                (void)sector;
@@ -1607,11 +1621,16 @@ void world_edit::update_ui() noexcept
                                       "entity_creation.cycle_ground_mode")));
          }
 
-         if (traits.has_extend_to) {
+         if (traits.has_resize_to) {
             ImGui::Text("Extend To");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
                                       "entity_creation.toggle_extend_to")));
+
+            ImGui::Text("Shrink To");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.toggle_shrink_to")));
          }
 
          ImGui::End();

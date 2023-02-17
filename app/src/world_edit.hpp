@@ -42,6 +42,8 @@ enum class placement_rotation : uint8 {
 
 enum class placement_node_insert : uint8 { nearest, append };
 
+enum class placement_resize_mode : uint8 { off, extend, shrink };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -185,6 +187,7 @@ private:
 
       bool using_point_at = false;
       bool using_extend_to = false;
+      bool using_shrink_to = false;
 
       bool finish_current_path = false;
 

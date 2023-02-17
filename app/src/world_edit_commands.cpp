@@ -91,8 +91,20 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("entity_creation.deactivate_point_at"s,
                  [this] { _entity_creation_context.using_point_at = false; });
-   _commands.add("entity_creation.toggle_extend_to"s,
-                 _entity_creation_context.using_extend_to);
+   _commands.add("entity_creation.toggle_extend_to"s, [this] {
+      _entity_creation_context.using_extend_to =
+         not _entity_creation_context.using_extend_to;
+      _entity_creation_context.using_shrink_to = false;
+   });
+   _commands.add("entity_creation.toggle_shrink_to"s, [this] {
+      _entity_creation_context.using_shrink_to =
+         not _entity_creation_context.using_shrink_to;
+      _entity_creation_context.using_extend_to = false;
+   });
+   _commands.add("entity_creation.deactivate_resize_to"s, [this] {
+      _entity_creation_context.using_shrink_to = false;
+      _entity_creation_context.using_extend_to = false;
+   });
 
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
@@ -145,6 +157,8 @@ void world_edit::initialize_hotkeys() noexcept
 
                        {"entity_creation.toggle_point_at", {.key = key::v}},
                        {"entity_creation.toggle_extend_to", {.key = key::t}},
+                       {"entity_creation.toggle_shrink_to",
+                        {.key = key::t, .modifiers = {.ctrl = true}}},
 
                        {"entity_creation.lock_x_axis", {.key = key::z}},
                        {"entity_creation.lock_y_axis", {.key = key::x}},
@@ -166,14 +180,14 @@ void world_edit::initialize_hotkeys() noexcept
                        {"entity_creation.deactivate_point_at", {.key = key::escape}},
                     });
 
-   _hotkeys.add_set("Entity Creation (Extend To)",
+   _hotkeys.add_set("Entity Creation (Resize To)",
                     [this] {
                        return _interaction_targets.creation_entity and
-                              _entity_creation_context.using_extend_to;
+                              (_entity_creation_context.using_extend_to or _entity_creation_context.using_shrink_to);
                     },
                     {
-                       {"entity_creation.toggle_extend_to", {.key = key::mouse1}},
-                       {"entity_creation.toggle_extend_to", {.key = key::escape}},
+                       {"entity_creation.deactivate_resize_to", {.key = key::mouse1}},
+                       {"entity_creation.deactivate_resize_to", {.key = key::escape}},
                     });
 }
 
