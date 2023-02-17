@@ -109,25 +109,25 @@ void world_edit::initialize_commands() noexcept
 void world_edit::initialize_hotkeys() noexcept
 {
    _hotkeys.add_set("", [] { return true; },
-                    {
-                       {"camera.move_forward", {.key = key::w}, {.toggle = true}},
-                       {"camera.move_back", {.key = key::s}, {.toggle = true}},
-                       {"camera.move_left", {.key = key::a}, {.toggle = true}},
-                       {"camera.move_right", {.key = key::d}, {.toggle = true}},
-                       {"camera.move_up", {.key = key::r}, {.toggle = true}},
-                       {"camera.move_down", {.key = key::f}, {.toggle = true}},
-                       {"camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
+                    {{"camera.move_forward", {.key = key::w}, {.toggle = true}},
+                     {"camera.move_back", {.key = key::s}, {.toggle = true}},
+                     {"camera.move_left", {.key = key::a}, {.toggle = true}},
+                     {"camera.move_right", {.key = key::d}, {.toggle = true}},
+                     {"camera.move_up", {.key = key::r}, {.toggle = true}},
+                     {"camera.move_down", {.key = key::f}, {.toggle = true}},
+                     {"camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
 
-                       {"edit.select", {.key = key::mouse1}},
-                       {"edit.deselect", {.key = key::escape}},
+                     {"edit.select", {.key = key::mouse1}},
+                     {"edit.deselect", {.key = key::escape}},
 
-                       {"edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
-                       {"edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
+                     {"edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
+                     {"edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
 
-                       {"hotkeys.show", {.key = key::f1}},
+                     {"hotkeys.show", {.key = key::f1}},
 
-                       {"save", {.key = key::s, .modifiers = {.ctrl = true}}},
-                    });
+                     {"save",
+                      {.key = key::s, .modifiers = {.ctrl = true}},
+                      {.ignore_imgui_focus = true}}});
 
    _hotkeys.add_set("Entity Creation",
                     [this] {
