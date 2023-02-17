@@ -32,6 +32,7 @@ struct placement_traits {
    bool has_placement_ground = true;
    bool has_node_placement_insert = false;
    bool has_resize_to = false;
+   bool has_from_bbox = false;
 };
 
 }
@@ -1335,7 +1336,40 @@ void world_edit::update_ui() noexcept
                   _entity_creation_context.resize_start_size = std::nullopt;
                }
 
-               return placement_traits{.has_resize_to = true};
+               ImGui::Separator();
+               if (ImGui::Button("From Object Bounds", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.using_from_object_bbox = true;
+               }
+
+               if (_entity_creation_context.using_from_object_bbox and
+                   _interaction_targets.hovered_entity and
+                   std::holds_alternative<world::object_id>(
+                      *_interaction_targets.hovered_entity)) {
+                  _entity_creation_context.placement_rotation = placement_rotation::manual_quaternion;
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+
+                  const world::object* object =
+                     world::find_entity(_world.objects,
+                                        std::get<world::object_id>(
+                                           *_interaction_targets.hovered_entity));
+
+                  if (object) {
+                     math::bounding_box bbox =
+                        _object_classes.at(object->class_name).model->bounding_box;
+
+                     const float3 size = abs(bbox.max - bbox.min) / 2.0f;
+                     const float3 position =
+                        object->rotation *
+                        ((conjugate(object->rotation) * object->position) +
+                         ((bbox.min + bbox.max) / 2.0f));
+
+                     region.rotation = object->rotation;
+                     region.position = position;
+                     region.size = size;
+                  }
+               }
+
+               return placement_traits{.has_resize_to = true, .has_from_bbox = true};
             },
             [&](world::sector& sector) {
                (void)sector;
@@ -1631,6 +1665,12 @@ void world_edit::update_ui() noexcept
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
                                       "entity_creation.toggle_shrink_to")));
+         }
+
+         if (traits.has_from_bbox) {
+            ImGui::Text("From Object Bounds");
+            ImGui::BulletText(get_display_string(_hotkeys.query_binding(
+               "Entity Creation", "entity_creation.toggle_from_object_bbox")));
          }
 
          ImGui::End();

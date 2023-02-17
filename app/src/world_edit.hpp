@@ -188,6 +188,7 @@ private:
       bool using_point_at = false;
       bool using_extend_to = false;
       bool using_shrink_to = false;
+      bool using_from_object_bbox = false;
 
       bool finish_current_path = false;
 

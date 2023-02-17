@@ -284,8 +284,14 @@ void world_edit::update_hovered_entity() noexcept
       _cursor_positionWS = ray.origin + ray.direction * hovered_entity_distance;
    }
 
-   if (_interaction_targets.creation_entity) {
-      _interaction_targets.hovered_entity = std::nullopt;
+   if (_interaction_targets.creation_entity and _interaction_targets.hovered_entity) {
+      const bool tool_wants_hover =
+         _entity_creation_context.using_from_object_bbox and
+         std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity);
+
+      if (not tool_wants_hover) {
+         _interaction_targets.hovered_entity = std::nullopt;
+      }
    }
 }
 
@@ -460,7 +466,19 @@ void world_edit::place_creation_entity() noexcept
                                  _world);
             }
          },
-         [&](world::region region) { (void)region; },
+         [&](world::region& region) {
+            world::region new_region = region;
+
+            new_region.name =
+               world::create_unique_name(_world.regions, new_region.name);
+            new_region.id = _world.next_id.regions.aquire();
+
+            _entity_creation_context.last_region = new_region.id;
+
+            _undo_stack.apply(actions::make_insert_entity(std::move(new_region)), _world);
+
+            region.name = world::create_unique_name(_world.regions, new_region.name);
+         },
          [&](world::sector sector) { (void)sector; },
          [&](world::portal portal) { (void)portal; },
          [&](world::barrier barrier) { (void)barrier; },
