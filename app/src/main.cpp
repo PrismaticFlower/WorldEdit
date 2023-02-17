@@ -75,6 +75,8 @@ void run_application(command_line command_line)
       std::terminate();
    }
 
+   ShowWindowAsync(window_handle.get(), SW_SHOWMAXIMIZED);
+
    we::world_edit app{window_handle.get(), command_line};
 
    window_procedure = [&](HWND window, UINT message, WPARAM wparam,
@@ -201,8 +203,6 @@ void run_application(command_line command_line)
 
       return DefWindowProcW(window, message, wparam, lparam);
    };
-
-   ShowWindowAsync(window_handle.get(), SW_SHOWMAXIMIZED);
 
    do {
       MSG message{};
