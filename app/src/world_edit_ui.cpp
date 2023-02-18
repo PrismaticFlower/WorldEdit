@@ -50,6 +50,11 @@ auto surface_rotation_degrees(const float3 surface_normal,
    return std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
 }
 
+auto align_position_to_grid(const float3 position, const float alignment) -> float3
+{
+   return round(position / alignment) * alignment;
+}
+
 }
 
 void world_edit::update_ui() noexcept
@@ -773,8 +778,8 @@ void world_edit::update_ui() noexcept
                   if (_entity_creation_context.placement_alignment ==
                       placement_alignment::grid) {
                      new_position =
-                        round(new_position / _entity_creation_context.alignment) *
-                        _entity_creation_context.alignment;
+                        align_position_to_grid(new_position,
+                                               _entity_creation_context.alignment);
                   }
                   else if (_entity_creation_context.placement_alignment ==
                            placement_alignment::snapping) {
@@ -854,8 +859,8 @@ void world_edit::update_ui() noexcept
                   if (_entity_creation_context.placement_alignment ==
                       placement_alignment::grid) {
                      new_position =
-                        round(new_position / _entity_creation_context.alignment) *
-                        _entity_creation_context.alignment;
+                        align_position_to_grid(new_position,
+                                               _entity_creation_context.alignment);
                   }
                   else if (_entity_creation_context.placement_alignment ==
                            placement_alignment::snapping) {
@@ -1039,8 +1044,8 @@ void world_edit::update_ui() noexcept
                   if (_entity_creation_context.placement_alignment ==
                       placement_alignment::grid) {
                      new_position =
-                        round(new_position / _entity_creation_context.alignment) *
-                        _entity_creation_context.alignment;
+                        align_position_to_grid(new_position,
+                                               _entity_creation_context.alignment);
                   }
                   else if (_entity_creation_context.placement_alignment ==
                            placement_alignment::snapping) {
@@ -1174,8 +1179,8 @@ void world_edit::update_ui() noexcept
                   if (_entity_creation_context.placement_alignment ==
                       placement_alignment::grid) {
                      new_position =
-                        round(new_position / _entity_creation_context.alignment) *
-                        _entity_creation_context.alignment;
+                        align_position_to_grid(new_position,
+                                               _entity_creation_context.alignment);
                   }
                   else if (_entity_creation_context.placement_alignment ==
                            placement_alignment::snapping) {
