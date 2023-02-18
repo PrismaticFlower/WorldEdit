@@ -62,6 +62,7 @@ struct flat_model {
    explicit flat_model(const scene& scene) noexcept;
 
    math::bounding_box bounding_box;
+   math::bounding_box collision_bounding_box;
 
    std::vector<mesh> meshes;
    std::vector<flat_model_collision> collision;

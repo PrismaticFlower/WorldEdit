@@ -208,7 +208,8 @@ void flat_model::regenerate_bounding_boxes() noexcept
    for (auto& coll : collision) {
       coll.regenerate_bounding_box();
 
-      bounding_box = math::combine(bounding_box, coll.bounding_box);
+      collision_bounding_box =
+         math::combine(collision_bounding_box, coll.bounding_box);
    }
 }
 
