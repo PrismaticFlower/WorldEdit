@@ -35,6 +35,21 @@ struct placement_traits {
    bool has_from_bbox = false;
 };
 
+auto surface_rotation_degrees(const float3 surface_normal,
+                              const float fallback_angle) -> float
+{
+   if (surface_normal.x == 0.0f and surface_normal.z == 0.0f) {
+      return fallback_angle;
+   }
+
+   const float2 direction = normalize(float2{surface_normal.x, surface_normal.z});
+
+   const float angle =
+      std::atan2(-direction.x, -direction.y) + std::numbers::pi_v<float>;
+
+   return std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+}
+
 }
 
 void world_edit::update_ui() noexcept
@@ -717,19 +732,11 @@ void world_edit::update_ui() noexcept
 
                   if (_entity_creation_context.placement_rotation ==
                          placement_rotation::surface and
-                      _cursor_surface_normalWS and
-                      not(_cursor_surface_normalWS->x == 0.0f and
-                          _cursor_surface_normalWS->z == 0.0f)) {
-
-                     const float2 direction =
-                        normalize(float2{_cursor_surface_normalWS->x,
-                                         _cursor_surface_normalWS->z});
-
-                     const float angle = std::atan2(-direction.x, -direction.y) +
-                                         std::numbers::pi_v<float>;
-
+                      _cursor_surface_normalWS) {
                      _entity_creation_context.rotation.y =
-                        std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _entity_creation_context
+                                                    .rotation.y);
 
                      object.rotation =
                         make_quat_from_euler(_entity_creation_context.rotation *
@@ -816,19 +823,11 @@ void world_edit::update_ui() noexcept
 
                   if (_entity_creation_context.placement_rotation ==
                          placement_rotation::surface and
-                      _cursor_surface_normalWS and
-                      not(_cursor_surface_normalWS->x == 0.0f and
-                          _cursor_surface_normalWS->z == 0.0f)) {
-
-                     const float2 direction =
-                        normalize(float2{_cursor_surface_normalWS->x,
-                                         _cursor_surface_normalWS->z});
-
-                     const float angle = std::atan2(-direction.x, -direction.y) +
-                                         std::numbers::pi_v<float>;
-
+                      _cursor_surface_normalWS) {
                      _entity_creation_context.rotation.y =
-                        std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _entity_creation_context
+                                                    .rotation.y);
 
                      light.rotation =
                         make_quat_from_euler(_entity_creation_context.rotation *
@@ -1009,20 +1008,11 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (_entity_creation_context.placement_rotation ==
-                         placement_rotation::surface and
-                      _cursor_surface_normalWS and
-                      not(_cursor_surface_normalWS->x == 0.0f and
-                          _cursor_surface_normalWS->z == 0.0f)) {
-
-                     const float2 direction =
-                        normalize(float2{_cursor_surface_normalWS->x,
-                                         _cursor_surface_normalWS->z});
-
-                     const float angle = std::atan2(-direction.x, -direction.y) +
-                                         std::numbers::pi_v<float>;
-
+                      placement_rotation::surface) {
                      _entity_creation_context.rotation.y =
-                        std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _entity_creation_context
+                                                    .rotation.y);
 
                      node.rotation =
                         make_quat_from_euler(_entity_creation_context.rotation *
@@ -1109,20 +1099,11 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (_entity_creation_context.placement_rotation ==
-                         placement_rotation::surface and
-                      _cursor_surface_normalWS and
-                      not(_cursor_surface_normalWS->x == 0.0f and
-                          _cursor_surface_normalWS->z == 0.0f)) {
-
-                     const float2 direction =
-                        normalize(float2{_cursor_surface_normalWS->x,
-                                         _cursor_surface_normalWS->z});
-
-                     const float angle = std::atan2(-direction.x, -direction.y) +
-                                         std::numbers::pi_v<float>;
-
+                      placement_rotation::surface) {
                      _entity_creation_context.rotation.y =
-                        std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _entity_creation_context
+                                                    .rotation.y);
 
                      region.rotation =
                         make_quat_from_euler(_entity_creation_context.rotation *
@@ -1345,7 +1326,8 @@ void world_edit::update_ui() noexcept
                    _interaction_targets.hovered_entity and
                    std::holds_alternative<world::object_id>(
                       *_interaction_targets.hovered_entity)) {
-                  _entity_creation_context.placement_rotation = placement_rotation::manual_quaternion;
+                  _entity_creation_context.placement_rotation =
+                     placement_rotation::manual_quaternion;
                   _entity_creation_context.placement_mode = placement_mode::manual;
 
                   const world::object* object =
