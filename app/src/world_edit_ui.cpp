@@ -52,7 +52,8 @@ auto surface_rotation_degrees(const float3 surface_normal,
 
 auto align_position_to_grid(const float3 position, const float alignment) -> float3
 {
-   return round(position / alignment) * alignment;
+   return float3{std::round(position.x / alignment) * alignment, position.y,
+                 std::round(position.z / alignment) * alignment};
 }
 
 }
