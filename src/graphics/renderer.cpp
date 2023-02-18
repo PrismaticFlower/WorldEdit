@@ -833,7 +833,7 @@ void renderer_impl::draw_world_meta_objects(
             const float outer_cone_radius =
                half_range * std::tan(light.outer_cone_angle);
             const float inner_cone_radius =
-               half_range * std::tan(light.outer_cone_angle);
+               half_range * std::tan(light.inner_cone_angle);
 
             const float3 light_direction =
                normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
@@ -1120,18 +1120,32 @@ void renderer_impl::draw_interaction_targets(
          }
          else if (light.light_type == world::light_type::spot) {
             const float half_range = light.range / 2.0f;
-            const float cone_radius = half_range * std::tan(light.outer_cone_angle);
+            const float outer_cone_radius =
+               half_range * std::tan(light.outer_cone_angle);
+            const float inner_cone_radius =
+               half_range * std::tan(light.inner_cone_angle);
 
-            float4x4 transform =
-               to_matrix(light.rotation) *
-               to_matrix(quaternion{0.707107f, -0.707107f, 0.0f, 0.0f}) *
-               float4x4{{cone_radius, 0.0f, 0.0f, 0.0f},
-                        {0.0f, half_range, 0.0f, 0.0f},
-                        {0.0f, 0.0f, cone_radius, 0.0f},
-                        {0.0f, -half_range, 0.0f, 1.0f}};
-            transform[3] = float4{light.position, 0.0f};
+            const float4x4 rotation = to_matrix(
+               light.rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
 
-            _meta_draw_batcher.add_cone_wireframe(transform, color);
+            float4x4 outer_transform =
+               rotation * float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},
+                                   {0.0f, half_range, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, outer_cone_radius, 0.0f},
+                                   {0.0f, -half_range, 0.0f, 1.0f}};
+
+            outer_transform[3] += float4{light.position, 0.0f};
+
+            float4x4 inner_transform =
+               rotation * float4x4{{inner_cone_radius, 0.0f, 0.0f, 0.0f},
+                                   {0.0f, half_range, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, inner_cone_radius, 0.0f},
+                                   {0.0f, -half_range, 0.0f, 1.0f}};
+
+            inner_transform[3] += float4{light.position, 0.0f};
+
+            _meta_draw_batcher.add_cone_wireframe(outer_transform, color);
+            _meta_draw_batcher.add_cone_wireframe(inner_transform, color);
          }
          else if (light.light_type == world::light_type::directional_region_box) {
             const float3 scale = light.region_size;
