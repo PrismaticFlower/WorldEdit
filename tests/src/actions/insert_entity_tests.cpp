@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "actions/insert_entity.hpp"
+#include "edits/insert_entity.hpp"
 #include "world/world.hpp"
 #include "world_test_data.hpp"
 

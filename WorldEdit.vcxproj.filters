@@ -487,15 +487,6 @@
     <ClInclude Include="src\imgui\imgui_stdlib.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\actions\stack.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\actions\imgui_ext.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\actions\ui_action.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\shadow_camera.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -571,9 +562,6 @@
     <ClInclude Include="src\graphics\profiler.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\actions\insert_entity.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\assets\terrain\terrain_collision.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -595,10 +583,22 @@
     <ClInclude Include="src\imgui\imgui_ext.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\actions\insert_node.hpp">
+    <ClInclude Include="src\edits\edit.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\actions\edit.hpp">
+    <ClInclude Include="src\edits\imgui_ext.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\insert_entity.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\insert_node.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\stack.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\ui_action.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -804,9 +804,6 @@
     <ClCompile Include="src\graphics\profiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\actions\insert_entity.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\assets\terrain\terrain_collision.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -825,7 +822,10 @@
     <ClCompile Include="src\imgui\imgui_ext.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\actions\insert_node.cpp">
+    <ClCompile Include="src\edits\insert_entity.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\insert_node.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

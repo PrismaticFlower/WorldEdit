@@ -1,7 +1,7 @@
 
 #include "world_edit.hpp"
 
-#include "actions/imgui_ext.hpp"
+#include "edits/imgui_ext.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_ext.hpp"
 #include "imgui/imgui_impl_win32.h"
