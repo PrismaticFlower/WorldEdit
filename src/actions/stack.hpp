@@ -1,6 +1,6 @@
 #pragma once
 
-#include "action.hpp"
+#include "edit.hpp"
 
 #include <memory>
 #include <vector>
@@ -13,62 +13,127 @@ struct stack_init {
 };
 
 /// @brief Encapsulates and manages Undo and Redo stacks.
-class stack {
-public:
-   stack() : stack{stack_init{}} {};
+/// @tparam T The type that the edits targets.
+template<typename T>
+struct stack {
+   using edit_target = T;
+   using edit_type = edit<T>;
 
-   stack(const stack_init params) noexcept;
+   stack() : stack{stack_init{}} {}
 
-   /// @brief Apply an action and push it onto the stack. Clears anything in the reverted stack.
-   /// @param action The action.
-   /// @param world The world used with the action.
-   void apply(std::unique_ptr<action> action, world::world& world) noexcept;
+   stack(const stack_init params) noexcept
+   {
+      _applied.reserve(params.reserve_size);
+      _reverted.reserve(params.reserve_size);
+   }
 
-   /// @brief Revert an action. Does nothing if there is no action to revert.
-   /// @param world The world used with the action.
-   void revert(world::world& world) noexcept;
+   /// @brief Apply an edit and push it onto the stack. Clears anything in the reverted stack.
+   /// @param edit The edit.
+   /// @param target The target of the edit.
+   void apply(std::unique_ptr<edit_type> edit, edit_target& target) noexcept
+   {
+      edit->apply(target);
 
-   /// @brief Reapply a reverted action. Does nothing if there is no action to reapply.
-   /// @param world The world used with the action.
-   void reapply(world::world& world) noexcept;
+      _applied.push_back(std::move(edit));
+      _reverted.clear();
+   }
 
-   /// @brief Reverts a number of actions. Does nothing if there is no action to revert.
-   /// @param count The number of actions to revert.
-   /// @param world The world used with the actions.
-   void revert(const std::size_t count, world::world& world) noexcept;
+   /// @brief Revert an edit. Does nothing if there is no edit to revert
+   /// @param target The target of the edit.
+   void revert(edit_target& target) noexcept
+   {
+      revert(1, target);
+   }
 
-   /// @brief Reapplies a number of actions. Does nothing if there is no action to reapply.
-   /// @param count The number of actions to revert.
-   /// @param world The world used with the actions.
-   void reapply(const std::size_t count, world::world& world) noexcept;
+   /// @brief Reapply a reverted edit. Does nothing if there is no edit to reapply.
+   /// @param target The target of the edit.
+   void reapply(edit_target& target) noexcept
+   {
+      reapply(1, target);
+   }
 
-   /// @brief Revert all actions.
-   /// @param world The world used with the action.
-   void revert_all(world::world& world) noexcept;
+   /// @brief Reverts a number of edits. Does nothing if there is no edit to revert.
+   /// @param count The number of edits to revert.
+   /// @param target The target of the edits.
+   void revert(const std::size_t count, edit_target& target) noexcept
+   {
+      const std::size_t clamped_count = std::min(count, _applied.size());
 
-   /// @brief Reapply all actions.
-   /// @param world The world used with the action.
-   void reapply_all(world::world& world) noexcept;
+      for (std::size_t i = 0; i < clamped_count; ++i) {
+         std::unique_ptr<edit_type>& edit = _applied.back();
 
-   /// @brief Number of actions in the applied stack.
-   auto applied_size() const noexcept -> std::size_t;
+         edit->revert(target);
 
-   /// @brief Number of actions in the reverted stack.
-   auto reverted_size() const noexcept -> std::size_t;
+         _reverted.push_back(std::move(edit));
+         _applied.pop_back();
+      }
+   }
+
+   /// @brief Reapplies a number of edits. Does nothing if there is no edit to reapply.
+   /// @param count The number of edits to revert.
+   /// @param target The target of the edits.
+   void reapply(const std::size_t count, edit_target& target) noexcept
+   {
+      const std::size_t clamped_count = std::min(count, _reverted.size());
+
+      for (std::size_t i = 0; i < clamped_count; ++i) {
+         std::unique_ptr<edit_type>& edit = _reverted.back();
+
+         edit->apply(target);
+
+         _applied.push_back(std::move(edit));
+         _reverted.pop_back();
+      }
+   }
+
+   /// @brief Revert all edits.
+   /// @param target The target of the edits.
+   void revert_all(edit_target& target) noexcept
+   {
+      revert(_applied.size(), target);
+   }
+
+   /// @brief Reapply all edits.
+   /// @param target The target of the edits.
+   void reapply_all(edit_target& target) noexcept
+   {
+      reapply(_reverted.size(), target);
+   }
+
+   /// @brief Number of edits in the applied stack.
+   auto applied_size() const noexcept -> std::size_t
+   {
+      return _applied.size();
+   }
+
+   /// @brief Number of edits in the reverted stack.
+   auto reverted_size() const noexcept -> std::size_t
+   {
+      return _reverted.size();
+   }
 
    /// @brief Check if the applied stack is empty.
-   bool applied_empty() const noexcept;
+   bool applied_empty() const noexcept
+   {
+      return _applied.empty();
+   }
 
    /// @brief Check if the reverted stack is empty.
-   bool reverted_empty() const noexcept;
+   bool reverted_empty() const noexcept
+   {
+      return _reverted.empty();
+   }
 
-   /// @brief Gets the pointer to the action at the top of the applied stack. If changes are made to the action drop_reverted should be called.
-   /// @return The pointer to the action or nullptr if no action is on the stack.
-   auto applied_top() noexcept -> action*;
+   /// @brief Gets the pointer to the edit at the top of the applied stack. If changes are made to the edit drop_reverted should be called.
+   /// @return The pointer to the edit or nullptr if no edit is on the stack.
+   auto applied_top() noexcept -> edit_type*
+   {
+      return _applied.empty() ? nullptr : _applied.back().get();
+   }
 
 private:
-   std::vector<std::unique_ptr<action>> _applied;
-   std::vector<std::unique_ptr<action>> _reverted;
+   std::vector<std::unique_ptr<edit_type>> _applied;
+   std::vector<std::unique_ptr<edit_type>> _reverted;
 };
 
 }

@@ -25,8 +25,8 @@ void world_edit::initialize_commands() noexcept
       _interaction_targets.selection.pop_back();
    });
 
-   _commands.add("edit.undo"s, [this]() { _undo_stack.revert(_world); });
-   _commands.add("edit.redo"s, [this]() { _undo_stack.reapply(_world); });
+   _commands.add("edit.undo"s, [this]() { _edit_stack_world.revert(_world); });
+   _commands.add("edit.redo"s, [this]() { _edit_stack_world.reapply(_world); });
 
    _commands.add("hotkeys.show"s, _hotkeys_show);
 

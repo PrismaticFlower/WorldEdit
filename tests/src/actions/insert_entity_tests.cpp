@@ -8,7 +8,7 @@ using namespace std::literals;
 
 namespace we::actions::tests {
 
-TEST_CASE("actions insert_entity", "[Actions]")
+TEST_CASE("edits insert_entity", "[Edits]")
 {
    world::world world = test_world;
 

@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "actions/stack.hpp"
-#include "world/world.hpp"
 
 using namespace std::literals;
 
@@ -9,238 +8,209 @@ namespace we::actions::tests {
 
 namespace {
 
-struct dummy_action : action {
-   dummy_action(int& apply_call_count, int& revert_call_count)
-      : apply_call_count{apply_call_count}, revert_call_count{revert_call_count}
-   {
-   }
-
-   void apply(world::world&) noexcept override
-   {
-      ++apply_call_count;
-   }
-
-   void revert(world::world&) noexcept override
-   {
-      ++revert_call_count;
-   }
-
-   int& apply_call_count;
-   int& revert_call_count;
+struct dummy_edit_state {
+   int apply_call_count = 0;
+   int revert_call_count = 0;
 };
 
-struct dummy_ordering_action : action {
-   dummy_ordering_action(bool& toggle) : toggle{toggle} {}
-
-   void apply(world::world&) noexcept override
+struct dummy_edit : edit<dummy_edit_state> {
+   void apply(dummy_edit_state& target) const noexcept override
    {
-      toggle = not toggle;
+      ++target.apply_call_count;
    }
 
-   void revert(world::world&) noexcept override
+   void revert(dummy_edit_state& target) const noexcept override
    {
-      toggle = not toggle;
+      ++target.revert_call_count;
+   }
+};
+
+struct dummy_edit_bools_state {
+   bool toggles[3] = {false, false, false};
+};
+
+struct dummy_ordering_edit : edit<dummy_edit_bools_state> {
+   dummy_ordering_edit(int index) : index{index} {}
+
+   void apply(dummy_edit_bools_state& target) const noexcept override
+   {
+      target.toggles[index] = not target.toggles[index];
    }
 
-   bool& toggle;
+   void revert(dummy_edit_bools_state& target) const noexcept override
+   {
+      target.toggles[index] = not target.toggles[index];
+   }
+
+   int index = 0;
 };
 
 }
 
-TEST_CASE("actions stack core tests", "[Actions]")
+TEST_CASE("edits stack core tests", "[Edits]")
 {
-   stack stack;
-   world::world world;
+   stack<dummy_edit_state> stack;
+   dummy_edit_state state;
 
-   int apply_call_count = 0;
-   int revert_call_count = 0;
+   stack.apply(std::make_unique<dummy_edit>(), state);
 
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-
-   REQUIRE(apply_call_count == 1);
-   REQUIRE(revert_call_count == 0);
+   REQUIRE(state.apply_call_count == 1);
+   REQUIRE(state.revert_call_count == 0);
    REQUIRE(stack.applied_size() == 1);
    REQUIRE(stack.reverted_size() == 0);
 
-   stack.revert(world);
+   stack.revert(state);
 
-   REQUIRE(apply_call_count == 1);
-   REQUIRE(revert_call_count == 1);
+   REQUIRE(state.apply_call_count == 1);
+   REQUIRE(state.revert_call_count == 1);
    REQUIRE(stack.applied_size() == 0);
    REQUIRE(stack.reverted_size() == 1);
 
-   stack.reapply(world);
+   stack.reapply(state);
 
-   REQUIRE(apply_call_count == 2);
-   REQUIRE(revert_call_count == 1);
+   REQUIRE(state.apply_call_count == 2);
+   REQUIRE(state.revert_call_count == 1);
    REQUIRE(stack.applied_size() == 1);
    REQUIRE(stack.reverted_size() == 0);
 }
 
-TEST_CASE("actions stack count function tests", "[Actions]")
+TEST_CASE("edits stack count function tests", "[Edits]")
 {
-   stack stack;
-   world::world world;
+   stack<dummy_edit_state> stack;
+   dummy_edit_state state;
 
-   int apply_call_count = 0;
-   int revert_call_count = 0;
+   stack.apply(std::make_unique<dummy_edit>(), state);
+   stack.apply(std::make_unique<dummy_edit>(), state);
+   stack.apply(std::make_unique<dummy_edit>(), state);
 
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-
-   REQUIRE(apply_call_count == 3);
-   REQUIRE(revert_call_count == 0);
+   REQUIRE(state.apply_call_count == 3);
+   REQUIRE(state.revert_call_count == 0);
    REQUIRE(stack.applied_size() == 3);
    REQUIRE(stack.reverted_size() == 0);
 
-   stack.revert(2, world);
+   stack.revert(2, state);
 
-   REQUIRE(apply_call_count == 3);
-   REQUIRE(revert_call_count == 2);
+   REQUIRE(state.apply_call_count == 3);
+   REQUIRE(state.revert_call_count == 2);
    REQUIRE(stack.applied_size() == 1);
    REQUIRE(stack.reverted_size() == 2);
 
-   stack.revert(2, world);
+   stack.revert(2, state);
 
-   REQUIRE(apply_call_count == 3);
-   REQUIRE(revert_call_count == 3);
+   REQUIRE(state.apply_call_count == 3);
+   REQUIRE(state.revert_call_count == 3);
    REQUIRE(stack.applied_size() == 0);
    REQUIRE(stack.reverted_size() == 3);
 
-   stack.reapply(2, world);
+   stack.reapply(2, state);
 
-   REQUIRE(apply_call_count == 5);
-   REQUIRE(revert_call_count == 3);
+   REQUIRE(state.apply_call_count == 5);
+   REQUIRE(state.revert_call_count == 3);
    REQUIRE(stack.applied_size() == 2);
    REQUIRE(stack.reverted_size() == 1);
 
-   stack.reapply(2, world);
+   stack.reapply(2, state);
 
-   REQUIRE(apply_call_count == 6);
-   REQUIRE(revert_call_count == 3);
+   REQUIRE(state.apply_call_count == 6);
+   REQUIRE(state.revert_call_count == 3);
    REQUIRE(stack.applied_size() == 3);
    REQUIRE(stack.reverted_size() == 0);
 }
 
-TEST_CASE("actions stack _all function tests", "[Actions]")
+TEST_CASE("edits stack _all function tests", "[Edits]")
 {
-   stack stack;
-   world::world world;
+   stack<dummy_edit_state> stack;
+   dummy_edit_state state;
 
-   int apply_call_count = 0;
-   int revert_call_count = 0;
+   stack.apply(std::make_unique<dummy_edit>(), state);
+   stack.apply(std::make_unique<dummy_edit>(), state);
+   stack.apply(std::make_unique<dummy_edit>(), state);
 
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-
-   REQUIRE(apply_call_count == 3);
-   REQUIRE(revert_call_count == 0);
+   REQUIRE(state.apply_call_count == 3);
+   REQUIRE(state.revert_call_count == 0);
    REQUIRE(stack.applied_size() == 3);
    REQUIRE(stack.reverted_size() == 0);
 
-   stack.revert_all(world);
+   stack.revert_all(state);
 
-   REQUIRE(apply_call_count == 3);
-   REQUIRE(revert_call_count == 3);
+   REQUIRE(state.apply_call_count == 3);
+   REQUIRE(state.revert_call_count == 3);
    REQUIRE(stack.applied_size() == 0);
    REQUIRE(stack.reverted_size() == 3);
 
-   stack.reapply_all(world);
+   stack.reapply_all(state);
 
-   REQUIRE(apply_call_count == 6);
-   REQUIRE(revert_call_count == 3);
+   REQUIRE(state.apply_call_count == 6);
+   REQUIRE(state.revert_call_count == 3);
    REQUIRE(stack.applied_size() == 3);
    REQUIRE(stack.reverted_size() == 0);
 }
 
-TEST_CASE("actions stack ordering tests", "[Actions]")
+TEST_CASE("edits stack ordering tests", "[Edits]")
 {
-   stack stack;
-   world::world world;
+   stack<dummy_edit_bools_state> stack;
+   dummy_edit_bools_state state;
 
-   bool a_active = false;
-   bool b_active = false;
-   bool c_active = false;
+   stack.apply(std::make_unique<dummy_ordering_edit>(0), state);
+   stack.apply(std::make_unique<dummy_ordering_edit>(1), state);
+   stack.apply(std::make_unique<dummy_ordering_edit>(2), state);
 
-   stack.apply(std::make_unique<dummy_ordering_action>(a_active), world);
-   stack.apply(std::make_unique<dummy_ordering_action>(b_active), world);
-   stack.apply(std::make_unique<dummy_ordering_action>(c_active), world);
+   REQUIRE(state.toggles[0]);
+   REQUIRE(state.toggles[1]);
+   REQUIRE(state.toggles[2]);
 
-   REQUIRE(a_active);
-   REQUIRE(b_active);
-   REQUIRE(c_active);
+   stack.revert(2, state);
 
-   stack.revert(2, world);
+   REQUIRE(state.toggles[0]);
+   REQUIRE(not state.toggles[1]);
+   REQUIRE(not state.toggles[2]);
 
-   REQUIRE(a_active);
-   REQUIRE(not b_active);
-   REQUIRE(not c_active);
+   stack.reapply(1, state);
 
-   stack.reapply(1, world);
-
-   REQUIRE(a_active);
-   REQUIRE(b_active);
-   REQUIRE(not c_active);
+   REQUIRE(state.toggles[0]);
+   REQUIRE(state.toggles[1]);
+   REQUIRE(not state.toggles[2]);
 }
 
-TEST_CASE("actions stack empty function tests", "[Actions]")
+TEST_CASE("edits stack empty function tests", "[Edits]")
 {
-   stack stack;
-   world::world world;
+   stack<dummy_edit_state> stack;
+   dummy_edit_state state;
 
    REQUIRE(stack.applied_empty());
    REQUIRE(stack.reverted_empty());
 
-   int apply_call_count = 0;
-   int revert_call_count = 0;
-
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
-   stack.apply(std::make_unique<dummy_action>(apply_call_count, revert_call_count),
-               world);
+   stack.apply(std::make_unique<dummy_edit>(), state);
+   stack.apply(std::make_unique<dummy_edit>(), state);
+   stack.apply(std::make_unique<dummy_edit>(), state);
 
    REQUIRE(not stack.applied_empty());
    REQUIRE(stack.reverted_empty());
 
-   stack.revert(2, world);
+   stack.revert(2, state);
 
    REQUIRE(not stack.applied_empty());
    REQUIRE(not stack.reverted_empty());
 
-   stack.revert(1, world);
+   stack.revert(1, state);
 
    REQUIRE(stack.applied_empty());
    REQUIRE(not stack.reverted_empty());
 }
 
-TEST_CASE("actions stack applied_top", "[Actions]")
+TEST_CASE("edits stack applied_top", "[Edits]")
 {
-   stack stack;
-   world::world world;
+   stack<dummy_edit_state> stack;
+   dummy_edit_state state;
 
    REQUIRE(stack.applied_top() == nullptr);
 
-   int apply_call_count = 0;
-   int revert_call_count = 0;
+   auto unique_edit = std::make_unique<dummy_edit>();
+   auto* edit = unique_edit.get();
 
-   auto unique_action =
-      std::make_unique<dummy_action>(apply_call_count, revert_call_count);
-   auto* action = unique_action.get();
+   stack.apply(std::move(unique_edit), state);
 
-   stack.apply(std::move(unique_action), world);
-
-   REQUIRE(stack.applied_top() == action);
+   REQUIRE(stack.applied_top() == edit);
 }
 
 }

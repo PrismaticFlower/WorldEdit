@@ -118,12 +118,12 @@ void world_edit::update_ui() noexcept
          if (ImGui::MenuItem("Undo",
                              get_display_string(
                                 _hotkeys.query_binding("", "edit.undo")))) {
-            _undo_stack.revert(_world);
+            _edit_stack_world.revert(_world);
          }
          if (ImGui::MenuItem("Redo",
                              get_display_string(
                                 _hotkeys.query_binding("", "edit.redo")))) {
-            _undo_stack.reapply(_world);
+            _edit_stack_world.reapply(_world);
          }
 
          ImGui::Separator();
@@ -345,10 +345,10 @@ void world_edit::update_ui() noexcept
                if (not object) return;
 
                ImGui::InputText("Name", object, &world::object::name,
-                                &_undo_stack, &_world);
+                                &_edit_stack_world, &_world);
                ImGui::InputTextAutoComplete(
                   "Class Name", object, &world::object::class_name,
-                  &_undo_stack, &_world, [&] {
+                  &_edit_stack_world, &_world, [&] {
                      std::array<we::lowercase_string, 6> entries;
                      std::size_t matching_count = 0;
 
@@ -364,19 +364,20 @@ void world_edit::update_ui() noexcept
 
                      return entries;
                   });
-               ImGui::LayerPick("Layer", object, &_undo_stack, &_world);
+               ImGui::LayerPick("Layer", object, &_edit_stack_world, &_world);
 
                ImGui::Separator();
 
                ImGui::DragQuat("Rotation", object, &world::object::rotation,
-                               &_undo_stack, &_world);
+                               &_edit_stack_world, &_world);
                ImGui::DragFloat3("Position", object, &world::object::position,
-                                 &_undo_stack, &_world);
+                                 &_edit_stack_world, &_world);
 
                ImGui::Separator();
 
-               ImGui::SliderInt("Team", object, &world::object::team, &_undo_stack,
-                                &_world, 0, 15, "%d", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::SliderInt("Team", object, &world::object::team,
+                                &_edit_stack_world, &_world, 0, 15, "%d",
+                                ImGuiSliderFlags_AlwaysClamp);
 
                ImGui::Separator();
 
@@ -384,7 +385,7 @@ void world_edit::update_ui() noexcept
                   if (prop.key.contains("Path")) {
                      ImGui::InputKeyValueAutoComplete(
                         object, &world::object::instance_properties, i,
-                        &_undo_stack, &_world, [&] {
+                        &_edit_stack_world, &_world, [&] {
                            std::array<std::string, 6> entries;
 
                            std::size_t matching_count = 0;
@@ -407,7 +408,7 @@ void world_edit::update_ui() noexcept
                   else if (prop.key.contains("Region")) {
                      ImGui::InputKeyValueAutoComplete(
                         object, &world::object::instance_properties, i,
-                        &_undo_stack, &_world, [&] {
+                        &_edit_stack_world, &_world, [&] {
                            std::array<std::string, 6> entries;
 
                            std::size_t matching_count = 0;
@@ -429,7 +430,7 @@ void world_edit::update_ui() noexcept
                   }
                   else {
                      ImGui::InputKeyValue(object, &world::object::instance_properties,
-                                          i, &_undo_stack, &_world);
+                                          i, &_edit_stack_world, &_world);
                   }
                }
             },
@@ -442,33 +443,34 @@ void world_edit::update_ui() noexcept
                if (not light) return;
 
                ImGui::InputText("Name", light, &world::light::name,
-                                &_undo_stack, &_world);
-               ImGui::LayerPick("Layer", light, &_undo_stack, &_world);
+                                &_edit_stack_world, &_world);
+               ImGui::LayerPick("Layer", light, &_edit_stack_world, &_world);
 
                ImGui::Separator();
 
                ImGui::DragQuat("Rotation", light, &world::light::rotation,
-                               &_undo_stack, &_world);
+                               &_edit_stack_world, &_world);
                ImGui::DragFloat3("Position", light, &world::light::position,
-                                 &_undo_stack, &_world);
+                                 &_edit_stack_world, &_world);
 
                ImGui::Separator();
 
                ImGui::ColorEdit3("Color", light, &world::light::color,
-                                 &_undo_stack, &_world,
+                                 &_edit_stack_world, &_world,
                                  ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR);
 
                ImGui::Checkbox("Static", light, &world::light::static_,
-                               &_undo_stack, &_world);
+                               &_edit_stack_world, &_world);
                ImGui::SameLine();
                ImGui::Checkbox("Shadow Caster", light, &world::light::shadow_caster,
-                               &_undo_stack, &_world);
+                               &_edit_stack_world, &_world);
                ImGui::SameLine();
-               ImGui::Checkbox("Specular Caster", light,
-                               &world::light::specular_caster, &_undo_stack, &_world);
+               ImGui::Checkbox("Specular Caster", light, &world::light::specular_caster,
+                               &_edit_stack_world, &_world);
 
                ImGui::EnumSelect(
-                  "Light Type", light, &world::light::light_type, &_undo_stack, &_world,
+                  "Light Type", light, &world::light::light_type,
+                  &_edit_stack_world, &_world,
                   {enum_select_option{"Directional", world::light_type::directional},
                    enum_select_option{"Point", world::light_type::point},
                    enum_select_option{"Spot", world::light_type::spot},
@@ -482,13 +484,13 @@ void world_edit::update_ui() noexcept
                ImGui::Separator();
 
                ImGui::DragFloat("Range", light, &world::light::range,
-                                &_undo_stack, &_world);
+                                &_edit_stack_world, &_world);
                ImGui::DragFloat("Inner Cone Angle", light,
-                                &world::light::inner_cone_angle, &_undo_stack,
+                                &world::light::inner_cone_angle, &_edit_stack_world,
                                 &_world, 0.01f, 0.0f, light->outer_cone_angle,
                                 "%.3f", ImGuiSliderFlags_AlwaysClamp);
                ImGui::DragFloat("Outer Cone Angle", light,
-                                &world::light::outer_cone_angle, &_undo_stack,
+                                &world::light::outer_cone_angle, &_edit_stack_world,
                                 &_world, 0.01f, light->inner_cone_angle, 1.570f,
                                 "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
@@ -496,13 +498,14 @@ void world_edit::update_ui() noexcept
 
                ImGui::DragFloat2("Directional Texture Tiling", light,
                                  &world::light::directional_texture_tiling,
-                                 &_undo_stack, &_world, 0.01f);
+                                 &_edit_stack_world, &_world, 0.01f);
                ImGui::DragFloat2("Directional Texture Offset", light,
                                  &world::light::directional_texture_offset,
-                                 &_undo_stack, &_world, 0.01f);
+                                 &_edit_stack_world, &_world, 0.01f);
 
                ImGui::InputTextAutoComplete(
-                  "Texture", light, &world::light::texture, &_undo_stack, &_world, [&] {
+                  "Texture", light, &world::light::texture, &_edit_stack_world,
+                  &_world, [&] {
                      std::array<std::string, 6> entries;
                      std::size_t matching_count = 0;
 
@@ -522,11 +525,11 @@ void world_edit::update_ui() noexcept
                ImGui::Separator();
 
                ImGui::InputText("Region Name", light, &world::light::region_name,
-                                &_undo_stack, &_world);
-               ImGui::DragQuat("Region Rotation", light,
-                               &world::light::region_rotation, &_undo_stack, &_world);
+                                &_edit_stack_world, &_world);
+               ImGui::DragQuat("Region Rotation", light, &world::light::region_rotation,
+                               &_edit_stack_world, &_world);
                ImGui::DragFloat3("Region Size", light, &world::light::region_size,
-                                 &_undo_stack, &_world);
+                                 &_edit_stack_world, &_world);
             },
             [&](world::path_id id) {
                world::path* path =
@@ -536,13 +539,15 @@ void world_edit::update_ui() noexcept
 
                if (not path) return;
 
-               ImGui::InputText("Name", path, &world::path::name, &_undo_stack, &_world);
-               ImGui::LayerPick("Layer", path, &_undo_stack, &_world);
+               ImGui::InputText("Name", path, &world::path::name,
+                                &_edit_stack_world, &_world);
+               ImGui::LayerPick("Layer", path, &_edit_stack_world, &_world);
 
                ImGui::Separator();
 
                ImGui::EnumSelect(
-                  "Spline Type", path, &world::path::spline_type, &_undo_stack, &_world,
+                  "Spline Type", path, &world::path::spline_type,
+                  &_edit_stack_world, &_world,
                   {enum_select_option{"None", world::path_spline_type::none},
                    enum_select_option{"Linear", world::path_spline_type::linear},
                    enum_select_option{"Hermite", world::path_spline_type::hermite},
@@ -551,7 +556,7 @@ void world_edit::update_ui() noexcept
 
                for (auto [i, prop] : enumerate(path->properties)) {
                   ImGui::InputKeyValue(path, &world::path::properties, i,
-                                       &_undo_stack, &_world);
+                                       &_edit_stack_world, &_world);
                }
 
                ImGui::Text("Nodes");
@@ -564,12 +569,13 @@ void world_edit::update_ui() noexcept
                   ImGui::Separator();
 
                   ImGui::DragQuat("Rotation", path, i, &world::path::node::rotation,
-                                  &_undo_stack, &_world);
+                                  &_edit_stack_world, &_world);
                   ImGui::DragFloat3("Position", path, i, &world::path::node::position,
-                                    &_undo_stack, &_world);
+                                    &_edit_stack_world, &_world);
 
                   for (auto [prop_index, prop] : enumerate(node.properties)) {
-                     ImGui::InputKeyValue(path, i, prop_index, &_undo_stack, &_world);
+                     ImGui::InputKeyValue(path, i, prop_index,
+                                          &_edit_stack_world, &_world);
                   }
 
                   ImGui::PopID();
@@ -598,28 +604,29 @@ void world_edit::update_ui() noexcept
                if (not region) return;
 
                ImGui::InputText("Name", region, &world::region::name,
-                                &_undo_stack, &_world);
-               ImGui::LayerPick("Layer", region, &_undo_stack, &_world);
+                                &_edit_stack_world, &_world);
+               ImGui::LayerPick("Layer", region, &_edit_stack_world, &_world);
 
                ImGui::Separator();
 
                ImGui::DragQuat("Rotation", region, &world::region::rotation,
-                               &_undo_stack, &_world);
+                               &_edit_stack_world, &_world);
                ImGui::DragFloat3("Position", region, &world::region::position,
-                                 &_undo_stack, &_world);
+                                 &_edit_stack_world, &_world);
                ImGui::DragFloat3("Size", region, &world::region::size,
-                                 &_undo_stack, &_world, 1.0f, 0.0f, 1e10f);
+                                 &_edit_stack_world, &_world, 1.0f, 0.0f, 1e10f);
 
-               ImGui::EnumSelect(
-                  "Shape", region, &world::region::shape, &_undo_stack, &_world,
-                  {enum_select_option{"Box", world::region_shape::box},
-                   enum_select_option{"Sphere", world::region_shape::sphere},
-                   enum_select_option{"Cylinder", world::region_shape::cylinder}});
+               ImGui::EnumSelect("Shape", region, &world::region::shape,
+                                 &_edit_stack_world, &_world,
+                                 {enum_select_option{"Box", world::region_shape::box},
+                                  enum_select_option{"Sphere", world::region_shape::sphere},
+                                  enum_select_option{"Cylinder",
+                                                     world::region_shape::cylinder}});
 
                ImGui::Separator();
 
                ImGui::InputText("Description", region, &world::region::description,
-                                &_undo_stack, &_world);
+                                &_edit_stack_world, &_world);
             },
             [&](world::sector_id id) {
                world::sector* sector =
@@ -646,15 +653,15 @@ void world_edit::update_ui() noexcept
                if (not hintnode) return;
 
                ImGui::InputText("Name", hintnode, &world::hintnode::name,
-                                &_undo_stack, &_world);
-               ImGui::LayerPick("Layer", hintnode, &_undo_stack, &_world);
+                                &_edit_stack_world, &_world);
+               ImGui::LayerPick("Layer", hintnode, &_edit_stack_world, &_world);
 
                ImGui::Separator();
 
                ImGui::DragQuat("Rotation", hintnode, &world::hintnode::rotation,
-                               &_undo_stack, &_world);
+                               &_edit_stack_world, &_world);
                ImGui::DragFloat3("Position", hintnode, &world::hintnode::position,
-                                 &_undo_stack, &_world);
+                                 &_edit_stack_world, &_world);
             },
             [&](world::barrier_id id) {
                world::barrier* barrier =
