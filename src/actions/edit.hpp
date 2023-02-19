@@ -1,6 +1,6 @@
 #pragma once
 
-namespace we::actions {
+namespace we::edits {
 
 /// @brief Represents an edit.
 /// @tparam T The type that the edit targets.
