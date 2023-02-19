@@ -439,9 +439,6 @@
     <ClInclude Include="src\imgui\imgui_freetype.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\actions\action.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\world\interaction_context.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -601,6 +598,9 @@
     <ClInclude Include="src\actions\insert_node.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\actions\edit.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -754,9 +754,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_stdlib.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\actions\stack.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp">
