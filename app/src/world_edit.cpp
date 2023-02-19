@@ -1,9 +1,9 @@
 
 #include "world_edit.hpp"
-#include "actions/insert_entity.hpp"
-#include "actions/insert_node.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
+#include "edits/insert_entity.hpp"
+#include "edits/insert_node.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"

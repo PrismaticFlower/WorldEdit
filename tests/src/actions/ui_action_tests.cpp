@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "actions/ui_action.hpp"
+#include "edits/ui_action.hpp"
 #include "world/world.hpp"
 #include "world_test_data.hpp"
 

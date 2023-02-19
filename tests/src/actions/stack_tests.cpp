@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "actions/stack.hpp"
+#include "edits/stack.hpp"
 
 using namespace std::literals;
 
