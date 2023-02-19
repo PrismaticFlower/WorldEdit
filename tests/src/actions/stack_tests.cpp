@@ -4,7 +4,7 @@
 
 using namespace std::literals;
 
-namespace we::actions::tests {
+namespace we::edits::tests {
 
 namespace {
 

@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-namespace we::actions {
+namespace we::edits {
 
 struct stack_init {
    /// @brief Reverse size for the applied and reverted stacks.

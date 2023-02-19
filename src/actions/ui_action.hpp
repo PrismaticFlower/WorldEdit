@@ -5,7 +5,7 @@
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
 
-namespace we::actions {
+namespace we::edits {
 
 // Classes for integrating ImGui controls with the Undo-Redo stack.
 

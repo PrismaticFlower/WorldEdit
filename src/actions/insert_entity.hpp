@@ -5,7 +5,7 @@
 
 #include <memory>
 
-namespace we::actions {
+namespace we::edits {
 
 auto make_insert_entity(world::object object) -> std::unique_ptr<edit<world::world>>;
 

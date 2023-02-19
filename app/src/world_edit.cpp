@@ -395,7 +395,7 @@ void world_edit::place_creation_entity() noexcept
 
             _entity_creation_context.last_object = new_object.id;
 
-            _edit_stack_world.apply(actions::make_insert_entity(std::move(new_object)),
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object)),
                                     _world);
 
             object.name = world::create_unique_name(_world.objects, object.name);
@@ -416,7 +416,7 @@ void world_edit::place_creation_entity() noexcept
 
             _entity_creation_context.last_light = new_light.id;
 
-            _edit_stack_world.apply(actions::make_insert_entity(std::move(new_light)),
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
                                     _world);
 
             light.name = world::create_unique_name(_world.objects, light.name);
@@ -443,19 +443,18 @@ void world_edit::place_creation_entity() noexcept
                   const world::clostest_node_result closest =
                      find_closest_node(path.nodes[0].position, *existing_path);
 
-                  _edit_stack_world
-                     .apply(actions::make_insert_node(existing_path->id,
-                                                      closest.next_is_forward
-                                                         ? closest.index + 1
-                                                         : closest.index,
-                                                      path.nodes[0]),
-                            _world);
+                  _edit_stack_world.apply(edits::make_insert_node(existing_path->id,
+                                                                  closest.next_is_forward
+                                                                     ? closest.index + 1
+                                                                     : closest.index,
+                                                                  path.nodes[0]),
+                                          _world);
                }
                else {
                   _edit_stack_world
-                     .apply(actions::make_insert_node(existing_path->id,
-                                                      existing_path->nodes.size(),
-                                                      path.nodes[0]),
+                     .apply(edits::make_insert_node(existing_path->id,
+                                                    existing_path->nodes.size(),
+                                                    path.nodes[0]),
                             _world);
                }
             }
@@ -465,7 +464,7 @@ void world_edit::place_creation_entity() noexcept
                new_path.name = path.name;
                new_path.id = _world.next_id.paths.aquire();
 
-               _edit_stack_world.apply(actions::make_insert_entity(std::move(new_path)),
+               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
                                        _world);
             }
          },
@@ -478,7 +477,7 @@ void world_edit::place_creation_entity() noexcept
 
             _entity_creation_context.last_region = new_region.id;
 
-            _edit_stack_world.apply(actions::make_insert_entity(std::move(new_region)),
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
                                     _world);
 
             region.name = world::create_unique_name(_world.regions, new_region.name);

@@ -19,7 +19,7 @@
 
 // Wrappers for ImGui controls that integrate with the Undo-Redo stack.
 
-namespace we::actions::imgui {
+namespace we::edits::imgui {
 
 struct edit_widget_result {
    bool value_changed;
@@ -48,8 +48,8 @@ concept input_key_value_type = requires(T t)
 }
 
 namespace we {
-using we::actions::imgui::edit_widget_result;
-using we::actions::imgui::enum_select_option;
+using we::edits::imgui::edit_widget_result;
+using we::edits::imgui::enum_select_option;
 }
 
 namespace ImGui {
@@ -58,13 +58,13 @@ namespace ImGui {
 
 template<typename Entity, typename T>
 inline bool EditWithUndo(Entity* object, T Entity::*value_member_ptr,
-                         we::actions::stack<we::world::world>* edit_stack,
+                         we::edits::stack<we::world::world>* edit_stack,
                          we::world::world* world,
-                         we::actions::imgui::edit_widget_callback<T> auto editor) noexcept
+                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
 {
    using namespace we;
-   using namespace we::actions;
-   using namespace we::actions::imgui;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
 
    using edit_type = ui_edit<Entity, T>;
    using value_type = T;
@@ -100,7 +100,7 @@ inline bool EditWithUndo(Entity* object, T Entity::*value_member_ptr,
 
 template<typename Entity>
 inline bool Checkbox(const char* label, Entity* entity, bool Entity::*value_member_ptr,
-                     we::actions::stack<we::world::world>* edit_stack,
+                     we::edits::stack<we::world::world>* edit_stack,
                      we::world::world* world) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, edit_stack, world, [=](bool* value) {
@@ -113,7 +113,7 @@ inline bool Checkbox(const char* label, Entity* entity, bool Entity::*value_memb
 
 template<typename Entity>
 inline bool DragFloat(const char* label, Entity* entity, float Entity::*value_member_ptr,
-                      we::actions::stack<we::world::world>* edit_stack,
+                      we::edits::stack<we::world::world>* edit_stack,
                       we::world::world* world, float v_speed = 1.0f,
                       float v_min = 0.0f, float v_max = 0.0f,
                       const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
@@ -130,7 +130,7 @@ inline bool DragFloat(const char* label, Entity* entity, float Entity::*value_me
 template<typename Entity>
 inline bool DragFloat2(const char* label, Entity* entity,
                        we::float2 Entity::*value_member_ptr,
-                       we::actions::stack<we::world::world>* edit_stack,
+                       we::edits::stack<we::world::world>* edit_stack,
                        we::world::world* world, float v_speed = 1.0f,
                        float v_min = 0.0f, float v_max = 0.0f,
                        ImGuiSliderFlags flags = 0) noexcept
@@ -147,7 +147,7 @@ inline bool DragFloat2(const char* label, Entity* entity,
 template<typename Entity>
 inline bool DragFloat3(const char* label, Entity* entity,
                        we::float3 Entity::*value_member_ptr,
-                       we::actions::stack<we::world::world>* edit_stack,
+                       we::edits::stack<we::world::world>* edit_stack,
                        we::world::world* world, float v_speed = 1.0f,
                        float v_min = 0.0f, float v_max = 0.0f,
                        ImGuiSliderFlags flags = 0) noexcept
@@ -164,7 +164,7 @@ inline bool DragFloat3(const char* label, Entity* entity,
 template<typename Entity>
 inline bool DragQuat(const char* label, Entity* entity,
                      we::quaternion Entity::*value_member_ptr,
-                     we::actions::stack<we::world::world>* edit_stack,
+                     we::edits::stack<we::world::world>* edit_stack,
                      we::world::world* world, float v_speed = 0.001f,
                      ImGuiSliderFlags flags = 0) noexcept
 {
@@ -178,7 +178,7 @@ inline bool DragQuat(const char* label, Entity* entity,
 
 template<typename Entity>
 inline bool SliderInt(const char* label, Entity* entity, int Entity::*value_member_ptr,
-                      we::actions::stack<we::world::world>* edit_stack,
+                      we::edits::stack<we::world::world>* edit_stack,
                       we::world::world* world, int v_min = 0, int v_max = 0,
                       const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
 {
@@ -193,7 +193,7 @@ inline bool SliderInt(const char* label, Entity* entity, int Entity::*value_memb
 template<typename Entity>
 inline bool ColorEdit3(const char* label, Entity* entity,
                        we::float3 Entity::*value_member_ptr,
-                       we::actions::stack<we::world::world>* edit_stack,
+                       we::edits::stack<we::world::world>* edit_stack,
                        we::world::world* world, ImGuiColorEditFlags flags = 0) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, edit_stack, world, [=](we::float3* value) {
@@ -207,7 +207,7 @@ inline bool ColorEdit3(const char* label, Entity* entity,
 template<typename Entity>
 inline bool InputText(const char* label, Entity* entity,
                       std::string Entity::*value_member_ptr,
-                      we::actions::stack<we::world::world>* edit_stack,
+                      we::edits::stack<we::world::world>* edit_stack,
                       we::world::world* world, ImGuiInputTextFlags flags = 0,
                       ImGuiInputTextCallback callback = nullptr,
                       void* user_data = nullptr) noexcept
@@ -225,7 +225,7 @@ inline bool InputText(const char* label, Entity* entity,
 template<typename Entity>
 inline bool InputText(const char* label, Entity* entity,
                       we::lowercase_string Entity::*value_member_ptr,
-                      we::actions::stack<we::world::world>* edit_stack,
+                      we::edits::stack<we::world::world>* edit_stack,
                       we::world::world* world, ImGuiInputTextFlags flags = 0,
                       ImGuiInputTextCallback callback = nullptr,
                       void* user_data = nullptr) noexcept
@@ -243,7 +243,7 @@ inline bool InputText(const char* label, Entity* entity,
 template<typename Entity, typename T, typename Fill>
 inline bool InputTextAutoComplete(const char* label, Entity* entity,
                                   T Entity::*value_member_ptr,
-                                  we::actions::stack<we::world::world>* edit_stack,
+                                  we::edits::stack<we::world::world>* edit_stack,
                                   we::world::world* world,
                                   const Fill& fill_entries_callback) noexcept
    requires std::is_invocable_r_v<std::array<T, 6>, Fill>
@@ -319,7 +319,7 @@ inline bool InputTextAutoComplete(const char* label, Entity* entity,
 
 template<typename Entity>
 inline bool LayerPick(const char* label, Entity* entity,
-                      we::actions::stack<we::world::world>* edit_stack,
+                      we::edits::stack<we::world::world>* edit_stack,
                       we::world::world* world) noexcept
 {
    return EditWithUndo(entity, &Entity::layer, edit_stack, world, [=](int* layer) {
@@ -348,7 +348,7 @@ inline bool LayerPick(const char* label, Entity* entity,
 
 template<typename Entity, typename Enum>
 inline bool EnumSelect(const char* label, Entity* entity, Enum Entity::*value_member_ptr,
-                       we::actions::stack<we::world::world>* edit_stack,
+                       we::edits::stack<we::world::world>* edit_stack,
                        we::world::world* world,
                        std::initializer_list<we::enum_select_option<Enum>> values) noexcept
 {
@@ -383,13 +383,13 @@ inline bool EnumSelect(const char* label, Entity* entity, Enum Entity::*value_me
 template<typename Entity, typename T>
 inline bool EditWithUndo(Entity* object, std::vector<T> Entity::*value_member_ptr,
                          const std::size_t item_index,
-                         we::actions::stack<we::world::world>* edit_stack,
+                         we::edits::stack<we::world::world>* edit_stack,
                          we::world::world* world,
-                         we::actions::imgui::edit_widget_callback<T> auto editor) noexcept
+                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
 {
    using namespace we;
-   using namespace we::actions;
-   using namespace we::actions::imgui;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
 
    using edit_type = ui_edit_indexed<Entity, T>;
    using value_type = T;
@@ -424,10 +424,10 @@ inline bool EditWithUndo(Entity* object, std::vector<T> Entity::*value_member_pt
    return valued_changed;
 }
 
-template<typename Entity, we::actions::imgui::input_key_value_type T>
+template<typename Entity, we::edits::imgui::input_key_value_type T>
 inline bool InputKeyValue(Entity* entity, std::vector<T> Entity::*value_member_ptr,
                           const std::size_t item_index,
-                          we::actions::stack<we::world::world>* edit_stack,
+                          we::edits::stack<we::world::world>* edit_stack,
                           we::world::world* world, ImGuiInputTextFlags flags = 0,
                           ImGuiInputTextCallback callback = nullptr,
                           void* user_data = nullptr) noexcept
@@ -442,11 +442,11 @@ inline bool InputKeyValue(Entity* entity, std::vector<T> Entity::*value_member_p
    });
 }
 
-template<typename Entity, we::actions::imgui::input_key_value_type T, typename Fill>
+template<typename Entity, we::edits::imgui::input_key_value_type T, typename Fill>
 inline bool InputKeyValueAutoComplete(Entity* entity,
                                       std::vector<T> Entity::*value_member_ptr,
                                       const std::size_t item_index,
-                                      we::actions::stack<we::world::world>* edit_stack,
+                                      we::edits::stack<we::world::world>* edit_stack,
                                       we::world::world* world,
                                       const Fill& fill_entries_callback) noexcept
 {
@@ -524,13 +524,13 @@ inline bool InputKeyValueAutoComplete(Entity* entity,
 template<typename T>
 inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
                          T we::world::path::node::*value_member_ptr,
-                         we::actions::stack<we::world::world>* edit_stack,
+                         we::edits::stack<we::world::world>* edit_stack,
                          we::world::world* world,
-                         we::actions::imgui::edit_widget_callback<T> auto editor) noexcept
+                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
 {
    using namespace we;
-   using namespace we::actions;
-   using namespace we::actions::imgui;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
 
    using edit_type = ui_edit_path_node<T>;
    using value_type = T;
@@ -568,7 +568,7 @@ inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
 inline bool DragFloat3(const char* label, we::world::path* entity,
                        const std::size_t node_index,
                        we::float3 we::world::path::node::*value_member_ptr,
-                       we::actions::stack<we::world::world>* edit_stack,
+                       we::edits::stack<we::world::world>* edit_stack,
                        we::world::world* world, float v_speed = 1.0f,
                        float v_min = 0.0f, float v_max = 0.0f,
                        const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
@@ -588,7 +588,7 @@ inline bool DragFloat3(const char* label, we::world::path* entity,
 inline bool DragQuat(const char* label, we::world::path* entity,
                      const std::size_t node_index,
                      we::quaternion we::world::path::node::*value_member_ptr,
-                     we::actions::stack<we::world::world>* edit_stack,
+                     we::edits::stack<we::world::world>* edit_stack,
                      we::world::world* world, float v_speed = 0.01f,
                      const char* format = "%.4f", ImGuiSliderFlags flags = 0) noexcept
 {
@@ -614,13 +614,13 @@ template<typename T>
 inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
                          std::vector<T> we::world::path::node::*value_member_ptr,
                          const std::size_t item_index,
-                         we::actions::stack<we::world::world>* edit_stack,
+                         we::edits::stack<we::world::world>* edit_stack,
                          we::world::world* world,
-                         we::actions::imgui::edit_widget_callback<T> auto editor) noexcept
+                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
 {
    using namespace we;
-   using namespace we::actions;
-   using namespace we::actions::imgui;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
 
    using edit_type = ui_edit_path_node_indexed<T>;
    using value_type = T;
@@ -658,7 +658,7 @@ inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
 
 inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
                           const std::size_t item_index,
-                          we::actions::stack<we::world::world>* edit_stack,
+                          we::edits::stack<we::world::world>* edit_stack,
                           we::world::world* world, ImGuiInputTextFlags flags = 0,
                           ImGuiInputTextCallback callback = nullptr,
                           void* user_data = nullptr) noexcept

@@ -6,7 +6,7 @@
 
 using namespace std::literals;
 
-namespace we::actions::tests {
+namespace we::edits::tests {
 
 TEST_CASE("edits insert_entity", "[Edits]")
 {

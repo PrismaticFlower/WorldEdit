@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-namespace we::actions {
+namespace we::edits {
 
 namespace {
 

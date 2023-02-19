@@ -1,7 +1,7 @@
 #include "insert_node.hpp"
 #include "world/utility/world_utilities.hpp"
 
-namespace we::actions {
+namespace we::edits {
 
 namespace {
 
