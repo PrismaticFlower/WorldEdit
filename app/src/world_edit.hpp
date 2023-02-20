@@ -147,7 +147,8 @@ private:
    world::terrain_collision _terrain_collision;
    world::tool_visualizers _tool_visualizers;
 
-   edits::stack<world::world> _edit_stack_world;
+   edits::stack<world::edit_context> _edit_stack_world;
+   world::edit_context _edit_context{.world = _world};
 
    std::unique_ptr<graphics::renderer> _renderer;
    graphics::camera _camera;

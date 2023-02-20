@@ -131,6 +131,13 @@ struct stack {
       return _applied.empty() ? nullptr : _applied.back().get();
    }
 
+   /// @brief Clear both the applied and reverted stacks while keeping their allocated memory.
+   void clear() noexcept
+   {
+      _applied.clear();
+      _reverted.clear();
+   }
+
 private:
    std::vector<std::unique_ptr<edit_type>> _applied;
    std::vector<std::unique_ptr<edit_type>> _reverted;

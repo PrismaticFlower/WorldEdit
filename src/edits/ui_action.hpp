@@ -2,6 +2,7 @@
 
 #include "edit.hpp"
 #include "types.hpp"
+#include "world/interaction_context.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
 
@@ -10,7 +11,7 @@ namespace we::edits {
 // Classes for integrating ImGui controls with the Undo-Redo stack.
 
 template<typename Entity, typename T>
-struct ui_edit final : edit<world::world> {
+struct ui_edit final : edit<world::edit_context> {
    using entity_type = Entity;
    using entity_id_type = world::id<entity_type>;
    using value_type = T;
@@ -21,14 +22,14 @@ struct ui_edit final : edit<world::world> {
    {
    }
 
-   void apply(world::world& world) const noexcept
+   void apply(world::edit_context& context) const noexcept
    {
-      find_entity<entity_type>(world, id)->*value_member_ptr = new_value;
+      find_entity<entity_type>(context.world, id)->*value_member_ptr = new_value;
    }
 
-   void revert(world::world& world) const noexcept
+   void revert(world::edit_context& context) const noexcept
    {
-      find_entity<entity_type>(world, id)->*value_member_ptr = original_value;
+      find_entity<entity_type>(context.world, id)->*value_member_ptr = original_value;
    }
 
    bool matching(entity_type& object,
@@ -47,7 +48,7 @@ struct ui_edit final : edit<world::world> {
 };
 
 template<typename Entity, typename T>
-struct ui_edit_indexed final : edit<world::world> {
+struct ui_edit_indexed final : edit<world::edit_context> {
    using entity_type = Entity;
    using entity_id_type = world::id<entity_type>;
    using value_type = T;
@@ -60,20 +61,20 @@ struct ui_edit_indexed final : edit<world::world> {
    {
    }
 
-   void apply(world::world& world) const noexcept
+   void apply(world::edit_context& context) const noexcept
    {
       std::vector<value_type>& vec =
-         find_entity<entity_type>(world, id)->*value_member_ptr;
+         find_entity<entity_type>(context.world, id)->*value_member_ptr;
 
       if (item_index >= vec.size()) std::terminate();
 
       vec[item_index] = new_value;
    }
 
-   void revert(world::world& world) const noexcept
+   void revert(world::edit_context& context) const noexcept
    {
       std::vector<value_type>& vec =
-         find_entity<entity_type>(world, id)->*value_member_ptr;
+         find_entity<entity_type>(context.world, id)->*value_member_ptr;
 
       if (item_index >= vec.size()) std::terminate();
 
@@ -99,7 +100,7 @@ struct ui_edit_indexed final : edit<world::world> {
 };
 
 template<typename T>
-struct ui_edit_path_node final : edit<world::world> {
+struct ui_edit_path_node final : edit<world::edit_context> {
    using entity_type = world::path;
    using node_type = world::path::node;
    using entity_id_type = world::id<entity_type>;
@@ -112,9 +113,9 @@ struct ui_edit_path_node final : edit<world::world> {
    {
    }
 
-   void apply(world::world& world) const noexcept
+   void apply(world::edit_context& context) const noexcept
    {
-      world::path* path = find_entity<entity_type>(world, id);
+      world::path* path = find_entity<entity_type>(context.world, id);
 
       if (node_index >= path->nodes.size()) std::terminate();
 
@@ -123,9 +124,9 @@ struct ui_edit_path_node final : edit<world::world> {
       node.*value_member_ptr = new_value;
    }
 
-   void revert(world::world& world) const noexcept
+   void revert(world::edit_context& context) const noexcept
    {
-      world::path* path = find_entity<entity_type>(world, id);
+      world::path* path = find_entity<entity_type>(context.world, id);
 
       if (node_index >= path->nodes.size()) std::terminate();
 
@@ -152,7 +153,7 @@ struct ui_edit_path_node final : edit<world::world> {
 };
 
 template<typename T>
-struct ui_edit_path_node_indexed final : edit<world::world> {
+struct ui_edit_path_node_indexed final : edit<world::edit_context> {
    using entity_type = world::path;
    using node_type = world::path::node;
    using entity_id_type = world::id<entity_type>;
@@ -171,9 +172,9 @@ struct ui_edit_path_node_indexed final : edit<world::world> {
    {
    }
 
-   void apply(world::world& world) const noexcept
+   void apply(world::edit_context& context) const noexcept
    {
-      world::path* path = find_entity<entity_type>(world, id);
+      world::path* path = find_entity<entity_type>(context.world, id);
 
       if (node_index >= path->nodes.size()) std::terminate();
 
@@ -186,9 +187,9 @@ struct ui_edit_path_node_indexed final : edit<world::world> {
       vec[item_index] = new_value;
    }
 
-   void revert(world::world& world) const noexcept
+   void revert(world::edit_context& context) const noexcept
    {
-      world::path* path = find_entity<entity_type>(world, id);
+      world::path* path = find_entity<entity_type>(context.world, id);
 
       if (node_index >= path->nodes.size()) std::terminate();
 
