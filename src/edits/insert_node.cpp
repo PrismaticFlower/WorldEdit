@@ -5,23 +5,23 @@ namespace we::edits {
 
 namespace {
 
-struct insert_path_node final : edit<world::world> {
+struct insert_path_node final : edit<world::edit_context> {
    insert_path_node(world::path_id path_id, std::size_t insert_before_index,
                     world::path::node node)
       : _id{path_id}, _insert_before_index{insert_before_index}, _node{std::move(node)}
    {
    }
 
-   void apply(world::world& world) const noexcept override
+   void apply(world::edit_context& context) const noexcept override
    {
-      auto& nodes = world::find_entity(world.paths, _id)->nodes;
+      auto& nodes = world::find_entity(context.world.paths, _id)->nodes;
 
       nodes.insert(nodes.begin() + _insert_before_index, _node);
    }
 
-   void revert(world::world& world) const noexcept override
+   void revert(world::edit_context& context) const noexcept override
    {
-      auto& nodes = world::find_entity(world.paths, _id)->nodes;
+      auto& nodes = world::find_entity(context.world.paths, _id)->nodes;
 
       nodes.erase(nodes.begin() + _insert_before_index);
    }
@@ -35,7 +35,8 @@ private:
 }
 
 auto make_insert_node(world::path_id path_id, std::size_t insert_before_index,
-                      world::path::node node) -> std::unique_ptr<edit<world::world>>
+                      world::path::node node)
+   -> std::unique_ptr<edit<world::edit_context>>
 {
    return std::make_unique<insert_path_node>(path_id, insert_before_index,
                                              std::move(node));

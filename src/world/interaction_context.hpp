@@ -38,4 +38,9 @@ struct interaction_targets {
    std::optional<creation_entity> creation_entity;
 };
 
+/// @brief References to data that is managed by an edit stack.
+struct edit_context {
+   world& world;
+};
+
 }
