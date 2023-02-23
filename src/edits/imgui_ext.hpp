@@ -14,6 +14,7 @@
 #include <array>
 #include <initializer_list>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <type_traits>
 #include <utility>
@@ -36,6 +37,10 @@ struct enum_select_option {
 template<typename Callback, typename T>
 concept edit_widget_callback =
    std::is_invocable_r_v<edit_widget_result, Callback, T*>;
+
+template<typename Callback, typename T, typename U>
+concept edit_widget_double_callback =
+   std::is_invocable_r_v<edit_widget_result, Callback, T*, U*>;
 
 // clang-format off
 template<typename T>
@@ -247,72 +252,15 @@ inline bool InputTextAutoComplete(const char* label, Entity* entity,
                                   T Entity::*value_member_ptr,
                                   we::edits::stack<we::world::edit_context>* edit_stack,
                                   we::world::edit_context* context,
-                                  const Fill& fill_entries_callback) noexcept
-   requires std::is_invocable_r_v<std::array<T, 6>, Fill>
+                                  Fill fill_entries_callback) noexcept
+   requires std::is_invocable_r_v<std::array<std::string, 6>, Fill>
 {
-   using string_type = T;
-
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](std::string* value) {
-      std::optional<std::array<string_type, 6>> autocomplete_entries;
-
-      std::pair<const Fill&, decltype(autocomplete_entries)&>
-         callback_userdata{fill_entries_callback, autocomplete_entries};
-
-      ImGui::BeginGroup();
-
-      bool value_changed = ImGui::InputText(
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [&](T* value) {
+      bool value_changed = ImGui::InputTextAutoComplete(
          label, value,
-         ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
-         [](ImGuiInputTextCallbackData* data) {
-            if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
-               auto& user_data =
-                  *static_cast<decltype(callback_userdata)*>(data->UserData);
-
-               user_data.second.emplace(user_data.first());
-
-               string_type& autofill = (*user_data.second)[0];
-
-               if (not autofill.empty()) {
-                  data->DeleteChars(0, data->BufTextLen);
-                  data->InsertChars(0, autofill.c_str(),
-                                    autofill.c_str() + autofill.size());
-               }
-            }
-
-            return 0;
-         },
-         &callback_userdata);
-
+         [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
+         static_cast<void*>(&fill_entries_callback));
       bool is_deactivated = ImGui::IsItemDeactivated();
-
-      if (ImGui::IsItemActive()) {
-         ImGui::SetNextWindowPos(
-            ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-         ImGui::SetNextWindowSize(
-            ImVec2{ImGui::GetItemRectMax().x - ImGui::GetItemRectMin().x -
-                      ImGui::CalcTextSize(label, nullptr, true).x -
-                      ImGui::GetStyle().ItemInnerSpacing.x,
-                   9.0f * ImGui::GetFontSize()});
-
-         ImGui::BeginTooltip();
-
-         if (not autocomplete_entries) {
-            autocomplete_entries.emplace(fill_entries_callback());
-         }
-
-         if ((*autocomplete_entries)[0].empty()) {
-            ImGui::TextUnformatted("No matches.");
-         }
-         else {
-            for (const string_type& asset : *autocomplete_entries) {
-               ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
-            }
-         }
-
-         ImGui::EndTooltip();
-      }
-
-      ImGui::EndGroup();
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = is_deactivated};
@@ -683,73 +631,15 @@ inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
 
 // Entity Creation Editors
 
-template<typename T, typename Fill>
-inline bool InputTextAutoComplete(const char* label, T* value,
-                                  const Fill& fill_entries_callback) noexcept
-   requires std::is_invocable_r_v<std::array<T, 6>, Fill>
+template<typename Fill>
+inline bool InputTextAutoComplete(const char* label, std::string* value,
+                                  Fill fill_entries_callback) noexcept
+   requires std::is_invocable_r_v<std::array<std::string, 6>, Fill>
 {
-   using string_type = T;
-
-   std::optional<std::array<string_type, 6>> autocomplete_entries;
-
-   std::pair<const Fill&, decltype(autocomplete_entries)&>
-      callback_userdata{fill_entries_callback, autocomplete_entries};
-
-   ImGui::BeginGroup();
-
-   bool value_changed = ImGui::InputText(
+   return ImGui::InputTextAutoComplete(
       label, value,
-      ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
-      [](ImGuiInputTextCallbackData* data) {
-         if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
-            auto& user_data =
-               *static_cast<decltype(callback_userdata)*>(data->UserData);
-
-            user_data.second.emplace(user_data.first());
-
-            string_type& autofill = (*user_data.second)[0];
-
-            if (not autofill.empty()) {
-               data->DeleteChars(0, data->BufTextLen);
-               data->InsertChars(0, autofill.c_str(),
-                                 autofill.c_str() + autofill.size());
-            }
-         }
-
-         return 0;
-      },
-      &callback_userdata);
-
-   if (ImGui::IsItemActive()) {
-      ImGui::SetNextWindowPos(
-         ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-      ImGui::SetNextWindowSize(
-         ImVec2{ImGui::GetItemRectMax().x - ImGui::GetItemRectMin().x -
-                   ImGui::CalcTextSize(label, nullptr, true).x -
-                   ImGui::GetStyle().ItemInnerSpacing.x,
-                9.0f * ImGui::GetFontSize()});
-
-      ImGui::BeginTooltip();
-
-      if (not autocomplete_entries) {
-         autocomplete_entries.emplace(fill_entries_callback());
-      }
-
-      if ((*autocomplete_entries)[0].empty()) {
-         ImGui::TextUnformatted("No matches.");
-      }
-      else {
-         for (const string_type& asset : *autocomplete_entries) {
-            ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
-         }
-      }
-
-      ImGui::EndTooltip();
-   }
-
-   ImGui::EndGroup();
-
-   return value_changed;
+      [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
+      static_cast<void*>(&fill_entries_callback));
 }
 
 inline bool LayerPick(const char* label, int* layer, we::world::world* world) noexcept
@@ -800,6 +690,229 @@ inline bool EnumSelect(const char* label, Enum* value,
    }
 
    return value_changed;
+}
+
+// Creation Entity Editors
+
+template<typename Entity, typename T>
+inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_member_ptr,
+                         we::edits::stack<we::world::edit_context>* edit_stack,
+                         we::world::edit_context* context,
+                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
+{
+   using namespace we;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
+
+   using edit_type = ui_creation_edit<Entity, T>;
+   using value_type = T;
+
+   value_type value = std::get_if<Entity>(entity)->*value_member_ptr;
+   value_type original_value = value;
+
+   auto [valued_changed, item_deactivated] = editor(&value);
+
+   if (valued_changed) {
+      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
+          edit and edit->matching(value_member_ptr) and not edit->closed) {
+         original_value = edit->original_value;
+
+         edit_stack->revert(*context);
+      }
+
+      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value, original_value),
+                        *context);
+   }
+
+   if (item_deactivated) {
+      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
+
+      if (edit and edit->matching(value_member_ptr)) {
+         edit->closed = true;
+      }
+   }
+
+   return valued_changed;
+}
+
+template<typename Entity, typename T, typename U>
+inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_member_ptr,
+                         U we::world::edit_context::*meta_value_member_ptr,
+                         we::edits::stack<we::world::edit_context>* edit_stack,
+                         we::world::edit_context* context,
+                         we::edits::imgui::edit_widget_double_callback<T, U> auto editor) noexcept
+{
+   using namespace we;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
+
+   using edit_type = ui_creation_edit_with_meta<Entity, T, U>;
+   using value_type = T;
+   using meta_value_type = U;
+
+   value_type value = std::get_if<Entity>(entity)->*value_member_ptr;
+   value_type original_value = value;
+   meta_value_type meta_value = context->*meta_value_member_ptr;
+   meta_value_type meta_original_value = meta_value;
+
+   auto [valued_changed, item_deactivated] = editor(&value, &meta_value);
+
+   if (valued_changed) {
+      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
+          edit and edit->matching(value_member_ptr, meta_value_member_ptr) and
+          not edit->closed) {
+         original_value = edit->original_value;
+
+         edit_stack->revert(*context);
+      }
+
+      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value,
+                                                    original_value, meta_value_member_ptr,
+                                                    meta_value, meta_original_value),
+                        *context);
+   }
+
+   if (item_deactivated) {
+      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
+
+      if (edit and edit->matching(value_member_ptr, meta_value_member_ptr)) {
+         edit->closed = true;
+      }
+   }
+
+   return valued_changed;
+}
+
+template<typename Entity, typename T>
+inline bool InputText(const char* label, we::world::creation_entity* entity,
+                      T Entity::*value_member_ptr,
+                      we::edits::stack<we::world::edit_context>* edit_stack,
+                      we::world::edit_context* context,
+                      std::invocable<T*> auto edit_filter) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](T* value) {
+      bool value_changed =
+         ImGui::InputText(label, value, ImGuiInputTextFlags_NoUndoRedo);
+
+      if (value_changed) {
+         edit_filter(value);
+      }
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity, typename T, typename Fill>
+inline bool InputTextAutoComplete(const char* label, we::world::creation_entity* entity,
+                                  T Entity::*value_member_ptr,
+                                  we::edits::stack<we::world::edit_context>* edit_stack,
+                                  we::world::edit_context* context,
+                                  Fill fill_entries_callback) noexcept
+   requires std::is_invocable_r_v<std::array<std::string, 6>, Fill>
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [&](std::string* value) {
+      bool value_changed = ImGui::InputTextAutoComplete(
+         label, value,
+         [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
+         static_cast<void*>(&fill_entries_callback));
+      bool is_deactivated = ImGui::IsItemDeactivated();
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = is_deactivated};
+   });
+}
+
+template<typename Entity>
+inline bool LayerPick(const char* label, we::world::creation_entity* entity,
+                      we::edits::stack<we::world::edit_context>* edit_stack,
+                      we::world::edit_context* context) noexcept
+{
+   return EditWithUndo(entity, &Entity::layer, edit_stack, context, [=](int* layer) {
+      bool value_changed = false;
+
+      if (ImGui::BeginCombo(label, [&] {
+             if (*layer >= context->world.layer_descriptions.size()) return "";
+
+             return context->world.layer_descriptions[*layer].name.c_str();
+          }())) {
+
+         for (int i = 0; i < std::ssize(context->world.layer_descriptions); ++i) {
+            if (ImGui::Selectable(context->world.layer_descriptions[i].name.c_str())) {
+               *layer = i;
+               value_changed = true;
+            }
+         }
+
+         ImGui::EndCombo();
+      }
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = value_changed};
+   });
+}
+
+template<typename Entity>
+inline bool DragRotationEuler(const char* label, we::world::creation_entity* entity,
+                              we::quaternion Entity::*value_member_ptr,
+                              we::float3 we::world::edit_context::*meta_value_member_ptr,
+                              we::edits::stack<we::world::edit_context>* edit_stack,
+                              we::world::edit_context* context)
+{
+   return EditWithUndo(entity, value_member_ptr, meta_value_member_ptr,
+                       edit_stack, context,
+                       [=](we::quaternion* rotation, we::float3* rotation_euler) {
+                          bool value_changed =
+                             ImGui::DragFloat3(label, rotation_euler);
+
+                          if (value_changed) {
+                             *rotation = make_quat_from_euler(
+                                *rotation_euler * std::numbers::pi_v<float> / 180.0f);
+                          }
+
+                          return we::edit_widget_result{.value_changed = value_changed,
+                                                        .item_deactivated =
+                                                           ImGui::IsItemDeactivated()};
+                       });
+}
+
+template<typename Entity>
+inline bool DragFloat3(const char* label, we::world::creation_entity* entity,
+                       we::float3 Entity::*value_member_ptr,
+                       we::edits::stack<we::world::edit_context>* edit_stack,
+                       we::world::edit_context* context)
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float3* value) {
+      return we::edit_widget_result{.value_changed = ImGui::DragFloat3(label, value),
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
+inline bool DragQuat(const char* label, we::world::creation_entity* entity,
+                     we::quaternion Entity::*value_member_ptr,
+                     we::edits::stack<we::world::edit_context>* edit_stack,
+                     we::world::edit_context* context)
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::quaternion* rotation) {
+      return we::edit_widget_result{.value_changed = ImGui::DragQuat(label, rotation),
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
+inline bool SliderInt(const char* label, we::world::creation_entity* entity,
+                      int Entity::*value_member_ptr,
+                      we::edits::stack<we::world::edit_context>* edit_stack,
+                      we::world::edit_context* context, int v_min = 0, int v_max = 0,
+                      const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](int* value) {
+      bool value_changed = ImGui::SliderInt(label, value, v_min, v_max, format, flags);
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
 }
 
 }

@@ -1,7 +1,9 @@
 
 #include "world_edit.hpp"
 
+#include "edits/creation_entity_set.hpp"
 #include "edits/imgui_ext.hpp"
+#include "edits/set_value.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_ext.hpp"
 #include "imgui/imgui_impl_win32.h"
@@ -140,74 +142,89 @@ void world_edit::update_ui() noexcept
             const world::object* base_object =
                world::find_entity(_world.objects, _entity_creation_context.last_object);
 
+            world::object new_object;
+
             if (base_object) {
-               world::object new_object = *base_object;
+               new_object = *base_object;
 
                new_object.name =
                   world::create_unique_name(_world.objects, base_object->name);
                new_object.id = world::max_id;
-
-               _interaction_targets.creation_entity = std::move(new_object);
             }
             else {
-               _interaction_targets.creation_entity =
+               new_object =
                   world::object{.name = "",
                                 .class_name = lowercase_string{"com_bldg_controlzone"sv},
                                 .id = world::max_id};
             }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_object),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
          }
 
          if (ImGui::MenuItem("Light")) {
             const world::light* base_light =
                world::find_entity(_world.lights, _entity_creation_context.last_light);
 
+            world::light new_light;
+
             if (base_light) {
-               world::light new_light = *base_light;
+               new_light = *base_light;
 
                new_light.name =
                   world::create_unique_name(_world.lights, base_light->name);
                new_light.id = world::max_id;
-
-               _interaction_targets.creation_entity = std::move(new_light);
             }
             else {
-               _interaction_targets.creation_entity =
-                  world::light{.name = "", .id = world::max_id};
+               new_light = world::light{.name = "", .id = world::max_id};
             }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_light),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
          }
 
          if (ImGui::MenuItem("Path")) {
             const world::path* base_path =
                world::find_entity(_world.paths, _entity_creation_context.last_path);
 
-            _interaction_targets.creation_entity =
-               world::path{.name =
-                              world::create_unique_name(_world.paths,
-                                                        base_path ? base_path->name
-                                                                  : "Path 0"),
-                           .layer = base_path ? base_path->layer : 0,
-                           .nodes = {world::path::node{}},
-                           .id = world::max_id};
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(
+                         world::path{.name = world::create_unique_name(
+                                        _world.paths, base_path ? base_path->name : "Path 0"),
+                                     .layer = base_path ? base_path->layer : 0,
+                                     .nodes = {world::path::node{}},
+                                     .id = world::max_id},
+                         _interaction_targets.creation_entity),
+                      _edit_context);
          }
 
          if (ImGui::MenuItem("Region")) {
             const world::region* base_region =
                world::find_entity(_world.regions, _entity_creation_context.last_region);
 
+            world::region new_region;
+
             if (base_region) {
-               world::region new_region = *base_region;
+               new_region = *base_region;
 
                new_region.name =
                   world::create_unique_name(_world.regions, base_region->name);
                new_region.id = world::max_id;
-
-               _interaction_targets.creation_entity = std::move(new_region);
             }
             else {
-               _interaction_targets.creation_entity =
+               new_region =
                   world::region{.name = world::create_unique_name(_world.lights, "Region0"),
                                 .id = world::max_id};
             }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_region),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
          }
 #if 0
          if (ImGui::MenuItem("Sector")) _create.sector = true;
@@ -349,7 +366,7 @@ void world_edit::update_ui() noexcept
                ImGui::InputTextAutoComplete(
                   "Class Name", object, &world::object::class_name,
                   &_edit_stack_world, &_edit_context, [&] {
-                     std::array<we::lowercase_string, 6> entries;
+                     std::array<std::string, 6> entries;
                      std::size_t matching_count = 0;
 
                      _asset_libraries.odfs.enumerate_known(
@@ -706,113 +723,175 @@ void world_edit::update_ui() noexcept
                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
                       ImGuiWindowFlags_AlwaysAutoResize);
 
+      world::creation_entity& creation_entity = *_interaction_targets.creation_entity;
+
       const placement_traits traits = std::visit(
          overload{
-            [&](world::object& object) {
+            [&](const world::object& object) {
                ImGui::Text("Object");
                ImGui::Separator();
 
-               if (ImGui::InputText("Name", &object.name)) {
-                  object.name =
-                     world::create_unique_name(_world.objects, object.name);
-               }
-               ImGui::InputTextAutoComplete("Class Name", &object.class_name, [&] {
-                  std::array<we::lowercase_string, 6> entries;
-                  std::size_t matching_count = 0;
+               ImGui::InputText("Name", &creation_entity, &world::object::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.objects,
+                                                                *edited_value);
+                                });
 
-                  _asset_libraries.odfs.enumerate_known([&](const lowercase_string& asset) {
-                     if (matching_count == entries.size()) return;
-                     if (not asset.contains(object.class_name)) return;
+               ImGui::InputTextAutoComplete(
+                  "Class Name", &creation_entity, &world::object::class_name,
+                  &_edit_stack_world, &_edit_context, [&] {
+                     std::array<std::string, 6> entries;
+                     std::size_t matching_count = 0;
 
-                     entries[matching_count] = asset;
+                     _asset_libraries.odfs.enumerate_known(
+                        [&](const lowercase_string& asset) {
+                           if (matching_count == entries.size()) return;
+                           if (not asset.contains(object.class_name)) return;
 
-                     ++matching_count;
+                           entries[matching_count] = asset;
+
+                           ++matching_count;
+                        });
+
+                     return entries;
                   });
-
-                  return entries;
-               });
-               ImGui::LayerPick("Layer", &object.layer, &_world);
+               ImGui::LayerPick<world::object>("Layer", &creation_entity,
+                                               &_edit_stack_world, &_edit_context);
 
                ImGui::Separator();
 
                if (_entity_creation_context.placement_rotation !=
                    placement_rotation::manual_quaternion) {
-                  if (ImGui::DragFloat3("Rotation", &_entity_creation_context.rotation)) {
-                     object.rotation =
-                        make_quat_from_euler(_entity_creation_context.rotation *
-                                             std::numbers::pi_v<float> / 180.0f);
-                  }
-
-                  if (_entity_creation_context.placement_rotation ==
-                         placement_rotation::surface and
-                      _cursor_surface_normalWS) {
-                     _entity_creation_context.rotation.y =
-                        surface_rotation_degrees(*_cursor_surface_normalWS,
-                                                 _entity_creation_context
-                                                    .rotation.y);
-
-                     object.rotation =
-                        make_quat_from_euler(_entity_creation_context.rotation *
-                                             std::numbers::pi_v<float> / 180.0f);
-                  }
+                  ImGui::DragRotationEuler("Rotation", &creation_entity,
+                                           &world::object::rotation,
+                                           &world::edit_context::euler_rotation,
+                                           &_edit_stack_world, &_edit_context);
                }
                else {
-                  ImGui::DragQuat("Rotation", &object.rotation);
+                  ImGui::DragQuat("Rotation", &creation_entity, &world::object::rotation,
+                                  &_edit_stack_world, &_edit_context);
                }
 
-               if (_entity_creation_context.using_point_at) {
-                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                                       object.position, 0xffffffffu);
-
-                  object.rotation = look_at_quat(_cursor_positionWS, object.position);
+               if (ImGui::DragFloat3("Position", &creation_entity, &world::object::position,
+                                     &_edit_stack_world, &_edit_context)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
                }
 
-               ImGui::DragFloat3("Position", &object.position);
+               if (_entity_creation_context.placement_rotation ==
+                      placement_rotation::surface or
+                   _entity_creation_context.placement_mode == placement_mode::cursor or
+                   _entity_creation_context.using_point_at) {
+                  quaternion new_rotation = object.rotation;
+                  float3 new_position = object.position;
+                  float3 new_euler_rotation = _edit_context.euler_rotation;
 
-               if (_entity_creation_context.placement_mode == placement_mode::cursor and
-                   not _entity_creation_context.using_point_at) {
-                  float3 new_position = _cursor_positionWS;
+                  if (_entity_creation_context.using_point_at) {
+                     _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                          object.position,
+                                                          0xffffffffu);
 
-                  if (_entity_creation_context.placement_ground == placement_ground::bbox and
-                      _object_classes.contains(object.class_name)) {
+                     new_rotation = look_at_quat(_cursor_positionWS, object.position);
+                  }
+                  else {
+                     if (_entity_creation_context.placement_rotation ==
+                            placement_rotation::surface and
+                         _cursor_surface_normalWS) {
+                        const float new_y_angle =
+                           surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                    _edit_context.euler_rotation.y);
+                        new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
+                                              _edit_context.euler_rotation.z};
+                        new_rotation = make_quat_from_euler(
+                           new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+                     }
 
-                     const math::bounding_box bbox =
-                        object.rotation *
-                        _object_classes.at(object.class_name).model->bounding_box;
+                     if (_entity_creation_context.placement_mode ==
+                         placement_mode::cursor) {
+                        new_position = _cursor_positionWS;
 
-                     new_position.y -= bbox.min.y;
+                        if (_entity_creation_context.placement_ground ==
+                               placement_ground::bbox and
+                            _object_classes.contains(object.class_name)) {
+
+                           const math::bounding_box bbox =
+                              object.rotation *
+                              _object_classes.at(object.class_name).model->bounding_box;
+
+                           new_position.y -= bbox.min.y;
+                        }
+
+                        if (_entity_creation_context.placement_alignment ==
+                            placement_alignment::grid) {
+                           new_position =
+                              align_position_to_grid(new_position,
+                                                     _entity_creation_context.alignment);
+                        }
+                        else if (_entity_creation_context.placement_alignment ==
+                                 placement_alignment::snapping) {
+                           const std::optional<float3> snapped_position =
+                              world::get_snapped_position(object, new_position,
+                                                          _world.objects,
+                                                          _entity_creation_context
+                                                             .snap_distance,
+                                                          _object_classes);
+
+                           if (snapped_position)
+                              new_position = *snapped_position;
+                        }
+
+                        if (_entity_creation_context.lock_x_axis) {
+                           new_position.x = object.position.x;
+                        }
+                        if (_entity_creation_context.lock_y_axis) {
+                           new_position.y = object.position.y;
+                        }
+                        if (_entity_creation_context.lock_z_axis) {
+                           new_position.z = object.position.z;
+                        }
+                     }
                   }
 
-                  if (_entity_creation_context.placement_alignment ==
-                      placement_alignment::grid) {
-                     new_position =
-                        align_position_to_grid(new_position,
-                                               _entity_creation_context.alignment);
-                  }
-                  else if (_entity_creation_context.placement_alignment ==
-                           placement_alignment::snapping) {
-                     const std::optional<float3> snapped_position =
-                        world::get_snapped_position(object, new_position, _world.objects,
-                                                    _entity_creation_context.snap_distance,
-                                                    _object_classes);
+                  if (new_rotation != object.rotation or new_position != object.position) {
+                     edits::set_creation_location<world::object> set_location{
+                        new_rotation,       object.rotation,
+                        new_position,       object.position,
+                        new_euler_rotation, _edit_context.euler_rotation};
 
-                     if (snapped_position) new_position = *snapped_position;
-                  }
+                     auto* existing_edit =
+                        dynamic_cast<edits::set_creation_location<world::object>*>(
+                           _edit_stack_world.applied_top());
 
-                  if (not _entity_creation_context.lock_x_axis) {
-                     object.position.x = new_position.x;
-                  }
-                  if (not _entity_creation_context.lock_y_axis) {
-                     object.position.y = new_position.y;
-                  }
-                  if (not _entity_creation_context.lock_z_axis) {
-                     object.position.z = new_position.z;
+                     if (not existing_edit or
+                         not existing_edit->coalescable(set_location)) {
+                        _edit_stack_world.apply(
+                           std::make_unique<edits::set_creation_location<world::object>>(
+                              std::move(set_location)),
+                           _edit_context);
+                     }
+                     else { // coalesce the edits
+                        set_location.original_rotation =
+                           existing_edit->original_rotation;
+                        set_location.original_position =
+                           existing_edit->original_position;
+                        set_location.original_euler_rotation =
+                           existing_edit->original_euler_rotation;
+
+                        _edit_stack_world.revert(_edit_context);
+
+                        _edit_stack_world.apply(
+                           std::make_unique<edits::set_creation_location<world::object>>(
+                              std::move(set_location)),
+                           _edit_context);
+                     }
                   }
                }
 
                ImGui::Separator();
 
-               ImGui::SliderInt("Team", &object.team, 0, 15, "%d",
+               ImGui::SliderInt("Team", &creation_entity, &world::object::team,
+                                &_edit_stack_world, &_edit_context, 0, 15, "%d",
                                 ImGuiSliderFlags_AlwaysClamp);
 
                return placement_traits{};
@@ -1397,7 +1476,7 @@ void world_edit::update_ui() noexcept
                return placement_traits{};
             },
          },
-         *_interaction_targets.creation_entity);
+         creation_entity);
 
       if (traits.has_placement_rotation) {
          ImGui::Separator();
@@ -1673,7 +1752,13 @@ void world_edit::update_ui() noexcept
 
       if (not continue_creation) {
          _entity_creation_context.using_point_at = false;
-         _interaction_targets.creation_entity = std::nullopt;
+         _entity_creation_context.using_extend_to = false;
+         _entity_creation_context.using_shrink_to = false;
+         _entity_creation_context.using_from_object_bbox = false;
+
+         _edit_stack_world.apply(edits::make_creation_entity_set(std::nullopt,
+                                                                 creation_entity),
+                                 _edit_context);
       }
    }
 }

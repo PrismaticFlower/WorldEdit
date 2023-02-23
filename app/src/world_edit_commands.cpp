@@ -1,4 +1,5 @@
 
+#include "edits/creation_entity_set.hpp"
 #include "world_edit.hpp"
 
 using namespace std::literals;
@@ -118,8 +119,14 @@ void world_edit::initialize_commands() noexcept
                  _entity_creation_context.finish_current_path);
 
    _commands.add("entity_creation.place"s, [this] { place_creation_entity(); });
-   _commands.add("entity_creation.cancel"s,
-                 [this] { _interaction_targets.creation_entity = std::nullopt; });
+   _commands.add("entity_creation.cancel"s, [this] {
+      if (not _interaction_targets.creation_entity) return;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::nullopt,
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+   });
 }
 
 void world_edit::initialize_hotkeys() noexcept

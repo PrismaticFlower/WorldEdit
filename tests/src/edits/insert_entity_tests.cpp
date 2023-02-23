@@ -11,7 +11,8 @@ namespace we::edits::tests {
 TEST_CASE("edits insert_entity", "[Edits]")
 {
    world::world world = test_world;
-   world::edit_context edit_context{world};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
 
    world::boundary boundary{.name = "Boundary2", .id = world::boundary_id{1}};
 

@@ -1,13 +1,21 @@
 #include "imgui_ext.hpp"
+#include "imgui_stdlib.h"
 
 #include "math/quaternion_funcs.hpp"
 #include "utility/string_ops.hpp"
 
 #include <cmath>
+#include <optional>
 
 namespace ImGui {
 
 namespace {
+
+struct text_callback_autofill_data {
+   std::optional<std::array<std::string, 6>>& autocomplete_entries;
+   std::add_pointer_t<std::array<std::string, 6>(void*)> fill_entries_callback;
+   void* fill_entries_callback_user_data;
+};
 
 struct item_widths {
    float one;
@@ -190,6 +198,74 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed, float v_min,
          *v = normalize(*v);
       }
    }
+
+   return value_changed;
+}
+
+bool InputTextAutoComplete(const char* label, std::string* value,
+                           const std::add_pointer_t<std::array<std::string, 6>(void*)> fill_entries_callback,
+                           void* fill_entries_callback_user_data)
+{
+   std::optional<std::array<std::string, 6>> autocomplete_entries;
+
+   text_callback_autofill_data callback_user_data{autocomplete_entries,
+                                                  fill_entries_callback,
+                                                  fill_entries_callback_user_data};
+
+   ImGui::BeginGroup();
+
+   bool value_changed = ImGui::InputText(
+      label, value,
+      ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
+      [](ImGuiInputTextCallbackData* data) {
+         if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+            text_callback_autofill_data& user_data =
+               *static_cast<decltype(callback_user_data)*>(data->UserData);
+
+            user_data.autocomplete_entries = user_data.fill_entries_callback(
+               user_data.fill_entries_callback_user_data);
+
+            std::string& autofill = (*user_data.autocomplete_entries)[0];
+
+            if (not autofill.empty()) {
+               data->DeleteChars(0, data->BufTextLen);
+               data->InsertChars(0, autofill.c_str(),
+                                 autofill.c_str() + autofill.size());
+            }
+         }
+
+         return 0;
+      },
+      &callback_user_data);
+
+   if (ImGui::IsItemActive()) {
+      ImGui::SetNextWindowPos(
+         ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+      ImGui::SetNextWindowSize(
+         ImVec2{ImGui::GetItemRectMax().x - ImGui::GetItemRectMin().x -
+                   ImGui::CalcTextSize(label, nullptr, true).x -
+                   ImGui::GetStyle().ItemInnerSpacing.x,
+                9.0f * ImGui::GetFontSize()});
+
+      ImGui::BeginTooltip();
+
+      if (not autocomplete_entries) {
+         autocomplete_entries = fill_entries_callback(fill_entries_callback_user_data);
+      }
+
+      if ((*autocomplete_entries)[0].empty()) {
+         ImGui::TextUnformatted("No matches.");
+      }
+      else {
+         for (const std::string& asset : *autocomplete_entries) {
+            ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
+         }
+      }
+
+      ImGui::EndTooltip();
+   }
+
+   ImGui::EndGroup();
 
    return value_changed;
 }

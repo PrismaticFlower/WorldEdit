@@ -601,6 +601,12 @@
     <ClInclude Include="src\edits\ui_action.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\edits\creation_entity_set.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\set_value.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -826,6 +832,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\insert_node.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\creation_entity_set.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

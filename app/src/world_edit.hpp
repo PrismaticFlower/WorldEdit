@@ -148,7 +148,9 @@ private:
    world::tool_visualizers _tool_visualizers;
 
    edits::stack<world::edit_context> _edit_stack_world;
-   world::edit_context _edit_context{.world = _world};
+   world::edit_context _edit_context{.world = _world,
+                                     .creation_entity =
+                                        _interaction_targets.creation_entity};
 
    std::unique_ptr<graphics::renderer> _renderer;
    graphics::camera _camera;
