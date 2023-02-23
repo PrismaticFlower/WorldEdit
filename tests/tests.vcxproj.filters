@@ -65,6 +65,7 @@
     <ClCompile Include="src\edits\stack_tests.cpp" />
     <ClCompile Include="src\edits\ui_action_tests.cpp" />
     <ClCompile Include="src\edits\world_test_data.cpp" />
+    <ClCompile Include="src\edits\set_value_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

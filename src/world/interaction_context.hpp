@@ -41,6 +41,8 @@ struct interaction_targets {
 /// @brief References to data that is managed by an edit stack.
 struct edit_context {
    world& world;
+   std::optional<creation_entity>& creation_entity;
+   float3 euler_rotation;
 };
 
 }

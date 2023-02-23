@@ -11,7 +11,8 @@ namespace we::edits::tests {
 TEST_CASE("edits insert_node", "[Edits]")
 {
    world::world world = test_world;
-   world::edit_context edit_context{world};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
 
    world::path::node node{.position = {0.0f, 1.0f, 0.0f}};
 
