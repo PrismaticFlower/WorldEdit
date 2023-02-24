@@ -23,6 +23,13 @@ struct creation_entity_set final : edit<world::edit_context> {
       context.creation_entity = old_creation_entity;
    }
 
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
    const std::optional<world::creation_entity> new_creation_entity;
    const std::optional<world::creation_entity> old_creation_entity;
 };

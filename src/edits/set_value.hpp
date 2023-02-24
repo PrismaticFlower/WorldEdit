@@ -17,31 +17,37 @@ struct set_creation_value final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
    }
 
-   bool coalescable(edit<world::edit_context>& edit) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      set_creation_value* other = dynamic_cast<set_creation_value*>(&edit);
+      const set_creation_value* other =
+         dynamic_cast<const set_creation_value*>(&other_unknown);
 
       if (not other) return false;
 
       return this->value_member_ptr == other->value_member_ptr;
    }
 
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_creation_value& other = dynamic_cast<set_creation_value&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+   }
+
    value_type entity_type::*value_member_ptr;
 
    value_type new_value;
    value_type original_value;
-
-   bool closed = false;
 };
 
 template<typename Entity, typename T, typename U>
@@ -64,27 +70,36 @@ struct set_creation_value_with_meta final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
       context.*meta_value_member_ptr = meta_original_value;
    }
 
-   bool coalescable(edit<world::edit_context>& edit) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      set_creation_value_with_meta* other =
-         dynamic_cast<set_creation_value_with_meta*>(&edit);
+      const set_creation_value_with_meta* other =
+         dynamic_cast<const set_creation_value_with_meta*>(&other_unknown);
 
       if (not other) return false;
 
       return this->value_member_ptr == other->value_member_ptr and
              this->meta_value_member_ptr == other->meta_value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_creation_value_with_meta& other =
+         dynamic_cast<set_creation_value_with_meta&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+      meta_new_value = std::move(other.meta_new_value);
    }
 
    value_type entity_type::*value_member_ptr;
@@ -95,8 +110,6 @@ struct set_creation_value_with_meta final : edit<world::edit_context> {
 
    value_type original_value;
    meta_value_type meta_original_value;
-
-   bool closed = false;
 };
 
 template<typename Entity>
@@ -115,25 +128,36 @@ struct set_creation_location final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).rotation = new_rotation;
       std::get<entity_type>(*context.creation_entity).position = new_position;
       context.euler_rotation = new_euler_rotation;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).rotation = original_rotation;
       std::get<entity_type>(*context.creation_entity).position = original_position;
       context.euler_rotation = original_euler_rotation;
    }
 
-   bool coalescable(edit<world::edit_context>& edit) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      set_creation_location* other = dynamic_cast<set_creation_location*>(&edit);
+      const set_creation_location* other =
+         dynamic_cast<const set_creation_location*>(&other_unknown);
 
       return other != nullptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_creation_location& other =
+         dynamic_cast<set_creation_location&>(other_unknown);
+
+      new_rotation = other.new_rotation;
+      new_position = other.new_position;
+      new_euler_rotation = other.new_euler_rotation;
    }
 
    quaternion new_rotation;
@@ -143,8 +167,6 @@ struct set_creation_location final : edit<world::edit_context> {
    quaternion original_rotation;
    float3 original_position;
    float3 original_euler_rotation;
-
-   bool closed = false;
 };
 
 }

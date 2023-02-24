@@ -81,25 +81,12 @@ inline bool EditWithUndo(Entity* object, T Entity::*value_member_ptr,
    auto [valued_changed, item_deactivated] = editor(&value);
 
    if (valued_changed) {
-      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-          edit and edit->matching(*object, value_member_ptr) and not edit->closed) {
-         original_value = edit->original_value;
-
-         edit_stack->revert(*context);
-      }
-
       edit_stack->apply(std::make_unique<edit_type>(object->id, value_member_ptr,
                                                     value, original_value),
                         *context);
    }
 
-   if (item_deactivated) {
-      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-
-      if (edit and edit->matching(*object, value_member_ptr)) {
-         edit->closed = true;
-      }
-   }
+   if (item_deactivated) edit_stack->close_last();
 
    return valued_changed;
 }
@@ -351,26 +338,12 @@ inline bool EditWithUndo(Entity* object, std::vector<T> Entity::*value_member_pt
    auto [valued_changed, item_deactivated] = editor(&value);
 
    if (valued_changed) {
-      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-          edit and edit->matching(*object, value_member_ptr, item_index) and
-          not edit->closed) {
-         original_value = edit->original_value;
-
-         edit_stack->revert(*context);
-      }
-
       edit_stack->apply(std::make_unique<edit_type>(object->id, value_member_ptr,
                                                     item_index, value, original_value),
                         *context);
    }
 
-   if (item_deactivated) {
-      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-
-      if (edit and edit->matching(*object, value_member_ptr, item_index)) {
-         edit->closed = true;
-      }
-   }
+   if (item_deactivated) edit_stack->close_last();
 
    return valued_changed;
 }
@@ -493,26 +466,12 @@ inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
    auto [valued_changed, item_deactivated] = editor(&value);
 
    if (valued_changed) {
-      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-          edit and edit->matching(*path, node_index, value_member_ptr) and
-          not edit->closed) {
-         original_value = edit->original_value;
-
-         edit_stack->revert(*context);
-      }
-
       edit_stack->apply(std::make_unique<edit_type>(path->id, node_index, value_member_ptr,
                                                     value, original_value),
                         *context);
    }
 
-   if (item_deactivated) {
-      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-
-      if (edit and edit->matching(*path, node_index, value_member_ptr)) {
-         edit->closed = true;
-      }
-   }
+   if (item_deactivated) edit_stack->close_last();
 
    return valued_changed;
 }
@@ -583,27 +542,13 @@ inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
    auto [valued_changed, item_deactivated] = editor(&value);
 
    if (valued_changed) {
-      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-          edit and edit->matching(*path, node_index, value_member_ptr, item_index) and
-          not edit->closed) {
-         original_value = edit->original_value;
-
-         edit_stack->revert(*context);
-      }
-
       edit_stack->apply(std::make_unique<edit_type>(path->id, node_index,
                                                     value_member_ptr, item_index,
                                                     value, original_value),
                         *context);
    }
 
-   if (item_deactivated) {
-      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-
-      if (edit and edit->matching(*path, node_index, value_member_ptr, item_index)) {
-         edit->closed = true;
-      }
-   }
+   if (item_deactivated) edit_stack->close_last();
 
    return valued_changed;
 }
@@ -713,24 +658,11 @@ inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_me
    auto [valued_changed, item_deactivated] = editor(&value);
 
    if (valued_changed) {
-      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-          edit and edit->matching(value_member_ptr) and not edit->closed) {
-         original_value = edit->original_value;
-
-         edit_stack->revert(*context);
-      }
-
       edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value, original_value),
                         *context);
    }
 
-   if (item_deactivated) {
-      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-
-      if (edit and edit->matching(value_member_ptr)) {
-         edit->closed = true;
-      }
-   }
+   if (item_deactivated) edit_stack->close_last();
 
    return valued_changed;
 }
@@ -758,27 +690,13 @@ inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_me
    auto [valued_changed, item_deactivated] = editor(&value, &meta_value);
 
    if (valued_changed) {
-      if (edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-          edit and edit->matching(value_member_ptr, meta_value_member_ptr) and
-          not edit->closed) {
-         original_value = edit->original_value;
-
-         edit_stack->revert(*context);
-      }
-
       edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value,
                                                     original_value, meta_value_member_ptr,
                                                     meta_value, meta_original_value),
                         *context);
    }
 
-   if (item_deactivated) {
-      edit_type* edit = dynamic_cast<edit_type*>(edit_stack->applied_top());
-
-      if (edit and edit->matching(value_member_ptr, meta_value_member_ptr)) {
-         edit->closed = true;
-      }
-   }
+   if (item_deactivated) edit_stack->close_last();
 
    return valued_changed;
 }

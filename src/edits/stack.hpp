@@ -32,9 +32,20 @@ struct stack {
    /// @param target The target of the edit.
    void apply(std::unique_ptr<edit_type> edit, edit_target& target) noexcept
    {
-      edit->apply(target);
+      if (not _applied.empty() and                   //
+          not _applied.back()->is_closed() and       //
+          _applied.back()->is_coalescable(*edit) and //
+          not edit->is_closed()) {
+         _applied.back()->revert(target);
+         _applied.back()->coalesce(*edit);
+         _applied.back()->apply(target);
+      }
+      else {
+         edit->apply(target);
 
-      _applied.push_back(std::move(edit));
+         _applied.push_back(std::move(edit));
+      }
+
       _reverted.clear();
    }
 
@@ -67,6 +78,8 @@ struct stack {
          _reverted.push_back(std::move(edit));
          _applied.pop_back();
       }
+
+      if (not _applied.empty()) _applied.back()->close();
    }
 
    /// @brief Reapplies a number of edits. Does nothing if there is no edit to reapply.
@@ -124,11 +137,10 @@ struct stack {
       return _reverted.empty();
    }
 
-   /// @brief Gets the pointer to the edit at the top of the applied stack. If changes are made to the edit drop_reverted should be called.
-   /// @return The pointer to the edit or nullptr if no edit is on the stack.
-   auto applied_top() noexcept -> edit_type*
+   /// @brief Call close() on the edit at the top of the applied stack, if there is one. Else does nothing.
+   void close_last() noexcept
    {
-      return _applied.empty() ? nullptr : _applied.back().get();
+      if (not _applied.empty()) _applied.back()->close();
    }
 
    /// @brief Clear both the applied and reverted stacks while keeping their allocated memory.
