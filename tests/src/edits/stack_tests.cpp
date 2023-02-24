@@ -23,6 +23,13 @@ struct dummy_edit : edit<dummy_edit_state> {
    {
       ++target.revert_call_count;
    }
+
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
 };
 
 struct dummy_edit_bools_state {
@@ -42,7 +49,44 @@ struct dummy_ordering_edit : edit<dummy_edit_bools_state> {
       target.toggles[index] = not target.toggles[index];
    }
 
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
    int index = 0;
+};
+
+struct dummy_edit_coalesce : edit<int> {
+   void apply(int& target) const noexcept override
+   {
+      target = new_value;
+   }
+
+   void revert(int& target) const noexcept override
+   {
+      target = old_value;
+   }
+
+   bool is_coalescable(const edit& other) const noexcept override
+   {
+      return static_cast<const dummy_edit_coalesce*>(&other) != nullptr;
+   }
+
+   void coalesce(edit& other) noexcept override
+   {
+      this->new_value = static_cast<dummy_edit_coalesce&>(other).new_value;
+   }
+
+   dummy_edit_coalesce(int new_value, int old_value)
+      : new_value{new_value}, old_value{old_value}
+   {
+   }
+
+   int new_value = 0;
+   int old_value = 0;
 };
 
 }
@@ -198,19 +242,96 @@ TEST_CASE("edits stack empty function tests", "[Edits]")
    REQUIRE(not stack.reverted_empty());
 }
 
-TEST_CASE("edits stack applied_top", "[Edits]")
+TEST_CASE("edits stack revert closes", "[Edits]")
 {
    stack<dummy_edit_state> stack;
    dummy_edit_state state;
 
-   REQUIRE(stack.applied_top() == nullptr);
+   auto unique_first_edit = std::make_unique<dummy_edit>();
 
-   auto unique_edit = std::make_unique<dummy_edit>();
-   auto* edit = unique_edit.get();
+   const dummy_edit* first_edit =
+      unique_first_edit.get(); // Never, ever, ever, hold onto edit pointers outside test code.
 
-   stack.apply(std::move(unique_edit), state);
+   stack.apply(std::move(unique_first_edit), state);
+   stack.apply(std::make_unique<dummy_edit>(), state);
 
-   REQUIRE(stack.applied_top() == edit);
+   stack.revert(state);
+
+   REQUIRE(first_edit->is_closed());
 }
 
+TEST_CASE("edits stack apply coalesce", "[Edits]")
+{
+   stack<int> stack;
+   int state = 0;
+
+   stack.apply(std::make_unique<dummy_edit_coalesce>(1, 0), state);
+   stack.apply(std::make_unique<dummy_edit_coalesce>(2, 1), state);
+
+   REQUIRE(state == 2);
+   REQUIRE(stack.applied_size() == 1);
+
+   stack.revert(state);
+
+   REQUIRE(state == 0);
+}
+
+TEST_CASE("edits stack apply closed first no coalesce", "[Edits]")
+{
+   stack<int> stack;
+   int state = 0;
+
+   auto edit = std::make_unique<dummy_edit_coalesce>(1, 0);
+
+   edit->close();
+
+   stack.apply(std::move(edit), state);
+   stack.apply(std::make_unique<dummy_edit_coalesce>(2, 1), state);
+
+   REQUIRE(state == 2);
+   REQUIRE(stack.applied_size() == 2);
+
+   stack.revert(state);
+
+   REQUIRE(state == 1);
+}
+
+TEST_CASE("edits stack apply closed second no coalesce", "[Edits]")
+{
+   stack<int> stack;
+   int state = 0;
+
+   stack.apply(std::make_unique<dummy_edit_coalesce>(1, 0), state);
+
+   auto next_edit = std::make_unique<dummy_edit_coalesce>(2, 1);
+
+   next_edit->close();
+
+   stack.apply(std::move(next_edit), state);
+
+   REQUIRE(state == 2);
+   REQUIRE(stack.applied_size() == 2);
+
+   stack.revert(state);
+
+   REQUIRE(state == 1);
+}
+
+TEST_CASE("edits stack close_last", "[Edits]")
+{
+   stack<int> stack;
+   int state = 0;
+
+   stack.close_last(); // calling on an empty stack should be safe
+   stack.apply(std::make_unique<dummy_edit_coalesce>(1, 0), state);
+   stack.close_last();
+   stack.apply(std::make_unique<dummy_edit_coalesce>(2, 1), state);
+
+   REQUIRE(state == 2);
+   REQUIRE(stack.applied_size() == 2);
+
+   stack.revert(state);
+
+   REQUIRE(state == 1);
+}
 }

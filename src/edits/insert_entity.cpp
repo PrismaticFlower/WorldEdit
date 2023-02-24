@@ -27,6 +27,13 @@ struct insert_entity final : edit<world::edit_context> {
       entities.pop_back();
    }
 
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
 private:
    world::id<T> _id;
    T _entity;

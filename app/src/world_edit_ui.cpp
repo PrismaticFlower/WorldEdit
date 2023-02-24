@@ -854,37 +854,11 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_rotation != object.rotation or new_position != object.position) {
-                     edits::set_creation_location<world::object> set_location{
-                        new_rotation,       object.rotation,
-                        new_position,       object.position,
-                        new_euler_rotation, _edit_context.euler_rotation};
-
-                     auto* existing_edit =
-                        dynamic_cast<edits::set_creation_location<world::object>*>(
-                           _edit_stack_world.applied_top());
-
-                     if (not existing_edit or
-                         not existing_edit->coalescable(set_location)) {
-                        _edit_stack_world.apply(
-                           std::make_unique<edits::set_creation_location<world::object>>(
-                              std::move(set_location)),
-                           _edit_context);
-                     }
-                     else { // coalesce the edits
-                        set_location.original_rotation =
-                           existing_edit->original_rotation;
-                        set_location.original_position =
-                           existing_edit->original_position;
-                        set_location.original_euler_rotation =
-                           existing_edit->original_euler_rotation;
-
-                        _edit_stack_world.revert(_edit_context);
-
-                        _edit_stack_world.apply(
-                           std::make_unique<edits::set_creation_location<world::object>>(
-                              std::move(set_location)),
-                           _edit_context);
-                     }
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_location<world::object>>(
+                           new_rotation, object.rotation, new_position, object.position,
+                           new_euler_rotation, _edit_context.euler_rotation),
+                        _edit_context);
                   }
                }
 

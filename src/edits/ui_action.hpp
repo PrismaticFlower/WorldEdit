@@ -35,10 +35,20 @@ struct ui_edit final : edit<world::edit_context> {
       find_entity<entity_type>(context.world, id)->*value_member_ptr = original_value;
    }
 
-   bool matching(entity_type& object,
-                 value_type entity_type::*other_value_member_ptr) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      return id == object.id and other_value_member_ptr == this->value_member_ptr;
+      const ui_edit* other = dynamic_cast<const ui_edit*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->id == this->id and other->value_member_ptr == this->value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_edit& other = dynamic_cast<ui_edit&>(other_unknown);
+
+      new_value = std::move(other.new_value);
    }
 
    entity_id_type id;
@@ -46,8 +56,6 @@ struct ui_edit final : edit<world::edit_context> {
 
    value_type new_value;
    value_type original_value;
-
-   bool closed = false;
 };
 
 template<typename Entity, typename T>
@@ -88,12 +96,23 @@ struct ui_edit_indexed final : edit<world::edit_context> {
       vec[item_index] = original_value;
    }
 
-   bool matching(entity_type& object,
-                 std::vector<value_type> entity_type::*other_value_member_ptr,
-                 std::size_t other_item_index) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      return id == object.id and other_value_member_ptr == this->value_member_ptr and
-             other_item_index == this->item_index;
+      const ui_edit_indexed* other =
+         dynamic_cast<const ui_edit_indexed*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->id == this->id and                             //
+             other->value_member_ptr == this->value_member_ptr and //
+             other->item_index == this->item_index;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_edit_indexed& other = dynamic_cast<ui_edit_indexed&>(other_unknown);
+
+      new_value = std::move(other.new_value);
    }
 
    entity_id_type id;
@@ -102,8 +121,6 @@ struct ui_edit_indexed final : edit<world::edit_context> {
 
    value_type new_value;
    value_type original_value;
-
-   bool closed = false;
 };
 
 template<typename T>
@@ -146,11 +163,23 @@ struct ui_edit_path_node final : edit<world::edit_context> {
       node.*value_member_ptr = original_value;
    }
 
-   bool matching(entity_type& path, std::size_t other_node_index,
-                 value_type node_type::*other_value_member_ptr) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      return id == path.id and other_node_index == this->node_index and
-             other_value_member_ptr == this->value_member_ptr;
+      const ui_edit_path_node* other =
+         dynamic_cast<const ui_edit_path_node*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->id == this->id and                 //
+             other->node_index == this->node_index and //
+             other->value_member_ptr == this->value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_edit_path_node& other = dynamic_cast<ui_edit_path_node&>(other_unknown);
+
+      new_value = std::move(other.new_value);
    }
 
    entity_id_type id;
@@ -159,8 +188,6 @@ struct ui_edit_path_node final : edit<world::edit_context> {
 
    value_type new_value;
    value_type original_value;
-
-   bool closed = false;
 };
 
 template<typename T>
@@ -213,13 +240,25 @@ struct ui_edit_path_node_indexed final : edit<world::edit_context> {
       vec[item_index] = original_value;
    }
 
-   bool matching(entity_type& path, std::size_t other_node_index,
-                 std::vector<value_type> node_type::*other_value_member_ptr,
-                 std::size_t other_item_index) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      return id == path.id and other_node_index == this->node_index and
-             other_value_member_ptr == this->value_member_ptr and
-             other_item_index == this->item_index;
+      const ui_edit_path_node_indexed* other =
+         dynamic_cast<const ui_edit_path_node_indexed*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->id == this->id and                             //
+             other->node_index == this->node_index and             //
+             other->value_member_ptr == this->value_member_ptr and //
+             other->item_index == this->item_index;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_edit_path_node_indexed& other =
+         dynamic_cast<ui_edit_path_node_indexed&>(other_unknown);
+
+      new_value = std::move(other.new_value);
    }
 
    entity_id_type id;
@@ -256,17 +295,27 @@ struct ui_creation_edit final : edit<world::edit_context> {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
    }
 
-   bool matching(value_type entity_type::*other_value_member_ptr) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      return other_value_member_ptr == this->value_member_ptr;
+      const ui_creation_edit* other =
+         dynamic_cast<const ui_creation_edit*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->value_member_ptr == this->value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_creation_edit& other = dynamic_cast<ui_creation_edit&>(other_unknown);
+
+      new_value = std::move(other.new_value);
    }
 
    value_type entity_type::*value_member_ptr;
 
    value_type new_value;
    value_type original_value;
-
-   bool closed = false;
 };
 
 template<typename Entity, typename T, typename U>
@@ -289,23 +338,36 @@ struct ui_creation_edit_with_meta final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) const noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
       context.*meta_value_member_ptr = meta_original_value;
    }
 
-   bool matching(value_type entity_type::*other_value_member_ptr,
-                 meta_value_type world::edit_context::*other_meta_value_member_ptr) const noexcept
+   bool is_coalescable(const edit& other_unknown) const noexcept override
    {
-      return other_value_member_ptr == this->value_member_ptr and
-             other_meta_value_member_ptr == this->meta_value_member_ptr;
+      const ui_creation_edit_with_meta* other =
+         dynamic_cast<const ui_creation_edit_with_meta*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->value_member_ptr == this->value_member_ptr and
+             other->meta_value_member_ptr == this->meta_value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_creation_edit_with_meta& other =
+         dynamic_cast<ui_creation_edit_with_meta&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+      meta_new_value = std::move(other.meta_new_value);
    }
 
    value_type entity_type::*value_member_ptr;
@@ -316,8 +378,6 @@ struct ui_creation_edit_with_meta final : edit<world::edit_context> {
 
    value_type original_value;
    meta_value_type meta_original_value;
-
-   bool closed = false;
 };
 
 }

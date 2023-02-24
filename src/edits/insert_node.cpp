@@ -26,6 +26,13 @@ struct insert_path_node final : edit<world::edit_context> {
       nodes.erase(nodes.begin() + _insert_before_index);
    }
 
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
 private:
    const world::path_id _id;
    const std::size_t _insert_before_index;
