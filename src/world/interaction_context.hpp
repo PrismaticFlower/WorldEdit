@@ -43,6 +43,7 @@ struct edit_context {
    world& world;
    std::optional<creation_entity>& creation_entity;
    float3 euler_rotation;
+   float3 light_region_euler_rotation;
 };
 
 }

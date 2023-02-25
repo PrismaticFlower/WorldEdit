@@ -795,6 +795,38 @@ inline bool DragRotationEuler(const char* label, we::world::creation_entity* ent
 }
 
 template<typename Entity>
+inline bool DragFloat(const char* label, we::world::creation_entity* entity,
+                      float Entity::*value_member_ptr,
+                      we::edits::stack<we::world::edit_context>* edit_stack,
+                      we::world::edit_context* context, float v_speed = 1.0f,
+                      float v_min = 0.0f, float v_max = 0.0f,
+                      const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](float* value) {
+      return we::edit_widget_result{.value_changed =
+                                       ImGui::DragFloat(label, value, v_speed, v_min,
+                                                        v_max, format, flags),
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
+inline bool DragFloat2(const char* label, we::world::creation_entity* entity,
+                       we::float2 Entity::*value_member_ptr,
+                       we::edits::stack<we::world::edit_context>* edit_stack,
+                       we::world::edit_context* context, float v_speed = 1.0f,
+                       float v_min = 0.0f, float v_max = 0.0f,
+                       ImGuiSliderFlags flags = 0) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float2* value) {
+      return we::edit_widget_result{.value_changed =
+                                       ImGui::DragFloat2(label, value, v_speed,
+                                                         v_min, v_max, flags),
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
 inline bool DragFloat3(const char* label, we::world::creation_entity* entity,
                        we::float3 Entity::*value_member_ptr,
                        we::edits::stack<we::world::edit_context>* edit_stack,
@@ -833,4 +865,62 @@ inline bool SliderInt(const char* label, we::world::creation_entity* entity,
    });
 }
 
+template<typename Entity>
+inline bool ColorEdit3(const char* label, we::world::creation_entity* entity,
+                       we::float3 Entity::*value_member_ptr,
+                       we::edits::stack<we::world::edit_context>* edit_stack,
+                       we::world::edit_context* context,
+                       ImGuiColorEditFlags flags = 0) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float3* value) {
+      return we::edit_widget_result{.value_changed =
+                                       ImGui::ColorEdit3(label, &value->x, flags),
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
+inline bool Checkbox(const char* label, we::world::creation_entity* entity,
+                     bool Entity::*value_member_ptr,
+                     we::edits::stack<we::world::edit_context>* edit_stack,
+                     we::world::edit_context* context)
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](bool* value) {
+      return we::edit_widget_result{.value_changed = ImGui::Checkbox(label, value),
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity, typename Enum>
+inline bool EnumSelect(const char* label, we::world::creation_entity* entity,
+                       Enum Entity::*value_member_ptr,
+                       we::edits::stack<we::world::edit_context>* edit_stack,
+                       we::world::edit_context* context,
+                       std::initializer_list<we::enum_select_option<Enum>> values) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=, &values](Enum* value) {
+      bool value_changed = false;
+
+      if (ImGui::BeginCombo(label, [&] {
+             for (auto& option : values) {
+                if (option.value == *value) return option.label;
+             }
+
+             return "";
+          }())) {
+
+         for (auto option : values) {
+            if (ImGui::Selectable(option.label)) {
+               *value = option.value;
+               value_changed = true;
+            }
+         }
+
+         ImGui::EndCombo();
+      }
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = value_changed};
+   });
+}
 }
