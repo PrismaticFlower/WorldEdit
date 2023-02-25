@@ -201,7 +201,6 @@ private:
       float snap_distance = 0.5f;
 
       float3 rotation{0.0f, 0.0f, 0.0f};
-      float3 light_region_rotation{0.0f, 0.0f, 0.0f};
 
       std::optional<float3> resize_start_size;
    } _entity_creation_context;

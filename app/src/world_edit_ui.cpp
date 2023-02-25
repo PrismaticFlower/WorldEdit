@@ -882,93 +882,130 @@ void world_edit::update_ui() noexcept
 
                return placement_traits{};
             },
-            [&](world::light& light) {
-               if (ImGui::InputText("Name", &light.name)) {
-                  light.name = world::create_unique_name(_world.lights, light.name);
-               }
+            [&](const world::light& light) {
+               ImGui::InputText("Name", &creation_entity, &world::light::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.lights,
+                                                                *edited_value);
+                                });
 
-               ImGui::LayerPick("Layer", &light.layer, &_world);
+               ImGui::LayerPick<world::light>("Layer", &creation_entity,
+                                              &_edit_stack_world, &_edit_context);
 
                ImGui::Separator();
 
                if (_entity_creation_context.placement_rotation !=
                    placement_rotation::manual_quaternion) {
-                  if (ImGui::DragFloat3("Rotation", &_entity_creation_context.rotation)) {
-                     light.rotation =
-                        make_quat_from_euler(_entity_creation_context.rotation *
-                                             std::numbers::pi_v<float> / 180.0f);
-                  }
+                  ImGui::DragRotationEuler("Rotation", &creation_entity,
+                                           &world::light::rotation,
+                                           &world::edit_context::euler_rotation,
+                                           &_edit_stack_world, &_edit_context);
+               }
+               else {
+                  ImGui::DragQuat("Rotation", &creation_entity, &world::light::rotation,
+                                  &_edit_stack_world, &_edit_context);
+               }
+
+               if (ImGui::DragFloat3("Position", &creation_entity, &world::light::position,
+                                     &_edit_stack_world, &_edit_context)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+               }
+
+               if ((_entity_creation_context.placement_rotation ==
+                       placement_rotation::surface or
+                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+                   not _entity_creation_context.using_point_at) {
+                  quaternion new_rotation = light.rotation;
+                  float3 new_position = light.position;
+                  float3 new_euler_rotation = _edit_context.euler_rotation;
 
                   if (_entity_creation_context.placement_rotation ==
                          placement_rotation::surface and
                       _cursor_surface_normalWS) {
-                     _entity_creation_context.rotation.y =
+                     const float new_y_angle =
                         surface_rotation_degrees(*_cursor_surface_normalWS,
-                                                 _entity_creation_context
-                                                    .rotation.y);
-
-                     light.rotation =
-                        make_quat_from_euler(_entity_creation_context.rotation *
-                                             std::numbers::pi_v<float> / 180.0f);
+                                                 _edit_context.euler_rotation.y);
+                     new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
+                                           _edit_context.euler_rotation.z};
+                     new_rotation = make_quat_from_euler(
+                        new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
-               }
-               else {
-                  ImGui::DragQuat("Rotation", &light.rotation);
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position = _cursor_positionWS;
+                     if (_entity_creation_context.placement_alignment ==
+                         placement_alignment::grid) {
+                        new_position =
+                           align_position_to_grid(new_position,
+                                                  _entity_creation_context.alignment);
+                     }
+                     else if (_entity_creation_context.placement_alignment ==
+                              placement_alignment::snapping) {
+                        const std::optional<float3> snapped_position =
+                           world::get_snapped_position(new_position, _world.objects,
+                                                       _entity_creation_context.snap_distance,
+                                                       _object_classes);
+
+                        if (snapped_position) new_position = *snapped_position;
+                     }
+
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = light.position.x;
+                     }
+                     if (_entity_creation_context.lock_y_axis) {
+                        new_position.y = light.position.y;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.z = light.position.z;
+                     }
+                  }
+
+                  if (new_rotation != light.rotation or new_position != light.position) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_location<world::light>>(
+                           new_rotation, light.rotation, new_position, light.position,
+                           new_euler_rotation, _edit_context.euler_rotation),
+                        _edit_context);
+                  }
                }
 
                if (_entity_creation_context.using_point_at) {
                   _tool_visualizers.lines.emplace_back(_cursor_positionWS,
                                                        light.position, 0xffffffffu);
 
-                  light.rotation = look_at_quat(_cursor_positionWS, light.position);
-               }
+                  const quaternion new_rotation =
+                     look_at_quat(_cursor_positionWS, light.position);
 
-               ImGui::DragFloat3("Position", &light.position);
-
-               if (_entity_creation_context.placement_mode == placement_mode::cursor and
-                   not _entity_creation_context.using_point_at) {
-                  float3 new_position = _cursor_positionWS;
-
-                  if (_entity_creation_context.placement_alignment ==
-                      placement_alignment::grid) {
-                     new_position =
-                        align_position_to_grid(new_position,
-                                               _entity_creation_context.alignment);
-                  }
-                  else if (_entity_creation_context.placement_alignment ==
-                           placement_alignment::snapping) {
-                     const std::optional<float3> snapped_position =
-                        world::get_snapped_position(new_position, _world.objects,
-                                                    _entity_creation_context.snap_distance,
-                                                    _object_classes);
-
-                     if (snapped_position) new_position = *snapped_position;
-                  }
-
-                  if (not _entity_creation_context.lock_x_axis) {
-                     light.position.x = new_position.x;
-                  }
-                  if (not _entity_creation_context.lock_y_axis) {
-                     light.position.y = new_position.y;
-                  }
-                  if (not _entity_creation_context.lock_z_axis) {
-                     light.position.z = new_position.z;
+                  if (new_rotation != light.rotation) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::light, quaternion>>(
+                           &world::light::rotation, new_rotation, light.rotation),
+                        _edit_context);
                   }
                }
 
                ImGui::Separator();
 
-               ImGui::ColorEdit3("Color", &light.color.x,
+               ImGui::ColorEdit3("Color", &creation_entity, &world::light::color,
+                                 &_edit_stack_world, &_edit_context,
                                  ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR);
 
-               ImGui::Checkbox("Static", &light.static_);
+               ImGui::Checkbox("Static", &creation_entity, &world::light::static_,
+                               &_edit_stack_world, &_edit_context);
                ImGui::SameLine();
-               ImGui::Checkbox("Shadow Caster", &light.shadow_caster);
+               ImGui::Checkbox("Shadow Caster", &creation_entity,
+                               &world::light::shadow_caster, &_edit_stack_world,
+                               &_edit_context);
                ImGui::SameLine();
-               ImGui::Checkbox("Specular Caster", &light.specular_caster);
+               ImGui::Checkbox("Specular Caster", &creation_entity,
+                               &world::light::specular_caster,
+                               &_edit_stack_world, &_edit_context);
 
                ImGui::EnumSelect(
-                  "Light Type", &light.light_type,
+                  "Light Type", &creation_entity, &world::light::light_type,
+                  &_edit_stack_world, &_edit_context,
                   {enum_select_option{"Directional", world::light_type::directional},
                    enum_select_option{"Point", world::light_type::point},
                    enum_select_option{"Spot", world::light_type::spot},
@@ -983,70 +1020,83 @@ void world_edit::update_ui() noexcept
 
                if (light.light_type == world::light_type::point or
                    light.light_type == world::light_type::spot) {
-                  ImGui::DragFloat("Range", &light.range);
+                  ImGui::DragFloat("Range", &creation_entity, &world::light::range,
+                                   &_edit_stack_world, &_edit_context);
 
                   if (light.light_type == world::light_type::spot) {
-                     ImGui::DragFloat("Inner Cone Angle", &light.inner_cone_angle,
-                                      0.01f, 0.0f, light.outer_cone_angle,
-                                      "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                     ImGui::DragFloat("Outer Cone Angle", &light.outer_cone_angle,
-                                      0.01f, light.inner_cone_angle, 1.570f,
-                                      "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                     ImGui::DragFloat("Inner Cone Angle", &creation_entity,
+                                      &world::light::inner_cone_angle,
+                                      &_edit_stack_world, &_edit_context, 0.01f,
+                                      0.0f, light.outer_cone_angle, "%.3f",
+                                      ImGuiSliderFlags_AlwaysClamp);
+                     ImGui::DragFloat("Outer Cone Angle", &creation_entity,
+                                      &world::light::outer_cone_angle,
+                                      &_edit_stack_world, &_edit_context, 0.01f,
+                                      light.inner_cone_angle, 1.570f, "%.3f",
+                                      ImGuiSliderFlags_AlwaysClamp);
                   }
 
                   ImGui::Separator();
                }
 
-               ImGui::InputTextAutoComplete("Texture", &light.texture, [&] {
-                  std::array<std::string, 6> entries;
-                  std::size_t matching_count = 0;
+               ImGui::InputTextAutoComplete(
+                  "Texture", &creation_entity, &world::light::texture,
+                  &_edit_stack_world, &_edit_context, [&] {
+                     std::array<std::string, 6> entries;
+                     std::size_t matching_count = 0;
 
-                  _asset_libraries.textures.enumerate_known(
-                     [&](const lowercase_string& asset) {
-                        if (matching_count == entries.size()) return;
-                        if (not asset.contains(light.texture)) return;
+                     _asset_libraries.textures.enumerate_known(
+                        [&](const lowercase_string& asset) {
+                           if (matching_count == entries.size()) return;
+                           if (not asset.contains(light.texture)) return;
 
-                        entries[matching_count] = asset;
+                           entries[matching_count] = asset;
 
-                        ++matching_count;
-                     });
+                           ++matching_count;
+                        });
 
-                  return entries;
-               });
+                     return entries;
+                  });
 
                if (world::is_directional_light(light) and not light.texture.empty()) {
-                  ImGui::DragFloat2("Directional Texture Tiling",
-                                    &light.directional_texture_tiling, 0.01f);
-                  ImGui::DragFloat2("Directional Texture Offset",
-                                    &light.directional_texture_offset, 0.01f);
+                  ImGui::DragFloat2("Directional Texture Tiling", &creation_entity,
+                                    &world::light::directional_texture_tiling,
+                                    &_edit_stack_world, &_edit_context, 0.01f);
+                  ImGui::DragFloat2("Directional Texture Offset", &creation_entity,
+                                    &world::light::directional_texture_offset,
+                                    &_edit_stack_world, &_edit_context, 0.01f);
                }
 
                if (is_region_light(light)) {
                   ImGui::Separator();
 
-                  if (ImGui::InputText("Region Name", &light.region_name)) {
-                     light.region_name =
-                        world::create_unique_light_region_name(_world.lights,
-                                                               _world.regions,
-                                                               light.region_name.empty()
-                                                                  ? light.name
-                                                                  : light.region_name);
-                  }
+                  ImGui::InputText("Region Name", &creation_entity,
+                                   &world::light::region_name, &_edit_stack_world,
+                                   &_edit_context, [&](std::string* edited_value) {
+                                      *edited_value =
+                                         world::create_unique_light_region_name(
+                                            _world.lights, _world.regions,
+                                            light.region_name.empty()
+                                               ? light.name
+                                               : light.region_name);
+                                   });
 
                   if (_entity_creation_context.placement_rotation !=
                       placement_rotation::manual_quaternion) {
-                     if (ImGui::DragFloat3("Rotation",
-                                           &_entity_creation_context.light_region_rotation)) {
-                        light.region_rotation = make_quat_from_euler(
-                           _entity_creation_context.light_region_rotation *
-                           std::numbers::pi_v<float> / 180.0f);
-                     }
+                     ImGui::DragRotationEuler("Rotation", &creation_entity,
+                                              &world::light::region_rotation,
+                                              &world::edit_context::light_region_euler_rotation,
+                                              &_edit_stack_world, &_edit_context);
                   }
                   else {
-                     ImGui::DragQuat("Region Rotation", &light.region_rotation);
+                     ImGui::DragQuat("Region Rotation", &creation_entity,
+                                     &world::light::region_rotation,
+                                     &_edit_stack_world, &_edit_context);
                   }
 
-                  ImGui::DragFloat3("Region Size", &light.region_size);
+                  ImGui::DragFloat3("Region Size", &creation_entity,
+                                    &world::light::region_size,
+                                    &_edit_stack_world, &_edit_context);
                }
 
                return placement_traits{.has_placement_ground = false};
