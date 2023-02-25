@@ -83,15 +83,8 @@ void world_edit::initialize_commands() noexcept
       }
    });
 
-   _commands.add("entity_creation.toggle_point_at"s, [this] {
-      _entity_creation_context.using_point_at =
-         not _entity_creation_context.using_point_at;
-
-      if (_entity_creation_context.using_point_at) {
-         _entity_creation_context.placement_rotation =
-            placement_rotation::manual_quaternion;
-      }
-   });
+   _commands.add("entity_creation.activate_point_at"s,
+                 _entity_creation_context.activate_point_at);
    _commands.add("entity_creation.deactivate_point_at"s,
                  [this] { _entity_creation_context.using_point_at = false; });
    _commands.add("entity_creation.toggle_extend_to"s, [this] {
@@ -166,7 +159,7 @@ void world_edit::initialize_hotkeys() noexcept
                        {"entity_creation.cycle_ground_mode",
                         {.key = key::r, .modifiers = {.ctrl = true}}},
 
-                       {"entity_creation.toggle_point_at", {.key = key::v}},
+                       {"entity_creation.activate_point_at", {.key = key::v}},
                        {"entity_creation.toggle_extend_to", {.key = key::t}},
                        {"entity_creation.toggle_shrink_to",
                         {.key = key::t, .modifiers = {.ctrl = true}}},

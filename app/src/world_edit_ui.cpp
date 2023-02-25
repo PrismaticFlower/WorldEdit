@@ -714,6 +714,15 @@ void world_edit::update_ui() noexcept
    }
 
    if (_interaction_targets.creation_entity) {
+      if (std::exchange(_entity_creation_context.activate_point_at, false)) {
+         _entity_creation_context.placement_rotation =
+            placement_rotation::manual_quaternion;
+         _entity_creation_context.placement_mode = placement_mode::manual;
+
+         _edit_stack_world.close_last(); // Make sure we don't coalesce with a previous point at.
+         _entity_creation_context.using_point_at = true;
+      }
+
       bool continue_creation = true;
 
       ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
@@ -779,77 +788,65 @@ void world_edit::update_ui() noexcept
                   _entity_creation_context.placement_mode = placement_mode::manual;
                }
 
-               if (_entity_creation_context.placement_rotation ==
-                      placement_rotation::surface or
-                   _entity_creation_context.placement_mode == placement_mode::cursor or
-                   _entity_creation_context.using_point_at) {
+               if ((_entity_creation_context.placement_rotation ==
+                       placement_rotation::surface or
+                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+                   not _entity_creation_context.using_point_at) {
                   quaternion new_rotation = object.rotation;
                   float3 new_position = object.position;
                   float3 new_euler_rotation = _edit_context.euler_rotation;
 
-                  if (_entity_creation_context.using_point_at) {
-                     _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                                          object.position,
-                                                          0xffffffffu);
-
-                     new_rotation = look_at_quat(_cursor_positionWS, object.position);
+                  if (_entity_creation_context.placement_rotation ==
+                         placement_rotation::surface and
+                      _cursor_surface_normalWS) {
+                     const float new_y_angle =
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _edit_context.euler_rotation.y);
+                     new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
+                                           _edit_context.euler_rotation.z};
+                     new_rotation = make_quat_from_euler(
+                        new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
-                  else {
-                     if (_entity_creation_context.placement_rotation ==
-                            placement_rotation::surface and
-                         _cursor_surface_normalWS) {
-                        const float new_y_angle =
-                           surface_rotation_degrees(*_cursor_surface_normalWS,
-                                                    _edit_context.euler_rotation.y);
-                        new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
-                                              _edit_context.euler_rotation.z};
-                        new_rotation = make_quat_from_euler(
-                           new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position = _cursor_positionWS;
+
+                     if (_entity_creation_context.placement_ground ==
+                            placement_ground::bbox and
+                         _object_classes.contains(object.class_name)) {
+
+                        const math::bounding_box bbox =
+                           object.rotation *
+                           _object_classes.at(object.class_name).model->bounding_box;
+
+                        new_position.y -= bbox.min.y;
                      }
 
-                     if (_entity_creation_context.placement_mode ==
-                         placement_mode::cursor) {
-                        new_position = _cursor_positionWS;
+                     if (_entity_creation_context.placement_alignment ==
+                         placement_alignment::grid) {
+                        new_position =
+                           align_position_to_grid(new_position,
+                                                  _entity_creation_context.alignment);
+                     }
+                     else if (_entity_creation_context.placement_alignment ==
+                              placement_alignment::snapping) {
+                        const std::optional<float3> snapped_position =
+                           world::get_snapped_position(object, new_position,
+                                                       _world.objects,
+                                                       _entity_creation_context.snap_distance,
+                                                       _object_classes);
 
-                        if (_entity_creation_context.placement_ground ==
-                               placement_ground::bbox and
-                            _object_classes.contains(object.class_name)) {
+                        if (snapped_position) new_position = *snapped_position;
+                     }
 
-                           const math::bounding_box bbox =
-                              object.rotation *
-                              _object_classes.at(object.class_name).model->bounding_box;
-
-                           new_position.y -= bbox.min.y;
-                        }
-
-                        if (_entity_creation_context.placement_alignment ==
-                            placement_alignment::grid) {
-                           new_position =
-                              align_position_to_grid(new_position,
-                                                     _entity_creation_context.alignment);
-                        }
-                        else if (_entity_creation_context.placement_alignment ==
-                                 placement_alignment::snapping) {
-                           const std::optional<float3> snapped_position =
-                              world::get_snapped_position(object, new_position,
-                                                          _world.objects,
-                                                          _entity_creation_context
-                                                             .snap_distance,
-                                                          _object_classes);
-
-                           if (snapped_position)
-                              new_position = *snapped_position;
-                        }
-
-                        if (_entity_creation_context.lock_x_axis) {
-                           new_position.x = object.position.x;
-                        }
-                        if (_entity_creation_context.lock_y_axis) {
-                           new_position.y = object.position.y;
-                        }
-                        if (_entity_creation_context.lock_z_axis) {
-                           new_position.z = object.position.z;
-                        }
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = object.position.x;
+                     }
+                     if (_entity_creation_context.lock_y_axis) {
+                        new_position.y = object.position.y;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.z = object.position.z;
                      }
                   }
 
@@ -858,6 +855,21 @@ void world_edit::update_ui() noexcept
                         std::make_unique<edits::set_creation_location<world::object>>(
                            new_rotation, object.rotation, new_position, object.position,
                            new_euler_rotation, _edit_context.euler_rotation),
+                        _edit_context);
+                  }
+               }
+
+               if (_entity_creation_context.using_point_at) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       object.position, 0xffffffffu);
+
+                  const quaternion new_rotation =
+                     look_at_quat(_cursor_positionWS, object.position);
+
+                  if (new_rotation != object.rotation) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::object, quaternion>>(
+                           &world::object::rotation, new_rotation, object.rotation),
                         _edit_context);
                   }
                }
@@ -1486,14 +1498,7 @@ void world_edit::update_ui() noexcept
 
          if (traits.has_point_at) {
             if (ImGui::Selectable("Point At", _entity_creation_context.using_point_at)) {
-               if (_entity_creation_context.using_point_at) {
-                  _entity_creation_context.using_point_at = false;
-               }
-               else {
-                  _entity_creation_context.using_point_at = true;
-                  _entity_creation_context.placement_rotation =
-                     placement_rotation::manual_quaternion;
-               }
+               _entity_creation_context.activate_point_at = true;
             }
          }
       }
@@ -1662,7 +1667,7 @@ void world_edit::update_ui() noexcept
             ImGui::Text("Point At");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.toggle_point_at")));
+                                      "entity_creation.activate_point_at")));
          }
 
          if (traits.has_placement_mode) {
