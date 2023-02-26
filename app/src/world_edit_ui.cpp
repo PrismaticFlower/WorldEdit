@@ -723,6 +723,26 @@ void world_edit::update_ui() noexcept
          _entity_creation_context.using_point_at = true;
       }
 
+      if (std::exchange(_entity_creation_context.activate_extend_to, false)) {
+         _edit_stack_world.close_last();
+
+         _entity_creation_context.using_extend_to = true;
+         _entity_creation_context.using_shrink_to = false;
+      }
+
+      if (std::exchange(_entity_creation_context.activate_shrink_to, false)) {
+         _edit_stack_world.close_last();
+
+         _entity_creation_context.using_extend_to = false;
+         _entity_creation_context.using_shrink_to = true;
+      }
+
+      if (std::exchange(_entity_creation_context.activate_from_object_bbox, false)) {
+         _edit_stack_world.close_last();
+
+         _entity_creation_context.using_from_object_bbox = true;
+      }
+
       bool continue_creation = true;
 
       ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
@@ -1243,172 +1263,209 @@ void world_edit::update_ui() noexcept
                return placement_traits{.has_new_path = true,
                                        .has_node_placement_insert = true};
             },
-            [&](world::region& region) {
-               if (ImGui::InputText("Name", &region.name)) {
-                  region.name =
-                     world::create_unique_name(_world.regions, region.name);
-               }
+            [&](const world::region& region) {
+               ImGui::InputText("Name", &creation_entity, &world::region::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.regions,
+                                                                region.name);
+                                });
 
-               ImGui::LayerPick("Layer", &region.layer, &_world);
+               ImGui::LayerPick<world::region>("Layer", &creation_entity,
+                                               &_edit_stack_world, &_edit_context);
 
-               ImGui::InputText("Description", &region.description);
+               ImGui::InputText("Description", &creation_entity,
+                                &world::region::description, &_edit_stack_world,
+                                &_edit_context,
+                                [&]([[maybe_unused]] std::string* edited_value) {});
 
                ImGui::Separator();
 
                if (_entity_creation_context.placement_rotation !=
                    placement_rotation::manual_quaternion) {
-                  if (ImGui::DragFloat3("Rotation", &_entity_creation_context.rotation)) {
-                     region.rotation =
-                        make_quat_from_euler(_entity_creation_context.rotation *
-                                             std::numbers::pi_v<float> / 180.0f);
-                  }
-
-                  if (_entity_creation_context.placement_rotation ==
-                      placement_rotation::surface) {
-                     _entity_creation_context.rotation.y =
-                        surface_rotation_degrees(*_cursor_surface_normalWS,
-                                                 _entity_creation_context
-                                                    .rotation.y);
-
-                     region.rotation =
-                        make_quat_from_euler(_entity_creation_context.rotation *
-                                             std::numbers::pi_v<float> / 180.0f);
-                  }
+                  ImGui::DragRotationEuler("Rotation", &creation_entity,
+                                           &world::region::rotation,
+                                           &world::edit_context::euler_rotation,
+                                           &_edit_stack_world, &_edit_context);
                }
                else {
-                  ImGui::DragQuat("Rotation", &region.rotation);
+                  ImGui::DragQuat("Rotation", &creation_entity, &world::region::rotation,
+                                  &_edit_stack_world, &_edit_context);
+               }
+
+               if (ImGui::DragFloat3("Position", &creation_entity, &world::region::position,
+                                     &_edit_stack_world, &_edit_context)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+               }
+
+               if ((_entity_creation_context.placement_rotation ==
+                       placement_rotation::surface or
+                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+                   not _entity_creation_context.using_point_at) {
+                  quaternion new_rotation = region.rotation;
+                  float3 new_position = region.position;
+                  float3 new_euler_rotation = _edit_context.euler_rotation;
+
+                  if (_entity_creation_context.placement_rotation ==
+                         placement_rotation::surface and
+                      _cursor_surface_normalWS) {
+                     const float new_y_angle =
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _edit_context.euler_rotation.y);
+                     new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
+                                           _edit_context.euler_rotation.z};
+                     new_rotation = make_quat_from_euler(
+                        new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+                  }
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position = _cursor_positionWS;
+
+                     if (_entity_creation_context.placement_ground ==
+                         placement_ground::bbox) {
+                        switch (region.shape) {
+                        case world::region_shape::box: {
+                           const std::array<float3, 8> bbox_corners = math::to_corners(
+                              {.min = -region.size, .max = region.size});
+
+                           float min_y = std::numeric_limits<float>::max();
+                           float max_y = std::numeric_limits<float>::lowest();
+
+                           for (const float3& v : bbox_corners) {
+                              const float3 rotated_corner = region.rotation * v;
+
+                              min_y = std::min(rotated_corner.y, min_y);
+                              max_y = std::max(rotated_corner.y, max_y);
+                           }
+
+                           new_position.y += (std::abs(max_y - min_y) / 2.0f);
+                        } break;
+                        case world::region_shape::sphere: {
+                           new_position.y += length(region.size);
+                        } break;
+                        case world::region_shape::cylinder: {
+                           const float cylinder_radius =
+                              length(float2{region.size.x, region.size.z});
+                           const std::array<float3, 8> bbox_corners = math::to_corners(
+                              {.min = {-cylinder_radius, -region.size.y, -cylinder_radius},
+                               .max = {cylinder_radius, region.size.y, cylinder_radius}});
+
+                           float min_y = std::numeric_limits<float>::max();
+                           float max_y = std::numeric_limits<float>::lowest();
+
+                           for (const float3& v : bbox_corners) {
+                              const float3 rotated_corner = region.rotation * v;
+
+                              min_y = std::min(rotated_corner.y, min_y);
+                              max_y = std::max(rotated_corner.y, max_y);
+                           }
+
+                           new_position.y += (std::abs(max_y - min_y) / 2.0f);
+                        } break;
+                        }
+                     }
+
+                     if (_entity_creation_context.placement_alignment ==
+                         placement_alignment::grid) {
+                        new_position =
+                           align_position_to_grid(new_position,
+                                                  _entity_creation_context.alignment);
+                     }
+                     else if (_entity_creation_context.placement_alignment ==
+                              placement_alignment::snapping) {
+                        const std::optional<float3> snapped_position =
+                           world::get_snapped_position(new_position, _world.objects,
+                                                       _entity_creation_context.snap_distance,
+                                                       _object_classes);
+
+                        if (snapped_position) new_position = *snapped_position;
+                     }
+
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = region.position.x;
+                     }
+                     if (_entity_creation_context.lock_y_axis) {
+                        new_position.y = region.position.y;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.z = region.position.z;
+                     }
+                  }
+
+                  if (new_rotation != region.rotation or new_position != region.position) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_location<world::region>>(
+                           new_rotation, region.rotation, new_position, region.position,
+                           new_euler_rotation, _edit_context.euler_rotation),
+                        _edit_context);
+                  }
                }
 
                if (_entity_creation_context.using_point_at) {
                   _tool_visualizers.lines.emplace_back(_cursor_positionWS,
                                                        region.position, 0xffffffffu);
 
-                  region.rotation = look_at_quat(_cursor_positionWS, region.position);
-               }
+                  const quaternion new_rotation =
+                     look_at_quat(_cursor_positionWS, region.position);
 
-               ImGui::DragFloat3("Position", &region.position);
-
-               if (_entity_creation_context.placement_mode == placement_mode::cursor and
-                   not _entity_creation_context.using_point_at) {
-                  float3 new_position = _cursor_positionWS;
-
-                  if (_entity_creation_context.placement_ground ==
-                      placement_ground::bbox) {
-                     switch (region.shape) {
-                     case world::region_shape::box: {
-                        const std::array<float3, 8> bbox_corners =
-                           math::to_corners({.min = -region.size, .max = region.size});
-
-                        float min_y = std::numeric_limits<float>::max();
-                        float max_y = std::numeric_limits<float>::lowest();
-
-                        for (const float3& v : bbox_corners) {
-                           const float3 rotated_corner = region.rotation * v;
-
-                           min_y = std::min(rotated_corner.y, min_y);
-                           max_y = std::max(rotated_corner.y, max_y);
-                        }
-
-                        new_position.y += (std::abs(max_y - min_y) / 2.0f);
-                     } break;
-                     case world::region_shape::sphere: {
-                        new_position.y += length(region.size);
-                     } break;
-                     case world::region_shape::cylinder: {
-                        const float cylinder_radius =
-                           length(float2{region.size.x, region.size.z});
-                        const std::array<float3, 8> bbox_corners = math::to_corners(
-                           {.min = {-cylinder_radius, -region.size.y, -cylinder_radius},
-                            .max = {cylinder_radius, region.size.y, cylinder_radius}});
-
-                        float min_y = std::numeric_limits<float>::max();
-                        float max_y = std::numeric_limits<float>::lowest();
-
-                        for (const float3& v : bbox_corners) {
-                           const float3 rotated_corner = region.rotation * v;
-
-                           min_y = std::min(rotated_corner.y, min_y);
-                           max_y = std::max(rotated_corner.y, max_y);
-                        }
-
-                        new_position.y += (std::abs(max_y - min_y) / 2.0f);
-                     } break;
-                     }
-                  }
-
-                  if (_entity_creation_context.placement_alignment ==
-                      placement_alignment::grid) {
-                     new_position =
-                        align_position_to_grid(new_position,
-                                               _entity_creation_context.alignment);
-                  }
-                  else if (_entity_creation_context.placement_alignment ==
-                           placement_alignment::snapping) {
-                     const std::optional<float3> snapped_position =
-                        world::get_snapped_position(new_position, _world.objects,
-                                                    _entity_creation_context.snap_distance,
-                                                    _object_classes);
-
-                     if (snapped_position) new_position = *snapped_position;
-                  }
-
-                  if (not _entity_creation_context.lock_x_axis) {
-                     region.position.x = new_position.x;
-                  }
-                  if (not _entity_creation_context.lock_y_axis) {
-                     region.position.y = new_position.y;
-                  }
-                  if (not _entity_creation_context.lock_z_axis) {
-                     region.position.z = new_position.z;
+                  if (new_rotation != region.rotation) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::region, quaternion>>(
+                           &world::region::rotation, new_rotation, region.rotation),
+                        _edit_context);
                   }
                }
 
                ImGui::Separator();
-               ImGui::EnumSelect("Shape", &region.shape,
+               ImGui::EnumSelect("Shape", &creation_entity, &world::region::shape,
+                                 &_edit_stack_world, &_edit_context,
                                  {enum_select_option{"Box", world::region_shape::box},
                                   enum_select_option{"Sphere", world::region_shape::sphere},
                                   enum_select_option{"Cylinder",
                                                      world::region_shape::cylinder}});
 
+               float3 region_size = region.size;
+
                switch (region.shape) {
                case world::region_shape::box: {
-                  ImGui::DragFloat3("Size", &region.size, 0.0f, 1e10f);
+                  ImGui::DragFloat3("Size", &region_size, 0.0f, 1e10f);
                } break;
                case world::region_shape::sphere: {
-                  float radius = length(region.size);
+                  float radius = length(region_size);
 
                   if (ImGui::DragFloat("Radius", &radius, 0.1f)) {
                      const float radius_sq = radius * radius;
                      const float size = std::sqrt(radius_sq / 3.0f);
 
-                     region.size = {size, size, size};
+                     region_size = {size, size, size};
                   }
                } break;
                case world::region_shape::cylinder: {
-                  float height = region.size.y * 2.0f;
+                  float height = region_size.y * 2.0f;
 
                   if (ImGui::DragFloat("Height", &height, 0.1f, 0.0f, 1e10f)) {
-                     region.size.y = height / 2.0f;
+                     region_size.y = height / 2.0f;
                   }
 
-                  float radius = length(float2{region.size.x, region.size.z});
+                  float radius = length(float2{region_size.x, region_size.z});
 
                   if (ImGui::DragFloat("Radius", &radius, 0.1f, 0.0f, 1e10f)) {
                      const float radius_sq = radius * radius;
                      const float size = std::sqrt(radius_sq / 2.0f);
 
-                     region.size.x = size;
-                     region.size.z = size;
+                     region_size.x = size;
+                     region_size.z = size;
                   }
                } break;
                }
 
                if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
-                  _entity_creation_context.using_extend_to =
-                     not _entity_creation_context.using_extend_to;
-                  _entity_creation_context.using_shrink_to = false;
+                  _entity_creation_context.activate_extend_to = true;
                }
                if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.activate_shrink_to = true;
+
                   _entity_creation_context.using_shrink_to =
                      not _entity_creation_context.using_shrink_to;
                   _entity_creation_context.using_extend_to = false;
@@ -1437,10 +1494,10 @@ void world_edit::update_ui() noexcept
                                              (_cursor_positionWS - region.position);
 
                      if (_entity_creation_context.using_extend_to) {
-                        region.size = max(abs(cursorRS), region_start_size);
+                        region_size = max(abs(cursorRS), region_start_size);
                      }
                      else {
-                        region.size = min(abs(cursorRS), region_start_size);
+                        region_size = min(abs(cursorRS), region_start_size);
                      }
                   } break;
                   case world::region_shape::sphere: {
@@ -1454,7 +1511,7 @@ void world_edit::update_ui() noexcept
                      const float radius_sq = radius * radius;
                      const float size = std::sqrt(radius_sq / 3.0f);
 
-                     region.size = {size, size, size};
+                     region_size = {size, size, size};
                   } break;
                   case world::region_shape::cylinder: {
                      const float start_radius =
@@ -1474,7 +1531,7 @@ void world_edit::update_ui() noexcept
                      const float radius_sq = radius * radius;
                      const float size = std::sqrt(radius_sq / 2.0f);
 
-                     region.size = {size, std::max(start_height, new_height), size};
+                     region_size = {size, std::max(start_height, new_height), size};
                   }
                   }
                }
@@ -1482,9 +1539,16 @@ void world_edit::update_ui() noexcept
                   _entity_creation_context.resize_start_size = std::nullopt;
                }
 
+               if (region_size != region.size) {
+                  _edit_stack_world.apply(
+                     std::make_unique<edits::set_creation_value<world::region, float3>>(
+                        &world::region::size, region_size, region.size),
+                     _edit_context);
+               }
+
                ImGui::Separator();
                if (ImGui::Button("From Object Bounds", {ImGui::CalcItemWidth(), 0.0f})) {
-                  _entity_creation_context.using_from_object_bbox = true;
+                  _entity_creation_context.activate_from_object_bbox = true;
                }
 
                if (_entity_creation_context.using_from_object_bbox and
@@ -1510,9 +1574,11 @@ void world_edit::update_ui() noexcept
                         ((conjugate(object->rotation) * object->position) +
                          ((bbox.min + bbox.max) / 2.0f));
 
-                     region.rotation = object->rotation;
-                     region.position = position;
-                     region.size = size;
+                     _edit_stack_world.apply(std::make_unique<edits::set_creation_region_metrics>(
+                                                object->rotation, region.rotation,
+                                                position, region.position, size,
+                                                region.size),
+                                             _edit_context);
                   }
                }
 
@@ -1799,18 +1865,19 @@ void world_edit::update_ui() noexcept
             ImGui::Text("Extend To");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.toggle_extend_to")));
+                                      "entity_creation.activate_extend_to")));
 
             ImGui::Text("Shrink To");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.toggle_shrink_to")));
+                                      "entity_creation.activate_shrink_to")));
          }
 
          if (traits.has_from_bbox) {
             ImGui::Text("From Object Bounds");
             ImGui::BulletText(get_display_string(_hotkeys.query_binding(
-               "Entity Creation", "entity_creation.toggle_from_object_bbox")));
+               "Entity Creation",
+               "entity_creation.activate_from_object_bbox")));
          }
 
          ImGui::End();
