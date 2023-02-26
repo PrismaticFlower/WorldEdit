@@ -132,6 +132,57 @@ TEST_CASE("edits ui_creation_edit_with_meta", "[Edits]")
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
+TEST_CASE("edits ui_creation_path_node_edit", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
+
+   ui_creation_path_node_edit edit{&world::path::node::rotation,
+                                   {-1.0f, 0.0f, 0.0f, 0.0f},
+                                   {1.0f, 0.0f, 0.0f, 0.0f}};
+
+   edit.apply(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{-1.0f, 0.0f, 0.0f, 0.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+}
+
+TEST_CASE("edits ui_creation_path_node_edit_with_meta", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
+
+   ui_creation_path_node_edit_with_meta edit{&world::path::node::rotation,
+                                             {-1.0f, 0.0f, 0.0f, 0.0f},
+                                             {1.0f, 0.0f, 0.0f, 0.0f},
+                                             &world::edit_context::euler_rotation,
+                                             {1.0f, 1.0f, 1.0f},
+                                             {0.0f, 0.0f, 0.0f}};
+
+   edit.apply(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{-1.0f, 0.0f, 0.0f, 0.0f});
+   REQUIRE(edit_context.euler_rotation == float3{1.0f, 1.0f, 1.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
+}
+
 TEST_CASE("edits ui_edit coalesce", "[Edits]")
 {
    world::world world = test_world;
@@ -302,6 +353,74 @@ TEST_CASE("edits ui_creation_edit_with_meta coalesce", "[Edits]")
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
+TEST_CASE("edits ui_creation_path_node_edit coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
+
+   ui_creation_path_node_edit edit{&world::path::node::rotation,
+                                   {-1.0f, 0.0f, 0.0f, 0.0f},
+                                   {1.0f, 0.0f, 0.0f, 0.0f}};
+   ui_creation_path_node_edit other_edit{&world::path::node::rotation,
+                                         {0.0f, 1.0f, 0.0f, 0.0f},
+                                         {1.0f, 0.0f, 0.0f, 0.0f}};
+
+   REQUIRE(edit.is_coalescable(other_edit));
+
+   edit.coalesce(other_edit);
+
+   edit.apply(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+}
+
+TEST_CASE("edits ui_creation_path_node_edit_with_meta coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
+
+   ui_creation_path_node_edit_with_meta edit{&world::path::node::rotation,
+                                             {-1.0f, 0.0f, 0.0f, 0.0f},
+                                             {1.0f, 0.0f, 0.0f, 0.0f},
+                                             &world::edit_context::euler_rotation,
+                                             {1.0f, 1.0f, 1.0f},
+                                             {0.0f, 0.0f, 0.0f}};
+   ui_creation_path_node_edit_with_meta other_edit{&world::path::node::rotation,
+                                                   {0.0f, 1.0f, 0.0f, 0.0f},
+                                                   {1.0f, 0.0f, 0.0f, 0.0f},
+                                                   &world::edit_context::euler_rotation,
+                                                   {2.0f, 2.0f, 2.0f},
+                                                   {0.0f, 0.0f, 0.0f}};
+
+   REQUIRE(edit.is_coalescable(other_edit));
+
+   edit.coalesce(other_edit);
+
+   edit.apply(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{0.0f, 1.0f, 0.0f, 0.0f});
+   REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+           quaternion{1.0f, 0.0f, 0.0f, 0.0f});
+   REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
+}
+
 TEST_CASE("edits ui_edit not coalescable", "[Edits]")
 {
    world::world world = test_world;
@@ -406,6 +525,45 @@ TEST_CASE("edits ui_creation_edit_with_meta not coalescable", "[Edits]")
                                          &world::edit_context::euler_rotation,
                                          {2.0f, 2.0f, 2.0f},
                                          {0.0f, 0.0f, 0.0f}};
+
+   REQUIRE(not edit.is_coalescable(other_edit));
+}
+
+TEST_CASE("edits ui_creation_path_node_edit not coalescable", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::object{};
+
+   ui_creation_path_node_edit edit{&world::path::node::position, {}, {}};
+   ui_creation_path_node_edit other_edit{&world::path::node::rotation, {}, {}};
+
+   REQUIRE(not edit.is_coalescable(other_edit));
+}
+
+TEST_CASE("edits ui_creation_path_node_edit_with_meta not coalescable",
+          "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::object{};
+
+   ui_creation_path_node_edit_with_meta edit{&world::path::node::position,
+                                             {1.0f, 1.0f, 1.0f},
+                                             {0.0f, 0.0f, 0.0f},
+                                             &world::edit_context::euler_rotation,
+                                             {1.0f, 1.0f, 1.0f},
+                                             {0.0f, 0.0f, 0.0f}};
+   ui_creation_path_node_edit_with_meta other_edit{&world::path::node::rotation,
+                                                   {-1.0f, 0.0f, 0.0f, 0.0f},
+                                                   {1.0f, 0.0f, 0.0f, 0.0f},
+                                                   &world::edit_context::euler_rotation,
+                                                   {2.0f, 2.0f, 2.0f},
+                                                   {0.0f, 0.0f, 0.0f}};
 
    REQUIRE(not edit.is_coalescable(other_edit));
 }
