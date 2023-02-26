@@ -923,4 +923,116 @@ inline bool EnumSelect(const char* label, we::world::creation_entity* entity,
                                     .item_deactivated = value_changed};
    });
 }
+
+// Creation Entity Path Node Editors
+
+template<typename T>
+inline bool EditWithUndoPathNode(we::world::creation_entity* entity,
+                                 T we::world::path::node ::*value_member_ptr,
+                                 we::edits::stack<we::world::edit_context>* edit_stack,
+                                 we::world::edit_context* context,
+                                 we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
+{
+   using namespace we;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
+
+   using edit_type = ui_creation_path_node_edit<T>;
+   using value_type = T;
+
+   value_type value = std::get_if<we::world::path>(entity)->nodes[0].*value_member_ptr;
+   value_type original_value = value;
+
+   auto [valued_changed, item_deactivated] = editor(&value);
+
+   if (valued_changed) {
+      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value, original_value),
+                        *context);
+   }
+
+   if (item_deactivated) edit_stack->close_last();
+
+   return valued_changed;
+}
+
+inline bool EditWithUndoPathNode(
+   we::world::creation_entity* entity,
+   we::quaternion we::world::path::node::*value_member_ptr,
+   we::float3 we::world::edit_context::*meta_value_member_ptr,
+   we::edits::stack<we::world::edit_context>* edit_stack,
+   we::world::edit_context* context,
+   we::edits::imgui::edit_widget_double_callback<we::quaternion, we::float3> auto editor) noexcept
+{
+   using namespace we;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
+
+   using edit_type = ui_creation_path_node_edit_with_meta<quaternion, float3>;
+   using value_type = quaternion;
+   using meta_value_type = float3;
+
+   value_type value = std::get_if<we::world::path>(entity)->nodes[0].*value_member_ptr;
+   value_type original_value = value;
+   meta_value_type meta_value = context->*meta_value_member_ptr;
+   meta_value_type meta_original_value = meta_value;
+
+   auto [valued_changed, item_deactivated] = editor(&value, &meta_value);
+
+   if (valued_changed) {
+      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value,
+                                                    original_value, meta_value_member_ptr,
+                                                    meta_value, meta_original_value),
+                        *context);
+   }
+
+   if (item_deactivated) edit_stack->close_last();
+
+   return valued_changed;
+}
+
+inline bool DragRotationEulerPathNode(const char* label,
+                                      we::world::creation_entity* entity,
+                                      we::float3 we::world::edit_context::*meta_value_member_ptr,
+                                      we::edits::stack<we::world::edit_context>* edit_stack,
+                                      we::world::edit_context* context)
+{
+   return EditWithUndoPathNode(
+      entity, &we::world::path::node::rotation, meta_value_member_ptr, edit_stack,
+      context, [=](we::quaternion* rotation, we::float3* rotation_euler) {
+         bool value_changed = ImGui::DragFloat3(label, rotation_euler);
+
+         if (value_changed) {
+            *rotation = make_quat_from_euler(*rotation_euler *
+                                             std::numbers::pi_v<float> / 180.0f);
+         }
+
+         return we::edit_widget_result{.value_changed = value_changed,
+                                       .item_deactivated = ImGui::IsItemDeactivated()};
+      });
+}
+
+inline bool DragQuatPathNode(const char* label, we::world::creation_entity* entity,
+                             we::edits::stack<we::world::edit_context>* edit_stack,
+                             we::world::edit_context* context)
+{
+   return EditWithUndoPathNode(entity, &we::world::path::node::rotation,
+                               edit_stack, context, [=](we::quaternion* rotation) {
+                                  return we::edit_widget_result{
+                                     .value_changed = ImGui::DragQuat(label, rotation),
+                                     .item_deactivated = ImGui::IsItemDeactivated()};
+                               });
+}
+
+inline bool DragFloat3PathNode(const char* label, we::world::creation_entity* entity,
+                               we::edits::stack<we::world::edit_context>* edit_stack,
+                               we::world::edit_context* context)
+{
+   return EditWithUndoPathNode(entity, &we::world::path::node::position,
+                               edit_stack, context, [=](we::float3* value) {
+                                  return we::edit_widget_result{
+                                     .value_changed = ImGui::DragFloat3(label, value),
+                                     .item_deactivated = ImGui::IsItemDeactivated()};
+                               });
+}
+
 }

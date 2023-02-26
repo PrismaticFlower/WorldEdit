@@ -380,4 +380,114 @@ struct ui_creation_edit_with_meta final : edit<world::edit_context> {
    meta_value_type meta_original_value;
 };
 
+template<typename T>
+struct ui_creation_path_node_edit final : edit<world::edit_context> {
+   using value_type = T;
+
+   ui_creation_path_node_edit(value_type world::path::node::*value_member_ptr,
+                              value_type new_value, value_type original_value)
+      : value_member_ptr{value_member_ptr},
+        new_value{std::move(new_value)},
+        original_value{std::move(original_value)}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
+         new_value;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
+         original_value;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const ui_creation_path_node_edit* other =
+         dynamic_cast<const ui_creation_path_node_edit*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->value_member_ptr == this->value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_creation_path_node_edit& other =
+         dynamic_cast<ui_creation_path_node_edit&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+   }
+
+   value_type world::path::node::*value_member_ptr;
+   value_type new_value;
+   value_type original_value;
+};
+
+template<typename T, typename U>
+struct ui_creation_path_node_edit_with_meta final : edit<world::edit_context> {
+   using value_type = T;
+   using meta_value_type = U;
+
+   ui_creation_path_node_edit_with_meta(
+      value_type world::path::node::*value_member_ptr, value_type new_value,
+      value_type original_value,
+      meta_value_type world::edit_context::*meta_value_member_ptr,
+      meta_value_type meta_new_value, meta_value_type meta_original_value)
+      : value_member_ptr{value_member_ptr},
+        meta_value_member_ptr{meta_value_member_ptr},
+        new_value{std::move(new_value)},
+        meta_new_value{std::move(meta_new_value)},
+        original_value{std::move(original_value)},
+        meta_original_value{std::move(meta_original_value)}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
+         new_value;
+      context.*meta_value_member_ptr = meta_new_value;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
+         original_value;
+      context.*meta_value_member_ptr = meta_original_value;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const ui_creation_path_node_edit_with_meta* other =
+         dynamic_cast<const ui_creation_path_node_edit_with_meta*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->value_member_ptr == this->value_member_ptr and
+             other->meta_value_member_ptr == this->meta_value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_creation_path_node_edit_with_meta& other =
+         dynamic_cast<ui_creation_path_node_edit_with_meta&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+      meta_new_value = std::move(other.meta_new_value);
+   }
+
+   value_type world::path::node::*value_member_ptr;
+   meta_value_type world::edit_context::*meta_value_member_ptr;
+
+   value_type new_value;
+   meta_value_type meta_new_value;
+
+   value_type original_value;
+   meta_value_type meta_original_value;
+};
+
 }
