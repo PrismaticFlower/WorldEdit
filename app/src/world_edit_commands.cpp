@@ -87,22 +87,19 @@ void world_edit::initialize_commands() noexcept
                  _entity_creation_context.activate_point_at);
    _commands.add("entity_creation.deactivate_point_at"s,
                  [this] { _entity_creation_context.using_point_at = false; });
-   _commands.add("entity_creation.toggle_extend_to"s, [this] {
-      _entity_creation_context.using_extend_to =
-         not _entity_creation_context.using_extend_to;
-      _entity_creation_context.using_shrink_to = false;
-   });
-   _commands.add("entity_creation.toggle_shrink_to"s, [this] {
-      _entity_creation_context.using_shrink_to =
-         not _entity_creation_context.using_shrink_to;
-      _entity_creation_context.using_extend_to = false;
-   });
+   _commands.add("entity_creation.activate_extend_to"s,
+                 _entity_creation_context.activate_extend_to);
+   _commands.add("entity_creation.activate_shrink_to"s,
+                 _entity_creation_context.activate_shrink_to);
    _commands.add("entity_creation.deactivate_resize_to"s, [this] {
       _entity_creation_context.using_shrink_to = false;
       _entity_creation_context.using_extend_to = false;
    });
-   _commands.add("entity_creation.toggle_from_object_bbox"s,
-                 _entity_creation_context.using_from_object_bbox);
+   _commands.add("entity_creation.activate_from_object_bbox"s,
+                 _entity_creation_context.activate_from_object_bbox);
+   _commands.add("entity_creation.deactivate_from_object_bbox"s, [this] {
+      _entity_creation_context.using_from_object_bbox = false;
+   });
 
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
@@ -160,10 +157,10 @@ void world_edit::initialize_hotkeys() noexcept
                         {.key = key::r, .modifiers = {.ctrl = true}}},
 
                        {"entity_creation.activate_point_at", {.key = key::v}},
-                       {"entity_creation.toggle_extend_to", {.key = key::t}},
-                       {"entity_creation.toggle_shrink_to",
+                       {"entity_creation.activate_extend_to", {.key = key::t}},
+                       {"entity_creation.activate_shrink_to",
                         {.key = key::t, .modifiers = {.ctrl = true}}},
-                       {"entity_creation.toggle_from_object_bbox", {.key = key::b}},
+                       {"entity_creation.activate_from_object_bbox", {.key = key::b}},
 
                        {"entity_creation.lock_x_axis", {.key = key::z}},
                        {"entity_creation.lock_y_axis", {.key = key::x}},
@@ -202,8 +199,10 @@ void world_edit::initialize_hotkeys() noexcept
                               _entity_creation_context.using_from_object_bbox;
                     },
                     {
-                       {"entity_creation.toggle_from_object_bbox", {.key = key::mouse1}},
-                       {"entity_creation.toggle_from_object_bbox", {.key = key::escape}},
+                       {"entity_creation.deactivate_from_object_bbox",
+                        {.key = key::mouse1}},
+                       {"entity_creation.deactivate_from_object_bbox",
+                        {.key = key::escape}},
                     });
 }
 

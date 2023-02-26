@@ -189,6 +189,9 @@ private:
       bool lock_z_axis = false;
 
       bool activate_point_at = false;
+      bool activate_extend_to = false;
+      bool activate_shrink_to = false;
+      bool activate_from_object_bbox = false;
 
       bool using_point_at = false;
       bool using_extend_to = false;
