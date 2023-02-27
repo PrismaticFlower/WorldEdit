@@ -52,6 +52,12 @@ auto surface_rotation_degrees(const float3 surface_normal,
    return std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
 }
 
+auto align_position_to_grid(const float2 position, const float alignment) -> float2
+{
+   return float2{std::round(position.x / alignment) * alignment,
+                 std::round(position.y / alignment) * alignment};
+}
+
 auto align_position_to_grid(const float3 position, const float alignment) -> float3
 {
    return float3{std::round(position.x / alignment) * alignment, position.y,
@@ -1609,7 +1615,8 @@ void world_edit::update_ui() noexcept
                                 });
 
                ImGui::DragFloat("Base", &creation_entity, &world::sector::base,
-                                &_edit_stack_world, &_edit_context);
+                                &_edit_stack_world, &_edit_context, 1.0f, 0.0f,
+                                0.0f, "Y:%.3f");
                ImGui::DragFloat("Height", &creation_entity, &world::sector::height,
                                 &_edit_stack_world, &_edit_context);
 
@@ -1620,7 +1627,37 @@ void world_edit::update_ui() noexcept
                ImGui::DragSectorPoint("Position", &creation_entity,
                                       &_edit_stack_world, &_edit_context);
 
-               // Cursor Position Movement!
+               if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  float2 new_position = sector.points[0];
+
+                  new_position = {_cursor_positionWS.x, _cursor_positionWS.z};
+
+                  if (_entity_creation_context.placement_alignment ==
+                      placement_alignment::grid) {
+                     new_position =
+                        align_position_to_grid(new_position,
+                                               _entity_creation_context.alignment);
+                  }
+                  else if (_entity_creation_context.placement_alignment ==
+                           placement_alignment::snapping) {
+                     // What should snapping for sectors do?
+                     ImGui::Text("Snapping is currently unimplemented for "
+                                 "sectors. Sorry!");
+                  }
+
+                  if (_entity_creation_context.lock_x_axis) {
+                     new_position.x = sector.points[0].x;
+                  }
+                  if (_entity_creation_context.lock_z_axis) {
+                     new_position.y = sector.points[0].y;
+                  }
+
+                  if (new_position != sector.points[0]) {
+                     _edit_stack_world.apply(std::make_unique<edits::set_creation_sector_point>(
+                                                new_position, sector.points[0]),
+                                             _edit_context);
+                  }
+               }
 
                // From Object BBOX!
 
