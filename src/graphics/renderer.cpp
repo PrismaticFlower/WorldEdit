@@ -932,6 +932,19 @@ void renderer_impl::draw_world_meta_objects(
             _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], sector_color);
             _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], sector_color);
          }
+
+         for (const auto point : sector.points) {
+            const std::array line = {float3{point.x, sector.base, point.y},
+                                     float3{point.x, sector.base + sector.height,
+                                            point.y}};
+
+            if (not intersects(view_frustum, line[0], 0.001f) and
+                not intersects(view_frustum, line[1], 0.001f)) {
+               continue;
+            }
+
+            _meta_draw_batcher.add_line_solid(line[0], line[1], sector_color);
+         }
       }
    }
 
@@ -1272,6 +1285,14 @@ void renderer_impl::draw_interaction_targets(
                                                       packed_color);
             _meta_draw_batcher.add_triangle_wireframe(quad[2], quad[3], quad[1],
                                                       packed_color);
+         }
+
+         for (const auto point : sector.points) {
+            const std::array line = {float3{point.x, sector.base, point.y},
+                                     float3{point.x, sector.base + sector.height,
+                                            point.y}};
+
+            _meta_draw_batcher.add_line_solid(line[0], line[1], packed_color);
          }
       },
       [&](const world::portal& portal, const float3 color) {
