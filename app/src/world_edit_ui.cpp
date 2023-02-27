@@ -1584,32 +1584,32 @@ void world_edit::update_ui() noexcept
 
                return placement_traits{.has_resize_to = true, .has_from_bbox = true};
             },
-            [&](world::sector& sector) {
+            [&](const world::sector& sector) {
                (void)sector;
 
                return placement_traits{};
             },
-            [&](world::portal& portal) {
+            [&](const world::portal& portal) {
                (void)portal;
 
                return placement_traits{};
             },
-            [&](world::barrier& barrier) {
+            [&](const world::barrier& barrier) {
                (void)barrier;
 
                return placement_traits{};
             },
-            [&](world::planning_hub& planning_hub) {
+            [&](const world::planning_hub& planning_hub) {
                (void)planning_hub;
 
                return placement_traits{};
             },
-            [&](world::planning_connection& planning_connection) {
+            [&](const world::planning_connection& planning_connection) {
                (void)planning_connection;
 
                return placement_traits{};
             },
-            [&](world::boundary& boundary) {
+            [&](const world::boundary& boundary) {
                (void)boundary;
 
                return placement_traits{};
