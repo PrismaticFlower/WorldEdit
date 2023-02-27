@@ -490,4 +490,42 @@ struct ui_creation_path_node_edit_with_meta final : edit<world::edit_context> {
    meta_value_type meta_original_value;
 };
 
+struct ui_creation_sector_point_edit final : edit<world::edit_context> {
+   using value_type = float2;
+
+   ui_creation_sector_point_edit(value_type new_value, value_type original_value)
+      : new_value{std::move(new_value)}, original_value{std::move(original_value)}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      std::get<world::sector>(*context.creation_entity).points[0] = new_value;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      std::get<world::sector>(*context.creation_entity).points[0] = original_value;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const ui_creation_sector_point_edit* other =
+         dynamic_cast<const ui_creation_sector_point_edit*>(&other_unknown);
+
+      return other != nullptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      ui_creation_sector_point_edit& other =
+         dynamic_cast<ui_creation_sector_point_edit&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+   }
+
+   value_type new_value;
+   value_type original_value;
+};
+
 }

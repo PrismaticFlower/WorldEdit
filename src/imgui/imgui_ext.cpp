@@ -74,6 +74,40 @@ bool DragFloat2(const char* label, we::float2* v, float v_speed, float v_min,
    return value_changed;
 }
 
+bool DragFloat2XZ(const char* label, we::float2* v, float v_speed, float v_min,
+                  float v_max, ImGuiSliderFlags flags)
+{
+   bool value_changed = false;
+
+   const item_widths item_widths = get_item_widths(2.0f);
+
+   BeginGroup();
+   PushID(label);
+   PushItemWidth(item_widths.last);
+   PushItemWidth(item_widths.one);
+
+   value_changed |= DragFloat("##X", &v->x, v_speed, v_min, v_max, "X:%.3f", flags);
+   SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
+   PopItemWidth();
+   value_changed |= DragFloat("##Z", &v->y, v_speed, v_min, v_max, "Z:%.3f", flags);
+   PopItemWidth();
+
+   PopID();
+
+   auto label_text =
+      we::utility::string::split_first_of_exclusive(std::string_view{label},
+                                                    "##");
+
+   if (not label_text.empty()) {
+      SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
+      TextUnformatted(&label_text[0].front(), &label_text[0].back() + 1);
+   }
+
+   EndGroup();
+
+   return value_changed;
+}
+
 bool DragFloat3(const char* label, we::float3* v, float v_speed, float v_min,
                 float v_max, ImGuiSliderFlags flags)
 {

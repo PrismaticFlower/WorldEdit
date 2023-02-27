@@ -1035,4 +1035,34 @@ inline bool DragFloat3PathNode(const char* label, we::world::creation_entity* en
                                });
 }
 
+// Sector Point Editors
+
+inline bool DragSectorPoint(const char* label, we::world::creation_entity* entity,
+                            we::edits::stack<we::world::edit_context>* edit_stack,
+                            we::world::edit_context* context,
+                            float v_speed = 1.0f, float v_min = 0.0f,
+                            float v_max = 0.0f, ImGuiSliderFlags flags = 0) noexcept
+{
+   using namespace we;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
+
+   using edit_type = ui_creation_sector_point_edit;
+
+   float2 value = std::get_if<we::world::sector>(entity)->points[0];
+   float2 original_value = value;
+
+   const bool value_changed =
+      ImGui::DragFloat2XZ(label, &value, v_speed, v_min, v_max, flags);
+   const bool item_deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      edit_stack->apply(std::make_unique<edit_type>(value, original_value), *context);
+   }
+
+   if (item_deactivated) edit_stack->close_last();
+
+   return value_changed;
+}
+
 }

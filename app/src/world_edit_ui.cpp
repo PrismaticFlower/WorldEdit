@@ -226,8 +226,23 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
          }
+
+         if (ImGui::MenuItem("Sector")) {
+            const world::path* base_path =
+               world::find_entity(_world.paths, _entity_creation_context.last_path);
+
+            _edit_stack_world.apply(edits::make_creation_entity_set(
+                                       world::sector{.name = world::create_unique_name(
+                                                        _world.paths,
+                                                        base_path ? base_path->name : "Sector0"),
+                                                     .base = 0.0f,
+                                                     .height = 10.0f,
+                                                     .points = {{0.0f, 0.0f}},
+                                                     .id = world::max_id},
+                                       _interaction_targets.creation_entity),
+                                    _edit_context);
+         }
 #if 0
-         if (ImGui::MenuItem("Sector")) _create.sector = true;
          if (ImGui::MenuItem("Portal")) _create.portal = true;
          if (ImGui::MenuItem("Barrier")) _create.barrier = true;
          if (ImGui::MenuItem("Planning Hub")) _create.planning_hub = true;
@@ -1585,9 +1600,51 @@ void world_edit::update_ui() noexcept
                return placement_traits{.has_resize_to = true, .has_from_bbox = true};
             },
             [&](const world::sector& sector) {
-               (void)sector;
+               ImGui::InputText("Name", &creation_entity, &world::sector::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.sectors,
+                                                                sector.name);
+                                });
 
-               return placement_traits{};
+               ImGui::DragFloat("Base", &creation_entity, &world::sector::base,
+                                &_edit_stack_world, &_edit_context);
+               ImGui::DragFloat("Height", &creation_entity, &world::sector::height,
+                                &_edit_stack_world, &_edit_context);
+
+               // Point Visualizer!
+
+               if (sector.points.size() != 1) std::terminate();
+
+               ImGui::DragSectorPoint("Position", &creation_entity,
+                                      &_edit_stack_world, &_edit_context);
+
+               // Cursor Position Movement!
+
+               // From Object BBOX!
+
+               if (ImGui::Button("New Sector", {ImGui::CalcItemWidth(), 0.0f}) or
+                   std::exchange(_entity_creation_context.finish_current_sector, false)) {
+
+                  _edit_stack_world.apply(
+                     std::make_unique<edits::set_creation_value<world::sector, std::string>>(
+                        &world::sector::name,
+                        world::create_unique_name(_world.sectors, sector.name),
+                        sector.name),
+                     _edit_context);
+               }
+
+               if (ImGui::IsItemHovered()) {
+                  ImGui::SetTooltip("Create another new sector and stop adding "
+                                    "points to the current one.");
+               }
+
+               return placement_traits{.has_placement_rotation = false,
+                                       .has_point_at = false,
+                                       .has_placement_ground = false,
+                                       .has_node_placement_insert = true,
+                                       .has_from_bbox = true};
             },
             [&](const world::portal& portal) {
                (void)portal;
