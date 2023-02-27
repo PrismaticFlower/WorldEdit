@@ -328,4 +328,40 @@ struct set_creation_region_metrics final : edit<world::edit_context> {
    float3 original_size;
 };
 
+struct set_creation_sector_point final : edit<world::edit_context> {
+   set_creation_sector_point(float2 new_position, float2 original_position)
+      : new_position{new_position}, original_position{original_position}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      std::get<world::sector>(*context.creation_entity).points[0] = new_position;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      std::get<world::sector>(*context.creation_entity).points[0] = original_position;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_creation_sector_point* other =
+         dynamic_cast<const set_creation_sector_point*>(&other_unknown);
+
+      return other != nullptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_creation_sector_point& other =
+         dynamic_cast<set_creation_sector_point&>(other_unknown);
+
+      new_position = other.new_position;
+   }
+
+   float2 new_position;
+   float2 original_position;
+};
+
 }

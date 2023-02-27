@@ -174,6 +174,26 @@ TEST_CASE("edits set_creation_region_metrics", "[Edits]")
            float3{0.0f, 0.0f, 0.0f});
 }
 
+TEST_CASE("edits set_creation_sector_point", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::sector{.points = {{0.0f, 0.0f}}};
+
+   set_creation_sector_point edit{float2{1.0f, 1.0f}, float2{0.0f, 0.0f}};
+
+   edit.apply(edit_context);
+
+   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+           float2{1.0f, 1.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+           float2{0.0f, 0.0f});
+}
 TEST_CASE("edits set_creation_value coalesce", "[Edits]")
 {
    world::world world = test_world;
@@ -390,6 +410,32 @@ TEST_CASE("edits set_creation_region_metrics coalesce", "[Edits]")
            float3{0.0f, 0.0f, 0.0f});
    REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).size ==
            float3{0.0f, 0.0f, 0.0f});
+}
+
+TEST_CASE("edits set_creation_sector_point coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::sector{.points = {{0.0f, 0.0f}}};
+
+   set_creation_sector_point edit{float2{1.0f, 1.0f}, float2{0.0f, 0.0f}};
+   set_creation_sector_point other_edit{float2{2.0f, 2.0f}, float2{0.0f, 0.0f}};
+
+   REQUIRE(edit.is_coalescable(other_edit));
+
+   edit.coalesce(other_edit);
+
+   edit.apply(edit_context);
+
+   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+           float2{2.0f, 2.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+           float2{0.0f, 0.0f});
 }
 
 }
