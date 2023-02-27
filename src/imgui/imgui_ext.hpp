@@ -12,6 +12,9 @@ namespace ImGui {
 bool DragFloat2(const char* label, we::float2* v, float v_speed = 1.0f,
                 float v_min = 0.0f, float v_max = 0.0f, ImGuiSliderFlags flags = 0);
 
+bool DragFloat2XZ(const char* label, we::float2* v, float v_speed = 1.0f,
+                  float v_min = 0.0f, float v_max = 0.0f, ImGuiSliderFlags flags = 0);
+
 bool DragFloat3(const char* label, we::float3* v, float v_speed = 1.0f,
                 float v_min = 0.0f, float v_max = 0.0f, ImGuiSliderFlags flags = 0);
 

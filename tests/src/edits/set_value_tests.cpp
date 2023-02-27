@@ -66,6 +66,8 @@ TEST_CASE("edits set_creation_location", "[Edits]")
                                              float3{2.0f, 2.0f, 2.0f},
                                              float3{0.0f, 0.0f, 0.0f}};
 
+   interaction_targets.creation_entity = world::object{};
+
    edit.apply(edit_context);
 
    REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).rotation ==
@@ -237,6 +239,8 @@ TEST_CASE("edits set_creation_location coalesce", "[Edits]")
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::object{};
 
    set_creation_location<world::object> edit{quaternion{0.0f, 1.0f, 0.0f, 0.0f},
                                              quaternion{1.0f, 0.0f, 0.0f, 0.0f},
