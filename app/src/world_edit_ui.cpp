@@ -1620,9 +1620,7 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat("Height", &creation_entity, &world::sector::height,
                                 &_edit_stack_world, &_edit_context);
 
-               // Point Visualizer!
-
-               if (sector.points.size() != 1) std::terminate();
+               if (sector.points.empty()) std::terminate();
 
                ImGui::DragSectorPoint("Position", &creation_entity,
                                       &_edit_stack_world, &_edit_context);
@@ -1659,8 +1657,6 @@ void world_edit::update_ui() noexcept
                   }
                }
 
-               // From Object BBOX!
-
                if (ImGui::Button("New Sector", {ImGui::CalcItemWidth(), 0.0f}) or
                    std::exchange(_entity_creation_context.finish_current_sector, false)) {
 
@@ -1677,11 +1673,43 @@ void world_edit::update_ui() noexcept
                                     "points to the current one.");
                }
 
+               ImGui::Checkbox("Auto-Fill Object List",
+                               &_entity_creation_context.auto_fill_sector);
+
+               if (ImGui::IsItemHovered()) {
+                  ImGui::SetTooltip(
+                     "Auto-Fill the sector's object list with objects inside "
+                     "the sector from active layers as points are added.");
+               }
+
+               if (const world::sector* existing_sector =
+                      world::find_entity(_world.sectors, sector.name);
+                   existing_sector and not existing_sector->points.empty()) {
+                  const float2 start_point = existing_sector->points.back();
+                  const float2 end_point = sector.points[0];
+
+                  const float3 line_bottom_start = {start_point.x,
+                                                    existing_sector->base,
+                                                    start_point.y};
+                  const float3 line_bottom_end = {end_point.x, sector.base,
+                                                  end_point.y};
+
+                  const float3 line_top_start = {start_point.x,
+                                                 existing_sector->base +
+                                                    existing_sector->height,
+                                                 start_point.y};
+                  const float3 line_top_end = {end_point.x, sector.base + sector.height,
+                                               end_point.y};
+
+                  _tool_visualizers.lines.emplace_back(line_bottom_start,
+                                                       line_bottom_end, 0xffffffffu);
+                  _tool_visualizers.lines.emplace_back(line_top_start,
+                                                       line_top_end, 0xffffffffu);
+               }
+
                return placement_traits{.has_placement_rotation = false,
                                        .has_point_at = false,
-                                       .has_placement_ground = false,
-                                       .has_node_placement_insert = true,
-                                       .has_from_bbox = true};
+                                       .has_placement_ground = false};
             },
             [&](const world::portal& portal) {
                (void)portal;

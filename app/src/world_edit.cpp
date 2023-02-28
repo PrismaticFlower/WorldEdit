@@ -4,6 +4,7 @@
 #include "assets/odf/default_object_class_definition.hpp"
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
+#include "edits/insert_point.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"
@@ -433,8 +434,6 @@ void world_edit::place_creation_entity() noexcept
             if (const world::path* existing_path =
                    world::find_entity(_world.paths, path.name);
                 existing_path) {
-               (void)existing_path; // TODO: Insert node!
-
                if (path.nodes.empty()) std::terminate();
 
                if (_entity_creation_context.placement_node_insert ==
@@ -480,9 +479,30 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
                                     _edit_context);
 
-            region.name = world::create_unique_name(_world.regions, new_region.name);
+            region.name = world::create_unique_name(_world.regions, region.name);
          },
-         [&](world::sector sector) { (void)sector; },
+         [&](world::sector& sector) {
+            if (sector.points.empty()) std::terminate();
+
+            if (const world::sector* existing_sector =
+                   world::find_entity(_world.sectors, sector.name);
+                existing_sector) {
+               _edit_stack_world
+                  .apply(edits::make_insert_point(existing_sector->id,
+                                                  existing_sector->points.size(),
+                                                  sector.points[0]),
+                         _edit_context);
+            }
+            else {
+               world::sector new_sector = sector;
+
+               new_sector.name = sector.name;
+               new_sector.id = _world.next_id.sectors.aquire();
+
+               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
+                                       _edit_context);
+            }
+         },
          [&](world::portal portal) { (void)portal; },
          [&](world::barrier barrier) { (void)barrier; },
          [&](world::planning_hub planning_hub) { (void)planning_hub; },

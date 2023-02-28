@@ -223,4 +223,34 @@ auto find_closest_node(const float3& point, const path& path) noexcept -> closte
    return {closest_index, true};
 }
 
+auto find_closest_point(const float2& point, const sector& sector) noexcept -> clostest_node_result
+{
+   if (sector.points.size() <= 1) return {0, not sector.points.empty()};
+
+   std::size_t closest_index = 0;
+   float closest_distance = FLT_MAX;
+
+   for (std::size_t i = 0; i < sector.points.size(); ++i) {
+      const float point_distance = distance(sector.points[i], point);
+
+      if (point_distance < closest_distance) {
+         closest_distance = point_distance;
+         closest_index = i;
+      }
+   }
+
+   if (closest_index > 0 and (closest_index + 1) < sector.points.size()) {
+
+      const float2 back_position = sector.points[closest_index - 1];
+      const float2 forward_position = sector.points[closest_index + 1];
+
+      const float back_distance = distance(point, back_position);
+      const float forward_distance = distance(point, forward_position);
+
+      return {closest_index, forward_distance <= back_distance};
+   }
+
+   return {closest_index, true};
+}
+
 }
