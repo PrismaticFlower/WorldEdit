@@ -194,6 +194,7 @@ TEST_CASE("edits set_creation_sector_point", "[Edits]")
    REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
            float2{0.0f, 0.0f});
 }
+
 TEST_CASE("edits set_creation_value coalesce", "[Edits]")
 {
    world::world world = test_world;

@@ -607,6 +607,9 @@
     <ClInclude Include="src\edits\set_value.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\edits\insert_point.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -835,6 +838,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\creation_entity_set.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\insert_point.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

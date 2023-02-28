@@ -77,4 +77,21 @@ TEST_CASE("world utilities find_closest_node", "[World][Utilities]")
    REQUIRE(find_closest_node({0.0f, 1.1f, 0.0f}, path).index == 1);
    REQUIRE(find_closest_node({0.0f, 1.1f, 0.0f}, path).next_is_forward);
 }
+
+TEST_CASE("world utilities find_closest_point", "[World][Utilities]")
+{
+   sector sector{.points = {
+                    {0.0f, 0.0f},
+                    {0.0f, 1.0f},
+                    {0.0f, 2.0f},
+                    {0.0f, 4.0f},
+                 }};
+
+   REQUIRE(find_closest_point({0.0f, 0.9f}, sector).index == 1);
+   REQUIRE(not find_closest_point({0.0f, 0.9f}, sector).next_is_forward);
+
+   REQUIRE(find_closest_point({0.0f, 1.1f}, sector).index == 1);
+   REQUIRE(find_closest_point({0.0f, 1.1f}, sector).next_is_forward);
+}
+
 }

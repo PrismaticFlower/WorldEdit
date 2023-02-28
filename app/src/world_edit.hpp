@@ -201,6 +201,8 @@ private:
       bool finish_current_path = false;
       bool finish_current_sector = false;
 
+      bool auto_fill_sector = false;
+
       float alignment = 4.0f;
       float snap_distance = 0.5f;
 

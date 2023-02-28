@@ -910,7 +910,7 @@ void renderer_impl::draw_world_meta_objects(
    if (active_entity_types.sectors and not world.sectors.empty()) {
       const uint32 sector_color = utility::pack_srgb_bgra(settings.sector_color);
 
-      for (auto& sector : world.sectors) {
+      const auto add_sector = [&](const world::sector& sector) {
          using namespace ranges::views;
 
          for (const auto [a, b] :
@@ -945,6 +945,15 @@ void renderer_impl::draw_world_meta_objects(
 
             _meta_draw_batcher.add_line_solid(line[0], line[1], sector_color);
          }
+      };
+
+      for (auto& sector : world.sectors) {
+         add_sector(sector);
+      }
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::sector>(*interaction_targets.creation_entity)) {
+         add_sector(std::get<world::sector>(*interaction_targets.creation_entity));
       }
    }
 
