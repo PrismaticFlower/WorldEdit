@@ -1686,24 +1686,35 @@ void world_edit::update_ui() noexcept
                       world::find_entity(_world.sectors, sector.name);
                    existing_sector and not existing_sector->points.empty()) {
                   const float2 start_point = existing_sector->points.back();
-                  const float2 end_point = sector.points[0];
+                  const float2 mid_point = sector.points[0];
+                  const float2 end_point = existing_sector->points[0];
 
                   const float3 line_bottom_start = {start_point.x,
                                                     existing_sector->base,
                                                     start_point.y};
-                  const float3 line_bottom_end = {end_point.x, sector.base,
+                  const float3 line_bottom_mid = {mid_point.x, sector.base,
+                                                  mid_point.y};
+                  const float3 line_bottom_end = {end_point.x, existing_sector->base,
                                                   end_point.y};
 
                   const float3 line_top_start = {start_point.x,
                                                  existing_sector->base +
                                                     existing_sector->height,
                                                  start_point.y};
-                  const float3 line_top_end = {end_point.x, sector.base + sector.height,
+                  const float3 line_top_mid = {mid_point.x, sector.base + sector.height,
+                                               mid_point.y};
+                  const float3 line_top_end = {end_point.x,
+                                               existing_sector->base +
+                                                  existing_sector->height,
                                                end_point.y};
 
                   _tool_visualizers.lines.emplace_back(line_bottom_start,
-                                                       line_bottom_end, 0xffffffffu);
+                                                       line_bottom_mid, 0xffffffffu);
                   _tool_visualizers.lines.emplace_back(line_top_start,
+                                                       line_top_mid, 0xffffffffu);
+                  _tool_visualizers.lines.emplace_back(line_bottom_mid,
+                                                       line_bottom_end, 0xffffffffu);
+                  _tool_visualizers.lines.emplace_back(line_top_mid,
                                                        line_top_end, 0xffffffffu);
                }
 
