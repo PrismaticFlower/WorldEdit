@@ -234,19 +234,20 @@ void world_edit::update_ui() noexcept
          }
 
          if (ImGui::MenuItem("Sector")) {
-            const world::path* base_path =
-               world::find_entity(_world.paths, _entity_creation_context.last_path);
+            const world::sector* base_sector =
+               world::find_entity(_world.sectors, _entity_creation_context.last_sector);
 
-            _edit_stack_world.apply(edits::make_creation_entity_set(
-                                       world::sector{.name = world::create_unique_name(
-                                                        _world.paths,
-                                                        base_path ? base_path->name : "Sector0"),
-                                                     .base = 0.0f,
-                                                     .height = 10.0f,
-                                                     .points = {{0.0f, 0.0f}},
-                                                     .id = world::max_id},
-                                       _interaction_targets.creation_entity),
-                                    _edit_context);
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(
+                         world::sector{.name = world::create_unique_name(
+                                          _world.sectors,
+                                          base_sector ? base_sector->name : "Sector0"),
+                                       .base = 0.0f,
+                                       .height = 10.0f,
+                                       .points = {{0.0f, 0.0f}},
+                                       .id = world::max_id},
+                         _interaction_targets.creation_entity),
+                      _edit_context);
          }
 #if 0
          if (ImGui::MenuItem("Portal")) _create.portal = true;
