@@ -1683,6 +1683,11 @@ void world_edit::update_ui() noexcept
                      "the sector from active layers as points are added.");
                }
 
+               if (_entity_creation_context.auto_fill_sector) {
+                  ImGui::Text(
+                     "Auto-Fill Object List is unimplemented currently.");
+               }
+
                if (const world::sector* existing_sector =
                       world::find_entity(_world.sectors, sector.name);
                    existing_sector and not existing_sector->points.empty()) {
