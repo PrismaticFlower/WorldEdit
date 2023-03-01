@@ -503,13 +503,13 @@ void world_edit::place_creation_entity() noexcept
                                        _edit_context);
             }
          },
-         [&](world::portal portal) { (void)portal; },
-         [&](world::barrier barrier) { (void)barrier; },
-         [&](world::planning_hub planning_hub) { (void)planning_hub; },
-         [&](world::planning_connection planning_connection) {
+         [&](world::portal& portal) { (void)portal; },
+         [&](world::barrier& barrier) { (void)barrier; },
+         [&](world::planning_hub& planning_hub) { (void)planning_hub; },
+         [&](world::planning_connection& planning_connection) {
             (void)planning_connection;
          },
-         [&](world::boundary boundary) { (void)boundary; },
+         [&](world::boundary& boundary) { (void)boundary; },
       },
       *_interaction_targets.creation_entity);
 }
