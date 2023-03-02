@@ -209,6 +209,8 @@ private:
       float3 rotation{0.0f, 0.0f, 0.0f};
 
       std::optional<float3> resize_start_size;
+      std::optional<float> resize_portal_start_width;
+      std::optional<float> resize_portal_start_height;
    } _entity_creation_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

@@ -28,7 +28,8 @@ using hovered_entity = interaction_target;
 using selected_entity = interaction_target;
 
 using creation_entity =
-   std::variant<object, light, path, region, sector, barrier, planning_hub, planning_connection, boundary>;
+   std::variant<object, light, path, region, sector, portal, barrier,
+                planning_hub, planning_connection, boundary>;
 
 /// @brief Stores references to the entities currently being interacted with.
 struct interaction_targets {

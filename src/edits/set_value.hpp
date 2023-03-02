@@ -364,4 +364,45 @@ struct set_creation_sector_point final : edit<world::edit_context> {
    float2 original_position;
 };
 
+struct set_creation_portal_size final : edit<world::edit_context> {
+   set_creation_portal_size(float new_width, float original_width,
+                            float new_height, float original_height)
+      : new_width{new_width}, original_width{original_width}, new_height{new_height}, original_height{original_height}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      std::get<world::portal>(*context.creation_entity).width = new_width;
+      std::get<world::portal>(*context.creation_entity).height = new_height;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      std::get<world::portal>(*context.creation_entity).width = original_width;
+      std::get<world::portal>(*context.creation_entity).height = original_height;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_creation_portal_size* other =
+         dynamic_cast<const set_creation_portal_size*>(&other_unknown);
+
+      return other != nullptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_creation_portal_size& other =
+         dynamic_cast<set_creation_portal_size&>(other_unknown);
+
+      this->new_width = other.new_width;
+      this->new_height = other.new_height;
+   }
+
+   float new_width;
+   float original_width;
+   float new_height;
+   float original_height;
+};
 }

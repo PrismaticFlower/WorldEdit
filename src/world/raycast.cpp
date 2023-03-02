@@ -280,6 +280,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 {
    std::optional<sector_id> hit;
    float min_distance = std::numeric_limits<float>::max();
+   float3 normalWS;
 
    for (auto& sector : sectors) {
       for (const auto [a, b] : zip(sector.points, concat(sector.points | drop(1),
@@ -298,13 +299,16 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          if (intersection < min_distance) {
             hit = sector.id;
             min_distance = intersection;
+            normalWS = normalize(cross(quad[1] - quad[0], quad[2] - quad[0]));
          }
       }
    }
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<sector>{.distance = min_distance, .id = *hit};
+   return raycast_result<sector>{.distance = min_distance,
+                                 .normalWS = normalWS,
+                                 .id = *hit};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

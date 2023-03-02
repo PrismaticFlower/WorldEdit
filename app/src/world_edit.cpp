@@ -219,6 +219,7 @@ void world_edit::update_hovered_entity() noexcept
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
+            _cursor_surface_normalWS = hit->normalWS;
             hovered_entity_distance = hit->distance;
          }
       }
@@ -503,7 +504,20 @@ void world_edit::place_creation_entity() noexcept
                                        _edit_context);
             }
          },
-         [&](world::portal& portal) { (void)portal; },
+         [&](world::portal& portal) {
+            world::portal new_portal = portal;
+
+            new_portal.name =
+               world::create_unique_name(_world.portals, new_portal.name);
+            new_portal.id = _world.next_id.portals.aquire();
+
+            _entity_creation_context.last_portal = new_portal.id;
+
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
+                                    _edit_context);
+
+            portal.name = world::create_unique_name(_world.portals, portal.name);
+         },
          [&](world::barrier& barrier) { (void)barrier; },
          [&](world::planning_hub& planning_hub) { (void)planning_hub; },
          [&](world::planning_connection& planning_connection) {

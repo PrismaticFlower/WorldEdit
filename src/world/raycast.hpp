@@ -32,6 +32,13 @@ struct raycast_result<path> {
 };
 
 template<>
+struct raycast_result<sector> {
+   float distance = 0.0f;
+   float3 normalWS;
+   sector_id id;
+};
+
+template<>
 struct raycast_result<barrier> {
    float distance = 0.0f;
    barrier_id id;

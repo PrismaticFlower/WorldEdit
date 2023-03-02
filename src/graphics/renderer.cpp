@@ -960,7 +960,7 @@ void renderer_impl::draw_world_meta_objects(
    if (active_entity_types.portals and not world.portals.empty()) {
       const uint32 portal_color = utility::pack_srgb_bgra(settings.portal_color);
 
-      for (auto& portal : world.portals) {
+      const auto add_portal = [&](const world::portal& portal) {
          using namespace ranges::views;
 
          const float half_width = portal.width * 0.5f;
@@ -968,7 +968,7 @@ void renderer_impl::draw_world_meta_objects(
 
          if (not intersects(view_frustum, portal.position,
                             std::max(half_width, half_height))) {
-            continue;
+            return;
          }
 
          std::array quad = {float3{-half_width, -half_height, 0.0f},
@@ -985,6 +985,13 @@ void renderer_impl::draw_world_meta_objects(
          _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], portal_color);
          _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], portal_color);
          _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], portal_color);
+      };
+
+      for (auto& portal : world.portals) add_portal(portal);
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::portal>(*interaction_targets.creation_entity)) {
+         add_portal(std::get<world::portal>(*interaction_targets.creation_entity));
       }
    }
 

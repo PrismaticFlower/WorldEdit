@@ -249,8 +249,30 @@ void world_edit::update_ui() noexcept
                          _interaction_targets.creation_entity),
                       _edit_context);
          }
+
+         if (ImGui::MenuItem("Portal")) {
+            const world::portal* base_portal =
+               world::find_entity(_world.portals, _entity_creation_context.last_portal);
+
+            world::portal new_portal;
+
+            if (base_portal) {
+               new_portal = *base_portal;
+
+               new_portal.name =
+                  world::create_unique_name(_world.portals, base_portal->name);
+               new_portal.id = world::max_id;
+            }
+            else {
+               new_portal = world::portal{.name = "Portal0", .id = world::max_id};
+            }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_portal),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
+         }
 #if 0
-         if (ImGui::MenuItem("Portal")) _create.portal = true;
          if (ImGui::MenuItem("Barrier")) _create.barrier = true;
          if (ImGui::MenuItem("Planning Hub")) _create.planning_hub = true;
          if (ImGui::MenuItem("Planning Connection"))
@@ -1729,9 +1751,200 @@ void world_edit::update_ui() noexcept
                                        .has_placement_ground = false};
             },
             [&](const world::portal& portal) {
-               (void)portal;
+               ImGui::InputText("Name", &creation_entity, &world::portal::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.portals,
+                                                                *edited_value);
+                                });
 
-               return placement_traits{};
+               ImGui::DragFloat("Width", &creation_entity,
+                                &world::portal::width, &_edit_stack_world,
+                                &_edit_context, 1.0f, 0.25f, 1e10f);
+               ImGui::DragFloat("Height", &creation_entity,
+                                &world::portal::height, &_edit_stack_world,
+                                &_edit_context, 1.0f, 0.25f, 1e10f);
+
+               ImGui::InputTextAutoComplete(
+                  "Linked Sector 1", &creation_entity, &world::portal::sector1,
+                  &_edit_stack_world, &_edit_context, [&] {
+                     std::array<std::string, 6> entries;
+                     std::size_t matching_count = 0;
+
+                     for (const auto& sector : _world.sectors) {
+                        if (sector.name.contains(portal.sector1)) {
+                           if (matching_count == entries.size()) break;
+
+                           entries[matching_count] = sector.name;
+
+                           ++matching_count;
+                        }
+                     }
+
+                     return entries;
+                  });
+
+               ImGui::InputTextAutoComplete(
+                  "Linked Sector 2", &creation_entity, &world::portal::sector2,
+                  &_edit_stack_world, &_edit_context, [&] {
+                     std::array<std::string, 6> entries;
+                     std::size_t matching_count = 0;
+
+                     for (const auto& sector : _world.sectors) {
+                        if (sector.name.contains(portal.sector2)) {
+                           if (matching_count == entries.size()) break;
+
+                           entries[matching_count] = sector.name;
+
+                           ++matching_count;
+                        }
+                     }
+
+                     return entries;
+                  });
+
+               if (_entity_creation_context.placement_rotation !=
+                   placement_rotation::manual_quaternion) {
+                  ImGui::DragRotationEuler("Rotation", &creation_entity,
+                                           &world::portal::rotation,
+                                           &world::edit_context::euler_rotation,
+                                           &_edit_stack_world, &_edit_context);
+               }
+               else {
+                  ImGui::DragQuat("Rotation", &creation_entity, &world::portal::rotation,
+                                  &_edit_stack_world, &_edit_context);
+               }
+
+               if (ImGui::DragFloat3("Position", &creation_entity, &world::portal::position,
+                                     &_edit_stack_world, &_edit_context)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+               }
+               if ((_entity_creation_context.placement_rotation ==
+                       placement_rotation::surface or
+                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+                   not _entity_creation_context.using_point_at) {
+                  quaternion new_rotation = portal.rotation;
+                  float3 new_position = portal.position;
+                  float3 new_euler_rotation = _edit_context.euler_rotation;
+
+                  if (_entity_creation_context.placement_rotation ==
+                         placement_rotation::surface and
+                      _cursor_surface_normalWS) {
+                     const float new_y_angle =
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _edit_context.euler_rotation.y);
+                     new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
+                                           _edit_context.euler_rotation.z};
+                     new_rotation = make_quat_from_euler(
+                        new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+                  }
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position = _cursor_positionWS;
+
+                     if (_entity_creation_context.placement_ground ==
+                         placement_ground::bbox) {
+                        new_position.y += (portal.height / 2.0f);
+                     }
+
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = portal.position.x;
+                     }
+                     if (_entity_creation_context.lock_y_axis) {
+                        new_position.y = portal.position.y;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.z = portal.position.z;
+                     }
+                  }
+
+                  if (new_rotation != portal.rotation or new_position != portal.position) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_location<world::portal>>(
+                           new_rotation, portal.rotation, new_position, portal.position,
+                           new_euler_rotation, _edit_context.euler_rotation),
+                        _edit_context);
+                  }
+               }
+
+               if (_entity_creation_context.using_point_at) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       portal.position, 0xffffffffu);
+
+                  const quaternion new_rotation =
+                     look_at_quat(_cursor_positionWS, portal.position);
+
+                  if (new_rotation != portal.rotation) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::portal, quaternion>>(
+                           &world::portal::rotation, new_rotation, portal.rotation),
+                        _edit_context);
+                  }
+               }
+
+               if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.activate_extend_to = true;
+               }
+               if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.activate_shrink_to = true;
+
+                  _entity_creation_context.using_shrink_to =
+                     not _entity_creation_context.using_shrink_to;
+                  _entity_creation_context.using_extend_to = false;
+               }
+
+               if (_entity_creation_context.using_extend_to or
+                   _entity_creation_context.using_shrink_to) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+
+                  if (not _entity_creation_context.resize_portal_start_width) {
+                     _entity_creation_context.resize_portal_start_width = portal.width;
+                  }
+
+                  if (not _entity_creation_context.resize_portal_start_height) {
+                     _entity_creation_context.resize_portal_start_height =
+                        portal.height;
+                  }
+
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       portal.position, 0xffffffffu);
+
+                  const quaternion inverse_rotation = conjugate(portal.rotation);
+
+                  const float3 positionPS = inverse_rotation * portal.position;
+                  const float3 cursor_positionPS = inverse_rotation * _cursor_positionWS;
+                  const float3 size = abs(positionPS - cursor_positionPS);
+
+                  const float width =
+                     _entity_creation_context.using_extend_to
+                        ? std::max(*_entity_creation_context.resize_portal_start_width,
+                                   size.x * 2.0f)
+                        : std::min(*_entity_creation_context.resize_portal_start_width,
+                                   size.x * 2.0f);
+                  const float height =
+                     _entity_creation_context.using_extend_to
+                        ? std::max(*_entity_creation_context.resize_portal_start_width,
+                                   size.y * 2.0f)
+                        : std::min(*_entity_creation_context.resize_portal_start_width,
+                                   size.y * 2.0f);
+
+                  if (width != portal.width or height != portal.height) {
+                     _edit_stack_world.apply(std::make_unique<edits::set_creation_portal_size>(
+                                                width, portal.width, height,
+                                                portal.height),
+                                             _edit_context);
+                  }
+               }
+               else {
+                  _entity_creation_context.resize_portal_start_width = std::nullopt;
+                  _entity_creation_context.resize_portal_start_height = std::nullopt;
+               }
+
+               ImGui::Separator();
+
+               return placement_traits{.has_placement_alignment = false,
+                                       .has_resize_to = true};
             },
             [&](const world::barrier& barrier) {
                (void)barrier;

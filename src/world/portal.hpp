@@ -13,8 +13,8 @@ struct portal {
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    float3 position{};
 
-   float width = 0.0f;
-   float height = 0.0f;
+   float width = 8.0f;
+   float height = 8.0f;
 
    std::string sector1;
    std::string sector2;
