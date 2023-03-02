@@ -1288,27 +1288,17 @@ void renderer_impl::draw_interaction_targets(
          for (auto& points = sector.points;
               const auto [a, b] :
               zip(points, concat(points | drop(1), points | take(1)))) {
-            const std::array quad = {float3{a.x, sector.base, a.y},
-                                     float3{b.x, sector.base, b.y},
-                                     float3{a.x, sector.base + sector.height, a.y},
-                                     float3{b.x, sector.base + sector.height, b.y}};
+            const std::array quad = {
+               float3{a.x, sector.base, a.y},
+               float3{a.x, sector.base + sector.height,
+                      a.y},
+               float3{b.x, sector.base + sector.height, b.y},
+               float3{b.x, sector.base, b.y}};
 
-            _meta_draw_batcher.add_triangle_wireframe(quad[0], quad[1], quad[2],
-                                                      packed_color);
-            _meta_draw_batcher.add_triangle_wireframe(quad[2], quad[1], quad[3],
-                                                      packed_color);
-            _meta_draw_batcher.add_triangle_wireframe(quad[0], quad[2], quad[1],
-                                                      packed_color);
-            _meta_draw_batcher.add_triangle_wireframe(quad[2], quad[3], quad[1],
-                                                      packed_color);
-         }
-
-         for (const auto point : sector.points) {
-            const std::array line = {float3{point.x, sector.base, point.y},
-                                     float3{point.x, sector.base + sector.height,
-                                            point.y}};
-
-            _meta_draw_batcher.add_line_solid(line[0], line[1], packed_color);
+            _meta_draw_batcher.add_line_solid(quad[0], quad[1], packed_color);
+            _meta_draw_batcher.add_line_solid(quad[1], quad[2], packed_color);
+            _meta_draw_batcher.add_line_solid(quad[2], quad[3], packed_color);
+            _meta_draw_batcher.add_line_solid(quad[3], quad[0], packed_color);
          }
       },
       [&](const world::portal& portal, const float3 color) {
@@ -1318,23 +1308,19 @@ void renderer_impl::draw_interaction_targets(
          const float half_height = portal.height * 0.5f;
 
          std::array quad = {float3{-half_width, -half_height, 0.0f},
-                            float3{half_width, -half_height, 0.0f},
                             float3{-half_width, half_height, 0.0f},
-                            float3{half_width, half_height, 0.0f}};
+                            float3{half_width, half_height, 0.0f},
+                            float3{half_width, -half_height, 0.0f}};
 
          for (auto& v : quad) {
             v = portal.rotation * v;
             v += portal.position;
          }
 
-         _meta_draw_batcher.add_triangle_wireframe(quad[0], quad[1], quad[2],
-                                                   packed_color);
-         _meta_draw_batcher.add_triangle_wireframe(quad[2], quad[1], quad[3],
-                                                   packed_color);
-         _meta_draw_batcher.add_triangle_wireframe(quad[0], quad[2], quad[1],
-                                                   packed_color);
-         _meta_draw_batcher.add_triangle_wireframe(quad[2], quad[3], quad[1],
-                                                   packed_color);
+         _meta_draw_batcher.add_line_solid(quad[0], quad[1], packed_color);
+         _meta_draw_batcher.add_line_solid(quad[1], quad[2], packed_color);
+         _meta_draw_batcher.add_line_solid(quad[2], quad[3], packed_color);
+         _meta_draw_batcher.add_line_solid(quad[3], quad[0], packed_color);
       },
       [&](const world::hintnode& hintnode, const float3 color) {
          float4x4 transform = to_matrix(hintnode.rotation);
