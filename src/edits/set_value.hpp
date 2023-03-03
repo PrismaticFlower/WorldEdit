@@ -1,8 +1,56 @@
 
 #include "edit.hpp"
 #include "world/interaction_context.hpp"
+#include "world/utility/world_utilities.hpp"
 
 namespace we::edits {
+
+template<typename Entity, typename T>
+struct set_value final : edit<world::edit_context> {
+   using entity_type = Entity;
+   using value_type = T;
+
+   set_value(world::id<Entity> id, value_type entity_type::*value_member_ptr,
+             value_type new_value, value_type original_value)
+      : id{id},
+        value_member_ptr{value_member_ptr},
+        new_value{std::move(new_value)},
+        original_value{std::move(original_value)}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      find_entity<entity_type>(context.world, id)->*value_member_ptr = new_value;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      find_entity<entity_type>(context.world, id)->*value_member_ptr = original_value;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_value* other = dynamic_cast<const set_value*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->id == other->id and this->value_member_ptr == other->value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_value& other = dynamic_cast<set_value&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+   }
+
+   world::id<Entity> id;
+   value_type entity_type::*value_member_ptr;
+
+   value_type new_value;
+   value_type original_value;
+};
 
 template<typename Entity, typename T>
 struct set_creation_value final : edit<world::edit_context> {

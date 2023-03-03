@@ -5,6 +5,7 @@
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
+#include "edits/set_value.hpp"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"
@@ -12,6 +13,7 @@
 #include "utility/overload.hpp"
 #include "utility/string_ops.hpp"
 #include "world/raycast.hpp"
+#include "world/utility/sector_fill.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
@@ -493,6 +495,15 @@ void world_edit::place_creation_entity() noexcept
                                                   existing_sector->points.size(),
                                                   sector.points[0]),
                          _edit_context);
+
+               if (_entity_creation_context.auto_fill_sector) {
+                  _edit_stack_world.apply(
+                     std::make_unique<edits::set_value<world::sector, std::vector<std::string>>>(
+                        existing_sector->id, &world::sector::objects,
+                        world::sector_fill(*existing_sector, _world.objects, _object_classes),
+                        existing_sector->objects),
+                     _edit_context);
+               }
             }
             else {
                world::sector new_sector = sector;

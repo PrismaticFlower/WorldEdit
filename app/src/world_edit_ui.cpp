@@ -1702,12 +1702,8 @@ void world_edit::update_ui() noexcept
                if (ImGui::IsItemHovered()) {
                   ImGui::SetTooltip(
                      "Auto-Fill the sector's object list with objects inside "
-                     "the sector from active layers as points are added.");
-               }
-
-               if (_entity_creation_context.auto_fill_sector) {
-                  ImGui::Text(
-                     "Auto-Fill Object List is unimplemented currently.");
+                     "the sector from active layers as points are added. This "
+                     "will add a separate entry to the Undo stack.");
                }
 
                if (const world::sector* existing_sector =

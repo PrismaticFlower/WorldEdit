@@ -610,6 +610,9 @@
     <ClInclude Include="src\edits\insert_point.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\sector_fill.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -841,6 +844,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\insert_point.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\sector_fill.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

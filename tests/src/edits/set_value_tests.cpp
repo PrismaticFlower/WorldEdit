@@ -8,6 +8,23 @@ using namespace std::literals;
 
 namespace we::edits::tests {
 
+TEST_CASE("edits set_value", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   set_value edit{world.objects[0].id, &world::object::layer, 1, 0};
+
+   edit.apply(edit_context);
+
+   REQUIRE(world.objects[0].layer == 1);
+
+   edit.revert(edit_context);
+
+   REQUIRE(world.objects[0].layer == 0);
+}
+
 TEST_CASE("edits set_creation_value", "[Edits]")
 {
    world::world world = test_world;
@@ -214,6 +231,28 @@ TEST_CASE("edits set_creation_portal_size", "[Edits]")
 
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 1.0f);
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 2.0f);
+}
+
+TEST_CASE("edits set_value coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   set_value edit{world.objects[0].id, &world::object::layer, 1, 0};
+   set_value other_edit{world.objects[0].id, &world::object::layer, 2, 0};
+
+   REQUIRE(edit.is_coalescable(other_edit));
+
+   edit.coalesce(other_edit);
+
+   edit.apply(edit_context);
+
+   REQUIRE(world.objects[0].layer == 2);
+
+   edit.revert(edit_context);
+
+   REQUIRE(world.objects[0].layer == 0);
 }
 
 TEST_CASE("edits set_creation_value coalesce", "[Edits]")
