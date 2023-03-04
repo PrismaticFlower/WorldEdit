@@ -774,23 +774,16 @@ void renderer_impl::draw_world_meta_objects(
       const float4 barrier_color = settings.barrier_color;
 
       for (auto& barrier : world.barriers) {
-         const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
-         const float2 size{distance(barrier.corners[0], barrier.corners[3]),
-                           distance(barrier.corners[0], barrier.corners[1])};
-         const float angle =
-            std::atan2(barrier.corners[1].x - barrier.corners[0].x,
-                       barrier.corners[1].y - barrier.corners[0].y);
-
          const float4x4 rotation =
-            make_rotation_matrix_from_euler({0.0f, angle, 0.0f});
+            make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
 
-         float4x4 transform =
-            rotation * float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
-                                {0.0f, barrier_height, 0.0f, 0.0f},
-                                {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                                {0.0f, 0.0f, 0.0f, 1.0f}};
+         float4x4 transform = float4x4{{barrier.size.x, 0.0f, 0.0f, 0.0f},
+                                       {0.0f, barrier_height, 0.0f, 0.0f},
+                                       {0.0f, 0.0f, barrier.size.y, 0.0f},
+                                       {0.0f, 0.0f, 0.0f, 1.0f}} *
+                              rotation;
 
-         transform[3] = {position.x, 0.0f, position.y, 1.0f};
+         transform[3] = {barrier.position.x, 0.0f, barrier.position.y, 1.0f};
 
          _meta_draw_batcher.add_box(transform, barrier_color); // TODO: Frustum cull
       }
@@ -1288,12 +1281,10 @@ void renderer_impl::draw_interaction_targets(
          for (auto& points = sector.points;
               const auto [a, b] :
               zip(points, concat(points | drop(1), points | take(1)))) {
-            const std::array quad = {
-               float3{a.x, sector.base, a.y},
-               float3{a.x, sector.base + sector.height,
-                      a.y},
-               float3{b.x, sector.base + sector.height, b.y},
-               float3{b.x, sector.base, b.y}};
+            const std::array quad = {float3{a.x, sector.base, a.y},
+                                     float3{a.x, sector.base + sector.height, a.y},
+                                     float3{b.x, sector.base + sector.height, b.y},
+                                     float3{b.x, sector.base, b.y}};
 
             _meta_draw_batcher.add_line_solid(quad[0], quad[1], packed_color);
             _meta_draw_batcher.add_line_solid(quad[1], quad[2], packed_color);
@@ -1331,21 +1322,18 @@ void renderer_impl::draw_interaction_targets(
       [&](const world::barrier& barrier, const float3 color) {
          const geometric_shape shape = _geometric_shapes.cube();
 
-         const float2 position = (barrier.corners[0] + barrier.corners[2]) / 2.0f;
-         const float2 size{distance(barrier.corners[0], barrier.corners[3]),
-                           distance(barrier.corners[0], barrier.corners[1])};
-         const float angle =
-            std::atan2(barrier.corners[1].x - barrier.corners[0].x,
-                       barrier.corners[1].y - barrier.corners[0].y);
-
          const float barrier_height = settings.barrier_height;
 
-         float4x4 transform = make_rotation_matrix_from_euler({0.0f, angle, 0.0f}) *
-                              float4x4{{size.x / 2.0f, 0.0f, 0.0f, 0.0f},
+         const float4x4 rotation =
+            make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
+
+         float4x4 transform = float4x4{{barrier.size.x, 0.0f, 0.0f, 0.0f},
                                        {0.0f, barrier_height, 0.0f, 0.0f},
-                                       {0.0f, 0.0f, size.y / 2.0f, 0.0f},
-                                       {0.0f, 0.0f, 0.0f, 1.0f}};
-         transform[3] = {position.x, 0.0f, position.y, 1.0f};
+                                       {0.0f, 0.0f, barrier.size.y, 0.0f},
+                                       {0.0f, 0.0f, 0.0f, 1.0f}} *
+                              rotation;
+
+         transform[3] = {barrier.position.x, 0.0f, barrier.position.y, 1.0f};
 
          _meta_draw_batcher.add_box_wireframe(transform, color);
       },

@@ -4,6 +4,8 @@
 #include "io/read_file.hpp"
 #include "world/world_io_save.hpp"
 
+#include "world/world_io_load.hpp"
+
 namespace we::world::tests {
 
 using namespace std::literals;
@@ -189,8 +191,8 @@ Barrier("Barrier0")
 {
 	Corner(72.596146, 0.000000, -31.159695);
 	Corner(86.691795, 0.000000, -0.198154);
-	Corner(99.806587, 0.000000, -6.168838);
-	Corner(85.710938, 0.000000, -37.130379);
+	Corner(99.806595, 0.000000, -6.168838);
+	Corner(85.710945, 0.000000, -37.130379);
 	Flag(32);
 }
 
@@ -313,13 +315,9 @@ TEST_CASE("world saving", "[World][IO]")
       // TODO: Path planning.
 
       .barriers = {barrier{.name = "Barrier0",
-                           .corners =
-                              {
-                                 float2{72.596146f, 31.159695f},
-                                 float2{86.691795f, 0.198154f},
-                                 float2{99.806587f, 6.168838f},
-                                 float2{85.710938f, 37.130379f},
-                              },
+                           .position = {86.2013702f, 18.6642666f},
+                           .size = {7.20497799f, 17.0095882f},
+                           .rotation_angle = {2.71437049f},
                            .flags = ai_path_flags::flyer}},
 
       .boundaries = {{.name = "boundary"}}};

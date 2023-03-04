@@ -3,11 +3,13 @@
 #include "assets/config/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
 #include "io/read_file.hpp"
+#include "math/vector_funcs.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
@@ -522,10 +524,12 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
 
          auto corner = std::find_if(key_node.cbegin(), key_node.cend(), is_corner);
 
+         std::array<float2, 4> corners;
+
          for (int i = 0; i < 4; ++i) {
             if (corner != key_node.cend()) {
-               barrier.corners[i] = {corner->values.get<float>(0),
-                                     -corner->values.get<float>(2)};
+               corners[i] = {corner->values.get<float>(0),
+                             -corner->values.get<float>(2)};
 
                corner = std::find_if(corner + 1, key_node.cend(), is_corner);
             }
@@ -536,6 +540,13 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
                break;
             }
          }
+
+         barrier.position = (corners[0] + corners[1] + corners[2] + corners[3]) / 4.0f;
+         barrier.size = float2{distance(corners[0], corners[3]),
+                               distance(corners[0], corners[1])} /
+                        2.0f;
+         barrier.rotation_angle =
+            std::atan2(corners[1].x - corners[0].x, corners[1].y - corners[0].y);
 
          if (verbose_output) {
             output.write("Loaded world barrier '{}'\n", barrier.name);

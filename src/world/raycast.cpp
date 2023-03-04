@@ -380,36 +380,33 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<barrier>>
 {
    std::optional<barrier_id> hit;
-   uint32 hit_edge = 0;
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& barrier : barriers) {
-      for (uint32 i = 0; i < barrier.corners.size(); ++i) {
-         const float2 a = barrier.corners[i];
-         const float2 b = barrier.corners[(i + 1u) % 4u];
+      float4x4 world_to_box = transpose(
+         make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f}));
+      world_to_box[3] = {world_to_box *
+                            float3{-barrier.position.x, 0.0f, -barrier.position.y},
+                         1.0f};
 
-         const std::array quad = {float3{a.x, barrier_height, a.y},
-                                  float3{a.x, -barrier_height, a.y},
-                                  float3{b.x, barrier_height, b.y},
-                                  float3{b.x, -barrier_height, b.y}};
+      float3 box_ray_origin = world_to_box * ray_origin;
+      float3 box_ray_direction = normalize(float3x3{world_to_box} * ray_direction);
 
-         const float intersection = quadIntersect(ray_origin, ray_direction,
-                                                  quad[0], quad[1], quad[3], quad[2])
-                                       .x;
+      const float intersection =
+         boxIntersection(box_ray_origin, box_ray_direction,
+                         {barrier.size.x, barrier_height, barrier.size.y});
 
-         if (intersection < 0.0f) continue;
+      if (intersection < 0.0f) continue;
 
-         if (intersection < min_distance) {
-            hit = barrier.id;
-            hit_edge = i;
-            min_distance = intersection;
-         }
+      if (intersection < min_distance) {
+         hit = barrier.id;
+         min_distance = intersection;
       }
    }
 
    if (not hit) return std::nullopt;
 
-   return raycast_result<barrier>{.distance = min_distance, .id = *hit, .edge = hit_edge};
+   return raycast_result<barrier>{.distance = min_distance, .id = *hit};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

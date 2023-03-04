@@ -123,7 +123,9 @@ const we::world::world test_world = {
    .barriers = {barrier{
       .name = "test_barrier"s,
 
-      .corners = {{{0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}}},
+      .position = {0.5f, 0.5f},
+      .size = {0.5f, 0.5f},
+      .rotation_angle = 0.0f,
       .flags = ai_path_flags::soldier | ai_path_flags::hover | ai_path_flags::small |
                ai_path_flags::medium | ai_path_flags::huge | ai_path_flags::flyer,
    }},

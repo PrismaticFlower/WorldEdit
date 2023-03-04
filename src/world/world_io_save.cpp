@@ -1,7 +1,9 @@
 
 #include "world_io_save.hpp"
+#include "math/vector_funcs.hpp"
 
 #include <cctype>
+#include <cstddef>
 #include <numeric>
 
 #include "assets/terrain/terrain_io.hpp"
@@ -77,6 +79,30 @@ auto light_region_shape(const light& light) noexcept -> region_shape
    default:
       return region_shape::box;
    }
+}
+
+auto make_barrier_corners(const barrier& barrier) noexcept -> std::array<float2, 4>
+{
+   const double rot_sin = std::sin(double{barrier.rotation_angle});
+   const double rot_cos = -std::cos(double{barrier.rotation_angle});
+
+   constexpr std::array<float2, 4> base_corners{float2{-1.0f, 1.0f},
+                                                float2{-1.0f, -1.0f},
+                                                float2{1.0f, -1.0f},
+                                                float2{1.0f, 1.0f}};
+
+   std::array<float2, 4> cornersWS{};
+
+   for (std::size_t i = 0; i < cornersWS.size(); ++i) {
+      const float2 cornerOS = base_corners[i] * barrier.size;
+
+      cornersWS[i] =
+         float2{static_cast<float>(cornerOS.x * rot_cos - cornerOS.y * rot_sin),
+                static_cast<float>(cornerOS.x * rot_sin + cornerOS.y * rot_cos)} +
+         barrier.position;
+   }
+
+   return cornersWS;
 }
 
 void save_objects(const std::filesystem::path& path, const std::string_view layer_name,
@@ -471,7 +497,7 @@ void save_barriers(const std::filesystem::path& path, const world& world)
       file.write_ln("Barrier(\"{}\")", barrier.name);
       file.write_ln("{");
 
-      for (auto& corner : barrier.corners) {
+      for (auto& corner : make_barrier_corners(barrier)) {
          file.write_ln("\tCorner({:f}, 0.000000, {:f});", corner.x, -corner.y);
       }
 
@@ -565,5 +591,4 @@ void save_world(const std::filesystem::path& path, const world& world)
 
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv), world.terrain);
 }
-
 }

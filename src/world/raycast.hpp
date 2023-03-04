@@ -38,13 +38,6 @@ struct raycast_result<sector> {
    sector_id id;
 };
 
-template<>
-struct raycast_result<barrier> {
-   float distance = 0.0f;
-   barrier_id id;
-   uint32 edge = 0;
-};
-
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const object> objects,
              const absl::flat_hash_map<lowercase_string, object_class>& object_classes) noexcept
