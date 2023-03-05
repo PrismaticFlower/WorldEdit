@@ -192,14 +192,18 @@ private:
       bool activate_extend_to = false;
       bool activate_shrink_to = false;
       bool activate_from_object_bbox = false;
+      bool activate_from_line = false;
 
       bool using_point_at = false;
       bool using_extend_to = false;
       bool using_shrink_to = false;
       bool using_from_object_bbox = false;
+      bool using_from_line = false;
 
       bool finish_current_path = false;
       bool finish_current_sector = false;
+
+      bool from_line_click = false;
 
       bool auto_fill_sector = false;
 
@@ -209,8 +213,12 @@ private:
       float3 rotation{0.0f, 0.0f, 0.0f};
 
       std::optional<float3> resize_start_size;
+      std::optional<float2> resize_barrier_start_position;
+      std::optional<float2> resize_barrier_start_size;
       std::optional<float> resize_portal_start_width;
       std::optional<float> resize_portal_start_height;
+
+      std::optional<float3> from_line_start;
    } _entity_creation_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

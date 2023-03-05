@@ -453,4 +453,60 @@ struct set_creation_portal_size final : edit<world::edit_context> {
    float new_height;
    float original_height;
 };
+
+struct set_creation_barrier_metrics final : edit<world::edit_context> {
+   set_creation_barrier_metrics(float new_rotation, float original_rotation,
+                                float2 new_position, float2 original_position,
+                                float2 new_size, float2 original_size)
+      : new_rotation{new_rotation},
+        new_position{new_position},
+        new_size{new_size},
+        original_rotation{original_rotation},
+        original_position{original_position},
+        original_size{original_size}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      std::get<world::barrier>(*context.creation_entity).rotation_angle = new_rotation;
+      std::get<world::barrier>(*context.creation_entity).position = new_position;
+      std::get<world::barrier>(*context.creation_entity).size = new_size;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      std::get<world::barrier>(*context.creation_entity).rotation_angle =
+         original_rotation;
+      std::get<world::barrier>(*context.creation_entity).position = original_position;
+      std::get<world::barrier>(*context.creation_entity).size = original_size;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_creation_barrier_metrics* other =
+         dynamic_cast<const set_creation_barrier_metrics*>(&other_unknown);
+
+      return other != nullptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_creation_barrier_metrics& other =
+         dynamic_cast<set_creation_barrier_metrics&>(other_unknown);
+
+      new_rotation = other.new_rotation;
+      new_position = other.new_position;
+      new_size = other.new_size;
+   }
+
+   float new_rotation;
+   float2 new_position;
+   float2 new_size;
+
+   float original_rotation;
+   float2 original_position;
+   float2 original_size;
+};
+
 }

@@ -773,19 +773,26 @@ void renderer_impl::draw_world_meta_objects(
       const float barrier_height = settings.barrier_height;
       const float4 barrier_color = settings.barrier_color;
 
-      for (auto& barrier : world.barriers) {
+      const auto add_barrier = [&](const world::barrier& barrier) {
          const float4x4 rotation =
             make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
 
-         float4x4 transform = float4x4{{barrier.size.x, 0.0f, 0.0f, 0.0f},
-                                       {0.0f, barrier_height, 0.0f, 0.0f},
-                                       {0.0f, 0.0f, barrier.size.y, 0.0f},
-                                       {0.0f, 0.0f, 0.0f, 1.0f}} *
-                              rotation;
+         float4x4 transform =
+            rotation * float4x4{{barrier.size.x, 0.0f, 0.0f, 0.0f},
+                                {0.0f, barrier_height, 0.0f, 0.0f},
+                                {0.0f, 0.0f, barrier.size.y, 0.0f},
+                                {0.0f, 0.0f, 0.0f, 1.0f}};
 
          transform[3] = {barrier.position.x, 0.0f, barrier.position.y, 1.0f};
 
          _meta_draw_batcher.add_box(transform, barrier_color); // TODO: Frustum cull
+      };
+
+      for (auto& barrier : world.barriers) add_barrier(barrier);
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::barrier>(*interaction_targets.creation_entity)) {
+         add_barrier(std::get<world::barrier>(*interaction_targets.creation_entity));
       }
    }
 
@@ -1327,11 +1334,11 @@ void renderer_impl::draw_interaction_targets(
          const float4x4 rotation =
             make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
 
-         float4x4 transform = float4x4{{barrier.size.x, 0.0f, 0.0f, 0.0f},
-                                       {0.0f, barrier_height, 0.0f, 0.0f},
-                                       {0.0f, 0.0f, barrier.size.y, 0.0f},
-                                       {0.0f, 0.0f, 0.0f, 1.0f}} *
-                              rotation;
+         float4x4 transform =
+            rotation * float4x4{{barrier.size.x, 0.0f, 0.0f, 0.0f},
+                                {0.0f, barrier_height, 0.0f, 0.0f},
+                                {0.0f, 0.0f, barrier.size.y, 0.0f},
+                                {0.0f, 0.0f, 0.0f, 1.0f}};
 
          transform[3] = {barrier.position.x, 0.0f, barrier.position.y, 1.0f};
 

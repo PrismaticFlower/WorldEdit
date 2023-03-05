@@ -839,6 +839,22 @@ inline bool DragFloat3(const char* label, we::world::creation_entity* entity,
 }
 
 template<typename Entity>
+inline bool DragFloat2XZ(const char* label, we::world::creation_entity* entity,
+                         we::float2 Entity::*value_member_ptr,
+                         we::edits::stack<we::world::edit_context>* edit_stack,
+                         we::world::edit_context* context, float v_speed = 1.0f,
+                         float v_min = 0.0f, float v_max = 0.0f,
+                         ImGuiSliderFlags flags = 0) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float2* value) {
+      return we::edit_widget_result{.value_changed =
+                                       ImGui::DragFloat2XZ(label, value, v_speed,
+                                                           v_min, v_max, flags),
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
 inline bool DragQuat(const char* label, we::world::creation_entity* entity,
                      we::quaternion Entity::*value_member_ptr,
                      we::edits::stack<we::world::edit_context>* edit_stack,

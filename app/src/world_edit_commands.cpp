@@ -101,6 +101,15 @@ void world_edit::initialize_commands() noexcept
       _entity_creation_context.using_from_object_bbox = false;
    });
 
+   _commands.add("entity_creation.activate_from_line"s,
+                 _entity_creation_context.activate_from_line);
+   _commands.add("entity_creation.deactivate_from_line"s, [this] {
+      _entity_creation_context.using_from_line = false;
+      _entity_creation_context.from_line_click = false;
+   });
+   _commands.add("entity_creation.from_line_click"s,
+                 _entity_creation_context.from_line_click);
+
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
    _commands.add("entity_creation.lock_z_axis"s, _entity_creation_context.lock_z_axis);
@@ -161,6 +170,8 @@ void world_edit::initialize_hotkeys() noexcept
                        {"entity_creation.activate_shrink_to",
                         {.key = key::t, .modifiers = {.ctrl = true}}},
                        {"entity_creation.activate_from_object_bbox", {.key = key::b}},
+                       {"entity_creation.activate_from_line",
+                        {.key = key::f, .modifiers = {.ctrl = true}}},
 
                        {"entity_creation.lock_x_axis", {.key = key::z}},
                        {"entity_creation.lock_y_axis", {.key = key::x}},
@@ -202,6 +213,17 @@ void world_edit::initialize_hotkeys() noexcept
                        {"entity_creation.deactivate_from_object_bbox",
                         {.key = key::mouse1}},
                        {"entity_creation.deactivate_from_object_bbox",
+                        {.key = key::escape}},
+                    });
+
+   _hotkeys.add_set("Entity Creation (From Line)",
+                    [this] {
+                       return _interaction_targets.creation_entity and
+                              _entity_creation_context.using_from_line;
+                    },
+                    {
+                       {"entity_creation.from_line_click", {.key = key::mouse1}},
+                       {"entity_creation.deactivate_from_line",
                         {.key = key::escape}},
                     });
 }

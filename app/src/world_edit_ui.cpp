@@ -35,6 +35,7 @@ struct placement_traits {
    bool has_node_placement_insert = false;
    bool has_resize_to = false;
    bool has_from_bbox = false;
+   bool has_from_line = false;
 };
 
 auto surface_rotation_degrees(const float3 surface_normal,
@@ -272,8 +273,31 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
          }
+
+         if (ImGui::MenuItem("Barrier")) {
+            const world::barrier* base_barrier =
+               world::find_entity(_world.barriers, _entity_creation_context.last_barrier);
+
+            world::barrier new_barrier;
+
+            if (base_barrier) {
+               new_barrier = *base_barrier;
+
+               new_barrier.name =
+                  world::create_unique_name(_world.barriers, base_barrier->name);
+               new_barrier.id = world::max_id;
+            }
+            else {
+               new_barrier = world::barrier{.name = "Barrier0", .id = world::max_id};
+            }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_barrier),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
+         }
+
 #if 0
-         if (ImGui::MenuItem("Barrier")) _create.barrier = true;
          if (ImGui::MenuItem("Planning Hub")) _create.planning_hub = true;
          if (ImGui::MenuItem("Planning Connection"))
             _create.planning_connection = true;
@@ -785,6 +809,12 @@ void world_edit::update_ui() noexcept
          _edit_stack_world.close_last();
 
          _entity_creation_context.using_from_object_bbox = true;
+      }
+
+      if (std::exchange(_entity_creation_context.activate_from_line, false)) {
+         _edit_stack_world.close_last();
+
+         _entity_creation_context.using_from_line = true;
       }
 
       bool continue_creation = true;
@@ -1509,10 +1539,6 @@ void world_edit::update_ui() noexcept
                }
                if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
                   _entity_creation_context.activate_shrink_to = true;
-
-                  _entity_creation_context.using_shrink_to =
-                     not _entity_creation_context.using_shrink_to;
-                  _entity_creation_context.using_extend_to = false;
                }
 
                if (_entity_creation_context.using_extend_to or
@@ -1884,10 +1910,6 @@ void world_edit::update_ui() noexcept
                }
                if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
                   _entity_creation_context.activate_shrink_to = true;
-
-                  _entity_creation_context.using_shrink_to =
-                     not _entity_creation_context.using_shrink_to;
-                  _entity_creation_context.using_extend_to = false;
                }
 
                if (_entity_creation_context.using_extend_to or
@@ -1943,9 +1965,314 @@ void world_edit::update_ui() noexcept
                                        .has_resize_to = true};
             },
             [&](const world::barrier& barrier) {
-               (void)barrier;
+               ImGui::InputText("Name", &creation_entity, &world::barrier::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.barriers,
+                                                                barrier.name);
+                                });
 
-               return placement_traits{};
+               ImGui::DragFloat("Rotation", &creation_entity,
+                                &world::barrier::rotation_angle,
+                                &_edit_stack_world, &_edit_context, 0.025f);
+
+               if (ImGui::DragFloat2XZ("Position", &creation_entity,
+                                       &world::barrier::position,
+                                       &_edit_stack_world, &_edit_context, 0.25f)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+               }
+
+               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+                   not _entity_creation_context.using_point_at) {
+                  float2 new_position = barrier.position;
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position =
+                        float2{_cursor_positionWS.x, _cursor_positionWS.z};
+
+                     if (_entity_creation_context.placement_alignment ==
+                         placement_alignment::grid) {
+                        new_position =
+                           align_position_to_grid(new_position,
+                                                  _entity_creation_context.alignment);
+                     }
+                     else if (_entity_creation_context.placement_alignment ==
+                              placement_alignment::snapping) {
+                        const std::optional<float3> snapped_position =
+                           world::get_snapped_position({new_position.x,
+                                                        _cursor_positionWS.y,
+                                                        new_position.y},
+                                                       _world.objects,
+                                                       _entity_creation_context.snap_distance,
+                                                       _object_classes);
+
+                        if (snapped_position) {
+                           new_position = {snapped_position->x, snapped_position->z};
+                        }
+                     }
+
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = barrier.position.x;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.y =
+                           barrier.position.y; // NB: Usage of Y under lock Z.
+                     }
+                  }
+
+                  if (new_position != barrier.position) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::barrier, float2>>(
+                           &world::barrier::position, new_position, barrier.position),
+                        _edit_context);
+                  }
+               }
+
+               if (_entity_creation_context.using_point_at) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       float3{barrier.position.x,
+                                                              _cursor_positionWS.y,
+                                                              barrier.position.y},
+                                                       0xffffffffu);
+
+                  const float new_angle =
+                     surface_rotation_degrees(normalize(
+                                                 float3{barrier.position.x,
+                                                        _cursor_positionWS.y,
+                                                        barrier.position.y} -
+                                                 _cursor_positionWS),
+                                              barrier.rotation_angle) /
+                     180.0f * std::numbers::pi_v<float>;
+
+                  if (new_angle != barrier.rotation_angle) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::barrier, float>>(
+                           &world::barrier::rotation_angle, new_angle,
+                           barrier.rotation_angle),
+                        _edit_context);
+                  }
+               }
+
+               ImGui::DragFloat2XZ("Size", &creation_entity,
+                                   &world::barrier::size, &_edit_stack_world,
+                                   &_edit_context, 1.0f, 0.0f, 1e10f);
+
+               if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.activate_extend_to = true;
+               }
+               if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.activate_shrink_to = true;
+               }
+
+               if (_entity_creation_context.using_extend_to or
+                   _entity_creation_context.using_shrink_to) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+
+                  if (not _entity_creation_context.resize_barrier_start_position) {
+                     _entity_creation_context.resize_barrier_start_position =
+                        barrier.position;
+                     _entity_creation_context.resize_barrier_start_size =
+                        barrier.size;
+                  }
+
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       float3{barrier.position.x,
+                                                              _cursor_positionWS.y,
+                                                              barrier.position.y},
+                                                       0xffffffffu);
+
+                  // TODO: Resize to
+
+                  const float2 barrier_start_position =
+                     *_entity_creation_context.resize_barrier_start_position;
+                  const float2 barrier_start_size =
+                     *_entity_creation_context.resize_barrier_start_size;
+
+                  const float4x4 barrier_rotation = make_rotation_matrix_from_euler(
+                     {0.0f, barrier.rotation_angle, 0.0f});
+                  const float4x4 inverse_barrier_rotation =
+                     transpose(barrier_rotation);
+
+                  const float3 cursor_positionOS =
+                     inverse_barrier_rotation *
+                     float3{_cursor_positionWS.x, 0.0f, _cursor_positionWS.z};
+                  const float3 barrier_positionOS =
+                     inverse_barrier_rotation * float3{barrier_start_position.x, 0.0f,
+                                                       barrier_start_position.y};
+
+                  std::array<float3, 4> cornersOS{
+                     float3{-barrier_start_size.x, 0.0f, -barrier_start_size.y} +
+                        barrier_positionOS,
+                     float3{-barrier_start_size.x, 0.0f, barrier_start_size.y} +
+                        barrier_positionOS,
+                     float3{barrier_start_size.x, 0.0f, barrier_start_size.y} +
+                        barrier_positionOS,
+                     float3{barrier_start_size.x, 0.0f, -barrier_start_size.y} +
+                        barrier_positionOS,
+                  };
+
+                  const float3 cursor_vectorOS = cursor_positionOS - barrier_positionOS;
+
+                  if (cursor_vectorOS.x < 0.0f) {
+                     cornersOS[0].x = cursor_positionOS.x;
+                     cornersOS[1].x = cursor_positionOS.x;
+                  }
+                  else {
+                     cornersOS[2].x = cursor_positionOS.x;
+                     cornersOS[3].x = cursor_positionOS.x;
+                  }
+
+                  if (cursor_vectorOS.z < 0.0f) {
+                     cornersOS[0].z = cursor_positionOS.z;
+                     cornersOS[3].z = cursor_positionOS.z;
+                  }
+                  else {
+                     cornersOS[1].z = cursor_positionOS.z;
+                     cornersOS[2].z = cursor_positionOS.z;
+                  }
+
+                  float3 new_positionOS{};
+
+                  for (const auto& corner : cornersOS) {
+                     new_positionOS += corner;
+                  }
+
+                  new_positionOS /= 4.0f;
+
+                  float2 barrier_new_size =
+                     abs(float2{cornersOS[2].x, cornersOS[2].z} -
+                         float2{cornersOS[0].x, cornersOS[0].z}) /
+                     2.0f;
+
+                  if (_entity_creation_context.using_extend_to) {
+                     barrier_new_size = max(barrier_new_size, barrier_start_size);
+                  }
+                  else {
+                     barrier_new_size = min(barrier_new_size, barrier_start_size);
+                  }
+
+                  float3 new_positionWS = barrier_rotation * new_positionOS;
+
+                  if (barrier_new_size.x == barrier_start_size.x) {
+                     new_positionWS.x = barrier_start_position.x;
+                  }
+                  if (barrier_new_size.y == barrier_start_size.y) {
+                     new_positionWS.z = barrier_start_position.y;
+                  }
+
+                  const float2 barrier_new_position = {new_positionWS.x,
+                                                       new_positionWS.z};
+
+                  if (barrier_new_position != barrier_start_position or
+                      barrier_new_size != barrier_start_size) {
+                     _edit_stack_world
+                        .apply(std::make_unique<edits::set_creation_barrier_metrics>(
+                                  barrier.rotation_angle, barrier.rotation_angle,
+                                  barrier_new_position, barrier_start_position,
+                                  barrier_new_size, barrier_start_size),
+                               _edit_context);
+                  }
+               }
+               else {
+                  _entity_creation_context.resize_barrier_start_position = std::nullopt;
+                  _entity_creation_context.resize_barrier_start_size = std::nullopt;
+               }
+
+               ImGui::Separator();
+               if (ImGui::Button("From Object Bounds", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.activate_from_object_bbox = true;
+               }
+
+               if (_entity_creation_context.using_from_object_bbox and
+                   _interaction_targets.hovered_entity and
+                   std::holds_alternative<world::object_id>(
+                      *_interaction_targets.hovered_entity)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+
+                  const world::object* object =
+                     world::find_entity(_world.objects,
+                                        std::get<world::object_id>(
+                                           *_interaction_targets.hovered_entity));
+
+                  if (object) {
+                     math::bounding_box bbox =
+                        _object_classes.at(object->class_name).model->bounding_box;
+
+                     const float3 size = abs(bbox.max - bbox.min) / 2.0f;
+                     const float3 position =
+                        object->rotation *
+                        ((conjugate(object->rotation) * object->position) +
+                         ((bbox.min + bbox.max) / 2.0f));
+
+                     std::array<float3, 8> corners = math::to_corners(bbox);
+
+                     for (auto& corner : corners) {
+                        corner = object->rotation * corner + object->position;
+                     }
+
+                     const float rotation_angle =
+                        std::atan2(corners[1].z - corners[0].z,
+                                   corners[1].x - corners[0].x);
+
+                     _edit_stack_world
+                        .apply(std::make_unique<edits::set_creation_barrier_metrics>(
+                                  rotation_angle, barrier.rotation_angle,
+                                  float2{position.x, position.z}, barrier.position,
+                                  float2{size.x, size.z}, barrier.size),
+                               _edit_context);
+                  }
+               }
+
+               if (ImGui::Button("From Line", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _entity_creation_context.activate_from_line = true;
+               }
+
+               if (ImGui::IsItemHovered()) {
+                  ImGui::SetTooltip("Place a line and then place resize and "
+                                    "reposition the barrier around that line.");
+               }
+
+               if (_entity_creation_context.using_from_line) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+
+                  if (_entity_creation_context.from_line_start) {
+                     _tool_visualizers.lines
+                        .emplace_back(*_entity_creation_context.from_line_start,
+                                      _cursor_positionWS, 0xffffffffu);
+
+                     const float3 start = *_entity_creation_context.from_line_start;
+                     const float3 end = _cursor_positionWS;
+
+                     const float3 position = (start + end) / 2.0f;
+                     const float height = distance(start, end) / 2.0f;
+                     const float rotation_angle = std::atan2(start.x - end.x, start.z - end.z);
+
+                     _edit_stack_world
+                        .apply(std::make_unique<edits::set_creation_barrier_metrics>(
+                                  rotation_angle, barrier.rotation_angle,
+                                  float2{position.x, position.z}, barrier.position,
+                                  float2{barrier.size.x, height}, barrier.size),
+                               _edit_context);
+
+                     if (std::exchange(_entity_creation_context.from_line_click, false)) {
+                        _entity_creation_context.using_from_line = false;
+                     }
+                  }
+                  else if (std::exchange(_entity_creation_context.from_line_click,
+                                         false)) {
+                     _entity_creation_context.from_line_start = _cursor_positionWS;
+                  }
+               }
+               else {
+                  _entity_creation_context.from_line_start = std::nullopt;
+               }
+
+               return placement_traits{.has_placement_rotation = false,
+                                       .has_placement_ground = false,
+                                       .has_resize_to = true,
+                                       .has_from_bbox = true,
+                                       .has_from_line = true};
             },
             [&](const world::planning_hub& planning_hub) {
                (void)planning_hub;
@@ -1996,11 +2323,13 @@ void world_edit::update_ui() noexcept
             _entity_creation_context.placement_rotation = placement_rotation::surface;
          }
          ImGui::EndTable();
+      }
 
-         if (traits.has_point_at) {
-            if (ImGui::Selectable("Point At", _entity_creation_context.using_point_at)) {
-               _entity_creation_context.activate_point_at = true;
-            }
+      if (traits.has_point_at) {
+         if (not traits.has_placement_rotation) ImGui::Separator();
+
+         if (ImGui::Selectable("Point At", _entity_creation_context.using_point_at)) {
+            _entity_creation_context.activate_point_at = true;
          }
       }
 
@@ -2226,6 +2555,13 @@ void world_edit::update_ui() noexcept
             ImGui::BulletText(get_display_string(_hotkeys.query_binding(
                "Entity Creation",
                "entity_creation.activate_from_object_bbox")));
+         }
+
+         if (traits.has_from_line) {
+            ImGui::Text("From Line");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.activate_from_line")));
          }
 
          ImGui::End();

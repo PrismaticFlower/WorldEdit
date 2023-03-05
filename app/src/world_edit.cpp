@@ -529,7 +529,20 @@ void world_edit::place_creation_entity() noexcept
 
             portal.name = world::create_unique_name(_world.portals, portal.name);
          },
-         [&](world::barrier& barrier) { (void)barrier; },
+         [&](world::barrier& barrier) {
+            world::barrier new_barrier = barrier;
+
+            new_barrier.name =
+               world::create_unique_name(_world.barriers, new_barrier.name);
+            new_barrier.id = _world.next_id.barriers.aquire();
+
+            _entity_creation_context.last_barrier = new_barrier.id;
+
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
+                                    _edit_context);
+
+            barrier.name = world::create_unique_name(_world.barriers, barrier.name);
+         },
          [&](world::planning_hub& planning_hub) { (void)planning_hub; },
          [&](world::planning_connection& planning_connection) {
             (void)planning_connection;
