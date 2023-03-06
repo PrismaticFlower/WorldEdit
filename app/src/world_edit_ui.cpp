@@ -1942,9 +1942,9 @@ void world_edit::update_ui() noexcept
                                    size.x * 2.0f);
                   const float height =
                      _entity_creation_context.using_extend_to
-                        ? std::max(*_entity_creation_context.resize_portal_start_width,
+                        ? std::max(*_entity_creation_context.resize_portal_start_height,
                                    size.y * 2.0f)
-                        : std::min(*_entity_creation_context.resize_portal_start_width,
+                        : std::min(*_entity_creation_context.resize_portal_start_height,
                                    size.y * 2.0f);
 
                   if (width != portal.width or height != portal.height) {
