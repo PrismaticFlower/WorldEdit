@@ -2340,7 +2340,7 @@ void world_edit::update_ui() noexcept
       if (traits.has_point_at) {
          if (not traits.has_placement_rotation) ImGui::Separator();
 
-         if (ImGui::Selectable("Point At", _entity_creation_context.using_point_at)) {
+         if (ImGui::Button("Point At", {ImGui::CalcItemWidth(), 0.0f})) {
             _entity_creation_context.activate_point_at = true;
          }
       }
