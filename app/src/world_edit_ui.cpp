@@ -2246,7 +2246,8 @@ void world_edit::update_ui() noexcept
 
                      const float3 position = (start + end) / 2.0f;
                      const float height = distance(start, end) / 2.0f;
-                     const float rotation_angle = std::atan2(start.x - end.x, start.z - end.z);
+                     const float rotation_angle =
+                        std::atan2(start.x - end.x, start.z - end.z);
 
                      _edit_stack_world
                         .apply(std::make_unique<edits::set_creation_barrier_metrics>(
@@ -2267,6 +2268,17 @@ void world_edit::update_ui() noexcept
                else {
                   _entity_creation_context.from_line_start = std::nullopt;
                }
+
+               ImGui::Separator();
+
+               ImGui::EditFlags("Flags", &creation_entity, &world::barrier::flags,
+                                &_edit_stack_world, &_edit_context,
+                                {{"Soldier", world::ai_path_flags::soldier},
+                                 {"Hover", world::ai_path_flags::hover},
+                                 {"Small", world::ai_path_flags::small},
+                                 {"Medium", world::ai_path_flags::medium},
+                                 {"Huge", world::ai_path_flags::huge},
+                                 {"Flyer", world::ai_path_flags::flyer}});
 
                return placement_traits{.has_placement_rotation = false,
                                        .has_placement_ground = false,

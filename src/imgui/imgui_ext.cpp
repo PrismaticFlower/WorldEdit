@@ -304,4 +304,26 @@ bool InputTextAutoComplete(const char* label, std::string* value,
    return value_changed;
 }
 
+bool EditFlags(const char* label, unsigned int* value, std::span<const ExtEditFlag> flags)
+{
+   bool value_changed = false;
+
+   const float item_width = CalcItemWidth();
+
+   ImGui::BeginGroup();
+
+   ImGui::TextUnformatted(label);
+
+   for (const auto& flag : flags) {
+      if (ImGui::Selectable(flag.label, *value & flag.bit, 0, {item_width, 0.0f})) {
+         *value ^= flag.bit;
+
+         value_changed |= true;
+      }
+   }
+
+   ImGui::EndGroup();
+
+   return value_changed;
+}
 }

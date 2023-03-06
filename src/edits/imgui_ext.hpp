@@ -34,6 +34,12 @@ struct enum_select_option {
    T value = {};
 };
 
+template<typename T>
+struct edit_flag {
+   const char* label = "";
+   T bit = {};
+};
+
 template<typename Callback, typename T>
 concept edit_widget_callback =
    std::is_invocable_r_v<edit_widget_result, Callback, T*>;
@@ -54,6 +60,7 @@ concept input_key_value_type = requires(T t)
 }
 
 namespace we {
+using we::edits::imgui::edit_flag;
 using we::edits::imgui::edit_widget_result;
 using we::edits::imgui::enum_select_option;
 }
@@ -933,6 +940,36 @@ inline bool EnumSelect(const char* label, we::world::creation_entity* entity,
          }
 
          ImGui::EndCombo();
+      }
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = value_changed};
+   });
+}
+
+template<typename Entity, typename Flags>
+inline bool EditFlags(const char* label, we::world::creation_entity* entity,
+                      Flags Entity::*value_member_ptr,
+                      we::edits::stack<we::world::edit_context>* edit_stack,
+                      we::world::edit_context* context,
+                      std::initializer_list<we::edit_flag<Flags>> flags) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=, &flags](Flags* value) {
+      unsigned int uint_value = std::to_underlying(*value);
+
+      std::array<ImGui::ExtEditFlag, 32> uint_flags;
+
+      for (std::size_t i = 0; i < (flags.size() > 32 ? 32 : flags.size()); ++i) {
+         auto& flag = flags.begin()[i];
+
+         uint_flags[i] = {flag.label, static_cast<unsigned int>(flag.bit)};
+      }
+
+      bool value_changed =
+         ImGui::EditFlags(label, &uint_value, {uint_flags.data(), flags.size()});
+
+      if (value_changed) {
+         *value = static_cast<Flags>(uint_value);
       }
 
       return we::edit_widget_result{.value_changed = value_changed,
