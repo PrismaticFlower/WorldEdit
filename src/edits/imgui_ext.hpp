@@ -977,6 +977,31 @@ inline bool EditFlags(const char* label, we::world::creation_entity* entity,
    });
 }
 
+inline bool DragBarrierRotation(const char* label, we::world::creation_entity* entity,
+                                we::edits::stack<we::world::edit_context>* edit_stack,
+                                we::world::edit_context* context,
+                                float v_speed = 1.0f, float v_min = 0.0f,
+                                float v_max = 0.0f, const char* format = "%.3f",
+                                ImGuiSliderFlags flags = 0) noexcept
+{
+   return EditWithUndo(entity, &we::world::barrier::rotation_angle, edit_stack,
+                       context, [=](float* value) {
+                          float degrees = *value * 180.0f / std::numbers::pi_v<float>;
+
+                          const bool value_changed =
+                             ImGui::DragFloat(label, &degrees, v_speed, v_min,
+                                              v_max, format, flags);
+
+                          if (value_changed) {
+                             *value = degrees / 180.0f * std::numbers::pi_v<float>;
+                          }
+
+                          return we::edit_widget_result{.value_changed = value_changed,
+                                                        .item_deactivated =
+                                                           ImGui::IsItemDeactivated()};
+                       });
+}
+
 // Creation Entity Path Node Editors
 
 template<typename T>

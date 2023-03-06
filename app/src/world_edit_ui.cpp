@@ -1973,9 +1973,8 @@ void world_edit::update_ui() noexcept
                                                                 barrier.name);
                                 });
 
-               ImGui::DragFloat("Rotation", &creation_entity,
-                                &world::barrier::rotation_angle,
-                                &_edit_stack_world, &_edit_context, 0.025f);
+               ImGui::DragBarrierRotation("Rotation", &creation_entity,
+                                          &_edit_stack_world, &_edit_context);
 
                if (ImGui::DragFloat2XZ("Position", &creation_entity,
                                        &world::barrier::position,
