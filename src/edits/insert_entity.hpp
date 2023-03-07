@@ -25,6 +25,9 @@ auto make_insert_entity(world::sector sector)
 auto make_insert_entity(world::portal portal)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_insert_entity(world::hintnode hintnode)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 auto make_insert_entity(world::barrier barrier)
    -> std::unique_ptr<edit<world::edit_context>>;
 

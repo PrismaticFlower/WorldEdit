@@ -10,6 +10,7 @@
 #include "imgui/imgui_stdlib.h"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
+#include "world/utility/hintnode_traits.hpp"
 #include "world/utility/snapping.hpp"
 #include "world/utility/world_utilities.hpp"
 
@@ -270,6 +271,30 @@ void world_edit::update_ui() noexcept
 
             _edit_stack_world
                .apply(edits::make_creation_entity_set(std::move(new_portal),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
+         }
+
+         if (ImGui::MenuItem("Hintnode")) {
+            const world::hintnode* base_hintnode =
+               world::find_entity(_world.hintnodes,
+                                  _entity_creation_context.last_hintnode);
+
+            world::hintnode new_hintnode;
+
+            if (base_hintnode) {
+               new_hintnode = *base_hintnode;
+
+               new_hintnode.name =
+                  world::create_unique_name(_world.hintnodes, base_hintnode->name);
+               new_hintnode.id = world::max_id;
+            }
+            else {
+               new_hintnode = world::hintnode{.name = "Hint0", .id = world::max_id};
+            }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_hintnode),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
          }
@@ -1963,6 +1988,201 @@ void world_edit::update_ui() noexcept
 
                return placement_traits{.has_placement_alignment = false,
                                        .has_resize_to = true};
+            },
+            [&](const world::hintnode& hintnode) {
+               ImGui::InputText("Name", &creation_entity,
+                                &world::hintnode::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.objects,
+                                                                *edited_value);
+                                });
+
+               ImGui::LayerPick<world::hintnode>("Layer", &creation_entity,
+                                                 &_edit_stack_world, &_edit_context);
+
+               ImGui::Separator();
+
+               if (_entity_creation_context.placement_rotation !=
+                   placement_rotation::manual_quaternion) {
+                  ImGui::DragRotationEuler("Rotation", &creation_entity,
+                                           &world::hintnode::rotation,
+                                           &world::edit_context::euler_rotation,
+                                           &_edit_stack_world, &_edit_context);
+               }
+               else {
+                  ImGui::DragQuat("Rotation", &creation_entity,
+                                  &world::hintnode::rotation,
+                                  &_edit_stack_world, &_edit_context);
+               }
+
+               if (ImGui::DragFloat3("Position", &creation_entity,
+                                     &world::hintnode::position,
+                                     &_edit_stack_world, &_edit_context)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+               }
+
+               if ((_entity_creation_context.placement_rotation ==
+                       placement_rotation::surface or
+                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+                   not _entity_creation_context.using_point_at) {
+                  quaternion new_rotation = hintnode.rotation;
+                  float3 new_position = hintnode.position;
+                  float3 new_euler_rotation = _edit_context.euler_rotation;
+
+                  if (_entity_creation_context.placement_rotation ==
+                         placement_rotation::surface and
+                      _cursor_surface_normalWS) {
+                     const float new_y_angle =
+                        surface_rotation_degrees(*_cursor_surface_normalWS,
+                                                 _edit_context.euler_rotation.y);
+                     new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
+                                           _edit_context.euler_rotation.z};
+                     new_rotation = make_quat_from_euler(
+                        new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+                  }
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position = _cursor_positionWS;
+
+                     if (_entity_creation_context.placement_alignment ==
+                         placement_alignment::grid) {
+                        new_position =
+                           align_position_to_grid(new_position,
+                                                  _entity_creation_context.alignment);
+                     }
+                     else if (_entity_creation_context.placement_alignment ==
+                              placement_alignment::snapping) {
+                        const std::optional<float3> snapped_position =
+                           world::get_snapped_position(new_position, _world.objects,
+                                                       _entity_creation_context.snap_distance,
+                                                       _object_classes);
+
+                        if (snapped_position) new_position = *snapped_position;
+                     }
+
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = hintnode.position.x;
+                     }
+                     if (_entity_creation_context.lock_y_axis) {
+                        new_position.y = hintnode.position.y;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.z = hintnode.position.z;
+                     }
+                  }
+
+                  if (new_rotation != hintnode.rotation or
+                      new_position != hintnode.position) {
+                     _edit_stack_world
+                        .apply(std::make_unique<edits::set_creation_location<world::hintnode>>(
+                                  new_rotation, hintnode.rotation, new_position,
+                                  hintnode.position, new_euler_rotation,
+                                  _edit_context.euler_rotation),
+                               _edit_context);
+                  }
+               }
+
+               if (_entity_creation_context.using_point_at) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       hintnode.position, 0xffffffffu);
+
+                  const quaternion new_rotation =
+                     look_at_quat(_cursor_positionWS, hintnode.position);
+
+                  if (new_rotation != hintnode.rotation) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::hintnode, quaternion>>(
+                           &world::hintnode::rotation, new_rotation, hintnode.rotation),
+                        _edit_context);
+                  }
+               }
+
+               ImGui::Separator();
+
+               ImGui::EnumSelect(
+                  "Type", &creation_entity, &world::hintnode::type,
+                  &_edit_stack_world, &_edit_context,
+                  {enum_select_option{"Snipe", world::hintnode_type::snipe},
+                   enum_select_option{"Patrol", world::hintnode_type::patrol},
+                   enum_select_option{"Cover", world::hintnode_type::cover},
+                   enum_select_option{"Access", world::hintnode_type::access},
+                   enum_select_option{"Jet Jump", world::hintnode_type::jet_jump},
+                   enum_select_option{"Mine", world::hintnode_type::mine},
+                   enum_select_option{"Land", world::hintnode_type::land},
+                   enum_select_option{"Fortification", world::hintnode_type::fortification},
+                   enum_select_option{"Vehicle Cover",
+                                      world::hintnode_type::vehicle_cover}});
+
+               const world::hintnode_traits hintnode_traits =
+                  world::get_hintnode_traits(hintnode.type);
+
+               if (hintnode_traits.has_command_post) {
+                  if (ImGui::BeginCombo("Command Post", hintnode.command_post.c_str())) {
+                     for (const auto& object : _world.objects) {
+                        auto object_class_it = _object_classes.find(object.class_name);
+
+                        if (object_class_it == _object_classes.end()) continue;
+
+                        const assets::odf::properties& properties =
+                           object_class_it->second.definition->header_properties;
+
+                        if (not properties.contains("ClassLabel")) continue;
+
+                        if (properties["ClassLabel"] == "commandpost") {
+                           if (ImGui::Selectable(object.name.c_str())) {
+                              _edit_stack_world.apply(
+                                 std::make_unique<edits::set_creation_value<world::hintnode, std::string>>(
+                                    &world::hintnode::command_post, object.name,
+                                    hintnode.command_post),
+                                 _edit_context);
+                           }
+                        }
+                     }
+                     ImGui::EndCombo();
+                  }
+               }
+
+               if (hintnode_traits.has_primary_stance) {
+                  ImGui::Separator();
+                  ImGui::EditFlags("Primary Stance", &creation_entity,
+                                   &world::hintnode::primary_stance,
+                                   &_edit_stack_world, &_edit_context,
+                                   {{"Stand", world::stance_flags::stand},
+                                    {"Crouch", world::stance_flags::crouch},
+                                    {"Prone", world::stance_flags::prone}});
+               }
+
+               if (hintnode_traits.has_secondary_stance) {
+                  ImGui::Separator();
+                  ImGui::EditFlags("Secondary Stance", &creation_entity,
+                                   &world::hintnode::secondary_stance,
+                                   &_edit_stack_world, &_edit_context,
+                                   {{"Stand", world::stance_flags::stand},
+                                    {"Crouch", world::stance_flags::crouch},
+                                    {"Prone", world::stance_flags::prone},
+                                    {"Left", world::stance_flags::left},
+                                    {"Right", world::stance_flags::right}});
+               }
+
+               if (hintnode_traits.has_mode) {
+                  ImGui::EnumSelect(
+                     "Mode", &creation_entity, &world::hintnode::mode,
+                     &_edit_stack_world, &_edit_context,
+                     {enum_select_option{"None", world::hintnode_mode::none},
+                      enum_select_option{"Attack", world::hintnode_mode::attack},
+                      enum_select_option{"Defend", world::hintnode_mode::defend},
+                      enum_select_option{"Both", world::hintnode_mode::both}});
+               }
+
+               if (hintnode_traits.has_radius) {
+                  ImGui::DragFloat("Radius", &creation_entity,
+                                   &world::hintnode::radius, &_edit_stack_world,
+                                   &_edit_context, 0.25f, 0.0f, 1e10f, "%.3f",
+                                   ImGuiSliderFlags_AlwaysClamp);
+               }
+
+               return placement_traits{.has_placement_ground = false};
             },
             [&](const world::barrier& barrier) {
                ImGui::InputText("Name", &creation_entity, &world::barrier::name,

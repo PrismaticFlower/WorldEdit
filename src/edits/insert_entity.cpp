@@ -76,6 +76,12 @@ auto make_insert_entity(world::portal portal)
    return std::make_unique<insert_entity<world::portal>>(std::move(portal));
 }
 
+auto make_insert_entity(world::hintnode hintnode)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<insert_entity<world::hintnode>>(std::move(hintnode));
+}
+
 auto make_insert_entity(world::barrier barrier)
    -> std::unique_ptr<edit<world::edit_context>>
 {

@@ -1000,10 +1000,10 @@ void renderer_impl::draw_world_meta_objects(
       const float4 hintnode_outline_color =
          float4{settings.hintnode_outline_color, 1.0f};
 
-      for (auto& hintnode : world.hintnodes) {
-         if (not active_layers[hintnode.layer]) continue;
+      const auto add_hintnode = [&](const world::hintnode& hintnode) {
+         if (not active_layers[hintnode.layer]) return;
 
-         if (not intersects(view_frustum, hintnode.position, 1.0f)) continue;
+         if (not intersects(view_frustum, hintnode.position, 1.0f)) return;
 
          float4x4 transform = to_matrix(hintnode.rotation);
 
@@ -1011,6 +1011,13 @@ void renderer_impl::draw_world_meta_objects(
 
          _meta_draw_batcher.add_octahedron_outlined(transform, hintnode_color,
                                                     hintnode_outline_color);
+      };
+
+      for (auto& hintnode : world.hintnodes) add_hintnode(hintnode);
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::hintnode>(*interaction_targets.creation_entity)) {
+         add_hintnode(std::get<world::hintnode>(*interaction_targets.creation_entity));
       }
    }
 

@@ -529,6 +529,22 @@ void world_edit::place_creation_entity() noexcept
 
             portal.name = world::create_unique_name(_world.portals, portal.name);
          },
+
+         [&](world::hintnode& hintnode) {
+            world::hintnode new_hintnode = hintnode;
+
+            new_hintnode.name =
+               world::create_unique_name(_world.hintnodes, new_hintnode.name);
+            new_hintnode.id = _world.next_id.hintnodes.aquire();
+
+            _entity_creation_context.last_hintnode = new_hintnode.id;
+
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
+                                    _edit_context);
+
+            hintnode.name =
+               world::create_unique_name(_world.hintnodes, hintnode.name);
+         },
          [&](world::barrier& barrier) {
             world::barrier new_barrier = barrier;
 

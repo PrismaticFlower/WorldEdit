@@ -173,6 +173,7 @@ private:
       world::region_id last_region = world::max_id;
       world::sector_id last_sector = world::max_id;
       world::portal_id last_portal = world::max_id;
+      world::hintnode_id last_hintnode = world::max_id;
       world::barrier_id last_barrier = world::max_id;
       world::planning_hub_id last_planning_hub = world::max_id;
       world::planning_connection_id last_planning_connection = world::max_id;
