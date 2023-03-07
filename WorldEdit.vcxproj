@@ -230,6 +230,7 @@
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
     <ClCompile Include="src\world\raycast.cpp" />
+    <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
     <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
     <ClCompile Include="src\world\utility\sector_fill.cpp" />
     <ClCompile Include="src\world\utility\snapping.cpp" />
@@ -448,6 +449,7 @@
     <ClInclude Include="src\world\interaction_context.hpp" />
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\tool_visualizers.hpp" />
+    <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
     <ClInclude Include="src\world\utility\sector_fill.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />

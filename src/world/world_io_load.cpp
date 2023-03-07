@@ -736,6 +736,41 @@ void convert_light_regions(world& world)
    });
 }
 
+void convert_boundaries(world& world, output_stream& output)
+{
+   for (auto& boundary : world.boundaries) {
+      auto path = std::find_if(world.paths.begin(), world.paths.end(),
+                               [&](const we::world::path& path) {
+                                  return path.name == boundary.name;
+                               });
+
+      if (path == world.paths.end()) {
+         output.write("Warning! Boundary '{}' is missing it's path. The "
+                      "default size({:f}, {:f}) and position({:f}, {:f}) "
+                      "will be used for the boundary.\n",
+                      boundary.name, boundary.size.x, boundary.size.y,
+                      boundary.position.x, boundary.position.y);
+
+         continue;
+      }
+
+      float2 min_node = {std::numeric_limits<float>::max(),
+                         std::numeric_limits<float>::max()};
+      float2 max_node = {std::numeric_limits<float>::lowest(),
+                         std::numeric_limits<float>::lowest()};
+
+      for (auto& node : path->nodes) {
+         min_node = min(float2{node.position.x, node.position.z}, min_node);
+         max_node = max(float2{node.position.x, node.position.z}, max_node);
+      }
+
+      boundary.position = (min_node + max_node) / 2.0f;
+      boundary.size = abs(max_node - min_node) / 2.0f;
+
+      world.paths.erase(path);
+   }
+}
+
 }
 
 auto load_world(const std::filesystem::path& path, output_stream& output) -> world
@@ -760,6 +795,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       }
 
       convert_light_regions(world);
+      convert_boundaries(world, output);
 
       try {
          utility::stopwatch load_timer;

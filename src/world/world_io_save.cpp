@@ -1,6 +1,7 @@
 
 #include "world_io_save.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/boundary_nodes.hpp"
 
 #include <cctype>
 #include <cstddef>
@@ -158,7 +159,8 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
       std::accumulate(world.paths.begin(), world.paths.end(), 0,
                       [=](int total, const path& path) {
                          return layer_index == path.layer ? total + 1 : total;
-                      });
+                      }) +
+      (layer_index == 0 ? static_cast<int>(world.boundaries.size()) : 0);
 
    file.write_ln("Version(10);");
    file.write_ln("PathCount({});\n", layer_path_count);
@@ -235,6 +237,52 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
             }
          }
 
+         file.write_ln("\t\t\t}");
+
+         file.write_ln("\t\t}\n");
+      }
+
+      file.write_ln("\t}\n");
+
+      file.write_ln("}\n");
+   }
+
+   if (layer_index != 0) return;
+
+   for (auto& boundary : world.boundaries) {
+      file.write_ln("Path(\"{}\")", boundary.name);
+      file.write_ln("{");
+
+      file.write_ln("\tData(0);");
+      file.write_ln("\tPathType(0);");
+      file.write_ln("\tPathSpeedType(0);");
+      file.write_ln("\tPathTime(0.000000);");
+      file.write_ln("\tOffsetPath(0);");
+      file.write_ln("\tSplineType(\"Hermite\");\n");
+
+      file.write_ln("\tProperties(0)");
+      file.write_ln("\t{");
+      file.write_ln("\t}\n");
+
+      const std::array<float2, 12> nodes = get_boundary_nodes(boundary);
+
+      file.write_ln("\tNodes({})", nodes.size());
+      file.write_ln("\t{");
+
+      for (auto& node : nodes) {
+         file.write_ln("\t\tNode()");
+         file.write_ln("\t\t{");
+
+         file.write_ln("\t\t\tPosition({:f}, 0.000000, {:f});", node.x, -node.y);
+         file.write_ln("\t\t\tKnot(0.000000);");
+         file.write_ln("\t\t\tData(0);");
+         file.write_ln("\t\t\tTime(1.000000);");
+         file.write_ln("\t\t\tPauseTime(0.000000);");
+         file.write_ln(
+            "\t\t\tRotation(1.000000, 0.000000, 0.000000, 0.000000);");
+
+         file.write_ln("\t\t\tProperties(0)");
+         file.write_ln("\t\t\t{");
          file.write_ln("\t\t\t}");
 
          file.write_ln("\t\t}\n");

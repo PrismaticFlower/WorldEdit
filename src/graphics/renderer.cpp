@@ -30,6 +30,7 @@
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
+#include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
 
@@ -1026,20 +1027,15 @@ void renderer_impl::draw_world_meta_objects(
       const uint32 boundary_color = utility::pack_srgb_bgra(settings.boundary_color);
 
       for (auto& boundary : world.boundaries) {
-         using namespace ranges::views;
+         const std::array<float2, 12> nodes = world::get_boundary_nodes(boundary);
 
-         const world::path* path = look_for(world.paths, [&](const world::path& path) {
-            return path.name == boundary.name;
-         });
+         for (std::size_t i = 0; i < nodes.size(); ++i) {
+            const float2 a = nodes[i];
+            const float2 b = nodes[(i + 1) % nodes.size()];
 
-         if (not path) continue;
-
-         for (const auto [a, b] :
-              zip(path->nodes, concat(path->nodes | drop(1), path->nodes | take(1)))) {
-
-            const std::array quad = {a.position, b.position,
-                                     a.position + float3{0.0f, boundary_height, 0.0f},
-                                     b.position + float3{0.0f, boundary_height, 0.0f}};
+            const std::array quad = {float3{a.x, 0.0f, a.y}, float3{b.x, 0.0f, b.y},
+                                     float3{a.x, boundary_height, a.y},
+                                     float3{b.x, boundary_height, b.y}};
 
             _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], boundary_color);
             _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], boundary_color);
@@ -1356,33 +1352,25 @@ void renderer_impl::draw_interaction_targets(
       [&]([[maybe_unused]] const world::planning_connection& planning_connection,
           [[maybe_unused]] const float3 color) {},
       [&](const world::boundary& boundary, const float3 color) {
-         const world::path* path = look_for(world.paths, [&](const world::path& path) {
-            return path.name == boundary.name;
-         });
-
-         if (not path) return;
-
          const float boundary_height = settings.boundary_height;
 
          const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
 
-         using namespace ranges::views;
+         const std::array<float2, 12> nodes = world::get_boundary_nodes(boundary);
 
-         for (const auto [a, b] :
-              zip(path->nodes, concat(path->nodes | drop(1), path->nodes | take(1)))) {
+         for (std::size_t i = 0; i < nodes.size(); ++i) {
+            const float2 a = nodes[i];
+            const float2 b = nodes[(i + 1) % nodes.size()];
 
-            const std::array quad = {a.position, b.position,
-                                     a.position + float3{0.0f, boundary_height, 0.0f},
-                                     b.position + float3{0.0f, boundary_height, 0.0f}};
+            const std::array quad = {float3{a.x, 0.0f, a.y},
+                                     float3{a.x, boundary_height, a.y},
+                                     float3{b.x, boundary_height, b.y},
+                                     float3{b.x, 0.0f, b.y}};
 
-            _meta_draw_batcher.add_triangle_wireframe(quad[0], quad[1], quad[2],
-                                                      packed_color);
-            _meta_draw_batcher.add_triangle_wireframe(quad[2], quad[1], quad[3],
-                                                      packed_color);
-            _meta_draw_batcher.add_triangle_wireframe(quad[0], quad[2], quad[1],
-                                                      packed_color);
-            _meta_draw_batcher.add_triangle_wireframe(quad[2], quad[3], quad[1],
-                                                      packed_color);
+            _meta_draw_batcher.add_line_solid(quad[0], quad[1], packed_color);
+            _meta_draw_batcher.add_line_solid(quad[1], quad[2], packed_color);
+            _meta_draw_batcher.add_line_solid(quad[2], quad[3], packed_color);
+            _meta_draw_batcher.add_line_solid(quad[3], quad[0], packed_color);
          }
       },
    };

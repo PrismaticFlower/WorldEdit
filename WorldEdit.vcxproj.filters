@@ -616,6 +616,9 @@
     <ClInclude Include="src\world\utility\hintnode_traits.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\boundary_nodes.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -853,6 +856,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\utility\hintnode_traits.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\boundary_nodes.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -3,6 +3,7 @@
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/boundary_nodes.hpp"
 #include "utility/look_for.hpp"
 
 #include <limits>
@@ -385,8 +386,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& barrier : barriers) {
       float4x4 world_to_box = transpose(
          make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f}));
-      world_to_box[3] = {world_to_box *
-                            float3{-barrier.position.x, 0.0f, -barrier.position.y},
+      world_to_box[3] = {world_to_box * float3{-barrier.position.x, 0.0f,
+                                               -barrier.position.y},
                          1.0f};
 
       float3 box_ray_origin = world_to_box * ray_origin;
@@ -410,27 +411,22 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const boundary> boundaries, std::span<const path> paths,
-             const float boundary_height) noexcept
+             std::span<const boundary> boundaries, const float boundary_height) noexcept
    -> std::optional<raycast_result<boundary>>
 {
    std::optional<boundary_id> hit;
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& boundary : boundaries) {
-      const path* boundary_path = look_for(paths, [&](const path& path) {
-         return path.name == boundary.name;
-      });
+      const std::array<float2, 12> nodes = get_boundary_nodes(boundary);
 
-      if (not boundary_path) continue;
+      for (std::size_t i = 0; i < nodes.size(); ++i) {
+         const float2 a = nodes[i];
+         const float2 b = nodes[(i + 1) % nodes.size()];
 
-      for (const auto [a, b] :
-           zip(boundary_path->nodes, concat(boundary_path->nodes | drop(1),
-                                            boundary_path->nodes | take(1)))) {
-
-         const std::array quad = {a.position, b.position,
-                                  a.position + float3{0.0f, boundary_height, 0.0f},
-                                  b.position + float3{0.0f, boundary_height, 0.0f}};
+         const std::array quad = {float3{a.x, 0.0f, a.y}, float3{b.x, 0.0f, b.y},
+                                  float3{a.x, boundary_height, a.y},
+                                  float3{b.x, boundary_height, b.y}};
 
          const float intersection = quadIntersect(ray_origin, ray_direction,
                                                   quad[0], quad[1], quad[3], quad[2])

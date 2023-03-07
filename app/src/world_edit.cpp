@@ -265,7 +265,7 @@ void world_edit::update_hovered_entity() noexcept
    if (_world_draw_mask.boundaries) {
       if (std::optional<world::raycast_result<world::boundary>> hit =
              world::raycast(ray.origin, ray.direction, _world.boundaries,
-                            _world.paths, _settings.graphics.boundary_height);
+                            _settings.graphics.boundary_height);
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;

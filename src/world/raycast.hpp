@@ -72,8 +72,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<barrier>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const boundary> boundaries, std::span<const path> paths,
-             const float boundary_height) noexcept
+             std::span<const boundary> boundaries, const float boundary_height) noexcept
    -> std::optional<raycast_result<boundary>>;
 
 }

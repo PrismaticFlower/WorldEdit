@@ -200,72 +200,40 @@ TEST_CASE("world loading", "[World][IO]")
 
    // path checks
    {
-      REQUIRE(world.paths.size() == 2);
-
-      // boundary
-      {
-         CHECK(world.paths[0].name == "boundary"sv);
-         CHECK(world.paths[0].layer == 0);
-         CHECK(world.paths[0].properties.empty());
-         CHECK(is_unique_id(0, world.paths));
-
-         constexpr std::array<float3, 12> expected_positions{
-            {{383.557434f, 0.000000f, 4.797800f},
-             {332.062256f, 0.000000f, -187.287064f},
-             {191.642288f, 0.000000f, -327.707031f},
-             {-0.442575f, 0.000000f, -379.202209f},
-             {-192.527451f, 0.000000f, -327.707031f},
-             {-332.947418f, 0.000000f, -187.287064f},
-             {-384.442566f, 0.000000f, 4.797800f},
-             {-332.947021f, 0.000000f, 196.882675f},
-             {-192.527451f, 0.000000f, 337.302643f},
-             {-0.442575f, 0.000000f, 388.797791f},
-             {191.642288f, 0.000000f, 337.302246f},
-             {332.062256f, 0.000000f, 196.882675f}}};
-
-         REQUIRE(world.paths[0].nodes.size() == 12);
-
-         for (int i = 0; i < world.paths[0].nodes.size(); ++i) {
-            CHECK(approx_equals(world.paths[0].nodes[i].position,
-                                expected_positions[i]));
-            CHECK(approx_equals(world.paths[0].nodes[i].rotation,
-                                {0.0f, 0.0f, 1.0f, 0.0f}));
-            CHECK(world.paths[0].nodes[i].properties.empty());
-         }
-      }
+      REQUIRE(world.paths.size() == 1);
 
       // Path 0
       {
-         CHECK(world.paths[1].name == "Path 0"sv);
-         CHECK(world.paths[1].layer == 0);
-         CHECK(world.paths[1].properties.size() == 1);
-         CHECK(world.paths[1].properties[0] ==
+         CHECK(world.paths[0].name == "Path 0"sv);
+         CHECK(world.paths[0].layer == 0);
+         CHECK(world.paths[0].properties.size() == 1);
+         CHECK(world.paths[0].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
-         CHECK(is_unique_id(1, world.paths));
+         CHECK(is_unique_id(0, world.paths));
 
          constexpr std::array<float3, 3> expected_positions{
             {{-16.041691f, 0.000000f, 31.988783f},
              {-31.982189f, 0.000000f, 48.033310f},
              {-48.012756f, 0.000000f, 31.962399f}}};
 
-         REQUIRE(world.paths[1].nodes.size() == 3);
+         REQUIRE(world.paths[0].nodes.size() == 3);
 
-         CHECK(approx_equals(world.paths[1].nodes[0].position, expected_positions[0]));
-         CHECK(approx_equals(world.paths[1].nodes[0].rotation,
+         CHECK(approx_equals(world.paths[0].nodes[0].position, expected_positions[0]));
+         CHECK(approx_equals(world.paths[0].nodes[0].rotation,
                              {0.0f, 0.0f, 1.0f, 0.0f}));
-         REQUIRE(world.paths[1].nodes[0].properties.size() == 1);
-         CHECK(world.paths[1].nodes[0].properties[0] ==
+         REQUIRE(world.paths[0].nodes[0].properties.size() == 1);
+         CHECK(world.paths[0].nodes[0].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
 
-         CHECK(approx_equals(world.paths[1].nodes[1].position, expected_positions[1]));
-         CHECK(approx_equals(world.paths[1].nodes[1].rotation,
+         CHECK(approx_equals(world.paths[0].nodes[1].position, expected_positions[1]));
+         CHECK(approx_equals(world.paths[0].nodes[1].rotation,
                              {0.0f, 0.0f, 1.0f, 0.0f}));
-         CHECK(world.paths[1].nodes[1].properties.empty());
+         CHECK(world.paths[0].nodes[1].properties.empty());
 
-         CHECK(approx_equals(world.paths[1].nodes[2].position, expected_positions[2]));
-         CHECK(approx_equals(world.paths[1].nodes[2].rotation,
+         CHECK(approx_equals(world.paths[0].nodes[2].position, expected_positions[2]));
+         CHECK(approx_equals(world.paths[0].nodes[2].rotation,
                              {0.0f, 0.0f, 1.0f, 0.0f}));
-         CHECK(world.paths[1].nodes[2].properties.empty());
+         CHECK(world.paths[0].nodes[2].properties.empty());
       }
    }
 
@@ -360,8 +328,11 @@ TEST_CASE("world loading", "[World][IO]")
 
    // boundaries checks
    {
+
       REQUIRE(world.boundaries.size() == 1);
       CHECK(world.boundaries[0].name == "boundary"sv);
+      CHECK(world.boundaries[0].size == float2{384.000000f, 384.000000f});
+      CHECK(world.boundaries[0].position == float2{-0.442565918f, 4.79779053f});
       CHECK(is_unique_id(0, world.boundaries));
    }
 }
