@@ -1026,7 +1026,7 @@ void renderer_impl::draw_world_meta_objects(
       const float boundary_height = settings.boundary_height;
       const uint32 boundary_color = utility::pack_srgb_bgra(settings.boundary_color);
 
-      for (auto& boundary : world.boundaries) {
+      const auto add_boundary = [&](const world::boundary& boundary) {
          const std::array<float2, 12> nodes = world::get_boundary_nodes(boundary);
 
          for (std::size_t i = 0; i < nodes.size(); ++i) {
@@ -1041,7 +1041,17 @@ void renderer_impl::draw_world_meta_objects(
             _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], boundary_color);
             _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], boundary_color);
             _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], boundary_color);
+
+            _meta_draw_batcher.add_line_solid(quad[0], quad[2], boundary_color);
+            _meta_draw_batcher.add_line_solid(quad[1], quad[3], boundary_color);
          }
+      };
+
+      for (auto& boundary : world.boundaries) add_boundary(boundary);
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::boundary>(*interaction_targets.creation_entity)) {
+         add_boundary(std::get<world::boundary>(*interaction_targets.creation_entity));
       }
    }
 

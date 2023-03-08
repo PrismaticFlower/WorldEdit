@@ -563,7 +563,21 @@ void world_edit::place_creation_entity() noexcept
          [&](world::planning_connection& planning_connection) {
             (void)planning_connection;
          },
-         [&](world::boundary& boundary) { (void)boundary; },
+         [&](world::boundary& boundary) {
+            world::boundary new_boundary = boundary;
+
+            new_boundary.name =
+               world::create_unique_name(_world.boundaries, new_boundary.name);
+            new_boundary.id = _world.next_id.boundaries.aquire();
+
+            _entity_creation_context.last_boundary = new_boundary.id;
+
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
+                                    _edit_context);
+
+            boundary.name =
+               world::create_unique_name(_world.boundaries, boundary.name);
+         },
       },
       *_interaction_targets.creation_entity);
 }

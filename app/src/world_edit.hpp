@@ -216,6 +216,7 @@ private:
       std::optional<float3> resize_start_size;
       std::optional<float2> resize_barrier_start_position;
       std::optional<float2> resize_barrier_start_size;
+      std::optional<float2> resize_boundary_start_size;
       std::optional<float> resize_portal_start_width;
       std::optional<float> resize_portal_start_height;
 

@@ -326,8 +326,32 @@ void world_edit::update_ui() noexcept
          if (ImGui::MenuItem("Planning Hub")) _create.planning_hub = true;
          if (ImGui::MenuItem("Planning Connection"))
             _create.planning_connection = true;
-         if (ImGui::MenuItem("Boundary")) _create.object = true;
 #endif
+
+         if (ImGui::MenuItem("Boundary")) {
+            const world::boundary* base_boundary =
+               world::find_entity(_world.boundaries,
+                                  _entity_creation_context.last_boundary);
+
+            world::boundary new_boundary;
+
+            if (base_boundary) {
+               new_boundary = *base_boundary;
+
+               new_boundary.name =
+                  world::create_unique_name(_world.boundaries, base_boundary->name);
+               new_boundary.id = world::max_id;
+            }
+            else {
+               new_boundary = world::boundary{.name = "Boundary", .id = world::max_id};
+            }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_boundary),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
+         }
+
          ImGui::EndMenu();
       }
 
@@ -2301,8 +2325,6 @@ void world_edit::update_ui() noexcept
                                                               barrier.position.y},
                                                        0xffffffffu);
 
-                  // TODO: Resize to
-
                   const float2 barrier_start_position =
                      *_entity_creation_context.resize_barrier_start_position;
                   const float2 barrier_start_size =
@@ -2516,9 +2538,73 @@ void world_edit::update_ui() noexcept
                return placement_traits{};
             },
             [&](const world::boundary& boundary) {
-               (void)boundary;
+               ImGui::InputText("Name", &creation_entity,
+                                &world::boundary::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.boundaries,
+                                                                boundary.name);
+                                });
 
-               return placement_traits{};
+               if (ImGui::DragFloat2XZ("Position", &creation_entity,
+                                       &world::boundary::position,
+                                       &_edit_stack_world, &_edit_context, 0.25f)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+               }
+
+               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+                   not _entity_creation_context.using_point_at) {
+                  float2 new_position = boundary.position;
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position =
+                        float2{_cursor_positionWS.x, _cursor_positionWS.z};
+
+                     if (_entity_creation_context.placement_alignment ==
+                         placement_alignment::grid) {
+                        new_position =
+                           align_position_to_grid(new_position,
+                                                  _entity_creation_context.alignment);
+                     }
+                     else if (_entity_creation_context.placement_alignment ==
+                              placement_alignment::snapping) {
+                        const std::optional<float3> snapped_position =
+                           world::get_snapped_position({new_position.x,
+                                                        _cursor_positionWS.y,
+                                                        new_position.y},
+                                                       _world.objects,
+                                                       _entity_creation_context.snap_distance,
+                                                       _object_classes);
+
+                        if (snapped_position) {
+                           new_position = {snapped_position->x, snapped_position->z};
+                        }
+                     }
+
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = boundary.position.x;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.y =
+                           boundary.position.y; // NB: Usage of Y under lock Z.
+                     }
+                  }
+
+                  if (new_position != boundary.position) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::boundary, float2>>(
+                           &world::boundary::position, new_position, boundary.position),
+                        _edit_context);
+                  }
+               }
+
+               ImGui::DragFloat2XZ("Size", &creation_entity,
+                                   &world::boundary::size, &_edit_stack_world,
+                                   &_edit_context, 1.0f, 0.0f, 1e10f);
+
+               return placement_traits{.has_placement_rotation = false,
+                                       .has_point_at = false,
+                                       .has_placement_ground = false};
             },
          },
          creation_entity);
