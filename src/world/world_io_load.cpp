@@ -561,6 +561,143 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
+void load_planning(const std::filesystem::path& filepath, output_stream& output,
+                   world& world_out)
+{
+   using namespace assets;
+
+   utility::stopwatch load_timer;
+
+   struct branch_weight {
+      std::string start_hub;
+      std::string end_hub;
+      float weight = 0.0f;
+      std::string connection;
+      ai_path_flags flag;
+   };
+
+   std::vector<branch_weight> branch_weights;
+   branch_weights.reserve(1024);
+
+   try {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
+         if (key_node.key == "Hub"sv) {
+            planning_hub& hub = world_out.planning_hubs.emplace_back();
+
+            hub.name = key_node.values.get<std::string>(0);
+            hub.id = world_out.next_id.planning_hubs.aquire();
+
+            for (auto& child_key_node : key_node) {
+               if (child_key_node.key == "Pos"sv) {
+                  hub.position = {child_key_node.values.get<float>(0),
+                                  -child_key_node.values.get<float>(2)};
+               }
+               else if (child_key_node.key == "Radius"sv) {
+                  hub.radius = {child_key_node.values.get<float>(0)};
+               }
+               else if (child_key_node.key == "BranchWeight"sv) {
+                  branch_weights.push_back(
+                     branch_weight{.start_hub = hub.name,
+                                   .end_hub = child_key_node.values.get<std::string>(0),
+                                   .weight = child_key_node.values.get<float>(1),
+                                   .connection =
+                                      child_key_node.values.get<std::string>(2),
+                                   .flag = static_cast<ai_path_flags>(
+                                      child_key_node.values.get<int>(3))});
+               };
+
+               if (verbose_output) {
+                  output.write("Loaded world planning hub '{}'\n", hub.name);
+               }
+            }
+         }
+         else if (key_node.key == "Connection") {
+            planning_connection& connection =
+               world_out.planning_connections.emplace_back();
+
+            connection.name = key_node.values.get<std::string>(0);
+            connection.id = world_out.next_id.planning_connections.aquire();
+
+            for (auto& child_key_node : key_node) {
+               if (child_key_node.key == "Start"sv) {
+                  connection.start = child_key_node.values.get<std::string>(0);
+               }
+               else if (child_key_node.key == "End"sv) {
+                  connection.end = child_key_node.values.get<std::string>(0);
+               }
+               else if (child_key_node.key == "Flag"sv) {
+                  connection.flags =
+                     static_cast<ai_path_flags>(child_key_node.values.get<int>(0));
+               }
+               else if (child_key_node.key == "Dynamic"sv) {
+                  connection.dynamic_group = child_key_node.values.get<int8>(0);
+               }
+               else if (child_key_node.key == "Jump"sv) {
+                  connection.jump = true;
+               }
+               else if (child_key_node.key == "JetJump"sv) {
+                  connection.jet_jump = true;
+               }
+               else if (child_key_node.key == "OneWay"sv) {
+                  connection.one_way = true;
+               }
+
+               if (verbose_output) {
+                  output.write("Loaded world planning connection '{}'\n",
+                               connection.name);
+               }
+            }
+         }
+      }
+   }
+   catch (std::exception& e) {
+      throw_layer_load_failure("planning", filepath.string(), e);
+   }
+
+   absl::flat_hash_map<std::string_view, planning_connection*> connection_map;
+   connection_map.reserve(world_out.planning_connections.size());
+
+   for (auto& connection : world_out.planning_connections) {
+      connection_map.emplace(connection.name, &connection);
+   }
+
+   for (auto& branch_weight : branch_weights) {
+      planning_connection& connection = *connection_map.at(branch_weight.connection);
+      planning_branch_weights& weights = connection.start == branch_weight.start_hub
+                                            ? connection.forward_weights
+                                            : connection.backward_weights;
+
+      switch (branch_weight.flag) {
+      case ai_path_flags::soldier:
+         weights.soldier = branch_weight.weight;
+         break;
+      case ai_path_flags::hover:
+         weights.hover = branch_weight.weight;
+         break;
+      case ai_path_flags::small:
+         weights.small = branch_weight.weight;
+         break;
+      case ai_path_flags::medium:
+         weights.medium = branch_weight.weight;
+         break;
+      case ai_path_flags::huge:
+         weights.huge = branch_weight.weight;
+         break;
+      case ai_path_flags::flyer:
+         weights.flyer = branch_weight.weight;
+         break;
+      default:
+         output.write(
+            "Branch Weight for Hub '{}' has multiple (or no) flags set. This "
+            "is invalid, ignoring weight.\n",
+            branch_weight.start_hub);
+      }
+   }
+
+   output.write("Loaded world AI planning (time taken {:f}ms)\n",
+                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+}
+
 void load_boundaries(const std::filesystem::path& filepath,
                      output_stream& output, world& world_out)
 {
@@ -681,6 +818,11 @@ void load_layer(const std::filesystem::path& world_dir, const std::string_view l
    if (const auto bar_path = world_dir / layer_name += ".bar"sv;
        std::filesystem::exists(bar_path)) {
       load_barriers(bar_path, output, world_out);
+   }
+
+   if (const auto pln_path = world_dir / layer_name += ".pln"sv;
+       std::filesystem::exists(pln_path)) {
+      load_planning(pln_path, output, world_out);
    }
 
    if (const auto bnd_path = world_dir / layer_name += ".bnd"sv;

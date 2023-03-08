@@ -318,12 +318,52 @@ TEST_CASE("world loading", "[World][IO]")
 
    // planning hubs checks
    {
-      // TODO: create a test .pln file
+      REQUIRE(world.planning_hubs.size() == 4);
+
+      CHECK(world.planning_hubs[0].name == "Hub0"sv);
+      CHECK(world.planning_hubs[0].position == float2{-63.822487f, -9.202278f});
+      CHECK(world.planning_hubs[0].radius == 8.0f);
+      CHECK(is_unique_id(0, world.planning_hubs));
+
+      CHECK(world.planning_hubs[1].name == "Hub1"sv);
+      CHECK(world.planning_hubs[1].position == float2{-121.883095f, -30.046543f});
+      CHECK(world.planning_hubs[1].radius == 7.586431f);
+      CHECK(is_unique_id(1, world.planning_hubs));
+
+      CHECK(world.planning_hubs[2].name == "Hub2"sv);
+      CHECK(world.planning_hubs[2].position == float2{-54.011314f, -194.037018f});
+      CHECK(world.planning_hubs[2].radius == 13.120973f);
+      CHECK(is_unique_id(2, world.planning_hubs));
+
+      CHECK(world.planning_hubs[3].name == "Hub3"sv);
+      CHECK(world.planning_hubs[3].position == float2{-163.852570f, -169.116760f});
+      CHECK(world.planning_hubs[3].radius == 12.046540f);
+      CHECK(is_unique_id(3, world.planning_hubs));
    }
 
    // planning connections checks
    {
-      // TODO: create a test .pln file
+      REQUIRE(world.planning_connections.size() == 2);
+
+      CHECK(world.planning_connections[0].start == "Hub0"sv);
+      CHECK(world.planning_connections[0].end == "Hub1"sv);
+      CHECK(world.planning_connections[0].flags ==
+            (ai_path_flags::soldier | ai_path_flags::hover | ai_path_flags::small |
+             ai_path_flags::medium | ai_path_flags::huge | ai_path_flags::flyer));
+
+      CHECK(world.planning_connections[0].backward_weights.soldier == 20.0f);
+      CHECK(world.planning_connections[0].backward_weights.hover == 15.0f);
+      CHECK(world.planning_connections[0].backward_weights.small == 7.5f);
+      CHECK(world.planning_connections[0].backward_weights.medium == 25.0f);
+      CHECK(world.planning_connections[0].backward_weights.huge == 75.0f);
+      CHECK(world.planning_connections[0].backward_weights.flyer == 100.0f);
+
+      CHECK(is_unique_id(0, world.planning_connections));
+
+      CHECK(world.planning_connections[1].start == "Hub3"sv);
+      CHECK(world.planning_connections[1].end == "Hub2"sv);
+      CHECK(world.planning_connections[1].flags == ai_path_flags::hover);
+      CHECK(is_unique_id(1, world.planning_connections));
    }
 
    // boundaries checks

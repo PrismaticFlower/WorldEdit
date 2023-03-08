@@ -10,23 +10,23 @@
 
 namespace we::world {
 
+struct planning_branch_weights {
+   float soldier = 0.0f;
+   float hover = 0.0f;
+   float small = 0.0f;
+   float medium = 0.0f;
+   float huge = 0.0f;
+   float flyer = 0.0f;
+
+   bool operator==(const planning_branch_weights&) const noexcept = default;
+};
+
 struct planning_hub {
-   struct branch_weight {
-      std::string target_hub;
-      std::string connection;
-      float weight = 100.0f;
-      ai_path_flags flag = ai_path_flags::soldier;
-
-      bool operator==(const branch_weight&) const noexcept = default;
-   };
-
    std::string name;
    int layer = 0;
 
-   float3 position;
+   float2 position;
    float radius = 0.0f;
-
-   std::vector<branch_weight> branch_weights;
 
    id<planning_hub> id{};
 
@@ -47,9 +47,12 @@ struct planning_connection {
                          ai_path_flags::huge | ai_path_flags::flyer;
 
    bool jump = false;
-   bool jetjump = false;
-   bool oneway = false;
-   std::optional<int> dynamic_group;
+   bool jet_jump = false;
+   bool one_way = false;
+   int8 dynamic_group = 0;
+
+   planning_branch_weights forward_weights;
+   planning_branch_weights backward_weights;
 
    id<planning_connection> id{};
 
