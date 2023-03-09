@@ -72,6 +72,10 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<barrier>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
+             std::span<const planning_hub> hubs, const float hub_height) noexcept
+   -> std::optional<raycast_result<planning_hub>>;
+
+auto raycast(const float3 ray_origin, const float3 ray_direction,
              std::span<const boundary> boundaries, const float boundary_height) noexcept
    -> std::optional<raycast_result<boundary>>;
 

@@ -411,6 +411,35 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
+             std::span<const planning_hub> hubs, const float hub_height) noexcept
+   -> std::optional<raycast_result<planning_hub>>
+{
+   std::optional<planning_hub_id> hit;
+   float min_distance = std::numeric_limits<float>::max();
+
+   for (auto& hub : hubs) {
+      const float3 top_position = {hub.position.x, hub_height, hub.position.y};
+      const float3 bottom_position = {hub.position.x, -hub_height, hub.position.y};
+
+      const float intersection =
+         iCylinder(ray_origin, ray_direction, top_position,
+                   bottom_position, hub.radius)
+            .x;
+
+      if (intersection < 0.0f) continue;
+
+      if (intersection < min_distance) {
+         hit = hub.id;
+         min_distance = intersection;
+      }
+   }
+
+   if (not hit) return std::nullopt;
+
+   return raycast_result<planning_hub>{.distance = min_distance, .id = *hit};
+}
+
+auto raycast(const float3 ray_origin, const float3 ray_direction,
              std::span<const boundary> boundaries, const float boundary_height) noexcept
    -> std::optional<raycast_result<boundary>>
 {
