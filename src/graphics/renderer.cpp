@@ -751,7 +751,7 @@ void renderer_impl::draw_world_meta_objects(
       }
    };
 
-   if (active_entity_types.regions and not world.regions.empty()) {
+   if (active_entity_types.regions) {
       const float4 region_color = settings.region_color;
 
       for (auto& region : world.regions) {
@@ -770,7 +770,7 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.barriers and not world.barriers.empty()) {
+   if (active_entity_types.barriers) {
       const float barrier_height = settings.barrier_height;
       const float4 barrier_color = settings.barrier_color;
 
@@ -797,7 +797,7 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.lights and not world.lights.empty()) {
+   if (active_entity_types.lights) {
       const float volume_alpha = settings.light_volume_alpha;
 
       const auto add_light = [&](const world::light& light) {
@@ -908,7 +908,7 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.sectors and not world.sectors.empty()) {
+   if (active_entity_types.sectors) {
       const uint32 sector_color = utility::pack_srgb_bgra(settings.sector_color);
 
       const auto add_sector = [&](const world::sector& sector) {
@@ -958,7 +958,7 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.portals and not world.portals.empty()) {
+   if (active_entity_types.portals) {
       const uint32 portal_color = utility::pack_srgb_bgra(settings.portal_color);
 
       const auto add_portal = [&](const world::portal& portal) {
@@ -996,7 +996,7 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.hintnodes and not world.hintnodes.empty()) {
+   if (active_entity_types.hintnodes) {
       const float4 hintnode_color = float4{settings.hintnode_color, 1.0f};
       const float4 hintnode_outline_color =
          float4{settings.hintnode_outline_color, 1.0f};
@@ -1022,7 +1022,39 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.boundaries and not world.boundaries.empty()) {
+   if (active_entity_types.planning) {
+      const float planning_hub_height = settings.planning_hub_height;
+      const float planning_connection_height = settings.planning_connection_height;
+      const float4 planning_color = settings.planning_color;
+
+      const auto add_hub = [&](const world::planning_hub& hub) {
+         const float3 position = {hub.position.x, 0.0f, hub.position.y};
+
+         const math::bounding_box bbox{
+            .min = float3{-hub.radius, -planning_hub_height, -hub.radius} + position,
+            .max = float3{hub.radius, planning_hub_height, hub.radius} + position};
+
+         if (not intersects(view_frustum, bbox)) return;
+
+         const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
+                                  {0.0f, planning_hub_height, 0.0f, 0.0f},
+                                  {0.0f, 0.0f, hub.radius, 0.0f},
+                                  {position.x, position.y, position.z, 1.0f}};
+
+         _meta_draw_batcher.add_cylinder(transform, planning_color);
+      };
+
+      for (auto& hub : world.planning_hubs) add_hub(hub);
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::planning_hub>(*interaction_targets.creation_entity)) {
+         add_hub(std::get<world::planning_hub>(*interaction_targets.creation_entity));
+      }
+
+      (void)planning_connection_height;
+   }
+
+   if (active_entity_types.boundaries) {
       const float boundary_height = settings.boundary_height;
       const uint32 boundary_color = utility::pack_srgb_bgra(settings.boundary_color);
 
@@ -1033,7 +1065,8 @@ void renderer_impl::draw_world_meta_objects(
             const float2 a = nodes[i];
             const float2 b = nodes[(i + 1) % nodes.size()];
 
-            const std::array quad = {float3{a.x, 0.0f, a.y}, float3{b.x, 0.0f, b.y},
+            const std::array quad = {float3{a.x, -boundary_height, a.y},
+                                     float3{b.x, -boundary_height, b.y},
                                      float3{a.x, boundary_height, a.y},
                                      float3{b.x, boundary_height, b.y}};
 
@@ -1357,8 +1390,16 @@ void renderer_impl::draw_interaction_targets(
 
          _meta_draw_batcher.add_box_wireframe(transform, color);
       },
-      [&]([[maybe_unused]] const world::planning_hub& planning_hub,
-          [[maybe_unused]] const float3 color) {},
+      [&](const world::planning_hub& hub, const float3 color) {
+         const float height = settings.planning_hub_height;
+
+         const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
+                                  {0.0f, height, 0.0f, 0.0f},
+                                  {0.0f, 0.0f, hub.radius, 0.0f},
+                                  {hub.position.x, 0.0f, hub.position.y, 1.0f}};
+
+         _meta_draw_batcher.add_cylinder_wireframe(transform, color);
+      },
       [&]([[maybe_unused]] const world::planning_connection& planning_connection,
           [[maybe_unused]] const float3 color) {},
       [&](const world::boundary& boundary, const float3 color) {
@@ -1372,10 +1413,10 @@ void renderer_impl::draw_interaction_targets(
             const float2 a = nodes[i];
             const float2 b = nodes[(i + 1) % nodes.size()];
 
-            const std::array quad = {float3{a.x, 0.0f, a.y},
+            const std::array quad = {float3{a.x, -boundary_height, a.y},
                                      float3{a.x, boundary_height, a.y},
                                      float3{b.x, boundary_height, b.y},
-                                     float3{b.x, 0.0f, b.y}};
+                                     float3{b.x, -boundary_height, b.y}};
 
             _meta_draw_batcher.add_line_solid(quad[0], quad[1], packed_color);
             _meta_draw_batcher.add_line_solid(quad[1], quad[2], packed_color);

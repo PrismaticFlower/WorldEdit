@@ -14,8 +14,7 @@ struct active_entity_types {
    bool portals : 1 = false;
    bool hintnodes : 1 = false;
    bool barriers : 1 = false;
-   bool planning_hubs : 1 = false;
-   bool planning_connections : 1 = false;
+   bool planning : 1 = false;
    bool boundaries : 1 = false;
 };
 

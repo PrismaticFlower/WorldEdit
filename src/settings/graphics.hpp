@@ -15,7 +15,9 @@ struct graphics {
 
    float4 region_color = {0.25f, 0.4f, 1.0f, 0.3f};
 
-   float4 barrier_color = {1.0f, 0.1f, 0.5f, 0.3f};
+   float4 barrier_color = {1.0f, 0.2f, 0.2f, 0.3f};
+
+   float4 planning_color = {0.2f, 0.2f, 1.0f, 0.3f};
 
    float4 sector_color = {0.6f, 0.3f, 1.0f, 0.3f};
 
@@ -38,6 +40,10 @@ struct graphics {
    float barrier_height = 64.0f;
 
    float boundary_height = 64.0f;
+
+   float planning_hub_height = 64.0f;
+
+   float planning_connection_height = 48.0f;
 
    float line_width = 2.5f;
 

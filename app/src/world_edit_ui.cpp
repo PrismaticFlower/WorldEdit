@@ -428,12 +428,8 @@ void world_edit::update_ui() noexcept
       _world_draw_mask.barriers = not _world_draw_mask.barriers;
    }
 
-   if (ImGui::Selectable("Planning Hubs", _world_draw_mask.planning_hubs)) {
-      _world_draw_mask.planning_hubs = not _world_draw_mask.planning_hubs;
-   }
-
-   if (ImGui::Selectable("Planning Connections", _world_draw_mask.planning_connections)) {
-      _world_draw_mask.planning_connections = not _world_draw_mask.planning_connections;
+   if (ImGui::Selectable("AI Planning", _world_draw_mask.planning)) {
+      _world_draw_mask.planning = not _world_draw_mask.planning;
    }
 
    if (ImGui::Selectable("Boundaries", _world_draw_mask.boundaries)) {
