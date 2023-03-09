@@ -373,6 +373,52 @@ Barrier("Barrier0")
 
 )"sv;
 
+constexpr auto expected_pln = R"(
+Hub("Hub0")
+{
+	Pos(-63.822487, 0.000000, 9.202278);
+	Radius(8.000000);
+}
+
+Hub("Hub1")
+{
+	Pos(-121.883095, 0.000000, 30.046543);
+	Radius(7.586431);
+	BranchWeight("Hub0",100.000000,"Connection0",32);
+	BranchWeight("Hub0",75.000000,"Connection0",16);
+	BranchWeight("Hub0",25.000000,"Connection0",8);
+	BranchWeight("Hub0",7.500000,"Connection0",4);
+	BranchWeight("Hub0",15.000000,"Connection0",2);
+	BranchWeight("Hub0",20.000000,"Connection0",1);
+}
+
+Hub("Hub2")
+{
+	Pos(-54.011314, 0.000000, 194.037018);
+	Radius(13.120973);
+}
+
+Hub("Hub3")
+{
+	Pos(-163.852570, 0.000000, 169.116760);
+	Radius(12.046540);
+}
+
+Connection("Connection0")
+{
+	Start("Hub0");
+	End("Hub1");
+	Flag(63);
+}
+
+Connection("Connection1")
+{
+	Start("Hub3");
+	End("Hub2");
+	Flag(2);
+}
+)"sv;
+
 constexpr auto expected_bnd = R"(Boundary()
 {
 	Path("boundary");
@@ -487,13 +533,47 @@ TEST_CASE("world saving", "[World][IO]")
                              .radius = 7.692307f,
                              .command_post = "cp2"}},
 
-      // TODO: Path planning.
-
       .barriers = {barrier{.name = "Barrier0",
                            .position = {86.2013702f, 18.6642666f},
                            .size = {7.20497799f, 17.0095882f},
                            .rotation_angle = {2.71437049f},
                            .flags = ai_path_flags::flyer}},
+
+      .planning_hubs = {planning_hub{.name = "Hub0",
+                                     .position = float2{-63.822487f, -9.202278f},
+                                     .radius = 8.0f},
+
+                        planning_hub{.name = "Hub1",
+                                     .position = float2{-121.883095f, -30.046543f},
+                                     .radius = 7.586431f},
+
+                        planning_hub{.name = "Hub2",
+                                     .position = float2{-54.011314f, -194.037018f},
+                                     .radius = 13.120973f},
+
+                        planning_hub{.name = "Hub3",
+                                     .position = float2{-163.852570f, -169.116760f},
+                                     .radius = 12.046540f}},
+
+      .planning_connections =
+         {planning_connection{.name = "Connection0",
+                              .start = "Hub0",
+                              .end = "Hub1",
+                              .flags = (ai_path_flags::soldier | ai_path_flags::hover |
+                                        ai_path_flags::small | ai_path_flags::medium |
+                                        ai_path_flags::huge | ai_path_flags::flyer),
+
+                              .backward_weights = {.soldier = 20.0f,
+                                                   .hover = 15.0f,
+                                                   .small = 7.5f,
+                                                   .medium = 25.0f,
+                                                   .huge = 75.0f,
+                                                   .flyer = 100.0f}},
+
+          planning_connection{.name = "Connection1",
+                              .start = "Hub3",
+                              .end = "Hub2",
+                              .flags = ai_path_flags::hover}},
 
       .boundaries = {{.name = "boundary",
                       .position = {-0.442565918f, 4.79779053f},
@@ -528,6 +608,10 @@ TEST_CASE("world saving", "[World][IO]")
    const auto written_bar = io::read_file_to_string(L"temp/world/test.bar");
 
    CHECK(written_bar == expected_bar);
+
+   const auto written_pln = io::read_file_to_string(L"temp/world/test.pln");
+
+   CHECK(written_pln == expected_pln);
 
    const auto written_bnd = io::read_file_to_string(L"temp/world/test.bnd");
 

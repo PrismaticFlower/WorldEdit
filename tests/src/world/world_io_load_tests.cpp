@@ -345,6 +345,7 @@ TEST_CASE("world loading", "[World][IO]")
    {
       REQUIRE(world.planning_connections.size() == 2);
 
+      CHECK(world.planning_connections[0].name == "Connection0"sv);
       CHECK(world.planning_connections[0].start == "Hub0"sv);
       CHECK(world.planning_connections[0].end == "Hub1"sv);
       CHECK(world.planning_connections[0].flags ==
@@ -360,6 +361,7 @@ TEST_CASE("world loading", "[World][IO]")
 
       CHECK(is_unique_id(0, world.planning_connections));
 
+      CHECK(world.planning_connections[1].name == "Connection1"sv);
       CHECK(world.planning_connections[1].start == "Hub3"sv);
       CHECK(world.planning_connections[1].end == "Hub2"sv);
       CHECK(world.planning_connections[1].flags == ai_path_flags::hover);

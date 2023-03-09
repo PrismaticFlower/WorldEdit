@@ -7,6 +7,9 @@
 #include <cstddef>
 #include <numeric>
 
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/inlined_vector.h>
+
 #include "assets/terrain/terrain_io.hpp"
 #include "io/output_file.hpp"
 #include "utility/srgb_conversion.hpp"
@@ -104,6 +107,47 @@ auto make_barrier_corners(const barrier& barrier) noexcept -> std::array<float2,
    }
 
    return cornersWS;
+}
+
+struct hub_branch_weight_ref {
+   std::string_view end_hub;
+   float weight = 0.0f;
+   std::string_view connection;
+   ai_path_flags flag;
+};
+
+auto get_hub_branch_weight_refs(const world& world)
+   -> absl::flat_hash_map<std::string_view, absl::InlinedVector<hub_branch_weight_ref, 12>>
+{
+   absl::flat_hash_map<std::string_view, absl::InlinedVector<hub_branch_weight_ref, 12>> refs;
+   refs.reserve(64);
+
+   for (auto& connection : world.planning_connections) {
+      const auto process_direction = [&](const planning_branch_weights& weights,
+                                         const std::string_view start_hub,
+                                         const std::string_view end_hub) {
+         const auto process_weight = [&](const float weight, const ai_path_flags flag) {
+            if (weight != 0.0f) {
+               refs[start_hub].push_back({.end_hub = end_hub,
+                                          .weight = weight,
+                                          .connection = connection.name,
+                                          .flag = flag});
+            }
+         };
+
+         process_weight(weights.flyer, ai_path_flags::flyer);
+         process_weight(weights.huge, ai_path_flags::huge);
+         process_weight(weights.medium, ai_path_flags::medium);
+         process_weight(weights.small, ai_path_flags::small);
+         process_weight(weights.hover, ai_path_flags::hover);
+         process_weight(weights.soldier, ai_path_flags::soldier);
+      };
+
+      process_direction(connection.forward_weights, connection.start, connection.end);
+      process_direction(connection.backward_weights, connection.end, connection.start);
+   }
+
+   return refs;
 }
 
 void save_objects(const std::filesystem::path& path, const std::string_view layer_name,
@@ -555,6 +599,57 @@ void save_barriers(const std::filesystem::path& path, const world& world)
    }
 }
 
+void save_planning(const std::filesystem::path& path, const world& world)
+{
+   const absl::flat_hash_map<std::string_view, absl::InlinedVector<hub_branch_weight_ref, 12>> hub_branch_weights =
+      get_hub_branch_weight_refs(world);
+
+   io::output_file file{path};
+
+   for (auto& hub : world.planning_hubs) {
+      file.write_ln("");
+      file.write_ln("Hub(\"{}\")", hub.name);
+      file.write_ln("{");
+
+      file.write_ln("\tPos({:f}, 0.000000, {:f});", hub.position.x,
+                    -hub.position.y);
+
+      file.write_ln("\tRadius({:f});", hub.radius);
+
+      if (auto branch_weights_it = hub_branch_weights.find(hub.name);
+          branch_weights_it != hub_branch_weights.end()) {
+         for (const auto& branch_weight : branch_weights_it->second) {
+            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});",
+                          branch_weight.end_hub, branch_weight.weight,
+                          branch_weight.connection,
+                          static_cast<int>(branch_weight.flag));
+         }
+      }
+
+      file.write_ln("}");
+   }
+
+   for (auto& connection : world.planning_connections) {
+      file.write_ln("");
+      file.write_ln("Connection(\"{}\")", connection.name);
+      file.write_ln("{");
+
+      file.write_ln("\tStart(\"{}\");", connection.start);
+      file.write_ln("\tEnd(\"{}\");", connection.end);
+      file.write_ln("\tFlag({});", static_cast<int>(connection.flags));
+
+      if (connection.dynamic_group != 0) {
+         file.write_ln("\tDynamic({});", static_cast<int>(connection.dynamic_group));
+      }
+
+      if (connection.jump) file.write_ln("\tJump();");
+      if (connection.jet_jump) file.write_ln("\tJetJump();");
+      if (connection.one_way) file.write_ln("\tJOneWay();");
+
+      file.write_ln("}");
+   }
+}
+
 void save_boundaries(const std::filesystem::path& path, const world& world)
 {
    io::output_file file{path};
@@ -586,6 +681,7 @@ void save_layer(const std::filesystem::path& world_dir, const std::string_view l
    if (layer_index == 0) {
       save_boundaries(world_dir / layer_name += L".bnd"sv, world);
       save_barriers(world_dir / layer_name += L".bar"sv, world);
+      save_planning(world_dir / layer_name += L".pln"sv, world);
       save_portals_sectors(world_dir / layer_name += L".pvs"sv, world);
    }
 }
