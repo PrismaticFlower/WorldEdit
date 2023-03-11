@@ -272,6 +272,17 @@ void world_edit::update_hovered_entity() noexcept
             hovered_entity_distance = hit->distance;
          }
       }
+
+      if (std::optional<world::raycast_result<world::planning_connection>> hit =
+             world::raycast(ray.origin, ray.direction, _world.planning_connections,
+                            _world.planning_hubs, _world.planning_hub_index,
+                            _settings.graphics.planning_connection_height);
+          hit) {
+         if (hit->distance < hovered_entity_distance) {
+            _interaction_targets.hovered_entity = hit->id;
+            hovered_entity_distance = hit->distance;
+         }
+      }
    }
 
    if (_world_draw_mask.boundaries) {

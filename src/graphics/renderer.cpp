@@ -1051,7 +1051,126 @@ void renderer_impl::draw_world_meta_objects(
          add_hub(std::get<world::planning_hub>(*interaction_targets.creation_entity));
       }
 
-      (void)planning_connection_height;
+      const uint32 packed_color =
+         utility::pack_srgb_bgra({planning_color.x, planning_color.y,
+                                  planning_color.z, 1.0f / 255.0f});
+
+      const auto add_connection = [&](const world::planning_connection& connection) {
+         const world::planning_hub& start =
+            world.planning_hubs[world.planning_hub_index.at(connection.start)];
+         const world::planning_hub& end =
+            world.planning_hubs[world.planning_hub_index.at(connection.end)];
+
+         const float3 start_position = {start.position.x, 0.0f, start.position.y};
+         const float3 end_position = {end.position.x, 0.0f, end.position.y};
+
+         const math::bounding_box start_bbox{
+            .min = float3{-start.radius, -planning_connection_height, -start.radius} +
+                   start_position,
+            .max = float3{start.radius, planning_connection_height, start.radius} +
+                   start_position};
+         const math::bounding_box end_bbox{
+            .min = float3{-end.radius, -planning_connection_height, -end.radius} + end_position,
+            .max = float3{end.radius, planning_connection_height, end.radius} +
+                   end_position};
+
+         const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
+
+         if (not intersects(view_frustum, bbox)) return;
+
+         const float3 normal =
+            normalize(float3{-(start_position.z - end_position.z), 0.0f,
+                             start_position.x - end_position.x});
+
+         std::array<float3, 4> quad{start_position + normal * start.radius,
+                                    start_position - normal * start.radius,
+                                    end_position + normal * end.radius,
+                                    end_position - normal * end.radius};
+
+         const float3 height_offset = {0.0f, planning_connection_height, 0.0f};
+
+         std::array<float3, 8> corners = {quad[0] + height_offset,
+                                          quad[1] + height_offset,
+                                          quad[2] + height_offset,
+                                          quad[3] + height_offset,
+                                          quad[0] - height_offset,
+                                          quad[1] - height_offset,
+                                          quad[2] - height_offset,
+                                          quad[3] - height_offset};
+
+         // Top
+         _meta_draw_batcher.add_triangle(corners[0], corners[2], corners[3],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[1], corners[0], corners[3],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[2], corners[0], corners[3],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[0], corners[1], corners[3],
+                                         packed_color);
+
+         // Bottom
+         _meta_draw_batcher.add_triangle(corners[4], corners[6], corners[7],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[5], corners[4], corners[7],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[6], corners[4], corners[7],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[4], corners[5], corners[7],
+                                         packed_color);
+
+         // Side 0
+
+         _meta_draw_batcher.add_triangle(corners[0], corners[6], corners[4],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[0], corners[2], corners[6],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[6], corners[0], corners[4],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[2], corners[0], corners[6],
+                                         packed_color);
+
+         // Side 1
+
+         _meta_draw_batcher.add_triangle(corners[1], corners[7], corners[5],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[1], corners[3], corners[7],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[7], corners[1], corners[5],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[3], corners[1], corners[7],
+                                         packed_color);
+
+         // Back
+         _meta_draw_batcher.add_triangle(corners[0], corners[1], corners[4],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[4], corners[1], corners[5],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[1], corners[0], corners[4],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[1], corners[4], corners[5],
+                                         packed_color);
+
+         // Front
+         _meta_draw_batcher.add_triangle(corners[2], corners[3], corners[6],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[6], corners[3], corners[7],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[3], corners[2], corners[6],
+                                         packed_color);
+         _meta_draw_batcher.add_triangle(corners[3], corners[6], corners[7],
+                                         packed_color);
+      };
+
+      for (auto& connection : world.planning_connections) {
+         add_connection(connection);
+      }
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::planning_connection>(
+             *interaction_targets.creation_entity)) {
+         add_connection(std::get<world::planning_connection>(
+            *interaction_targets.creation_entity));
+      }
    }
 
    if (active_entity_types.boundaries) {
@@ -1400,8 +1519,54 @@ void renderer_impl::draw_interaction_targets(
 
          _meta_draw_batcher.add_cylinder_wireframe(transform, color);
       },
-      [&]([[maybe_unused]] const world::planning_connection& planning_connection,
-          [[maybe_unused]] const float3 color) {},
+      [&](const world::planning_connection& connection, const float3 color) {
+         const float height = settings.planning_connection_height;
+
+         const world::planning_hub& start =
+            world.planning_hubs[world.planning_hub_index.at(connection.start)];
+         const world::planning_hub& end =
+            world.planning_hubs[world.planning_hub_index.at(connection.end)];
+
+         const float3 start_position = {start.position.x, 0.0f, start.position.y};
+         const float3 end_position = {end.position.x, 0.0f, end.position.y};
+
+         const float3 normal =
+            normalize(float3{-(start_position.z - end_position.z), 0.0f,
+                             start_position.x - end_position.x});
+
+         std::array<float3, 4> quad{start_position + normal * start.radius,
+                                    start_position - normal * start.radius,
+                                    end_position + normal * end.radius,
+                                    end_position - normal * end.radius};
+
+         const float3 height_offset = {0.0f, height, 0.0f};
+
+         std::array<float3, 8> corners = {quad[0] + height_offset,
+                                          quad[1] + height_offset,
+                                          quad[2] + height_offset,
+                                          quad[3] + height_offset,
+                                          quad[0] - height_offset,
+                                          quad[1] - height_offset,
+                                          quad[2] - height_offset,
+                                          quad[3] - height_offset};
+
+         const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
+
+         _meta_draw_batcher.add_line_solid(corners[0], corners[1], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[0], corners[2], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[2], corners[3], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[3], corners[1], packed_color);
+
+         _meta_draw_batcher.add_line_solid(corners[4], corners[5], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[4], corners[6], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[6], corners[7], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[7], corners[5], packed_color);
+
+         _meta_draw_batcher.add_line_solid(corners[0], corners[4], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[1], corners[5], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[2], corners[6], packed_color);
+         _meta_draw_batcher.add_line_solid(corners[3], corners[7], packed_color);
+      },
       [&](const world::boundary& boundary, const float3 color) {
          const float boundary_height = settings.boundary_height;
 

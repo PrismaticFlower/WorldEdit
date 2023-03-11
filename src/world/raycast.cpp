@@ -421,10 +421,9 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       const float3 top_position = {hub.position.x, hub_height, hub.position.y};
       const float3 bottom_position = {hub.position.x, -hub_height, hub.position.y};
 
-      const float intersection =
-         iCylinder(ray_origin, ray_direction, top_position,
-                   bottom_position, hub.radius)
-            .x;
+      const float intersection = iCylinder(ray_origin, ray_direction, top_position,
+                                           bottom_position, hub.radius)
+                                    .x;
 
       if (intersection < 0.0f) continue;
 
@@ -437,6 +436,86 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    if (not hit) return std::nullopt;
 
    return raycast_result<planning_hub>{.distance = min_distance, .id = *hit};
+}
+
+auto raycast(const float3 ray_origin, const float3 ray_direction,
+             std::span<const planning_connection> connections,
+             std::span<const planning_hub> hubs,
+             const absl::flat_hash_map<planning_hub_id, std::size_t>& planning_hub_index,
+             const float connection_height) noexcept
+   -> std::optional<raycast_result<planning_connection>>
+{
+   std::optional<planning_connection_id> hit;
+   float min_distance = std::numeric_limits<float>::max();
+
+   for (auto& connection : connections) {
+      const planning_hub& start = hubs[planning_hub_index.at(connection.start)];
+      const planning_hub& end = hubs[planning_hub_index.at(connection.end)];
+
+      const float3 start_position = {start.position.x, 0.0f, start.position.y};
+      const float3 end_position = {end.position.x, 0.0f, end.position.y};
+
+      const math::bounding_box start_bbox{
+         .min = float3{-start.radius, -connection_height, -start.radius} + start_position,
+         .max = float3{start.radius, connection_height, start.radius} + start_position};
+      const math::bounding_box end_bbox{
+         .min = float3{-end.radius, -connection_height, -end.radius} + end_position,
+         .max = float3{end.radius, connection_height, end.radius} + end_position};
+
+      const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
+
+      const float3 bbox_centre = (bbox.min + bbox.max) / 2.0f;
+      const float3 bbox_size = (bbox.max - bbox.min) / 2.0f;
+
+      if (boxIntersection(ray_origin - bbox_centre, ray_direction, bbox_size) < 0.0f) {
+         continue;
+      }
+
+      const float3 normal =
+         normalize(float3{-(start_position.z - end_position.z), 0.0f,
+                          start_position.x - end_position.x});
+
+      std::array<float3, 4> points{start_position + normal * start.radius,
+                                   start_position - normal * start.radius,
+                                   end_position + normal * end.radius,
+                                   end_position - normal * end.radius};
+
+      const float3 height_offset = {0.0f, connection_height, 0.0f};
+
+      std::array<float3, 8> corners = {points[0] + height_offset,
+                                       points[1] + height_offset,
+                                       points[2] + height_offset,
+                                       points[3] + height_offset,
+                                       points[0] - height_offset,
+                                       points[1] - height_offset,
+                                       points[2] - height_offset,
+                                       points[3] - height_offset};
+
+      constexpr std::array<std::array<uint32, 4>, 6> quads = {{{0u, 1u, 2u, 3u},
+                                                               {4u, 5u, 6u, 7u},
+                                                               {0u, 2u, 4u, 6u},
+                                                               {1u, 3u, 5u, 7u},
+                                                               {0u, 1u, 4u, 5u},
+                                                               {2u, 3u, 6u, 7u}}};
+
+      for (const auto& quad : quads) {
+         const float intersection =
+            quadIntersect(ray_origin, ray_direction, corners[quad[0]],
+                          corners[quad[1]], corners[quad[3]], corners[quad[2]])
+               .x;
+
+         if (intersection < 0.0f) continue;
+
+         if (intersection < min_distance) {
+            hit = connection.id;
+            min_distance = intersection;
+         }
+      }
+   }
+
+   if (not hit) return std::nullopt;
+
+   return raycast_result<planning_connection>{.distance = min_distance, .id = *hit};
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
