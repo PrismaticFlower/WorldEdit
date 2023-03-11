@@ -36,6 +36,14 @@ void throw_layer_load_failure(std::string_view type,
                                   utility::string::indent(2, e.what()))};
 }
 
+void throw_planning_missing_hub(std::string_view hub, std::string_view connection)
+{
+   throw load_failure{fmt::format("Failed to path planning. A hub referenced "
+                                  "by a connection was missing!.\n   "
+                                  "Hub: {}\n   Connection: {}\n",
+                                  hub, connection)};
+}
+
 auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap) -> int
 {
    if (const auto layer_it = node.find("Layer"sv); layer_it != node.cend()) {
@@ -580,7 +588,10 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
    branch_weights.reserve(1024);
 
    try {
-      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
+      const config::node planning =
+         config::read_config(io::read_file_to_string(filepath));
+
+      for (auto& key_node : planning) {
          if (key_node.key == "Hub"sv) {
             planning_hub& hub = world_out.planning_hubs.emplace_back();
 
@@ -611,7 +622,22 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
                }
             }
          }
-         else if (key_node.key == "Connection") {
+      }
+
+      absl::flat_hash_map<std::string_view, planning_hub_id> hub_map;
+      hub_map.reserve(world_out.planning_hubs.size());
+
+      world_out.planning_hub_index.reserve(world_out.planning_hubs.size());
+
+      for (std::size_t i = 0; i < world_out.planning_hubs.size(); ++i) {
+         const planning_hub& hub = world_out.planning_hubs[i];
+
+         world_out.planning_hub_index.emplace(hub.id, i);
+         hub_map.emplace(hub.name, hub.id);
+      }
+
+      for (auto& key_node : planning) {
+         if (key_node.key == "Connection") {
             planning_connection& connection =
                world_out.planning_connections.emplace_back();
 
@@ -620,10 +646,28 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
 
             for (auto& child_key_node : key_node) {
                if (child_key_node.key == "Start"sv) {
-                  connection.start = child_key_node.values.get<std::string>(0);
+                  const std::string_view hub_name =
+                     child_key_node.values.get<std::string_view>(0);
+
+                  auto hub_it = hub_map.find(hub_name);
+
+                  if (hub_it == hub_map.end()) {
+                     throw_planning_missing_hub(hub_name, connection.name);
+                  }
+
+                  connection.start = hub_it->second;
                }
                else if (child_key_node.key == "End"sv) {
-                  connection.end = child_key_node.values.get<std::string>(0);
+                  const std::string_view hub_name =
+                     child_key_node.values.get<std::string_view>(0);
+
+                  auto hub_it = hub_map.find(hub_name);
+
+                  if (hub_it == hub_map.end()) {
+                     throw_planning_missing_hub(hub_name, connection.name);
+                  }
+
+                  connection.end = hub_it->second;
                }
                else if (child_key_node.key == "Flag"sv) {
                   connection.flags =
@@ -649,49 +693,52 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
             }
          }
       }
+
+      absl::flat_hash_map<std::string_view, planning_connection*> connection_map;
+      connection_map.reserve(world_out.planning_connections.size());
+
+      for (auto& connection : world_out.planning_connections) {
+         connection_map.emplace(connection.name, &connection);
+      }
+
+      for (auto& branch_weight : branch_weights) {
+         planning_connection& connection =
+            *connection_map.at(branch_weight.connection);
+         planning_branch_weights& weights =
+            world_out.planning_hubs[world_out.planning_hub_index.at(connection.start)]
+                     .name == branch_weight.start_hub
+               ? connection.forward_weights
+               : connection.backward_weights;
+
+         switch (branch_weight.flag) {
+         case ai_path_flags::soldier:
+            weights.soldier = branch_weight.weight;
+            break;
+         case ai_path_flags::hover:
+            weights.hover = branch_weight.weight;
+            break;
+         case ai_path_flags::small:
+            weights.small = branch_weight.weight;
+            break;
+         case ai_path_flags::medium:
+            weights.medium = branch_weight.weight;
+            break;
+         case ai_path_flags::huge:
+            weights.huge = branch_weight.weight;
+            break;
+         case ai_path_flags::flyer:
+            weights.flyer = branch_weight.weight;
+            break;
+         default:
+            output.write("Branch Weight for Hub '{}' has multiple (or no) "
+                         "flags set. This "
+                         "is invalid, ignoring weight.\n",
+                         branch_weight.start_hub);
+         }
+      }
    }
    catch (std::exception& e) {
       throw_layer_load_failure("planning", filepath.string(), e);
-   }
-
-   absl::flat_hash_map<std::string_view, planning_connection*> connection_map;
-   connection_map.reserve(world_out.planning_connections.size());
-
-   for (auto& connection : world_out.planning_connections) {
-      connection_map.emplace(connection.name, &connection);
-   }
-
-   for (auto& branch_weight : branch_weights) {
-      planning_connection& connection = *connection_map.at(branch_weight.connection);
-      planning_branch_weights& weights = connection.start == branch_weight.start_hub
-                                            ? connection.forward_weights
-                                            : connection.backward_weights;
-
-      switch (branch_weight.flag) {
-      case ai_path_flags::soldier:
-         weights.soldier = branch_weight.weight;
-         break;
-      case ai_path_flags::hover:
-         weights.hover = branch_weight.weight;
-         break;
-      case ai_path_flags::small:
-         weights.small = branch_weight.weight;
-         break;
-      case ai_path_flags::medium:
-         weights.medium = branch_weight.weight;
-         break;
-      case ai_path_flags::huge:
-         weights.huge = branch_weight.weight;
-         break;
-      case ai_path_flags::flyer:
-         weights.flyer = branch_weight.weight;
-         break;
-      default:
-         output.write(
-            "Branch Weight for Hub '{}' has multiple (or no) flags set. This "
-            "is invalid, ignoring weight.\n",
-            branch_weight.start_hub);
-      }
    }
 
    output.write("Loaded world AI planning (time taken {:f}ms)\n",

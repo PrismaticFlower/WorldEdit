@@ -117,21 +117,23 @@ struct hub_branch_weight_ref {
 };
 
 auto get_hub_branch_weight_refs(const world& world)
-   -> absl::flat_hash_map<std::string_view, absl::InlinedVector<hub_branch_weight_ref, 12>>
+   -> absl::flat_hash_map<planning_hub_id, absl::InlinedVector<hub_branch_weight_ref, 12>>
 {
-   absl::flat_hash_map<std::string_view, absl::InlinedVector<hub_branch_weight_ref, 12>> refs;
+   absl::flat_hash_map<planning_hub_id, absl::InlinedVector<hub_branch_weight_ref, 12>> refs;
    refs.reserve(64);
 
    for (auto& connection : world.planning_connections) {
       const auto process_direction = [&](const planning_branch_weights& weights,
-                                         const std::string_view start_hub,
-                                         const std::string_view end_hub) {
+                                         const planning_hub_id start_hub,
+                                         const planning_hub_id end_hub) {
          const auto process_weight = [&](const float weight, const ai_path_flags flag) {
             if (weight != 0.0f) {
-               refs[start_hub].push_back({.end_hub = end_hub,
-                                          .weight = weight,
-                                          .connection = connection.name,
-                                          .flag = flag});
+               refs[start_hub].push_back(
+                  {.end_hub =
+                      world.planning_hubs[world.planning_hub_index.at(end_hub)].name,
+                   .weight = weight,
+                   .connection = connection.name,
+                   .flag = flag});
             }
          };
 
@@ -601,7 +603,7 @@ void save_barriers(const std::filesystem::path& path, const world& world)
 
 void save_planning(const std::filesystem::path& path, const world& world)
 {
-   const absl::flat_hash_map<std::string_view, absl::InlinedVector<hub_branch_weight_ref, 12>> hub_branch_weights =
+   const absl::flat_hash_map<planning_hub_id, absl::InlinedVector<hub_branch_weight_ref, 12>> hub_branch_weights =
       get_hub_branch_weight_refs(world);
 
    io::output_file file{path};
@@ -616,7 +618,7 @@ void save_planning(const std::filesystem::path& path, const world& world)
 
       file.write_ln("\tRadius({:f});", hub.radius);
 
-      if (auto branch_weights_it = hub_branch_weights.find(hub.name);
+      if (auto branch_weights_it = hub_branch_weights.find(hub.id);
           branch_weights_it != hub_branch_weights.end()) {
          for (const auto& branch_weight : branch_weights_it->second) {
             file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});",
@@ -634,8 +636,12 @@ void save_planning(const std::filesystem::path& path, const world& world)
       file.write_ln("Connection(\"{}\")", connection.name);
       file.write_ln("{");
 
-      file.write_ln("\tStart(\"{}\");", connection.start);
-      file.write_ln("\tEnd(\"{}\");", connection.end);
+      file.write_ln(
+         "\tStart(\"{}\");",
+         world.planning_hubs[world.planning_hub_index.at(connection.start)].name);
+      file.write_ln(
+         "\tEnd(\"{}\");",
+         world.planning_hubs[world.planning_hub_index.at(connection.end)].name);
       file.write_ln("\tFlag({});", static_cast<int>(connection.flags));
 
       if (connection.dynamic_group != 0) {

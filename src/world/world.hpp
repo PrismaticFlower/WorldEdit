@@ -18,6 +18,8 @@
 
 #include <vector>
 
+#include <absl/container/flat_hash_map.h>
+
 namespace we::world {
 
 struct world {
@@ -40,6 +42,8 @@ struct world {
    std::vector<planning_hub> planning_hubs;
    std::vector<planning_connection> planning_connections;
    std::vector<boundary> boundaries;
+
+   absl::flat_hash_map<planning_hub_id, std::size_t> planning_hub_index;
 
    struct next_ids {
       id_generator<gamemode_description> gamemode_descriptions;

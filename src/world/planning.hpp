@@ -39,8 +39,8 @@ struct planning_connection {
    std::string name;
    int layer = 0;
 
-   std::string start;
-   std::string end;
+   planning_hub_id start;
+   planning_hub_id end;
 
    ai_path_flags flags = ai_path_flags::soldier | ai_path_flags::hover |
                          ai_path_flags::small | ai_path_flags::medium |
