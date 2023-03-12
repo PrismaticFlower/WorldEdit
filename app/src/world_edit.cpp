@@ -171,7 +171,8 @@ void world_edit::update_hovered_entity() noexcept
    if (_interaction_targets.creation_entity and
        std::holds_alternative<world::planning_connection>(
           *_interaction_targets.creation_entity)) {
-      raycast_mask = world::active_entity_types{.objects = false, .planning = true};
+      raycast_mask =
+         world::active_entity_types{.objects = false, .planning_hubs = true};
    }
 
    if (raycast_mask.objects) {
@@ -270,7 +271,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (raycast_mask.planning) {
+   if (raycast_mask.planning_hubs) {
       if (std::optional<world::raycast_result<world::planning_hub>> hit =
              world::raycast(ray.origin, ray.direction, _world.planning_hubs,
                             _settings.graphics.planning_hub_height);
@@ -280,7 +281,9 @@ void world_edit::update_hovered_entity() noexcept
             hovered_entity_distance = hit->distance;
          }
       }
+   }
 
+   if (raycast_mask.planning_connections) {
       if (std::optional<world::raycast_result<world::planning_connection>> hit =
              world::raycast(ray.origin, ray.direction, _world.planning_connections,
                             _world.planning_hubs, _world.planning_hub_index,

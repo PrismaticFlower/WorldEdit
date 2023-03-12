@@ -1022,9 +1022,8 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   if (active_entity_types.planning) {
+   if (active_entity_types.planning_hubs) {
       const float planning_hub_height = settings.planning_hub_height;
-      const float planning_connection_height = settings.planning_connection_height;
       const float4 planning_color = settings.planning_color;
 
       const auto add_hub = [&](const world::planning_hub& hub) {
@@ -1050,10 +1049,14 @@ void renderer_impl::draw_world_meta_objects(
           std::holds_alternative<world::planning_hub>(*interaction_targets.creation_entity)) {
          add_hub(std::get<world::planning_hub>(*interaction_targets.creation_entity));
       }
+   }
 
-      const uint32 packed_color =
-         utility::pack_srgb_bgra({planning_color.x, planning_color.y,
-                                  planning_color.z, 1.0f / 255.0f});
+   if (active_entity_types.planning_connections) {
+      const float planning_connection_height = settings.planning_connection_height;
+      const float4 planning_color = settings.planning_color;
+
+      const uint32 packed_color = utility::pack_srgb_bgra(
+         {planning_color.x, planning_color.y, planning_color.z, 1.0f / 255.0f});
 
       const auto add_connection = [&](const world::planning_connection& connection) {
          const world::planning_hub& start =
