@@ -609,8 +609,10 @@ void world_edit::place_creation_entity() noexcept
 
                _entity_creation_context.last_planning_hub = new_hub.id;
 
-               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
-                                       _edit_context);
+               _edit_stack_world
+                  .apply(edits::make_insert_entity(std::move(new_hub),
+                                                   _world.planning_hubs.size()),
+                         _edit_context);
 
                hub.name = world::create_unique_name(_world.planning_hubs, hub.name);
 

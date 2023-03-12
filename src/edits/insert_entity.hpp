@@ -31,7 +31,7 @@ auto make_insert_entity(world::hintnode hintnode)
 auto make_insert_entity(world::barrier barrier)
    -> std::unique_ptr<edit<world::edit_context>>;
 
-auto make_insert_entity(world::planning_hub planning_hub)
+auto make_insert_entity(world::planning_hub planning_hub, std::size_t hub_index)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 auto make_insert_entity(world::planning_connection planning_connection)

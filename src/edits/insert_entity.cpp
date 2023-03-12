@@ -35,8 +35,40 @@ struct insert_entity final : edit<world::edit_context> {
    void coalesce([[maybe_unused]] edit& other) noexcept override {}
 
 private:
-   world::id<T> _id;
-   T _entity;
+   const world::id<T> _id;
+   const T _entity;
+};
+
+template<>
+struct insert_entity<world::planning_hub> final : edit<world::edit_context> {
+   insert_entity(world::planning_hub hub, const std::size_t hub_index)
+      : _id{hub.id}, _hub{std::move(hub)}, _index{hub_index}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      context.world.planning_hubs.push_back(_hub);
+      context.world.planning_hub_index.emplace(_hub.id, _index);
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      context.world.planning_hubs.pop_back();
+      context.world.planning_hub_index.erase(_hub.id);
+   }
+
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
+private:
+   const world::planning_hub_id _id;
+   const world::planning_hub _hub;
+   const std::size_t _index;
 };
 
 }
@@ -88,10 +120,11 @@ auto make_insert_entity(world::barrier barrier)
    return std::make_unique<insert_entity<world::barrier>>(std::move(barrier));
 }
 
-auto make_insert_entity(world::planning_hub planning_hub)
+auto make_insert_entity(world::planning_hub planning_hub, std::size_t hub_index)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<insert_entity<world::planning_hub>>(std::move(planning_hub));
+   return std::make_unique<insert_entity<world::planning_hub>>(std::move(planning_hub),
+                                                               hub_index);
 }
 
 auto make_insert_entity(world::planning_connection planning_connection)
