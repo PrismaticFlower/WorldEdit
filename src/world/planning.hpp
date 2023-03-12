@@ -26,7 +26,7 @@ struct planning_hub {
    int layer = 0;
 
    float2 position;
-   float radius = 0.0f;
+   float radius = 1.0f;
 
    id<planning_hub> id{};
 

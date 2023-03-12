@@ -322,8 +322,33 @@ void world_edit::update_ui() noexcept
                       _edit_context);
          }
 
+         if (ImGui::MenuItem("AI Planning Hub")) {
+            _entity_creation_context.hub_sizing_started = false;
+
+            const world::planning_hub* base_hub =
+               world::find_entity(_world.planning_hubs,
+                                  _entity_creation_context.last_planning_hub);
+
+            world::planning_hub new_hub;
+
+            if (base_hub) {
+               new_hub = *base_hub;
+
+               new_hub.name =
+                  world::create_unique_name(_world.planning_hubs, base_hub->name);
+               new_hub.id = world::max_id;
+            }
+            else {
+               new_hub = world::planning_hub{.name = "Hub0", .id = world::max_id};
+            }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_hub),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
+         }
+
 #if 0
-         if (ImGui::MenuItem("Planning Hub")) _create.planning_hub = true;
          if (ImGui::MenuItem("Planning Connection"))
             _create.planning_connection = true;
 #endif
@@ -2523,10 +2548,94 @@ void world_edit::update_ui() noexcept
                                        .has_from_bbox = true,
                                        .has_from_line = true};
             },
-            [&](const world::planning_hub& planning_hub) {
-               (void)planning_hub;
+            [&](const world::planning_hub& hub) {
+               ImGui::InputText("Name", &creation_entity,
+                                &world::planning_hub::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.planning_hubs,
+                                                                hub.name);
+                                });
 
-               return placement_traits{};
+               if (ImGui::DragFloat2XZ("Position", &creation_entity,
+                                       &world::planning_hub::position,
+                                       &_edit_stack_world, &_edit_context, 0.25f)) {
+                  _entity_creation_context.placement_mode = placement_mode::manual;
+               }
+
+               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+                   not _entity_creation_context.hub_sizing_started) {
+                  float2 new_position = hub.position;
+
+                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                     new_position =
+                        float2{_cursor_positionWS.x, _cursor_positionWS.z};
+
+                     if (_entity_creation_context.placement_alignment ==
+                         placement_alignment::grid) {
+                        new_position =
+                           align_position_to_grid(new_position,
+                                                  _entity_creation_context.alignment);
+                     }
+                     else if (_entity_creation_context.placement_alignment ==
+                              placement_alignment::snapping) {
+                        const std::optional<float3> snapped_position =
+                           world::get_snapped_position({new_position.x,
+                                                        _cursor_positionWS.y,
+                                                        new_position.y},
+                                                       _world.objects,
+                                                       _entity_creation_context.snap_distance,
+                                                       _object_classes);
+
+                        if (snapped_position) {
+                           new_position = {snapped_position->x, snapped_position->z};
+                        }
+                     }
+
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = hub.position.x;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.y = hub.position.y; // NB: Usage of Y under lock Z.
+                     }
+                  }
+
+                  if (new_position != hub.position) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::planning_hub, float2>>(
+                           &world::planning_hub::position, new_position, hub.position),
+                        _edit_context);
+                  }
+               }
+
+               ImGui::DragFloat("Radius", &creation_entity,
+                                &world::planning_hub::radius, &_edit_stack_world,
+                                &_edit_context, 1.0f, 0.0f, 1e10f);
+
+               if (_entity_creation_context.hub_sizing_started) {
+                  _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                       float3{hub.position.x,
+                                                              _cursor_positionWS.y,
+                                                              hub.position.y},
+                                                       0xffffffffu);
+
+                  const float new_radius =
+                     distance(float2{_cursor_positionWS.x, _cursor_positionWS.z},
+                              hub.position);
+
+                  if (new_radius != hub.radius) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::planning_hub, float>>(
+                           &world::planning_hub::radius, new_radius, hub.radius),
+                        _edit_context);
+                  }
+               }
+
+               return placement_traits{
+                  .has_placement_rotation = false,
+                  .has_point_at = false,
+                  .has_placement_ground = false,
+               };
             },
             [&](const world::planning_connection& planning_connection) {
                (void)planning_connection;

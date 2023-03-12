@@ -582,7 +582,27 @@ void world_edit::place_creation_entity() noexcept
 
             barrier.name = world::create_unique_name(_world.barriers, barrier.name);
          },
-         [&](world::planning_hub& planning_hub) { (void)planning_hub; },
+         [&](world::planning_hub& hub) {
+            if (_entity_creation_context.hub_sizing_started) {
+               world::planning_hub new_hub = hub;
+
+               new_hub.name =
+                  world::create_unique_name(_world.planning_hubs, new_hub.name);
+               new_hub.id = _world.next_id.planning_hubs.aquire();
+
+               _entity_creation_context.last_planning_hub = new_hub.id;
+
+               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
+                                       _edit_context);
+
+               hub.name = world::create_unique_name(_world.planning_hubs, hub.name);
+
+               _entity_creation_context.hub_sizing_started = false;
+            }
+            else {
+               _entity_creation_context.hub_sizing_started = true;
+            }
+         },
          [&](world::planning_connection& planning_connection) {
             (void)planning_connection;
          },
