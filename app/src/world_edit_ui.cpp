@@ -348,10 +348,38 @@ void world_edit::update_ui() noexcept
                       _edit_context);
          }
 
-#if 0
-         if (ImGui::MenuItem("Planning Connection"))
-            _create.planning_connection = true;
-#endif
+         if (ImGui::MenuItem("AI Planning Connection") and
+             not _world.planning_hubs.empty()) {
+            _entity_creation_context.connection_link_started = false;
+            _world_draw_mask.planning = true;
+
+            const world::planning_connection* base_connection =
+               world::find_entity(_world.planning_connections,
+                                  _entity_creation_context.last_planning_connection);
+
+            world::planning_connection new_connection;
+
+            if (base_connection) {
+               new_connection = *base_connection;
+
+               new_connection.name =
+                  world::create_unique_name(_world.planning_connections,
+                                            base_connection->name);
+               new_connection.id = world::max_id;
+            }
+            else {
+               new_connection =
+                  world::planning_connection{.name = "Connection0",
+                                             .start = _world.planning_hubs[0].id,
+                                             .end = _world.planning_hubs[0].id,
+                                             .id = world::max_id};
+            }
+
+            _edit_stack_world
+               .apply(edits::make_creation_entity_set(std::move(new_connection),
+                                                      _interaction_targets.creation_entity),
+                      _edit_context);
+         }
 
          if (ImGui::MenuItem("Boundary")) {
             const world::boundary* base_boundary =
@@ -2637,10 +2665,142 @@ void world_edit::update_ui() noexcept
                   .has_placement_ground = false,
                };
             },
-            [&](const world::planning_connection& planning_connection) {
-               (void)planning_connection;
+            [&](const world::planning_connection& connection) {
+               ImGui::InputText("Name", &creation_entity,
+                                &world::planning_connection::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.planning_connections,
+                                                                connection.name);
+                                });
 
-               return placement_traits{};
+               ImGui::Text(
+                  "Start: %s",
+                  _world
+                     .planning_hubs[_world.planning_hub_index.at(connection.start)]
+                     .name.c_str());
+               ImGui::Text(
+                  "End: %s",
+                  _world
+                     .planning_hubs[_world.planning_hub_index.at(connection.end)]
+                     .name.c_str());
+
+               if (_entity_creation_context.connection_link_started and
+                   _interaction_targets.hovered_entity and
+                   std::holds_alternative<world::planning_hub_id>(
+                      *_interaction_targets.hovered_entity)) {
+                  const world::planning_hub_id end_id =
+                     std::get<world::planning_hub_id>(*_interaction_targets.hovered_entity);
+
+                  _edit_stack_world.apply(
+                     std::make_unique<edits::set_creation_value<world::planning_connection, world::planning_hub_id>>(
+                        &world::planning_connection::end, end_id, connection.end),
+                     _edit_context);
+               }
+
+               ImGui::Separator();
+
+               ImGui::EditFlags("Flags", &creation_entity,
+                                &world::planning_connection::flags,
+                                &_edit_stack_world, &_edit_context,
+                                {{"Soldier", world::ai_path_flags::soldier},
+                                 {"Hover", world::ai_path_flags::hover},
+                                 {"Small", world::ai_path_flags::small},
+                                 {"Medium", world::ai_path_flags::medium},
+                                 {"Huge", world::ai_path_flags::huge},
+                                 {"Flyer", world::ai_path_flags::flyer}});
+
+               ImGui::Separator();
+
+               ImGui::Checkbox("Jump", &creation_entity,
+                               &world::planning_connection::jump,
+                               &_edit_stack_world, &_edit_context);
+               ImGui::SameLine();
+               ImGui::Checkbox("Jet Jump", &creation_entity,
+                               &world::planning_connection::jet_jump,
+                               &_edit_stack_world, &_edit_context);
+               ImGui::SameLine();
+               ImGui::Checkbox("One Way", &creation_entity,
+                               &world::planning_connection::one_way,
+                               &_edit_stack_world, &_edit_context);
+
+               bool is_dynamic = connection.dynamic_group != 0;
+
+               if (ImGui::Checkbox("Dynamic", &is_dynamic)) {
+                  _edit_stack_world.apply(
+                     std::make_unique<edits::set_creation_value<world::planning_connection, int8>>(
+                        &world::planning_connection::dynamic_group,
+                        is_dynamic ? int8{1} : int8{0}, connection.dynamic_group),
+                     _edit_context);
+               }
+
+               if (is_dynamic) {
+                  ImGui::SliderInt("Dynamic Group", &creation_entity,
+                                   &world::planning_connection::dynamic_group,
+                                   &_edit_stack_world, &_edit_context, 1, 8,
+                                   "%d", ImGuiSliderFlags_AlwaysClamp);
+               }
+
+               if (ImGui::CollapsingHeader("Forward Branch Weights")) {
+                  world::planning_branch_weights weights = connection.forward_weights;
+
+                  bool changed = false;
+
+                  ImGui::PushID("Forward Branch Weights");
+
+                  // clang-format off
+                  changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Flyer", &weights.flyer, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  // clang-format on
+
+                  ImGui::PopID();
+
+                  if (changed) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::planning_connection, world::planning_branch_weights>>(
+                           &world::planning_connection::forward_weights,
+                           weights, connection.forward_weights),
+                        _edit_context);
+                  }
+               }
+
+               if (ImGui::CollapsingHeader("Backward Branch Weights")) {
+                  world::planning_branch_weights weights = connection.backward_weights;
+
+                  ImGui::PushID("Backward Branch Weights");
+
+                  bool changed = false;
+
+                  // clang-format off
+                  changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Flyer", &weights.flyer, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  // clang-format on
+
+                  ImGui::PopID();
+
+                  if (changed) {
+                     _edit_stack_world.apply(
+                        std::make_unique<edits::set_creation_value<world::planning_connection, world::planning_branch_weights>>(
+                           &world::planning_connection::backward_weights,
+                           weights, connection.backward_weights),
+                        _edit_context);
+                  }
+               }
+
+               return placement_traits{.has_placement_rotation = false,
+                                       .has_point_at = false,
+                                       .has_placement_mode = false,
+                                       .has_lock_axis = false,
+                                       .has_placement_alignment = false,
+                                       .has_placement_ground = false};
             },
             [&](const world::boundary& boundary) {
                ImGui::InputText("Name", &creation_entity,

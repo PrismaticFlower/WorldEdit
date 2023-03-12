@@ -889,6 +889,26 @@ inline bool SliderInt(const char* label, we::world::creation_entity* entity,
 }
 
 template<typename Entity>
+inline bool SliderInt(const char* label, we::world::creation_entity* entity,
+                      we::int8 Entity::*value_member_ptr,
+                      we::edits::stack<we::world::edit_context>* edit_stack,
+                      we::world::edit_context* context, int v_min = 0, int v_max = 0,
+                      const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
+{
+   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::int8* value) {
+      int int_value = *value;
+
+      bool value_changed =
+         ImGui::SliderInt(label, &int_value, v_min, v_max, format, flags);
+
+      if (value_changed) *value = static_cast<we::int8>(int_value);
+
+      return we::edit_widget_result{.value_changed = value_changed,
+                                    .item_deactivated = ImGui::IsItemDeactivated()};
+   });
+}
+
+template<typename Entity>
 inline bool ColorEdit3(const char* label, we::world::creation_entity* entity,
                        we::float3 Entity::*value_member_ptr,
                        we::edits::stack<we::world::edit_context>* edit_stack,

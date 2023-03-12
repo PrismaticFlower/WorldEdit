@@ -166,7 +166,15 @@ void world_edit::update_hovered_entity() noexcept
 
    // TODO: interaction mask instead of reusing draw mask
 
-   if (_world_draw_mask.objects) {
+   world::active_entity_types raycast_mask = _world_draw_mask;
+
+   if (_interaction_targets.creation_entity and
+       std::holds_alternative<world::planning_connection>(
+          *_interaction_targets.creation_entity)) {
+      raycast_mask = world::active_entity_types{.objects = false, .planning = true};
+   }
+
+   if (raycast_mask.objects) {
       if (std::optional<world::raycast_result<world::object>> hit =
              world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
                             _world.objects, _object_classes);
@@ -179,7 +187,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.lights) {
+   if (raycast_mask.lights) {
       if (std::optional<world::raycast_result<world::light>> hit =
              world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
                             _world.lights);
@@ -191,7 +199,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.paths) {
+   if (raycast_mask.paths) {
       if (std::optional<world::raycast_result<world::path>> hit =
              world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
                             _world.paths);
@@ -203,7 +211,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.regions) {
+   if (raycast_mask.regions) {
       if (std::optional<world::raycast_result<world::region>> hit =
              world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
                             _world.regions);
@@ -215,7 +223,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.sectors) {
+   if (raycast_mask.sectors) {
       if (std::optional<world::raycast_result<world::sector>> hit =
              world::raycast(ray.origin, ray.direction, _world.sectors);
           hit) {
@@ -227,7 +235,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.portals) {
+   if (raycast_mask.portals) {
       if (std::optional<world::raycast_result<world::portal>> hit =
              world::raycast(ray.origin, ray.direction, _world.portals);
           hit) {
@@ -238,7 +246,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.hintnodes) {
+   if (raycast_mask.hintnodes) {
       if (std::optional<world::raycast_result<world::hintnode>> hit =
              world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
                             _world.hintnodes);
@@ -250,7 +258,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.barriers) {
+   if (raycast_mask.barriers) {
       if (std::optional<world::raycast_result<world::barrier>> hit =
              world::raycast(ray.origin, ray.direction, _world.barriers,
                             _settings.graphics.barrier_height);
@@ -262,7 +270,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.planning) {
+   if (raycast_mask.planning) {
       if (std::optional<world::raycast_result<world::planning_hub>> hit =
              world::raycast(ray.origin, ray.direction, _world.planning_hubs,
                             _settings.graphics.planning_hub_height);
@@ -285,7 +293,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_world_draw_mask.boundaries) {
+   if (raycast_mask.boundaries) {
       if (std::optional<world::raycast_result<world::boundary>> hit =
              world::raycast(ray.origin, ray.direction, _world.boundaries,
                             _settings.graphics.boundary_height);
@@ -298,7 +306,7 @@ void world_edit::update_hovered_entity() noexcept
    }
 
    // TODO: Unique terrain mask.
-   if (_world_draw_mask.objects) {
+   if (raycast_mask.objects) {
       if (auto hit = _terrain_collision.raycast(ray.origin, ray.direction); hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = std::nullopt;
@@ -312,9 +320,18 @@ void world_edit::update_hovered_entity() noexcept
    }
 
    if (_interaction_targets.creation_entity and _interaction_targets.hovered_entity) {
+      const bool from_bbox_wants_hover =
+         (_entity_creation_context.using_from_object_bbox and
+          std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity));
+
+      const bool connection_placement_wants_hover =
+         (std::holds_alternative<world::planning_connection>(
+             *_interaction_targets.creation_entity) and
+          std::holds_alternative<world::planning_hub_id>(
+             *_interaction_targets.hovered_entity));
+
       const bool tool_wants_hover =
-         _entity_creation_context.using_from_object_bbox and
-         std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity);
+         from_bbox_wants_hover or connection_placement_wants_hover;
 
       if (not tool_wants_hover) {
          _interaction_targets.hovered_entity = std::nullopt;
@@ -603,8 +620,42 @@ void world_edit::place_creation_entity() noexcept
                _entity_creation_context.hub_sizing_started = true;
             }
          },
-         [&](world::planning_connection& planning_connection) {
-            (void)planning_connection;
+         [&](world::planning_connection& connection) {
+            if (not(_interaction_targets.hovered_entity and
+                    std::holds_alternative<world::planning_hub_id>(
+                       *_interaction_targets.hovered_entity))) {
+               return;
+            }
+
+            if (_entity_creation_context.connection_link_started) {
+               world::planning_connection new_connection = connection;
+
+               new_connection.name =
+                  world::create_unique_name(_world.planning_connections,
+                                            new_connection.name);
+               new_connection.id = _world.next_id.planning_connections.aquire();
+
+               _entity_creation_context.last_planning_connection =
+                  new_connection.id;
+
+               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
+                                       _edit_context);
+
+               connection.name = world::create_unique_name(_world.planning_connections,
+                                                           connection.name);
+
+               _entity_creation_context.connection_link_started = false;
+            }
+            else {
+               _edit_stack_world.apply(
+                  std::make_unique<edits::set_creation_value<world::planning_connection, world::planning_hub_id>>(
+                     &world::planning_connection::start,
+                     std::get<world::planning_hub_id>(*_interaction_targets.hovered_entity),
+                     connection.start),
+                  _edit_context);
+
+               _entity_creation_context.connection_link_started = true;
+            }
          },
          [&](world::boundary& boundary) {
             world::boundary new_boundary = boundary;

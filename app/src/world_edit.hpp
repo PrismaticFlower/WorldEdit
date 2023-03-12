@@ -209,6 +209,7 @@ private:
       bool auto_fill_sector = false;
 
       bool hub_sizing_started = false;
+      bool connection_link_started = false;
 
       float alignment = 4.0f;
       float snap_distance = 0.5f;
