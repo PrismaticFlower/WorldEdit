@@ -133,14 +133,15 @@ TEST_CASE("edits set_creation_path_node_location", "[Edits]")
 
    interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
 
-   set_creation_path_node_location edit{quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                        quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                        float3{1.0f, 1.0f, 1.0f},
-                                        float3{0.0f, 0.0f, 0.0f},
-                                        float3{2.0f, 2.0f, 2.0f},
-                                        float3{0.0f, 0.0f, 0.0f}};
+   auto edit =
+      make_set_creation_path_node_location(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                           quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                                           float3{1.0f, 1.0f, 1.0f},
+                                           float3{0.0f, 0.0f, 0.0f},
+                                           float3{2.0f, 2.0f, 2.0f},
+                                           float3{0.0f, 0.0f, 0.0f});
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
@@ -148,7 +149,7 @@ TEST_CASE("edits set_creation_path_node_location", "[Edits]")
            float3{1.0f, 1.0f, 1.0f});
    REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -165,14 +166,14 @@ TEST_CASE("edits set_creation_region_metrics", "[Edits]")
 
    interaction_targets.creation_entity = world::region{};
 
-   set_creation_region_metrics edit{quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                    quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                    float3{1.0f, 1.0f, 1.0f},
-                                    float3{0.0f, 0.0f, 0.0f},
-                                    float3{2.0f, 2.0f, 2.0f},
-                                    float3{0.0f, 0.0f, 0.0f}};
+   auto edit = make_set_creation_region_metrics(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                                quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                                                float3{1.0f, 1.0f, 1.0f},
+                                                float3{0.0f, 0.0f, 0.0f},
+                                                float3{2.0f, 2.0f, 2.0f},
+                                                float3{0.0f, 0.0f, 0.0f});
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
@@ -181,7 +182,7 @@ TEST_CASE("edits set_creation_region_metrics", "[Edits]")
    REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).size ==
            float3{2.0f, 2.0f, 2.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -199,14 +200,14 @@ TEST_CASE("edits set_creation_sector_point", "[Edits]")
 
    interaction_targets.creation_entity = world::sector{.points = {{0.0f, 0.0f}}};
 
-   set_creation_sector_point edit{float2{1.0f, 1.0f}, float2{0.0f, 0.0f}};
+   auto edit = make_set_creation_sector_point(float2{1.0f, 1.0f}, float2{0.0f, 0.0f});
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
            float2{1.0f, 1.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
            float2{0.0f, 0.0f});
@@ -220,14 +221,14 @@ TEST_CASE("edits set_creation_portal_size", "[Edits]")
 
    interaction_targets.creation_entity = world::portal{};
 
-   set_creation_portal_size edit{2.0f, 1.0f, 4.0f, 2.0f};
+   auto edit = make_set_creation_portal_size(2.0f, 1.0f, 4.0f, 2.0f);
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 2.0f);
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 4.0f);
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 1.0f);
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 2.0f);
@@ -241,14 +242,12 @@ TEST_CASE("edits set_creation_barrier_metrics", "[Edits]")
 
    interaction_targets.creation_entity = world::barrier{};
 
-   set_creation_barrier_metrics edit{2.0f,
-                                     0.0f,
-                                     float2{1.0f, 1.0f},
-                                     float2{0.0f, 0.0f},
-                                     float2{2.0f, 2.0f},
-                                     float2{0.0f, 0.0f}};
+   auto edit =
+      make_set_creation_barrier_metrics(2.0f, 0.0f, float2{1.0f, 1.0f},
+                                        float2{0.0f, 0.0f}, float2{2.0f, 2.0f},
+                                        float2{0.0f, 0.0f});
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            2.0f);
@@ -257,7 +256,7 @@ TEST_CASE("edits set_creation_barrier_metrics", "[Edits]")
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
            float2{2.0f, 2.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            0.0f);
@@ -429,24 +428,26 @@ TEST_CASE("edits set_creation_path_node_location coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
 
-   set_creation_path_node_location edit{quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                        quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                        float3{1.0f, 1.0f, 1.0f},
-                                        float3{0.0f, 0.0f, 0.0f},
-                                        float3{2.0f, 2.0f, 2.0f},
-                                        float3{0.0f, 0.0f, 0.0f}};
-   set_creation_path_node_location other_edit{quaternion{0.0f, 0.0f, 1.0f, 0.0f},
-                                              quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                              float3{2.0f, 2.0f, 2.0f},
-                                              float3{0.0f, 0.0f, 0.0f},
-                                              float3{4.0f, 4.0f, 4.0f},
-                                              float3{0.0f, 0.0f, 0.0f}};
+   auto edit =
+      make_set_creation_path_node_location(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                           quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                                           float3{1.0f, 1.0f, 1.0f},
+                                           float3{0.0f, 0.0f, 0.0f},
+                                           float3{2.0f, 2.0f, 2.0f},
+                                           float3{0.0f, 0.0f, 0.0f});
+   auto other_edit =
+      make_set_creation_path_node_location(quaternion{0.0f, 0.0f, 1.0f, 0.0f},
+                                           quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                                           float3{2.0f, 2.0f, 2.0f},
+                                           float3{0.0f, 0.0f, 0.0f},
+                                           float3{4.0f, 4.0f, 4.0f},
+                                           float3{0.0f, 0.0f, 0.0f});
 
-   REQUIRE(edit.is_coalescable(other_edit));
+   REQUIRE(edit->is_coalescable(*other_edit));
 
-   edit.coalesce(other_edit);
+   edit->coalesce(*other_edit);
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
            quaternion{0.0f, 0.0f, 1.0f, 0.0f});
@@ -454,7 +455,7 @@ TEST_CASE("edits set_creation_path_node_location coalesce", "[Edits]")
            float3{2.0f, 2.0f, 2.0f});
    REQUIRE(edit_context.euler_rotation == float3{4.0f, 4.0f, 4.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -471,24 +472,25 @@ TEST_CASE("edits set_creation_region_metrics coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::region{};
 
-   set_creation_region_metrics edit{quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                    quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                    float3{1.0f, 1.0f, 1.0f},
-                                    float3{0.0f, 0.0f, 0.0f},
-                                    float3{2.0f, 2.0f, 2.0f},
-                                    float3{0.0f, 0.0f, 0.0f}};
-   set_creation_region_metrics other_edit{quaternion{0.0f, 0.0f, 1.0f, 0.0f},
-                                          quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                          float3{2.0f, 2.0f, 2.0f},
-                                          float3{0.0f, 0.0f, 0.0f},
-                                          float3{4.0f, 4.0f, 4.0f},
-                                          float3{0.0f, 0.0f, 0.0f}};
+   auto edit = make_set_creation_region_metrics(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                                quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                                                float3{1.0f, 1.0f, 1.0f},
+                                                float3{0.0f, 0.0f, 0.0f},
+                                                float3{2.0f, 2.0f, 2.0f},
+                                                float3{0.0f, 0.0f, 0.0f});
+   auto other_edit =
+      make_set_creation_region_metrics(quaternion{0.0f, 0.0f, 1.0f, 0.0f},
+                                       quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                                       float3{2.0f, 2.0f, 2.0f},
+                                       float3{0.0f, 0.0f, 0.0f},
+                                       float3{4.0f, 4.0f, 4.0f},
+                                       float3{0.0f, 0.0f, 0.0f});
 
-   REQUIRE(edit.is_coalescable(other_edit));
+   REQUIRE(edit->is_coalescable(*other_edit));
 
-   edit.coalesce(other_edit);
+   edit->coalesce(*other_edit);
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
            quaternion{0.0f, 0.0f, 1.0f, 0.0f});
@@ -497,7 +499,7 @@ TEST_CASE("edits set_creation_region_metrics coalesce", "[Edits]")
    REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).size ==
            float3{4.0f, 4.0f, 4.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
@@ -515,19 +517,20 @@ TEST_CASE("edits set_creation_sector_point coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::sector{.points = {{0.0f, 0.0f}}};
 
-   set_creation_sector_point edit{float2{1.0f, 1.0f}, float2{0.0f, 0.0f}};
-   set_creation_sector_point other_edit{float2{2.0f, 2.0f}, float2{0.0f, 0.0f}};
+   auto edit = make_set_creation_sector_point(float2{1.0f, 1.0f}, float2{0.0f, 0.0f});
+   auto other_edit =
+      make_set_creation_sector_point(float2{2.0f, 2.0f}, float2{0.0f, 0.0f});
 
-   REQUIRE(edit.is_coalescable(other_edit));
+   REQUIRE(edit->is_coalescable(*other_edit));
 
-   edit.coalesce(other_edit);
+   edit->coalesce(*other_edit);
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
            float2{2.0f, 2.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
            float2{0.0f, 0.0f});
@@ -541,19 +544,19 @@ TEST_CASE("edits set_creation_portal_size coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::portal{};
 
-   set_creation_portal_size edit{2.0f, 1.0f, 4.0f, 2.0f};
-   set_creation_portal_size other_edit{8.0f, 2.0f, 16.0f, 4.0f};
+   auto edit = make_set_creation_portal_size(2.0f, 1.0f, 4.0f, 2.0f);
+   auto other_edit = make_set_creation_portal_size(8.0f, 2.0f, 16.0f, 4.0f);
 
-   REQUIRE(edit.is_coalescable(other_edit));
+   REQUIRE(edit->is_coalescable(*other_edit));
 
-   edit.coalesce(other_edit);
+   edit->coalesce(*other_edit);
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 8.0f);
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 16.0f);
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 1.0f);
    REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 2.0f);
@@ -567,24 +570,20 @@ TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::barrier{};
 
-   set_creation_barrier_metrics edit{1.0f,
-                                     0.0f,
-                                     float2{1.0f, 1.0f},
-                                     float2{0.0f, 0.0f},
-                                     float2{2.0f, 2.0f},
-                                     float2{0.0f, 0.0f}};
-   set_creation_barrier_metrics other_edit{2.0f,
-                                           1.0f,
-                                           float2{2.0f, 2.0f},
-                                           float2{0.0f, 0.0f},
-                                           float2{4.0f, 4.0f},
-                                           float2{0.0f, 0.0f}};
+   auto edit =
+      make_set_creation_barrier_metrics(1.0f, 0.0f, float2{1.0f, 1.0f},
+                                        float2{0.0f, 0.0f}, float2{2.0f, 2.0f},
+                                        float2{0.0f, 0.0f});
+   auto other_edit =
+      make_set_creation_barrier_metrics(2.0f, 1.0f, float2{2.0f, 2.0f},
+                                        float2{0.0f, 0.0f}, float2{4.0f, 4.0f},
+                                        float2{0.0f, 0.0f});
 
-   REQUIRE(edit.is_coalescable(other_edit));
+   REQUIRE(edit->is_coalescable(*other_edit));
 
-   edit.coalesce(other_edit);
+   edit->coalesce(*other_edit);
 
-   edit.apply(edit_context);
+   edit->apply(edit_context);
 
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            2.0f);
@@ -593,7 +592,7 @@ TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
            float2{4.0f, 4.0f});
 
-   edit.revert(edit_context);
+   edit->revert(edit_context);
 
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            0.0f);

@@ -207,6 +207,7 @@
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
     <ClCompile Include="src\edits\insert_point.cpp" />
+    <ClCompile Include="src\edits\set_value.cpp" />
     <ClCompile Include="src\graphics\copy_command_list_pool.cpp" />
     <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp" />
     <ClCompile Include="src\graphics\gpu\rhi.cpp" />

@@ -1046,11 +1046,11 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_rotation != object.rotation or new_position != object.position) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_location<world::object>>(
-                           new_rotation, object.rotation, new_position, object.position,
-                           new_euler_rotation, _edit_context.euler_rotation),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_location<world::object>(
+                                                new_rotation, object.rotation, new_position,
+                                                object.position, new_euler_rotation,
+                                                _edit_context.euler_rotation),
+                                             _edit_context);
                   }
                }
 
@@ -1062,10 +1062,11 @@ void world_edit::update_ui() noexcept
                      look_at_quat(_cursor_positionWS, object.position);
 
                   if (new_rotation != object.rotation) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::object, quaternion>>(
-                           &world::object::rotation, new_rotation, object.rotation),
-                        _edit_context);
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::object::rotation,
+                                                              new_rotation,
+                                                              object.rotation),
+                               _edit_context);
                   }
                }
 
@@ -1158,11 +1159,11 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_rotation != light.rotation or new_position != light.position) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_location<world::light>>(
-                           new_rotation, light.rotation, new_position, light.position,
-                           new_euler_rotation, _edit_context.euler_rotation),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_location<world::light>(
+                                                new_rotation, light.rotation, new_position,
+                                                light.position, new_euler_rotation,
+                                                _edit_context.euler_rotation),
+                                             _edit_context);
                   }
                }
 
@@ -1174,10 +1175,11 @@ void world_edit::update_ui() noexcept
                      look_at_quat(_cursor_positionWS, light.position);
 
                   if (new_rotation != light.rotation) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::light, quaternion>>(
-                           &world::light::rotation, new_rotation, light.rotation),
-                        _edit_context);
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::light::rotation,
+                                                              new_rotation,
+                                                              light.rotation),
+                               _edit_context);
                   }
                }
 
@@ -1392,7 +1394,7 @@ void world_edit::update_ui() noexcept
 
                   if (new_rotation != path.nodes[0].rotation or
                       new_position != path.nodes[0].position) {
-                     _edit_stack_world.apply(std::make_unique<edits::set_creation_path_node_location>(
+                     _edit_stack_world.apply(edits::make_set_creation_path_node_location(
                                                 new_rotation, path.nodes[0].rotation,
                                                 new_position, path.nodes[0].position,
                                                 new_euler_rotation,
@@ -1410,11 +1412,10 @@ void world_edit::update_ui() noexcept
                      look_at_quat(_cursor_positionWS, path.nodes[0].position);
 
                   if (new_rotation != path.nodes[0].rotation) {
-                     _edit_stack_world
-                        .apply(std::make_unique<edits::set_creation_path_node_value<quaternion>>(
-                                  &world::path::node::rotation, new_rotation,
-                                  path.nodes[0].rotation),
-                               _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_path_node_value(
+                                                &world::path::node::rotation,
+                                                new_rotation, path.nodes[0].rotation),
+                                             _edit_context);
                   }
                }
 
@@ -1423,11 +1424,12 @@ void world_edit::update_ui() noexcept
                if (ImGui::Button("New Path", {ImGui::CalcItemWidth(), 0.0f}) or
                    std::exchange(_entity_creation_context.finish_current_path, false)) {
 
-                  _edit_stack_world.apply(
-                     std::make_unique<edits::set_creation_value<world::path, std::string>>(
-                        &world::path::name,
-                        world::create_unique_name(_world.paths, path.name), path.name),
-                     _edit_context);
+                  _edit_stack_world.apply(edits::make_set_creation_value(
+                                             &world::path::name,
+                                             world::create_unique_name(_world.paths,
+                                                                       path.name),
+                                             path.name),
+                                          _edit_context);
                }
 
                if (ImGui::IsItemHovered()) {
@@ -1569,11 +1571,11 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_rotation != region.rotation or new_position != region.position) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_location<world::region>>(
-                           new_rotation, region.rotation, new_position, region.position,
-                           new_euler_rotation, _edit_context.euler_rotation),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_location<world::region>(
+                                                new_rotation, region.rotation, new_position,
+                                                region.position, new_euler_rotation,
+                                                _edit_context.euler_rotation),
+                                             _edit_context);
                   }
                }
 
@@ -1585,10 +1587,11 @@ void world_edit::update_ui() noexcept
                      look_at_quat(_cursor_positionWS, region.position);
 
                   if (new_rotation != region.rotation) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::region, quaternion>>(
-                           &world::region::rotation, new_rotation, region.rotation),
-                        _edit_context);
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::region::rotation,
+                                                              new_rotation,
+                                                              region.rotation),
+                               _edit_context);
                   }
                }
 
@@ -1711,10 +1714,10 @@ void world_edit::update_ui() noexcept
                }
 
                if (region_size != region.size) {
-                  _edit_stack_world.apply(
-                     std::make_unique<edits::set_creation_value<world::region, float3>>(
-                        &world::region::size, region_size, region.size),
-                     _edit_context);
+                  _edit_stack_world.apply(edits::make_set_creation_value(&world::region::size,
+                                                                         region_size,
+                                                                         region.size),
+                                          _edit_context);
                }
 
                ImGui::Separator();
@@ -1745,7 +1748,7 @@ void world_edit::update_ui() noexcept
                         ((conjugate(object->rotation) * object->position) +
                          ((bbox.min + bbox.max) / 2.0f));
 
-                     _edit_stack_world.apply(std::make_unique<edits::set_creation_region_metrics>(
+                     _edit_stack_world.apply(edits::make_set_creation_region_metrics(
                                                 object->rotation, region.rotation,
                                                 position, region.position, size,
                                                 region.size),
@@ -1801,7 +1804,7 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_position != sector.points[0]) {
-                     _edit_stack_world.apply(std::make_unique<edits::set_creation_sector_point>(
+                     _edit_stack_world.apply(edits::make_set_creation_sector_point(
                                                 new_position, sector.points[0]),
                                              _edit_context);
                   }
@@ -1810,12 +1813,12 @@ void world_edit::update_ui() noexcept
                if (ImGui::Button("New Sector", {ImGui::CalcItemWidth(), 0.0f}) or
                    std::exchange(_entity_creation_context.finish_current_sector, false)) {
 
-                  _edit_stack_world.apply(
-                     std::make_unique<edits::set_creation_value<world::sector, std::string>>(
-                        &world::sector::name,
-                        world::create_unique_name(_world.sectors, sector.name),
-                        sector.name),
-                     _edit_context);
+                  _edit_stack_world.apply(edits::make_set_creation_value(
+                                             &world::sector::name,
+                                             world::create_unique_name(_world.sectors,
+                                                                       sector.name),
+                                             sector.name),
+                                          _edit_context);
                }
 
                if (ImGui::IsItemHovered()) {
@@ -1983,11 +1986,11 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_rotation != portal.rotation or new_position != portal.position) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_location<world::portal>>(
-                           new_rotation, portal.rotation, new_position, portal.position,
-                           new_euler_rotation, _edit_context.euler_rotation),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_location<world::portal>(
+                                                new_rotation, portal.rotation, new_position,
+                                                portal.position, new_euler_rotation,
+                                                _edit_context.euler_rotation),
+                                             _edit_context);
                   }
                }
 
@@ -1999,10 +2002,11 @@ void world_edit::update_ui() noexcept
                      look_at_quat(_cursor_positionWS, portal.position);
 
                   if (new_rotation != portal.rotation) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::portal, quaternion>>(
-                           &world::portal::rotation, new_rotation, portal.rotation),
-                        _edit_context);
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::portal::rotation,
+                                                              new_rotation,
+                                                              portal.rotation),
+                               _edit_context);
                   }
                }
 
@@ -2049,10 +2053,10 @@ void world_edit::update_ui() noexcept
                                    size.y * 2.0f);
 
                   if (width != portal.width or height != portal.height) {
-                     _edit_stack_world.apply(std::make_unique<edits::set_creation_portal_size>(
-                                                width, portal.width, height,
-                                                portal.height),
-                                             _edit_context);
+                     _edit_stack_world.apply(
+                        edits::make_set_creation_portal_size(width, portal.width,
+                                                             height, portal.height),
+                        _edit_context);
                   }
                }
                else {
@@ -2150,12 +2154,12 @@ void world_edit::update_ui() noexcept
 
                   if (new_rotation != hintnode.rotation or
                       new_position != hintnode.position) {
-                     _edit_stack_world
-                        .apply(std::make_unique<edits::set_creation_location<world::hintnode>>(
-                                  new_rotation, hintnode.rotation, new_position,
-                                  hintnode.position, new_euler_rotation,
-                                  _edit_context.euler_rotation),
-                               _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_location<world::hintnode>(
+                                                new_rotation, hintnode.rotation,
+                                                new_position, hintnode.position,
+                                                new_euler_rotation,
+                                                _edit_context.euler_rotation),
+                                             _edit_context);
                   }
                }
 
@@ -2167,10 +2171,10 @@ void world_edit::update_ui() noexcept
                      look_at_quat(_cursor_positionWS, hintnode.position);
 
                   if (new_rotation != hintnode.rotation) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::hintnode, quaternion>>(
-                           &world::hintnode::rotation, new_rotation, hintnode.rotation),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::hintnode::rotation,
+                                                new_rotation, hintnode.rotation),
+                                             _edit_context);
                   }
                }
 
@@ -2207,11 +2211,11 @@ void world_edit::update_ui() noexcept
 
                         if (properties["ClassLabel"] == "commandpost") {
                            if (ImGui::Selectable(object.name.c_str())) {
-                              _edit_stack_world.apply(
-                                 std::make_unique<edits::set_creation_value<world::hintnode, std::string>>(
-                                    &world::hintnode::command_post, object.name,
-                                    hintnode.command_post),
-                                 _edit_context);
+                              _edit_stack_world.apply(edits::make_set_creation_value(
+                                                         &world::hintnode::command_post,
+                                                         object.name,
+                                                         hintnode.command_post),
+                                                      _edit_context);
                            }
                         }
                      }
@@ -2317,10 +2321,10 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_position != barrier.position) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::barrier, float2>>(
-                           &world::barrier::position, new_position, barrier.position),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::barrier::position,
+                                                new_position, barrier.position),
+                                             _edit_context);
                   }
                }
 
@@ -2341,11 +2345,10 @@ void world_edit::update_ui() noexcept
                      180.0f * std::numbers::pi_v<float>;
 
                   if (new_angle != barrier.rotation_angle) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::barrier, float>>(
-                           &world::barrier::rotation_angle, new_angle,
-                           barrier.rotation_angle),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::barrier::rotation_angle,
+                                                new_angle, barrier.rotation_angle),
+                                             _edit_context);
                   }
                }
 
@@ -2459,12 +2462,11 @@ void world_edit::update_ui() noexcept
 
                   if (barrier_new_position != barrier_start_position or
                       barrier_new_size != barrier_start_size) {
-                     _edit_stack_world
-                        .apply(std::make_unique<edits::set_creation_barrier_metrics>(
-                                  barrier.rotation_angle, barrier.rotation_angle,
-                                  barrier_new_position, barrier_start_position,
-                                  barrier_new_size, barrier_start_size),
-                               _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
+                                                barrier.rotation_angle, barrier.rotation_angle,
+                                                barrier_new_position, barrier_start_position,
+                                                barrier_new_size, barrier_start_size),
+                                             _edit_context);
                   }
                }
                else {
@@ -2508,12 +2510,12 @@ void world_edit::update_ui() noexcept
                         std::atan2(corners[1].z - corners[0].z,
                                    corners[1].x - corners[0].x);
 
-                     _edit_stack_world
-                        .apply(std::make_unique<edits::set_creation_barrier_metrics>(
-                                  rotation_angle, barrier.rotation_angle,
-                                  float2{position.x, position.z}, barrier.position,
-                                  float2{size.x, size.z}, barrier.size),
-                               _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
+                                                rotation_angle, barrier.rotation_angle,
+                                                float2{position.x, position.z},
+                                                barrier.position,
+                                                float2{size.x, size.z}, barrier.size),
+                                             _edit_context);
                   }
                }
 
@@ -2542,12 +2544,13 @@ void world_edit::update_ui() noexcept
                      const float rotation_angle =
                         std::atan2(start.x - end.x, start.z - end.z);
 
-                     _edit_stack_world
-                        .apply(std::make_unique<edits::set_creation_barrier_metrics>(
-                                  rotation_angle, barrier.rotation_angle,
-                                  float2{position.x, position.z}, barrier.position,
-                                  float2{barrier.size.x, height}, barrier.size),
-                               _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
+                                                rotation_angle, barrier.rotation_angle,
+                                                float2{position.x, position.z},
+                                                barrier.position,
+                                                float2{barrier.size.x, height},
+                                                barrier.size),
+                                             _edit_context);
 
                      if (std::exchange(_entity_creation_context.from_line_click, false)) {
                         _entity_creation_context.using_from_line = false;
@@ -2632,10 +2635,10 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_position != hub.position) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::planning_hub, float2>>(
-                           &world::planning_hub::position, new_position, hub.position),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::planning_hub::position,
+                                                new_position, hub.position),
+                                             _edit_context);
                   }
                }
 
@@ -2655,10 +2658,10 @@ void world_edit::update_ui() noexcept
                               hub.position);
 
                   if (new_radius != hub.radius) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::planning_hub, float>>(
-                           &world::planning_hub::radius, new_radius, hub.radius),
-                        _edit_context);
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::planning_hub::radius,
+                                                              new_radius, hub.radius),
+                               _edit_context);
                   }
                }
 
@@ -2695,10 +2698,10 @@ void world_edit::update_ui() noexcept
                   const world::planning_hub_id end_id =
                      std::get<world::planning_hub_id>(*_interaction_targets.hovered_entity);
 
-                  _edit_stack_world.apply(
-                     std::make_unique<edits::set_creation_value<world::planning_connection, world::planning_hub_id>>(
-                        &world::planning_connection::end, end_id, connection.end),
-                     _edit_context);
+                  _edit_stack_world
+                     .apply(edits::make_set_creation_value(&world::planning_connection::end,
+                                                           end_id, connection.end),
+                            _edit_context);
                }
 
                ImGui::Separator();
@@ -2730,11 +2733,11 @@ void world_edit::update_ui() noexcept
                bool is_dynamic = connection.dynamic_group != 0;
 
                if (ImGui::Checkbox("Dynamic", &is_dynamic)) {
-                  _edit_stack_world.apply(
-                     std::make_unique<edits::set_creation_value<world::planning_connection, int8>>(
-                        &world::planning_connection::dynamic_group,
-                        is_dynamic ? int8{1} : int8{0}, connection.dynamic_group),
-                     _edit_context);
+                  _edit_stack_world.apply(edits::make_set_creation_value(
+                                             &world::planning_connection::dynamic_group,
+                                             is_dynamic ? int8{1} : int8{0},
+                                             connection.dynamic_group),
+                                          _edit_context);
                }
 
                if (is_dynamic) {
@@ -2763,11 +2766,10 @@ void world_edit::update_ui() noexcept
                   ImGui::PopID();
 
                   if (changed) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::planning_connection, world::planning_branch_weights>>(
-                           &world::planning_connection::forward_weights,
-                           weights, connection.forward_weights),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::planning_connection::forward_weights,
+                                                weights, connection.forward_weights),
+                                             _edit_context);
                   }
                }
 
@@ -2790,11 +2792,10 @@ void world_edit::update_ui() noexcept
                   ImGui::PopID();
 
                   if (changed) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::planning_connection, world::planning_branch_weights>>(
-                           &world::planning_connection::backward_weights,
-                           weights, connection.backward_weights),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::planning_connection::backward_weights,
+                                                weights, connection.backward_weights),
+                                             _edit_context);
                   }
                }
 
@@ -2859,10 +2860,10 @@ void world_edit::update_ui() noexcept
                   }
 
                   if (new_position != boundary.position) {
-                     _edit_stack_world.apply(
-                        std::make_unique<edits::set_creation_value<world::boundary, float2>>(
-                           &world::boundary::position, new_position, boundary.position),
-                        _edit_context);
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::boundary::position,
+                                                new_position, boundary.position),
+                                             _edit_context);
                   }
                }
 

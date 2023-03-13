@@ -861,6 +861,9 @@
     <ClCompile Include="src\world\utility\boundary_nodes.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\edits\set_value.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />
