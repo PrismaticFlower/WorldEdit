@@ -732,6 +732,14 @@ void world_edit::update_ui() noexcept
                ImGui::Separator();
 
                ImGui::EnumSelect(
+                  "Path Type", path, &world::path::type, &_edit_stack_world,
+                  &_edit_context,
+                  {enum_select_option{"None", world::path_type::none},
+                   enum_select_option{"Entity Follow", world::path_type::entity_follow},
+                   enum_select_option{"Formation", world::path_type::formation},
+                   enum_select_option{"Patrol", world::path_type::patrol}});
+
+               ImGui::EnumSelect(
                   "Spline Type", path, &world::path::spline_type,
                   &_edit_stack_world, &_edit_context,
                   {enum_select_option{"None", world::path_spline_type::none},
@@ -1311,6 +1319,14 @@ void world_edit::update_ui() noexcept
 
                ImGui::LayerPick<world::path>("Layer", &creation_entity,
                                              &_edit_stack_world, &_edit_context);
+
+               ImGui::EnumSelect(
+                  "Path Type", &creation_entity, &world::path::type,
+                  &_edit_stack_world, &_edit_context,
+                  {enum_select_option{"None", world::path_type::none},
+                   enum_select_option{"Entity Follow", world::path_type::entity_follow},
+                   enum_select_option{"Formation", world::path_type::formation},
+                   enum_select_option{"Patrol", world::path_type::patrol}});
 
                ImGui::EnumSelect(
                   "Spline Type", &creation_entity, &world::path::spline_type,
