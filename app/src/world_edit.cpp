@@ -433,7 +433,7 @@ void world_edit::place_creation_entity() noexcept
 
    std::visit(
       overload{
-         [&](world::object& object) {
+         [&](const world::object& object) {
             world::object new_object = object;
 
             new_object.name =
@@ -445,9 +445,16 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object)),
                                     _edit_context);
 
-            object.name = world::create_unique_name(_world.objects, object.name);
+            if (not object.name.empty()) {
+               _edit_stack_world.apply(
+                  std::make_unique<edits::set_creation_value<world::object, std::string>>(
+                     &world::object::name,
+                     world::create_unique_name(_world.objects, object.name),
+                     object.name),
+                  _edit_context, {.transparent = true});
+            }
          },
-         [&](world::light& light) {
+         [&](const world::light& light) {
             world::light new_light = light;
 
             new_light.name = world::create_unique_name(_world.lights, new_light.name);
@@ -466,17 +473,26 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
                                     _edit_context);
 
-            light.name = world::create_unique_name(_world.objects, light.name);
+            _edit_stack_world.apply(
+               std::make_unique<edits::set_creation_value<world::light, std::string>>(
+                  &world::light::name,
+                  world::create_unique_name(_world.lights, light.name), light.name),
+               _edit_context, {.transparent = true});
 
             if (world::is_region_light(light)) {
-               light.region_name =
-                  world::create_unique_light_region_name(_world.lights, _world.regions,
-                                                         light.region_name.empty()
-                                                            ? light.name
-                                                            : light.region_name);
+               _edit_stack_world.apply(
+                  std::make_unique<edits::set_creation_value<world::light, std::string>>(
+                     &world::light::region_name,
+                     world::create_unique_light_region_name(_world.lights,
+                                                            _world.regions,
+                                                            light.region_name.empty()
+                                                               ? light.name
+                                                               : light.region_name),
+                     light.region_name),
+                  _edit_context, {.transparent = true});
             }
          },
-         [&](world::path& path) {
+         [&](const world::path& path) {
             if (const world::path* existing_path =
                    world::find_entity(_world.paths, path.name);
                 existing_path) {
@@ -513,7 +529,7 @@ void world_edit::place_creation_entity() noexcept
                                        _edit_context);
             }
          },
-         [&](world::region& region) {
+         [&](const world::region& region) {
             world::region new_region = region;
 
             new_region.name =
@@ -525,9 +541,13 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
                                     _edit_context);
 
-            region.name = world::create_unique_name(_world.regions, region.name);
+            _edit_stack_world.apply(
+               std::make_unique<edits::set_creation_value<world::region, std::string>>(
+                  &world::region::name,
+                  world::create_unique_name(_world.regions, region.name), region.name),
+               _edit_context, {.transparent = true});
          },
-         [&](world::sector& sector) {
+         [&](const world::sector& sector) {
             if (sector.points.empty()) std::terminate();
 
             if (const world::sector* existing_sector =
@@ -558,7 +578,7 @@ void world_edit::place_creation_entity() noexcept
                                        _edit_context);
             }
          },
-         [&](world::portal& portal) {
+         [&](const world::portal& portal) {
             world::portal new_portal = portal;
 
             new_portal.name =
@@ -570,10 +590,13 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
                                     _edit_context);
 
-            portal.name = world::create_unique_name(_world.portals, portal.name);
+            _edit_stack_world.apply(
+               std::make_unique<edits::set_creation_value<world::portal, std::string>>(
+                  &world::portal::name,
+                  world::create_unique_name(_world.portals, portal.name), portal.name),
+               _edit_context, {.transparent = true});
          },
-
-         [&](world::hintnode& hintnode) {
+         [&](const world::hintnode& hintnode) {
             world::hintnode new_hintnode = hintnode;
 
             new_hintnode.name =
@@ -585,10 +608,14 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
                                     _edit_context);
 
-            hintnode.name =
-               world::create_unique_name(_world.hintnodes, hintnode.name);
+            _edit_stack_world.apply(
+               std::make_unique<edits::set_creation_value<world::hintnode, std::string>>(
+                  &world::hintnode::name,
+                  world::create_unique_name(_world.hintnodes, hintnode.name),
+                  hintnode.name),
+               _edit_context, {.transparent = true});
          },
-         [&](world::barrier& barrier) {
+         [&](const world::barrier& barrier) {
             world::barrier new_barrier = barrier;
 
             new_barrier.name =
@@ -600,9 +627,14 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
                                     _edit_context);
 
-            barrier.name = world::create_unique_name(_world.barriers, barrier.name);
+            _edit_stack_world.apply(
+               std::make_unique<edits::set_creation_value<world::barrier, std::string>>(
+                  &world::barrier::name,
+                  world::create_unique_name(_world.barriers, barrier.name),
+                  barrier.name),
+               _edit_context, {.transparent = true});
          },
-         [&](world::planning_hub& hub) {
+         [&](const world::planning_hub& hub) {
             if (_entity_creation_context.hub_sizing_started) {
                world::planning_hub new_hub = hub;
 
@@ -617,7 +649,12 @@ void world_edit::place_creation_entity() noexcept
                                                    _world.planning_hubs.size()),
                          _edit_context);
 
-               hub.name = world::create_unique_name(_world.planning_hubs, hub.name);
+               _edit_stack_world.apply(
+                  std::make_unique<edits::set_creation_value<world::planning_hub, std::string>>(
+                     &world::planning_hub::name,
+                     world::create_unique_name(_world.planning_hubs, hub.name),
+                     hub.name),
+                  _edit_context, {.transparent = true});
 
                _entity_creation_context.hub_sizing_started = false;
             }
@@ -625,7 +662,7 @@ void world_edit::place_creation_entity() noexcept
                _entity_creation_context.hub_sizing_started = true;
             }
          },
-         [&](world::planning_connection& connection) {
+         [&](const world::planning_connection& connection) {
             if (not(_interaction_targets.hovered_entity and
                     std::holds_alternative<world::planning_hub_id>(
                        *_interaction_targets.hovered_entity))) {
@@ -646,8 +683,13 @@ void world_edit::place_creation_entity() noexcept
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
                                        _edit_context);
 
-               connection.name = world::create_unique_name(_world.planning_connections,
-                                                           connection.name);
+               _edit_stack_world.apply(
+                  std::make_unique<edits::set_creation_value<world::planning_connection, std::string>>(
+                     &world::planning_connection::name,
+                     world::create_unique_name(_world.planning_connections,
+                                               connection.name),
+                     connection.name),
+                  _edit_context, {.transparent = true});
 
                _entity_creation_context.connection_link_started = false;
             }
@@ -662,7 +704,7 @@ void world_edit::place_creation_entity() noexcept
                _entity_creation_context.connection_link_started = true;
             }
          },
-         [&](world::boundary& boundary) {
+         [&](const world::boundary& boundary) {
             world::boundary new_boundary = boundary;
 
             new_boundary.name =
@@ -674,8 +716,12 @@ void world_edit::place_creation_entity() noexcept
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
                                     _edit_context);
 
-            boundary.name =
-               world::create_unique_name(_world.boundaries, boundary.name);
+            _edit_stack_world.apply(
+               std::make_unique<edits::set_creation_value<world::boundary, std::string>>(
+                  &world::boundary::name,
+                  world::create_unique_name(_world.boundaries, boundary.name),
+                  boundary.name),
+               _edit_context, {.transparent = true});
          },
       },
       *_interaction_targets.creation_entity);

@@ -41,8 +41,23 @@ struct edit {
       _closed = true;
    }
 
+   /// @brief Checks if the edit is marked as transparent. Intended for edits not
+   /// directly caused by user actions. When revert/reapply is called transparent edits on top of the stack are processed in addition to the first non-transparent edit.
+   /// @return If the edit is transparent.
+   bool is_transparent() const noexcept
+   {
+      return _transparent;
+   }
+
+   /// @brief Marks the edit as transparent.
+   void mark_transparent() noexcept
+   {
+      _transparent = true;
+   }
+
 private:
    bool _closed = false;
+   bool _transparent = false;
 };
 
 }

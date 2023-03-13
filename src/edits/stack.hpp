@@ -12,6 +12,14 @@ struct stack_init {
    const std::size_t reserve_size = 8192;
 };
 
+struct apply_flags {
+   /// @brief Mark the edit as closed. (Not coalescable.)
+   bool closed = false;
+
+   /// @brief Mark the edit as transparent. (Not directly performed by the user.)
+   bool transparent = false;
+};
+
 /// @brief Encapsulates and manages Undo and Redo stacks.
 /// @tparam T The type that the edits targets.
 template<typename T>
@@ -30,7 +38,9 @@ struct stack {
    /// @brief Apply an edit and push it onto the stack. Clears anything in the reverted stack.
    /// @param edit The edit.
    /// @param target The target of the edit.
-   void apply(std::unique_ptr<edit_type> edit, edit_target& target) noexcept
+   /// @param flags The flags for the edit
+   void apply(std::unique_ptr<edit_type> edit, edit_target& target,
+              const apply_flags flags = {}) noexcept
    {
       if (not _applied.empty() and                   //
           not _applied.back()->is_closed() and       //
@@ -47,6 +57,9 @@ struct stack {
       }
 
       _reverted.clear();
+
+      if (flags.closed) _applied.back()->close();
+      if (flags.transparent) _applied.back()->mark_transparent();
    }
 
    /// @brief Revert an edit. Does nothing if there is no edit to revert
@@ -68,9 +81,18 @@ struct stack {
    /// @param target The target of the edits.
    void revert(const std::size_t count, edit_target& target) noexcept
    {
-      const std::size_t clamped_count = std::min(count, _applied.size());
+      for (std::size_t i = 0; i < count; ++i) {
+         while (not _applied.empty() and _applied.back()->is_transparent()) {
+            std::unique_ptr<edit_type>& transparent_edit = _applied.back();
 
-      for (std::size_t i = 0; i < clamped_count; ++i) {
+            transparent_edit->revert(target);
+
+            _reverted.push_back(std::move(transparent_edit));
+            _applied.pop_back();
+         }
+
+         if (_applied.empty()) break;
+
          std::unique_ptr<edit_type>& edit = _applied.back();
 
          edit->revert(target);
@@ -87,15 +109,24 @@ struct stack {
    /// @param target The target of the edits.
    void reapply(const std::size_t count, edit_target& target) noexcept
    {
-      const std::size_t clamped_count = std::min(count, _reverted.size());
+      for (std::size_t i = 0; i < count; ++i) {
+         if (_reverted.empty()) break;
 
-      for (std::size_t i = 0; i < clamped_count; ++i) {
          std::unique_ptr<edit_type>& edit = _reverted.back();
 
          edit->apply(target);
 
          _applied.push_back(std::move(edit));
          _reverted.pop_back();
+
+         while (not _reverted.empty() and _reverted.back()->is_transparent()) {
+            std::unique_ptr<edit_type>& transparent_edit = _reverted.back();
+
+            transparent_edit->apply(target);
+
+            _applied.push_back(std::move(transparent_edit));
+            _reverted.pop_back();
+         }
       }
    }
 

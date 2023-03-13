@@ -334,4 +334,32 @@ TEST_CASE("edits stack close_last", "[Edits]")
 
    REQUIRE(state == 1);
 }
+
+TEST_CASE("edits stack transparent tests", "[Edits]")
+{
+   stack<dummy_edit_state> stack;
+   dummy_edit_state state;
+
+   stack.apply(std::make_unique<dummy_edit>(), state);
+   stack.apply(std::make_unique<dummy_edit>(), state, {.transparent = true});
+
+   REQUIRE(state.apply_call_count == 2);
+   REQUIRE(state.revert_call_count == 0);
+   REQUIRE(stack.applied_size() == 2);
+   REQUIRE(stack.reverted_size() == 0);
+
+   stack.revert(state);
+
+   REQUIRE(state.apply_call_count == 2);
+   REQUIRE(state.revert_call_count == 2);
+   REQUIRE(stack.applied_size() == 0);
+   REQUIRE(stack.reverted_size() == 2);
+
+   stack.reapply(state);
+
+   REQUIRE(state.apply_call_count == 4);
+   REQUIRE(state.revert_call_count == 2);
+   REQUIRE(stack.applied_size() == 2);
+   REQUIRE(stack.reverted_size() == 0);
+}
 }
