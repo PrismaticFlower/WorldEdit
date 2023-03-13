@@ -362,6 +362,22 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
          path.properties = read_path_properties(key_node.at("Properties"sv));
          path.id = world_out.next_id.paths.aquire();
 
+         if (path.name.starts_with("type_")) {
+            const lowercase_string lowercase_name{path.name};
+
+            if (lowercase_name.starts_with("type_entitypath")) {
+               path.type = path_type::entity_follow;
+            }
+            else if (lowercase_name.starts_with("type_entityformation")) {
+               path.type = path_type::formation;
+            }
+            else if (lowercase_name.starts_with("type_patrolpath")) {
+               path.type = path_type::patrol;
+            }
+
+            path.name = utility::string::split_first_of_exclusive(path.name, " ")[1];
+         }
+
          // path nodes
          {
             auto& path_nodes = key_node.at("Nodes"sv);

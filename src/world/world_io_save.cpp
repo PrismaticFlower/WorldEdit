@@ -214,7 +214,21 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
    for (auto& path : world.paths) {
       if (path.layer != layer_index) continue;
 
-      file.write_ln("Path(\"{}\")", path.name);
+      const std::string name_prefix = [&] {
+         switch (path.type) {
+         default:
+         case path_type::none:
+            return ""s;
+         case path_type::entity_follow:
+            return "type_EntityPath "s;
+         case path_type::formation:
+            return "type_EntityFormation "s;
+         case path_type::patrol:
+            return "type_PatrolPath "s;
+         }
+      }();
+
+      file.write_ln("Path(\"{}{}\")", name_prefix, path.name);
       file.write_ln("{");
 
       file.write_ln("\tData(1);");

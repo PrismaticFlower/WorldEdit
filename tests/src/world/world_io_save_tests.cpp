@@ -70,9 +70,58 @@ GlobalLights()
 )"sv;
 
 constexpr auto expected_pth = R"(Version(10);
-PathCount(2);
+PathCount(3);
 
 Path("The Amazing Path")
+{
+	Data(1);
+	PathType(0);
+	PathSpeedType(0);
+	PathTime(0.000000);
+	OffsetPath(0);
+	SplineType("Catmull-Rom");
+
+	Properties(2)
+	{
+		FloatVal(5.0000);
+		StringVal("Such string, much wow");
+	}
+
+	Nodes(2)
+	{
+		Node()
+		{
+			Position(-2.006914, -0.002500, 56.238541);
+			Knot(0.000000);
+			Data(1);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(2)
+			{
+				FloatVal(5.0000);
+				StringVal("Such string, much wow");
+			}
+		}
+
+		Node()
+		{
+			Position(-0.484701, -0.002500, 54.641960);
+			Knot(0.000000);
+			Data(1);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(0.703845, 0.000000, 0.710354, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+	}
+
+}
+
+Path("type_EntityPath The Other Amazing Path")
 {
 	Data(1);
 	PathType(0);
@@ -479,25 +528,45 @@ TEST_CASE("world saving", "[World][IO]")
                     .region_rotation = {0.0f, 0.0f, 1.0f, 0.0f},
                  }},
 
-      .paths = {path{
-         .name = "The Amazing Path",
-         .spline_type = path_spline_type::catmull_rom,
-         .properties = {path::property{.key = "FloatVal", .value = "5.0000"},
-                        path::property{.key = "StringVal", .value = "Such string, much wow"}},
+      .paths =
+         {path{.name = "The Amazing Path",
+               .spline_type = path_spline_type::catmull_rom,
+               .properties = {path::property{.key = "FloatVal", .value = "5.0000"},
+                              path::property{.key = "StringVal",
+                                             .value = "Such string, much wow"}},
 
-         .nodes = {path::node{
-                      .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
-                      .position = {-2.006914f, -0.002500f, -56.238541f},
-                      .properties = {{.key = "FloatVal", .value = "5.0000"},
-                                     {.key = "StringVal", .value = "Such string, much wow"}},
-                   },
+               .nodes = {path::node{
+                            .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
+                            .position = {-2.006914f, -0.002500f, -56.238541f},
+                            .properties = {{.key = "FloatVal", .value = "5.0000"},
+                                           {.key = "StringVal", .value = "Such string, much wow"}},
+                         },
 
-                   path::node{
-                      .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
-                      .position = {-0.484701f, -0.002500f, -54.641960f},
-                   }}
+                         path::node{
+                            .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
+                            .position = {-0.484701f, -0.002500f, -54.641960f},
+                         }}
 
-      }},
+          },
+
+          path{.name = "The Other Amazing Path",
+               .type = path_type::entity_follow,
+               .spline_type = path_spline_type::catmull_rom,
+               .properties = {path::property{.key = "FloatVal", .value = "5.0000"},
+                              path::property{.key = "StringVal",
+                                             .value = "Such string, much wow"}},
+
+               .nodes = {path::node{
+                            .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
+                            .position = {-2.006914f, -0.002500f, -56.238541f},
+                            .properties = {{.key = "FloatVal", .value = "5.0000"},
+                                           {.key = "StringVal", .value = "Such string, much wow"}},
+                         },
+
+                         path::node{
+                            .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
+                            .position = {-0.484701f, -0.002500f, -54.641960f},
+                         }}}},
 
       .regions = {region{.name = "lightregion2",
                          .rotation = {0.027578f, -0.836273f, 0.546265f, -0.038489f},

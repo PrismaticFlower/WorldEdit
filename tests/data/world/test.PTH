@@ -236,3 +236,34 @@ Path("Path 0")
 
 }
 
+Path("type_entitypath Path 1")
+{
+	Data(1);
+	PathType(0);
+	PathSpeedType(0);
+	PathTime(0.000000);
+	OffsetPath(0);
+	SplineType("Catmull-Rom");
+
+	Properties(0)
+	{
+	}
+
+	Nodes(1)
+	{
+		Node()
+		{
+			Position(-16.041691, 0.000000, -31.988783);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+	}
+
+}

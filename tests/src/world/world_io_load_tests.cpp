@@ -200,12 +200,13 @@ TEST_CASE("world loading", "[World][IO]")
 
    // path checks
    {
-      REQUIRE(world.paths.size() == 1);
+      REQUIRE(world.paths.size() == 2);
 
       // Path 0
       {
          CHECK(world.paths[0].name == "Path 0"sv);
          CHECK(world.paths[0].layer == 0);
+         CHECK(world.paths[0].type == path_type::none);
          CHECK(world.paths[0].properties.size() == 1);
          CHECK(world.paths[0].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
@@ -234,6 +235,21 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(approx_equals(world.paths[0].nodes[2].rotation,
                              {0.0f, 0.0f, 1.0f, 0.0f}));
          CHECK(world.paths[0].nodes[2].properties.empty());
+      }
+
+      // Path 1
+      {
+         CHECK(world.paths[1].name == "Path 1"sv);
+         CHECK(world.paths[1].layer == 0);
+         CHECK(world.paths[1].type == path_type::entity_follow);
+         CHECK(is_unique_id(1, world.paths));
+
+         REQUIRE(world.paths[1].nodes.size() == 1);
+
+         CHECK(approx_equals(world.paths[1].nodes[0].position,
+                             {-16.041691f, 0.000000f, 31.988783f}));
+         CHECK(approx_equals(world.paths[1].nodes[0].rotation,
+                             {0.0f, 0.0f, 1.0f, 0.0f}));
       }
    }
 
@@ -382,5 +398,4 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(is_unique_id(0, world.boundaries));
    }
 }
-
 }
