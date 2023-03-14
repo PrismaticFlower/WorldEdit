@@ -70,7 +70,7 @@ namespace ImGui {
 // Entity Property Editors
 
 template<typename Entity, typename T>
-inline bool EditWithUndo(Entity* object, T Entity::*value_member_ptr,
+inline bool EditWithUndo(const Entity* object, T Entity::*value_member_ptr,
                          we::edits::stack<we::world::edit_context>* edit_stack,
                          we::world::edit_context* context,
                          we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
@@ -99,7 +99,8 @@ inline bool EditWithUndo(Entity* object, T Entity::*value_member_ptr,
 }
 
 template<typename Entity>
-inline bool Checkbox(const char* label, Entity* entity, bool Entity::*value_member_ptr,
+inline bool Checkbox(const char* label, const Entity* entity,
+                     bool Entity::*value_member_ptr,
                      we::edits::stack<we::world::edit_context>* edit_stack,
                      we::world::edit_context* context) noexcept
 {
@@ -112,7 +113,8 @@ inline bool Checkbox(const char* label, Entity* entity, bool Entity::*value_memb
 }
 
 template<typename Entity>
-inline bool DragFloat(const char* label, Entity* entity, float Entity::*value_member_ptr,
+inline bool DragFloat(const char* label, const Entity* entity,
+                      float Entity::*value_member_ptr,
                       we::edits::stack<we::world::edit_context>* edit_stack,
                       we::world::edit_context* context, float v_speed = 1.0f,
                       float v_min = 0.0f, float v_max = 0.0f,
@@ -128,7 +130,7 @@ inline bool DragFloat(const char* label, Entity* entity, float Entity::*value_me
 }
 
 template<typename Entity>
-inline bool DragFloat2(const char* label, Entity* entity,
+inline bool DragFloat2(const char* label, const Entity* entity,
                        we::float2 Entity::*value_member_ptr,
                        we::edits::stack<we::world::edit_context>* edit_stack,
                        we::world::edit_context* context, float v_speed = 1.0f,
@@ -145,7 +147,7 @@ inline bool DragFloat2(const char* label, Entity* entity,
 }
 
 template<typename Entity>
-inline bool DragFloat3(const char* label, Entity* entity,
+inline bool DragFloat3(const char* label, const Entity* entity,
                        we::float3 Entity::*value_member_ptr,
                        we::edits::stack<we::world::edit_context>* edit_stack,
                        we::world::edit_context* context, float v_speed = 1.0f,
@@ -162,7 +164,7 @@ inline bool DragFloat3(const char* label, Entity* entity,
 }
 
 template<typename Entity>
-inline bool DragQuat(const char* label, Entity* entity,
+inline bool DragQuat(const char* label, const Entity* entity,
                      we::quaternion Entity::*value_member_ptr,
                      we::edits::stack<we::world::edit_context>* edit_stack,
                      we::world::edit_context* context, float v_speed = 0.001f,
@@ -177,7 +179,8 @@ inline bool DragQuat(const char* label, Entity* entity,
 }
 
 template<typename Entity>
-inline bool SliderInt(const char* label, Entity* entity, int Entity::*value_member_ptr,
+inline bool SliderInt(const char* label, const Entity* entity,
+                      int Entity::*value_member_ptr,
                       we::edits::stack<we::world::edit_context>* edit_stack,
                       we::world::edit_context* context, int v_min = 0, int v_max = 0,
                       const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
@@ -191,7 +194,7 @@ inline bool SliderInt(const char* label, Entity* entity, int Entity::*value_memb
 }
 
 template<typename Entity>
-inline bool ColorEdit3(const char* label, Entity* entity,
+inline bool ColorEdit3(const char* label, const Entity* entity,
                        we::float3 Entity::*value_member_ptr,
                        we::edits::stack<we::world::edit_context>* edit_stack,
                        we::world::edit_context* context,
@@ -206,7 +209,7 @@ inline bool ColorEdit3(const char* label, Entity* entity,
 }
 
 template<typename Entity>
-inline bool InputText(const char* label, Entity* entity,
+inline bool InputText(const char* label, const Entity* entity,
                       std::string Entity::*value_member_ptr,
                       we::edits::stack<we::world::edit_context>* edit_stack,
                       we::world::edit_context* context, ImGuiInputTextFlags flags = 0,
@@ -224,7 +227,7 @@ inline bool InputText(const char* label, Entity* entity,
 }
 
 template<typename Entity>
-inline bool InputText(const char* label, Entity* entity,
+inline bool InputText(const char* label, const Entity* entity,
                       we::lowercase_string Entity::*value_member_ptr,
                       we::edits::stack<we::world::edit_context>* edit_stack,
                       we::world::edit_context* context, ImGuiInputTextFlags flags = 0,
@@ -242,7 +245,7 @@ inline bool InputText(const char* label, Entity* entity,
 }
 
 template<typename Entity, typename T, typename Fill>
-inline bool InputTextAutoComplete(const char* label, Entity* entity,
+inline bool InputTextAutoComplete(const char* label, const Entity* entity,
                                   T Entity::*value_member_ptr,
                                   we::edits::stack<we::world::edit_context>* edit_stack,
                                   we::world::edit_context* context,
@@ -262,7 +265,7 @@ inline bool InputTextAutoComplete(const char* label, Entity* entity,
 }
 
 template<typename Entity>
-inline bool LayerPick(const char* label, Entity* entity,
+inline bool LayerPick(const char* label, const Entity* entity,
                       we::edits::stack<we::world::edit_context>* edit_stack,
                       we::world::edit_context* context) noexcept
 {
@@ -292,7 +295,8 @@ inline bool LayerPick(const char* label, Entity* entity,
 }
 
 template<typename Entity, typename Enum>
-inline bool EnumSelect(const char* label, Entity* entity, Enum Entity::*value_member_ptr,
+inline bool EnumSelect(const char* label, const Entity* entity,
+                       Enum Entity::*value_member_ptr,
                        we::edits::stack<we::world::edit_context>* edit_stack,
                        we::world::edit_context* context,
                        std::initializer_list<we::enum_select_option<Enum>> values) noexcept

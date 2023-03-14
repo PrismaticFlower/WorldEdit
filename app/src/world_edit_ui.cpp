@@ -1307,35 +1307,62 @@ void world_edit::update_ui() noexcept
                return placement_traits{.has_placement_ground = false};
             },
             [&](const world::path& path) {
-               ImGui::InputText("Name", &creation_entity, &world::path::name,
-                                &_edit_stack_world, &_edit_context,
-                                [&](std::string* edited_value) {
-                                   *edited_value =
-                                      world::create_unique_name(_world.paths,
-                                                                path.name.empty()
-                                                                   ? "Path 0"sv
-                                                                   : path.name);
-                                });
+               const world::path* existing_path =
+                  world::find_entity(_world.paths, path.name);
 
-               ImGui::LayerPick<world::path>("Layer", &creation_entity,
-                                             &_edit_stack_world, &_edit_context);
+               if (existing_path) {
+                  ImGui::LabelText("Name", existing_path->name.c_str());
+                  ImGui::LayerPick("Layer", existing_path, &_edit_stack_world,
+                                   &_edit_context);
 
-               ImGui::EnumSelect(
-                  "Path Type", &creation_entity, &world::path::type,
-                  &_edit_stack_world, &_edit_context,
-                  {enum_select_option{"None", world::path_type::none},
-                   enum_select_option{"Entity Follow", world::path_type::entity_follow},
-                   enum_select_option{"Formation", world::path_type::formation},
-                   enum_select_option{"Patrol", world::path_type::patrol}});
+                  ImGui::EnumSelect(
+                     "Path Type", existing_path, &world::path::type,
+                     &_edit_stack_world, &_edit_context,
+                     {enum_select_option{"None", world::path_type::none},
+                      enum_select_option{"Entity Follow", world::path_type::entity_follow},
+                      enum_select_option{"Formation", world::path_type::formation},
+                      enum_select_option{"Patrol", world::path_type::patrol}});
 
-               ImGui::EnumSelect(
-                  "Spline Type", &creation_entity, &world::path::spline_type,
-                  &_edit_stack_world, &_edit_context,
-                  {enum_select_option{"None", world::path_spline_type::none},
-                   enum_select_option{"Linear", world::path_spline_type::linear},
-                   enum_select_option{"Hermite", world::path_spline_type::hermite},
-                   enum_select_option{"Catmull-Rom",
-                                      world::path_spline_type::catmull_rom}});
+                  ImGui::EnumSelect(
+                     "Spline Type", existing_path, &world::path::spline_type,
+                     &_edit_stack_world, &_edit_context,
+                     {enum_select_option{"None", world::path_spline_type::none},
+                      enum_select_option{"Linear", world::path_spline_type::linear},
+                      enum_select_option{"Hermite", world::path_spline_type::hermite},
+                      enum_select_option{"Catmull-Rom",
+                                         world::path_spline_type::catmull_rom}});
+               }
+               else {
+                  ImGui::InputText("Name", &creation_entity, &world::path::name,
+                                   &_edit_stack_world, &_edit_context,
+                                   [&](std::string* edited_value) {
+                                      *edited_value =
+                                         world::create_unique_name(_world.paths,
+                                                                   path.name.empty()
+                                                                      ? "Path 0"sv
+                                                                      : path.name);
+                                   });
+
+                  ImGui::LayerPick<world::path>("Layer", &creation_entity,
+                                                &_edit_stack_world, &_edit_context);
+
+                  ImGui::EnumSelect(
+                     "Path Type", &creation_entity, &world::path::type,
+                     &_edit_stack_world, &_edit_context,
+                     {enum_select_option{"None", world::path_type::none},
+                      enum_select_option{"Entity Follow", world::path_type::entity_follow},
+                      enum_select_option{"Formation", world::path_type::formation},
+                      enum_select_option{"Patrol", world::path_type::patrol}});
+
+                  ImGui::EnumSelect(
+                     "Spline Type", &creation_entity, &world::path::spline_type,
+                     &_edit_stack_world, &_edit_context,
+                     {enum_select_option{"None", world::path_spline_type::none},
+                      enum_select_option{"Linear", world::path_spline_type::linear},
+                      enum_select_option{"Hermite", world::path_spline_type::hermite},
+                      enum_select_option{"Catmull-Rom",
+                                         world::path_spline_type::catmull_rom}});
+               }
 
                ImGui::Separator();
 
