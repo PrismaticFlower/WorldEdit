@@ -84,11 +84,10 @@ bool world_edit::update()
    update_ui();
 
    // Logic!
-   update_object_classes();
    update_hovered_entity();
+   update_object_classes();
 
    _asset_libraries.update_loaded();
-   _asset_load_queue.execute();
 
    // Render!
    update_camera(delta_time);
@@ -102,9 +101,6 @@ bool world_edit::update()
       handle_gpu_error(e);
    }
 
-   // Garbage Collection! (not memory)
-   garbage_collect_assets();
-
    return true;
 }
 
@@ -115,31 +111,6 @@ void world_edit::wait_for_swap_chain_ready() noexcept
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
-   }
-}
-
-void world_edit::update_object_classes()
-{
-   for (const auto& object : _world.objects) {
-      if (_object_classes.contains(object.class_name)) continue;
-
-      auto definition = _asset_libraries.odfs[object.class_name];
-
-      _object_classes.emplace(object.class_name,
-                              world::object_class{_asset_libraries, definition});
-   }
-
-   if (_interaction_targets.creation_entity and
-       std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
-      const lowercase_string& class_name =
-         std::get<world::object>(*_interaction_targets.creation_entity).class_name;
-
-      if (not _object_classes.contains(class_name)) {
-         auto definition = _asset_libraries.odfs[class_name];
-
-         _object_classes.emplace(class_name,
-                                 world::object_class{_asset_libraries, definition});
-      }
    }
 }
 
@@ -342,6 +313,19 @@ void world_edit::update_hovered_entity() noexcept
    }
 }
 
+void world_edit::update_object_classes() noexcept
+{
+   std::array<std::span<const world::object>, 2> object_spans{_world.objects};
+
+   if (_interaction_targets.creation_entity and
+       std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
+      object_spans[1] =
+         std::span{&std::get<world::object>(*_interaction_targets.creation_entity), 1};
+   }
+
+   _object_classes.update(object_spans);
+}
+
 void world_edit::update_camera(const float delta_time)
 {
    float3 camera_position = _camera.position();
@@ -379,43 +363,6 @@ void world_edit::update_camera(const float delta_time)
       SetCursorPos(_rotate_camera_cursor_position.x,
                    _rotate_camera_cursor_position.y);
    }
-}
-
-void world_edit::garbage_collect_assets() noexcept
-{
-   for (auto& [name, object_class] : _object_classes) {
-      object_class.world_frame_references = 0;
-   }
-
-   for (const auto& object : _world.objects) {
-      if (auto name_object_class = _object_classes.find(object.class_name);
-          name_object_class != _object_classes.end()) {
-         auto& [name, object_class] = *name_object_class;
-
-         object_class.world_frame_references += 1;
-      }
-
-      continue; // Don't care about missing object classes here, leave that for update_object_classes().
-   }
-
-   if (_interaction_targets.creation_entity and
-       std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
-      const lowercase_string& class_name =
-         std::get<world::object>(*_interaction_targets.creation_entity).class_name;
-
-      if (auto name_object_class = _object_classes.find(class_name);
-          name_object_class != _object_classes.end()) {
-         auto& [name, object_class] = *name_object_class;
-
-         object_class.world_frame_references += 1;
-      }
-   }
-
-   absl::erase_if(_object_classes, [](const auto& name_object_class) {
-      auto& [name, object_class] = name_object_class;
-
-      return object_class.world_frame_references == 0;
-   });
 }
 
 void world_edit::select_hovered_entity() noexcept
@@ -726,25 +673,6 @@ void world_edit::place_creation_entity() noexcept
          },
       },
       *_interaction_targets.creation_entity);
-}
-
-void world_edit::object_definition_loaded(const lowercase_string& name,
-                                          asset_ref<assets::odf::definition> asset,
-                                          asset_data<assets::odf::definition> data)
-{
-   _object_classes[name].update_definition(_asset_libraries, asset);
-}
-
-void world_edit::model_loaded(const lowercase_string& name,
-                              asset_ref<assets::msh::flat_model> asset,
-                              asset_data<assets::msh::flat_model> data)
-{
-   for (auto& [object_class_name, object_class] : _object_classes) {
-      if (object_class.model_name != name) continue;
-
-      object_class.model_asset = asset;
-      object_class.model = data;
-   }
 }
 
 void world_edit::open_project(std::filesystem::path path) noexcept

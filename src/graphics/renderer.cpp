@@ -30,6 +30,7 @@
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
+#include "world/object_class_library.hpp"
 #include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
@@ -88,7 +89,7 @@ struct renderer_impl final : renderer {
                    const world::active_entity_types active_entity_types,
                    const world::active_layers active_layers,
                    const world::tool_visualizers& tool_visualizers,
-                   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+                   const world::object_class_library& world_classes,
                    const settings::graphics& settings) override;
 
    void window_resized(uint16 width, uint16 height) override;
@@ -127,17 +128,17 @@ private:
                                 const world::tool_visualizers& tool_visualizers,
                                 const settings::graphics& settings);
 
-   void draw_interaction_targets(
-      const frustum& view_frustum, const world::world& world,
-      const world::interaction_targets& interaction_targets,
-      const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
-      const settings::graphics& settings, gpu::graphics_command_list& command_list);
+   void draw_interaction_targets(const frustum& view_frustum, const world::world& world,
+                                 const world::interaction_targets& interaction_targets,
+                                 const world::object_class_library& world_classes,
+                                 const settings::graphics& settings,
+                                 gpu::graphics_command_list& command_list);
 
-   void build_world_mesh_list(
-      gpu::copy_command_list& command_list, const world::world& world,
-      const world::active_layers active_layers,
-      const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
-      const world::object* const creation_object);
+   void build_world_mesh_list(gpu::copy_command_list& command_list,
+                              const world::world& world,
+                              const world::active_layers active_layers,
+                              const world::object_class_library& world_classes,
+                              const world::object* const creation_object);
 
    void build_object_render_list(const frustum& view_frustum);
 
@@ -288,14 +289,13 @@ void renderer_impl::wait_for_swap_chain_ready()
    _swap_chain.wait_for_ready();
 }
 
-void renderer_impl::draw_frame(
-   const camera& camera, const world::world& world,
-   const world::interaction_targets& interaction_targets,
-   const world::active_entity_types active_entity_types,
-   const world::active_layers active_layers,
-   const world::tool_visualizers& tool_visualizers,
-   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
-   const settings::graphics& settings)
+void renderer_impl::draw_frame(const camera& camera, const world::world& world,
+                               const world::interaction_targets& interaction_targets,
+                               const world::active_entity_types active_entity_types,
+                               const world::active_layers active_layers,
+                               const world::tool_visualizers& tool_visualizers,
+                               const world::object_class_library& world_classes,
+                               const settings::graphics& settings)
 {
    const frustum view_frustum{camera.inv_view_projection_matrix()};
 
@@ -1218,7 +1218,7 @@ void renderer_impl::draw_world_meta_objects(
 void renderer_impl::draw_interaction_targets(
    const frustum& view_frustum, const world::world& world,
    const world::interaction_targets& interaction_targets,
-   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+   const world::object_class_library& world_classes,
    const settings::graphics& settings, gpu::graphics_command_list& command_list)
 {
    (void)view_frustum; // TODO: frustum Culling (Is it worth it for interaction targets?)
@@ -1264,7 +1264,7 @@ void renderer_impl::draw_interaction_targets(
             return allocation.gpu_address;
          }();
 
-         model& model = _model_manager[world_classes.at(object.class_name).model_name];
+         model& model = _model_manager[world_classes[object.class_name].model_name];
 
          command_list.set_graphics_root_signature(
             _root_signatures.mesh_wireframe.get());
@@ -1728,11 +1728,11 @@ void renderer_impl::draw_interaction_targets(
    }
 }
 
-void renderer_impl::build_world_mesh_list(
-   gpu::copy_command_list& command_list, const world::world& world,
-   const world::active_layers active_layers,
-   const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
-   const world::object* const creation_object)
+void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
+                                          const world::world& world,
+                                          const world::active_layers active_layers,
+                                          const world::object_class_library& world_classes,
+                                          const world::object* const creation_object)
 {
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
@@ -1747,7 +1747,7 @@ void renderer_impl::build_world_mesh_list(
 
    for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
       const auto& object = world.objects[i];
-      auto& model = _model_manager[world_classes.at(object.class_name).model_name];
+      auto& model = _model_manager[world_classes[object.class_name].model_name];
 
       if (not active_layers[object.layer]) continue;
 
@@ -1785,7 +1785,7 @@ void renderer_impl::build_world_mesh_list(
 
    if (creation_object and world.objects.size() < max_drawn_objects) {
       auto& model =
-         _model_manager[world_classes.at(creation_object->class_name).model_name];
+         _model_manager[world_classes[creation_object->class_name].model_name];
 
       const auto object_bbox =
          creation_object->rotation * model.bbox + creation_object->position;

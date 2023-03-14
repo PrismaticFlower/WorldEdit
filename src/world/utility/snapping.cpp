@@ -1,4 +1,5 @@
 #include "snapping.hpp"
+#include "../object_class.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -48,39 +49,33 @@ auto get_face_midpoints(const std::array<float3, 8>& corners) -> std::array<floa
 
 }
 
-auto get_snapped_position(
-   const object& snapping_object, const float3 snapping_position,
-   const std::span<const object> world_objects, const float snap_radius,
-   const absl::flat_hash_map<lowercase_string, object_class>& object_classes)
+auto get_snapped_position(const object& snapping_object, const float3 snapping_position,
+                          const std::span<const object> world_objects,
+                          const float snap_radius,
+                          const object_class_library& object_classes)
    -> std::optional<float3>
 {
-   if (not object_classes.contains(snapping_object.class_name)) {
-      return std::nullopt;
-   }
-
    const std::array<float3, 8> snapping_corners =
       get_transformed_corners(snapping_object, snapping_position,
-                              object_classes.at(snapping_object.class_name));
+                              object_classes[snapping_object.class_name]);
 
    float3 closest_corner;
    float closest_distance = FLT_MAX;
    uint32 closest_index = 0;
 
    for (const auto& object : world_objects) {
-      if (auto object_class_it = object_classes.find(object.class_name);
-          object_class_it != object_classes.end()) {
-         const std::array<float3, 8> object_corners =
-            get_transformed_corners(object, object.position, object_class_it->second);
+      const std::array<float3, 8> object_corners =
+         get_transformed_corners(object, object.position,
+                                 object_classes[object.class_name]);
 
-         for (const auto& corner : object_corners) {
-            for (uint32 i = 0; i < snapping_corners.size(); ++i) {
-               const float corner_distance = distance(corner, snapping_corners[i]);
+      for (const auto& corner : object_corners) {
+         for (uint32 i = 0; i < snapping_corners.size(); ++i) {
+            const float corner_distance = distance(corner, snapping_corners[i]);
 
-               if (corner_distance < closest_distance) {
-                  closest_corner = corner;
-                  closest_distance = corner_distance;
-                  closest_index = i;
-               }
+            if (corner_distance < closest_distance) {
+               closest_corner = corner;
+               closest_distance = corner_distance;
+               closest_index = i;
             }
          }
       }
@@ -96,26 +91,23 @@ auto get_snapped_position(
 auto get_snapped_position(const float3 snapping_position,
                           const std::span<const object> world_objects,
                           const float snap_radius,
-                          const absl::flat_hash_map<lowercase_string, object_class>& object_classes)
+                          const object_class_library& object_classes)
    -> std::optional<float3>
 {
    float3 closest_position;
    float closest_distance = FLT_MAX;
 
    for (const auto& object : world_objects) {
-      if (auto object_class_it = object_classes.find(object.class_name);
-          object_class_it != object_classes.end()) {
-         const std::array<float3, 6> object_face_midpoints =
-            get_face_midpoints(get_transformed_corners(object, object.position,
-                                                       object_class_it->second));
+      const std::array<float3, 6> object_face_midpoints = get_face_midpoints(
+         get_transformed_corners(object, object.position,
+                                 object_classes[object.class_name]));
 
-         for (const auto& corner : object_face_midpoints) {
-            const float corner_distance = distance(corner, snapping_position);
+      for (const auto& corner : object_face_midpoints) {
+         const float corner_distance = distance(corner, snapping_position);
 
-            if (corner_distance < closest_distance) {
-               closest_position = corner;
-               closest_distance = corner_distance;
-            }
+         if (corner_distance < closest_distance) {
+            closest_position = corner;
+            closest_distance = corner_distance;
          }
       }
    }

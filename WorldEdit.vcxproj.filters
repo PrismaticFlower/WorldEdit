@@ -390,9 +390,6 @@
     <ClInclude Include="src\utility\event.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\utility\synchronous_task_queue.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\world_mesh_list.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -623,6 +620,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\utility\path_properties.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\utility\object_properties.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\object_class_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -874,6 +877,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\utility\path_properties.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\object_class_library.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

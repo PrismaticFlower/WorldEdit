@@ -36,6 +36,7 @@ struct graphics;
 namespace we::world {
 
 struct world;
+struct object_class_library;
 
 }
 
@@ -55,7 +56,7 @@ struct renderer {
                            const world::active_entity_types active_entity_types,
                            const world::active_layers active_layers,
                            const world::tool_visualizers& tool_visualizers,
-                           const absl::flat_hash_map<lowercase_string, world::object_class>& world_classes,
+                           const world::object_class_library& world_classes,
                            const settings::graphics& settings) = 0;
 
    virtual void window_resized(uint16 width, uint16 height) = 0;

@@ -1,4 +1,5 @@
 #include "sector_fill.hpp"
+#include "../object_class.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -83,8 +84,7 @@ bool inside_sector(const std::span<const float2> sector_points,
 }
 
 auto sector_fill(const sector& sector, const std::span<const object> world_objects,
-                 const absl::flat_hash_map<lowercase_string, object_class>& object_classes)
-   -> std::vector<std::string>
+                 const object_class_library& object_classes) -> std::vector<std::string>
 {
    if (sector.points.empty() or sector.points.size() < 3) return {};
 
@@ -106,11 +106,8 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
    for (auto& object : world_objects) {
       if (object.name.empty()) continue;
 
-      const auto object_class_it = object_classes.find(object.class_name);
-
-      if (object_class_it == object_classes.end()) continue;
-
-      const math::bounding_box model_bbox = object_class_it->second.model->bounding_box;
+      const math::bounding_box model_bbox =
+         object_classes[object.class_name].model->bounding_box;
       const math::bounding_box bbox = object.rotation * model_bbox + object.position;
 
       if (bbox.min.x > sector_max.x or bbox.max.x < sector_min.x or

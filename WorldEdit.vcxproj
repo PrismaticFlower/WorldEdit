@@ -231,6 +231,7 @@
     <ClCompile Include="src\math\bounding_box.cpp" />
     <ClCompile Include="src\math\matrix_funcs.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
+    <ClCompile Include="src\world\object_class_library.cpp" />
     <ClCompile Include="src\world\raycast.cpp" />
     <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
     <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
@@ -429,7 +430,6 @@
     <ClInclude Include="src\utility\overload.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />
     <ClInclude Include="src\utility\string_ops.hpp" />
-    <ClInclude Include="src\utility\synchronous_task_queue.hpp" />
     <ClInclude Include="src\utility\stopwatch.hpp" />
     <ClInclude Include="src\world\active_elements.hpp" />
     <ClInclude Include="src\world\ai_path_flags.hpp" />
@@ -443,6 +443,7 @@
     <ClInclude Include="src\world\lighting_settings.hpp" />
     <ClInclude Include="src\world\object.hpp" />
     <ClInclude Include="src\world\object_class.hpp" />
+    <ClInclude Include="src\world\object_class_library.hpp" />
     <ClInclude Include="src\world\object_instance_property.hpp" />
     <ClInclude Include="src\world\path.hpp" />
     <ClInclude Include="src\world\planning.hpp" />
@@ -455,6 +456,7 @@
     <ClInclude Include="src\world\tool_visualizers.hpp" />
     <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
+    <ClInclude Include="src\world\utility\object_properties.hpp" />
     <ClInclude Include="src\world\utility\path_properties.hpp" />
     <ClInclude Include="src\world\utility\sector_fill.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />

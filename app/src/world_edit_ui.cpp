@@ -1042,12 +1042,11 @@ void world_edit::update_ui() noexcept
                      new_position = _cursor_positionWS;
 
                      if (_entity_creation_context.placement_ground ==
-                            placement_ground::bbox and
-                         _object_classes.contains(object.class_name)) {
+                         placement_ground::bbox) {
 
                         const math::bounding_box bbox =
                            object.rotation *
-                           _object_classes.at(object.class_name).model->bounding_box;
+                           _object_classes[object.class_name].model->bounding_box;
 
                         new_position.y -= bbox.min.y;
                      }
@@ -1830,7 +1829,7 @@ void world_edit::update_ui() noexcept
 
                   if (object) {
                      math::bounding_box bbox =
-                        _object_classes.at(object->class_name).model->bounding_box;
+                        _object_classes[object->class_name].model->bounding_box;
 
                      const float3 size = abs(bbox.max - bbox.min) / 2.0f;
                      const float3 position =
@@ -2292,12 +2291,8 @@ void world_edit::update_ui() noexcept
                if (hintnode_traits.has_command_post) {
                   if (ImGui::BeginCombo("Command Post", hintnode.command_post.c_str())) {
                      for (const auto& object : _world.objects) {
-                        auto object_class_it = _object_classes.find(object.class_name);
-
-                        if (object_class_it == _object_classes.end()) continue;
-
                         const assets::odf::properties& properties =
-                           object_class_it->second.definition->header_properties;
+                           _object_classes[object.class_name].definition->header_properties;
 
                         if (not properties.contains("ClassLabel")) continue;
 
@@ -2584,7 +2579,7 @@ void world_edit::update_ui() noexcept
 
                   if (object) {
                      math::bounding_box bbox =
-                        _object_classes.at(object->class_name).model->bounding_box;
+                        _object_classes[object->class_name].model->bounding_box;
 
                      const float3 size = abs(bbox.max - bbox.min) / 2.0f;
                      const float3 position =

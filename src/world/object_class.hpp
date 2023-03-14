@@ -33,7 +33,7 @@ struct object_class {
 
    std::vector<instance_property> instance_properties;
 
-   int32 world_frame_references = 0;
+   int32 world_frame_references = 1;
 
    /// @brief Update the object class from a definition asset.
    /// @param assets_libraries A reference to the assets::libraries_manager to pull model assets from.

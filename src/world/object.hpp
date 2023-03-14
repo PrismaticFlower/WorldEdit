@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "lowercase_string.hpp"
 #include "object_instance_property.hpp"
 #include "types.hpp"

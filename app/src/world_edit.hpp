@@ -10,8 +10,8 @@
 #include "output_stream.hpp"
 #include "settings/settings.hpp"
 #include "utility/command_line.hpp"
-#include "utility/synchronous_task_queue.hpp"
 #include "world/object_class.hpp"
+#include "world/object_class_library.hpp"
 #include "world/tool_visualizers.hpp"
 #include "world/world.hpp"
 
@@ -21,8 +21,6 @@
 #include <vector>
 
 #include <Windows.h>
-
-#include <absl/container/flat_hash_map.h>
 
 struct ImGuiContext;
 
@@ -69,29 +67,19 @@ public:
 private:
    void wait_for_swap_chain_ready() noexcept;
 
-   void update_object_classes();
-
    void update_input() noexcept;
 
    void update_hovered_entity() noexcept;
+
+   void update_object_classes() noexcept;
 
    void update_camera(const float delta_time);
 
    void update_ui() noexcept;
 
-   void garbage_collect_assets() noexcept;
-
    void select_hovered_entity() noexcept;
 
    void place_creation_entity() noexcept;
-
-   void object_definition_loaded(const lowercase_string& name,
-                                 asset_ref<assets::odf::definition> asset,
-                                 asset_data<assets::odf::definition> data);
-
-   void model_loaded(const lowercase_string& name,
-                     asset_ref<assets::msh::flat_model> asset,
-                     asset_data<assets::msh::flat_model> data);
 
    void open_project(std::filesystem::path path) noexcept;
 
@@ -139,7 +127,7 @@ private:
    std::vector<std::filesystem::path> _project_world_paths;
 
    assets::libraries_manager _asset_libraries{_stream, _thread_pool};
-   absl::flat_hash_map<lowercase_string, world::object_class> _object_classes;
+   world::object_class_library _object_classes{_asset_libraries};
    world::world _world;
    world::interaction_targets _interaction_targets;
    world::active_entity_types _world_draw_mask;
@@ -228,23 +216,6 @@ private:
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
-
-   utility::synchronous_task_queue _asset_load_queue;
-   event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,
-                       asset_data<assets::odf::definition>)>
-      _object_definition_load_listener = _asset_libraries.odfs.listen_for_loads(
-         [this](lowercase_string name, asset_ref<assets::odf::definition> asset,
-                asset_data<assets::odf::definition> data) {
-            _asset_load_queue.enqueue(
-               [=] { object_definition_loaded(name, asset, data); });
-         });
-   event_listener<void(const lowercase_string&, asset_ref<assets::msh::flat_model>,
-                       asset_data<assets::msh::flat_model>)>
-      _model_load_listener = _asset_libraries.models.listen_for_loads(
-         [this](lowercase_string name, asset_ref<assets::msh::flat_model> asset,
-                asset_data<assets::msh::flat_model> data) {
-            _asset_load_queue.enqueue([=] { model_loaded(name, asset, data); });
-         });
 
    commands _commands;
    hotkeys _hotkeys{_commands, _stream};
