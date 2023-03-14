@@ -1,6 +1,7 @@
 
 #include "world_edit.hpp"
 
+#include "edits/add_property.hpp"
 #include "edits/creation_entity_set.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
@@ -11,6 +12,7 @@
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
 #include "world/utility/hintnode_traits.hpp"
+#include "world/utility/path_properties.hpp"
 #include "world/utility/snapping.hpp"
 #include "world/utility/world_utilities.hpp"
 
@@ -753,6 +755,17 @@ void world_edit::update_ui() noexcept
                                        &_edit_stack_world, &_edit_context);
                }
 
+               if (ImGui::BeginCombo("Add Property", "<select property>")) {
+                  for (const char* prop : world::get_path_properties(path->type)) {
+                     if (ImGui::Selectable(prop)) {
+                        _edit_stack_world.apply(edits::make_add_property(path->id, prop),
+                                                _edit_context);
+                     }
+                  }
+
+                  ImGui::EndCombo();
+               }
+
                ImGui::Text("Nodes");
                ImGui::BeginChild("Nodes", {}, true);
 
@@ -771,6 +784,19 @@ void world_edit::update_ui() noexcept
                        prop_index < path->nodes[i].properties.size(); ++prop_index) {
                      ImGui::InputKeyValue(path, i, prop_index,
                                           &_edit_stack_world, &_edit_context);
+                  }
+
+                  if (ImGui::BeginCombo("Add Property", "<select property>")) {
+                     for (const char* prop :
+                          world::get_path_node_properties(path->type)) {
+                        if (ImGui::Selectable(prop)) {
+                           _edit_stack_world.apply(edits::make_add_property(path->id,
+                                                                            i, prop),
+                                                   _edit_context);
+                        }
+                     }
+
+                     ImGui::EndCombo();
                   }
 
                   ImGui::PopID();
@@ -1332,6 +1358,26 @@ void world_edit::update_ui() noexcept
                       enum_select_option{"Hermite", world::path_spline_type::hermite},
                       enum_select_option{"Catmull-Rom",
                                          world::path_spline_type::catmull_rom}});
+
+                  ImGui::Separator();
+
+                  for (std::size_t i = 0; i < existing_path->properties.size(); ++i) {
+                     ImGui::InputKeyValue(existing_path, &world::path::properties,
+                                          i, &_edit_stack_world, &_edit_context);
+                  }
+
+                  if (ImGui::BeginCombo("Add Property", "<select property>")) {
+                     for (const char* prop :
+                          world::get_path_properties(existing_path->type)) {
+                        if (ImGui::Selectable(prop)) {
+                           _edit_stack_world
+                              .apply(edits::make_add_property(existing_path->id, prop),
+                                     _edit_context);
+                        }
+                     }
+
+                     ImGui::EndCombo();
+                  }
                }
                else {
                   ImGui::InputText("Name", &creation_entity, &world::path::name,

@@ -330,7 +330,7 @@ inline bool EnumSelect(const char* label, const Entity* entity,
 // Entity Vector/Array Property Editors
 
 template<typename Entity, typename T>
-inline bool EditWithUndo(Entity* object, std::vector<T> Entity::*value_member_ptr,
+inline bool EditWithUndo(const Entity* entity, std::vector<T> Entity::*value_member_ptr,
                          const std::size_t item_index,
                          we::edits::stack<we::world::edit_context>* edit_stack,
                          we::world::edit_context* context,
@@ -343,13 +343,13 @@ inline bool EditWithUndo(Entity* object, std::vector<T> Entity::*value_member_pt
    using edit_type = ui_edit_indexed<Entity, T>;
    using value_type = T;
 
-   value_type value = (object->*value_member_ptr)[item_index];
+   value_type value = (entity->*value_member_ptr)[item_index];
    value_type original_value = value;
 
    auto [valued_changed, item_deactivated] = editor(&value);
 
    if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(object->id, value_member_ptr,
+      edit_stack->apply(std::make_unique<edit_type>(entity->id, value_member_ptr,
                                                     item_index, value, original_value),
                         *context);
    }
@@ -360,7 +360,7 @@ inline bool EditWithUndo(Entity* object, std::vector<T> Entity::*value_member_pt
 }
 
 template<typename Entity, we::edits::imgui::input_key_value_type T>
-inline bool InputKeyValue(Entity* entity, std::vector<T> Entity::*value_member_ptr,
+inline bool InputKeyValue(const Entity* entity, std::vector<T> Entity::*value_member_ptr,
                           const std::size_t item_index,
                           we::edits::stack<we::world::edit_context>* edit_stack,
                           we::world::edit_context* context,
@@ -379,7 +379,7 @@ inline bool InputKeyValue(Entity* entity, std::vector<T> Entity::*value_member_p
 }
 
 template<typename Entity, we::edits::imgui::input_key_value_type T, typename Fill>
-inline bool InputKeyValueAutoComplete(Entity* entity,
+inline bool InputKeyValueAutoComplete(const Entity* entity,
                                       std::vector<T> Entity::*value_member_ptr,
                                       const std::size_t item_index,
                                       we::edits::stack<we::world::edit_context>* edit_stack,

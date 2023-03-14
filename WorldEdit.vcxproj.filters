@@ -619,6 +619,12 @@
     <ClInclude Include="src\world\utility\boundary_nodes.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\edits\add_property.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\utility\path_properties.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -862,6 +868,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\set_value.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\add_property.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\path_properties.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

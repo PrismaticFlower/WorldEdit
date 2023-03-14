@@ -203,6 +203,7 @@
     <ClCompile Include="src\assets\terrain\terrain_collision.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
+    <ClCompile Include="src\edits\add_property.cpp" />
     <ClCompile Include="src\edits\creation_entity_set.cpp" />
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
@@ -233,6 +234,7 @@
     <ClCompile Include="src\world\raycast.cpp" />
     <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
     <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
+    <ClCompile Include="src\world\utility\path_properties.cpp" />
     <ClCompile Include="src\world\utility\sector_fill.cpp" />
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
@@ -328,6 +330,7 @@
     <ClInclude Include="src\edits\insert_entity.hpp" />
     <ClInclude Include="src\edits\insert_node.hpp" />
     <ClInclude Include="src\edits\insert_point.hpp" />
+    <ClInclude Include="src\edits\add_property.hpp" />
     <ClInclude Include="src\edits\set_value.hpp" />
     <ClInclude Include="src\edits\stack.hpp" />
     <ClInclude Include="src\edits\ui_action.hpp" />
@@ -452,6 +455,7 @@
     <ClInclude Include="src\world\tool_visualizers.hpp" />
     <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
+    <ClInclude Include="src\world\utility\path_properties.hpp" />
     <ClInclude Include="src\world\utility\sector_fill.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
