@@ -16,10 +16,7 @@
 
 #include <numbers>
 
-#include <range/v3/view/enumerate.hpp>
-
 using namespace std::literals;
-using ranges::views::enumerate;
 
 namespace we {
 
@@ -438,8 +435,9 @@ void world_edit::update_ui() noexcept
    ImGui::Separator();
    ImGui::BeginChild("Active Layers", ImVec2{0.0f, 208.0f * _display_scale});
 
-   for (auto [i, layer] : enumerate(_world.layer_descriptions)) {
-      if (ImGui::Selectable(layer.name.c_str(), _world_layers_draw_mask[i])) {
+   for (std::size_t i = 0; i < _world.layer_descriptions.size(); ++i) {
+      if (ImGui::Selectable(_world.layer_descriptions[i].name.c_str(),
+                            _world_layers_draw_mask[i])) {
          _world_layers_draw_mask[i] = not _world_layers_draw_mask[i];
       }
    }
@@ -567,7 +565,9 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               for (auto [i, prop] : enumerate(object->instance_properties)) {
+               for (std::size_t i = 0; i < object->instance_properties.size(); ++i) {
+                  world::instance_property& prop = object->instance_properties[i];
+
                   if (prop.key.contains("Path")) {
                      ImGui::InputKeyValueAutoComplete(
                         object, &world::object::instance_properties, i,
@@ -748,7 +748,7 @@ void world_edit::update_ui() noexcept
                    enum_select_option{"Catmull-Rom",
                                       world::path_spline_type::catmull_rom}});
 
-               for (auto [i, prop] : enumerate(path->properties)) {
+               for (std::size_t i = 0; i < path->properties.size(); ++i) {
                   ImGui::InputKeyValue(path, &world::path::properties, i,
                                        &_edit_stack_world, &_edit_context);
                }
@@ -756,7 +756,7 @@ void world_edit::update_ui() noexcept
                ImGui::Text("Nodes");
                ImGui::BeginChild("Nodes", {}, true);
 
-               for (auto [i, node] : enumerate(path->nodes)) {
+               for (std::size_t i = 0; i < path->nodes.size(); ++i) {
                   ImGui::PushID(static_cast<int>(i));
 
                   ImGui::Text("Node %i", static_cast<int>(i));
@@ -767,7 +767,8 @@ void world_edit::update_ui() noexcept
                   ImGui::DragFloat3("Position", path, i, &world::path::node::position,
                                     &_edit_stack_world, &_edit_context);
 
-                  for (auto [prop_index, prop] : enumerate(node.properties)) {
+                  for (std::size_t prop_index = 0;
+                       prop_index < path->nodes[i].properties.size(); ++prop_index) {
                      ImGui::InputKeyValue(path, i, prop_index,
                                           &_edit_stack_world, &_edit_context);
                   }
@@ -1874,8 +1875,10 @@ void world_edit::update_ui() noexcept
 
                if (ImGui::IsItemHovered()) {
                   ImGui::SetTooltip(
-                     "Auto-Fill the sector's object list with objects inside "
-                     "the sector from active layers as points are added. This "
+                     "Auto-Fill the sector's object list with objects "
+                     "inside "
+                     "the sector from active layers as points are added. "
+                     "This "
                      "will add a separate entry to the Undo stack.");
                }
 
