@@ -7,8 +7,6 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include "imgui/imgui.h"
-
 using namespace std::string_literals;
 
 namespace we::world {
