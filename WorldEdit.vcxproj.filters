@@ -628,6 +628,9 @@
     <ClInclude Include="src\world\object_class_library.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\utility\string_icompare.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -880,6 +883,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\object_class_library.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\object_properties.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utility\string_icompare.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

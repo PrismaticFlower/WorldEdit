@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-namespace we::utility::string {
+namespace we::string {
 
 struct line {
    int number = 0;

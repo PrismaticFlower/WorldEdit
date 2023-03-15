@@ -5,7 +5,7 @@
 
 using namespace std::literals;
 
-namespace we::utility::string {
+namespace we::string {
 
 auto count_lines(const std::string_view str) noexcept -> std::size_t
 {

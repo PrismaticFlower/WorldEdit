@@ -61,8 +61,7 @@ bool DragFloat2(const char* label, we::float2* v, float v_speed, float v_min,
    PopID();
 
    auto label_text =
-      we::utility::string::split_first_of_exclusive(std::string_view{label},
-                                                    "##");
+      we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text.empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -95,8 +94,7 @@ bool DragFloat2XZ(const char* label, we::float2* v, float v_speed, float v_min,
    PopID();
 
    auto label_text =
-      we::utility::string::split_first_of_exclusive(std::string_view{label},
-                                                    "##");
+      we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text.empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -133,8 +131,7 @@ bool DragFloat3(const char* label, we::float3* v, float v_speed, float v_min,
    PopID();
 
    auto label_text =
-      we::utility::string::split_first_of_exclusive(std::string_view{label},
-                                                    "##");
+      we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text.empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -175,8 +172,7 @@ bool DragFloat4(const char* label, we::float4* v, float v_speed, float v_min,
    PopID();
 
    auto label_text =
-      we::utility::string::split_first_of_exclusive(std::string_view{label},
-                                                    "##");
+      we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text.empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
@@ -217,8 +213,7 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed, float v_min,
    PopID();
 
    auto label_text =
-      we::utility::string::split_first_of_exclusive(std::string_view{label},
-                                                    "##");
+      we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
    if (not label_text.empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);

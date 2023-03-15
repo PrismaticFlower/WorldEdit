@@ -32,8 +32,7 @@ void commands::add(std::string name, std::string& value) noexcept
 
 void commands::execute(const std::string_view str)
 {
-   const auto [command, arg_str] =
-      utility::string::split_first_of_exclusive(str, " "sv);
+   const auto [command, arg_str] = string::split_first_of_exclusive(str, " "sv);
 
    if (_commands.contains(command)) {
       _commands[command]->invoke(arg_str);

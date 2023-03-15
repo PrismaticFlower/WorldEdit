@@ -83,7 +83,7 @@ void model_manager::update_models() noexcept
          catch (std::exception& e) {
             _error_output.write(
                "Failed to create model:\n   Name: {}\n   Message: \n{}\n",
-               std::string_view{name}, utility::string::indent(2, e.what()));
+               std::string_view{name}, string::indent(2, e.what()));
 
             _failed_creations.insert(name);
          }

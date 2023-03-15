@@ -28,8 +28,7 @@ auto read_file_impl(const std::filesystem::path& path) -> Out
 
    const std::size_t file_size = std::filesystem::file_size(path.c_str());
 
-   [[unlikely]] if (file_size > std::numeric_limits<DWORD>::max())
-   {
+   [[unlikely]] if (file_size > std::numeric_limits<DWORD>::max()) {
       throw open_error{fmt::format("File '{}' is too big to read.\n   Max "
                                    "readable size is 4294967295, file is {}.",
                                    path.string(), file_size)};
@@ -57,6 +56,11 @@ auto read_file_impl(const std::filesystem::path& path) -> Out
 auto read_file_to_bytes(const std::filesystem::path& path) -> std::vector<std::byte>
 {
    return read_file_impl<std::vector<std::byte>>(path);
+}
+
+auto read_file_to_chars(const std::filesystem::path& path) -> std::vector<char>
+{
+   return read_file_impl<std::vector<char>>(path);
 }
 
 auto read_file_to_string(const std::filesystem::path& path) -> std::string

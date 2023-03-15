@@ -278,7 +278,7 @@ void library<T>::enqueue_create_asset(lowercase_string name,
          catch (std::exception& e) {
             self->_output_stream.write("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
                                        asset_path.string(),
-                                       utility::string::indent(2, e.what()));
+                                       string::indent(2, e.what()));
 
             return nullptr;
          }

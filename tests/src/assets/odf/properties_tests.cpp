@@ -27,11 +27,6 @@ TEST_CASE(".odf properties list construction", "[Assets][ODF]")
       REQUIRE(properties.size() == 3);
       REQUIRE(not properties.empty());
 
-      properties.clear();
-
-      REQUIRE(properties.size() == 0);
-      REQUIRE(properties.empty());
-
       properties.reserve(8);
       REQUIRE(properties.capacity() == 8);
    }
@@ -53,14 +48,6 @@ TEST_CASE(".odf properties list construction", "[Assets][ODF]")
       REQUIRE(properties.at(2).value == "3"sv);
    }
 
-   SECTION("front/back checks")
-   {
-      REQUIRE(properties.front().key == properties[0].key);
-      REQUIRE(properties.front().value == properties[0].value);
-      REQUIRE(properties.back().key == properties[2].key);
-      REQUIRE(properties.back().value == properties[2].value);
-   }
-
    SECTION("key value checks")
    {
       REQUIRE(properties["GeometryName"sv] == "cool_model"sv);
@@ -71,21 +58,13 @@ TEST_CASE(".odf properties list construction", "[Assets][ODF]")
       REQUIRE(properties["geoMetrYnamE"sv] == "cool_model"sv);
    }
 
-   SECTION("push/pop back checks")
+   SECTION("push checks")
    {
-      properties.push_back({.key = "Hello"s, .value = "Person"s});
+      properties.push_back({.key = "Hello"sv, .value = "Person"sv});
 
       REQUIRE(properties.size() == 4);
-      REQUIRE(properties.back().key == "Hello"sv);
-      REQUIRE(properties.back().value == "Person"sv);
-
-      REQUIRE(properties.push_back({.key = "Goodbye"s, .value = "Other Person"s}) ==
-              property{.key = "Goodbye"s, .value = "Other Person"s});
-
-      properties.pop_back();
-
-      REQUIRE(properties.back().key == "Hello"sv);
-      REQUIRE(properties.back().value == "Person"sv);
+      REQUIRE(properties[3].key == "Hello"sv);
+      REQUIRE(properties[3].value == "Person"sv);
    }
 
    SECTION("invalid access checks")

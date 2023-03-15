@@ -33,7 +33,7 @@ void throw_layer_load_failure(std::string_view type,
    throw load_failure{fmt::format("Failed to load layer {}.\n   "
                                   "File: {}\n   Message: {}\n",
                                   type, filepath.string(),
-                                  utility::string::indent(2, e.what()))};
+                                  string::indent(2, e.what()))};
 }
 
 void throw_planning_missing_hub(std::string_view hub, std::string_view connection)
@@ -172,8 +172,7 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
    catch (std::exception& e) {
       throw load_failure{fmt::format("Failed to layer index.\n   "
                                      "File: {}\n   Message: {}\n",
-                                     path.string(),
-                                     utility::string::indent(2, e.what()))};
+                                     path.string(), string::indent(2, e.what()))};
    }
 }
 
@@ -375,7 +374,7 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
                path.type = path_type::patrol;
             }
 
-            path.name = utility::string::split_first_of_exclusive(path.name, " ")[1];
+            path.name = string::split_first_of_exclusive(path.name, " ")[1];
          }
 
          // path nodes
@@ -1016,7 +1015,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       catch (std::exception& e) {
          auto message =
             fmt::format("Error while loading terrain:\n   Message: \n{}\n",
-                        utility::string::indent(2, e.what()));
+                        string::indent(2, e.what()));
 
          output.write(message);
 
@@ -1026,7 +1025,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
    catch (load_failure& failure) {
       output
          .write("Error while loading world:\n   World: {}\n   Message: \n{}\n",
-                path.string(), utility::string::indent(2, failure.what()));
+                path.string(), string::indent(2, failure.what()));
 
       throw;
    }

@@ -4,6 +4,6 @@
 
 namespace we::assets::odf {
 
-auto read_definition(std::string_view str) -> definition;
+auto read_definition(std::vector<char> string_storage) -> definition;
 
 }

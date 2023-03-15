@@ -1,17 +1,15 @@
 
 #include "definition_io.hpp"
+#include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
 #include <stdexcept>
 
-#include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
 using namespace std::literals;
 
 namespace we::assets::odf {
-
-namespace string = utility::string;
 
 namespace {
 
@@ -22,31 +20,38 @@ enum class section {
    instance_properties,
 };
 
+struct property_counts {
+   std::size_t header = 0;
+   std::size_t properties = 0;
+   std::size_t instance_properties = 0;
+};
+
 auto read_property(string::line line) -> property
 {
    auto [key, value] = string::split_first_of_exclusive(line.string, "="sv);
 
-   if (boost::contains(key, "//"sv)) {
+   if (key.contains("//"sv)) {
       throw std::runtime_error{fmt::format(
          "Error in .odf on line #{}! '//' can not appear in the middle of a "
-         "property '<Key> = <Value>' pair. Move the comment to the end of the line."sv,
+         "property '<Key> = <Value>' pair. Move the comment to the end of the "
+         "line.",
          line.number)};
    }
 
    key = string::trim_trailing_whitespace(key);
    value = string::trim_leading_whitespace(value);
 
-   if (boost::contains(line.string, "="sv) and value.empty()) {
+   if (line.string.contains("="sv) and value.empty()) {
       throw std::runtime_error{
          fmt::format("Error in .odf on line #{}! The value right of '=' can "
                      "not be only whitespace. "
-                     "Use '{} = \"\"' to indicate an empty value."sv,
+                     "Use '{} = \"\"' to indicate an empty value.",
                      line.number, key)};
    }
    else if (value.empty()) {
       throw std::runtime_error{
          fmt::format("Error in .odf on line #{}! Expected '=' "
-                     "left of key '{}'!"sv,
+                     "left of key '{}'!",
                      line.number, key)};
    }
 
@@ -60,14 +65,13 @@ auto read_property(string::line line) -> property
               }).front();
    }
 
-   return {.key = std::string{key}, .value = std::string{value}};
+   return {.key = key, .value = value};
 }
 
-}
-
-auto read_definition(std::string_view str) -> definition
+template<typename T>
+void read_definition(std::string_view str, T& result)
 {
-   definition definition;
+   type definition_type = type::game_object_class;
 
    section current_section = section::none;
 
@@ -79,52 +83,97 @@ auto read_definition(std::string_view str) -> definition
       if (line.string.starts_with("--"sv)) continue;
       if (string::is_whitespace(line.string)) continue;
 
-      if (boost::istarts_with(line.string, "[ExplosionClass]"sv)) {
+      if (string::istarts_with(line.string, "[ExplosionClass]"sv)) {
          current_section = section::header;
-         definition.type = type::explosion_class;
+         definition_type = type::explosion_class;
       }
-      else if (boost::istarts_with(line.string, "[OrdnanceClass]"sv)) {
+      else if (string::istarts_with(line.string, "[OrdnanceClass]"sv)) {
          current_section = section::header;
-         definition.type = type::ordnance_class;
+         definition_type = type::ordnance_class;
       }
-      else if (boost::istarts_with(line.string, "[WeaponClass]"sv)) {
+      else if (string::istarts_with(line.string, "[WeaponClass]"sv)) {
          current_section = section::header;
-         definition.type = type::weapon_class;
+         definition_type = type::weapon_class;
       }
-      else if (boost::istarts_with(line.string, "[GameObjectClass]"sv)) {
+      else if (string::istarts_with(line.string, "[GameObjectClass]"sv)) {
          current_section = section::header;
-         definition.type = type::game_object_class;
+         definition_type = type::game_object_class;
       }
-      else if (boost::istarts_with(line.string, "[Properties]"sv)) {
+      else if (string::istarts_with(line.string, "[Properties]"sv)) {
          current_section = section::properties;
       }
-      else if (boost::istarts_with(line.string, "[InstanceProperties]"sv)) {
+      else if (string::istarts_with(line.string, "[InstanceProperties]"sv)) {
          current_section = section::instance_properties;
       }
       else if (line.string.starts_with("["sv)) {
          throw std::runtime_error{
-            fmt::format("Error in .odf on line #{}! Unknown or incomplete .odf header '{}'!"sv,
+            fmt::format("Error in .odf on line #{}! Unknown or incomplete .odf "
+                        "header '{}'!",
                         line.number,
                         string::split_first_of_inclusive(line.string, "]"sv).front())};
       }
       else {
-         switch (current_section) {
-         case section::header:
-            definition.header_properties.push_back(read_property(line));
-            break;
-         case section::properties:
-            definition.class_properties.push_back(read_property(line));
-            break;
-         case section::instance_properties:
-            definition.instance_properties.push_back(read_property(line));
-            break;
-         case section::none:
-            throw std::runtime_error{
-               fmt::format("Error in .odf on line #{}! Non-empty line is before any .odf header.!"sv,
-                           line.number)};
+         if constexpr (std::is_same_v<T, property_counts>) {
+            switch (current_section) {
+            case section::header:
+               result.header += 1;
+               break;
+            case section::properties:
+               result.properties += 1;
+               break;
+            case section::instance_properties:
+               result.instance_properties += 1;
+               break;
+            case section::none:
+               throw std::runtime_error{
+                  fmt::format("Error in .odf on line #{}! Non-empty line is "
+                              "before any .odf header.!",
+                              line.number)};
+            }
+         }
+         else {
+            switch (current_section) {
+            case section::header:
+               result.header_properties.push_back(read_property(line));
+               break;
+            case section::properties:
+               result.class_properties.push_back(read_property(line));
+               break;
+            case section::instance_properties:
+               result.instance_properties.push_back(read_property(line));
+               break;
+            case section::none:
+               throw std::runtime_error{
+                  fmt::format("Error in .odf on line #{}! Non-empty line is "
+                              "before any .odf header.!",
+                              line.number)};
+            }
          }
       }
    }
+
+   if constexpr (std::is_same_v<T, definition>) {
+      result.type = definition_type;
+   }
+}
+
+}
+
+auto read_definition(std::vector<char> string_storage) -> definition
+{
+   definition definition{.storage = std::move(string_storage)};
+
+   std::string_view str{definition.storage.data(), definition.storage.size()};
+
+   property_counts property_counts;
+
+   read_definition(str, property_counts);
+
+   definition.header_properties.reserve(property_counts.header);
+   definition.class_properties.reserve(property_counts.properties);
+   definition.instance_properties.reserve(property_counts.instance_properties);
+
+   read_definition(str, definition);
 
    return definition;
 }

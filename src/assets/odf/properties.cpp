@@ -1,10 +1,11 @@
 
 #include "properties.hpp"
+#include "utility/string_icompare.hpp"
 
 #include <cctype>
+#include <span>
 #include <stdexcept>
 
-#include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
 using namespace std::literals;
@@ -13,25 +14,25 @@ namespace we::assets::odf {
 
 namespace {
 
-template<typename Vector>
-auto find_key(const std::string_view key, Vector& props_vec) -> auto&
+auto find_key(const std::string_view key, std::span<const property> props)
+   -> const std::string_view
 {
-   for (auto& prop : props_vec) {
-      if (boost::iequals(prop.key, key)) return prop.value;
+   for (auto& prop : props) {
+      if (string::iequals(prop.key, key)) return prop.value;
    }
 
-   throw std::invalid_argument{fmt::format("Unable to find property '{}'!"sv, key)};
+   throw std::invalid_argument{fmt::format("Unable to find property '{}'!", key)};
 }
 
-template<typename Vector>
-auto index_prop(const std::size_t index, Vector& props_vec) -> auto&
+auto index_prop(const std::size_t index, std::span<const property> props)
+   -> const property&
 {
-   if (index >= props_vec.size()) {
+   if (index >= props.size()) {
       throw std::out_of_range{
-         fmt::format("Unable property at index '{}' as it does not exist!"sv, index)};
+         fmt::format("Unable property at index '{}' as it does not exist!", index)};
    }
 
-   return props_vec[index];
+   return props[index];
 }
 
 }
@@ -41,24 +42,13 @@ properties::properties(std::initializer_list<std::array<std::string_view, 2>> pr
    _props_vec.reserve(properties_list.size());
 
    for (const auto& key_value : properties_list) {
-      _props_vec.push_back(property{.key = std::string{key_value[0]},
-                                    .value = std::string{key_value[1]}});
+      _props_vec.push_back(property{.key = key_value[0], .value = key_value[1]});
    }
 }
 
-auto properties::operator[](const std::string_view key) -> std::string&
+auto properties::operator[](const std::string_view key) const -> std::string_view
 {
    return find_key(key, _props_vec);
-}
-
-auto properties::operator[](const std::string_view key) const -> const std::string&
-{
-   return find_key(key, _props_vec);
-}
-
-auto properties::operator[](const std::size_t index) -> property&
-{
-   return index_prop(index, _props_vec);
 }
 
 auto properties::operator[](const std::size_t index) const -> const property&
@@ -66,19 +56,9 @@ auto properties::operator[](const std::size_t index) const -> const property&
    return index_prop(index, _props_vec);
 }
 
-auto properties::at(const std::string_view key) -> std::string&
+auto properties::at(const std::string_view key) const -> std::string_view
 {
    return find_key(key, _props_vec);
-}
-
-auto properties::at(const std::string_view key) const -> const std::string&
-{
-   return find_key(key, _props_vec);
-}
-
-auto properties::at(const std::size_t index) -> property&
-{
-   return index_prop(index, _props_vec);
 }
 
 auto properties::at(const std::size_t index) const -> const property&
@@ -86,33 +66,42 @@ auto properties::at(const std::size_t index) const -> const property&
    return index_prop(index, _props_vec);
 }
 
-auto properties::front() noexcept -> property&
-{
-   return _props_vec.front();
-}
-
-auto properties::front() const noexcept -> const property&
-{
-   return _props_vec.front();
-}
-
-auto properties::back() noexcept -> property&
-{
-   return _props_vec.back();
-}
-
-auto properties::back() const noexcept -> const property&
-{
-   return _props_vec.back();
-}
-
 bool properties::contains(const std::string_view key) const noexcept
 {
    for (auto& prop : _props_vec) {
-      if (boost::iequals(prop.key, key)) return true;
+      if (string::iequals(prop.key, key)) return true;
    }
-
    return false;
+}
+
+auto properties::begin() noexcept -> iterator
+{
+   return _props_vec.begin();
+}
+
+auto properties::end() noexcept -> iterator
+{
+   return _props_vec.end();
+}
+
+auto properties::begin() const noexcept -> const_iterator
+{
+   return _props_vec.begin();
+}
+
+auto properties::end() const noexcept -> const_iterator
+{
+   return _props_vec.end();
+}
+
+auto properties::cbegin() const noexcept -> const_iterator
+{
+   return _props_vec.cbegin();
+}
+
+auto properties::cend() const noexcept -> const_iterator
+{
+   return _props_vec.cend();
 }
 
 auto properties::capacity() const noexcept -> size_type
@@ -125,14 +114,14 @@ auto properties::size() const noexcept -> size_type
    return _props_vec.size();
 }
 
-auto properties::max_size() const noexcept -> size_type
-{
-   return _props_vec.max_size();
-}
-
 bool properties::empty() const noexcept
 {
    return _props_vec.empty();
+}
+
+auto properties::max_size() const noexcept -> size_type
+{
+   return _props_vec.max_size();
 }
 
 void properties::reserve(const std::size_t size) noexcept
@@ -140,28 +129,9 @@ void properties::reserve(const std::size_t size) noexcept
    _props_vec.reserve(size);
 }
 
-auto properties::push_back(const property& prop) noexcept -> property&
-{
-   _props_vec.push_back(prop);
-
-   return _props_vec.back();
-}
-
-auto properties::push_back(property&& prop) noexcept -> property&
+void properties::push_back(property&& prop) noexcept
 {
    _props_vec.push_back(std::move(prop));
-
-   return _props_vec.back();
-}
-
-void properties::pop_back() noexcept
-{
-   _props_vec.pop_back();
-}
-
-void properties::clear() noexcept
-{
-   _props_vec.clear();
 }
 
 }

@@ -10,9 +10,7 @@ namespace we::assets {
 auto asset_traits<odf::definition>::load(const std::filesystem::path& path)
    -> odf::definition
 {
-   auto file = io::read_file_to_string(path);
-
-   return odf::read_definition(file);
+   return odf::read_definition(io::read_file_to_chars(path));
 }
 
 auto asset_traits<msh::flat_model>::load(const std::filesystem::path& path)

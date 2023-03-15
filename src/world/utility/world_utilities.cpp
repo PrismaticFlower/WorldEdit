@@ -34,7 +34,7 @@ auto create_base_name(const std::string_view name,
                       const std::string_view base_name = missing_name_base<T>())
    -> std::string_view
 {
-   std::string_view stripped_name = utility::string::trim_trailing_digits(name);
+   std::string_view stripped_name = string::trim_trailing_digits(name);
 
    if (stripped_name.empty()) {
       stripped_name = base_name;

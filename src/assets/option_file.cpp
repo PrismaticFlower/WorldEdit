@@ -7,7 +7,7 @@
 
 namespace we::assets {
 
-using namespace utility::string;
+using namespace string;
 
 namespace {
 

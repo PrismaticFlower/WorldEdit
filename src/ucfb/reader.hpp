@@ -247,8 +247,7 @@ private:
          throw std::runtime_error{fmt::format(
             "Chunk ID mistmatch when performing strict read of child chunk. "
             "Read chunk ID is {} expected was {}. Chunk Trace Stack: \n{}"sv,
-            to_string(child.id()), to_string(child_id),
-            utility::string::indent(1, trace()))};
+            to_string(child.id()), to_string(child_id), string::indent(1, trace()))};
       }
 
       return child;
@@ -268,8 +267,7 @@ private:
       if (_head > _size) {
          throw std::runtime_error{
             fmt::format("Attempt to read {} bytes past end of chunk {}. Chunk Trace Stack: \n{}"sv,
-                        _head - _size, to_string(id()),
-                        utility::string::indent(1, trace()))};
+                        _head - _size, to_string(id()), string::indent(1, trace()))};
       }
    }
 
@@ -320,8 +318,7 @@ public:
 private:
    friend class reader;
 
-   struct unchecked_tag {
-   };
+   struct unchecked_tag {};
 
    reader_strict(reader ucfb_reader, unchecked_tag) noexcept
       : reader{ucfb_reader}

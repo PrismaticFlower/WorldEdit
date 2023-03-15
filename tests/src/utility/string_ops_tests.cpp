@@ -4,7 +4,7 @@
 
 using namespace std::literals;
 
-namespace we::utility::string::tests {
+namespace we::string::tests {
 
 TEST_CASE("string count lines", "[Utility][StringOp]")
 {

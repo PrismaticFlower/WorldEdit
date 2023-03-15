@@ -65,11 +65,17 @@ ClassLabel = "prop" // Expect error the on below line.
 GeometryName
 
 [Properties])";
+
+auto to_vector(std::string_view string) -> std::vector<char>
+{
+   return {string.begin(), string.end()};
+}
+
 }
 
 TEST_CASE(".odf reading", "[Assets][ODF]")
 {
-   auto definition = read_definition(valid_odf_test);
+   auto definition = read_definition(to_vector(valid_odf_test));
 
    REQUIRE(definition.type == type::game_object_class);
 
@@ -87,7 +93,7 @@ TEST_CASE(".odf reading", "[Assets][ODF]")
 
 TEST_CASE(".odf reading mixed line breaks", "[Assets][ODF]")
 {
-   auto definition = read_definition(valid_odf_test_mixed_line_breaks);
+   auto definition = read_definition(to_vector(valid_odf_test_mixed_line_breaks));
 
    REQUIRE(definition.type == type::game_object_class);
 
@@ -100,21 +106,21 @@ TEST_CASE(".odf reading mixed line breaks", "[Assets][ODF]")
 
 TEST_CASE(".odf failed reading bad header", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(invalid_odf_test_bad_header_name));
+   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_bad_header_name)));
 }
 
 TEST_CASE(".odf failed reading bad key value", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(invalid_odf_test_bad_key_value));
+   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_bad_key_value)));
 }
 
 TEST_CASE(".odf failed reading empty value", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(invalid_odf_test_empty_value));
+   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_empty_value)));
 }
 
 TEST_CASE(".odf failed reading no assignment", "[Assets][ODF]")
 {
-   REQUIRE_THROWS(read_definition(invalid_odf_test_no_assignment));
+   REQUIRE_THROWS(read_definition(to_vector(invalid_odf_test_no_assignment)));
 }
 }

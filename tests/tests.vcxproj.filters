@@ -67,6 +67,7 @@
     <ClCompile Include="src\edits\set_value_tests.cpp" />
     <ClCompile Include="src\edits\insert_point_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
+    <ClCompile Include="src\utility\string_icompare_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

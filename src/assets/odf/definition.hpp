@@ -2,8 +2,6 @@
 
 #include "properties.hpp"
 
-#include <string>
-
 namespace we::assets::odf {
 
 enum class type {
@@ -19,6 +17,8 @@ struct definition {
    properties header_properties;
    properties class_properties;
    properties instance_properties;
+
+   std::vector<char> storage;
 };
 
 }

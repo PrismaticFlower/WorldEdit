@@ -770,7 +770,7 @@ void world_edit::save_world(std::filesystem::path path) noexcept
       auto message =
          fmt::format("Failed to save world!\n   Reason: \n{}\n"
                      "   Incomplete save data maybe present on disk.\n",
-                     utility::string::indent(2, e.what()));
+                     string::indent(2, e.what()));
 
       _stream.write(message);
 

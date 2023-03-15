@@ -12,8 +12,6 @@ using namespace std::literals;
 
 namespace we::assets::config {
 
-using namespace utility;
-
 namespace {
 
 auto parse_string_value(const string::line line, std::string_view str,

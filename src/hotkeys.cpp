@@ -198,8 +198,7 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
 
 void hotkeys::validate_command(const std::string_view command)
 {
-   auto [command_name, command_args] =
-      utility::string::split_first_of_exclusive(command, " ");
+   auto [command_name, command_args] = string::split_first_of_exclusive(command, " ");
 
    if (not _commands.has_command(command_name)) {
       throw unknown_command{fmt::format("Unknown command '{}'!", command_name)};
