@@ -7,6 +7,8 @@
 
 #include <absl/container/flat_hash_map.h>
 
+#include "imgui/imgui.h"
+
 using namespace std::string_literals;
 
 namespace we::world {
@@ -53,6 +55,8 @@ struct object_class_library::impl {
          for (const auto& loaded : _definition_load_queue) {
             object_definition_loaded(loaded);
          }
+
+         _definition_load_queue.clear();
       }
 
       {
@@ -61,6 +65,8 @@ struct object_class_library::impl {
          for (const auto& loaded : _model_load_queue) {
             model_loaded(loaded);
          }
+
+         _model_load_queue.clear();
       }
 
       absl::erase_if(_object_classes, [](const auto& name_object_class) {
