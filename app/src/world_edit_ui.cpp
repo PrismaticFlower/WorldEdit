@@ -12,6 +12,7 @@
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
 #include "world/utility/hintnode_traits.hpp"
+#include "world/utility/object_properties.hpp"
 #include "world/utility/path_properties.hpp"
 #include "world/utility/snapping.hpp"
 #include "world/utility/world_utilities.hpp"
@@ -550,6 +551,22 @@ void world_edit::update_ui() noexcept
 
                      return entries;
                   });
+
+               if (ImGui::IsItemDeactivatedAfterEdit()) {
+                  std::vector<world::instance_property> new_instance_properties =
+                     world::make_object_instance_properties(
+                        *_object_classes[object->class_name].definition,
+                        object->instance_properties);
+
+                  if (new_instance_properties != object->instance_properties) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(object->id, &world::object::instance_properties,
+                                              std::move(new_instance_properties),
+                                              object->instance_properties),
+                        _edit_context, {.transparent = true});
+                  }
+               }
+
                ImGui::LayerPick("Layer", object, &_edit_stack_world, &_edit_context);
 
                ImGui::Separator();
@@ -996,6 +1013,22 @@ void world_edit::update_ui() noexcept
 
                      return entries;
                   });
+
+               if (ImGui::IsItemDeactivatedAfterEdit()) {
+                  std::vector<world::instance_property> new_instance_properties =
+                     world::make_object_instance_properties(
+                        *_object_classes[object.class_name].definition,
+                        object.instance_properties);
+
+                  if (new_instance_properties != object.instance_properties) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::object::instance_properties,
+                                                std::move(new_instance_properties),
+                                                object.instance_properties),
+                                             _edit_context, {.transparent = true});
+                  }
+               }
+
                ImGui::LayerPick<world::object>("Layer", &creation_entity,
                                                &_edit_stack_world, &_edit_context);
 
