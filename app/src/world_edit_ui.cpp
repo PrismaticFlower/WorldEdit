@@ -14,6 +14,7 @@
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/path_properties.hpp"
+#include "world/utility/region_properties.hpp"
 #include "world/utility/snapping.hpp"
 #include "world/utility/world_utilities.hpp"
 
@@ -1574,6 +1575,122 @@ void world_edit::update_ui() noexcept
                ImGui::LayerPick<world::region>("Layer", &creation_entity,
                                                &_edit_stack_world, &_edit_context);
 
+               ImGui::Separator();
+
+               world::region_type region_type =
+                  world::get_region_type(region.description);
+
+               if (ImGui::EnumSelect(
+                      "Type", &region_type,
+                      {
+                         enum_select_option{"Typeless", world::region_type::typeless},
+                         enum_select_option{"Death Region", world::region_type::deathregion},
+                         enum_select_option{"Sound Stream", world::region_type::soundstream},
+                         enum_select_option{"Sound Static", world::region_type::soundstatic},
+                         enum_select_option{"Sound Space", world::region_type::soundspace},
+                         enum_select_option{"Sound Trigger", world::region_type::soundtrigger},
+                         enum_select_option{"Foley FX", world::region_type::foleyfx},
+                         enum_select_option{"Shadow", world::region_type::shadow},
+                         enum_select_option{"Map Bounds", world::region_type::mapbounds},
+                         enum_select_option{"Rumble", world::region_type::rumble},
+                         enum_select_option{"Reflection", world::region_type::reflection},
+                         enum_select_option{"Rain Shadow", world::region_type::rainshadow},
+                         enum_select_option{"Danger", world::region_type::danger},
+                         enum_select_option{"Damage Region", world::region_type::damage_region},
+                         enum_select_option{"AI Vis", world::region_type::ai_vis},
+                         enum_select_option{"Color Grading (Shader Patch)",
+                                            world::region_type::colorgrading},
+                      })) {
+                  std::terminate(); // Make a new description string here.
+               }
+
+               switch (region_type) {
+               case world::region_type::soundstream: {
+                  world::sound_stream_properties properties =
+                     world::unpack_region_sound_stream(region.description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |=
+                     ImGui::InputText("Stream Name", &properties.sound_name);
+
+                  value_changed |= ImGui::DragFloat("Min Distance Divisor",
+                                                    &properties.min_distance_divisor,
+                                                    1.0f, 1.0f, 1000000.0f, "%.3f",
+                                                    ImGuiSliderFlags_AlwaysClamp);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                pack_region_sound_stream(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::soundstatic: {
+                  world::sound_stream_properties properties =
+                     world::unpack_region_sound_static(region.description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |=
+                     ImGui::InputText("Sound Name", &properties.sound_name);
+
+                  value_changed |= ImGui::DragFloat("Min Distance Divisor",
+                                                    &properties.min_distance_divisor,
+                                                    1.0f, 1.0f, 1000000.0f, "%.3f",
+                                                    ImGuiSliderFlags_AlwaysClamp);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                pack_region_sound_static(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::soundspace: {
+                  ImGui::Text("TODO!");
+               } break;
+               case world::region_type::soundtrigger: {
+                  ImGui::Text("TODO!");
+               } break;
+               case world::region_type::foleyfx: {
+                  ImGui::Text("TODO!");
+               } break;
+               case world::region_type::shadow: {
+                  ImGui::Text("TODO!");
+               } break;
+               case world::region_type::rumble: {
+                  ImGui::Text("TODO!");
+               } break;
+               case world::region_type::damage_region: {
+                  ImGui::Text("TODO!");
+               } break;
+               case world::region_type::ai_vis: {
+                  ImGui::Text("TODO!");
+               } break;
+               case world::region_type::colorgrading: {
+                  ImGui::Text("TODO!");
+               } break;
+               }
+
                ImGui::InputText("Description", &creation_entity,
                                 &world::region::description, &_edit_stack_world,
                                 &_edit_context,
@@ -1718,12 +1835,12 @@ void world_edit::update_ui() noexcept
                }
 
                ImGui::Separator();
-               ImGui::EnumSelect("Shape", &creation_entity, &world::region::shape,
-                                 &_edit_stack_world, &_edit_context,
-                                 {enum_select_option{"Box", world::region_shape::box},
-                                  enum_select_option{"Sphere", world::region_shape::sphere},
-                                  enum_select_option{"Cylinder",
-                                                     world::region_shape::cylinder}});
+               ImGui::EnumSelect(
+                  "Shape (TODO: RESRICT ME BASED ON TYPE)", &creation_entity,
+                  &world::region::shape, &_edit_stack_world, &_edit_context,
+                  {enum_select_option{"Box", world::region_shape::box},
+                   enum_select_option{"Sphere", world::region_shape::sphere},
+                   enum_select_option{"Cylinder", world::region_shape::cylinder}});
 
                float3 region_size = region.size;
 

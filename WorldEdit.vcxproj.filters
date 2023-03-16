@@ -631,6 +631,9 @@
     <ClInclude Include="src\utility\string_icompare.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\region_properties.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -889,6 +892,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utility\string_icompare.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\region_properties.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

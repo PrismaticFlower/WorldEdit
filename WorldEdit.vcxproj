@@ -238,6 +238,7 @@
     <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
     <ClCompile Include="src\world\utility\object_properties.cpp" />
     <ClCompile Include="src\world\utility\path_properties.cpp" />
+    <ClCompile Include="src\world\utility\region_properties.cpp" />
     <ClCompile Include="src\world\utility\sector_fill.cpp" />
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
@@ -461,6 +462,7 @@
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
     <ClInclude Include="src\world\utility\object_properties.hpp" />
     <ClInclude Include="src\world\utility\path_properties.hpp" />
+    <ClInclude Include="src\world\utility\region_properties.hpp" />
     <ClInclude Include="src\world\utility\sector_fill.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
