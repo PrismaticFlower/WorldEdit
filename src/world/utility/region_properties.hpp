@@ -88,6 +88,8 @@ struct colorgrading_region_properties {
 
 auto get_region_type(const std::string_view description) noexcept -> region_type;
 
+auto to_string(const region_type type) noexcept -> std::string;
+
 auto unpack_region_sound_stream(const std::string_view description) noexcept
    -> sound_stream_properties;
 

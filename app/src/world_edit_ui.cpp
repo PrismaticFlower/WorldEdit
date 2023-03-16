@@ -1577,8 +1577,9 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               world::region_type region_type =
+               const world::region_type start_region_type =
                   world::get_region_type(region.description);
+               world::region_type region_type = start_region_type;
 
                if (ImGui::EnumSelect(
                       "Type", &region_type,
@@ -1601,7 +1602,13 @@ void world_edit::update_ui() noexcept
                          enum_select_option{"Color Grading (Shader Patch)",
                                             world::region_type::colorgrading},
                       })) {
-                  std::terminate(); // Make a new description string here.
+                  if (region_type != start_region_type) {
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::region::description,
+                                                              to_string(region_type),
+                                                              region.description),
+                               _edit_context);
+                  }
                }
 
                switch (region_type) {
@@ -1624,7 +1631,7 @@ void world_edit::update_ui() noexcept
                   if (value_changed) {
                      _edit_stack_world.apply(edits::make_set_creation_value(
                                                 &world::region::description,
-                                                pack_region_sound_stream(properties),
+                                                world::pack_region_sound_stream(properties),
                                                 region.description),
                                              _edit_context);
                   }
@@ -1654,7 +1661,7 @@ void world_edit::update_ui() noexcept
                   if (value_changed) {
                      _edit_stack_world.apply(edits::make_set_creation_value(
                                                 &world::region::description,
-                                                pack_region_sound_static(properties),
+                                                world::pack_region_sound_static(properties),
                                                 region.description),
                                              _edit_context);
                   }
@@ -1666,28 +1673,268 @@ void world_edit::update_ui() noexcept
                   }
                } break;
                case world::region_type::soundspace: {
-                  ImGui::Text("TODO!");
+                  world::sound_space_properties properties =
+                     world::unpack_region_sound_space(region.description);
+
+                  if (ImGui::InputText("Sound Space Name", &properties.sound_space_name)) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_sound_space(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                case world::region_type::soundtrigger: {
-                  ImGui::Text("TODO!");
+                  world::sound_trigger_properties properties =
+                     world::unpack_region_sound_trigger(region.description);
+
+                  if (ImGui::InputText("Region Name", &properties.region_name)) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_sound_trigger(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                case world::region_type::foleyfx: {
-                  ImGui::Text("TODO!");
+                  world::foley_fx_region_properties properties =
+                     world::unpack_region_foley_fx(region.description);
+
+                  if (ImGui::InputText("Group ID", &properties.group_id)) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_foley_fx(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                case world::region_type::shadow: {
-                  ImGui::Text("TODO!");
+                  world::shadow_region_properties properties =
+                     world::unpack_region_shadow(region.description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  if (float directional0 = properties.directional0.value_or(1.0f);
+                      ImGui::DragFloat("Directional Light 0 Strength",
+                                       &directional0, 0.01f, 0.0f, 1.0f, "%.3f",
+                                       ImGuiSliderFlags_AlwaysClamp)) {
+                     properties.directional0 = directional0;
+                     value_changed = true;
+                  }
+
+                  if (float directional1 = properties.directional1.value_or(1.0f);
+                      ImGui::DragFloat("Directional Light 1 Strength",
+                                       &directional1, 0.01f, 0.0f, 1.0f, "%.3f",
+                                       ImGuiSliderFlags_AlwaysClamp)) {
+                     properties.directional1 = directional1;
+                     value_changed = true;
+                  }
+
+                  if (float3 color_top =
+                         properties.color_top.value_or(float3{0.0f, 0.0f, 0.0f});
+                      ImGui::ColorEdit3("Ambient Light Top", &color_top.x)) {
+                     properties.color_top = color_top;
+                     value_changed = true;
+                  }
+
+                  if (float3 color_bottom =
+                         properties.color_bottom.value_or(float3{0.0f, 0.0f, 0.0f});
+                      ImGui::ColorEdit3("Ambient Light Bottom", &color_bottom.x)) {
+                     properties.color_bottom = color_bottom;
+                     value_changed = true;
+                  }
+
+                  value_changed |=
+                     ImGui::InputText("Environment Map", &properties.env_map);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_shadow(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                case world::region_type::rumble: {
-                  ImGui::Text("TODO!");
+                  world::rumble_region_properties properties =
+                     world::unpack_region_rumble(region.description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |=
+                     ImGui::InputText("Rumble Class", &properties.rumble_class);
+                  value_changed |= ImGui::InputText("Particle Effect",
+                                                    &properties.particle_effect);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_rumble(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                case world::region_type::damage_region: {
-                  ImGui::Text("TODO!");
+                  world::damage_region_properties properties =
+                     world::unpack_region_damage(region.description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  if (float damage_rate = properties.damage_rate.value_or(0.0f);
+                      ImGui::DragFloat("Damage Rate", &damage_rate)) {
+                     properties.damage_rate = damage_rate;
+                     value_changed = true;
+                  }
+
+                  if (float person_scale = properties.person_scale.value_or(1.0f);
+                      ImGui::DragFloat("Person Scale", &person_scale, 0.01f)) {
+                     properties.person_scale = person_scale;
+                     value_changed = true;
+                  }
+
+                  if (float animal_scale = properties.animal_scale.value_or(1.0f);
+                      ImGui::DragFloat("Animal Scale", &animal_scale, 0.01f)) {
+                     properties.animal_scale = animal_scale;
+                     value_changed = true;
+                  }
+
+                  if (float droid_scale = properties.droid_scale.value_or(1.0f);
+                      ImGui::DragFloat("Droid Scale", &droid_scale, 0.01f)) {
+                     properties.droid_scale = droid_scale;
+                     value_changed = true;
+                  }
+
+                  if (float vehicle_scale = properties.vehicle_scale.value_or(1.0f);
+                      ImGui::DragFloat("Vehicle Scale", &vehicle_scale, 0.01f)) {
+                     properties.vehicle_scale = vehicle_scale;
+                     value_changed = true;
+                  }
+
+                  if (float building_scale = properties.building_scale.value_or(1.0f);
+                      ImGui::DragFloat("Building Scale", &building_scale, 0.01f)) {
+                     properties.building_scale = building_scale;
+                     value_changed = true;
+                  }
+
+                  if (float building_dead_scale =
+                         properties.building_scale.value_or(1.0f);
+                      ImGui::DragFloat("Building Dead Scale",
+                                       &building_dead_scale, 0.01f)) {
+                     properties.building_dead_scale = building_dead_scale;
+                     value_changed = true;
+                  }
+
+                  if (float building_unbuilt_scale =
+                         properties.building_scale.value_or(1.0f);
+                      ImGui::DragFloat("Building Unbuilt Scale",
+                                       &building_unbuilt_scale, 0.01f)) {
+                     properties.building_unbuilt_scale = building_unbuilt_scale;
+                     value_changed = true;
+                  }
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_damage(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                case world::region_type::ai_vis: {
-                  ImGui::Text("TODO!");
+                  world::ai_vis_region_properties properties =
+                     world::unpack_region_ai_vis(region.description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  if (float crouch = properties.crouch.value_or(1.0f);
+                      ImGui::DragFloat("Crouch", &crouch, 0.01f, 0.0f, 1e10f)) {
+                     properties.crouch = crouch;
+                     value_changed = true;
+                  }
+
+                  if (float stand = properties.stand.value_or(1.0f);
+                      ImGui::DragFloat("Stand", &stand, 0.01f, 0.0f, 1e10f)) {
+                     properties.stand = stand;
+                     value_changed = true;
+                  }
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_ai_vis(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                case world::region_type::colorgrading: {
-                  ImGui::Text("TODO!");
+                  world::colorgrading_region_properties properties =
+                     world::unpack_region_colorgrading(region.description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |= ImGui::InputText("Config", &properties.config);
+                  value_changed |=
+                     ImGui::DragFloat("Fade Length", &properties.fade_length);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(edits::make_set_creation_value(
+                                                &world::region::description,
+                                                world::pack_region_colorgrading(properties),
+                                                region.description),
+                                             _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
                } break;
                }
 
