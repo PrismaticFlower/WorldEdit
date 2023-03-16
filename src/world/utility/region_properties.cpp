@@ -75,6 +75,19 @@ auto to_string(const region_type type) noexcept -> std::string
    // clang-format on
 }
 
+auto get_region_allowed_shapes(const region_type type) noexcept -> region_allowed_shapes
+{
+   switch (type) {
+   default:
+      return region_allowed_shapes::all;
+   case region_type::soundstream:
+   case region_type::soundstatic:
+      return region_allowed_shapes::sphere;
+   case region_type::reflection:
+      return region_allowed_shapes::box_cylinder;
+   }
+}
+
 auto unpack_region_sound_stream(const std::string_view description) noexcept
    -> sound_stream_properties
 {

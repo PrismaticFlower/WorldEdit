@@ -1608,6 +1608,26 @@ void world_edit::update_ui() noexcept
                                                               to_string(region_type),
                                                               region.description),
                                _edit_context);
+
+                     const world::region_allowed_shapes allowed_shapes =
+                        world::get_region_allowed_shapes(region_type);
+
+                     if (allowed_shapes == world::region_allowed_shapes::sphere and
+                         region.shape != world::region_shape::sphere) {
+                        _edit_stack_world.apply(
+                           edits::make_set_creation_value(&world::region::shape,
+                                                          world::region_shape::sphere,
+                                                          region.shape),
+                           _edit_context, {.closed = true, .transparent = true});
+                     }
+                     else if (allowed_shapes == world::region_allowed_shapes::box_cylinder and
+                              region.shape == world::region_shape::sphere) {
+                        _edit_stack_world.apply(
+                           edits::make_set_creation_value(&world::region::shape,
+                                                          world::region_shape::box,
+                                                          region.shape),
+                           _edit_context, {.closed = true, .transparent = true});
+                     }
                   }
                }
 
@@ -2082,12 +2102,27 @@ void world_edit::update_ui() noexcept
                }
 
                ImGui::Separator();
-               ImGui::EnumSelect(
-                  "Shape (TODO: RESRICT ME BASED ON TYPE)", &creation_entity,
-                  &world::region::shape, &_edit_stack_world, &_edit_context,
-                  {enum_select_option{"Box", world::region_shape::box},
-                   enum_select_option{"Sphere", world::region_shape::sphere},
-                   enum_select_option{"Cylinder", world::region_shape::cylinder}});
+
+               switch (world::get_region_allowed_shapes(region_type)) {
+               case world::region_allowed_shapes::all: {
+                  ImGui::EnumSelect(
+                     "Shape", &creation_entity, &world::region::shape,
+                     &_edit_stack_world, &_edit_context,
+                     {enum_select_option{"Box", world::region_shape::box},
+                      enum_select_option{"Sphere", world::region_shape::sphere},
+                      enum_select_option{"Cylinder", world::region_shape::cylinder}});
+               } break;
+               case world::region_allowed_shapes::sphere: {
+                  ImGui::LabelText("Shape", "Sphere");
+               } break;
+               case world::region_allowed_shapes::box_cylinder: {
+                  ImGui::EnumSelect("Shape", &creation_entity, &world::region::shape,
+                                    &_edit_stack_world, &_edit_context,
+                                    {enum_select_option{"Box", world::region_shape::box},
+                                     enum_select_option{"Cylinder",
+                                                        world::region_shape::cylinder}});
+               } break;
+               }
 
                float3 region_size = region.size;
 

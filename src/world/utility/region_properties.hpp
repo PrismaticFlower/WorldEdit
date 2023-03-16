@@ -28,6 +28,8 @@ enum class region_type {
    count
 };
 
+enum class region_allowed_shapes { all, sphere, box_cylinder };
+
 struct sound_region_properties {
    std::string sound_name;
    float min_distance_divisor;
@@ -89,6 +91,8 @@ struct colorgrading_region_properties {
 auto get_region_type(const std::string_view description) noexcept -> region_type;
 
 auto to_string(const region_type type) noexcept -> std::string;
+
+auto get_region_allowed_shapes(const region_type type) noexcept -> region_allowed_shapes;
 
 auto unpack_region_sound_stream(const std::string_view description) noexcept
    -> sound_stream_properties;
