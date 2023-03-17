@@ -217,9 +217,7 @@ inline bool InputText(const char* label, const Entity* entity,
                       void* user_data = nullptr) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](std::string* value) {
-      bool value_changed =
-         ImGui::InputText(label, value, flags | ImGuiInputTextFlags_NoUndoRedo,
-                          callback, user_data);
+      bool value_changed = ImGui::InputText(label, value, flags, callback, user_data);
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
@@ -235,9 +233,7 @@ inline bool InputText(const char* label, const Entity* entity,
                       void* user_data = nullptr) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](std::string* value) {
-      bool value_changed =
-         ImGui::InputText(label, value, flags | ImGuiInputTextFlags_NoUndoRedo,
-                          callback, user_data);
+      bool value_changed = ImGui::InputText(label, value, flags, callback, user_data);
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
@@ -369,9 +365,8 @@ inline bool InputKeyValue(const Entity* entity, std::vector<T> Entity::*value_me
                           void* user_data = nullptr) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, item_index, edit_stack, context, [=](T* kv) {
-      bool value_changed = ImGui::InputText(kv->key.c_str(), &kv->value,
-                                            flags | ImGuiInputTextFlags_NoUndoRedo,
-                                            callback, user_data);
+      bool value_changed =
+         ImGui::InputText(kv->key.c_str(), &kv->value, flags, callback, user_data);
 
       return we::edit_widget_result{.value_changed = value_changed,
                                     .item_deactivated = ImGui::IsItemDeactivated()};
@@ -397,8 +392,7 @@ inline bool InputKeyValueAutoComplete(const Entity* entity,
       ImGui::BeginGroup();
 
       bool value_changed = ImGui::InputText(
-         kv->key.c_str(), &kv->value,
-         ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
+         kv->key.c_str(), &kv->value, ImGuiInputTextFlags_CallbackCompletion,
          [](ImGuiInputTextCallbackData* data) {
             if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
                auto& user_data =
@@ -576,8 +570,7 @@ inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
                        item_index, edit_stack, context, [=](auto* kv) {
                           bool value_changed =
                              ImGui::InputText(kv->key.c_str(), &kv->value,
-                                              flags | ImGuiInputTextFlags_NoUndoRedo,
-                                              callback, user_data);
+                                              flags, callback, user_data);
 
                           return we::edit_widget_result{.value_changed = value_changed,
                                                         .item_deactivated =
@@ -720,8 +713,7 @@ inline bool InputText(const char* label, we::world::creation_entity* entity,
                       std::invocable<T*> auto edit_filter) noexcept
 {
    return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](T* value) {
-      bool value_changed =
-         ImGui::InputText(label, value, ImGuiInputTextFlags_NoUndoRedo);
+      bool value_changed = ImGui::InputText(label, value);
 
       if (value_changed) {
          edit_filter(value);

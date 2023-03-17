@@ -244,8 +244,7 @@ bool InputTextAutoComplete(const char* label, std::string* value,
    ImGui::BeginGroup();
 
    bool value_changed = ImGui::InputText(
-      label, value,
-      ImGuiInputTextFlags_NoUndoRedo | ImGuiInputTextFlags_CallbackCompletion,
+      label, value, ImGuiInputTextFlags_CallbackCompletion,
       [](ImGuiInputTextCallbackData* data) {
          if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
             text_callback_autofill_data& user_data =
