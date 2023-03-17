@@ -203,6 +203,7 @@
     <ClCompile Include="src\container\enum_array_tests.cpp" />
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
+    <ClCompile Include="src\edits\delete_entity_tests.cpp" />
     <ClCompile Include="src\edits\insert_entity_tests.cpp" />
     <ClCompile Include="src\edits\insert_node_tests.cpp" />
     <ClCompile Include="src\edits\insert_point_tests.cpp" />

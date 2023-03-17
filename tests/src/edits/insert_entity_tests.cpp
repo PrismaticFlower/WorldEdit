@@ -35,19 +35,19 @@ TEST_CASE("edits insert_entity planning_hub", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   world::planning_hub hub{.name = "Hub4", .id = world.next_id.planning_hubs.aquire()};
+   world::planning_hub hub{.name = "Hub4", .id = world::planning_hub_id{2}};
 
    auto action = make_insert_entity(hub, world.planning_hubs.size());
 
    action->apply(edit_context);
 
-   REQUIRE(world.planning_hubs.size() == 1);
-   REQUIRE(world.planning_hubs[0] == hub);
-   REQUIRE(world.planning_hub_index.at(hub.id) == 0);
+   REQUIRE(world.planning_hubs.size() == 3);
+   REQUIRE(world.planning_hubs[2] == hub);
+   REQUIRE(world.planning_hub_index.at(hub.id) == 2);
 
    action->revert(edit_context);
 
-   REQUIRE(world.planning_hubs.size() == 0);
+   REQUIRE(world.planning_hubs.size() == 2);
    REQUIRE(not world.planning_hub_index.contains(hub.id));
 }
 

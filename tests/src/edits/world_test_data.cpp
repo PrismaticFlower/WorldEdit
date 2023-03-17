@@ -28,7 +28,18 @@ const we::world::world test_world = {
       .team = 0,
 
       .class_name = lowercase_string{"test_prop_wall"sv},
-      .instance_properties = {{.key = "MaxHealth"s, .value = "50000"}},
+      .instance_properties =
+         {
+            {.key = "MaxHealth"s, .value = "50000"},
+            {.key = "SpawnPath"s, .value = "test_path"},
+            {.key = "AllyPath"s, .value = "test_path"},
+            {.key = "TurretPath"s, .value = "test_path"},
+            {.key = "CaptureRegion"s, .value = "test_region"},
+            {.key = "ControlRegion"s, .value = "test_region"},
+            {.key = "EffectRegion"s, .value = "test_region"},
+            {.key = "KillRegion"s, .value = "test_region"},
+            {.key = "SpawnRegion"s, .value = "test_region"},
+         },
    }},
 
    .lights = {light{
@@ -61,12 +72,17 @@ const we::world::world test_world = {
       .layer = 0,
 
       .spline_type = path_spline_type::hermite,
-      .properties = {{.key = "Key"s, .value = "Value"s}},
+      .properties = {{.key = "Key"s, .value = "Value"s},
+                     {.key = "EnableObject"s, .value = "test_object"s}},
       .nodes = {{
-         .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
-         .position = {0.0f, 0.0f, 0.0f},
-         .properties = {{.key = "Key"s, .value = "Value"s}},
-      }},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                   .position = {0.0f, 0.0f, 0.0f},
+                   .properties = {{.key = "Key"s, .value = "Value"s}},
+                },
+                {
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                   .position = {1.0f, 1.0f, 1.0f},
+                }},
    }},
 
    .regions = {region{
@@ -78,7 +94,7 @@ const we::world::world test_world = {
       .size = {1.0f, 1.0f, 1.0f},
       .shape = region_shape::box,
 
-      .description = ""s,
+      .description = "test_region"s,
    }},
 
    .sectors = {sector{
@@ -117,7 +133,7 @@ const we::world::world test_world = {
       .primary_stance = stance_flags::crouch,
       .secondary_stance = stance_flags::none,
 
-      .command_post = ""s,
+      .command_post = "test_object"s,
    }},
 
    .barriers = {barrier{
@@ -130,8 +146,26 @@ const we::world::world test_world = {
                ai_path_flags::medium | ai_path_flags::huge | ai_path_flags::flyer,
    }},
 
-   // TODO: Path Planning!
+   .planning_hubs = {planning_hub{.name = "Hub0",
+                                  .position = float2{-63.822487f, -9.202278f},
+                                  .radius = 8.0f,
+                                  .id = planning_hub_id{0}},
 
-   .boundaries = {boundary{.name = "test_path"s}},
+                     planning_hub{.name = "Hub1",
+                                  .position = float2{-121.883095f, -30.046543f},
+                                  .radius = 7.586431f,
+                                  .id = planning_hub_id{1}}},
+
+   .planning_connections =
+      {planning_connection{.name = "Connection0",
+                           .start = planning_hub_id{0},
+                           .end = planning_hub_id{1},
+                           .flags = (ai_path_flags::soldier | ai_path_flags::hover |
+                                     ai_path_flags::small | ai_path_flags::medium |
+                                     ai_path_flags::huge | ai_path_flags::flyer)}},
+
+   .boundaries = {boundary{.name = "boundary"s}},
+
+   .planning_hub_index = {{planning_hub_id{0}, 0}, {planning_hub_id{1}, 1}},
 };
 }

@@ -2,6 +2,8 @@
 #include "world_edit.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
+#include "edits/creation_entity_set.hpp"
+#include "edits/delete_entity.hpp"
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
@@ -698,8 +700,25 @@ void world_edit::redo() noexcept
 
 void world_edit::delete_selected() noexcept
 {
-   MessageBoxW(_window, L"Eventually this will delete the selected entities!. Amazing!",
-               L"Pretending to delete...", MB_OK);
+   if (_interaction_targets.creation_entity) {
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::nullopt,
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+
+      return;
+   }
+
+   for (const auto& generic_selected : _interaction_targets.selection) {
+      std::visit(
+         [&](const auto selected) {
+            _edit_stack_world.apply(edits::make_delete_entity(selected, _world),
+                                    _edit_context);
+         },
+         generic_selected);
+   }
+
+   _interaction_targets.selection.clear();
 }
 
 void world_edit::open_project(std::filesystem::path path) noexcept

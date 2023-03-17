@@ -18,13 +18,13 @@ TEST_CASE("edits add_property path", "[Edits]")
 
    action->apply(edit_context);
 
-   REQUIRE(world.paths[0].properties.size() == 2);
+   REQUIRE(world.paths[0].properties.size() == 3);
    REQUIRE(world.paths[0].properties[0].key == "Key");
-   REQUIRE(world.paths[0].properties[1].key == "AmazingProperty");
+   REQUIRE(world.paths[0].properties[2].key == "AmazingProperty");
 
    action->revert(edit_context);
 
-   REQUIRE(world.paths[0].properties.size() == 1);
+   REQUIRE(world.paths[0].properties.size() == 2);
    REQUIRE(world.paths[0].properties[0].key == "Key");
 }
 

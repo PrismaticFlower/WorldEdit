@@ -205,6 +205,7 @@
     <ClCompile Include="src\commands.cpp" />
     <ClCompile Include="src\edits\add_property.cpp" />
     <ClCompile Include="src\edits\creation_entity_set.cpp" />
+    <ClCompile Include="src\edits\delete_entity.cpp" />
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
     <ClCompile Include="src\edits\insert_point.cpp" />
@@ -329,6 +330,7 @@
     <ClInclude Include="src\container\enum_array.hpp" />
     <ClInclude Include="src\container\slim_bitset.hpp" />
     <ClInclude Include="src\edits\creation_entity_set.hpp" />
+    <ClInclude Include="src\edits\delete_entity.hpp" />
     <ClInclude Include="src\edits\edit.hpp" />
     <ClInclude Include="src\edits\imgui_ext.hpp" />
     <ClInclude Include="src\edits\insert_entity.hpp" />

@@ -20,12 +20,12 @@ TEST_CASE("edits insert_node", "[Edits]")
 
    action->apply(edit_context);
 
-   REQUIRE(world.paths[0].nodes.size() == 2);
+   REQUIRE(world.paths[0].nodes.size() == 3);
    REQUIRE(world.paths[0].nodes[0] == node);
 
    action->revert(edit_context);
 
-   REQUIRE(world.paths[0].nodes.size() == 1);
+   REQUIRE(world.paths[0].nodes.size() == 2);
    REQUIRE(world.paths[0].nodes[0] != node);
 }
 }
