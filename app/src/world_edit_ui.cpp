@@ -15,6 +15,7 @@
 #include "world/utility/object_properties.hpp"
 #include "world/utility/path_properties.hpp"
 #include "world/utility/region_properties.hpp"
+#include "world/utility/sector_fill.hpp"
 #include "world/utility/snapping.hpp"
 #include "world/utility/world_utilities.hpp"
 
@@ -544,8 +545,12 @@ void world_edit::update_ui() noexcept
 
                if (not object) return;
 
-               ImGui::InputText("Name", object, &world::object::name,
-                                &_edit_stack_world, &_edit_context);
+               ImGui::InputText("Name", object, &world::object::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.objects,
+                                                                *edited_value);
+                                });
                ImGui::InputTextAutoComplete(
                   "Class Name", object, &world::object::class_name,
                   &_edit_stack_world, &_edit_context, [&] {
@@ -660,8 +665,12 @@ void world_edit::update_ui() noexcept
 
                if (not light) return;
 
-               ImGui::InputText("Name", light, &world::light::name,
-                                &_edit_stack_world, &_edit_context);
+               ImGui::InputText("Name", light, &world::light::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.lights,
+                                                                *edited_value);
+                                });
                ImGui::LayerPick("Layer", light, &_edit_stack_world, &_edit_context);
 
                ImGui::Separator();
@@ -701,25 +710,26 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               ImGui::DragFloat("Range", light, &world::light::range,
-                                &_edit_stack_world, &_edit_context);
-               ImGui::DragFloat("Inner Cone Angle", light,
-                                &world::light::inner_cone_angle, &_edit_stack_world,
-                                &_edit_context, 0.01f, 0.0f, light->outer_cone_angle,
-                                "%.3f", ImGuiSliderFlags_AlwaysClamp);
-               ImGui::DragFloat("Outer Cone Angle", light,
-                                &world::light::outer_cone_angle, &_edit_stack_world,
-                                &_edit_context, 0.01f, light->inner_cone_angle,
-                                1.570f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+               if (light->light_type == world::light_type::point or
+                   light->light_type == world::light_type::spot) {
+                  ImGui::DragFloat("Range", light, &world::light::range,
+                                   &_edit_stack_world, &_edit_context);
 
-               ImGui::Separator();
+                  if (light->light_type == world::light_type::spot) {
+                     ImGui::DragFloat("Inner Cone Angle", light,
+                                      &world::light::inner_cone_angle,
+                                      &_edit_stack_world, &_edit_context, 0.01f,
+                                      0.0f, light->outer_cone_angle, "%.3f",
+                                      ImGuiSliderFlags_AlwaysClamp);
+                     ImGui::DragFloat("Outer Cone Angle", light,
+                                      &world::light::outer_cone_angle,
+                                      &_edit_stack_world, &_edit_context, 0.01f,
+                                      light->inner_cone_angle, 1.570f, "%.3f",
+                                      ImGuiSliderFlags_AlwaysClamp);
+                  }
 
-               ImGui::DragFloat2("Directional Texture Tiling", light,
-                                 &world::light::directional_texture_tiling,
-                                 &_edit_stack_world, &_edit_context, 0.01f);
-               ImGui::DragFloat2("Directional Texture Offset", light,
-                                 &world::light::directional_texture_offset,
-                                 &_edit_stack_world, &_edit_context, 0.01f);
+                  ImGui::Separator();
+               }
 
                ImGui::InputTextAutoComplete(
                   "Texture", light, &world::light::texture, &_edit_stack_world,
@@ -740,14 +750,33 @@ void world_edit::update_ui() noexcept
                      return entries;
                   });
 
+               if (world::is_directional_light(*light) and not light->texture.empty()) {
+                  ImGui::DragFloat2("Directional Texture Tiling", light,
+                                    &world::light::directional_texture_tiling,
+                                    &_edit_stack_world, &_edit_context, 0.01f);
+                  ImGui::DragFloat2("Directional Texture Offset", light,
+                                    &world::light::directional_texture_offset,
+                                    &_edit_stack_world, &_edit_context, 0.01f);
+               }
+
                ImGui::Separator();
 
-               ImGui::InputText("Region Name", light, &world::light::region_name,
-                                &_edit_stack_world, &_edit_context);
-               ImGui::DragQuat("Region Rotation", light, &world::light::region_rotation,
-                               &_edit_stack_world, &_edit_context);
-               ImGui::DragFloat3("Region Size", light, &world::light::region_size,
-                                 &_edit_stack_world, &_edit_context);
+               if (is_region_light(*light)) {
+                  ImGui::InputText("Region Name", light,
+                                   &world::light::region_name, &_edit_stack_world,
+                                   &_edit_context, [&](std::string* edited_value) {
+                                      *edited_value =
+                                         world::create_unique_light_region_name(
+                                            _world.lights, _world.regions,
+                                            edited_value->empty() ? light->name
+                                                                  : *edited_value);
+                                   });
+                  ImGui::DragQuat("Region Rotation", light,
+                                  &world::light::region_rotation,
+                                  &_edit_stack_world, &_edit_context);
+                  ImGui::DragFloat3("Region Size", light, &world::light::region_size,
+                                    &_edit_stack_world, &_edit_context);
+               }
             },
             [&](world::path_id_node_pair id_node) {
                auto [id, node_index] = id_node;
@@ -759,11 +788,16 @@ void world_edit::update_ui() noexcept
 
                if (not path or node_index >= path->nodes.size()) return;
 
-               ImGui::InputText("Name", path, &world::path::name,
-                                &_edit_stack_world, &_edit_context);
+               ImGui::InputText("Name", path, &world::path::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.paths,
+                                                                edited_value->empty()
+                                                                   ? "Path 0"sv
+                                                                   : std::string_view{
+                                                                        *edited_value});
+                                });
                ImGui::LayerPick("Layer", path, &_edit_stack_world, &_edit_context);
-
-               ImGui::Separator();
 
                ImGui::EnumSelect(
                   "Path Type", path, &world::path::type, &_edit_stack_world,
@@ -781,6 +815,8 @@ void world_edit::update_ui() noexcept
                    enum_select_option{"Hermite", world::path_spline_type::hermite},
                    enum_select_option{"Catmull-Rom",
                                       world::path_spline_type::catmull_rom}});
+
+               if (not path->properties.empty()) ImGui::Separator();
 
                for (std::size_t i = 0; i < path->properties.size(); ++i) {
                   ImGui::InputKeyValue(path, &world::path::properties, i,
@@ -834,9 +870,400 @@ void world_edit::update_ui() noexcept
 
                if (not region) return;
 
-               ImGui::InputText("Name", region, &world::region::name,
-                                &_edit_stack_world, &_edit_context);
+               ImGui::InputText("Name", region, &world::region::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.regions,
+                                                                *edited_value);
+                                });
                ImGui::LayerPick("Layer", region, &_edit_stack_world, &_edit_context);
+
+               ImGui::Separator();
+
+               const world::region_type start_region_type =
+                  world::get_region_type(region->description);
+               world::region_type region_type = start_region_type;
+
+               if (ImGui::EnumSelect(
+                      "Type", &region_type,
+                      {
+                         enum_select_option{"Typeless", world::region_type::typeless},
+                         enum_select_option{"Death Region", world::region_type::deathregion},
+                         enum_select_option{"Sound Stream", world::region_type::soundstream},
+                         enum_select_option{"Sound Static", world::region_type::soundstatic},
+                         enum_select_option{"Sound Space", world::region_type::soundspace},
+                         enum_select_option{"Sound Trigger", world::region_type::soundtrigger},
+                         enum_select_option{"Foley FX", world::region_type::foleyfx},
+                         enum_select_option{"Shadow", world::region_type::shadow},
+                         enum_select_option{"Map Bounds", world::region_type::mapbounds},
+                         enum_select_option{"Rumble", world::region_type::rumble},
+                         enum_select_option{"Reflection", world::region_type::reflection},
+                         enum_select_option{"Rain Shadow", world::region_type::rainshadow},
+                         enum_select_option{"Danger", world::region_type::danger},
+                         enum_select_option{"Damage Region", world::region_type::damage_region},
+                         enum_select_option{"AI Vis", world::region_type::ai_vis},
+                         enum_select_option{"Color Grading (Shader Patch)",
+                                            world::region_type::colorgrading},
+                      })) {
+                  if (region_type != start_region_type) {
+                     _edit_stack_world.apply(edits::make_set_value(region->id,
+                                                                   &world::region::description,
+                                                                   to_string(region_type),
+                                                                   region->description),
+                                             _edit_context);
+
+                     const world::region_allowed_shapes allowed_shapes =
+                        world::get_region_allowed_shapes(region_type);
+
+                     if (allowed_shapes == world::region_allowed_shapes::sphere and
+                         region->shape != world::region_shape::sphere) {
+                        _edit_stack_world.apply(
+                           edits::make_set_value(region->id, &world::region::shape,
+                                                 world::region_shape::sphere,
+                                                 region->shape),
+                           _edit_context, {.closed = true, .transparent = true});
+                     }
+                     else if (allowed_shapes == world::region_allowed_shapes::box_cylinder and
+                              region->shape == world::region_shape::sphere) {
+                        _edit_stack_world.apply(
+                           edits::make_set_value(region->id, &world::region::shape,
+                                                 world::region_shape::box,
+                                                 region->shape),
+                           _edit_context, {.closed = true, .transparent = true});
+                     }
+                  }
+               }
+
+               switch (region_type) {
+               case world::region_type::soundstream: {
+                  world::sound_stream_properties properties =
+                     world::unpack_region_sound_stream(region->description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |=
+                     ImGui::InputText("Stream Name", &properties.sound_name);
+
+                  value_changed |= ImGui::DragFloat("Min Distance Divisor",
+                                                    &properties.min_distance_divisor,
+                                                    1.0f, 1.0f, 1000000.0f, "%.3f",
+                                                    ImGuiSliderFlags_AlwaysClamp);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_sound_stream(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::soundstatic: {
+                  world::sound_stream_properties properties =
+                     world::unpack_region_sound_static(region->description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |=
+                     ImGui::InputText("Sound Name", &properties.sound_name);
+
+                  value_changed |= ImGui::DragFloat("Min Distance Divisor",
+                                                    &properties.min_distance_divisor,
+                                                    1.0f, 1.0f, 1000000.0f, "%.3f",
+                                                    ImGuiSliderFlags_AlwaysClamp);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_sound_static(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::soundspace: {
+                  world::sound_space_properties properties =
+                     world::unpack_region_sound_space(region->description);
+
+                  if (ImGui::InputText("Sound Space Name", &properties.sound_space_name)) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_sound_space(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::soundtrigger: {
+                  world::sound_trigger_properties properties =
+                     world::unpack_region_sound_trigger(region->description);
+
+                  if (ImGui::InputText("Region Name", &properties.region_name)) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_sound_trigger(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::foleyfx: {
+                  world::foley_fx_region_properties properties =
+                     world::unpack_region_foley_fx(region->description);
+
+                  if (ImGui::InputText("Group ID", &properties.group_id)) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_foley_fx(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::shadow: {
+                  world::shadow_region_properties properties =
+                     world::unpack_region_shadow(region->description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  if (float directional0 = properties.directional0.value_or(1.0f);
+                      ImGui::DragFloat("Directional Light 0 Strength",
+                                       &directional0, 0.01f, 0.0f, 1.0f, "%.3f",
+                                       ImGuiSliderFlags_AlwaysClamp)) {
+                     properties.directional0 = directional0;
+                     value_changed = true;
+                  }
+
+                  if (float directional1 = properties.directional1.value_or(1.0f);
+                      ImGui::DragFloat("Directional Light 1 Strength",
+                                       &directional1, 0.01f, 0.0f, 1.0f, "%.3f",
+                                       ImGuiSliderFlags_AlwaysClamp)) {
+                     properties.directional1 = directional1;
+                     value_changed = true;
+                  }
+
+                  if (float3 color_top =
+                         properties.color_top.value_or(float3{0.0f, 0.0f, 0.0f});
+                      ImGui::ColorEdit3("Ambient Light Top", &color_top.x)) {
+                     properties.color_top = color_top;
+                     value_changed = true;
+                  }
+
+                  if (float3 color_bottom =
+                         properties.color_bottom.value_or(float3{0.0f, 0.0f, 0.0f});
+                      ImGui::ColorEdit3("Ambient Light Bottom", &color_bottom.x)) {
+                     properties.color_bottom = color_bottom;
+                     value_changed = true;
+                  }
+
+                  value_changed |=
+                     ImGui::InputText("Environment Map", &properties.env_map);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_shadow(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::rumble: {
+                  world::rumble_region_properties properties =
+                     world::unpack_region_rumble(region->description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |=
+                     ImGui::InputText("Rumble Class", &properties.rumble_class);
+                  value_changed |= ImGui::InputText("Particle Effect",
+                                                    &properties.particle_effect);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_rumble(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::damage_region: {
+                  world::damage_region_properties properties =
+                     world::unpack_region_damage(region->description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  if (float damage_rate = properties.damage_rate.value_or(0.0f);
+                      ImGui::DragFloat("Damage Rate", &damage_rate)) {
+                     properties.damage_rate = damage_rate;
+                     value_changed = true;
+                  }
+
+                  if (float person_scale = properties.person_scale.value_or(1.0f);
+                      ImGui::DragFloat("Person Scale", &person_scale, 0.01f)) {
+                     properties.person_scale = person_scale;
+                     value_changed = true;
+                  }
+
+                  if (float animal_scale = properties.animal_scale.value_or(1.0f);
+                      ImGui::DragFloat("Animal Scale", &animal_scale, 0.01f)) {
+                     properties.animal_scale = animal_scale;
+                     value_changed = true;
+                  }
+
+                  if (float droid_scale = properties.droid_scale.value_or(1.0f);
+                      ImGui::DragFloat("Droid Scale", &droid_scale, 0.01f)) {
+                     properties.droid_scale = droid_scale;
+                     value_changed = true;
+                  }
+
+                  if (float vehicle_scale = properties.vehicle_scale.value_or(1.0f);
+                      ImGui::DragFloat("Vehicle Scale", &vehicle_scale, 0.01f)) {
+                     properties.vehicle_scale = vehicle_scale;
+                     value_changed = true;
+                  }
+
+                  if (float building_scale = properties.building_scale.value_or(1.0f);
+                      ImGui::DragFloat("Building Scale", &building_scale, 0.01f)) {
+                     properties.building_scale = building_scale;
+                     value_changed = true;
+                  }
+
+                  if (float building_dead_scale =
+                         properties.building_scale.value_or(1.0f);
+                      ImGui::DragFloat("Building Dead Scale",
+                                       &building_dead_scale, 0.01f)) {
+                     properties.building_dead_scale = building_dead_scale;
+                     value_changed = true;
+                  }
+
+                  if (float building_unbuilt_scale =
+                         properties.building_scale.value_or(1.0f);
+                      ImGui::DragFloat("Building Unbuilt Scale",
+                                       &building_unbuilt_scale, 0.01f)) {
+                     properties.building_unbuilt_scale = building_unbuilt_scale;
+                     value_changed = true;
+                  }
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_damage(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::ai_vis: {
+                  world::ai_vis_region_properties properties =
+                     world::unpack_region_ai_vis(region->description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  if (float crouch = properties.crouch.value_or(1.0f);
+                      ImGui::DragFloat("Crouch", &crouch, 0.01f, 0.0f, 1e10f)) {
+                     properties.crouch = crouch;
+                     value_changed = true;
+                  }
+
+                  if (float stand = properties.stand.value_or(1.0f);
+                      ImGui::DragFloat("Stand", &stand, 0.01f, 0.0f, 1e10f)) {
+                     properties.stand = stand;
+                     value_changed = true;
+                  }
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_ai_vis(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               case world::region_type::colorgrading: {
+                  world::colorgrading_region_properties properties =
+                     world::unpack_region_colorgrading(region->description);
+
+                  ImGui::BeginGroup();
+
+                  bool value_changed = false;
+
+                  value_changed |= ImGui::InputText("Config", &properties.config);
+                  value_changed |=
+                     ImGui::DragFloat("Fade Length", &properties.fade_length);
+
+                  if (value_changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(region->id, &world::region::description,
+                                              world::pack_region_colorgrading(properties),
+                                              region->description),
+                        _edit_context);
+                  }
+
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemDeactivatedAfterEdit()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               }
+
+               ImGui::InputText("Description", region,
+                                &world::region::description, &_edit_stack_world,
+                                &_edit_context, [&](std::string*) {});
 
                ImGui::Separator();
 
@@ -847,17 +1274,28 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat3("Size", region, &world::region::size, &_edit_stack_world,
                                  &_edit_context, 1.0f, 0.0f, 1e10f);
 
-               ImGui::EnumSelect("Shape", region, &world::region::shape,
-                                 &_edit_stack_world, &_edit_context,
-                                 {enum_select_option{"Box", world::region_shape::box},
-                                  enum_select_option{"Sphere", world::region_shape::sphere},
-                                  enum_select_option{"Cylinder",
-                                                     world::region_shape::cylinder}});
-
                ImGui::Separator();
 
-               ImGui::InputText("Description", region, &world::region::description,
-                                &_edit_stack_world, &_edit_context);
+               switch (world::get_region_allowed_shapes(region_type)) {
+               case world::region_allowed_shapes::all: {
+                  ImGui::EnumSelect(
+                     "Shape", region, &world::region::shape, &_edit_stack_world,
+                     &_edit_context,
+                     {enum_select_option{"Box", world::region_shape::box},
+                      enum_select_option{"Sphere", world::region_shape::sphere},
+                      enum_select_option{"Cylinder", world::region_shape::cylinder}});
+               } break;
+               case world::region_allowed_shapes::sphere: {
+                  ImGui::LabelText("Shape", "Sphere");
+               } break;
+               case world::region_allowed_shapes::box_cylinder: {
+                  ImGui::EnumSelect("Shape", region, &world::region::shape,
+                                    &_edit_stack_world, &_edit_context,
+                                    {enum_select_option{"Box", world::region_shape::box},
+                                     enum_select_option{"Cylinder",
+                                                        world::region_shape::cylinder}});
+               } break;
+               }
             },
             [&](world::sector_id id) {
                world::sector* sector =
@@ -866,6 +1304,43 @@ void world_edit::update_ui() noexcept
                   });
 
                if (not sector) return;
+
+               ImGui::InputText("Name", sector, &world::sector::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.sectors,
+                                                                *edited_value);
+                                });
+
+               ImGui::DragFloat("Base", sector, &world::sector::base, &_edit_stack_world,
+                                &_edit_context, 1.0f, 0.0f, 0.0f, "Y:%.3f");
+               ImGui::DragFloat("Height", sector, &world::sector::height,
+                                &_edit_stack_world, &_edit_context);
+
+               ImGui::Separator();
+
+               ImGui::Text("Points");
+
+               for (const float2 point : sector->points) {
+                  ImGui::Text("X:%.3f Z:%.3f", point.x, point.y);
+               }
+
+               ImGui::Separator();
+
+               ImGui::Text("Contained Objects");
+
+               if (ImGui::Button("Auto-Fill Sector", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _edit_stack_world.apply(
+                     edits::make_set_value(sector->id, &world::sector::objects,
+                                           world::sector_fill(*sector, _world.objects,
+                                                              _object_classes),
+                                           sector->objects),
+                     _edit_context);
+               }
+
+               for (const auto& object : sector->objects) {
+                  ImGui::Text(object.c_str());
+               }
             },
             [&](world::portal_id id) {
                world::portal* portal =
@@ -874,6 +1349,63 @@ void world_edit::update_ui() noexcept
                   });
 
                if (not portal) return;
+
+               ImGui::InputText("Name", portal, &world::portal::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.portals,
+                                                                *edited_value);
+                                });
+
+               ImGui::DragFloat("Width", portal, &world::portal::width,
+                                &_edit_stack_world, &_edit_context, 1.0f, 0.25f,
+                                1e10f);
+               ImGui::DragFloat("Height", portal, &world::portal::height,
+                                &_edit_stack_world, &_edit_context, 1.0f, 0.25f,
+                                1e10f);
+
+               ImGui::InputTextAutoComplete(
+                  "Linked Sector 1", portal, &world::portal::sector1,
+                  &_edit_stack_world, &_edit_context, [&] {
+                     std::array<std::string, 6> entries;
+                     std::size_t matching_count = 0;
+
+                     for (const auto& sector : _world.sectors) {
+                        if (sector.name.contains(portal->sector1)) {
+                           if (matching_count == entries.size()) break;
+
+                           entries[matching_count] = sector.name;
+
+                           ++matching_count;
+                        }
+                     }
+
+                     return entries;
+                  });
+
+               ImGui::InputTextAutoComplete(
+                  "Linked Sector 2", portal, &world::portal::sector2,
+                  &_edit_stack_world, &_edit_context, [&] {
+                     std::array<std::string, 6> entries;
+                     std::size_t matching_count = 0;
+
+                     for (const auto& sector : _world.sectors) {
+                        if (sector.name.contains(portal->sector2)) {
+                           if (matching_count == entries.size()) break;
+
+                           entries[matching_count] = sector.name;
+
+                           ++matching_count;
+                        }
+                     }
+
+                     return entries;
+                  });
+
+               ImGui::DragQuat("Rotation", portal, &world::portal::rotation,
+                               &_edit_stack_world, &_edit_context);
+               ImGui::DragFloat3("Position", portal, &world::portal::position,
+                                 &_edit_stack_world, &_edit_context);
             },
             [&](world::hintnode_id id) {
                world::hintnode* hintnode =
@@ -884,7 +1416,12 @@ void world_edit::update_ui() noexcept
                if (not hintnode) return;
 
                ImGui::InputText("Name", hintnode, &world::hintnode::name,
-                                &_edit_stack_world, &_edit_context);
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.hintnodes,
+                                                                *edited_value);
+                                });
                ImGui::LayerPick("Layer", hintnode, &_edit_stack_world, &_edit_context);
 
                ImGui::Separator();
@@ -893,6 +1430,87 @@ void world_edit::update_ui() noexcept
                                &_edit_stack_world, &_edit_context);
                ImGui::DragFloat3("Position", hintnode, &world::hintnode::position,
                                  &_edit_stack_world, &_edit_context);
+
+               ImGui::Separator();
+
+               ImGui::EnumSelect(
+                  "Type", hintnode, &world::hintnode::type, &_edit_stack_world,
+                  &_edit_context,
+                  {enum_select_option{"Snipe", world::hintnode_type::snipe},
+                   enum_select_option{"Patrol", world::hintnode_type::patrol},
+                   enum_select_option{"Cover", world::hintnode_type::cover},
+                   enum_select_option{"Access", world::hintnode_type::access},
+                   enum_select_option{"Jet Jump", world::hintnode_type::jet_jump},
+                   enum_select_option{"Mine", world::hintnode_type::mine},
+                   enum_select_option{"Land", world::hintnode_type::land},
+                   enum_select_option{"Fortification", world::hintnode_type::fortification},
+                   enum_select_option{"Vehicle Cover",
+                                      world::hintnode_type::vehicle_cover}});
+
+               const world::hintnode_traits hintnode_traits =
+                  world::get_hintnode_traits(hintnode->type);
+
+               if (hintnode_traits.has_command_post) {
+                  if (ImGui::BeginCombo("Command Post",
+                                        hintnode->command_post.c_str())) {
+                     for (const auto& object : _world.objects) {
+                        const assets::odf::properties& properties =
+                           _object_classes[object.class_name].definition->header_properties;
+
+                        if (not properties.contains("ClassLabel")) continue;
+
+                        if (properties["ClassLabel"] == "commandpost") {
+                           if (ImGui::Selectable(object.name.c_str())) {
+                              _edit_stack_world
+                                 .apply(edits::make_set_value(hintnode->id,
+                                                              &world::hintnode::command_post,
+                                                              object.name,
+                                                              hintnode->command_post),
+                                        _edit_context);
+                           }
+                        }
+                     }
+                     ImGui::EndCombo();
+                  }
+               }
+
+               if (hintnode_traits.has_primary_stance) {
+                  ImGui::Separator();
+                  ImGui::EditFlags("Primary Stance", hintnode,
+                                   &world::hintnode::primary_stance,
+                                   &_edit_stack_world, &_edit_context,
+                                   {{"Stand", world::stance_flags::stand},
+                                    {"Crouch", world::stance_flags::crouch},
+                                    {"Prone", world::stance_flags::prone}});
+               }
+
+               if (hintnode_traits.has_secondary_stance) {
+                  ImGui::Separator();
+                  ImGui::EditFlags("Secondary Stance", hintnode,
+                                   &world::hintnode::secondary_stance,
+                                   &_edit_stack_world, &_edit_context,
+                                   {{"Stand", world::stance_flags::stand},
+                                    {"Crouch", world::stance_flags::crouch},
+                                    {"Prone", world::stance_flags::prone},
+                                    {"Left", world::stance_flags::left},
+                                    {"Right", world::stance_flags::right}});
+               }
+
+               if (hintnode_traits.has_mode) {
+                  ImGui::EnumSelect(
+                     "Mode", hintnode, &world::hintnode::mode,
+                     &_edit_stack_world, &_edit_context,
+                     {enum_select_option{"None", world::hintnode_mode::none},
+                      enum_select_option{"Attack", world::hintnode_mode::attack},
+                      enum_select_option{"Defend", world::hintnode_mode::defend},
+                      enum_select_option{"Both", world::hintnode_mode::both}});
+               }
+
+               if (hintnode_traits.has_radius) {
+                  ImGui::DragFloat("Radius", hintnode, &world::hintnode::radius,
+                                   &_edit_stack_world, &_edit_context, 0.25f, 0.0f,
+                                   1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+               }
             },
             [&](world::barrier_id id) {
                world::barrier* barrier =
@@ -901,9 +1519,182 @@ void world_edit::update_ui() noexcept
                   });
 
                if (not barrier) return;
+
+               ImGui::InputText("Name", barrier, &world::barrier::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.barriers,
+                                                                *edited_value);
+                                });
+
+               ImGui::DragBarrierRotation("Rotation", barrier,
+                                          &_edit_stack_world, &_edit_context);
+
+               ImGui::DragFloat2XZ("Position", barrier, &world::barrier::position,
+                                   &_edit_stack_world, &_edit_context, 0.25f);
+
+               ImGui::DragFloat2XZ("Size", barrier, &world::barrier::size,
+                                   &_edit_stack_world, &_edit_context, 1.0f,
+                                   0.0f, 1e10f);
+
+               ImGui::Separator();
+
+               ImGui::EditFlags("Flags", barrier, &world::barrier::flags,
+                                &_edit_stack_world, &_edit_context,
+                                {{"Soldier", world::ai_path_flags::soldier},
+                                 {"Hover", world::ai_path_flags::hover},
+                                 {"Small", world::ai_path_flags::small},
+                                 {"Medium", world::ai_path_flags::medium},
+                                 {"Huge", world::ai_path_flags::huge},
+                                 {"Flyer", world::ai_path_flags::flyer}});
             },
-            [&](world::planning_hub_id id) { (void)id; },
-            [&](world::planning_connection_id id) { (void)id; },
+            [&](world::planning_hub_id id) {
+               world::planning_hub* hub =
+                  look_for(_world.planning_hubs, [id](const world::planning_hub& hub) {
+                     return id == hub.id;
+                  });
+
+               if (not hub) return;
+
+               ImGui::InputText("Name", hub, &world::planning_hub::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.planning_hubs,
+                                                                *edited_value);
+                                });
+
+               ImGui::DragFloat2XZ("Position", hub, &world::planning_hub::position,
+                                   &_edit_stack_world, &_edit_context, 0.25f);
+
+               ImGui::DragFloat("Radius", hub, &world::planning_hub::radius,
+                                &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
+            },
+            [&](world::planning_connection_id id) {
+               world::planning_connection* connection =
+                  look_for(_world.planning_connections,
+                           [id](const world::planning_connection& connection) {
+                              return id == connection.id;
+                           });
+
+               if (not connection) return;
+
+               ImGui::InputText("Name", connection,
+                                &world::planning_connection::name, &_edit_stack_world,
+                                &_edit_context, [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.planning_connections,
+                                                                *edited_value);
+                                });
+
+               ImGui::Text(
+                  "Start: %s",
+                  _world
+                     .planning_hubs[_world.planning_hub_index.at(connection->start)]
+                     .name.c_str());
+               ImGui::Text(
+                  "End: %s",
+                  _world
+                     .planning_hubs[_world.planning_hub_index.at(connection->end)]
+                     .name.c_str());
+
+               ImGui::Separator();
+
+               ImGui::EditFlags("Flags", connection, &world::planning_connection::flags,
+                                &_edit_stack_world, &_edit_context,
+                                {{"Soldier", world::ai_path_flags::soldier},
+                                 {"Hover", world::ai_path_flags::hover},
+                                 {"Small", world::ai_path_flags::small},
+                                 {"Medium", world::ai_path_flags::medium},
+                                 {"Huge", world::ai_path_flags::huge},
+                                 {"Flyer", world::ai_path_flags::flyer}});
+
+               ImGui::Separator();
+
+               ImGui::Checkbox("Jump", connection, &world::planning_connection::jump,
+                               &_edit_stack_world, &_edit_context);
+               ImGui::SameLine();
+               ImGui::Checkbox("Jet Jump", connection,
+                               &world::planning_connection::jet_jump,
+                               &_edit_stack_world, &_edit_context);
+               ImGui::SameLine();
+               ImGui::Checkbox("One Way", connection,
+                               &world::planning_connection::one_way,
+                               &_edit_stack_world, &_edit_context);
+
+               bool is_dynamic = connection->dynamic_group != 0;
+
+               if (ImGui::Checkbox("Dynamic", &is_dynamic)) {
+                  _edit_stack_world
+                     .apply(edits::make_set_value(connection->id,
+                                                  &world::planning_connection::dynamic_group,
+                                                  is_dynamic ? int8{1} : int8{0},
+                                                  connection->dynamic_group),
+                            _edit_context);
+               }
+
+               if (is_dynamic) {
+                  ImGui::SliderInt("Dynamic Group", connection,
+                                   &world::planning_connection::dynamic_group,
+                                   &_edit_stack_world, &_edit_context, 1, 8,
+                                   "%d", ImGuiSliderFlags_AlwaysClamp);
+               }
+
+               if (ImGui::CollapsingHeader("Forward Branch Weights")) {
+                  world::planning_branch_weights weights = connection->forward_weights;
+
+                  bool changed = false;
+
+                  ImGui::PushID("Forward Branch Weights");
+
+                  // clang-format off
+                  changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Flyer", &weights.flyer, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  // clang-format on
+
+                  ImGui::PopID();
+
+                  if (changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(connection->id,
+                                              &world::planning_connection::forward_weights,
+                                              weights, connection->forward_weights),
+                        _edit_context);
+                  }
+               }
+
+               if (ImGui::CollapsingHeader("Backward Branch Weights")) {
+                  world::planning_branch_weights weights = connection->backward_weights;
+
+                  ImGui::PushID("Backward Branch Weights");
+
+                  bool changed = false;
+
+                  // clang-format off
+                  changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  changed |= ImGui::DragFloat("Flyer", &weights.flyer, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                  // clang-format on
+
+                  ImGui::PopID();
+
+                  if (changed) {
+                     _edit_stack_world.apply(
+                        edits::make_set_value(connection->id,
+                                              &world::planning_connection::backward_weights,
+                                              weights, connection->backward_weights),
+                        _edit_context);
+                  }
+               }
+            },
             [&](world::boundary_id id) {
                world::boundary* boundary =
                   look_for(_world.boundaries, [id](const world::boundary& boundary) {
@@ -912,12 +1703,20 @@ void world_edit::update_ui() noexcept
 
                if (not boundary) return;
 
-               world::path* path =
-                  look_for(_world.paths, [&](const world::path& path) {
-                     return path.name == boundary->name;
-                  });
+               ImGui::InputText("Name", boundary, &world::boundary::name,
+                                &_edit_stack_world, &_edit_context,
+                                [&](std::string* edited_value) {
+                                   *edited_value =
+                                      world::create_unique_name(_world.boundaries,
+                                                                *edited_value);
+                                });
 
-               if (not path) return;
+               ImGui::DragFloat2XZ("Position", boundary, &world::boundary::position,
+                                   &_edit_stack_world, &_edit_context, 0.25f);
+
+               ImGui::DragFloat2XZ("Size", boundary, &world::boundary::size,
+                                   &_edit_stack_world, &_edit_context, 1.0f,
+                                   0.0f, 1e10f);
             },
          },
          _interaction_targets.selection.front());
@@ -1331,9 +2130,8 @@ void world_edit::update_ui() noexcept
                                       *edited_value =
                                          world::create_unique_light_region_name(
                                             _world.lights, _world.regions,
-                                            light.region_name.empty()
-                                               ? light.name
-                                               : light.region_name);
+                                            edited_value->empty() ? light.name
+                                                                  : *edited_value);
                                    });
 
                   if (_entity_creation_config.placement_rotation !=
@@ -1406,11 +2204,11 @@ void world_edit::update_ui() noexcept
                   ImGui::InputText("Name", &creation_entity, &world::path::name,
                                    &_edit_stack_world, &_edit_context,
                                    [&](std::string* edited_value) {
-                                      *edited_value =
-                                         world::create_unique_name(_world.paths,
-                                                                   path.name.empty()
-                                                                      ? "Path 0"sv
-                                                                      : path.name);
+                                      *edited_value = world::create_unique_name(
+                                         _world.paths,
+                                         edited_value->empty()
+                                            ? "Path 0"sv
+                                            : std::string_view{*edited_value});
                                    });
 
                   ImGui::LayerPick<world::path>("Layer", &creation_entity,
@@ -1558,7 +2356,7 @@ void world_edit::update_ui() noexcept
                                 [&](std::string* edited_value) {
                                    *edited_value =
                                       world::create_unique_name(_world.regions,
-                                                                region.name);
+                                                                *edited_value);
                                 });
 
                ImGui::LayerPick<world::region>("Layer", &creation_entity,
@@ -2273,7 +3071,7 @@ void world_edit::update_ui() noexcept
                                 [&](std::string* edited_value) {
                                    *edited_value =
                                       world::create_unique_name(_world.sectors,
-                                                                sector.name);
+                                                                *edited_value);
                                 });
 
                ImGui::DragFloat("Base", &creation_entity, &world::sector::base,
@@ -2584,7 +3382,7 @@ void world_edit::update_ui() noexcept
                                 &world::hintnode::name, &_edit_stack_world,
                                 &_edit_context, [&](std::string* edited_value) {
                                    *edited_value =
-                                      world::create_unique_name(_world.objects,
+                                      world::create_unique_name(_world.hintnodes,
                                                                 *edited_value);
                                 });
 
@@ -2775,7 +3573,7 @@ void world_edit::update_ui() noexcept
                                 [&](std::string* edited_value) {
                                    *edited_value =
                                       world::create_unique_name(_world.barriers,
-                                                                barrier.name);
+                                                                *edited_value);
                                 });
 
                ImGui::DragBarrierRotation("Rotation", &creation_entity,
@@ -3093,7 +3891,7 @@ void world_edit::update_ui() noexcept
                                 &_edit_context, [&](std::string* edited_value) {
                                    *edited_value =
                                       world::create_unique_name(_world.planning_hubs,
-                                                                hub.name);
+                                                                *edited_value);
                                 });
 
                if (ImGui::DragFloat2XZ("Position", &creation_entity,
@@ -3182,7 +3980,7 @@ void world_edit::update_ui() noexcept
                                 &_edit_context, [&](std::string* edited_value) {
                                    *edited_value =
                                       world::create_unique_name(_world.planning_connections,
-                                                                connection.name);
+                                                                *edited_value);
                                 });
 
                ImGui::Text(
@@ -3317,7 +4115,7 @@ void world_edit::update_ui() noexcept
                                 &_edit_context, [&](std::string* edited_value) {
                                    *edited_value =
                                       world::create_unique_name(_world.boundaries,
-                                                                boundary.name);
+                                                                *edited_value);
                                 });
 
                if (ImGui::DragFloat2XZ("Position", &creation_entity,
