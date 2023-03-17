@@ -139,6 +139,12 @@ void world_edit::update_ui() noexcept
 
          ImGui::Separator();
 
+         if (ImGui::MenuItem("Delete",
+                             get_display_string(
+                                _hotkeys.query_binding("", "edit.delete")))) {
+            delete_selected();
+         }
+
          ImGui::MenuItem("Cut", nullptr, nullptr, false);
          ImGui::MenuItem("Copy", nullptr, nullptr, false);
          ImGui::MenuItem("Paste", nullptr, nullptr, false);

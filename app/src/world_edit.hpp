@@ -85,6 +85,8 @@ private:
 
    void redo() noexcept;
 
+   void delete_selected() noexcept;
+
    void open_project(std::filesystem::path path) noexcept;
 
    void open_project_with_picker() noexcept;

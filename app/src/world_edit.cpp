@@ -695,6 +695,12 @@ void world_edit::redo() noexcept
    _edit_stack_world.reapply(_edit_context);
 }
 
+void world_edit::delete_selected() noexcept
+{
+   MessageBoxW(_window, L"Eventually this will delete the selected entities!. Amazing!",
+               L"Pretending to delete...", MB_OK);
+}
+
 void world_edit::open_project(std::filesystem::path path) noexcept
 {
    if (not std::filesystem::exists(path / L"Worlds")) {
