@@ -129,12 +129,12 @@ void world_edit::update_ui() noexcept
          if (ImGui::MenuItem("Undo",
                              get_display_string(
                                 _hotkeys.query_binding("", "edit.undo")))) {
-            _edit_stack_world.revert(_edit_context);
+            undo();
          }
          if (ImGui::MenuItem("Redo",
                              get_display_string(
                                 _hotkeys.query_binding("", "edit.redo")))) {
-            _edit_stack_world.reapply(_edit_context);
+            redo();
          }
 
          ImGui::Separator();

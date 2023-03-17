@@ -81,6 +81,10 @@ private:
 
    void place_creation_entity() noexcept;
 
+   void undo() noexcept;
+
+   void redo() noexcept;
+
    void open_project(std::filesystem::path path) noexcept;
 
    void open_project_with_picker() noexcept;
@@ -194,8 +198,6 @@ private:
 
       bool hub_sizing_started = false;
       bool connection_link_started = false;
-
-      float3 rotation{0.0f, 0.0f, 0.0f};
 
       std::optional<float3> resize_start_size;
       std::optional<float2> resize_barrier_start_position;

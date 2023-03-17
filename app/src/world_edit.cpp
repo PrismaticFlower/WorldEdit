@@ -676,6 +676,18 @@ void world_edit::place_creation_entity() noexcept
       *_interaction_targets.creation_entity);
 }
 
+void world_edit::undo() noexcept
+{
+   _edit_stack_world.revert(_edit_context);
+
+   if (_interaction_targets.creation_entity) _entity_creation_context = {};
+}
+
+void world_edit::redo() noexcept
+{
+   _edit_stack_world.reapply(_edit_context);
+}
+
 void world_edit::open_project(std::filesystem::path path) noexcept
 {
    if (not std::filesystem::exists(path / L"Worlds")) {
