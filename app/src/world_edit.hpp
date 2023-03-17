@@ -154,7 +154,7 @@ private:
 
    POINT _rotate_camera_cursor_position = {0, 0};
 
-   struct entity_creation_context {
+   struct last_created_entities {
       world::object_id last_object = world::max_id;
       world::light_id last_light = world::max_id;
       world::path_id last_path = world::max_id;
@@ -166,13 +166,9 @@ private:
       world::planning_hub_id last_planning_hub = world::max_id;
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
+   } _last_created_entities;
 
-      placement_rotation placement_rotation = placement_rotation::manual_euler;
-      placement_mode placement_mode = placement_mode::cursor;
-      placement_alignment placement_alignment = placement_alignment::none;
-      placement_ground placement_ground = placement_ground::origin;
-      placement_node_insert placement_node_insert = placement_node_insert::nearest;
-
+   struct entity_creation_context {
       bool lock_x_axis = false;
       bool lock_y_axis = false;
       bool lock_z_axis = false;
@@ -199,9 +195,6 @@ private:
       bool hub_sizing_started = false;
       bool connection_link_started = false;
 
-      float alignment = 4.0f;
-      float snap_distance = 0.5f;
-
       float3 rotation{0.0f, 0.0f, 0.0f};
 
       std::optional<float3> resize_start_size;
@@ -213,6 +206,17 @@ private:
 
       std::optional<float3> from_line_start;
    } _entity_creation_context;
+
+   struct entity_creation_config {
+      placement_rotation placement_rotation = placement_rotation::manual_euler;
+      placement_mode placement_mode = placement_mode::cursor;
+      placement_alignment placement_alignment = placement_alignment::none;
+      placement_ground placement_ground = placement_ground::origin;
+      placement_node_insert placement_node_insert = placement_node_insert::nearest;
+
+      float alignment = 4.0f;
+      float snap_distance = 0.5f;
+   } _entity_creation_config;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

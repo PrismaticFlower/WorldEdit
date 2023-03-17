@@ -149,7 +149,7 @@ void world_edit::update_ui() noexcept
       if (ImGui::BeginMenu("Create")) {
          if (ImGui::MenuItem("Object")) {
             const world::object* base_object =
-               world::find_entity(_world.objects, _entity_creation_context.last_object);
+               world::find_entity(_world.objects, _last_created_entities.last_object);
 
             world::object new_object;
 
@@ -161,21 +161,21 @@ void world_edit::update_ui() noexcept
                new_object.id = world::max_id;
             }
             else {
-               new_object =
-                  world::object{.name = "",
-                                .class_name = lowercase_string{"com_bldg_controlzone"sv},
-                                .id = world::max_id};
+               new_object = world::object{.name = "",
+                                          .class_name = lowercase_string{""sv},
+                                          .id = world::max_id};
             }
 
             _edit_stack_world
                .apply(edits::make_creation_entity_set(std::move(new_object),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Light")) {
             const world::light* base_light =
-               world::find_entity(_world.lights, _entity_creation_context.last_light);
+               world::find_entity(_world.lights, _last_created_entities.last_light);
 
             world::light new_light;
 
@@ -194,11 +194,12 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_light),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Path")) {
             const world::path* base_path =
-               world::find_entity(_world.paths, _entity_creation_context.last_path);
+               world::find_entity(_world.paths, _last_created_entities.last_path);
 
             _edit_stack_world
                .apply(edits::make_creation_entity_set(
@@ -209,11 +210,12 @@ void world_edit::update_ui() noexcept
                                      .id = world::max_id},
                          _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Region")) {
             const world::region* base_region =
-               world::find_entity(_world.regions, _entity_creation_context.last_region);
+               world::find_entity(_world.regions, _last_created_entities.last_region);
 
             world::region new_region;
 
@@ -234,11 +236,12 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_region),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Sector")) {
             const world::sector* base_sector =
-               world::find_entity(_world.sectors, _entity_creation_context.last_sector);
+               world::find_entity(_world.sectors, _last_created_entities.last_sector);
 
             _edit_stack_world
                .apply(edits::make_creation_entity_set(
@@ -251,11 +254,12 @@ void world_edit::update_ui() noexcept
                                        .id = world::max_id},
                          _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Portal")) {
             const world::portal* base_portal =
-               world::find_entity(_world.portals, _entity_creation_context.last_portal);
+               world::find_entity(_world.portals, _last_created_entities.last_portal);
 
             world::portal new_portal;
 
@@ -274,12 +278,12 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_portal),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Hintnode")) {
             const world::hintnode* base_hintnode =
-               world::find_entity(_world.hintnodes,
-                                  _entity_creation_context.last_hintnode);
+               world::find_entity(_world.hintnodes, _last_created_entities.last_hintnode);
 
             world::hintnode new_hintnode;
 
@@ -298,11 +302,12 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_hintnode),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Barrier")) {
             const world::barrier* base_barrier =
-               world::find_entity(_world.barriers, _entity_creation_context.last_barrier);
+               world::find_entity(_world.barriers, _last_created_entities.last_barrier);
 
             world::barrier new_barrier;
 
@@ -321,14 +326,13 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_barrier),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("AI Planning Hub")) {
-            _entity_creation_context.hub_sizing_started = false;
-
             const world::planning_hub* base_hub =
                world::find_entity(_world.planning_hubs,
-                                  _entity_creation_context.last_planning_hub);
+                                  _last_created_entities.last_planning_hub);
 
             world::planning_hub new_hub;
 
@@ -347,17 +351,17 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_hub),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("AI Planning Connection") and
              not _world.planning_hubs.empty()) {
-            _entity_creation_context.connection_link_started = false;
             _world_draw_mask.planning_hubs = true;
             _world_draw_mask.planning_connections = true;
 
             const world::planning_connection* base_connection =
                world::find_entity(_world.planning_connections,
-                                  _entity_creation_context.last_planning_connection);
+                                  _last_created_entities.last_planning_connection);
 
             world::planning_connection new_connection;
 
@@ -381,12 +385,13 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_connection),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          if (ImGui::MenuItem("Boundary")) {
             const world::boundary* base_boundary =
                world::find_entity(_world.boundaries,
-                                  _entity_creation_context.last_boundary);
+                                  _last_created_entities.last_boundary);
 
             world::boundary new_boundary;
 
@@ -405,6 +410,7 @@ void world_edit::update_ui() noexcept
                .apply(edits::make_creation_entity_set(std::move(new_boundary),
                                                       _interaction_targets.creation_entity),
                       _edit_context);
+            _entity_creation_context = {};
          }
 
          ImGui::EndMenu();
@@ -937,9 +943,9 @@ void world_edit::update_ui() noexcept
 
    if (_interaction_targets.creation_entity) {
       if (std::exchange(_entity_creation_context.activate_point_at, false)) {
-         _entity_creation_context.placement_rotation =
+         _entity_creation_config.placement_rotation =
             placement_rotation::manual_quaternion;
-         _entity_creation_context.placement_mode = placement_mode::manual;
+         _entity_creation_config.placement_mode = placement_mode::manual;
 
          _edit_stack_world.close_last(); // Make sure we don't coalesce with a previous point at.
          _entity_creation_context.using_point_at = true;
@@ -1035,7 +1041,7 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               if (_entity_creation_context.placement_rotation !=
+               if (_entity_creation_config.placement_rotation !=
                    placement_rotation::manual_quaternion) {
                   ImGui::DragRotationEuler("Rotation", &creation_entity,
                                            &world::object::rotation,
@@ -1049,18 +1055,17 @@ void world_edit::update_ui() noexcept
 
                if (ImGui::DragFloat3("Position", &creation_entity, &world::object::position,
                                      &_edit_stack_world, &_edit_context)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
 
-               if ((_entity_creation_context.placement_rotation ==
-                       placement_rotation::surface or
-                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+               if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
+                    _entity_creation_config.placement_mode == placement_mode::cursor) and
                    not _entity_creation_context.using_point_at) {
                   quaternion new_rotation = object.rotation;
                   float3 new_position = object.position;
                   float3 new_euler_rotation = _edit_context.euler_rotation;
 
-                  if (_entity_creation_context.placement_rotation ==
+                  if (_entity_creation_config.placement_rotation ==
                          placement_rotation::surface and
                       _cursor_surface_normalWS) {
                      const float new_y_angle =
@@ -1072,10 +1077,10 @@ void world_edit::update_ui() noexcept
                         new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position = _cursor_positionWS;
 
-                     if (_entity_creation_context.placement_ground ==
+                     if (_entity_creation_config.placement_ground ==
                          placement_ground::bbox) {
 
                         const math::bounding_box bbox =
@@ -1085,18 +1090,18 @@ void world_edit::update_ui() noexcept
                         new_position.y -= bbox.min.y;
                      }
 
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position(object, new_position,
                                                        _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) new_position = *snapped_position;
@@ -1160,7 +1165,7 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               if (_entity_creation_context.placement_rotation !=
+               if (_entity_creation_config.placement_rotation !=
                    placement_rotation::manual_quaternion) {
                   ImGui::DragRotationEuler("Rotation", &creation_entity,
                                            &world::light::rotation,
@@ -1174,18 +1179,17 @@ void world_edit::update_ui() noexcept
 
                if (ImGui::DragFloat3("Position", &creation_entity, &world::light::position,
                                      &_edit_stack_world, &_edit_context)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
 
-               if ((_entity_creation_context.placement_rotation ==
-                       placement_rotation::surface or
-                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+               if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
+                    _entity_creation_config.placement_mode == placement_mode::cursor) and
                    not _entity_creation_context.using_point_at) {
                   quaternion new_rotation = light.rotation;
                   float3 new_position = light.position;
                   float3 new_euler_rotation = _edit_context.euler_rotation;
 
-                  if (_entity_creation_context.placement_rotation ==
+                  if (_entity_creation_config.placement_rotation ==
                          placement_rotation::surface and
                       _cursor_surface_normalWS) {
                      const float new_y_angle =
@@ -1197,19 +1201,19 @@ void world_edit::update_ui() noexcept
                         new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position = _cursor_positionWS;
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position(new_position, _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) new_position = *snapped_position;
@@ -1346,7 +1350,7 @@ void world_edit::update_ui() noexcept
                                                : light.region_name);
                                    });
 
-                  if (_entity_creation_context.placement_rotation !=
+                  if (_entity_creation_config.placement_rotation !=
                       placement_rotation::manual_quaternion) {
                      ImGui::DragRotationEuler("Rotation", &creation_entity,
                                               &world::light::region_rotation,
@@ -1450,7 +1454,7 @@ void world_edit::update_ui() noexcept
 
                ImGui::Text("Next Node");
 
-               if (_entity_creation_context.placement_rotation !=
+               if (_entity_creation_config.placement_rotation !=
                    placement_rotation::manual_quaternion) {
                   ImGui::DragRotationEulerPathNode("Rotation", &creation_entity,
                                                    &world::edit_context::euler_rotation,
@@ -1463,17 +1467,16 @@ void world_edit::update_ui() noexcept
 
                if (ImGui::DragFloat3PathNode("Position", &creation_entity,
                                              &_edit_stack_world, &_edit_context)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
-               if ((_entity_creation_context.placement_rotation ==
-                       placement_rotation::surface or
-                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+               if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
+                    _entity_creation_config.placement_mode == placement_mode::cursor) and
                    not _entity_creation_context.using_point_at) {
                   quaternion new_rotation = path.nodes[0].rotation;
                   float3 new_position = path.nodes[0].position;
                   float3 new_euler_rotation = _edit_context.euler_rotation;
 
-                  if (_entity_creation_context.placement_rotation ==
+                  if (_entity_creation_config.placement_rotation ==
                          placement_rotation::surface and
                       _cursor_surface_normalWS) {
                      const float new_y_angle =
@@ -1485,20 +1488,20 @@ void world_edit::update_ui() noexcept
                         new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position = _cursor_positionWS;
 
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position(new_position, _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) new_position = *snapped_position;
@@ -1965,7 +1968,7 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               if (_entity_creation_context.placement_rotation !=
+               if (_entity_creation_config.placement_rotation !=
                    placement_rotation::manual_quaternion) {
                   ImGui::DragRotationEuler("Rotation", &creation_entity,
                                            &world::region::rotation,
@@ -1979,18 +1982,17 @@ void world_edit::update_ui() noexcept
 
                if (ImGui::DragFloat3("Position", &creation_entity, &world::region::position,
                                      &_edit_stack_world, &_edit_context)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
 
-               if ((_entity_creation_context.placement_rotation ==
-                       placement_rotation::surface or
-                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+               if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
+                    _entity_creation_config.placement_mode == placement_mode::cursor) and
                    not _entity_creation_context.using_point_at) {
                   quaternion new_rotation = region.rotation;
                   float3 new_position = region.position;
                   float3 new_euler_rotation = _edit_context.euler_rotation;
 
-                  if (_entity_creation_context.placement_rotation ==
+                  if (_entity_creation_config.placement_rotation ==
                          placement_rotation::surface and
                       _cursor_surface_normalWS) {
                      const float new_y_angle =
@@ -2002,10 +2004,10 @@ void world_edit::update_ui() noexcept
                         new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position = _cursor_positionWS;
 
-                     if (_entity_creation_context.placement_ground ==
+                     if (_entity_creation_config.placement_ground ==
                          placement_ground::bbox) {
                         switch (region.shape) {
                         case world::region_shape::box: {
@@ -2049,17 +2051,17 @@ void world_edit::update_ui() noexcept
                         }
                      }
 
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position(new_position, _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) new_position = *snapped_position;
@@ -2168,7 +2170,7 @@ void world_edit::update_ui() noexcept
 
                if (_entity_creation_context.using_extend_to or
                    _entity_creation_context.using_shrink_to) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
 
                   if (not _entity_creation_context.resize_start_size) {
                      _entity_creation_context.resize_start_size = region.size;
@@ -2250,9 +2252,9 @@ void world_edit::update_ui() noexcept
                    _interaction_targets.hovered_entity and
                    std::holds_alternative<world::object_id>(
                       *_interaction_targets.hovered_entity)) {
-                  _entity_creation_context.placement_rotation =
+                  _entity_creation_config.placement_rotation =
                      placement_rotation::manual_quaternion;
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
 
                   const world::object* object =
                      world::find_entity(_world.objects,
@@ -2299,18 +2301,18 @@ void world_edit::update_ui() noexcept
                ImGui::DragSectorPoint("Position", &creation_entity,
                                       &_edit_stack_world, &_edit_context);
 
-               if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+               if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                   float2 new_position = sector.points[0];
 
                   new_position = {_cursor_positionWS.x, _cursor_positionWS.z};
 
-                  if (_entity_creation_context.placement_alignment ==
+                  if (_entity_creation_config.placement_alignment ==
                       placement_alignment::grid) {
                      new_position =
                         align_position_to_grid(new_position,
-                                               _entity_creation_context.alignment);
+                                               _entity_creation_config.alignment);
                   }
-                  else if (_entity_creation_context.placement_alignment ==
+                  else if (_entity_creation_config.placement_alignment ==
                            placement_alignment::snapping) {
                      // What should snapping for sectors do?
                      ImGui::Text("Snapping is currently unimplemented for "
@@ -2453,7 +2455,7 @@ void world_edit::update_ui() noexcept
                      return entries;
                   });
 
-               if (_entity_creation_context.placement_rotation !=
+               if (_entity_creation_config.placement_rotation !=
                    placement_rotation::manual_quaternion) {
                   ImGui::DragRotationEuler("Rotation", &creation_entity,
                                            &world::portal::rotation,
@@ -2467,17 +2469,16 @@ void world_edit::update_ui() noexcept
 
                if (ImGui::DragFloat3("Position", &creation_entity, &world::portal::position,
                                      &_edit_stack_world, &_edit_context)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
-               if ((_entity_creation_context.placement_rotation ==
-                       placement_rotation::surface or
-                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+               if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
+                    _entity_creation_config.placement_mode == placement_mode::cursor) and
                    not _entity_creation_context.using_point_at) {
                   quaternion new_rotation = portal.rotation;
                   float3 new_position = portal.position;
                   float3 new_euler_rotation = _edit_context.euler_rotation;
 
-                  if (_entity_creation_context.placement_rotation ==
+                  if (_entity_creation_config.placement_rotation ==
                          placement_rotation::surface and
                       _cursor_surface_normalWS) {
                      const float new_y_angle =
@@ -2489,10 +2490,10 @@ void world_edit::update_ui() noexcept
                         new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position = _cursor_positionWS;
 
-                     if (_entity_creation_context.placement_ground ==
+                     if (_entity_creation_config.placement_ground ==
                          placement_ground::bbox) {
                         new_position.y += (portal.height / 2.0f);
                      }
@@ -2542,7 +2543,7 @@ void world_edit::update_ui() noexcept
 
                if (_entity_creation_context.using_extend_to or
                    _entity_creation_context.using_shrink_to) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
 
                   if (not _entity_creation_context.resize_portal_start_width) {
                      _entity_creation_context.resize_portal_start_width = portal.width;
@@ -2606,7 +2607,7 @@ void world_edit::update_ui() noexcept
 
                ImGui::Separator();
 
-               if (_entity_creation_context.placement_rotation !=
+               if (_entity_creation_config.placement_rotation !=
                    placement_rotation::manual_quaternion) {
                   ImGui::DragRotationEuler("Rotation", &creation_entity,
                                            &world::hintnode::rotation,
@@ -2622,18 +2623,17 @@ void world_edit::update_ui() noexcept
                if (ImGui::DragFloat3("Position", &creation_entity,
                                      &world::hintnode::position,
                                      &_edit_stack_world, &_edit_context)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
 
-               if ((_entity_creation_context.placement_rotation ==
-                       placement_rotation::surface or
-                    _entity_creation_context.placement_mode == placement_mode::cursor) and
+               if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
+                    _entity_creation_config.placement_mode == placement_mode::cursor) and
                    not _entity_creation_context.using_point_at) {
                   quaternion new_rotation = hintnode.rotation;
                   float3 new_position = hintnode.position;
                   float3 new_euler_rotation = _edit_context.euler_rotation;
 
-                  if (_entity_creation_context.placement_rotation ==
+                  if (_entity_creation_config.placement_rotation ==
                          placement_rotation::surface and
                       _cursor_surface_normalWS) {
                      const float new_y_angle =
@@ -2645,20 +2645,20 @@ void world_edit::update_ui() noexcept
                         new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
                   }
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position = _cursor_positionWS;
 
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position(new_position, _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) new_position = *snapped_position;
@@ -2798,31 +2798,31 @@ void world_edit::update_ui() noexcept
                if (ImGui::DragFloat2XZ("Position", &creation_entity,
                                        &world::barrier::position,
                                        &_edit_stack_world, &_edit_context, 0.25f)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
 
-               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+               if (_entity_creation_config.placement_mode == placement_mode::cursor and
                    not _entity_creation_context.using_point_at) {
                   float2 new_position = barrier.position;
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position =
                         float2{_cursor_positionWS.x, _cursor_positionWS.z};
 
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position({new_position.x,
                                                         _cursor_positionWS.y,
                                                         new_position.y},
                                                        _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) {
@@ -2884,7 +2884,7 @@ void world_edit::update_ui() noexcept
 
                if (_entity_creation_context.using_extend_to or
                    _entity_creation_context.using_shrink_to) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
 
                   if (not _entity_creation_context.resize_barrier_start_position) {
                      _entity_creation_context.resize_barrier_start_position =
@@ -3002,7 +3002,7 @@ void world_edit::update_ui() noexcept
                    _interaction_targets.hovered_entity and
                    std::holds_alternative<world::object_id>(
                       *_interaction_targets.hovered_entity)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
 
                   const world::object* object =
                      world::find_entity(_world.objects,
@@ -3048,7 +3048,7 @@ void world_edit::update_ui() noexcept
                }
 
                if (_entity_creation_context.using_from_line) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
 
                   if (_entity_creation_context.from_line_start) {
                      _tool_visualizers.lines
@@ -3113,31 +3113,31 @@ void world_edit::update_ui() noexcept
                if (ImGui::DragFloat2XZ("Position", &creation_entity,
                                        &world::planning_hub::position,
                                        &_edit_stack_world, &_edit_context, 0.25f)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
 
-               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+               if (_entity_creation_config.placement_mode == placement_mode::cursor and
                    not _entity_creation_context.hub_sizing_started) {
                   float2 new_position = hub.position;
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position =
                         float2{_cursor_positionWS.x, _cursor_positionWS.z};
 
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position({new_position.x,
                                                         _cursor_positionWS.y,
                                                         new_position.y},
                                                        _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) {
@@ -3337,31 +3337,31 @@ void world_edit::update_ui() noexcept
                if (ImGui::DragFloat2XZ("Position", &creation_entity,
                                        &world::boundary::position,
                                        &_edit_stack_world, &_edit_context, 0.25f)) {
-                  _entity_creation_context.placement_mode = placement_mode::manual;
+                  _entity_creation_config.placement_mode = placement_mode::manual;
                }
 
-               if (_entity_creation_context.placement_mode == placement_mode::cursor and
+               if (_entity_creation_config.placement_mode == placement_mode::cursor and
                    not _entity_creation_context.using_point_at) {
                   float2 new_position = boundary.position;
 
-                  if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+                  if (_entity_creation_config.placement_mode == placement_mode::cursor) {
                      new_position =
                         float2{_cursor_positionWS.x, _cursor_positionWS.z};
 
-                     if (_entity_creation_context.placement_alignment ==
+                     if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
                            align_position_to_grid(new_position,
-                                                  _entity_creation_context.alignment);
+                                                  _entity_creation_config.alignment);
                      }
-                     else if (_entity_creation_context.placement_alignment ==
+                     else if (_entity_creation_config.placement_alignment ==
                               placement_alignment::snapping) {
                         const std::optional<float3> snapped_position =
                            world::get_snapped_position({new_position.x,
                                                         _cursor_positionWS.y,
                                                         new_position.y},
                                                        _world.objects,
-                                                       _entity_creation_context.snap_distance,
+                                                       _entity_creation_config.snap_distance,
                                                        _object_classes);
 
                         if (snapped_position) {
@@ -3407,25 +3407,25 @@ void world_edit::update_ui() noexcept
                               ImGuiTableFlags_SizingStretchSame);
 
          ImGui::TableNextColumn();
-         if (ImGui::Selectable("Manual", _entity_creation_context.placement_rotation ==
+         if (ImGui::Selectable("Manual", _entity_creation_config.placement_rotation ==
                                             placement_rotation::manual_euler)) {
-            _entity_creation_context.placement_rotation =
+            _entity_creation_config.placement_rotation =
                placement_rotation::manual_euler;
          }
 
          ImGui::TableNextColumn();
          if (ImGui::Selectable("Manual (Quat)",
-                               _entity_creation_context.placement_rotation ==
+                               _entity_creation_config.placement_rotation ==
                                   placement_rotation::manual_quaternion)) {
-            _entity_creation_context.placement_rotation =
+            _entity_creation_config.placement_rotation =
                placement_rotation::manual_quaternion;
          }
 
          ImGui::TableNextColumn();
 
-         if (ImGui::Selectable("Around Cursor", _entity_creation_context.placement_rotation ==
+         if (ImGui::Selectable("Around Cursor", _entity_creation_config.placement_rotation ==
                                                    placement_rotation::surface)) {
-            _entity_creation_context.placement_rotation = placement_rotation::surface;
+            _entity_creation_config.placement_rotation = placement_rotation::surface;
          }
          ImGui::EndTable();
       }
@@ -3448,21 +3448,21 @@ void world_edit::update_ui() noexcept
                               ImGuiTableFlags_SizingStretchSame);
 
          ImGui::TableNextColumn();
-         if (ImGui::Selectable("Manual", _entity_creation_context.placement_mode ==
+         if (ImGui::Selectable("Manual", _entity_creation_config.placement_mode ==
                                             placement_mode::manual)) {
-            _entity_creation_context.placement_mode = placement_mode::manual;
+            _entity_creation_config.placement_mode = placement_mode::manual;
          }
 
          ImGui::TableNextColumn();
 
-         if (ImGui::Selectable("At Cursor", _entity_creation_context.placement_mode ==
+         if (ImGui::Selectable("At Cursor", _entity_creation_config.placement_mode ==
                                                placement_mode::cursor)) {
-            _entity_creation_context.placement_mode = placement_mode::cursor;
+            _entity_creation_config.placement_mode = placement_mode::cursor;
          }
          ImGui::EndTable();
       }
 
-      if (_entity_creation_context.placement_mode == placement_mode::cursor) {
+      if (_entity_creation_config.placement_mode == placement_mode::cursor) {
          if (traits.has_lock_axis) {
             ImGui::Separator();
 
@@ -3492,23 +3492,21 @@ void world_edit::update_ui() noexcept
                                  ImGuiTableFlags_SizingStretchSame);
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("None", _entity_creation_context.placement_alignment ==
+            if (ImGui::Selectable("None", _entity_creation_config.placement_alignment ==
                                              placement_alignment::none)) {
-               _entity_creation_context.placement_alignment =
-                  placement_alignment::none;
+               _entity_creation_config.placement_alignment = placement_alignment::none;
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Grid", _entity_creation_context.placement_alignment ==
+            if (ImGui::Selectable("Grid", _entity_creation_config.placement_alignment ==
                                              placement_alignment::grid)) {
-               _entity_creation_context.placement_alignment =
-                  placement_alignment::grid;
+               _entity_creation_config.placement_alignment = placement_alignment::grid;
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Snapping", _entity_creation_context.placement_alignment ==
+            if (ImGui::Selectable("Snapping", _entity_creation_config.placement_alignment ==
                                                  placement_alignment::snapping)) {
-               _entity_creation_context.placement_alignment =
+               _entity_creation_config.placement_alignment =
                   placement_alignment::snapping;
             }
             ImGui::EndTable();
@@ -3524,15 +3522,15 @@ void world_edit::update_ui() noexcept
                                  ImGuiTableFlags_SizingStretchSame);
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Origin", _entity_creation_context.placement_ground ==
+            if (ImGui::Selectable("Origin", _entity_creation_config.placement_ground ==
                                                placement_ground::origin)) {
-               _entity_creation_context.placement_ground = placement_ground::origin;
+               _entity_creation_config.placement_ground = placement_ground::origin;
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Bounding Box", _entity_creation_context.placement_ground ==
+            if (ImGui::Selectable("Bounding Box", _entity_creation_config.placement_ground ==
                                                      placement_ground::bbox)) {
-               _entity_creation_context.placement_ground = placement_ground::bbox;
+               _entity_creation_config.placement_ground = placement_ground::bbox;
             }
 
             ImGui::EndTable();
@@ -3548,34 +3546,34 @@ void world_edit::update_ui() noexcept
                                  ImGuiTableFlags_SizingStretchSame);
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Nearest", _entity_creation_context.placement_node_insert ==
+            if (ImGui::Selectable("Nearest", _entity_creation_config.placement_node_insert ==
                                                 placement_node_insert::nearest)) {
-               _entity_creation_context.placement_node_insert =
+               _entity_creation_config.placement_node_insert =
                   placement_node_insert::nearest;
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Append", _entity_creation_context.placement_node_insert ==
+            if (ImGui::Selectable("Append", _entity_creation_config.placement_node_insert ==
                                                placement_node_insert::append)) {
-               _entity_creation_context.placement_node_insert =
+               _entity_creation_config.placement_node_insert =
                   placement_node_insert::append;
             }
 
             ImGui::EndTable();
          }
 
-         if (_entity_creation_context.placement_alignment == placement_alignment::grid) {
+         if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
             ImGui::Separator();
             ImGui::DragFloat("Alignment Grid Size",
-                             &_entity_creation_context.alignment, 1.0f, 1.0f,
+                             &_entity_creation_config.alignment, 1.0f, 1.0f,
                              1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
          }
-         else if (_entity_creation_context.placement_alignment ==
+         else if (_entity_creation_config.placement_alignment ==
                   placement_alignment::snapping) {
             ImGui::Separator();
             ImGui::DragFloat("Snap Distance",
-                             &_entity_creation_context.snap_distance, 0.1f,
-                             0.0f, 1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                             &_entity_creation_config.snap_distance, 0.1f, 0.0f,
+                             1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
          }
       }
 

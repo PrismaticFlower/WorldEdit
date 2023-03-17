@@ -36,49 +36,49 @@ void world_edit::initialize_commands() noexcept
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
-      switch (_entity_creation_context.placement_rotation) {
+      switch (_entity_creation_config.placement_rotation) {
       case placement_rotation::manual_euler:
-         _entity_creation_context.placement_rotation =
+         _entity_creation_config.placement_rotation =
             placement_rotation::manual_quaternion;
          return;
       case placement_rotation::manual_quaternion:
-         _entity_creation_context.placement_rotation = placement_rotation::surface;
+         _entity_creation_config.placement_rotation = placement_rotation::surface;
          return;
       case placement_rotation::surface:
-         _entity_creation_context.placement_rotation = placement_rotation::manual_euler;
+         _entity_creation_config.placement_rotation = placement_rotation::manual_euler;
          return;
       }
    });
    _commands.add("entity_creation.cycle_placement_mode"s, [this] {
-      switch (_entity_creation_context.placement_mode) {
+      switch (_entity_creation_config.placement_mode) {
       case placement_mode::manual:
-         _entity_creation_context.placement_mode = placement_mode::cursor;
+         _entity_creation_config.placement_mode = placement_mode::cursor;
          return;
       case placement_mode::cursor:
-         _entity_creation_context.placement_mode = placement_mode::manual;
+         _entity_creation_config.placement_mode = placement_mode::manual;
          return;
       }
    });
    _commands.add("entity_creation.cycle_alignment_mode"s, [this] {
-      switch (_entity_creation_context.placement_alignment) {
+      switch (_entity_creation_config.placement_alignment) {
       case placement_alignment::none:
-         _entity_creation_context.placement_alignment = placement_alignment::grid;
+         _entity_creation_config.placement_alignment = placement_alignment::grid;
          return;
       case placement_alignment::grid:
-         _entity_creation_context.placement_alignment = placement_alignment::snapping;
+         _entity_creation_config.placement_alignment = placement_alignment::snapping;
          return;
       case placement_alignment::snapping:
-         _entity_creation_context.placement_alignment = placement_alignment::none;
+         _entity_creation_config.placement_alignment = placement_alignment::none;
          return;
       }
    });
    _commands.add("entity_creation.cycle_ground_mode"s, [this] {
-      switch (_entity_creation_context.placement_ground) {
+      switch (_entity_creation_config.placement_ground) {
       case placement_ground::origin:
-         _entity_creation_context.placement_ground = placement_ground::bbox;
+         _entity_creation_config.placement_ground = placement_ground::bbox;
          return;
       case placement_ground::bbox:
-         _entity_creation_context.placement_ground = placement_ground::origin;
+         _entity_creation_config.placement_ground = placement_ground::origin;
          return;
       }
    });
@@ -223,8 +223,7 @@ void world_edit::initialize_hotkeys() noexcept
                     },
                     {
                        {"entity_creation.from_line_click", {.key = key::mouse1}},
-                       {"entity_creation.deactivate_from_line",
-                        {.key = key::escape}},
+                       {"entity_creation.deactivate_from_line", {.key = key::escape}},
                     });
 }
 
