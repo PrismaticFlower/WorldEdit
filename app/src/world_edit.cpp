@@ -680,7 +680,14 @@ void world_edit::undo() noexcept
 {
    _edit_stack_world.revert(_edit_context);
 
-   if (_interaction_targets.creation_entity) _entity_creation_context = {};
+   if (_interaction_targets.creation_entity) {
+      _entity_creation_context = {};
+      _entity_creation_config.placement_mode = placement_mode::manual;
+      _entity_creation_config.placement_rotation =
+         _entity_creation_config.placement_rotation == placement_rotation::surface
+            ? placement_rotation::manual_euler
+            : _entity_creation_config.placement_rotation;
+   }
 }
 
 void world_edit::redo() noexcept
