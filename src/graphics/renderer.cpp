@@ -1613,14 +1613,6 @@ void renderer_impl::draw_interaction_targets(
 
                if (light) draw_entity(*light, color);
             },
-            [&](world::path_id id) {
-               const world::path* path =
-                  look_for(world.paths, [id](const world::path& path) {
-                     return id == path.id;
-                  });
-
-               if (path) draw_entity(*path, color);
-            },
             [&](world::path_id_node_pair id_node) {
                auto [id, node_index] = id_node;
 

@@ -18,7 +18,7 @@ struct path_id_node_pair {
 
 /// @brief Represents an entity being interacted with (hovered or selected).
 using interaction_target =
-   std::variant<object_id, light_id, path_id, path_id_node_pair, region_id, sector_id, portal_id,
+   std::variant<object_id, light_id, path_id_node_pair, region_id, sector_id, portal_id,
                 hintnode_id, barrier_id, planning_hub_id, planning_connection_id, boundary_id>;
 
 /// @brief Represents an entity being hovered over.

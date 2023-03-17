@@ -749,13 +749,15 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat3("Region Size", light, &world::light::region_size,
                                  &_edit_stack_world, &_edit_context);
             },
-            [&](world::path_id id) {
+            [&](world::path_id_node_pair id_node) {
+               auto [id, node_index] = id_node;
+
                world::path* path =
                   look_for(_world.paths, [id](const world::path& path) {
                      return id == path.id;
                   });
 
-               if (not path) return;
+               if (not path or node_index >= path->nodes.size()) return;
 
                ImGui::InputText("Name", path, &world::path::name,
                                 &_edit_stack_world, &_edit_context);
@@ -796,55 +798,33 @@ void world_edit::update_ui() noexcept
                   ImGui::EndCombo();
                }
 
-               ImGui::Text("Nodes");
-               ImGui::BeginChild("Nodes", {}, true);
+               ImGui::Separator();
+               ImGui::Text("Node %i", static_cast<int>(node_index));
 
-               for (std::size_t i = 0; i < path->nodes.size(); ++i) {
-                  ImGui::PushID(static_cast<int>(i));
+               ImGui::DragQuat("Rotation", path, node_index, &world::path::node::rotation,
+                               &_edit_stack_world, &_edit_context);
+               ImGui::DragFloat3("Position", path, node_index,
+                                 &world::path::node::position,
+                                 &_edit_stack_world, &_edit_context);
 
-                  ImGui::Text("Node %i", static_cast<int>(i));
-                  ImGui::Separator();
-
-                  ImGui::DragQuat("Rotation", path, i, &world::path::node::rotation,
-                                  &_edit_stack_world, &_edit_context);
-                  ImGui::DragFloat3("Position", path, i, &world::path::node::position,
-                                    &_edit_stack_world, &_edit_context);
-
-                  for (std::size_t prop_index = 0;
-                       prop_index < path->nodes[i].properties.size(); ++prop_index) {
-                     ImGui::InputKeyValue(path, i, prop_index,
-                                          &_edit_stack_world, &_edit_context);
-                  }
-
-                  if (ImGui::BeginCombo("Add Property", "<select property>")) {
-                     for (const char* prop :
-                          world::get_path_node_properties(path->type)) {
-                        if (ImGui::Selectable(prop)) {
-                           _edit_stack_world.apply(edits::make_add_property(path->id,
-                                                                            i, prop),
-                                                   _edit_context);
-                        }
-                     }
-
-                     ImGui::EndCombo();
-                  }
-
-                  ImGui::PopID();
+               for (std::size_t prop_index = 0;
+                    prop_index < path->nodes[node_index].properties.size();
+                    ++prop_index) {
+                  ImGui::InputKeyValue(path, node_index, prop_index,
+                                       &_edit_stack_world, &_edit_context);
                }
 
-               ImGui::EndChild();
-            },
-            [&](world::path_id_node_pair id_node) {
-               auto [id, node_index] = id_node;
+               if (ImGui::BeginCombo("Add Property", "<select property>")) {
+                  for (const char* prop : world::get_path_node_properties(path->type)) {
+                     if (ImGui::Selectable(prop)) {
+                        _edit_stack_world.apply(edits::make_add_property(path->id, node_index,
+                                                                         prop),
+                                                _edit_context);
+                     }
+                  }
 
-               world::path* path =
-                  look_for(_world.paths, [id](const world::path& path) {
-                     return id == path.id;
-                  });
-
-               if (not path) return;
-
-               if (node_index >= path->nodes.size()) return;
+                  ImGui::EndCombo();
+               }
             },
             [&](world::region_id id) {
                world::region* region =

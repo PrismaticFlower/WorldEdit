@@ -177,7 +177,8 @@ void world_edit::update_hovered_entity() noexcept
                             _world.paths);
           hit) {
          if (hit->distance < hovered_entity_distance) {
-            _interaction_targets.hovered_entity = hit->id;
+            _interaction_targets.hovered_entity =
+               world::path_id_node_pair{hit->id, hit->node_index};
             hovered_entity_distance = hit->distance;
          }
       }
