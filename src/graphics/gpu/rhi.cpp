@@ -132,6 +132,9 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       return device;
    }
 
+   MessageBoxW(nullptr, L"Unable to create D3D12 device. The app will now close.",
+               L"No suitable GPU found. 🙁", MB_OK);
+
    std::terminate();
 }
 
