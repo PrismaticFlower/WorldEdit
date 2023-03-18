@@ -3,8 +3,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <gsl/gsl>
-
 namespace we::utility {
 
 namespace detail {
@@ -102,14 +100,6 @@ public:
       return *this;
    }
 
-   template<typename Other, typename = std::enable_if_t<std::is_convertible_v<Other*, Class*>>>
-   explicit com_ptr(const std::shared_ptr<Other>& other)
-   {
-      _pointer = static_cast<Class*>(other.get());
-
-      if (_pointer) _pointer->AddRef();
-   }
-
    void reset(Class* with) noexcept
    {
       com_ptr discarded{_pointer};
@@ -122,7 +112,7 @@ public:
       std::swap(this->_pointer, other._pointer);
    }
 
-   [[nodiscard]] auto release() noexcept -> gsl::owner<Class*>
+   [[nodiscard]] auto release() noexcept -> Class*
    {
       return std::exchange(_pointer, nullptr);
    }
@@ -165,7 +155,7 @@ public:
       return reinterpret_cast<void**>(&_pointer);
    }
 
-   [[nodiscard]] auto unmanaged_copy() const noexcept -> gsl::owner<Class*>
+   [[nodiscard]] auto unmanaged_copy() const noexcept -> Class*
    {
       Expects(this->get() != nullptr);
 
@@ -183,7 +173,7 @@ public:
    friend auto operator<=>(const com_ptr& left, const com_ptr& right) noexcept = default;
 
 private:
-   gsl::owner<Class*> _pointer = nullptr;
+   Class* _pointer = nullptr;
 };
 
 template<typename Class>

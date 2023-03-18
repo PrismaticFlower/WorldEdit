@@ -13,8 +13,6 @@
 #include <bitset>
 #include <vector>
 
-#include <gsl/gsl>
-
 namespace we::graphics {
 
 enum class terrain_draw { depth_prepass, main };

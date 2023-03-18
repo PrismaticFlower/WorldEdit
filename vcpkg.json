@@ -17,7 +17,6 @@
 
     "directxtex",
     "fmt",
-    "ms-gsl",
     "range-v3",
     "wil"
   ]
