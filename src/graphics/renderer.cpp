@@ -35,8 +35,6 @@
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
 
-#include <range/v3/view.hpp>
-
 namespace we::graphics {
 
 namespace {
@@ -256,16 +254,15 @@ renderer_impl::renderer_impl(const renderer::window_handle window,
                     thread_pool,      _error_output}
 {
    // create object constants upload buffers
-   for (auto [buffer, cpu_ptr] :
-        ranges::views::zip(_object_constants_upload_buffers,
-                           _object_constants_upload_cpu_ptrs)) {
-      buffer = {_device.create_buffer({.size = objects_constants_buffer_size,
-                                       .debug_name =
-                                          "Object Constant Upload Buffers"},
-                                      gpu::heap_type::upload),
-                _device.direct_queue};
+   for (std::size_t i = 0; i < _object_constants_upload_buffers.size(); ++i) {
+      _object_constants_upload_buffers[i] = {
+         _device.create_buffer({.size = objects_constants_buffer_size,
+                                .debug_name = "Object Constant Upload Buffers"},
+                               gpu::heap_type::upload),
+         _device.direct_queue};
 
-      cpu_ptr = static_cast<std::byte*>(_device.map(buffer.get(), 0, {}));
+      _object_constants_upload_cpu_ptrs[i] = static_cast<std::byte*>(
+         _device.map(_object_constants_upload_buffers[i].get(), 0, {}));
    }
 
    // map depth minmax readback buffer
@@ -665,19 +662,14 @@ void renderer_impl::draw_world_meta_objects(
             }
          }
 
-         if (draw_connections) {
+         if (not path.nodes.empty() and draw_connections) {
             const uint32 path_node_connection_color = utility::pack_srgb_bgra(
                float4{settings.path_node_connection_color, 1.0f});
 
-            using namespace ranges::views;
+            for (std::size_t i = 0; i < (path.nodes.size() - 1); ++i) {
+               const float3 a = path.nodes[i].position;
+               const float3 b = path.nodes[i + 1].position;
 
-            const auto get_position = [](const world::path::node& node) {
-               return node.position;
-            };
-
-            for (const auto [a, b] :
-                 zip(path.nodes | transform(get_position),
-                     path.nodes | drop(1) | transform(get_position))) {
                _meta_draw_batcher.add_line_solid(a, b, path_node_connection_color);
             }
          }
@@ -912,11 +904,10 @@ void renderer_impl::draw_world_meta_objects(
       const uint32 sector_color = utility::pack_srgb_bgra(settings.sector_color);
 
       const auto add_sector = [&](const world::sector& sector) {
-         using namespace ranges::views;
+         for (std::size_t i = 0; i < sector.points.size(); ++i) {
+            const float2 a = sector.points[i];
+            const float2 b = sector.points[(i + 1) % sector.points.size()];
 
-         for (const auto [a, b] :
-              zip(sector.points,
-                  concat(sector.points | drop(1), sector.points | take(1)))) {
             const std::array quad = {float3{a.x, sector.base, a.y},
                                      float3{b.x, sector.base, b.y},
                                      float3{a.x, sector.base + sector.height, a.y},
@@ -924,7 +915,7 @@ void renderer_impl::draw_world_meta_objects(
 
             math::bounding_box bbox{.min = quad[0], .max = quad[0]};
 
-            for (auto v : quad | drop(1)) bbox = integrate(bbox, v);
+            for (auto v : quad) bbox = integrate(bbox, v);
 
             if (not intersects(view_frustum, bbox)) continue;
 
@@ -962,8 +953,6 @@ void renderer_impl::draw_world_meta_objects(
       const uint32 portal_color = utility::pack_srgb_bgra(settings.portal_color);
 
       const auto add_portal = [&](const world::portal& portal) {
-         using namespace ranges::views;
-
          const float half_width = portal.width * 0.5f;
          const float half_height = portal.height * 0.5f;
 
@@ -1398,16 +1387,14 @@ void renderer_impl::draw_interaction_targets(
       [&](const world::path& path, const float3 color) {
          for (auto& node : path.nodes) draw_path_node(node, color);
 
-         using namespace ranges::views;
-
-         const auto get_position = [](const world::path::node& node) {
-            return node.position;
-         };
+         if (path.nodes.empty()) return;
 
          const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
 
-         for (const auto [a, b] : zip(path.nodes | transform(get_position),
-                                      path.nodes | drop(1) | transform(get_position))) {
+         for (std::size_t i = 0; i < (path.nodes.size() - 1); ++i) {
+            const float3 a = path.nodes[i].position;
+            const float3 b = path.nodes[i + 1].position;
+
             _meta_draw_batcher.add_line_solid(a, b, packed_color);
          }
       },
@@ -1449,13 +1436,12 @@ void renderer_impl::draw_interaction_targets(
          }
       },
       [&](const world::sector& sector, const float3 color) {
-         using namespace ranges::views;
-
          const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
 
-         for (auto& points = sector.points;
-              const auto [a, b] :
-              zip(points, concat(points | drop(1), points | take(1)))) {
+         for (std::size_t i = 0; i < sector.points.size(); ++i) {
+            const float2 a = sector.points[i];
+            const float2 b = sector.points[(i + 1) % sector.points.size()];
+
             const std::array quad = {float3{a.x, sector.base, a.y},
                                      float3{a.x, sector.base + sector.height, a.y},
                                      float3{b.x, sector.base + sector.height, b.y},
