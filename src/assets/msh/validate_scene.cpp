@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include <absl/container/inlined_vector.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 #include <range/v3/algorithm.hpp>
 #include <range/v3/view.hpp>
 
@@ -25,7 +25,7 @@ void check_node_name_uniqueness(const scene& scene)
           })) {
          throw std::runtime_error{
             fmt::format(".msh file validation failure! Two or more nodes have "
-                        "the same name '{}'."sv,
+                        "the same name '{}'.",
                         node.name)};
       }
    }
@@ -45,7 +45,7 @@ void check_node_type_validity(const scene& scene)
       default:
          throw std::runtime_error{fmt::format(
             ".msh file validation failure! Node '{}' has unknown node type "
-            "'{}'."sv,
+            "'{}'.",
             node.name, static_cast<int32>(node.type))};
       }
    }
@@ -60,7 +60,8 @@ void check_node_parents_validity(const scene& scene)
              return *node.parent == other.name;
           })) {
          throw std::runtime_error{
-            fmt::format(".msh file validation failure! Node '{}' references missing parent '{}'."sv,
+            fmt::format(".msh file validation failure! Node '{}' references "
+                        "missing parent '{}'.",
                         node.name, *node.parent)};
       }
    }
@@ -83,7 +84,8 @@ void check_node_parents_noncircular(const scene& scene)
            })) {
          if (ranges::contains(traversed_nodes, &(*it))) {
             throw std::runtime_error{
-               fmt::format(".msh file validation failure! Node '{}' has circular relationship with ancestor/parent '{}'."sv,
+               fmt::format(".msh file validation failure! Node '{}' has "
+                           "circular relationship with ancestor/parent '{}'.",
                            node.name, it->name)};
          }
 
@@ -101,7 +103,7 @@ void check_geometry_segment_material_index_validity(const scene& scene)
             throw std::runtime_error{
                fmt::format(".msh file validation failure! The material index "
                            "'{}' in geometry segment #{} in node '{}'  "
-                           " is out of range. Max material index is '{}'."sv,
+                           " is out of range. Max material index is '{}'.",
                            segment.material_index, index, node.name,
                            std::ssize(scene.materials))};
          }
@@ -132,7 +134,7 @@ void check_geometry_segment_attibutes_count_matches(const scene& scene)
                "   position count: {}\n"
                "   normals count: {}\n"
                "   texcoords count: {}\n"
-               "   colors count: {}"sv,
+               "   colors count: {}",
                index, node.name, positions_count,
                segment.normals ? std::to_string(segment.normals->size()) : "nullopt"sv,
                segment.texcoords ? std::to_string(segment.texcoords->size()) : "nullopt"sv,
@@ -152,7 +154,7 @@ void check_geometry_segment_vertex_count_limit(const scene& scene)
                "#{} in node '{}'  "
                " has '{}' vertices. This is invalid as the max a geometry "
                "segment can "
-               "index is '{}'."sv,
+               "index is '{}'.",
                index, node.name, segment.positions.size(),
                geometry_segment::max_vertex_count)};
          }
@@ -171,7 +173,7 @@ void check_geometry_segment_triangles_index_validity(const scene& scene)
                      fmt::format(".msh file validation failure! A triangle in "
                                  "geometry segment #{} in node '{}' contains a "
                                  "vertex index that is out of range! "
-                                 "Vertex count '{}', out of range index '{}'."sv,
+                                 "Vertex count '{}', out of range index '{}'.",
                                  index, node.name, segment.positions.size(), i)};
                }
             }
@@ -195,7 +197,7 @@ void check_geometry_segment_non_empty(const scene& scene)
 
    if (empty) {
       throw std::runtime_error{fmt::format(
-         ".msh file validation failure! No node contains mesh data."sv)};
+         ".msh file validation failure! No node contains mesh data.")};
    }
 }
 
@@ -213,7 +215,7 @@ void check_collision_primitive_shape_validity(const scene& scene)
          throw std::runtime_error{
             fmt::format(".msh file validation failure! The collision primitive "
                         "for node '{}' has unknown shape "
-                        "'{}'."sv,
+                        "'{}'.",
                         node.name,
                         static_cast<int32>(node.collision_primitive->shape))};
       }

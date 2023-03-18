@@ -2,7 +2,7 @@
 #include "read_file.hpp"
 #include "error.hpp"
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 #include <wil/resource.h>
 
 namespace we::io {

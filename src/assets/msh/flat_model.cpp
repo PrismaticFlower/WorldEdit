@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <string_view>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include <range/v3/algorithm.hpp>
 

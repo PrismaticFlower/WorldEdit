@@ -6,7 +6,7 @@
 #include <optional>
 #include <system_error>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 using namespace std::literals;
 
@@ -49,7 +49,7 @@ file_watcher::file_watcher(const std::filesystem::path& path) : _path{path}
       const int error = GetLastError();
 
       throw std::system_error{std::error_code{error, std::system_category()},
-                              fmt::format("(Unable to open directory '{}'"sv,
+                              fmt::format("(Unable to open directory '{}'",
                                           path.string())};
    }
 

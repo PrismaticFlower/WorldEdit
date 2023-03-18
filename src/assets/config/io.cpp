@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <tuple>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 using namespace std::literals;
 
@@ -20,10 +20,10 @@ auto parse_string_value(const string::line line, std::string_view str,
    auto quoted_result = string::quoted_read(str);
 
    if (!quoted_result) {
-      throw std::runtime_error{
-         fmt::format("Error on line #{} at column #{}! Expected '\"' to close value #{}."sv,
-                     line.number, string::substr_distance(line.string, str) + 1,
-                     values_out.size())};
+      throw std::runtime_error{fmt::format(
+         "Error on line #{} at column #{}! Expected '\"' to close value #{}.",
+         line.number, string::substr_distance(line.string, str) + 1,
+         values_out.size())};
    }
 
    auto [value, rest] = *quoted_result;
@@ -45,7 +45,8 @@ auto parse_number_value(const string::line line, std::string_view str,
           std::from_chars(value.data(), value.data() + value.size(), dbl_val);
        err.ec != std::errc{}) {
       throw std::runtime_error{
-         fmt::format("Error on line #{} at column #{}! Unexpected character '{}' inside number. Value is #{}."sv,
+         fmt::format("Error on line #{} at column #{}! Unexpected character "
+                     "'{}' inside number. Value is #{}.",
                      line.number,
                      string::substr_distance(line.string, std::string_view{err.ptr, 1}) + 1,
                      *err.ptr, values_out.size())};
@@ -85,9 +86,9 @@ void parse_values(const string::line line, std::string_view str, values& values_
       }
    }
 
-   throw std::runtime_error{
-      fmt::format("Error on line #{} at column #{}! Expected ')' to close values list."sv,
-                  line.number, line.string.size())};
+   throw std::runtime_error{fmt::format(
+      "Error on line #{} at column #{}! Expected ')' to close values list.",
+      line.number, line.string.size())};
 }
 
 void parse_key_values(const string::line line, std::string& key_out, values& values_out)
@@ -98,7 +99,8 @@ void parse_key_values(const string::line line, std::string& key_out, values& val
 
    if (values.empty()) {
       throw std::runtime_error{
-         fmt::format("Error on line #{} at column #{}! Expected '(' to open values list for key '{}'."sv,
+         fmt::format("Error on line #{} at column #{}! Expected '(' to open "
+                     "values list for key '{}'.",
                      line.number, string::substr_distance(line.string, key) + 1, key)};
    }
 
@@ -155,18 +157,17 @@ auto parse_node_children(const string::lines_iterator line_iter, key_node& out)
          return child_iter;
       }
       else if (not std::isalnum(str.front())) {
-         throw std::runtime_error{
-            fmt::format("Error on line #{} at column #{}! Unexpected character '{}'."sv,
-                        child_line.number,
-                        string::substr_distance(child_line.string, str) + 1,
-                        str.front())};
+         throw std::runtime_error{fmt::format(
+            "Error on line #{} at column #{}! Unexpected character '{}'.",
+            child_line.number,
+            string::substr_distance(child_line.string, str) + 1, str.front())};
       }
 
       child_iter = parse_key_node(child_iter, out.emplace_back());
    }
 
-   throw std::runtime_error{fmt::format("Error! Expected '}}' to close '{{' on line #{}."sv,
-                                        child_line.number)};
+   throw std::runtime_error{
+      fmt::format("Error! Expected '}}' to close '{{' on line #{}.", child_line.number)};
 }
 
 }
@@ -185,10 +186,9 @@ auto read_config(std::string_view str) -> node
          continue;
       }
       else if (not std::isalnum(str.front())) {
-         throw std::runtime_error{
-            fmt::format("Error on line #{} at column #{}! Unexpected character '{}'."sv,
-                        line.number, string::substr_distance(line.string, str) + 1,
-                        str.front())};
+         throw std::runtime_error{fmt::format(
+            "Error on line #{} at column #{}! Unexpected character '{}'.", line.number,
+            string::substr_distance(line.string, str) + 1, str.front())};
       }
 
       line_iter = parse_key_node(line_iter, result.emplace_back());

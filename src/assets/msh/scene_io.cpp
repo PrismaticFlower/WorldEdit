@@ -10,7 +10,7 @@
 #include <numeric>
 #include <stdexcept>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #pragma warning(disable : 4063) // case is not a valid value for switch of enum
 

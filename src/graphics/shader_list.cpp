@@ -1,7 +1,7 @@
 
 #include "shader_list.hpp"
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 using namespace std::literals;
 

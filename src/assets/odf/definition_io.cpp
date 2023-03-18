@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 using namespace std::literals;
 

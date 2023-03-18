@@ -2,8 +2,9 @@
 #include "key_node.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 using namespace std::literals;
 
@@ -37,7 +38,7 @@ auto node::at(const std::string_view child_key) -> key_node&
    }
 
    throw std::runtime_error{
-      fmt::format("config node has no child key-node named {}"sv, child_key)};
+      fmt::format("config node has no child key-node named {}", child_key)};
 }
 
 auto node::at(const std::string_view child_key) const -> const key_node&
@@ -47,7 +48,7 @@ auto node::at(const std::string_view child_key) const -> const key_node&
    }
 
    throw std::runtime_error{
-      fmt::format("config node has no child key-node named {}"sv, child_key)};
+      fmt::format("config node has no child key-node named {}", child_key)};
 }
 
 auto node::find(const std::string_view child_key) noexcept -> iterator
@@ -81,8 +82,8 @@ auto key_node::at(const std::string_view child_key) -> key_node&
       return static_cast<node&>(*this).at(child_key);
    }
    catch (std::runtime_error&) {
-      throw std::runtime_error{fmt::format("config key-node {} has no child key-node named {}"sv,
-                                           key, child_key)};
+      throw std::runtime_error{
+         fmt::format("config key-node {} has no child key-node named {}", key, child_key)};
    }
 }
 
@@ -92,8 +93,8 @@ auto key_node::at(const std::string_view child_key) const -> const key_node&
       return static_cast<const node&>(*this).at(child_key);
    }
    catch (std::runtime_error&) {
-      throw std::runtime_error{fmt::format("config key-node {} has no child key-node named {}"sv,
-                                           key, child_key)};
+      throw std::runtime_error{
+         fmt::format("config key-node {} has no child key-node named {}", key, child_key)};
    }
 }
 
