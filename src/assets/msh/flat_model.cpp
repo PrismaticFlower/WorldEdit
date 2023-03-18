@@ -5,6 +5,7 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/enum_bitflags.hpp"
+#include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
@@ -13,7 +14,6 @@
 #include <stdexcept>
 #include <string_view>
 
-#include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
 #include <range/v3/algorithm.hpp>
@@ -50,7 +50,7 @@ auto build_node_to_object_transforms(const scene& scene) -> std::vector<float4x4
          }
          else {
             throw std::runtime_error{
-               fmt::format("Unable to find parent node '{}' in .msh scene!"sv, parent)};
+               fmt::format("Unable to find parent node '{}' in .msh scene!", parent)};
          }
       };
 
@@ -77,14 +77,14 @@ bool is_mesh_node(const node& node) noexcept
    if (node.name.starts_with("sv_"sv)) return false;
    if (node.name.starts_with("shadowvolume"sv)) return false;
    if (node.name.starts_with("p_"sv)) return false;
-   if (boost::istarts_with(node.name, "collision"sv)) return false;
-   if (boost::istarts_with(node.name, "terraincutter"sv)) return false;
+   if (string::istarts_with(node.name, "collision"sv)) return false;
+   if (string::istarts_with(node.name, "terraincutter"sv)) return false;
 
    // TODO: LOD Support
-   if (boost::iends_with(node.name, "lod2"sv)) return false;
-   if (boost::iends_with(node.name, "lod3"sv)) return false;
-   if (boost::iends_with(node.name, "lowres"sv)) return false;
-   if (boost::iends_with(node.name, "lowrez"sv)) return false;
+   if (string::iends_with(node.name, "lod2"sv)) return false;
+   if (string::iends_with(node.name, "lod3"sv)) return false;
+   if (string::iends_with(node.name, "lowres"sv)) return false;
+   if (string::iends_with(node.name, "lowrez"sv)) return false;
 
    return true;
 }
@@ -92,7 +92,7 @@ bool is_mesh_node(const node& node) noexcept
 bool is_collision_node(const node& node) noexcept
 {
    if (node.name.starts_with("p_"sv)) return true;
-   if (boost::istarts_with(node.name, "collision"sv)) return true;
+   if (string::istarts_with(node.name, "collision"sv)) return true;
 
    return false;
 }
@@ -143,7 +143,7 @@ void patch_materials_with_options(std::vector<mesh>& meshes, const options& opts
 {
    for (auto& mesh : meshes) {
       for (auto& normal_map : opts.normal_maps) {
-         if (boost::iequals(mesh.material.textures[0], normal_map)) {
+         if (string::iequals(mesh.material.textures[0], normal_map)) {
             mesh.material.textures[1] = mesh.material.textures[0] + "_bump";
             mesh.material.flags |= material_flags::perpixel;
          }

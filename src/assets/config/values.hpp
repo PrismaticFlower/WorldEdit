@@ -5,12 +5,12 @@
 #include <type_traits>
 #include <variant>
 
-#include <boost/container/small_vector.hpp>
+#include <absl/container/inlined_vector.h>
 
 namespace we::assets::config {
 
 using values_container_type =
-   boost::container::small_vector<std::variant<int, long long, double, std::string>, 4>;
+   absl::InlinedVector<std::variant<int, long long, double, std::string>, 4>;
 
 class values : values_container_type {
 public:

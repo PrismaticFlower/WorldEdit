@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/container/static_vector.hpp>
+#include <absl/container/inlined_vector.h>
 
 namespace we::graphics {
 
@@ -60,8 +60,7 @@ struct shader_define {
    bool operator==(const shader_define&) const noexcept = default;
 };
 
-using shader_defines =
-   boost::container::static_vector<shader_define, max_shader_defines>;
+using shader_defines = absl::InlinedVector<shader_define, max_shader_defines>;
 
 struct shader_description {
    std::string name;

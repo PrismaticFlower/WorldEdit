@@ -13,7 +13,7 @@
 #include <span>
 #include <vector>
 
-#include <boost/container/small_vector.hpp>
+#include <absl/container/inlined_vector.h>
 
 namespace we::graphics {
 
@@ -61,7 +61,7 @@ struct model {
    mesh_data_offsets data_offsets;
    mesh_gpu_buffer gpu_buffer;
 
-   boost::container::small_vector<mesh_part, 8> parts;
+   absl::InlinedVector<mesh_part, 8> parts;
 
 private:
    void init_gpu_buffer_async(gpu::device& device,

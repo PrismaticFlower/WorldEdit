@@ -15,8 +15,6 @@
       "default-features": false
     },
 
-    "boost-algorithm",
-    "boost-container",
     "directxtex",
     "fmt",
     "ms-gsl",

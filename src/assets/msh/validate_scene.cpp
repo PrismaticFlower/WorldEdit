@@ -4,7 +4,7 @@
 #include <iterator>
 #include <string_view>
 
-#include <boost/container/small_vector.hpp>
+#include <absl/container/inlined_vector.h>
 #include <fmt/format.h>
 #include <range/v3/algorithm.hpp>
 #include <range/v3/view.hpp>
@@ -71,7 +71,7 @@ void check_node_parents_noncircular(const scene& scene)
    for (const auto& node : scene.nodes) {
       if (not node.parent) continue;
 
-      boost::container::small_vector<const msh::node*, 64> traversed_nodes = {&node};
+      absl::InlinedVector<const msh::node*, 64> traversed_nodes = {&node};
 
       for (auto it = ranges::find_if(scene.nodes,
                                      [&](const msh::node& other) {

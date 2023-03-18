@@ -21,4 +21,13 @@ TEST_CASE("string istarts_with test", "[Utility][StopWatch]")
                             "How are you? A really long string. Isn't that fun?"sv));
 }
 
+TEST_CASE("string iends_with test", "[Utility][StopWatch]")
+{
+   REQUIRE(iends_with("How are you?"sv, "How are YOU?"sv));
+   REQUIRE(iends_with("How are you?"sv, "YOU?"sv));
+   REQUIRE(not iends_with("How are you?"sv, "you!"sv));
+   REQUIRE(not iends_with("How are you?"sv,
+                          "How are you? A really long string. Isn't that fun?"sv));
+}
+
 }

@@ -12,9 +12,9 @@ using namespace string;
 namespace {
 
 auto parse_arguments(std::string_view str)
-   -> std::pair<std::string_view, boost::container::small_vector<std::string, 8>>
+   -> std::pair<std::string_view, absl::InlinedVector<std::string, 8>>
 {
-   boost::container::small_vector<std::string, 8> arguments;
+   absl::InlinedVector<std::string, 8> arguments;
 
    while (not str.empty() and str.front() != '-') {
       str = trim_leading_whitespace(str);

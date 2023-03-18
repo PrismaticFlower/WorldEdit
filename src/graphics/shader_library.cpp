@@ -13,9 +13,7 @@
 #include <iostream>
 #include <shared_mutex>
 
-#include <boost/container/small_vector.hpp>
-#include <boost/functional/hash.hpp>
-
+#include <absl/container/inlined_vector.h>
 #include <range/v3/algorithm.hpp>
 
 #include <D3DCommon.h>
@@ -67,9 +65,9 @@ auto get_target(const shader_description& desc) noexcept -> std::wstring
 }
 
 auto get_shader_defines(const shader_description& desc)
-   -> boost::container::static_vector<std::wstring, max_shader_defines>
+   -> absl::InlinedVector<std::wstring, max_shader_defines>
 {
-   boost::container::static_vector<std::wstring, max_shader_defines> macros;
+   absl::InlinedVector<std::wstring, max_shader_defines> macros;
 
    macros.resize(desc.defines.size());
 
@@ -114,7 +112,7 @@ auto compile(const shader_description& desc) -> std::vector<std::byte>
       L"-Qstrip_reflect",
    };
 
-   boost::container::small_vector<const wchar_t*, 64> compile_args;
+   absl::InlinedVector<const wchar_t*, 64> compile_args;
    compile_args.reserve(static_compile_args.size() + shader_defines.size() * 2);
 
    compile_args.insert(compile_args.begin(), static_compile_args.begin(),

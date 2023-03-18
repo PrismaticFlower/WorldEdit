@@ -18,4 +18,10 @@ bool iequals(const std::string_view left, const std::string_view right) noexcept
 /// @return If left starts with right.
 bool istarts_with(const std::string_view left, const std::string_view right) noexcept;
 
+/// @brief Check if left end with right, ignoring simple casing.
+/// @param left The left string to check.
+/// @param right The right string to check.
+/// @return If left ends with right.
+bool iends_with(const std::string_view left, const std::string_view right) noexcept;
+
 }

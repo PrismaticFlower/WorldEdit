@@ -42,4 +42,11 @@ bool istarts_with(const std::string_view left, const std::string_view right) noe
    return iequals(left.substr(0, right.size()), right);
 }
 
+bool iends_with(const std::string_view left, const std::string_view right) noexcept
+{
+   if (left.size() < right.size()) return false;
+
+   return iequals(left.substr(left.size() - right.size(), right.size()), right);
+}
+
 }

@@ -4,12 +4,12 @@
 #include "io/read_file.hpp"
 #include "ucfb/reader.hpp"
 #include "utility/srgb_conversion.hpp"
+#include "utility/string_icompare.hpp"
 #include "validate_scene.hpp"
 
 #include <numeric>
 #include <stdexcept>
 
-#include <boost/algorithm/string.hpp>
 #include <fmt/format.h>
 
 #pragma warning(disable : 4063) // case is not a valid value for switch of enum
@@ -320,7 +320,7 @@ auto read_matl(ucfb::reader_strict<"MATL"_id> matl) -> std::vector<material>
       if (!matl) {
          throw std::runtime_error{fmt::format(
             ".msh file material list (MATL) ended after {} materials but the "
-            "declared count was {}."sv,
+            "declared count was {}.",
             i, count)};
       }
 
@@ -394,12 +394,10 @@ auto read_scene_options(const std::filesystem::path& path) -> options
    options results;
 
    for (auto& opt : parse_options(io::read_file_to_string(path))) {
-      using boost::iequals;
-
-      if (iequals(opt.name, "-bump"sv)) {
+      if (string::iequals(opt.name, "-bump"sv)) {
          results.normal_maps.assign(opt.arguments.begin(), opt.arguments.end());
       }
-      else if (iequals(opt.name, "-additiveemissive"sv)) {
+      else if (string::iequals(opt.name, "-additiveemissive"sv)) {
          results.additive_emissive = true;
       }
    }

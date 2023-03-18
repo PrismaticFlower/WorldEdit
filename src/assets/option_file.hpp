@@ -4,13 +4,13 @@
 #include <string_view>
 #include <vector>
 
-#include <boost/container/small_vector.hpp>
+#include <absl/container/inlined_vector.h>
 
 namespace we::assets {
 
 struct option {
    std::string name;
-   boost::container::small_vector<std::string, 8> arguments;
+   absl::InlinedVector<std::string, 8> arguments;
 };
 
 using options = std::vector<option>;

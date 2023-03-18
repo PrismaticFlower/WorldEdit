@@ -3,13 +3,13 @@
 #include "../option_file.hpp"
 #include "io/read_file.hpp"
 #include "texture_transforms.hpp"
+#include "utility/string_icompare.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
 
 #include <DirectXTex.h>
-#include <boost/algorithm/string.hpp>
 
 #include <range/v3/view.hpp>
 
@@ -34,7 +34,7 @@ auto load_options(std::filesystem::path path) -> texture_options
    texture_options opts;
 
    for (auto& opt : parse_options(io::read_file_to_string(path))) {
-      using boost::iequals;
+      using string::iequals;
 
       if (iequals(opt.name, "-format"sv) or iequals(opt.name, "-forceformat"sv)) {
          if (opt.arguments.empty()) continue;

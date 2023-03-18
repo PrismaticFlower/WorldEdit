@@ -12,7 +12,7 @@
 #include <tuple>
 #include <type_traits>
 
-#include <boost/container/small_vector.hpp>
+#include <absl/container/inlined_vector.h>
 #include <fmt/format.h>
 
 namespace we::ucfb {
@@ -184,36 +184,34 @@ public:
 
    auto trace() const noexcept -> std::string
    {
-      using namespace std::literals;
-
       std::string str;
 
       for (auto level : _trace_stack) {
-         str += fmt::format("{} at offset {}\n"sv, to_string(level.id), level.offset);
+         str += fmt::format("{} at offset {}\n", to_string(level.id), level.offset);
       }
 
-      str += fmt::format("   Read head of {} is {}\n"sv, to_string(_id), _head);
+      str += fmt::format("   Read head of {} is {}\n", to_string(_id), _head);
 
       if ((_head + 8) < _size) {
          str += fmt::format("   Bytes at read head: {:02x}",
                             fmt::join(std::span{reinterpret_cast<const unsigned char*>(
                                                    _data + _head),
                                                 8},
-                                      " "sv));
+                                      " "));
       }
       else if ((_head - 8) < _size) {
          str += fmt::format("   Bytes preceding read head: {:02x}",
                             fmt::join(std::span{reinterpret_cast<const unsigned char*>(
                                                    _data + _head - 8),
                                                 8},
-                                      " "sv));
+                                      " "));
       }
       else {
          str +=
             fmt::format("   Bytes in {}: {:02x}", to_string(_id),
                         fmt::join(std::span{reinterpret_cast<const unsigned char*>(_data),
                                             _size},
-                                  " "sv));
+                                  " "));
       }
 
       return str;
@@ -225,7 +223,7 @@ private:
       std::size_t offset;
    };
 
-   using trace_stack = boost::container::small_vector<trace_entry, 8>;
+   using trace_stack = absl::InlinedVector<trace_entry, 8>;
 
    reader(const chunk_id id, const std::uint32_t size, const std::byte* const data,
           const std::size_t abs_offset, trace_stack trace_stack)
@@ -246,7 +244,7 @@ private:
 
          throw std::runtime_error{fmt::format(
             "Chunk ID mistmatch when performing strict read of child chunk. "
-            "Read chunk ID is {} expected was {}. Chunk Trace Stack: \n{}"sv,
+            "Read chunk ID is {} expected was {}. Chunk Trace Stack: \n{}",
             to_string(child.id()), to_string(child_id), string::indent(1, trace()))};
       }
 
@@ -266,7 +264,8 @@ private:
 
       if (_head > _size) {
          throw std::runtime_error{
-            fmt::format("Attempt to read {} bytes past end of chunk {}. Chunk Trace Stack: \n{}"sv,
+            fmt::format("Attempt to read {} bytes past end of chunk {}. Chunk "
+                        "Trace Stack: \n{}",
                         _head - _size, to_string(id()), string::indent(1, trace()))};
       }
    }
