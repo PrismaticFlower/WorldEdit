@@ -306,7 +306,7 @@ bool EditFlags(const char* label, unsigned int* value, std::span<const ExtEditFl
 
    ImGui::BeginGroup();
 
-   ImGui::TextUnformatted(label);
+   ImGui::SeparatorText(label);
 
    for (const auto& flag : flags) {
       if (ImGui::Selectable(flag.label, *value & flag.bit, 0, {item_width, 0.0f})) {

@@ -1475,7 +1475,6 @@ void world_edit::update_ui() noexcept
                }
 
                if (hintnode_traits.has_primary_stance) {
-                  ImGui::Separator();
                   ImGui::EditFlags("Primary Stance", hintnode,
                                    &world::hintnode::primary_stance,
                                    &_edit_stack_world, &_edit_context,
@@ -1485,7 +1484,6 @@ void world_edit::update_ui() noexcept
                }
 
                if (hintnode_traits.has_secondary_stance) {
-                  ImGui::Separator();
                   ImGui::EditFlags("Secondary Stance", hintnode,
                                    &world::hintnode::secondary_stance,
                                    &_edit_stack_world, &_edit_context,
@@ -1537,8 +1535,6 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat2XZ("Size", barrier, &world::barrier::size,
                                    &_edit_stack_world, &_edit_context, 1.0f,
                                    0.0f, 1e10f);
-
-               ImGui::Separator();
 
                ImGui::EditFlags("Flags", barrier, &world::barrier::flags,
                                 &_edit_stack_world, &_edit_context,
@@ -1598,8 +1594,6 @@ void world_edit::update_ui() noexcept
                   _world
                      .planning_hubs[_world.planning_hub_index.at(connection->end)]
                      .name.c_str());
-
-               ImGui::Separator();
 
                ImGui::EditFlags("Flags", connection, &world::planning_connection::flags,
                                 &_edit_stack_world, &_edit_context,
@@ -1776,9 +1770,6 @@ void world_edit::update_ui() noexcept
       const placement_traits traits = std::visit(
          overload{
             [&](const world::object& object) {
-               ImGui::Text("Object");
-               ImGui::Separator();
-
                ImGui::InputText("Name", &creation_entity, &world::object::name,
                                 &_edit_stack_world, &_edit_context,
                                 [&](std::string* edited_value) {
@@ -3527,7 +3518,6 @@ void world_edit::update_ui() noexcept
                }
 
                if (hintnode_traits.has_primary_stance) {
-                  ImGui::Separator();
                   ImGui::EditFlags("Primary Stance", &creation_entity,
                                    &world::hintnode::primary_stance,
                                    &_edit_stack_world, &_edit_context,
@@ -3537,7 +3527,6 @@ void world_edit::update_ui() noexcept
                }
 
                if (hintnode_traits.has_secondary_stance) {
-                  ImGui::Separator();
                   ImGui::EditFlags("Secondary Stance", &creation_entity,
                                    &world::hintnode::secondary_stance,
                                    &_edit_stack_world, &_edit_context,
@@ -3868,8 +3857,6 @@ void world_edit::update_ui() noexcept
                   _entity_creation_context.from_line_start = std::nullopt;
                }
 
-               ImGui::Separator();
-
                ImGui::EditFlags("Flags", &creation_entity, &world::barrier::flags,
                                 &_edit_stack_world, &_edit_context,
                                 {{"Soldier", world::ai_path_flags::soldier},
@@ -4006,8 +3993,6 @@ void world_edit::update_ui() noexcept
                                                            end_id, connection.end),
                             _edit_context);
                }
-
-               ImGui::Separator();
 
                ImGui::EditFlags("Flags", &creation_entity,
                                 &world::planning_connection::flags,
@@ -4182,9 +4167,7 @@ void world_edit::update_ui() noexcept
          creation_entity);
 
       if (traits.has_placement_rotation) {
-         ImGui::Separator();
-
-         ImGui::Text("Rotation");
+         ImGui::SeparatorText("Rotation");
 
          ImGui::BeginTable("Rotation", 3,
                            ImGuiTableFlags_NoSavedSettings |
@@ -4223,9 +4206,7 @@ void world_edit::update_ui() noexcept
       }
 
       if (traits.has_placement_mode) {
-         ImGui::Separator();
-
-         ImGui::Text("Placement");
+         ImGui::SeparatorText("Placement");
 
          ImGui::BeginTable("Placement", 2,
                            ImGuiTableFlags_NoSavedSettings |
@@ -4248,9 +4229,7 @@ void world_edit::update_ui() noexcept
 
       if (_entity_creation_config.placement_mode == placement_mode::cursor) {
          if (traits.has_lock_axis) {
-            ImGui::Separator();
-
-            ImGui::Text("Locked Position");
+            ImGui::SeparatorText("Locked Position");
 
             ImGui::BeginTable("Locked Position", 3,
                               ImGuiTableFlags_NoSavedSettings |
@@ -4267,9 +4246,7 @@ void world_edit::update_ui() noexcept
          }
 
          if (traits.has_placement_alignment) {
-            ImGui::Separator();
-
-            ImGui::Text("Align To");
+            ImGui::SeparatorText("Align To");
 
             ImGui::BeginTable("Align To", 3,
                               ImGuiTableFlags_NoSavedSettings |
@@ -4294,12 +4271,23 @@ void world_edit::update_ui() noexcept
                   placement_alignment::snapping;
             }
             ImGui::EndTable();
+
+            if (_entity_creation_config.placement_alignment ==
+                placement_alignment::grid) {
+               ImGui::DragFloat("Alignment Grid Size",
+                                &_entity_creation_config.alignment, 1.0f, 1.0f,
+                                1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            else if (_entity_creation_config.placement_alignment ==
+                     placement_alignment::snapping) {
+               ImGui::DragFloat("Snap Distance",
+                                &_entity_creation_config.snap_distance, 0.1f, 0.0f,
+                                1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            }
          }
 
          if (traits.has_placement_ground) {
-            ImGui::Separator();
-
-            ImGui::Text("Ground With");
+            ImGui::SeparatorText("Ground With");
 
             ImGui::BeginTable("Ground With", 2,
                               ImGuiTableFlags_NoSavedSettings |
@@ -4321,9 +4309,7 @@ void world_edit::update_ui() noexcept
          }
 
          if (traits.has_node_placement_insert) {
-            ImGui::Separator();
-
-            ImGui::Text("Node Insertion");
+            ImGui::SeparatorText("Node Insertion");
 
             ImGui::BeginTable("Node Insertion", 2,
                               ImGuiTableFlags_NoSavedSettings |
@@ -4344,20 +4330,6 @@ void world_edit::update_ui() noexcept
             }
 
             ImGui::EndTable();
-         }
-
-         if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
-            ImGui::Separator();
-            ImGui::DragFloat("Alignment Grid Size",
-                             &_entity_creation_config.alignment, 1.0f, 1.0f,
-                             1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-         }
-         else if (_entity_creation_config.placement_alignment ==
-                  placement_alignment::snapping) {
-            ImGui::Separator();
-            ImGui::DragFloat("Snap Distance",
-                             &_entity_creation_config.snap_distance, 0.1f, 0.0f,
-                             1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
          }
       }
 
