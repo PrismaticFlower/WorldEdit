@@ -158,6 +158,9 @@ private:
    bool _rotate_camera = false;
    bool _hotkeys_show = false;
 
+   bool _imgui_demo_open = false;
+   bool _hotkeys_editor_open = false;
+
    POINT _rotate_camera_cursor_position = {0, 0};
 
    struct last_created_entities {

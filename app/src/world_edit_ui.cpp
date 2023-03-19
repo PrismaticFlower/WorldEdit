@@ -74,7 +74,11 @@ void world_edit::update_ui() noexcept
 {
    ImGui_ImplWin32_NewFrame();
    ImGui::NewFrame();
-   ImGui::ShowDemoWindow(nullptr);
+
+   if (_imgui_demo_open) ImGui::ShowDemoWindow(&_imgui_demo_open);
+   if (_hotkeys_editor_open) {
+      _hotkeys.show_imgui(_hotkeys_editor_open, _display_scale);
+   }
 
    _tool_visualizers.clear();
 
@@ -423,6 +427,13 @@ void world_edit::update_ui() noexcept
          ImGui::EndMenu();
       }
 
+      if (ImGui::BeginMenu("Settings")) {
+         ImGui::MenuItem("Hotkeys Editor", nullptr, &_hotkeys_editor_open);
+         ImGui::MenuItem("Show ImGui Demo", nullptr, &_imgui_demo_open);
+
+         ImGui::EndMenu();
+      }
+
       if (ImGui::BeginMenu("Developer")) {
          if (ImGui::MenuItem("Reload Shaders")) {
             try {
@@ -433,7 +444,7 @@ void world_edit::update_ui() noexcept
             }
          }
 
-         ImGui::Selectable("Show GPU Profiler", &_settings.graphics.show_profiler);
+         ImGui::MenuItem("Show GPU Profiler", nullptr, &_settings.graphics.show_profiler);
 
          ImGui::EndMenu();
       }

@@ -1,6 +1,10 @@
 
 #include "hotkeys.hpp"
+#include "imgui/imgui.h"
+#include "utility/overload.hpp"
 #include "utility/string_ops.hpp"
+
+#include <algorithm>
 
 namespace we {
 
@@ -88,6 +92,10 @@ void hotkeys::update(const bool imgui_has_mouse, const bool imgui_has_keyboard) 
    for (const auto& event : _key_events) {
       process_new_key_state(event.key, event.new_state, imgui_has_mouse,
                             imgui_has_keyboard);
+   }
+
+   if (_user_inputting_new_binding and not _key_events.empty()) {
+      _user_editing_last_key_event = _key_events.back();
    }
 
    _key_events.clear();
@@ -272,6 +280,147 @@ void hotkeys::try_execute_command(const std::string_view command) const noexcept
       _error_output_stream
          .write("Failed to execute command '{}'\n   Error: {}\n", command, e.what());
    }
+}
+
+void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
+{
+   ImGui::SetNextWindowSize({960.0f * display_scale, 540.0f * display_scale},
+                            ImGuiCond_Once);
+
+   if (ImGui::Begin("Hotkeys Editor", &window_open)) {
+      for (int set_index = 0; set_index < std::ssize(_hotkey_sets); ++set_index) {
+         hotkey_set& set = _hotkey_sets[set_index];
+
+         if (not ImGui::CollapsingHeader(set.name.c_str())) {
+            continue;
+         }
+
+         ImGui::PushID(set_index);
+         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0.0f, 0.0f});
+
+         fill_sorted_info(set, _sorted_hotkey_set);
+
+         for (int bind_index = 0; bind_index < std::ssize(_sorted_hotkey_set);
+              ++bind_index) {
+            ImGui::PushID(bind_index);
+
+            std::visit(overload{[&](const std::pair<const hotkey_bind, hotkey>* hotkey_bind_hotkey) {
+                                   const auto& [hotkey_bind, hotkey] =
+                                      *hotkey_bind_hotkey;
+
+                                   ImGui::LabelText("", hotkey.command.c_str());
+                                   ImGui::SameLine();
+
+                                   if (ImGui::Selectable(get_display_string(hotkey_bind))) {
+                                      _user_inputting_new_binding = true;
+                                      _user_editing_bind_set = set_index;
+                                      _user_editing_bind = hotkey_bind;
+                                      _user_editing_hotkey = hotkey;
+                                   }
+                                },
+                                [&](const hotkey* hotkey) {
+                                   ImGui::LabelText("", hotkey->command.c_str());
+                                   ImGui::SameLine();
+
+                                   if (ImGui::Selectable("<unbound>")) {
+                                      _user_inputting_new_binding = true;
+                                      _user_editing_bind_set = set_index;
+                                      _user_editing_bind = std::nullopt;
+                                      _user_editing_hotkey = *hotkey;
+                                   }
+                                }},
+                       _sorted_hotkey_set[bind_index]);
+            ImGui::PopID();
+         }
+
+         ImGui::PopStyleVar();
+         ImGui::PopID();
+      }
+   }
+
+   ImGui::End();
+
+   if (_user_inputting_new_binding) {
+      ImGui::OpenPopup("Press New Binding##Hotkeys");
+   }
+
+   if (ImGui::BeginPopupModal("Press New Binding##Hotkeys", &_user_inputting_new_binding,
+                              ImGuiWindowFlags_AlwaysAutoResize)) {
+      ImGui::Text("Press Escape to cancel and go back.");
+
+      const std::optional<key_event> last_key_event =
+         std::exchange(_user_editing_last_key_event, std::nullopt);
+
+      if (last_key_event) {
+         if (last_key_event->key == key::escape and
+             last_key_event->new_state == key_state::up) {
+            _user_inputting_new_binding = false;
+         }
+
+         if (last_key_event->new_state == key_state::up and
+             last_key_event->key != key::ctrl and last_key_event->key != key::shift) {
+            hotkey_set& set = _hotkey_sets[_user_editing_bind_set];
+
+            if (_user_editing_bind) {
+               set.bindings.erase(*_user_editing_bind);
+            }
+
+            const hotkey_bind new_bind{.key = last_key_event->key,
+                                       .modifiers = {.ctrl = is_key_down(key::ctrl),
+                                                     .shift = is_key_down(key::shift)}};
+
+            if (set.bindings.contains(new_bind)) {
+               set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
+            }
+
+            set.bindings[new_bind] = _user_editing_hotkey;
+            set.query_bindings[_user_editing_hotkey.command] = new_bind;
+
+            std::erase_if(set.unbound_hotkeys, [&](const hotkey& hotkey) {
+               return hotkey == _user_editing_hotkey;
+            });
+
+            _user_inputting_new_binding = false;
+         }
+      }
+
+      ImGui::EndPopup();
+   }
+
+   if (not window_open) {
+      _user_inputting_new_binding = false;
+   }
+}
+
+void hotkeys::fill_sorted_info(const hotkey_set& set,
+                               std::vector<sorted_hotkey_variant>& sorted_hotkey_set)
+{
+   sorted_hotkey_set.clear();
+   sorted_hotkey_set.reserve(set.bindings.size());
+
+   for (const auto& bind_hotkey : set.bindings) {
+      sorted_hotkey_set.emplace_back(&bind_hotkey);
+   }
+
+   for (const auto& unbound : set.unbound_hotkeys) {
+      sorted_hotkey_set.emplace_back(&unbound);
+   }
+
+   std::sort(sorted_hotkey_set.begin(), sorted_hotkey_set.end(),
+             [](const sorted_hotkey_variant& left, const sorted_hotkey_variant& right) {
+                const std::string& left_command =
+                   std::holds_alternative<const std::pair<const hotkey_bind, hotkey>*>(left)
+                      ? std::get<const std::pair<const hotkey_bind, hotkey>*>(left)
+                           ->second.command
+                      : std::get<const hotkey*>(left)->command;
+                const std::string& right_command =
+                   std::holds_alternative<const std::pair<const hotkey_bind, hotkey>*>(right)
+                      ? std::get<const std::pair<const hotkey_bind, hotkey>*>(right)
+                           ->second.command
+                      : std::get<const hotkey*>(right)->command;
+
+                return left_command < right_command;
+             });
 }
 
 auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*

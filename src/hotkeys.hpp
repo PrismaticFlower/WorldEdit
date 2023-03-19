@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <optional>
 #include <string_view>
+#include <variant>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
@@ -84,6 +85,10 @@ struct hotkeys {
 
       -> std::optional<hotkey_bind>;
 
+   /// @brief Show an ImGui window for editing bindings.
+   /// @param window_open If the ImGui window is still open or not.
+   void show_imgui(bool& window_open, const float display_scale) noexcept;
+
 private:
    enum class key_state : bool { up, down };
 
@@ -118,6 +123,8 @@ private:
       bool toggle = false;
       bool toggle_active = false;
       bool ignore_imgui_focus = false;
+
+      bool operator==(const hotkey&) const noexcept = default;
    };
 
    struct hotkey_set {
@@ -125,6 +132,7 @@ private:
       std::function<bool()> activated_predicate;
       absl::flat_hash_map<hotkey_bind, hotkey> bindings;
       absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
+      std::vector<hotkey> unbound_hotkeys;
    };
 
    std::vector<hotkey_set> _hotkey_sets;
@@ -146,10 +154,21 @@ private:
 
    absl::flat_hash_set<active_toggle> _active_toggles;
 
-   key_state _shift_state = key_state::up;
-   key_state _ctrl_state = key_state::up;
+   bool _user_inputting_new_binding = false;
+   std::optional<key_event> _user_editing_last_key_event;
+   std::ptrdiff_t _user_editing_bind_set = 0;
+   std::optional<hotkey_bind> _user_editing_bind;
+   hotkey _user_editing_hotkey;
 
    container::enum_array<key_state, key> _keys{};
+
+   using sorted_hotkey_variant =
+      std::variant<const std::pair<const hotkey_bind, hotkey>*, const hotkey*>;
+
+   std::vector<sorted_hotkey_variant> _sorted_hotkey_set;
+
+   static void fill_sorted_info(const hotkey_set& set,
+                                std::vector<sorted_hotkey_variant>& sorted_hotkey_set);
 };
 
 auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*;
