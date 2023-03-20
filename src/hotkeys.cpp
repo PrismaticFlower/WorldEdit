@@ -39,6 +39,8 @@ hotkeys::hotkeys(commands& commands, output_stream& error_output_stream) noexcep
 {
    _hotkey_sets.reserve(16);
    _key_events.reserve(256);
+
+   _saved_bindings = load_bindings(save_path);
 }
 
 void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
@@ -47,10 +49,12 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
    absl::flat_hash_set<std::string> hotkey_set;
    absl::flat_hash_map<hotkey_bind, hotkey> bindings;
    absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
+   std::vector<hotkey> unbound_hotkeys;
 
    hotkey_set.reserve(default_hotkeys.size());
    bindings.reserve(default_hotkeys.size());
    query_bindings.reserve(default_hotkeys.size());
+   unbound_hotkeys.reserve(default_hotkeys.size());
 
    for (auto& default_hotkey : default_hotkeys) {
       validate_command(default_hotkey.command);
@@ -59,21 +63,35 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
          std::terminate(); // Duplicate hotkey name!
       }
 
-      const hotkey_bind binding =
-         _saved_bindings[set_name].contains(default_hotkey.name)
-            ? _saved_bindings[set_name].at(default_hotkey.name)
-            : default_hotkey.binding;
+      const bool has_saved_binding =
+         _saved_bindings[set_name].contains(default_hotkey.name);
 
-      bindings.emplace(binding,
-                       hotkey{.command = std::string{default_hotkey.command},
-                              .toggle = default_hotkey.bind_config.toggle,
-                              .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
-                              .name = std::string{default_hotkey.name}});
-      query_bindings.emplace(default_hotkey.command, binding);
+      const hotkey_bind binding =
+         has_saved_binding ? _saved_bindings[set_name].at(default_hotkey.name)
+                           : default_hotkey.binding;
+
+      if (has_saved_binding and bindings.contains(binding)) {
+         unbound_hotkeys.push_back(bindings.at(binding));
+      }
+      else if (not bindings.contains(binding)) {
+         bindings[binding] =
+            hotkey{.command = std::string{default_hotkey.command},
+                   .toggle = default_hotkey.bind_config.toggle,
+                   .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
+                   .name = std::string{default_hotkey.name}};
+         query_bindings[default_hotkey.command] = binding;
+      }
+      else {
+         unbound_hotkeys.push_back(
+            hotkey{.command = std::string{default_hotkey.command},
+                   .toggle = default_hotkey.bind_config.toggle,
+                   .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
+                   .name = std::string{default_hotkey.name}});
+      }
    }
 
-   _hotkey_sets.emplace_back(set_name, std::move(activated),
-                             std::move(bindings), std::move(query_bindings));
+   _hotkey_sets.emplace_back(set_name, std::move(activated), std::move(bindings),
+                             std::move(query_bindings), std::move(unbound_hotkeys));
 }
 
 void hotkeys::notify_key_down(const key key) noexcept
@@ -453,5 +471,4 @@ auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*
    return get_display_string(binding->key, binding->modifiers.ctrl,
                              binding->modifiers.shift);
 }
-
 }

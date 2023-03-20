@@ -1,5 +1,8 @@
 #include "key.hpp"
 #include "container/enum_array.hpp"
+#include "lowercase_string.hpp"
+#include "utility/string_icompare.hpp"
+#include "utility/string_ops.hpp"
 
 #include <Windows.h>
 
@@ -562,6 +565,66 @@ auto get_display_string(const key key, const bool ctrl, const bool shift) -> con
    if (ctrl) return ctrl_key_display_names[key];
 
    return key_display_names[key];
+}
+
+bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
+                          bool& out_shift)
+{
+   string = string::trim_whitespace(string);
+
+   constexpr std::underlying_type_t<key> first = std::to_underlying(key::tab);
+   constexpr std::underlying_type_t<key> count = std::to_underlying(key::count);
+
+   if (string::istarts_with(string, "Ctrl + Shift +")) {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(ctrl_shift_key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = true;
+            out_shift = true;
+
+            return true;
+         }
+      }
+   }
+   else if (string::istarts_with(string, "Shift +")) {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(shift_key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = false;
+            out_shift = true;
+
+            return true;
+         }
+      }
+   }
+   else if (string::istarts_with(string, "Ctrl +")) {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(ctrl_key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = true;
+            out_shift = false;
+
+            return true;
+         }
+      }
+   }
+   else {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = false;
+            out_shift = false;
+
+            return true;
+         }
+      }
+   }
+
+   return false;
 }
 
 }

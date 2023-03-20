@@ -181,6 +181,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="key_tests.cpp" />
     <ClCompile Include="src\allocators\aligned_allocator_tests.cpp" />
     <ClCompile Include="src\assets\asset_ref_tests.cpp" />
     <ClCompile Include="src\assets\config\io_tests.cpp" />
