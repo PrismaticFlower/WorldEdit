@@ -46,6 +46,7 @@ struct hotkey_bind_config {
 };
 
 struct hotkey_default {
+   std::string_view name;
    std::string_view command;
    hotkey_bind binding;
    hotkey_bind_config bind_config;
@@ -123,6 +124,8 @@ private:
       bool toggle = false;
       bool toggle_active = false;
       bool ignore_imgui_focus = false;
+
+      std::string name;
 
       bool operator==(const hotkey&) const noexcept = default;
    };

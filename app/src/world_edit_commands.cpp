@@ -129,59 +129,67 @@ void world_edit::initialize_commands() noexcept
 
 void world_edit::initialize_hotkeys() noexcept
 {
-   _hotkeys.add_set("", [] { return true; },
-                    {{"camera.move_forward", {.key = key::w}, {.toggle = true}},
-                     {"camera.move_back", {.key = key::s}, {.toggle = true}},
-                     {"camera.move_left", {.key = key::a}, {.toggle = true}},
-                     {"camera.move_right", {.key = key::d}, {.toggle = true}},
-                     {"camera.move_up", {.key = key::r}, {.toggle = true}},
-                     {"camera.move_down", {.key = key::f}, {.toggle = true}},
-                     {"camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
+   _hotkeys.add_set(
+      "", [] { return true; },
+      {
+         {"Move Forward", "camera.move_forward", {.key = key::w}, {.toggle = true}},
+         {"Move Back", "camera.move_back", {.key = key::s}, {.toggle = true}},
+         {"Move Left", "camera.move_left", {.key = key::a}, {.toggle = true}},
+         {"Move Right", "camera.move_right", {.key = key::d}, {.toggle = true}},
+         {"Move Up", "camera.move_up", {.key = key::r}, {.toggle = true}},
+         {"Move Down", "camera.move_down", {.key = key::f}, {.toggle = true}},
+         {"Rotate Camera", "camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
 
-                     {"edit.select", {.key = key::mouse1}},
-                     {"edit.deselect", {.key = key::escape}},
+         {"Select", "edit.select", {.key = key::mouse1}},
+         {"Deselect", "edit.deselect", {.key = key::escape}},
 
-                     {"edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
-                     {"edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
-                     {"edit.delete", {.key = key::del}},
+         {"Undo", "edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
+         {"Redo", "edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
+         {"Delete", "edit.delete", {.key = key::del}},
 
-                     {"hotkeys.show", {.key = key::f1}},
+         {"Show Hotkeys", "hotkeys.show", {.key = key::f1}},
 
-                     {"save",
-                      {.key = key::s, .modifiers = {.ctrl = true}},
-                      {.ignore_imgui_focus = true}}});
+         {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
+      });
 
-   _hotkeys.add_set("Entity Creation",
-                    [this] {
-                       return _interaction_targets.creation_entity.has_value();
-                    },
-                    {
-                       {"entity_creation.cycle_rotation_mode",
-                        {.key = key::q, .modifiers = {.ctrl = true}}},
-                       {"entity_creation.cycle_placement_mode",
-                        {.key = key::w, .modifiers = {.ctrl = true}}},
-                       {"entity_creation.cycle_alignment_mode",
-                        {.key = key::e, .modifiers = {.ctrl = true}}},
-                       {"entity_creation.cycle_ground_mode",
-                        {.key = key::r, .modifiers = {.ctrl = true}}},
+   _hotkeys.add_set(
+      "Entity Creation",
+      [this] { return _interaction_targets.creation_entity.has_value(); },
+      {
+         {"Change Rotation Mode",
+          "entity_creation.cycle_rotation_mode",
+          {.key = key::q, .modifiers = {.ctrl = true}}},
+         {"Change Placement Mode",
+          "entity_creation.cycle_placement_mode",
+          {.key = key::w, .modifiers = {.ctrl = true}}},
+         {"Change Alignment Mode",
+          "entity_creation.cycle_alignment_mode",
+          {.key = key::e, .modifiers = {.ctrl = true}}},
+         {"Change Grounding Mode",
+          "entity_creation.cycle_ground_mode",
+          {.key = key::r, .modifiers = {.ctrl = true}}},
 
-                       {"entity_creation.activate_point_at", {.key = key::v}},
-                       {"entity_creation.activate_extend_to", {.key = key::t}},
-                       {"entity_creation.activate_shrink_to",
-                        {.key = key::t, .modifiers = {.ctrl = true}}},
-                       {"entity_creation.activate_from_object_bbox", {.key = key::b}},
-                       {"entity_creation.activate_from_line",
-                        {.key = key::f, .modifiers = {.ctrl = true}}},
+         {"Start Point At", "entity_creation.activate_point_at", {.key = key::v}},
+         {"Start Extend To", "entity_creation.activate_extend_to", {.key = key::t}},
+         {"Start Shrink To",
+          "entity_creation.activate_shrink_to",
+          {.key = key::t, .modifiers = {.ctrl = true}}},
+         {"Start From Object BBOX",
+          "entity_creation.activate_from_object_bbox",
+          {.key = key::b}},
+         {"Start From Line",
+          "entity_creation.activate_from_line",
+          {.key = key::f, .modifiers = {.ctrl = true}}},
 
-                       {"entity_creation.lock_x_axis", {.key = key::z}},
-                       {"entity_creation.lock_y_axis", {.key = key::x}},
-                       {"entity_creation.lock_z_axis", {.key = key::c}},
+         {"Lock X Axis", "entity_creation.lock_x_axis", {.key = key::z}},
+         {"Lock Y Axis", "entity_creation.lock_y_axis", {.key = key::x}},
+         {"Lock Z Axis", "entity_creation.lock_z_axis", {.key = key::c}},
 
-                       {"entity_creation.place", {.key = key::mouse1}},
-                       {"entity_creation.cancel", {.key = key::escape}},
+         {"Place Entity", "entity_creation.place", {.key = key::mouse1}},
+         {"Cancel", "entity_creation.cancel", {.key = key::escape}},
 
-                       {"entity_creation.finish_path", {.key = key::g}},
-                    });
+         {"Finish Path", "entity_creation.finish_path", {.key = key::g}},
+      });
 
    _hotkeys.add_set("Entity Creation (Point At)",
                     [this] {
@@ -189,8 +197,12 @@ void world_edit::initialize_hotkeys() noexcept
                               _entity_creation_context.using_point_at;
                     },
                     {
-                       {"entity_creation.deactivate_point_at", {.key = key::mouse1}},
-                       {"entity_creation.deactivate_point_at", {.key = key::escape}},
+                       {"Stop Point At",
+                        "entity_creation.deactivate_point_at",
+                        {.key = key::mouse1}},
+                       {"Stop Point At (Escape)",
+                        "entity_creation.deactivate_point_at",
+                        {.key = key::escape}},
                     });
 
    _hotkeys.add_set("Entity Creation (Resize To)",
@@ -200,8 +212,12 @@ void world_edit::initialize_hotkeys() noexcept
                                _entity_creation_context.using_shrink_to);
                     },
                     {
-                       {"entity_creation.deactivate_resize_to", {.key = key::mouse1}},
-                       {"entity_creation.deactivate_resize_to", {.key = key::escape}},
+                       {"Stop Resize To",
+                        "entity_creation.deactivate_resize_to",
+                        {.key = key::mouse1}},
+                       {"Stop Resize To (Escape)",
+                        "entity_creation.deactivate_resize_to",
+                        {.key = key::escape}},
                     });
 
    _hotkeys.add_set("Entity Creation (From BBOX)",
@@ -210,9 +226,11 @@ void world_edit::initialize_hotkeys() noexcept
                               _entity_creation_context.using_from_object_bbox;
                     },
                     {
-                       {"entity_creation.deactivate_from_object_bbox",
+                       {"Stop From Object BBOX",
+                        "entity_creation.deactivate_from_object_bbox",
                         {.key = key::mouse1}},
-                       {"entity_creation.deactivate_from_object_bbox",
+                       {"Stop From Object BBOX (Escape)",
+                        "entity_creation.deactivate_from_object_bbox",
                         {.key = key::escape}},
                     });
 
@@ -222,8 +240,12 @@ void world_edit::initialize_hotkeys() noexcept
                               _entity_creation_context.using_from_line;
                     },
                     {
-                       {"entity_creation.from_line_click", {.key = key::mouse1}},
-                       {"entity_creation.deactivate_from_line", {.key = key::escape}},
+                       {"Stop From Line",
+                        "entity_creation.from_line_click",
+                        {.key = key::mouse1}},
+                       {"Stop From Line (Escape)",
+                        "entity_creation.deactivate_from_line",
+                        {.key = key::escape}},
                     });
 }
 

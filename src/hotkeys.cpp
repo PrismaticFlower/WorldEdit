@@ -41,20 +41,26 @@ hotkeys::hotkeys(commands& commands, output_stream& error_output_stream) noexcep
 void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
                       std::initializer_list<hotkey_default> default_hotkeys)
 {
+   absl::flat_hash_set<std::string> hotkey_set;
    absl::flat_hash_map<hotkey_bind, hotkey> bindings;
    absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
 
+   hotkey_set.reserve(default_hotkeys.size());
    bindings.reserve(default_hotkeys.size());
    query_bindings.reserve(default_hotkeys.size());
 
    for (auto& default_hotkey : default_hotkeys) {
       validate_command(default_hotkey.command);
 
+      if (not hotkey_set.emplace(default_hotkey.name).second) {
+         std::terminate(); // Duplicate hotkey name!
+      }
+
       bindings.emplace(default_hotkey.binding,
                        hotkey{.command = std::string{default_hotkey.command},
                               .toggle = default_hotkey.bind_config.toggle,
-                              .ignore_imgui_focus =
-                                 default_hotkey.bind_config.ignore_imgui_focus});
+                              .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
+                              .name = std::string{default_hotkey.name}});
       query_bindings.emplace(default_hotkey.command, default_hotkey.binding);
    }
 
@@ -291,11 +297,13 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
       for (int set_index = 0; set_index < std::ssize(_hotkey_sets); ++set_index) {
          hotkey_set& set = _hotkey_sets[set_index];
 
+         ImGui::PushID(set_index);
+
          if (not ImGui::CollapsingHeader(set.name.c_str())) {
+            ImGui::PopID();
             continue;
          }
 
-         ImGui::PushID(set_index);
          ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0.0f, 0.0f});
 
          fill_sorted_info(set, _sorted_hotkey_set);
@@ -308,7 +316,7 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
                                    const auto& [hotkey_bind, hotkey] =
                                       *hotkey_bind_hotkey;
 
-                                   ImGui::LabelText("", hotkey.command.c_str());
+                                   ImGui::LabelText("", hotkey.name.c_str());
                                    ImGui::SameLine();
 
                                    if (ImGui::Selectable(get_display_string(hotkey_bind))) {
@@ -319,7 +327,7 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
                                    }
                                 },
                                 [&](const hotkey* hotkey) {
-                                   ImGui::LabelText("", hotkey->command.c_str());
+                                   ImGui::LabelText("", hotkey->name.c_str());
                                    ImGui::SameLine();
 
                                    if (ImGui::Selectable("<unbound>")) {
@@ -330,6 +338,7 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
                                    }
                                 }},
                        _sorted_hotkey_set[bind_index]);
+
             ImGui::PopID();
          }
 
