@@ -4,6 +4,7 @@
 #include "detail/error.hpp"
 #include "detail/handle_packing.hpp"
 #include "detail/release_queue.hpp"
+#include "io/output_file.hpp"
 #include "utility/com_ptr.hpp"
 
 #include <atomic>
@@ -68,6 +69,8 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       }
    }
 
+   io::output_file debug_ouput{"D3D12 Create Device.log"};
+
    com_ptr<IDXGIAdapter4> adapter;
    com_ptr<ID3D12Device10> device;
 
@@ -75,8 +78,33 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
            i, static_cast<DXGI_GPU_PREFERENCE>(device_desc.gpu_preference),
            IID_PPV_ARGS(adapter.clear_and_assign())));
         ++i) {
+      DXGI_ADAPTER_DESC3 adapter_desc{};
+
+      adapter->GetDesc3(&adapter_desc);
+
+      const std::array<char, 129> adapter_name = [&] {
+         static_assert(sizeof(DXGI_ADAPTER_DESC3::Description) / 2 == 128);
+
+         std::array<char, 129> name{};
+
+         for (std::size_t i = 0; i < name.size(); ++i) {
+            // This is bad but it is just temporary. (so in maybe 10 years it'll get removed)
+            name[i] = adapter_desc.Description[i] < 128
+                         ? static_cast<char>(adapter_desc.Description[i])
+                         : ' ';
+         }
+
+         name[128] = '\0';
+
+         return name;
+      }();
+
+      debug_ouput.write_ln("Trying {}...", std::string_view{adapter_name.data()});
+
       if (FAILED(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_1,
                                    IID_PPV_ARGS(device.clear_and_assign())))) {
+         debug_ouput.write_ln("GPU doesn't support D3D_FEATURE_LEVEL_12_1");
+
          continue;
       }
 
@@ -84,10 +112,16 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
 
       if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS,
                                              &options, sizeof(options)))) {
+         debug_ouput.write_ln(
+            "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
+
          continue;
       }
 
       if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3) {
+         debug_ouput.write_ln(
+            "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
+
          continue;
       }
 
@@ -95,16 +129,24 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
 
       if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
                                              &options3, sizeof(options3)))) {
+         debug_ouput.write_ln(
+            "D3D12 Runtime doesn't support D3D12_FEATURE_D3D12_OPTIONS3");
+
          continue;
       }
 
       if (not options3.WriteBufferImmediateSupportFlags &
           (D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT | D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE |
            D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY)) {
+         debug_ouput.write_ln(
+            "GPU doesn't support needed Write Buffer Immediate Support Flags");
+
          continue;
       }
 
       if (not options3.BarycentricsSupported) {
+         debug_ouput.write_ln("GPU doesn't support Pixel Shader Barycentrics");
+
          continue;
       }
 
@@ -113,18 +155,24 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
 
       if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shader_model_support,
                                              sizeof(shader_model_support)))) {
+         debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_6");
+
          continue;
       }
 
       if (shader_model_support.HighestShaderModel < D3D_SHADER_MODEL_6_6) {
+         debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_6");
+
          continue;
       }
+
+      debug_ouput.write_ln("Requirements met. Using GPU.");
 
       return device;
    }
 
    MessageBoxW(nullptr, L"Unable to create D3D12 device. The app will now close.",
-               L"No suitable GPU found. 🙁", MB_OK);
+               L"See \"D3D12 Create Device.log\" for more info.", MB_OK);
 
    std::terminate();
 }
@@ -2161,5 +2209,4 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
                                               &color.x, rect ? 1 : 0,
                                               rect ? &win32_rect : nullptr);
 }
-
 }
