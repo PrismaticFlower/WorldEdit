@@ -234,6 +234,35 @@ constexpr bool marked_as_enum_bitflag(texture_barrier_flags) noexcept
    return true;
 }
 
+enum class legacy_resource_state {
+   common = 0,
+   vertex_and_constant_buffer = 0x1,
+   index_buffer = 0x2,
+   render_target = 0x4,
+   unordered_access = 0x8,
+   depth_write = 0x10,
+   depth_read = 0x20,
+   non_pixel_shader_resource = 0x40,
+   pixel_shader_resource = 0x80,
+   stream_out = 0x100,
+   indirect_argument = 0x200,
+   copy_dest = 0x400,
+   copy_source = 0x800,
+   resolve_dest = 0x1000,
+   resolve_source = 0x2000,
+   raytracing_acceleration_structure = 0x400000,
+   shading_rate_source = 0x1000000,
+   generic_read = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
+   all_shader_resource = (0x40 | 0x80),
+   present = 0,
+   predication = 0x200,
+};
+
+constexpr bool marked_as_enum_bitflag(legacy_resource_state) noexcept
+{
+   return true;
+}
+
 enum class filter {
    point = 0,
    bilinear = 0x14,
@@ -720,6 +749,24 @@ struct buffer_barrier {
    uint64 size = UINT64_MAX;
 };
 
+/// Legacy Barrier Structures ///
+
+struct legacy_resource_transition_barrier {
+   resource_handle resource;
+   uint32 subresource = texture_barrier_all_subresources;
+   legacy_resource_state state_before;
+   legacy_resource_state state_after;
+};
+
+struct legacy_resource_aliasing_barrier {
+   resource_handle resource_before;
+   resource_handle resource_after;
+};
+
+struct legacy_resource_uav_barrier {
+   resource_handle resource;
+};
+
 /// Command List Structures and Definitions ///
 
 struct command_list_desc {
@@ -802,7 +849,7 @@ protected:
    friend device;
    friend command_queue;
 
-   implementation_storage<command_list_state, 184> state;
+   implementation_storage<command_list_state, 224> state;
 };
 
 struct copy_command_list : command_list {
@@ -817,6 +864,18 @@ struct copy_command_list : command_list {
    void deferred_barrier(const std::span<const buffer_barrier> barriers);
 
    void deferred_barrier(const buffer_barrier& barrier);
+
+   void deferred_barrier(const std::span<const legacy_resource_transition_barrier> barriers);
+
+   void deferred_barrier(const legacy_resource_transition_barrier& barrier);
+
+   void deferred_barrier(const std::span<const legacy_resource_aliasing_barrier> barriers);
+
+   void deferred_barrier(const legacy_resource_aliasing_barrier& barrier);
+
+   void deferred_barrier(const std::span<const legacy_resource_uav_barrier> barriers);
+
+   void deferred_barrier(const legacy_resource_uav_barrier& barrier);
 
    void flush_barriers();
 
@@ -1086,13 +1145,16 @@ struct device_desc {
 
    /// @brief Enable state tracking when GPU based validation is enabled.
    bool enable_gpu_based_validation_state_tracking = false;
+
+   /// @brief Force usage of legacy barriers.
+   bool force_legacy_barriers = false;
 };
 
 /// Device Definitions ///
 
 struct device {
 private:
-   implementation_storage<device_state, 440> state;
+   implementation_storage<device_state, 448> state;
 
 public:
    command_queue direct_queue;
@@ -1138,7 +1200,8 @@ public:
                                     const heap_type heap_type) -> resource_handle;
 
    [[nodiscard]] auto create_texture(const texture_desc& desc,
-                                     const barrier_layout initial_resource_layout)
+                                     const barrier_layout initial_resource_layout,
+                                     const legacy_resource_state legacy_initial_resource_state)
       -> resource_handle;
 
    [[nodiscard]] auto get_gpu_virtual_address(resource_handle resource)
@@ -1180,6 +1243,10 @@ public:
    /// Swapchain Functions ///
 
    [[nodiscard]] auto create_swap_chain(const swap_chain_desc& desc) -> swap_chain;
+
+   /// Feature Test Functions ///
+
+   [[nodiscard]] bool supports_enhanced_barriers() const noexcept;
 
    /// Constructors/Destructor ///
 

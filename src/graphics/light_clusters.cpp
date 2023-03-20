@@ -311,7 +311,8 @@ light_clusters::light_clusters(gpu::device& device,
                       .optimized_clear_value =
                          gpu::texture_clear_value{.format = DXGI_FORMAT_D32_FLOAT,
                                                   .depth_stencil = {.depth = 1.0f}}},
-                     gpu::barrier_layout::direct_queue_shader_resource),
+                     gpu::barrier_layout::direct_queue_shader_resource,
+                     gpu::legacy_resource_state::pixel_shader_resource),
                   device.direct_queue};
 
    for (uint32 i = 0; i < cascade_count; ++i) {
@@ -685,12 +686,18 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
                             math::align_up(_tiles_height, 32) / 32, 1);
    }
 
-   command_list.deferred_barrier(
-      gpu::buffer_barrier{.sync_before = gpu::barrier_sync::compute_shading,
-                          .sync_after = gpu::barrier_sync::pixel_shading,
-                          .access_before = gpu::barrier_access::unordered_access,
-                          .access_after = gpu::barrier_access::unordered_access,
-                          .resource = _lights_tiles.get()});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::buffer_barrier{.sync_before = gpu::barrier_sync::compute_shading,
+                             .sync_after = gpu::barrier_sync::pixel_shading,
+                             .access_before = gpu::barrier_access::unordered_access,
+                             .access_after = gpu::barrier_access::unordered_access,
+                             .resource = _lights_tiles.get()});
+   }
+   else {
+      command_list.deferred_barrier(
+         gpu::legacy_resource_uav_barrier{.resource = _lights_tiles.get()});
+   }
    command_list.flush_barriers();
 
    command_list.set_graphics_root_signature(root_signatures.tile_lights.get());
@@ -728,12 +735,20 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
                                           _light_count, 0, 0, 0);
    }
 
-   command_list.deferred_barrier(
-      gpu::buffer_barrier{.sync_before = gpu::barrier_sync::pixel_shading,
-                          .sync_after = gpu::barrier_sync::pixel_shading,
-                          .access_before = gpu::barrier_access::unordered_access,
-                          .access_after = gpu::barrier_access::shader_resource,
-                          .resource = _lights_tiles.get()});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::buffer_barrier{.sync_before = gpu::barrier_sync::pixel_shading,
+                             .sync_after = gpu::barrier_sync::pixel_shading,
+                             .access_before = gpu::barrier_access::unordered_access,
+                             .access_after = gpu::barrier_access::shader_resource,
+                             .resource = _lights_tiles.get()});
+   }
+   else {
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = _lights_tiles.get(),
+         .state_before = gpu::legacy_resource_state::unordered_access,
+         .state_after = gpu::legacy_resource_state::pixel_shader_resource});
+   }
 }
 
 void light_clusters::draw_shadow_maps(
@@ -744,14 +759,22 @@ void light_clusters::draw_shadow_maps(
    profile_section profile{"Lights - Draw Shadow Maps", command_list, profiler,
                            profiler_queue::direct};
 
-   command_list.deferred_barrier(
-      gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
-                           .sync_after = gpu::barrier_sync::depth_stencil,
-                           .access_before = gpu::barrier_access::no_access,
-                           .access_after = gpu::barrier_access::depth_stencil_write,
-                           .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
-                           .layout_after = gpu::barrier_layout::depth_stencil_write,
-                           .resource = _shadow_map.get()});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
+                              .sync_after = gpu::barrier_sync::depth_stencil,
+                              .access_before = gpu::barrier_access::no_access,
+                              .access_after = gpu::barrier_access::depth_stencil_write,
+                              .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
+                              .layout_after = gpu::barrier_layout::depth_stencil_write,
+                              .resource = _shadow_map.get()});
+   }
+   else {
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = _shadow_map.get(),
+         .state_before = gpu::legacy_resource_state::pixel_shader_resource,
+         .state_after = gpu::legacy_resource_state::depth_write});
+   }
    command_list.flush_barriers();
 
    for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
@@ -818,14 +841,22 @@ void light_clusters::draw_shadow_maps(
       }
    }
 
-   command_list.deferred_barrier(
-      gpu::texture_barrier{.sync_before = gpu::barrier_sync::depth_stencil,
-                           .sync_after = gpu::barrier_sync::pixel_shading,
-                           .access_before = gpu::barrier_access::depth_stencil_write,
-                           .access_after = gpu::barrier_access::shader_resource,
-                           .layout_before = gpu::barrier_layout::depth_stencil_write,
-                           .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
-                           .resource = _shadow_map.get()});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::texture_barrier{.sync_before = gpu::barrier_sync::depth_stencil,
+                              .sync_after = gpu::barrier_sync::pixel_shading,
+                              .access_before = gpu::barrier_access::depth_stencil_write,
+                              .access_after = gpu::barrier_access::shader_resource,
+                              .layout_before = gpu::barrier_layout::depth_stencil_write,
+                              .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
+                              .resource = _shadow_map.get()});
+   }
+   else {
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = _shadow_map.get(),
+         .state_before = gpu::legacy_resource_state::depth_write,
+         .state_after = gpu::legacy_resource_state::pixel_shader_resource});
+   }
 }
 
 auto light_clusters::lights_constant_buffer_view() const noexcept -> gpu_virtual_address

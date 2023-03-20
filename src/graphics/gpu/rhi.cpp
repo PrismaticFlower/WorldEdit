@@ -120,15 +120,6 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          continue;
       }
 
-      D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12{};
-
-      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12,
-                                             &options12, sizeof(options12)))) {
-         continue;
-      }
-
-      if (not options12.EnhancedBarriersSupported) continue;
-
       return device;
    }
 
@@ -154,6 +145,18 @@ void set_debug_name(ID3D12Object& child, std::string_view name) noexcept
                         static_cast<uint32>(name.size()), name.data());
 }
 
+bool check_enhanced_barriers_support(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_D3D12_OPTIONS12 options12{};
+
+   if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12,
+                                         &options12, sizeof(options12)))) {
+      return false;
+   }
+
+   return options12.EnhancedBarriersSupported;
+}
+
 }
 
 struct command_queue_init {
@@ -164,7 +167,11 @@ struct command_queue_init {
 
 struct device_state {
    device_state(const device_desc& desc)
-      : factory{create_dxgi_factory(desc)}, device{create_d3d12_device(*factory, desc)}
+      : factory{create_dxgi_factory(desc)},
+        device{create_d3d12_device(*factory, desc)},
+        supports_enhanced_barriers{desc.force_legacy_barriers
+                                      ? false
+                                      : check_enhanced_barriers_support(*device)}
    {
    }
 
@@ -193,6 +200,8 @@ struct device_state {
    command_allocator_pool direct_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_DIRECT};
    command_allocator_pool compute_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_COMPUTE};
    command_allocator_pool copy_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_COPY};
+
+   const bool supports_enhanced_barriers;
 };
 
 struct swap_chain_state {
@@ -225,6 +234,9 @@ struct command_queue_state {
 
 struct command_list_state {
    com_ptr<ID3D12GraphicsCommandList7> command_list;
+
+   bool supports_enhanced_barriers = false;
+
    std::vector<D3D12_GLOBAL_BARRIER> deferred_global_barriers = [] {
       std::vector<D3D12_GLOBAL_BARRIER> init;
 
@@ -241,6 +253,13 @@ struct command_list_state {
    }();
    std::vector<D3D12_BUFFER_BARRIER> deferred_buffer_barriers = [] {
       std::vector<D3D12_BUFFER_BARRIER> init;
+
+      init.reserve(128);
+
+      return init;
+   }();
+   std::vector<D3D12_RESOURCE_BARRIER> deferred_legacy_barriers = [] {
+      std::vector<D3D12_RESOURCE_BARRIER> init;
 
       init.reserve(128);
 
@@ -398,6 +417,7 @@ auto device::create_copy_command_list(const command_list_desc& desc) -> copy_com
 
    command_list.state =
       command_list_state{.command_list = std::move(d3d12_command_list),
+                         .supports_enhanced_barriers = supports_enhanced_barriers(),
                          .command_allocator = nullptr,
                          .descriptor_heap = nullptr,
                          .allocator_pool = &state->copy_command_allocator_pool,
@@ -422,6 +442,7 @@ auto device::create_compute_command_list(const command_list_desc& desc) -> compu
 
    command_list.state =
       command_list_state{.command_list = std::move(d3d12_command_list),
+                         .supports_enhanced_barriers = supports_enhanced_barriers(),
                          .command_allocator = nullptr,
                          .descriptor_heap = state->srv_uav_descriptor_heap.heap,
                          .allocator_pool = &state->compute_command_allocator_pool,
@@ -446,6 +467,7 @@ auto device::create_graphics_command_list(const command_list_desc& desc) -> grap
 
    command_list.state =
       command_list_state{.command_list = std::move(d3d12_command_list),
+                         .supports_enhanced_barriers = supports_enhanced_barriers(),
                          .command_allocator = nullptr,
                          .descriptor_heap = state->srv_uav_descriptor_heap.heap,
                          .allocator_pool = &state->direct_command_allocator_pool,
@@ -738,7 +760,9 @@ auto device::create_buffer(const buffer_desc& desc, const heap_type heap_type) -
 }
 
 auto device::create_texture(const texture_desc& desc,
-                            const barrier_layout initial_resource_layout) -> resource_handle
+                            [[maybe_unused]] const barrier_layout initial_resource_layout,
+                            [[maybe_unused]] const legacy_resource_state legacy_initial_resource_state)
+   -> resource_handle
 {
    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 
@@ -785,11 +809,20 @@ auto device::create_texture(const texture_desc& desc,
 
    com_ptr<ID3D12Resource2> resource;
 
-   throw_if_fail(state->device->CreateCommittedResource3(
-      &heap_properties, D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, &d3d12_desc,
-      static_cast<D3D12_BARRIER_LAYOUT>(initial_resource_layout),
-      has_clear_value ? &clear_value : nullptr, nullptr, 0, nullptr,
-      IID_PPV_ARGS(resource.clear_and_assign())));
+   [[likely]] if (supports_enhanced_barriers()) {
+      throw_if_fail(state->device->CreateCommittedResource3(
+         &heap_properties, D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, &d3d12_desc,
+         static_cast<D3D12_BARRIER_LAYOUT>(initial_resource_layout),
+         has_clear_value ? &clear_value : nullptr, nullptr, 0, nullptr,
+         IID_PPV_ARGS(resource.clear_and_assign())));
+   }
+   else {
+      throw_if_fail(state->device->CreateCommittedResource2(
+         &heap_properties, D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, &d3d12_desc,
+         static_cast<D3D12_RESOURCE_STATES>(legacy_initial_resource_state),
+         has_clear_value ? &clear_value : nullptr, nullptr,
+         IID_PPV_ARGS(resource.clear_and_assign())));
+   }
 
    set_debug_name(*resource, desc.debug_name);
 
@@ -1233,6 +1266,11 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
    return swap_chain;
 }
 
+[[msvc::forceinline]] bool device::supports_enhanced_barriers() const noexcept
+{
+   return state->supports_enhanced_barriers;
+}
+
 swap_chain::swap_chain() = default;
 
 swap_chain::~swap_chain()
@@ -1574,42 +1612,128 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
        .Size = barrier.size});
 }
 
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const std::span<const legacy_resource_transition_barrier> barriers)
+{
+   state->deferred_legacy_barriers.reserve(
+      state->deferred_legacy_barriers.size() + barriers.size());
+
+   for (const auto& barrier : barriers) {
+      state->deferred_legacy_barriers.push_back(D3D12_RESOURCE_BARRIER{
+         .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+         .Transition = {.pResource = unpack_resource_handle(barrier.resource),
+                        .Subresource = barrier.subresource,
+                        .StateBefore =
+                           static_cast<D3D12_RESOURCE_STATES>(barrier.state_before),
+                        .StateAfter = static_cast<D3D12_RESOURCE_STATES>(
+                           barrier.state_after)}});
+   }
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const legacy_resource_transition_barrier& barrier)
+{
+   deferred_barrier(std::span{&barrier, 1});
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const std::span<const legacy_resource_aliasing_barrier> barriers)
+{
+   state->deferred_legacy_barriers.reserve(
+      state->deferred_legacy_barriers.size() + barriers.size());
+
+   for (const auto& barrier : barriers) {
+      state->deferred_legacy_barriers.push_back(
+         D3D12_RESOURCE_BARRIER{.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
+                                .Aliasing = {.pResourceBefore = unpack_resource_handle(
+                                                barrier.resource_before),
+                                             .pResourceAfter = unpack_resource_handle(
+                                                barrier.resource_after)}});
+   }
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const legacy_resource_aliasing_barrier& barrier)
+{
+   deferred_barrier(std::span{&barrier, 1});
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const std::span<const legacy_resource_uav_barrier> barriers)
+{
+   state->deferred_legacy_barriers.reserve(
+      state->deferred_legacy_barriers.size() + barriers.size());
+
+   for (const auto& barrier : barriers) {
+      state->deferred_legacy_barriers.push_back(
+         D3D12_RESOURCE_BARRIER{.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
+                                .UAV = {.pResource = unpack_resource_handle(
+                                           barrier.resource)}});
+   }
+}
+
+[[msvc::forceinline]] void copy_command_list::deferred_barrier(
+   const legacy_resource_uav_barrier& barrier)
+{
+   deferred_barrier(std::span{&barrier, 1});
+}
+
 [[msvc::forceinline]] void copy_command_list::flush_barriers()
 {
-   absl::InlinedVector<D3D12_BARRIER_GROUP, 4> barriers;
+   [[likely]] if (state->supports_enhanced_barriers) {
+      if (not state->deferred_legacy_barriers.empty()) {
+         std::terminate(); // Mixing Enhanced & Legacy Barriers usage.
+      }
 
-   if (not state->deferred_global_barriers.empty()) {
-      barriers.push_back(
-         D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_GLOBAL,
-                             .NumBarriers = static_cast<uint32>(
-                                state->deferred_global_barriers.size()),
-                             .pGlobalBarriers =
-                                state->deferred_global_barriers.data()});
+      absl::InlinedVector<D3D12_BARRIER_GROUP, 4> barriers;
+
+      if (not state->deferred_global_barriers.empty()) {
+         barriers.push_back(
+            D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_GLOBAL,
+                                .NumBarriers = static_cast<uint32>(
+                                   state->deferred_global_barriers.size()),
+                                .pGlobalBarriers =
+                                   state->deferred_global_barriers.data()});
+      }
+
+      if (not state->deferred_texture_barriers.empty()) {
+         barriers.push_back(
+            D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_TEXTURE,
+                                .NumBarriers = static_cast<uint32>(
+                                   state->deferred_texture_barriers.size()),
+                                .pTextureBarriers =
+                                   state->deferred_texture_barriers.data()});
+      }
+
+      if (not state->deferred_buffer_barriers.empty()) {
+         barriers.push_back(
+            D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_BUFFER,
+                                .NumBarriers = static_cast<uint32>(
+                                   state->deferred_buffer_barriers.size()),
+                                .pBufferBarriers =
+                                   state->deferred_buffer_barriers.data()});
+      }
+
+      state->command_list->Barrier(static_cast<uint32>(barriers.size()),
+                                   barriers.data());
+
+      state->deferred_global_barriers.clear();
+      state->deferred_buffer_barriers.clear();
+      state->deferred_texture_barriers.clear();
    }
+   else {
+      if (not state->deferred_global_barriers.empty() or
+          not state->deferred_texture_barriers.empty() or
+          not state->deferred_buffer_barriers.empty()) {
+         std::terminate(); // Mixing Enhanced & Legacy Barriers usage.
+      }
 
-   if (not state->deferred_texture_barriers.empty()) {
-      barriers.push_back(
-         D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_TEXTURE,
-                             .NumBarriers = static_cast<uint32>(
-                                state->deferred_texture_barriers.size()),
-                             .pTextureBarriers =
-                                state->deferred_texture_barriers.data()});
+      state->command_list->ResourceBarrier(static_cast<uint32>(
+                                              state->deferred_legacy_barriers.size()),
+                                           state->deferred_legacy_barriers.data());
+
+      state->deferred_legacy_barriers.clear();
    }
-
-   if (not state->deferred_buffer_barriers.empty()) {
-      barriers.push_back(
-         D3D12_BARRIER_GROUP{.Type = D3D12_BARRIER_TYPE_BUFFER,
-                             .NumBarriers = static_cast<uint32>(
-                                state->deferred_buffer_barriers.size()),
-                             .pBufferBarriers =
-                                state->deferred_buffer_barriers.data()});
-   }
-
-   state->command_list->Barrier(static_cast<uint32>(barriers.size()), barriers.data());
-
-   state->deferred_global_barriers.clear();
-   state->deferred_buffer_barriers.clear();
-   state->deferred_texture_barriers.clear();
 }
 
 [[msvc::forceinline]] void copy_command_list::copy_buffer_region(

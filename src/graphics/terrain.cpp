@@ -209,7 +209,8 @@ void terrain::init_gpu_height_map(const world::terrain& terrain,
                                           .format = DXGI_FORMAT_R16_SNORM,
                                           .width = _terrain_length,
                                           .height = _terrain_length},
-                                         gpu::barrier_layout::common),
+                                         gpu::barrier_layout::common,
+                                         gpu::legacy_resource_state::common),
                   _device.copy_queue};
 
    const uint32 row_pitch = math::align_up(_terrain_length * uint32{sizeof(uint16)},
@@ -253,7 +254,8 @@ void terrain::init_gpu_texture_weight_map(const world::terrain& terrain,
                                                    .width = _terrain_length,
                                                    .height = _terrain_length,
                                                    .array_size = texture_count},
-                                                  gpu::barrier_layout::common),
+                                                  gpu::barrier_layout::common,
+                                                  gpu::legacy_resource_state::common),
                            _device.direct_queue};
 
    const uint32 row_pitch =

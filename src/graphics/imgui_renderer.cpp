@@ -185,7 +185,8 @@ void imgui_renderer::recreate_font_atlas(copy_command_list_pool& copy_command_li
                                             .height = static_cast<uint32>(height),
                                             .debug_name =
                                                "dear ImGui Font Atlas"},
-                                           gpu::barrier_layout::common),
+                                           gpu::barrier_layout::common,
+                                           gpu::legacy_resource_state::common),
                     _device.direct_queue};
 
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();

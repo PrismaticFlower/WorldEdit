@@ -151,7 +151,8 @@ private:
    std::shared_ptr<async::thread_pool> _thread_pool;
    output_stream& _error_output;
 
-   gpu::device _device{gpu::device_desc{.enable_debug_layer = false}};
+   gpu::device _device{gpu::device_desc{.enable_debug_layer = false,
+                                        .enable_gpu_based_validation = false}};
    gpu::swap_chain _swap_chain;
    gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(
       {.allocator_name = "World Allocator", .debug_name = "Pre-Render Copy Command List"});
@@ -178,7 +179,8 @@ private:
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                    .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
-                              gpu::barrier_layout::direct_queue_shader_resource),
+                              gpu::barrier_layout::direct_queue_shader_resource,
+                              gpu::legacy_resource_state::all_shader_resource),
        _device.direct_queue};
    gpu::unique_dsv_handle _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
@@ -351,23 +353,36 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                     _pipelines, command_list,
                                     _dynamic_buffer_allocator, _profiler);
 
-   command_list.deferred_barrier(
-      gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
-                           .sync_after = gpu::barrier_sync::render_target,
-                           .access_before = gpu::barrier_access::no_access,
-                           .access_after = gpu::barrier_access::render_target,
-                           .layout_before = gpu::barrier_layout::present,
-                           .layout_after = gpu::barrier_layout::render_target,
-                           .resource = back_buffer});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
+                              .sync_after = gpu::barrier_sync::render_target,
+                              .access_before = gpu::barrier_access::no_access,
+                              .access_after = gpu::barrier_access::render_target,
+                              .layout_before = gpu::barrier_layout::present,
+                              .layout_after = gpu::barrier_layout::render_target,
+                              .resource = back_buffer});
 
-   command_list.deferred_barrier(
-      gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
-                           .sync_after = gpu::barrier_sync::depth_stencil,
-                           .access_before = gpu::barrier_access::no_access,
-                           .access_after = gpu::barrier_access::depth_stencil_write,
-                           .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
-                           .layout_after = gpu::barrier_layout::depth_stencil_write,
-                           .resource = _depth_stencil_texture.get()});
+      command_list.deferred_barrier(
+         gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
+                              .sync_after = gpu::barrier_sync::depth_stencil,
+                              .access_before = gpu::barrier_access::no_access,
+                              .access_after = gpu::barrier_access::depth_stencil_write,
+                              .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
+                              .layout_after = gpu::barrier_layout::depth_stencil_write,
+                              .resource = _depth_stencil_texture.get()});
+   }
+   else {
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = back_buffer,
+         .state_before = gpu::legacy_resource_state::present,
+         .state_after = gpu::legacy_resource_state::render_target});
+
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = _depth_stencil_texture.get(),
+         .state_before = gpu::legacy_resource_state::all_shader_resource,
+         .state_after = gpu::legacy_resource_state::depth_write});
+   }
    command_list.flush_barriers();
 
    command_list.clear_render_target_view(back_buffer_rtv,
@@ -407,14 +422,22 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    _profiler.end_frame(command_list);
 
-   command_list.deferred_barrier(
-      gpu::texture_barrier{.sync_before = gpu::barrier_sync::render_target,
-                           .sync_after = gpu::barrier_sync::none,
-                           .access_before = gpu::barrier_access::render_target,
-                           .access_after = gpu::barrier_access::no_access,
-                           .layout_before = gpu::barrier_layout::render_target,
-                           .layout_after = gpu::barrier_layout::present,
-                           .resource = back_buffer});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::texture_barrier{.sync_before = gpu::barrier_sync::render_target,
+                              .sync_after = gpu::barrier_sync::none,
+                              .access_before = gpu::barrier_access::render_target,
+                              .access_after = gpu::barrier_access::no_access,
+                              .layout_before = gpu::barrier_layout::render_target,
+                              .layout_after = gpu::barrier_layout::present,
+                              .resource = back_buffer});
+   }
+   else {
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = back_buffer,
+         .state_before = gpu::legacy_resource_state::render_target,
+         .state_after = gpu::legacy_resource_state::present});
+   }
 
    command_list.flush_barriers();
 
@@ -444,7 +467,8 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
                                    .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
-                              gpu::barrier_layout::direct_queue_shader_resource),
+                              gpu::barrier_layout::direct_queue_shader_resource,
+                              gpu::legacy_resource_state::all_shader_resource),
        _device.direct_queue};
    _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
@@ -1846,14 +1870,22 @@ void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list
    profile_section profile{"Reduce Depth Minmax", command_list, _profiler,
                            profiler_queue::direct};
 
-   command_list.deferred_barrier(
-      gpu::texture_barrier{.sync_before = gpu::barrier_sync::depth_stencil,
-                           .sync_after = gpu::barrier_sync::compute_shading,
-                           .access_before = gpu::barrier_access::depth_stencil_write,
-                           .access_after = gpu::barrier_access::shader_resource,
-                           .layout_before = gpu::barrier_layout::depth_stencil_write,
-                           .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
-                           .resource = _depth_stencil_texture.get()});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::texture_barrier{.sync_before = gpu::barrier_sync::depth_stencil,
+                              .sync_after = gpu::barrier_sync::compute_shading,
+                              .access_before = gpu::barrier_access::depth_stencil_write,
+                              .access_after = gpu::barrier_access::shader_resource,
+                              .layout_before = gpu::barrier_layout::depth_stencil_write,
+                              .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
+                              .resource = _depth_stencil_texture.get()});
+   }
+   else {
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = _depth_stencil_texture.get(),
+         .state_before = gpu::legacy_resource_state::depth_write,
+         .state_after = gpu::legacy_resource_state::all_shader_resource});
+   }
    command_list.flush_barriers();
 
    const gpu_virtual_address depth_minmax_buffer =
@@ -1873,12 +1905,20 @@ void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list
    command_list.dispatch(math::align_up(_swap_chain.width() / 8, 8),
                          math::align_up(_swap_chain.height() / 8, 8), 1);
 
-   command_list.deferred_barrier(
-      gpu::buffer_barrier{.sync_before = gpu::barrier_sync::compute_shading,
-                          .sync_after = gpu::barrier_sync::copy,
-                          .access_before = gpu::barrier_access::unordered_access,
-                          .access_after = gpu::barrier_access::copy_source,
-                          .resource = _depth_minmax_buffer.get()});
+   [[likely]] if (_device.supports_enhanced_barriers()) {
+      command_list.deferred_barrier(
+         gpu::buffer_barrier{.sync_before = gpu::barrier_sync::compute_shading,
+                             .sync_after = gpu::barrier_sync::copy,
+                             .access_before = gpu::barrier_access::unordered_access,
+                             .access_after = gpu::barrier_access::copy_source,
+                             .resource = _depth_minmax_buffer.get()});
+   }
+   else {
+      command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+         .resource = _depth_minmax_buffer.get(),
+         .state_before = gpu::legacy_resource_state::unordered_access,
+         .state_after = gpu::legacy_resource_state::copy_source});
+   }
    command_list.flush_barriers();
 
    command_list.copy_buffer_region(_depth_minmax_readback_buffer.get(),
