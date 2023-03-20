@@ -1,5 +1,6 @@
 
 #include "hotkeys.hpp"
+#include "hotkeys_io.hpp"
 #include "imgui/imgui.h"
 #include "utility/overload.hpp"
 #include "utility/string_ops.hpp"
@@ -9,6 +10,8 @@
 namespace we {
 
 namespace {
+
+const std::wstring_view save_path = L".bindings";
 
 constexpr bool is_mouse_key(const key key) noexcept
 {
@@ -370,9 +373,9 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
              last_key_event->new_state == key_state::up) {
             _user_inputting_new_binding = false;
          }
-
-         if (last_key_event->new_state == key_state::up and
-             last_key_event->key != key::ctrl and last_key_event->key != key::shift) {
+         else if (last_key_event->new_state == key_state::up and
+                  last_key_event->key != key::ctrl and
+                  last_key_event->key != key::shift) {
             hotkey_set& set = _hotkey_sets[_user_editing_bind_set];
 
             if (_user_editing_bind) {
@@ -385,6 +388,8 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
 
             if (set.bindings.contains(new_bind)) {
                set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
+
+               _saved_bindings[set.name].erase(set.unbound_hotkeys.back().name);
             }
 
             set.bindings[new_bind] = _user_editing_hotkey;
@@ -395,6 +400,10 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
             });
 
             _user_inputting_new_binding = false;
+
+            _saved_bindings[set.name][_user_editing_hotkey.name] = new_bind;
+
+            save_bindings(save_path, _saved_bindings);
          }
       }
 

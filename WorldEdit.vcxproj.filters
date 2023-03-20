@@ -637,6 +637,9 @@
     <ClInclude Include="src\edits\delete_entity.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\hotkeys_io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -901,6 +904,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\delete_entity.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hotkeys_io.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
