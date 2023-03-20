@@ -170,6 +170,8 @@ private:
 
    std::vector<sorted_hotkey_variant> _sorted_hotkey_set;
 
+   absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>> _saved_bindings;
+
    static void fill_sorted_info(const hotkey_set& set,
                                 std::vector<sorted_hotkey_variant>& sorted_hotkey_set);
 };

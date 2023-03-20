@@ -56,12 +56,17 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
          std::terminate(); // Duplicate hotkey name!
       }
 
-      bindings.emplace(default_hotkey.binding,
+      const hotkey_bind binding =
+         _saved_bindings[set_name].contains(default_hotkey.name)
+            ? _saved_bindings[set_name].at(default_hotkey.name)
+            : default_hotkey.binding;
+
+      bindings.emplace(binding,
                        hotkey{.command = std::string{default_hotkey.command},
                               .toggle = default_hotkey.bind_config.toggle,
                               .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
                               .name = std::string{default_hotkey.name}});
-      query_bindings.emplace(default_hotkey.command, default_hotkey.binding);
+      query_bindings.emplace(default_hotkey.command, binding);
    }
 
    _hotkey_sets.emplace_back(set_name, std::move(activated),
