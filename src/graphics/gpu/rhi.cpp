@@ -101,9 +101,15 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
 
       debug_ouput.write_ln("Trying {}...", std::string_view{adapter_name.data()});
 
-      if (FAILED(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_1,
-                                   IID_PPV_ARGS(device.clear_and_assign())))) {
-         debug_ouput.write_ln("GPU doesn't support D3D_FEATURE_LEVEL_12_1");
+      if (auto hr = D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_1,
+                                      IID_PPV_ARGS(adapter.clear_and_assign()))) {
+         if (hr == E_NOINTERFACE) {
+            debug_ouput.write_ln(
+               "DX12 Agility SDK does not appear to be in use.");
+         }
+         else {
+            debug_ouput.write_ln("GPU doesn't support D3D_FEATURE_LEVEL_12_1.");
+         }
 
          continue;
       }
@@ -170,6 +176,8 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
 
       return device;
    }
+
+   debug_ouput.flush();
 
    MessageBoxW(nullptr, L"Unable to create D3D12 device. The app will now close.",
                L"See \"D3D12 Create Device.log\" for more info.", MB_OK);

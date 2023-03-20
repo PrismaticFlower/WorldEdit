@@ -77,6 +77,9 @@ public:
       write(std::span{reinterpret_cast<const std::byte*>(&object), sizeof(T)});
    }
 
+   /// @brief Flush buffered writes to the OS.
+   void flush() noexcept;
+
    // clang-format off
 private:
    void vwrite_ln(const fmt::string_view format, fmt::format_args args) noexcept;
@@ -84,8 +87,6 @@ private:
    void vwrite(const fmt::string_view format, fmt::format_args args) noexcept;
 
    void write_impl(const void* data, std::int64_t size) noexcept;
-
-   void flush() noexcept;
 
    // clang-format on
 
