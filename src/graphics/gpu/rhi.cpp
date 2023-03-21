@@ -150,12 +150,6 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          continue;
       }
 
-      if (not options3.BarycentricsSupported) {
-         debug_ouput.write_ln("GPU doesn't support Pixel Shader Barycentrics");
-
-         continue;
-      }
-
       D3D12_FEATURE_DATA_SHADER_MODEL shader_model_support{
          .HighestShaderModel = D3D_SHADER_MODEL_6_6};
 
@@ -213,6 +207,18 @@ bool check_enhanced_barriers_support(ID3D12Device& device) noexcept
    return options12.EnhancedBarriersSupported;
 }
 
+bool check_shader_barycentrics_support(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
+
+   if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
+                                         &options3, sizeof(options3)))) {
+      return false;
+   }
+
+   return options3.BarycentricsSupported;
+}
+
 }
 
 struct command_queue_init {
@@ -227,7 +233,8 @@ struct device_state {
         device{create_d3d12_device(*factory, desc)},
         supports_enhanced_barriers{desc.force_legacy_barriers
                                       ? false
-                                      : check_enhanced_barriers_support(*device)}
+                                      : check_enhanced_barriers_support(*device)},
+        supports_shader_barycentrics{check_shader_barycentrics_support(*device)}
    {
    }
 
@@ -257,7 +264,8 @@ struct device_state {
    command_allocator_pool compute_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_COMPUTE};
    command_allocator_pool copy_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_COPY};
 
-   const bool supports_enhanced_barriers;
+   const bool supports_enhanced_barriers : 1;
+   const bool supports_shader_barycentrics : 1;
 };
 
 struct swap_chain_state {
@@ -716,6 +724,8 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
              .BytecodeLength = desc.vs_bytecode.size()},
       .PS = {.pShaderBytecode = desc.ps_bytecode.data(),
              .BytecodeLength = desc.ps_bytecode.size()},
+      .GS = {.pShaderBytecode = desc.gs_bytecode.data(),
+             .BytecodeLength = desc.gs_bytecode.size()},
 
       .BlendState = blend_state,
       .SampleMask = 0xffffffffu,
@@ -1325,6 +1335,11 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
 [[msvc::forceinline]] bool device::supports_enhanced_barriers() const noexcept
 {
    return state->supports_enhanced_barriers;
+}
+
+[[msvc::forceinline]] bool device::supports_shader_barycentrics() const noexcept
+{
+   return state->supports_shader_barycentrics;
 }
 
 swap_chain::swap_chain() = default;

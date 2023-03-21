@@ -320,30 +320,43 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
    mesh_normal = create_material_pipelines(device, "mesh_normal"sv, shader_library,
                                            root_signature_library);
 
-   mesh_wireframe = {device.create_graphics_pipeline(
-                        {.root_signature = root_signature_library.mesh_wireframe.get(),
+   const bool supports_shader_barycentrics = device.supports_shader_barycentrics();
 
-                         .vs_bytecode = shader_library["mesh_wireframeVS"sv],
-                         .ps_bytecode = shader_library["mesh_wireframePS"sv],
+   mesh_wireframe =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.mesh_wireframe.get(),
 
-                         .blend_state = blend_alpha,
-                         .rasterizer_state = rasterizer_cull_backfacing,
-                         .depth_stencil_state = depth_stencil_readonly_less_equal,
-                         .input_layout = mesh_input_layout_position_only,
+           .vs_bytecode = shader_library["mesh_wireframeVS"sv],
+           .ps_bytecode = supports_shader_barycentrics
+                             ? shader_library["mesh_wireframePS"sv]
+                             : shader_library["mesh_wireframe_GS_fallbackPS"sv],
+           .gs_bytecode = supports_shader_barycentrics
+                             ? std::span<const std::byte>{}
+                             : shader_library["mesh_wireframe_GS_fallbackGS"sv],
 
-                         .render_target_count = 1,
-                         .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                         .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .blend_state = blend_alpha,
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .depth_stencil_state = depth_stencil_readonly_less_equal,
+           .input_layout = mesh_input_layout_position_only,
 
-                         .debug_name = "mesh_wireframe"sv}),
-                     device.direct_queue};
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "mesh_wireframe"sv}),
+       device.direct_queue};
 
    mesh_wireframe_doublesided =
       {device.create_graphics_pipeline(
           {.root_signature = root_signature_library.mesh_wireframe.get(),
 
            .vs_bytecode = shader_library["mesh_wireframeVS"sv],
-           .ps_bytecode = shader_library["mesh_wireframePS"sv],
+           .ps_bytecode = supports_shader_barycentrics
+                             ? shader_library["mesh_wireframePS"sv]
+                             : shader_library["mesh_wireframe_GS_fallbackPS"sv],
+           .gs_bytecode = supports_shader_barycentrics
+                             ? std::span<const std::byte>{}
+                             : shader_library["mesh_wireframe_GS_fallbackGS"sv],
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_none,
@@ -459,7 +472,12 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
           {.root_signature = root_signature_library.meta_draw.get(),
 
            .vs_bytecode = shader_library["meta_draw_shapeVS"sv],
-           .ps_bytecode = shader_library["meta_draw_wireframePS"sv],
+           .ps_bytecode = supports_shader_barycentrics
+                             ? shader_library["meta_draw_wireframePS"sv]
+                             : shader_library["meta_draw_wireframe_GS_fallbackPS"sv],
+           .gs_bytecode = supports_shader_barycentrics
+                             ? std::span<const std::byte>{}
+                             : shader_library["meta_draw_wireframe_GS_fallbackGS"sv],
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_backfacing,
@@ -496,7 +514,12 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
           {.root_signature = root_signature_library.meta_draw.get(),
 
            .vs_bytecode = shader_library["meta_draw_sphereVS"sv],
-           .ps_bytecode = shader_library["meta_draw_wireframePS"sv],
+           .ps_bytecode = supports_shader_barycentrics
+                             ? shader_library["meta_draw_wireframePS"sv]
+                             : shader_library["meta_draw_wireframe_GS_fallbackPS"sv],
+           .gs_bytecode = supports_shader_barycentrics
+                             ? std::span<const std::byte>{}
+                             : shader_library["meta_draw_wireframe_GS_fallbackGS"sv],
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_backfacing,
@@ -552,7 +575,12 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
           {.root_signature = root_signature_library.meta_draw.get(),
 
            .vs_bytecode = shader_library["meta_draw_primitiveVS"sv],
-           .ps_bytecode = shader_library["meta_draw_wireframePS"sv],
+           .ps_bytecode = supports_shader_barycentrics
+                             ? shader_library["meta_draw_wireframePS"sv]
+                             : shader_library["meta_draw_wireframe_GS_fallbackPS"sv],
+           .gs_bytecode = supports_shader_barycentrics
+                             ? std::span<const std::byte>{}
+                             : shader_library["meta_draw_wireframe_GS_fallbackGS"sv],
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_backfacing,
