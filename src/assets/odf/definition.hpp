@@ -12,11 +12,16 @@ enum class type {
 };
 
 struct definition {
+   struct header {
+      std::string_view class_label;
+      std::string_view geometry_name;
+   };
+
    type type = type::game_object_class;
 
-   properties header_properties;
-   properties class_properties;
-   properties instance_properties;
+   header header;
+   odf::properties properties;
+   odf::properties instance_properties;
 
    std::vector<char> storage;
 };

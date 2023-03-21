@@ -34,6 +34,7 @@ const std::string_view valid_odf_test_mixed_line_breaks =
    "[GameObjectClass] // Comment after [GameObjectClass]\n"
    "ClassLabel = \"prop\"\r\n"
    "GeometryName = \"test_prop_sphere.msh\"\n"
+   "[Properties]\n"
    "SemiquotedProp = \"quoted values do not need an ending quote // this is "
    "part of the value \r\n";
 
@@ -79,13 +80,13 @@ TEST_CASE(".odf reading", "[Assets][ODF]")
 
    REQUIRE(definition.type == type::game_object_class);
 
-   CHECK(definition.header_properties["ClassLabel"sv] == "prop"sv);
-   CHECK(definition.header_properties["GeometryName"sv] == "test_prop_sphere.msh"sv);
+   CHECK(definition.header.class_label == "prop"sv);
+   CHECK(definition.header.geometry_name == "test_prop_sphere.msh"sv);
 
-   CHECK(definition.class_properties["GeometryName"sv] == "test_prop_sphere"sv);
-   CHECK(definition.class_properties["QuotedProp"sv] ==
+   CHECK(definition.properties["GeometryName"sv] == "test_prop_sphere"sv);
+   CHECK(definition.properties["QuotedProp"sv] ==
          "quoted values can have spaces //this is part of the value "sv);
-   CHECK(definition.class_properties["SemiquotedProp"sv] ==
+   CHECK(definition.properties["SemiquotedProp"sv] ==
          "quoted values do not need an ending quote // this is part of the value "sv);
 
    CHECK(definition.instance_properties["InstanceValue"sv] == "1.8"sv);
@@ -97,9 +98,9 @@ TEST_CASE(".odf reading mixed line breaks", "[Assets][ODF]")
 
    REQUIRE(definition.type == type::game_object_class);
 
-   CHECK(definition.header_properties["ClassLabel"sv] == "prop"sv);
-   CHECK(definition.header_properties["GeometryName"sv] == "test_prop_sphere.msh"sv);
-   CHECK(definition.header_properties["SemiquotedProp"sv] ==
+   CHECK(definition.header.class_label == "prop"sv);
+   CHECK(definition.header.geometry_name == "test_prop_sphere.msh"sv);
+   CHECK(definition.properties["SemiquotedProp"sv] ==
          "quoted values do not need an ending quote // this is "
          "part of the value "sv);
 }

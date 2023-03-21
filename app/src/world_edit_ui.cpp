@@ -11,6 +11,7 @@
 #include "imgui/imgui_stdlib.h"
 #include "utility/look_for.hpp"
 #include "utility/overload.hpp"
+#include "utility/string_icompare.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/path_properties.hpp"
@@ -1465,12 +1466,11 @@ void world_edit::update_ui() noexcept
                   if (ImGui::BeginCombo("Command Post",
                                         hintnode->command_post.c_str())) {
                      for (const auto& object : _world.objects) {
-                        const assets::odf::properties& properties =
-                           _object_classes[object.class_name].definition->header_properties;
+                        const assets::odf::definition& definition =
+                           *_object_classes[object.class_name].definition;
 
-                        if (not properties.contains("ClassLabel")) continue;
-
-                        if (properties["ClassLabel"] == "commandpost") {
+                        if (string::iequals(definition.header.class_label,
+                                            "commandpost")) {
                            if (ImGui::Selectable(object.name.c_str())) {
                               _edit_stack_world
                                  .apply(edits::make_set_value(hintnode->id,
@@ -3509,12 +3509,11 @@ void world_edit::update_ui() noexcept
                if (hintnode_traits.has_command_post) {
                   if (ImGui::BeginCombo("Command Post", hintnode.command_post.c_str())) {
                      for (const auto& object : _world.objects) {
-                        const assets::odf::properties& properties =
-                           _object_classes[object.class_name].definition->header_properties;
+                        const assets::odf::definition& definition =
+                           *_object_classes[object.class_name].definition;
 
-                        if (not properties.contains("ClassLabel")) continue;
-
-                        if (properties["ClassLabel"] == "commandpost") {
+                        if (string::iequals(definition.header.class_label,
+                                            "commandpost")) {
                            if (ImGui::Selectable(object.name.c_str())) {
                               _edit_stack_world.apply(edits::make_set_creation_value(
                                                          &world::hintnode::command_post,

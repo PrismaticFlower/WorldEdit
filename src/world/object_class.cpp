@@ -3,6 +3,7 @@
 #include "assets/asset_libraries.hpp"
 #include "assets/msh/default_missing_scene.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
+#include "utility/string_icompare.hpp"
 
 using namespace std::literals;
 
@@ -36,18 +37,12 @@ void object_class::update_from_definition(assets::libraries_manager& assets_libr
       instance_properties.push_back({.key = prop.key, .value = prop.value});
    }
 
-   if (definition->class_properties.contains("GeometryName"sv)) {
-      model_name =
-         lowercase_string{definition->class_properties.at("GeometryName"sv)};
-   }
-   else if (definition->header_properties.contains("GeometryName"sv)) {
-      model_name = lowercase_string{
-         definition->header_properties.at("GeometryName"sv)
-            .substr(0, definition->header_properties.at("GeometryName"sv).size() -
-                          ".msh"sv.size())};
+   if (string::iends_with(definition->header.geometry_name, ".msh"sv)) {
+      model_name = lowercase_string{definition->header.geometry_name.substr(
+         0, definition->header.geometry_name.size() - ".msh"sv.size())};
    }
    else {
-      model_name = {};
+      model_name = lowercase_string{definition->header.geometry_name};
    }
 
    if (not model_name.empty()) {

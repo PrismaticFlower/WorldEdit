@@ -133,11 +133,19 @@ void read_definition(std::string_view str, T& result)
          }
          else {
             switch (current_section) {
-            case section::header:
-               result.header_properties.push_back(read_property(line));
+            case section::header: {
+               const property property = read_property(line);
+
+               if (string::iequals(property.key, "ClassLabel"sv)) {
+                  result.header.class_label = property.value;
+               }
+               else if (string::iequals(property.key, "GeometryName"sv)) {
+                  result.header.geometry_name = property.value;
+               }
                break;
+            }
             case section::properties:
-               result.class_properties.push_back(read_property(line));
+               result.properties.push_back(read_property(line));
                break;
             case section::instance_properties:
                result.instance_properties.push_back(read_property(line));
@@ -169,8 +177,7 @@ auto read_definition(std::vector<char> string_storage) -> definition
 
    read_definition(str, property_counts);
 
-   definition.header_properties.reserve(property_counts.header);
-   definition.class_properties.reserve(property_counts.properties);
+   definition.properties.reserve(property_counts.properties);
    definition.instance_properties.reserve(property_counts.instance_properties);
 
    read_definition(str, definition);
