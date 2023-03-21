@@ -1251,6 +1251,8 @@ public:
 
    [[nodiscard]] bool supports_shader_barycentrics() const noexcept;
 
+   [[nodiscard]] bool supports_conservative_rasterization() const noexcept;
+
    /// Constructors/Destructor ///
 
    device(const device_desc& desc);

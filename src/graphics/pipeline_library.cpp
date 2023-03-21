@@ -40,11 +40,6 @@ constexpr gpu::rasterizer_state_desc rasterizer_cull_frontfacing = {
    .cull_mode = gpu::cull_mode::front,
 };
 
-constexpr gpu::rasterizer_state_desc rasterizer_conservative_cull_frontfacing = {
-   .cull_mode = gpu::cull_mode::front,
-   .conservative_raster = true,
-};
-
 constexpr gpu::rasterizer_state_desc rasterizer_line_antialiased = {
    .cull_mode = gpu::cull_mode::none,
    .antialiased_lines = true,
@@ -602,19 +597,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                             .debug_name = "tile_lights_clear"sv}),
                         device.direct_queue};
 
-   tile_lights_spheres = {device.create_graphics_pipeline(
-                             {.root_signature =
-                                 root_signature_library.tile_lights.get(),
+   tile_lights_spheres =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.tile_lights.get(),
 
-                              .vs_bytecode = shader_library["tile_lightsVS"sv],
-                              .ps_bytecode = shader_library["tile_lightsPS"sv],
+           .vs_bytecode = shader_library["tile_lightsVS"sv],
+           .ps_bytecode = shader_library["tile_lightsPS"sv],
 
-                              .rasterizer_state = rasterizer_conservative_cull_frontfacing,
-                              .depth_stencil_state = depth_stencil_disabled,
-                              .input_layout = meta_draw_input_layout,
+           .rasterizer_state =
+              {
+                 .cull_mode = gpu::cull_mode::front,
+                 .conservative_raster = device.supports_conservative_rasterization(),
+              },
+           .depth_stencil_state = depth_stencil_disabled,
+           .input_layout = meta_draw_input_layout,
 
-                              .debug_name = "tile_lights_spheres"sv}),
-                          device.direct_queue};
+           .debug_name = "tile_lights_spheres"sv}),
+       device.direct_queue};
 
    depth_reduce_minmax = {device.create_compute_pipeline(
                              {.root_signature =

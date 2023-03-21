@@ -219,6 +219,19 @@ bool check_shader_barycentrics_support(ID3D12Device& device) noexcept
    return options3.BarycentricsSupported;
 }
 
+bool check_conservative_rasterization_support(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_D3D12_OPTIONS options{};
+
+   if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options,
+                                         sizeof(options)))) {
+      return false;
+   }
+
+   return options.ConservativeRasterizationTier !=
+          D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED;
+}
+
 }
 
 struct command_queue_init {
@@ -233,8 +246,7 @@ struct device_state {
         device{create_d3d12_device(*factory, desc)},
         supports_enhanced_barriers{desc.force_legacy_barriers
                                       ? false
-                                      : check_enhanced_barriers_support(*device)},
-        supports_shader_barycentrics{check_shader_barycentrics_support(*device)}
+                                      : check_enhanced_barriers_support(*device)}
    {
    }
 
@@ -265,7 +277,10 @@ struct device_state {
    command_allocator_pool copy_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_COPY};
 
    const bool supports_enhanced_barriers : 1;
-   const bool supports_shader_barycentrics : 1;
+   const bool supports_shader_barycentrics : 1 =
+      check_shader_barycentrics_support(*device);
+   const bool supports_conservative_rasterization : 1 =
+      check_conservative_rasterization_support(*device);
 };
 
 struct swap_chain_state {
@@ -1340,6 +1355,11 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
 [[msvc::forceinline]] bool device::supports_shader_barycentrics() const noexcept
 {
    return state->supports_shader_barycentrics;
+}
+
+[[msvc::forceinline]] bool device::supports_conservative_rasterization() const noexcept
+{
+   return state->supports_conservative_rasterization;
 }
 
 swap_chain::swap_chain() = default;
