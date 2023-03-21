@@ -101,25 +101,18 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
 
       debug_ouput.write_ln("Trying {}...", std::string_view{adapter_name.data()});
 
-      if (auto hr = D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_1,
+      if (auto hr = D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_11_0,
                                       IID_PPV_ARGS(device.clear_and_assign()))) {
-         if (hr == E_NOINTERFACE) {
-            debug_ouput.write_ln(
-               "DX12 Agility SDK does not appear to be in use.");
-         }
-         else {
-            debug_ouput.write_ln("GPU doesn't support D3D_FEATURE_LEVEL_12_1.");
-         }
+         debug_ouput.write_ln("DX12 Agility SDK does not appear to be in use.");
 
          continue;
       }
 
-      D3D12_FEATURE_DATA_D3D12_OPTIONS options;
+      D3D12_FEATURE_DATA_D3D12_OPTIONS options{};
 
       if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS,
                                              &options, sizeof(options)))) {
-         debug_ouput.write_ln(
-            "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
+         debug_ouput.write_ln("Failed to query D3D12_FEATURE_D3D12_OPTIONS.");
 
          continue;
       }
@@ -131,12 +124,26 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          continue;
       }
 
-      D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3;
+      D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1{};
+
+      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1,
+                                             &options1, sizeof(options1)))) {
+         debug_ouput.write_ln("Failed to query D3D12_FEATURE_D3D12_OPTIONS1.");
+
+         continue;
+      }
+
+      if (not options1.WaveOps) {
+         debug_ouput.write_ln("GPU doesn't support WaveOps");
+
+         continue;
+      }
+
+      D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
 
       if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
                                              &options3, sizeof(options3)))) {
-         debug_ouput.write_ln(
-            "D3D12 Runtime doesn't support D3D12_FEATURE_D3D12_OPTIONS3");
+         debug_ouput.write_ln("Failed to query D3D12_FEATURE_D3D12_OPTIONS3");
 
          continue;
       }
