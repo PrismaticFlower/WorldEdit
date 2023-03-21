@@ -102,7 +102,7 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       debug_ouput.write_ln("Trying {}...", std::string_view{adapter_name.data()});
 
       if (auto hr = D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_12_1,
-                                      IID_PPV_ARGS(adapter.clear_and_assign()))) {
+                                      IID_PPV_ARGS(device.clear_and_assign()))) {
          if (hr == E_NOINTERFACE) {
             debug_ouput.write_ln(
                "DX12 Agility SDK does not appear to be in use.");
