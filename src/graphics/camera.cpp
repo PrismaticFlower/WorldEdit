@@ -8,6 +8,8 @@
 
 #include <cmath>
 
+#include "imgui/imgui.h"
+
 namespace we::graphics {
 
 auto camera::right() const noexcept -> float3
@@ -160,10 +162,10 @@ void camera::update() noexcept
    _view_matrix = rotation_inverse;
    _view_matrix[3] = {rotation_inverse * -_position, 1.0f};
 
-   _projection_matrix = {{1.0f, 0.0f, 0.0f, 0.0f}, //
-                         {0.0f, 1.0f, 0.0f, 0.0f}, //
-                         {0.0f, 0.0f, 1.0f, 0.0f}, //
-                         {0.0f, 0.0f, 0.0f, 1.0f}};
+   _projection_matrix = {{0.0f, 0.0f, 0.0f, 0.0f}, //
+                         {0.0f, 0.0f, 0.0f, 0.0f}, //
+                         {0.0f, 0.0f, 0.0f, 0.0f}, //
+                         {0.0f, 0.0f, 0.0f, 0.0f}};
 
    const auto near_clip = _near_clip;
    const auto far_clip = _far_clip;
