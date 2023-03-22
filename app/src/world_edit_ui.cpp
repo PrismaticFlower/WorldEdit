@@ -163,7 +163,7 @@ void world_edit::update_ui() noexcept
 
          if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip(
-               "Been editing for a while and large memory free getting you "
+               "Been editing for a while and large memory usage getting you "
                "down? Hit this to clear your undo stack and release the "
                "memory.");
          }
