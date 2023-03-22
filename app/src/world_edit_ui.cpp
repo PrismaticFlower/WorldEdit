@@ -155,6 +155,19 @@ void world_edit::update_ui() noexcept
          ImGui::MenuItem("Copy", nullptr, nullptr, false);
          ImGui::MenuItem("Paste", nullptr, nullptr, false);
 
+         ImGui::Separator();
+
+         if (ImGui::MenuItem("Clear Undo/Redo Stacks")) {
+            _clear_edit_stack_confirm_open = true;
+         }
+
+         if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+               "Been editing for a while and large memory free getting you "
+               "down? Hit this to clear your undo stack and release the "
+               "memory.");
+         }
+
          ImGui::EndMenu();
       }
 
@@ -451,6 +464,34 @@ void world_edit::update_ui() noexcept
       }
 
       ImGui::EndMainMenuBar();
+   }
+
+   // Clear Edit Stack Confirmation Window
+   if (_clear_edit_stack_confirm_open) {
+      ImGui::OpenPopup("Clear Undo/Redo Stacks?");
+   }
+
+   const ImVec2 imgui_center = ImGui::GetMainViewport()->GetCenter();
+   ImGui::SetNextWindowPos(imgui_center, ImGuiCond_Appearing, {0.5f, 0.5f});
+
+   if (ImGui::BeginPopupModal("Clear Undo/Redo Stacks?", &_clear_edit_stack_confirm_open,
+                              ImGuiWindowFlags_AlwaysAutoResize)) {
+
+      ImGui::Text("Clear the Undo/Redo stacks to free memory? This "
+                  "(unsurprisingly) cannot be undone!");
+      ImGui::Separator();
+
+      if (ImGui::Button("OK", {120.0f, 0.0f})) {
+         _edit_stack_world = {};
+         _clear_edit_stack_confirm_open = false;
+      }
+      ImGui::SetItemDefaultFocus();
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel", {120.0f, 0.0f})) {
+         _clear_edit_stack_confirm_open = false;
+      }
+
+      ImGui::EndPopup();
    }
 
    ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});

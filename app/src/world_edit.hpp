@@ -162,6 +162,7 @@ private:
 
    bool _imgui_demo_open = false;
    bool _hotkeys_editor_open = false;
+   bool _clear_edit_stack_confirm_open = false;
 
    POINT _rotate_camera_cursor_position = {0, 0};
 
