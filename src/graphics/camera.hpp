@@ -71,7 +71,7 @@ private:
    float4x4 _inv_view_projection_matrix;
 
    float _near_clip = 1.0f;
-   float _far_clip = 500.0f;
+   float _far_clip = 1000.0f;
 
    float3 _position{0.0f, 0.0f, 0.0f};
 
