@@ -60,6 +60,13 @@ struct paged_stack {
       return _size;
    }
 
+   void clear() noexcept
+   {
+      _size = 0;
+
+      for (auto& page : _pages) page.clear();
+   }
+
    auto push(const T& value) noexcept -> T&
    {
       const std::size_t new_item_index = _size++;

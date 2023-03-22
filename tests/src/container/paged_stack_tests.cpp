@@ -52,4 +52,27 @@ TEST_CASE("paged_stack top test", "[Container][PagedStack]")
    REQUIRE(stack.push(1) == stack.top());
 }
 
+TEST_CASE("paged_stack clear test", "[Container][PagedStack]")
+{
+   paged_stack<int, 2> stack;
+
+   for (int i = 0; i < 16; ++i) stack.push(i);
+
+   REQUIRE(not stack.empty());
+
+   stack.clear();
+
+   REQUIRE(stack.empty());
+
+   for (int i = 0; i < 16; ++i) {
+      CHECK(stack.push(i) == i);
+   }
+
+   REQUIRE(stack.size() == 16);
+
+   for (int i = 15; i >= 0; --i) {
+      CHECK(stack.pop() == i);
+   }
+}
+
 }

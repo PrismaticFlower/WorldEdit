@@ -1,16 +1,11 @@
 #pragma once
 
+#include "container/paged_stack.hpp"
 #include "edit.hpp"
 
 #include <memory>
-#include <vector>
 
 namespace we::edits {
-
-struct stack_init {
-   /// @brief Reverse size for the applied and reverted stacks.
-   const std::size_t reserve_size = 8192;
-};
 
 struct apply_flags {
    /// @brief Mark the edit as closed. (Not coalescable.)
@@ -27,14 +22,6 @@ struct stack {
    using edit_target = T;
    using edit_type = edit<T>;
 
-   stack() : stack{stack_init{}} {}
-
-   stack(const stack_init params) noexcept
-   {
-      _applied.reserve(params.reserve_size);
-      _reverted.reserve(params.reserve_size);
-   }
-
    /// @brief Apply an edit and push it onto the stack. Clears anything in the reverted stack.
    /// @param edit The edit.
    /// @param target The target of the edit.
@@ -42,24 +29,24 @@ struct stack {
    void apply(std::unique_ptr<edit_type> edit, edit_target& target,
               const apply_flags flags = {}) noexcept
    {
-      if (not _applied.empty() and                   //
-          not _applied.back()->is_closed() and       //
-          _applied.back()->is_coalescable(*edit) and //
+      if (not _applied.empty() and                  //
+          not _applied.top()->is_closed() and       //
+          _applied.top()->is_coalescable(*edit) and //
           not edit->is_closed()) {
-         _applied.back()->revert(target);
-         _applied.back()->coalesce(*edit);
-         _applied.back()->apply(target);
+         _applied.top()->revert(target);
+         _applied.top()->coalesce(*edit);
+         _applied.top()->apply(target);
       }
       else {
          edit->apply(target);
 
-         _applied.push_back(std::move(edit));
+         _applied.push(std::move(edit));
       }
 
       _reverted.clear();
 
-      if (flags.closed) _applied.back()->close();
-      if (flags.transparent) _applied.back()->mark_transparent();
+      if (flags.closed) _applied.top()->close();
+      if (flags.transparent) _applied.top()->mark_transparent();
    }
 
    /// @brief Revert an edit. Does nothing if there is no edit to revert
@@ -82,26 +69,26 @@ struct stack {
    void revert(const std::size_t count, edit_target& target) noexcept
    {
       for (std::size_t i = 0; i < count; ++i) {
-         while (not _applied.empty() and _applied.back()->is_transparent()) {
-            std::unique_ptr<edit_type>& transparent_edit = _applied.back();
+         while (not _applied.empty() and _applied.top()->is_transparent()) {
+            std::unique_ptr<edit_type>& transparent_edit = _applied.top();
 
             transparent_edit->revert(target);
 
-            _reverted.push_back(std::move(transparent_edit));
-            _applied.pop_back();
+            _reverted.push(std::move(transparent_edit));
+            _applied.pop();
          }
 
          if (_applied.empty()) break;
 
-         std::unique_ptr<edit_type>& edit = _applied.back();
+         std::unique_ptr<edit_type>& edit = _applied.top();
 
          edit->revert(target);
 
-         _reverted.push_back(std::move(edit));
-         _applied.pop_back();
+         _reverted.push(std::move(edit));
+         _applied.pop();
       }
 
-      if (not _applied.empty()) _applied.back()->close();
+      if (not _applied.empty()) _applied.top()->close();
    }
 
    /// @brief Reapplies a number of edits. Does nothing if there is no edit to reapply.
@@ -112,20 +99,20 @@ struct stack {
       for (std::size_t i = 0; i < count; ++i) {
          if (_reverted.empty()) break;
 
-         std::unique_ptr<edit_type>& edit = _reverted.back();
+         std::unique_ptr<edit_type>& edit = _reverted.top();
 
          edit->apply(target);
 
-         _applied.push_back(std::move(edit));
-         _reverted.pop_back();
+         _applied.push(std::move(edit));
+         _reverted.pop();
 
-         while (not _reverted.empty() and _reverted.back()->is_transparent()) {
-            std::unique_ptr<edit_type>& transparent_edit = _reverted.back();
+         while (not _reverted.empty() and _reverted.top()->is_transparent()) {
+            std::unique_ptr<edit_type>& transparent_edit = _reverted.top();
 
             transparent_edit->apply(target);
 
-            _applied.push_back(std::move(transparent_edit));
-            _reverted.pop_back();
+            _applied.push(std::move(transparent_edit));
+            _reverted.pop();
          }
       }
    }
@@ -171,7 +158,7 @@ struct stack {
    /// @brief Call close() on the edit at the top of the applied stack, if there is one. Else does nothing.
    void close_last() noexcept
    {
-      if (not _applied.empty()) _applied.back()->close();
+      if (not _applied.empty()) _applied.top()->close();
    }
 
    /// @brief Clear both the applied and reverted stacks while keeping their allocated memory.
@@ -182,8 +169,8 @@ struct stack {
    }
 
 private:
-   std::vector<std::unique_ptr<edit_type>> _applied;
-   std::vector<std::unique_ptr<edit_type>> _reverted;
+   container::paged_stack<std::unique_ptr<edit_type>, 8192> _applied;
+   container::paged_stack<std::unique_ptr<edit_type>, 8192> _reverted;
 };
 
 }
