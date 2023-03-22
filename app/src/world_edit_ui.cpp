@@ -873,6 +873,19 @@ void world_edit::update_ui() noexcept
 
                   ImGui::EndCombo();
                }
+
+               ImGui::Separator();
+
+               if (ImGui::Button("Add Nodes", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _edit_stack_world.apply(edits::make_creation_entity_set(
+                                             world::path{.name = path->name,
+                                                         .layer = path->layer,
+                                                         .nodes = {world::path::node{}},
+                                                         .id = world::max_id},
+                                             _interaction_targets.creation_entity),
+                                          _edit_context);
+                  _entity_creation_context = {};
+               }
             },
             [&](world::region_id id) {
                world::region* region =
@@ -2348,6 +2361,39 @@ void world_edit::update_ui() noexcept
                                                 &world::path::node::rotation,
                                                 new_rotation, path.nodes[0].rotation),
                                              _edit_context);
+                  }
+               }
+
+               if (existing_path and not existing_path->nodes.empty()) {
+                  if (_entity_creation_config.placement_node_insert ==
+                      placement_node_insert::nearest) {
+                     const world::clostest_node_result closest =
+                        find_closest_node(path.nodes[0].position, *existing_path);
+
+                     _tool_visualizers.lines
+                        .emplace_back(path.nodes[0].position,
+                                      existing_path->nodes[closest.index].position,
+                                      0xffffffffu);
+
+                     if (closest.next_is_forward and
+                         closest.index + 1 < existing_path->nodes.size()) {
+                        _tool_visualizers.lines
+                           .emplace_back(path.nodes[0].position,
+                                         existing_path->nodes[closest.index + 1].position,
+                                         0xffffffffu);
+                     }
+                     else if (closest.index > 0) {
+                        _tool_visualizers.lines
+                           .emplace_back(path.nodes[0].position,
+                                         existing_path->nodes[closest.index - 1].position,
+                                         0xffffffffu);
+                     }
+                  }
+                  else {
+                     _tool_visualizers.lines
+                        .emplace_back(path.nodes[0].position,
+                                      existing_path->nodes.back().position,
+                                      0xffffffffu);
                   }
                }
 
