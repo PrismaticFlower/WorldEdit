@@ -13,8 +13,10 @@
 #include "math/vector_funcs.hpp"
 #include "utility/file_pickers.hpp"
 #include "utility/overload.hpp"
+#include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 #include "world/raycast.hpp"
+#include "world/utility/make_command_post_linked_entities.hpp"
 #include "world/utility/sector_fill.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world_io_load.hpp"
@@ -403,6 +405,13 @@ void world_edit::place_creation_entity() noexcept
                                           object.name),
                                        _edit_context, {.transparent = true});
             }
+
+            if (_entity_creation_config.command_post_auto_place_meta_entities and
+                string::iequals(_object_classes[object.class_name]
+                                   .definition->header.class_label,
+                                "commandpost")) {
+               command_post_auto_place_meta_entities(_world.objects.back());
+            }
          },
          [&](const world::light& light) {
             world::light new_light = light;
@@ -677,6 +686,62 @@ void world_edit::place_creation_entity() noexcept
          },
       },
       *_interaction_targets.creation_entity);
+}
+
+void world_edit::command_post_auto_place_meta_entities(const world::object& object) noexcept
+{
+   world::command_post_linked_entities command_post_linked_entities =
+      world::make_command_post_linked_entities(
+         {.name = object.name,
+          .layer = object.layer,
+          .position = object.position,
+          .capture_radius = _entity_creation_config.command_post_capture_radius,
+          .control_radius = _entity_creation_config.command_post_control_radius,
+          .control_height = _entity_creation_config.command_post_control_height,
+          .spawn_radius = _entity_creation_config.command_post_spawn_radius},
+         _world.objects, _world.paths, _world.regions, _object_classes,
+         _terrain_collision);
+
+   for (std::size_t i = 0; i < object.instance_properties.size(); ++i) {
+      const auto& [key, value] = object.instance_properties[i];
+      if (string::iequals(key, "CaptureRegion")) {
+         _edit_stack_world.apply(edits::make_set_instance_property_value(
+                                    object.id, i,
+                                    command_post_linked_entities.capture_region.description,
+                                    value),
+                                 _edit_context,
+                                 {.closed = true, .transparent = true});
+      }
+      else if (string::iequals(key, "ControlRegion")) {
+         _edit_stack_world.apply(edits::make_set_instance_property_value(
+                                    object.id, i,
+                                    command_post_linked_entities.control_region.description,
+                                    value),
+                                 _edit_context,
+                                 {.closed = true, .transparent = true});
+      }
+      else if (string::iequals(key, "SpawnPath")) {
+         _edit_stack_world.apply(edits::make_set_instance_property_value(
+                                    object.id, i,
+                                    command_post_linked_entities.spawn_path.name, value),
+                                 _edit_context,
+                                 {.closed = true, .transparent = true});
+      }
+   }
+
+   command_post_linked_entities.capture_region.id = _world.next_id.regions.aquire();
+   command_post_linked_entities.control_region.id = _world.next_id.regions.aquire();
+   command_post_linked_entities.spawn_path.id = _world.next_id.paths.aquire();
+
+   _edit_stack_world.apply(edits::make_insert_entity(std::move(
+                              command_post_linked_entities.capture_region)),
+                           _edit_context, {.transparent = true});
+   _edit_stack_world.apply(edits::make_insert_entity(std::move(
+                              command_post_linked_entities.control_region)),
+                           _edit_context, {.transparent = true});
+   _edit_stack_world.apply(edits::make_insert_entity(
+                              std::move(command_post_linked_entities.spawn_path)),
+                           _edit_context, {.transparent = true});
 }
 
 void world_edit::undo() noexcept
@@ -985,5 +1050,4 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
    } break;
    }
 }
-
 }

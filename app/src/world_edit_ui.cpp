@@ -1826,6 +1826,26 @@ void world_edit::update_ui() noexcept
                ImGui::LayerPick<world::object>("Layer", &creation_entity,
                                                &_edit_stack_world, &_edit_context);
 
+               if (string::iequals(_object_classes[object.class_name]
+                                      .definition->header.class_label,
+                                   "commandpost")) {
+                  ImGui::SeparatorText("Command Post");
+
+                  ImGui::Checkbox("Auto-Place Regions & Spawn Path",
+                                  &_entity_creation_config.command_post_auto_place_meta_entities);
+
+                  if (_entity_creation_config.command_post_auto_place_meta_entities) {
+                     ImGui::DragFloat("Capture Region Radius",
+                                      &_entity_creation_config.command_post_capture_radius);
+                     ImGui::DragFloat("Control Region Radius",
+                                      &_entity_creation_config.command_post_control_radius);
+                     ImGui::DragFloat("Control Region Height",
+                                      &_entity_creation_config.command_post_control_height);
+                     ImGui::DragFloat("Spawn Path Radius",
+                                      &_entity_creation_config.command_post_spawn_radius);
+                  }
+               }
+
                ImGui::Separator();
 
                if (_entity_creation_config.placement_rotation !=

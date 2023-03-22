@@ -25,6 +25,25 @@ TEST_CASE("edits set_value", "[Edits]")
    REQUIRE(world.objects[0].layer == 0);
 }
 
+TEST_CASE("edits set_instance_property_value", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_instance_property_value(world.objects[0].id, 0, "10",
+                                       world.objects[0].instance_properties[0].value);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.objects[0].instance_properties[0].value == "10");
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.objects[0].instance_properties[0].value == "50000");
+}
+
 TEST_CASE("edits set_creation_value", "[Edits]")
 {
    world::world world = test_world;
@@ -286,6 +305,34 @@ TEST_CASE("edits set_value coalesce", "[Edits]")
    edit.revert(edit_context);
 
    REQUIRE(world.objects[0].layer == 0);
+}
+
+TEST_CASE("edits set_instance_property_value coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::object{};
+
+   auto edit =
+      make_set_instance_property_value(world.objects[0].id, 0, "10",
+                                       world.objects[0].instance_properties[0].value);
+   auto other_edit =
+      make_set_instance_property_value(world.objects[0].id, 0, "20",
+                                       world.objects[0].instance_properties[0].value);
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.objects[0].instance_properties[0].value == "20");
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.objects[0].instance_properties[0].value == "50000");
 }
 
 TEST_CASE("edits set_creation_value coalesce", "[Edits]")

@@ -323,6 +323,10 @@ inline auto make_set_creation_path_node_value(T world::path::node::*value_member
                                                             std::move(original_value));
 }
 
+auto make_set_instance_property_value(world::object_id id, std::size_t property_index,
+                                      std::string new_value, std::string original_value)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 auto make_set_creation_path_node_location(quaternion new_rotation,
                                           quaternion original_rotation,
                                           float3 new_position, float3 original_position,

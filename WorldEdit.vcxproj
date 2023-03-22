@@ -237,6 +237,7 @@
     <ClCompile Include="src\world\object_class_library.cpp" />
     <ClCompile Include="src\world\raycast.cpp" />
     <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
+    <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp" />
     <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
     <ClCompile Include="src\world\utility\object_properties.cpp" />
     <ClCompile Include="src\world\utility\path_properties.cpp" />
@@ -463,6 +464,7 @@
     <ClInclude Include="src\world\terrain.hpp" />
     <ClInclude Include="src\world\tool_visualizers.hpp" />
     <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
+    <ClInclude Include="src\world\utility\make_command_post_linked_entities.hpp" />
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
     <ClInclude Include="src\world\utility\object_properties.hpp" />
     <ClInclude Include="src\world\utility\path_properties.hpp" />

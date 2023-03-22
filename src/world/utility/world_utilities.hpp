@@ -67,41 +67,41 @@ inline auto find_region_by_description(const world& world, const std::string_vie
    return nullptr;
 }
 
-auto create_unique_name(const std::vector<object>& entities,
+auto create_unique_name(const std::span<const object> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<light>& entities,
+auto create_unique_name(const std::span<const light> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<path>& entities,
+auto create_unique_name(const std::span<const path> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<region>& entities,
+auto create_unique_name(const std::span<const region> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<sector>& entities,
+auto create_unique_name(const std::span<const sector> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<portal>& entities,
+auto create_unique_name(const std::span<const portal> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<hintnode>& entities,
+auto create_unique_name(const std::span<const hintnode> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<barrier>& entities,
+auto create_unique_name(const std::span<const barrier> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<planning_hub>& entities,
+auto create_unique_name(const std::span<const planning_hub> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<planning_connection>& entities,
+auto create_unique_name(const std::span<const planning_connection> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_name(const std::vector<boundary>& entities,
+auto create_unique_name(const std::span<const boundary> entities,
                         const std::string_view reference_name) -> std::string;
 
-auto create_unique_light_region_name(const std::vector<light>& lights,
-                                     const std::vector<region>& regions,
+auto create_unique_light_region_name(const std::span<const light> lights,
+                                     const std::span<const region> regions,
                                      const std::string_view reference_name)
    -> std::string;
 

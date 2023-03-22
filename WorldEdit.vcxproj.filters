@@ -640,6 +640,9 @@
     <ClInclude Include="src\hotkeys_io.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\make_command_post_linked_entities.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -907,6 +910,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\hotkeys_io.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
