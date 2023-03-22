@@ -202,6 +202,7 @@
     <ClCompile Include="src\commands_test.cpp" />
     <ClCompile Include="src\container\dynamic_array_2d_tests.cpp" />
     <ClCompile Include="src\container\enum_array_tests.cpp" />
+    <ClCompile Include="src\container\paged_stack_tests.cpp" />
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
     <ClCompile Include="src\edits\delete_entity_tests.cpp" />
