@@ -30,7 +30,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("edit.redo"s, [this]() { redo(); });
    _commands.add("edit.delete"s, [this]() { delete_selected(); });
 
-   _commands.add("hotkeys.show"s, _hotkeys_show);
+   _commands.add("hotkeys.show"s, _hotkeys_view_show);
 
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
