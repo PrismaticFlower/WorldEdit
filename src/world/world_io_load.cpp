@@ -872,29 +872,31 @@ void load_layer(const std::filesystem::path& world_dir, const std::string_view l
       load_lights(lights_path, layer_name, output, world_out, layer);
    }
 
-   if (const auto pvs_path = world_dir / layer_name += ".pvs"sv;
-       std::filesystem::exists(pvs_path)) {
-      load_portals_sectors(pvs_path, output, world_out);
-   }
-
-   if (const auto bar_path = world_dir / layer_name += ".bar"sv;
-       std::filesystem::exists(bar_path)) {
-      load_barriers(bar_path, output, world_out);
-   }
-
-   if (const auto pln_path = world_dir / layer_name += ".pln"sv;
-       std::filesystem::exists(pln_path)) {
-      load_planning(pln_path, output, world_out);
-   }
-
-   if (const auto bnd_path = world_dir / layer_name += ".bnd"sv;
-       std::filesystem::exists(bnd_path)) {
-      load_boundaries(bnd_path, output, world_out);
-   }
-
    if (const auto hnt_path = world_dir / layer_name += ".hnt"sv;
        std::filesystem::exists(hnt_path)) {
       load_hintnodes(hnt_path, layer_name, output, world_out, layer);
+   }
+
+   if (layer == 0) {
+      if (const auto pvs_path = world_dir / layer_name += ".pvs"sv;
+          std::filesystem::exists(pvs_path)) {
+         load_portals_sectors(pvs_path, output, world_out);
+      }
+
+      if (const auto bar_path = world_dir / layer_name += ".bar"sv;
+          std::filesystem::exists(bar_path)) {
+         load_barriers(bar_path, output, world_out);
+      }
+
+      if (const auto pln_path = world_dir / layer_name += ".pln"sv;
+          std::filesystem::exists(pln_path)) {
+         load_planning(pln_path, output, world_out);
+      }
+
+      if (const auto bnd_path = world_dir / layer_name += ".bnd"sv;
+          std::filesystem::exists(bnd_path)) {
+         load_boundaries(bnd_path, output, world_out);
+      }
    }
 }
 
