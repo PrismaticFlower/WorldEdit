@@ -140,7 +140,8 @@ public:
 
    /// @brief Gets the result of the task, waiting or executing the task directly if needed. Throws any exception thrown by the task. Calling this twice results in std::terminate being called.
    /// @return The result of the task.
-   [[nodiscard]] auto get() -> T requires(not std::same_as<T, void>)
+   [[nodiscard]] auto get() -> T
+      requires(not std::same_as<T, void>)
    {
       if (not _context or std::exchange(_context->result_obtained, true)) {
          std::terminate();
@@ -156,7 +157,8 @@ public:
    }
 
    /// @brief Waits for a task that returns nothing to be ready. Throws any exception thrown by the task. Calling this twice results in std::terminate being called.
-   void get() requires(std::same_as<T, void>)
+   void get()
+      requires(std::same_as<T, void>)
    {
       if (not _context or std::exchange(_context->result_obtained, true)) {
          std::terminate();
@@ -193,9 +195,9 @@ enum class task_priority { low, normal };
 
 /// @brief Initialization parameters for the thread_pool.
 struct thread_pool_init {
-   /// @brief Number of threads to create for the thread_pool. Can be 0 to force singlethreaded execution of tasks.
+   /// @brief Number of threads to create for the thread_pool. Must be >= 1.
    const std::size_t thread_count;
-   /// @brief Number of low priority threads to create for the thread_pool. Can be 0 to force singlethreaded execution of tasks.
+   /// @brief Number of low priority threads to create for the thread_pool. Must be >= 1.
    const std::size_t low_priority_thread_count;
 };
 

@@ -269,40 +269,6 @@ TEST_CASE("async thread_pool", "[Async][ThreadPool]")
    REQUIRE_THROWS(void_task_exception.get());
 }
 
-TEST_CASE("async thread_pool singlethreaded mode", "[Async][ThreadPool]")
-{
-   auto thread_pool =
-      thread_pool::make({.thread_count = 0, .low_priority_thread_count = 0});
-
-   REQUIRE(thread_pool->thread_count(task_priority::low) == 0);
-   REQUIRE(thread_pool->thread_count(task_priority::normal) == 0);
-
-   task<int> get_32 = thread_pool->exec(task_priority::normal, [] { return 32; });
-   task<int> get_exception = thread_pool->exec(task_priority::normal, []() -> int {
-      throw std::runtime_error{"Hello!"};
-   });
-   bool void_task_called = false;
-
-   task<void> void_task =
-      thread_pool->exec(task_priority::normal,
-                        [&void_task_called] { void_task_called = true; });
-   task<void> void_task_exception = thread_pool->exec(task_priority::normal, [] {
-      throw std::runtime_error{"Hello!"};
-   });
-
-   REQUIRE(get_32.ready());
-   REQUIRE(get_32.get() == 32);
-
-   REQUIRE(get_exception.ready());
-   REQUIRE_THROWS(get_exception.get());
-
-   REQUIRE(void_task.ready());
-   REQUIRE(void_task_called);
-
-   REQUIRE(void_task_exception.ready());
-   REQUIRE_THROWS(void_task_exception.get());
-}
-
 TEST_CASE("async thread_pool for_each_n", "[Async][ThreadPool]")
 {
    auto thread_pool =

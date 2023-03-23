@@ -52,9 +52,11 @@ thread_pool::thread_pool(const thread_pool_init init)
       }
    };
 
-   init_threads(_lowp_context, init.low_priority_thread_count,
+   init_threads(_lowp_context,
+                std::max(init.low_priority_thread_count, std::size_t{1}),
                 THREAD_PRIORITY_BELOW_NORMAL, L" (Low Priority)");
-   init_threads(_normalp_context, init.thread_count, THREAD_PRIORITY_NORMAL, L"");
+   init_threads(_normalp_context, std::max(init.thread_count, std::size_t{1}),
+                THREAD_PRIORITY_NORMAL, L"");
 }
 
 void thread_pool::cancel_task(detail::task_context_base& task_context) noexcept
