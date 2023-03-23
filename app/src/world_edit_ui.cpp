@@ -4544,11 +4544,6 @@ void world_edit::update_ui() noexcept
       }
 
       if (not continue_creation) {
-         _entity_creation_context.using_point_at = false;
-         _entity_creation_context.using_extend_to = false;
-         _entity_creation_context.using_shrink_to = false;
-         _entity_creation_context.using_from_object_bbox = false;
-
          _edit_stack_world.apply(edits::make_creation_entity_set(std::nullopt,
                                                                  creation_entity),
                                  _edit_context);
