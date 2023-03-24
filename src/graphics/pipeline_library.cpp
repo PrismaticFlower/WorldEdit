@@ -449,7 +449,13 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
           {.root_signature = root_signature_library.meta_draw.get(),
 
            .vs_bytecode = shader_library["meta_draw_shape_outlinedVS"sv],
-           .ps_bytecode = shader_library["meta_draw_outlinedPS"sv],
+           .ps_bytecode = supports_shader_barycentrics
+                             ? shader_library["meta_draw_outlinedPS"sv]
+                             : shader_library["meta_draw_outlined_GS_fallbackPS"sv],
+           .gs_bytecode =
+              supports_shader_barycentrics
+                 ? std::span<const std::byte>{}
+                 : shader_library["meta_draw_outlined_GS_fallbackGS"],
 
            .rasterizer_state = rasterizer_cull_backfacing,
            .depth_stencil_state = depth_stencil_enabled,

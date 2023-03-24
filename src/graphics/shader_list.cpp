@@ -58,6 +58,8 @@ std::initializer_list<shader_description> shader_list = {
    shader("meta_draw_wireframe_GS_fallbackPS"),
    shader("meta_draw_wireframe_GS_fallbackGS"),
    shader("meta_draw_outlinedPS"),
+   shader("meta_draw_outlined_GS_fallbackPS"),
+   shader("meta_draw_outlined_GS_fallbackGS"),
    shader("meta_draw_primitiveVS"),
    shader("meta_draw_shape_outlinedVS"),
    shader("meta_draw_shapeVS"),
