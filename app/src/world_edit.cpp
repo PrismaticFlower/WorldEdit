@@ -393,6 +393,7 @@ void world_edit::place_creation_entity() noexcept
             new_object.id = _world.next_id.objects.aquire();
 
             _last_created_entities.last_object = new_object.id;
+            _last_created_entities.last_used_object_classes.insert(new_object.class_name);
 
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object)),
                                     _edit_context);
@@ -742,6 +743,27 @@ void world_edit::command_post_auto_place_meta_entities(const world::object& obje
    _edit_stack_world.apply(edits::make_insert_entity(
                               std::move(command_post_linked_entities.spawn_path)),
                            _edit_context, {.transparent = true});
+}
+
+void world_edit::cycle_creation_entity_object_class() noexcept
+{
+   if (not _interaction_targets.creation_entity or
+       not std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
+      return;
+   }
+
+   if (_last_created_entities.last_used_object_classes.empty()) return;
+
+   const lowercase_string& class_name =
+      _last_created_entities.last_used_object_classes
+         [(_entity_creation_config.cycle_object_class_index++) %
+          _last_created_entities.last_used_object_classes.size()];
+
+   _edit_stack_world
+      .apply(edits::make_set_creation_value(
+                &world::object::class_name, class_name,
+                std::get<world::object>(*_interaction_targets.creation_entity).class_name),
+             _edit_context, {.closed = true});
 }
 
 void world_edit::undo() noexcept

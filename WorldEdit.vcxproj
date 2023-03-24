@@ -331,6 +331,7 @@
     <ClInclude Include="src\commands.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
+    <ClInclude Include="src\container\ring_set.hpp" />
     <ClInclude Include="src\container\slim_bitset.hpp" />
     <ClInclude Include="src\container\paged_stack.hpp" />
     <ClInclude Include="src\edits\creation_entity_set.hpp" />

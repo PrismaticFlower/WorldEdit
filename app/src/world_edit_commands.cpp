@@ -81,6 +81,8 @@ void world_edit::initialize_commands() noexcept
          return;
       }
    });
+   _commands.add("entity_creation.cycle_object_class"s,
+                 [this] { cycle_creation_entity_object_class(); });
 
    _commands.add("entity_creation.activate_point_at"s,
                  _entity_creation_context.activate_point_at);
@@ -168,6 +170,7 @@ void world_edit::initialize_hotkeys() noexcept
          {"Change Grounding Mode",
           "entity_creation.cycle_ground_mode",
           {.key = key::r, .modifiers = {.ctrl = true}}},
+         {"Cycle Object Class", "entity_creation.cycle_object_class", {.key = key::q}},
 
          {"Start Point At", "entity_creation.activate_point_at", {.key = key::v}},
          {"Start Extend To", "entity_creation.activate_extend_to", {.key = key::t}},

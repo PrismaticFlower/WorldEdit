@@ -2,6 +2,7 @@
 #include "assets/asset_libraries.hpp"
 #include "async/thread_pool.hpp"
 #include "commands.hpp"
+#include "container/ring_set.hpp"
 #include "edits/stack.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/gpu/exception.hpp"
@@ -82,6 +83,8 @@ private:
    void place_creation_entity() noexcept;
 
    void command_post_auto_place_meta_entities(const world::object& object) noexcept;
+
+   void cycle_creation_entity_object_class() noexcept;
 
    void undo() noexcept;
 
@@ -184,6 +187,8 @@ private:
       world::planning_hub_id last_planning_hub = world::max_id;
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
+
+      container::ring_set<lowercase_string, 8> last_used_object_classes;
    } _last_created_entities;
 
    struct entity_creation_context {
@@ -239,6 +244,8 @@ private:
       float command_post_control_radius = 16.0f;
       float command_post_control_height = 8.0f;
       float command_post_spawn_radius = 8.0f;
+
+      uint32 cycle_object_class_index = 0;
    } _entity_creation_config;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

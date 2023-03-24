@@ -29,6 +29,7 @@ namespace we {
 namespace {
 
 struct placement_traits {
+   bool has_cycle_object_class = false;
    bool has_new_path = false;
    bool has_placement_rotation = true;
    bool has_point_at = true;
@@ -2038,7 +2039,7 @@ void world_edit::update_ui() noexcept
                                 &_edit_stack_world, &_edit_context, 0, 15, "%d",
                                 ImGuiSliderFlags_AlwaysClamp);
 
-               return placement_traits{};
+               return placement_traits{.has_cycle_object_class = true};
             },
             [&](const world::light& light) {
                ImGui::InputText("Name", &creation_entity, &world::light::name,
@@ -4482,6 +4483,13 @@ void world_edit::update_ui() noexcept
 
       if (_hotkeys_view_show) {
          ImGui::Begin("Hotkeys");
+
+         if (traits.has_cycle_object_class) {
+            ImGui::Text("Cycle Object Class");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "entity_creation.cycle_object_class")));
+         }
 
          if (traits.has_new_path) {
             ImGui::Text("New Path");
