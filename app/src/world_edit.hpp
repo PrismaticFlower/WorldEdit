@@ -163,7 +163,11 @@ private:
    bool _imgui_demo_open = false;
    bool _hotkeys_editor_open = false;
    bool _clear_edit_stack_confirm_open = false;
+   bool _world_explorer_open = true;
    bool _world_stats_open = false;
+
+   std::string _world_explorer_filter;
+   std::string _world_explorer_class_filter;
 
    POINT _rotate_camera_cursor_position = {0, 0};
 

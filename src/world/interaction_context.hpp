@@ -47,4 +47,8 @@ struct edit_context {
    float3 light_region_euler_rotation;
 };
 
+bool is_selected(const selected_entity entity, const interaction_targets& targets) noexcept;
+
+bool is_selected(const path_id entity, const interaction_targets& targets) noexcept;
+
 }

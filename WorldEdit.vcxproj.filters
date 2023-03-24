@@ -918,6 +918,9 @@
     <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\interaction_context.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />
