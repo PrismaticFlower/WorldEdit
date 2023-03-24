@@ -4574,6 +4574,10 @@ void world_edit::update_ui() noexcept
    }
 
    if (_world_explorer_open) {
+      ImGui::SetNextWindowPos({0.0f, ImGui::GetIO().DisplaySize.y},
+                              ImGuiCond_Once, {0.0f, 1.0f});
+      ImGui::SetNextWindowSize({1216.0f, 272.0f}, ImGuiCond_Once);
+
       ImGui::Begin("World Explorer", &_world_explorer_open);
 
       if (ImGui::BeginTabBar("Explorer", ImGuiTabBarFlags_Reorderable)) {
