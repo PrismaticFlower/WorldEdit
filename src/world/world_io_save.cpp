@@ -485,15 +485,15 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
 
    if (layer_index == 0) {
       auto ambient_sky_color =
-         utility::compress_srgb(world.lighting_settings.ambient_sky_color);
+         utility::compress_srgb(world.global_lights.ambient_sky_color);
       auto ambient_ground_color =
-         utility::compress_srgb(world.lighting_settings.ambient_ground_color);
+         utility::compress_srgb(world.global_lights.ambient_ground_color);
 
       file.write_ln("GlobalLights()");
       file.write_ln("{");
       file.write_ln("\tEditorGlobalDirIconSize(10);");
-      file.write_ln("\tLight1(\"{}\");", world.lighting_settings.global_lights[0]);
-      file.write_ln("\tLight2(\"{}\");", world.lighting_settings.global_lights[1]);
+      file.write_ln("\tLight1(\"{}\");", world.global_lights.global_light_1);
+      file.write_ln("\tLight2(\"{}\");", world.global_lights.global_light_2);
       file.write_ln("\tTop({}, {}, {});",
                     static_cast<int>(ambient_sky_color.x * 255.0f + 0.5f),
                     static_cast<int>(ambient_sky_color.y * 255.0f + 0.5f),
@@ -503,8 +503,8 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
                     static_cast<int>(ambient_ground_color.y * 255.0f + 0.5f),
                     static_cast<int>(ambient_ground_color.z * 255.0f + 0.5f));
 
-      if (not world.lighting_settings.env_map_texture.empty()) {
-         file.write_ln("\tEnvMap(\"{}\");", world.lighting_settings.env_map_texture);
+      if (not world.global_lights.env_map_texture.empty()) {
+         file.write_ln("\tEnvMap(\"{}\");", world.global_lights.env_map_texture);
       }
 
       file.write_ln("}");

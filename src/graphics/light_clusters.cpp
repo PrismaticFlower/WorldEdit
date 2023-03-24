@@ -412,9 +412,9 @@ void light_clusters::prepare_lights(const camera& view_camera,
       upload_to(_lights_region_list_srv.get(),
                 &upload_data.constants->light_region_list_index);
       upload_to(_shadow_map_srv.get(), &upload_data.constants->shadow_map_index);
-      upload_to(world.lighting_settings.ambient_sky_color,
+      upload_to(world.global_lights.ambient_sky_color,
                 &upload_data.constants->sky_ambient_color);
-      upload_to(world.lighting_settings.ambient_ground_color,
+      upload_to(world.global_lights.ambient_ground_color,
                 &upload_data.constants->ground_ambient_color);
       upload_to({shadow_res, shadow_res}, &upload_data.constants->shadow_resolution);
       upload_to({1.0f / shadow_res, 1.0f / shadow_res},

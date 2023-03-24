@@ -87,11 +87,11 @@ TEST_CASE("world loading", "[World][IO]")
 
    // light checks
    {
-      CHECK(world.lighting_settings.global_lights[0] == "sun"sv);
-      CHECK(world.lighting_settings.global_lights[1] == ""sv);
-      CHECK(approx_equals(world.lighting_settings.ambient_sky_color,
+      CHECK(world.global_lights.global_light_1 == "sun"sv);
+      CHECK(world.global_lights.global_light_2 == ""sv);
+      CHECK(approx_equals(world.global_lights.ambient_sky_color,
                           utility::decompress_srgb({0.5490196f, 0.3098039f, 0.2470588f})));
-      CHECK(approx_equals(world.lighting_settings.ambient_ground_color,
+      CHECK(approx_equals(world.global_lights.ambient_ground_color,
                           utility::decompress_srgb({0.3137254f, 0.1568627f, 0.1176470f})));
 
       REQUIRE(world.lights.size() == 5);

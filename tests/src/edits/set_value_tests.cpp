@@ -25,6 +25,27 @@ TEST_CASE("edits set_value", "[Edits]")
    REQUIRE(world.objects[0].layer == 0);
 }
 
+TEST_CASE("edits set_global_lights_value", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_global_lights_value(&world::global_lights::env_map_texture,
+                                       "starfield"s,
+                                       world.global_lights.env_map_texture);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.global_lights.env_map_texture == "starfield");
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.global_lights.env_map_texture ==
+           test_world.global_lights.env_map_texture);
+}
+
 TEST_CASE("edits set_instance_property_value", "[Edits]")
 {
    world::world world = test_world;
@@ -305,6 +326,35 @@ TEST_CASE("edits set_value coalesce", "[Edits]")
    edit.revert(edit_context);
 
    REQUIRE(world.objects[0].layer == 0);
+}
+
+TEST_CASE("edits set_global_lights_value coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_global_lights_value(&world::global_lights::env_map_texture,
+                                       "starfield"s,
+                                       world.global_lights.env_map_texture);
+   auto other_edit =
+      make_set_global_lights_value(&world::global_lights::env_map_texture,
+                                       "mountains"s,
+                                       world.global_lights.env_map_texture);
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.global_lights.env_map_texture == "mountains");
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.global_lights.env_map_texture ==
+           test_world.global_lights.env_map_texture);
 }
 
 TEST_CASE("edits set_instance_property_value coalesce", "[Edits]")

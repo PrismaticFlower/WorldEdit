@@ -451,7 +451,7 @@
     <ClInclude Include="src\world\hintnode.hpp" />
     <ClInclude Include="src\world\layer_description.hpp" />
     <ClInclude Include="src\world\light.hpp" />
-    <ClInclude Include="src\world\lighting_settings.hpp" />
+    <ClInclude Include="src\world\global_lights.hpp" />
     <ClInclude Include="src\world\object.hpp" />
     <ClInclude Include="src\world\object_class.hpp" />
     <ClInclude Include="src\world\object_class_library.hpp" />

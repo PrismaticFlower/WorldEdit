@@ -489,9 +489,10 @@ TEST_CASE("world saving", "[World][IO]")
                                                    hub_id_generator.aquire()};
 
    const world world{
-      .lighting_settings = {.global_lights = {"sun", ""},
-                            .ambient_sky_color = {1.0f, 1.0f, 1.0f},
-                            .ambient_ground_color = {0.0f, 0.0f, 0.0f}},
+      .global_lights = {.global_light_1 = "sun",
+                        .global_light_2 = "",
+                        .ambient_sky_color = {1.0f, 1.0f, 1.0f},
+                        .ambient_ground_color = {0.0f, 0.0f, 0.0f}},
 
       .objects = {object{.name = "object",
 

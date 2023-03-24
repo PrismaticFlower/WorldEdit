@@ -99,9 +99,6 @@
     <ClInclude Include="include\world\light.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\world\lighting_settings.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\world\object.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -250,9 +247,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\light.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\lighting_settings.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\object.hpp">
@@ -644,6 +638,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\container\paged_stack.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\world\lighting_settings.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\global_lights.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

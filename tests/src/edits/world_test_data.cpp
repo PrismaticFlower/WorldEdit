@@ -17,6 +17,7 @@ const we::world::world test_world = {
    .gamemode_descriptions = {},
 
    .terrain = {},
+   .global_lights = {.env_map_texture = "sky"},
 
    .objects = {object{
       .name = "test_object"s,

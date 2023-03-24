@@ -3,11 +3,11 @@
 #include "barrier.hpp"
 #include "boundary.hpp"
 #include "gamemode_description.hpp"
+#include "global_lights.hpp"
 #include "hintnode.hpp"
 #include "id.hpp"
 #include "layer_description.hpp"
 #include "light.hpp"
-#include "lighting_settings.hpp"
 #include "object.hpp"
 #include "path.hpp"
 #include "planning.hpp"
@@ -29,7 +29,7 @@ struct world {
    std::vector<gamemode_description> gamemode_descriptions;
 
    terrain terrain;
-   lighting_settings lighting_settings;
+   global_lights global_lights;
 
    std::vector<object> objects;
    std::vector<light> lights;

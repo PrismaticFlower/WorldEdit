@@ -7,15 +7,16 @@
 
 namespace we::world {
 
-struct lighting_settings {
-   std::array<std::string, 2> global_lights;
+struct global_lights {
+   std::string global_light_1;
+   std::string global_light_2;
 
    float3 ambient_sky_color = {0.5f, 0.5f, 0.5f};
    float3 ambient_ground_color = {0.3f, 0.3f, 0.3f};
 
    std::string env_map_texture;
 
-   bool operator==(const lighting_settings&) const noexcept = default;
+   bool operator==(const global_lights&) const noexcept = default;
 };
 
 }

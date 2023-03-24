@@ -315,21 +315,21 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
             }
          }
          else if (key_node.key == "GlobalLights"sv) {
-            world_out.lighting_settings.global_lights[0] =
+            world_out.global_lights.global_light_1 =
                key_node.at("Light1"sv).values.get<std::string>(0);
-            world_out.lighting_settings.global_lights[1] =
+            world_out.global_lights.global_light_2 =
                key_node.at("Light2"sv).values.get<std::string>(0);
-            world_out.lighting_settings.ambient_sky_color = utility::decompress_srgb(
+            world_out.global_lights.ambient_sky_color = utility::decompress_srgb(
                float3{key_node.at("Top"sv).values.get<float>(0) / 255.0f,
                       key_node.at("Top"sv).values.get<float>(1) / 255.0f,
                       key_node.at("Top"sv).values.get<float>(2) / 255.0f});
-            world_out.lighting_settings.ambient_ground_color = utility::decompress_srgb(
+            world_out.global_lights.ambient_ground_color = utility::decompress_srgb(
                float3{key_node.at("Bottom"sv).values.get<float>(0) / 255.0f,
                       key_node.at("Bottom"sv).values.get<float>(1) / 255.0f,
                       key_node.at("Bottom"sv).values.get<float>(2) / 255.0f});
 
             if (auto env_map = key_node.find("EnvMap"sv); env_map != key_node.cend()) {
-               world_out.lighting_settings.env_map_texture =
+               world_out.global_lights.env_map_texture =
                   env_map->values.get<std::string>(0);
             }
          }
