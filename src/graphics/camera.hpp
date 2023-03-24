@@ -71,12 +71,12 @@ private:
    float4x4 _inv_view_projection_matrix;
 
    float _near_clip = 1.0f;
-   float _far_clip = 1000.0f;
+   float _far_clip = 2000.0f;
 
    float3 _position{0.0f, 0.0f, 0.0f};
 
    float _aspect_ratio = 1.0f;
-   float _fov = 0.7853981635f;
+   float _fov = 1.2217305f;
 
    float _pitch = 0.0f;
    float _yaw = 0.0f;
