@@ -111,6 +111,11 @@ void world_edit::update_ui() noexcept
             ImGui::EndMenu();
          }
 
+         if (not loaded_project and
+             ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            ImGui::SetTooltip("You must open a project to load a world.");
+         }
+
          const bool loaded_world = not _world_path.empty();
 
          if (ImGui::MenuItem("Save World",
