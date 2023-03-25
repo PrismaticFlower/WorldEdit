@@ -9,8 +9,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />
+    <ClInclude Include="src\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\resource.rc" />
   </ItemGroup>
 </Project>

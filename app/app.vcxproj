@@ -122,7 +122,6 @@
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxcompiler.dll" "$(OutputPath)"
 copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxil.dll" "$(OutputPath)"
-xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
 xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <Message>Copying dxcompiler and assets...</Message>
     </PostBuildEvent>
@@ -162,7 +161,6 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxcompiler.dll" "$(OutputPath)"
 copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxil.dll" "$(OutputPath)"
-xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
 xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <Message>Copying dxcompiler and assets...</Message>
     </PostBuildEvent>
@@ -203,7 +201,6 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxcompiler.dll" "$(OutputPath)"
 copy "$(SolutionDir)third_party\dxc\bin\$(Platform)\dxil.dll" "$(OutputPath)"
-xcopy /q /y "$(SolutionDir)\fonts\" "$(OutputPath)\fonts\"
 xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       <Message>Copying dxcompiler and assets...</Message>
     </PostBuildEvent>
@@ -214,6 +211,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <ClCompile Include="src\world_edit.cpp" />
     <ClCompile Include="src\world_edit_commands.cpp" />
     <ClCompile Include="src\world_edit_ui.cpp" />
+    <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\world_edit.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -223,6 +221,9 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

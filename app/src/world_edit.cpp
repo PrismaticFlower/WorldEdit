@@ -11,6 +11,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"
+#include "resource.h"
 #include "utility/file_pickers.hpp"
 #include "utility/overload.hpp"
 #include "utility/string_icompare.hpp"
@@ -1042,9 +1043,24 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
 
    _display_scale = _current_dpi / 96.0f;
 
+   const static std::span<std::byte> roboto_regular = [] {
+      const HRSRC resource =
+         FindResourceW(nullptr, MAKEINTRESOURCEW(RES_ID_ROBOTO_REGULAR),
+                       MAKEINTRESOURCEW(RES_TYPE_BINARY));
+
+      return std::span{static_cast<std::byte*>(
+                          LockResource(LoadResource(nullptr, resource))),
+                       SizeofResource(nullptr, resource)};
+   }();
+
+   ImFontConfig font_config{};
+   font_config.FontDataOwnedByAtlas = false;
+
    ImGui::GetIO().Fonts->Clear();
-   ImGui::GetIO().Fonts->AddFontFromFileTTF("fonts/Roboto-Regular.ttf",
-                                            std::floor(16.0f * _display_scale));
+   ImGui::GetIO().Fonts->AddFontFromMemoryTTF(roboto_regular.data(),
+                                              static_cast<int>(roboto_regular.size()),
+                                              std::floor(16.0f * _display_scale),
+                                              &font_config);
    ImGui::GetStyle().ScaleAllSizes(new_dpi / old_dpi);
 
    try {
