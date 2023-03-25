@@ -124,6 +124,8 @@ private:
    float _display_scale = 1.0f;
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
+   std::chrono::steady_clock::time_point _sprint_start =
+      std::chrono::steady_clock::now();
 
    int32 _queued_mouse_movement_x = 0;
    int32 _queued_mouse_movement_y = 0;
@@ -160,6 +162,7 @@ private:
    bool _move_camera_right = false;
    bool _move_camera_up = false;
    bool _move_camera_down = false;
+   bool _move_sprint = false;
    bool _rotate_camera = false;
 
    bool _hotkeys_view_show = false;
@@ -169,6 +172,7 @@ private:
    bool _world_global_lights_editor_open = false;
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
+   bool _camera_controls_open = false;
 
    std::string _world_explorer_filter;
    std::string _world_explorer_class_filter;

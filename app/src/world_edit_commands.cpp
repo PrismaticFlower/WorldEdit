@@ -14,6 +14,30 @@ void world_edit::initialize_commands() noexcept
    _commands.add("camera.move_right"s, _move_camera_right);
    _commands.add("camera.move_up"s, _move_camera_up);
    _commands.add("camera.move_down"s, _move_camera_down);
+   _commands.add("camera.move_sprint_forward"s, [this] {
+      _move_camera_forward = not _move_camera_forward;
+      _move_sprint = not _move_sprint;
+   });
+   _commands.add("camera.move_sprint_back"s, [this] {
+      _move_camera_back = not _move_camera_back;
+      _move_sprint = not _move_sprint;
+   });
+   _commands.add("camera.move_sprint_left"s, [this] {
+      _move_camera_left = not _move_camera_left;
+      _move_sprint = not _move_sprint;
+   });
+   _commands.add("camera.move_sprint_right"s, [this] {
+      _move_camera_right = not _move_camera_right;
+      _move_sprint = not _move_sprint;
+   });
+   _commands.add("camera.move_sprint_up"s, [this] {
+      _move_camera_up = not _move_camera_up;
+      _move_sprint = not _move_sprint;
+   });
+   _commands.add("camera.move_sprint_down"s, [this] {
+      _move_camera_down = not _move_camera_down;
+      _move_sprint = not _move_sprint;
+   });
    _commands.add("camera.rotate_with_mouse"s, [this]() {
       _rotate_camera = not _rotate_camera;
       GetCursorPos(&_rotate_camera_cursor_position);
@@ -140,6 +164,30 @@ void world_edit::initialize_hotkeys() noexcept
          {"Move Right", "camera.move_right", {.key = key::d}, {.toggle = true}},
          {"Move Up", "camera.move_up", {.key = key::r}, {.toggle = true}},
          {"Move Down", "camera.move_down", {.key = key::f}, {.toggle = true}},
+         {"Move Sprint Forward",
+          "camera.move_sprint_forward",
+          {.key = key::w, .modifiers = {.shift = true}},
+          {.toggle = true}},
+         {"Move Sprint Back",
+          "camera.move_sprint_back",
+          {.key = key::s, .modifiers = {.shift = true}},
+          {.toggle = true}},
+         {"Move Sprint Left",
+          "camera.move_sprint_left",
+          {.key = key::a, .modifiers = {.shift = true}},
+          {.toggle = true}},
+         {"Move Sprint Right",
+          "camera.move_sprint_right",
+          {.key = key::d, .modifiers = {.shift = true}},
+          {.toggle = true}},
+         {"Move Sprint Up",
+          "camera.move_sprint_up",
+          {.key = key::r, .modifiers = {.shift = true}},
+          {.toggle = true}},
+         {"Move Sprint Down",
+          "camera.move_sprint_down",
+          {.key = key::f, .modifiers = {.shift = true}},
+          {.toggle = true}},
          {"Rotate Camera", "camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
 
          {"Select", "edit.select", {.key = key::mouse1}},

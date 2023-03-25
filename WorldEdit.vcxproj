@@ -401,6 +401,7 @@
     <ClInclude Include="src\math\quaternion_funcs.hpp" />
     <ClInclude Include="src\math\vector_funcs.hpp" />
     <ClInclude Include="src\output_stream.hpp" />
+    <ClInclude Include="src\settings\camera.hpp" />
     <ClInclude Include="src\settings\graphics.hpp" />
     <ClInclude Include="src\settings\settings.hpp" />
     <ClInclude Include="src\types.hpp" />

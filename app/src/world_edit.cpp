@@ -32,13 +32,6 @@ using namespace std::literals;
 
 namespace we {
 
-namespace {
-
-constexpr float camera_movement_sensitivity = 20.0f;
-constexpr float camera_look_sensitivity = 0.18f;
-
-}
-
 world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
      _window{window},
@@ -335,7 +328,20 @@ void world_edit::update_camera(const float delta_time)
 {
    float3 camera_position = _camera.position();
 
-   const float camera_movement_scale = delta_time * camera_movement_sensitivity;
+   float sprint_factor = 1.0f;
+
+   if (_move_sprint) {
+      const float sprint_time =
+         std::chrono::duration<float>(std::chrono::steady_clock::now() - _sprint_start)
+            .count();
+      sprint_factor = std::pow(sprint_time + 1.0f, _settings.camera.sprint_power);
+   }
+   else {
+      _sprint_start = std::chrono::steady_clock::now();
+   }
+
+   const float camera_movement_scale =
+      delta_time * _settings.camera.move_speed * sprint_factor;
 
    if (_move_camera_forward) {
       camera_position += (_camera.forward() * camera_movement_scale);
@@ -359,7 +365,7 @@ void world_edit::update_camera(const float delta_time)
    _camera.position(camera_position);
 
    if (_rotate_camera) {
-      const float camera_look_scale = delta_time * camera_look_sensitivity;
+      const float camera_look_scale = delta_time * _settings.camera.look_sensitivity;
 
       _camera.yaw(_camera.yaw() + (-_mouse_movement_x * camera_look_scale));
       _camera.pitch(_camera.pitch() + (-_mouse_movement_y * camera_look_scale));

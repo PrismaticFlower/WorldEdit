@@ -183,6 +183,8 @@ void world_edit::update_ui() noexcept
                               "hotkeys during editing.");
          }
 
+         ImGui::MenuItem("Camera Controls", nullptr, &_camera_controls_open);
+
          ImGui::Separator();
 
          ImGui::MenuItem("World Global Lights Editor", nullptr,
@@ -530,8 +532,7 @@ void world_edit::update_ui() noexcept
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                    ImGuiWindowFlags_NoMove);
 
-   ImGui::TextUnformatted("Active Layers");
-   ImGui::Separator();
+   ImGui::SeparatorText("Active Layers");
    ImGui::BeginChild("Active Layers", ImVec2{0.0f, 208.0f * _display_scale});
 
    for (std::size_t i = 0; i < _world.layer_descriptions.size(); ++i) {
@@ -543,9 +544,8 @@ void world_edit::update_ui() noexcept
 
    ImGui::EndChild();
 
-   ImGui::TextUnformatted("Active Entities");
-   ImGui::Separator();
-   ImGui::BeginChild("Active Entities", ImVec2{0.0f, 236.0f * _display_scale});
+   ImGui::SeparatorText("Active Entities");
+   ImGui::BeginChild("Active Entities", ImVec2{0.0f, 224.0f * _display_scale});
 
    if (ImGui::Selectable("Objects", _world_draw_mask.objects)) {
       _world_draw_mask.objects = not _world_draw_mask.objects;
@@ -5330,6 +5330,32 @@ void world_edit::update_ui() noexcept
                      static_cast<int>(_edit_stack_world.applied_size()));
          ImGui::Text("Redo Stack Size: %i",
                      static_cast<int>(_edit_stack_world.reverted_size()));
+      }
+      ImGui::End();
+   }
+
+   if (_camera_controls_open) {
+      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+                              ImGuiCond_Once, {0.0f, 0.0f});
+
+      if (ImGui::Begin("Camera##Controls", &_camera_controls_open,
+                       ImGuiWindowFlags_AlwaysAutoResize)) {
+         ImGui::DragFloat("Move Speed", &_settings.camera.move_speed, 0.05f,
+                          1.0f, 1000.0f);
+         ImGui::DragFloat("Look Sensitivity", &_settings.camera.look_sensitivity,
+                          0.001f, 0.00001f, 1000.0f);
+         ImGui::DragFloat("Sprint Power", &_settings.camera.sprint_power,
+                          0.005f, 1.0f, 1000.0f);
+
+         if (float fov = _camera.fov();
+             ImGui::SliderAngle("Horizontal FOV", &fov, 1.0f, 120.0f)) {
+            _camera.fov(fov);
+         }
+
+         if (float3 position = _camera.position();
+             ImGui::DragFloat3("Position", &position.x)) {
+            _camera.position(position);
+         }
       }
       ImGui::End();
    }
