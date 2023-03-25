@@ -4,7 +4,7 @@
 
 namespace we::graphics::gpu {
 
-enum class error { out_of_memory, device_removed };
+enum class error { out_of_memory, device_removed, no_suitable_device };
 
 struct exception final : std::runtime_error {
    explicit exception(const error error, const char* msg) noexcept

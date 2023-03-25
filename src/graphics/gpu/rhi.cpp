@@ -178,12 +178,9 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       return device;
    }
 
-   debug_ouput.flush();
-
-   MessageBoxW(nullptr, L"Unable to create D3D12 device. The app will now close.",
-               L"See \"D3D12 Create Device.log\" for more info.", MB_OK);
-
-   std::terminate();
+   throw exception{error::no_suitable_device,
+                   "No D3D12 device was found that met requirements for use. "
+                   "See \"D3D12 Create Device.log\" for more info."};
 }
 
 auto create_fence(ID3D12Device& device, uint64 initial_value) -> com_ptr<ID3D12Fence>

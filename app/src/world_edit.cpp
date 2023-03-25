@@ -33,10 +33,16 @@ using namespace std::literals;
 namespace we {
 
 world_edit::world_edit(const HWND window, utility::command_line command_line)
-   : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
-     _window{window},
-     _renderer{graphics::make_renderer(window, _thread_pool, _asset_libraries, _stream)}
+   : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}
 {
+   try {
+      _renderer =
+         graphics::make_renderer(window, _thread_pool, _asset_libraries, _stream);
+   }
+   catch (graphics::gpu::exception& e) {
+      handle_gpu_error(e);
+   }
+
    initialize_commands();
    initialize_hotkeys();
 
@@ -1063,7 +1069,7 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
                           "GPU Memory Exhausted", MB_YESNO | MB_ICONERROR)) {
       case IDYES:
          save_world_with_picker();
-
+         [[fallthrough]];
       case IDNO:
       default:
          std::terminate();
@@ -1072,9 +1078,34 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
    case error::device_removed: {
       _renderer = nullptr;
 
-      _renderer =
-         graphics::make_renderer(_window, _thread_pool, _asset_libraries, _stream);
+      try {
+         _renderer = graphics::make_renderer(_window, _thread_pool,
+                                             _asset_libraries, _stream);
+      }
+      catch (graphics::gpu::exception& e) {
+         if (e.error() != error::device_removed) {
+            return handle_gpu_error(e);
+         }
+      }
 
+   } break;
+   case error::no_suitable_device: {
+      switch (MessageBoxA(
+         _window,
+         fmt::format("{}\n\nIt is possible the GPU "
+                     "being used was removed and the remaining ones do not met "
+                     "requirements.\n\nThe editor "
+                     "will now exit.\n\nSave world?",
+                     e.what())
+            .c_str(),
+         "No Suitable GPU", MB_YESNO | MB_ICONERROR)) {
+      case IDYES:
+         save_world_with_picker();
+         [[fallthrough]];
+      case IDNO:
+      default:
+         std::terminate();
+      }
    } break;
    }
 }
