@@ -88,7 +88,7 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
                            : default_hotkey.binding;
 
       const bool binding_free_for_use =
-         has_saved_used_set and
+         not has_saved_used_set or
          not _saved_used_bindings.at(set_name).contains(binding);
 
       if (has_saved_binding or binding_free_for_use) {
