@@ -35,12 +35,28 @@ constexpr bool is_keyboard_key(const key key) noexcept
 }
 
 hotkeys::hotkeys(commands& commands, output_stream& error_output_stream) noexcept
-   : _commands{commands}, _error_output_stream{error_output_stream}
+   : _commands{commands},
+     _error_output_stream{error_output_stream},
+     _saved_bindings{load_bindings(save_path)},
+     _saved_used_bindings{[this] {
+        absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> saved_used_bindings;
+        saved_used_bindings.reserve(_saved_bindings.size());
+
+        for (const auto& [set_name, saved] : _saved_bindings) {
+           absl::flat_hash_set<hotkey_bind>& used = saved_used_bindings[set_name];
+
+           used.reserve(saved.size());
+
+           for (const auto& [name, binding] : saved) {
+              used.insert(binding);
+           }
+        }
+
+        return saved_used_bindings;
+     }()}
 {
    _hotkey_sets.reserve(16);
    _key_events.reserve(256);
-
-   _saved_bindings = load_bindings(save_path);
 }
 
 void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
@@ -65,15 +81,17 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
 
       const bool has_saved_binding =
          _saved_bindings[set_name].contains(default_hotkey.name);
+      const bool has_saved_used_set = _saved_used_bindings.contains(set_name);
 
       const hotkey_bind binding =
          has_saved_binding ? _saved_bindings[set_name].at(default_hotkey.name)
                            : default_hotkey.binding;
 
-      if (has_saved_binding and bindings.contains(binding)) {
-         unbound_hotkeys.push_back(bindings.at(binding));
-      }
-      else if (not bindings.contains(binding)) {
+      const bool binding_free_for_use =
+         has_saved_used_set and
+         not _saved_used_bindings.at(set_name).contains(binding);
+
+      if (has_saved_binding or binding_free_for_use) {
          bindings[binding] =
             hotkey{.command = std::string{default_hotkey.command},
                    .toggle = default_hotkey.bind_config.toggle,
@@ -406,7 +424,7 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
 
             if (set.bindings.contains(new_bind)) {
                set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
-               //   set.query_bindings.erase(set.unbound_hotkeys.back().name);
+               set.query_bindings.erase(set.unbound_hotkeys.back().name);
 
                _saved_bindings[set.name].erase(set.unbound_hotkeys.back().name);
             }
