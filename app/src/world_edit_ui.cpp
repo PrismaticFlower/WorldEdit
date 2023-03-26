@@ -4702,51 +4702,64 @@ void world_edit::update_ui() noexcept
          }
 
          if (ImGui::BeginTabItem("Object Classes")) {
-            _asset_libraries.odfs.enumerate_known([&](const lowercase_string& asset) {
-               _world_explorer_class_list.insert(asset);
-            });
-
             ImGui::PushItemWidth(std::floor((ImGui::GetContentRegionAvail().x) / 4.0f));
             ImGui::InputTextWithHint("Class Name Filter", "e.g. com_bldg_controlzone",
                                      &_world_explorer_class_filter);
             ImGui::PopItemWidth();
+
+            _world_explorer_object_classes.clear();
+            _world_explorer_object_classes.reserve(1024);
+
+            _asset_libraries.odfs.enumerate_known([&](const lowercase_string& asset) {
+               if (not _world_explorer_class_filter.empty() and
+                   not string::istarts_with(asset, _world_explorer_class_filter)) {
+                  return;
+               }
+
+               _world_explorer_object_classes.push_back(asset);
+            });
+
+            std::sort(_world_explorer_object_classes.begin(),
+                      _world_explorer_object_classes.end());
 
             if (ImGui::BeginTable("Object Classes", 1,
                                   ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollY)) {
                ImGui::TableSetupColumn("Name");
                ImGui::TableHeadersRow();
 
-               for (const auto& class_name : _world_explorer_class_list) {
-                  if (not _world_explorer_class_filter.empty() and
-                      not string::istarts_with(class_name, _world_explorer_class_filter)) {
-                     continue;
-                  }
+               ImGuiListClipper clipper;
+               clipper.Begin(static_cast<int>(_world_explorer_object_classes.size()));
+               while (clipper.Step()) {
+                  for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+                     const lowercase_string& class_name =
+                        _world_explorer_object_classes[i];
 
-                  ImGui::TableNextRow();
+                     ImGui::TableNextRow();
 
-                  ImGui::TableNextColumn();
-                  if (ImGui::Selectable(class_name.c_str(), false,
-                                        ImGuiSelectableFlags_SpanAllColumns)) {
-                     if (_interaction_targets.creation_entity and
-                         std::holds_alternative<world::object>(
-                            *_interaction_targets.creation_entity)) {
-                        const world::object& object = std::get<world::object>(
-                           *_interaction_targets.creation_entity);
+                     ImGui::TableNextColumn();
+                     if (ImGui::Selectable(class_name.c_str(), false,
+                                           ImGuiSelectableFlags_SpanAllColumns)) {
+                        if (_interaction_targets.creation_entity and
+                            std::holds_alternative<world::object>(
+                               *_interaction_targets.creation_entity)) {
+                           const world::object& object = std::get<world::object>(
+                              *_interaction_targets.creation_entity);
 
-                        _edit_stack_world.apply(
-                           edits::make_set_creation_value(&world::object::class_name,
-                                                          std::move(class_name),
-                                                          object.class_name),
-                           _edit_context);
-                     }
-                     else {
-                        _edit_stack_world.apply(edits::make_creation_entity_set(
-                                                   world::object{.name = "",
-                                                                 .class_name = class_name,
-                                                                 .id = world::max_id},
-                                                   _interaction_targets.creation_entity),
-                                                _edit_context);
-                        _entity_creation_context = {};
+                           _edit_stack_world.apply(edits::make_set_creation_value(
+                                                      &world::object::class_name,
+                                                      std::move(class_name),
+                                                      object.class_name),
+                                                   _edit_context);
+                        }
+                        else {
+                           _edit_stack_world.apply(edits::make_creation_entity_set(
+                                                      world::object{.name = "",
+                                                                    .class_name = class_name,
+                                                                    .id = world::max_id},
+                                                      _interaction_targets.creation_entity),
+                                                   _edit_context);
+                           _entity_creation_context = {};
+                        }
                      }
                   }
                }
