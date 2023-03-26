@@ -21,6 +21,8 @@
 #include <memory>
 #include <vector>
 
+#include <absl/container/btree_set.h>
+
 #include <Windows.h>
 
 struct ImGuiContext;
@@ -176,6 +178,8 @@ private:
 
    std::string _world_explorer_filter;
    std::string _world_explorer_class_filter;
+
+   absl::btree_set<lowercase_string> _world_explorer_class_list;
 
    POINT _rotate_camera_cursor_position = {0, 0};
 

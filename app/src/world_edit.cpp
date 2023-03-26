@@ -18,6 +18,7 @@
 #include "utility/string_ops.hpp"
 #include "world/raycast.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
+#include "world/utility/object_properties.hpp"
 #include "world/utility/sector_fill.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world_io_load.hpp"
@@ -403,6 +404,9 @@ void world_edit::place_creation_entity() noexcept
 
             new_object.name =
                world::create_unique_name(_world.objects, new_object.name);
+            new_object.instance_properties = world::make_object_instance_properties(
+               *_object_classes[object.class_name].definition,
+               new_object.instance_properties);
             new_object.id = _world.next_id.objects.aquire();
 
             _last_created_entities.last_object = new_object.id;

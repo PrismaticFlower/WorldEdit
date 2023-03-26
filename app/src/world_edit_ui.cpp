@@ -1896,21 +1896,6 @@ void world_edit::update_ui() noexcept
                      return entries;
                   });
 
-               if (ImGui::IsItemDeactivatedAfterEdit()) {
-                  std::vector<world::instance_property> new_instance_properties =
-                     world::make_object_instance_properties(
-                        *_object_classes[object.class_name].definition,
-                        object.instance_properties);
-
-                  if (new_instance_properties != object.instance_properties) {
-                     _edit_stack_world.apply(edits::make_set_creation_value(
-                                                &world::object::instance_properties,
-                                                std::move(new_instance_properties),
-                                                object.instance_properties),
-                                             _edit_context, {.transparent = true});
-                  }
-               }
-
                ImGui::LayerPick<world::object>("Layer", &creation_entity,
                                                &_edit_stack_world, &_edit_context);
 
@@ -4726,9 +4711,58 @@ void world_edit::update_ui() noexcept
          }
 
          if (ImGui::BeginTabItem("Object Classes")) {
-            ImGui::Text("The object class browser will go here. The plan is to "
-                        "show you nice thumbnails of object classes and let "
-                        "you click on one to create it.");
+            _asset_libraries.odfs.enumerate_known([&](const lowercase_string& asset) {
+               _world_explorer_class_list.insert(asset);
+            });
+
+            ImGui::PushItemWidth(std::floor((ImGui::GetContentRegionAvail().x) / 4.0f));
+            ImGui::InputTextWithHint("Class Name Filter", "e.g. com_bldg_controlzone",
+                                     &_world_explorer_class_filter);
+            ImGui::PopItemWidth();
+
+            if (ImGui::BeginTable("Object Classes", 1,
+                                  ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollY)) {
+               ImGui::TableSetupColumn("Name");
+               ImGui::TableHeadersRow();
+
+               for (const auto& class_name : _world_explorer_class_list) {
+                  if (not _world_explorer_class_filter.empty() and
+                      not string::istarts_with(class_name, _world_explorer_class_filter)) {
+                     continue;
+                  }
+
+                  ImGui::TableNextRow();
+
+                  ImGui::TableNextColumn();
+                  if (ImGui::Selectable(class_name.c_str(), false,
+                                        ImGuiSelectableFlags_SpanAllColumns)) {
+                     if (_interaction_targets.creation_entity and
+                         std::holds_alternative<world::object>(
+                            *_interaction_targets.creation_entity)) {
+                        const world::object& object = std::get<world::object>(
+                           *_interaction_targets.creation_entity);
+
+                        _edit_stack_world.apply(
+                           edits::make_set_creation_value(&world::object::class_name,
+                                                          std::move(class_name),
+                                                          object.class_name),
+                           _edit_context);
+                     }
+                     else {
+                        _edit_stack_world.apply(edits::make_creation_entity_set(
+                                                   world::object{.name = "",
+                                                                 .class_name = class_name,
+                                                                 .id = world::max_id},
+                                                   _interaction_targets.creation_entity),
+                                                _edit_context);
+                        _entity_creation_context = {};
+                     }
+                  }
+               }
+
+               ImGui::EndTable();
+            }
+
             ImGui::EndTabItem();
          }
 
