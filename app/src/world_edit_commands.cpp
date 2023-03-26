@@ -42,6 +42,10 @@ void world_edit::initialize_commands() noexcept
       _rotate_camera = not _rotate_camera;
       GetCursorPos(&_rotate_camera_cursor_position);
    });
+   _commands.add("camera.pan_with_mouse"s, [this]() {
+      _pan_camera = not _pan_camera;
+      GetCursorPos(&_rotate_camera_cursor_position);
+   });
 
    _commands.add("edit.select"s, [this]() { select_hovered_entity(); });
    _commands.add("edit.deselect"s, [this]() {
@@ -189,6 +193,10 @@ void world_edit::initialize_hotkeys() noexcept
           {.key = key::f, .modifiers = {.shift = true}},
           {.toggle = true}},
          {"Rotate Camera", "camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
+         {"Pan Camera",
+          "camera.pan_with_mouse",
+          {.key = key::mouse1, .modifiers = {.alt = true}},
+          {.toggle = true}},
 
          {"Select", "edit.select", {.key = key::mouse1}},
          {"Deselect", "edit.deselect", {.key = key::escape}},

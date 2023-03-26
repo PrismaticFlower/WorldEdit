@@ -370,14 +370,23 @@ void world_edit::update_camera(const float delta_time)
       camera_position += (_camera.down() * camera_movement_scale);
    }
 
+   if (_pan_camera) {
+      const float camera_pan_scale = _settings.camera.pan_sensitivity;
+
+      camera_position += _camera.left() * (_mouse_movement_x * camera_pan_scale);
+      camera_position += _camera.up() * (_mouse_movement_y * camera_pan_scale);
+   }
+
    _camera.position(camera_position);
 
    if (_rotate_camera) {
-      const float camera_look_scale = delta_time * _settings.camera.look_sensitivity;
+      const float camera_look_scale = _settings.camera.look_sensitivity;
 
       _camera.yaw(_camera.yaw() + (-_mouse_movement_x * camera_look_scale));
       _camera.pitch(_camera.pitch() + (-_mouse_movement_y * camera_look_scale));
+   }
 
+   if (_rotate_camera or _pan_camera) {
       SetCursor(nullptr);
       SetCursorPos(_rotate_camera_cursor_position.x,
                    _rotate_camera_cursor_position.y);

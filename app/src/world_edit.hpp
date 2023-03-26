@@ -164,6 +164,7 @@ private:
    bool _move_camera_down = false;
    bool _move_sprint = false;
    bool _rotate_camera = false;
+   bool _pan_camera = false;
 
    bool _hotkeys_view_show = false;
    bool _imgui_demo_open = false;

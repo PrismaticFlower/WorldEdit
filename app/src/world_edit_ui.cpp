@@ -5387,6 +5387,8 @@ void world_edit::update_ui() noexcept
                           1.0f, 1000.0f);
          ImGui::DragFloat("Look Sensitivity", &_settings.camera.look_sensitivity,
                           0.001f, 0.00001f, 1000.0f);
+         ImGui::DragFloat("Pan Sensitivity", &_settings.camera.pan_sensitivity,
+                          0.005f, 0.00001f, 1000.0f);
          ImGui::DragFloat("Sprint Power", &_settings.camera.sprint_power,
                           0.005f, 1.0f, 1000.0f);
 
