@@ -28,6 +28,7 @@ auto translate_virtual_key(const std::uintptr_t vk) noexcept -> key
    case VK_ESCAPE: return key::escape;
    case VK_CONTROL: return key::ctrl;
    case VK_SHIFT: return key::shift;
+   case VK_MENU: return key::alt;
    case VK_APPS: return key::menu;
    case '0': return key::_0;
    case '1': return key::_1;
@@ -139,6 +140,7 @@ constexpr container::enum_array<const char*, key> key_display_names =
       {key::escape, "Escape"},
       {key::ctrl, "Ctrl"},
       {key::shift, "Shift"},
+      {key::alt, "Alt"},
       {key::menu, "Menu"},
       {key::_0, "0"},
       {key::_1, "1"},
@@ -248,6 +250,7 @@ constexpr container::enum_array<const char*, key> ctrl_key_display_names =
       {key::escape, "Ctrl + Escape"},
       {key::ctrl, "Ctrl + Ctrl"},
       {key::shift, "Ctrl + Shift"},
+      {key::alt, "Ctrl + Alt"},
       {key::menu, "Ctrl + Menu"},
       {key::_0, "Ctrl + 0"},
       {key::_1, "Ctrl + 1"},
@@ -357,6 +360,7 @@ constexpr container::enum_array<const char*, key> shift_key_display_names =
       {key::escape, "Shift + Escape"},
       {key::ctrl, "Shift + Ctrl"},
       {key::shift, "Shift + Shift"},
+      {key::alt, "Shift + Alt"},
       {key::menu, "Shift + Menu"},
       {key::_0, "Shift + 0"},
       {key::_1, "Shift + 1"},
@@ -447,6 +451,116 @@ constexpr container::enum_array<const char*, key> shift_key_display_names =
       {key::void_key, "Shift + <empty>"},
    });
 
+constexpr container::enum_array<const char*, key> alt_key_display_names =
+   container::make_enum_array<const char*, key>({
+      {key::tab, "Alt + Tab"},
+      {key::left_arrow, "Alt + Left Arrow"},
+      {key::right_arrow, "Alt + Right Arrow"},
+      {key::up_arrow, "Alt + Up Arrow"},
+      {key::down_arrow, "Alt + Down Arrow"},
+      {key::page_up, "Alt + Page Up"},
+      {key::page_down, "Alt + Page Down"},
+      {key::home, "Alt + Home"},
+      {key::end, "Alt + End"},
+      {key::insert, "Alt + Insert"},
+      {key::del, "Alt + Del"},
+      {key::backspace, "Alt + Backspace"},
+      {key::space, "Alt + Space"},
+      {key::enter, "Alt + Enter"},
+      {key::escape, "Alt + Escape"},
+      {key::ctrl, "Alt + Ctrl"},
+      {key::shift, "Alt + Shift"},
+      {key::alt, "Alt + Alt"},
+      {key::menu, "Alt + Menu"},
+      {key::_0, "Alt + 0"},
+      {key::_1, "Alt + 1"},
+      {key::_2, "Alt + 2"},
+      {key::_3, "Alt + 3"},
+      {key::_4, "Alt + 4"},
+      {key::_5, "Alt + 5"},
+      {key::_6, "Alt + 6"},
+      {key::_7, "Alt + 7"},
+      {key::_8, "Alt + 8"},
+      {key::_9, "Alt + 9"},
+      {key::a, "Alt + A"},
+      {key::b, "Alt + B"},
+      {key::c, "Alt + C"},
+      {key::d, "Alt + D"},
+      {key::e, "Alt + E"},
+      {key::f, "Alt + F"},
+      {key::g, "Alt + G"},
+      {key::h, "Alt + H"},
+      {key::i, "Alt + I"},
+      {key::j, "Alt + J"},
+      {key::k, "Alt + K"},
+      {key::l, "Alt + L"},
+      {key::m, "Alt + M"},
+      {key::n, "Alt + N"},
+      {key::o, "Alt + O"},
+      {key::p, "Alt + P"},
+      {key::q, "Alt + Q"},
+      {key::r, "Alt + R"},
+      {key::s, "Alt + S"},
+      {key::t, "Alt + T"},
+      {key::u, "Alt + U"},
+      {key::v, "Alt + V"},
+      {key::w, "Alt + W"},
+      {key::x, "Alt + X"},
+      {key::y, "Alt + Y"},
+      {key::z, "Alt + Z"},
+      {key::f1, "Alt + F1"},
+      {key::f2, "Alt + F2"},
+      {key::f3, "Alt + F3"},
+      {key::f4, "Alt + F4"},
+      {key::f5, "Alt + F5"},
+      {key::f6, "Alt + F6"},
+      {key::f7, "Alt + F7"},
+      {key::f8, "Alt + F8"},
+      {key::f9, "Alt + F9"},
+      {key::f10, "Alt + F10"},
+      {key::f11, "Alt + F11"},
+      {key::f12, "Alt + F12"},
+      {key::apostrophe, "Alt + '"},
+      {key::comma, "Alt + ,"},
+      {key::minus, "Alt + -"},
+      {key::period, "Alt + ."},
+      {key::slash, "Alt + /"},
+      {key::semicolon, "Alt + ;"},
+      {key::equal, "Alt + ="},
+      {key::left_bracket, "Alt + ["},
+      {key::right_bracket, "Alt + ]"},
+      {key::backslash, "Alt + \\"},
+      {key::grave_accent, "Alt + `"},
+      {key::caps_lock, "Alt + Caps Lock"},
+      {key::scroll_lock, "Alt + Scroll Lock"},
+      {key::num_lock, "Alt + Num Lock"},
+      {key::print_screen, "Alt + Print Screen"},
+      {key::pause, "Alt + Pause"},
+      {key::numpad_0, "Alt + Numpad 0"},
+      {key::numpad_1, "Alt + Numpad 1"},
+      {key::numpad_2, "Alt + Numpad 2"},
+      {key::numpad_3, "Alt + Numpad 3"},
+      {key::numpad_4, "Alt + Numpad 4"},
+      {key::numpad_5, "Alt + Numpad 5"},
+      {key::numpad_6, "Alt + Numpad 6"},
+      {key::numpad_7, "Alt + Numpad 7"},
+      {key::numpad_8, "Alt + Numpad 8"},
+      {key::numpad_9, "Alt + Numpad 9"},
+      {key::numpad_decimal, "Alt + Numpad Decimal"},
+      {key::numpad_divide, "Alt + Numpad Divide"},
+      {key::numpad_multiply, "Alt + Numpad Multiply"},
+      {key::numpad_subtract, "Alt + Numpad Subtract"},
+      {key::numpad_add, "Alt + Numpad Add"},
+
+      {key::mouse1, "Alt + L Mouse"},
+      {key::mouse2, "Alt + R Mouse"},
+      {key::mouse3, "Alt + Middle Mouse"},
+      {key::mouse4, "Alt + Mouse 4"},
+      {key::mouse5, "Alt + Mouse 5"},
+
+      {key::void_key, "Alt + <empty>"},
+   });
+
 constexpr container::enum_array<const char*, key> ctrl_shift_key_display_names =
    container::make_enum_array<const char*, key>({
       {key::tab, "Ctrl + Shift + Tab"},
@@ -466,6 +580,7 @@ constexpr container::enum_array<const char*, key> ctrl_shift_key_display_names =
       {key::escape, "Ctrl + Shift + Escape"},
       {key::ctrl, "Ctrl + Shift + Ctrl"},
       {key::shift, "Ctrl + Shift + Shift"},
+      {key::alt, "Ctrl + Shift + Alt"},
       {key::menu, "Ctrl + Shift + Menu"},
       {key::_0, "Ctrl + Shift + 0"},
       {key::_1, "Ctrl + Shift + 1"},
@@ -556,32 +671,407 @@ constexpr container::enum_array<const char*, key> ctrl_shift_key_display_names =
       {key::void_key, "Ctrl + Shift + <empty>"},
    });
 
+constexpr container::enum_array<const char*, key> ctrl_alt_key_display_names =
+   container::make_enum_array<const char*, key>({
+      {key::tab, "Ctrl + Alt + Tab"},
+      {key::left_arrow, "Ctrl + Alt + Left Arrow"},
+      {key::right_arrow, "Ctrl + Alt + Right Arrow"},
+      {key::up_arrow, "Ctrl + Alt + Up Arrow"},
+      {key::down_arrow, "Ctrl + Alt + Down Arrow"},
+      {key::page_up, "Ctrl + Alt + Page Up"},
+      {key::page_down, "Ctrl + Alt + Page Down"},
+      {key::home, "Ctrl + Alt + Home"},
+      {key::end, "Ctrl + Alt + End"},
+      {key::insert, "Ctrl + Alt + Insert"},
+      {key::del, "Ctrl + Alt + Del"},
+      {key::backspace, "Ctrl + Alt + Backspace"},
+      {key::space, "Ctrl + Alt + Space"},
+      {key::enter, "Ctrl + Alt + Enter"},
+      {key::escape, "Ctrl + Alt + Escape"},
+      {key::ctrl, "Ctrl + Alt + Ctrl"},
+      {key::shift, "Ctrl + Alt + Shift"},
+      {key::alt, "Ctrl + Alt + Alt"},
+      {key::menu, "Ctrl + Alt + Menu"},
+      {key::_0, "Ctrl + Alt + 0"},
+      {key::_1, "Ctrl + Alt + 1"},
+      {key::_2, "Ctrl + Alt + 2"},
+      {key::_3, "Ctrl + Alt + 3"},
+      {key::_4, "Ctrl + Alt + 4"},
+      {key::_5, "Ctrl + Alt + 5"},
+      {key::_6, "Ctrl + Alt + 6"},
+      {key::_7, "Ctrl + Alt + 7"},
+      {key::_8, "Ctrl + Alt + 8"},
+      {key::_9, "Ctrl + Alt + 9"},
+      {key::a, "Ctrl + Alt + A"},
+      {key::b, "Ctrl + Alt + B"},
+      {key::c, "Ctrl + Alt + C"},
+      {key::d, "Ctrl + Alt + D"},
+      {key::e, "Ctrl + Alt + E"},
+      {key::f, "Ctrl + Alt + F"},
+      {key::g, "Ctrl + Alt + G"},
+      {key::h, "Ctrl + Alt + H"},
+      {key::i, "Ctrl + Alt + I"},
+      {key::j, "Ctrl + Alt + J"},
+      {key::k, "Ctrl + Alt + K"},
+      {key::l, "Ctrl + Alt + L"},
+      {key::m, "Ctrl + Alt + M"},
+      {key::n, "Ctrl + Alt + N"},
+      {key::o, "Ctrl + Alt + O"},
+      {key::p, "Ctrl + Alt + P"},
+      {key::q, "Ctrl + Alt + Q"},
+      {key::r, "Ctrl + Alt + R"},
+      {key::s, "Ctrl + Alt + S"},
+      {key::t, "Ctrl + Alt + T"},
+      {key::u, "Ctrl + Alt + U"},
+      {key::v, "Ctrl + Alt + V"},
+      {key::w, "Ctrl + Alt + W"},
+      {key::x, "Ctrl + Alt + X"},
+      {key::y, "Ctrl + Alt + Y"},
+      {key::z, "Ctrl + Alt + Z"},
+      {key::f1, "Ctrl + Alt + F1"},
+      {key::f2, "Ctrl + Alt + F2"},
+      {key::f3, "Ctrl + Alt + F3"},
+      {key::f4, "Ctrl + Alt + F4"},
+      {key::f5, "Ctrl + Alt + F5"},
+      {key::f6, "Ctrl + Alt + F6"},
+      {key::f7, "Ctrl + Alt + F7"},
+      {key::f8, "Ctrl + Alt + F8"},
+      {key::f9, "Ctrl + Alt + F9"},
+      {key::f10, "Ctrl + Alt + F10"},
+      {key::f11, "Ctrl + Alt + F11"},
+      {key::f12, "Ctrl + Alt + F12"},
+      {key::apostrophe, "Ctrl + Alt + '"},
+      {key::comma, "Ctrl + Alt + ,"},
+      {key::minus, "Ctrl + Alt + -"},
+      {key::period, "Ctrl + Alt + ."},
+      {key::slash, "Ctrl + Alt + /"},
+      {key::semicolon, "Ctrl + Alt + ;"},
+      {key::equal, "Ctrl + Alt + ="},
+      {key::left_bracket, "Ctrl + Alt + ["},
+      {key::right_bracket, "Ctrl + Alt + ]"},
+      {key::backslash, "Ctrl + Alt + \\"},
+      {key::grave_accent, "Ctrl + Alt + `"},
+      {key::caps_lock, "Ctrl + Alt + Caps Lock"},
+      {key::scroll_lock, "Ctrl + Alt + Scroll Lock"},
+      {key::num_lock, "Ctrl + Alt + Num Lock"},
+      {key::print_screen, "Ctrl + Alt + Print Screen"},
+      {key::pause, "Ctrl + Alt + Pause"},
+      {key::numpad_0, "Ctrl + Alt + Numpad 0"},
+      {key::numpad_1, "Ctrl + Alt + Numpad 1"},
+      {key::numpad_2, "Ctrl + Alt + Numpad 2"},
+      {key::numpad_3, "Ctrl + Alt + Numpad 3"},
+      {key::numpad_4, "Ctrl + Alt + Numpad 4"},
+      {key::numpad_5, "Ctrl + Alt + Numpad 5"},
+      {key::numpad_6, "Ctrl + Alt + Numpad 6"},
+      {key::numpad_7, "Ctrl + Alt + Numpad 7"},
+      {key::numpad_8, "Ctrl + Alt + Numpad 8"},
+      {key::numpad_9, "Ctrl + Alt + Numpad 9"},
+      {key::numpad_decimal, "Ctrl + Alt + Numpad Decimal"},
+      {key::numpad_divide, "Ctrl + Alt + Numpad Divide"},
+      {key::numpad_multiply, "Ctrl + Alt + Numpad Multiply"},
+      {key::numpad_subtract, "Ctrl + Alt + Numpad Subtract"},
+      {key::numpad_add, "Ctrl + Alt + Numpad Add"},
+
+      {key::mouse1, "Ctrl + Alt + L Mouse"},
+      {key::mouse2, "Ctrl + Alt + R Mouse"},
+      {key::mouse3, "Ctrl + Alt + Middle Mouse"},
+      {key::mouse4, "Ctrl + Alt + Mouse 4"},
+      {key::mouse5, "Ctrl + Alt + Mouse 5"},
+
+      {key::void_key, "Ctrl + Alt + <empty>"},
+   });
+
+constexpr container::enum_array<const char*, key> shift_alt_key_display_names =
+   container::make_enum_array<const char*, key>({
+      {key::tab, "Shift + Alt + Tab"},
+      {key::left_arrow, "Shift + Alt + Left Arrow"},
+      {key::right_arrow, "Shift + Alt + Right Arrow"},
+      {key::up_arrow, "Shift + Alt + Up Arrow"},
+      {key::down_arrow, "Shift + Alt + Down Arrow"},
+      {key::page_up, "Shift + Alt + Page Up"},
+      {key::page_down, "Shift + Alt + Page Down"},
+      {key::home, "Shift + Alt + Home"},
+      {key::end, "Shift + Alt + End"},
+      {key::insert, "Shift + Alt + Insert"},
+      {key::del, "Shift + Alt + Del"},
+      {key::backspace, "Shift + Alt + Backspace"},
+      {key::space, "Shift + Alt + Space"},
+      {key::enter, "Shift + Alt + Enter"},
+      {key::escape, "Shift + Alt + Escape"},
+      {key::ctrl, "Shift + Alt + Ctrl"},
+      {key::shift, "Shift + Alt + Shift"},
+      {key::alt, "Shift + Alt + Alt"},
+      {key::menu, "Shift + Alt + Menu"},
+      {key::_0, "Shift + Alt + 0"},
+      {key::_1, "Shift + Alt + 1"},
+      {key::_2, "Shift + Alt + 2"},
+      {key::_3, "Shift + Alt + 3"},
+      {key::_4, "Shift + Alt + 4"},
+      {key::_5, "Shift + Alt + 5"},
+      {key::_6, "Shift + Alt + 6"},
+      {key::_7, "Shift + Alt + 7"},
+      {key::_8, "Shift + Alt + 8"},
+      {key::_9, "Shift + Alt + 9"},
+      {key::a, "Shift + Alt + A"},
+      {key::b, "Shift + Alt + B"},
+      {key::c, "Shift + Alt + C"},
+      {key::d, "Shift + Alt + D"},
+      {key::e, "Shift + Alt + E"},
+      {key::f, "Shift + Alt + F"},
+      {key::g, "Shift + Alt + G"},
+      {key::h, "Shift + Alt + H"},
+      {key::i, "Shift + Alt + I"},
+      {key::j, "Shift + Alt + J"},
+      {key::k, "Shift + Alt + K"},
+      {key::l, "Shift + Alt + L"},
+      {key::m, "Shift + Alt + M"},
+      {key::n, "Shift + Alt + N"},
+      {key::o, "Shift + Alt + O"},
+      {key::p, "Shift + Alt + P"},
+      {key::q, "Shift + Alt + Q"},
+      {key::r, "Shift + Alt + R"},
+      {key::s, "Shift + Alt + S"},
+      {key::t, "Shift + Alt + T"},
+      {key::u, "Shift + Alt + U"},
+      {key::v, "Shift + Alt + V"},
+      {key::w, "Shift + Alt + W"},
+      {key::x, "Shift + Alt + X"},
+      {key::y, "Shift + Alt + Y"},
+      {key::z, "Shift + Alt + Z"},
+      {key::f1, "Shift + Alt + F1"},
+      {key::f2, "Shift + Alt + F2"},
+      {key::f3, "Shift + Alt + F3"},
+      {key::f4, "Shift + Alt + F4"},
+      {key::f5, "Shift + Alt + F5"},
+      {key::f6, "Shift + Alt + F6"},
+      {key::f7, "Shift + Alt + F7"},
+      {key::f8, "Shift + Alt + F8"},
+      {key::f9, "Shift + Alt + F9"},
+      {key::f10, "Shift + Alt + F10"},
+      {key::f11, "Shift + Alt + F11"},
+      {key::f12, "Shift + Alt + F12"},
+      {key::apostrophe, "Shift + Alt + '"},
+      {key::comma, "Shift + Alt + ,"},
+      {key::minus, "Shift + Alt + -"},
+      {key::period, "Shift + Alt + ."},
+      {key::slash, "Shift + Alt + /"},
+      {key::semicolon, "Shift + Alt + ;"},
+      {key::equal, "Shift + Alt + ="},
+      {key::left_bracket, "Shift + Alt + ["},
+      {key::right_bracket, "Shift + Alt + ]"},
+      {key::backslash, "Shift + Alt + \\"},
+      {key::grave_accent, "Shift + Alt + `"},
+      {key::caps_lock, "Shift + Alt + Caps Lock"},
+      {key::scroll_lock, "Shift + Alt + Scroll Lock"},
+      {key::num_lock, "Shift + Alt + Num Lock"},
+      {key::print_screen, "Shift + Alt + Print Screen"},
+      {key::pause, "Shift + Alt + Pause"},
+      {key::numpad_0, "Shift + Alt + Numpad 0"},
+      {key::numpad_1, "Shift + Alt + Numpad 1"},
+      {key::numpad_2, "Shift + Alt + Numpad 2"},
+      {key::numpad_3, "Shift + Alt + Numpad 3"},
+      {key::numpad_4, "Shift + Alt + Numpad 4"},
+      {key::numpad_5, "Shift + Alt + Numpad 5"},
+      {key::numpad_6, "Shift + Alt + Numpad 6"},
+      {key::numpad_7, "Shift + Alt + Numpad 7"},
+      {key::numpad_8, "Shift + Alt + Numpad 8"},
+      {key::numpad_9, "Shift + Alt + Numpad 9"},
+      {key::numpad_decimal, "Shift + Alt + Numpad Decimal"},
+      {key::numpad_divide, "Shift + Alt + Numpad Divide"},
+      {key::numpad_multiply, "Shift + Alt + Numpad Multiply"},
+      {key::numpad_subtract, "Shift + Alt + Numpad Subtract"},
+      {key::numpad_add, "Shift + Alt + Numpad Add"},
+
+      {key::mouse1, "Shift + Alt + L Mouse"},
+      {key::mouse2, "Shift + Alt + R Mouse"},
+      {key::mouse3, "Shift + Alt + Middle Mouse"},
+      {key::mouse4, "Shift + Alt + Mouse 4"},
+      {key::mouse5, "Shift + Alt + Mouse 5"},
+
+      {key::void_key, "Shift + Alt + <empty>"},
+   });
+
+constexpr container::enum_array<const char*, key> ctrl_shift_alt_key_display_names =
+   container::make_enum_array<const char*, key>({
+      {key::tab, "Ctrl + Shift + Alt + Tab"},
+      {key::left_arrow, "Ctrl + Shift + Alt + Left Arrow"},
+      {key::right_arrow, "Ctrl + Shift + Alt + Right Arrow"},
+      {key::up_arrow, "Ctrl + Shift + Alt + Up Arrow"},
+      {key::down_arrow, "Ctrl + Shift + Alt + Down Arrow"},
+      {key::page_up, "Ctrl + Shift + Alt + Page Up"},
+      {key::page_down, "Ctrl + Shift + Alt + Page Down"},
+      {key::home, "Ctrl + Shift + Alt + Home"},
+      {key::end, "Ctrl + Shift + Alt + End"},
+      {key::insert, "Ctrl + Shift + Alt + Insert"},
+      {key::del, "Ctrl + Shift + Alt + Del"},
+      {key::backspace, "Ctrl + Shift + Alt + Backspace"},
+      {key::space, "Ctrl + Shift + Alt + Space"},
+      {key::enter, "Ctrl + Shift + Alt + Enter"},
+      {key::escape, "Ctrl + Shift + Alt + Escape"},
+      {key::ctrl, "Ctrl + Shift + Alt + Ctrl"},
+      {key::shift, "Ctrl + Shift + Alt + Shift"},
+      {key::alt, "Ctrl + Shift + Alt + Alt"},
+      {key::menu, "Ctrl + Shift + Alt + Menu"},
+      {key::_0, "Ctrl + Shift + Alt + 0"},
+      {key::_1, "Ctrl + Shift + Alt + 1"},
+      {key::_2, "Ctrl + Shift + Alt + 2"},
+      {key::_3, "Ctrl + Shift + Alt + 3"},
+      {key::_4, "Ctrl + Shift + Alt + 4"},
+      {key::_5, "Ctrl + Shift + Alt + 5"},
+      {key::_6, "Ctrl + Shift + Alt + 6"},
+      {key::_7, "Ctrl + Shift + Alt + 7"},
+      {key::_8, "Ctrl + Shift + Alt + 8"},
+      {key::_9, "Ctrl + Shift + Alt + 9"},
+      {key::a, "Ctrl + Shift + Alt + A"},
+      {key::b, "Ctrl + Shift + Alt + B"},
+      {key::c, "Ctrl + Shift + Alt + C"},
+      {key::d, "Ctrl + Shift + Alt + D"},
+      {key::e, "Ctrl + Shift + Alt + E"},
+      {key::f, "Ctrl + Shift + Alt + F"},
+      {key::g, "Ctrl + Shift + Alt + G"},
+      {key::h, "Ctrl + Shift + Alt + H"},
+      {key::i, "Ctrl + Shift + Alt + I"},
+      {key::j, "Ctrl + Shift + Alt + J"},
+      {key::k, "Ctrl + Shift + Alt + K"},
+      {key::l, "Ctrl + Shift + Alt + L"},
+      {key::m, "Ctrl + Shift + Alt + M"},
+      {key::n, "Ctrl + Shift + Alt + N"},
+      {key::o, "Ctrl + Shift + Alt + O"},
+      {key::p, "Ctrl + Shift + Alt + P"},
+      {key::q, "Ctrl + Shift + Alt + Q"},
+      {key::r, "Ctrl + Shift + Alt + R"},
+      {key::s, "Ctrl + Shift + Alt + S"},
+      {key::t, "Ctrl + Shift + Alt + T"},
+      {key::u, "Ctrl + Shift + Alt + U"},
+      {key::v, "Ctrl + Shift + Alt + V"},
+      {key::w, "Ctrl + Shift + Alt + W"},
+      {key::x, "Ctrl + Shift + Alt + X"},
+      {key::y, "Ctrl + Shift + Alt + Y"},
+      {key::z, "Ctrl + Shift + Alt + Z"},
+      {key::f1, "Ctrl + Shift + Alt + F1"},
+      {key::f2, "Ctrl + Shift + Alt + F2"},
+      {key::f3, "Ctrl + Shift + Alt + F3"},
+      {key::f4, "Ctrl + Shift + Alt + F4"},
+      {key::f5, "Ctrl + Shift + Alt + F5"},
+      {key::f6, "Ctrl + Shift + Alt + F6"},
+      {key::f7, "Ctrl + Shift + Alt + F7"},
+      {key::f8, "Ctrl + Shift + Alt + F8"},
+      {key::f9, "Ctrl + Shift + Alt + F9"},
+      {key::f10, "Ctrl + Shift + Alt + F10"},
+      {key::f11, "Ctrl + Shift + Alt + F11"},
+      {key::f12, "Ctrl + Shift + Alt + F12"},
+      {key::apostrophe, "Ctrl + Shift + Alt + '"},
+      {key::comma, "Ctrl + Shift + Alt + ,"},
+      {key::minus, "Ctrl + Shift + Alt + -"},
+      {key::period, "Ctrl + Shift + Alt + ."},
+      {key::slash, "Ctrl + Shift + Alt + /"},
+      {key::semicolon, "Ctrl + Shift + Alt + ;"},
+      {key::equal, "Ctrl + Shift + Alt + ="},
+      {key::left_bracket, "Ctrl + Shift + Alt + ["},
+      {key::right_bracket, "Ctrl + Shift + Alt + ]"},
+      {key::backslash, "Ctrl + Shift + Alt + \\"},
+      {key::grave_accent, "Ctrl + Shift + Alt + `"},
+      {key::caps_lock, "Ctrl + Shift + Alt + Caps Lock"},
+      {key::scroll_lock, "Ctrl + Shift + Alt + Scroll Lock"},
+      {key::num_lock, "Ctrl + Shift + Alt + Num Lock"},
+      {key::print_screen, "Ctrl + Shift + Alt + Print Screen"},
+      {key::pause, "Ctrl + Shift + Alt + Pause"},
+      {key::numpad_0, "Ctrl + Shift + Alt + Numpad 0"},
+      {key::numpad_1, "Ctrl + Shift + Alt + Numpad 1"},
+      {key::numpad_2, "Ctrl + Shift + Alt + Numpad 2"},
+      {key::numpad_3, "Ctrl + Shift + Alt + Numpad 3"},
+      {key::numpad_4, "Ctrl + Shift + Alt + Numpad 4"},
+      {key::numpad_5, "Ctrl + Shift + Alt + Numpad 5"},
+      {key::numpad_6, "Ctrl + Shift + Alt + Numpad 6"},
+      {key::numpad_7, "Ctrl + Shift + Alt + Numpad 7"},
+      {key::numpad_8, "Ctrl + Shift + Alt + Numpad 8"},
+      {key::numpad_9, "Ctrl + Shift + Alt + Numpad 9"},
+      {key::numpad_decimal, "Ctrl + Shift + Alt + Numpad Decimal"},
+      {key::numpad_divide, "Ctrl + Shift + Alt + Numpad Divide"},
+      {key::numpad_multiply, "Ctrl + Shift + Alt + Numpad Multiply"},
+      {key::numpad_subtract, "Ctrl + Shift + Alt + Numpad Subtract"},
+      {key::numpad_add, "Ctrl + Shift + Alt + Numpad Add"},
+
+      {key::mouse1, "Ctrl + Shift + Alt + L Mouse"},
+      {key::mouse2, "Ctrl + Shift + Alt + R Mouse"},
+      {key::mouse3, "Ctrl + Shift + Alt + Middle Mouse"},
+      {key::mouse4, "Ctrl + Shift + Alt + Mouse 4"},
+      {key::mouse5, "Ctrl + Shift + Alt + Mouse 5"},
+
+      {key::void_key, "Ctrl + Shift + Alt + <empty>"},
+   });
+
 }
 
-auto get_display_string(const key key, const bool ctrl, const bool shift) -> const char*
+auto get_display_string(const key key, const bool ctrl, const bool shift,
+                        const bool alt) -> const char*
 {
+   if (ctrl and shift and alt) return ctrl_shift_alt_key_display_names[key];
    if (ctrl and shift) return ctrl_shift_key_display_names[key];
+   if (ctrl and alt) return ctrl_alt_key_display_names[key];
+   if (shift and alt) return shift_alt_key_display_names[key];
    if (shift) return shift_key_display_names[key];
    if (ctrl) return ctrl_key_display_names[key];
+   if (alt) return alt_key_display_names[key];
 
    return key_display_names[key];
 }
 
 bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
-                          bool& out_shift)
+                          bool& out_shift, bool& out_alt)
 {
    string = string::trim_whitespace(string);
 
    constexpr std::underlying_type_t<key> first = std::to_underlying(key::tab);
    constexpr std::underlying_type_t<key> count = std::to_underlying(key::count);
 
-   if (string::istarts_with(string, "Ctrl + Shift +")) {
+   if (string::istarts_with(string, "Ctrl + Shift + Alt")) {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(ctrl_shift_alt_key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = true;
+            out_shift = true;
+            out_alt = true;
+
+            return true;
+         }
+      }
+   }
+   else if (string::istarts_with(string, "Ctrl + Shift +")) {
       for (auto i = first; i < count; ++i) {
          if (string::iequals(ctrl_shift_key_display_names[i], string)) {
 
             out_key = key{i};
             out_ctrl = true;
             out_shift = true;
+            out_alt = false;
+
+            return true;
+         }
+      }
+   }
+   else if (string::istarts_with(string, "Ctrl + Alt +")) {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(ctrl_alt_key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = true;
+            out_shift = false;
+            out_alt = true;
+
+            return true;
+         }
+      }
+   }
+   else if (string::istarts_with(string, "Shift + Alt +")) {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(shift_alt_key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = false;
+            out_shift = true;
+            out_alt = true;
 
             return true;
          }
@@ -594,6 +1084,7 @@ bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
             out_key = key{i};
             out_ctrl = false;
             out_shift = true;
+            out_alt = false;
 
             return true;
          }
@@ -606,6 +1097,20 @@ bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
             out_key = key{i};
             out_ctrl = true;
             out_shift = false;
+            out_alt = false;
+
+            return true;
+         }
+      }
+   }
+   else if (string::istarts_with(string, "Alt +")) {
+      for (auto i = first; i < count; ++i) {
+         if (string::iequals(ctrl_key_display_names[i], string)) {
+
+            out_key = key{i};
+            out_ctrl = false;
+            out_shift = false;
+            out_alt = true;
 
             return true;
          }
@@ -618,6 +1123,7 @@ bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
             out_key = key{i};
             out_ctrl = false;
             out_shift = false;
+            out_alt = false;
 
             return true;
          }

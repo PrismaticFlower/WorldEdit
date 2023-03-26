@@ -120,10 +120,20 @@ void run_application(command_line command_line)
 
          return 0;
       }
+      case WM_SYSKEYDOWN: {
+         app.key_down(we::translate_virtual_key(wparam));
+
+         return DefWindowProcW(window, message, wparam, lparam);
+      }
       case WM_KEYUP: {
          app.key_up(we::translate_virtual_key(wparam));
 
          return 0;
+      }
+      case WM_SYSKEYUP: {
+         app.key_up(we::translate_virtual_key(wparam));
+
+         return DefWindowProcW(window, message, wparam, lparam);
       }
       case WM_LBUTTONDOWN: {
          app.key_down(we::key::mouse1);
@@ -198,6 +208,11 @@ void run_application(command_line command_line)
          }
 
          return 0;
+      }
+      case WM_SYSCOMMAND: {
+         if (wparam == SC_KEYMENU or wparam == SC_MOUSEMENU) return 0;
+
+         return DefWindowProcW(window, message, wparam, lparam);
       }
       }
 

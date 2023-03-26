@@ -175,8 +175,8 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
 
    if (old_state == new_state) return;
 
-   if (key == key::ctrl or key == key::shift) {
-      release_modified_toggles(key == key::ctrl, key == key::shift);
+   if (key == key::ctrl or key == key::shift or key == key::alt) {
+      release_modified_toggles(key == key::ctrl, key == key::shift, key == key::alt);
    }
 
    for (std::ptrdiff_t i = std::ssize(_hotkey_sets) - 1; i >= 0; --i) {
@@ -217,7 +217,20 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
 
       absl::flat_hash_map<hotkey_bind, hotkey>& bindings = set.bindings;
 
-      if (is_key_down(key::ctrl) and is_key_down(key::shift)) {
+      const bool ctrl_down = is_key_down(key::ctrl);
+      const bool shift_down = is_key_down(key::shift);
+      const bool alt_down = is_key_down(key::alt);
+
+      if (ctrl_down and shift_down and alt_down) {
+         auto bind_hotkey = bindings.find(
+            {.key = key, .modifiers = {.ctrl = true, .shift = true, .alt = true}});
+
+         if (bind_hotkey == bindings.end()) continue;
+
+         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
+      }
+      else if (ctrl_down and shift_down) {
          auto bind_hotkey =
             bindings.find({.key = key, .modifiers = {.ctrl = true, .shift = true}});
 
@@ -226,7 +239,25 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
          break;
       }
-      else if (is_key_down(key::ctrl)) {
+      else if (ctrl_down and alt_down) {
+         auto bind_hotkey =
+            bindings.find({.key = key, .modifiers = {.ctrl = true, .alt = true}});
+
+         if (bind_hotkey == bindings.end()) continue;
+
+         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
+      }
+      else if (shift_down and alt_down) {
+         auto bind_hotkey =
+            bindings.find({.key = key, .modifiers = {.shift = true, .alt = true}});
+
+         if (bind_hotkey == bindings.end()) continue;
+
+         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
+      }
+      else if (ctrl_down) {
          auto bind_hotkey = bindings.find({.key = key, .modifiers = {.ctrl = true}});
 
          if (bind_hotkey == bindings.end()) continue;
@@ -234,9 +265,17 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
          handle_hotkey(bind_hotkey->first, bind_hotkey->second);
          break;
       }
-      else if (is_key_down(key::shift)) {
+      else if (shift_down) {
          auto bind_hotkey =
             bindings.find({.key = key, .modifiers = {.shift = true}});
+
+         if (bind_hotkey == bindings.end()) continue;
+
+         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+         break;
+      }
+      else if (alt_down) {
+         auto bind_hotkey = bindings.find({.key = key, .modifiers = {.alt = true}});
 
          if (bind_hotkey == bindings.end()) continue;
 
@@ -295,13 +334,15 @@ void hotkeys::release_stale_toggles(const bool imgui_has_mouse,
    }
 }
 
-void hotkeys::release_modified_toggles(const bool ctrl, const bool shift) noexcept
+void hotkeys::release_modified_toggles(const bool ctrl, const bool shift,
+                                       const bool alt) noexcept
 {
    for (auto it = _active_toggles.begin(); it != _active_toggles.end();) {
       auto active_toggle = it++;
 
       const bool release = active_toggle->bind.modifiers.ctrl == ctrl or
-                           active_toggle->bind.modifiers.shift == shift;
+                           active_toggle->bind.modifiers.shift == shift or
+                           active_toggle->bind.modifiers.alt == alt;
 
       if (not release) continue;
 
@@ -411,7 +452,8 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
          }
          else if (last_key_event->new_state == key_state::up and
                   last_key_event->key != key::ctrl and
-                  last_key_event->key != key::shift) {
+                  last_key_event->key != key::shift and
+                  last_key_event->key != key::alt) {
             hotkey_set& set = _hotkey_sets[_user_editing_bind_set];
 
             if (_user_editing_bind) {
@@ -420,7 +462,8 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
 
             const hotkey_bind new_bind{.key = last_key_event->key,
                                        .modifiers = {.ctrl = is_key_down(key::ctrl),
-                                                     .shift = is_key_down(key::shift)}};
+                                                     .shift = is_key_down(key::shift),
+                                                     .alt = is_key_down(key::alt)}};
 
             if (set.bindings.contains(new_bind)) {
                set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
@@ -488,6 +531,6 @@ auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*
    if (not binding) return "<UNBOUND>";
 
    return get_display_string(binding->key, binding->modifiers.ctrl,
-                             binding->modifiers.shift);
+                             binding->modifiers.shift, binding->modifiers.alt);
 }
 }

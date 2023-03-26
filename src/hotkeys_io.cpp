@@ -29,10 +29,12 @@ auto load_bindings(const std::wstring_view path)
             key key = key::void_key;
             bool ctrl = false;
             bool shift = false;
+            bool alt = false;
 
-            if (parse_display_string(bind_string, key, ctrl, shift)) {
+            if (parse_display_string(bind_string, key, ctrl, shift, alt)) {
                loaded[current_set][name] =
-                  hotkey_bind{.key = key, .modifiers = {.ctrl = ctrl, .shift = shift}};
+                  hotkey_bind{.key = key,
+                              .modifiers = {.ctrl = ctrl, .shift = shift, .alt = alt}};
             }
          }
       }

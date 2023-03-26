@@ -18,6 +18,7 @@ namespace we {
 struct hotkey_modifiers {
    bool ctrl = false;
    bool shift = false;
+   bool alt = false;
 
    constexpr bool operator==(const hotkey_modifiers&) const noexcept = default;
 };
@@ -30,7 +31,7 @@ struct hotkey_bind {
    friend H AbslHashValue(H h, const hotkey_bind& bind_key)
    {
       return H::combine(std::move(h), bind_key.key, bind_key.modifiers.ctrl,
-                        bind_key.modifiers.shift);
+                        bind_key.modifiers.shift, bind_key.modifiers.alt);
    }
 
    constexpr bool operator==(const hotkey_bind&) const noexcept = default;
@@ -98,7 +99,8 @@ private:
    void release_stale_toggles(const bool imgui_has_mouse,
                               const bool imgui_has_keyboard) noexcept;
 
-   void release_modified_toggles(const bool ctrl, const bool shift) noexcept;
+   void release_modified_toggles(const bool ctrl, const bool shift,
+                                 const bool alt) noexcept;
 
    void process_new_key_state(const key key, const key_state new_state,
                               const bool imgui_has_mouse,

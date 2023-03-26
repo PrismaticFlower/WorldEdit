@@ -24,6 +24,7 @@ enum class key : uint8 {
    escape,
    ctrl,
    shift,
+   alt,
    menu,
    _0,
    _1,
@@ -127,8 +128,8 @@ auto translate_virtual_key(const std::uintptr_t vk) noexcept -> key;
 /// @param ctrl Include Ctrl + in the string.
 /// @param shift Include Shift + in the string.
 /// @return The C string for passing to ImGui for display.
-auto get_display_string(const key key, const bool ctrl, const bool shift)
-   -> const char*;
+auto get_display_string(const key key, const bool ctrl, const bool shift,
+                        const bool alt) -> const char*;
 
 /// @brief Parse a display string for a key. With optional modifiers.
 /// @param out_key The output key.
@@ -136,6 +137,6 @@ auto get_display_string(const key key, const bool ctrl, const bool shift)
 /// @param out_shift Output of if Shift + was in the string.
 /// @return True if the string was parsed, false if it wasn't.
 bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
-                          bool& out_shift);
+                          bool& out_shift, bool& out_alt);
 
 }
