@@ -120,7 +120,7 @@ void world_edit::update_ui() noexcept
 
          if (ImGui::MenuItem("Save World",
                              get_display_string(
-                                _hotkeys.query_binding("", "save")))) {
+                                _hotkeys.query_binding("", "Save")))) {
             save_world(_world_path);
          }
 
@@ -138,14 +138,12 @@ void world_edit::update_ui() noexcept
       }
 
       if (ImGui::BeginMenu("Edit")) {
-         if (ImGui::MenuItem("Undo",
-                             get_display_string(
-                                _hotkeys.query_binding("", "edit.undo")))) {
+         if (ImGui::MenuItem("Undo", get_display_string(
+                                        _hotkeys.query_binding("", "Undo")))) {
             undo();
          }
-         if (ImGui::MenuItem("Redo",
-                             get_display_string(
-                                _hotkeys.query_binding("", "edit.redo")))) {
+         if (ImGui::MenuItem("Redo", get_display_string(
+                                        _hotkeys.query_binding("", "Redo")))) {
             redo();
          }
 
@@ -153,7 +151,7 @@ void world_edit::update_ui() noexcept
 
          if (ImGui::MenuItem("Delete",
                              get_display_string(
-                                _hotkeys.query_binding("", "edit.delete")))) {
+                                _hotkeys.query_binding("", "Delete")))) {
             delete_selected();
          }
 
@@ -180,7 +178,7 @@ void world_edit::update_ui() noexcept
       if (ImGui::BeginMenu("View")) {
          ImGui::MenuItem("Hotkeys",
                          get_display_string(
-                            _hotkeys.query_binding("", "hotkeys.show")),
+                            _hotkeys.query_binding("", "Show Hotkeys")),
                          &_hotkeys_view_show);
 
          if (ImGui::IsItemHovered()) {
@@ -4478,92 +4476,85 @@ void world_edit::update_ui() noexcept
             ImGui::Text("Cycle Object Class");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.cycle_object_class")));
+                                      "Cycle Object Class")));
          }
 
          if (traits.has_new_path) {
             ImGui::Text("New Path");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.finish_path")));
+                                      "Cycle Object Class")));
          }
 
          if (traits.has_placement_rotation) {
             ImGui::Text("Change Rotation Mode");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.cycle_rotation_mode")));
+                                      "Change Rotation Mode")));
          }
 
          if (traits.has_point_at) {
             ImGui::Text("Point At");
             ImGui::BulletText(get_display_string(
-               _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.activate_point_at")));
+               _hotkeys.query_binding("Entity Creation", "Start Point At")));
          }
 
          if (traits.has_placement_mode) {
             ImGui::Text("Change Placement Mode");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.cycle_placement_mode")));
+                                      "Change Placement Mode")));
          }
 
          if (traits.has_lock_axis) {
             ImGui::Text("Lock X Position");
             ImGui::BulletText(get_display_string(
-               _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.lock_x_axis")));
+               _hotkeys.query_binding("Entity Creation", "Lock X Axis")));
 
             ImGui::Text("Lock Y Position");
             ImGui::BulletText(get_display_string(
-               _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.lock_y_axis")));
+               _hotkeys.query_binding("Entity Creation", "Lock Y Axis")));
 
             ImGui::Text("Lock Z Position");
             ImGui::BulletText(get_display_string(
-               _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.lock_z_axis")));
+               _hotkeys.query_binding("Entity Creation", "Lock Z Axis")));
          }
 
          if (traits.has_placement_alignment) {
             ImGui::Text("Change Alignment Mode");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.cycle_alignment_mode")));
+                                      "Change Alignment Mode")));
          }
 
          if (traits.has_placement_ground) {
             ImGui::Text("Change Grounding Mode");
             ImGui::BulletText(get_display_string(
                _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.cycle_ground_mode")));
+                                      "Change Grounding Mode")));
          }
 
          if (traits.has_resize_to) {
             ImGui::Text("Extend To");
             ImGui::BulletText(get_display_string(
-               _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.activate_extend_to")));
+               _hotkeys.query_binding("Entity Creation", "Start Extend To")));
 
             ImGui::Text("Shrink To");
             ImGui::BulletText(get_display_string(
-               _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.activate_shrink_to")));
+               _hotkeys.query_binding("Entity Creation", "Start Shrink To")));
          }
 
          if (traits.has_from_bbox) {
             ImGui::Text("From Object Bounds");
-            ImGui::BulletText(get_display_string(_hotkeys.query_binding(
-               "Entity Creation",
-               "entity_creation.activate_from_object_bbox")));
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "Start From Object BBOX")));
          }
 
          if (traits.has_from_line) {
             ImGui::Text("From Line");
             ImGui::BulletText(get_display_string(
-               _hotkeys.query_binding("Entity Creation",
-                                      "entity_creation.activate_from_line")));
+               _hotkeys.query_binding("Entity Creation", "Start From Line")));
          }
 
          ImGui::End();

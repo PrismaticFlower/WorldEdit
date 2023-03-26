@@ -79,7 +79,7 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
                    .toggle = default_hotkey.bind_config.toggle,
                    .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
                    .name = std::string{default_hotkey.name}};
-         query_bindings[default_hotkey.command] = binding;
+         query_bindings[default_hotkey.name] = binding;
       }
       else {
          unbound_hotkeys.push_back(
@@ -406,12 +406,13 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
 
             if (set.bindings.contains(new_bind)) {
                set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
+               //   set.query_bindings.erase(set.unbound_hotkeys.back().name);
 
                _saved_bindings[set.name].erase(set.unbound_hotkeys.back().name);
             }
 
             set.bindings[new_bind] = _user_editing_hotkey;
-            set.query_bindings[_user_editing_hotkey.command] = new_bind;
+            set.query_bindings[_user_editing_hotkey.name] = new_bind;
 
             std::erase_if(set.unbound_hotkeys, [&](const hotkey& hotkey) {
                return hotkey == _user_editing_hotkey;

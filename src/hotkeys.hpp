@@ -78,11 +78,11 @@ struct hotkeys {
    /// @brief Call and clear the state for all toggle bindings.
    void release_toggles() noexcept;
 
-   /// @brief Query for the key bound to a command string in a set.
+   /// @brief Query for the key bound to a hotkey in a set.
    /// @param set_name The name of the set.
-   /// @param command The command to query.
-   /// @return The key(s) bound to the command or nullopt if the command is unbound in the set.
-   auto query_binding(std::string_view set_name, std::string_view command) const noexcept
+   /// @param command The name of the hotkey.
+   /// @return The key(s) bound to the hotkey or nullopt if the command is unbound in the set.
+   auto query_binding(std::string_view set_name, std::string_view name) const noexcept
 
       -> std::optional<hotkey_bind>;
 
