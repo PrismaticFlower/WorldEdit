@@ -824,8 +824,8 @@ void world_edit::delete_selected() noexcept
 void world_edit::open_project(std::filesystem::path path) noexcept
 {
    if (not std::filesystem::exists(path / L"Worlds")) {
-      if (MessageBoxW(_window, L"The selected folder does not appear to be a project folder. Are you sure you wish to open it?",
-                      L"Not a Project Folder", MB_YESNO) != IDYES) {
+      if (MessageBoxW(_window, L"The selected folder does not appear to be a mod data folder. Are you sure you wish to open it?",
+                      L"Not a Data Folder", MB_YESNO) != IDYES) {
          return;
       }
    }
@@ -846,7 +846,7 @@ void world_edit::open_project_with_picker() noexcept
                                                      {0x9c, 0xb5, 0xa0, 0x71,
                                                       0x65, 0x1d, 0x42, 0xa4}};
 
-   auto path = utility::show_folder_picker({.title = L"Open Project",
+   auto path = utility::show_folder_picker({.title = L"Open Data Folder",
                                             .ok_button_label = L"Open",
                                             .picker_guid = open_project_picker_guid,
                                             .window = _window});
@@ -984,7 +984,7 @@ void world_edit::enumerate_project_worlds() noexcept
       }
    }
    catch (std::filesystem::filesystem_error&) {
-      MessageBoxW(_window, L"Unable to enumerate project worlds. Loading worlds will require manual navigation.",
+      MessageBoxW(_window, L"Unable to enumerate data folder worlds. Loading worlds will require manual navigation.",
                   L"Error", MB_OK);
    }
 }

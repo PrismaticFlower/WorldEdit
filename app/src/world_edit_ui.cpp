@@ -86,7 +86,7 @@ void world_edit::update_ui() noexcept
 
    if (ImGui::BeginMainMenuBar()) {
       if (ImGui::BeginMenu("File")) {
-         if (ImGui::MenuItem("Open Project")) open_project_with_picker();
+         if (ImGui::MenuItem("Open Data Folder")) open_project_with_picker();
 
          ImGui::Separator();
 
@@ -113,7 +113,7 @@ void world_edit::update_ui() noexcept
 
          if (not loaded_project and
              ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-            ImGui::SetTooltip("You must open a project to load a world.");
+            ImGui::SetTooltip("You must open a data folder to load a world.");
          }
 
          const bool loaded_world = not _world_path.empty();
