@@ -1968,6 +1968,16 @@ void world_edit::update_ui() noexcept
                         new_position.y -= bbox.min.y;
                      }
 
+                     if (_entity_creation_context.lock_x_axis) {
+                        new_position.x = object.position.x;
+                     }
+                     if (_entity_creation_context.lock_y_axis) {
+                        new_position.y = object.position.y;
+                     }
+                     if (_entity_creation_context.lock_z_axis) {
+                        new_position.z = object.position.z;
+                     }
+
                      if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
@@ -1983,16 +1993,6 @@ void world_edit::update_ui() noexcept
                                                        _object_classes);
 
                         if (snapped_position) new_position = *snapped_position;
-                     }
-
-                     if (_entity_creation_context.lock_x_axis) {
-                        new_position.x = object.position.x;
-                     }
-                     if (_entity_creation_context.lock_y_axis) {
-                        new_position.y = object.position.y;
-                     }
-                     if (_entity_creation_context.lock_z_axis) {
-                        new_position.z = object.position.z;
                      }
                   }
 

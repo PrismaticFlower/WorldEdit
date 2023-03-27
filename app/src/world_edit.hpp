@@ -243,7 +243,7 @@ private:
       placement_node_insert placement_node_insert = placement_node_insert::nearest;
 
       float alignment = 4.0f;
-      float snap_distance = 0.5f;
+      float snap_distance = 0.25f;
 
       bool command_post_auto_place_meta_entities = true;
 
