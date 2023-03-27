@@ -1977,7 +1977,6 @@ void world_edit::update_ui() noexcept
                      if (_entity_creation_context.lock_z_axis) {
                         new_position.z = object.position.z;
                      }
-
                      if (_entity_creation_config.placement_alignment ==
                          placement_alignment::grid) {
                         new_position =
@@ -4658,12 +4657,12 @@ void world_edit::update_ui() noexcept
 
                for (const world::object& object : _world.objects) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(object.name, _world_explorer_filter)) {
+                      not string::icontains(object.name, _world_explorer_filter)) {
                      continue;
                   }
                   if (not _world_explorer_class_filter.empty() and
-                      not string::istarts_with(object.class_name,
-                                               _world_explorer_class_filter)) {
+                      not string::icontains(object.class_name,
+                                            _world_explorer_class_filter)) {
                      continue;
                   }
 
@@ -4712,7 +4711,7 @@ void world_edit::update_ui() noexcept
 
             _asset_libraries.odfs.enumerate_known([&](const lowercase_string& asset) {
                if (not _world_explorer_class_filter.empty() and
-                   not string::istarts_with(asset, _world_explorer_class_filter)) {
+                   not string::icontains(asset, _world_explorer_class_filter)) {
                   return;
                }
 
@@ -4786,7 +4785,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::light& light : _world.lights) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(light.name, _world_explorer_filter)) {
+                      not string::icontains(light.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -4855,7 +4854,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::path& path : _world.paths) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(path.name, _world_explorer_filter)) {
+                      not string::icontains(path.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -4905,7 +4904,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::region& region : _world.regions) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(region.name, _world_explorer_filter)) {
+                      not string::icontains(region.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -4964,7 +4963,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::sector& sector : _world.sectors) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(sector.name, _world_explorer_filter)) {
+                      not string::icontains(sector.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -5011,7 +5010,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::portal& portal : _world.portals) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(portal.name, _world_explorer_filter)) {
+                      not string::icontains(portal.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -5059,7 +5058,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::hintnode& hintnode : _world.hintnodes) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(hintnode.name, _world_explorer_filter)) {
+                      not string::icontains(hintnode.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -5125,7 +5124,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::barrier& barrier : _world.barriers) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(barrier.name, _world_explorer_filter)) {
+                      not string::icontains(barrier.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -5187,7 +5186,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::planning_hub& hub : _world.planning_hubs) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(hub.name, _world_explorer_filter)) {
+                      not string::icontains(hub.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -5238,7 +5237,7 @@ void world_edit::update_ui() noexcept
                for (const world::planning_connection& connection :
                     _world.planning_connections) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(connection.name, _world_explorer_filter)) {
+                      not string::icontains(connection.name, _world_explorer_filter)) {
                      continue;
                   }
 
@@ -5313,7 +5312,7 @@ void world_edit::update_ui() noexcept
 
                for (const world::boundary& boundary : _world.boundaries) {
                   if (not _world_explorer_filter.empty() and
-                      not string::istarts_with(boundary.name, _world_explorer_filter)) {
+                      not string::icontains(boundary.name, _world_explorer_filter)) {
                      continue;
                   }
 
