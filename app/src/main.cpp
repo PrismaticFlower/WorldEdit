@@ -187,6 +187,25 @@ void run_application(command_line command_line)
 
          return 0;
       }
+      case WM_MOUSEWHEEL: {
+         static int delta = 0;
+
+         delta += GET_WHEEL_DELTA_WPARAM(wparam);
+
+         const int steps = delta / WHEEL_DELTA;
+
+         for (int i = 0; i < std::abs(steps); ++i) {
+            const we::key key = delta > 0 ? we::key::mouse_wheel_forward
+                                          : we::key::mouse_wheel_back;
+
+            app.key_down(key);
+            app.key_up(key);
+         }
+
+         delta -= (steps * WHEEL_DELTA);
+
+         return 0;
+      };
       case WM_INPUT: {
          const HRAWINPUT raw_input_handle = reinterpret_cast<HRAWINPUT>(lparam);
 

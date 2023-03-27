@@ -21,6 +21,8 @@ constexpr bool is_mouse_key(const key key) noexcept
    case key::mouse3:
    case key::mouse4:
    case key::mouse5:
+   case key::mouse_wheel_forward:
+   case key::mouse_wheel_back:
       return true;
    default:
       return false;

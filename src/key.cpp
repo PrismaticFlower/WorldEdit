@@ -227,6 +227,8 @@ constexpr container::enum_array<const char*, key> key_display_names =
       {key::mouse3, "Middle Mouse"},
       {key::mouse4, "Mouse 4"},
       {key::mouse5, "Mouse 5"},
+      {key::mouse_wheel_forward, "Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Mouse Wheel Back"},
 
       {key::void_key, "<empty>"},
    });
@@ -337,6 +339,8 @@ constexpr container::enum_array<const char*, key> ctrl_key_display_names =
       {key::mouse3, "Ctrl + Middle Mouse"},
       {key::mouse4, "Ctrl + Mouse 4"},
       {key::mouse5, "Ctrl + Mouse 5"},
+      {key::mouse_wheel_forward, "Ctrl + Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Ctrl + Mouse Wheel Back"},
 
       {key::void_key, "Ctrl + <empty>"},
    });
@@ -447,6 +451,8 @@ constexpr container::enum_array<const char*, key> shift_key_display_names =
       {key::mouse3, "Shift + Middle Mouse"},
       {key::mouse4, "Shift + Mouse 4"},
       {key::mouse5, "Shift + Mouse 5"},
+      {key::mouse_wheel_forward, "Shift + Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Shift + Mouse Wheel Back"},
 
       {key::void_key, "Shift + <empty>"},
    });
@@ -557,6 +563,8 @@ constexpr container::enum_array<const char*, key> alt_key_display_names =
       {key::mouse3, "Alt + Middle Mouse"},
       {key::mouse4, "Alt + Mouse 4"},
       {key::mouse5, "Alt + Mouse 5"},
+      {key::mouse_wheel_forward, "Alt + Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Alt + Mouse Wheel Back"},
 
       {key::void_key, "Alt + <empty>"},
    });
@@ -667,6 +675,8 @@ constexpr container::enum_array<const char*, key> ctrl_shift_key_display_names =
       {key::mouse3, "Ctrl + Shift + Middle Mouse"},
       {key::mouse4, "Ctrl + Shift + Mouse 4"},
       {key::mouse5, "Ctrl + Shift + Mouse 5"},
+      {key::mouse_wheel_forward, "Ctrl + Shift + Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Ctrl + Shift + Mouse Wheel Back"},
 
       {key::void_key, "Ctrl + Shift + <empty>"},
    });
@@ -777,6 +787,8 @@ constexpr container::enum_array<const char*, key> ctrl_alt_key_display_names =
       {key::mouse3, "Ctrl + Alt + Middle Mouse"},
       {key::mouse4, "Ctrl + Alt + Mouse 4"},
       {key::mouse5, "Ctrl + Alt + Mouse 5"},
+      {key::mouse_wheel_forward, "Ctrl + Alt + Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Ctrl + Alt + Mouse Wheel Back"},
 
       {key::void_key, "Ctrl + Alt + <empty>"},
    });
@@ -887,6 +899,8 @@ constexpr container::enum_array<const char*, key> shift_alt_key_display_names =
       {key::mouse3, "Shift + Alt + Middle Mouse"},
       {key::mouse4, "Shift + Alt + Mouse 4"},
       {key::mouse5, "Shift + Alt + Mouse 5"},
+      {key::mouse_wheel_forward, "Shift + Alt + Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Shift + Alt + Mouse Wheel Back"},
 
       {key::void_key, "Shift + Alt + <empty>"},
    });
@@ -997,6 +1011,8 @@ constexpr container::enum_array<const char*, key> ctrl_shift_alt_key_display_nam
       {key::mouse3, "Ctrl + Shift + Alt + Middle Mouse"},
       {key::mouse4, "Ctrl + Shift + Alt + Mouse 4"},
       {key::mouse5, "Ctrl + Shift + Alt + Mouse 5"},
+      {key::mouse_wheel_forward, "Ctrl + Shift + Alt + Mouse Wheel Forward"},
+      {key::mouse_wheel_back, "Ctrl + Shift + Alt + Mouse Wheel Back"},
 
       {key::void_key, "Ctrl + Shift + Alt + <empty>"},
    });

@@ -111,6 +111,8 @@ enum class key : uint8 {
    mouse3,
    mouse4,
    mouse5,
+   mouse_wheel_forward,
+   mouse_wheel_back,
 
    void_key,
 
