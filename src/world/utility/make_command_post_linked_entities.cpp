@@ -1,6 +1,6 @@
 #include "make_command_post_linked_entities.hpp"
-#include "../raycast.hpp"
 #include "math/vector_funcs.hpp"
+#include "raycast.hpp"
 #include "world_utilities.hpp"
 
 #include <cmath>

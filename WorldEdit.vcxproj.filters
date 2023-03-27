@@ -466,9 +466,6 @@
     <ClInclude Include="src\commands.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\raycast.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\math\intersectors.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -652,6 +649,9 @@
     <ClInclude Include="src\settings\camera.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\raycast.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -798,9 +798,6 @@
     <ClCompile Include="src\commands.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\raycast.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -925,6 +922,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\interaction_context.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\raycast.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
