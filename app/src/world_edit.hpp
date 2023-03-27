@@ -203,6 +203,9 @@ private:
       bool lock_y_axis = false;
       bool lock_z_axis = false;
 
+      bool rotate_forward = false;
+      bool rotate_back = false;
+
       bool activate_point_at = false;
       bool activate_extend_to = false;
       bool activate_shrink_to = false;

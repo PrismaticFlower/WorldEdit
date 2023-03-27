@@ -146,6 +146,10 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.finish_path"s,
                  _entity_creation_context.finish_current_path);
 
+   _commands.add("entity_creation.rotate_forward"s,
+                 _entity_creation_context.rotate_forward);
+   _commands.add("entity_creation.rotate_back"s, _entity_creation_context.rotate_back);
+
    _commands.add("entity_creation.place"s, [this] { place_creation_entity(); });
    _commands.add("entity_creation.cancel"s, [this] {
       if (not _interaction_targets.creation_entity) return;
@@ -243,6 +247,11 @@ void world_edit::initialize_hotkeys() noexcept
          {"Lock X Axis", "entity_creation.lock_x_axis", {.key = key::z}},
          {"Lock Y Axis", "entity_creation.lock_y_axis", {.key = key::x}},
          {"Lock Z Axis", "entity_creation.lock_z_axis", {.key = key::c}},
+
+         {"Rotate Entity Forward",
+          "entity_creation.rotate_forward",
+          {.key = key::mouse_wheel_forward}},
+         {"Rotate Entity Back", "entity_creation.rotate_back", {.key = key::mouse_wheel_back}},
 
          {"Place Entity", "entity_creation.place", {.key = key::mouse1}},
          {"Cancel", "entity_creation.cancel", {.key = key::escape}},
