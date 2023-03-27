@@ -24,4 +24,10 @@ bool istarts_with(const std::string_view left, const std::string_view right) noe
 /// @return If left ends with right.
 bool iends_with(const std::string_view left, const std::string_view right) noexcept;
 
+/// @brief Check if left contains right, ignoring simple casing.
+/// @param left The left string to check.
+/// @param right The right string to check.
+/// @return If left contains right.
+bool icontains(const std::string_view left, const std::string_view right) noexcept;
+
 }

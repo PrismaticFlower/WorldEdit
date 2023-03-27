@@ -49,4 +49,19 @@ bool iends_with(const std::string_view left, const std::string_view right) noexc
    return iequals(left.substr(left.size() - right.size(), right.size()), right);
 }
 
+bool icontains(const std::string_view left, const std::string_view right) noexcept
+{
+   if (left.size() < right.size()) return false;
+
+   for (std::size_t i = 0; i < left.size(); ++i) {
+      if ((left.size() - i) < right.size()) return false;
+
+      if (iequals(left.substr(i, right.size()), right)) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 }
