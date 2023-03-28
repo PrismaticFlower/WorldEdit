@@ -203,9 +203,11 @@
     <ClCompile Include="src\assets\terrain\terrain_collision.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
+    <ClCompile Include="src\edits\add_layer.cpp" />
     <ClCompile Include="src\edits\add_property.cpp" />
     <ClCompile Include="src\edits\creation_entity_set.cpp" />
     <ClCompile Include="src\edits\delete_entity.cpp" />
+    <ClCompile Include="src\edits\delete_layer.cpp" />
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
     <ClCompile Include="src\edits\insert_point.cpp" />
@@ -334,8 +336,10 @@
     <ClInclude Include="src\container\ring_set.hpp" />
     <ClInclude Include="src\container\slim_bitset.hpp" />
     <ClInclude Include="src\container\paged_stack.hpp" />
+    <ClInclude Include="src\edits\add_layer.hpp" />
     <ClInclude Include="src\edits\creation_entity_set.hpp" />
     <ClInclude Include="src\edits\delete_entity.hpp" />
+    <ClInclude Include="src\edits\delete_layer.hpp" />
     <ClInclude Include="src\edits\edit.hpp" />
     <ClInclude Include="src\edits\imgui_ext.hpp" />
     <ClInclude Include="src\edits\insert_entity.hpp" />
