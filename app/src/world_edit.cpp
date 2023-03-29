@@ -70,7 +70,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
                         static_cast<float>(rect.bottom - rect.top));
 }
 
-bool world_edit::update()
+void world_edit::update()
 {
    const float delta_time =
       std::chrono::duration<float>(
@@ -78,7 +78,7 @@ bool world_edit::update()
          std::exchange(_last_update, std::chrono::steady_clock::now()))
          .count();
 
-   if (not _focused) return true;
+   if (not _focused) return;
 
    wait_for_swap_chain_ready();
 
@@ -86,6 +86,7 @@ bool world_edit::update()
    update_input();
 
    // UI!
+   update_window_text();
    update_ui();
 
    // Logic!
@@ -105,8 +106,6 @@ bool world_edit::update()
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
    }
-
-   return true;
 }
 
 void world_edit::wait_for_swap_chain_ready() noexcept
@@ -116,6 +115,17 @@ void world_edit::wait_for_swap_chain_ready() noexcept
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
+   }
+}
+
+void world_edit::update_window_text() noexcept
+{
+   if (_window_unsaved_star != _edit_stack_world.modified_flag()) {
+      SetWindowTextA(_window, fmt::format("WorldEdit - {}{}",
+                                          _edit_stack_world.modified_flag() ? "*" : "",
+                                          _world_path.filename().string())
+                                 .c_str());
+      _window_unsaved_star = _edit_stack_world.modified_flag();
    }
 }
 
@@ -834,6 +844,18 @@ void world_edit::delete_selected() noexcept
    _interaction_targets.selection.clear();
 }
 
+void world_edit::ask_to_save_world() noexcept
+{
+   if (_world_path.empty()) return;
+   if (not _edit_stack_world.modified_flag()) return;
+
+   int result =
+      MessageBoxW(_window, L"You have unsaved changes in your current world. They'll be lost once the world is closed.\n\nSave them?",
+                  L"Unsaved Changes", MB_YESNO);
+
+   if (result == IDYES) save_world(_world_path);
+}
+
 void world_edit::open_project(std::filesystem::path path) noexcept
 {
    if (not std::filesystem::exists(path / L"Worlds")) {
@@ -887,6 +909,7 @@ void world_edit::load_world(std::filesystem::path path) noexcept
       SetWindowTextA(_window,
                      fmt::format("WorldEdit - {}", _world_path.filename().string())
                         .c_str());
+      _window_unsaved_star = false;
    }
    catch (std::exception& e) {
       _stream.write(fmt::format("Failed to load world '{}'! Reason: {}",
@@ -924,6 +947,8 @@ void world_edit::save_world(std::filesystem::path path) noexcept
       }
 
       world::save_world(path, _world);
+
+      _edit_stack_world.clear_modified_flag();
    }
    catch (std::exception& e) {
       auto message =
@@ -961,6 +986,8 @@ void world_edit::save_world_with_picker() noexcept
 
 void world_edit::close_world() noexcept
 {
+   ask_to_save_world();
+
    _object_classes.clear();
    _world = {};
    _interaction_targets = {};
@@ -972,10 +999,12 @@ void world_edit::close_world() noexcept
    _terrain_collision = {};
 
    _edit_stack_world.clear();
+   _edit_stack_world.clear_modified_flag();
 
    _renderer->mark_dirty_terrain();
 
    SetWindowTextA(_window, "WorldEdit");
+   _window_unsaved_star = false;
 }
 
 void world_edit::enumerate_project_worlds() noexcept
@@ -1032,6 +1061,17 @@ void world_edit::unfocused()
 bool world_edit::idling() const noexcept
 {
    return not _focused;
+}
+
+bool world_edit::can_close() const noexcept
+{
+   if (not _edit_stack_world.modified_flag()) return true;
+
+   int result =
+      MessageBoxW(_window, L"You have unsaved changes in your world. If you quit now you will lose them.\n\nAre you sure you want to quit?",
+                  L"Unsaved Changes", MB_YESNO | MB_DEFBUTTON2);
+
+   return result == IDYES;
 }
 
 void world_edit::key_down(const key key) noexcept

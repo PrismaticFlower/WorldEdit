@@ -92,6 +92,11 @@ void run_application(command_line command_line)
          PostQuitMessage(0);
 
          return 0;
+      case WM_CLOSE: {
+         if (not app.can_close()) return 0;
+
+         return DefWindowProcW(window, message, wparam, lparam);
+      }
       case WM_SIZE:
          app.resized(lparam & 0xffff, (lparam >> 16) & 0xffff);
 
@@ -249,7 +254,9 @@ void run_application(command_line command_line)
       }
 
       if (app.idling()) WaitMessage();
-   } while (app.update());
+
+      app.update();
+   } while (true);
 }
 
 int main(int arg_count, const char** args)

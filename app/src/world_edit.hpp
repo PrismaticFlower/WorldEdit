@@ -47,7 +47,7 @@ class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
 
-   bool update();
+   void update();
 
    void resized(uint16 width, uint16 height);
 
@@ -56,6 +56,8 @@ public:
    void unfocused();
 
    bool idling() const noexcept;
+
+   bool can_close() const noexcept;
 
    void dpi_changed(const int new_dpi) noexcept;
 
@@ -67,6 +69,8 @@ public:
 
 private:
    void wait_for_swap_chain_ready() noexcept;
+
+   void update_window_text() noexcept;
 
    void update_input() noexcept;
 
@@ -91,6 +95,8 @@ private:
    void redo() noexcept;
 
    void delete_selected() noexcept;
+
+   void ask_to_save_world() noexcept;
 
    void open_project(std::filesystem::path path) noexcept;
 
@@ -120,6 +126,7 @@ private:
    std::shared_ptr<async::thread_pool> _thread_pool = async::thread_pool::make();
 
    bool _focused = true;
+   bool _window_unsaved_star = false;
    float _current_dpi = 96.0f;
    float _display_scale = 1.0f;
    std::chrono::steady_clock::time_point _last_update =

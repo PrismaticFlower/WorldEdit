@@ -47,6 +47,8 @@ struct stack {
 
       if (flags.closed) _applied.top()->close();
       if (flags.transparent) _applied.top()->mark_transparent();
+
+      _modified_flag = true;
    }
 
    /// @brief Revert an edit. Does nothing if there is no edit to revert
@@ -89,6 +91,8 @@ struct stack {
       }
 
       if (not _applied.empty()) _applied.top()->close();
+
+      _modified_flag = true;
    }
 
    /// @brief Reapplies a number of edits. Does nothing if there is no edit to reapply.
@@ -115,6 +119,8 @@ struct stack {
             _reverted.pop();
          }
       }
+
+      _modified_flag = true;
    }
 
    /// @brief Revert all edits.
@@ -168,9 +174,24 @@ struct stack {
       _reverted.clear();
    }
 
+   /// @brief Check the value of the modified flag. (Set whenever an edited is applied/reverted/reapplied)
+   /// @return The value of the modified flag.
+   bool modified_flag() const noexcept
+   {
+      return _modified_flag;
+   }
+
+   /// @brief Clear the modified flag.
+   void clear_modified_flag() noexcept
+   {
+      _modified_flag = false;
+   }
+
 private:
    container::paged_stack<std::unique_ptr<edit_type>, 8192> _applied;
    container::paged_stack<std::unique_ptr<edit_type>, 8192> _reverted;
+
+   bool _modified_flag = false;
 };
 
 }

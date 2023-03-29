@@ -362,4 +362,37 @@ TEST_CASE("edits stack transparent tests", "[Edits]")
    REQUIRE(stack.applied_size() == 2);
    REQUIRE(stack.reverted_size() == 0);
 }
+
+TEST_CASE("edits stack modified flag tests", "[Edits]")
+{
+   stack<dummy_edit_state> stack;
+   dummy_edit_state state;
+
+   CHECK(not stack.modified_flag());
+
+   stack.apply(std::make_unique<dummy_edit>(), state);
+
+   CHECK(stack.modified_flag());
+
+   stack.clear_modified_flag();
+
+   CHECK(not stack.modified_flag());
+
+   stack.revert(state);
+
+   CHECK(stack.modified_flag());
+
+   stack.clear_modified_flag();
+
+   CHECK(not stack.modified_flag());
+
+   stack.reapply(state);
+
+   CHECK(stack.modified_flag());
+
+   stack.clear_modified_flag();
+
+   CHECK(not stack.modified_flag());
+}
+
 }
