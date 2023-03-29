@@ -1010,21 +1010,29 @@ void renderer_impl::draw_world_meta_objects(
    }
 
    if (active_entity_types.hintnodes) {
-      const float4 hintnode_color = float4{settings.hintnode_color, 1.0f};
-      const float4 hintnode_outline_color =
-         float4{settings.hintnode_outline_color, 1.0f};
+      const float4 hintnode_color = settings.hintnode_color;
+      const uint32 packed_hintnode_color = utility::pack_srgb_bgra(hintnode_color);
 
       const auto add_hintnode = [&](const world::hintnode& hintnode) {
          if (not active_layers[hintnode.layer]) return;
 
-         if (not intersects(view_frustum, hintnode.position, 1.0f)) return;
+         if (not intersects(view_frustum, hintnode.position, 3.0f)) return;
 
-         float4x4 transform = to_matrix(hintnode.rotation);
+         float4x4 rotation = to_matrix(hintnode.rotation);
 
+         float4x4 transform = rotation;
          transform[3] = {hintnode.position, 1.0f};
 
-         _meta_draw_batcher.add_octahedron_outlined(transform, hintnode_color,
-                                                    hintnode_outline_color);
+         _meta_draw_batcher.add_hint_hexahedron(transform, hintnode_color);
+
+         float4x4 arrow_transform = rotation * float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                        {0.0f, 1.0f, 0.0f, 0.0f},
+                                                        {0.0f, 0.0f, 1.0f, 0.0f},
+                                                        {0.0f, 1.0f, 0.0f, 1.0f}};
+         arrow_transform[3] += {hintnode.position, 0.0f};
+
+         _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 2.4f,
+                                                    packed_hintnode_color);
       };
 
       for (auto& hintnode : world.hintnodes) add_hintnode(hintnode);
@@ -1499,10 +1507,22 @@ void renderer_impl::draw_interaction_targets(
          _meta_draw_batcher.add_line_solid(quad[3], quad[0], packed_color);
       },
       [&](const world::hintnode& hintnode, const float3 color) {
-         float4x4 transform = to_matrix(hintnode.rotation);
+         float4x4 rotation = to_matrix(hintnode.rotation);
+
+         float4x4 transform = rotation;
          transform[3] = {hintnode.position, 1.0f};
 
-         _meta_draw_batcher.add_octahedron_wireframe(transform, color);
+         _meta_draw_batcher.add_hint_hexahedron_wireframe(transform, color);
+
+         float4x4 arrow_transform = rotation * float4x4{{1.0f, 0.0f, 0.0f, 0.0f},
+                                                        {0.0f, 1.0f, 0.0f, 0.0f},
+                                                        {0.0f, 0.0f, 1.0f, 0.0f},
+                                                        {0.0f, 1.0f, 0.0f, 1.0f}};
+         arrow_transform[3] += {hintnode.position, 0.0f};
+
+         _meta_draw_batcher.add_arrow_outline_solid(arrow_transform, 2.4f,
+                                                    utility::pack_srgb_bgra(
+                                                       float4{color, 1.0f}));
       },
       [&](const world::barrier& barrier, const float3 color) {
          const geometric_shape shape = _geometric_shapes.cube();

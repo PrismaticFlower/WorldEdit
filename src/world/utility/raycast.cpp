@@ -360,14 +360,44 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& hintnode : hintnodes) {
       if (not active_layers[hintnode.layer]) continue;
 
-      const float intersection =
-         sphIntersect(ray_origin, ray_direction, hintnode.position, 1.4142f);
+      const float bounding_intersection =
+         sphIntersect(ray_origin, ray_direction, hintnode.position, 2.0f);
 
-      if (intersection < 0.0f) continue;
+      if (bounding_intersection < 0.0f) continue;
 
-      if (intersection < min_distance) {
-         hit = hintnode.id;
-         min_distance = intersection;
+      constexpr static std::array<float3, 8> hexahedron_vertices{
+         {{0.000000f, 1.000000f, 1.000000f},
+          {-0.866025f, 1.000000f, -0.500000f},
+          {0.866025f, 1.000000f, -0.500000f},
+          {0.000000f, 2.000000f, 0.000000f},
+          {0.000000f, 1.000000f, 1.000000f},
+          {0.866025f, 1.000000f, -0.500000f},
+          {-0.866026f, 1.000000f, -0.500000f},
+          {0.000000f, 0.000000f, -0.000000f}}};
+
+      constexpr static std::array<std::array<uint16, 3>, 6> hexahedron_indices{
+         {{0, 3, 1}, {1, 3, 2}, {2, 3, 0}, {4, 7, 5}, {5, 7, 6}, {6, 7, 4}}};
+
+      quaternion inverse_node_rotation = conjugate(hintnode.rotation);
+
+      float4x4 world_to_node = to_matrix(inverse_node_rotation);
+      world_to_node[3] = {inverse_node_rotation * -hintnode.position, 1.0f};
+
+      const float3 node_ray_origin = world_to_node * ray_origin;
+      const float3 node_ray_direction = normalize(float3x3{world_to_node} * ray_direction);
+
+      for (const auto& [i0, i1, i2] : hexahedron_indices) {
+         const float intersection =
+            triIntersect(node_ray_origin, node_ray_direction, hexahedron_vertices[i0],
+                         hexahedron_vertices[i1], hexahedron_vertices[i2])
+               .x;
+
+         if (intersection < 0.0f) continue;
+
+         if (intersection < min_distance) {
+            hit = hintnode.id;
+            min_distance = intersection;
+         }
       }
    }
 

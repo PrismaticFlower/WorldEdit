@@ -388,6 +388,19 @@ struct geometric_shapes_buffer {
    alignas(gpu::raw_uav_srv_byte_alignment) const std::array<std::array<uint16, 3>, 8> octahedron_indices{
       {{0, 1, 2}, {2, 1, 3}, {3, 1, 4}, {4, 1, 0}, {4, 5, 3}, {0, 5, 4}, {2, 5, 0}, {3, 5, 2}}};
 
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 8> hint_hexahedron_vertices{
+      {{0.000000f, 1.000000f, 1.000000f},
+       {-0.866025f, 1.000000f, -0.500000f},
+       {0.866025f, 1.000000f, -0.500000f},
+       {0.000000f, 2.000000f, 0.000000f},
+       {0.000000f, 1.000000f, 1.000000f},
+       {0.866025f, 1.000000f, -0.500000f},
+       {-0.866026f, 1.000000f, -0.500000f},
+       {0.000000f, 0.000000f, -0.000000f}}};
+
+   alignas(gpu::raw_uav_srv_byte_alignment) const std::array<std::array<uint16, 3>, 6> hint_hexahedron_indices{
+      {{0, 3, 1}, {1, 3, 2}, {2, 3, 0}, {4, 7, 5}, {5, 7, 6}, {6, 7, 4}}};
+
    alignas(gpu::raw_uav_srv_byte_alignment) const std::array<float3, 33> cone_vertices{
       {{0.000000f, -1.000000f, -1.000000f},
        {0.000000f, 1.000000f, 0.000000f},
@@ -548,6 +561,24 @@ void geometric_shapes::init_shapes(gpu::device& device)
             .buffer_location =
                gpu_address + offsetof(geometric_shapes_buffer, octahedron_vertices),
             .size_in_bytes = sizeof(geometric_shapes_buffer::octahedron_vertices),
+            .stride_in_bytes = sizeof(float3),
+         },
+   };
+
+   _hint_hexahedron = {
+      .index_count =
+         static_cast<uint32>(shapes_buffer.hint_hexahedron_indices.size()) * 3,
+      .index_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer,
+                                                      hint_hexahedron_indices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::hint_hexahedron_indices),
+         },
+      .position_vertex_buffer_view =
+         {
+            .buffer_location = gpu_address + offsetof(geometric_shapes_buffer,
+                                                      hint_hexahedron_vertices),
+            .size_in_bytes = sizeof(geometric_shapes_buffer::hint_hexahedron_vertices),
             .stride_in_bytes = sizeof(float3),
          },
    };

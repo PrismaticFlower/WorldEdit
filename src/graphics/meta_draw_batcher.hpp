@@ -62,6 +62,8 @@ struct meta_draw_batcher {
 
    void add_octahedron(const float4x4& transform, const float4& color);
 
+   void add_hint_hexahedron(const float4x4& transform, const float4& color);
+
    void add_box(const float4x4& transform, const float4& color);
 
    void add_sphere(const float3& position, const float radius, const float4& color);
@@ -79,6 +81,8 @@ struct meta_draw_batcher {
                                 const float arrow_offset, const uint32 color);
 
    void add_octahedron_wireframe(const float4x4& transform, const float3& color);
+
+   void add_hint_hexahedron_wireframe(const float4x4& transform, const float3& color);
 
    void add_box_wireframe(const float4x4& transform, const float3& color);
 
@@ -104,6 +108,7 @@ private:
    std::vector<meta_draw_outlined> _octahedrons_outlined;
 
    std::vector<meta_draw_object> _octahedrons;
+   std::vector<meta_draw_object> _hint_hexahedrons;
    std::vector<meta_draw_object> _boxes;
    std::vector<meta_draw_sphere> _spheres;
    std::vector<meta_draw_object> _cylinders;
@@ -112,6 +117,7 @@ private:
    std::vector<meta_draw_line> _lines_solid;
 
    std::vector<meta_draw_object> _octahedrons_wireframe;
+   std::vector<meta_draw_object> _hint_hexahedrons_wireframe;
    std::vector<meta_draw_object> _boxes_wireframe;
    std::vector<meta_draw_sphere> _spheres_wireframe;
    std::vector<meta_draw_object> _cylinders_wireframe;

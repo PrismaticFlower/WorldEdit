@@ -80,6 +80,7 @@ void meta_draw_batcher::clear()
    _octahedrons_outlined.clear();
 
    _octahedrons.clear();
+   _hint_hexahedrons.clear();
    _boxes.clear();
    _spheres.clear();
    _cylinders.clear();
@@ -88,6 +89,7 @@ void meta_draw_batcher::clear()
    _lines_solid.clear();
 
    _octahedrons_wireframe.clear();
+   _hint_hexahedrons_wireframe.clear();
    _boxes_wireframe.clear();
    _spheres_wireframe.clear();
    _cylinders_wireframe.clear();
@@ -105,6 +107,11 @@ void meta_draw_batcher::add_octahedron_outlined(const float4x4& transform,
 void meta_draw_batcher::add_octahedron(const float4x4& transform, const float4& color)
 {
    _octahedrons.emplace_back(transform, color);
+}
+
+void meta_draw_batcher::add_hint_hexahedron(const float4x4& transform, const float4& color)
+{
+   _hint_hexahedrons.emplace_back(transform, color);
 }
 
 void meta_draw_batcher::add_box(const float4x4& transform, const float4& color)
@@ -155,6 +162,12 @@ void meta_draw_batcher::add_octahedron_wireframe(const float4x4& transform,
                                                  const float3& color)
 {
    _octahedrons_wireframe.emplace_back(transform, float4{color, 1.0f});
+}
+
+void meta_draw_batcher::add_hint_hexahedron_wireframe(const float4x4& transform,
+                                                      const float3& color)
+{
+   _hint_hexahedrons_wireframe.emplace_back(transform, float4{color, 1.0f});
 }
 
 void meta_draw_batcher::add_box_wireframe(const float4x4& transform, const float3& color)
@@ -264,11 +277,6 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                   shapes.octahedron());
    }
 
-   if (not _octahedrons.empty()) {
-      draw_shapes(_octahedrons, pipeline_library.meta_draw_shape.get(),
-                  shapes.octahedron());
-   }
-
    if (not _lines_solid.empty()) {
       draw_lines(_lines_solid, pipeline_library.meta_draw_line_solid.get());
    }
@@ -277,6 +285,12 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
       draw_shapes(_octahedrons_wireframe,
                   pipeline_library.meta_draw_shape_wireframe.get(),
                   shapes.octahedron());
+   }
+
+   if (not _hint_hexahedrons_wireframe.empty()) {
+      draw_shapes(_hint_hexahedrons_wireframe,
+                  pipeline_library.meta_draw_shape_wireframe.get(),
+                  shapes.hint_hexahedron());
    }
 
    if (not _boxes_wireframe.empty()) {
@@ -311,6 +325,11 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
                   shapes.octahedron());
    }
 
+   if (not _hint_hexahedrons.empty()) {
+      draw_shapes(_hint_hexahedrons, pipeline_library.meta_draw_shape.get(),
+                  shapes.hint_hexahedron());
+   }
+
    if (not _boxes.empty()) {
       draw_shapes(_boxes, pipeline_library.meta_draw_shape.get(), shapes.cube());
    }
@@ -337,9 +356,10 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 bool meta_draw_batcher::all_empty() const noexcept
 {
    return _octahedrons_outlined.empty() and _octahedrons.empty() and
-          _boxes.empty() and _spheres.empty() and _cylinders.empty() and
-          _cones.empty() and _triangles.empty() and _lines_solid.empty() and
-          _octahedrons_wireframe.empty() and _boxes_wireframe.empty() and
+          _hint_hexahedrons.empty() and _boxes.empty() and _spheres.empty() and
+          _cylinders.empty() and _cones.empty() and _triangles.empty() and
+          _lines_solid.empty() and _octahedrons_wireframe.empty() and
+          _hint_hexahedrons_wireframe.empty() and _boxes_wireframe.empty() and
           _spheres_wireframe.empty() and _cylinders_wireframe.empty() and
           _cones_wireframe.empty() and _triangles_wireframe.empty();
 }

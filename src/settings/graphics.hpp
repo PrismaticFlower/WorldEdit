@@ -23,9 +23,7 @@ struct graphics {
 
    float4 portal_color = {0.3f, 0.9f, 0.0f, 0.3f};
 
-   float3 hintnode_color = {1.0f, 0.6f, 0.0f};
-
-   float3 hintnode_outline_color = {0.7f, 0.4f, 0.0f};
+   float4 hintnode_color = {1.0f, 0.6f, 0.0f, 0.45f};
 
    float4 boundary_color = {1.0f, 0.0f, 0.0f, 0.2f};
 

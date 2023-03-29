@@ -39,6 +39,11 @@ public:
       return _octahedron;
    }
 
+   auto hint_hexahedron() -> geometric_shape
+   {
+      return _hint_hexahedron;
+   }
+
    auto cone() -> geometric_shape
    {
       return _cone;
@@ -56,6 +61,7 @@ private:
    geometric_shape _cylinder;
    geometric_shape _cube;
    geometric_shape _octahedron;
+   geometric_shape _hint_hexahedron;
    geometric_shape _cone;
 };
 
