@@ -1,5 +1,6 @@
 
 #include "edits/creation_entity_set.hpp"
+#include "math/vector_funcs.hpp"
 #include "world_edit.hpp"
 
 using namespace std::literals;
@@ -45,6 +46,16 @@ void world_edit::initialize_commands() noexcept
    _commands.add("camera.pan_with_mouse"s, [this]() {
       _pan_camera = not _pan_camera;
       GetCursorPos(&_rotate_camera_cursor_position);
+   });
+   _commands.add("camera.zoom_in"s,
+                 [this] { _camera.zoom(_camera.zoom() + 0.25f); });
+   _commands.add("camera.zoom_out"s,
+                 [this] { _camera.zoom(std::max(_camera.zoom() - 0.25f, 1.0f)); });
+   _commands.add("camera.step_forward"s, [this] {
+      _camera.position(_camera.position() + _camera.forward() * _settings.camera.step_size);
+   });
+   _commands.add("camera.step_back"s, [this] {
+      _camera.position(_camera.position() + _camera.back() * _settings.camera.step_size);
    });
    _commands.add("camera.perspective"s, [this]() {
       _camera.projection(graphics::camera_projection::perspective);
@@ -207,6 +218,18 @@ void world_edit::initialize_hotkeys() noexcept
           "camera.pan_with_mouse",
           {.key = key::mouse1, .modifiers = {.alt = true}},
           {.toggle = true}},
+         {"Zoom In",
+          "camera.zoom_in",
+          {.key = key::mouse_wheel_forward, .modifiers = {.ctrl = true}}},
+         {"Zoom Out",
+          "camera.zoom_out",
+          {.key = key::mouse_wheel_back, .modifiers = {.ctrl = true}}},
+         {"Step Forward",
+          "camera.step_forward",
+          {.key = key::mouse_wheel_forward, .modifiers = {.alt = true}}},
+         {"Step Back",
+          "camera.step_back",
+          {.key = key::mouse_wheel_back, .modifiers = {.alt = true}}},
 
          {"Set Perspective Camera", "camera.perspective", {.key = key::p}},
          {"Set Orthographic Camera", "camera.orthographic", {.key = key::o}},

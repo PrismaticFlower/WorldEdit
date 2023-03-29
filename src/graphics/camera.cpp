@@ -1,5 +1,3 @@
-#pragma once
-
 #include "camera.hpp"
 
 #include "math/matrix_funcs.hpp"
@@ -163,6 +161,18 @@ void camera::view_width(const float new_view_width) noexcept
    update();
 }
 
+auto camera::zoom() const noexcept -> float
+{
+   return _zoom;
+}
+
+void camera::zoom(const float new_zoom) noexcept
+{
+   _zoom = new_zoom;
+
+   update();
+}
+
 auto camera::projection() const noexcept -> camera_projection
 {
    return _projection;
@@ -206,10 +216,11 @@ void camera::update() noexcept
                             {0.0f, 0.0f, 0.0f, 0.0f}, //
                             {0.0f, 0.0f, 0.0f, 0.0f}};
 
-      const auto near_clip = _near_clip;
-      const auto far_clip = _far_clip;
+      const float fov = _fov / _zoom;
+      const float near_clip = _near_clip;
+      const float far_clip = _far_clip;
 
-      _projection_matrix[0].x = 1.0f / std::tan(_fov * 0.5f);
+      _projection_matrix[0].x = 1.0f / std::tan(fov * 0.5f);
       _projection_matrix[1].y = _projection_matrix[0].x * _aspect_ratio;
 
       _projection_matrix[2].z = far_clip / (near_clip - far_clip);
@@ -222,13 +233,14 @@ void camera::update() noexcept
                             {0.0f, 0.0f, 1.0f, 0.0f}, //
                             {0.0f, 0.0f, 0.0f, 1.0f}};
 
-      const auto near_clip = -_far_clip;
-      const auto far_clip = _far_clip;
+      const float near_clip = -_far_clip;
+      const float far_clip = _far_clip;
 
-      const float view_height = _view_width / _aspect_ratio;
+      const float view_width = _view_width / _zoom;
+      const float view_height = view_width / _aspect_ratio;
       const float z_range = 1.0f / (near_clip - far_clip);
 
-      _projection_matrix[0].x = 2.0f / _view_width;
+      _projection_matrix[0].x = 2.0f / view_width;
       _projection_matrix[1].y = 2.0f / view_height;
       _projection_matrix[2].z = z_range;
       _projection_matrix[3].z = z_range * near_clip;

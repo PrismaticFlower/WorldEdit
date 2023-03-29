@@ -67,6 +67,10 @@ public:
 
    void view_width(const float new_view_width) noexcept;
 
+   auto zoom() const noexcept -> float;
+
+   void zoom(const float new_zoom) noexcept;
+
    auto projection() const noexcept -> camera_projection;
 
    void projection(const camera_projection new_projection) noexcept;
@@ -87,6 +91,7 @@ private:
 
    float _aspect_ratio = 1.0f;
    float _fov = 1.2217305f;
+   float _zoom = 1.0f;
 
    float _pitch = 0.0f;
    float _yaw = 0.0f;

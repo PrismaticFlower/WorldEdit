@@ -5539,14 +5539,20 @@ void world_edit::update_ui() noexcept
 
       if (ImGui::Begin("Camera##Controls", &_camera_controls_open,
                        ImGuiWindowFlags_AlwaysAutoResize)) {
+         ImGui::SeparatorText("Movement");
          ImGui::DragFloat("Move Speed", &_settings.camera.move_speed, 0.05f,
                           1.0f, 1000.0f);
+         ImGui::DragFloat("Step Size", &_settings.camera.step_size, 0.5f, 1.0f, 10.0f);
+         ImGui::DragFloat("Sprint Power", &_settings.camera.sprint_power,
+                          0.005f, 1.0f, 1000.0f);
+
+         ImGui::SeparatorText("Sensitivity");
          ImGui::DragFloat("Look Sensitivity", &_settings.camera.look_sensitivity,
                           0.001f, 0.00001f, 1000.0f);
          ImGui::DragFloat("Pan Sensitivity", &_settings.camera.pan_sensitivity,
                           0.005f, 0.00001f, 1000.0f);
-         ImGui::DragFloat("Sprint Power", &_settings.camera.sprint_power,
-                          0.005f, 1.0f, 1000.0f);
+
+         ImGui::SeparatorText("View");
 
          if (_camera.projection() == graphics::camera_projection::perspective) {
             if (float fov = _camera.fov();
@@ -5574,6 +5580,13 @@ void world_edit::update_ui() noexcept
 
             ImGui::EndCombo();
          }
+
+         if (float zoom = _camera.zoom();
+             ImGui::DragFloat("Zoom", &zoom, 0.025f, 1.0f, 10.0f)) {
+            _camera.zoom(zoom);
+         }
+
+         ImGui::SeparatorText("Position");
 
          if (float3 position = _camera.position();
              ImGui::DragFloat3("Position", &position.x)) {
