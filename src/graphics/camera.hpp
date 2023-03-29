@@ -9,6 +9,8 @@ struct camera_ray {
    float3 direction;
 };
 
+enum class camera_projection { perspective, orthographic };
+
 class camera {
 public:
    auto right() const noexcept -> float3;
@@ -61,6 +63,14 @@ public:
 
    void yaw(const float new_yaw);
 
+   auto view_width() const noexcept -> float;
+
+   void view_width(const float new_view_width) noexcept;
+
+   auto projection() const noexcept -> camera_projection;
+
+   void projection(const camera_projection new_projection) noexcept;
+
 private:
    void update() noexcept;
 
@@ -80,6 +90,10 @@ private:
 
    float _pitch = 0.0f;
    float _yaw = 0.0f;
+
+   float _view_width = 256.0f;
+
+   camera_projection _projection = camera_projection::perspective;
 };
 
 auto make_camera_ray(const camera& camera, const float2 cursor_position,

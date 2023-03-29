@@ -5548,9 +5548,31 @@ void world_edit::update_ui() noexcept
          ImGui::DragFloat("Sprint Power", &_settings.camera.sprint_power,
                           0.005f, 1.0f, 1000.0f);
 
-         if (float fov = _camera.fov();
-             ImGui::SliderAngle("Horizontal FOV", &fov, 1.0f, 120.0f)) {
-            _camera.fov(fov);
+         if (_camera.projection() == graphics::camera_projection::perspective) {
+            if (float fov = _camera.fov();
+                ImGui::SliderAngle("Horizontal FOV", &fov, 1.0f, 120.0f)) {
+               _camera.fov(fov);
+            }
+         }
+         else {
+            if (float view_width = _camera.view_width();
+                ImGui::DragFloat("View Width", &view_width, 1.0f, 1.0f, 8192.0f)) {
+               _camera.view_width(view_width);
+            }
+         }
+
+         if (ImGui::BeginCombo("Projection", _camera.projection() ==
+                                                   graphics::camera_projection::perspective
+                                                ? "Perspective"
+                                                : "Orthographic")) {
+            if (ImGui::Selectable("Perspective")) {
+               _camera.projection(graphics::camera_projection::perspective);
+            }
+            if (ImGui::Selectable("Orthographic")) {
+               _camera.projection(graphics::camera_projection::orthographic);
+            }
+
+            ImGui::EndCombo();
          }
 
          if (float3 position = _camera.position();

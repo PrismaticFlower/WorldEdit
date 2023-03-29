@@ -46,6 +46,12 @@ void world_edit::initialize_commands() noexcept
       _pan_camera = not _pan_camera;
       GetCursorPos(&_rotate_camera_cursor_position);
    });
+   _commands.add("camera.perspective"s, [this]() {
+      _camera.projection(graphics::camera_projection::perspective);
+   });
+   _commands.add("camera.orthographic"s, [this]() {
+      _camera.projection(graphics::camera_projection::orthographic);
+   });
 
    _commands.add("edit.select"s, [this]() { select_hovered_entity(); });
    _commands.add("edit.deselect"s, [this]() {
@@ -201,6 +207,9 @@ void world_edit::initialize_hotkeys() noexcept
           "camera.pan_with_mouse",
           {.key = key::mouse1, .modifiers = {.alt = true}},
           {.toggle = true}},
+
+         {"Set Perspective Camera", "camera.perspective", {.key = key::p}},
+         {"Set Orthographic Camera", "camera.orthographic", {.key = key::o}},
 
          {"Select", "edit.select", {.key = key::mouse1}},
          {"Deselect", "edit.deselect", {.key = key::escape}},
