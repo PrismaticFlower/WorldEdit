@@ -1,4 +1,5 @@
 
+#include "imgui/imgui.h"
 #include "utility/command_line.hpp"
 #include "world_edit.hpp"
 
@@ -262,6 +263,14 @@ void run_application(command_line command_line)
 int main(int arg_count, const char** args)
 {
    std::ios_base::sync_with_stdio(false);
+
+   ImGui::SetAllocatorFunctions(
+      [](std::size_t size, [[maybe_unused]] void* user_data) noexcept {
+         return ::operator new(size);
+      },
+      [](void* allocation, [[maybe_unused]] void* user_data) noexcept {
+         return ::operator delete(allocation);
+      });
 
    DXGIDeclareAdapterRemovalSupport();
 

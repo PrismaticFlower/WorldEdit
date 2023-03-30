@@ -6,6 +6,7 @@
     <ClCompile Include="src\dx_agility_sdk_exports.cpp" />
     <ClCompile Include="src\world_edit_commands.cpp" />
     <ClCompile Include="src\world_edit_ui.cpp" />
+    <ClCompile Include="src\new_delete_override.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

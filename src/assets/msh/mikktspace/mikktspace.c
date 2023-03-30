@@ -18,6 +18,8 @@
  *  3. This notice may not be removed or altered from any source distribution.
  */
 
+// Important! This file has been edited for WorldEdit to include mimalloc-override.h. This is the only change.
+
 #include <assert.h>
 #include <float.h>
 #include <math.h>
@@ -26,6 +28,9 @@
 #include <string.h>
 
 #include "mikktspace.h"
+
+// WorldEdit change here.
+#include <mimalloc-override.h>
 
 #define TFALSE 0
 #define TTRUE 1
