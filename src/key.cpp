@@ -1121,7 +1121,7 @@ bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
    }
    else if (string::istarts_with(string, "Alt +")) {
       for (auto i = first; i < count; ++i) {
-         if (string::iequals(ctrl_key_display_names[i], string)) {
+         if (string::iequals(alt_key_display_names[i], string)) {
 
             out_key = key{i};
             out_ctrl = false;
