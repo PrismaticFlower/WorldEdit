@@ -57,10 +57,10 @@ void world_edit::initialize_commands() noexcept
    _commands.add("camera.step_back"s, [this] {
       _camera.position(_camera.position() + _camera.back() * _settings.camera.step_size);
    });
-   _commands.add("camera.perspective"s, [this]() {
+   _commands.add("camera.set_perspective"s, [this]() {
       _camera.projection(graphics::camera_projection::perspective);
    });
-   _commands.add("camera.orthographic"s, [this]() {
+   _commands.add("camera.set_orthographic"s, [this]() {
       _camera.projection(graphics::camera_projection::orthographic);
    });
 
@@ -231,8 +231,8 @@ void world_edit::initialize_hotkeys() noexcept
           "camera.step_back",
           {.key = key::mouse_wheel_back, .modifiers = {.alt = true}}},
 
-         {"Set Perspective Camera", "camera.perspective", {.key = key::p}},
-         {"Set Orthographic Camera", "camera.orthographic", {.key = key::o}},
+         {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
+         {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
 
          {"Select", "edit.select", {.key = key::mouse1}},
          {"Deselect", "edit.deselect", {.key = key::escape}},
