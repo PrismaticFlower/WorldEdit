@@ -5542,7 +5542,7 @@ void world_edit::update_ui() noexcept
          ImGui::SeparatorText("Movement");
          ImGui::DragFloat("Move Speed", &_settings.camera.move_speed, 0.05f,
                           1.0f, 1000.0f);
-         ImGui::DragFloat("Step Size", &_settings.camera.step_size, 0.5f, 1.0f, 10.0f);
+         ImGui::DragFloat("Step Size", &_settings.camera.step_size, 0.5f, 1.0f, 1000.0f);
          ImGui::DragFloat("Sprint Power", &_settings.camera.sprint_power,
                           0.005f, 1.0f, 1000.0f);
 
@@ -5565,6 +5565,12 @@ void world_edit::update_ui() noexcept
                 ImGui::DragFloat("View Width", &view_width, 1.0f, 1.0f, 8192.0f)) {
                _camera.view_width(view_width);
             }
+         }
+
+         if (float far_clip = _camera.far_clip();
+             ImGui::DragFloat("View Distance", &far_clip, 1.0f,
+                              _camera.near_clip(), 1e10f)) {
+            _camera.far_clip(far_clip);
          }
 
          if (ImGui::BeginCombo("Projection", _camera.projection() ==
