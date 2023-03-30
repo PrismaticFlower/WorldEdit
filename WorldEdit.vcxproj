@@ -200,6 +200,7 @@
     <ClCompile Include="src\assets\asset_ref.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
     <ClCompile Include="src\assets\msh\scene.cpp" />
+    <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_collision.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
@@ -319,6 +320,8 @@
     <ClInclude Include="src\assets\odf\definition_io.hpp" />
     <ClInclude Include="src\assets\odf\properties.hpp" />
     <ClInclude Include="src\assets\option_file.hpp" />
+    <ClInclude Include="src\assets\req\io.hpp" />
+    <ClInclude Include="src\assets\req\requirement_list.hpp" />
     <ClInclude Include="src\assets\terrain\terrain.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_collision.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_io.hpp" />

@@ -658,6 +658,12 @@
     <ClInclude Include="src\edits\delete_layer.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\req\requirement_list.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\assets\req\io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -937,6 +943,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\delete_layer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\req\io.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
