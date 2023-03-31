@@ -1,6 +1,7 @@
 
 #include "world_io_load.hpp"
 #include "assets/config/io.hpp"
+#include "assets/req/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
 #include "io/read_file.hpp"
 #include "math/vector_funcs.hpp"
@@ -140,22 +141,22 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
                          world_out.layer_descriptions.back().name);
          }
          else if (key_node.key == "GameMode"sv) {
-            auto& gamemode = world_out.gamemode_descriptions.emplace_back();
+            auto& game_mode = world_out.game_modes.emplace_back();
 
-            gamemode.name = key_node.values.get<std::string>(0);
+            game_mode.name = key_node.values.get<std::string>(0);
 
-            for (const auto& gamemode_key_node : key_node) {
-               if (gamemode_key_node.key != "Layer"sv) continue;
+            for (const auto& game_mode_key_node : key_node) {
+               if (game_mode_key_node.key != "Layer"sv) continue;
 
-               gamemode.layers.push_back(gamemode_key_node.values.get<int>(0));
+               game_mode.layers.push_back(game_mode_key_node.values.get<int>(0));
             }
 
-            output.write("Found gamemode '{}' in .ldx file\n", gamemode.name);
+            output.write("Found game_mode '{}' in .ldx file\n", game_mode.name);
          }
       }
 
-      for (auto& gamemode : world_out.gamemode_descriptions) {
-         for (auto& layer : gamemode.layers) {
+      for (auto& game_mode : world_out.game_modes) {
+         for (auto& layer : game_mode.layers) {
             layer = layer_remap[layer];
          }
       }
@@ -900,6 +901,63 @@ void load_layer(const std::filesystem::path& world_dir, const std::string_view l
    }
 }
 
+void load_requirements_files(const std::filesystem::path& world_dir,
+                             world& world_out, output_stream& output)
+{
+   if (const auto req_path = world_dir / world_out.name += ".req"sv;
+       std::filesystem::exists(req_path)) {
+      try {
+         utility::stopwatch load_timer;
+
+         world_out.requirements =
+            assets::req::read(io::read_file_to_string(req_path));
+
+         output.write("Loaded {}.req (time taken {:f}ms)\n", world_out.name,
+                      load_timer
+                         .elapsed<std::chrono::duration<double, std::milli>>()
+                         .count());
+      }
+      catch (std::exception& e) {
+         auto message =
+            fmt::format("Error while loading {}.req:\n   Message: \n{}\n",
+                        world_out.name, string::indent(2, e.what()));
+
+         output.write(message);
+
+         throw load_failure{message};
+      }
+   }
+
+   for (std::size_t i = 0; i < world_out.game_modes.size(); ++i) {
+      const std::string file_name =
+         fmt::format("{}_{}.mrq", world_out.name, world_out.game_modes[i].name);
+
+      if (const auto mrq_path = world_dir / file_name;
+          std::filesystem::exists(mrq_path)) {
+         try {
+            utility::stopwatch load_timer;
+
+            world_out.game_modes[i].requirements =
+               assets::req::read(io::read_file_to_string(mrq_path));
+
+            output.write("Loaded {} (time taken {:f}ms)\n", file_name,
+                         load_timer
+                            .elapsed<std::chrono::duration<double, std::milli>>()
+                            .count());
+         }
+         catch (std::exception& e) {
+            auto message =
+               fmt::format("Error while loading {}:\n   Message: \n{}\n",
+                           file_name, string::indent(2, e.what()));
+
+            output.write(message);
+
+            throw load_failure{message};
+         }
+      }
+   }
+}
+
 void convert_light_regions(world& world)
 {
    absl::flat_hash_map<std::string_view, region*> regions;
@@ -1023,6 +1081,8 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
 
          throw load_failure{message};
       }
+
+      load_requirements_files(world_dir, world, output);
    }
    catch (load_failure& failure) {
       output

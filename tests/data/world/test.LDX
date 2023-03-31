@@ -18,3 +18,7 @@ GameMode("Common")
 	Layer(1);
 }
 
+GameMode("conquest")
+{
+}
+

@@ -41,13 +41,50 @@ TEST_CASE("world loading", "[World][IO]")
 
    CHECK(world.name == "test"sv);
 
+   REQUIRE(world.requirements.size() == 7);
+
+   CHECK(world.requirements[0].file_type == "path"sv);
+   REQUIRE(world.requirements[0].entries.size() == 1);
+   CHECK(world.requirements[0].entries[0] == "test"sv);
+
+   CHECK(world.requirements[1].file_type == "congraph"sv);
+   REQUIRE(world.requirements[1].entries.size() == 1);
+   CHECK(world.requirements[1].entries[0] == "test"sv);
+
+   CHECK(world.requirements[2].file_type == "envfx"sv);
+   REQUIRE(world.requirements[2].entries.size() == 1);
+   CHECK(world.requirements[2].entries[0] == "test"sv);
+
+   CHECK(world.requirements[3].file_type == "world"sv);
+   REQUIRE(world.requirements[3].entries.size() == 1);
+   CHECK(world.requirements[3].entries[0] == "test"sv);
+
+   CHECK(world.requirements[4].file_type == "prop"sv);
+   REQUIRE(world.requirements[4].entries.size() == 1);
+   CHECK(world.requirements[4].entries[0] == "test"sv);
+
+   CHECK(world.requirements[5].file_type == "povs"sv);
+   REQUIRE(world.requirements[5].entries.size() == 1);
+   CHECK(world.requirements[5].entries[0] == "test"sv);
+
+   CHECK(world.requirements[6].file_type == "lvl"sv);
+   REQUIRE(world.requirements[6].entries.size() == 1);
+   CHECK(world.requirements[6].entries[0] == "test_conquest"sv);
+
    REQUIRE(world.layer_descriptions.size() == 2);
    CHECK(world.layer_descriptions[0].name == "[Base]"sv);
    CHECK(world.layer_descriptions[1].name == "design"sv);
 
-   REQUIRE(world.gamemode_descriptions.size() == 1);
-   CHECK(world.gamemode_descriptions[0].name == "Common"sv);
-   CHECK(world.gamemode_descriptions[0].layers == std::vector{0, 1});
+   REQUIRE(world.game_modes.size() == 2);
+   CHECK(world.game_modes[0].name == "Common"sv);
+   CHECK(world.game_modes[0].layers == std::vector{0, 1});
+
+   CHECK(world.game_modes[1].name == "conquest"sv);
+   CHECK(world.game_modes[1].layers == std::vector<int>{});
+   REQUIRE(world.game_modes[1].requirements.size() == 1);
+   CHECK(world.game_modes[1].requirements[0].file_type == "world"sv);
+   REQUIRE(world.game_modes[1].requirements[0].entries.size() == 1);
+   CHECK(world.game_modes[1].requirements[0].entries[0] == "test_conquest"sv);
 
    // object checks
    {

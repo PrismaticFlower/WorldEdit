@@ -237,7 +237,7 @@
     <ClInclude Include="src\world\boundary.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\gamemode_description.hpp">
+    <ClInclude Include="src\world\game_mode_description.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\hintnode.hpp">
@@ -662,6 +662,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\assets\req\io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\requirement_list.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

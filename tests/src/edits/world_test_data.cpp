@@ -14,7 +14,7 @@ const we::world::world test_world = {
    .name = "Test"s,
 
    .layer_descriptions = {{.name = "[Base]"s}},
-   .gamemode_descriptions = {},
+   .game_modes = {},
 
    .terrain = {},
    .global_lights = {.env_map_texture = "sky"},

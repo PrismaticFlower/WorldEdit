@@ -1,0 +1,38 @@
+ucft
+{
+	REQN
+	{
+		"path"
+		"test"
+	}
+	REQN
+	{
+		"congraph"
+		"test"
+	}
+	REQN
+	{
+		"envfx"
+		"test"
+	}
+	REQN
+	{
+		"world"
+		"test"
+	}
+	REQN
+	{
+		"prop"
+		"test"
+	}
+	REQN
+	{
+		"povs"
+		"test"
+	}
+	REQN
+	{
+		"lvl"
+		"test_conquest"
+	}
+}

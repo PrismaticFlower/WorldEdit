@@ -2,7 +2,7 @@
 
 #include "barrier.hpp"
 #include "boundary.hpp"
-#include "gamemode_description.hpp"
+#include "game_mode_description.hpp"
 #include "global_lights.hpp"
 #include "hintnode.hpp"
 #include "id.hpp"
@@ -13,6 +13,7 @@
 #include "planning.hpp"
 #include "portal.hpp"
 #include "region.hpp"
+#include "requirement_list.hpp"
 #include "sector.hpp"
 #include "terrain.hpp"
 
@@ -25,8 +26,10 @@ namespace we::world {
 struct world {
    std::string name;
 
+   std::vector<requirement_list> requirements;
+
    std::vector<layer_description> layer_descriptions;
-   std::vector<gamemode_description> gamemode_descriptions;
+   std::vector<game_mode_description> game_modes;
 
    terrain terrain;
    global_lights global_lights;
@@ -46,7 +49,6 @@ struct world {
    absl::flat_hash_map<planning_hub_id, std::size_t> planning_hub_index;
 
    struct next_ids {
-      id_generator<gamemode_description> gamemode_descriptions;
       id_generator<object> objects;
       id_generator<light> lights;
       id_generator<path> paths;

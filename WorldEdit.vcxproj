@@ -456,7 +456,7 @@
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
     <ClInclude Include="src\world\id.hpp" />
-    <ClInclude Include="src\world\gamemode_description.hpp" />
+    <ClInclude Include="src\world\game_mode_description.hpp" />
     <ClInclude Include="src\world\hintnode.hpp" />
     <ClInclude Include="src\world\layer_description.hpp" />
     <ClInclude Include="src\world\light.hpp" />
@@ -469,6 +469,7 @@
     <ClInclude Include="src\world\planning.hpp" />
     <ClInclude Include="src\world\portal.hpp" />
     <ClInclude Include="src\world\region.hpp" />
+    <ClInclude Include="src\world\requirement_list.hpp" />
     <ClInclude Include="src\world\sector.hpp" />
     <ClInclude Include="src\world\interaction_context.hpp" />
     <ClInclude Include="src\world\terrain.hpp" />
