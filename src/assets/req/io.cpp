@@ -101,18 +101,21 @@ auto read(std::string_view req_string) -> std::vector<requirement_list>
                                     fmt::format("Unknown platform '{}'!", value));
                }
             }
-            else if (prop == "alignment"sv) {
+            else if (prop == "align"sv) {
                if (std::from_chars(value.data(), value.data() + value.size(),
                                    current_section.alignment)
                       .ec != std::errc{}) {
-                  throw_parse_error(line.number,
-                                    fmt::format("Unknown platform '{}'!", value));
+                  throw_parse_error(
+                     line.number,
+                     fmt::format("Expected number for align but got '{}'!", value));
                }
             }
             else {
                throw_parse_error(
                   line.number,
-                  fmt::format("Expected number for alignment but got '{}'!", value));
+                  fmt::format("Unknown property. Expected 'platform' or "
+                              "'align' but got '{}'!",
+                              value));
             }
          }
          else {

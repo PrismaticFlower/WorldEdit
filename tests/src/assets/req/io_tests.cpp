@@ -27,7 +27,7 @@ ucft
    REQN
    {
       "texture"
-      "alignment=2048"
+      "align=2048"
       "first"
       "second"
    }
@@ -44,7 +44,7 @@ ucft
    {
       "envfx"
       "platform=ps2"
-      "alignment=8192"
+      "align=8192"
       "first"
       "second"
    }
