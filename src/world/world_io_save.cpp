@@ -726,7 +726,7 @@ void save_layer_index(const std::filesystem::path& path, const world& world)
 
    if (not world.game_modes.empty()) { // for possible BF1 support
       for (auto& game_mode : world.game_modes) {
-         file.write_ln("game_mode(\"{}\")", game_mode.name);
+         file.write_ln("GameMode(\"{}\")", game_mode.name);
          file.write_ln("{");
          for (auto& layer : game_mode.layers) {
             file.write_ln("\tLayer({});", layer);

@@ -475,6 +475,31 @@ constexpr auto expected_bnd = R"(Boundary()
 
 )"sv;
 
+constexpr auto expected_ldx = R"(Version(1);
+NextID(2);
+
+Layer("[Base]", 0, 0)
+{
+	Description("");
+}
+
+Layer("conquest", 1, 0)
+{
+	Description("");
+}
+
+GameMode("Common")
+{
+	Layer(0);
+}
+
+GameMode("conquest")
+{
+	Layer(1);
+}
+
+)"sv;
+
 constexpr auto expected_req = R"(ucft
 {
 	REQN
@@ -550,9 +575,12 @@ TEST_CASE("world saving", "[World][IO]")
             {.file_type = "lvl", .entries = {"test_conquest"}},
          },
 
-      .game_modes = {{.name = "common"},
+      .layer_descriptions = {{.name = "[Base]"}, {.name = "conquest"}},
+
+      .game_modes = {{.name = "Common", .layers = {0}},
 
                      {.name = "conquest",
+                      .layers = {1},
                       .requirements =
                          {
                             {.file_type = "world", .entries = {"test_conquest"}},
@@ -771,6 +799,10 @@ TEST_CASE("world saving", "[World][IO]")
    const auto written_bnd = io::read_file_to_string(L"temp/world/test.bnd");
 
    CHECK(written_bnd == expected_bnd);
+
+   const auto written_ldx = io::read_file_to_string(L"temp/world/test.ldx");
+
+   CHECK(written_ldx == expected_ldx);
 
    const auto written_req = io::read_file_to_string(L"temp/world/test.req");
 
