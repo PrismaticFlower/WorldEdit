@@ -1,5 +1,6 @@
 #include "io.hpp"
 
+#include "io/output_file.hpp"
 #include "utility/string_ops.hpp"
 
 #include <charconv>
@@ -174,6 +175,36 @@ auto read(std::string_view req_string) -> std::vector<requirement_list>
    }
 
    return list;
+}
+
+void save(const std::filesystem::path& path,
+          const std::span<const requirement_list> requirements)
+{
+   io::output_file out{path};
+
+   out.write_ln("ucft");
+   out.write_ln("{");
+
+   for (const auto& list : requirements) {
+      out.write_ln("\tREQN");
+      out.write_ln("\t{");
+
+      out.write_ln("\t\t\"{}\"", list.file_type);
+
+      // clang-format off
+      if (list.platform == platform::pc) out.write_ln("\t\t\"platform=pc\"");
+      if (list.platform == platform::xbox) out.write_ln("\t\t\"platform=xbox\"");
+      if (list.platform == platform::ps2) out.write_ln("\t\t\"platform=ps2\"");
+      // clang-format on
+
+      if (list.alignment != 0) out.write_ln("\t\t\"align={}\"", list.alignment);
+
+      for (auto& entry : list.entries) out.write_ln("\t\t\"{}\"", entry);
+
+      out.write_ln("\t}");
+   }
+
+   out.write_ln("}");
 }
 
 }

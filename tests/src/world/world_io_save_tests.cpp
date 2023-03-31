@@ -475,6 +475,56 @@ constexpr auto expected_bnd = R"(Boundary()
 
 )"sv;
 
+constexpr auto expected_req = R"(ucft
+{
+	REQN
+	{
+		"path"
+		"test"
+	}
+	REQN
+	{
+		"congraph"
+		"test"
+	}
+	REQN
+	{
+		"envfx"
+		"test"
+	}
+	REQN
+	{
+		"world"
+		"test"
+	}
+	REQN
+	{
+		"prop"
+		"test"
+	}
+	REQN
+	{
+		"povs"
+		"test"
+	}
+	REQN
+	{
+		"lvl"
+		"test_conquest"
+	}
+}
+)"sv;
+
+constexpr auto expected_mrq = R"(ucft
+{
+	REQN
+	{
+		"world"
+		"test_conquest"
+	}
+}
+)"sv;
+
 }
 
 TEST_CASE("world saving", "[World][IO]")
@@ -489,6 +539,25 @@ TEST_CASE("world saving", "[World][IO]")
                                                    hub_id_generator.aquire()};
 
    const world world{
+      .requirements =
+         {
+            {.file_type = "path", .entries = {"test"}},
+            {.file_type = "congraph", .entries = {"test"}},
+            {.file_type = "envfx", .entries = {"test"}},
+            {.file_type = "world", .entries = {"test"}},
+            {.file_type = "prop", .entries = {"test"}},
+            {.file_type = "povs", .entries = {"test"}},
+            {.file_type = "lvl", .entries = {"test_conquest"}},
+         },
+
+      .game_modes = {{.name = "common"},
+
+                     {.name = "conquest",
+                      .requirements =
+                         {
+                            {.file_type = "world", .entries = {"test_conquest"}},
+                         }}},
+
       .global_lights = {.global_light_1 = "sun",
                         .global_light_2 = "",
                         .ambient_sky_color = {1.0f, 1.0f, 1.0f},
@@ -702,5 +771,14 @@ TEST_CASE("world saving", "[World][IO]")
    const auto written_bnd = io::read_file_to_string(L"temp/world/test.bnd");
 
    CHECK(written_bnd == expected_bnd);
+
+   const auto written_req = io::read_file_to_string(L"temp/world/test.req");
+
+   CHECK(written_req == expected_req);
+
+   const auto written_mrq =
+      io::read_file_to_string(L"temp/world/test_conquest.mrq");
+
+   CHECK(written_mrq == expected_mrq);
 }
 }

@@ -1,5 +1,6 @@
 
 #include "world_io_save.hpp"
+#include "assets/req/io.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/boundary_nodes.hpp"
 
@@ -735,6 +736,23 @@ void save_layer_index(const std::filesystem::path& path, const world& world)
    }
 }
 
+void save_requirements(const std::filesystem::path& world_dir,
+                       const std::string_view world_name, const world& world)
+{
+   if (not world.requirements.empty()) {
+      assets::req::save(world_dir / fmt::format("{}.req", world_name),
+                        world.requirements);
+   }
+
+   for (std::size_t i = 1; i < world.game_modes.size(); ++i) {
+      if (world.game_modes[i].requirements.empty()) continue;
+
+      assets::req::save(world_dir / fmt::format("{}_{}.mrq", world_name,
+                                                world.game_modes[i].name),
+                        world.game_modes[i].requirements);
+   }
+}
+
 }
 
 void save_world(const std::filesystem::path& path, const world& world)
@@ -754,5 +772,6 @@ void save_world(const std::filesystem::path& path, const world& world)
    }
 
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv), world.terrain);
+   save_requirements(world_dir, world_name, world);
 }
 }
