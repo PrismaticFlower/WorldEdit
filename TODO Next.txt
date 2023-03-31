@@ -1,5 +1,0 @@
-- Finish adding layer creation and deletion.
-- Add "Are you sure you wish to exit?" dialog.
-- Add orthographic camera mode.
-- Improve hintnode visualizer.
-- Improve sprint toggle.
