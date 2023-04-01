@@ -13,8 +13,10 @@ using namespace world;
 const we::world::world test_world = {
    .name = "Test"s,
 
+   .requirements = {{.file_type = "world", .entries = {"Test"}}},
+
    .layer_descriptions = {{.name = "[Base]"s}},
-   .game_modes = {},
+   .game_modes = {{.name = "Common"s, .layers = {0}}},
 
    .terrain = {},
    .global_lights = {.env_map_texture = "sky"},

@@ -1035,6 +1035,17 @@ void convert_boundaries(world& world, output_stream& output)
    }
 }
 
+void ensure_common_game_mode(world& world) noexcept
+{
+   if (not world.game_modes.empty()) return;
+
+   world.game_modes.push_back({.name = "Common"s});
+
+   for (int i = 0; i < world.layer_descriptions.size(); ++i) {
+      world.game_modes[0].layers.push_back(i);
+   }
+}
+
 }
 
 auto load_world(const std::filesystem::path& path, output_stream& output) -> world
@@ -1060,6 +1071,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
 
       convert_light_regions(world);
       convert_boundaries(world, output);
+      ensure_common_game_mode(world);
 
       try {
          utility::stopwatch load_timer;

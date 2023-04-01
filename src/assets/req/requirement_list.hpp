@@ -13,6 +13,8 @@ struct requirement_list {
    int alignment = 0;
 
    std::vector<std::string> entries;
+
+   bool operator==(const requirement_list&) const noexcept = default;
 };
 
 }
