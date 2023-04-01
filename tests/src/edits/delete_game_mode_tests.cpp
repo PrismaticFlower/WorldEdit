@@ -52,10 +52,14 @@ TEST_CASE("edits delete_game_mode", "[Edits]")
    CHECK(world.game_modes[2].name == "hunt");
    CHECK(world.game_modes[3].name == "assault");
 
+   REQUIRE(world.deleted_game_modes.size() == 1);
+   CHECK(world.deleted_game_modes[0] == "ctf");
+
    action->revert(edit_context);
 
    CHECK(world.requirements == game_mode_delete_test_world.requirements);
    CHECK(world.game_modes == game_mode_delete_test_world.game_modes);
+   CHECK(world.deleted_game_modes == game_mode_delete_test_world.deleted_game_modes);
 }
 
 }

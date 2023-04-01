@@ -14,7 +14,7 @@ TEST_CASE("edits add_layer", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto action = make_add_layer("Wow");
+   auto action = make_add_layer("Wow", world);
 
    action->apply(edit_context);
 
@@ -48,7 +48,7 @@ TEST_CASE("edits add_layer empty req", "[Edits]")
 
    world.requirements.clear();
 
-   auto action = make_add_layer("Wow");
+   auto action = make_add_layer("Wow", world);
 
    action->apply(edit_context);
 
@@ -68,6 +68,39 @@ TEST_CASE("edits add_layer empty req", "[Edits]")
    REQUIRE(world.game_modes[0].layers.size() == 1);
 
    REQUIRE(world.requirements.empty());
+}
+
+TEST_CASE("edits add_layer preivously deleted", "[Edits]")
+{
+   world::world test_world_preivously_deleted = test_world;
+
+   test_world_preivously_deleted.deleted_layers = {"Now", "Wow", "Meow"};
+
+   world::world world = test_world_preivously_deleted;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto action = make_add_layer("Wow", world);
+
+   action->apply(edit_context);
+
+   REQUIRE(world.layer_descriptions.size() == 2);
+   CHECK(world.layer_descriptions[0].name == "[Base]");
+   CHECK(world.layer_descriptions[1].name == "Wow");
+
+   REQUIRE(world.game_modes[0].layers.size() == 2);
+   CHECK(world.game_modes[0].layers[1] == 1);
+
+   REQUIRE(world.deleted_layers.size() == 2);
+   CHECK(world.deleted_layers[0] == "Now");
+   CHECK(world.deleted_layers[1] == "Meow");
+
+   action->revert(edit_context);
+
+   REQUIRE(world.layer_descriptions == test_world_preivously_deleted.layer_descriptions);
+   REQUIRE(world.game_modes == test_world_preivously_deleted.game_modes);
+   REQUIRE(world.requirements == test_world_preivously_deleted.requirements);
+   REQUIRE(world.deleted_layers == test_world_preivously_deleted.deleted_layers);
 }
 
 }

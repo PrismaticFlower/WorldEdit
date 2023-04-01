@@ -7,6 +7,7 @@
 
 namespace we::edits {
 
-auto make_add_layer(std::string name) -> std::unique_ptr<edit<world::edit_context>>;
+auto make_add_layer(std::string name, const world::world& world)
+   -> std::unique_ptr<edit<world::edit_context>>;
 
 }

@@ -1,6 +1,8 @@
 #include "add_game_mode.hpp"
 #include "utility/string_icompare.hpp"
 
+#include <optional>
+
 #include <fmt/core.h>
 
 namespace we::edits {
@@ -32,10 +34,32 @@ void get_req_edit_type(const world::world& world, req_edit_type& type_out,
    }
 }
 
+struct previously_deleted_entry {
+   int index = 0;
+   std::string name;
+};
+
+auto make_previously_deleted(std::string_view new_name,
+                             const std::span<const std::string> deleted_game_modes)
+   -> std::optional<previously_deleted_entry>
+{
+   for (int i = 0; i < deleted_game_modes.size(); ++i) {
+      if (string::iequals(new_name, deleted_game_modes[i])) {
+         return previously_deleted_entry{.index = i, .name = deleted_game_modes[i]};
+      }
+   }
+
+   return std::nullopt;
+}
+
 struct add_game_mode final : edit<world::edit_context> {
    add_game_mode(std::string name, req_edit_type req_edit_type,
-                 req_edit_append req_edit_append)
-      : _name{std::move(name)}, _req_edit_type{req_edit_type}, _req_edit_append{req_edit_append}
+                 req_edit_append req_edit_append,
+                 std::optional<previously_deleted_entry> previously_deleted_entry)
+      : _name{std::move(name)},
+        _req_edit_type{req_edit_type},
+        _req_edit_append{req_edit_append},
+        _previously_deleted{std::move(previously_deleted_entry)}
    {
    }
 
@@ -57,6 +81,11 @@ struct add_game_mode final : edit<world::edit_context> {
       else if (_req_edit_type == req_edit_type::create) {
          world.requirements.push_back({.file_type = "lvl", .entries = {req_entry_name}});
       }
+
+      if (_previously_deleted) {
+         world.deleted_game_modes.erase(world.deleted_game_modes.begin() +
+                                        _previously_deleted->index);
+      }
    }
 
    void revert(world::edit_context& context) const noexcept override
@@ -71,6 +100,12 @@ struct add_game_mode final : edit<world::edit_context> {
       else if (_req_edit_type == req_edit_type::create) {
          world.requirements.pop_back();
       }
+
+      if (_previously_deleted) {
+         world.deleted_game_modes.insert(world.deleted_game_modes.begin() +
+                                            _previously_deleted->index,
+                                         _previously_deleted->name);
+      }
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
@@ -84,6 +119,7 @@ private:
    const std::string _name;
    const req_edit_type _req_edit_type;
    const req_edit_append _req_edit_append;
+   const std::optional<previously_deleted_entry> _previously_deleted;
 };
 
 }
@@ -96,8 +132,11 @@ auto make_add_game_mode(std::string name, const world::world& world)
 
    get_req_edit_type(world, req_edit_type, req_edit_append);
 
-   return std::make_unique<add_game_mode>(std::move(name), req_edit_type,
-                                          req_edit_append);
+   std::optional<previously_deleted_entry> previously_deleted =
+      make_previously_deleted(name, world.deleted_game_modes);
+
+   return std::make_unique<add_game_mode>(std::move(name), req_edit_type, req_edit_append,
+                                          std::move(previously_deleted));
 }
 
 }

@@ -33,6 +33,22 @@ const we::world::world add_game_mode_test_world = {
       },
 };
 
+const we::world::world add_game_mode_previously_deleted_test_world =
+   {.name = "Test"s,
+
+    .layer_descriptions =
+       {
+          {.name = "[Base]"},
+       },
+    .game_modes = {{.name = "Common"}},
+
+    .deleted_game_modes = {
+       "conquest",
+       "ctf",
+       "hunt",
+       "assault",
+    }};
+
 }
 
 TEST_CASE("edits add_game_mode", "[Edits]")
@@ -62,10 +78,13 @@ TEST_CASE("edits add_game_mode", "[Edits]")
    CHECK(world.requirements[1].entries[3] == "Test_assault");
    CHECK(world.requirements[1].entries[4] == "Test_race");
 
+   REQUIRE(world.deleted_game_modes.empty());
+
    action->revert(edit_context);
 
    REQUIRE(world.game_modes == add_game_mode_test_world.game_modes);
    REQUIRE(world.requirements == add_game_mode_test_world.requirements);
+   REQUIRE(world.deleted_game_modes.empty());
 }
 
 TEST_CASE("edits add_game_mode empty req", "[Edits]")
@@ -93,12 +112,43 @@ TEST_CASE("edits add_game_mode empty req", "[Edits]")
    REQUIRE(world.requirements[1].entries.size() == 1);
    CHECK(world.requirements[1].entries[0] == "Test_race");
 
+   REQUIRE(world.deleted_game_modes.empty());
+
    action->revert(edit_context);
 
    REQUIRE(world.game_modes == add_game_mode_test_world.game_modes);
 
    REQUIRE(world.requirements.size() == 1);
    CHECK(world.requirements[0] == add_game_mode_test_world.requirements[0]);
+
+   REQUIRE(world.deleted_game_modes.empty());
+}
+
+TEST_CASE("edits add_game_mode previously deleted", "[Edits]")
+{
+   world::world world = add_game_mode_previously_deleted_test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto action = make_add_game_mode("hunt", world);
+
+   action->apply(edit_context);
+
+   REQUIRE(world.game_modes.size() == 2);
+   CHECK(world.game_modes[0].name == "Common");
+   CHECK(world.game_modes[1].name == "hunt");
+
+   REQUIRE(world.deleted_game_modes.size() == 3);
+   CHECK(world.deleted_game_modes[0] == "conquest");
+   CHECK(world.deleted_game_modes[1] == "ctf");
+   CHECK(world.deleted_game_modes[2] == "assault");
+
+   action->revert(edit_context);
+
+   REQUIRE(world.game_modes == add_game_mode_previously_deleted_test_world.game_modes);
+   REQUIRE(world.requirements == add_game_mode_previously_deleted_test_world.requirements);
+   REQUIRE(world.deleted_game_modes ==
+           add_game_mode_previously_deleted_test_world.deleted_game_modes);
 }
 
 }

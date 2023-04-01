@@ -368,6 +368,7 @@ struct delete_layer final : edit<world::edit_context> {
       world::world& world = context.world;
 
       world.layer_descriptions.erase(world.layer_descriptions.begin() + _data.index);
+      world.deleted_layers.push_back(_data.layer.name);
 
       apply_remap_entries(world.objects, _data.remap_objects);
       apply_remap_entries(world.lights, _data.remap_lights);
@@ -392,6 +393,7 @@ struct delete_layer final : edit<world::edit_context> {
 
       world.layer_descriptions.insert(world.layer_descriptions.begin() + _data.index,
                                       _data.layer);
+      world.deleted_layers.pop_back();
 
       revert_delete_entries(world.objects, _data.delete_objects);
       revert_delete_entries(world.lights, _data.delete_lights);

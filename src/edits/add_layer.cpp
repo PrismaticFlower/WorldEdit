@@ -7,8 +7,29 @@ namespace we::edits {
 
 namespace {
 
+struct previously_deleted_entry {
+   int index = 0;
+   std::string name;
+};
+
+auto make_previously_deleted(std::string_view new_name,
+                             const std::span<const std::string> deleted_layers)
+   -> std::optional<previously_deleted_entry>
+{
+   for (int i = 0; i < deleted_layers.size(); ++i) {
+      if (string::iequals(new_name, deleted_layers[i])) {
+         return previously_deleted_entry{.index = i, .name = deleted_layers[i]};
+      }
+   }
+
+   return std::nullopt;
+}
+
 struct add_layer final : edit<world::edit_context> {
-   add_layer(std::string name) : _name{std::move(name)} {}
+   add_layer(std::string name, std::optional<previously_deleted_entry> previously_deleted)
+      : _name{std::move(name)}, _previously_deleted{std::move(previously_deleted)}
+   {
+   }
 
    void apply(world::edit_context& context) const noexcept override
    {
@@ -26,6 +47,11 @@ struct add_layer final : edit<world::edit_context> {
 
          break;
       }
+
+      if (_previously_deleted) {
+         context.world.deleted_layers.erase(context.world.deleted_layers.begin() +
+                                            _previously_deleted->index);
+      }
    }
 
    void revert(world::edit_context& context) const noexcept override
@@ -41,6 +67,12 @@ struct add_layer final : edit<world::edit_context> {
 
          break;
       }
+
+      if (_previously_deleted) {
+         context.world.deleted_layers.insert(context.world.deleted_layers.begin() +
+                                                _previously_deleted->index,
+                                             _previously_deleted->name);
+      }
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
@@ -52,13 +84,18 @@ struct add_layer final : edit<world::edit_context> {
 
 private:
    const std::string _name;
+   const std::optional<previously_deleted_entry> _previously_deleted;
 };
 
 }
 
-auto make_add_layer(std::string name) -> std::unique_ptr<edit<world::edit_context>>
+auto make_add_layer(std::string name, const world::world& world)
+   -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<add_layer>(std::move(name));
+   std::optional<previously_deleted_entry> previously_deleted =
+      make_previously_deleted(name, world.deleted_layers);
+
+   return std::make_unique<add_layer>(std::move(name), std::move(previously_deleted));
 }
 
 }

@@ -137,6 +137,9 @@ TEST_CASE("edits delete_layer", "[Edits]")
    CHECK(world.hintnodes[0].layer == 0);
    CHECK(world.hintnodes[1].layer == 1);
 
+   REQUIRE(world.deleted_layers.size() == 1);
+   CHECK(world.deleted_layers[0] == "Middle");
+
    action->revert(edit_context);
 
    CHECK(world.layer_descriptions == layer_delete_test_world.layer_descriptions);
@@ -146,6 +149,7 @@ TEST_CASE("edits delete_layer", "[Edits]")
    CHECK(world.paths == layer_delete_test_world.paths);
    CHECK(world.regions == layer_delete_test_world.regions);
    CHECK(world.hintnodes == layer_delete_test_world.hintnodes);
+   CHECK(world.deleted_layers == layer_delete_test_world.deleted_layers);
 }
 
 }

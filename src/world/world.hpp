@@ -46,7 +46,14 @@ struct world {
    std::vector<planning_connection> planning_connections;
    std::vector<boundary> boundaries;
 
+   /// @brief Maps planning hub IDs to their index in planning_hubs.
    absl::flat_hash_map<planning_hub_id, std::size_t> planning_hub_index;
+
+   /// @brief Vector of layers to garbage collect the files of at save time.
+   std::vector<std::string> deleted_layers;
+
+   /// @brief Vector of game modes to garbage collect the files of at save time.
+   std::vector<std::string> deleted_game_modes;
 
    struct next_ids {
       id_generator<object> objects;

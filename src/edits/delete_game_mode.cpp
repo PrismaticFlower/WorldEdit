@@ -61,6 +61,7 @@ struct delete_game_mode final : edit<world::edit_context> {
       world::world& world = context.world;
 
       world.game_modes.erase(world.game_modes.begin() + _index);
+      world.deleted_game_modes.push_back(_game_mode.name);
 
       for (const auto& [list_index, entry_index, entry] : _delete_requirements) {
          auto& list = world.requirements[list_index];
@@ -74,6 +75,7 @@ struct delete_game_mode final : edit<world::edit_context> {
       world::world& world = context.world;
 
       world.game_modes.insert(world.game_modes.begin() + _index, _game_mode);
+      world.deleted_game_modes.pop_back();
 
       for (std::ptrdiff_t i = (std::ssize(_delete_requirements) - 1); i >= 0; --i) {
          const auto& [list_index, entry_index, entry] = _delete_requirements[i];
