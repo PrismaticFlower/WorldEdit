@@ -1,10 +1,11 @@
 
 #include "pch.h"
 
+#include "io/output_file.hpp"
 #include "io/read_file.hpp"
 #include "world/world_io_save.hpp"
 
-#include "world/world_io_load.hpp"
+#include <fmt/core.h>
 
 namespace we::world::tests {
 
@@ -564,6 +565,8 @@ TEST_CASE("world saving", "[World][IO]")
                                                    hub_id_generator.aquire()};
 
    const world world{
+      .name = "test",
+
       .requirements =
          {
             {.file_type = "path", .entries = {"test"}},
@@ -813,4 +816,47 @@ TEST_CASE("world saving", "[World][IO]")
 
    CHECK(written_mrq == expected_mrq);
 }
+
+TEST_CASE("world saving garbage collect", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/world_gc");
+
+   const std::array<std::string_view, 5> layer_files{"lyr", "pth", "rgn", "lgt", "hnt"};
+
+   const world world{
+      .name = "test",
+
+      .deleted_layers = {"conquest", "ctf", "sound"},
+      .deleted_game_modes = {"conquest", "ctf"},
+   };
+
+   for (const auto& layer : world.deleted_layers) {
+      for (const auto& file : layer_files) {
+         [[maybe_unused]] io::output_file output_file{
+            fmt::format("temp/world_gc/test_{}.{}", layer, file)};
+      }
+   }
+
+   // Game Modes
+   {
+      [[maybe_unused]] io::output_file file{"temp/world_gc/test_conquest.mrq"};
+
+      // NB: Test that test_ctf.mrq already being gone causes no issues.
+   }
+
+   save_world(L"temp/world_gc/test.wld", world);
+
+   for (const auto& layer : world.deleted_layers) {
+      for (const auto& file : layer_files) {
+         CHECK(not std::filesystem::exists(
+            fmt::format("temp/world_gc/test_{}.{}", layer, file)));
+      }
+   }
+
+   for (const auto& game_mode : world.deleted_game_modes) {
+      CHECK(not std::filesystem::exists(
+         fmt::format("temp/world_gc/test_{}.mrq", game_mode)));
+   }
+}
+
 }

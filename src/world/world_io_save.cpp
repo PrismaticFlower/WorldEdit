@@ -3,6 +3,7 @@
 #include "assets/req/io.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/boundary_nodes.hpp"
+#include "utility/string_icompare.hpp"
 
 #include <cctype>
 #include <cstddef>
@@ -753,12 +754,48 @@ void save_requirements(const std::filesystem::path& world_dir,
    }
 }
 
+void garbage_collect_files(const std::filesystem::path& world_dir,
+                           const std::string_view world_name, const world& world)
+{
+   constexpr std::array<std::string_view, 5> layer_files{"lyr", "pth", "rgn",
+                                                         "lgt", "hnt"};
+
+   for (const auto& layer : world.deleted_layers) {
+      for (const auto& file : layer_files) {
+         try {
+            [[maybe_unused]] std::error_code ec{};
+
+            std::filesystem::remove(world_dir / fmt::format("{}_{}.{}", world_name,
+                                                            layer, file),
+                                    ec);
+         }
+         catch (std::exception&) {
+            // ... No need to care about this.
+         }
+      }
+   }
+
+   for (const auto& game_mode : world.deleted_game_modes) {
+      try {
+         [[maybe_unused]] std::error_code ec{};
+
+         std::filesystem::remove(world_dir / fmt::format("{}_{}.mrq", world_name, game_mode),
+                                 ec);
+      }
+      catch (std::exception&) {
+         // ... No need to care about this.
+      }
+   }
+}
+
 }
 
 void save_world(const std::filesystem::path& path, const world& world)
 {
    const auto world_dir = path.parent_path();
    const auto world_name = path.stem().string();
+
+   garbage_collect_files(world_dir, world_name, world);
 
    save_layer_index(std::filesystem::path{path}.replace_extension(L".ldx"sv), world);
 
