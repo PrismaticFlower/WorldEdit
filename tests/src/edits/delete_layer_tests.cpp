@@ -18,7 +18,22 @@ using world::region;
 const we::world::world layer_delete_test_world = {
    .name = "Test"s,
 
+   .requirements = {{.file_type = "world",
+                     .entries = {"Test", "Test_Middle", "Test_Top"}}},
+
    .layer_descriptions = {{.name = "[Base]"}, {.name = "Middle"}, {.name = "Top"}},
+   .game_modes =
+      {
+         {.name = "Common", .layers = {0, 1, 2}},
+         {
+            .name = "conquest",
+            .layers = {1},
+            .requirements = {{
+               .file_type = "world",
+               .entries = {"Test_Middle"},
+            }},
+         },
+      },
 
    .objects =
       {
@@ -73,6 +88,17 @@ TEST_CASE("edits delete_layer", "[Edits]")
    REQUIRE(world.layer_descriptions.size() == 2);
    CHECK(world.layer_descriptions[0].name == "[Base]");
    CHECK(world.layer_descriptions[1].name == "Top");
+   REQUIRE(world.layer_descriptions.size() == 2);
+
+   REQUIRE(world.requirements[0].entries.size() == 2);
+   CHECK(world.requirements[0].entries[0] == "Test");
+   CHECK(world.requirements[0].entries[1] == "Test_Top");
+
+   REQUIRE(world.game_modes[0].layers.size() == 2);
+   CHECK(world.game_modes[0].layers[0] == 0);
+   CHECK(world.game_modes[0].layers[1] == 1);
+   CHECK(world.game_modes[1].layers.empty());
+   CHECK(world.game_modes[1].requirements[0].entries.empty());
 
    REQUIRE(world.objects.size() == 3);
    CHECK(world.objects[0].name == "Object0");
@@ -114,6 +140,7 @@ TEST_CASE("edits delete_layer", "[Edits]")
    action->revert(edit_context);
 
    CHECK(world.layer_descriptions == layer_delete_test_world.layer_descriptions);
+   CHECK(world.game_modes == layer_delete_test_world.game_modes);
    CHECK(world.objects == layer_delete_test_world.objects);
    CHECK(world.lights == layer_delete_test_world.lights);
    CHECK(world.paths == layer_delete_test_world.paths);
