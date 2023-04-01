@@ -4740,7 +4740,8 @@ void world_edit::update_ui() noexcept
          if (not is_unique_layer_name) ImGui::BeginDisabled();
 
          if (ImGui::Button("Create")) {
-            _edit_stack_world.apply(edits::make_add_layer(std::move(_layer_editor_new_name)),
+            _edit_stack_world.apply(edits::make_add_layer(std::move(_layer_editor_new_name),
+                                                          _world),
                                     _edit_context);
 
             _layer_editor_new_name = "";
