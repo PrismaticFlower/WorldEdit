@@ -189,6 +189,8 @@ auto make_requirements_delete_entries(const std::string_view layer_file_name,
    for (int list_index = 0; list_index < requirements.size(); ++list_index) {
       const auto& list = requirements[list_index];
 
+      if (not string::iequals(list.file_type, "world")) continue;
+
       int delete_offset = 0;
 
       for (int i = 0; i < list.entries.size(); ++i) {
@@ -256,6 +258,8 @@ auto makee_game_mode_requirements_delete_entries(
 
       for (int list_index = 0; list_index < game_mode.requirements.size(); ++list_index) {
          const auto& list = game_mode.requirements[list_index];
+
+         if (not string::iequals(list.file_type, "world")) continue;
 
          int delete_offset = 0;
 

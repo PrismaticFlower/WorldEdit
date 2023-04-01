@@ -667,6 +667,18 @@
     <ClInclude Include="src\world\requirement_list.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\edits\delete_game_mode.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\add_game_mode.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\game_mode_link_layer.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\edits\game_mode_unlink_layer.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -949,6 +961,18 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\req\io.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\delete_game_mode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\add_game_mode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\game_mode_link_layer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\game_mode_unlink_layer.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
