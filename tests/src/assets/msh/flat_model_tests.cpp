@@ -228,9 +228,9 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
          CHECK(approx_equals(mesh.normals[2],
                              transform_normal_from_root(segment_normals[2])));
 
-         CHECK(approx_equals(mesh.colors[0], {1.0f, 1.0f, 1.0f, 1.0f}));
-         CHECK(approx_equals(mesh.colors[1], {1.0f, 1.0f, 1.0f, 1.0f}));
-         CHECK(approx_equals(mesh.colors[2], {1.0f, 1.0f, 1.0f, 1.0f}));
+         CHECK(mesh.colors[0] == 0xffffffffu);
+         CHECK(mesh.colors[1] == 0xffffffffu);
+         CHECK(mesh.colors[2] == 0xffffffffu);
 
          auto& segment_texcoords = *segment.texcoords;
          CHECK(approx_equals(mesh.texcoords[0], segment_texcoords[0]));

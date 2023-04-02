@@ -19,7 +19,7 @@ struct mesh {
    std::vector<float3> normals;
    std::vector<float3> tangents;
    std::vector<float3> bitangents;
-   std::vector<float4> colors;
+   std::vector<uint32> colors;
    std::vector<float2> texcoords;
 
    std::vector<std::array<uint16, 3>> triangles;

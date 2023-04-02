@@ -38,7 +38,7 @@ struct geometry_segment {
 
    std::vector<float3> positions;
    std::optional<std::vector<float3>> normals;
-   std::optional<std::vector<float4>> colors;
+   std::optional<std::vector<uint32>> colors;
    std::optional<std::vector<float2>> texcoords;
 
    std::vector<std::array<uint16, 3>> triangles;

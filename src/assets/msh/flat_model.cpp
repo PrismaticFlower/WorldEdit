@@ -242,8 +242,7 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
       }
 
       if (not segment.colors) {
-         mesh.colors.insert(mesh.colors.end(), segment.positions.size(),
-                            float4{1.0f, 1.0f, 1.0f, 1.0f});
+         mesh.colors.insert(mesh.colors.end(), segment.positions.size(), 0xffffffffu);
       }
       else {
          mesh.colors.append_range(*segment.colors);

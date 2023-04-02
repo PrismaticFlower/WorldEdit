@@ -31,6 +31,11 @@ auto from_msh_space(float2 vec) -> float2
    return {vec.x, 1.0f - vec.y};
 }
 
+auto from_msh_space(uint32 color) -> uint32
+{
+   return color;
+}
+
 auto count_triangles_in_strips(const std::vector<std::vector<uint16>>& strips) noexcept
    -> std::size_t
 {
@@ -126,22 +131,6 @@ auto read_strp(ucfb::reader_strict<"STRP"_id> strp)
    return triangle_strips_to_lists(strips);
 }
 
-auto read_clrl(ucfb::reader_strict<"CLRL"_id> clrl) -> std::vector<float4>
-{
-   const auto count = clrl.read<int32>();
-
-   std::vector<float4> colors;
-   colors.reserve(count);
-
-   for (int i = 0; i < count; ++i) {
-      const auto packed_color = clrl.read<uint32>();
-
-      colors.emplace_back(utility::unpack_srgb_bgra(packed_color));
-   }
-
-   return colors;
-}
-
 template<typename Type>
 auto read_vertex_atrb(ucfb::reader reader) -> std::vector<Type>
 {
@@ -178,7 +167,7 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
          segment.texcoords = read_vertex_atrb<float2>(child);
          continue;
       case "CLRL"_id:
-         segment.colors = read_clrl(ucfb::reader_strict<"CLRL"_id>{child});
+         segment.colors = read_vertex_atrb<uint32>(child);
          continue;
       case "STRP"_id:
          segment.triangles = read_strp(ucfb::reader_strict<"STRP"_id>{child});

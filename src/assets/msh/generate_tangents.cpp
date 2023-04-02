@@ -31,7 +31,7 @@ struct mesh_tri_list {
    std::vector<std::array<float3, 3>> normals;
    std::vector<std::array<float3, 3>> tangents;
    std::vector<std::array<float3, 3>> bitangents;
-   std::vector<std::array<float4, 3>> colors;
+   std::vector<std::array<uint32, 3>> colors;
    std::vector<std::array<float2, 3>> texcoords;
 };
 
@@ -112,7 +112,7 @@ struct cached_vertex {
    float3 tangent;
    float3 bitangent;
    float2 texcoord;
-   float4 color;
+   uint32 color;
 
    bool operator==(const cached_vertex&) const noexcept = default;
 
@@ -124,8 +124,7 @@ struct cached_vertex {
                         cached.normal.z, cached.tangent.x, cached.tangent.y,
                         cached.tangent.z, cached.bitangent.x,
                         cached.bitangent.y, cached.bitangent.z,
-                        cached.texcoord.x, cached.texcoord.y, cached.color.x,
-                        cached.color.y, cached.color.z, cached.color.w);
+                        cached.texcoord.x, cached.texcoord.y, cached.color);
    }
 };
 
