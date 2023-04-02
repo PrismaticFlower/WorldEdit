@@ -115,7 +115,7 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
                        .start_index = triangle_offset * 3,
                        .start_vertex = vertex_offset,
                        .vertex_count = static_cast<uint32>(mesh.positions.size()),
-                       .material = {mesh.material, device,
+                       .material = {mesh.material, mesh.colors_are_lighting, device,
                                     copy_command_list_pool, texture_manager}});
 
       std::uninitialized_copy_n(mesh.triangles.cbegin(), mesh.triangles.size(),
@@ -128,7 +128,8 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
             return mesh_attributes{.normals = pack_snorm(mesh.normals[i]),
                                    .tangents = pack_snorm(mesh.tangents[i]),
                                    .bitangents = pack_snorm(mesh.bitangents[i]),
-                                   .texcoords = mesh.texcoords[i]};
+                                   .texcoords = mesh.texcoords[i],
+                                   .color = mesh.colors[i]};
          });
 
       std::uninitialized_copy_n(attributes.begin(), mesh.positions.size(),

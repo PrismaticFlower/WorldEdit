@@ -10,8 +10,8 @@
 namespace we::graphics {
 
 struct material {
-   material(const assets::msh::material& material, gpu::device& device,
-            copy_command_list_pool& copy_command_list_pool,
+   material(const assets::msh::material& material, const bool static_lighting,
+            gpu::device& device, copy_command_list_pool& copy_command_list_pool,
             texture_manager& texture_manager);
 
    void process_updated_textures(gpu::copy_command_list& command_list,
@@ -47,7 +47,8 @@ private:
 
    void init_flags(const assets::msh::material& material);
 
-   void init_resources(const assets::msh::material& material, gpu::device& device,
+   void init_resources(const assets::msh::material& material,
+                       const bool static_lighting, gpu::device& device,
                        copy_command_list_pool& copy_command_list_pool);
 };
 

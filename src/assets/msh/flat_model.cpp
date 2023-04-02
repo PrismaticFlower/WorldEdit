@@ -170,7 +170,8 @@ flat_model::flat_model(const scene& scene) noexcept
       const auto& node_to_object = node_to_object_transforms[i];
 
       if (is_mesh_node(node)) {
-         flatten_segments_to_meshes(node.segments, node_to_object, scene.materials);
+         flatten_segments_to_meshes(node.segments, node_to_object,
+                                    scene.materials, scene.options);
       }
       else if (is_collision_node(node)) {
          flatten_node_to_collision(node, node_to_object);
@@ -215,13 +216,15 @@ void flat_model::regenerate_bounding_boxes() noexcept
 
 void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>& segments,
                                             const float4x4& node_to_object,
-                                            const std::vector<material>& scene_materials)
+                                            const std::vector<material>& scene_materials,
+                                            const options& options)
 {
    for (const auto& segment : segments) {
       if (segment.triangles.empty()) continue;
 
       auto& mesh =
-         select_mesh_for_segment(segment, scene_materials.at(segment.material_index));
+         select_mesh_for_segment(segment, scene_materials.at(segment.material_index),
+                                 options);
 
       const auto vertex_offset = mesh.positions.size();
 
@@ -265,10 +268,22 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
 }
 
 auto flat_model::select_mesh_for_segment(const geometry_segment& segment,
-                                         const material& material) -> mesh&
+                                         const material& material,
+                                         const options& options) -> mesh&
 {
    const auto search_for_suitable_mesh = [&](std::vector<mesh>::iterator begin) {
       return std::find_if(begin, meshes.end(), [&](const mesh& mesh) {
+         if (options.vertex_lighting) {
+            // If vertex colors represent vertex lighting then we don't want to
+            // merge meshes that would have different colors_are_lighting values.
+            //
+            // Which would be true for any mesh made from a geometry_segment **with** colours and false
+            // for a mesh that recieved default colours.
+
+            return mesh.material == material and
+                   mesh.colors_are_lighting == segment.colors.has_value();
+         }
+
          return mesh.material == material;
       });
    };
@@ -286,6 +301,7 @@ auto flat_model::select_mesh_for_segment(const geometry_segment& segment,
    auto& mesh = meshes.emplace_back();
 
    mesh.material = material;
+   mesh.colors_are_lighting = options.vertex_lighting and segment.colors.has_value();
 
    return mesh;
 }

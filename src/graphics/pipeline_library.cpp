@@ -82,6 +82,9 @@ constexpr std::array mesh_input_layout = {
    gpu::input_element_desc{.semantic_name = "TEXCOORD",
                            .format = DXGI_FORMAT_R32G32_FLOAT,
                            .input_slot = 1},
+   gpu::input_element_desc{.semantic_name = "COLOR",
+                           .format = DXGI_FORMAT_B8G8R8A8_UNORM,
+                           .input_slot = 1},
 };
 
 constexpr std::array mesh_input_layout_position_only = {

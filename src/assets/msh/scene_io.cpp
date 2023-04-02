@@ -389,6 +389,9 @@ auto read_scene_options(const std::filesystem::path& path) -> options
       else if (string::iequals(opt.name, "-additiveemissive"sv)) {
          results.additive_emissive = true;
       }
+      else if (string::iequals(opt.name, "-vertexlighting"sv)) {
+         results.vertex_lighting = true;
+      }
    }
 
    return results;

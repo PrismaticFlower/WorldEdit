@@ -22,6 +22,7 @@ struct mesh_attributes {
    std::array<int16, 4> tangents;
    std::array<int16, 4> bitangents;
    float2 texcoords;
+   uint32 color;
 };
 
 struct mesh_vertices {

@@ -17,6 +17,7 @@ float4 main(input_vertex input) : SV_Target0
    lighting_inputs.diffuse_color = surface_color;
    lighting_inputs.specular_color = 0.0;
    lighting_inputs.positionSS = input.positionSS.xy;
+   lighting_inputs.receive_static_light = true;
 
    const float3 lighting = calculate_lighting(lighting_inputs);
 

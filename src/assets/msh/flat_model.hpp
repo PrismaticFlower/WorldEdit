@@ -14,7 +14,6 @@ struct mesh {
    math::bounding_box bounding_box;
 
    material material;
-
    std::vector<float3> positions;
    std::vector<float3> normals;
    std::vector<float3> tangents;
@@ -23,6 +22,8 @@ struct mesh {
    std::vector<float2> texcoords;
 
    std::vector<std::array<uint16, 3>> triangles;
+
+   bool colors_are_lighting = false;
 
    void regenerate_bounding_box() noexcept;
 };
@@ -75,12 +76,13 @@ struct flat_model {
 private:
    void flatten_segments_to_meshes(const std::vector<geometry_segment>& segments,
                                    const float4x4& node_to_object,
-                                   const std::vector<material>& scene_materials);
+                                   const std::vector<material>& scene_materials,
+                                   const options& options);
 
    void flatten_node_to_collision(const node& node, const float4x4& node_to_object);
 
-   auto select_mesh_for_segment(const geometry_segment& segment,
-                                const material& material) -> mesh&;
+   auto select_mesh_for_segment(const geometry_segment& segment, const material& material,
+                                const options& options) -> mesh&;
 
    void generate_tangents_for_meshes();
 };

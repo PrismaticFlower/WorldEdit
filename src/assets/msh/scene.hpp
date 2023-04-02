@@ -64,6 +64,7 @@ struct node {
 
 struct options {
    bool additive_emissive;
+   bool vertex_lighting;
    std::vector<std::string> normal_maps;
 };
 

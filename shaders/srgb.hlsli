@@ -1,8 +1,18 @@
 #pragma once
 
-float3 srgb_to_linear(float3 color)
+float srgb_to_linear(float color)
 {
    return (color < 0.04045) ? color / 12.92 : pow(abs((color + 0.055)) / 1.055, 2.4);
+}
+
+float3 srgb_to_linear(float3 color)
+{
+   return float3(srgb_to_linear(color.r), srgb_to_linear(color.g), srgb_to_linear(color.b));
+}
+
+float4 srgb_to_linear(float4 color)
+{
+   return float4(srgb_to_linear(color.rgb), color.a);
 }
 
 float4 unpack_bgra_srgb(uint packed)

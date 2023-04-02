@@ -11,7 +11,8 @@ enum class shader_flags : uint32 {
    transparent = 0b1,
    unlit = 0b10,
    specular_visibility_in_diffuse_map = 0b100,
-   scrolling = 0b1000
+   scrolling = 0b1000,
+   static_lighting = 0b10000,
 };
 
 constexpr bool marked_as_enum_bitflag(shader_flags)
@@ -35,8 +36,8 @@ constexpr bool has_normalmap(const assets::msh::material& material)
 
 constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
                                  const assets::msh::material& material,
-                                 const bool specular_visibility_in_diffuse_map) noexcept
-   -> shader_flags
+                                 const bool specular_visibility_in_diffuse_map,
+                                 const bool static_lighting) noexcept -> shader_flags
 {
    shader_flags flags = shader_flags::none;
 
@@ -60,6 +61,10 @@ constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
       flags |= shader_flags::scrolling;
    }
 
+   if (static_lighting) {
+      flags |= shader_flags::static_lighting;
+   }
+
    return flags;
 }
 
@@ -75,13 +80,14 @@ struct alignas(16) normal_material_constants {
 
 }
 
-material::material(const assets::msh::material& material, gpu::device& device,
+material::material(const assets::msh::material& material,
+                   const bool static_lighting, gpu::device& device,
                    copy_command_list_pool& copy_command_list_pool,
                    texture_manager& texture_manager)
 {
    init_textures(material, texture_manager);
    init_flags(material);
-   init_resources(material, device, copy_command_list_pool);
+   init_resources(material, static_lighting, device, copy_command_list_pool);
 }
 
 void material::init_textures(const assets::msh::material& material,
@@ -136,7 +142,8 @@ void material::init_flags(const assets::msh::material& material)
    }
 }
 
-void material::init_resources(const assets::msh::material& material, gpu::device& device,
+void material::init_resources(const assets::msh::material& material,
+                              const bool static_lighting, gpu::device& device,
                               copy_command_list_pool& copy_command_list_pool)
 {
    const bool has_specular =
@@ -161,7 +168,8 @@ void material::init_resources(const assets::msh::material& material, gpu::device
    constant_buffer_view = device.get_gpu_virtual_address(constant_buffer.get());
 
    normal_material_constants constants{
-      .flags = make_shader_flags(flags, material, texture_names.normal_map.empty()),
+      .flags = make_shader_flags(flags, material, texture_names.normal_map.empty(),
+                                 static_lighting),
       .diffuse_map = textures.diffuse_map->srv_srgb.index,
       .normal_map = textures.normal_map->srv.index,
       .specular_color = specular_color,

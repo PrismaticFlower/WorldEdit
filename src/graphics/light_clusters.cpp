@@ -5,6 +5,7 @@
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/enum_bitflags.hpp"
 
 #include <cmath>
 
@@ -22,6 +23,17 @@ constexpr auto max_regional_lights = 256;
 
 enum class light_type : uint32 { directional, point, spot };
 enum class directional_region_type : uint32 { none, box, sphere, cylinder };
+
+enum class light_flags : uint32 {
+   none = 0b0,
+   is_shadow_caster = 0b1,
+   is_dynamic = 0b10,
+};
+
+constexpr bool marked_as_enum_bitflag(light_flags) noexcept
+{
+   return true;
+}
 
 struct alignas(16) light_tile_clear_inputs {
    std::array<uint32, 2> tile_counts;
@@ -51,7 +63,7 @@ struct alignas(16) light_description {
    float spot_inner_param;
    directional_region_type region_type;
    uint32 directional_region_index;
-   uint32 shadow_caster;
+   light_flags flags;
 };
 
 static_assert(sizeof(light_description) == 64);
@@ -426,6 +438,10 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
       const uint32 light_index = _light_count;
 
+      light_flags flags = light_flags::none;
+
+      if (not light.static_) flags |= light_flags::is_dynamic;
+
       switch (light.light_type) {
       case world::light_type::directional: {
          const float3 light_direction =
@@ -434,13 +450,15 @@ void light_clusters::prepare_lights(const camera& view_camera,
          if (light.shadow_caster) {
             _sun_shadow_cascades =
                make_shadow_cascades(light.rotation, view_camera, scene_depth_min_max);
+
+            flags |= light_flags::is_shadow_caster;
          }
 
          upload_to({.direction = light_direction,
                     .type = light_type::directional,
                     .color = light.color,
                     .region_type = directional_region_type::none,
-                    .shadow_caster = light.shadow_caster},
+                    .flags = flags},
                    &upload_data.constants->lights[light_index]);
 
          _light_count += 1;
@@ -458,7 +476,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
          upload_to({.type = light_type::point,
                     .position = light.position,
                     .range = light.range,
-                    .color = light.color},
+                    .color = light.color,
+                    .flags = flags},
                    &upload_data.constants->lights[light_index]);
 
          upload_to({.transform = make_sphere_light_proxy_transform(light, light.range),
@@ -494,7 +513,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
                     .spot_outer_param = std::cos(light.outer_cone_angle / 2.0f),
                     .spot_inner_param =
                        1.0f / (std::cos(light.inner_cone_angle / 2.0f) -
-                               std::cos(light.outer_cone_angle / 2.0f))},
+                               std::cos(light.outer_cone_angle / 2.0f)),
+                    .flags = flags},
                    &upload_data.constants->lights[light_index]);
 
          upload_to({.transform = make_sphere_light_proxy_transform(light, light.range), // TODO: Cone light proxies.
@@ -535,7 +555,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
                        .type = light_type::directional,
                        .color = light.color,
                        .region_type = directional_region_type::box,
-                       .directional_region_index = region_description_index},
+                       .directional_region_index = region_description_index,
+                       .flags = flags},
                       &upload_data.constants->lights[light_index]);
 
             upload_to({.transform = make_sphere_light_proxy_transform(
@@ -564,7 +585,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
                        .type = light_type::directional,
                        .color = light.color,
                        .region_type = directional_region_type::sphere,
-                       .directional_region_index = region_description_index},
+                       .directional_region_index = region_description_index,
+                       .flags = flags},
                       &upload_data.constants->lights[light_index]);
 
             upload_to({.transform = make_sphere_light_proxy_transform(light, sphere_radius),
@@ -590,7 +612,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
                        .type = light_type::directional,
                        .color = light.color,
                        .region_type = directional_region_type::cylinder,
-                       .directional_region_index = region_description_index},
+                       .directional_region_index = region_description_index,
+                       .flags = flags},
                       &upload_data.constants->lights[light_index]);
 
             upload_to({.transform = make_sphere_light_proxy_transform(

@@ -10,6 +10,7 @@ enum flags {
    unlit = 0b10,
    specular_visibility_in_diffuse_map = 0b100,
    scrolling = 0b1000,
+   static_lighting = 0b10000,
 };
 
 struct input_vertex {
@@ -18,6 +19,7 @@ struct input_vertex {
    float3 tangentWS : TANGENT;
    float3 bitangentWS : BITANGENT;
    float2 texcoords : TEXCOORD;
+   float4 color : COLOR;
 
    float4 positionSS : SV_Position;
 };
@@ -27,12 +29,12 @@ float3 transform_normalWS(const input_vertex input, const float3 normalTS)
    return normalize(mul(normalTS, float3x3(input.tangentWS, input.bitangentWS, input.normalWS)));
 }
 
-float4 main(input_vertex input_vertex) : SV_TARGET
+float4 main(input_vertex input) : SV_TARGET
 {
    Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map_index];
    Texture2D<float4> normal_map = ResourceDescriptorHeap[material.normal_map_index];
 
-   float2 texcoords = input_vertex.texcoords;
+   float2 texcoords = input.texcoords;
 
    const float4 normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
 
@@ -41,11 +43,20 @@ float4 main(input_vertex input_vertex) : SV_TARGET
    }
 
    const float3 normalTS = normal_map_sample.xyz * 2.0 - 1.0;
-   const float3 normalWS = transform_normalWS(input_vertex, normalTS);
+   const float3 normalWS = transform_normalWS(input, normalTS);
 
-   const float3 positionWS = input_vertex.positionWS;
+   const float3 positionWS = input.positionWS;
    const float3 viewWS = normalize(cb_frame.view_positionWS - positionWS);
    float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, texcoords);
+
+   const bool static_lighting = material.flags & flags::static_lighting;
+
+   if (static_lighting) {
+      diffuse_color.a *= input.color.a;
+   }
+   else {
+      diffuse_color *= input.color;
+   }
 
    if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
 
@@ -67,9 +78,14 @@ float4 main(input_vertex input_vertex) : SV_TARGET
    lighting_inputs.viewWS = viewWS;
    lighting_inputs.diffuse_color = diffuse_color.rgb;
    lighting_inputs.specular_color = specular_color;
-   lighting_inputs.positionSS = input_vertex.positionSS.xy;
+   lighting_inputs.positionSS = input.positionSS.xy;
+   lighting_inputs.receive_static_light = !static_lighting;
 
-   const float3 lighting = calculate_lighting(lighting_inputs);
+   float3 lighting = calculate_lighting(lighting_inputs);
+
+   if (static_lighting) {
+      lighting += input.color.rgb * diffuse_color.rgb;
+   }
 
    return float4(lighting, diffuse_color.a);
 }

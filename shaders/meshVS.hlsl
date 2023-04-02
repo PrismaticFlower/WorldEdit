@@ -1,5 +1,6 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
+#include "srgb.hlsli"
 
 struct object_constants {
    float4x4 world_matrix;
@@ -13,6 +14,7 @@ struct input_vertex {
    float3 tangentOS : TANGENT;
    float3 bitangentOS : BITANGENT;
    float2 texcoords : TEXCOORD;
+   float4 color : COLOR;
 };
 
 struct output_vertex {
@@ -21,6 +23,7 @@ struct output_vertex {
    float3 tangentWS : TANGENT;
    float3 bitangentWS : BITANGENT;
    float2 texcoords : TEXCOORD;
+   float4 color : COLOR;
 
    float4 positionPS : SV_Position;
 };
@@ -36,6 +39,7 @@ output_vertex main(input_vertex input)
    output.tangentWS = mul((float3x3)cb_object_constants.world_matrix, input.tangentOS);
    output.bitangentWS = mul((float3x3)cb_object_constants.world_matrix, input.bitangentOS);
    output.texcoords = input.texcoords;
+   output.color = srgb_to_linear(input.color);
    output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
 
    return output;

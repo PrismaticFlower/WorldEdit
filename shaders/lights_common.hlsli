@@ -20,6 +20,11 @@ const static uint sphere = 2;
 const static uint cylinder = 3;
 };
 
+enum light_flags : uint {
+   light_flag_is_shadow_caster = 0b1,
+   light_flag_is_dynamic = 0b10,
+};
+
 struct light_description {
    float3 directionWS;
    uint type;
@@ -30,7 +35,7 @@ struct light_description {
    float spot_inner_param;
    uint region_type;
    uint directional_region_index;
-   uint shadow_caster;
+   light_flags flags;
 };
 
 struct light_constant_buffer {
@@ -64,6 +69,7 @@ struct calculate_light_inputs {
    float3 diffuse_color;
    float3 specular_color;
    uint2 positionSS;
+   bool receive_static_light;
 };
 
 struct light_info {
@@ -184,7 +190,7 @@ light_info get_light_info(light_description light, calculate_light_inputs input)
       float region_fade_or_shadow = 1.0;
 
       if (light.region_type == directional_region_type::none) {
-         if (light.shadow_caster) {
+         if (light.flags & light_flag_is_shadow_caster) {
             region_fade_or_shadow = sample_cascaded_shadow_map(positionWS, normalWS);
          }
       }
@@ -280,7 +286,11 @@ float3 calculate_light(calculate_light_inputs input, light_description light, li
 
 float3 calculate_lighting(calculate_light_inputs input)
 {
-   float3 total_light = calc_ambient_light(input.normalWS) * input.diffuse_color;
+   float3 total_light = 0.0;
+
+   if (input.receive_static_light) {
+      total_light += calc_ambient_light(input.normalWS) * input.diffuse_color;
+   }
 
    const uint2 tile_position = input.positionSS / light_tile_size;
    const uint tile_index = tile_position.x + tile_position.y * light_constants.light_tiles_width;
@@ -300,7 +310,9 @@ float3 calculate_lighting(calculate_light_inputs input)
          light_description light = light_constants.lights[light_index];
          light_info light_info = get_light_info(light, input);
 
-         total_light += calculate_light(input, light, light_info);
+         if (input.receive_static_light || (light.flags & light_flag_is_dynamic)) {
+            total_light += calculate_light(input, light, light_info);
+         }
       }
    }
 
