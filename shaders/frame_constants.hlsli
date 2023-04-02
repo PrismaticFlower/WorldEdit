@@ -6,6 +6,7 @@ struct frame_constant_buffer {
    float4x4 view_projection_matrix;
 
    float3 view_positionWS;
+   float texture_scroll_duration;
 
    float2 viewport_size;
    float2 viewport_topleft;

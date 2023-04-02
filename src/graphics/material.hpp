@@ -41,15 +41,13 @@ struct material {
    texture_names texture_names;
    texture_load_tokens texture_load_tokens;
 
-   float3 specular_color;
-
-   assets::msh::material_flags msh_flags = assets::msh::material_flags::none;
-
 private:
    void init_textures(const assets::msh::material& material,
                       texture_manager& texture_manager);
 
-   void init_resources(gpu::device& device,
+   void init_flags(const assets::msh::material& material);
+
+   void init_resources(const assets::msh::material& material, gpu::device& device,
                        copy_command_list_pool& copy_command_list_pool);
 };
 

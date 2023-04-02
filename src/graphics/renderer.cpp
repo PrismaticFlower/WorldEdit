@@ -44,7 +44,7 @@ struct alignas(256) frame_constant_buffer {
    float4x4 view_projection_matrix;
 
    float3 view_positionWS;
-   uint32 pad0 = 0;
+   float texture_scroll_duration;
 
    float2 viewport_size;
    float2 viewport_topleft;
@@ -242,6 +242,8 @@ private:
    meta_draw_batcher _meta_draw_batcher;
 
    imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
+
+   utility::stopwatch<std::chrono::steady_clock> _texture_scroll_timer;
 
    profiler _profiler{_device, 256};
 
@@ -498,16 +500,18 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
                                                  const settings::graphics& settings,
                                                  gpu::copy_command_list& command_list)
 {
-   frame_constant_buffer
-      constants{.view_projection_matrix = camera.view_projection_matrix(),
+   frame_constant_buffer constants{
+      .view_projection_matrix = camera.view_projection_matrix(),
 
-                .view_positionWS = camera.position(),
+      .view_positionWS = camera.position(),
+      .texture_scroll_duration = static_cast<float>(std::fmod(
+         _texture_scroll_timer.elapsed<std::chrono::duration<double>>().count(), 255.0)),
 
-                .viewport_size = {static_cast<float>(_swap_chain.width()),
-                                  static_cast<float>(_swap_chain.height())},
-                .viewport_topleft = {0.0f, 0.0f},
+      .viewport_size = {static_cast<float>(_swap_chain.width()),
+                        static_cast<float>(_swap_chain.height())},
+      .viewport_topleft = {0.0f, 0.0f},
 
-                .line_width = settings.line_width * _display_scale};
+      .line_width = settings.line_width * _display_scale};
 
    auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 

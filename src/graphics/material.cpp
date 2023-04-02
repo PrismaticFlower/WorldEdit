@@ -10,7 +10,8 @@ enum class shader_flags : uint32 {
    none = 0b0,
    transparent = 0b1,
    unlit = 0b10,
-   specular_visibility_in_diffuse_map = 0b100
+   specular_visibility_in_diffuse_map = 0b100,
+   scrolling = 0b1000
 };
 
 constexpr bool marked_as_enum_bitflag(shader_flags)
@@ -33,7 +34,7 @@ constexpr bool has_normalmap(const assets::msh::material& material)
 }
 
 constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
-                                 assets::msh::material_flags msh_flags,
+                                 const assets::msh::material& material,
                                  const bool specular_visibility_in_diffuse_map) noexcept
    -> shader_flags
 {
@@ -43,16 +44,20 @@ constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
       flags |= shader_flags::transparent;
    }
 
-   if (are_flags_set(msh_flags, assets::msh::material_flags::unlit)) {
+   if (are_flags_set(material.flags, assets::msh::material_flags::unlit)) {
       flags |= shader_flags::unlit;
    }
 
-   if (are_flags_set(msh_flags, assets::msh::material_flags::glow)) {
+   if (are_flags_set(material.flags, assets::msh::material_flags::glow)) {
       flags |= shader_flags::unlit; // Actually implementing this properly is fairly pointless without a bloom pass.
    }
 
    if (specular_visibility_in_diffuse_map) {
       flags |= shader_flags::specular_visibility_in_diffuse_map;
+   }
+
+   if (material.rendertype == assets::msh::rendertype::scrolling) {
+      flags |= shader_flags::scrolling;
    }
 
    return flags;
@@ -64,6 +69,8 @@ struct alignas(16) normal_material_constants {
    uint32 normal_map;
    uint32 pad;
    float3 specular_color;
+   uint32 pad1;
+   float2 scrolling_amount;
 };
 
 }
@@ -73,39 +80,8 @@ material::material(const assets::msh::material& material, gpu::device& device,
                    texture_manager& texture_manager)
 {
    init_textures(material, texture_manager);
-
-   using assets::msh::material_flags;
-
-   msh_flags = material.flags;
-
-   if (are_flags_set(material.flags, material_flags::transparent)) {
-      flags |= material_pipeline_flags::transparent;
-   }
-
-   if (are_flags_set(material.flags, material_flags::transparent_doublesided)) {
-      flags |= material_pipeline_flags::transparent;
-      flags |= material_pipeline_flags::doublesided;
-   }
-
-   if (are_flags_set(material.flags, material_flags::hardedged)) {
-      flags |= material_pipeline_flags::alpha_cutout;
-      flags &= ~material_pipeline_flags::transparent;
-   }
-
-   if (are_flags_set(material.flags, material_flags::additive)) {
-      flags |= material_pipeline_flags::additive;
-   }
-
-   if (are_flags_set(material.flags, material_flags::specular) or
-       material.rendertype == assets::msh::rendertype::specular or
-       material.rendertype == assets::msh::rendertype::normalmap_specular) {
-      specular_color = material.specular_color;
-   }
-   else {
-      specular_color = float3{};
-   }
-
-   init_resources(device, copy_command_list_pool);
+   init_flags(material);
+   init_resources(material, device, copy_command_list_pool);
 }
 
 void material::init_textures(const assets::msh::material& material,
@@ -137,9 +113,44 @@ void material::init_textures(const assets::msh::material& material,
    }
 }
 
-void material::init_resources(gpu::device& device,
+void material::init_flags(const assets::msh::material& material)
+{
+   using assets::msh::material_flags;
+
+   if (are_flags_set(material.flags, material_flags::transparent)) {
+      flags |= material_pipeline_flags::transparent;
+   }
+
+   if (are_flags_set(material.flags, material_flags::transparent_doublesided)) {
+      flags |= material_pipeline_flags::transparent;
+      flags |= material_pipeline_flags::doublesided;
+   }
+
+   if (are_flags_set(material.flags, material_flags::hardedged)) {
+      flags |= material_pipeline_flags::alpha_cutout;
+      flags &= ~material_pipeline_flags::transparent;
+   }
+
+   if (are_flags_set(material.flags, material_flags::additive)) {
+      flags |= material_pipeline_flags::additive;
+   }
+}
+
+void material::init_resources(const assets::msh::material& material, gpu::device& device,
                               copy_command_list_pool& copy_command_list_pool)
 {
+   const bool has_specular =
+      are_flags_set(material.flags, assets::msh::material_flags::specular) or
+      material.rendertype == assets::msh::rendertype::specular or
+      material.rendertype == assets::msh::rendertype::normalmap_specular;
+   const bool is_scrolling = material.rendertype == assets::msh::rendertype::scrolling;
+
+   const float3 specular_color =
+      has_specular ? material.specular_color : float3{0.0f, 0.0f, 0.0f};
+   const float2 scrolling_amount =
+      is_scrolling ? float2{material.data0 / 255.0f, material.data1 / 255.0f}
+                   : float2{0.f, 0.0f};
+
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
    constant_buffer = {device.create_buffer({.size = sizeof(normal_material_constants),
@@ -150,10 +161,11 @@ void material::init_resources(gpu::device& device,
    constant_buffer_view = device.get_gpu_virtual_address(constant_buffer.get());
 
    normal_material_constants constants{
-      .flags = make_shader_flags(flags, msh_flags, texture_names.normal_map.empty()),
+      .flags = make_shader_flags(flags, material, texture_names.normal_map.empty()),
       .diffuse_map = textures.diffuse_map->srv_srgb.index,
       .normal_map = textures.normal_map->srv.index,
-      .specular_color = specular_color};
+      .specular_color = specular_color,
+      .scrolling_amount = scrolling_amount};
 
    gpu::unique_resource_handle upload_buffer =
       {device.create_buffer({.size = sizeof(normal_material_constants),

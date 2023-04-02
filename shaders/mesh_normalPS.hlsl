@@ -8,7 +8,8 @@ enum flags {
    none = 0b0,
    transparent = 0b1,
    unlit = 0b10,
-   specular_visibility_in_diffuse_map = 0b100
+   specular_visibility_in_diffuse_map = 0b100,
+   scrolling = 0b1000,
 };
 
 struct input_vertex {
@@ -31,14 +32,20 @@ float4 main(input_vertex input_vertex) : SV_TARGET
    Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map_index];
    Texture2D<float4> normal_map = ResourceDescriptorHeap[material.normal_map_index];
 
-   const float4 normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, input_vertex.texcoords);
+   float2 texcoords = input_vertex.texcoords;
+
+   const float4 normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
+
+   if (material.flags & flags::scrolling) {
+      texcoords -= material.scrolling_amount * cb_frame.texture_scroll_duration;
+   }
 
    const float3 normalTS = normal_map_sample.xyz * 2.0 - 1.0;
    const float3 normalWS = transform_normalWS(input_vertex, normalTS);
 
    const float3 positionWS = input_vertex.positionWS;
    const float3 viewWS = normalize(cb_frame.view_positionWS - positionWS);
-   float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, input_vertex.texcoords);
+   float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, texcoords);
 
    if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
 
