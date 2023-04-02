@@ -414,6 +414,14 @@ void world_edit::update_camera(const float delta_time)
       SetCursorPos(_rotate_camera_cursor_position.x,
                    _rotate_camera_cursor_position.y);
    }
+
+   if (_camera.fov() != _settings.camera.fov) {
+      _camera.fov(_settings.camera.fov);
+   }
+
+   if (_camera.view_width() != _settings.camera.view_width) {
+      _camera.view_width(_settings.camera.view_width);
+   }
 }
 
 void world_edit::select_hovered_entity() noexcept

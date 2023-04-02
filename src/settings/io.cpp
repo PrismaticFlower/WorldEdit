@@ -97,6 +97,8 @@ auto load(const std::string_view path) -> settings
             setting_entry(pan_sensitivity);
             setting_entry(sprint_power);
             setting_entry(step_size);
+            setting_entry(fov);
+            setting_entry(view_width);
          }
 #undef setting_entry
       }
@@ -152,6 +154,8 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(pan_sensitivity));
       write(file, name_value(sprint_power));
       write(file, name_value(step_size));
+      write(file, name_value(fov));
+      write(file, name_value(view_width));
 
 #undef name_value
 

@@ -5714,16 +5714,11 @@ void world_edit::update_ui() noexcept
          ImGui::SeparatorText("View");
 
          if (_camera.projection() == graphics::camera_projection::perspective) {
-            if (float fov = _camera.fov();
-                ImGui::SliderAngle("Horizontal FOV", &fov, 1.0f, 120.0f)) {
-               _camera.fov(fov);
-            }
+            ImGui::SliderAngle("Horizontal FOV", &_settings.camera.fov, 1.0f, 120.0f);
          }
          else {
-            if (float view_width = _camera.view_width();
-                ImGui::DragFloat("View Width", &view_width, 1.0f, 1.0f, 8192.0f)) {
-               _camera.view_width(view_width);
-            }
+            ImGui::DragFloat("View Width", &_settings.camera.view_width, 1.0f,
+                             1.0f, 8192.0f);
          }
 
          if (float far_clip = _camera.far_clip();
