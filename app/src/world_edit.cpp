@@ -37,6 +37,17 @@ namespace we {
 world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}
 {
+   async::task<settings::settings> settings_load = _thread_pool->exec([]() {
+      try {
+         return settings::load(".settings");
+      }
+      catch (std::exception&) {
+         // No saved settings for us 🙁
+      }
+
+      return settings::settings{};
+   });
+
    try {
       _renderer =
          graphics::make_renderer(window, _thread_pool, _asset_libraries, _stream);
@@ -68,6 +79,8 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 
    _camera.aspect_ratio(static_cast<float>(rect.right - rect.left) /
                         static_cast<float>(rect.bottom - rect.top));
+
+   _settings = settings_load.get();
 }
 
 void world_edit::update()

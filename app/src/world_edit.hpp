@@ -9,6 +9,7 @@
 #include "graphics/renderer.hpp"
 #include "hotkeys.hpp"
 #include "output_stream.hpp"
+#include "settings/io.hpp"
 #include "settings/settings.hpp"
 #include "utility/command_line.hpp"
 #include "world/object_class.hpp"
@@ -275,6 +276,8 @@ private:
 
    commands _commands;
    hotkeys _hotkeys{_commands, _stream};
+
+   settings::saver _settings_saver{".settings", _settings};
 };
 
 }

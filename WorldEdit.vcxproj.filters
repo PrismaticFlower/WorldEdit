@@ -679,6 +679,9 @@
     <ClInclude Include="src\edits\game_mode_unlink_layer.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\settings\io.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -973,6 +976,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\game_mode_unlink_layer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\settings\io.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
