@@ -4931,7 +4931,7 @@ void world_edit::update_ui() noexcept
                if (not is_common_game_mode) {
                   ImGui::SeparatorText("Delete Game Mode");
 
-                  if (ImGui::Button("Delete")) {
+                  if (ImGui::Button("Delete", {ImGui::CalcItemWidth(), 0.0f})) {
                      _edit_stack_world.apply(edits::make_delete_game_mode(game_mode_index,
                                                                           _world),
                                              _edit_context);
