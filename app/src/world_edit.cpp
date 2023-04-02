@@ -1118,6 +1118,7 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
 
    try {
       _renderer->recreate_imgui_font_atlas();
+      _renderer->display_scale_changed(_display_scale);
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -1150,6 +1151,9 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
       try {
          _renderer = graphics::make_renderer(_window, _thread_pool,
                                              _asset_libraries, _stream);
+
+         _renderer->recreate_imgui_font_atlas();
+         _renderer->display_scale_changed(_display_scale);
       }
       catch (graphics::gpu::exception& e) {
          if (e.error() != error::device_removed) {

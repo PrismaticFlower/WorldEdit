@@ -92,6 +92,11 @@ struct renderer_impl final : renderer {
 
    void window_resized(uint16 width, uint16 height) override;
 
+   void display_scale_changed(const float display_scale) noexcept override
+   {
+      _display_scale = display_scale;
+   }
+
    void mark_dirty_terrain() noexcept override;
 
    void recreate_imgui_font_atlas() override
@@ -150,6 +155,7 @@ private:
 
    std::shared_ptr<async::thread_pool> _thread_pool;
    output_stream& _error_output;
+   float _display_scale = 1.0f;
 
    gpu::device _device{gpu::device_desc{.enable_debug_layer = false,
                                         .enable_gpu_based_validation = false}};
@@ -501,7 +507,7 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
                                   static_cast<float>(_swap_chain.height())},
                 .viewport_topleft = {0.0f, 0.0f},
 
-                .line_width = settings.line_width};
+                .line_width = settings.line_width * _display_scale};
 
    auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 
