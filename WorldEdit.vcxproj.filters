@@ -981,6 +981,9 @@
     <ClCompile Include="src\settings\io.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\settings\settings.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />

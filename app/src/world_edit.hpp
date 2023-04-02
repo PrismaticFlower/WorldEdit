@@ -184,6 +184,7 @@ private:
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
    bool _camera_controls_open = false;
+   bool _settings_editor_open = false;
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;

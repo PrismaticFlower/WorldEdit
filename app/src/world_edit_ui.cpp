@@ -487,6 +487,7 @@ void world_edit::update_ui() noexcept
       }
 
       if (ImGui::BeginMenu("Settings")) {
+         ImGui::MenuItem("Settings Editor", nullptr, &_settings_editor_open);
          ImGui::MenuItem("Hotkeys Editor", nullptr, &_hotkeys_editor_open);
          ImGui::MenuItem("Show ImGui Demo", nullptr, &_imgui_demo_open);
 
@@ -5754,6 +5755,14 @@ void world_edit::update_ui() noexcept
          }
       }
       ImGui::End();
+   }
+
+   if (_settings_editor_open) {
+      settings::show_imgui_editor(_settings, _settings_editor_open, _display_scale);
+
+      if (not _settings_editor_open) {
+         settings::save(".settings", _settings);
+      }
    }
 }
 }

@@ -10,4 +10,6 @@ struct settings {
    camera camera;
 };
 
+void show_imgui_editor(settings& settings, bool& open, float display_scale) noexcept;
+
 }
