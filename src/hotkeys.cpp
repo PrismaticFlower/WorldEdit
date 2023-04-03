@@ -171,9 +171,9 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
 
    if (old_state == new_state) return;
 
-   if (key == key::ctrl or key == key::shift or key == key::alt) {
-      release_modified_toggles(key == key::ctrl, key == key::shift, key == key::alt);
-   }
+   release_toggles_using(key);
+
+   if (new_state == key_state::up) return;
 
    for (std::ptrdiff_t i = std::ssize(_hotkey_sets) - 1; i >= 0; --i) {
       hotkey_set& set = _hotkey_sets[i];
@@ -191,23 +191,14 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
             return;
          }
 
-         if (hotkey.toggle and (new_state == key_state::down or hotkey.toggle_active)) {
-            hotkey.toggle_active = not hotkey.toggle_active;
-
+         if (new_state == key_state::down) {
             try_execute_command(hotkey.command);
 
-            if (hotkey.toggle_active) {
+            if (hotkey.toggle) {
+               hotkey.toggle_active = true;
+
                _active_toggles.emplace(i, bind);
             }
-            else {
-               _active_toggles.erase({i, bind});
-            }
-         }
-         else if (new_state == key_state::down) {
-            // If this was true then we know this is a transition from up to down
-            // as we've already ruled out a transition to the same state above.
-
-            try_execute_command(hotkey.command);
          }
       };
 
@@ -280,15 +271,19 @@ void hotkeys::release_stale_toggles(const bool imgui_has_mouse,
    }
 }
 
-void hotkeys::release_modified_toggles(const bool ctrl, const bool shift,
-                                       const bool alt) noexcept
+void hotkeys::release_toggles_using(const key key) noexcept
 {
+   const bool is_ctrl = key == we::key::ctrl;
+   const bool is_shift = key == we::key::shift;
+   const bool is_alt = key == we::key::alt;
+
    for (auto it = _active_toggles.begin(); it != _active_toggles.end();) {
       auto active_toggle = it++;
 
-      const bool release = active_toggle->bind.modifiers.ctrl == ctrl or
-                           active_toggle->bind.modifiers.shift == shift or
-                           active_toggle->bind.modifiers.alt == alt;
+      const bool release = active_toggle->bind.key == key or
+                           (active_toggle->bind.modifiers.ctrl and is_ctrl) or
+                           (active_toggle->bind.modifiers.shift and is_shift) or
+                           (active_toggle->bind.modifiers.alt and is_alt);
 
       if (not release) continue;
 

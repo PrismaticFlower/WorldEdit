@@ -101,8 +101,7 @@ private:
    void release_stale_toggles(const bool imgui_has_mouse,
                               const bool imgui_has_keyboard) noexcept;
 
-   void release_modified_toggles(const bool ctrl, const bool shift,
-                                 const bool alt) noexcept;
+   void release_toggles_using(const key key) noexcept;
 
    void process_new_key_state(const key key, const key_state new_state,
                               const bool imgui_has_mouse,
