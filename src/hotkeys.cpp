@@ -219,79 +219,16 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
 
       absl::flat_hash_map<hotkey_bind, hotkey>& bindings = set.bindings;
 
-      const bool ctrl_down = is_key_down(key::ctrl);
-      const bool shift_down = is_key_down(key::shift);
-      const bool alt_down = is_key_down(key::alt);
+      auto bind_hotkey =
+         bindings.find({.key = key,
+                        .modifiers = {.ctrl = is_key_down(key::ctrl),
+                                      .shift = is_key_down(key::shift),
+                                      .alt = is_key_down(key::alt)}});
 
-      if (ctrl_down and shift_down and alt_down) {
-         auto bind_hotkey = bindings.find(
-            {.key = key, .modifiers = {.ctrl = true, .shift = true, .alt = true}});
+      if (bind_hotkey == bindings.end()) continue;
 
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
-      else if (ctrl_down and shift_down) {
-         auto bind_hotkey =
-            bindings.find({.key = key, .modifiers = {.ctrl = true, .shift = true}});
-
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
-      else if (ctrl_down and alt_down) {
-         auto bind_hotkey =
-            bindings.find({.key = key, .modifiers = {.ctrl = true, .alt = true}});
-
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
-      else if (shift_down and alt_down) {
-         auto bind_hotkey =
-            bindings.find({.key = key, .modifiers = {.shift = true, .alt = true}});
-
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
-      else if (ctrl_down) {
-         auto bind_hotkey = bindings.find({.key = key, .modifiers = {.ctrl = true}});
-
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
-      else if (shift_down) {
-         auto bind_hotkey =
-            bindings.find({.key = key, .modifiers = {.shift = true}});
-
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
-      else if (alt_down) {
-         auto bind_hotkey = bindings.find({.key = key, .modifiers = {.alt = true}});
-
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
-      else {
-         auto bind_hotkey = bindings.find({.key = key});
-
-         if (bind_hotkey == bindings.end()) continue;
-
-         handle_hotkey(bind_hotkey->first, bind_hotkey->second);
-         break;
-      }
+      handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+      break;
    }
 }
 
