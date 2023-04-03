@@ -1864,6 +1864,8 @@ void world_edit::update_ui() noexcept
          _edit_stack_world.close_last();
 
          _entity_creation_context.using_from_line = true;
+
+         _entity_creation_context.from_line_start = std::nullopt;
       }
 
       if (std::exchange(_entity_creation_context.activate_draw_barrier, false)) {
@@ -4086,9 +4088,6 @@ void world_edit::update_ui() noexcept
                                          false)) {
                      _entity_creation_context.from_line_start = _cursor_positionWS;
                   }
-               }
-               else {
-                  _entity_creation_context.from_line_start = std::nullopt;
                }
 
                if (ImGui::Button("Draw Barrier", {ImGui::CalcItemWidth(), 0.0f})) {
