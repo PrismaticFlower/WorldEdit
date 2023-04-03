@@ -143,8 +143,8 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("entity_creation.activate_from_object_bbox"s,
                  _entity_creation_context.activate_from_object_bbox);
-   _commands.add("entity_creation.deactivate_from_object_bbox"s, [this] {
-      _entity_creation_context.using_from_object_bbox = false;
+   _commands.add("entity_creation.finish_from_object_bbox"s, [this] {
+      _entity_creation_context.finish_from_object_bbox = true;
    });
 
    _commands.add("entity_creation.activate_from_line"s,
@@ -326,11 +326,11 @@ void world_edit::initialize_hotkeys() noexcept
                               _entity_creation_context.using_from_object_bbox;
                     },
                     {
-                       {"Stop From Object BBOX",
-                        "entity_creation.deactivate_from_object_bbox",
+                       {"Complete From Object BBOX",
+                        "entity_creation.finish_from_object_bbox",
                         {.key = key::mouse1}},
-                       {"Stop From Object BBOX (Escape)",
-                        "entity_creation.deactivate_from_object_bbox",
+                       {"Complete From Object BBOX (Escape)",
+                        "entity_creation.finish_from_object_bbox",
                         {.key = key::escape}},
                     });
 

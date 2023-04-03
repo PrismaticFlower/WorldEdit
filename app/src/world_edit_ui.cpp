@@ -1865,6 +1865,12 @@ void world_edit::update_ui() noexcept
          _entity_creation_context.using_from_line = true;
       }
 
+      if (std::exchange(_entity_creation_context.finish_from_object_bbox, false)) {
+         _entity_creation_context.using_from_object_bbox = false;
+
+         place_creation_entity();
+      }
+
       const bool rotate_entity_forward =
          std::exchange(_entity_creation_context.rotate_forward, false);
       const bool rotate_entity_back =

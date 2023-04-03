@@ -234,6 +234,7 @@ private:
 
       bool finish_current_path = false;
       bool finish_current_sector = false;
+      bool finish_from_object_bbox = false;
 
       bool from_line_click = false;
 
