@@ -744,6 +744,8 @@ void world_edit::place_creation_entity() noexcept
          },
       },
       *_interaction_targets.creation_entity);
+
+   _entity_creation_config.placement_mode = placement_mode::cursor;
 }
 
 void world_edit::command_post_auto_place_meta_entities(const world::object& object) noexcept
