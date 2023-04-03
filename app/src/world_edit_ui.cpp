@@ -4113,7 +4113,8 @@ void world_edit::update_ui() noexcept
                   else if (click) {
                      place_creation_entity();
 
-                     _entity_creation_context.using_draw_barrier = false;
+                     _entity_creation_context.draw_barrier_start = std::nullopt;
+                     _entity_creation_context.draw_barrier_mid = std::nullopt;
                   }
 
                   if (_entity_creation_context.draw_barrier_start and
