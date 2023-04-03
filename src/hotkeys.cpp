@@ -124,17 +124,11 @@ void hotkeys::notify_key_up(const key key) noexcept
    _key_events.push_back({.key = key, .new_state = key_state::up});
 }
 
-void hotkeys::release_toggles() noexcept
+void hotkeys::clear_state() noexcept
 {
-   for (auto& active : _active_toggles) {
-      hotkey& hotkey = _hotkey_sets[active.set_index].bindings[active.bind];
+   release_all_toggles();
 
-      if (std::exchange(hotkey.toggle_active, false)) {
-         _commands.execute(hotkey.command);
-      }
-   }
-
-   _active_toggles.clear();
+   _keys = {};
 }
 
 void hotkeys::update(const bool imgui_has_mouse, const bool imgui_has_keyboard) noexcept
@@ -239,6 +233,19 @@ void hotkeys::validate_command(const std::string_view command)
    if (not _commands.has_command(command_name)) {
       throw unknown_command{fmt::format("Unknown command '{}'!", command_name)};
    }
+}
+
+void hotkeys::release_all_toggles() noexcept
+{
+   for (auto& active : _active_toggles) {
+      hotkey& hotkey = _hotkey_sets[active.set_index].bindings[active.bind];
+
+      if (std::exchange(hotkey.toggle_active, false)) {
+         _commands.execute(hotkey.command);
+      }
+   }
+
+   _active_toggles.clear();
 }
 
 void hotkeys::release_stale_toggles(const bool imgui_has_mouse,

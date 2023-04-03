@@ -1078,7 +1078,7 @@ void world_edit::focused()
 void world_edit::unfocused()
 {
    _focused = false;
-   _hotkeys.release_toggles();
+   _hotkeys.clear_state();
 }
 
 bool world_edit::idling() const noexcept

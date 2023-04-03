@@ -76,8 +76,8 @@ struct hotkeys {
    /// @param imgui_has_keyboard ImGui::GetIO().WantCaptureKeyboard passed through.
    void update(const bool imgui_has_mouse, const bool imgui_has_keyboard) noexcept;
 
-   /// @brief Call and clear the state for all toggle bindings.
-   void release_toggles() noexcept;
+   /// @brief Call and clear the state for all toggle bindings. Reset all keys to up state.
+   void clear_state() noexcept;
 
    /// @brief Query for the key bound to a hotkey in a set.
    /// @param set_name The name of the set.
@@ -95,6 +95,8 @@ private:
    enum class key_state : bool { up, down };
 
    void validate_command(const std::string_view command);
+
+   void release_all_toggles() noexcept;
 
    void release_stale_toggles(const bool imgui_has_mouse,
                               const bool imgui_has_keyboard) noexcept;

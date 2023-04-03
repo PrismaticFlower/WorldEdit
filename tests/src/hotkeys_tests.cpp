@@ -84,7 +84,33 @@ TEST_CASE("hotkeys modified toggle bind test", "[Hotkeys]")
    REQUIRE(not called);
 }
 
-TEST_CASE("hotkeys toggle bind release_toggles test", "[Hotkeys]")
+TEST_CASE("hotkeys toggle bind clear_state test", "[Hotkeys]")
+{
+   int called_count = 0;
+
+   commands commands;
+   null_output_stream output;
+
+   commands.add("called", [&] { ++called_count; });
+
+   hotkeys hotkeys{commands, output};
+
+   hotkeys.add_set("", [] { return true; },
+                   {{"called", "called", {.key = key::a, .modifiers = {.ctrl = true}}}});
+
+   hotkeys.notify_key_down(key::ctrl);
+   hotkeys.update(false, false);
+   hotkeys.clear_state();
+
+   REQUIRE(called_count == 0);
+
+   hotkeys.notify_key_down(key::a);
+   hotkeys.update(false, false);
+
+   REQUIRE(called_count == 0);
+}
+
+TEST_CASE("hotkeys toggle bind clear_state releases toggles test", "[Hotkeys]")
 {
    bool called = false;
    int called_count = 0;
@@ -104,7 +130,7 @@ TEST_CASE("hotkeys toggle bind release_toggles test", "[Hotkeys]")
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
-   hotkeys.release_toggles();
+   hotkeys.clear_state();
 
    REQUIRE(not called);
    REQUIRE(called_count == 2);
