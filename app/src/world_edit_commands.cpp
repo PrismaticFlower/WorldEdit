@@ -156,6 +156,16 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.from_line_click"s,
                  _entity_creation_context.from_line_click);
 
+   _commands.add("entity_creation.activate_draw_barrier"s,
+                 _entity_creation_context.activate_draw_barrier);
+   _commands.add("entity_creation.deactivate_draw_barrier"s, [this] {
+      _entity_creation_context.using_draw_barrier = false;
+      _entity_creation_context.draw_barrier_click = false;
+   });
+
+   _commands.add("entity_creation.draw_barrier_click"s,
+                 _entity_creation_context.draw_barrier_click);
+
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
    _commands.add("entity_creation.lock_z_axis"s, _entity_creation_context.lock_z_axis);
@@ -275,6 +285,9 @@ void world_edit::initialize_hotkeys() noexcept
          {"Start From Line",
           "entity_creation.activate_from_line",
           {.key = key::f, .modifiers = {.ctrl = true}}},
+         {"Start Draw Barrier",
+          "entity_creation.activate_draw_barrier",
+          {.key = key::d, .modifiers = {.ctrl = true}}},
 
          {"Lock X Axis", "entity_creation.lock_x_axis", {.key = key::z}},
          {"Lock Y Axis", "entity_creation.lock_y_axis", {.key = key::x}},
@@ -345,6 +358,20 @@ void world_edit::initialize_hotkeys() noexcept
                         {.key = key::mouse1}},
                        {"Stop From Line (Escape)",
                         "entity_creation.deactivate_from_line",
+                        {.key = key::escape}},
+                    });
+
+   _hotkeys.add_set("Entity Creation (Draw Barrier)",
+                    [this] {
+                       return _interaction_targets.creation_entity and
+                              _entity_creation_context.using_draw_barrier;
+                    },
+                    {
+                       {"Draw Barrier",
+                        "entity_creation.draw_barrier_click",
+                        {.key = key::mouse1}},
+                       {"Stop Draw Barrier",
+                        "entity_creation.deactivate_draw_barrier",
                         {.key = key::escape}},
                     });
 }

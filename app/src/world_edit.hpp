@@ -225,18 +225,21 @@ private:
       bool activate_shrink_to = false;
       bool activate_from_object_bbox = false;
       bool activate_from_line = false;
+      bool activate_draw_barrier = false;
 
       bool using_point_at = false;
       bool using_extend_to = false;
       bool using_shrink_to = false;
       bool using_from_object_bbox = false;
       bool using_from_line = false;
+      bool using_draw_barrier = false;
 
       bool finish_current_path = false;
       bool finish_current_sector = false;
       bool finish_from_object_bbox = false;
 
       bool from_line_click = false;
+      bool draw_barrier_click = false;
 
       bool auto_fill_sector = false;
 
@@ -251,6 +254,9 @@ private:
       std::optional<float> resize_portal_start_height;
 
       std::optional<float3> from_line_start;
+
+      std::optional<float3> draw_barrier_start;
+      std::optional<float3> draw_barrier_mid;
    } _entity_creation_context;
 
    struct entity_creation_config {
