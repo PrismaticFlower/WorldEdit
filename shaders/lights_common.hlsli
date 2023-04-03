@@ -101,7 +101,7 @@ uint select_shadow_map_cascade(float3 positionWS)
 {
    uint cascade_index = (shadow_cascade_count - 1);
 
-   [unroll] for (int i = (shadow_cascade_count - 1); i >= 0; --i)
+   [unroll] for (int i = (shadow_cascade_count - 2); i >= 0; --i)
    {
       float3 positionLS = mul(light_constants.shadow_cascade_transforms[i], float4(positionWS, 1.0)).xyz;
 
