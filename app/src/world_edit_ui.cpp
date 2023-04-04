@@ -242,6 +242,7 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.objects = true;
          }
 
          if (ImGui::MenuItem("Light")) {
@@ -266,6 +267,7 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.lights = true;
          }
 
          if (ImGui::MenuItem("Path")) {
@@ -282,6 +284,7 @@ void world_edit::update_ui() noexcept
                          _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.paths = true;
          }
 
          if (ImGui::MenuItem("Region")) {
@@ -308,6 +311,7 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.regions = true;
          }
 
          if (ImGui::MenuItem("Sector")) {
@@ -326,6 +330,7 @@ void world_edit::update_ui() noexcept
                          _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.sectors = true;
          }
 
          if (ImGui::MenuItem("Portal")) {
@@ -350,6 +355,7 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.portals = true;
          }
 
          if (ImGui::MenuItem("Hintnode")) {
@@ -374,6 +380,7 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.hintnodes = true;
          }
 
          if (ImGui::MenuItem("Barrier")) {
@@ -398,6 +405,7 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.barriers = true;
          }
 
          if (ImGui::MenuItem("AI Planning Hub")) {
@@ -423,13 +431,12 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.planning_hubs = true;
+            _world_draw_mask.planning_connections = true;
          }
 
          if (ImGui::MenuItem("AI Planning Connection") and
              not _world.planning_hubs.empty()) {
-            _world_draw_mask.planning_hubs = true;
-            _world_draw_mask.planning_connections = true;
-
             const world::planning_connection* base_connection =
                world::find_entity(_world.planning_connections,
                                   _last_created_entities.last_planning_connection);
@@ -457,6 +464,8 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.planning_hubs = true;
+            _world_draw_mask.planning_connections = true;
          }
 
          if (ImGui::MenuItem("Boundary")) {
@@ -482,6 +491,7 @@ void world_edit::update_ui() noexcept
                                                       _interaction_targets.creation_entity),
                       _edit_context);
             _entity_creation_context = {};
+            _world_draw_mask.boundaries = true;
          }
 
          ImGui::EndMenu();
