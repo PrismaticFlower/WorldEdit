@@ -116,7 +116,9 @@ private:
                                      const settings::graphics& settings,
                                      gpu::copy_command_list& command_list);
 
-   void draw_world(const frustum& view_frustum, gpu::graphics_command_list& command_list);
+   void draw_world(const frustum& view_frustum,
+                   const world::active_entity_types active_entity_types,
+                   gpu::graphics_command_list& command_list);
 
    void draw_world_render_list_depth_prepass(const std::vector<uint16>& list,
                                              gpu::graphics_command_list& command_list);
@@ -406,7 +408,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
 
    // Render World
-   if (active_entity_types.objects) draw_world(view_frustum, command_list);
+   draw_world(view_frustum, active_entity_types, command_list);
 
    // Render World Meta Objects
    _meta_draw_batcher.clear();
@@ -521,16 +523,17 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 }
 
 void renderer_impl::draw_world(const frustum& view_frustum,
+                               const world::active_entity_types active_entity_types,
                                gpu::graphics_command_list& command_list)
 {
-   {
+   if (active_entity_types.objects) {
       profile_section profile{"World - Draw Render List Depth Prepass",
                               command_list, _profiler, profiler_queue::direct};
 
       draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
    }
 
-   {
+   if (active_entity_types.terrain) {
       profile_section profile{"Terrain - Draw Depth Prepass", command_list,
                               _profiler, profiler_queue::direct};
 
@@ -540,14 +543,14 @@ void renderer_impl::draw_world(const frustum& view_frustum,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
    }
 
-   {
+   if (active_entity_types.objects) {
       profile_section profile{"World - Draw Opaque", command_list, _profiler,
                               profiler_queue::direct};
 
       draw_world_render_list(_opaque_object_render_list, command_list);
    }
 
-   {
+   if (active_entity_types.terrain) {
       profile_section profile{"Terrain - Draw", command_list, _profiler,
                               profiler_queue::direct};
 
@@ -556,7 +559,7 @@ void renderer_impl::draw_world(const frustum& view_frustum,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
    }
 
-   {
+   if (active_entity_types.objects) {
       profile_section profile{"World - Draw Transparent", command_list,
                               _profiler, profiler_queue::direct};
 

@@ -604,6 +604,9 @@ void world_edit::update_ui() noexcept
    if (ImGui::Selectable("Boundaries", _world_draw_mask.boundaries)) {
       _world_draw_mask.boundaries = not _world_draw_mask.boundaries;
    }
+   if (ImGui::Selectable("Terrain", _world_draw_mask.terrain)) {
+      _world_draw_mask.terrain = not _world_draw_mask.terrain;
+   }
 
    ImGui::EndChild();
 

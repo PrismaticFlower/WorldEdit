@@ -308,8 +308,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   // TODO: Unique terrain mask.
-   if (raycast_mask.objects) {
+   if (raycast_mask.terrain) {
       if (auto hit = _terrain_collision.raycast(ray.origin, ray.direction); hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = std::nullopt;
