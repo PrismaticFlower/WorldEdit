@@ -66,7 +66,7 @@ GlobalLights()
 	Light1("sun");
 	Light2("");
 	Top(255, 255, 255);
-	Bottom(0, 0, 0);
+	Bottom(128, 128, 128);
 }
 )"sv;
 
@@ -592,7 +592,7 @@ TEST_CASE("world saving", "[World][IO]")
       .global_lights = {.global_light_1 = "sun",
                         .global_light_2 = "",
                         .ambient_sky_color = {1.0f, 1.0f, 1.0f},
-                        .ambient_ground_color = {0.0f, 0.0f, 0.0f}},
+                        .ambient_ground_color = {0.5f, 0.5f, 0.5f}},
 
       .objects = {object{.name = "object",
 

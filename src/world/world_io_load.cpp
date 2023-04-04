@@ -5,7 +5,6 @@
 #include "assets/terrain/terrain_io.hpp"
 #include "io/read_file.hpp"
 #include "math/vector_funcs.hpp"
-#include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
 #include "utility/string_ops.hpp"
 
@@ -320,14 +319,14 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
                key_node.at("Light1"sv).values.get<std::string>(0);
             world_out.global_lights.global_light_2 =
                key_node.at("Light2"sv).values.get<std::string>(0);
-            world_out.global_lights.ambient_sky_color = utility::decompress_srgb(
+            world_out.global_lights.ambient_sky_color =
                float3{key_node.at("Top"sv).values.get<float>(0) / 255.0f,
                       key_node.at("Top"sv).values.get<float>(1) / 255.0f,
-                      key_node.at("Top"sv).values.get<float>(2) / 255.0f});
-            world_out.global_lights.ambient_ground_color = utility::decompress_srgb(
+                      key_node.at("Top"sv).values.get<float>(2) / 255.0f};
+            world_out.global_lights.ambient_ground_color =
                float3{key_node.at("Bottom"sv).values.get<float>(0) / 255.0f,
                       key_node.at("Bottom"sv).values.get<float>(1) / 255.0f,
-                      key_node.at("Bottom"sv).values.get<float>(2) / 255.0f});
+                      key_node.at("Bottom"sv).values.get<float>(2) / 255.0f};
 
             if (auto env_map = key_node.find("EnvMap"sv); env_map != key_node.cend()) {
                world_out.global_lights.env_map_texture =

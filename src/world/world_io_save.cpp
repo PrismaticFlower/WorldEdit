@@ -14,7 +14,6 @@
 
 #include "assets/terrain/terrain_io.hpp"
 #include "io/output_file.hpp"
-#include "utility/srgb_conversion.hpp"
 
 using namespace std::literals;
 
@@ -486,10 +485,8 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
    }
 
    if (layer_index == 0) {
-      auto ambient_sky_color =
-         utility::compress_srgb(world.global_lights.ambient_sky_color);
-      auto ambient_ground_color =
-         utility::compress_srgb(world.global_lights.ambient_ground_color);
+      const float3 ambient_sky_color = world.global_lights.ambient_sky_color;
+      const float3 ambient_ground_color = world.global_lights.ambient_ground_color;
 
       file.write_ln("GlobalLights()");
       file.write_ln("{");
