@@ -542,7 +542,7 @@ void world_edit::update_ui() noexcept
    }
 
    ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});
-   ImGui::SetNextWindowSize({224.0f * _display_scale, 512.0f * _display_scale});
+   ImGui::SetNextWindowSize({224.0f * _display_scale, 568.0f * _display_scale});
 
    ImGui::Begin("World Active Context", nullptr,
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -561,55 +561,222 @@ void world_edit::update_ui() noexcept
    ImGui::EndChild();
 
    ImGui::SeparatorText("Active Entities");
-   ImGui::BeginChild("Active Entities", ImVec2{0.0f, 224.0f * _display_scale});
+   ImGui::BeginChild("Active Entities", ImVec2{0.0f, 288.0f * _display_scale});
 
-   if (ImGui::Selectable("Objects", _world_draw_mask.objects)) {
-      _world_draw_mask.objects = not _world_draw_mask.objects;
-   }
+   if (ImGui::BeginTable("Active Entities", 3, ImGuiTableFlags_SizingStretchProp)) {
+      ImGui::TableNextRow();
 
-   if (ImGui::Selectable("Lights", _world_draw_mask.lights)) {
-      _world_draw_mask.lights = not _world_draw_mask.lights;
-   }
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Objects");
 
-   if (ImGui::Selectable("Paths", _world_draw_mask.paths)) {
-      _world_draw_mask.paths = not _world_draw_mask.paths;
-   }
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.objects;
+          ImGui::Checkbox("Draw##Objects", &draw)) {
+         _world_draw_mask.objects = draw;
+         if (not draw) _world_hit_mask.objects = false;
+      }
 
-   if (ImGui::Selectable("Regions", _world_draw_mask.regions)) {
-      _world_draw_mask.regions = not _world_draw_mask.regions;
-   }
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.objects; ImGui::Checkbox("Hit##Objects", &hit)) {
+         _world_hit_mask.objects = hit;
+         if (hit) _world_draw_mask.objects = true;
+      }
 
-   if (ImGui::Selectable("Sectors", _world_draw_mask.sectors)) {
-      _world_draw_mask.sectors = not _world_draw_mask.sectors;
-   }
+      ImGui::TableNextRow();
 
-   if (ImGui::Selectable("Portals", _world_draw_mask.portals)) {
-      _world_draw_mask.portals = not _world_draw_mask.portals;
-   }
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Lights");
 
-   if (ImGui::Selectable("Hintnodes", _world_draw_mask.hintnodes)) {
-      _world_draw_mask.hintnodes = not _world_draw_mask.hintnodes;
-   }
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.lights; ImGui::Checkbox("Draw##Lights", &draw)) {
+         _world_draw_mask.lights = draw;
+         if (not draw) _world_hit_mask.lights = false;
+      }
 
-   if (ImGui::Selectable("Barriers", _world_draw_mask.barriers)) {
-      _world_draw_mask.barriers = not _world_draw_mask.barriers;
-   }
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.lights; ImGui::Checkbox("Hit##Lights", &hit)) {
+         _world_hit_mask.lights = hit;
+         if (hit) _world_draw_mask.lights = true;
+      }
 
-   if (ImGui::Selectable("AI Planning", _world_draw_mask.planning_hubs or
-                                           _world_draw_mask.planning_connections)) {
-      _world_draw_mask.planning_hubs = not _world_draw_mask.planning_hubs;
-      _world_draw_mask.planning_connections = not _world_draw_mask.planning_connections;
-   }
+      ImGui::TableNextRow();
 
-   if (ImGui::Selectable("Boundaries", _world_draw_mask.boundaries)) {
-      _world_draw_mask.boundaries = not _world_draw_mask.boundaries;
-   }
-   if (ImGui::Selectable("Terrain", _world_draw_mask.terrain)) {
-      _world_draw_mask.terrain = not _world_draw_mask.terrain;
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Paths");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.paths; ImGui::Checkbox("Draw##Paths", &draw)) {
+         _world_draw_mask.paths = draw;
+         if (not draw) _world_hit_mask.paths = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.paths; ImGui::Checkbox("Hit##Paths", &hit)) {
+         _world_hit_mask.paths = hit;
+         if (hit) _world_draw_mask.paths = true;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Regions");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.regions;
+          ImGui::Checkbox("Draw##Regions", &draw)) {
+         _world_draw_mask.regions = draw;
+         if (not draw) _world_hit_mask.regions = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.regions; ImGui::Checkbox("Hit##Regions", &hit)) {
+         _world_hit_mask.regions = hit;
+         if (hit) _world_draw_mask.regions = true;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Sectors");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.sectors;
+          ImGui::Checkbox("Draw##Sectors", &draw)) {
+         _world_draw_mask.sectors = draw;
+         if (not draw) _world_hit_mask.sectors = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.sectors; ImGui::Checkbox("Hit##Sectors", &hit)) {
+         _world_hit_mask.sectors = hit;
+         if (hit) _world_draw_mask.sectors = true;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Portals");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.portals;
+          ImGui::Checkbox("Draw##Portals", &draw)) {
+         _world_draw_mask.portals = draw;
+         if (not draw) _world_hit_mask.portals = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.portals; ImGui::Checkbox("Hit##Portals", &hit)) {
+         _world_hit_mask.portals = hit;
+         if (hit) _world_draw_mask.portals = true;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Hintnodes");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.hintnodes;
+          ImGui::Checkbox("Draw##Hintnodes", &draw)) {
+         _world_draw_mask.hintnodes = draw;
+         if (not draw) _world_hit_mask.hintnodes = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.hintnodes;
+          ImGui::Checkbox("Hit##Hintnodes", &hit)) {
+         _world_hit_mask.hintnodes = hit;
+         if (hit) _world_draw_mask.hintnodes = true;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Barriers");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.barriers;
+          ImGui::Checkbox("Draw##Barriers", &draw)) {
+         _world_draw_mask.barriers = draw;
+         if (not draw) _world_hit_mask.barriers = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.barriers; ImGui::Checkbox("Hit##Barriers", &hit)) {
+         _world_hit_mask.barriers = hit;
+         if (hit) _world_draw_mask.barriers = true;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("AI Planning");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.planning_hubs or _world_draw_mask.planning_connections;
+          ImGui::Checkbox("Draw##AI Planning", &draw)) {
+         _world_draw_mask.planning_hubs = draw;
+         _world_draw_mask.planning_connections = draw;
+
+         if (not draw) {
+            _world_hit_mask.planning_hubs = false;
+            _world_hit_mask.planning_connections = false;
+         }
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.planning_hubs or _world_hit_mask.planning_connections;
+          ImGui::Checkbox("Hit##AI Planning", &hit)) {
+         _world_hit_mask.planning_hubs = hit;
+         _world_hit_mask.planning_connections = hit;
+
+         if (hit) {
+            _world_draw_mask.planning_hubs = true;
+            _world_draw_mask.planning_connections = true;
+         }
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Boundaries");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.boundaries;
+          ImGui::Checkbox("Draw##Boundaries", &draw)) {
+         _world_draw_mask.boundaries = draw;
+         if (not draw) _world_hit_mask.boundaries = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.boundaries;
+          ImGui::Checkbox("Hit##Boundaries", &hit)) {
+         _world_hit_mask.boundaries = hit;
+         if (hit) _world_draw_mask.boundaries = true;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted("Terrain");
+
+      ImGui::TableNextColumn();
+      if (bool draw = _world_draw_mask.terrain;
+          ImGui::Checkbox("Draw##Terrain", &draw)) {
+         _world_draw_mask.terrain = draw;
+         if (not draw) _world_hit_mask.terrain = false;
+      }
+
+      ImGui::TableNextColumn();
+      if (bool hit = _world_hit_mask.terrain; ImGui::Checkbox("Hit##Terrain", &hit)) {
+         _world_hit_mask.terrain = hit;
+         if (hit) _world_draw_mask.terrain = true;
+      }
+
+      ImGui::EndTable();
    }
 
    ImGui::EndChild();
-
    ImGui::End();
 
    if (_hotkeys_view_show) {

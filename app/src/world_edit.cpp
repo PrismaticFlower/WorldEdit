@@ -163,15 +163,14 @@ void world_edit::update_hovered_entity() noexcept
 
    if (ImGui::GetIO().WantCaptureMouse) return;
 
-   // TODO: interaction mask instead of reusing draw mask
-
-   world::active_entity_types raycast_mask = _world_draw_mask;
+   world::active_entity_types raycast_mask = _world_hit_mask;
 
    if (_interaction_targets.creation_entity and
        std::holds_alternative<world::planning_connection>(
           *_interaction_targets.creation_entity)) {
-      raycast_mask =
-         world::active_entity_types{.objects = false, .planning_hubs = true};
+      raycast_mask = world::active_entity_types{.objects = false,
+                                                .planning_hubs = true,
+                                                .terrain = false};
    }
 
    if (raycast_mask.objects) {
