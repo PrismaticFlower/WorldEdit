@@ -154,6 +154,7 @@ private:
    world::active_entity_types _world_draw_mask;
    world::active_entity_types _world_hit_mask;
    world::active_layers _world_layers_draw_mask{true};
+   world::active_layers _world_layers_hit_mask{true};
    world::terrain_collision _terrain_collision;
    world::tool_visualizers _tool_visualizers;
 

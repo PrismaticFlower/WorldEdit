@@ -175,7 +175,7 @@ void world_edit::update_hovered_entity() noexcept
 
    if (raycast_mask.objects) {
       if (std::optional<world::raycast_result<world::object>> hit =
-             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+             world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
                             _world.objects, _object_classes);
           hit) {
          if (hit->distance < hovered_entity_distance) {
@@ -188,7 +188,7 @@ void world_edit::update_hovered_entity() noexcept
 
    if (raycast_mask.lights) {
       if (std::optional<world::raycast_result<world::light>> hit =
-             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+             world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
                             _world.lights);
           hit) {
          if (hit->distance < hovered_entity_distance) {
@@ -200,7 +200,7 @@ void world_edit::update_hovered_entity() noexcept
 
    if (raycast_mask.paths) {
       if (std::optional<world::raycast_result<world::path>> hit =
-             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+             world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
                             _world.paths);
           hit) {
          if (hit->distance < hovered_entity_distance) {
@@ -213,7 +213,7 @@ void world_edit::update_hovered_entity() noexcept
 
    if (raycast_mask.regions) {
       if (std::optional<world::raycast_result<world::region>> hit =
-             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+             world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
                             _world.regions);
           hit) {
          if (hit->distance < hovered_entity_distance) {
@@ -248,7 +248,7 @@ void world_edit::update_hovered_entity() noexcept
 
    if (raycast_mask.hintnodes) {
       if (std::optional<world::raycast_result<world::hintnode>> hit =
-             world::raycast(ray.origin, ray.direction, _world_layers_draw_mask,
+             world::raycast(ray.origin, ray.direction, _world_layers_hit_mask,
                             _world.hintnodes);
           hit) {
          if (hit->distance < hovered_entity_distance) {
@@ -1014,7 +1014,9 @@ void world_edit::close_world() noexcept
    _interaction_targets = {};
    _entity_creation_context = {};
    _world_draw_mask = {};
+   _world_hit_mask = {};
    _world_layers_draw_mask = {true};
+   _world_layers_hit_mask = {true};
    _world_path.clear();
 
    _terrain_collision = {};

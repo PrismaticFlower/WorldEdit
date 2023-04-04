@@ -551,11 +551,48 @@ void world_edit::update_ui() noexcept
    ImGui::SeparatorText("Active Layers");
    ImGui::BeginChild("Active Layers", ImVec2{0.0f, 208.0f * _display_scale});
 
-   for (std::size_t i = 0; i < _world.layer_descriptions.size(); ++i) {
-      if (ImGui::Selectable(_world.layer_descriptions[i].name.c_str(),
-                            _world_layers_draw_mask[i])) {
-         _world_layers_draw_mask[i] = not _world_layers_draw_mask[i];
+   if (ImGui::BeginTable("Active Layers", 3, ImGuiTableFlags_SizingStretchProp)) {
+      for (int i = 0; i < _world.layer_descriptions.size(); ++i) {
+         ImGui::PushID(i);
+
+         ImGui::TableNextRow();
+
+         ImGui::TableNextColumn();
+         const std::string& name = _world.layer_descriptions[i].name;
+
+         if (name.size() < 12) {
+            ImGui::TextUnformatted(name.c_str(),
+                                   name.c_str() + std::min(name.size(), 11ull));
+         }
+         else {
+            std::array<char, 11> faded_name{};
+
+            std::memcpy(faded_name.data(), name.data(), faded_name.size());
+
+            faded_name[8] = faded_name[9] = faded_name[10] = '.';
+
+            ImGui::TextUnformatted(faded_name.data(),
+                                   faded_name.data() + faded_name.size());
+         }
+
+         if (ImGui::IsItemHovered()) ImGui::SetTooltip(name.c_str());
+
+         ImGui::TableNextColumn();
+         if (bool draw = _world_layers_draw_mask[i]; ImGui::Checkbox("Draw", &draw)) {
+            _world_layers_draw_mask[i] = draw;
+            if (not draw) _world_layers_hit_mask[i] = false;
+         }
+
+         ImGui::TableNextColumn();
+         if (bool hit = _world_layers_hit_mask[i]; ImGui::Checkbox("Hit", &hit)) {
+            _world_layers_hit_mask[i] = hit;
+            if (hit) _world_layers_draw_mask[i] = true;
+         }
+
+         ImGui::PopID();
       }
+
+      ImGui::EndTable();
    }
 
    ImGui::EndChild();
