@@ -284,6 +284,8 @@ private:
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
 
+   float _editor_floor_height = 0.0f;
+
    commands _commands;
    hotkeys _hotkeys{_commands, _stream};
 

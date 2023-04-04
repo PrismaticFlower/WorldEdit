@@ -552,7 +552,7 @@ void world_edit::update_ui() noexcept
    }
 
    ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});
-   ImGui::SetNextWindowSize({224.0f * _display_scale, 568.0f * _display_scale});
+   ImGui::SetNextWindowSize({224.0f * _display_scale, 620.0f * _display_scale});
 
    ImGui::Begin("World Active Context", nullptr,
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -824,6 +824,17 @@ void world_edit::update_ui() noexcept
    }
 
    ImGui::EndChild();
+
+   ImGui::SeparatorText("Floor Collision");
+   ImGui::DragFloat("Height", &_editor_floor_height, 1.0f,
+                    _world.terrain.height_scale * 32768.0f, 1e10f);
+
+   if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip(
+         "Height of the editor's 'floor' collision. Used when nothing else is "
+         "hit. Useful for space maps and anything you can think of for it!");
+   }
+
    ImGui::End();
 
    if (_hotkeys_view_show) {

@@ -316,6 +316,15 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
+   if (hovered_entity_distance == std::numeric_limits<float>::max()) {
+      if (float hit = -(dot(ray.origin, float3{0.0f, 1.0f, 0.0f}) - _editor_floor_height) /
+                      dot(ray.direction, float3{0.0f, 1.0f, 0.0f});
+          hit > 0.0f) {
+         _interaction_targets.hovered_entity = std::nullopt;
+         hovered_entity_distance = hit;
+      }
+   }
+
    if (hovered_entity_distance != std::numeric_limits<float>::max()) {
       _cursor_positionWS = ray.origin + ray.direction * hovered_entity_distance;
    }
