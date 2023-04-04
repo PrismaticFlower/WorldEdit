@@ -5839,10 +5839,22 @@ void world_edit::update_ui() noexcept
                           0.005f, 1.0f, 1000.0f);
 
          ImGui::SeparatorText("Sensitivity");
-         ImGui::DragFloat("Look Sensitivity", &_settings.camera.look_sensitivity,
-                          0.001f, 0.00001f, 1000.0f);
-         ImGui::DragFloat("Pan Sensitivity", &_settings.camera.pan_sensitivity,
-                          0.005f, 0.00001f, 1000.0f);
+
+         if (float scaled_sensitivity =
+                std::pow(_settings.camera.look_sensitivity, 1.0f / 6.0f) * 10.0f;
+             ImGui::SliderFloat("Look Sensitivity", &scaled_sensitivity, 1.0f,
+                                10.0f, "%.1f")) {
+            _settings.camera.look_sensitivity =
+               std::pow(scaled_sensitivity / 10.0f, 6.0f);
+         }
+
+         if (float scaled_sensitivity =
+                std::pow(_settings.camera.pan_sensitivity, 1.0f / 4.0f) * 10.0f;
+             ImGui::SliderFloat("Pan Sensitivity", &scaled_sensitivity, 1.0f,
+                                10.0f, "%.1f")) {
+            _settings.camera.pan_sensitivity =
+               std::pow(scaled_sensitivity / 10.0f, 4.0f);
+         }
 
          ImGui::SeparatorText("View");
 
