@@ -5519,11 +5519,16 @@ void world_edit::update_ui() noexcept
             ImGui::PushItemWidth(std::floor((ImGui::GetContentRegionAvail().x) / 4.0f));
             ImGui::InputTextWithHint("Name Filter", "e.g. spawn",
                                      &_world_explorer_filter);
+            ImGui::SameLine();
+            ImGui::Checkbox("Show All Nodes", &_world_explorer_path_show_all_nodes);
             ImGui::PopItemWidth();
 
-            if (ImGui::BeginTable("Paths", 4,
+            const bool show_all_nodes = _world_explorer_path_show_all_nodes;
+
+            if (ImGui::BeginTable("Paths", show_all_nodes ? 5 : 4,
                                   ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollY)) {
                ImGui::TableSetupColumn("Name");
+               if (show_all_nodes) ImGui::TableSetupColumn("Node");
                ImGui::TableSetupColumn("Nodes");
                ImGui::TableSetupColumn("Layer");
                ImGui::TableSetupColumn("ID");
@@ -5535,26 +5540,37 @@ void world_edit::update_ui() noexcept
                      continue;
                   }
 
-                  const bool is_selected =
-                     world::is_selected(path.id, _interaction_targets);
-                  bool select = false;
+                  for (int i = 0; i < (show_all_nodes ? path.nodes.size() : 1); ++i) {
+                     const bool is_selected =
+                        world::is_selected(path.id, _interaction_targets);
+                     bool select = false;
 
-                  ImGui::TableNextRow();
+                     ImGui::PushID(i);
 
-                  ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(path.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
-                  ImGui::TableNextColumn();
-                  ImGui::Text("%i", static_cast<int>(path.nodes.size()));
-                  ImGui::TableNextColumn();
-                  ImGui::Text(_world.layer_descriptions[path.layer].name.c_str());
-                  ImGui::TableNextColumn();
-                  ImGui::Text("%i", static_cast<int>(path.id));
+                     ImGui::TableNextRow();
 
-                  if (select and path.nodes.size() != 0) {
-                     _interaction_targets.selection.clear();
-                     _interaction_targets.selection.emplace_back(
-                        world::path_id_node_pair{path.id, 0});
+                     ImGui::TableNextColumn();
+                     select |= ImGui::Selectable(path.name.c_str(), is_selected,
+                                                 ImGuiSelectableFlags_SpanAllColumns);
+                     if (show_all_nodes) {
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%i", i);
+                     }
+                     ImGui::TableNextColumn();
+                     ImGui::Text("%i", static_cast<int>(path.nodes.size()));
+                     ImGui::TableNextColumn();
+                     ImGui::Text(_world.layer_descriptions[path.layer].name.c_str());
+                     ImGui::TableNextColumn();
+                     ImGui::Text("%i", static_cast<int>(path.id));
+
+                     if (select and path.nodes.size() != 0) {
+                        _interaction_targets.selection.clear();
+                        _interaction_targets.selection.emplace_back(
+                           world::path_id_node_pair{path.id,
+                                                    static_cast<std::size_t>(i)});
+                     }
+
+                     ImGui::PopID();
                   }
                }
 

@@ -196,6 +196,8 @@ private:
 
    std::vector<lowercase_string> _world_explorer_object_classes;
 
+   bool _world_explorer_path_show_all_nodes;
+
    POINT _rotate_camera_cursor_position = {0, 0};
 
    struct last_created_entities {
