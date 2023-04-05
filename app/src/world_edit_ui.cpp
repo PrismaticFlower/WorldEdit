@@ -193,21 +193,38 @@ void world_edit::update_ui() noexcept
                               "hotkeys during editing.");
          }
 
-         ImGui::MenuItem("Camera Controls", nullptr, &_camera_controls_open);
+         ImGui::MenuItem("Camera Controls",
+                         get_display_string(
+                            _hotkeys.query_binding("", "Show Camera Controls")),
+                         &_camera_controls_open);
 
          ImGui::Separator();
 
-         ImGui::MenuItem("World Global Lights Editor", nullptr,
+         ImGui::MenuItem("World Global Lights Editor",
+                         get_display_string(_hotkeys.query_binding(
+                            "", "Show World Global Lights Editor")),
                          &_world_global_lights_editor_open);
 
-         ImGui::MenuItem("World Layers Editor", nullptr, &_world_layers_editor_open);
+         ImGui::MenuItem("World Layers Editor",
+                         get_display_string(
+                            _hotkeys.query_binding("",
+                                                   "Show World Layers Editor")),
+                         &_world_layers_editor_open);
 
-         ImGui::MenuItem("World Game Mode Editor", nullptr,
+         ImGui::MenuItem("World Game Mode Editor",
+                         get_display_string(_hotkeys.query_binding(
+                            "", "Show World Game Mode Editor")),
                          &_world_game_mode_editor_open);
 
-         ImGui::MenuItem("World Explorer", nullptr, &_world_explorer_open);
+         ImGui::MenuItem("World Explorer",
+                         get_display_string(
+                            _hotkeys.query_binding("", "Show World Explorer")),
+                         &_world_explorer_open);
 
-         ImGui::MenuItem("World Stats", nullptr, &_world_stats_open);
+         ImGui::MenuItem("World Stats",
+                         get_display_string(
+                            _hotkeys.query_binding("", "Show World Stats")),
+                         &_world_stats_open);
 
          if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Display a window showing basic world stats such "

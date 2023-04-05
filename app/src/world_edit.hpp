@@ -1,3 +1,4 @@
+#pragma once
 
 #include "assets/asset_libraries.hpp"
 #include "async/thread_pool.hpp"

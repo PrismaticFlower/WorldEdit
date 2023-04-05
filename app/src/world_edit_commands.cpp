@@ -75,7 +75,13 @@ void world_edit::initialize_commands() noexcept
    _commands.add("edit.redo"s, [this]() { redo(); });
    _commands.add("edit.delete"s, [this]() { delete_selected(); });
 
-   _commands.add("hotkeys.show"s, _hotkeys_view_show);
+   _commands.add("show.hotkeys"s, _hotkeys_view_show);
+   _commands.add("show.camera_controls"s, _camera_controls_open);
+   _commands.add("show.world_global_lights_editor"s, _world_global_lights_editor_open);
+   _commands.add("show.world_layers_editor"s, _world_layers_editor_open);
+   _commands.add("show.world_game_mode_editor"s, _world_game_mode_editor_open);
+   _commands.add("show.world_explorer"s, _world_explorer_open);
+   _commands.add("show.world_stats"s, _world_stats_open);
 
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
@@ -251,7 +257,16 @@ void world_edit::initialize_hotkeys() noexcept
          {"Redo", "edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
          {"Delete", "edit.delete", {.key = key::del}},
 
-         {"Show Hotkeys", "hotkeys.show", {.key = key::f1}},
+         {"Show Hotkeys", "show.hotkeys", {.key = key::f1}},
+         {"Show Camera Controls", "show.camera_controls", {.key = key::f2}},
+
+         {"Show World Global Lights Editor",
+          "show.world_global_lights_editor",
+          {.key = key::f4}},
+         {"Show World Layers Editor", "show.world_layers_editor", {.key = key::f5}},
+         {"Show World Game Mode Editor", "show.world_game_mode_editor", {.key = key::f6}},
+         {"Show World Explorer", "show.world_explorer", {.key = key::f7}},
+         {"Show World Stats", "show.world_stats", {.key = key::f8}},
 
          {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
       });
