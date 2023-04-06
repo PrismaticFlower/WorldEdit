@@ -211,6 +211,7 @@
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
     <ClCompile Include="src\edits\add_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
+    <ClCompile Include="src\edits\bundle_tests.cpp" />
     <ClCompile Include="src\edits\delete_entity_tests.cpp" />
     <ClCompile Include="src\edits\delete_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\delete_layer_tests.cpp" />

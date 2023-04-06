@@ -210,6 +210,7 @@
     <ClCompile Include="src\edits\add_game_mode.cpp" />
     <ClCompile Include="src\edits\add_layer.cpp" />
     <ClCompile Include="src\edits\add_property.cpp" />
+    <ClCompile Include="src\edits\bundle.cpp" />
     <ClCompile Include="src\edits\creation_entity_set.cpp" />
     <ClCompile Include="src\edits\delete_entity.cpp" />
     <ClCompile Include="src\edits\delete_game_mode.cpp" />
@@ -350,6 +351,7 @@
     <ClInclude Include="src\container\paged_stack.hpp" />
     <ClInclude Include="src\edits\add_game_mode.hpp" />
     <ClInclude Include="src\edits\add_layer.hpp" />
+    <ClInclude Include="src\edits\bundle.hpp" />
     <ClInclude Include="src\edits\creation_entity_set.hpp" />
     <ClInclude Include="src\edits\delete_entity.hpp" />
     <ClInclude Include="src\edits\delete_game_mode.hpp" />
