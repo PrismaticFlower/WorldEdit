@@ -6244,7 +6244,17 @@ void world_edit::update_ui() noexcept
 
                if (not sector) return;
 
-               _stream.write("Pretending to move sector\n");
+               std::vector<float2> new_points = sector->points;
+
+               for (auto& point : new_points) {
+                  point += float2{move_delta.x, move_delta.z};
+               }
+
+               _edit_stack_world.apply(edits::make_set_value(sector->id,
+                                                             &world::sector::points,
+                                                             std::move(new_points),
+                                                             sector->points),
+                                       _edit_context);
             }
             else if (std::holds_alternative<world::portal_id>(selected)) {
                const world::portal* portal =
