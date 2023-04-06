@@ -25,16 +25,33 @@ TEST_CASE("edits set_value", "[Edits]")
    REQUIRE(world.objects[0].layer == 0);
 }
 
+TEST_CASE("edits set_path_node_value", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   set_path_node_value edit{world.paths[0].id, 0, &world::path::node::position,
+                            float3{1.0f, 1.0f, 1.0f}, float3{0.0f, 0.0f, 0.0f}};
+
+   edit.apply(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{1.0f, 1.0f, 1.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
+}
+
 TEST_CASE("edits set_global_lights_value", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit =
-      make_set_global_lights_value(&world::global_lights::env_map_texture,
-                                       "starfield"s,
-                                       world.global_lights.env_map_texture);
+   auto edit = make_set_global_lights_value(&world::global_lights::env_map_texture,
+                                            "starfield"s,
+                                            world.global_lights.env_map_texture);
 
    edit->apply(edit_context);
 
@@ -328,20 +345,42 @@ TEST_CASE("edits set_value coalesce", "[Edits]")
    REQUIRE(world.objects[0].layer == 0);
 }
 
+TEST_CASE("edits set_path_node_value coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   set_path_node_value edit{world.paths[0].id, 0, &world::path::node::position,
+                            float3{1.0f, 1.0f, 1.0f}, float3{0.0f, 0.0f, 0.0f}};
+   set_path_node_value other_edit{world.paths[0].id, 0, &world::path::node::position,
+                                  float3{2.0f, 2.0f, 2.0f}, float3{1.0f, 1.0f, 1.0f}};
+
+   REQUIRE(edit.is_coalescable(other_edit));
+
+   edit.coalesce(other_edit);
+
+   edit.apply(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{2.0f, 2.0f, 2.0f});
+
+   edit.revert(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
+}
+
 TEST_CASE("edits set_global_lights_value coalesce", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit =
-      make_set_global_lights_value(&world::global_lights::env_map_texture,
-                                       "starfield"s,
-                                       world.global_lights.env_map_texture);
+   auto edit = make_set_global_lights_value(&world::global_lights::env_map_texture,
+                                            "starfield"s,
+                                            world.global_lights.env_map_texture);
    auto other_edit =
       make_set_global_lights_value(&world::global_lights::env_map_texture,
-                                       "mountains"s,
-                                       world.global_lights.env_map_texture);
+                                   "mountains"s, world.global_lights.env_map_texture);
 
    REQUIRE(edit->is_coalescable(*other_edit));
 

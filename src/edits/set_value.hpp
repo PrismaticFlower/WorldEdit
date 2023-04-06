@@ -64,11 +64,76 @@ inline auto make_set_value(world::id<Entity> id, T Entity::*value_member_ptr,
 }
 
 template<typename T>
+struct set_path_node_value final : edit<world::edit_context> {
+   using value_type = T;
+
+   set_path_node_value(world::path_id id, std::size_t node,
+                       value_type world::path::node::*value_member_ptr,
+                       value_type new_value, value_type original_value)
+      : id{id},
+        node{node},
+        value_member_ptr{value_member_ptr},
+        new_value{std::move(new_value)},
+        original_value{std::move(original_value)}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      find_entity<world::path>(context.world, id)->nodes[node].*value_member_ptr =
+         new_value;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      find_entity<world::path>(context.world, id)->nodes[node].*value_member_ptr =
+         original_value;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_path_node_value* other =
+         dynamic_cast<const set_path_node_value*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->id == other->id and this->node == other->node and
+             this->value_member_ptr == other->value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_path_node_value& other = dynamic_cast<set_path_node_value&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+   }
+
+private:
+   world::path_id id;
+   std::size_t node;
+   value_type world::path::node::*value_member_ptr;
+
+   value_type new_value;
+   value_type original_value;
+};
+
+template<typename T>
+inline auto make_set_path_node_value(world::path_id id, std::size_t node,
+                                     T world::path::node::*value_member_ptr,
+                                     T new_value, T original_value)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_path_node_value<T>>(id, node, value_member_ptr,
+                                                   std::move(new_value),
+                                                   std::move(original_value));
+}
+
+template<typename T>
 struct set_global_lights_value final : edit<world::edit_context> {
    using value_type = T;
 
    set_global_lights_value(value_type world::global_lights::*value_member_ptr,
-                               value_type new_value, value_type original_value)
+                           value_type new_value, value_type original_value)
       : value_member_ptr{value_member_ptr},
         new_value{std::move(new_value)},
         original_value{std::move(original_value)}
@@ -111,12 +176,12 @@ struct set_global_lights_value final : edit<world::edit_context> {
 
 template<typename T>
 inline auto make_set_global_lights_value(T world::global_lights::*value_member_ptr,
-                                             T new_value, T original_value)
+                                         T new_value, T original_value)
    -> std::unique_ptr<set_global_lights_value<T>>
 {
    return std::make_unique<set_global_lights_value<T>>(value_member_ptr,
-                                                           std::move(new_value),
-                                                           std::move(original_value));
+                                                       std::move(new_value),
+                                                       std::move(original_value));
 }
 
 template<typename Entity, typename T>

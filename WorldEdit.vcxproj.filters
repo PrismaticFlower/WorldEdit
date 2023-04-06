@@ -682,6 +682,9 @@
     <ClInclude Include="src\settings\io.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\edits\bundle.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -982,6 +985,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\settings\settings.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\bundle.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
