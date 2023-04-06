@@ -6202,13 +6202,16 @@ void world_edit::update_ui() noexcept
                   world::find_entity(_world.objects,
                                      std::get<world::object_id>(selected));
 
-               if (not object) return;
-
-               _edit_stack_world.apply(edits::make_set_value(object->id,
-                                                             &world::object::position,
-                                                             object->position + move_delta,
-                                                             object->position),
-                                       _edit_context);
+               if (object) {
+                  _edit_stack_world.apply(edits::make_set_value(object->id,
+                                                                &world::object::position,
+                                                                object->position + move_delta,
+                                                                object->position),
+                                          _edit_context);
+               }
+               else {
+                  _tool_move_selection_open;
+               }
             }
             else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
                const auto [id, node_index] =
@@ -6216,129 +6219,150 @@ void world_edit::update_ui() noexcept
 
                const world::path* path = world::find_entity(_world.paths, id);
 
-               if (not path) return;
+               if (path) {
+                  const world::path::node& node = path->nodes[node_index];
 
-               const world::path::node& node = path->nodes[node_index];
-
-               _edit_stack_world
-                  .apply(edits::make_set_path_node_value(path->id, node_index,
-                                                         &world::path::node::position,
-                                                         node.position + move_delta,
-                                                         node.position),
-                         _edit_context);
+                  _edit_stack_world
+                     .apply(edits::make_set_path_node_value(path->id, node_index,
+                                                            &world::path::node::position,
+                                                            node.position + move_delta,
+                                                            node.position),
+                            _edit_context);
+               }
+               else {
+                  _tool_move_selection_open;
+               }
             }
             else if (std::holds_alternative<world::light_id>(selected)) {
                const world::light* light =
                   world::find_entity(_world.lights,
                                      std::get<world::light_id>(selected));
 
-               if (not light) return;
-
-               _edit_stack_world.apply(edits::make_set_value(light->id,
-                                                             &world::light::position,
-                                                             light->position + move_delta,
-                                                             light->position),
-                                       _edit_context);
+               if (light) {
+                  _edit_stack_world.apply(edits::make_set_value(light->id,
+                                                                &world::light::position,
+                                                                light->position + move_delta,
+                                                                light->position),
+                                          _edit_context);
+               }
+               else {
+                  _tool_move_selection_open;
+               }
             }
             else if (std::holds_alternative<world::region_id>(selected)) {
                const world::region* region =
                   world::find_entity(_world.regions,
                                      std::get<world::region_id>(selected));
 
-               if (not region) return;
-
-               _edit_stack_world.apply(edits::make_set_value(region->id,
-                                                             &world::region::position,
-                                                             region->position + move_delta,
-                                                             region->position),
-                                       _edit_context);
+               if (region) {
+                  _edit_stack_world.apply(edits::make_set_value(region->id,
+                                                                &world::region::position,
+                                                                region->position + move_delta,
+                                                                region->position),
+                                          _edit_context);
+               }
+               else {
+                  _tool_move_selection_open;
+               }
             }
             else if (std::holds_alternative<world::sector_id>(selected)) {
                const world::sector* sector =
                   world::find_entity(_world.sectors,
                                      std::get<world::sector_id>(selected));
 
-               if (not sector) return;
+               if (sector) {
+                  std::vector<float2> new_points = sector->points;
 
-               std::vector<float2> new_points = sector->points;
+                  for (auto& point : new_points) {
+                     point += float2{move_delta.x, move_delta.z};
+                  }
 
-               for (auto& point : new_points) {
-                  point += float2{move_delta.x, move_delta.z};
+                  _edit_stack_world.apply(edits::make_set_value(sector->id,
+                                                                &world::sector::points,
+                                                                std::move(new_points),
+                                                                sector->points),
+                                          _edit_context);
                }
-
-               _edit_stack_world.apply(edits::make_set_value(sector->id,
-                                                             &world::sector::points,
-                                                             std::move(new_points),
-                                                             sector->points),
-                                       _edit_context);
+               else {
+                  _tool_move_selection_open;
+               }
             }
             else if (std::holds_alternative<world::portal_id>(selected)) {
                const world::portal* portal =
                   world::find_entity(_world.portals,
                                      std::get<world::portal_id>(selected));
 
-               if (not portal) return;
-
-               _edit_stack_world.apply(edits::make_set_value(portal->id,
-                                                             &world::portal::position,
-                                                             portal->position + move_delta,
-                                                             portal->position),
-                                       _edit_context);
+               if (portal) {
+                  _edit_stack_world.apply(edits::make_set_value(portal->id,
+                                                                &world::portal::position,
+                                                                portal->position + move_delta,
+                                                                portal->position),
+                                          _edit_context);
+               }
+               else {
+                  _tool_move_selection_open;
+               }
             }
             else if (std::holds_alternative<world::hintnode_id>(selected)) {
                const world::hintnode* hintnode =
                   world::find_entity(_world.hintnodes,
                                      std::get<world::hintnode_id>(selected));
 
-               if (not hintnode) return;
-
-               _edit_stack_world.apply(edits::make_set_value(hintnode->id,
-                                                             &world::hintnode::position,
-                                                             hintnode->position + move_delta,
-                                                             hintnode->position),
-                                       _edit_context);
+               if (hintnode) {
+                  _edit_stack_world.apply(edits::make_set_value(hintnode->id,
+                                                                &world::hintnode::position,
+                                                                hintnode->position + move_delta,
+                                                                hintnode->position),
+                                          _edit_context);
+               }
+               else {
+                  _tool_move_selection_open;
+               }
             }
             else if (std::holds_alternative<world::barrier_id>(selected)) {
                const world::barrier* barrier =
                   world::find_entity(_world.barriers,
                                      std::get<world::barrier_id>(selected));
 
-               if (not barrier) return;
-
-               _edit_stack_world.apply(
-                  edits::make_set_value(barrier->id, &world::barrier::position,
-                                        barrier->position +
-                                           float2{move_delta.x, move_delta.z},
-                                        barrier->position),
-                  _edit_context);
+               if (barrier) {
+                  _edit_stack_world.apply(
+                     edits::make_set_value(barrier->id, &world::barrier::position,
+                                           barrier->position +
+                                              float2{move_delta.x, move_delta.z},
+                                           barrier->position),
+                     _edit_context);
+               }
             }
             else if (std::holds_alternative<world::planning_hub_id>(selected)) {
                const world::planning_hub* planning_hub =
                   world::find_entity(_world.planning_hubs,
                                      std::get<world::planning_hub_id>(selected));
 
-               if (not planning_hub) return;
-
-               _edit_stack_world.apply(
-                  edits::make_set_value(planning_hub->id, &world::planning_hub::position,
-                                        planning_hub->position +
-                                           float2{move_delta.x, move_delta.z},
-                                        planning_hub->position),
-                  _edit_context);
+               if (planning_hub) {
+                  _edit_stack_world.apply(
+                     edits::make_set_value(planning_hub->id, &world::planning_hub::position,
+                                           planning_hub->position +
+                                              float2{move_delta.x, move_delta.z},
+                                           planning_hub->position),
+                     _edit_context);
+               }
             }
             else if (std::holds_alternative<world::boundary_id>(selected)) {
                const world::boundary* boundary =
                   world::find_entity(_world.boundaries,
                                      std::get<world::boundary_id>(selected));
 
-               if (not boundary) return;
-
-               _edit_stack_world.apply(
-                  edits::make_set_value(boundary->id, &world::boundary::position,
-                                        boundary->position +
-                                           float2{move_delta.x, move_delta.z},
-                                        boundary->position),
-                  _edit_context);
+               if (boundary) {
+                  _edit_stack_world.apply(
+                     edits::make_set_value(boundary->id, &world::boundary::position,
+                                           boundary->position +
+                                              float2{move_delta.x, move_delta.z},
+                                           boundary->position),
+                     _edit_context);
+               }
+               else {
+                  _tool_move_selection_open;
+               }
             }
          }
 
