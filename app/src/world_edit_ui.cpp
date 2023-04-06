@@ -6203,13 +6203,21 @@ void world_edit::update_ui() noexcept
                                        _edit_context);
             }
             else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-               const auto [id, node] = std::get<world::path_id_node_pair>(selected);
+               const auto [id, node_index] =
+                  std::get<world::path_id_node_pair>(selected);
 
                const world::path* path = world::find_entity(_world.paths, id);
 
                if (not path) return;
 
-               _stream.write("Pretending to move path node\n");
+               const world::path::node& node = path->nodes[node_index];
+
+               _edit_stack_world
+                  .apply(edits::make_set_path_node_value(path->id, node_index,
+                                                         &world::path::node::position,
+                                                         node.position + move_delta,
+                                                         node.position),
+                         _edit_context);
             }
             else if (std::holds_alternative<world::light_id>(selected)) {
                const world::light* light =
@@ -6323,6 +6331,9 @@ void world_edit::update_ui() noexcept
                                            float2{move_delta.x, move_delta.z},
                                         boundary->position),
                   _edit_context);
+            }
+            else {
+               _tool_move_selection_open = false;
             }
          }
 
