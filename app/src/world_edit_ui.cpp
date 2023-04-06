@@ -4,6 +4,7 @@
 #include "edits/add_game_mode.hpp"
 #include "edits/add_layer.hpp"
 #include "edits/add_property.hpp"
+#include "edits/bundle.hpp"
 #include "edits/creation_entity_set.hpp"
 #include "edits/delete_game_mode.hpp"
 #include "edits/delete_layer.hpp"
@@ -1217,6 +1218,12 @@ void world_edit::update_ui() noexcept
                                           _edit_context);
                   _entity_creation_context = {};
                }
+
+               if (ImGui::Button("Move Path", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _tool_move_whole_path_open = true;
+                  _move_selection_amount = {0.0f, 0.0f, 0.0f};
+                  _move_entire_path_id = id;
+               }
             },
             [&](world::region_id id) {
                world::region* region =
@@ -2074,6 +2081,7 @@ void world_edit::update_ui() noexcept
 
       if (ImGui::Button("Move Selection", {ImGui::CalcItemWidth(), 0.0f})) {
          _tool_move_selection_open = true;
+         _move_selection_amount = {0.0f, 0.0f, 0.0f};
       }
 
       ImGui::End();
@@ -6332,9 +6340,6 @@ void world_edit::update_ui() noexcept
                                         boundary->position),
                   _edit_context);
             }
-            else {
-               _tool_move_selection_open = false;
-            }
          }
 
          if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
@@ -6345,10 +6350,55 @@ void world_edit::update_ui() noexcept
       if (not _tool_move_selection_open) _edit_stack_world.close_last();
 
       ImGui::End();
+   }
 
-      if (not _tool_move_selection_open) {
-         _move_selection_amount = {0.0f, 0.0f, 0.0f};
+   if (_tool_move_whole_path_open) {
+      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+                              ImGuiCond_Once, {0.0f, 0.0f});
+
+      if (ImGui::Begin("Move Path", &_tool_move_whole_path_open,
+                       ImGuiWindowFlags_AlwaysAutoResize)) {
+         const float3 last_move_amount = _move_selection_amount;
+
+         if (ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f)) {
+            const world::selected_entity selected =
+               _interaction_targets.selection.back();
+            const float3 move_delta = (_move_selection_amount - last_move_amount);
+
+            const world::path* path =
+               world::find_entity(_world.paths, _move_entire_path_id);
+
+            if (path) {
+               edits::bundle_vector bundled_edits;
+
+               bundled_edits.reserve(path->nodes.size());
+
+               for (std::size_t i = 0; i < path->nodes.size(); ++i) {
+                  const world::path::node& node = path->nodes[i];
+
+                  bundled_edits.push_back(
+                     edits::make_set_path_node_value(path->id, i,
+                                                     &world::path::node::position,
+                                                     node.position + move_delta,
+                                                     node.position));
+               }
+
+               _edit_stack_world.apply(edits::make_bundle(std::move(bundled_edits)),
+                                       _edit_context);
+            }
+            else {
+               _tool_move_whole_path_open = false;
+            }
+         }
+
+         if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
+            _tool_move_selection_open = false;
+         }
       }
+
+      if (not _tool_move_whole_path_open) _edit_stack_world.close_last();
+
+      ImGui::End();
    }
 }
 }
