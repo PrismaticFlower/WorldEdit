@@ -188,6 +188,7 @@ private:
    bool _world_stats_open = false;
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;
+   bool _tool_move_selection_open = false;
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;
@@ -288,6 +289,8 @@ private:
    std::optional<float3> _cursor_surface_normalWS;
 
    float _editor_floor_height = 0.0f;
+
+   float3 _move_selection_amount = {0.0f, 0.0f, 0.0f};
 
    commands _commands;
    hotkeys _hotkeys{_commands, _stream};

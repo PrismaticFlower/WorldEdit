@@ -2070,6 +2070,12 @@ void world_edit::update_ui() noexcept
          },
          _interaction_targets.selection.front());
 
+      ImGui::SeparatorText("Selection Tools");
+
+      if (ImGui::Button("Move Selection", {ImGui::CalcItemWidth(), 0.0f})) {
+         _tool_move_selection_open = true;
+      }
+
       ImGui::End();
 
       if (not selection_open) _interaction_targets.selection.clear();
@@ -6167,6 +6173,160 @@ void world_edit::update_ui() noexcept
 
       if (not _settings_editor_open) {
          settings::save(".settings", _settings);
+      }
+   }
+
+   if (_tool_move_selection_open and not _interaction_targets.selection.empty()) {
+      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+                              ImGuiCond_Once, {0.0f, 0.0f});
+
+      if (ImGui::Begin("Move Selection", &_tool_move_selection_open,
+                       ImGuiWindowFlags_AlwaysAutoResize)) {
+         const float3 last_move_amount = _move_selection_amount;
+
+         if (ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f)) {
+            const world::selected_entity selected =
+               _interaction_targets.selection.back();
+            const float3 move_delta = (_move_selection_amount - last_move_amount);
+
+            if (std::holds_alternative<world::object_id>(selected)) {
+               const world::object* object =
+                  world::find_entity(_world.objects,
+                                     std::get<world::object_id>(selected));
+
+               if (not object) return;
+
+               _edit_stack_world.apply(edits::make_set_value(object->id,
+                                                             &world::object::position,
+                                                             object->position + move_delta,
+                                                             object->position),
+                                       _edit_context);
+            }
+            else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+               const auto [id, node] = std::get<world::path_id_node_pair>(selected);
+
+               const world::path* path = world::find_entity(_world.paths, id);
+
+               if (not path) return;
+
+               _stream.write("Pretending to move path node\n");
+            }
+            else if (std::holds_alternative<world::light_id>(selected)) {
+               const world::light* light =
+                  world::find_entity(_world.lights,
+                                     std::get<world::light_id>(selected));
+
+               if (not light) return;
+
+               _edit_stack_world.apply(edits::make_set_value(light->id,
+                                                             &world::light::position,
+                                                             light->position + move_delta,
+                                                             light->position),
+                                       _edit_context);
+            }
+            else if (std::holds_alternative<world::region_id>(selected)) {
+               const world::region* region =
+                  world::find_entity(_world.regions,
+                                     std::get<world::region_id>(selected));
+
+               if (not region) return;
+
+               _edit_stack_world.apply(edits::make_set_value(region->id,
+                                                             &world::region::position,
+                                                             region->position + move_delta,
+                                                             region->position),
+                                       _edit_context);
+            }
+            else if (std::holds_alternative<world::sector_id>(selected)) {
+               const world::sector* sector =
+                  world::find_entity(_world.sectors,
+                                     std::get<world::sector_id>(selected));
+
+               if (not sector) return;
+
+               _stream.write("Pretending to move sector\n");
+            }
+            else if (std::holds_alternative<world::portal_id>(selected)) {
+               const world::portal* portal =
+                  world::find_entity(_world.portals,
+                                     std::get<world::portal_id>(selected));
+
+               if (not portal) return;
+
+               _edit_stack_world.apply(edits::make_set_value(portal->id,
+                                                             &world::portal::position,
+                                                             portal->position + move_delta,
+                                                             portal->position),
+                                       _edit_context);
+            }
+            else if (std::holds_alternative<world::hintnode_id>(selected)) {
+               const world::hintnode* hintnode =
+                  world::find_entity(_world.hintnodes,
+                                     std::get<world::hintnode_id>(selected));
+
+               if (not hintnode) return;
+
+               _edit_stack_world.apply(edits::make_set_value(hintnode->id,
+                                                             &world::hintnode::position,
+                                                             hintnode->position + move_delta,
+                                                             hintnode->position),
+                                       _edit_context);
+            }
+            else if (std::holds_alternative<world::barrier_id>(selected)) {
+               const world::barrier* barrier =
+                  world::find_entity(_world.barriers,
+                                     std::get<world::barrier_id>(selected));
+
+               if (not barrier) return;
+
+               _edit_stack_world.apply(
+                  edits::make_set_value(barrier->id, &world::barrier::position,
+                                        barrier->position +
+                                           float2{move_delta.x, move_delta.z},
+                                        barrier->position),
+                  _edit_context);
+            }
+            else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+               const world::planning_hub* planning_hub =
+                  world::find_entity(_world.planning_hubs,
+                                     std::get<world::planning_hub_id>(selected));
+
+               if (not planning_hub) return;
+
+               _edit_stack_world.apply(
+                  edits::make_set_value(planning_hub->id, &world::planning_hub::position,
+                                        planning_hub->position +
+                                           float2{move_delta.x, move_delta.z},
+                                        planning_hub->position),
+                  _edit_context);
+            }
+            else if (std::holds_alternative<world::boundary_id>(selected)) {
+               const world::boundary* boundary =
+                  world::find_entity(_world.boundaries,
+                                     std::get<world::boundary_id>(selected));
+
+               if (not boundary) return;
+
+               _edit_stack_world.apply(
+                  edits::make_set_value(boundary->id, &world::boundary::position,
+                                        boundary->position +
+                                           float2{move_delta.x, move_delta.z},
+                                        boundary->position),
+                  _edit_context);
+            }
+         }
+
+         if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
+            _tool_move_selection_open = false;
+         }
+      }
+
+      if (not _tool_move_selection_open) _edit_stack_world.close_last();
+
+      ImGui::End();
+
+      if (not _tool_move_selection_open) {
+         _move_selection_amount = {0.0f, 0.0f, 0.0f};
       }
    }
 }

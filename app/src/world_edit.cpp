@@ -844,6 +844,8 @@ void world_edit::undo() noexcept
             ? placement_rotation::manual_euler
             : _entity_creation_config.placement_rotation;
    }
+
+   _tool_move_selection_open = false;
 }
 
 void world_edit::redo() noexcept
