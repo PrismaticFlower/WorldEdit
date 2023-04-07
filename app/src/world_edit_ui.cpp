@@ -5705,13 +5705,14 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(object.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(object.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(object.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text(object.class_name.c_str());
                   ImGui::TableNextColumn();
@@ -5728,6 +5729,10 @@ void world_edit::update_ui() noexcept
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(object.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = object.id;
                   }
                }
 
@@ -5828,13 +5833,14 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(light.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(light.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(light.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text([&] {
                      // clang-format off
@@ -5866,6 +5872,10 @@ void world_edit::update_ui() noexcept
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(light.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = light.id;
                   }
                }
 
@@ -5903,15 +5913,16 @@ void world_edit::update_ui() noexcept
                   for (int i = 0; i < (show_all_nodes ? path.nodes.size() : 1); ++i) {
                      const bool is_selected =
                         world::is_selected(path.id, _interaction_targets);
-                     bool select = false;
 
                      ImGui::PushID(i);
 
                      ImGui::TableNextRow();
 
                      ImGui::TableNextColumn();
-                     select |= ImGui::Selectable(path.name.c_str(), is_selected,
-                                                 ImGuiSelectableFlags_SpanAllColumns);
+                     const bool select =
+                        ImGui::Selectable(path.name.c_str(), is_selected,
+                                          ImGuiSelectableFlags_SpanAllColumns);
+                     const bool hover = ImGui::IsItemHovered();
                      if (show_all_nodes) {
                         ImGui::TableNextColumn();
                         ImGui::Text("%i", i);
@@ -5928,6 +5939,12 @@ void world_edit::update_ui() noexcept
                         _interaction_targets.selection.emplace_back(
                            world::path_id_node_pair{path.id,
                                                     static_cast<std::size_t>(i)});
+                     }
+
+                     if (hover and path.nodes.size() != 0) {
+                        _interaction_targets.hovered_entity =
+                           world::path_id_node_pair{path.id,
+                                                    static_cast<std::size_t>(i)};
                      }
 
                      ImGui::PopID();
@@ -5963,13 +5980,14 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(region.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(region.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(region.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text(region.description.c_str());
                   ImGui::TableNextColumn();
@@ -5991,6 +6009,10 @@ void world_edit::update_ui() noexcept
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(region.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = region.id;
                   }
                }
 
@@ -6022,13 +6044,14 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(sector.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(sector.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(sector.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text("%i", static_cast<int>(sector.points.size()));
                   ImGui::TableNextColumn();
@@ -6039,6 +6062,10 @@ void world_edit::update_ui() noexcept
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(sector.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = sector.id;
                   }
                }
 
@@ -6069,13 +6096,14 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(portal.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(portal.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(portal.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text(portal.sector1.c_str());
                   ImGui::TableNextColumn();
@@ -6086,6 +6114,10 @@ void world_edit::update_ui() noexcept
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(portal.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = portal.id;
                   }
                }
 
@@ -6117,13 +6149,14 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(hintnode.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(hintnode.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(hintnode.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text([&] {
                      // clang-format off
@@ -6149,6 +6182,10 @@ void world_edit::update_ui() noexcept
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(hintnode.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = hintnode.id;
                   }
                }
 
@@ -6183,7 +6220,6 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(barrier.id, _interaction_targets);
-                  bool select = false;
 
                   using world::ai_path_flags;
 
@@ -6197,8 +6233,10 @@ void world_edit::update_ui() noexcept
                   ImGui::TableNextRow(ImGuiTableRowFlags_None);
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(barrier.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(barrier.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover_entity = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text(soldier ? "X" : "-");
                   ImGui::TableNextColumn();
@@ -6217,6 +6255,10 @@ void world_edit::update_ui() noexcept
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(barrier.id);
+                  }
+
+                  if (hover_entity) {
+                     _interaction_targets.hovered_entity = barrier.id;
                   }
                }
 
@@ -6245,19 +6287,24 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(hub.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(hub.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(hub.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text("%i", static_cast<int>(hub.id));
 
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(hub.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = hub.id;
                   }
                }
 
@@ -6296,7 +6343,6 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(connection.id, _interaction_targets);
-                  bool select = false;
 
                   using world::ai_path_flags;
 
@@ -6312,8 +6358,10 @@ void world_edit::update_ui() noexcept
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(connection.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(connection.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover_entity = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text(
                      _world
@@ -6343,6 +6391,10 @@ void world_edit::update_ui() noexcept
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(connection.id);
                   }
+
+                  if (hover_entity) {
+                     _interaction_targets.hovered_entity = connection.id;
+                  }
                }
 
                ImGui::EndTable();
@@ -6371,19 +6423,24 @@ void world_edit::update_ui() noexcept
 
                   const bool is_selected =
                      world::is_selected(boundary.id, _interaction_targets);
-                  bool select = false;
 
                   ImGui::TableNextRow();
 
                   ImGui::TableNextColumn();
-                  select |= ImGui::Selectable(boundary.name.c_str(), is_selected,
-                                              ImGuiSelectableFlags_SpanAllColumns);
+                  const bool select =
+                     ImGui::Selectable(boundary.name.c_str(), is_selected,
+                                       ImGuiSelectableFlags_SpanAllColumns);
+                  const bool hover = ImGui::IsItemHovered();
                   ImGui::TableNextColumn();
                   ImGui::Text("%i", static_cast<int>(boundary.id));
 
                   if (select) {
                      _interaction_targets.selection.clear();
                      _interaction_targets.selection.emplace_back(boundary.id);
+                  }
+
+                  if (hover) {
+                     _interaction_targets.hovered_entity = boundary.id;
                   }
                }
 

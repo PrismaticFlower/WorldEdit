@@ -97,13 +97,13 @@ void world_edit::update()
 
    // Input!
    update_input();
+   update_hovered_entity();
 
    // UI!
    update_window_text();
    update_ui();
 
    // Logic!
-   update_hovered_entity();
    update_object_classes();
 
    _asset_libraries.update_loaded();
