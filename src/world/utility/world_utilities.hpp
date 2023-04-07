@@ -25,18 +25,37 @@ inline auto select_entities(world& world) -> std::vector<Type>&
    if constexpr (std::is_same_v<Type, boundary>) return world.boundaries;
 }
 
-template<typename Type>
-inline auto find_entity(std::vector<Type>& entities, const id<Type> id) -> Type*
+template<typename Type, typename Type_id>
+inline auto find_entity(std::span<Type> entities, const Type_id id) -> Type*
 {
-   for (auto& entity : entities) {
-      if (entity.id == id) return &entity;
+   if (auto it = std::lower_bound(entities.begin(), entities.end(), id,
+                                  [](const Type& entity, const Type_id id) {
+                                     return entity.id < id;
+                                  });
+       it != entities.end()) {
+      if (it->id == id) return &(*it);
    }
 
    return nullptr;
 }
 
 template<typename Type>
-inline auto find_entity(world& world, const id<Type> id) -> Type*
+inline auto find_entity(std::vector<Type>& entities,
+                        const id<std::type_identity_t<Type>> id) -> Type*
+{
+   return find_entity(std::span<Type>{entities.data(), entities.size()}, id);
+}
+
+template<typename Type>
+inline auto find_entity(const std::vector<Type>& entities,
+                        const id<std::type_identity_t<Type>> id) -> const Type*
+{
+   return find_entity(std::span<const Type>{entities.data(), entities.size()}, id);
+}
+
+template<typename Type>
+inline auto find_entity(world& world, const id<std::type_identity_t<Type>> id)
+   -> Type*
 {
    return find_entity(select_entities<Type>(world), id);
 }

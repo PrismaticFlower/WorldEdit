@@ -9,12 +9,46 @@ using namespace std::literals;
 
 namespace we::world::tests {
 
-TEST_CASE("world utilities find_entity", "[World][Utilities]")
+TEST_CASE("world utilities find_entity by name", "[World][Utilities]")
 {
    world world{.regions = {region{.name = "some_region"s, .description = "some_desc"s}}};
 
    REQUIRE(find_entity(world.regions, "some_region"sv) == &world.regions[0]);
    REQUIRE(find_entity(world.regions, "no_region"sv) == nullptr);
+}
+
+TEST_CASE("world utilities find_entity by id", "[World][Utilities]")
+{
+   world world;
+
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   auto missing_id = world.next_id.regions.aquire();
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+
+   REQUIRE(find_entity(world.regions, world.regions[0].id) == &world.regions[0]);
+   REQUIRE(find_entity(world.regions, world.regions[1].id) == &world.regions[1]);
+   REQUIRE(find_entity(world.regions, world.regions[2].id) == &world.regions[2]);
+   REQUIRE(find_entity(world.regions, world.regions[3].id) == &world.regions[3]);
+   REQUIRE(find_entity(world.regions, world.regions[4].id) == &world.regions[4]);
+   REQUIRE(find_entity(world.regions, missing_id) == nullptr);
+
+   world.regions.clear();
+
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+   world.regions.push_back(region{.id = world.next_id.regions.aquire()});
+
+   REQUIRE(find_entity(world.regions, world.regions[0].id) == &world.regions[0]);
+   REQUIRE(find_entity(world.regions, world.regions[1].id) == &world.regions[1]);
+   REQUIRE(find_entity(world.regions, world.regions[2].id) == &world.regions[2]);
+   REQUIRE(find_entity(world.regions, world.regions[3].id) == &world.regions[3]);
+   REQUIRE(find_entity(world.regions, world.regions[4].id) == &world.regions[4]);
+   REQUIRE(find_entity(world.regions, missing_id) == nullptr);
 }
 
 TEST_CASE("world utilities find_region", "[World][Utilities]")

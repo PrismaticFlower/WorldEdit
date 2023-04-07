@@ -26,7 +26,6 @@
 #include "shader_list.hpp"
 #include "terrain.hpp"
 #include "texture_manager.hpp"
-#include "utility/look_for.hpp"
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
@@ -1638,112 +1637,81 @@ void renderer_impl::draw_interaction_targets(
    };
 
    const auto draw_target = [&](world::interaction_target target, const float3 color) {
-      std::visit(
-         overload{
-            [&](world::object_id id) {
-               const world::object* object =
-                  look_for(world.objects, [id](const world::object& object) {
-                     return id == object.id;
-                  });
+      std::visit(overload{
+                    [&](world::object_id id) {
+                       const world::object* object = find_entity(world.objects, id);
 
-               if (object) draw_entity(*object, color);
-            },
-            [&](world::light_id id) {
-               const world::light* light =
-                  look_for(world.lights, [id](const world::light& light) {
-                     return id == light.id;
-                  });
+                       if (object) draw_entity(*object, color);
+                    },
+                    [&](world::light_id id) {
+                       const world::light* light = find_entity(world.lights, id);
 
-               if (light) draw_entity(*light, color);
-            },
-            [&](world::path_id_node_pair id_node) {
-               auto [id, node_index] = id_node;
+                       if (light) draw_entity(*light, color);
+                    },
+                    [&](world::path_id_node_pair id_node) {
+                       auto [id, node_index] = id_node;
 
-               const world::path* path =
-                  look_for(world.paths, [id](const world::path& path) {
-                     return id == path.id;
-                  });
+                       const world::path* path = find_entity(world.paths, id);
 
-               if (not path) return;
+                       if (not path) return;
 
-               if (node_index >= path->nodes.size()) return;
+                       if (node_index >= path->nodes.size()) return;
 
-               if (path) {
-                  draw_entity(path->nodes[node_index], color);
-               }
-            },
-            [&](world::region_id id) {
-               const world::region* region =
-                  look_for(world.regions, [id](const world::region& region) {
-                     return id == region.id;
-                  });
+                       if (path) {
+                          draw_entity(path->nodes[node_index], color);
+                       }
+                    },
+                    [&](world::region_id id) {
+                       const world::region* region = find_entity(world.regions, id);
 
-               if (region) draw_entity(*region, color);
-            },
-            [&](world::sector_id id) {
-               const world::sector* sector =
-                  look_for(world.sectors, [id](const world::sector& sector) {
-                     return id == sector.id;
-                  });
+                       if (region) draw_entity(*region, color);
+                    },
+                    [&](world::sector_id id) {
+                       const world::sector* sector = find_entity(world.sectors, id);
 
-               if (sector) draw_entity(*sector, color);
-            },
-            [&](world::portal_id id) {
-               const world::portal* portal =
-                  look_for(world.portals, [id](const world::portal& portal) {
-                     return id == portal.id;
-                  });
+                       if (sector) draw_entity(*sector, color);
+                    },
+                    [&](world::portal_id id) {
+                       const world::portal* portal = find_entity(world.portals, id);
 
-               if (portal) draw_entity(*portal, color);
-            },
-            [&](world::hintnode_id id) {
-               const world::hintnode* hintnode =
-                  look_for(world.hintnodes, [id](const world::hintnode& hintnode) {
-                     return id == hintnode.id;
-                  });
+                       if (portal) draw_entity(*portal, color);
+                    },
+                    [&](world::hintnode_id id) {
+                       const world::hintnode* hintnode =
+                          find_entity(world.hintnodes, id);
 
-               if (hintnode) draw_entity(*hintnode, color);
-            },
-            [&](world::barrier_id id) {
-               const world::barrier* barrier =
-                  look_for(world.barriers, [id](const world::barrier& barrier) {
-                     return id == barrier.id;
-                  });
+                       if (hintnode) draw_entity(*hintnode, color);
+                    },
+                    [&](world::barrier_id id) {
+                       const world::barrier* barrier =
+                          find_entity(world.barriers, id);
 
-               if (barrier) draw_entity(*barrier, color);
-            },
-            [&](world::planning_hub_id id) {
-               const world::planning_hub* planning_hub =
-                  look_for(world.planning_hubs,
-                           [id](const world::planning_hub& planning_hub) {
-                              return id == planning_hub.id;
-                           });
+                       if (barrier) draw_entity(*barrier, color);
+                    },
+                    [&](world::planning_hub_id id) {
+                       const world::planning_hub* planning_hub =
+                          find_entity(world.planning_hubs, id);
 
-               if (planning_hub) {
-                  draw_entity(*planning_hub, color);
-               }
-            },
-            [&](world::planning_connection_id id) {
-               const world::planning_connection* planning_connection =
-                  look_for(world.planning_connections,
-                           [id](const world::planning_connection& planning_connection) {
-                              return id == planning_connection.id;
-                           });
+                       if (planning_hub) {
+                          draw_entity(*planning_hub, color);
+                       }
+                    },
+                    [&](world::planning_connection_id id) {
+                       const world::planning_connection* planning_connection =
+                          find_entity(world.planning_connections, id);
 
-               if (planning_connection) {
-                  draw_entity(*planning_connection, color);
-               }
-            },
-            [&](world::boundary_id id) {
-               const world::boundary* boundary =
-                  look_for(world.boundaries, [id](const world::boundary& boundary) {
-                     return id == boundary.id;
-                  });
+                       if (planning_connection) {
+                          draw_entity(*planning_connection, color);
+                       }
+                    },
+                    [&](world::boundary_id id) {
+                       const world::boundary* boundary =
+                          find_entity(world.boundaries, id);
 
-               if (boundary) draw_entity(*boundary, color);
-            },
-         },
-         target);
+                       if (boundary) draw_entity(*boundary, color);
+                    },
+                 },
+                 target);
    };
 
    if (interaction_targets.hovered_entity) {
