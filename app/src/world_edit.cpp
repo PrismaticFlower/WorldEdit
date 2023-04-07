@@ -165,12 +165,16 @@ void world_edit::update_hovered_entity() noexcept
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 
-   if (_interaction_targets.creation_entity and
-       std::holds_alternative<world::planning_connection>(
-          *_interaction_targets.creation_entity)) {
-      raycast_mask = world::active_entity_types{.objects = false,
-                                                .planning_hubs = true,
-                                                .terrain = false};
+   if (_interaction_targets.creation_entity) {
+      if (_entity_creation_context.using_from_object_bbox) {
+         raycast_mask = world::active_entity_types{.objects = true, .terrain = false};
+      }
+      else if (std::holds_alternative<world::planning_connection>(
+                  *_interaction_targets.creation_entity)) {
+         raycast_mask = world::active_entity_types{.objects = false,
+                                                   .planning_hubs = true,
+                                                   .terrain = false};
+      }
    }
 
    if (raycast_mask.objects) {
