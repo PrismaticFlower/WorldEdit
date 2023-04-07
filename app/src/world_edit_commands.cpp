@@ -64,12 +64,13 @@ void world_edit::initialize_commands() noexcept
       _camera.projection(graphics::camera_projection::orthographic);
    });
 
-   _commands.add("edit.select"s, [this]() { select_hovered_entity(); });
-   _commands.add("edit.deselect"s, [this]() {
-      if (_interaction_targets.selection.empty()) return;
-
-      _interaction_targets.selection.pop_back();
-   });
+   _commands.add("selection.set"s,
+                 [this]() { select_hovered_entity(select_method::single); });
+   _commands.add("selection.add"s,
+                 [this]() { select_hovered_entity(select_method::multi); });
+   _commands.add("selection.remove"s, [this]() { deselect_hovered_entity(); });
+   _commands.add("selection.clear"s,
+                 [this]() { _interaction_targets.selection.clear(); });
 
    _commands.add("edit.undo"s, [this]() { undo(); });
    _commands.add("edit.redo"s, [this]() { redo(); });
@@ -250,8 +251,12 @@ void world_edit::initialize_hotkeys() noexcept
          {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
          {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
 
-         {"Select", "edit.select", {.key = key::mouse1}},
-         {"Deselect", "edit.deselect", {.key = key::escape}},
+         {"Select", "selection.set", {.key = key::mouse1}},
+         {"Select Multiple",
+          "selection.add",
+          {.key = key::mouse1, .modifiers = {.shift = true}}},
+         {"Deselect", "selection.remove", {.key = key::mouse1, .modifiers = {.ctrl = true}}},
+         {"Clear Selection", "selection.clear", {.key = key::escape}},
 
          {"Undo", "edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
          {"Redo", "edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},

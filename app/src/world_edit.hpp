@@ -29,6 +29,8 @@ struct ImGuiContext;
 
 namespace we {
 
+enum class select_method : uint8 { single, multi };
+
 enum class placement_mode : uint8 { manual, cursor };
 
 enum class placement_alignment : uint8 { none, grid, snapping };
@@ -84,7 +86,9 @@ private:
 
    void update_ui() noexcept;
 
-   void select_hovered_entity() noexcept;
+   void select_hovered_entity(const select_method method) noexcept;
+
+   void deselect_hovered_entity() noexcept;
 
    void place_creation_entity() noexcept;
 

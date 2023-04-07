@@ -431,13 +431,33 @@ void world_edit::update_camera(const float delta_time)
    }
 }
 
-void world_edit::select_hovered_entity() noexcept
+void world_edit::select_hovered_entity(const select_method method) noexcept
 {
-   _interaction_targets.selection.clear();
+   if (not _interaction_targets.hovered_entity) {
+      _interaction_targets.selection.clear();
 
-   if (not _interaction_targets.hovered_entity) return;
+      return;
+   }
+
+   if (method == select_method::single) {
+      _interaction_targets.selection.clear();
+   }
+   else if (method == select_method::multi) {
+      for (auto& selected : _interaction_targets.selection) {
+         if (selected == _interaction_targets.hovered_entity) return;
+      }
+   }
 
    _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
+}
+
+void world_edit::deselect_hovered_entity() noexcept
+{
+   if (not _interaction_targets.hovered_entity) return;
+
+   std::erase_if(_interaction_targets.selection, [&](const auto& selected) {
+      return selected == _interaction_targets.hovered_entity;
+   });
 }
 
 void world_edit::place_creation_entity() noexcept
