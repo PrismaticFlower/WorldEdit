@@ -20,7 +20,6 @@ constexpr auto light_tile_size = 8;
 constexpr auto max_lights = 256;
 constexpr auto tile_light_word_bits = 32;
 constexpr auto tile_light_words = max_lights / tile_light_word_bits;
-constexpr auto max_regional_lights = 256;
 
 enum class light_type : uint32 { directional, point, spot };
 enum class directional_region_type : uint32 { none, box, sphere, cylinder };
@@ -121,50 +120,6 @@ auto make_sphere_light_proxy_transform(const world::light& light, const float ra
       light_transform); // transpose so we have good alignment for a float3x4 in HLSL
 
    return {light_transform[0], light_transform[1], light_transform[2]};
-}
-
-struct upload_data {
-   upload_data(dynamic_buffer_allocator& dynamic_buffer_allocator)
-   {
-      {
-         auto allocation = dynamic_buffer_allocator.allocate(sizeof(light_constants));
-
-         constants = reinterpret_cast<light_constants*>(allocation.cpu_address);
-         constants_offset = allocation.offset;
-      }
-
-      {
-         auto allocation = dynamic_buffer_allocator.allocate(
-            sizeof(std::array<light_region_description, max_regional_lights>));
-
-         regional_lights_descriptions =
-            reinterpret_cast<light_region_description*>(allocation.cpu_address);
-         regional_lights_descriptions_offset = allocation.offset;
-      }
-
-      {
-         auto allocation = dynamic_buffer_allocator.allocate(
-            sizeof(std::array<light_proxy_instance, max_lights>));
-
-         sphere_light_proxies =
-            reinterpret_cast<light_proxy_instance*>(allocation.cpu_address);
-         sphere_light_proxies_gpu = allocation.gpu_address;
-      }
-   }
-
-   light_constants* constants;
-   light_region_description* regional_lights_descriptions;
-   light_proxy_instance* sphere_light_proxies;
-
-   uint64 constants_offset;
-   uint64 regional_lights_descriptions_offset;
-   gpu_virtual_address sphere_light_proxies_gpu;
-};
-
-template<typename T>
-void upload_to(const T& v, T* const to)
-{
-   std::memcpy(to, &v, sizeof(T));
 }
 
 constexpr std::array<float3, 26> sphere_proxy_vertices = {
@@ -309,7 +264,7 @@ light_clusters::light_clusters(gpu::device& device,
                         device.direct_queue};
 
    _lights_region_list =
-      {device.create_buffer({.size = sizeof(light_region_description) * max_regional_lights,
+      {device.create_buffer({.size = sizeof(light_region_description) * max_lights,
                              .debug_name = "Lights Region List"},
                             gpu::heap_type::default_),
        device.direct_queue};
@@ -389,7 +344,7 @@ void light_clusters::update_descriptors()
    _lights_region_list_srv = {_device.create_shader_resource_view(
                                  _lights_region_list.get(),
                                  {.buffer = {.first_element = 0,
-                                             .number_elements = max_regional_lights,
+                                             .number_elements = max_lights,
                                              .structure_byte_stride =
                                                 sizeof(light_region_description)}}),
                               _device.direct_queue};
@@ -409,35 +364,34 @@ void light_clusters::prepare_lights(const camera& view_camera,
                                     gpu::copy_command_list& command_list,
                                     dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   upload_data upload_data{dynamic_buffer_allocator};
-
    static_assert((sizeof(_tiles_start_value) / sizeof(uint32)) == tile_light_words);
 
    _tiles_start_value = {};
    _light_count = 0;
-   _sphere_light_proxies_srv = upload_data.sphere_light_proxies_gpu;
-   uint32 regional_lights_count = 0;
+   _light_proxy_count = 0;
+   uint32 region_lights_count = 0;
 
-   // Upload light constants.
-   {
-      upload_to(_tiles_width, &upload_data.constants->light_tiles_width);
-      upload_to(_lights_tiles_srv.get(), &upload_data.constants->light_tiles_index);
-      upload_to(_lights_region_list_srv.get(),
-                &upload_data.constants->light_region_list_index);
-      upload_to(_shadow_map_srv.get(), &upload_data.constants->shadow_map_index);
-      upload_to(utility::decompress_srgb(world.global_lights.ambient_sky_color),
-                &upload_data.constants->sky_ambient_color);
-      upload_to(utility::decompress_srgb(world.global_lights.ambient_ground_color),
-                &upload_data.constants->ground_ambient_color);
-      upload_to({shadow_res, shadow_res}, &upload_data.constants->shadow_resolution);
-      upload_to({1.0f / shadow_res, 1.0f / shadow_res},
-                &upload_data.constants->inv_shadow_resolution);
-   }
+   light_constants light_constants{.light_tiles_width = _tiles_width,
+                                   .light_tiles_index = _lights_tiles_srv.get(),
+                                   .light_region_list_index =
+                                      _lights_region_list_srv.get(),
+                                   .shadow_map_index = _shadow_map_srv.get(),
+                                   .sky_ambient_color = utility::decompress_srgb(
+                                      world.global_lights.ambient_sky_color),
+                                   .ground_ambient_color = utility::decompress_srgb(
+                                      world.global_lights.ambient_ground_color),
+                                   .shadow_resolution = {shadow_res, shadow_res},
+                                   .inv_shadow_resolution = {1.0f / shadow_res,
+                                                             1.0f / shadow_res}};
+   std::array<light_region_description, max_lights> region_lights_descriptions{};
+   std::array<light_proxy_instance, max_lights> sphere_light_proxies{};
+
+   std::array<light_description, max_lights>& lights = light_constants.lights;
 
    const auto process_light = [&](const world::light& light) {
       if (_light_count >= max_lights) return;
 
-      const uint32 light_index = _light_count;
+      const uint32 light_index = _light_count++;
 
       light_flags flags = light_flags::none;
 
@@ -455,41 +409,32 @@ void light_clusters::prepare_lights(const camera& view_camera,
             flags |= light_flags::is_shadow_caster;
          }
 
-         upload_to({.direction = light_direction,
-                    .type = light_type::directional,
-                    .color = light.color,
-                    .region_type = directional_region_type::none,
-                    .flags = flags},
-                   &upload_data.constants->lights[light_index]);
-
-         _light_count += 1;
+         lights[light_index] = {.direction = light_direction,
+                                .type = light_type::directional,
+                                .color = light.color,
+                                .region_type = directional_region_type::none,
+                                .flags = flags};
 
          // Set the directional light as part of the tile clear pass.
          _tiles_start_value[light_index / tile_light_word_bits] |=
             (1u << (light_index % tile_light_word_bits));
-         break;
-      }
+      } break;
       case world::light_type::point: {
          if (not intersects(view_frustum, light.position, light.range)) {
             return;
          }
 
-         upload_to({.type = light_type::point,
-                    .position = light.position,
-                    .range = light.range,
-                    .color = light.color,
-                    .flags = flags},
-                   &upload_data.constants->lights[light_index]);
+         lights[light_index] = {.type = light_type::point,
+                                .position = light.position,
+                                .range = light.range,
+                                .color = light.color,
+                                .flags = flags};
 
-         upload_to({.transform = make_sphere_light_proxy_transform(light, light.range),
+         sphere_light_proxies[_light_proxy_count++] =
+            {.transform = make_sphere_light_proxy_transform(light, light.range),
 
-                    .light_index = light_index},
-                   upload_data.sphere_light_proxies + light_index);
-
-         _light_count += 1;
-
-         break;
-      }
+             .light_index = light_index};
+      } break;
       case world::light_type::spot: {
          const float3 light_direction =
             normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
@@ -506,35 +451,27 @@ void light_clusters::prepare_lights(const camera& view_camera,
             return;
          }
 
-         upload_to({.direction = light_direction,
-                    .type = light_type::spot,
-                    .position = light.position,
-                    .range = light.range,
-                    .color = light.color,
-                    .spot_outer_param = std::cos(light.outer_cone_angle / 2.0f),
-                    .spot_inner_param =
-                       1.0f / (std::cos(light.inner_cone_angle / 2.0f) -
-                               std::cos(light.outer_cone_angle / 2.0f)),
-                    .flags = flags},
-                   &upload_data.constants->lights[light_index]);
+         lights[light_index] = {.direction = light_direction,
+                                .type = light_type::spot,
+                                .position = light.position,
+                                .range = light.range,
+                                .color = light.color,
+                                .spot_outer_param =
+                                   std::cos(light.outer_cone_angle / 2.0f),
+                                .spot_inner_param =
+                                   1.0f / (std::cos(light.inner_cone_angle / 2.0f) -
+                                           std::cos(light.outer_cone_angle / 2.0f)),
+                                .flags = flags};
 
-         upload_to({.transform = make_sphere_light_proxy_transform(light, light.range), // TODO: Cone light proxies.
-                    .light_index = light_index},
-                   upload_data.sphere_light_proxies + light_index);
-
-         _light_count += 1;
-
-         break;
-      }
+         sphere_light_proxies[_light_proxy_count++] =
+            {.transform = make_sphere_light_proxy_transform(light, light.range), // TODO: Cone light proxies.
+             .light_index = light_index};
+      } break;
       case world::light_type::directional_region_box:
       case world::light_type::directional_region_sphere:
       case world::light_type::directional_region_cylinder: {
          const float3 light_direction =
             normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
-
-         if (regional_lights_count == max_regional_lights) {
-            break;
-         }
 
          const quaternion region_rotation_inverse = conjugate(light.region_rotation);
          float4x4 inverse_region_transform = to_matrix(region_rotation_inverse);
@@ -542,96 +479,77 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
          inverse_region_transform = transpose(inverse_region_transform);
 
-         const uint32 region_description_index = regional_lights_count;
+         const uint32 region_description_index = region_lights_count++;
 
          switch (light.light_type) {
          case world::light_type::directional_region_box: {
-            upload_to({.inverse_transform = inverse_region_transform,
-                       .position = light.position,
-                       .type = directional_region_type::box,
-                       .size = light.region_size},
-                      upload_data.regional_lights_descriptions + region_description_index);
+            region_lights_descriptions[region_description_index] =
+               {.inverse_transform = inverse_region_transform,
+                .position = light.position,
+                .type = directional_region_type::box,
+                .size = light.region_size};
 
-            upload_to({.direction = light_direction,
-                       .type = light_type::directional,
-                       .color = light.color,
-                       .region_type = directional_region_type::box,
-                       .directional_region_index = region_description_index,
-                       .flags = flags},
-                      &upload_data.constants->lights[light_index]);
+            lights[light_index] = {.direction = light_direction,
+                                   .type = light_type::directional,
+                                   .color = light.color,
+                                   .region_type = directional_region_type::box,
+                                   .directional_region_index = region_description_index,
+                                   .flags = flags};
 
-            upload_to({.transform = make_sphere_light_proxy_transform(
-                          light,
-                          std::max({light.region_size.x, light.region_size.y,
+            sphere_light_proxies[_light_proxy_count++] =
+               {.transform = make_sphere_light_proxy_transform(
+                   light, std::max({light.region_size.x, light.region_size.y,
                                     light.region_size.z})),
 
-                       .light_index = light_index},
-                      upload_data.sphere_light_proxies + light_index);
-
-            _light_count += 1;
-            regional_lights_count += 1;
-
-            break;
-         }
+                .light_index = light_index};
+         } break;
          case world::light_type::directional_region_sphere: {
             const float sphere_radius = length(light.region_size);
 
-            upload_to({.inverse_transform = inverse_region_transform,
-                       .position = light.position,
-                       .type = directional_region_type::sphere,
-                       .size = float3{sphere_radius, sphere_radius, sphere_radius}},
-                      upload_data.regional_lights_descriptions + region_description_index);
+            region_lights_descriptions[region_description_index] =
+               {.inverse_transform = inverse_region_transform,
+                .position = light.position,
+                .type = directional_region_type::sphere,
+                .size = float3{sphere_radius, sphere_radius, sphere_radius}};
 
-            upload_to({.direction = light_direction,
-                       .type = light_type::directional,
-                       .color = light.color,
-                       .region_type = directional_region_type::sphere,
-                       .directional_region_index = region_description_index,
-                       .flags = flags},
-                      &upload_data.constants->lights[light_index]);
+            lights[light_index] = {.direction = light_direction,
+                                   .type = light_type::directional,
+                                   .color = light.color,
+                                   .region_type = directional_region_type::sphere,
+                                   .directional_region_index = region_description_index,
+                                   .flags = flags};
 
-            upload_to({.transform = make_sphere_light_proxy_transform(light, sphere_radius),
+            sphere_light_proxies[_light_proxy_count++] =
+               {.transform = make_sphere_light_proxy_transform(light, sphere_radius),
 
-                       .light_index = light_index},
-                      upload_data.sphere_light_proxies + light_index);
-
-            _light_count += 1;
-            regional_lights_count += 1;
-
-            break;
-         }
+                .light_index = light_index};
+         } break;
          case world::light_type::directional_region_cylinder: {
             const float radius =
                length(float2{light.region_size.x, light.region_size.z});
-            upload_to({.inverse_transform = inverse_region_transform,
-                       .position = light.position,
-                       .type = directional_region_type::cylinder,
-                       .size = float3{radius, light.region_size.y, radius}},
-                      upload_data.regional_lights_descriptions + region_description_index);
+            region_lights_descriptions[region_description_index] =
+               {.inverse_transform = inverse_region_transform,
+                .position = light.position,
+                .type = directional_region_type::cylinder,
+                .size = float3{radius, light.region_size.y, radius}};
 
-            upload_to({.direction = light_direction,
-                       .type = light_type::directional,
-                       .color = light.color,
-                       .region_type = directional_region_type::cylinder,
-                       .directional_region_index = region_description_index,
-                       .flags = flags},
-                      &upload_data.constants->lights[light_index]);
+            lights[light_index] = {.direction = light_direction,
+                                   .type = light_type::directional,
+                                   .color = light.color,
+                                   .region_type = directional_region_type::cylinder,
+                                   .directional_region_index = region_description_index,
+                                   .flags = flags};
 
-            upload_to({.transform = make_sphere_light_proxy_transform(
-                          light, std::max(radius, light.region_size.y)),
+            sphere_light_proxies[_light_proxy_count++] =
+               {.transform =
+                   make_sphere_light_proxy_transform(light,
+                                                     std::max(radius,
+                                                              light.region_size.y)),
 
-                       .light_index = light_index},
-                      upload_data.sphere_light_proxies + light_index);
-
-            _light_count += 1;
-            regional_lights_count += 1;
-
-            break;
+                .light_index = light_index};
+         } break;
          }
-         }
-
-         break;
-      }
+      } break;
       }
    };
 
@@ -644,17 +562,10 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
    if (optional_placement_light) process_light(*optional_placement_light);
 
-   // Upload shadow transform.
-   {
-      upload_to(_sun_shadow_cascades[0].texture_matrix(),
-                &upload_data.constants->shadow_transforms[0]);
-      upload_to(_sun_shadow_cascades[1].texture_matrix(),
-                &upload_data.constants->shadow_transforms[1]);
-      upload_to(_sun_shadow_cascades[2].texture_matrix(),
-                &upload_data.constants->shadow_transforms[2]);
-      upload_to(_sun_shadow_cascades[3].texture_matrix(),
-                &upload_data.constants->shadow_transforms[3]);
-   }
+   light_constants.shadow_transforms = {_sun_shadow_cascades[0].texture_matrix(),
+                                        _sun_shadow_cascades[1].texture_matrix(),
+                                        _sun_shadow_cascades[2].texture_matrix(),
+                                        _sun_shadow_cascades[3].texture_matrix()};
 
    // copy tile culling inputs
    {
@@ -671,16 +582,38 @@ void light_clusters::prepare_lights(const camera& view_camera,
                                       upload_buffer.offset, sizeof(tiling_inputs));
    }
 
-   command_list.copy_buffer_region(_lights_constants.get(), 0,
-                                   dynamic_buffer_allocator.resource(),
-                                   upload_data.constants_offset,
-                                   sizeof(light_constants));
+   {
+      auto upload_buffer = dynamic_buffer_allocator.allocate(sizeof(light_constants));
 
-   command_list.copy_buffer_region(_lights_region_list.get(), 0,
-                                   dynamic_buffer_allocator.resource(),
-                                   upload_data.regional_lights_descriptions_offset,
-                                   sizeof(light_region_description) *
-                                      regional_lights_count);
+      std::memcpy(upload_buffer.cpu_address, &light_constants, sizeof(light_constants));
+
+      command_list.copy_buffer_region(_lights_constants.get(), 0,
+                                      dynamic_buffer_allocator.resource(),
+                                      upload_buffer.offset, sizeof(light_constants));
+   }
+
+   {
+      auto upload_buffer =
+         dynamic_buffer_allocator.allocate(sizeof(region_lights_descriptions));
+
+      std::memcpy(upload_buffer.cpu_address, &region_lights_descriptions,
+                  sizeof(region_lights_descriptions));
+
+      command_list.copy_buffer_region(_lights_region_list.get(), 0,
+                                      dynamic_buffer_allocator.resource(),
+                                      upload_buffer.offset,
+                                      sizeof(region_lights_descriptions));
+   }
+
+   {
+      auto upload_buffer =
+         dynamic_buffer_allocator.allocate(sizeof(sphere_light_proxies));
+
+      std::memcpy(upload_buffer.cpu_address, &sphere_light_proxies,
+                  sizeof(sphere_light_proxies));
+
+      _sphere_light_proxies_srv = upload_buffer.gpu_address;
+   }
 }
 
 void light_clusters::tile_lights(root_signature_library& root_signatures,
@@ -756,7 +689,7 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
 
       command_list.draw_indexed_instanced(static_cast<uint32>(
                                              sphere_proxy_indices.size()),
-                                          _light_count, 0, 0, 0);
+                                          _light_proxy_count, 0, 0, 0);
    }
 
    [[likely]] if (_device.supports_enhanced_barriers()) {

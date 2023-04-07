@@ -89,6 +89,7 @@ private:
 
    std::array<uint32, 8> _tiles_start_value;
    uint32 _light_count = 0;
+   uint32 _light_proxy_count = 0;
    gpu_virtual_address _sphere_light_proxies_srv = 0;
 
    std::array<shadow_ortho_camera, sun_cascade_count> _sun_shadow_cascades;
