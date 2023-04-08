@@ -2469,6 +2469,12 @@ void world_edit::update_ui() noexcept
          _entity_creation_context.draw_barrier_mid = std::nullopt;
       }
 
+      if (std::exchange(_entity_creation_context.activate_pick_sector, false)) {
+         _edit_stack_world.close_last();
+
+         _entity_creation_context.using_pick_sector = true;
+      }
+
       if (std::exchange(_entity_creation_context.finish_from_object_bbox, false)) {
          _entity_creation_context.using_from_object_bbox = false;
 
@@ -3982,6 +3988,11 @@ void world_edit::update_ui() noexcept
                                          return entries;
                                       });
 
+         if (ImGui::Button("Pick Linked Sector 1", {ImGui::CalcItemWidth(), 0.0f})) {
+            _entity_creation_context.activate_pick_sector = true;
+            _entity_creation_context.pick_sector_index = 1;
+         }
+
          ImGui::InputTextAutoComplete("Linked Sector 2", &creation_entity,
                                       &world::portal::sector2,
                                       &_edit_stack_world, &_edit_context, [&] {
@@ -4002,6 +4013,35 @@ void world_edit::update_ui() noexcept
                                          return entries;
                                       });
 
+         if (ImGui::Button("Pick Linked Sector 2", {ImGui::CalcItemWidth(), 0.0f})) {
+            _entity_creation_context.activate_pick_sector = true;
+            _entity_creation_context.pick_sector_index = 2;
+         }
+
+         if (_entity_creation_context.using_pick_sector and
+             _interaction_targets.hovered_entity and
+             std::holds_alternative<world::sector_id>(*_interaction_targets.hovered_entity)) {
+            const world::sector* sector =
+               find_entity(_world.sectors, std::get<world::sector_id>(
+                                              *_interaction_targets.hovered_entity));
+
+            if (sector) {
+               std::string world::portal::*sector_member = nullptr;
+
+               if (_entity_creation_context.pick_sector_index == 1) {
+                  sector_member = &world::portal::sector1;
+               }
+               else if (_entity_creation_context.pick_sector_index == 2) {
+                  sector_member = &world::portal::sector2;
+               }
+
+               _edit_stack_world.apply(edits::make_set_creation_value(sector_member,
+                                                                      sector->name,
+                                                                      portal.*sector_member),
+                                       _edit_context);
+            }
+         }
+
          if (_entity_creation_config.placement_rotation !=
              placement_rotation::manual_quaternion) {
             ImGui::DragRotationEuler("Rotation", &creation_entity,
@@ -4021,7 +4061,8 @@ void world_edit::update_ui() noexcept
          if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
               _entity_creation_config.placement_mode == placement_mode::cursor or
               rotate_entity_forward or rotate_entity_back) and
-             not _entity_creation_context.using_point_at) {
+             not _entity_creation_context.using_point_at and
+             not _entity_creation_context.using_pick_sector) {
             quaternion new_rotation = portal.rotation;
             float3 new_position = portal.position;
             float3 new_euler_rotation = _edit_context.euler_rotation;

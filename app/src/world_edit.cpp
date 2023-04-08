@@ -175,6 +175,11 @@ void world_edit::update_hovered_entity() noexcept
                                                    .planning_hubs = true,
                                                    .terrain = false};
       }
+      else if (_entity_creation_context.using_pick_sector) {
+         raycast_mask = world::active_entity_types{.objects = false,
+                                                   .sectors = true,
+                                                   .terrain = false};
+      }
    }
 
    if (raycast_mask.objects) {
@@ -344,8 +349,11 @@ void world_edit::update_hovered_entity() noexcept
           std::holds_alternative<world::planning_hub_id>(
              *_interaction_targets.hovered_entity));
 
-      const bool tool_wants_hover =
-         from_bbox_wants_hover or connection_placement_wants_hover;
+      const bool pick_sector_wants_hover = _entity_creation_context.using_pick_sector;
+
+      const bool tool_wants_hover = from_bbox_wants_hover or
+                                    connection_placement_wants_hover or
+                                    pick_sector_wants_hover;
 
       if (not tool_wants_hover) {
          _interaction_targets.hovered_entity = std::nullopt;

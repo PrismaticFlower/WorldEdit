@@ -170,6 +170,9 @@ void world_edit::initialize_commands() noexcept
       _entity_creation_context.draw_barrier_click = false;
    });
 
+   _commands.add("entity_creation.deactivate_pick_sector"s,
+                 [this] { _entity_creation_context.using_pick_sector = false; });
+
    _commands.add("entity_creation.draw_barrier_click"s,
                  _entity_creation_context.draw_barrier_click);
 
@@ -392,6 +395,20 @@ void world_edit::initialize_hotkeys() noexcept
                         {.key = key::mouse1}},
                        {"Stop Draw Barrier",
                         "entity_creation.deactivate_draw_barrier",
+                        {.key = key::escape}},
+                    });
+
+   _hotkeys.add_set("Entity Creation (Pick Sector)",
+                    [this] {
+                       return _interaction_targets.creation_entity and
+                              _entity_creation_context.using_pick_sector;
+                    },
+                    {
+                       {"Stop Pick Sector",
+                        "entity_creation.deactivate_pick_sector",
+                        {.key = key::mouse1}},
+                       {"Stop Pick Sector (Escape)",
+                        "entity_creation.deactivate_pick_sector",
                         {.key = key::escape}},
                     });
 }
