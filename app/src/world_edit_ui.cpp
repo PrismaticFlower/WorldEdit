@@ -938,14 +938,18 @@ void world_edit::update_ui() noexcept
                      std::array<std::string, 6> entries;
                      std::size_t matching_count = 0;
 
-                     _asset_libraries.odfs.enumerate_known(
-                        [&](const lowercase_string& asset) {
-                           if (matching_count == entries.size()) return;
-                           if (not asset.contains(object->class_name)) return;
+                     _asset_libraries.odfs.view_existing(
+                        [&](const std::span<const assets::stable_string> assets) {
+                           for (const std::string_view asset : assets) {
+                              if (matching_count == entries.size()) break;
+                              if (not asset.contains(object->class_name)) {
+                                 continue;
+                              }
 
-                           entries[matching_count] = asset;
+                              entries[matching_count] = asset;
 
-                           ++matching_count;
+                              ++matching_count;
+                           }
                         });
 
                      return entries;
@@ -1147,14 +1151,18 @@ void world_edit::update_ui() noexcept
                      std::array<std::string, 6> entries;
                      std::size_t matching_count = 0;
 
-                     _asset_libraries.textures.enumerate_known(
-                        [&](const lowercase_string& asset) {
-                           if (matching_count == entries.size()) return;
-                           if (not asset.contains(light->texture)) return;
+                     _asset_libraries.textures.view_existing(
+                        [&](const std::span<const assets::stable_string> assets) {
+                           for (const std::string_view asset : assets) {
+                              if (matching_count == entries.size()) break;
+                              if (not asset.contains(light->texture)) {
+                                 continue;
+                              }
 
-                           entries[matching_count] = asset;
+                              entries[matching_count] = asset;
 
-                           ++matching_count;
+                              ++matching_count;
+                           }
                         });
 
                      return entries;
@@ -2495,26 +2503,28 @@ void world_edit::update_ui() noexcept
                                 world::create_unique_name(_world.objects, *edited_value);
                           });
 
-         ImGui::InputTextAutoComplete("Class Name", &creation_entity,
-                                      &world::object::class_name,
-                                      &_edit_stack_world, &_edit_context, [&] {
-                                         std::array<std::string, 6> entries;
-                                         std::size_t matching_count = 0;
+         ImGui::InputTextAutoComplete(
+            "Class Name", &creation_entity, &world::object::class_name,
+            &_edit_stack_world, &_edit_context, [&] {
+               std::array<std::string, 6> entries;
+               std::size_t matching_count = 0;
 
-                                         _asset_libraries.odfs.enumerate_known(
-                                            [&](const lowercase_string& asset) {
-                                               if (matching_count == entries.size())
-                                                  return;
-                                               if (not asset.contains(object.class_name))
-                                                  return;
+               _asset_libraries.odfs.view_existing(
+                  [&](const std::span<const assets::stable_string> assets) {
+                     for (const std::string_view asset : assets) {
+                        if (matching_count == entries.size()) break;
+                        if (not asset.contains(object.class_name)) {
+                           continue;
+                        }
 
-                                               entries[matching_count] = asset;
+                        entries[matching_count] = asset;
 
-                                               ++matching_count;
-                                            });
+                        ++matching_count;
+                     }
+                  });
 
-                                         return entries;
-                                      });
+               return entries;
+            });
 
          ImGui::LayerPick<world::object>("Layer", &creation_entity,
                                          &_edit_stack_world, &_edit_context);
@@ -2819,26 +2829,28 @@ void world_edit::update_ui() noexcept
             ImGui::Separator();
          }
 
-         ImGui::InputTextAutoComplete("Texture", &creation_entity,
-                                      &world::light::texture,
-                                      &_edit_stack_world, &_edit_context, [&] {
-                                         std::array<std::string, 6> entries;
-                                         std::size_t matching_count = 0;
+         ImGui::InputTextAutoComplete(
+            "Texture", &creation_entity, &world::light::texture,
+            &_edit_stack_world, &_edit_context, [&] {
+               std::array<std::string, 6> entries;
+               std::size_t matching_count = 0;
 
-                                         _asset_libraries.textures.enumerate_known(
-                                            [&](const lowercase_string& asset) {
-                                               if (matching_count == entries.size())
-                                                  return;
-                                               if (not asset.contains(light.texture))
-                                                  return;
+               _asset_libraries.textures.view_existing(
+                  [&](const std::span<const assets::stable_string> assets) {
+                     for (const std::string_view asset : assets) {
+                        if (matching_count == entries.size()) break;
+                        if (not asset.contains(light.texture)) {
+                           continue;
+                        }
 
-                                               entries[matching_count] = asset;
+                        entries[matching_count] = asset;
 
-                                               ++matching_count;
-                                            });
+                        ++matching_count;
+                     }
+                  });
 
-                                         return entries;
-                                      });
+               return entries;
+            });
 
          if (world::is_directional_light(light) and not light.texture.empty()) {
             ImGui::DragFloat2("Directional Texture Tiling", &creation_entity,

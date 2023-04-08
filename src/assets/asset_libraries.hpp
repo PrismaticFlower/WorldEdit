@@ -68,10 +68,6 @@ struct library {
    /// @brief Clears the asset library.
    void clear() noexcept;
 
-   /// @brief Enumerate all known assets. Takes the read lock on assets while the callback is called so be careful of calling back into the library from the callback.
-   /// @param callback The function to call with the name of each asset.
-   void enumerate_known(const std::function<void(const lowercase_string& name)> callback) noexcept;
-
    /// @brief Allows you to view a span of existing (on disk) assets. A shared lock is taken on the underlying data as such `add` or `clear` must not be called from within the callback.
    /// @param callback The function to call with a span of existing assets. The strings will be valid until clear is called.
    void view_existing(

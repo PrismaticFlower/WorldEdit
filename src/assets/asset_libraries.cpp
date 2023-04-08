@@ -162,21 +162,6 @@ struct library<T>::impl {
       _existing_assets_sorted = true;
    }
 
-   void enumerate_known(const std::function<void(const lowercase_string& name)> callback) noexcept
-   {
-      std::shared_lock lock{_assets_mutex};
-
-      for (const auto& [name, state] : _assets) {
-         {
-            std::shared_lock state_lock{state->mutex};
-
-            if (not state->exists) continue;
-         }
-
-         callback(name);
-      }
-   }
-
    void view_existing(
       const std::function<void(const std::span<const stable_string> assets)> callback) noexcept
    {
@@ -328,13 +313,6 @@ template<typename T>
 void library<T>::clear() noexcept
 {
    self->clear();
-}
-
-template<typename T>
-void library<T>::enumerate_known(
-   const std::function<void(const lowercase_string& name)> callback) noexcept
-{
-   self->enumerate_known(std::move(callback));
 }
 
 template<typename T>
