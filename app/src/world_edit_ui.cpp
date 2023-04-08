@@ -1,4 +1,3 @@
-
 #include "world_edit.hpp"
 
 #include "edits/add_game_mode.hpp"
@@ -5674,19 +5673,20 @@ void world_edit::update_ui() noexcept
             ImGui::PopItemWidth();
 
             _world_explorer_object_classes.clear();
-            _world_explorer_object_classes.reserve(1024);
 
-            _asset_libraries.odfs.enumerate_known([&](const lowercase_string& asset) {
-               if (not _world_explorer_class_filter.empty() and
-                   not string::icontains(asset, _world_explorer_class_filter)) {
-                  return;
-               }
+            _asset_libraries.odfs.view_existing(
+               [&](const std::span<const assets::stable_string> assets) {
+                  _world_explorer_object_classes.reserve(assets.size());
 
-               _world_explorer_object_classes.push_back(asset);
-            });
+                  for (std::string_view asset : assets) {
+                     if (not _world_explorer_class_filter.empty() and
+                         not string::icontains(asset, _world_explorer_class_filter)) {
+                        continue;
+                     }
 
-            std::sort(_world_explorer_object_classes.begin(),
-                      _world_explorer_object_classes.end());
+                     _world_explorer_object_classes.push_back(asset);
+                  }
+               });
 
             if (ImGui::BeginTable("Object Classes", 1,
                                   ImGuiTableFlags_Reorderable | ImGuiTableFlags_ScrollY)) {
@@ -5697,13 +5697,15 @@ void world_edit::update_ui() noexcept
                clipper.Begin(static_cast<int>(_world_explorer_object_classes.size()));
                while (clipper.Step()) {
                   for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-                     const lowercase_string& class_name =
+                     const std::string_view class_name =
                         _world_explorer_object_classes[i];
+
+                     ImGui::PushID(i);
 
                      ImGui::TableNextRow();
 
                      ImGui::TableNextColumn();
-                     if (ImGui::Selectable(class_name.c_str(), false,
+                     if (ImGui::Selectable("", false,
                                            ImGuiSelectableFlags_SpanAllColumns)) {
                         if (_interaction_targets.creation_entity and
                             std::holds_alternative<world::object>(
@@ -5713,20 +5715,28 @@ void world_edit::update_ui() noexcept
 
                            _edit_stack_world.apply(edits::make_set_creation_value(
                                                       &world::object::class_name,
-                                                      std::move(class_name),
+                                                      lowercase_string{class_name},
                                                       object.class_name),
                                                    _edit_context);
                         }
                         else {
-                           _edit_stack_world.apply(edits::make_creation_entity_set(
-                                                      world::object{.name = "",
-                                                                    .class_name = class_name,
-                                                                    .id = world::max_id},
-                                                      _interaction_targets.creation_entity),
-                                                   _edit_context);
+                           _edit_stack_world
+                              .apply(edits::make_creation_entity_set(
+                                        world::object{.name = "",
+                                                      .class_name = lowercase_string{class_name},
+                                                      .id = world::max_id},
+                                        _interaction_targets.creation_entity),
+                                     _edit_context);
                            _entity_creation_context = {};
                         }
                      }
+
+                     ImGui::SameLine();
+
+                     ImGui::TextUnformatted(class_name.data(),
+                                            class_name.data() + class_name.size());
+
+                     ImGui::PopID();
                   }
                }
 

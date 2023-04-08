@@ -685,6 +685,9 @@
     <ClInclude Include="src\edits\bundle.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\asset_stable_string.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

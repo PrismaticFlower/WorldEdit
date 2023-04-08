@@ -33,12 +33,244 @@ const absl::flat_hash_set<std::wstring_view> ignored_folders =
     L".git"sv,   L".svn"sv,    L".vscode"sv};
 
 }
+
 template<typename T>
-struct library<T>::members {
-   members(output_stream& stream, std::shared_ptr<async::thread_pool> thread_pool,
-           std::shared_ptr<asset_state<T>> null_asset)
-      : _output_stream{stream}, _thread_pool{std::move(thread_pool)}, _null_asset{std::move(null_asset)}
+struct library<T>::impl {
+   impl(output_stream& stream, std::shared_ptr<async::thread_pool> thread_pool)
+      : _output_stream{stream}, _thread_pool{std::move(thread_pool)}
    {
+   }
+
+   void add(const std::filesystem::path& unpreferred_asset_path) noexcept
+   {
+      std::filesystem::path asset_path =
+         unpreferred_asset_path; // makes for prettier output messages
+
+      asset_path.make_preferred();
+
+      const lowercase_string name{asset_path.stem().string()};
+
+      auto new_state = make_asset_state(name, asset_path);
+
+      auto [state_pair, inserted] = [&] {
+         std::scoped_lock lock{_assets_mutex};
+
+         return _assets.emplace(name, new_state);
+      }();
+
+      auto state = state_pair->second;
+
+      if (not inserted) {
+         std::scoped_lock state_lock{state->mutex, _existing_assets_mutex};
+
+         if (not state->exists) insert_existing_asset(name);
+
+         state->exists = true;
+         state->load_failure = false;
+         state->path = asset_path;
+         state->start_load = [this, name] { enqueue_create_asset(name, false); };
+      }
+      else {
+         insert_existing_asset(name);
+      }
+
+      if (state->ref_count.load(std::memory_order_relaxed) > 0) {
+         enqueue_create_asset(name, true);
+      }
+   }
+
+   auto operator[](const lowercase_string& name) noexcept -> asset_ref<T>
+   {
+      if (name.empty()) return asset_ref{_null_asset};
+
+      // Take a shared_lock to try and get an already existing asset state.
+      {
+         std::shared_lock lock{_assets_mutex};
+
+         if (auto asset = _assets.find(name); asset != _assets.end()) {
+            return asset_ref{asset->second};
+         }
+      }
+
+      auto placeholder_state = make_placeholder_asset_state();
+
+      std::lock_guard lock{_assets_mutex};
+
+      auto [state_pair, inserted] = _assets.emplace(name, placeholder_state);
+
+      return state_pair->second;
+   }
+
+   auto listen_for_loads(
+      std::function<void(const lowercase_string& name, asset_ref<T> asset, asset_data<T> data)> callback) noexcept
+      -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>
+   {
+      return _load_event.listen(std::move(callback));
+   }
+
+   void update_loaded() noexcept
+   {
+   restart_loop:
+      std::unique_lock lock{_load_tasks_mutex};
+
+      for (auto& [task_name, task] : _load_tasks) {
+         if (not task.ready()) continue;
+
+         asset_data<T> asset_data = task.get();
+         lowercase_string name = task_name;
+
+         _load_tasks.erase(name);
+         lock.unlock(); // After thise line accessing _load_tasks is no longer safe.
+
+         asset_ref<T> asset;
+         std::shared_ptr<asset_state<T>> asset_state;
+
+         // Get the asset_state.
+         {
+            std::scoped_lock assets_lock{_assets_mutex};
+
+            asset_state = _assets[name];
+         }
+
+         // Update the asset data.
+         {
+            std::scoped_lock asset_lock{asset_state->mutex};
+
+            asset_state->data = asset_data;
+         }
+
+         asset = asset_ref<T>{asset_state};
+
+         if (asset_data != nullptr) {
+            _load_event.broadcast(name, asset, asset_data);
+         }
+         else {
+            asset_state->load_failure = true;
+         }
+
+         goto restart_loop;
+      }
+   }
+
+   void clear() noexcept
+   {
+      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex, _existing_assets_mutex};
+
+      _load_tasks.clear();
+      _assets.clear();
+      _existing_assets.clear();
+      _existing_assets_sorted = true;
+   }
+
+   void enumerate_known(const std::function<void(const lowercase_string& name)> callback) noexcept
+   {
+      std::shared_lock lock{_assets_mutex};
+
+      for (const auto& [name, state] : _assets) {
+         {
+            std::shared_lock state_lock{state->mutex};
+
+            if (not state->exists) continue;
+         }
+
+         callback(name);
+      }
+   }
+
+   void view_existing(
+      const std::function<void(const std::span<const stable_string> assets)> callback) noexcept
+   {
+      std::shared_lock lock{_existing_assets_mutex};
+
+      callback(_existing_assets);
+   }
+
+private:
+   auto make_asset_state(const lowercase_string& name,
+                         const std::filesystem::path& asset_path)
+      -> std::shared_ptr<asset_state<T>>
+   {
+      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{},
+                                              not asset_path.empty(),
+                                              asset_path, [this, name = name] {
+                                                 enqueue_create_asset(name, false);
+                                              });
+   }
+
+   auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
+   {
+      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{}, false,
+                                              std::filesystem::path{}, [] {});
+   }
+
+   void enqueue_create_asset(lowercase_string name, bool preempt_current_load) noexcept
+   {
+      using namespace std::literals;
+
+      auto asset = [&] {
+         std::scoped_lock lock{_assets_mutex};
+
+         return _assets.at(name);
+      }();
+
+      // Do not try reload assets that previously failed loading.
+      if (asset->load_failure) return;
+
+      std::filesystem::path asset_path = [&] {
+         std::shared_lock asset_lock{asset->mutex};
+
+         return asset->path;
+      }();
+
+      std::scoped_lock tasks_lock{_load_tasks_mutex};
+
+      if (preempt_current_load) {
+         if (auto inprogress_load = _load_tasks.find(name);
+             inprogress_load != _load_tasks.end()) {
+            auto& [_, load_task] = *inprogress_load;
+
+            load_task.cancel();
+
+            _load_tasks.erase(inprogress_load);
+         }
+      }
+      else if (_load_tasks.contains(name)) {
+         return;
+      }
+
+      _load_tasks[name] = _thread_pool->exec(
+         async::task_priority::low,
+         [this, asset_path = std::move(asset_path), asset, name]() -> asset_data<T> {
+            try {
+               utility::stopwatch<std::chrono::high_resolution_clock> load_timer;
+
+               auto asset_data =
+                  std::make_shared<const T>(asset_traits<T>::load(asset_path));
+
+               _output_stream.write("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
+                                    asset_path.string(),
+                                    load_timer
+                                       .elapsed<std::chrono::duration<double, std::milli>>()
+                                       .count());
+
+               return asset_data;
+            }
+            catch (std::exception& e) {
+               _output_stream.write("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
+                                    asset_path.string(),
+                                    string::indent(2, e.what()));
+
+               return nullptr;
+            }
+         });
+   }
+
+   void insert_existing_asset(const std::string_view name) noexcept
+   {
+      std::scoped_lock lock{_existing_assets_mutex};
+
+      _existing_assets.emplace_back(name);
+      _existing_assets_sorted = false;
    }
 
    we::output_stream& _output_stream;
@@ -49,74 +281,33 @@ struct library<T>::members {
    std::shared_mutex _load_tasks_mutex;
    absl::flat_hash_map<lowercase_string, async::task<asset_data<T>>> _load_tasks; // guarded by _load_tasks_mutex
 
+   std::shared_mutex _existing_assets_mutex;
+   std::vector<stable_string> _existing_assets;
+   bool _existing_assets_sorted = true;
+
    std::shared_ptr<async::thread_pool> _thread_pool;
 
-   const std::shared_ptr<asset_state<T>> _null_asset;
+   const std::shared_ptr<asset_state<T>> _null_asset = make_placeholder_asset_state();
 
    utility::event<void(const lowercase_string&, asset_ref<T>, asset_data<T>)> _load_event;
 };
 
 template<typename T>
 library<T>::library(output_stream& stream, std::shared_ptr<async::thread_pool> thread_pool)
-   : self{stream, std::move(thread_pool), make_placeholder_asset_state()}
+   : self{stream, std::move(thread_pool)}
 {
 }
 
 template<typename T>
-void library<T>::add(const std::filesystem::path& unpreferred_asset_path) noexcept
+void library<T>::add(const std::filesystem::path& asset_path) noexcept
 {
-   std::filesystem::path asset_path =
-      unpreferred_asset_path; // makes for prettier output messages
-
-   asset_path.make_preferred();
-
-   const lowercase_string name{asset_path.stem().string()};
-
-   auto new_state = make_asset_state(name, asset_path);
-
-   auto [state_pair, inserted] = [&] {
-      std::scoped_lock lock{self->_assets_mutex};
-
-      return self->_assets.emplace(name, new_state);
-   }();
-
-   auto state = state_pair->second;
-
-   if (not inserted) {
-      std::scoped_lock state_lock{state->mutex};
-
-      state->exists = true;
-      state->load_failure = false;
-      state->path = asset_path;
-      state->start_load = [this, name] { enqueue_create_asset(name, false); };
-   }
-
-   if (state->ref_count.load(std::memory_order_relaxed) > 0) {
-      enqueue_create_asset(name, true);
-   }
+   self->add(asset_path);
 }
 
 template<typename T>
 auto library<T>::operator[](const lowercase_string& name) noexcept -> asset_ref<T>
 {
-   if (name.empty()) return asset_ref{self->_null_asset};
-
-   // Take a shared_lock to try and get an already existing asset state.
-   {
-      std::shared_lock lock{self->_assets_mutex};
-
-      if (auto asset = self->_assets.find(name); asset != self->_assets.end()) {
-         return asset_ref{asset->second};
-      }
-   }
-
-   auto placeholder_state = make_placeholder_asset_state();
-
-   std::lock_guard lock{self->_assets_mutex};
-
-   auto [state_pair, inserted] = self->_assets.emplace(name, placeholder_state);
-
-   return state_pair->second;
+   return self.get()[name];
 }
 
 template<typename T>
@@ -124,158 +315,33 @@ auto library<T>::listen_for_loads(
    std::function<void(const lowercase_string& name, asset_ref<T> asset, asset_data<T> data)> callback) noexcept
    -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>
 {
-   return self->_load_event.listen(std::move(callback));
+   return self->listen_for_loads(std::move(callback));
 }
 
 template<typename T>
 void library<T>::update_loaded() noexcept
 {
-restart_loop:
-   std::unique_lock lock{self->_load_tasks_mutex};
-
-   for (auto& [task_name, task] : self->_load_tasks) {
-      if (not task.ready()) continue;
-
-      asset_data<T> asset_data = task.get();
-      lowercase_string name = task_name;
-
-      self->_load_tasks.erase(name);
-      lock.unlock(); // After thise line accessing _load_tasks is no longer safe.
-
-      asset_ref<T> asset;
-      std::shared_ptr<asset_state<T>> asset_state;
-
-      // Get the asset_state.
-      {
-         std::scoped_lock assets_lock{self->_assets_mutex};
-
-         asset_state = self->_assets[name];
-      }
-
-      // Update the asset data.
-      {
-         std::scoped_lock asset_lock{asset_state->mutex};
-
-         asset_state->data = asset_data;
-      }
-
-      asset = asset_ref<T>{asset_state};
-
-      if (asset_data != nullptr) {
-         self->_load_event.broadcast(name, asset, asset_data);
-      }
-      else {
-         asset_state->load_failure = true;
-      }
-
-      goto restart_loop;
-   }
+   self->update_loaded();
 }
 
 template<typename T>
 void library<T>::clear() noexcept
 {
-   std::scoped_lock lock{self->_assets_mutex, self->_load_tasks_mutex};
-
-   self->_load_tasks.clear();
-   self->_assets.clear();
+   self->clear();
 }
 
 template<typename T>
 void library<T>::enumerate_known(
    const std::function<void(const lowercase_string& name)> callback) noexcept
 {
-   std::shared_lock lock{self->_assets_mutex};
-
-   for (const auto& [name, state] : self->_assets) {
-      {
-         std::shared_lock state_lock{state->mutex};
-
-         if (not state->exists) continue;
-      }
-
-      callback(name);
-   }
+   self->enumerate_known(std::move(callback));
 }
 
 template<typename T>
-auto library<T>::make_asset_state(const lowercase_string& name,
-                                  const std::filesystem::path& asset_path)
-   -> std::shared_ptr<asset_state<T>>
+void library<T>::view_existing(
+   const std::function<void(const std::span<const stable_string> assets)> callback) noexcept
 {
-   return std::make_shared<asset_state<T>>(std::weak_ptr<T>{}, not asset_path.empty(),
-                                           asset_path, [this, name = name] {
-                                              enqueue_create_asset(name, false);
-                                           });
-}
-
-template<typename T>
-auto library<T>::make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
-{
-   return std::make_shared<asset_state<T>>(std::weak_ptr<T>{}, false,
-                                           std::filesystem::path{}, [] {});
-}
-
-template<typename T>
-void library<T>::enqueue_create_asset(lowercase_string name,
-                                      bool preempt_current_load) noexcept
-{
-   using namespace std::literals;
-
-   auto asset = [&] {
-      std::scoped_lock lock{self->_assets_mutex};
-
-      return self->_assets.at(name);
-   }();
-
-   // Do not try reload assets that previously failed loading.
-   if (asset->load_failure) return;
-
-   std::filesystem::path asset_path = [&] {
-      std::shared_lock asset_lock{asset->mutex};
-
-      return asset->path;
-   }();
-
-   std::scoped_lock tasks_lock{self->_load_tasks_mutex};
-
-   if (preempt_current_load) {
-      if (auto inprogress_load = self->_load_tasks.find(name);
-          inprogress_load != self->_load_tasks.end()) {
-         auto& [_, load_task] = *inprogress_load;
-
-         load_task.cancel();
-
-         self->_load_tasks.erase(inprogress_load);
-      }
-   }
-   else if (self->_load_tasks.contains(name)) {
-      return;
-   }
-
-   self->_load_tasks[name] = self->_thread_pool->exec(
-      async::task_priority::low,
-      [this, asset_path = std::move(asset_path), asset, name]() -> asset_data<T> {
-         try {
-            utility::stopwatch load_timer;
-
-            auto asset_data =
-               std::make_shared<const T>(asset_traits<T>::load(asset_path));
-
-            self->_output_stream.write(
-               "Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv, asset_path.string(),
-               load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
-
-            return asset_data;
-         }
-         catch (std::exception& e) {
-            self->_output_stream.write("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
-                                       asset_path.string(),
-                                       string::indent(2, e.what()));
-
-            return nullptr;
-         }
-      });
+   self->view_existing(std::move(callback));
 }
 
 template struct library<odf::definition>;

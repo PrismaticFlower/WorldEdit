@@ -201,7 +201,7 @@ private:
    std::string _world_explorer_filter;
    std::string _world_explorer_class_filter;
 
-   std::vector<lowercase_string> _world_explorer_object_classes;
+   std::vector<std::string_view> _world_explorer_object_classes;
 
    bool _world_explorer_path_show_all_nodes;
 

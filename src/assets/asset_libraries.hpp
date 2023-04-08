@@ -1,11 +1,13 @@
 #pragma once
 
+#include "asset_stable_string.hpp"
 #include "lowercase_string.hpp"
 #include "utility/event_listener.hpp"
 #include "utility/implementation_storage.hpp"
 
 #include <functional>
 #include <memory>
+#include <span>
 
 #include "asset_ref.hpp"
 
@@ -70,18 +72,15 @@ struct library {
    /// @param callback The function to call with the name of each asset.
    void enumerate_known(const std::function<void(const lowercase_string& name)> callback) noexcept;
 
+   /// @brief Allows you to view a span of existing (on disk) assets. A shared lock is taken on the underlying data as such `add` or `clear` must not be called from within the callback.
+   /// @param callback The function to call with a span of existing assets. The strings will be valid until clear is called.
+   void view_existing(
+      const std::function<void(const std::span<const stable_string> assets)> callback) noexcept;
+
 private:
-   auto make_asset_state(const lowercase_string& name,
-                         const std::filesystem::path& asset_path)
-      -> std::shared_ptr<asset_state<T>>;
+   struct impl;
 
-   auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>;
-
-   void enqueue_create_asset(lowercase_string name, bool preempt_current_load) noexcept;
-
-   struct members;
-
-   implementation_storage<members, 152> self;
+   implementation_storage<impl, 200> self;
 };
 
 struct libraries_manager {

@@ -308,6 +308,7 @@
     <ClInclude Include="src\allocators\aligned_allocator.hpp" />
     <ClInclude Include="src\assets\asset_ref.hpp" />
     <ClInclude Include="src\assets\asset_libraries.hpp" />
+    <ClInclude Include="src\assets\asset_stable_string.hpp" />
     <ClInclude Include="src\assets\asset_state.hpp" />
     <ClInclude Include="src\assets\asset_traits.hpp" />
     <ClInclude Include="src\assets\config\io.hpp" />
