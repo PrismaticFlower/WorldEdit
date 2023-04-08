@@ -21,9 +21,6 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
-#include <range/v3/view/filter.hpp>
-#include <range/v3/view/transform.hpp>
-
 using namespace std::literals;
 
 namespace we::assets {
@@ -190,17 +187,13 @@ void library<T>::enumerate_known(
 {
    std::shared_lock lock{self->_assets_mutex};
 
-   using namespace ranges::views;
+   for (const auto& [name, state] : self->_assets) {
+      {
+         std::shared_lock state_lock{state->mutex};
 
-   for (const lowercase_string& name :
-        self->_assets | filter([](const auto& name_asset) {
-           asset_state<T>& state = *name_asset.second;
+         if (not state->exists) continue;
+      }
 
-           std::shared_lock lock{state.mutex};
-
-           return state.exists;
-        }) |
-           transform([](const auto& name_asset) { return name_asset.first; })) {
       callback(name);
    }
 }
