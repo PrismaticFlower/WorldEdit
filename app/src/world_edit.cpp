@@ -413,14 +413,10 @@ void world_edit::update_camera(const float delta_time)
       camera_position += (_camera.right() * camera_movement_scale);
    }
    if (_move_camera_up) {
-      const float3 up = is_perspective ? _camera.up() : _camera.forward();
-
-      camera_position += (up * camera_movement_scale);
+      camera_position += (_camera.up() * camera_movement_scale);
    }
    if (_move_camera_down) {
-      const float3 down = is_perspective ? _camera.down() : _camera.back();
-
-      camera_position += (down * camera_movement_scale);
+      camera_position += (_camera.down() * camera_movement_scale);
    }
 
    if (_pan_camera) {
