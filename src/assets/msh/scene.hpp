@@ -63,8 +63,8 @@ struct node {
 };
 
 struct options {
-   bool additive_emissive;
-   bool vertex_lighting;
+   bool additive_emissive = false;
+   bool vertex_lighting = false;
    std::vector<std::string> normal_maps;
 };
 
