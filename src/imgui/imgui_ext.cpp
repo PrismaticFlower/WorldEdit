@@ -12,8 +12,8 @@ namespace ImGui {
 namespace {
 
 struct text_callback_autofill_data {
-   std::optional<std::array<std::string, 6>>& autocomplete_entries;
-   std::add_pointer_t<std::array<std::string, 6>(void*)> fill_entries_callback;
+   std::optional<std::array<std::string_view, 6>>& autocomplete_entries;
+   std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback;
    void* fill_entries_callback_user_data;
 };
 
@@ -231,11 +231,79 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed, float v_min,
    return value_changed;
 }
 
-bool InputTextAutoComplete(const char* label, std::string* value,
-                           const std::add_pointer_t<std::array<std::string, 6>(void*)> fill_entries_callback,
-                           void* fill_entries_callback_user_data)
+bool EditFlags(const char* label, unsigned int* value, std::span<const ExtEditFlag> flags)
 {
-   std::optional<std::array<std::string, 6>> autocomplete_entries;
+   bool value_changed = false;
+
+   const float item_width = CalcItemWidth();
+
+   ImGui::BeginGroup();
+
+   ImGui::SeparatorText(label);
+
+   for (const auto& flag : flags) {
+      if (ImGui::Selectable(flag.label, *value & flag.bit, 0, {item_width, 0.0f})) {
+         *value ^= flag.bit;
+
+         value_changed |= true;
+      }
+   }
+
+   ImGui::EndGroup();
+
+   return value_changed;
+}
+
+bool InputText(const char* label, absl::InlinedVector<char, 256>* buffer,
+               ImGuiInputTextFlags flags, ImGuiInputTextCallback callback,
+               void* user_data)
+{
+   IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
+
+   flags |= ImGuiInputTextFlags_CallbackResize;
+
+   struct callback_user_data {
+      absl::InlinedVector<char, 256>* buffer;
+      ImGuiInputTextCallback chain_callback;
+      void* chain_callback_user_data;
+   };
+
+   callback_user_data cb_user_data;
+   cb_user_data.buffer = buffer;
+   cb_user_data.chain_callback = callback;
+   cb_user_data.chain_callback_user_data = user_data;
+
+   const auto resize_callback = [](ImGuiInputTextCallbackData* data) -> int {
+      callback_user_data* user_data = (callback_user_data*)data->UserData;
+      if (data->EventFlag == ImGuiInputTextFlags_CallbackResize) {
+         absl::InlinedVector<char, 256>* buffer = user_data->buffer;
+
+         buffer->resize(data->BufTextLen + 1); // + 1 for null terminator
+         data->Buf = buffer->data();
+      }
+      else if (user_data->chain_callback) {
+         data->UserData = user_data->chain_callback_user_data;
+         return user_data->chain_callback(data);
+      }
+      return 0;
+   };
+
+   buffer->push_back('\0');
+
+   const bool edited = InputText(label, buffer->data(), buffer->capacity() + 1,
+                                 flags, resize_callback, &cb_user_data);
+
+   buffer->pop_back();
+
+   return edited;
+}
+
+bool InputTextAutoComplete(
+   const char* label, absl::InlinedVector<char, 256>* buffer,
+   const std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback,
+   void* fill_entries_callback_user_data)
+{
+   std::optional<std::array<std::string_view, 6>> autocomplete_entries;
 
    text_callback_autofill_data callback_user_data{autocomplete_entries,
                                                   fill_entries_callback,
@@ -244,7 +312,7 @@ bool InputTextAutoComplete(const char* label, std::string* value,
    ImGui::BeginGroup();
 
    bool value_changed = ImGui::InputText(
-      label, value, ImGuiInputTextFlags_CallbackCompletion,
+      label, buffer, ImGuiInputTextFlags_CallbackCompletion,
       [](ImGuiInputTextCallbackData* data) {
          if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
             text_callback_autofill_data& user_data =
@@ -253,12 +321,12 @@ bool InputTextAutoComplete(const char* label, std::string* value,
             user_data.autocomplete_entries = user_data.fill_entries_callback(
                user_data.fill_entries_callback_user_data);
 
-            std::string& autofill = (*user_data.autocomplete_entries)[0];
+            std::string_view autofill = (*user_data.autocomplete_entries)[0];
 
             if (not autofill.empty()) {
                data->DeleteChars(0, data->BufTextLen);
-               data->InsertChars(0, autofill.c_str(),
-                                 autofill.c_str() + autofill.size());
+               data->InsertChars(0, autofill.data(),
+                                 autofill.data() + autofill.size());
             }
          }
 
@@ -285,8 +353,8 @@ bool InputTextAutoComplete(const char* label, std::string* value,
          ImGui::TextUnformatted("No matches.");
       }
       else {
-         for (const std::string& asset : *autocomplete_entries) {
-            ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
+         for (const std::string_view& asset : *autocomplete_entries) {
+            ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
          }
       }
 
@@ -298,26 +366,4 @@ bool InputTextAutoComplete(const char* label, std::string* value,
    return value_changed;
 }
 
-bool EditFlags(const char* label, unsigned int* value, std::span<const ExtEditFlag> flags)
-{
-   bool value_changed = false;
-
-   const float item_width = CalcItemWidth();
-
-   ImGui::BeginGroup();
-
-   ImGui::SeparatorText(label);
-
-   for (const auto& flag : flags) {
-      if (ImGui::Selectable(flag.label, *value & flag.bit, 0, {item_width, 0.0f})) {
-         *value ^= flag.bit;
-
-         value_changed |= true;
-      }
-   }
-
-   ImGui::EndGroup();
-
-   return value_changed;
-}
 }

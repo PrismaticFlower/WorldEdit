@@ -252,14 +252,29 @@ inline bool InputText(const char* label, const Entity* entity,
                       we::world::edit_context* context,
                       std::invocable<T*> auto edit_filter) noexcept
 {
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](std::string* value) {
-      bool value_changed = ImGui::InputText(label, value);
+   const T& raw_value = entity->*value_member_ptr;
 
-      if (value_changed) edit_filter(value);
+   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
+   const bool value_changed = ImGui::InputText(label, &buffer);
+   const bool deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
+
+      T new_value{new_value_view};
+
+      edit_filter(&new_value);
+
+      edit_stack->apply(std::make_unique<we::edits::ui_edit<Entity, T>>(entity->id, value_member_ptr,
+                                                                        std::move(new_value),
+                                                                        raw_value),
+                        *context);
+   }
+
+   if (deactivated) edit_stack->close_last();
+
+   return value_changed;
 }
 
 template<typename Entity, typename T, typename Fill>
@@ -268,18 +283,32 @@ inline bool InputTextAutoComplete(const char* label, const Entity* entity,
                                   we::edits::stack<we::world::edit_context>* edit_stack,
                                   we::world::edit_context* context,
                                   Fill fill_entries_callback) noexcept
-   requires std::is_invocable_r_v<std::array<std::string, 6>, Fill>
+   requires std::is_invocable_r_v<std::array<std::string_view, 6>, Fill>
 {
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [&](T* value) {
-      bool value_changed = ImGui::InputTextAutoComplete(
-         label, value,
-         [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
-         static_cast<void*>(&fill_entries_callback));
-      bool is_deactivated = ImGui::IsItemDeactivated();
+   const T& raw_value = entity->*value_member_ptr;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = is_deactivated};
-   });
+   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
+
+   const bool value_changed = ImGui::InputTextAutoComplete(
+      label, &buffer,
+      [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
+      static_cast<void*>(&fill_entries_callback));
+   const bool deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
+
+      T new_value{new_value_view};
+
+      edit_stack->apply(std::make_unique<we::edits::ui_edit<Entity, T>>(entity->id, value_member_ptr,
+                                                                        std::move(new_value),
+                                                                        raw_value),
+                        *context);
+   }
+
+   if (deactivated) edit_stack->close_last();
+
+   return value_changed;
 }
 
 template<typename Entity>
@@ -402,36 +431,6 @@ inline bool DragBarrierRotation(const char* label, we::world::barrier* barrier,
 
 // Entity Vector/Array Property Editors
 
-template<typename Entity, typename T>
-inline bool EditWithUndo(const Entity* entity, std::vector<T> Entity::*value_member_ptr,
-                         const std::size_t item_index,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context,
-                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_edit_indexed<Entity, T>;
-   using value_type = T;
-
-   value_type value = (entity->*value_member_ptr)[item_index];
-   value_type original_value = value;
-
-   auto [valued_changed, item_deactivated] = editor(&value);
-
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(entity->id, value_member_ptr,
-                                                    item_index, value, original_value),
-                        *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return valued_changed;
-}
-
 template<typename Entity, we::edits::imgui::input_key_value_type T>
 inline bool InputKeyValue(const Entity* entity, std::vector<T> Entity::*value_member_ptr,
                           const std::size_t item_index,
@@ -441,13 +440,29 @@ inline bool InputKeyValue(const Entity* entity, std::vector<T> Entity::*value_me
                           ImGuiInputTextCallback callback = nullptr,
                           void* user_data = nullptr) noexcept
 {
-   return EditWithUndo(entity, value_member_ptr, item_index, edit_stack, context, [=](T* kv) {
-      bool value_changed =
-         ImGui::InputText(kv->key.c_str(), &kv->value, flags, callback, user_data);
+   const T& key_value = (entity->*value_member_ptr)[item_index];
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
+   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
+                                         key_value.value.end()};
+
+   const bool value_changed =
+      ImGui::InputText(key_value.key.c_str(), &buffer, flags, callback, user_data);
+   const bool deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
+
+      T new_key_value{key_value.key, std::string{new_value_view}};
+
+      edit_stack->apply(std::make_unique<we::edits::ui_edit_indexed<Entity, T>>(
+                           entity->id, value_member_ptr, item_index,
+                           std::move(new_key_value), key_value),
+                        *context);
+   }
+
+   if (deactivated) edit_stack->close_last();
+
+   return value_changed;
 }
 
 template<typename Entity, we::edits::imgui::input_key_value_type T, typename Fill>
@@ -456,74 +471,35 @@ inline bool InputKeyValueAutoComplete(const Entity* entity,
                                       const std::size_t item_index,
                                       we::edits::stack<we::world::edit_context>* edit_stack,
                                       we::world::edit_context* context,
-                                      const Fill& fill_entries_callback) noexcept
+                                      Fill fill_entries_callback) noexcept
 {
-   return EditWithUndo(entity, value_member_ptr, item_index, edit_stack, context, [=](T* kv) {
-      using string_type = decltype(kv->value);
+   const T& key_value = (entity->*value_member_ptr)[item_index];
 
-      std::optional<std::array<string_type, 6>> autocomplete_entries;
+   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
+                                         key_value.value.end()};
 
-      std::pair<const Fill&, decltype(autocomplete_entries)&>
-         callback_userdata{fill_entries_callback, autocomplete_entries};
+   const bool value_changed = ImGui::InputTextAutoComplete(
+      key_value.key.c_str(), &buffer,
+      [](void* user_data) -> std::array<std::string_view, 6> {
+         return (*static_cast<Fill*>(user_data))();
+      },
+      static_cast<void*>(&fill_entries_callback));
+   const bool deactivated = ImGui::IsItemDeactivated();
 
-      ImGui::BeginGroup();
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
 
-      bool value_changed = ImGui::InputText(
-         kv->key.c_str(), &kv->value, ImGuiInputTextFlags_CallbackCompletion,
-         [](ImGuiInputTextCallbackData* data) {
-            if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
-               auto& user_data =
-                  *static_cast<decltype(callback_userdata)*>(data->UserData);
+      T new_key_value{key_value.key, std::string{new_value_view}};
 
-               user_data.second.emplace(user_data.first());
+      edit_stack->apply(std::make_unique<we::edits::ui_edit_indexed<Entity, T>>(
+                           entity->id, value_member_ptr, item_index,
+                           std::move(new_key_value), key_value),
+                        *context);
+   }
 
-               string_type& autofill = (*user_data.second)[0];
+   if (deactivated) edit_stack->close_last();
 
-               if (not autofill.empty()) {
-                  data->DeleteChars(0, data->BufTextLen);
-                  data->InsertChars(0, autofill.c_str(),
-                                    autofill.c_str() + autofill.size());
-               }
-            }
-
-            return 0;
-         },
-         &callback_userdata);
-
-      bool is_deactivated = ImGui::IsItemDeactivated();
-
-      if (ImGui::IsItemActive()) {
-         ImGui::SetNextWindowPos(
-            ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
-         ImGui::SetNextWindowSize(
-            ImVec2{ImGui::GetItemRectMax().x - ImGui::GetItemRectMin().x -
-                      ImGui::CalcTextSize(kv->key.c_str(), nullptr, true).x -
-                      ImGui::GetStyle().ItemInnerSpacing.x,
-                   9.0f * ImGui::GetFontSize()});
-
-         ImGui::BeginTooltip();
-
-         if (not autocomplete_entries) {
-            autocomplete_entries.emplace(fill_entries_callback());
-         }
-
-         if ((*autocomplete_entries)[0].empty()) {
-            ImGui::TextUnformatted("No matches.");
-         }
-         else {
-            for (const string_type& asset : *autocomplete_entries) {
-               ImGui::TextUnformatted(asset.c_str(), asset.c_str() + asset.size());
-            }
-         }
-
-         ImGui::EndTooltip();
-      }
-
-      ImGui::EndGroup();
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = is_deactivated};
-   });
+   return value_changed;
 }
 
 // Path Node Property Editors
@@ -643,30 +619,35 @@ inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
                           ImGuiInputTextCallback callback = nullptr,
                           void* user_data = nullptr) noexcept
 {
-   return EditWithUndo(entity, node_index, &we::world::path::node::properties,
-                       item_index, edit_stack, context, [=](auto* kv) {
-                          bool value_changed =
-                             ImGui::InputText(kv->key.c_str(), &kv->value,
-                                              flags, callback, user_data);
+   using namespace we::world;
 
-                          return we::edit_widget_result{.value_changed = value_changed,
-                                                        .item_deactivated =
-                                                           ImGui::IsItemDeactivated()};
-                       });
+   const path::property& key_value = entity->nodes[node_index].properties[item_index];
+
+   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
+                                         key_value.value.end()};
+
+   const bool value_changed =
+      ImGui::InputText(key_value.key.c_str(), &buffer, flags, callback, user_data);
+   const bool deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
+
+      we::world::path::property new_key_value{key_value.key,
+                                              std::string{new_value_view}};
+
+      edit_stack->apply(std::make_unique<we::edits::ui_edit_path_node_indexed<path::property>>(
+                           entity->id, node_index, &path::node::properties,
+                           item_index, std::move(new_key_value), key_value),
+                        *context);
+   }
+
+   if (deactivated) edit_stack->close_last();
+
+   return value_changed;
 }
 
 // Entity Creation Editors
-
-template<typename Fill>
-inline bool InputTextAutoComplete(const char* label, std::string* value,
-                                  Fill fill_entries_callback) noexcept
-   requires std::is_invocable_r_v<std::array<std::string, 6>, Fill>
-{
-   return ImGui::InputTextAutoComplete(
-      label, value,
-      [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
-      static_cast<void*>(&fill_entries_callback));
-}
 
 inline bool LayerPick(const char* label, int* layer, we::world::world* world) noexcept
 {
@@ -789,16 +770,28 @@ inline bool InputText(const char* label, we::world::creation_entity* entity,
                       we::world::edit_context* context,
                       std::invocable<T*> auto edit_filter) noexcept
 {
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](T* value) {
-      bool value_changed = ImGui::InputText(label, value);
+   const T& raw_value = std::get_if<Entity>(entity)->*value_member_ptr;
 
-      if (value_changed) {
-         edit_filter(value);
-      }
+   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
+   const bool value_changed = ImGui::InputText(label, &buffer);
+   const bool deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
+
+      T new_value{new_value_view};
+
+      edit_filter(&new_value);
+
+      edit_stack->apply(std::make_unique<we::edits::ui_creation_edit<Entity, T>>(
+                           value_member_ptr, std::move(new_value), raw_value),
+                        *context);
+   }
+
+   if (deactivated) edit_stack->close_last();
+
+   return value_changed;
 }
 
 template<typename Entity, typename T, typename Fill>
@@ -807,18 +800,31 @@ inline bool InputTextAutoComplete(const char* label, we::world::creation_entity*
                                   we::edits::stack<we::world::edit_context>* edit_stack,
                                   we::world::edit_context* context,
                                   Fill fill_entries_callback) noexcept
-   requires std::is_invocable_r_v<std::array<std::string, 6>, Fill>
+   requires std::is_invocable_r_v<std::array<std::string_view, 6>, Fill>
 {
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [&](std::string* value) {
-      bool value_changed = ImGui::InputTextAutoComplete(
-         label, value,
-         [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
-         static_cast<void*>(&fill_entries_callback));
-      bool is_deactivated = ImGui::IsItemDeactivated();
+   const T& raw_value = std::get_if<Entity>(entity)->*value_member_ptr;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = is_deactivated};
-   });
+   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
+
+   const bool value_changed = ImGui::InputTextAutoComplete(
+      label, &buffer,
+      [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
+      static_cast<void*>(&fill_entries_callback));
+   const bool deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
+
+      T new_value{new_value_view};
+
+      edit_stack->apply(std::make_unique<we::edits::ui_creation_edit<Entity, T>>(
+                           value_member_ptr, std::move(new_value), raw_value),
+                        *context);
+   }
+
+   if (deactivated) edit_stack->close_last();
+
+   return value_changed;
 }
 
 template<typename Entity>

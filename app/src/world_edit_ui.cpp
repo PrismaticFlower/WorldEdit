@@ -935,7 +935,7 @@ void world_edit::update_ui() noexcept
                ImGui::InputTextAutoComplete(
                   "Class Name", object, &world::object::class_name,
                   &_edit_stack_world, &_edit_context, [&] {
-                     std::array<std::string, 6> entries;
+                     std::array<std::string_view, 6> entries;
                      std::size_t matching_count = 0;
 
                      _asset_libraries.odfs.view_existing(
@@ -994,7 +994,7 @@ void world_edit::update_ui() noexcept
                      ImGui::InputKeyValueAutoComplete(
                         object, &world::object::instance_properties, i,
                         &_edit_stack_world, &_edit_context, [&] {
-                           std::array<std::string, 6> entries;
+                           std::array<std::string_view, 6> entries;
 
                            std::size_t matching_count = 0;
 
@@ -1017,7 +1017,7 @@ void world_edit::update_ui() noexcept
                      ImGui::InputKeyValueAutoComplete(
                         object, &world::object::instance_properties, i,
                         &_edit_stack_world, &_edit_context, [&] {
-                           std::array<std::string, 6> entries;
+                           std::array<std::string_view, 6> entries;
 
                            std::size_t matching_count = 0;
 
@@ -1148,7 +1148,7 @@ void world_edit::update_ui() noexcept
                ImGui::InputTextAutoComplete(
                   "Texture", light, &world::light::texture, &_edit_stack_world,
                   &_edit_context, [&] {
-                     std::array<std::string, 6> entries;
+                     std::array<std::string_view, 6> entries;
                      std::size_t matching_count = 0;
 
                      _asset_libraries.textures.view_existing(
@@ -1918,7 +1918,7 @@ void world_edit::update_ui() noexcept
                ImGui::InputTextAutoComplete(
                   "Linked Sector 1", portal, &world::portal::sector1,
                   &_edit_stack_world, &_edit_context, [&] {
-                     std::array<std::string, 6> entries;
+                     std::array<std::string_view, 6> entries;
                      std::size_t matching_count = 0;
 
                      for (const auto& sector : _world.sectors) {
@@ -1937,7 +1937,7 @@ void world_edit::update_ui() noexcept
                ImGui::InputTextAutoComplete(
                   "Linked Sector 2", portal, &world::portal::sector2,
                   &_edit_stack_world, &_edit_context, [&] {
-                     std::array<std::string, 6> entries;
+                     std::array<std::string_view, 6> entries;
                      std::size_t matching_count = 0;
 
                      for (const auto& sector : _world.sectors) {
@@ -2512,7 +2512,7 @@ void world_edit::update_ui() noexcept
          ImGui::InputTextAutoComplete(
             "Class Name", &creation_entity, &world::object::class_name,
             &_edit_stack_world, &_edit_context, [&] {
-               std::array<std::string, 6> entries;
+               std::array<std::string_view, 6> entries;
                std::size_t matching_count = 0;
 
                _asset_libraries.odfs.view_existing(
@@ -2838,7 +2838,7 @@ void world_edit::update_ui() noexcept
          ImGui::InputTextAutoComplete(
             "Texture", &creation_entity, &world::light::texture,
             &_edit_stack_world, &_edit_context, [&] {
-               std::array<std::string, 6> entries;
+               std::array<std::string_view, 6> entries;
                std::size_t matching_count = 0;
 
                _asset_libraries.textures.view_existing(
@@ -3971,7 +3971,7 @@ void world_edit::update_ui() noexcept
          ImGui::InputTextAutoComplete("Linked Sector 1", &creation_entity,
                                       &world::portal::sector1,
                                       &_edit_stack_world, &_edit_context, [&] {
-                                         std::array<std::string, 6> entries;
+                                         std::array<std::string_view, 6> entries;
                                          std::size_t matching_count = 0;
 
                                          for (const auto& sector : _world.sectors) {
@@ -3996,7 +3996,7 @@ void world_edit::update_ui() noexcept
          ImGui::InputTextAutoComplete("Linked Sector 2", &creation_entity,
                                       &world::portal::sector2,
                                       &_edit_stack_world, &_edit_context, [&] {
-                                         std::array<std::string, 6> entries;
+                                         std::array<std::string_view, 6> entries;
                                          std::size_t matching_count = 0;
 
                                          for (const auto& sector : _world.sectors) {
