@@ -188,6 +188,7 @@ private:
    bool _world_global_lights_editor_open = false;
    bool _world_layers_editor_open = false;
    bool _world_game_mode_editor_open = false;
+   bool _world_requirements_editor_open = false;
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
    bool _camera_controls_open = false;
@@ -197,6 +198,8 @@ private:
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;
+   std::string _req_editor_new_name;
+   std::string _req_editor_add_entry;
 
    std::string _world_explorer_filter;
    std::string _world_explorer_class_filter;

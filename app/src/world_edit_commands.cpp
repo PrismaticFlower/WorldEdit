@@ -81,6 +81,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.world_global_lights_editor"s, _world_global_lights_editor_open);
    _commands.add("show.world_layers_editor"s, _world_layers_editor_open);
    _commands.add("show.world_game_mode_editor"s, _world_game_mode_editor_open);
+   _commands.add("show.world_requirements_editor"s, _world_requirements_editor_open);
    _commands.add("show.world_explorer"s, _world_explorer_open);
    _commands.add("show.world_stats"s, _world_stats_open);
 
@@ -273,8 +274,9 @@ void world_edit::initialize_hotkeys() noexcept
           {.key = key::f4}},
          {"Show World Layers Editor", "show.world_layers_editor", {.key = key::f5}},
          {"Show World Game Mode Editor", "show.world_game_mode_editor", {.key = key::f6}},
-         {"Show World Explorer", "show.world_explorer", {.key = key::f7}},
-         {"Show World Stats", "show.world_stats", {.key = key::f8}},
+         {"Show World Requirements Editor", "show.world_requirements_editor", {.key = key::f7}},
+         {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
+         {"Show World Stats", "show.world_stats", {.key = key::f9}},
 
          {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
       });
