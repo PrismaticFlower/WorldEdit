@@ -165,6 +165,12 @@ struct library<T>::impl {
    void view_existing(
       const std::function<void(const std::span<const stable_string> assets)> callback) noexcept
    {
+      if (not _existing_assets_sorted.exchange(true)) {
+         std::scoped_lock lock{_existing_assets_mutex};
+
+         std::sort(_existing_assets.begin(), _existing_assets.end());
+      }
+
       std::shared_lock lock{_existing_assets_mutex};
 
       callback(_existing_assets);
@@ -268,7 +274,7 @@ private:
 
    std::shared_mutex _existing_assets_mutex;
    std::vector<stable_string> _existing_assets;
-   bool _existing_assets_sorted = true;
+   std::atomic_bool _existing_assets_sorted = true;
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 
