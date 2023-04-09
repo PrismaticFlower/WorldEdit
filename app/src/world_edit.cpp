@@ -393,11 +393,18 @@ void world_edit::update_camera(const float delta_time)
    const float camera_movement_scale =
       delta_time * _settings.camera.move_speed * sprint_factor;
 
+   const bool is_perspective =
+      _camera.projection() == graphics::camera_projection::perspective;
+
    if (_move_camera_forward) {
-      camera_position += (_camera.forward() * camera_movement_scale);
+      const float3 forward = is_perspective ? _camera.forward() : _camera.up();
+
+      camera_position += (forward * camera_movement_scale);
    }
    if (_move_camera_back) {
-      camera_position += (_camera.back() * camera_movement_scale);
+      const float3 back = is_perspective ? _camera.back() : _camera.down();
+
+      camera_position += (back * camera_movement_scale);
    }
    if (_move_camera_left) {
       camera_position += (_camera.left() * camera_movement_scale);
@@ -406,10 +413,14 @@ void world_edit::update_camera(const float delta_time)
       camera_position += (_camera.right() * camera_movement_scale);
    }
    if (_move_camera_up) {
-      camera_position += (_camera.up() * camera_movement_scale);
+      const float3 up = is_perspective ? _camera.up() : _camera.forward();
+
+      camera_position += (up * camera_movement_scale);
    }
    if (_move_camera_down) {
-      camera_position += (_camera.down() * camera_movement_scale);
+      const float3 down = is_perspective ? _camera.down() : _camera.back();
+
+      camera_position += (down * camera_movement_scale);
    }
 
    if (_pan_camera) {
