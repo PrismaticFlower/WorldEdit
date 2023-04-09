@@ -23,6 +23,7 @@
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/path_properties.hpp"
+#include "world/utility/raycast.hpp"
 #include "world/utility/region_properties.hpp"
 #include "world/utility/sector_fill.hpp"
 #include "world/utility/snapping.hpp"
@@ -883,6 +884,9 @@ void world_edit::update_ui() noexcept
       ImGui::SetNextWindowSizeConstraints({520.0f * _display_scale, 620.0f * _display_scale},
                                           {-1.0f, 620.0f * _display_scale});
 
+      const bool ground_all_objects =
+         std::exchange(_selection_edit_context.ground_objects, false);
+
       bool selection_open = true;
 
       if (ImGui::Begin("Selection", &selection_open, ImGuiWindowFlags_NoCollapse)) {
@@ -988,6 +992,9 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat3("Position", object, &world::object::position,
                                  &_edit_stack_world, &_edit_context);
 
+               const bool ground_object =
+                  ImGui::Button("Ground Object", {ImGui::CalcItemWidth(), 0.0f});
+
                ImGui::Separator();
 
                ImGui::SliderInt("Team", object, &world::object::team,
@@ -1048,6 +1055,79 @@ void world_edit::update_ui() noexcept
                   else {
                      ImGui::InputKeyValue(object, &world::object::instance_properties,
                                           i, &_edit_stack_world, &_edit_context);
+                  }
+               }
+
+               if (ground_object or ground_all_objects) {
+                  const math::bounding_box bbox =
+                     object->rotation *
+                        _object_classes[object->class_name].model->bounding_box +
+                     object->position;
+
+                  float hit_distance = std::numeric_limits<float>::max();
+
+                  const float3 ray_origin = {object->position.x, bbox.min.y,
+                                             object->position.z};
+
+                  if (std::optional<world::raycast_result<world::object>> hit =
+                         world::raycast(ray_origin, {0.0f, -1.0f, 0.0f},
+                                        _world_layers_hit_mask, _world.objects,
+                                        _object_classes, object->id);
+                      hit) {
+                     if (hit->distance < hit_distance) {
+                        hit_distance = hit->distance;
+                     }
+                  }
+
+                  if (auto hit = _terrain_collision.raycast(ray_origin,
+                                                            {0.0f, -1.0f, 0.0f});
+                      hit) {
+                     if (hit->distance < hit_distance) {
+                        hit_distance = hit->distance;
+                     }
+                  }
+
+                  // Try "digging" the object out of the ground.
+                  if (hit_distance == std::numeric_limits<float>::max()) {
+                     if (std::optional<world::raycast_result<world::object>> hit =
+                            world::raycast(ray_origin, {0.0f, 1.0f, 0.0f},
+                                           _world_layers_hit_mask, _world.objects,
+                                           _object_classes, object->id);
+                         hit) {
+                        if (hit->distance < hit_distance) {
+                           hit_distance = hit->distance;
+                        }
+                     }
+
+                     if (auto hit = _terrain_collision.raycast(ray_origin,
+                                                               {0.0f, 1.0f, 0.0f});
+                         hit) {
+                        if (hit->distance < hit_distance) {
+                           hit_distance = hit->distance;
+                        }
+                     }
+
+                     // Make sure we're not about to "ceiling" the object instead.
+                     if (hit_distance < std::abs(bbox.max.y - bbox.min.y)) {
+                        hit_distance = -hit_distance;
+                     }
+                     else {
+                        hit_distance = std::numeric_limits<float>::max();
+                     }
+                  }
+
+                  if (hit_distance != std::numeric_limits<float>::max()) {
+                     const float3 new_position = {object->position.x,
+                                                  object->position.y - hit_distance,
+                                                  object->position.z};
+
+                     if (new_position != object->position) {
+                        _edit_stack_world.apply(edits::make_set_value(object->id,
+                                                                      &world::object::position,
+                                                                      new_position,
+                                                                      object->position),
+                                                _edit_context, {.closed = true});
+                     }
                   }
                }
             }

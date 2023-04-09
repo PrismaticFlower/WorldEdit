@@ -40,7 +40,8 @@ struct raycast_result<sector> {
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const object> objects,
-             const object_class_library& object_classes) noexcept
+             const object_class_library& object_classes,
+             std::optional<object_id> ignore_object = std::nullopt) noexcept
    -> std::optional<raycast_result<object>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

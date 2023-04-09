@@ -16,7 +16,8 @@ namespace we::world {
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const object> objects,
-             const object_class_library& object_classes) noexcept
+             const object_class_library& object_classes,
+             std::optional<object_id> ignore_object) noexcept
    -> std::optional<raycast_result<object>>
 {
    using namespace assets;
@@ -27,6 +28,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& object : objects) {
       if (not active_layers[object.layer]) continue;
+      if (object.id == ignore_object) continue;
 
       quaternion inverse_object_rotation = conjugate(object.rotation);
 
@@ -384,7 +386,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       world_to_node[3] = {inverse_node_rotation * -hintnode.position, 1.0f};
 
       const float3 node_ray_origin = world_to_node * ray_origin;
-      const float3 node_ray_direction = normalize(float3x3{world_to_node} * ray_direction);
+      const float3 node_ray_direction =
+         normalize(float3x3{world_to_node} * ray_direction);
 
       for (const auto& [i0, i1, i2] : hexahedron_indices) {
          const float intersection =

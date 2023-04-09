@@ -297,6 +297,10 @@ private:
       uint32 cycle_object_class_index = 0;
    } _entity_creation_config;
 
+   struct selection_edit_context {
+      bool ground_objects = false;
+   } _selection_edit_context;
+
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
 
