@@ -16,11 +16,9 @@ auto parse_arguments(std::string_view str)
 {
    absl::InlinedVector<std::string, 8> arguments;
 
+   str = trim_leading_whitespace(str);
+
    while (not str.empty() and str.front() != '-') {
-      str = trim_leading_whitespace(str);
-
-      if (str.empty()) break;
-
       if (auto quoted_arg = quoted_read(str); quoted_arg) {
          arguments.emplace_back((*quoted_arg)[0]);
          str = (*quoted_arg)[1];
@@ -30,6 +28,8 @@ auto parse_arguments(std::string_view str)
          arguments.emplace_back(argument);
          str = rest;
       }
+
+      str = trim_leading_whitespace(str);
    }
 
    return {str, arguments};
