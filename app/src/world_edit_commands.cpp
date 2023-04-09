@@ -87,6 +87,12 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
+   _commands.add("entity_edit.ground_objects"s, _selection_edit_context.ground_objects);
+   _commands.add("entity_edit.move_selection"s, [this] {
+      _tool_move_selection_open = true;
+      _move_selection_amount = {0.0f, 0.0f, 0.0f};
+   });
+
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_config.placement_rotation) {
       case placement_rotation::manual_euler:
@@ -280,6 +286,13 @@ void world_edit::initialize_hotkeys() noexcept
 
          {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
       });
+
+   _hotkeys.add_set("Entity Editing",
+                    [this] { return not _interaction_targets.selection.empty(); },
+                    {
+                       {"Move Selection", "entity_edit.move_selection", {.key = key::z}},
+                       {"Ground Objects", "entity_edit.ground_objects", {.key = key::g}},
+                    });
 
    _hotkeys.add_set(
       "Entity Creation",

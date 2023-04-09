@@ -37,6 +37,10 @@ namespace we {
 
 namespace {
 
+struct selection_traits {
+   bool has_ground_objects = false;
+};
+
 struct placement_traits {
    bool has_cycle_object_class = false;
    bool has_new_path = false;
@@ -887,6 +891,8 @@ void world_edit::update_ui() noexcept
       const bool ground_all_objects =
          std::exchange(_selection_edit_context.ground_objects, false);
 
+      selection_traits traits{};
+
       bool selection_open = true;
 
       if (ImGui::Begin("Selection", &selection_open, ImGuiWindowFlags_NoCollapse)) {
@@ -1130,6 +1136,8 @@ void world_edit::update_ui() noexcept
                      }
                   }
                }
+
+               traits.has_ground_objects = true;
             }
             else if (std::holds_alternative<world::light_id>(selected)) {
                world::light* light =
@@ -2510,6 +2518,24 @@ void world_edit::update_ui() noexcept
       ImGui::End();
 
       if (not selection_open) _interaction_targets.selection.clear();
+
+      if (_hotkeys_view_show) {
+         ImGui::Begin("Hotkeys");
+
+         ImGui::SeparatorText("Entity Editing");
+
+         if (traits.has_ground_objects) {
+            ImGui::Text("Ground Objects");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Editing", "Ground Objects")));
+         }
+
+         ImGui::Text("Move Selection");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Editing", "Move Selection")));
+
+         ImGui::End();
+      }
    }
 
    if (_interaction_targets.creation_entity) {
@@ -5335,6 +5361,8 @@ void world_edit::update_ui() noexcept
       if (_hotkeys_view_show) {
          ImGui::Begin("Hotkeys");
 
+         ImGui::SeparatorText("Entity Creation");
+
          if (traits.has_cycle_object_class) {
             ImGui::Text("Cycle Object Class");
             ImGui::BulletText(get_display_string(
@@ -6745,9 +6773,13 @@ void world_edit::update_ui() noexcept
       }
    }
 
-   if (_tool_move_selection_open and not _interaction_targets.selection.empty()) {
+   if (_tool_move_selection_open) {
       ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
+
+      if (_interaction_targets.selection.empty()) {
+         _tool_move_selection_open = false;
+      }
 
       if (ImGui::Begin("Move Selection", &_tool_move_selection_open,
                        ImGuiWindowFlags_AlwaysAutoResize)) {
