@@ -11,6 +11,7 @@ enum flags {
    specular_visibility_in_diffuse_map = 0b100,
    scrolling = 0b1000,
    static_lighting = 0b10000,
+   has_env_map = 0b100000,
 };
 
 struct input_vertex {
@@ -61,14 +62,14 @@ float4 main(input_vertex input) : SV_TARGET
    if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
 
    if (material.flags & flags::unlit) return diffuse_color;
-
-   float3 specular_color = material.specular_color;
+   
+   float specular_visibility = 1.0;
 
    if (material.flags & flags::specular_visibility_in_diffuse_map) {
-      specular_color *= diffuse_color.a;
+      specular_visibility = diffuse_color.a;
    }
    else {
-      specular_color *= normal_map_sample.a;
+      specular_visibility = normal_map_sample.a;
    }
 
    calculate_light_inputs lighting_inputs;
@@ -77,7 +78,7 @@ float4 main(input_vertex input) : SV_TARGET
    lighting_inputs.normalWS = normalWS;
    lighting_inputs.viewWS = viewWS;
    lighting_inputs.diffuse_color = diffuse_color.rgb;
-   lighting_inputs.specular_color = specular_color;
+   lighting_inputs.specular_color = material.specular_color * specular_visibility;
    lighting_inputs.positionSS = input.positionSS.xy;
    lighting_inputs.receive_static_light = !static_lighting;
 
@@ -85,6 +86,15 @@ float4 main(input_vertex input) : SV_TARGET
 
    if (static_lighting) {
       lighting += input.color.rgb * diffuse_color.rgb;
+   }
+
+   if (material.flags & flags::has_env_map) {
+      TextureCube<float3> env_map = ResourceDescriptorHeap[material.env_map_index];
+
+      const float3 reflectionWS = normalize(reflect(-viewWS, normalWS));
+
+      lighting += env_map.Sample(sampler_anisotropic_wrap, reflectionWS) * material.env_color *
+                  specular_visibility;
    }
 
    return float4(lighting, diffuse_color.a);

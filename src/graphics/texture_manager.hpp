@@ -19,9 +19,11 @@ struct texture_manager;
 
 struct world_texture_load_token {};
 
+enum class world_texture_dimension { _2d, cube };
+
 struct world_texture {
    world_texture(gpu::device& device, gpu::unique_resource_handle texture,
-                 const DXGI_FORMAT format);
+                 const DXGI_FORMAT format, const world_texture_dimension dimension);
 
    ~world_texture();
 
@@ -31,6 +33,7 @@ struct world_texture {
    gpu::resource_view srv;
    gpu::resource_view srv_srgb;
    gpu::resource_handle texture;
+   world_texture_dimension dimension;
 
 private:
    friend texture_manager;
@@ -48,9 +51,11 @@ struct texture_manager {
 
    /// @brief Gets the specified texture or returns a default texture if it is not available.
    /// @param name Name of the texture to get.
+   /// @param expected_dimension The dimension of the texture to get. A texture will only be returned if this matches it else default_texture will be returned.
    /// @param default_texture Texture to return if the requested texture is not available.
    /// @return The texture or default_texture.
    auto at_or(const lowercase_string& name,
+              const world_texture_dimension expected_dimension,
               std::shared_ptr<const world_texture> default_texture)
       -> std::shared_ptr<const world_texture>;
 
@@ -72,6 +77,13 @@ struct texture_manager {
    auto null_normal_map() -> std::shared_ptr<const world_texture>
    {
       return _null_normal_map;
+   }
+
+   /// @brief Cube texture with a color value of 0.0, 0.0, 0.0, 1.0.
+   /// @return The texture.
+   auto null_cube_map() -> std::shared_ptr<const world_texture>
+   {
+      return _null_cube_map;
    }
 
    /// @brief Allows processing updated textures through a callback.
@@ -157,6 +169,7 @@ private:
 
    std::shared_ptr<world_texture> _null_diffuse_map;
    std::shared_ptr<world_texture> _null_normal_map;
+   std::shared_ptr<world_texture> _null_cube_map;
 
    event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>,
                        asset_data<assets::texture::texture>)>

@@ -22,6 +22,7 @@ namespace {
 struct texture_options {
    bool srgb = true;
    bool generate_normal_map = false;
+   bool cube_map = false;
    float normal_map_scale = 1.0f;
 };
 
@@ -55,6 +56,9 @@ auto load_options(std::filesystem::path path) -> texture_options
 
          opts.normal_map_scale = std::stof(opt.arguments[0]);
       }
+      else if (iequals(opt.name, "-cubemap"sv)) {
+         opts.cube_map = true;
+      }
    }
 
    return opts;
@@ -63,6 +67,51 @@ auto load_options(std::filesystem::path path) -> texture_options
 auto get_mip_count(const std::size_t length) noexcept -> uint16
 {
    return static_cast<uint16>(std::log2(length) + 1);
+}
+
+auto fold_cube_map(DirectX::ScratchImage image) -> DirectX::ScratchImage
+{
+   if ((image.GetMetadata().width % 4) != 0 or (image.GetMetadata().height % 3) != 0) {
+      throw std::runtime_error{"Invalid cube map dimensions!"};
+   }
+
+   const auto width = (image.GetMetadata().width / 4);
+   const auto height = (image.GetMetadata().height / 3);
+
+   DirectX::ScratchImage cube_map;
+   cube_map.InitializeCube(image.GetMetadata().format, width, height, 1, 1);
+
+   // +X
+   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width * 2, height, width, height},
+                          *cube_map.GetImage(0, 0, 0),
+                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
+
+   // -X
+   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {0, height, width, height},
+                          *cube_map.GetImage(0, 1, 0),
+                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
+
+   // +Y
+   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width, 0, width, height},
+                          *cube_map.GetImage(0, 2, 0),
+                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
+
+   // -Y
+   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width, height * 2, width, height},
+                          *cube_map.GetImage(0, 3, 0),
+                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
+
+   // +Z
+   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width, height, width, height},
+                          *cube_map.GetImage(0, 4, 0),
+                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
+
+   // +Z
+   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width * 3, height, width, height},
+                          *cube_map.GetImage(0, 5, 0),
+                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
+
+   return cube_map;
 }
 
 auto get_texture_format(const DXGI_FORMAT dxgi_format) -> texture_format
@@ -99,7 +148,9 @@ auto generate_mipmaps(DirectX::ScratchImage scratch_image) -> DirectX::ScratchIm
 {
    DirectX::ScratchImage mipped_image;
 
-   if (FAILED(DirectX::GenerateMipMaps(*scratch_image.GetImage(0, 0, 0),
+   if (FAILED(DirectX::GenerateMipMaps(scratch_image.GetImages(),
+                                       scratch_image.GetImageCount(),
+                                       scratch_image.GetMetadata(),
                                        DirectX::TEX_FILTER_BOX | DirectX::TEX_FILTER_FORCE_NON_WIC,
                                        0, mipped_image))) {
       throw std::runtime_error{"Failed to generate mip maps."};
@@ -140,6 +191,10 @@ auto load_texture(const std::filesystem::path& path) -> texture
       scratch_image.OverrideFormat(DirectX::MakeSRGB(scratch_image.GetMetadata().format));
    }
 
+   if (options.cube_map) {
+      scratch_image = fold_cube_map(std::move(scratch_image));
+   }
+
    if (not is_1x1x1(scratch_image)) {
       scratch_image = generate_mipmaps(std::move(scratch_image));
    }
@@ -150,14 +205,18 @@ auto load_texture(const std::filesystem::path& path) -> texture
       texture::init_params{.width = static_cast<uint32>(metadata.width),
                            .height = static_cast<uint32>(metadata.height),
                            .mip_levels = static_cast<uint16>(metadata.mipLevels),
-                           .format = get_texture_format(metadata.format)};
+                           .array_size = static_cast<uint16>(metadata.arraySize),
+                           .format = get_texture_format(metadata.format),
+                           .flags = {.cube_map = options.cube_map}};
 
-   for (uint32 i = 0; i < texture.mip_levels(); ++i) {
-      init_texture_data(texture.subresource({.mip_level = i}),
-                        *scratch_image.GetImage(i, 0, 0));
+   for (uint32 item = 0; item < texture.array_size(); ++item) {
+      for (uint32 mip = 0; mip < texture.mip_levels(); ++mip) {
+         init_texture_data(texture.subresource({.mip_level = mip, .array_index = item}),
+                           *scratch_image.GetImage(mip, item, 0));
+      }
    }
 
-   if (options.generate_normal_map) {
+   if (options.generate_normal_map and not options.cube_map) {
       texture = generate_normal_maps(texture, options.normal_map_scale);
    }
 

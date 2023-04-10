@@ -39,14 +39,20 @@ auto strip_srgb_format(const DXGI_FORMAT format) noexcept -> DXGI_FORMAT
 }
 
 world_texture::world_texture(gpu::device& device, gpu::unique_resource_handle texture,
-                             const DXGI_FORMAT format)
-   : _device{device}
+                             const DXGI_FORMAT format,
+                             const world_texture_dimension dimension)
+   : _device{device}, dimension{dimension}
 {
-   srv = device.create_shader_resource_view(texture.get(),
-                                            {.format = strip_srgb_format(format)});
-   srv_srgb =
-      device.create_shader_resource_view(texture.get(),
-                                         {.format = get_srgb_format(format)});
+   const bool texture_cube_view = dimension == world_texture_dimension::cube;
+
+   srv = device.create_shader_resource_view(
+      texture.get(), {.format = strip_srgb_format(format),
+                      .texture2d = {.texture_cube_view = texture_cube_view},
+                      .texture2d_array = {.texture_cube_view = texture_cube_view}});
+   srv_srgb = device.create_shader_resource_view(
+      texture.get(), {.format = get_srgb_format(format),
+                      .texture2d = {.texture_cube_view = texture_cube_view},
+                      .texture2d_array = {.texture_cube_view = texture_cube_view}});
 
    this->texture = texture.release();
 }
@@ -88,7 +94,8 @@ texture_manager::texture_manager(gpu::device& device,
       init_texture(texture.get(), cpu_null_texture);
 
       auto result = std::make_shared<world_texture>(_device, std::move(texture),
-                                                    cpu_null_texture.dxgi_format());
+                                                    cpu_null_texture.dxgi_format(),
+                                                    world_texture_dimension::_2d);
 
       return result;
    };
@@ -98,9 +105,44 @@ texture_manager::texture_manager(gpu::device& device,
 
    _null_normal_map = null_texture_init(float4{0.5f, 0.5f, 1.0f, 1.0f},
                                         texture_format::r8g8b8a8_unorm);
+
+   const auto null_cube_texture_init = [&](const float4 v, const texture_format format) {
+      assets::texture::texture cpu_null_texture{{.width = 1,
+                                                 .height = 1,
+                                                 .array_size = 6,
+                                                 .format = format,
+                                                 .flags = {.cube_map = true}}};
+
+      for (uint32 i = 0; i < 6; ++i) {
+         cpu_null_texture.store({.array_index = i}, {0, 0}, v);
+      }
+
+      gpu::unique_resource_handle texture =
+         {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                                  .format = cpu_null_texture.dxgi_format(),
+                                  .width = cpu_null_texture.width(),
+                                  .height = cpu_null_texture.height(),
+                                  .mip_levels = cpu_null_texture.mip_levels(),
+                                  .array_size = cpu_null_texture.array_size()},
+                                 gpu::barrier_layout::common,
+                                 gpu::legacy_resource_state::common),
+          _device.direct_queue};
+
+      init_texture(texture.get(), cpu_null_texture);
+
+      auto result = std::make_shared<world_texture>(_device, std::move(texture),
+                                                    cpu_null_texture.dxgi_format(),
+                                                    world_texture_dimension::cube);
+
+      return result;
+   };
+
+   _null_cube_map = null_cube_texture_init({0.0f, 0.0f, 0.0f, 1.0f},
+                                           texture_format::r8g8b8a8_unorm_srgb);
 };
 
 auto texture_manager::at_or(const lowercase_string& name,
+                            const world_texture_dimension expected_dimension,
                             std::shared_ptr<const world_texture> default_texture)
    -> std::shared_ptr<const world_texture>
 {
@@ -114,7 +156,7 @@ auto texture_manager::at_or(const lowercase_string& name,
          const auto& [_, state] = *state_entry;
 
          if (auto texture = state.texture.lock(); texture) {
-            return texture;
+            if (texture->dimension == expected_dimension) return texture;
          }
       }
    }
@@ -128,7 +170,7 @@ auto texture_manager::at_or(const lowercase_string& name,
       if (auto texture = state.texture.lock(); texture) {
          // Not a mistake, the texture could've been created inbetween releasing the shared lock and retaking it exlcusively.
 
-         return texture;
+         if (texture->dimension == expected_dimension) return texture;
       }
       else {
          state.asset = _texture_assets[name];
@@ -234,7 +276,8 @@ void texture_manager::create_texture_async(const lowercase_string& name,
                                                 .format = data->dxgi_format(),
                                                 .width = data->width(),
                                                 .height = data->height(),
-                                                .mip_levels = data->mip_levels()},
+                                                .mip_levels = data->mip_levels(),
+                                                .array_size = data->array_size()},
                                                gpu::barrier_layout::common,
                                                gpu::legacy_resource_state::common),
                         _device.direct_queue};
@@ -243,8 +286,10 @@ void texture_manager::create_texture_async(const lowercase_string& name,
 
                     _device.background_copy_queue.wait_for_idle();
 
-                    return std::make_shared<world_texture>(_device, std::move(texture),
-                                                           data->dxgi_format());
+                    return std::make_shared<world_texture>(
+                       _device, std::move(texture), data->dxgi_format(),
+                       data->flags().cube_map ? world_texture_dimension::cube
+                                              : world_texture_dimension::_2d);
                  }),
               .asset = asset};
 }

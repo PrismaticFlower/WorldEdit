@@ -410,7 +410,8 @@ void terrain::init_textures(const world::terrain& terrain)
          texture = _texture_manager.null_diffuse_map();
       }
       else {
-         texture = _texture_manager.at_or(name, _texture_manager.null_diffuse_map());
+         texture = _texture_manager.at_or(name, world_texture_dimension::_2d,
+                                          _texture_manager.null_diffuse_map());
       }
    }
 }

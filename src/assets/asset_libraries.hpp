@@ -38,7 +38,7 @@ struct flat_model;
 }
 
 namespace texture {
-class texture;
+struct texture;
 }
 
 template<typename T>

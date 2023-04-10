@@ -10,13 +10,16 @@
 
 namespace we::assets::texture {
 
+struct texture_flags {
+   bool cube_map : 1 = false;
+};
+
 struct texture_index {
    uint32 x = 0;
    uint32 y = 0;
 };
 
-class texture_subresource_view {
-public:
+struct texture_subresource_view {
    struct init_params {
       std::span<std::byte> data;
       std::size_t offset = 0;
@@ -59,8 +62,7 @@ private:
    texture_format _format = texture_format::r8g8b8a8_unorm;
 };
 
-class texture {
-public:
+struct texture {
    constexpr static std::size_t pitch_alignment = 256;
    constexpr static std::size_t subresource_alignment = 512;
 
@@ -70,6 +72,7 @@ public:
       uint16 mip_levels = 1;
       uint16 array_size = 1;
       texture_format format = texture_format::r8g8b8a8_unorm;
+      texture_flags flags = {.cube_map = false};
    };
 
    texture(const init_params init_params);
@@ -111,6 +114,8 @@ public:
 
    [[nodiscard]] auto dxgi_format() const noexcept -> DXGI_FORMAT;
 
+   [[nodiscard]] auto flags() const noexcept -> texture_flags;
+
    [[nodiscard]] auto load(const subresource_index subresource,
                            const texture_index index) const -> float4;
 
@@ -128,6 +133,7 @@ private:
    uint16 _mip_levels = 0;
    uint16 _array_size = 0;
    texture_format _format = texture_format::r8g8b8a8_unorm;
+   texture_flags _flags = {};
 };
 
 }

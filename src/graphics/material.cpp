@@ -13,6 +13,7 @@ enum class shader_flags : uint32 {
    specular_visibility_in_diffuse_map = 0b100,
    scrolling = 0b1000,
    static_lighting = 0b10000,
+   has_env_map = 0b100000,
 };
 
 constexpr bool marked_as_enum_bitflag(shader_flags)
@@ -31,6 +32,15 @@ constexpr bool has_normalmap(const assets::msh::material& material)
           material.rendertype == (rendertype::normalmap_specular) or
           material.rendertype == (rendertype::normalmap_tiled_envmapped) or
           material.rendertype == (rendertype::normalmap_tiled) or
+          material.rendertype == (rendertype::normalmap_envmapped);
+}
+
+constexpr bool has_env_map(const assets::msh::material& material)
+{
+   using assets::msh::rendertype;
+
+   return material.rendertype == (rendertype::envmapped) or
+          material.rendertype == (rendertype::normalmap_tiled_envmapped) or
           material.rendertype == (rendertype::normalmap_envmapped);
 }
 
@@ -65,6 +75,10 @@ constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
       flags |= shader_flags::static_lighting;
    }
 
+   if (has_env_map(material)) {
+      flags |= shader_flags::has_env_map;
+   }
+
    return flags;
 }
 
@@ -72,10 +86,16 @@ struct alignas(16) normal_material_constants {
    shader_flags flags;
    uint32 diffuse_map;
    uint32 normal_map;
-   uint32 pad;
+   uint32 env_map;
+
    float3 specular_color;
    uint32 pad1;
+
    float2 scrolling_amount;
+   uint32 pad2;
+   uint32 pad3;
+
+   float3 env_color;
 };
 
 }
@@ -95,16 +115,28 @@ void material::init_textures(const assets::msh::material& material,
 {
    texture_names.diffuse_map = lowercase_string{material.textures[0]};
    texture_names.normal_map = lowercase_string{material.textures[1]};
+   texture_names.env_map = lowercase_string{material.textures[3]};
 
-   textures.diffuse_map = texture_manager.at_or(texture_names.diffuse_map,
-                                                texture_manager.null_diffuse_map());
+   textures.diffuse_map =
+      texture_manager.at_or(texture_names.diffuse_map, world_texture_dimension::_2d,
+                            texture_manager.null_diffuse_map());
 
    if (has_normalmap(material) and not texture_names.normal_map.empty()) {
-      textures.normal_map = texture_manager.at_or(texture_names.normal_map,
-                                                  texture_manager.null_normal_map());
+      textures.normal_map =
+         texture_manager.at_or(texture_names.normal_map, world_texture_dimension::_2d,
+                               texture_manager.null_normal_map());
    }
    else {
       textures.normal_map = texture_manager.null_normal_map();
+   }
+
+   if (has_env_map(material) and not texture_names.env_map.empty()) {
+      textures.env_map = texture_manager.at_or(texture_names.env_map,
+                                               world_texture_dimension::cube,
+                                               texture_manager.null_cube_map());
+   }
+   else {
+      textures.env_map = texture_manager.null_cube_map();
    }
 
    if (textures.diffuse_map == texture_manager.null_diffuse_map()) {
@@ -116,6 +148,12 @@ void material::init_textures(const assets::msh::material& material,
        textures.normal_map == texture_manager.null_normal_map()) {
       texture_load_tokens.normal_map =
          texture_manager.acquire_load_token(texture_names.normal_map);
+   }
+
+   if (not texture_names.env_map.empty() and
+       textures.env_map == texture_manager.null_normal_map()) {
+      texture_load_tokens.env_map =
+         texture_manager.acquire_load_token(texture_names.env_map);
    }
 }
 
@@ -172,8 +210,10 @@ void material::init_resources(const assets::msh::material& material,
                                  static_lighting),
       .diffuse_map = textures.diffuse_map->srv_srgb.index,
       .normal_map = textures.normal_map->srv.index,
+      .env_map = textures.env_map->srv_srgb.index,
       .specular_color = specular_color,
-      .scrolling_amount = scrolling_amount};
+      .scrolling_amount = scrolling_amount,
+      .env_color = material.specular_color};
 
    gpu::unique_resource_handle upload_buffer =
       {device.create_buffer({.size = sizeof(normal_material_constants),
@@ -203,7 +243,8 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
       device.get_gpu_virtual_address(constant_buffer.get());
 
    if (auto new_texture = updated.find(texture_names.diffuse_map);
-       new_texture != updated.end()) {
+       new_texture != updated.end() and
+       new_texture->second->dimension == world_texture_dimension::_2d) {
       textures.diffuse_map = new_texture->second;
       texture_load_tokens.diffuse_map = nullptr;
 
@@ -214,13 +255,25 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
    }
 
    if (auto new_texture = updated.find(texture_names.normal_map);
-       new_texture != updated.end()) {
+       new_texture != updated.end() and
+       new_texture->second->dimension == world_texture_dimension::_2d) {
       textures.normal_map = new_texture->second;
       texture_load_tokens.normal_map = nullptr;
 
       command_list.write_buffer_immediate(constant_buffer_address +
                                              offsetof(normal_material_constants, normal_map),
                                           textures.normal_map->srv.index);
+   }
+
+   if (auto new_texture = updated.find(texture_names.env_map);
+       new_texture != updated.end() and
+       new_texture->second->dimension == world_texture_dimension::cube) {
+      textures.env_map = new_texture->second;
+      texture_load_tokens.env_map = nullptr;
+
+      command_list.write_buffer_immediate(constant_buffer_address +
+                                             offsetof(normal_material_constants, env_map),
+                                          textures.env_map->srv_srgb.index);
    }
 }
 }

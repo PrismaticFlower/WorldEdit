@@ -121,6 +121,7 @@ texture::texture(const init_params init_params)
    _mip_levels = init_params.mip_levels;
    _array_size = init_params.array_size;
    _format = init_params.format;
+   _flags = init_params.flags;
 
    _texture_data.resize([&] {
       std::size_t size = 0;
@@ -242,6 +243,11 @@ auto texture::format() const noexcept -> texture_format
 auto texture::dxgi_format() const noexcept -> DXGI_FORMAT
 {
    return to_dxgi_format(_format);
+}
+
+auto texture::flags() const noexcept -> texture_flags
+{
+   return _flags;
 }
 
 auto texture::load(const subresource_index subresource,
