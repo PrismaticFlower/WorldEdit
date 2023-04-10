@@ -890,6 +890,7 @@ void world_edit::undo() noexcept
 
    _tool_move_selection_open = false;
    _tool_move_whole_path_open = false;
+   _tool_rotate_selection_open = false;
 }
 
 void world_edit::redo() noexcept

@@ -2513,6 +2513,11 @@ void world_edit::update_ui() noexcept
             _tool_move_selection_open = true;
             _move_selection_amount = {0.0f, 0.0f, 0.0f};
          }
+
+         if (ImGui::Button("Rotate Selection", {ImGui::CalcItemWidth(), 0.0f})) {
+            _tool_rotate_selection_open = true;
+            _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
+         }
       }
 
       ImGui::End();
@@ -2533,6 +2538,10 @@ void world_edit::update_ui() noexcept
          ImGui::Text("Move Selection");
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Editing", "Move Selection")));
+
+         ImGui::Text("Rotate Selection");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Editing", "Rotate Selection")));
 
          ImGui::End();
       }
@@ -6990,6 +6999,170 @@ void world_edit::update_ui() noexcept
       }
 
       if (not _tool_move_whole_path_open) _edit_stack_world.close_last();
+
+      ImGui::End();
+   }
+
+   if (_tool_rotate_selection_open) {
+      ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
+                              ImGuiCond_FirstUseEver, {0.0f, 0.0f});
+
+      if (_interaction_targets.selection.empty()) {
+         _tool_rotate_selection_open = false;
+      }
+
+      if (ImGui::Begin("Rotate Selection", &_tool_rotate_selection_open,
+                       ImGuiWindowFlags_AlwaysAutoResize)) {
+         const float3 last_rotation_amount = _rotate_selection_amount;
+
+         if (ImGui::DragFloat3("Amount", &_rotate_selection_amount, 1.0f)) {
+            const float3 rotate_delta =
+               (_rotate_selection_amount - last_rotation_amount);
+            const float3 rotation_euler = {rotate_delta *
+                                           std::numbers::pi_v<float> / 180.0f};
+            const quaternion rotation = make_quat_from_euler(rotation_euler);
+
+            edits::bundle_vector bundled_edits;
+
+            for (const auto& selected : _interaction_targets.selection) {
+               if (std::holds_alternative<world::object_id>(selected)) {
+                  const world::object* object =
+                     world::find_entity(_world.objects,
+                                        std::get<world::object_id>(selected));
+
+                  if (object) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(object->id, &world::object::rotation,
+                                              object->rotation * rotation,
+                                              object->rotation));
+                  }
+               }
+               else if (std::holds_alternative<world::light_id>(selected)) {
+                  const world::light* light =
+                     world::find_entity(_world.lights,
+                                        std::get<world::light_id>(selected));
+
+                  if (light) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(light->id, &world::light::rotation,
+                                              light->rotation * rotation,
+                                              light->rotation));
+                  }
+               }
+               else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+                  const auto [id, node_index] =
+                     std::get<world::path_id_node_pair>(selected);
+
+                  const world::path* path = world::find_entity(_world.paths, id);
+
+                  if (path) {
+                     const world::path::node& node = path->nodes[node_index];
+
+                     bundled_edits.push_back(
+                        edits::make_set_path_node_value(path->id, node_index,
+                                                        &world::path::node::rotation,
+                                                        node.rotation * rotation,
+                                                        node.rotation));
+                  }
+               }
+               else if (std::holds_alternative<world::region_id>(selected)) {
+                  const world::region* region =
+                     world::find_entity(_world.regions,
+                                        std::get<world::region_id>(selected));
+
+                  if (region) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(region->id, &world::region::rotation,
+                                              region->rotation * rotation,
+                                              region->rotation));
+                  }
+               }
+               else if (std::holds_alternative<world::sector_id>(selected)) {
+                  const world::sector* sector =
+                     world::find_entity(_world.sectors,
+                                        std::get<world::sector_id>(selected));
+
+                  if (sector) {
+                     const quaternion sector_rotation =
+                        make_quat_from_euler(float3{0.0f, rotation_euler.y, 0.0f});
+
+                     float2 centre = {0.0f, 0.0f};
+
+                     for (const auto& point : sector->points) {
+                        centre += point;
+                     }
+
+                     centre /= static_cast<float>(sector->points.size());
+
+                     std::vector<float2> new_points = sector->points;
+
+                     for (auto& point : new_points) {
+                        const float3 rotated_point =
+                           sector_rotation *
+                           float3{point.x - centre.x, 0.0f, point.y - centre.y};
+
+                        point = float2{rotated_point.x, rotated_point.z} + centre;
+                     }
+
+                     bundled_edits.push_back(
+                        edits::make_set_value(sector->id, &world::sector::points,
+                                              std::move(new_points), sector->points));
+                  }
+               }
+               else if (std::holds_alternative<world::portal_id>(selected)) {
+                  const world::portal* portal =
+                     world::find_entity(_world.portals,
+                                        std::get<world::portal_id>(selected));
+
+                  if (portal) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(portal->id, &world::portal::rotation,
+                                              portal->rotation * rotation,
+                                              portal->rotation));
+                  }
+               }
+               else if (std::holds_alternative<world::hintnode_id>(selected)) {
+                  const world::hintnode* hintnode =
+                     world::find_entity(_world.hintnodes,
+                                        std::get<world::hintnode_id>(selected));
+
+                  if (hintnode) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(hintnode->id, &world::hintnode::rotation,
+                                              hintnode->rotation * rotation,
+                                              hintnode->rotation));
+                  }
+               }
+               else if (std::holds_alternative<world::barrier_id>(selected)) {
+                  const world::barrier* barrier =
+                     world::find_entity(_world.barriers,
+                                        std::get<world::barrier_id>(selected));
+
+                  if (barrier) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(barrier->id, &world::barrier::rotation_angle,
+                                              barrier->rotation_angle +
+                                                 rotation_euler.y,
+                                              barrier->rotation_angle));
+                  }
+               }
+            }
+
+            if (bundled_edits.size() == 1) {
+               _edit_stack_world.apply(std::move(bundled_edits.back()), _edit_context);
+            }
+            else if (not bundled_edits.empty()) {
+               _edit_stack_world.apply(edits::make_bundle(std::move(bundled_edits)),
+                                       _edit_context);
+            }
+         }
+
+         if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
+            _tool_rotate_selection_open = false;
+         }
+      }
+
+      if (not _tool_rotate_selection_open) _edit_stack_world.close_last();
 
       ImGui::End();
    }
