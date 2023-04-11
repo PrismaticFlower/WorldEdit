@@ -23,18 +23,21 @@ struct material {
    struct textures {
       std::shared_ptr<const world_texture> diffuse_map;
       std::shared_ptr<const world_texture> normal_map;
+      std::shared_ptr<const world_texture> detail_map;
       std::shared_ptr<const world_texture> env_map;
    };
 
    struct texture_names {
       lowercase_string diffuse_map;
       lowercase_string normal_map;
+      lowercase_string detail_map;
       lowercase_string env_map;
    };
 
    struct texture_load_tokens {
       std::shared_ptr<const world_texture_load_token> diffuse_map;
       std::shared_ptr<const world_texture_load_token> normal_map;
+      std::shared_ptr<const world_texture_load_token> detail_map;
       std::shared_ptr<const world_texture_load_token> env_map;
    };
 

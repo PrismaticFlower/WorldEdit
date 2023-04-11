@@ -106,6 +106,9 @@ texture_manager::texture_manager(gpu::device& device,
    _null_normal_map = null_texture_init(float4{0.5f, 0.5f, 1.0f, 1.0f},
                                         texture_format::r8g8b8a8_unorm);
 
+   _null_detail_map = null_texture_init(float4{0.5f, 0.5f, 0.5f, 1.0f},
+                                        texture_format::r8g8b8a8_unorm);
+
    const auto null_cube_texture_init = [&](const float4 v, const texture_format format) {
       assets::texture::texture cpu_null_texture{{.width = 1,
                                                  .height = 1,
