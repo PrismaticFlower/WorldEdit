@@ -149,6 +149,7 @@ void material::init_textures(const assets::msh::material& material,
                                texture_manager.null_normal_map());
    }
    else {
+      texture_names.normal_map.clear();
       textures.normal_map = texture_manager.null_normal_map();
    }
 
@@ -158,6 +159,7 @@ void material::init_textures(const assets::msh::material& material,
                                texture_manager.null_detail_map());
    }
    else {
+      texture_names.detail_map.clear();
       textures.detail_map = texture_manager.null_detail_map();
    }
 
@@ -167,6 +169,7 @@ void material::init_textures(const assets::msh::material& material,
                                                texture_manager.null_cube_map());
    }
    else {
+      texture_names.env_map.clear();
       textures.env_map = texture_manager.null_cube_map();
    }
 
