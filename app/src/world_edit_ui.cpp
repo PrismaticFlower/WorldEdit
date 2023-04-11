@@ -886,7 +886,8 @@ void world_edit::update_ui() noexcept
       ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
       ImGui::SetNextWindowSizeConstraints({520.0f * _display_scale, 620.0f * _display_scale},
-                                          {-1.0f, 620.0f * _display_scale});
+                                          {std::numeric_limits<float>::max(),
+                                           620.0f * _display_scale});
 
       const bool ground_all_objects =
          std::exchange(_selection_edit_context.ground_objects, false);
