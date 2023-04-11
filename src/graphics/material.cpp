@@ -13,7 +13,8 @@ enum class shader_flags : uint32 {
    specular_visibility_in_diffuse_map = 0b100,
    scrolling = 0b1000,
    static_lighting = 0b10000,
-   has_env_map = 0b100000,
+   has_normal_map = 0b100000,
+   has_env_map = 0b1000000,
 };
 
 constexpr bool marked_as_enum_bitflag(shader_flags)
@@ -26,13 +27,14 @@ constexpr bool has_normalmap(const assets::msh::material& material)
    using assets::msh::material_flags;
    using assets::msh::rendertype;
 
-   return are_flags_set(material.flags, material_flags::perpixel) or
-          are_flags_set(material.flags, material_flags::specular) or
-          material.rendertype == (rendertype::normalmap) or
-          material.rendertype == (rendertype::normalmap_specular) or
-          material.rendertype == (rendertype::normalmap_tiled_envmapped) or
-          material.rendertype == (rendertype::normalmap_tiled) or
-          material.rendertype == (rendertype::normalmap_envmapped);
+   return not material.textures[1].empty() and
+          (are_flags_set(material.flags, material_flags::perpixel) or
+           are_flags_set(material.flags, material_flags::specular) or
+           material.rendertype == (rendertype::normalmap) or
+           material.rendertype == (rendertype::normalmap_specular) or
+           material.rendertype == (rendertype::normalmap_tiled_envmapped) or
+           material.rendertype == (rendertype::normalmap_tiled) or
+           material.rendertype == (rendertype::normalmap_envmapped));
 }
 
 constexpr bool has_env_map(const assets::msh::material& material)
@@ -73,6 +75,10 @@ constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
 
    if (static_lighting) {
       flags |= shader_flags::static_lighting;
+   }
+
+   if (has_normalmap(material)) {
+      flags |= shader_flags::has_normal_map;
    }
 
    if (has_env_map(material)) {

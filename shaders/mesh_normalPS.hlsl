@@ -11,7 +11,8 @@ enum flags {
    specular_visibility_in_diffuse_map = 0b100,
    scrolling = 0b1000,
    static_lighting = 0b10000,
-   has_env_map = 0b100000,
+   has_normal_map = 0b100000,
+   has_env_map = 0b1000000,
 };
 
 struct input_vertex {
@@ -37,7 +38,11 @@ float4 main(input_vertex input) : SV_TARGET
 
    float2 texcoords = input.texcoords;
 
-   const float4 normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
+   float4 normal_map_sample = float4(0.5, 0.5, 1.0, 1.0);
+
+   if (material.flags & flags::has_normal_map) {
+      normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
+   }
 
    if (material.flags & flags::scrolling) {
       texcoords -= material.scrolling_amount * cb_frame.texture_scroll_duration;
@@ -62,7 +67,7 @@ float4 main(input_vertex input) : SV_TARGET
    if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
 
    if (material.flags & flags::unlit) return diffuse_color;
-   
+
    float specular_visibility = 1.0;
 
    if (material.flags & flags::specular_visibility_in_diffuse_map) {
