@@ -14,6 +14,7 @@ enum flags {
    has_normal_map = 0b100000,
    has_detail_map = 0b1000000,
    has_env_map = 0b10000000,
+   tile_normal_map = 0b100000000,
 };
 
 struct input_vertex {
@@ -38,16 +39,22 @@ float4 main(input_vertex input) : SV_TARGET
 
    float2 texcoords = input.texcoords;
 
+   if (material.flags & flags::scrolling) {
+      texcoords -= material.scrolling_amount * cb_frame.texture_scroll_duration;
+   }
+
    float4 normal_map_sample = float4(0.5, 0.5, 1.0, 1.0);
 
    if (material.flags & flags::has_normal_map) {
       Texture2D<float4> normal_map = ResourceDescriptorHeap[material.normal_map_index];
 
-      normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
-   }
-
-   if (material.flags & flags::scrolling) {
-      texcoords -= material.scrolling_amount * cb_frame.texture_scroll_duration;
+      if (material.flags & flags::tile_normal_map) {
+         normal_map_sample =
+            normal_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale);
+      }
+      else {
+         normal_map_sample = normal_map.Sample(sampler_anisotropic_wrap, texcoords);
+      }
    }
 
    const float3 normalTS = normal_map_sample.xyz * 2.0 - 1.0;

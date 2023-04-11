@@ -16,6 +16,7 @@ enum class shader_flags : uint32 {
    has_normal_map = 0b100000,
    has_detail_map = 0b1000000,
    has_env_map = 0b10000000,
+   tile_normal_map = 0b100000000,
 };
 
 constexpr bool marked_as_enum_bitflag(shader_flags)
@@ -93,6 +94,11 @@ constexpr auto make_shader_flags(const material_pipeline_flags pipeline_flags,
 
    if (has_env_map(material)) {
       flags |= shader_flags::has_env_map;
+   }
+
+   if (material.rendertype == assets::msh::rendertype::normalmap_tiled_envmapped or
+       material.rendertype == assets::msh::rendertype::normalmap_tiled) {
+      flags |= shader_flags::tile_normal_map;
    }
 
    return flags;
