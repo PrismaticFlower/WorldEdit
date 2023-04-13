@@ -73,6 +73,8 @@ meta_draw_batcher::meta_draw_batcher()
    _cylinders_wireframe.reserve(16);
    _cones_wireframe.reserve(16);
    _triangles_wireframe.reserve(2048);
+
+   _lines_overlay.reserve(2048);
 }
 
 void meta_draw_batcher::clear()
@@ -95,6 +97,8 @@ void meta_draw_batcher::clear()
    _cylinders_wireframe.clear();
    _cones_wireframe.clear();
    _triangles_wireframe.clear();
+
+   _lines_overlay.clear();
 }
 
 void meta_draw_batcher::add_octahedron_outlined(const float4x4& transform,
@@ -198,6 +202,12 @@ void meta_draw_batcher::add_triangle_wireframe(const float3& a, const float3& b,
    _triangles_wireframe.emplace_back(a, color);
    _triangles_wireframe.emplace_back(b, color);
    _triangles_wireframe.emplace_back(c, color);
+}
+
+void meta_draw_batcher::add_line_overlay(const float3& a, const float3& b,
+                                         const uint32 color)
+{
+   _lines_overlay.emplace_back(a, color, b);
 }
 
 void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
@@ -351,6 +361,10 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
    if (not _triangles.empty()) {
       draw_vertices(_triangles, pipeline_library.meta_draw_triangle.get());
    }
+
+   if (not _lines_overlay.empty()) {
+      draw_lines(_lines_overlay, pipeline_library.meta_draw_line_overlay.get());
+   }
 }
 
 bool meta_draw_batcher::all_empty() const noexcept
@@ -361,7 +375,8 @@ bool meta_draw_batcher::all_empty() const noexcept
           _lines_solid.empty() and _octahedrons_wireframe.empty() and
           _hint_hexahedrons_wireframe.empty() and _boxes_wireframe.empty() and
           _spheres_wireframe.empty() and _cylinders_wireframe.empty() and
-          _cones_wireframe.empty() and _triangles_wireframe.empty();
+          _cones_wireframe.empty() and _triangles_wireframe.empty() and
+          _lines_overlay.empty();
 }
 
 }

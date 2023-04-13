@@ -5,6 +5,7 @@
 #include "commands.hpp"
 #include "container/ring_set.hpp"
 #include "edits/stack.hpp"
+#include "gizmo.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/gpu/exception.hpp"
 #include "graphics/renderer.hpp"
@@ -311,6 +312,7 @@ private:
    float3 _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
    world::path_id _move_entire_path_id = {};
 
+   gizmo _gizmo;
    commands _commands;
    hotkeys _hotkeys{_commands, _stream};
 

@@ -240,4 +240,10 @@ inline float3 triIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2
    if (u < 0.0f || v < 0.0f || (u + v) > 1.0f) t = -1.0f;
    return float3(t, u, v);
 }
+
+inline float plaIntersect(float3 ro, float3 rd, float4 p)
+{
+   return -(dot(ro, float3{p.x, p.y, p.z}) + p.w) / dot(rd, float3{p.x, p.y, p.z});
+}
+
 }

@@ -95,6 +95,13 @@ void world_edit::update()
 
    wait_for_swap_chain_ready();
 
+   _gizmo.update(make_camera_ray(_camera,
+                                 {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                                 {ImGui::GetMainViewport()->Size.x,
+                                  ImGui::GetMainViewport()->Size.y}),
+                 ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
+                    not ImGui::GetIO().WantCaptureMouse);
+
    // Input!
    update_input();
    update_hovered_entity();
@@ -110,6 +117,8 @@ void world_edit::update()
 
    // Render!
    update_camera(delta_time);
+
+   _gizmo.draw(_tool_visualizers);
 
    try {
       _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
@@ -144,7 +153,8 @@ void world_edit::update_window_text() noexcept
 
 void world_edit::update_input() noexcept
 {
-   _hotkeys.update(ImGui::GetIO().WantCaptureMouse, ImGui::GetIO().WantCaptureKeyboard);
+   _hotkeys.update(ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse(),
+                   ImGui::GetIO().WantCaptureKeyboard);
 
    _mouse_movement_x = std::exchange(_queued_mouse_movement_x, 0);
    _mouse_movement_y = std::exchange(_queued_mouse_movement_y, 0);
@@ -161,7 +171,7 @@ void world_edit::update_hovered_entity() noexcept
    _cursor_surface_normalWS = std::nullopt;
    float hovered_entity_distance = std::numeric_limits<float>::max();
 
-   if (ImGui::GetIO().WantCaptureMouse) return;
+   if (ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse()) return;
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 
@@ -472,6 +482,10 @@ void world_edit::select_hovered_entity(const select_method method) noexcept
    }
 
    _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
+
+   _tool_move_selection_open = false;
+   _tool_move_whole_path_open = false;
+   _tool_rotate_selection_open = false;
 }
 
 void world_edit::deselect_hovered_entity() noexcept

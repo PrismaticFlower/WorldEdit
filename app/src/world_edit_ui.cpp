@@ -6793,9 +6793,140 @@ void world_edit::update_ui() noexcept
 
       if (ImGui::Begin("Move Selection", &_tool_move_selection_open,
                        ImGuiWindowFlags_AlwaysAutoResize)) {
+         float3 selection_centre = {0.0f, 0.0f, 0.0f};
+         float3 selection_axis_count = {0.0f, 0.0f, 0.0f};
+
+         for (const auto& selected : _interaction_targets.selection) {
+            if (std::holds_alternative<world::object_id>(selected)) {
+               const world::object* object =
+                  world::find_entity(_world.objects,
+                                     std::get<world::object_id>(selected));
+
+               if (object) {
+                  selection_centre += object->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+               const auto [id, node_index] =
+                  std::get<world::path_id_node_pair>(selected);
+
+               const world::path* path = world::find_entity(_world.paths, id);
+
+               if (path) {
+                  const world::path::node& node = path->nodes[node_index];
+
+                  selection_centre += node.position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::light_id>(selected)) {
+               const world::light* light =
+                  world::find_entity(_world.lights,
+                                     std::get<world::light_id>(selected));
+
+               if (light) {
+                  selection_centre += light->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::region_id>(selected)) {
+               const world::region* region =
+                  world::find_entity(_world.regions,
+                                     std::get<world::region_id>(selected));
+
+               if (region) {
+                  selection_centre += region->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::sector_id>(selected)) {
+               const world::sector* sector =
+                  world::find_entity(_world.sectors,
+                                     std::get<world::sector_id>(selected));
+
+               if (sector) {
+                  for (auto& point : sector->points) {
+                     selection_centre += {point.x, 0.0f, point.y};
+                     selection_axis_count += {1.0f, 0.0f, 1.0f};
+                  }
+               }
+            }
+            else if (std::holds_alternative<world::portal_id>(selected)) {
+               const world::portal* portal =
+                  world::find_entity(_world.portals,
+                                     std::get<world::portal_id>(selected));
+
+               if (portal) {
+                  selection_centre += portal->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::hintnode_id>(selected)) {
+               const world::hintnode* hintnode =
+                  world::find_entity(_world.hintnodes,
+                                     std::get<world::hintnode_id>(selected));
+
+               if (hintnode) {
+                  selection_centre += hintnode->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::barrier_id>(selected)) {
+               const world::barrier* barrier =
+                  world::find_entity(_world.barriers,
+                                     std::get<world::barrier_id>(selected));
+
+               if (barrier) {
+                  selection_centre +=
+                     {barrier->position.x, 0.0f, barrier->position.y};
+                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+               const world::planning_hub* planning_hub =
+                  world::find_entity(_world.planning_hubs,
+                                     std::get<world::planning_hub_id>(selected));
+
+               if (planning_hub) {
+                  selection_centre +=
+                     {planning_hub->position.x, 0.0f, planning_hub->position.y};
+                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::boundary_id>(selected)) {
+               const world::boundary* boundary =
+                  world::find_entity(_world.boundaries,
+                                     std::get<world::boundary_id>(selected));
+
+               if (boundary) {
+                  selection_centre +=
+                     {boundary->position.x, 0.0f, boundary->position.y};
+                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+               }
+            }
+         }
+
+         selection_axis_count = max(selection_axis_count, float3{1.0f, 1.0f, 1.0f});
+
+         selection_centre /= selection_axis_count;
+
+         if (_interaction_targets.selection.size() == 1) {
+            selection_centre =
+               world::find_entity(_world.objects,
+                                  std::get<world::object_id>(
+                                     _interaction_targets.selection.back()))
+                  ->position;
+         }
+
          const float3 last_move_amount = _move_selection_amount;
 
-         if (ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f)) {
+         const bool imgui_edited =
+            ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+         const bool gizmo_edited =
+            _gizmo.show_translate(selection_centre, _move_selection_amount);
+
+         if (imgui_edited or gizmo_edited) {
             const float3 move_delta = (_move_selection_amount - last_move_amount);
 
             edits::bundle_vector bundled_edits;
@@ -6963,7 +7094,29 @@ void world_edit::update_ui() noexcept
                        ImGuiWindowFlags_AlwaysAutoResize)) {
          const float3 last_move_amount = _move_selection_amount;
 
-         if (ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f)) {
+         float3 path_centre = {0.0f, 0.0f, 0.0f};
+
+         if (const world::path* path =
+                world::find_entity(_world.paths, _move_entire_path_id);
+             path) {
+            for (std::size_t i = 0; i < path->nodes.size(); ++i) {
+               const world::path::node& node = path->nodes[i];
+
+               path_centre += node.position;
+            }
+
+            path_centre /= static_cast<float>(path->nodes.size());
+         }
+         else {
+            _tool_move_whole_path_open = false;
+         }
+
+         const bool imgui_edited =
+            ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+         const bool gizmo_edited =
+            _gizmo.show_translate(path_centre, _move_selection_amount);
+
+         if (imgui_edited or gizmo_edited) {
             const world::selected_entity selected =
                _interaction_targets.selection.back();
             const float3 move_delta = (_move_selection_amount - last_move_amount);
@@ -7014,14 +7167,122 @@ void world_edit::update_ui() noexcept
 
       if (ImGui::Begin("Rotate Selection", &_tool_rotate_selection_open,
                        ImGuiWindowFlags_AlwaysAutoResize)) {
+         float3 selection_centre = {0.0f, 0.0f, 0.0f};
+         float3 selection_axis_count = {0.0f, 0.0f, 0.0f};
+
+         for (const auto& selected : _interaction_targets.selection) {
+            if (std::holds_alternative<world::object_id>(selected)) {
+               const world::object* object =
+                  world::find_entity(_world.objects,
+                                     std::get<world::object_id>(selected));
+
+               if (object) {
+                  selection_centre += object->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+               const auto [id, node_index] =
+                  std::get<world::path_id_node_pair>(selected);
+
+               const world::path* path = world::find_entity(_world.paths, id);
+
+               if (path) {
+                  const world::path::node& node = path->nodes[node_index];
+
+                  selection_centre += node.position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::light_id>(selected)) {
+               const world::light* light =
+                  world::find_entity(_world.lights,
+                                     std::get<world::light_id>(selected));
+
+               if (light) {
+                  selection_centre += light->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::region_id>(selected)) {
+               const world::region* region =
+                  world::find_entity(_world.regions,
+                                     std::get<world::region_id>(selected));
+
+               if (region) {
+                  selection_centre += region->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::sector_id>(selected)) {
+               const world::sector* sector =
+                  world::find_entity(_world.sectors,
+                                     std::get<world::sector_id>(selected));
+
+               if (sector) {
+                  for (auto& point : sector->points) {
+                     selection_centre += {point.x, 0.0f, point.y};
+                     selection_axis_count += {1.0f, 0.0f, 1.0f};
+                  }
+               }
+            }
+            else if (std::holds_alternative<world::portal_id>(selected)) {
+               const world::portal* portal =
+                  world::find_entity(_world.portals,
+                                     std::get<world::portal_id>(selected));
+
+               if (portal) {
+                  selection_centre += portal->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::hintnode_id>(selected)) {
+               const world::hintnode* hintnode =
+                  world::find_entity(_world.hintnodes,
+                                     std::get<world::hintnode_id>(selected));
+
+               if (hintnode) {
+                  selection_centre += hintnode->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+               }
+            }
+            else if (std::holds_alternative<world::barrier_id>(selected)) {
+               const world::barrier* barrier =
+                  world::find_entity(_world.barriers,
+                                     std::get<world::barrier_id>(selected));
+
+               if (barrier) {
+                  selection_centre +=
+                     {barrier->position.x, 0.0f, barrier->position.y};
+                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+               }
+            }
+         }
+
+         selection_axis_count = max(selection_axis_count, float3{1.0f, 1.0f, 1.0f});
+
+         selection_centre /= selection_axis_count;
+
          const float3 last_rotation_amount = _rotate_selection_amount;
 
-         if (ImGui::DragFloat3("Amount", &_rotate_selection_amount, 1.0f)) {
+         float3 rotate_selection_amount_degrees =
+            _rotate_selection_amount * 180.0f / std::numbers::pi_v<float>;
+
+         const bool imgui_edited =
+            ImGui::DragFloat3("Amount", &rotate_selection_amount_degrees, 1.0f);
+
+         if (imgui_edited) {
+            _rotate_selection_amount = rotate_selection_amount_degrees *
+                                       std::numbers::pi_v<float> / 180.0f;
+         }
+
+         const bool gizmo_edited =
+            _gizmo.show_rotate(selection_centre, _rotate_selection_amount);
+
+         if (imgui_edited or gizmo_edited) {
             const float3 rotate_delta =
                (_rotate_selection_amount - last_rotation_amount);
-            const float3 rotation_euler = {rotate_delta *
-                                           std::numbers::pi_v<float> / 180.0f};
-            const quaternion rotation = make_quat_from_euler(rotation_euler);
+            const quaternion rotation = make_quat_from_euler(rotate_delta);
 
             edits::bundle_vector bundled_edits;
 
@@ -7085,7 +7346,7 @@ void world_edit::update_ui() noexcept
 
                   if (sector) {
                      const quaternion sector_rotation =
-                        make_quat_from_euler(float3{0.0f, rotation_euler.y, 0.0f});
+                        make_quat_from_euler(float3{0.0f, rotate_delta.y, 0.0f});
 
                      float2 centre = {0.0f, 0.0f};
 
@@ -7143,7 +7404,7 @@ void world_edit::update_ui() noexcept
                      bundled_edits.push_back(
                         edits::make_set_value(barrier->id, &world::barrier::rotation_angle,
                                               barrier->rotation_angle +
-                                                 rotation_euler.y,
+                                                 rotate_delta.y,
                                               barrier->rotation_angle));
                   }
                }

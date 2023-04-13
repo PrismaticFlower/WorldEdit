@@ -63,6 +63,7 @@ struct pipeline_library {
    gpu::unique_pipeline_handle meta_draw_sphere;
    gpu::unique_pipeline_handle meta_draw_sphere_wireframe;
    gpu::unique_pipeline_handle meta_draw_line_solid;
+   gpu::unique_pipeline_handle meta_draw_line_overlay;
    gpu::unique_pipeline_handle meta_draw_triangle;
    gpu::unique_pipeline_handle meta_draw_triangle_wireframe;
 
