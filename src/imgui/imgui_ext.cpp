@@ -343,22 +343,23 @@ bool InputTextAutoComplete(
                    ImGui::GetStyle().ItemInnerSpacing.x,
                 9.0f * ImGui::GetFontSize()});
 
-      ImGui::BeginTooltip();
-
-      if (not autocomplete_entries) {
-         autocomplete_entries = fill_entries_callback(fill_entries_callback_user_data);
-      }
-
-      if ((*autocomplete_entries)[0].empty()) {
-         ImGui::TextUnformatted("No matches.");
-      }
-      else {
-         for (const std::string_view& asset : *autocomplete_entries) {
-            ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
+      if (ImGui::BeginTooltip()) {
+         if (not autocomplete_entries) {
+            autocomplete_entries =
+               fill_entries_callback(fill_entries_callback_user_data);
          }
-      }
 
-      ImGui::EndTooltip();
+         if ((*autocomplete_entries)[0].empty()) {
+            ImGui::TextUnformatted("No matches.");
+         }
+         else {
+            for (const std::string_view& asset : *autocomplete_entries) {
+               ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
+            }
+         }
+
+         ImGui::EndTooltip();
+      }
    }
 
    ImGui::EndGroup();
