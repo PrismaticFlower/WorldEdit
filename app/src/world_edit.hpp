@@ -48,6 +48,8 @@ enum class placement_node_insert : uint8 { nearest, append };
 
 enum class placement_resize_mode : uint8 { off, extend, shrink };
 
+enum class selection_edit_tool : uint8 { none, move, move_path, rotate };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -194,9 +196,7 @@ private:
    bool _world_stats_open = false;
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;
-   bool _tool_move_selection_open = false;
-   bool _tool_move_whole_path_open = false;
-   bool _tool_rotate_selection_open = false;
+   selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;

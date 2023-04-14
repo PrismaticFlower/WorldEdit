@@ -1419,7 +1419,7 @@ void world_edit::update_ui() noexcept
                }
 
                if (ImGui::Button("Move Path", {ImGui::CalcItemWidth(), 0.0f})) {
-                  _tool_move_whole_path_open = true;
+                  _selection_edit_tool = selection_edit_tool::move_path;
                   _move_selection_amount = {0.0f, 0.0f, 0.0f};
                   _move_entire_path_id = id;
                }
@@ -2511,12 +2511,12 @@ void world_edit::update_ui() noexcept
          ImGui::SeparatorText("Selection Tools");
 
          if (ImGui::Button("Move Selection", {ImGui::CalcItemWidth(), 0.0f})) {
-            _tool_move_selection_open = true;
+            _selection_edit_tool = selection_edit_tool::move;
             _move_selection_amount = {0.0f, 0.0f, 0.0f};
          }
 
          if (ImGui::Button("Rotate Selection", {ImGui::CalcItemWidth(), 0.0f})) {
-            _tool_rotate_selection_open = true;
+            _selection_edit_tool = selection_edit_tool::rotate;
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
          }
       }
@@ -6783,16 +6783,17 @@ void world_edit::update_ui() noexcept
       }
    }
 
-   if (_tool_move_selection_open) {
+   if (_selection_edit_tool == selection_edit_tool::move) {
       ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
       if (_interaction_targets.selection.empty()) {
-         _tool_move_selection_open = false;
+         _selection_edit_tool = selection_edit_tool::none;
       }
 
-      if (ImGui::Begin("Move Selection", &_tool_move_selection_open,
-                       ImGuiWindowFlags_AlwaysAutoResize)) {
+      bool open = _selection_edit_tool == selection_edit_tool::move;
+
+      if (ImGui::Begin("Move Selection", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
          float3 selection_centre = {0.0f, 0.0f, 0.0f};
          float3 selection_axis_count = {0.0f, 0.0f, 0.0f};
 
@@ -7077,21 +7078,25 @@ void world_edit::update_ui() noexcept
          }
 
          if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
-            _tool_move_selection_open = false;
+            open = false;
          }
       }
 
-      if (not _tool_move_selection_open) _edit_stack_world.close_last();
+      if (not open) {
+         _edit_stack_world.close_last();
+         _selection_edit_tool = selection_edit_tool::none;
+      }
 
       ImGui::End();
    }
 
-   if (_tool_move_whole_path_open) {
+   if (_selection_edit_tool == selection_edit_tool::move_path) {
       ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
-      if (ImGui::Begin("Move Path", &_tool_move_whole_path_open,
-                       ImGuiWindowFlags_AlwaysAutoResize)) {
+      bool open = true;
+
+      if (ImGui::Begin("Move Path", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
          const float3 last_move_amount = _move_selection_amount;
 
          float3 path_centre = {0.0f, 0.0f, 0.0f};
@@ -7108,7 +7113,7 @@ void world_edit::update_ui() noexcept
             path_centre /= static_cast<float>(path->nodes.size());
          }
          else {
-            _tool_move_whole_path_open = false;
+            open = false;
          }
 
          const bool imgui_edited =
@@ -7143,30 +7148,34 @@ void world_edit::update_ui() noexcept
                                        _edit_context);
             }
             else {
-               _tool_move_whole_path_open = false;
+               open = false;
             }
          }
 
          if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
-            _tool_move_selection_open = false;
+            open = false;
          }
       }
 
-      if (not _tool_move_whole_path_open) _edit_stack_world.close_last();
+      if (not open) {
+         _edit_stack_world.close_last();
+         _selection_edit_tool = selection_edit_tool::none;
+      }
 
       ImGui::End();
    }
 
-   if (_tool_rotate_selection_open) {
+   if (_selection_edit_tool == selection_edit_tool::rotate) {
       ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
       if (_interaction_targets.selection.empty()) {
-         _tool_rotate_selection_open = false;
+         _selection_edit_tool = selection_edit_tool::none;
       }
 
-      if (ImGui::Begin("Rotate Selection", &_tool_rotate_selection_open,
-                       ImGuiWindowFlags_AlwaysAutoResize)) {
+      bool open = _selection_edit_tool == selection_edit_tool::rotate;
+
+      if (ImGui::Begin("Rotate Selection", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
          float3 selection_centre = {0.0f, 0.0f, 0.0f};
          float3 selection_axis_count = {0.0f, 0.0f, 0.0f};
 
@@ -7420,11 +7429,14 @@ void world_edit::update_ui() noexcept
          }
 
          if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
-            _tool_rotate_selection_open = false;
+            open = false;
          }
       }
 
-      if (not _tool_rotate_selection_open) _edit_stack_world.close_last();
+      if (not open) {
+         _edit_stack_world.close_last();
+         _selection_edit_tool = selection_edit_tool::none;
+      }
 
       ImGui::End();
    }

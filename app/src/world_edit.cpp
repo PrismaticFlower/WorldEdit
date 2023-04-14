@@ -483,9 +483,7 @@ void world_edit::select_hovered_entity(const select_method method) noexcept
 
    _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
 
-   _tool_move_selection_open = false;
-   _tool_move_whole_path_open = false;
-   _tool_rotate_selection_open = false;
+   _selection_edit_tool = selection_edit_tool::none;
 }
 
 void world_edit::deselect_hovered_entity() noexcept
@@ -902,9 +900,7 @@ void world_edit::undo() noexcept
             : _entity_creation_config.placement_rotation;
    }
 
-   _tool_move_selection_open = false;
-   _tool_move_whole_path_open = false;
-   _tool_rotate_selection_open = false;
+   _selection_edit_tool = selection_edit_tool::none;
 }
 
 void world_edit::redo() noexcept

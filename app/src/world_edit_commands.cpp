@@ -89,11 +89,11 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("entity_edit.ground_objects"s, _selection_edit_context.ground_objects);
    _commands.add("entity_edit.move_selection"s, [this] {
-      _tool_move_selection_open = true;
+      _selection_edit_tool = selection_edit_tool::move;
       _move_selection_amount = {0.0f, 0.0f, 0.0f};
    });
    _commands.add("entity_edit.rotate_selection"s, [this] {
-      _tool_rotate_selection_open = true;
+      _selection_edit_tool = selection_edit_tool::rotate;
       _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
    });
 
