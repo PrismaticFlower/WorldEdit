@@ -1246,16 +1246,6 @@ void renderer_impl::draw_world_meta_objects(
    for (const auto& line : tool_visualizers.lines) {
       _meta_draw_batcher.add_line_overlay(line.v0, line.v1, line.color);
    }
-
-#if 0
-   for (const auto& cylinder : tool_visualizers.cylinders_overlay) {
-      _meta_draw_batcher.add_cylinder_overlay(cylinder.transform, cylinder.color);
-   }
-
-   for (const auto& cone : tool_visualizers.cones_overlay) {
-      _meta_draw_batcher.add_cone_overlay(cone.transform, cone.color);
-   }
-#endif
 }
 
 void renderer_impl::draw_interaction_targets(
