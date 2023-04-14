@@ -6912,14 +6912,6 @@ void world_edit::update_ui() noexcept
 
          selection_centre /= selection_axis_count;
 
-         if (_interaction_targets.selection.size() == 1) {
-            selection_centre =
-               world::find_entity(_world.objects,
-                                  std::get<world::object_id>(
-                                     _interaction_targets.selection.back()))
-                  ->position;
-         }
-
          const float3 last_move_amount = _move_selection_amount;
 
          const bool imgui_edited =
