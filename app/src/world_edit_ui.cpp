@@ -6804,8 +6804,19 @@ void world_edit::update_ui() noexcept
                                      std::get<world::object_id>(selected));
 
                if (object) {
-                  selection_centre += object->position;
-                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+                  if (_gizmo_object_placement == gizmo_object_placement::position) {
+                     selection_centre += object->position;
+                     selection_axis_count += {1.0f, 1.0f, 1.0f};
+                  }
+                  else {
+                     math::bounding_box bbox =
+                        _object_classes[object->class_name].model->bounding_box;
+
+                     bbox = object->rotation * bbox + object->position;
+
+                     selection_centre += ((bbox.max + bbox.min) / 2.0f);
+                     selection_axis_count += {1.0f, 1.0f, 1.0f};
+                  }
                }
             }
             else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
@@ -7071,6 +7082,26 @@ void world_edit::update_ui() noexcept
 
          if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
             open = false;
+         }
+
+         ImGui::SeparatorText("Object Gizmo Location");
+
+         if (ImGui::BeginTable("Object Gizmo Location", 2,
+                               ImGuiTableFlags_NoSavedSettings |
+                                  ImGuiTableFlags_SizingStretchSame)) {
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Object Position", _gizmo_object_placement ==
+                                                 gizmo_object_placement::position)) {
+               _gizmo_object_placement = gizmo_object_placement::position;
+            }
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Object BBOX Center", _gizmo_object_placement ==
+                                                    gizmo_object_placement::bbox_centre)) {
+               _gizmo_object_placement = gizmo_object_placement::bbox_centre;
+            }
+
+            ImGui::EndTable();
          }
       }
 

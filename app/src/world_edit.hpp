@@ -50,6 +50,8 @@ enum class placement_resize_mode : uint8 { off, extend, shrink };
 
 enum class selection_edit_tool : uint8 { none, move, move_path, rotate };
 
+enum class gizmo_object_placement : uint8 { position, bbox_centre };
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -197,6 +199,7 @@ private:
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
+   gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;
@@ -208,7 +211,7 @@ private:
 
    std::vector<std::string_view> _world_explorer_object_classes;
 
-   bool _world_explorer_path_show_all_nodes;
+   bool _world_explorer_path_show_all_nodes = false;
 
    POINT _rotate_camera_cursor_position = {0, 0};
 
