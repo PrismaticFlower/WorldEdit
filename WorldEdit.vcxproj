@@ -242,7 +242,7 @@
     <ClCompile Include="src\imgui\imgui_ext.cpp" />
     <ClCompile Include="src\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
-    <ClCompile Include="src\imgui\imgui_freetype.cpp" />
+    <ClCompile Include="src\imgui\misc\freetype\imgui_freetype.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
     <ClCompile Include="src\key.cpp" />
@@ -421,7 +421,7 @@
     <ClInclude Include="src\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
-    <ClInclude Include="src\imgui\imgui_freetype.h" />
+    <ClInclude Include="src\imgui\misc\freetype\imgui_freetype.h" />
     <ClInclude Include="src\key.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />
@@ -550,9 +550,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="src\imgui\misc\debuggers\imgui.natstepfilter" />
     <None Include="third_party\licenses\vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
+    <Natvis Include="src\imgui\misc\debuggers\imgui.natvis" />
     <Natvis Include="src\utility\implementation_storage.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

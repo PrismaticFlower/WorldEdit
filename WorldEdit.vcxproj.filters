@@ -427,9 +427,6 @@
     <ClInclude Include="src\settings\settings.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui\imgui_freetype.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\world\interaction_context.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -703,6 +700,9 @@
     <ClInclude Include="src\gizmo.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\imgui\misc\freetype\imgui_freetype.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -838,9 +838,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_tables.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_freetype.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\async\thread_pool.cpp">
@@ -1023,12 +1020,17 @@
     <ClCompile Include="src\gizmo.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\imgui\misc\freetype\imgui_freetype.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />
     <None Include="packages.config" />
+    <None Include="src\imgui\misc\debuggers\imgui.natstepfilter" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="src\utility\implementation_storage.natvis" />
+    <Natvis Include="src\imgui\misc\debuggers\imgui.natvis" />
   </ItemGroup>
 </Project>
