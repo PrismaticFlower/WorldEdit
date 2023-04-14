@@ -1848,12 +1848,7 @@ void renderer_impl::build_object_render_list(const frustum& view_frustum)
 
    std::sort(_opaque_object_render_list.begin(), _opaque_object_render_list.end(),
              [&](const uint16 l, const uint16 r) {
-                return std::tuple{dot(view_frustum.planes[frustum_planes::near_],
-                                      float4{meshes.position[l], 1.0f}),
-                                  meshes.pipeline[l]} <
-                       std::tuple{dot(view_frustum.planes[frustum_planes::near_],
-                                      float4{meshes.position[r], 1.0f}),
-                                  meshes.pipeline[r]};
+                return meshes.pipeline[l] < meshes.pipeline[r];
              });
    std::sort(_transparent_object_render_list.begin(),
              _transparent_object_render_list.end(),
