@@ -40,9 +40,9 @@ void main(uint2 DTid : SV_DispatchThreadID, uint group_index : SV_GroupIndex) { 
       }
    }
 
-   if (group_index == 0) {
-      GroupMemoryBarrierWithGroupSync();
+   GroupMemoryBarrierWithGroupSync();
 
+   if (group_index == 0) {
       output.InterlockedMin(0, shared_min_depth);
       output.InterlockedMax(4, shared_max_depth);
    }
