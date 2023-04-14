@@ -5203,31 +5203,33 @@ void world_edit::update_ui() noexcept
       if (traits.has_placement_rotation) {
          ImGui::SeparatorText("Rotation");
 
-         ImGui::BeginTable("Rotation", 3,
-                           ImGuiTableFlags_NoSavedSettings |
-                              ImGuiTableFlags_SizingStretchSame);
+         if (ImGui::BeginTable("Rotation", 3,
+                               ImGuiTableFlags_NoSavedSettings |
+                                  ImGuiTableFlags_SizingStretchSame)) {
 
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Manual", _entity_creation_config.placement_rotation ==
-                                            placement_rotation::manual_euler)) {
-            _entity_creation_config.placement_rotation =
-               placement_rotation::manual_euler;
-         }
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Manual", _entity_creation_config.placement_rotation ==
+                                               placement_rotation::manual_euler)) {
+               _entity_creation_config.placement_rotation =
+                  placement_rotation::manual_euler;
+            }
 
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Manual (Quat)",
-                               _entity_creation_config.placement_rotation ==
-                                  placement_rotation::manual_quaternion)) {
-            _entity_creation_config.placement_rotation =
-               placement_rotation::manual_quaternion;
-         }
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Manual (Quat)",
+                                  _entity_creation_config.placement_rotation ==
+                                     placement_rotation::manual_quaternion)) {
+               _entity_creation_config.placement_rotation =
+                  placement_rotation::manual_quaternion;
+            }
 
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Around Cursor", _entity_creation_config.placement_rotation ==
-                                                   placement_rotation::surface)) {
-            _entity_creation_config.placement_rotation = placement_rotation::surface;
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Around Cursor",
+                                  _entity_creation_config.placement_rotation ==
+                                     placement_rotation::surface)) {
+               _entity_creation_config.placement_rotation = placement_rotation::surface;
+            }
+            ImGui::EndTable();
          }
-         ImGui::EndTable();
       }
 
       if (traits.has_point_at) {
@@ -5241,69 +5243,74 @@ void world_edit::update_ui() noexcept
       if (traits.has_placement_mode) {
          ImGui::SeparatorText("Placement");
 
-         ImGui::BeginTable("Placement", 2,
-                           ImGuiTableFlags_NoSavedSettings |
-                              ImGuiTableFlags_SizingStretchSame);
+         if (ImGui::BeginTable("Placement", 2,
+                               ImGuiTableFlags_NoSavedSettings |
+                                  ImGuiTableFlags_SizingStretchSame)) {
 
-         ImGui::TableNextColumn();
-         if (ImGui::Selectable("Manual", _entity_creation_config.placement_mode ==
-                                            placement_mode::manual)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Manual", _entity_creation_config.placement_mode ==
+                                               placement_mode::manual)) {
+               _entity_creation_config.placement_mode = placement_mode::manual;
+            }
+
+            ImGui::TableNextColumn();
+
+            if (ImGui::Selectable("At Cursor", _entity_creation_config.placement_mode ==
+                                                  placement_mode::cursor)) {
+               _entity_creation_config.placement_mode = placement_mode::cursor;
+            }
+            ImGui::EndTable();
          }
-
-         ImGui::TableNextColumn();
-
-         if (ImGui::Selectable("At Cursor", _entity_creation_config.placement_mode ==
-                                               placement_mode::cursor)) {
-            _entity_creation_config.placement_mode = placement_mode::cursor;
-         }
-         ImGui::EndTable();
       }
 
       if (_entity_creation_config.placement_mode == placement_mode::cursor) {
          if (traits.has_lock_axis) {
             ImGui::SeparatorText("Locked Position");
 
-            ImGui::BeginTable("Locked Position", 3,
-                              ImGuiTableFlags_NoSavedSettings |
-                                 ImGuiTableFlags_SizingStretchSame);
+            if (ImGui::BeginTable("Locked Position", 3,
+                                  ImGuiTableFlags_NoSavedSettings |
+                                     ImGuiTableFlags_SizingStretchSame)) {
 
-            ImGui::TableNextColumn();
-            ImGui::Selectable("X", &_entity_creation_context.lock_x_axis);
-            ImGui::TableNextColumn();
-            ImGui::Selectable("Y", &_entity_creation_context.lock_y_axis);
-            ImGui::TableNextColumn();
-            ImGui::Selectable("Z", &_entity_creation_context.lock_z_axis);
+               ImGui::TableNextColumn();
+               ImGui::Selectable("X", &_entity_creation_context.lock_x_axis);
+               ImGui::TableNextColumn();
+               ImGui::Selectable("Y", &_entity_creation_context.lock_y_axis);
+               ImGui::TableNextColumn();
+               ImGui::Selectable("Z", &_entity_creation_context.lock_z_axis);
 
-            ImGui::EndTable();
+               ImGui::EndTable();
+            }
          }
 
          if (traits.has_placement_alignment) {
             ImGui::SeparatorText("Align To");
 
-            ImGui::BeginTable("Align To", 3,
-                              ImGuiTableFlags_NoSavedSettings |
-                                 ImGuiTableFlags_SizingStretchSame);
+            if (ImGui::BeginTable("Align To", 3,
+                                  ImGuiTableFlags_NoSavedSettings |
+                                     ImGuiTableFlags_SizingStretchSame)) {
+               ImGui::TableNextColumn();
+               if (ImGui::Selectable("None", _entity_creation_config.placement_alignment ==
+                                                placement_alignment::none)) {
+                  _entity_creation_config.placement_alignment =
+                     placement_alignment::none;
+               }
 
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("None", _entity_creation_config.placement_alignment ==
-                                             placement_alignment::none)) {
-               _entity_creation_config.placement_alignment = placement_alignment::none;
-            }
+               ImGui::TableNextColumn();
+               if (ImGui::Selectable("Grid", _entity_creation_config.placement_alignment ==
+                                                placement_alignment::grid)) {
+                  _entity_creation_config.placement_alignment =
+                     placement_alignment::grid;
+               }
 
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("Grid", _entity_creation_config.placement_alignment ==
-                                             placement_alignment::grid)) {
-               _entity_creation_config.placement_alignment = placement_alignment::grid;
-            }
+               ImGui::TableNextColumn();
+               if (ImGui::Selectable("Snapping", _entity_creation_config.placement_alignment ==
+                                                    placement_alignment::snapping)) {
+                  _entity_creation_config.placement_alignment =
+                     placement_alignment::snapping;
+               }
 
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("Snapping", _entity_creation_config.placement_alignment ==
-                                                 placement_alignment::snapping)) {
-               _entity_creation_config.placement_alignment =
-                  placement_alignment::snapping;
+               ImGui::EndTable();
             }
-            ImGui::EndTable();
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
@@ -5322,47 +5329,49 @@ void world_edit::update_ui() noexcept
          if (traits.has_placement_ground) {
             ImGui::SeparatorText("Ground With");
 
-            ImGui::BeginTable("Ground With", 2,
-                              ImGuiTableFlags_NoSavedSettings |
-                                 ImGuiTableFlags_SizingStretchSame);
+            if (ImGui::BeginTable("Ground With", 2,
+                                  ImGuiTableFlags_NoSavedSettings |
+                                     ImGuiTableFlags_SizingStretchSame)) {
 
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("Origin", _entity_creation_config.placement_ground ==
-                                               placement_ground::origin)) {
-               _entity_creation_config.placement_ground = placement_ground::origin;
+               ImGui::TableNextColumn();
+               if (ImGui::Selectable("Origin", _entity_creation_config.placement_ground ==
+                                                  placement_ground::origin)) {
+                  _entity_creation_config.placement_ground = placement_ground::origin;
+               }
+
+               ImGui::TableNextColumn();
+               if (ImGui::Selectable("Bounding Box", _entity_creation_config.placement_ground ==
+                                                        placement_ground::bbox)) {
+                  _entity_creation_config.placement_ground = placement_ground::bbox;
+               }
+
+               ImGui::EndTable();
             }
-
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("Bounding Box", _entity_creation_config.placement_ground ==
-                                                     placement_ground::bbox)) {
-               _entity_creation_config.placement_ground = placement_ground::bbox;
-            }
-
-            ImGui::EndTable();
          }
 
          if (traits.has_node_placement_insert) {
             ImGui::SeparatorText("Node Insertion");
 
-            ImGui::BeginTable("Node Insertion", 2,
-                              ImGuiTableFlags_NoSavedSettings |
-                                 ImGuiTableFlags_SizingStretchSame);
+            if (ImGui::BeginTable("Node Insertion", 2,
+                                  ImGuiTableFlags_NoSavedSettings |
+                                     ImGuiTableFlags_SizingStretchSame)) {
 
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("Nearest", _entity_creation_config.placement_node_insert ==
-                                                placement_node_insert::nearest)) {
-               _entity_creation_config.placement_node_insert =
-                  placement_node_insert::nearest;
+               ImGui::TableNextColumn();
+               if (ImGui::Selectable("Nearest", _entity_creation_config.placement_node_insert ==
+                                                   placement_node_insert::nearest)) {
+                  _entity_creation_config.placement_node_insert =
+                     placement_node_insert::nearest;
+               }
+
+               ImGui::TableNextColumn();
+               if (ImGui::Selectable("Append", _entity_creation_config.placement_node_insert ==
+                                                  placement_node_insert::append)) {
+                  _entity_creation_config.placement_node_insert =
+                     placement_node_insert::append;
+               }
+
+               ImGui::EndTable();
             }
-
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("Append", _entity_creation_config.placement_node_insert ==
-                                               placement_node_insert::append)) {
-               _entity_creation_config.placement_node_insert =
-                  placement_node_insert::append;
-            }
-
-            ImGui::EndTable();
          }
       }
 
@@ -7090,14 +7099,16 @@ void world_edit::update_ui() noexcept
                                ImGuiTableFlags_NoSavedSettings |
                                   ImGuiTableFlags_SizingStretchSame)) {
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Object Position", _gizmo_object_placement ==
-                                                 gizmo_object_placement::position)) {
+            if (ImGui::Selectable("Object Position",
+                                  _gizmo_object_placement ==
+                                     gizmo_object_placement::position)) {
                _gizmo_object_placement = gizmo_object_placement::position;
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Object BBOX Center", _gizmo_object_placement ==
-                                                    gizmo_object_placement::bbox_centre)) {
+            if (ImGui::Selectable("Object BBOX Center",
+                                  _gizmo_object_placement ==
+                                     gizmo_object_placement::bbox_centre)) {
                _gizmo_object_placement = gizmo_object_placement::bbox_centre;
             }
 
