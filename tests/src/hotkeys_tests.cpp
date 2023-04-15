@@ -17,7 +17,9 @@ TEST_CASE("hotkeys basic bind test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; }, {{"called", "called", {.key = key::a}}});
+   hotkeys.add_set({.name = "",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {{"called", "called", {.key = key::a}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -41,8 +43,11 @@ TEST_CASE("hotkeys toggle bind test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {
+          {"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -66,11 +71,12 @@ TEST_CASE("hotkeys modified toggle bind test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called",
-                     "toggle_called",
-                     {.key = key::a, .modifiers = {.ctrl = true}},
-                     {.toggle = true}}});
+   hotkeys.add_set({.name = "",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {{"toggle_called",
+                                         "toggle_called",
+                                         {.key = key::a, .modifiers = {.ctrl = true}},
+                                         {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::ctrl);
    hotkeys.notify_key_down(key::a);
@@ -95,8 +101,11 @@ TEST_CASE("hotkeys toggle bind clear_state test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"called", "called", {.key = key::a, .modifiers = {.ctrl = true}}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {
+          {"called", "called", {.key = key::a, .modifiers = {.ctrl = true}}}}});
 
    hotkeys.notify_key_down(key::ctrl);
    hotkeys.update(false, false);
@@ -125,8 +134,11 @@ TEST_CASE("hotkeys toggle bind clear_state releases toggles test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {
+          {"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -158,8 +170,11 @@ TEST_CASE("hotkeys toggle bind mouse focus lost toggles release test",
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called", "toggle_called", {.key = key::mouse1}, {.toggle = true}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {
+          {"toggle_called", "toggle_called", {.key = key::mouse1}, {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::mouse1);
    hotkeys.update(false, false);
@@ -195,8 +210,11 @@ TEST_CASE("hotkeys toggle bind keyboard focus lost toggles release test",
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {
+          {"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -227,11 +245,13 @@ TEST_CASE("hotkeys toggle bind mouse ignore ImGui focus test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called",
-                     "toggle_called",
-                     {.key = key::mouse1},
-                     {.toggle = true, .ignore_imgui_focus = true}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {{"toggle_called",
+                            "toggle_called",
+                            {.key = key::mouse1},
+                            {.toggle = true, .ignore_imgui_focus = true}}}});
 
    hotkeys.notify_key_down(key::mouse1);
    hotkeys.update(true, false);
@@ -255,11 +275,13 @@ TEST_CASE("hotkeys toggle bind keyboard ignore ImGui focus test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called",
-                     "toggle_called",
-                     {.key = key::a},
-                     {.toggle = true, .ignore_imgui_focus = true}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {{"toggle_called",
+                            "toggle_called",
+                            {.key = key::a},
+                            {.toggle = true, .ignore_imgui_focus = true}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, true);
@@ -283,8 +305,10 @@ TEST_CASE("hotkeys basic bind multi-down test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called", "toggle_called", {.key = key::a}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {{"toggle_called", "toggle_called", {.key = key::a}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.notify_key_down(key::a);
@@ -307,10 +331,12 @@ TEST_CASE("hotkeys modified bind test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"toggle_called",
-                     "toggle_called",
-                     {.key = key::a, .modifiers = {.shift = true}}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {{"toggle_called",
+                            "toggle_called",
+                            {.key = key::a, .modifiers = {.shift = true}}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.notify_key_down(key::shift);
@@ -335,10 +361,13 @@ TEST_CASE("hotkeys bind missing command test", "[Commands]")
 
    hotkeys hotkeys{commands, output};
 
-   REQUIRE_THROWS_AS(hotkeys.add_set("", [] { return true; },
-                                     {{"test.command",
-                                       "test.command",
-                                       {.key = key::a, .modifiers = {.shift = true}}}}),
+   REQUIRE_THROWS_AS(hotkeys.add_set(
+                        {.name = "",
+                         .activated = [] { return true; },
+                         .default_hotkeys = {{"test.command",
+                                              "test.command",
+                                              {.key = key::a,
+                                               .modifiers = {.shift = true}}}}}),
                      unknown_command);
 }
 
@@ -353,8 +382,10 @@ TEST_CASE("hotkeys bad command argument test", "[Commands]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [] { return true; },
-                   {{"test.command one", "test.command one", {.key = key::a}}}); // executing this will cause a invalid_command_argument exception
+   hotkeys.add_set({.name = "",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {
+                       {"test.command one", "test.command one", {.key = key::a}}}}); // executing this will cause a invalid_command_argument exception
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false); // but hotkeys should catch it and print it out to error_output
@@ -378,8 +409,11 @@ TEST_CASE("hotkeys toggle bind deactivated release test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("", [&] { return set_active; },
-                   {{"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set(
+      {.name = "",
+       .activated = [&] { return set_active; },
+       .default_hotkeys = {
+          {"toggle_called", "toggle_called", {.key = key::a}, {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -414,10 +448,12 @@ TEST_CASE("hotkeys basic multiset bind test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("A", [] { return true; },
-                   {{"a_called", "a_called", {.key = key::a}}});
-   hotkeys.add_set("B", [] { return true; },
-                   {{"b_called", "b_called", {.key = key::a}}});
+   hotkeys.add_set({.name = "A",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {{"a_called", "a_called", {.key = key::a}}}});
+   hotkeys.add_set({.name = "B",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {{"b_called", "b_called", {.key = key::a}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -445,10 +481,14 @@ TEST_CASE("hotkeys basic multiset toggle test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("A", [] { return true; },
-                   {{"a_called", "a_called", {.key = key::a}, {.toggle = true}}});
-   hotkeys.add_set("B", [] { return true; },
-                   {{"b_called", "b_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set({.name = "A",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {
+                       {"a_called", "a_called", {.key = key::a}, {.toggle = true}}}});
+   hotkeys.add_set({.name = "B",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {
+                       {"b_called", "b_called", {.key = key::a}, {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -478,10 +518,14 @@ TEST_CASE("hotkeys basic multiset toggle deactivate test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("A", [] { return true; },
-                   {{"a_called", "a_called", {.key = key::a}, {.toggle = true}}});
-   hotkeys.add_set("B", [&] { return b_active; },
-                   {{"b_called", "b_called", {.key = key::a}, {.toggle = true}}});
+   hotkeys.add_set({.name = "A",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {
+                       {"a_called", "a_called", {.key = key::a}, {.toggle = true}}}});
+   hotkeys.add_set({.name = "B",
+                    .activated = [&] { return b_active; },
+                    .default_hotkeys = {
+                       {"b_called", "b_called", {.key = key::a}, {.toggle = true}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -517,10 +561,15 @@ TEST_CASE("hotkeys basic multiset overlap modified toggle test", "[Hotkeys]")
 
    hotkeys hotkeys{commands, output};
 
-   hotkeys.add_set("A", [] { return true; },
-                   {{"a_called", "a_called", {.key = key::a}, {.toggle = true}}});
-   hotkeys.add_set("B", [&] { return b_active; },
-                   {{"b_called", "b_called", {.key = key::a, .modifiers = {.ctrl = true}}}});
+   hotkeys.add_set({.name = "A",
+                    .activated = [] { return true; },
+                    .default_hotkeys = {
+                       {"a_called", "a_called", {.key = key::a}, {.toggle = true}}}});
+   hotkeys.add_set(
+      {.name = "B",
+       .activated = [&] { return b_active; },
+       .default_hotkeys = {
+          {"b_called", "b_called", {.key = key::a, .modifiers = {.ctrl = true}}}}});
 
    hotkeys.notify_key_down(key::a);
    hotkeys.update(false, false);
@@ -543,5 +592,4 @@ TEST_CASE("hotkeys basic multiset overlap modified toggle test", "[Hotkeys]")
    REQUIRE(a_called_count == 2);
    REQUIRE(b_called_count == 1);
 }
-
 }
