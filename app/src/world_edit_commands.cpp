@@ -213,6 +213,9 @@ void world_edit::initialize_hotkeys() noexcept
 {
    _hotkeys.add_set(
       {.name = "",
+       .description = "Global hotkeys. These are always active.\n\nThese "
+                      "bindings have a lower priority than any other set."
+                      "have the lowest priority."s,
        .activated = [] { return true; },
        .default_hotkeys = {
           {"Move Forward", "camera.move_forward", {.key = key::w}, {.toggle = true}},
@@ -292,6 +295,7 @@ void world_edit::initialize_hotkeys() noexcept
 
    _hotkeys.add_set(
       {.name = "Entity Editing",
+       .description = "Hotkeys for editing already existing entities.\n\nThese are active whenever entities are selected. Their bindings have lower priority than Entity Creation bindings."s,
        .activated = [this] { return not _interaction_targets.selection.empty(); },
        .default_hotkeys{
           {"Move Selection", "entity_edit.move_selection", {.key = key::z}},
@@ -301,6 +305,7 @@ void world_edit::initialize_hotkeys() noexcept
 
    _hotkeys.add_set(
       {.name = "Entity Creation",
+       .description = "Hotkeys for creating new entities.\n\nThese are active while a new entity is being created. Their bindings currently only have lower priority than tool bindings. Like Point At."s,
        .activated =
           [this] { return _interaction_targets.creation_entity.has_value(); },
        .default_hotkeys = {

@@ -111,7 +111,7 @@ void hotkeys::add_set(hotkey_set_desc desc)
 
    _hotkey_sets.emplace_back(desc.name, std::move(desc.activated),
                              std::move(bindings), std::move(query_bindings),
-                             std::move(unbound_hotkeys));
+                             std::move(unbound_hotkeys), std::move(desc.description));
 }
 
 void hotkeys::notify_key_down(const key key) noexcept
@@ -329,6 +329,13 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
             ImGui::PopID();
             continue;
          }
+
+         ImGui::SeparatorText("Description");
+
+         ImGui::TextUnformatted(set.description.data(),
+                                set.description.data() + set.description.size());
+
+         ImGui::SeparatorText("Bindings");
 
          ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0.0f, 0.0f});
 

@@ -55,6 +55,7 @@ struct hotkey_default {
 
 struct hotkey_set_desc {
    std::string name;
+   std::string description;
    std::function<bool()> activated;
    std::initializer_list<hotkey_default> default_hotkeys;
 };
@@ -144,6 +145,8 @@ private:
       absl::flat_hash_map<hotkey_bind, hotkey> bindings;
       absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
       std::vector<hotkey> unbound_hotkeys;
+
+      std::string description;
    };
 
    std::vector<hotkey_set> _hotkey_sets;
