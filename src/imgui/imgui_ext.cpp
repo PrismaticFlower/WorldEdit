@@ -7,12 +7,21 @@
 #include <cmath>
 #include <optional>
 
+// From imgui_internal.h, forward declared to avoid accidentally taking a dependency on other internals.
+// This is a special exception, as without the auto complete window is... hard.
+struct ImGuiWindow;
+
 namespace ImGui {
+
+// From imgui_internal.h, see forward declaration of ImGuiWindow.
+ImGuiWindow* GetCurrentWindow();
+IMGUI_API void BringWindowToDisplayFront(ImGuiWindow* window);
 
 namespace {
 
 struct text_callback_autofill_data {
    std::optional<std::array<std::string_view, 6>>& autocomplete_entries;
+   int autocomplete_index = 0;
    std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback;
    void* fill_entries_callback_user_data;
 };
@@ -303,13 +312,20 @@ bool InputTextAutoComplete(
    const std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback,
    void* fill_entries_callback_user_data)
 {
-   std::optional<std::array<std::string_view, 6>> autocomplete_entries;
 
-   text_callback_autofill_data callback_user_data{autocomplete_entries,
-                                                  fill_entries_callback,
-                                                  fill_entries_callback_user_data};
+   ImGui::PushID(label);
 
    ImGui::BeginGroup();
+
+   const ImGuiID storage_id = ImGui::GetID("auto_complete_index");
+
+   int selected_index = ImGui::GetStateStorage()->GetInt(storage_id, 0);
+
+   std::optional<std::array<std::string_view, 6>> autocomplete_entries;
+
+   text_callback_autofill_data callback_user_data{autocomplete_entries, selected_index,
+                                                  fill_entries_callback,
+                                                  fill_entries_callback_user_data};
 
    bool value_changed = ImGui::InputText(
       label, buffer, ImGuiInputTextFlags_CallbackCompletion,
@@ -321,7 +337,8 @@ bool InputTextAutoComplete(
             user_data.autocomplete_entries = user_data.fill_entries_callback(
                user_data.fill_entries_callback_user_data);
 
-            std::string_view autofill = (*user_data.autocomplete_entries)[0];
+            std::string_view autofill =
+               (*user_data.autocomplete_entries)[user_data.autocomplete_index];
 
             if (not autofill.empty()) {
                data->DeleteChars(0, data->BufTextLen);
@@ -334,7 +351,30 @@ bool InputTextAutoComplete(
       },
       &callback_user_data);
 
-   if (ImGui::IsItemActive()) {
+   if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) and selected_index > 0) {
+      selected_index -= 1;
+   }
+
+   if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) and selected_index < 6) {
+      selected_index += 1;
+   }
+
+   if (ImGui::IsKeyPressed(ImGuiKey_Enter)) {
+      if (not autocomplete_entries) {
+         autocomplete_entries = fill_entries_callback(fill_entries_callback_user_data);
+      }
+
+      buffer->assign((*autocomplete_entries)[selected_index].begin(),
+                     (*autocomplete_entries)[selected_index].end());
+
+      value_changed = true;
+   }
+
+   const bool input_text_deactivated = ImGui::IsItemDeactivated();
+
+   if (ImGui::IsItemActive()) ImGui::OpenPopup("##autocomplete-entries");
+
+   {
       ImGui::SetNextWindowPos(
          ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
       ImGui::SetNextWindowSize(
@@ -343,7 +383,12 @@ bool InputTextAutoComplete(
                    ImGui::GetStyle().ItemInnerSpacing.x,
                 9.0f * ImGui::GetFontSize()});
 
-      if (ImGui::BeginTooltip()) {
+      if (ImGui::BeginPopup("##autocomplete-entries",
+                            ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration |
+                               ImGuiWindowFlags_NoFocusOnAppearing |
+                               ImGuiWindowFlags_NoSavedSettings)) {
+         ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
+
          if (not autocomplete_entries) {
             autocomplete_entries =
                fill_entries_callback(fill_entries_callback_user_data);
@@ -353,16 +398,46 @@ bool InputTextAutoComplete(
             ImGui::TextUnformatted("No matches.");
          }
          else {
-            for (const std::string_view& asset : *autocomplete_entries) {
+            int highest_entry = 0;
+
+            for (int i = 0; i < autocomplete_entries->size(); ++i) {
+               const std::string_view asset = (*autocomplete_entries)[i];
+
+               if (asset.empty()) break;
+
+               ImGui::PushID(i);
+
+               if (ImGui::Selectable("##selectable", i == selected_index)) {
+                  buffer->assign(asset.begin(), asset.end());
+
+                  value_changed = true;
+               }
+               ImGui::SameLine();
                ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
+
+               ImGui::PopID();
+
+               highest_entry = i;
             }
+
+            if (selected_index > highest_entry) selected_index = 0;
          }
 
-         ImGui::EndTooltip();
+         if (input_text_deactivated and not ImGui::IsWindowFocused()) {
+            ImGui::CloseCurrentPopup();
+         }
+
+         ImGui::EndPopup();
       }
    }
 
+   if (input_text_deactivated) selected_index = 0;
+
+   ImGui::GetStateStorage()->SetInt(storage_id, selected_index);
+
    ImGui::EndGroup();
+
+   ImGui::PopID();
 
    return value_changed;
 }
