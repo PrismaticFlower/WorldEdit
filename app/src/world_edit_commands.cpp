@@ -212,226 +212,217 @@ void world_edit::initialize_commands() noexcept
 void world_edit::initialize_hotkeys() noexcept
 {
    _hotkeys.add_set(
-      "", [] { return true; },
-      {
-         {"Move Forward", "camera.move_forward", {.key = key::w}, {.toggle = true}},
-         {"Move Back", "camera.move_back", {.key = key::s}, {.toggle = true}},
-         {"Move Left", "camera.move_left", {.key = key::a}, {.toggle = true}},
-         {"Move Right", "camera.move_right", {.key = key::d}, {.toggle = true}},
-         {"Move Up", "camera.move_up", {.key = key::r}, {.toggle = true}},
-         {"Move Down", "camera.move_down", {.key = key::f}, {.toggle = true}},
-         {"Move Sprint Forward",
-          "camera.move_sprint_forward",
-          {.key = key::w, .modifiers = {.shift = true}},
-          {.toggle = true}},
-         {"Move Sprint Back",
-          "camera.move_sprint_back",
-          {.key = key::s, .modifiers = {.shift = true}},
-          {.toggle = true}},
-         {"Move Sprint Left",
-          "camera.move_sprint_left",
-          {.key = key::a, .modifiers = {.shift = true}},
-          {.toggle = true}},
-         {"Move Sprint Right",
-          "camera.move_sprint_right",
-          {.key = key::d, .modifiers = {.shift = true}},
-          {.toggle = true}},
-         {"Move Sprint Up",
-          "camera.move_sprint_up",
-          {.key = key::r, .modifiers = {.shift = true}},
-          {.toggle = true}},
-         {"Move Sprint Down",
-          "camera.move_sprint_down",
-          {.key = key::f, .modifiers = {.shift = true}},
-          {.toggle = true}},
-         {"Rotate Camera", "camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
-         {"Pan Camera",
-          "camera.pan_with_mouse",
-          {.key = key::mouse1, .modifiers = {.alt = true}},
-          {.toggle = true}},
-         {"Zoom In",
-          "camera.zoom_in",
-          {.key = key::mouse_wheel_forward, .modifiers = {.ctrl = true}}},
-         {"Zoom Out",
-          "camera.zoom_out",
-          {.key = key::mouse_wheel_back, .modifiers = {.ctrl = true}}},
-         {"Step Forward",
-          "camera.step_forward",
-          {.key = key::mouse_wheel_forward, .modifiers = {.alt = true}}},
-         {"Step Back",
-          "camera.step_back",
-          {.key = key::mouse_wheel_back, .modifiers = {.alt = true}}},
+      {.name = "",
+       .activated = [] { return true; },
+       .default_hotkeys = {
+          {"Move Forward", "camera.move_forward", {.key = key::w}, {.toggle = true}},
+          {"Move Back", "camera.move_back", {.key = key::s}, {.toggle = true}},
+          {"Move Left", "camera.move_left", {.key = key::a}, {.toggle = true}},
+          {"Move Right", "camera.move_right", {.key = key::d}, {.toggle = true}},
+          {"Move Up", "camera.move_up", {.key = key::r}, {.toggle = true}},
+          {"Move Down", "camera.move_down", {.key = key::f}, {.toggle = true}},
+          {"Move Sprint Forward",
+           "camera.move_sprint_forward",
+           {.key = key::w, .modifiers = {.shift = true}},
+           {.toggle = true}},
+          {"Move Sprint Back",
+           "camera.move_sprint_back",
+           {.key = key::s, .modifiers = {.shift = true}},
+           {.toggle = true}},
+          {"Move Sprint Left",
+           "camera.move_sprint_left",
+           {.key = key::a, .modifiers = {.shift = true}},
+           {.toggle = true}},
+          {"Move Sprint Right",
+           "camera.move_sprint_right",
+           {.key = key::d, .modifiers = {.shift = true}},
+           {.toggle = true}},
+          {"Move Sprint Up",
+           "camera.move_sprint_up",
+           {.key = key::r, .modifiers = {.shift = true}},
+           {.toggle = true}},
+          {"Move Sprint Down",
+           "camera.move_sprint_down",
+           {.key = key::f, .modifiers = {.shift = true}},
+           {.toggle = true}},
+          {"Rotate Camera", "camera.rotate_with_mouse", {.key = key::mouse2}, {.toggle = true}},
+          {"Pan Camera",
+           "camera.pan_with_mouse",
+           {.key = key::mouse1, .modifiers = {.alt = true}},
+           {.toggle = true}},
+          {"Zoom In",
+           "camera.zoom_in",
+           {.key = key::mouse_wheel_forward, .modifiers = {.ctrl = true}}},
+          {"Zoom Out",
+           "camera.zoom_out",
+           {.key = key::mouse_wheel_back, .modifiers = {.ctrl = true}}},
+          {"Step Forward",
+           "camera.step_forward",
+           {.key = key::mouse_wheel_forward, .modifiers = {.alt = true}}},
+          {"Step Back",
+           "camera.step_back",
+           {.key = key::mouse_wheel_back, .modifiers = {.alt = true}}},
 
-         {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
-         {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
+          {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
+          {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
 
-         {"Select", "selection.set", {.key = key::mouse1}},
-         {"Select Multiple",
-          "selection.add",
-          {.key = key::mouse1, .modifiers = {.shift = true}}},
-         {"Deselect", "selection.remove", {.key = key::mouse1, .modifiers = {.ctrl = true}}},
-         {"Clear Selection", "selection.clear", {.key = key::escape}},
+          {"Select", "selection.set", {.key = key::mouse1}},
+          {"Select Multiple", "selection.add", {.key = key::mouse1, .modifiers = {.shift = true}}},
+          {"Deselect", "selection.remove", {.key = key::mouse1, .modifiers = {.ctrl = true}}},
+          {"Clear Selection", "selection.clear", {.key = key::escape}},
 
-         {"Undo", "edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
-         {"Redo", "edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
-         {"Delete", "edit.delete", {.key = key::del}},
+          {"Undo", "edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
+          {"Redo", "edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
+          {"Delete", "edit.delete", {.key = key::del}},
 
-         {"Show Hotkeys", "show.hotkeys", {.key = key::f1}},
-         {"Show Camera Controls", "show.camera_controls", {.key = key::f2}},
+          {"Show Hotkeys", "show.hotkeys", {.key = key::f1}},
+          {"Show Camera Controls", "show.camera_controls", {.key = key::f2}},
 
-         {"Show World Global Lights Editor",
-          "show.world_global_lights_editor",
-          {.key = key::f4}},
-         {"Show World Layers Editor", "show.world_layers_editor", {.key = key::f5}},
-         {"Show World Game Mode Editor", "show.world_game_mode_editor", {.key = key::f6}},
-         {"Show World Requirements Editor", "show.world_requirements_editor", {.key = key::f7}},
-         {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
-         {"Show World Stats", "show.world_stats", {.key = key::f9}},
+          {"Show World Global Lights Editor",
+           "show.world_global_lights_editor",
+           {.key = key::f4}},
+          {"Show World Layers Editor", "show.world_layers_editor", {.key = key::f5}},
+          {"Show World Game Mode Editor", "show.world_game_mode_editor", {.key = key::f6}},
+          {"Show World Requirements Editor", "show.world_requirements_editor", {.key = key::f7}},
+          {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
+          {"Show World Stats", "show.world_stats", {.key = key::f9}},
 
-         {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
-      });
-
-   _hotkeys.add_set(
-      "Entity Editing",
-      [this] { return not _interaction_targets.selection.empty(); },
-      {
-         {"Move Selection", "entity_edit.move_selection", {.key = key::z}},
-         {"Rotate Selection", "entity_edit.rotate_selection", {.key = key::x}},
-         {"Ground Objects", "entity_edit.ground_objects", {.key = key::g}},
-      });
+          {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
+       }});
 
    _hotkeys.add_set(
-      "Entity Creation",
-      [this] { return _interaction_targets.creation_entity.has_value(); },
-      {
-         {"Change Rotation Mode",
-          "entity_creation.cycle_rotation_mode",
-          {.key = key::q, .modifiers = {.ctrl = true}}},
-         {"Change Placement Mode",
-          "entity_creation.cycle_placement_mode",
-          {.key = key::w, .modifiers = {.ctrl = true}}},
-         {"Change Alignment Mode",
-          "entity_creation.cycle_alignment_mode",
-          {.key = key::e, .modifiers = {.ctrl = true}}},
-         {"Change Grounding Mode",
-          "entity_creation.cycle_ground_mode",
-          {.key = key::r, .modifiers = {.ctrl = true}}},
-         {"Cycle Object Class", "entity_creation.cycle_object_class", {.key = key::q}},
+      {.name = "Entity Editing",
+       .activated = [this] { return not _interaction_targets.selection.empty(); },
+       .default_hotkeys{
+          {"Move Selection", "entity_edit.move_selection", {.key = key::z}},
+          {"Rotate Selection", "entity_edit.rotate_selection", {.key = key::x}},
+          {"Ground Objects", "entity_edit.ground_objects", {.key = key::g}},
+       }});
 
-         {"Start Point At", "entity_creation.activate_point_at", {.key = key::v}},
-         {"Start Extend To", "entity_creation.activate_extend_to", {.key = key::t}},
-         {"Start Shrink To",
-          "entity_creation.activate_shrink_to",
-          {.key = key::t, .modifiers = {.ctrl = true}}},
-         {"Start From Object BBOX",
-          "entity_creation.activate_from_object_bbox",
-          {.key = key::b}},
-         {"Start From Line",
-          "entity_creation.activate_from_line",
-          {.key = key::f, .modifiers = {.ctrl = true}}},
-         {"Start Draw Barrier",
-          "entity_creation.activate_draw_barrier",
-          {.key = key::d, .modifiers = {.ctrl = true}}},
+   _hotkeys.add_set(
+      {.name = "Entity Creation",
+       .activated =
+          [this] { return _interaction_targets.creation_entity.has_value(); },
+       .default_hotkeys = {
+          {"Change Rotation Mode",
+           "entity_creation.cycle_rotation_mode",
+           {.key = key::q, .modifiers = {.ctrl = true}}},
+          {"Change Placement Mode",
+           "entity_creation.cycle_placement_mode",
+           {.key = key::w, .modifiers = {.ctrl = true}}},
+          {"Change Alignment Mode",
+           "entity_creation.cycle_alignment_mode",
+           {.key = key::e, .modifiers = {.ctrl = true}}},
+          {"Change Grounding Mode",
+           "entity_creation.cycle_ground_mode",
+           {.key = key::r, .modifiers = {.ctrl = true}}},
+          {"Cycle Object Class", "entity_creation.cycle_object_class", {.key = key::q}},
 
-         {"Lock X Axis", "entity_creation.lock_x_axis", {.key = key::z}},
-         {"Lock Y Axis", "entity_creation.lock_y_axis", {.key = key::x}},
-         {"Lock Z Axis", "entity_creation.lock_z_axis", {.key = key::c}},
+          {"Start Point At", "entity_creation.activate_point_at", {.key = key::v}},
+          {"Start Extend To", "entity_creation.activate_extend_to", {.key = key::t}},
+          {"Start Shrink To",
+           "entity_creation.activate_shrink_to",
+           {.key = key::t, .modifiers = {.ctrl = true}}},
+          {"Start From Object BBOX",
+           "entity_creation.activate_from_object_bbox",
+           {.key = key::b}},
+          {"Start From Line",
+           "entity_creation.activate_from_line",
+           {.key = key::f, .modifiers = {.ctrl = true}}},
+          {"Start Draw Barrier",
+           "entity_creation.activate_draw_barrier",
+           {.key = key::d, .modifiers = {.ctrl = true}}},
 
-         {"Rotate Entity Forward",
-          "entity_creation.rotate_forward",
-          {.key = key::mouse_wheel_forward}},
-         {"Rotate Entity Back", "entity_creation.rotate_back", {.key = key::mouse_wheel_back}},
+          {"Lock X Axis", "entity_creation.lock_x_axis", {.key = key::z}},
+          {"Lock Y Axis", "entity_creation.lock_y_axis", {.key = key::x}},
+          {"Lock Z Axis", "entity_creation.lock_z_axis", {.key = key::c}},
 
-         {"Place Entity", "entity_creation.place", {.key = key::mouse1}},
-         {"Cancel", "entity_creation.cancel", {.key = key::escape}},
+          {"Rotate Entity Forward", "entity_creation.rotate_forward", {.key = key::mouse_wheel_forward}},
+          {"Rotate Entity Back", "entity_creation.rotate_back", {.key = key::mouse_wheel_back}},
 
-         {"Finish Path", "entity_creation.finish_path", {.key = key::g}},
-      });
+          {"Place Entity", "entity_creation.place", {.key = key::mouse1}},
+          {"Cancel", "entity_creation.cancel", {.key = key::escape}},
 
-   _hotkeys.add_set("Entity Creation (Point At)",
-                    [this] {
-                       return _interaction_targets.creation_entity and
-                              _entity_creation_context.using_point_at;
-                    },
-                    {
-                       {"Stop Point At",
-                        "entity_creation.deactivate_point_at",
-                        {.key = key::mouse1}},
-                       {"Stop Point At (Escape)",
-                        "entity_creation.deactivate_point_at",
-                        {.key = key::escape}},
-                    });
+          {"Finish Path", "entity_creation.finish_path", {.key = key::g}},
+       }});
 
-   _hotkeys.add_set("Entity Creation (Resize To)",
-                    [this] {
-                       return _interaction_targets.creation_entity and
-                              (_entity_creation_context.using_extend_to or
-                               _entity_creation_context.using_shrink_to);
-                    },
-                    {
-                       {"Stop Resize To",
-                        "entity_creation.deactivate_resize_to",
-                        {.key = key::mouse1}},
-                       {"Stop Resize To (Escape)",
-                        "entity_creation.deactivate_resize_to",
-                        {.key = key::escape}},
-                    });
+   _hotkeys.add_set(
+      {.name = "Entity Creation (Point At)",
+       .activated =
+          [this] {
+             return _interaction_targets.creation_entity and
+                    _entity_creation_context.using_point_at;
+          },
+       .default_hotkeys = {
+          {"Stop Point At", "entity_creation.deactivate_point_at", {.key = key::mouse1}},
+          {"Stop Point At (Escape)", "entity_creation.deactivate_point_at", {.key = key::escape}},
+       }});
 
-   _hotkeys.add_set("Entity Creation (From BBOX)",
-                    [this] {
-                       return _interaction_targets.creation_entity and
-                              _entity_creation_context.using_from_object_bbox;
-                    },
-                    {
-                       {"Complete From Object BBOX",
-                        "entity_creation.finish_from_object_bbox",
-                        {.key = key::mouse1}},
-                       {"Complete From Object BBOX (Escape)",
-                        "entity_creation.finish_from_object_bbox",
-                        {.key = key::escape}},
-                    });
+   _hotkeys.add_set(
+      {.name = "Entity Creation (Resize To)",
+       .activated =
+          [this] {
+             return _interaction_targets.creation_entity and
+                    (_entity_creation_context.using_extend_to or
+                     _entity_creation_context.using_shrink_to);
+          },
+       .default_hotkeys = {
+          {"Stop Resize To", "entity_creation.deactivate_resize_to", {.key = key::mouse1}},
+          {"Stop Resize To (Escape)", "entity_creation.deactivate_resize_to", {.key = key::escape}},
+       }});
 
-   _hotkeys.add_set("Entity Creation (From Line)",
-                    [this] {
-                       return _interaction_targets.creation_entity and
-                              _entity_creation_context.using_from_line;
-                    },
-                    {
-                       {"Stop From Line",
-                        "entity_creation.from_line_click",
-                        {.key = key::mouse1}},
-                       {"Stop From Line (Escape)",
-                        "entity_creation.deactivate_from_line",
-                        {.key = key::escape}},
-                    });
+   _hotkeys.add_set({.name = "Entity Creation (From BBOX)",
+                     .activated =
+                        [this] {
+                           return _interaction_targets.creation_entity and
+                                  _entity_creation_context.using_from_object_bbox;
+                        },
+                     .default_hotkeys = {
+                        {"Complete From Object BBOX",
+                         "entity_creation.finish_from_object_bbox",
+                         {.key = key::mouse1}},
+                        {"Complete From Object BBOX (Escape)",
+                         "entity_creation.finish_from_object_bbox",
+                         {.key = key::escape}},
+                     }});
 
-   _hotkeys.add_set("Entity Creation (Draw Barrier)",
-                    [this] {
-                       return _interaction_targets.creation_entity and
-                              _entity_creation_context.using_draw_barrier;
-                    },
-                    {
-                       {"Draw Barrier",
-                        "entity_creation.draw_barrier_click",
-                        {.key = key::mouse1}},
-                       {"Stop Draw Barrier",
-                        "entity_creation.deactivate_draw_barrier",
-                        {.key = key::escape}},
-                    });
+   _hotkeys.add_set(
+      {.name = "Entity Creation (From Line)",
+       .activated =
+          [this] {
+             return _interaction_targets.creation_entity and
+                    _entity_creation_context.using_from_line;
+          },
+       .default_hotkeys = {
+          {"Stop From Line", "entity_creation.from_line_click", {.key = key::mouse1}},
+          {"Stop From Line (Escape)", "entity_creation.deactivate_from_line", {.key = key::escape}},
+       }});
 
-   _hotkeys.add_set("Entity Creation (Pick Sector)",
-                    [this] {
-                       return _interaction_targets.creation_entity and
-                              _entity_creation_context.using_pick_sector;
-                    },
-                    {
-                       {"Stop Pick Sector",
-                        "entity_creation.deactivate_pick_sector",
-                        {.key = key::mouse1}},
-                       {"Stop Pick Sector (Escape)",
-                        "entity_creation.deactivate_pick_sector",
-                        {.key = key::escape}},
-                    });
+   _hotkeys.add_set(
+      {.name = "Entity Creation (Draw Barrier)",
+       .activated =
+          [this] {
+             return _interaction_targets.creation_entity and
+                    _entity_creation_context.using_draw_barrier;
+          },
+       .default_hotkeys = {
+          {"Draw Barrier", "entity_creation.draw_barrier_click", {.key = key::mouse1}},
+          {"Stop Draw Barrier", "entity_creation.deactivate_draw_barrier", {.key = key::escape}},
+       }});
+
+   _hotkeys.add_set(
+      {.name = "Entity Creation (Pick Sector)",
+       .activated =
+          [this] {
+             return _interaction_targets.creation_entity and
+                    _entity_creation_context.using_pick_sector;
+          },
+       .default_hotkeys = {
+          {"Stop Pick Sector", "entity_creation.deactivate_pick_sector", {.key = key::mouse1}},
+          {"Stop Pick Sector (Escape)",
+           "entity_creation.deactivate_pick_sector",
+           {.key = key::escape}},
+       }});
 }
 
 }

@@ -53,6 +53,12 @@ struct hotkey_default {
    hotkey_bind_config bind_config;
 };
 
+struct hotkey_set_desc {
+   std::string name;
+   std::function<bool()> activated;
+   std::initializer_list<hotkey_default> default_hotkeys;
+};
+
 struct hotkeys {
    hotkeys(commands& commands, output_stream& error_output_stream) noexcept;
 
@@ -60,8 +66,7 @@ struct hotkeys {
    /// @param set_name The name of the set.
    /// @param activated Predicate to call to test if the set is active or not.
    /// @param bindings_set
-   void add_set(std::string set_name, std::function<bool()> activated,
-                std::initializer_list<hotkey_default> default_hotkeys);
+   void add_set(hotkey_set_desc desc);
 
    /// @brief Notify the manager of a key being pressed.
    /// @param key The key.

@@ -61,20 +61,19 @@ hotkeys::hotkeys(commands& commands, output_stream& error_output_stream) noexcep
    _key_events.reserve(256);
 }
 
-void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
-                      std::initializer_list<hotkey_default> default_hotkeys)
+void hotkeys::add_set(hotkey_set_desc desc)
 {
    absl::flat_hash_set<std::string> hotkey_set;
    absl::flat_hash_map<hotkey_bind, hotkey> bindings;
    absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
    std::vector<hotkey> unbound_hotkeys;
 
-   hotkey_set.reserve(default_hotkeys.size());
-   bindings.reserve(default_hotkeys.size());
-   query_bindings.reserve(default_hotkeys.size());
-   unbound_hotkeys.reserve(default_hotkeys.size());
+   hotkey_set.reserve(desc.default_hotkeys.size());
+   bindings.reserve(desc.default_hotkeys.size());
+   query_bindings.reserve(desc.default_hotkeys.size());
+   unbound_hotkeys.reserve(desc.default_hotkeys.size());
 
-   for (auto& default_hotkey : default_hotkeys) {
+   for (auto& default_hotkey : desc.default_hotkeys) {
       validate_command(default_hotkey.command);
 
       if (not hotkey_set.emplace(default_hotkey.name).second) {
@@ -82,16 +81,16 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
       }
 
       const bool has_saved_binding =
-         _saved_bindings[set_name].contains(default_hotkey.name);
-      const bool has_saved_used_set = _saved_used_bindings.contains(set_name);
+         _saved_bindings[desc.name].contains(default_hotkey.name);
+      const bool has_saved_used_set = _saved_used_bindings.contains(desc.name);
 
       const hotkey_bind binding =
-         has_saved_binding ? _saved_bindings[set_name].at(default_hotkey.name)
+         has_saved_binding ? _saved_bindings[desc.name].at(default_hotkey.name)
                            : default_hotkey.binding;
 
       const bool binding_free_for_use =
          not has_saved_used_set or
-         not _saved_used_bindings.at(set_name).contains(binding);
+         not _saved_used_bindings.at(desc.name).contains(binding);
 
       if (has_saved_binding or binding_free_for_use) {
          bindings[binding] =
@@ -110,8 +109,9 @@ void hotkeys::add_set(std::string set_name, std::function<bool()> activated,
       }
    }
 
-   _hotkey_sets.emplace_back(set_name, std::move(activated), std::move(bindings),
-                             std::move(query_bindings), std::move(unbound_hotkeys));
+   _hotkey_sets.emplace_back(desc.name, std::move(desc.activated),
+                             std::move(bindings), std::move(query_bindings),
+                             std::move(unbound_hotkeys));
 }
 
 void hotkeys::notify_key_down(const key key) noexcept
