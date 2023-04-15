@@ -58,6 +58,7 @@ struct hotkey_set_desc {
    std::string description;
    std::function<bool()> activated;
    std::initializer_list<hotkey_default> default_hotkeys;
+   const bool hidden = false;
 };
 
 struct hotkeys {
@@ -147,6 +148,7 @@ private:
       std::vector<hotkey> unbound_hotkeys;
 
       std::string description;
+      bool hidden = false;
    };
 
    std::vector<hotkey_set> _hotkey_sets;

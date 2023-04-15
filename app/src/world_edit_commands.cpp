@@ -351,83 +351,112 @@ void world_edit::initialize_hotkeys() noexcept
           {"Finish Path", "entity_creation.finish_path", {.key = key::g}},
        }});
 
-   _hotkeys.add_set(
-      {.name = "Entity Creation (Point At)",
-       .activated =
-          [this] {
-             return _interaction_targets.creation_entity and
-                    _entity_creation_context.using_point_at;
-          },
-       .default_hotkeys = {
-          {"Stop Point At", "entity_creation.deactivate_point_at", {.key = key::mouse1}},
-          {"Stop Point At (Escape)", "entity_creation.deactivate_point_at", {.key = key::escape}},
-       }});
+   _hotkeys.add_set({
+      .name = "Entity Creation (Point At)",
+      .activated =
+         [this] {
+            return _interaction_targets.creation_entity and
+                   _entity_creation_context.using_point_at;
+         },
+      .default_hotkeys =
+         {
+            {"Stop Point At", "entity_creation.deactivate_point_at", {.key = key::mouse1}},
+            {"Stop Point At (Escape)", "entity_creation.deactivate_point_at", {.key = key::escape}},
+         },
 
-   _hotkeys.add_set(
-      {.name = "Entity Creation (Resize To)",
-       .activated =
-          [this] {
-             return _interaction_targets.creation_entity and
-                    (_entity_creation_context.using_extend_to or
-                     _entity_creation_context.using_shrink_to);
-          },
-       .default_hotkeys = {
-          {"Stop Resize To", "entity_creation.deactivate_resize_to", {.key = key::mouse1}},
-          {"Stop Resize To (Escape)", "entity_creation.deactivate_resize_to", {.key = key::escape}},
-       }});
+      .hidden = true,
+   });
 
-   _hotkeys.add_set({.name = "Entity Creation (From BBOX)",
-                     .activated =
-                        [this] {
-                           return _interaction_targets.creation_entity and
-                                  _entity_creation_context.using_from_object_bbox;
-                        },
-                     .default_hotkeys = {
-                        {"Complete From Object BBOX",
-                         "entity_creation.finish_from_object_bbox",
-                         {.key = key::mouse1}},
-                        {"Complete From Object BBOX (Escape)",
-                         "entity_creation.finish_from_object_bbox",
-                         {.key = key::escape}},
-                     }});
+   _hotkeys.add_set({
+      .name = "Entity Creation (Resize To)",
+      .activated =
+         [this] {
+            return _interaction_targets.creation_entity and
+                   (_entity_creation_context.using_extend_to or
+                    _entity_creation_context.using_shrink_to);
+         },
+      .default_hotkeys =
+         {
+            {"Stop Resize To", "entity_creation.deactivate_resize_to", {.key = key::mouse1}},
+            {"Stop Resize To (Escape)",
+             "entity_creation.deactivate_resize_to",
+             {.key = key::escape}},
+         },
 
-   _hotkeys.add_set(
-      {.name = "Entity Creation (From Line)",
-       .activated =
-          [this] {
-             return _interaction_targets.creation_entity and
-                    _entity_creation_context.using_from_line;
-          },
-       .default_hotkeys = {
-          {"Stop From Line", "entity_creation.from_line_click", {.key = key::mouse1}},
-          {"Stop From Line (Escape)", "entity_creation.deactivate_from_line", {.key = key::escape}},
-       }});
+      .hidden = true,
+   });
 
-   _hotkeys.add_set(
-      {.name = "Entity Creation (Draw Barrier)",
-       .activated =
-          [this] {
-             return _interaction_targets.creation_entity and
-                    _entity_creation_context.using_draw_barrier;
-          },
-       .default_hotkeys = {
-          {"Draw Barrier", "entity_creation.draw_barrier_click", {.key = key::mouse1}},
-          {"Stop Draw Barrier", "entity_creation.deactivate_draw_barrier", {.key = key::escape}},
-       }});
+   _hotkeys.add_set({
+      .name = "Entity Creation (From BBOX)",
+      .activated =
+         [this] {
+            return _interaction_targets.creation_entity and
+                   _entity_creation_context.using_from_object_bbox;
+         },
+      .default_hotkeys =
+         {
+            {"Complete From Object BBOX",
+             "entity_creation.finish_from_object_bbox",
+             {.key = key::mouse1}},
+            {"Complete From Object BBOX (Escape)",
+             "entity_creation.finish_from_object_bbox",
+             {.key = key::escape}},
+         },
 
-   _hotkeys.add_set(
-      {.name = "Entity Creation (Pick Sector)",
-       .activated =
-          [this] {
-             return _interaction_targets.creation_entity and
-                    _entity_creation_context.using_pick_sector;
-          },
-       .default_hotkeys = {
-          {"Stop Pick Sector", "entity_creation.deactivate_pick_sector", {.key = key::mouse1}},
-          {"Stop Pick Sector (Escape)",
-           "entity_creation.deactivate_pick_sector",
-           {.key = key::escape}},
-       }});
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Creation (From Line)",
+      .activated =
+         [this] {
+            return _interaction_targets.creation_entity and
+                   _entity_creation_context.using_from_line;
+         },
+      .default_hotkeys =
+         {
+            {"Stop From Line", "entity_creation.from_line_click", {.key = key::mouse1}},
+            {"Stop From Line (Escape)",
+             "entity_creation.deactivate_from_line",
+             {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Creation (Draw Barrier)",
+      .activated =
+         [this] {
+            return _interaction_targets.creation_entity and
+                   _entity_creation_context.using_draw_barrier;
+         },
+      .default_hotkeys =
+         {
+            {"Draw Barrier", "entity_creation.draw_barrier_click", {.key = key::mouse1}},
+            {"Stop Draw Barrier", "entity_creation.deactivate_draw_barrier", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Creation (Pick Sector)",
+      .activated =
+         [this] {
+            return _interaction_targets.creation_entity and
+                   _entity_creation_context.using_pick_sector;
+         },
+      .default_hotkeys =
+         {
+            {"Stop Pick Sector", "entity_creation.deactivate_pick_sector", {.key = key::mouse1}},
+            {"Stop Pick Sector (Escape)",
+             "entity_creation.deactivate_pick_sector",
+             {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
 }
 
 }
