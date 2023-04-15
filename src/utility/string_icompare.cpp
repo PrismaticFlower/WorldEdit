@@ -20,8 +20,8 @@ static_assert(to_lower('@') == '@');
 static_assert(to_lower('[') == '[');
 static_assert(to_lower('{') == '{');
 
-static_assert(L'A' == 65 and L'Z' == 90);
-static_assert(L'a' == 97 and L'z' == 122);
+static_assert('A' == 65 and 'Z' == 90);
+static_assert('a' == 97 and 'z' == 122);
 
 [[msvc::forceinline]] constexpr wchar_t to_lower(const wchar_t c) noexcept
 {
@@ -35,6 +35,9 @@ static_assert(to_lower(L'Z') == L'z');
 static_assert(to_lower(L'@') == L'@');
 static_assert(to_lower(L'[') == L'[');
 static_assert(to_lower(L'{') == L'{');
+
+static_assert(L'A' == 65 and L'Z' == 90);
+static_assert(L'a' == 97 and L'z' == 122);
 
 }
 
