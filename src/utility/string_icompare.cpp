@@ -20,6 +20,22 @@ static_assert(to_lower('@') == '@');
 static_assert(to_lower('[') == '[');
 static_assert(to_lower('{') == '{');
 
+static_assert(L'A' == 65 and L'Z' == 90);
+static_assert(L'a' == 97 and L'z' == 122);
+
+[[msvc::forceinline]] constexpr wchar_t to_lower(const wchar_t c) noexcept
+{
+   return (c >= L'A' and c <= L'Z') ? c + L'\x20' : c;
+}
+
+static_assert(to_lower(L'A') == L'a');
+static_assert(to_lower(L'I') == L'i');
+static_assert(to_lower(L'Z') == L'z');
+
+static_assert(to_lower(L'@') == L'@');
+static_assert(to_lower(L'[') == L'[');
+static_assert(to_lower(L'{') == L'{');
+
 }
 
 // These functions ignore (A-Z and a-z but nothing else, this is good enough for our use case).
@@ -62,6 +78,17 @@ bool icontains(const std::string_view left, const std::string_view right) noexce
    }
 
    return false;
+}
+
+bool iequals(const std::wstring_view left, const std::wstring_view right) noexcept
+{
+   if (left.size() != right.size()) return false;
+
+   for (std::size_t i = 0; i < left.size(); ++i) {
+      if (to_lower(left[i]) != to_lower(right[i])) return false;
+   }
+
+   return true;
 }
 
 }

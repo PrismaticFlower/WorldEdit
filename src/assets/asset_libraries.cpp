@@ -8,6 +8,7 @@
 #include "output_stream.hpp"
 #include "utility/file_watcher.hpp"
 #include "utility/stopwatch.hpp"
+#include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
@@ -389,13 +390,14 @@ void libraries_manager::clear() noexcept
 
 void libraries_manager::register_asset(const std::filesystem::path& path) noexcept
 {
-   if (auto extension = path.extension(); extension == L".odf"sv) {
+   if (const auto extension = path.extension();
+       string::iequals(extension.native(), L".odf"sv)) {
       odfs.add(path);
    }
-   else if (extension == L".msh"sv) {
+   else if (string::iequals(extension.native(), L".msh"sv)) {
       models.add(path);
    }
-   else if (extension == L".tga"sv) {
+   else if (string::iequals(extension.native(), L".tga"sv)) {
       textures.add(path);
    }
 }

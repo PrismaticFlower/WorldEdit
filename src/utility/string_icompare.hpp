@@ -30,4 +30,10 @@ bool iends_with(const std::string_view left, const std::string_view right) noexc
 /// @return If left contains right.
 bool icontains(const std::string_view left, const std::string_view right) noexcept;
 
+/// @brief Compare two wide strings for equality, ignoring simple casing.
+/// @param left The left string to compare.
+/// @param right The right string to comapre.
+/// @return If the strings are equal.
+bool iequals(const std::wstring_view left, const std::wstring_view right) noexcept;
+
 }

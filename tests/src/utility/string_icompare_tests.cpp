@@ -40,4 +40,10 @@ TEST_CASE("string icontains test", "[Utility]")
                          "How are you? A really long string. Isn't that fun?"sv));
 }
 
+TEST_CASE("string wide iequals test", "[Utility]")
+{
+   REQUIRE(iequals(L"Hello"sv, L"hElLo"sv));
+   REQUIRE(not iequals(L"Hello!"sv, L"hElLo?"sv));
+}
+
 }
