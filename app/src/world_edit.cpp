@@ -24,8 +24,6 @@
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
 
-#include "utility/stopwatch.hpp"
-
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -101,6 +99,10 @@ void world_edit::update()
                                   ImGui::GetMainViewport()->Size.y}),
                  ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
                     not ImGui::GetIO().WantCaptureMouse);
+
+   if (_applied_user_display_scale != _settings.ui.extra_scaling) {
+      dpi_changed(_current_dpi);
+   }
 
    // Input!
    update_input();
@@ -1181,9 +1183,9 @@ void world_edit::mouse_movement(const int32 x_movement, const int32 y_movement) 
 
 void world_edit::dpi_changed(const int new_dpi) noexcept
 {
-   const float old_dpi = std::exchange(_current_dpi, static_cast<float>(new_dpi));
-
-   _display_scale = _current_dpi / 96.0f;
+   _current_dpi = new_dpi;
+   _display_scale = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
+   _applied_user_display_scale = _settings.ui.extra_scaling;
 
    const static std::span<std::byte> roboto_regular = [] {
       const HRSRC resource =
@@ -1203,7 +1205,8 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
                                               static_cast<int>(roboto_regular.size()),
                                               std::floor(16.0f * _display_scale),
                                               &font_config);
-   ImGui::GetStyle().ScaleAllSizes(new_dpi / old_dpi);
+   ImGui::GetStyle() = ImGuiStyle{};
+   ImGui::GetStyle().ScaleAllSizes(_display_scale);
 
    try {
       _renderer->recreate_imgui_font_atlas();

@@ -703,6 +703,9 @@
     <ClInclude Include="src\imgui\misc\freetype\imgui_freetype.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\settings\ui.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

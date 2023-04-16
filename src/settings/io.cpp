@@ -102,6 +102,17 @@ auto load(const std::string_view path) -> settings
          }
 #undef setting_entry
       }
+      else if (node.key == "ui") {
+#define setting_entry(setting)                                                 \
+   if (prop.key == #setting) {                                                 \
+      read(prop, settings.ui.setting);                                         \
+      continue;                                                                \
+   }
+         for (auto& prop : node) {
+            setting_entry(extra_scaling);
+         }
+#undef setting_entry
+      }
    }
 
    return settings;
@@ -156,6 +167,17 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(step_size));
       write(file, name_value(fov));
       write(file, name_value(view_width));
+
+#undef name_value
+
+      file.write_ln("}\n");
+
+      file.write_ln("ui()");
+      file.write_ln("{");
+
+#define name_value(prop) #prop, settings.ui.prop
+
+      write(file, name_value(extra_scaling));
 
 #undef name_value
 

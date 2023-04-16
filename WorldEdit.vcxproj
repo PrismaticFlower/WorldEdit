@@ -438,6 +438,7 @@
     <ClInclude Include="src\settings\graphics.hpp" />
     <ClInclude Include="src\settings\io.hpp" />
     <ClInclude Include="src\settings\settings.hpp" />
+    <ClInclude Include="src\settings\ui.hpp" />
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ucfb\reader.hpp" />
     <ClInclude Include="src\utility\binary_reader.hpp" />

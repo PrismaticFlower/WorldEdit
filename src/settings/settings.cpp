@@ -2,6 +2,7 @@
 
 #include "imgui/imgui.h"
 
+#include <array>
 #include <cmath>
 
 namespace we::settings {
@@ -16,6 +17,46 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
 
    if (ImGui::Begin("Settings", &open)) {
       if (ImGui::BeginTabBar("Settings")) {
+         if (ImGui::BeginTabItem("UI")) {
+            ui& ui = settings.ui;
+
+            constexpr static std::array extra_scaling_factors{0.5f, 0.75f,
+                                                              1.0f, 1.25f,
+                                                              1.5f, 1.75f,
+                                                              2.0f};
+            constexpr static std::array extra_scaling_factors_names{
+               "0.5", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0"};
+
+            static_assert(extra_scaling_factors.size() ==
+                          extra_scaling_factors_names.size());
+
+            if (ImGui::BeginCombo("Extra UI Scaling", [](const float scaling) {
+                   for (std::size_t i = 0; i < extra_scaling_factors.size(); ++i) {
+                      if (scaling == extra_scaling_factors[i]) {
+                         return extra_scaling_factors_names[i];
+                      }
+                   }
+
+                   return "Custom";
+                }(ui.extra_scaling))) {
+
+               for (std::size_t i = 0; i < extra_scaling_factors.size(); ++i) {
+                  if (ImGui::Selectable(extra_scaling_factors_names[i],
+                                        ui.extra_scaling == extra_scaling_factors[i]))
+                     ui.extra_scaling = extra_scaling_factors[i];
+               }
+
+               ImGui::EndCombo();
+            }
+
+            ImGui::SeparatorText("Reset");
+
+            if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {
+               ui = {};
+            }
+
+            ImGui::EndTabItem();
+         }
          if (ImGui::BeginTabItem("Graphics")) {
             graphics& graphics = settings.graphics;
 

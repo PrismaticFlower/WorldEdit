@@ -138,7 +138,8 @@ private:
 
    bool _focused = true;
    bool _window_unsaved_star = false;
-   float _current_dpi = 96.0f;
+   float _applied_user_display_scale = 1.0f;
+   int _current_dpi = 96;
    float _display_scale = 1.0f;
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
