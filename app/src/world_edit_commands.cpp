@@ -63,6 +63,10 @@ void world_edit::initialize_commands() noexcept
    _commands.add("camera.set_orthographic"s, [this]() {
       _camera.projection(graphics::camera_projection::orthographic);
    });
+   _commands.add("camera.double_move_speed"s,
+                 [this] { _settings.camera.move_speed *= 2.0f; });
+   _commands.add("camera.halve_move_speed"s,
+                 [this] { _settings.camera.move_speed /= 2.0f; });
 
    _commands.add("selection.set"s,
                  [this]() { select_hovered_entity(select_method::single); });
@@ -456,6 +460,17 @@ void world_edit::initialize_hotkeys() noexcept
          },
 
       .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Camera Active Controls",
+      .description = "Controls for increasing camera movement speed. Active while Rotate Camera is being used."s,
+      .activated = [this] { return _rotate_camera; },
+      .default_hotkeys =
+         {
+            {"Increase Move Speed", "camera.double_move_speed", {.key = key::mouse_wheel_forward}},
+            {"Decrease Move Speed", "camera.halve_move_speed", {.key = key::mouse_wheel_back}},
+         },
    });
 }
 
