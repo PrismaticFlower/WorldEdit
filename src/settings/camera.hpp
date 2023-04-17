@@ -10,7 +10,7 @@ struct camera {
    float pan_sensitivity = 0.075f;
    float sprint_power = 1.5f;
    float step_size = 10.0f;
-   float fov = 1.2217305f;
+   float fov = 1.5707964f;
    float view_width = 256.0f;
 };
 
