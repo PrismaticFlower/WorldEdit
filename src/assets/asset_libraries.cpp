@@ -3,6 +3,7 @@
 #include "asset_state.hpp"
 #include "asset_traits.hpp"
 #include "async/thread_pool.hpp"
+#include "io/read_file.hpp"
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
 #include "output_stream.hpp"
@@ -388,6 +389,21 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
    _file_changed_event =
       _file_watcher->listen_file_changed([this](const std::filesystem::path& path) {
          // TODO: Skip path if parent path is ignored.
+
+         // Sometimes we get notified of file changes before the apps writing them have finished.
+         //
+         // We wait for 1s in lots of 50ms to try and give them a chance to finish. If that fails nothing bad will happen
+         // except us not getting to use the shiny new asset.
+         const int max_waits = 20;
+
+         for (int i = 0; i < max_waits; ++i) {
+            if (not io::is_readable(path)) {
+               std::this_thread::sleep_for(std::chrono::milliseconds{50ms});
+            }
+            else {
+               break;
+            }
+         }
 
          register_asset(path);
       });

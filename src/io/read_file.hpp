@@ -22,4 +22,9 @@ auto read_file_to_chars(const std::filesystem::path& path) -> std::vector<char>;
 /// @return The contents of the file.
 auto read_file_to_string(const std::filesystem::path& path) -> std::string;
 
+/// @brief Check if a file is readable. Useless you say? Mostly except for the very specific thing we need it for in asset_libraries.cpp
+/// @param path The file path.
+/// @return True if the file can currently be read, false if it can't. This information may already be out of date when the call returns so again it is mostly useless.
+bool is_readable(const std::filesystem::path& path) noexcept;
+
 }
