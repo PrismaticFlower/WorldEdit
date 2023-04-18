@@ -100,6 +100,7 @@ void world_edit::initialize_commands() noexcept
       _selection_edit_tool = selection_edit_tool::rotate;
       _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
    });
+   _commands.add("entity_edit.open_odf"s, [this] { open_odfs_for_selected(); });
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_config.placement_rotation) {
@@ -305,6 +306,11 @@ void world_edit::initialize_hotkeys() noexcept
           {"Move Selection", "entity_edit.move_selection", {.key = key::z}},
           {"Rotate Selection", "entity_edit.rotate_selection", {.key = key::x}},
           {"Ground Objects", "entity_edit.ground_objects", {.key = key::g}},
+          {
+             "Open .odf in Text Editor",
+             "entity_edit.open_odf",
+             {.key = key::o, .modifiers = {.ctrl = true}},
+          },
        }});
 
    _hotkeys.add_set(

@@ -1123,6 +1123,20 @@ void world_edit::enumerate_project_worlds() noexcept
    }
 }
 
+void world_edit::open_odfs_for_selected() noexcept
+{
+   for (auto& selected : _interaction_targets.selection) {
+      if (not std::holds_alternative<world::object_id>(selected)) continue;
+
+      const world::object* object =
+         world::find_entity(_world.objects, std::get<world::object_id>(selected));
+
+      if (not object) continue;
+
+      open_odf_in_text_editor(object->class_name);
+   }
+}
+
 void world_edit::open_odf_in_text_editor(const lowercase_string& asset_name) noexcept
 {
    const auto asset_path = _asset_libraries.odfs.query_path(asset_name);
