@@ -990,6 +990,14 @@ void world_edit::update_ui() noexcept
                   }
                }
 
+               if (ImGui::BeginPopupContextItem("Class Name")) {
+                  if (ImGui::MenuItem("Open .odf in Text Editor")) {
+                     open_odf_in_text_editor(object->class_name);
+                  }
+
+                  ImGui::EndPopup();
+               }
+
                ImGui::LayerPick("Layer", object, &_edit_stack_world, &_edit_context);
 
                ImGui::Separator();
@@ -2656,6 +2664,14 @@ void world_edit::update_ui() noexcept
 
                return entries;
             });
+
+         if (ImGui::BeginPopupContextItem("Class Name")) {
+            if (ImGui::MenuItem("Open .odf in Text Editor")) {
+               open_odf_in_text_editor(object.class_name);
+            }
+
+            ImGui::EndPopup();
+         }
 
          ImGui::LayerPick<world::object>("Layer", &creation_entity,
                                          &_edit_stack_world, &_edit_context);

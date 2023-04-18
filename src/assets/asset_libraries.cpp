@@ -177,6 +177,21 @@ struct library<T>::impl {
       callback(_existing_assets);
    }
 
+   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path
+   {
+      std::shared_lock lock{_assets_mutex};
+
+      auto it = _assets.find(name);
+
+      if (it == _assets.end()) return {};
+
+      asset_state<T>& state = *it->second;
+
+      std::shared_lock state_lock{state.mutex};
+
+      return state.path;
+   }
+
 private:
    auto make_asset_state(const lowercase_string& name,
                          const std::filesystem::path& asset_path)
@@ -327,6 +342,13 @@ void library<T>::view_existing(
    const std::function<void(const std::span<const stable_string> assets)> callback) noexcept
 {
    self->view_existing(std::move(callback));
+}
+
+template<typename T>
+auto library<T>::query_path(const lowercase_string& name) noexcept
+   -> std::filesystem::path
+{
+   return self->query_path(name);
 }
 
 template struct library<odf::definition>;

@@ -73,6 +73,11 @@ struct library {
    void view_existing(
       const std::function<void(const std::span<const stable_string> assets)> callback) noexcept;
 
+   /// @brief Query the file path of an asset.
+   /// @param name The name of the asset.
+   /// @return The file path to the asset. Can be empty if the asset does not exist.
+   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path;
+
 private:
    struct impl;
 

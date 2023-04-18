@@ -706,6 +706,12 @@
     <ClInclude Include="src\settings\ui.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\utility\os_execute.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\settings\preferences.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1024,6 +1030,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\misc\freetype\imgui_freetype.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utility\os_execute.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\settings\preferences.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

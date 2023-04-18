@@ -25,6 +25,11 @@ void write(io::output_file& file, std::string_view name, float4 value)
                  value.z, value.w);
 }
 
+void write(io::output_file& file, std::string_view name, const std::string& value)
+{
+   file.write_ln("\t{}(\"{}\");", name, value);
+}
+
 void read(assets::config::node& node, float& out)
 {
    out = node.values.get<float>(0);
@@ -40,6 +45,11 @@ void read(assets::config::node& node, float4& out)
 {
    out = {node.values.get<float>(0), node.values.get<float>(1),
           node.values.get<float>(2), node.values.get<float>(3)};
+}
+
+void read(assets::config::node& node, std::string& out)
+{
+   out = node.values.get<std::string>(0);
 }
 
 }
@@ -113,6 +123,17 @@ auto load(const std::string_view path) -> settings
          }
 #undef setting_entry
       }
+      else if (node.key == "preferences") {
+#define setting_entry(setting)                                                 \
+   if (prop.key == #setting) {                                                 \
+      read(prop, settings.preferences.setting);                                \
+      continue;                                                                \
+   }
+         for (auto& prop : node) {
+            setting_entry(text_editor);
+         }
+#undef setting_entry
+      }
    }
 
    return settings;
@@ -178,6 +199,17 @@ void save(const std::string_view path, const settings& settings) noexcept
 #define name_value(prop) #prop, settings.ui.prop
 
       write(file, name_value(extra_scaling));
+
+#undef name_value
+
+      file.write_ln("}\n");
+
+      file.write_ln("preferences()");
+      file.write_ln("{");
+
+#define name_value(prop) #prop, settings.preferences.prop
+
+      write(file, name_value(text_editor));
 
 #undef name_value
 

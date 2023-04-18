@@ -1,6 +1,7 @@
 #include "settings.hpp"
 
 #include "imgui/imgui.h"
+#include "imgui/imgui_stdlib.h"
 
 #include <array>
 #include <cmath>
@@ -17,8 +18,20 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
 
    if (ImGui::Begin("Settings", &open)) {
       if (ImGui::BeginTabBar("Settings")) {
-         if (ImGui::BeginTabItem("UI")) {
+         if (ImGui::BeginTabItem("Preferences")) {
             ui& ui = settings.ui;
+            preferences& preferences = settings.preferences;
+
+            if (ImGui::InputText("Text Editor", &preferences.text_editor)) {
+               std::erase(preferences.text_editor, '"');
+            }
+
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
+               ImGui::SetTooltip("The path to the app to use when opening text "
+                                 "files. The path can contain environment "
+                                 "variables such as %%ProgramFiles%%. But may "
+                                 "not contain quotes (\").");
+            }
 
             constexpr static std::array extra_scaling_factors{0.5f, 0.75f,
                                                               1.0f, 1.25f,
@@ -53,6 +66,7 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
 
             if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {
                ui = {};
+               preferences = {};
             }
 
             ImGui::EndTabItem();

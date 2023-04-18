@@ -13,6 +13,7 @@
 #include "math/vector_funcs.hpp"
 #include "resource.h"
 #include "utility/file_pickers.hpp"
+#include "utility/os_execute.hpp"
 #include "utility/overload.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
@@ -1119,6 +1120,23 @@ void world_edit::enumerate_project_worlds() noexcept
    catch (std::filesystem::filesystem_error&) {
       MessageBoxW(_window, L"Unable to enumerate data folder worlds. Loading worlds will require manual navigation.",
                   L"Error", MB_OK);
+   }
+}
+
+void world_edit::open_odf_in_text_editor(const lowercase_string& asset_name) noexcept
+{
+   const auto asset_path = _asset_libraries.odfs.query_path(asset_name);
+
+   if (asset_path.empty()) return;
+
+   const std::string command_line =
+      fmt::format("{} {}", _settings.preferences.text_editor, asset_path.string());
+
+   if (not utility::os_execute_async(command_line)) {
+      MessageBoxA(_window,
+                  fmt::format("Unable to execute command line '{}'.", command_line)
+                     .c_str(),
+                  "Failed to open .odf editor!", MB_OK);
    }
 }
 
