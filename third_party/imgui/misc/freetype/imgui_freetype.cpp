@@ -34,7 +34,7 @@
 // FIXME: cfg.OversampleH, OversampleV are not supported (but perhaps not so necessary with this rasterizer).
 
 #include "imgui_freetype.h"
-#include "imgui/imgui_internal.h"     // ImMin,ImMax,ImFontAtlasBuild*,
+#include "imgui_internal.h"     // ImMin,ImMax,ImFontAtlasBuild*,
 #include <stdint.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H          // <freetype/freetype.h>
@@ -362,7 +362,7 @@ namespace
 #ifdef IMGUI_STB_RECT_PACK_FILENAME
 #include IMGUI_STB_RECT_PACK_FILENAME
 #else
-#include "imgui/imstb_rectpack.h"
+#include "imstb_rectpack.h"
 #endif
 #endif
 

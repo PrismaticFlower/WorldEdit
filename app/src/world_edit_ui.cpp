@@ -15,10 +15,7 @@
 #include "edits/game_mode_unlink_layer.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
-#include "imgui/imgui.h"
 #include "imgui/imgui_ext.hpp"
-#include "imgui/imgui_impl_win32.h"
-#include "imgui/imgui_stdlib.h"
 #include "utility/string_icompare.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/object_properties.hpp"
@@ -30,6 +27,10 @@
 #include "world/utility/world_utilities.hpp"
 
 #include <numbers>
+
+#include <backends/imgui_impl_win32.h>
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 using namespace std::literals;
 

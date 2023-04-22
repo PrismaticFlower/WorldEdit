@@ -8,7 +8,6 @@
 #include "frustum.hpp"
 #include "geometric_shapes.hpp"
 #include "gpu/rhi.hpp"
-#include "imgui/imgui.h"
 #include "imgui_renderer.hpp"
 #include "light_clusters.hpp"
 #include "math/matrix_funcs.hpp"
@@ -33,6 +32,8 @@
 #include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
+
+#include <imgui.h>
 
 namespace we::graphics {
 

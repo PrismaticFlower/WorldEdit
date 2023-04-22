@@ -8,8 +8,6 @@
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
 #include "edits/set_value.hpp"
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_win32.h"
 #include "math/vector_funcs.hpp"
 #include "resource.h"
 #include "utility/file_pickers.hpp"
@@ -28,6 +26,9 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+
+#include <backends/imgui_impl_win32.h>
+#include <imgui.h>
 
 using namespace std::literals;
 

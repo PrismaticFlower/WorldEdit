@@ -1,10 +1,10 @@
 #include "settings.hpp"
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_stdlib.h"
-
 #include <array>
 #include <cmath>
+
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 namespace we::settings {
 

@@ -324,27 +324,6 @@
     <ClInclude Include="src\assets\texture\texture_format.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui\imconfig.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imgui.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imgui_impl_win32.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imgui_internal.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imstb_rectpack.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imstb_textedit.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imstb_truetype.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\geometric_shapes.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -467,9 +446,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\assets\msh\flat_model_bvh.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\imgui_stdlib.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\shadow_camera.hpp">
@@ -700,9 +676,6 @@
     <ClInclude Include="src\gizmo.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui\misc\freetype\imgui_freetype.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\settings\ui.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -710,6 +683,33 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\settings\preferences.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imconfig.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imgui.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imgui_internal.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imstb_rectpack.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imstb_textedit.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imstb_truetype.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -774,21 +774,6 @@
     <ClCompile Include="src\assets\texture\texture_format.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui\imgui.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_demo.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_draw.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_impl_win32.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_widgets.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\geometric_shapes.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -846,9 +831,6 @@
     <ClCompile Include="src\io\read_file.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui\imgui_tables.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\async\thread_pool.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -856,9 +838,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui\imgui_stdlib.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp">
@@ -1029,23 +1008,44 @@
     <ClCompile Include="src\gizmo.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui\misc\freetype\imgui_freetype.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\utility\os_execute.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\settings\preferences.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_demo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\misc\freetype\imgui_freetype.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />
     <None Include="packages.config" />
-    <None Include="src\imgui\misc\debuggers\imgui.natstepfilter" />
+    <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="src\utility\implementation_storage.natvis" />
-    <Natvis Include="src\imgui\misc\debuggers\imgui.natvis" />
+    <Natvis Include="third_party\imgui\misc\debuggers\imgui.natvis" />
   </ItemGroup>
 </Project>

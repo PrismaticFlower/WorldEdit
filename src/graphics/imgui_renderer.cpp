@@ -2,9 +2,9 @@
 #include "imgui_renderer.hpp"
 #include "math/align.hpp"
 
-#include "imgui/imgui.h"
-
 #include <bit>
+
+#include <imgui.h>
 
 namespace we::graphics {
 

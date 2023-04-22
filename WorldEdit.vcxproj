@@ -97,7 +97,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -136,7 +136,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -176,7 +176,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;GLM_FORCE_SILENT_WARNINGS;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -249,9 +249,6 @@
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
     <ClCompile Include="src\imgui\imgui_ext.cpp" />
-    <ClCompile Include="src\imgui\imgui_stdlib.cpp" />
-    <ClCompile Include="src\imgui\imgui_tables.cpp" />
-    <ClCompile Include="src\imgui\misc\freetype\imgui_freetype.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
     <ClCompile Include="src\key.cpp" />
@@ -276,6 +273,14 @@
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
     <ClCompile Include="src\world\world_io_save.cpp" />
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="third_party\imgui\imgui.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_demo.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp" />
+    <ClCompile Include="third_party\imgui\misc\freetype\imgui_freetype.cpp" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
     <ClInclude Include="include\assets\config\values.hpp" />
@@ -423,16 +428,7 @@
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
     <ClInclude Include="src\hotkeys.hpp" />
     <ClInclude Include="src\hotkeys_io.hpp" />
-    <ClInclude Include="src\imgui\imconfig.h" />
-    <ClInclude Include="src\imgui\imgui.h" />
     <ClInclude Include="src\imgui\imgui_ext.hpp" />
-    <ClInclude Include="src\imgui\imgui_impl_win32.h" />
-    <ClInclude Include="src\imgui\imgui_internal.h" />
-    <ClInclude Include="src\imgui\imgui_stdlib.h" />
-    <ClInclude Include="src\imgui\imstb_rectpack.h" />
-    <ClInclude Include="src\imgui\imstb_textedit.h" />
-    <ClInclude Include="src\imgui\imstb_truetype.h" />
-    <ClInclude Include="src\imgui\misc\freetype\imgui_freetype.h" />
     <ClInclude Include="src\key.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />
@@ -528,6 +524,15 @@
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />
     <ClInclude Include="src\world\world_io_save.hpp" />
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="third_party\imgui\imconfig.h" />
+    <ClInclude Include="third_party\imgui\imgui.h" />
+    <ClInclude Include="third_party\imgui\imgui_internal.h" />
+    <ClInclude Include="third_party\imgui\imstb_rectpack.h" />
+    <ClInclude Include="third_party\imgui\imstb_textedit.h" />
+    <ClInclude Include="third_party\imgui\imstb_truetype.h" />
+    <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h" />
+    <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\asset_libraries.cpp" />
@@ -552,11 +557,6 @@
     <ClCompile Include="src\graphics\material.cpp" />
     <ClCompile Include="src\graphics\model.cpp" />
     <ClCompile Include="src\graphics\terrain.cpp" />
-    <ClCompile Include="src\imgui\imgui.cpp" />
-    <ClCompile Include="src\imgui\imgui_demo.cpp" />
-    <ClCompile Include="src\imgui\imgui_draw.cpp" />
-    <ClCompile Include="src\imgui\imgui_impl_win32.cpp" />
-    <ClCompile Include="src\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\object_class.cpp" />
@@ -564,12 +564,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="src\imgui\misc\debuggers\imgui.natstepfilter" />
+    <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
     <None Include="third_party\licenses\vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="src\imgui\misc\debuggers\imgui.natvis" />
     <Natvis Include="src\utility\implementation_storage.natvis" />
+    <Natvis Include="third_party\imgui\misc\debuggers\imgui.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

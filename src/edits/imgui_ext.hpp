@@ -7,7 +7,6 @@
 #include "world/interaction_context.hpp"
 #include "world/world.hpp"
 
-#include "imgui/imgui.h"
 #include "imgui/imgui_ext.hpp"
 
 #include <array>
@@ -17,6 +16,8 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+
+#include <imgui.h>
 
 // Wrappers for ImGui controls that integrate with the Undo-Redo stack.
 

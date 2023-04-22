@@ -6,8 +6,6 @@
 
 #include <cmath>
 
-#include "imgui/imgui.h"
-
 namespace we::graphics {
 
 auto camera::right() const noexcept -> float3
