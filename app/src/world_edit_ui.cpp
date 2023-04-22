@@ -28,7 +28,6 @@
 
 #include <numbers>
 
-#include <backends/imgui_impl_win32.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
@@ -89,9 +88,6 @@ auto align_position_to_grid(const float3 position, const float alignment) -> flo
 
 void world_edit::update_ui() noexcept
 {
-   ImGui_ImplWin32_NewFrame();
-   ImGui::NewFrame();
-
    if (_imgui_demo_open) ImGui::ShowDemoWindow(&_imgui_demo_open);
    if (_hotkeys_editor_open) {
       _hotkeys.show_imgui(_hotkeys_editor_open, _display_scale);

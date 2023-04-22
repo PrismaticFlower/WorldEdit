@@ -95,16 +95,19 @@ void world_edit::update()
 
    wait_for_swap_chain_ready();
 
+   if (_applied_user_display_scale != _settings.ui.extra_scaling) {
+      dpi_changed(_current_dpi);
+   }
+
+   ImGui_ImplWin32_NewFrame();
+   ImGui::NewFrame();
+
    _gizmo.update(make_camera_ray(_camera,
                                  {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
                                  {ImGui::GetMainViewport()->Size.x,
                                   ImGui::GetMainViewport()->Size.y}),
                  ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
                     not ImGui::GetIO().WantCaptureMouse);
-
-   if (_applied_user_display_scale != _settings.ui.extra_scaling) {
-      dpi_changed(_current_dpi);
-   }
 
    // Input!
    update_input();
