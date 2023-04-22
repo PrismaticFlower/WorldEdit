@@ -541,9 +541,6 @@
     <ClInclude Include="src\world\tool_visualizers.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui\imgui_ext.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\edits\edit.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -710,6 +707,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui_ext.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -903,9 +903,6 @@
     <ClCompile Include="src\world\utility\snapping.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui\imgui_ext.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\edits\insert_entity.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -1036,6 +1033,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imgui_ext.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

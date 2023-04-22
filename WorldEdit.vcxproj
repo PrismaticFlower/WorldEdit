@@ -248,7 +248,7 @@
     <ClCompile Include="src\graphics\texture_manager.cpp" />
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
-    <ClCompile Include="src\imgui\imgui_ext.cpp" />
+    <ClCompile Include="src\imgui_ext.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
     <ClCompile Include="src\key.cpp" />
@@ -428,7 +428,7 @@
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
     <ClInclude Include="src\hotkeys.hpp" />
     <ClInclude Include="src\hotkeys_io.hpp" />
-    <ClInclude Include="src\imgui\imgui_ext.hpp" />
+    <ClInclude Include="src\imgui_ext.hpp" />
     <ClInclude Include="src\key.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />

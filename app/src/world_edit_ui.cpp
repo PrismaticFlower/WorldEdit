@@ -15,7 +15,7 @@
 #include "edits/game_mode_unlink_layer.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
-#include "imgui/imgui_ext.hpp"
+#include "imgui_ext.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/object_properties.hpp"
