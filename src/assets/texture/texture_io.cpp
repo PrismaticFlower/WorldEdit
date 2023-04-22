@@ -11,8 +11,6 @@
 
 #include <DirectXTex.h>
 
-#include <range/v3/view.hpp>
-
 using namespace std::literals;
 
 namespace we::assets::texture {

@@ -6,10 +6,6 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include <range/v3/view.hpp>
-
-using ranges::views::zip;
-
 namespace we::assets::msh {
 
 namespace {
@@ -144,34 +140,28 @@ auto indexify_tri_list(const mesh_tri_list& tri_list) -> generate_tangents_outpu
 
    absl::flat_hash_map<cached_vertex, std::size_t> cache;
 
-   // I have mixed feelings about using zip for this...
-   for (const auto& [tri_positions, tri_normals, tri_tangents, tri_bitangents,
-                     tri_texcoords, tri_colors] :
-        zip(tri_list.positions, tri_list.normals, tri_list.tangents,
-            tri_list.bitangents, tri_list.texcoords, tri_list.colors)) {
+   for (std::size_t tri_index = 0; tri_index < tri_list.positions.size(); ++tri_index) {
       auto& tri = output.triangles.emplace_back();
 
-      for (auto [out_index, position, normal, tangent, bitangent, texcoord, color] :
-           zip(tri, tri_positions, tri_normals, tri_tangents, tri_bitangents,
-               tri_texcoords, tri_colors)) {
-         cached_vertex vertex{.position = position,
-                              .normal = normal,
-                              .tangent = tangent,
-                              .bitangent = bitangent,
-                              .texcoord = texcoord,
-                              .color = color};
+      for (std::size_t vertex_index = 0; vertex_index < tri.size(); ++vertex_index) {
+         cached_vertex vertex{.position = tri_list.positions[tri_index][vertex_index],
+                              .normal = tri_list.normals[tri_index][vertex_index],
+                              .tangent = tri_list.tangents[tri_index][vertex_index],
+                              .bitangent = tri_list.bitangents[tri_index][vertex_index],
+                              .texcoord = tri_list.texcoords[tri_index][vertex_index],
+                              .color = tri_list.colors[tri_index][vertex_index]};
 
          auto [index_it, inserted] = cache.emplace(vertex, output.positions.size());
 
-         out_index = static_cast<uint16>(index_it->second);
+         tri[vertex_index] = static_cast<uint16>(index_it->second);
 
          if (inserted) {
-            output.positions.push_back(position);
-            output.normals.push_back(normal);
-            output.tangents.push_back(tangent);
-            output.bitangents.push_back(bitangent);
-            output.texcoords.push_back(texcoord);
-            output.colors.push_back(color);
+            output.positions.push_back(vertex.position);
+            output.normals.push_back(vertex.normal);
+            output.tangents.push_back(vertex.tangent);
+            output.bitangents.push_back(vertex.bitangent);
+            output.texcoords.push_back(vertex.texcoord);
+            output.colors.push_back(vertex.color);
          }
       }
    }

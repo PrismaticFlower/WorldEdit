@@ -7,8 +7,6 @@
 
 #include <FastBVH.h>
 
-#include <range/v3/view.hpp>
-
 namespace we::assets::msh {
 
 namespace detail {
@@ -49,7 +47,10 @@ public:
    {
       std::optional<ray_hit> hit = std::nullopt;
 
-      for (auto [bvh, mesh] : ranges::views::zip(_bvhs, _meshes)) {
+      for (std::size_t i = 0; i < _bvhs.size(); ++i) {
+         const FastBVH::BVH<float, std::array<uint16, 3>>& bvh = _bvhs[i];
+         const mesh& mesh = _meshes[i];
+
          FastBVH::Traverser traverser{
             bvh, [&](const std::array<uint16, 3>& tri, const FastBVH::Ray<float>& ray) {
                float3 intersect =

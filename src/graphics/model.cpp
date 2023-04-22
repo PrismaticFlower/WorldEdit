@@ -5,13 +5,6 @@
 
 #include <memory>
 
-#include <range/v3/action.hpp>
-#include <range/v3/numeric.hpp>
-#include <range/v3/view.hpp>
-
-using ranges::views::iota;
-using ranges::views::transform;
-
 namespace we::graphics {
 
 namespace {
@@ -46,6 +39,28 @@ auto pack_snorm(float3 value) -> std::array<int16, 4>
            static_cast<int16>(value.z), 0};
 }
 
+auto count_vertices(const assets::msh::flat_model& model) -> std::size_t
+{
+   std::size_t count = 0;
+
+   for (auto& mesh : model.meshes) {
+      count += mesh.positions.size();
+   }
+
+   return count;
+}
+
+auto count_triangles(const assets::msh::flat_model& model) -> std::size_t
+{
+   std::size_t count = 0;
+
+   for (auto& mesh : model.meshes) {
+      count += mesh.triangles.size();
+   }
+
+   return count;
+}
+
 }
 
 model::model(const assets::msh::flat_model& model, gpu::device& device,
@@ -60,18 +75,8 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
 
    parts.reserve(model.meshes.size());
 
-   const auto vertex_count =
-      ranges::accumulate(transform(model.meshes,
-                                   [](const assets::msh::mesh& mesh) {
-                                      return mesh.positions.size();
-                                   }),
-                         std::size_t{0});
-   const auto triangle_count =
-      ranges::accumulate(transform(model.meshes,
-                                   [](const assets::msh::mesh& mesh) {
-                                      return mesh.triangles.size();
-                                   }),
-                         std::size_t{0});
+   const auto vertex_count = count_vertices(model);
+   const auto triangle_count = count_triangles(model);
 
    const auto indices_data_size = triangle_count * sizeof(std::array<uint16, 3>);
    const auto positions_data_size =
@@ -95,7 +100,7 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
 
    std::vector<std::byte> buffer{buffer_size};
 
-   // Caution, UB below, but hey what's the worst that could happen? (Lots probably, but that's not the point.)
+   // Caution, UB below, but hey what's the worst that could happen? (Lots probably.)
    const std::span<std::array<uint16, 3>> indices =
       {reinterpret_cast<std::array<uint16, 3>*>(&buffer[indices_data_offset]),
        triangle_count};
@@ -123,17 +128,14 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
       std::uninitialized_copy_n(mesh.positions.cbegin(), mesh.positions.size(),
                                 vertices.positions.begin() + vertex_offset);
 
-      auto attributes =
-         iota(std::size_t{0}, mesh.positions.size()) | transform([&](std::size_t i) {
-            return mesh_attributes{.normals = pack_snorm(mesh.normals[i]),
-                                   .tangents = pack_snorm(mesh.tangents[i]),
-                                   .bitangents = pack_snorm(mesh.bitangents[i]),
-                                   .texcoords = mesh.texcoords[i],
-                                   .color = mesh.colors[i]};
-         });
-
-      std::uninitialized_copy_n(attributes.begin(), mesh.positions.size(),
-                                vertices.attributes.begin() + vertex_offset);
+      for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
+         vertices.attributes[i + vertex_offset] =
+            mesh_attributes{.normals = pack_snorm(mesh.normals[i]),
+                            .tangents = pack_snorm(mesh.tangents[i]),
+                            .bitangents = pack_snorm(mesh.bitangents[i]),
+                            .texcoords = mesh.texcoords[i],
+                            .color = mesh.colors[i]};
+      }
 
       triangle_offset += static_cast<uint32>(mesh.triangles.size());
       vertex_offset += static_cast<uint32>(mesh.positions.size());

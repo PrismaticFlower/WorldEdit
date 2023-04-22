@@ -16,8 +16,6 @@
 
 #include <fmt/core.h>
 
-#include <range/v3/algorithm.hpp>
-
 using namespace std::literals;
 
 namespace we::assets::msh {

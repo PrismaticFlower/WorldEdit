@@ -17,7 +17,6 @@
 
     "directxtex",
     "fmt",
-    "range-v3",
     "wil",
     "mimalloc"
   ]

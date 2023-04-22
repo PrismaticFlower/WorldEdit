@@ -8,10 +8,6 @@
 
 #include <limits>
 
-#include <range/v3/view.hpp>
-
-using namespace ranges::views;
-
 namespace we::world {
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -190,7 +186,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& path : paths) {
       if (not active_layers[path.layer]) continue;
 
-      for (const auto& [i, node] : enumerate(path.nodes)) {
+      for (std::size_t i = 0; i < path.nodes.size(); ++i) {
+         const path::node& node = path.nodes[i];
 
          const float intersection =
             sphIntersect(ray_origin, ray_direction, node.position, 0.707f);
@@ -286,8 +283,10 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float3 normalWS;
 
    for (auto& sector : sectors) {
-      for (const auto [a, b] : zip(sector.points, concat(sector.points | drop(1),
-                                                         sector.points | take(1)))) {
+      for (std::size_t i = 0; i < sector.points.size(); ++i) {
+         const float2 a = sector.points[i];
+         const float2 b = sector.points[(i + 1) % sector.points.size()];
+
          const std::array quad = {float3{a.x, sector.base, a.y},
                                   float3{b.x, sector.base, b.y},
                                   float3{a.x, sector.base + sector.height, a.y},

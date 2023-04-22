@@ -4,8 +4,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include <range/v3/view.hpp>
-
 namespace we::graphics {
 
 namespace {
@@ -161,20 +159,18 @@ void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
 void terrain::process_updated_texture(gpu::copy_command_list& command_list,
                                       const updated_textures& updated)
 {
-   using namespace ranges::views;
-
    const gpu_virtual_address constant_buffer_address =
       _device.get_gpu_virtual_address(_terrain_constants_buffer.get());
 
-   for (auto [i, name, texture] : zip(iota(std::size_t{0}, texture_count),
-                                      _diffuse_maps_names, _diffuse_maps)) {
-      if (auto new_texture = updated.find(name); new_texture != updated.end()) {
-         texture = new_texture->second;
+   for (std::size_t i = 0; i < texture_count; ++i) {
+      if (auto new_texture = updated.find(_diffuse_maps_names[i]);
+          new_texture != updated.end()) {
+         _diffuse_maps[i] = new_texture->second;
 
          command_list.write_buffer_immediate(constant_buffer_address +
                                                 offsetof(terrain_constants, diffuse_maps) +
                                                 i * sizeof(std::array<uint32, 4>),
-                                             texture->srv_srgb.index);
+                                             _diffuse_maps[i]->srv_srgb.index);
       }
    }
 }
@@ -305,8 +301,6 @@ void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
                                                 gpu::copy_command_list& command_list,
                                                 dynamic_buffer_allocator& dynamic_buffer_allocator)
 {
-   using namespace ranges::views;
-
    terrain_constants constants{
       .half_world_size = _terrain_half_world_size,
       .grid_size = _terrain_grid_size,
@@ -320,10 +314,12 @@ void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
       constants.diffuse_maps[i][0] = _diffuse_maps[i]->srv_srgb.index;
    }
 
-   for (auto [axis, scale, transform_x, transform_y] :
-        zip(terrain.texture_axes, terrain.texture_scales,
-            constants.texture_transform_x, constants.texture_transform_y)) {
-      switch (axis) {
+   for (std::size_t i = 0; i < terrain.texture_axes.size(); ++i) {
+      const float scale = terrain.texture_scales[i];
+      float4& transform_x = constants.texture_transform_x[i];
+      float4& transform_y = constants.texture_transform_y[i];
+
+      switch (terrain.texture_axes[i]) {
       case world::texture_axis::xz:
          transform_x = {scale, 0.0f, 0.0f, 0.0f};
          transform_y = {0.0f, 0.0f, scale, 0.0f};
@@ -392,26 +388,22 @@ void terrain::init_gpu_terrain_constants_buffer(const world::terrain& terrain,
 
 void terrain::init_textures(const world::terrain& terrain)
 {
-   using namespace ranges::views;
-
-   for (auto i : iota(std::size_t{0}, _diffuse_maps_names.size())) {
+   for (std::size_t i = 0; i < _diffuse_maps_names.size(); ++i) {
       _diffuse_maps_names[i] = lowercase_string{terrain.texture_names[i]};
-   }
 
-   for (auto& name : _diffuse_maps_names) {
-      if (const auto ext_offset = name.find_last_of('.');
+      if (const auto ext_offset = _diffuse_maps_names[i].find_last_of('.');
           ext_offset != std::string::npos) {
-         name.resize(ext_offset);
+         _diffuse_maps_names[i].resize(ext_offset);
       }
-   }
 
-   for (auto [name, texture] : zip(_diffuse_maps_names, _diffuse_maps)) {
-      if (name.empty()) {
-         texture = _texture_manager.null_diffuse_map();
+      if (_diffuse_maps_names[i].empty()) {
+         _diffuse_maps[i] = _texture_manager.null_diffuse_map();
       }
       else {
-         texture = _texture_manager.at_or(name, world_texture_dimension::_2d,
-                                          _texture_manager.null_diffuse_map());
+         _diffuse_maps[i] =
+            _texture_manager.at_or(_diffuse_maps_names[i],
+                                   world_texture_dimension::_2d,
+                                   _texture_manager.null_diffuse_map());
       }
    }
 }
@@ -464,5 +456,4 @@ void terrain::init_patches_info(const world::terrain& terrain)
       }
    }
 }
-
 }

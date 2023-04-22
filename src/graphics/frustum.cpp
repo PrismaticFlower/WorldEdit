@@ -5,9 +5,6 @@
 
 #include <array>
 
-#include <range/v3/algorithm.hpp>
-#include <range/v3/view.hpp>
-
 #include <functional>
 
 namespace we::graphics {
@@ -51,13 +48,11 @@ frustum::frustum(const float4x4& inv_view_projection_matrix, const float z_min,
           {frustum_corner::top_left_far, {-1.0f, 1.0f, z_max, 1.0f}},
           {frustum_corner::top_right_far, {1.0f, 1.0f, z_max, 1.0f}}});
 
-   ranges::copy(
-      corners_proj | ranges::views::transform([&](float4 position) {
-         position = inv_view_projection_matrix * position;
+   for (std::size_t i = 0; i < corners.size(); ++i) {
+      const float4 position = inv_view_projection_matrix * corners_proj[i];
 
-         return float3{position.x, position.y, position.z} / position.w;
-      }),
-      corners.begin());
+      corners[i] = float3{position.x, position.y, position.z} / position.w;
+   }
 
    planes[frustum_planes::near_] =
       get_plane({corners[frustum_corner::top_left_near],
@@ -132,7 +127,9 @@ bool intersects(const frustum& frustum, const math::bounding_box& bbox)
 
 bool intersects_shadow_cascade(const frustum& frustum, const math::bounding_box& bbox)
 {
-   for (auto& plane : frustum.planes | ranges::views::drop(1)) {
+   for (std::size_t i = 0; i < (frustum.planes.size() - 1); ++i) {
+      const float4 plane = frustum.planes[i];
+
       if (outside_plane(plane, {bbox.min.x, bbox.min.y, bbox.min.z}) &
           outside_plane(plane, {bbox.max.x, bbox.min.y, bbox.min.z}) &
           outside_plane(plane, {bbox.min.x, bbox.max.y, bbox.min.z}) &

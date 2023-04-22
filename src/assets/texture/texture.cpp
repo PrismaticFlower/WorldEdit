@@ -5,9 +5,6 @@
 #include <cassert>
 #include <stdexcept>
 
-#include <range/v3/numeric.hpp>
-#include <range/v3/view.hpp>
-
 namespace we::assets::texture {
 
 namespace {
@@ -126,9 +123,8 @@ texture::texture(const init_params init_params)
    _texture_data.resize([&] {
       std::size_t size = 0;
 
-      for ([[maybe_unused]] auto array_index :
-           ranges::views::indices(init_params.array_size)) {
-         for (auto mip_level : ranges::views::indices(init_params.mip_levels)) {
+      for (uint32 array_index = 0; array_index < init_params.array_size; ++array_index) {
+         for (uint32 mip_level = 0; mip_level < init_params.mip_levels; ++mip_level) {
             size += get_mip_level_desc(_width, _height, mip_level, _format).size;
             size = math::align_up(size, subresource_alignment);
          }
@@ -141,9 +137,8 @@ texture::texture(const init_params init_params)
 
    std::size_t subresource_offset = 0;
 
-   for ([[maybe_unused]] auto array_index :
-        ranges::views::indices(init_params.array_size)) {
-      for (auto mip_level : ranges::views::indices(init_params.mip_levels)) {
+   for (uint32 array_index = 0; array_index < init_params.array_size; ++array_index) {
+      for (uint32 mip_level = 0; mip_level < init_params.mip_levels; ++mip_level) {
          const texture_mip_level_desc mip_level_desc =
             get_mip_level_desc(_width, _height, mip_level, _format);
 

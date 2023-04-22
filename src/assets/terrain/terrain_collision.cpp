@@ -9,8 +9,6 @@
 
 #include <FastBVH.h>
 
-#include <range/v3/view.hpp>
-
 namespace we::assets::terrain {
 
 namespace detail {

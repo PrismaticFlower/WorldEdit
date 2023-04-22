@@ -14,7 +14,6 @@
 #include <shared_mutex>
 
 #include <absl/container/inlined_vector.h>
-#include <range/v3/algorithm.hpp>
 
 #include <D3DCommon.h>
 #include <dxcapi.h>
@@ -71,10 +70,11 @@ auto get_shader_defines(const shader_description& desc)
 
    macros.resize(desc.defines.size());
 
-   ranges::transform(desc.defines, macros.begin(), [](const shader_define& define) {
-      return std::format(L"{}={}", define.var,
-                         static_cast<const std::wstring&>(define.value));
-   });
+   for (std::size_t i = 0; i < desc.defines.size(); ++i) {
+      macros[i] =
+         std::format(L"{}={}", desc.defines[i].var,
+                     static_cast<const std::wstring&>(desc.defines[i].value));
+   }
 
    return macros;
 }

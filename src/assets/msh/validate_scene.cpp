@@ -1,13 +1,14 @@
 #include "validate_scene.hpp"
 
+#include <algorithm>
 #include <array>
 #include <iterator>
+#include <ranges>
+#include <stdexcept>
 #include <string_view>
 
 #include <absl/container/inlined_vector.h>
 #include <fmt/core.h>
-#include <range/v3/algorithm.hpp>
-#include <range/v3/view.hpp>
 
 using namespace std::literals;
 
@@ -18,7 +19,7 @@ namespace {
 void check_node_name_uniqueness(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
-      if (ranges::any_of(scene.nodes, [&](const msh::node& other) {
+      if (std::ranges::any_of(scene.nodes, [&](const msh::node& other) {
              if (&other == &node) return false;
 
              return node.name == other.name;
@@ -56,7 +57,7 @@ void check_node_parents_validity(const scene& scene)
    for (const auto& node : scene.nodes) {
       if (not node.parent) continue;
 
-      if (ranges::none_of(scene.nodes, [&](const msh::node& other) {
+      if (std::ranges::none_of(scene.nodes, [&](const msh::node& other) {
              return *node.parent == other.name;
           })) {
          throw std::runtime_error{
@@ -74,15 +75,15 @@ void check_node_parents_noncircular(const scene& scene)
 
       absl::InlinedVector<const msh::node*, 64> traversed_nodes = {&node};
 
-      for (auto it = ranges::find_if(scene.nodes,
-                                     [&](const msh::node& other) {
-                                        return node.parent == other.name;
-                                     });
+      for (auto it = std::ranges::find_if(scene.nodes,
+                                          [&](const msh::node& other) {
+                                             return node.parent == other.name;
+                                          });
            it != scene.nodes.cend();
-           it = ranges::find_if(scene.nodes, [&](const msh::node& other) {
+           it = std::ranges::find_if(scene.nodes, [&](const msh::node& other) {
               return it->parent == other.name;
            })) {
-         if (ranges::contains(traversed_nodes, &(*it))) {
+         if (std::ranges::contains(traversed_nodes, &(*it))) {
             throw std::runtime_error{
                fmt::format(".msh file validation failure! Node '{}' has "
                            "circular relationship with ancestor/parent '{}'.",
@@ -97,7 +98,9 @@ void check_node_parents_noncircular(const scene& scene)
 void check_geometry_segment_material_index_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
-      for (const auto& [index, segment] : ranges::views::enumerate(node.segments)) {
+      for (std::size_t index = 0; index < node.segments.size(); ++index) {
+         const auto& segment = node.segments[index];
+
          if (segment.material_index < 0 or
              segment.material_index >= std::ssize(scene.materials)) {
             throw std::runtime_error{
@@ -114,7 +117,9 @@ void check_geometry_segment_material_index_validity(const scene& scene)
 void check_geometry_segment_attibutes_count_matches(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
-      for (const auto& [index, segment] : ranges::views::enumerate(node.segments)) {
+      for (std::size_t index = 0; index < node.segments.size(); ++index) {
+         const auto& segment = node.segments[index];
+
          const std::size_t positions_count = segment.positions.size();
          const std::array attribute_counts{segment.normals ? segment.normals->size()
                                                            : positions_count,
@@ -124,7 +129,7 @@ void check_geometry_segment_attibutes_count_matches(const scene& scene)
                                            segment.colors ? segment.colors->size()
                                                           : positions_count};
 
-         if (not ranges::all_of(attribute_counts, [=](const std::size_t size) {
+         if (not std::ranges::all_of(attribute_counts, [=](const std::size_t size) {
                 return size == positions_count;
              })) {
             throw std::runtime_error{fmt::format(
@@ -147,7 +152,9 @@ void check_geometry_segment_attibutes_count_matches(const scene& scene)
 void check_geometry_segment_vertex_count_limit(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
-      for (const auto& [index, segment] : ranges::views::enumerate(node.segments)) {
+      for (std::size_t index = 0; index < node.segments.size(); ++index) {
+         const auto& segment = node.segments[index];
+
          if (segment.positions.size() > geometry_segment::max_vertex_count) {
             throw std::runtime_error{fmt::format(
                ".msh file validation failure! Geometry segment "
@@ -165,7 +172,9 @@ void check_geometry_segment_vertex_count_limit(const scene& scene)
 void check_geometry_segment_triangles_index_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
-      for (const auto& [index, segment] : ranges::views::enumerate(node.segments)) {
+      for (std::size_t index = 0; index < node.segments.size(); ++index) {
+         const auto& segment = node.segments[index];
+
          for (const auto& tri : segment.triangles) {
             for (const auto i : tri) {
                if (i >= segment.positions.size()) {
@@ -186,7 +195,7 @@ void check_geometry_segment_non_empty(const scene& scene)
 {
    bool empty = true;
 
-   for (const auto& node : scene.nodes | ranges::views::filter([](const auto& node) {
+   for (const auto& node : scene.nodes | std::ranges::views::filter([](const auto& node) {
                               return node.type == node_type::skinned_mesh or
                                      node.type == node_type::static_mesh;
                            })) {
