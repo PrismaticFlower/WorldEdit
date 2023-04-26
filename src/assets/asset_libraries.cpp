@@ -418,6 +418,7 @@ void libraries_manager::update_loaded() noexcept
    odfs.update_loaded();
    models.update_loaded();
    textures.update_loaded();
+   skies.update_loaded();
 }
 
 void libraries_manager::clear() noexcept
@@ -425,6 +426,7 @@ void libraries_manager::clear() noexcept
    odfs.clear();
    models.clear();
    textures.clear();
+   skies.clear();
 }
 
 void libraries_manager::register_asset(const std::filesystem::path& path) noexcept
