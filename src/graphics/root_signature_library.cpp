@@ -11,6 +11,7 @@ constexpr uint32 object_cb_register = 2;
 constexpr uint32 material_cb_register = 3;
 constexpr uint32 terrain_cb_register = 4;
 constexpr uint32 meta_mesh_cb_register = 5;
+constexpr uint32 sky_mesh_cb_register = 6;
 
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
@@ -109,6 +110,21 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "mesh_depth_prepass_root_signature",
+};
+
+const gpu::root_signature_desc sky_mesh_desc{
+   .parameters =
+      {
+         frame_constant_buffer,
+         material_constant_buffer,
+         gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
+                             .shader_register = sky_mesh_cb_register,
+                             .values_count = 1},
+      },
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "sky_mesh_root_signature",
 };
 
 const gpu::root_signature_desc mesh_wireframe_desc{
@@ -234,6 +250,7 @@ root_signature_library::root_signature_library(gpu::device& device)
                          device.direct_queue};
    mesh_wireframe = {device.create_root_signature(mesh_wireframe_desc),
                      device.direct_queue};
+   sky_mesh = {device.create_root_signature(sky_mesh_desc), device.direct_queue};
    meta_draw = {device.create_root_signature(meta_draw_desc), device.direct_queue};
 
    tile_lights_clear = {device.create_root_signature(tile_lights_clear_desc),

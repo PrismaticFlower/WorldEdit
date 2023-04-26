@@ -429,6 +429,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                          .debug_name = "terrain_normal"sv}),
                      device.direct_queue};
 
+   sky_mesh = {device.create_graphics_pipeline(
+                  {.root_signature = root_signature_library.sky_mesh.get(),
+
+                   .vs_bytecode = shader_library["sky_meshVS"sv],
+                   .ps_bytecode = shader_library["sky_meshPS"sv],
+
+                   .rasterizer_state = rasterizer_cull_backfacing,
+                   .depth_stencil_state = depth_stencil_disabled,
+                   .input_layout = mesh_input_layout,
+
+                   .render_target_count = 1,
+                   .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                   .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                   .debug_name = "sky_mesh"sv}),
+               device.direct_queue};
+
    meta_draw_shape = {device.create_graphics_pipeline(
                          {.root_signature = root_signature_library.meta_draw.get(),
 

@@ -160,7 +160,7 @@ private:
    output_stream& _error_output;
    float _display_scale = 1.0f;
 
-   gpu::device _device{gpu::device_desc{.enable_debug_layer = false,
+   gpu::device _device{gpu::device_desc{.enable_debug_layer = true,
                                         .enable_gpu_based_validation = false}};
    gpu::swap_chain _swap_chain;
    gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(

@@ -1,5 +1,6 @@
 
 #include "bindings.hlsli"
+#include "frame_constants.hlsli"
 #include "material_normal.hlsli"
 #include "samplers.hlsli"
 
@@ -13,11 +14,6 @@ struct input_vertex {
    float2 texcoords : TEXCOORD;
    float4 color : COLOR;
 };
-
-float3 transform_normalWS(const input_vertex input, const float3 normalTS)
-{
-   return normalize(mul(normalTS, float3x3(input.tangentWS, input.bitangentWS, input.normalWS)));
-}
 
 float4 main(input_vertex input) : SV_TARGET
 {
@@ -49,7 +45,12 @@ float4 main(input_vertex input) : SV_TARGET
       diffuse_color *= input.color;
    }
 
-   if (material.flags & flags::transparent) diffuse_color.rgb *= diffuse_color.a;
+   if (material.flags & flags::transparent) {
+      diffuse_color.rgb *= diffuse_color.a;
+   }
+   else {
+      diffuse_color.a = 1.0;
+   }
 
    return diffuse_color;
 }

@@ -43,7 +43,8 @@ void sky::draw(gpu_virtual_address frame_constant_buffer_view,
       (void)model;
    }
 
-   (void)command_list, root_signatures, pipelines, dynamic_buffer_allocator;
+   (void)frame_constant_buffer_view, command_list, root_signatures, pipelines,
+      dynamic_buffer_allocator;
 }
 
 void sky::sky_loaded([[maybe_unused]] const lowercase_string& name,

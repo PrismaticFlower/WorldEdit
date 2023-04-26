@@ -2,6 +2,19 @@
 
 #include "bindings.hlsli"
 
+enum flags {
+   none = 0b0,
+   transparent = 0b1,
+   unlit = 0b10,
+   specular_visibility_in_diffuse_map = 0b100,
+   scrolling = 0b1000,
+   static_lighting = 0b10000,
+   has_normal_map = 0b100000,
+   has_detail_map = 0b1000000,
+   has_env_map = 0b10000000,
+   tile_normal_map = 0b100000000,
+};
+
 struct material_input {
    uint flags;
    uint diffuse_map_index;
