@@ -2,6 +2,7 @@
 
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
+#include "sky/sky.hpp"
 #include "texture/texture.hpp"
 
 #include <filesystem>
@@ -10,8 +11,7 @@
 namespace we::assets {
 
 template<typename T>
-struct asset_traits {
-};
+struct asset_traits {};
 
 template<>
 struct asset_traits<odf::definition> {
@@ -32,6 +32,13 @@ struct asset_traits<texture::texture> {
    static constexpr std::string_view error_type_name = "texture";
 
    static auto load(const std::filesystem::path& path) -> texture::texture;
+};
+
+template<>
+struct asset_traits<sky::config> {
+   static constexpr std::string_view error_type_name = "sky";
+
+   static auto load(const std::filesystem::path& path) -> sky::config;
 };
 
 }
