@@ -718,6 +718,9 @@
     <ClInclude Include="src\assets\sky\io.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\sky.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1045,6 +1048,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\sky\io.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\sky.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
