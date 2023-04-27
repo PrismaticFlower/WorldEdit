@@ -115,11 +115,11 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
 const gpu::root_signature_desc sky_mesh_desc{
    .parameters =
       {
-         frame_constant_buffer,
-         material_constant_buffer,
          gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
                              .shader_register = sky_mesh_cb_register,
                              .values_count = 1},
+         material_constant_buffer,
+         frame_constant_buffer,
       },
 
    .flags = {.allow_input_assembler_input_layout = true},

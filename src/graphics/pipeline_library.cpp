@@ -435,8 +435,9 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                    .vs_bytecode = shader_library["sky_meshVS"sv],
                    .ps_bytecode = shader_library["sky_meshPS"sv],
 
+                   .blend_state = blend_premult_alpha,
                    .rasterizer_state = rasterizer_cull_backfacing,
-                   .depth_stencil_state = depth_stencil_disabled,
+                   .depth_stencil_state = depth_stencil_readonly_less_equal,
                    .input_layout = mesh_input_layout,
 
                    .render_target_count = 1,

@@ -563,6 +563,14 @@ void renderer_impl::draw_world(const frustum& view_frustum,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
    }
 
+   {
+      profile_section profile{"Sky - Draw", command_list, _profiler,
+                              profiler_queue::direct};
+
+      _sky.draw(_camera_constant_buffer_view, command_list, _root_signatures,
+                _pipelines, _dynamic_buffer_allocator);
+   }
+
    if (active_entity_types.objects) {
       profile_section profile{"World - Draw Transparent", command_list,
                               _profiler, profiler_queue::direct};
