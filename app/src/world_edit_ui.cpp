@@ -95,6 +95,8 @@ void world_edit::update_ui() noexcept
 
    _tool_visualizers.clear();
 
+   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
    if (ImGui::BeginMainMenuBar()) {
       if (ImGui::BeginMenu("File")) {
          if (ImGui::MenuItem("Open Data Folder")) open_project_with_picker();
@@ -548,6 +550,8 @@ void world_edit::update_ui() noexcept
 
       ImGui::EndMainMenuBar();
    }
+
+   ImGui::PopStyleVar();
 
    // Clear Edit Stack Confirmation Window
    if (_clear_edit_stack_confirm_open) {

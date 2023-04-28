@@ -9,12 +9,17 @@
 #include <iostream>
 
 #include <Windows.h>
+#include <dwmapi.h>
 #include <dxgi1_6.h>
 
 #include <wil/resource.h>
 #include <wil/result.h>
 
 #include <imgui.h>
+
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
 
 using we::utility::command_line;
 
@@ -67,6 +72,10 @@ void run_application(command_line command_line)
                       CW_USEDEFAULT, nullptr, nullptr, current_instance, nullptr)};
 
    if (window_handle == nullptr) std::terminate();
+
+   BOOL use_immersive_dark_mode = true;
+   DwmSetWindowAttribute(window_handle.get(), DWMWA_USE_IMMERSIVE_DARK_MODE,
+                         &use_immersive_dark_mode, sizeof(use_immersive_dark_mode));
 
    RAWINPUTDEVICE raw_input_device{.usUsagePage = 0x01, // HID_USAGE_PAGE_GENERIC
                                    .usUsage = 0x02, // HID_USAGE_GENERIC_MOUSE
