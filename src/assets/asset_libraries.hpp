@@ -41,6 +41,10 @@ namespace texture {
 struct texture;
 }
 
+namespace sky {
+struct config;
+}
+
 template<typename T>
 struct library {
    explicit library(output_stream& stream,
@@ -100,6 +104,7 @@ struct libraries_manager {
    library<odf::definition> odfs;
    library<msh::flat_model> models;
    library<texture::texture> textures;
+   library<sky::config> skies;
 
 private:
    void clear() noexcept;

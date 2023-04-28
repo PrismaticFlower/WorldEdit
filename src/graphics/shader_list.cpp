@@ -53,6 +53,9 @@ std::initializer_list<shader_description> shader_list = {
    shader("terrain_lightingPS"),
    shader("terrain_normalPS"),
 
+   shader("sky_meshVS"),
+   shader("sky_meshPS"),
+
    shader("meta_drawPS"),
    shader("meta_draw_wireframePS"),
    shader("meta_draw_wireframe_GS_fallbackPS"),

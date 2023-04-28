@@ -23,6 +23,7 @@
 #include "settings/graphics.hpp"
 #include "shader_library.hpp"
 #include "shader_list.hpp"
+#include "sky.hpp"
 #include "terrain.hpp"
 #include "texture_manager.hpp"
 #include "utility/overload.hpp"
@@ -224,6 +225,7 @@ private:
    light_clusters _light_clusters{_device, _copy_command_list_pool,
                                   _swap_chain.width(), _swap_chain.height()};
    terrain _terrain{_device, _texture_manager};
+   sky _sky;
 
    constexpr static std::size_t max_drawn_objects = 2048;
    constexpr static std::size_t objects_constants_buffer_size =
@@ -263,7 +265,8 @@ renderer_impl::renderer_impl(const renderer::window_handle window,
                       asset_libraries.textures},
      _model_manager{_device,          _copy_command_list_pool,
                     _texture_manager, asset_libraries.models,
-                    thread_pool,      _error_output}
+                    thread_pool,      _error_output},
+     _sky{_device, _model_manager, asset_libraries}
 {
    // create object constants upload buffers
    for (std::size_t i = 0; i < _object_constants_upload_buffers.size(); ++i) {
@@ -312,6 +315,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _dynamic_buffer_allocator.reset(_device.frame_index());
 
    _model_manager.update_models();
+   _sky.update(world.name);
 
    if (settings.show_profiler) _profiler.show();
 
@@ -557,6 +561,14 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       _terrain.draw(terrain_draw::main, view_frustum, _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
+
+   {
+      profile_section profile{"Sky - Draw", command_list, _profiler,
+                              profiler_queue::direct};
+
+      _sky.draw(_camera_constant_buffer_view, command_list, _root_signatures,
+                _pipelines, _dynamic_buffer_allocator);
    }
 
    if (active_entity_types.objects) {

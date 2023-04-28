@@ -355,10 +355,11 @@ auto library<T>::query_path(const lowercase_string& name) noexcept
 template struct library<odf::definition>;
 template struct library<msh::flat_model>;
 template struct library<texture::texture>;
+template struct library<sky::config>;
 
 libraries_manager::libraries_manager(output_stream& stream,
                                      std::shared_ptr<async::thread_pool> thread_pool) noexcept
-   : odfs{stream, thread_pool}, models{stream, thread_pool}, textures{stream, thread_pool}
+   : odfs{stream, thread_pool}, models{stream, thread_pool}, textures{stream, thread_pool}, skies{stream, thread_pool}
 {
 }
 
@@ -417,6 +418,7 @@ void libraries_manager::update_loaded() noexcept
    odfs.update_loaded();
    models.update_loaded();
    textures.update_loaded();
+   skies.update_loaded();
 }
 
 void libraries_manager::clear() noexcept
@@ -424,6 +426,7 @@ void libraries_manager::clear() noexcept
    odfs.clear();
    models.clear();
    textures.clear();
+   skies.clear();
 }
 
 void libraries_manager::register_asset(const std::filesystem::path& path) noexcept
@@ -437,6 +440,9 @@ void libraries_manager::register_asset(const std::filesystem::path& path) noexce
    }
    else if (string::iequals(extension.native(), L".tga"sv)) {
       textures.add(path);
+   }
+   else if (string::iequals(extension.native(), L".sky"sv)) {
+      skies.add(path);
    }
 }
 

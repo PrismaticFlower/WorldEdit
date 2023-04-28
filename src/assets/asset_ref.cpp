@@ -62,7 +62,7 @@ auto asset_ref<T>::get_if() noexcept -> asset_data<T>
       return data;
    }
 
-   _state->start_load();
+   _state->start_load(); // DEADLOCK ='(
 
    return nullptr;
 }
@@ -98,5 +98,6 @@ auto asset_ref<T>::hash() const noexcept -> std::size_t
 template struct asset_ref<odf::definition>;
 template struct asset_ref<msh::flat_model>;
 template struct asset_ref<texture::texture>;
+template struct asset_ref<sky::config>;
 
 }
