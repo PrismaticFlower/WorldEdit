@@ -3,12 +3,7 @@
 #include "frame_constants.hlsli"
 #include "material_normal.hlsli"
 #include "samplers.hlsli"
-
-struct sky_mesh_constants {
-   uint alpha_cutout;
-};
-
-ConstantBuffer<sky_mesh_constants> cb_mesh_constants : register(SKY_MESH_CB_REGISTER);
+#include "sky_mesh_constants.hlsli"
 
 struct input_vertex {
    float2 texcoords : TEXCOORD;

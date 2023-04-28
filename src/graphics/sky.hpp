@@ -34,6 +34,7 @@ private:
       lowercase_string geometry;
 
       float movement_scale = 1.0f;
+      float offset = 0.0f;
       float rotation_speed = 0.0f;
       float3 rotation_direction = {0.0f, 1.0f, 0.0f};
 

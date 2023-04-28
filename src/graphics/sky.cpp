@@ -7,6 +7,21 @@
 
 namespace we::graphics {
 
+namespace {
+
+struct sky_mesh_constants {
+   float4x4 rotation;
+
+   float movement_scale = 1.0f;
+   float offset = 0.0f;
+   uint32 alpha_cutout = 0;
+   uint32 padding = 0;
+};
+
+static_assert(sizeof(sky_mesh_constants) == 80);
+
+}
+
 sky::sky(gpu::device& device, model_manager& model_manager,
          assets::libraries_manager& assets)
    : _device{device}, _model_manager{model_manager}, _assets{assets}
@@ -18,6 +33,15 @@ void sky::update(const std::string_view world_name) noexcept
    if (_world_name == world_name) return;
 
    _world_name = world_name;
+
+   if (_world_name.empty()) {
+      std::scoped_lock lock{_sky_asset_mutex, _dome_models_mutex};
+
+      _sky_asset = asset_ref<assets::sky::config>{};
+      _dome_models.clear();
+
+      return;
+   }
 
    {
       std::scoped_lock lock{_sky_asset_mutex};
@@ -54,13 +78,18 @@ void sky::draw(gpu_virtual_address frame_constant_buffer_view,
       command_list.ia_set_vertex_buffers(0, vertex_buffers);
 
       for (auto& mesh : model.parts) {
-         (void)dynamic_buffer_allocator;
+         sky_mesh_constants constants{.rotation = {},
 
-         command_list.set_graphics_32bit_constant(rs::sky_mesh::sky_mesh_cbv,
-                                                  (mesh.material.flags &
-                                                   material_pipeline_flags::alpha_cutout) ==
-                                                     material_pipeline_flags::alpha_cutout,
-                                                  0);
+                                      .movement_scale = dome_model.movement_scale,
+                                      .offset = dome_model.offset,
+                                      .alpha_cutout =
+                                         (mesh.material.flags &
+                                          material_pipeline_flags::alpha_cutout) ==
+                                         material_pipeline_flags::alpha_cutout};
+
+         command_list.set_graphics_cbv(
+            rs::sky_mesh::sky_mesh_cbv,
+            dynamic_buffer_allocator.allocate_and_copy(constants).gpu_address);
          command_list.set_graphics_cbv(rs::sky_mesh::material_cbv,
                                        mesh.material.constant_buffer_view);
 
@@ -88,6 +117,7 @@ void sky::sky_loaded([[maybe_unused]] const lowercase_string& name,
       _dome_models.push_back({.geometry = geometry,
 
                               .movement_scale = dome_model.movement_scale,
+                              .offset = dome_model.offset,
                               .rotation_speed = dome_model.rotation.speed,
                               .rotation_direction = dome_model.rotation.direction,
 

@@ -1,5 +1,6 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
+#include "sky_mesh_constants.hlsli"
 #include "srgb.hlsli"
 
 struct input_vertex {
@@ -22,7 +23,12 @@ output_vertex main(input_vertex input)
 {
    output_vertex output;
 
-   const float3 positionWS = input.positionOS + cb_frame.view_positionWS;
+   float3 positionOS = mul(cb_mesh_constants.rotation, float4(input.positionOS, 1.0)).xyz;
+
+   float3 view_positionWS = cb_frame.view_positionWS;
+   float3 positionWS = positionOS + view_positionWS * float3(1.0, cb_mesh_constants.movement_scale, 1.0);
+
+   positionWS.y += ((1.0 - cb_mesh_constants.movement_scale) * cb_mesh_constants.offset);
 
    output.texcoords = input.texcoords;
    output.color = srgb_to_linear(input.color);

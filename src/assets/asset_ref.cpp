@@ -62,7 +62,7 @@ auto asset_ref<T>::get_if() noexcept -> asset_data<T>
       return data;
    }
 
-   _state->start_load();
+   _state->start_load(); // DEADLOCK ='(
 
    return nullptr;
 }
