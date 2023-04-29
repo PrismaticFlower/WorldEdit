@@ -86,7 +86,7 @@ auto light_region_shape(const light& light) noexcept -> region_shape
    }
 }
 
-auto make_barrier_corners(const barrier& barrier) noexcept -> std::array<float2, 4>
+auto make_barrier_corners(const barrier& barrier) noexcept -> std::array<float3, 4>
 {
    const double rot_sin = std::sin(double{barrier.rotation_angle});
    const double rot_cos = -std::cos(double{barrier.rotation_angle});
@@ -96,13 +96,13 @@ auto make_barrier_corners(const barrier& barrier) noexcept -> std::array<float2,
                                                 float2{1.0f, -1.0f},
                                                 float2{1.0f, 1.0f}};
 
-   std::array<float2, 4> cornersWS{};
+   std::array<float3, 4> cornersWS{};
 
    for (std::size_t i = 0; i < cornersWS.size(); ++i) {
       const float2 cornerOS = base_corners[i] * barrier.size;
 
       cornersWS[i] =
-         float2{static_cast<float>(cornerOS.x * rot_cos - cornerOS.y * rot_sin),
+         float3{static_cast<float>(cornerOS.x * rot_cos - cornerOS.y * rot_sin), 0.0f,
                 static_cast<float>(cornerOS.x * rot_sin + cornerOS.y * rot_cos)} +
          barrier.position;
    }
@@ -605,7 +605,8 @@ void save_barriers(const std::filesystem::path& path, const world& world)
       file.write_ln("{");
 
       for (auto& corner : make_barrier_corners(barrier)) {
-         file.write_ln("\tCorner({:f}, 0.000000, {:f});", corner.x, -corner.y);
+         file.write_ln("\tCorner({:f}, {:f}, {:f});", corner.x, corner.y,
+                       -corner.z);
       }
 
       file.write_ln("\tFlag({});", static_cast<int>(barrier.flags));

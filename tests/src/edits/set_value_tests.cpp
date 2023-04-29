@@ -300,16 +300,16 @@ TEST_CASE("edits set_creation_barrier_metrics", "[Edits]")
    interaction_targets.creation_entity = world::barrier{};
 
    auto edit =
-      make_set_creation_barrier_metrics(2.0f, 0.0f, float2{1.0f, 1.0f},
-                                        float2{0.0f, 0.0f}, float2{2.0f, 2.0f},
-                                        float2{0.0f, 0.0f});
+      make_set_creation_barrier_metrics(2.0f, 0.0f, float3{1.0f, 1.0f, 1.0f},
+                                        float3{0.0f, 0.0f, 0.0f},
+                                        float2{2.0f, 2.0f}, float2{0.0f, 0.0f});
 
    edit->apply(edit_context);
 
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            2.0f);
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
-           float2{1.0f, 1.0f});
+           float3{1.0f, 1.0f, 1.0f});
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
            float2{2.0f, 2.0f});
 
@@ -318,7 +318,7 @@ TEST_CASE("edits set_creation_barrier_metrics", "[Edits]")
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            0.0f);
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
-           float2{0.0f, 0.0f});
+           float3{0.0f, 0.0f, 0.0f});
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
            float2{0.0f, 0.0f});
 }
@@ -707,13 +707,13 @@ TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
    interaction_targets.creation_entity = world::barrier{};
 
    auto edit =
-      make_set_creation_barrier_metrics(1.0f, 0.0f, float2{1.0f, 1.0f},
-                                        float2{0.0f, 0.0f}, float2{2.0f, 2.0f},
-                                        float2{0.0f, 0.0f});
+      make_set_creation_barrier_metrics(1.0f, 0.0f, float3{1.0f, 1.0f, 1.0f},
+                                        float3{0.0f, 0.0f, 0.0f},
+                                        float2{2.0f, 2.0f}, float2{0.0f, 0.0f});
    auto other_edit =
-      make_set_creation_barrier_metrics(2.0f, 1.0f, float2{2.0f, 2.0f},
-                                        float2{0.0f, 0.0f}, float2{4.0f, 4.0f},
-                                        float2{0.0f, 0.0f});
+      make_set_creation_barrier_metrics(2.0f, 1.0f, float3{2.0f, 2.0f, 2.0f},
+                                        float3{0.0f, 0.0f, 0.0f},
+                                        float2{4.0f, 4.0f}, float2{0.0f, 0.0f});
 
    REQUIRE(edit->is_coalescable(*other_edit));
 
@@ -724,7 +724,7 @@ TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            2.0f);
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
-           float2{2.0f, 2.0f});
+           float3{2.0f, 2.0f, 2.0f});
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
            float2{4.0f, 4.0f});
 
@@ -733,7 +733,7 @@ TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
            0.0f);
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
-           float2{0.0f, 0.0f});
+           float3{0.0f, 0.0f, 0.0f});
    REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
            float2{0.0f, 0.0f});
 }

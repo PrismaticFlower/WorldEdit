@@ -275,7 +275,7 @@ private:
       int pick_sector_index = 0;
 
       std::optional<float3> resize_start_size;
-      std::optional<float2> resize_barrier_start_position;
+      std::optional<float3> resize_barrier_start_position;
       std::optional<float2> resize_barrier_start_size;
       std::optional<float2> resize_boundary_start_size;
       std::optional<float> resize_portal_start_width;

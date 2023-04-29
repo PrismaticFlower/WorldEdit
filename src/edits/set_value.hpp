@@ -469,7 +469,7 @@ auto make_set_creation_portal_size(float new_width, float original_width,
    -> std::unique_ptr<edit<world::edit_context>>;
 
 auto make_set_creation_barrier_metrics(float new_rotation, float original_rotation,
-                                       float2 new_position, float2 original_position,
+                                       float3 new_position, float3 original_position,
                                        float2 new_size, float2 original_size)
    -> std::unique_ptr<edit<world::edit_context>>;
 

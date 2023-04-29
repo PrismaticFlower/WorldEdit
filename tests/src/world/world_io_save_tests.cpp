@@ -414,10 +414,10 @@ constexpr auto expected_bar = R"(BarrierCount(1);
 
 Barrier("Barrier0")
 {
-	Corner(72.596146, 0.000000, -31.159695);
-	Corner(86.691795, 0.000000, -0.198154);
-	Corner(99.806595, 0.000000, -6.168838);
-	Corner(85.710945, 0.000000, -37.130379);
+	Corner(72.596146, 1.000000, -31.159695);
+	Corner(86.691795, 1.000000, -0.198154);
+	Corner(99.806595, 1.000000, -6.168838);
+	Corner(85.710945, 1.000000, -37.130379);
 	Flag(32);
 }
 
@@ -711,7 +711,7 @@ TEST_CASE("world saving", "[World][IO]")
                              .command_post = "cp2"}},
 
       .barriers = {barrier{.name = "Barrier0",
-                           .position = {86.2013702f, 18.6642666f},
+                           .position = {86.2013702f, 1.0f, 18.6642666f},
                            .size = {7.20497799f, 17.0095882f},
                            .rotation_angle = {2.71437049f},
                            .flags = ai_path_flags::flyer}},

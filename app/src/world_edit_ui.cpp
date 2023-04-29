@@ -2244,8 +2244,8 @@ void world_edit::update_ui() noexcept
                ImGui::DragBarrierRotation("Rotation", barrier,
                                           &_edit_stack_world, &_edit_context);
 
-               ImGui::DragFloat2XZ("Position", barrier, &world::barrier::position,
-                                   &_edit_stack_world, &_edit_context, 0.25f);
+               ImGui::DragFloat3("Position", barrier, &world::barrier::position,
+                                 &_edit_stack_world, &_edit_context, 0.25f);
 
                ImGui::DragFloat2XZ("Size", barrier, &world::barrier::size,
                                    &_edit_stack_world, &_edit_context, 1.0f,
@@ -4529,19 +4529,19 @@ void world_edit::update_ui() noexcept
          ImGui::DragBarrierRotation("Rotation", &creation_entity,
                                     &_edit_stack_world, &_edit_context);
 
-         if (ImGui::DragFloat2XZ("Position", &creation_entity, &world::barrier::position,
-                                 &_edit_stack_world, &_edit_context, 0.25f)) {
+         if (ImGui::DragFloat3("Position", &creation_entity, &world::barrier::position,
+                               &_edit_stack_world, &_edit_context)) {
             _entity_creation_config.placement_mode = placement_mode::manual;
          }
 
          if ((_entity_creation_config.placement_mode == placement_mode::cursor or
               rotate_entity_forward or rotate_entity_back) and
              not _entity_creation_context.using_point_at) {
-            float2 new_position = barrier.position;
+            float3 new_position = barrier.position;
             float new_rotation = barrier.rotation_angle;
 
             if (_entity_creation_config.placement_mode == placement_mode::cursor) {
-               new_position = float2{_cursor_positionWS.x, _cursor_positionWS.z};
+               new_position = _cursor_positionWS;
 
                if (_entity_creation_config.placement_alignment ==
                    placement_alignment::grid) {
@@ -4552,23 +4552,23 @@ void world_edit::update_ui() noexcept
                else if (_entity_creation_config.placement_alignment ==
                         placement_alignment::snapping) {
                   const std::optional<float3> snapped_position =
-                     world::get_snapped_position({new_position.x,
-                                                  _cursor_positionWS.y,
-                                                  new_position.y},
-                                                 _world.objects,
+                     world::get_snapped_position(new_position, _world.objects,
                                                  _entity_creation_config.snap_distance,
                                                  _object_classes);
 
                   if (snapped_position) {
-                     new_position = {snapped_position->x, snapped_position->z};
+                     new_position = *snapped_position;
                   }
                }
 
                if (_entity_creation_context.lock_x_axis) {
                   new_position.x = barrier.position.x;
                }
+               if (_entity_creation_context.lock_y_axis) {
+                  new_position.y = barrier.position.y;
+               }
                if (_entity_creation_context.lock_z_axis) {
-                  new_position.y = barrier.position.y; // NB: Usage of Y under lock Z.
+                  new_position.z = barrier.position.z;
                }
             }
 
@@ -4589,16 +4589,10 @@ void world_edit::update_ui() noexcept
 
          if (_entity_creation_context.using_point_at) {
             _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                                 float3{barrier.position.x,
-                                                        _cursor_positionWS.y,
-                                                        barrier.position.y},
-                                                 0xffffffffu);
+                                                 barrier.position, 0xffffffffu);
 
             const float new_angle =
-               surface_rotation_degrees(normalize(float3{barrier.position.x,
-                                                         _cursor_positionWS.y,
-                                                         barrier.position.y} -
-                                                  _cursor_positionWS),
+               surface_rotation_degrees(normalize(barrier.position - _cursor_positionWS),
                                         barrier.rotation_angle) /
                180.0f * std::numbers::pi_v<float>;
 
@@ -4629,27 +4623,22 @@ void world_edit::update_ui() noexcept
                _entity_creation_context.resize_barrier_start_size = barrier.size;
             }
 
-            _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                                 float3{barrier.position.x,
-                                                        _cursor_positionWS.y,
-                                                        barrier.position.y},
-                                                 0xffffffffu);
-
-            const float2 barrier_start_position =
+            const float3 barrier_start_position =
                *_entity_creation_context.resize_barrier_start_position;
             const float2 barrier_start_size =
                *_entity_creation_context.resize_barrier_start_size;
+
+            _tool_visualizers.lines.emplace_back(_cursor_positionWS,
+                                                 barrier_start_position, 0xffffffffu);
 
             const float4x4 barrier_rotation =
                make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
             const float4x4 inverse_barrier_rotation = transpose(barrier_rotation);
 
             const float3 cursor_positionOS =
-               inverse_barrier_rotation *
-               float3{_cursor_positionWS.x, 0.0f, _cursor_positionWS.z};
+               inverse_barrier_rotation * _cursor_positionWS;
             const float3 barrier_positionOS =
-               inverse_barrier_rotation *
-               float3{barrier_start_position.x, 0.0f, barrier_start_position.y};
+               inverse_barrier_rotation * barrier_start_position;
 
             std::array<float3, 4> cornersOS{
                float3{-barrier_start_size.x, 0.0f, -barrier_start_size.y} + barrier_positionOS,
@@ -4697,17 +4686,16 @@ void world_edit::update_ui() noexcept
                barrier_new_size = min(barrier_new_size, barrier_start_size);
             }
 
-            float3 new_positionWS = barrier_rotation * new_positionOS;
+            float3 barrier_new_position = barrier_rotation * new_positionOS;
 
             if (barrier_new_size.x == barrier_start_size.x) {
-               new_positionWS.x = barrier_start_position.x;
+               barrier_new_position.x = barrier_start_position.x;
             }
             if (barrier_new_size.y == barrier_start_size.y) {
-               new_positionWS.z = barrier_start_position.y;
+               barrier_new_position.z = barrier_start_position.z;
             }
 
-            const float2 barrier_new_position = {new_positionWS.x,
-                                                 new_positionWS.z};
+            barrier_new_position.y = barrier_start_position.y;
 
             if (barrier_new_position != barrier_start_position or
                 barrier_new_size != barrier_start_size) {
@@ -4758,8 +4746,7 @@ void world_edit::update_ui() noexcept
 
                _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
                                           rotation_angle, barrier.rotation_angle,
-                                          float2{position.x, position.z},
-                                          barrier.position,
+                                          position, barrier.position,
                                           float2{size.x, size.z}, barrier.size),
                                        _edit_context);
             }
@@ -4791,8 +4778,7 @@ void world_edit::update_ui() noexcept
 
                _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
                                           rotation_angle, barrier.rotation_angle,
-                                          float2{position.x, position.z},
-                                          barrier.position,
+                                          position, barrier.position,
                                           float2{barrier.size.x, height},
                                           barrier.size),
                                        _edit_context);
@@ -4901,8 +4887,7 @@ void world_edit::update_ui() noexcept
                const float2 size = abs(barrier_max - barrier_min) / 2.0f;
 
                _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
-                                          rotation_angle, barrier.rotation_angle,
-                                          float2{position.x, position.z},
+                                          rotation_angle, barrier.rotation_angle, position,
                                           barrier.position, size, barrier.size),
                                        _edit_context);
             }
@@ -6916,9 +6901,8 @@ void world_edit::update_ui() noexcept
                                      std::get<world::barrier_id>(selected));
 
                if (barrier) {
-                  selection_centre +=
-                     {barrier->position.x, 0.0f, barrier->position.y};
-                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+                  selection_centre += barrier->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
                }
             }
             else if (std::holds_alternative<world::planning_hub_id>(selected)) {
@@ -7063,8 +7047,7 @@ void world_edit::update_ui() noexcept
                   if (barrier) {
                      bundled_edits.push_back(
                         edits::make_set_value(barrier->id, &world::barrier::position,
-                                              barrier->position +
-                                                 float2{move_delta.x, move_delta.z},
+                                              barrier->position + move_delta,
                                               barrier->position));
                   }
                }
@@ -7312,9 +7295,8 @@ void world_edit::update_ui() noexcept
                                      std::get<world::barrier_id>(selected));
 
                if (barrier) {
-                  selection_centre +=
-                     {barrier->position.x, 0.0f, barrier->position.y};
-                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+                  selection_centre += barrier->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
                }
             }
          }

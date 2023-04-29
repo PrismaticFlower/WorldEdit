@@ -244,7 +244,7 @@ struct set_creation_portal_size final : edit<world::edit_context> {
 
 struct set_creation_barrier_metrics final : edit<world::edit_context> {
    set_creation_barrier_metrics(float new_rotation, float original_rotation,
-                                float2 new_position, float2 original_position,
+                                float3 new_position, float3 original_position,
                                 float2 new_size, float2 original_size)
       : new_rotation{new_rotation},
         new_position{new_position},
@@ -289,11 +289,11 @@ struct set_creation_barrier_metrics final : edit<world::edit_context> {
    }
 
    float new_rotation;
-   float2 new_position;
+   float3 new_position;
    float2 new_size;
 
    float original_rotation;
-   float2 original_position;
+   float3 original_position;
    float2 original_size;
 };
 
@@ -349,7 +349,7 @@ auto make_set_creation_portal_size(float new_width, float original_width,
 }
 
 auto make_set_creation_barrier_metrics(float new_rotation, float original_rotation,
-                                       float2 new_position, float2 original_position,
+                                       float3 new_position, float3 original_position,
                                        float2 new_size, float2 original_size)
    -> std::unique_ptr<edit<world::edit_context>>
 {

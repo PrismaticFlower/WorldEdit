@@ -825,7 +825,7 @@ void renderer_impl::draw_world_meta_objects(
                                 {0.0f, 0.0f, barrier.size.y, 0.0f},
                                 {0.0f, 0.0f, 0.0f, 1.0f}};
 
-         transform[3] = {barrier.position.x, 0.0f, barrier.position.y, 1.0f};
+         transform[3] = {barrier.position, 1.0f};
 
          _meta_draw_batcher.add_box(transform, barrier_color); // TODO: Frustum cull
       };
@@ -1563,7 +1563,7 @@ void renderer_impl::draw_interaction_targets(
                                 {0.0f, 0.0f, barrier.size.y, 0.0f},
                                 {0.0f, 0.0f, 0.0f, 1.0f}};
 
-         transform[3] = {barrier.position.x, 0.0f, barrier.position.y, 1.0f};
+         transform[3] = {barrier.position, 1.0f};
 
          _meta_draw_batcher.add_box_wireframe(transform, color);
       },

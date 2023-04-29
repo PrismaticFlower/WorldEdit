@@ -364,7 +364,7 @@ TEST_CASE("world loading", "[World][IO]")
       REQUIRE(world.barriers.size() == 1);
       CHECK(world.barriers[0].name == "Barrier0"sv);
       CHECK(world.barriers[0].flags == ai_path_flags::flyer);
-      CHECK(approx_equals(world.barriers[0].position, {86.2013702f, 18.6642666f}));
+      CHECK(approx_equals(world.barriers[0].position, {86.2013702f, 2.0f, 18.6642666f}));
       CHECK(approx_equals(world.barriers[0].size, {7.20497799f, 17.0095882f}));
       CHECK(world.barriers[0].rotation_angle == 2.71437049f);
       CHECK(is_unique_id(0, world.barriers));

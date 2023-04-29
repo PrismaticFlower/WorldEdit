@@ -12,7 +12,7 @@ namespace we::world {
 struct barrier {
    std::string name;
 
-   float2 position;
+   float3 position;
    float2 size = {2.0f, 2.0f};
    float rotation_angle = 0.0f;
 
