@@ -857,7 +857,7 @@ void world_edit::update_ui() noexcept
 
    ImGui::SeparatorText("Floor Collision");
    ImGui::DragFloat("Height", &_editor_floor_height, 1.0f,
-                    _world.terrain.height_scale * 32768.0f, 1e10f);
+                    _world.terrain.height_scale * -32768.0f, 1e10f);
 
    if (ImGui::IsItemHovered()) {
       ImGui::SetTooltip(
