@@ -16,6 +16,7 @@
     },
 
     "directxtex",
+    "directxmath",
     "fmt",
     "wil",
     "mimalloc"
