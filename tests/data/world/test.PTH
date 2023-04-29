@@ -243,7 +243,7 @@ Path("type_entitypath Path 1")
 	PathSpeedType(0);
 	PathTime(0.000000);
 	OffsetPath(0);
-	SplineType("Catmull-Rom");
+	SplineType("None");
 
 	Properties(0)
 	{

@@ -243,6 +243,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.paths[0].name == "Path 0"sv);
          CHECK(world.paths[0].layer == 0);
          CHECK(world.paths[0].type == path_type::none);
+         CHECK(world.paths[0].spline_type == path_spline_type::catmull_rom);
          CHECK(world.paths[0].properties.size() == 1);
          CHECK(world.paths[0].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
@@ -278,6 +279,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.paths[1].name == "Path 1"sv);
          CHECK(world.paths[1].layer == 0);
          CHECK(world.paths[1].type == path_type::entity_follow);
+         CHECK(world.paths[1].spline_type == path_spline_type::none);
          CHECK(is_unique_id(1, world.paths));
 
          REQUIRE(world.paths[1].nodes.size() == 1);

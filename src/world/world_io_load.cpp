@@ -6,6 +6,7 @@
 #include "io/read_file.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/stopwatch.hpp"
+#include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
@@ -375,6 +376,21 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
             }
 
             path.name = string::split_first_of_exclusive(path.name, " ")[1];
+         }
+
+         if (const auto spline =
+                key_node["SplineType"sv].values.get<std::string_view>(0);
+             string::iequals(spline, "None"sv)) {
+            path.spline_type = path_spline_type::none;
+         }
+         else if (string::iequals(spline, "Linear"sv)) {
+            path.spline_type = path_spline_type::linear;
+         }
+         else if (string::iequals(spline, "Hermite"sv)) {
+            path.spline_type = path_spline_type::hermite;
+         }
+         else if (string::iequals(spline, "Catmull-Rom"sv)) {
+            path.spline_type = path_spline_type::catmull_rom;
          }
 
          // path nodes
