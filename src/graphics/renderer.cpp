@@ -1073,18 +1073,16 @@ void renderer_impl::draw_world_meta_objects(
       const float4 planning_color = settings.planning_color;
 
       const auto add_hub = [&](const world::planning_hub& hub) {
-         const float3 position = {hub.position.x, 0.0f, hub.position.y};
-
          const math::bounding_box bbox{
-            .min = float3{-hub.radius, -planning_hub_height, -hub.radius} + position,
-            .max = float3{hub.radius, planning_hub_height, hub.radius} + position};
+            .min = float3{-hub.radius, -planning_hub_height, -hub.radius} + hub.position,
+            .max = float3{hub.radius, planning_hub_height, hub.radius} + hub.position};
 
          if (not intersects(view_frustum, bbox)) return;
 
          const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
                                   {0.0f, planning_hub_height, 0.0f, 0.0f},
                                   {0.0f, 0.0f, hub.radius, 0.0f},
-                                  {position.x, position.y, position.z, 1.0f}};
+                                  {hub.position, 1.0f}};
 
          _meta_draw_batcher.add_cylinder(transform, planning_color);
       };
@@ -1110,31 +1108,29 @@ void renderer_impl::draw_world_meta_objects(
          const world::planning_hub& end =
             world.planning_hubs[world.planning_hub_index.at(connection.end)];
 
-         const float3 start_position = {start.position.x, 0.0f, start.position.y};
-         const float3 end_position = {end.position.x, 0.0f, end.position.y};
-
          const math::bounding_box start_bbox{
             .min = float3{-start.radius, -planning_connection_height, -start.radius} +
-                   start_position,
+                   start.position,
             .max = float3{start.radius, planning_connection_height, start.radius} +
-                   start_position};
+                   start.position};
          const math::bounding_box end_bbox{
-            .min = float3{-end.radius, -planning_connection_height, -end.radius} + end_position,
+            .min = float3{-end.radius, -planning_connection_height, -end.radius} +
+                   end.position,
             .max = float3{end.radius, planning_connection_height, end.radius} +
-                   end_position};
+                   end.position};
 
          const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
 
          if (not intersects(view_frustum, bbox)) return;
 
          const float3 normal =
-            normalize(float3{-(start_position.z - end_position.z), 0.0f,
-                             start_position.x - end_position.x});
+            normalize(float3{-(start.position.z - end.position.z), 0.0f,
+                             start.position.x - end.position.x});
 
-         std::array<float3, 4> quad{start_position + normal * start.radius,
-                                    start_position - normal * start.radius,
-                                    end_position + normal * end.radius,
-                                    end_position - normal * end.radius};
+         std::array<float3, 4> quad{start.position + normal * start.radius,
+                                    start.position - normal * start.radius,
+                                    end.position + normal * end.radius,
+                                    end.position - normal * end.radius};
 
          const float3 height_offset = {0.0f, planning_connection_height, 0.0f};
 
@@ -1573,7 +1569,7 @@ void renderer_impl::draw_interaction_targets(
          const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
                                   {0.0f, height, 0.0f, 0.0f},
                                   {0.0f, 0.0f, hub.radius, 0.0f},
-                                  {hub.position.x, 0.0f, hub.position.y, 1.0f}};
+                                  {hub.position, 1.0f}};
 
          _meta_draw_batcher.add_cylinder_wireframe(transform, color);
       },
@@ -1585,17 +1581,14 @@ void renderer_impl::draw_interaction_targets(
          const world::planning_hub& end =
             world.planning_hubs[world.planning_hub_index.at(connection.end)];
 
-         const float3 start_position = {start.position.x, 0.0f, start.position.y};
-         const float3 end_position = {end.position.x, 0.0f, end.position.y};
-
          const float3 normal =
-            normalize(float3{-(start_position.z - end_position.z), 0.0f,
-                             start_position.x - end_position.x});
+            normalize(float3{-(start.position.z - end.position.z), 0.0f,
+                             start.position.x - end.position.x});
 
-         std::array<float3, 4> quad{start_position + normal * start.radius,
-                                    start_position - normal * start.radius,
-                                    end_position + normal * end.radius,
-                                    end_position - normal * end.radius};
+         std::array<float3, 4> quad{start.position + normal * start.radius,
+                                    start.position - normal * start.radius,
+                                    end.position + normal * end.radius,
+                                    end.position - normal * end.radius};
 
          const float3 height_offset = {0.0f, height, 0.0f};
 

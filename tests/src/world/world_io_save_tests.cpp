@@ -432,7 +432,7 @@ Hub("Hub0")
 
 Hub("Hub1")
 {
-	Pos(-121.883095, 0.000000, 30.046543);
+	Pos(-121.883095, 1.000000, 30.046543);
 	Radius(7.586431);
 	BranchWeight("Hub0",100.000000,"Connection0",32);
 	BranchWeight("Hub0",75.000000,"Connection0",16);
@@ -444,13 +444,13 @@ Hub("Hub1")
 
 Hub("Hub2")
 {
-	Pos(-54.011314, 0.000000, 194.037018);
+	Pos(-54.011314, 2.000000, 194.037018);
 	Radius(13.120973);
 }
 
 Hub("Hub3")
 {
-	Pos(-163.852570, 0.000000, 169.116760);
+	Pos(-163.852570, 3.000000, 169.116760);
 	Radius(12.046540);
 }
 
@@ -717,22 +717,22 @@ TEST_CASE("world saving", "[World][IO]")
                            .flags = ai_path_flags::flyer}},
 
       .planning_hubs = {planning_hub{.name = "Hub0",
-                                     .position = float2{-63.822487f, -9.202278f},
+                                     .position = float3{-63.822487f, 0.0f, -9.202278f},
                                      .radius = 8.0f,
                                      .id = hub_ids[0]},
 
                         planning_hub{.name = "Hub1",
-                                     .position = float2{-121.883095f, -30.046543f},
+                                     .position = float3{-121.883095f, 1.0f, -30.046543f},
                                      .radius = 7.586431f,
                                      .id = hub_ids[1]},
 
                         planning_hub{.name = "Hub2",
-                                     .position = float2{-54.011314f, -194.037018f},
+                                     .position = float3{-54.011314f, 2.0f, -194.037018f},
                                      .radius = 13.120973f,
                                      .id = hub_ids[2]},
 
                         planning_hub{.name = "Hub3",
-                                     .position = float2{-163.852570f, -169.116760f},
+                                     .position = float3{-163.852570f, 3.0f, -169.116760f},
                                      .radius = 12.046540f,
                                      .id = hub_ids[3]}},
 

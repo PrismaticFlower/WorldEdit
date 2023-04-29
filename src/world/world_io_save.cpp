@@ -627,8 +627,8 @@ void save_planning(const std::filesystem::path& path, const world& world)
       file.write_ln("Hub(\"{}\")", hub.name);
       file.write_ln("{");
 
-      file.write_ln("\tPos({:f}, 0.000000, {:f});", hub.position.x,
-                    -hub.position.y);
+      file.write_ln("\tPos({:f}, {:f}, {:f});", hub.position.x, hub.position.y,
+                    -hub.position.z);
 
       file.write_ln("\tRadius({:f});", hub.radius);
 

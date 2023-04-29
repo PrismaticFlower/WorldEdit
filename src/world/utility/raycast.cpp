@@ -418,9 +418,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& barrier : barriers) {
       float4x4 world_to_box = transpose(
          make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f}));
-      world_to_box[3] = {world_to_box * float3{-barrier.position.x, 0.0f,
-                                               -barrier.position.y},
-                         1.0f};
+      world_to_box[3] = {world_to_box * -barrier.position, 1.0f};
 
       float3 box_ray_origin = world_to_box * ray_origin;
       float3 box_ray_direction = normalize(float3x3{world_to_box} * ray_direction);
@@ -450,8 +448,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& hub : hubs) {
-      const float3 top_position = {hub.position.x, hub_height, hub.position.y};
-      const float3 bottom_position = {hub.position.x, -hub_height, hub.position.y};
+      const float3 top_position = hub.position + float3{0.0f, hub_height, 0.0f};
+      const float3 bottom_position = hub.position + float3{0.0f, -hub_height, 0.0f};
 
       const float intersection = iCylinder(ray_origin, ray_direction, top_position,
                                            bottom_position, hub.radius)
@@ -484,15 +482,12 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       const planning_hub& start = hubs[planning_hub_index.at(connection.start)];
       const planning_hub& end = hubs[planning_hub_index.at(connection.end)];
 
-      const float3 start_position = {start.position.x, 0.0f, start.position.y};
-      const float3 end_position = {end.position.x, 0.0f, end.position.y};
-
       const math::bounding_box start_bbox{
-         .min = float3{-start.radius, -connection_height, -start.radius} + start_position,
-         .max = float3{start.radius, connection_height, start.radius} + start_position};
+         .min = float3{-start.radius, -connection_height, -start.radius} + start.position,
+         .max = float3{start.radius, connection_height, start.radius} + start.position};
       const math::bounding_box end_bbox{
-         .min = float3{-end.radius, -connection_height, -end.radius} + end_position,
-         .max = float3{end.radius, connection_height, end.radius} + end_position};
+         .min = float3{-end.radius, -connection_height, -end.radius} + end.position,
+         .max = float3{end.radius, connection_height, end.radius} + end.position};
 
       const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
 
@@ -504,13 +499,13 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       }
 
       const float3 normal =
-         normalize(float3{-(start_position.z - end_position.z), 0.0f,
-                          start_position.x - end_position.x});
+         normalize(float3{-(start.position.z - end.position.z), 0.0f,
+                          start.position.x - end.position.x});
 
-      std::array<float3, 4> points{start_position + normal * start.radius,
-                                   start_position - normal * start.radius,
-                                   end_position + normal * end.radius,
-                                   end_position - normal * end.radius};
+      std::array<float3, 4> points{start.position + normal * start.radius,
+                                   start.position - normal * start.radius,
+                                   end.position + normal * end.radius,
+                                   end.position - normal * end.radius};
 
       const float3 height_offset = {0.0f, connection_height, 0.0f};
 

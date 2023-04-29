@@ -24,7 +24,7 @@ struct planning_branch_weights {
 struct planning_hub {
    std::string name;
 
-   float2 position;
+   float3 position;
    float radius = 1.0f;
 
    id<planning_hub> id{};

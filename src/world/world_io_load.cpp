@@ -633,6 +633,7 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
             for (auto& child_key_node : key_node) {
                if (child_key_node.key == "Pos"sv) {
                   hub.position = {child_key_node.values.get<float>(0),
+                                  child_key_node.values.get<float>(1),
                                   -child_key_node.values.get<float>(2)};
                }
                else if (child_key_node.key == "Radius"sv) {

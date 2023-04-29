@@ -150,12 +150,12 @@ const we::world::world test_world = {
    }},
 
    .planning_hubs = {planning_hub{.name = "Hub0",
-                                  .position = float2{-63.822487f, -9.202278f},
+                                  .position = float3{-63.822487f, 0.0f, -9.202278f},
                                   .radius = 8.0f,
                                   .id = planning_hub_id{0}},
 
                      planning_hub{.name = "Hub1",
-                                  .position = float2{-121.883095f, -30.046543f},
+                                  .position = float3{-121.883095f, 0.0f, -30.046543f},
                                   .radius = 7.586431f,
                                   .id = planning_hub_id{1}}},
 

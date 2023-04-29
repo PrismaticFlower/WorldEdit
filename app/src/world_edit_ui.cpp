@@ -2305,8 +2305,8 @@ void world_edit::update_ui() noexcept
                                                                 *edited_value);
                                 });
 
-               ImGui::DragFloat2XZ("Position", hub, &world::planning_hub::position,
-                                   &_edit_stack_world, &_edit_context, 0.25f);
+               ImGui::DragFloat3("Position", hub, &world::planning_hub::position,
+                                 &_edit_stack_world, &_edit_context);
 
                ImGui::DragFloat("Radius", hub, &world::planning_hub::radius,
                                 &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
@@ -4925,18 +4925,17 @@ void world_edit::update_ui() noexcept
                                                           *edited_value);
                           });
 
-         if (ImGui::DragFloat2XZ("Position", &creation_entity,
-                                 &world::planning_hub::position,
-                                 &_edit_stack_world, &_edit_context, 0.25f)) {
+         if (ImGui::DragFloat3("Position", &creation_entity, &world::planning_hub::position,
+                               &_edit_stack_world, &_edit_context)) {
             _entity_creation_config.placement_mode = placement_mode::manual;
          }
 
          if (_entity_creation_config.placement_mode == placement_mode::cursor and
              not _entity_creation_context.hub_sizing_started) {
-            float2 new_position = hub.position;
+            float3 new_position = hub.position;
 
             if (_entity_creation_config.placement_mode == placement_mode::cursor) {
-               new_position = float2{_cursor_positionWS.x, _cursor_positionWS.z};
+               new_position = _cursor_positionWS;
 
                if (_entity_creation_config.placement_alignment ==
                    placement_alignment::grid) {
@@ -4955,15 +4954,18 @@ void world_edit::update_ui() noexcept
                                                  _object_classes);
 
                   if (snapped_position) {
-                     new_position = {snapped_position->x, snapped_position->z};
+                     new_position = *snapped_position;
                   }
                }
 
                if (_entity_creation_context.lock_x_axis) {
                   new_position.x = hub.position.x;
                }
+               if (_entity_creation_context.lock_y_axis) {
+                  new_position.y = hub.position.y;
+               }
                if (_entity_creation_context.lock_z_axis) {
-                  new_position.y = hub.position.y; // NB: Usage of Y under lock Z.
+                  new_position.z = hub.position.z;
                }
             }
 
@@ -4980,13 +4982,9 @@ void world_edit::update_ui() noexcept
 
          if (_entity_creation_context.hub_sizing_started) {
             _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                                 float3{hub.position.x,
-                                                        _cursor_positionWS.y,
-                                                        hub.position.y},
-                                                 0xffffffffu);
+                                                 hub.position, 0xffffffffu);
 
-            const float new_radius =
-               distance(float2{_cursor_positionWS.x, _cursor_positionWS.z}, hub.position);
+            const float new_radius = distance(_cursor_positionWS, hub.position);
 
             if (new_radius != hub.radius) {
                _edit_stack_world.apply(edits::make_set_creation_value(&world::planning_hub::radius,
@@ -6911,9 +6909,8 @@ void world_edit::update_ui() noexcept
                                      std::get<world::planning_hub_id>(selected));
 
                if (planning_hub) {
-                  selection_centre +=
-                     {planning_hub->position.x, 0.0f, planning_hub->position.y};
-                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+                  selection_centre += planning_hub->position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
                }
             }
             else if (std::holds_alternative<world::boundary_id>(selected)) {
@@ -7060,8 +7057,7 @@ void world_edit::update_ui() noexcept
                      bundled_edits.push_back(
                         edits::make_set_value(planning_hub->id,
                                               &world::planning_hub::position,
-                                              planning_hub->position +
-                                                 float2{move_delta.x, move_delta.z},
+                                              planning_hub->position + move_delta,
                                               planning_hub->position));
                   }
                }
