@@ -219,8 +219,7 @@ void world_edit::initialize_hotkeys() noexcept
    _hotkeys.add_set(
       {.name = "",
        .description = "Global hotkeys. These are always active.\n\nThese "
-                      "bindings have a lower priority than any other set."
-                      "have the lowest priority."s,
+                      "bindings have a lower priority than any other set."s,
        .activated = [] { return true; },
        .default_hotkeys = {
           {"Move Forward", "camera.move_forward", {.key = key::w}, {.toggle = true}},
