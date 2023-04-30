@@ -56,13 +56,23 @@ asset_ref<T>::~asset_ref()
 template<typename T>
 auto asset_ref<T>::get_if() noexcept -> asset_data<T>
 {
-   std::shared_lock lock{_state->mutex};
+   {
+      std::shared_lock lock{_state->mutex};
 
-   if (auto data = _state->data.lock(); data) {
-      return data;
+      if (auto data = _state->data.lock(); data) {
+         return data;
+      }
    }
 
-   _state->start_load(); // DEADLOCK ='(
+   std::function<void()> start_load;
+
+   {
+      std::shared_lock lock{_state->mutex};
+
+      start_load = _state->start_load;
+   }
+
+   start_load();
 
    return nullptr;
 }
