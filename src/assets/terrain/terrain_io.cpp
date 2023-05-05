@@ -13,7 +13,7 @@ namespace we::assets::terrain {
 namespace {
 
 constexpr uint32 terrain_max_string_length = 32;
-constexpr uint32 cluster_size = 4;
+constexpr int cluster_size = 4;
 constexpr uint32 foliage_map_length = 512;
 
 using terr_string = std::array<char, terrain_max_string_length>;
@@ -137,11 +137,13 @@ auto build_clusters_info(const terrain& terrain) -> clusters_info
          uint32 flags = 0;
 
          // build texture vis mask
-         for (int local_y = 0; local_y < cluster_size; ++local_y) {
-            for (int local_x = 0; local_x < cluster_size; ++local_x) {
+         for (int local_y = -1; local_y <= cluster_size; ++local_y) {
+            for (int local_x = -1; local_x <= cluster_size; ++local_x) {
                for (uint32 i = 0; i < terrain::texture_count; ++i) {
-                  const uint8 weight =
-                     terrain.texture_weight_maps[i][{x + local_x, y + local_y}];
+                  const int abs_x = std::clamp(x + local_x, 0, terrain.length - 1);
+                  const int abs_y = std::clamp(y + local_y, 0, terrain.length - 1);
+
+                  const uint8 weight = terrain.texture_weight_maps[i][{abs_x, abs_y}];
 
                   flags |= (1 & (weight > 0)) << i;
                }
