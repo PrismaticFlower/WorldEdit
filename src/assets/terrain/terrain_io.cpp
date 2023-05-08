@@ -14,7 +14,9 @@ namespace {
 
 constexpr uint32 terrain_max_string_length = 32;
 constexpr int cluster_size = 4;
+constexpr int foliage_patch_size = 2;
 constexpr uint32 foliage_map_length = 512;
+constexpr uint32 cluster_info_water_bit = 0x10000;
 
 using terr_string = std::array<char, terrain_max_string_length>;
 
@@ -150,7 +152,9 @@ auto build_clusters_info(const terrain& terrain) -> clusters_info
             }
          }
 
-         // TODO: Water flag.
+         if (terrain.water_map[{x / cluster_size, y / cluster_size}]) {
+            flags |= cluster_info_water_bit;
+         }
 
          info.flags[{x / cluster_size, (terrain.length - 1 - y) / cluster_size}] = flags;
       }
@@ -172,13 +176,18 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
          ".ter file does not begin with 'TERR' and is likely corrupted!"};
    }
 
+   if (header.terrain_length > 1024) {
+      throw std::runtime_error{
+         ".ter file length is too long. Terrain max length is 1024!"};
+   }
+
    if (header.exheader_size != 164) {
       throw std::runtime_error{"Size of terrain exheader is unexpected."};
    }
 
-   if (header.foliage_patch_size != 2) {
+   if (header.foliage_patch_size != foliage_patch_size) {
       throw std::runtime_error{
-         ".ter file foliage patche size is not '2'! This is unsupported."};
+         ".ter file foliage patch size is not '2'! This is unsupported."};
    }
 
    terrain terrain{.version = header.version,
@@ -294,9 +303,63 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
       }
    }
 
-   // TODO: Water.
+   const int loaded_cluster_length = terrain.length / cluster_size;
+   const int cluster_length = header.terrain_length / cluster_size;
+   const int cluster_count = cluster_length * cluster_length;
+   const int cluster_active_offset = active_offset / cluster_size;
+   const int cluster_active_end = active_end / cluster_size;
 
-   // TODO: Foliage.
+   reader.skip(cluster_count * sizeof(int16));
+   reader.skip(cluster_count * sizeof(int16));
+
+   for (int y = cluster_length - 1; y >= 0; --y) {
+      reader.skip(cluster_active_offset * sizeof(uint32));
+
+      if ((y >= cluster_active_offset) and (y < cluster_active_end)) {
+         for (int x = 0; x < loaded_cluster_length; ++x) {
+            uint32 cluster_flags = reader.read<uint32>();
+
+            terrain.water_map[{x, y - cluster_active_offset}] =
+               (cluster_flags & cluster_info_water_bit) != 0;
+         }
+      }
+      else {
+         reader.skip(loaded_cluster_length * sizeof(uint32));
+      }
+
+      reader.skip(cluster_active_offset * sizeof(uint32));
+   }
+
+   container::dynamic_array_2d<uint8> foliage_map{foliage_map_length, foliage_map_length};
+
+   for (int y = foliage_map_length - 1; y >= 0; --y) {
+      for (int x = 0; x < foliage_map_length; x += 2) {
+
+         const uint8 packed_foliage = reader.read<uint8>();
+
+         foliage_map[{x, y}] = packed_foliage & 0xfu;
+         foliage_map[{x + 1, y}] = (packed_foliage >> 4u) & 0xfu;
+      }
+   }
+
+   const int active_foliage_length = (terrain.length / 2);
+   const int active_foliage_offset = (foliage_map_length - active_foliage_length) / 2;
+
+   for (int y = 0; y < active_foliage_length; ++y) {
+      for (int x = 0; x < active_foliage_length; ++x) {
+         const uint8 foliage =
+            foliage_map[{x + active_foliage_offset, y + active_foliage_offset}];
+
+         terrain.foliage_map[{x, y}] = {.layer0 = (foliage & 0b1) != 0,
+                                        .layer1 = (foliage & 0b10) != 0,
+                                        .layer2 = (foliage & 0b100) != 0,
+                                        .layer3 = (foliage & 0b1000) != 0};
+      }
+   }
+
+   const std::size_t unused_sections_size = 262'144 + 131'072;
+
+   reader.skip(unused_sections_size);
 
    // TODO: Terrain cuts. (Although there isn't much point in reading them as we'll just have to recreate them based off objects in the world.)
 
@@ -382,9 +445,6 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain)
    auto write_map = [&](const auto& map) {
       const auto rows = map.rows_begin();
 
-      // I was going to do a simple range-for loop with reverse from ranges but apparently
-      // the iterators for rows don't work with it and the compiler has helpfully decided to
-      // not tell me which concept isn't being satisified (I just know it isn't std::bidirectional_iterator).
       for (int y = int{terrain.length} - 1; y >= 0; --y) {
          file.write(std::as_bytes(rows[y]));
       }
@@ -414,23 +474,58 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain)
    file.write(std::as_bytes(std::span{info.max_heights}));
    file.write(std::as_bytes(std::span{info.flags}));
 
-   const std::size_t foliage_map_size = foliage_map_length * foliage_map_length / 2;
+   // foliage
+
+   const int active_foliage_length = (terrain.length / 2);
+   const int active_foliage_offset = (foliage_map_length - active_foliage_length) / 2;
+
+   for (int y = 0; y < active_foliage_offset; ++y) {
+      file.write(std::array<std::byte, 256>{});
+   }
+
+   for (int y = 0; y < active_foliage_length; ++y) {
+      for (int x = 0; x < (active_foliage_offset / 2); ++x) {
+         file.write_object(std::byte{});
+      }
+
+      const int flipped_y = (active_foliage_length - 1) - y;
+
+      for (int x = 0; x < active_foliage_length; x += 2) {
+         const foliage_patch foliage_0 = terrain.foliage_map[{x, flipped_y}];
+         const foliage_patch foliage_1 = terrain.foliage_map[{x + 1, flipped_y}];
+
+         uint8 packed_foliage = 0;
+
+         packed_foliage |= foliage_0.layer0 << 0;
+         packed_foliage |= foliage_0.layer1 << 1;
+         packed_foliage |= foliage_0.layer2 << 2;
+         packed_foliage |= foliage_0.layer3 << 3;
+         packed_foliage |= foliage_1.layer0 << 4;
+         packed_foliage |= foliage_1.layer1 << 5;
+         packed_foliage |= foliage_1.layer2 << 6;
+         packed_foliage |= foliage_1.layer3 << 7;
+
+         file.write_object(packed_foliage);
+      }
+
+      for (int x = 0; x < (active_foliage_offset / 2); ++x) {
+         file.write_object(std::byte{});
+      }
+   }
+
+   for (int y = 0; y < active_foliage_offset; ++y) {
+      file.write(std::array<std::byte, 256>{});
+   }
+
    const std::size_t unused_sections_size = 262'144 + 131'072;
 
-   const std::size_t make_dummy_data_size =
-      std::max(foliage_map_size, unused_sections_size);
-
-   const std::vector<std::byte> dummy_data{make_dummy_data_size};
+   const std::vector<std::byte> dummy_data{unused_sections_size};
    const std::span<const std::byte> dummy_data_span{dummy_data};
 
-   // foliage
-   file.write(dummy_data_span.subspan(0, foliage_map_size));
-
-   file.write(dummy_data_span.subspan(0, unused_sections_size));
+   file.write(dummy_data_span);
 
    // terrain cuts
    // TODO: Terrain cutter support.
    file.write_object(std::array<uint32, 2>{0, 0}); // section size, cutter count
 }
-
 }

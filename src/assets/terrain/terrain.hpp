@@ -56,7 +56,6 @@ struct foliage_patch {
 };
 
 struct terrain {
-   constexpr static std::size_t foliage_length = 512;
    constexpr static std::size_t texture_count = 16;
 
    version version = version::swbf2;
@@ -97,6 +96,10 @@ struct terrain {
        container::dynamic_array_2d<uint8>{length, length},
        container::dynamic_array_2d<uint8>{length, length},
        container::dynamic_array_2d<uint8>{length, length}};
+
+   container::dynamic_array_2d<bool> water_map{length / 4, length / 4};
+
+   container::dynamic_array_2d<foliage_patch> foliage_map{length / 2, length / 2};
 
    // TODO: Water.
 
