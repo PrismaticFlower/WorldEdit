@@ -539,6 +539,8 @@ void world_edit::place_creation_entity() noexcept
                                 "commandpost")) {
                command_post_auto_place_meta_entities(_world.objects.back());
             }
+
+            _last_created_entities.last_layer = object.layer;
          },
          [&](const world::light& light) {
             world::light new_light = light;
@@ -576,6 +578,8 @@ void world_edit::place_creation_entity() noexcept
                                           light.region_name),
                                        _edit_context, {.transparent = true});
             }
+
+            _last_created_entities.last_layer = light.layer;
          },
          [&](const world::path& path) {
             if (const world::path* existing_path =
@@ -615,6 +619,8 @@ void world_edit::place_creation_entity() noexcept
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
                                        _edit_context);
             }
+
+            _last_created_entities.last_layer = path.layer;
          },
          [&](const world::region& region) {
             world::region new_region = region;
@@ -634,6 +640,8 @@ void world_edit::place_creation_entity() noexcept
                                                                  region.name),
                                        region.name),
                                     _edit_context, {.transparent = true});
+
+            _last_created_entities.last_layer = region.layer;
          },
          [&](const world::sector& sector) {
             if (sector.points.empty()) std::terminate();
@@ -704,6 +712,8 @@ void world_edit::place_creation_entity() noexcept
                                                                  hintnode.name),
                                        hintnode.name),
                                     _edit_context, {.transparent = true});
+
+            _last_created_entities.last_layer = hintnode.layer;
          },
          [&](const world::barrier& barrier) {
             world::barrier new_barrier = barrier;

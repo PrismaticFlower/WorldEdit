@@ -246,6 +246,11 @@ void world_edit::update_ui() noexcept
       }
 
       if (ImGui::BeginMenu("Create")) {
+         const int creation_layer = _last_created_entities.last_layer <
+                                          std::ssize(_world.layer_descriptions)
+                                       ? _last_created_entities.last_layer
+                                       : 0;
+
          if (ImGui::MenuItem("Object")) {
             const world::object* base_object =
                world::find_entity(_world.objects, _last_created_entities.last_object);
@@ -257,10 +262,12 @@ void world_edit::update_ui() noexcept
 
                new_object.name =
                   world::create_unique_name(_world.objects, base_object->name);
+               new_object.layer = creation_layer;
                new_object.id = world::max_id;
             }
             else {
                new_object = world::object{.name = "",
+                                          .layer = creation_layer,
                                           .class_name = lowercase_string{""sv},
                                           .id = world::max_id};
             }
@@ -284,10 +291,12 @@ void world_edit::update_ui() noexcept
 
                new_light.name =
                   world::create_unique_name(_world.lights, base_light->name);
+               new_light.layer = creation_layer;
                new_light.id = world::max_id;
             }
             else {
-               new_light = world::light{.name = "", .id = world::max_id};
+               new_light =
+                  world::light{.name = "", .layer = creation_layer, .id = world::max_id};
             }
 
             _edit_stack_world
@@ -302,15 +311,17 @@ void world_edit::update_ui() noexcept
             const world::path* base_path =
                world::find_entity(_world.paths, _last_created_entities.last_path);
 
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(
-                         world::path{.name = world::create_unique_name(
-                                        _world.paths, base_path ? base_path->name : "Path 0"),
-                                     .layer = base_path ? base_path->layer : 0,
-                                     .nodes = {world::path::node{}},
-                                     .id = world::max_id},
-                         _interaction_targets.creation_entity),
-                      _edit_context);
+            _edit_stack_world.apply(
+               edits::make_creation_entity_set(
+                  world::path{.name = world::create_unique_name(_world.paths,
+                                                                base_path
+                                                                   ? base_path->name
+                                                                   : "Path 0"),
+                              .layer = base_path ? base_path->layer : creation_layer,
+                              .nodes = {world::path::node{}},
+                              .id = world::max_id},
+                  _interaction_targets.creation_entity),
+               _edit_context);
             _entity_creation_context = {};
             _world_draw_mask.paths = true;
          }
@@ -326,11 +337,13 @@ void world_edit::update_ui() noexcept
 
                new_region.name =
                   world::create_unique_name(_world.regions, base_region->name);
+               new_region.layer = creation_layer;
                new_region.id = world::max_id;
             }
             else {
                new_region =
                   world::region{.name = world::create_unique_name(_world.lights, "Region0"),
+                                .layer = creation_layer,
                                 .id = world::max_id};
             }
 
@@ -397,10 +410,13 @@ void world_edit::update_ui() noexcept
 
                new_hintnode.name =
                   world::create_unique_name(_world.hintnodes, base_hintnode->name);
+               new_hintnode.layer = creation_layer;
                new_hintnode.id = world::max_id;
             }
             else {
-               new_hintnode = world::hintnode{.name = "Hint0", .id = world::max_id};
+               new_hintnode = world::hintnode{.name = "Hint0",
+                                              .layer = creation_layer,
+                                              .id = world::max_id};
             }
 
             _edit_stack_world

@@ -233,6 +233,8 @@ private:
       world::planning_connection_id last_planning_connection = world::max_id;
       world::boundary_id last_boundary = world::max_id;
 
+      int last_layer = 0;
+
       container::ring_set<lowercase_string, 8> last_used_object_classes;
    } _last_created_entities;
 
