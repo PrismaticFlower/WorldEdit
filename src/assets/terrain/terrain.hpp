@@ -6,6 +6,7 @@
 #include <array>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace we::assets::terrain {
 
@@ -55,6 +56,12 @@ struct foliage_patch {
    bool operator==(const foliage_patch&) const noexcept = default;
 };
 
+struct terrain_cut {
+   float3 bbox_min;
+   float3 bbox_max;
+   std::vector<float4> planes;
+};
+
 struct terrain {
    constexpr static std::size_t texture_count = 16;
 
@@ -101,11 +108,7 @@ struct terrain {
 
    container::dynamic_array_2d<foliage_patch> foliage_map{length / 2, length / 2};
 
-   // TODO: Water.
-
-   // TODO: Foliage.
-
-   // TODO: Terraincuts.
+   std::vector<terrain_cut> cuts;
 };
 
 }

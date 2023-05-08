@@ -361,7 +361,35 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
 
    reader.skip(unused_sections_size);
 
-   // TODO: Terrain cuts. (Although there isn't much point in reading them as we'll just have to recreate them based off objects in the world.)
+   [[maybe_unused]] const uint32 terrain_cuts_size = reader.read<uint32>();
+   const uint32 terrain_cut_count = reader.read<uint32>();
+
+   terrain.cuts.reserve(terrain_cut_count);
+
+   for (uint32 i = 0; i < terrain_cut_count; ++i) {
+      const uint32 plane_count = reader.read<uint32>();
+
+      const float3 bbox_min = reader.read<float3>();
+      const float3 bbox_max = reader.read<float3>();
+
+      const float3 flipped_bbox_min = {bbox_min.x, bbox_min.y,
+                                       std::min(-bbox_min.z, -bbox_max.z)};
+      const float3 flipped_bbox_max = {bbox_max.x, bbox_max.y,
+                                       std::max(-bbox_min.z, -bbox_max.z)};
+
+      std::vector<float4> planes;
+      planes.reserve(plane_count);
+
+      for (uint32 plane_index = 0; plane_index < plane_count; ++plane_index) {
+         float4 plane = reader.read<float4>();
+
+         plane.z = -plane.z;
+
+         planes.push_back(plane);
+      }
+
+      terrain.cuts.emplace_back(flipped_bbox_min, flipped_bbox_max, std::move(planes));
+   }
 
    return terrain;
 }
@@ -524,8 +552,32 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain)
 
    file.write(dummy_data_span);
 
-   // terrain cuts
-   // TODO: Terrain cutter support.
-   file.write_object(std::array<uint32, 2>{0, 0}); // section size, cutter count
+   std::size_t terrain_cuts_size = sizeof(uint32);
+
+   for (const auto& cut : terrain.cuts) {
+      terrain_cuts_size +=
+         sizeof(uint32) + sizeof(float3) * 2 + sizeof(float4) * cut.planes.size();
+   }
+
+   file.write_object(static_cast<uint32>(terrain_cuts_size));
+   file.write_object(static_cast<uint32>(terrain.cuts.size()));
+
+   for (const auto& cut : terrain.cuts) {
+      file.write_object(static_cast<uint32>(cut.planes.size()));
+
+      const float3 bbox_min = {cut.bbox_min.x, cut.bbox_min.y,
+                               std::min(-cut.bbox_min.z, -cut.bbox_max.z)};
+      const float3 bbox_max = {cut.bbox_max.x, cut.bbox_max.y,
+                               std::max(-cut.bbox_min.z, -cut.bbox_max.z)};
+
+      file.write_object(bbox_min);
+      file.write_object(bbox_max);
+
+      for (float4 plane : cut.planes) {
+         plane.z = -plane.z;
+
+         file.write_object(plane);
+      }
+   }
 }
 }
