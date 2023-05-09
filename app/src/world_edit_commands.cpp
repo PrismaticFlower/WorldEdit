@@ -101,6 +101,8 @@ void world_edit::initialize_commands() noexcept
       _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
    });
    _commands.add("entity_edit.align_selection"s, [this] { align_selection(); });
+   _commands.add("entity_edit.new_from_selection"s,
+                 [this] { new_entity_from_selection(); });
    _commands.add("entity_edit.open_odf"s, [this] { open_odfs_for_selected(); });
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
@@ -309,6 +311,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Align Selection (Terrain Grid)",
            "entity_edit.align_selection",
            {.key = key::a, .modifiers = {.shift = true}}},
+          {"New Entity from Selection", "entity_edit.new_from_selection", {.key = key::n}},
           {"Open .odf in Text Editor",
            "entity_edit.open_odf",
            {.key = key::o, .modifiers = {.ctrl = true}}},

@@ -109,6 +109,8 @@ private:
 
    void align_selection() noexcept;
 
+   void new_entity_from_selection() noexcept;
+
    void ask_to_save_world() noexcept;
 
    void open_project(std::filesystem::path path) noexcept;

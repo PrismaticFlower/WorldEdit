@@ -1092,6 +1092,213 @@ void world_edit::align_selection() noexcept
    }
 }
 
+void world_edit::new_entity_from_selection() noexcept
+{
+   if (_interaction_targets.selection.empty()) return;
+
+   auto& selected = _interaction_targets.selection.front();
+
+   if (std::holds_alternative<world::object_id>(selected)) {
+      world::object* object =
+         world::find_entity(_world.objects, std::get<world::object_id>(selected));
+
+      if (not object) return;
+
+      world::object new_object = *object;
+
+      new_object.name = world::create_unique_name(_world.objects, new_object.name);
+      new_object.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_object),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.objects = true;
+   }
+   else if (std::holds_alternative<world::light_id>(selected)) {
+      world::light* light =
+         world::find_entity(_world.lights, std::get<world::light_id>(selected));
+
+      if (not light) return;
+
+      world::light new_light = *light;
+
+      new_light.name = world::create_unique_name(_world.lights, new_light.name);
+      new_light.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_light),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.lights = true;
+   }
+   else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+      auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+
+      world::path* path = world::find_entity(_world.paths, id);
+
+      if (not path) return;
+
+      world::path new_path = *path;
+
+      new_path.name = world::create_unique_name(_world.paths, new_path.name);
+      new_path.nodes = {world::path::node{}};
+      new_path.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_path),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.paths = true;
+   }
+   else if (std::holds_alternative<world::region_id>(selected)) {
+      world::region* region =
+         world::find_entity(_world.regions, std::get<world::region_id>(selected));
+
+      if (not region) return;
+
+      world::region new_region = *region;
+
+      new_region.name = world::create_unique_name(_world.regions, new_region.name);
+      new_region.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_region),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.regions = true;
+   }
+   else if (std::holds_alternative<world::sector_id>(selected)) {
+      world::sector* sector =
+         world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
+
+      if (not sector) return;
+
+      world::sector new_sector = *sector;
+
+      new_sector.name = world::create_unique_name(_world.sectors, new_sector.name);
+      new_sector.points = {{0.0f, 0.0f}};
+      new_sector.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_sector),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.sectors = true;
+   }
+   else if (std::holds_alternative<world::portal_id>(selected)) {
+      world::portal* portal =
+         world::find_entity(_world.portals, std::get<world::portal_id>(selected));
+
+      if (not portal) return;
+
+      world::portal new_portal = *portal;
+
+      new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
+      new_portal.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_portal),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.portals = true;
+   }
+   else if (std::holds_alternative<world::hintnode_id>(selected)) {
+      world::hintnode* hintnode =
+         world::find_entity(_world.hintnodes, std::get<world::hintnode_id>(selected));
+
+      if (not hintnode) return;
+
+      world::hintnode new_hintnode = *hintnode;
+
+      new_hintnode.name =
+         world::create_unique_name(_world.hintnodes, new_hintnode.name);
+      new_hintnode.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_hintnode),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.hintnodes = true;
+   }
+   else if (std::holds_alternative<world::barrier_id>(selected)) {
+      world::barrier* barrier =
+         world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
+
+      if (not barrier) return;
+
+      world::barrier new_barrier = *barrier;
+
+      new_barrier.name = world::create_unique_name(_world.barriers, new_barrier.name);
+      new_barrier.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_barrier),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.barriers = true;
+   }
+   else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+      world::planning_hub* hub =
+         world::find_entity(_world.planning_hubs,
+                            std::get<world::planning_hub_id>(selected));
+
+      if (not hub) return;
+
+      world::planning_hub new_hub = *hub;
+
+      new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
+      new_hub.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_hub),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.planning_hubs = true;
+      _world_draw_mask.planning_connections = true;
+   }
+   else if (std::holds_alternative<world::planning_connection_id>(selected)) {
+      world::planning_connection* connection =
+         world::find_entity(_world.planning_connections,
+                            std::get<world::planning_connection_id>(selected));
+
+      if (not connection) return;
+
+      world::planning_connection new_connection = *connection;
+
+      new_connection.name =
+         world::create_unique_name(_world.planning_connections, new_connection.name);
+      new_connection.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_connection),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.planning_hubs = true;
+      _world_draw_mask.planning_connections = true;
+   }
+   else if (std::holds_alternative<world::boundary_id>(selected)) {
+      world::boundary* boundary =
+         world::find_entity(_world.boundaries, std::get<world::boundary_id>(selected));
+
+      if (not boundary) return;
+
+      world::boundary new_boundary = *boundary;
+
+      new_boundary.name =
+         world::create_unique_name(_world.boundaries, new_boundary.name);
+      new_boundary.id = world::max_id;
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_boundary),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _world_draw_mask.boundaries = true;
+   }
+
+   _entity_creation_context = {};
+}
+
 void world_edit::ask_to_save_world() noexcept
 {
    if (_world_path.empty()) return;

@@ -2574,6 +2574,16 @@ void world_edit::update_ui() noexcept
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Editing", "Rotate Selection")));
 
+         ImGui::Text("Align Selection (Terrain Grid)");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Editing",
+                                   "Align Selection (Terrain Grid)")));
+
+         ImGui::Text("New Entity from Selection");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Editing",
+                                   "New Entity from Selection")));
+
          ImGui::End();
       }
    }
