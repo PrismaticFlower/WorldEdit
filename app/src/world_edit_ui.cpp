@@ -2544,6 +2544,11 @@ void world_edit::update_ui() noexcept
             _selection_edit_tool = selection_edit_tool::rotate;
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
          }
+
+         if (ImGui::Button("Align Selection (Terrain Grid)",
+                           {ImGui::CalcItemWidth(), 0.0f})) {
+            align_selection();
+         }
       }
 
       ImGui::End();

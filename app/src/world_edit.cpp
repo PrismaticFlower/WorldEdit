@@ -2,6 +2,7 @@
 #include "world_edit.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
+#include "edits/bundle.hpp"
 #include "edits/creation_entity_set.hpp"
 #include "edits/delete_entity.hpp"
 #include "edits/insert_entity.hpp"
@@ -946,6 +947,149 @@ void world_edit::delete_selected() noexcept
    }
 
    _interaction_targets.selection.clear();
+}
+
+void world_edit::align_selection() noexcept
+{
+   if (_interaction_targets.selection.empty()) return;
+
+   edits::bundle_vector bundle;
+
+   const float alignment = _world.terrain.grid_scale;
+
+   const auto align_position = [=](const float3 position) {
+      return float3{std::round(position.x / alignment) * alignment, position.y,
+                    std::round(position.z / alignment) * alignment};
+   };
+
+   for (const auto& selected : _interaction_targets.selection) {
+      if (std::holds_alternative<world::object_id>(selected)) {
+         const world::object* object =
+            world::find_entity(_world.objects, std::get<world::object_id>(selected));
+
+         if (object) {
+            bundle.push_back(edits::make_set_value(object->id, &world::object::position,
+                                                   align_position(object->position),
+                                                   object->position));
+         }
+      }
+      else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+         const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+
+         const world::path* path = world::find_entity(_world.paths, id);
+
+         if (path) {
+            const world::path::node& node = path->nodes[node_index];
+
+            bundle.push_back(
+               edits::make_set_path_node_value(path->id, node_index,
+                                               &world::path::node::position,
+                                               align_position(node.position),
+                                               node.position));
+         }
+      }
+      else if (std::holds_alternative<world::light_id>(selected)) {
+         const world::light* light =
+            world::find_entity(_world.lights, std::get<world::light_id>(selected));
+
+         if (light) {
+            bundle.push_back(edits::make_set_value(light->id, &world::light::position,
+                                                   align_position(light->position),
+                                                   light->position));
+         }
+      }
+      else if (std::holds_alternative<world::region_id>(selected)) {
+         const world::region* region =
+            world::find_entity(_world.regions, std::get<world::region_id>(selected));
+
+         if (region) {
+            bundle.push_back(edits::make_set_value(region->id, &world::region::position,
+                                                   align_position(region->position),
+                                                   region->position));
+         }
+      }
+      else if (std::holds_alternative<world::sector_id>(selected)) {
+         const world::sector* sector =
+            world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
+
+         if (sector) {
+            std::vector<float2> new_points = sector->points;
+
+            for (auto& point : new_points) {
+               point = round(point / alignment) * alignment;
+            }
+
+            bundle.push_back(
+               edits::make_set_value(sector->id, &world::sector::points,
+                                     std::move(new_points), sector->points));
+         }
+      }
+      else if (std::holds_alternative<world::portal_id>(selected)) {
+         const world::portal* portal =
+            world::find_entity(_world.portals, std::get<world::portal_id>(selected));
+
+         if (portal) {
+            bundle.push_back(edits::make_set_value(portal->id, &world::portal::position,
+                                                   align_position(portal->position),
+                                                   portal->position));
+         }
+      }
+      else if (std::holds_alternative<world::hintnode_id>(selected)) {
+         const world::hintnode* hintnode =
+            world::find_entity(_world.hintnodes,
+                               std::get<world::hintnode_id>(selected));
+
+         if (hintnode) {
+            bundle.push_back(
+               edits::make_set_value(hintnode->id, &world::hintnode::position,
+                                     align_position(hintnode->position),
+                                     hintnode->position));
+         }
+      }
+      else if (std::holds_alternative<world::barrier_id>(selected)) {
+         const world::barrier* barrier =
+            world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
+
+         if (barrier) {
+            bundle.push_back(edits::make_set_value(barrier->id, &world::barrier::position,
+                                                   align_position(barrier->position),
+                                                   barrier->position));
+         }
+      }
+      else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+         const world::planning_hub* planning_hub =
+            world::find_entity(_world.planning_hubs,
+                               std::get<world::planning_hub_id>(selected));
+
+         if (planning_hub) {
+            bundle.push_back(
+               edits::make_set_value(planning_hub->id, &world::planning_hub::position,
+                                     align_position(planning_hub->position),
+                                     planning_hub->position));
+         }
+      }
+      else if (std::holds_alternative<world::boundary_id>(selected)) {
+         const world::boundary* boundary =
+            world::find_entity(_world.boundaries,
+                               std::get<world::boundary_id>(selected));
+
+         if (boundary) {
+            bundle.push_back(
+               edits::make_set_value(boundary->id, &world::boundary::position,
+                                     round(boundary->position / alignment) * alignment,
+                                     boundary->position));
+         }
+      }
+   }
+
+   if (bundle.size() == 1) {
+      _edit_stack_world.apply(std::move(bundle.back()), _edit_context,
+                              {.closed = true});
+   }
+   else if (not bundle.empty()) {
+      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                              _edit_context, {.closed = true});
+   }
 }
 
 void world_edit::ask_to_save_world() noexcept
