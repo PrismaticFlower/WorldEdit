@@ -75,6 +75,8 @@ TEST_CASE("world utilities create_unique_name", "[World][Utilities]")
            "Amazing Object 0");
    REQUIRE(create_unique_name(world.objects, "Amazing Object") ==
            "Amazing Object");
+   REQUIRE(create_unique_name(world.objects, "Amazing Object 31") ==
+           "Amazing Object 31");
    REQUIRE(create_unique_name(world.objects, "62") == "Object0");
    REQUIRE(create_unique_name(world.objects, "63") == "63");
    REQUIRE(create_unique_name(world.objects, "") == "");
@@ -94,6 +96,8 @@ TEST_CASE("world utilities create_unique_light_region_name",
                                            "Region0") == "Region1");
    REQUIRE(create_unique_light_region_name(world.lights, world.regions, "") ==
            "LightRegion0");
+   REQUIRE(create_unique_light_region_name(world.lights, world.regions,
+                                           "Region1") == "Region1");
 }
 
 TEST_CASE("world utilities find_closest_node", "[World][Utilities]")

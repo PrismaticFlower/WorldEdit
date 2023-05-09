@@ -44,20 +44,31 @@ auto create_base_name(const std::string_view name,
 }
 
 template<typename T>
+bool is_name_unique(const std::span<const T> entities,
+                    const std::string_view reference_name) noexcept
+{
+   for (auto& entity : entities) {
+      if (entity.name == reference_name) return false;
+   }
+
+   return true;
+}
+
+template<typename T>
 auto create_unique_name_impl(const std::span<const T> entities,
                              const std::string_view reference_name) -> std::string
 {
    if (reference_name.empty()) return "";
+
+   if (is_name_unique(entities, reference_name)) {
+      return std::string{reference_name};
+   }
 
    absl::flat_hash_set<std::string_view> used_names;
 
    used_names.reserve(entities.size());
 
    for (const auto& entity : entities) used_names.emplace(entity.name);
-
-   if (not used_names.contains(reference_name)) {
-      return std::string{reference_name};
-   }
 
    const std::string_view base_name = create_base_name<T>(reference_name);
 
@@ -142,6 +153,11 @@ auto create_unique_light_region_name(const std::span<const light> lights,
                                      const std::span<const region> regions,
                                      const std::string_view reference_name) -> std::string
 {
+   if (not reference_name.empty() and is_name_unique(lights, reference_name) and
+       is_name_unique(regions, reference_name)) {
+      return std::string{reference_name};
+   }
+
    absl::flat_hash_set<std::string_view> used_names;
 
    used_names.reserve(lights.size());
@@ -151,10 +167,6 @@ auto create_unique_light_region_name(const std::span<const light> lights,
       if (is_region_light(light)) used_names.emplace(light.region_name);
    }
    for (const auto& region : regions) used_names.emplace(region.name);
-
-   if (not reference_name.empty() and not used_names.contains(reference_name)) {
-      return std::string{reference_name};
-   }
 
    const std::string_view base_name =
       create_base_name<light>(reference_name, "LightRegion");
