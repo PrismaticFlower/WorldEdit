@@ -6038,13 +6038,14 @@ void world_edit::update_ui() noexcept
                                                    _edit_context);
                         }
                         else {
-                           _edit_stack_world
-                              .apply(edits::make_creation_entity_set(
-                                        world::object{.name = "",
-                                                      .class_name = lowercase_string{class_name},
-                                                      .id = world::max_id},
-                                        _interaction_targets.creation_entity),
-                                     _edit_context);
+                           _edit_stack_world.apply(
+                              edits::make_creation_entity_set(
+                                 world::object{.name = "",
+                                               .layer = _last_created_entities.last_layer,
+                                               .class_name = lowercase_string{class_name},
+                                               .id = world::max_id},
+                                 _interaction_targets.creation_entity),
+                              _edit_context);
                            _entity_creation_context = {};
                         }
                      }
