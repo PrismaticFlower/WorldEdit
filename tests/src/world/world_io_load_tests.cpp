@@ -311,12 +311,50 @@ TEST_CASE("world loading", "[World][IO]")
 
    // sector checks
    {
-      // TODO: create a test .pvs file
+      REQUIRE(world.sectors.size() == 2);
+
+      CHECK(world.sectors[0].name == "sector"sv);
+
+      REQUIRE(world.sectors[0].points.size() == 4);
+      CHECK(approx_equals(world.sectors[0].points[0], {-157.581009f, -4.900336f}));
+      CHECK(approx_equals(world.sectors[0].points[1], {-227.199097f, -7.364827f}));
+      CHECK(approx_equals(world.sectors[0].points[2], {-228.642029f, 40.347687f}));
+      CHECK(approx_equals(world.sectors[0].points[3], {-159.451279f, 40.488800f}));
+
+      REQUIRE(world.sectors[0].objects.size() == 1);
+      CHECK(world.sectors[0].objects[0] == "tat3_bldg_keeper"sv);
+
+      CHECK(world.sectors[1].name == "Sector-1"sv);
+
+      REQUIRE(world.sectors[1].points.size() == 4);
+      CHECK(approx_equals(world.sectors[1].points[0], {-196.648041f, 125.908623f}));
+      CHECK(approx_equals(world.sectors[1].points[1], {-195.826218f, 49.666763f}));
+      CHECK(approx_equals(world.sectors[1].points[2], {-271.034851f, 48.864563f}));
+      CHECK(approx_equals(world.sectors[1].points[3], {-274.260132f, 128.690567f}));
+
+      REQUIRE(world.sectors[1].objects.size() == 4);
+      CHECK(world.sectors[1].objects[0] == "lod_test120"sv);
+      CHECK(world.sectors[1].objects[1] == "lod_test2010"sv);
+      CHECK(world.sectors[1].objects[2] == "lod_test12"sv);
+      CHECK(world.sectors[1].objects[3] == "lod_test201"sv);
+
+      CHECK(is_unique_id(1, world.sectors));
    }
 
    // portal checks
    {
-      // TODO: create a test .pvs file
+      REQUIRE(world.portals.size() == 1);
+
+      CHECK(world.portals[0].name == "Portal"sv);
+      CHECK(approx_equals(world.portals[0].position,
+                          {-193.661575f, 2.097009f, 31.728502f}));
+      CHECK(approx_equals(world.portals[0].rotation, {0.000f, 0.000f, 1.000f, 0.000f}));
+      CHECK(world.portals[0].width == 2.92f);
+      CHECK(world.portals[0].height == 4.12f);
+      CHECK(world.portals[0].sector1 == "sector"sv);
+      CHECK(world.portals[0].sector2 == "Sector-1"sv);
+
+      CHECK(is_unique_id(0, world.portals));
    }
 
    // hintnodes checks

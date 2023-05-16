@@ -523,7 +523,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
             }
 
             if (auto sector = key_node.find("Sector2"sv); sector != key_node.cend()) {
-               portal.sector1 = sector->values.get<std::string>(0);
+               portal.sector2 = sector->values.get<std::string>(0);
             }
 
             if (verbose_output) {

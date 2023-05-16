@@ -1,0 +1,32 @@
+Sector("sector")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-157.581009, 4.900336);
+	Point(-227.199097, 7.364827);
+	Point(-228.642029, -40.347687);
+	Point(-159.451279, -40.488800);
+	Object("tat3_bldg_keeper");
+}
+Sector("Sector-1")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-196.648041, -125.908623);
+	Point(-195.826218, -49.666763);
+	Point(-271.034851, -48.864563);
+	Point(-274.260132, -128.690567);
+	Object("lod_test120");
+	Object("lod_test2010");
+	Object("lod_test12");
+	Object("lod_test201");
+}
+Portal("Portal")
+{
+	Rotation(1.000000, -0.000000, -0.000000, -0.000000);
+	Position(-193.661575, 2.097009, -31.728502);
+	Width(2.920000);
+	Height(4.120000);
+	Sector1("sector");
+	Sector2("Sector-1");
+}
