@@ -674,12 +674,14 @@ void save_boundaries(const std::filesystem::path& path, const world& world)
 {
    io::output_file file{path};
 
+   file.write_ln("Boundary()");
+   file.write_ln("{");
+
    for (auto& boundary : world.boundaries) {
-      file.write_ln("Boundary()", boundary.name);
-      file.write_ln("{");
       file.write_ln("\tPath(\"{}\");", boundary.name);
-      file.write_ln("}\n");
    }
+
+   file.write_ln("}\n");
 }
 
 /// @brief Saves a world layer.

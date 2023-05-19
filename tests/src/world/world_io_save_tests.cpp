@@ -71,7 +71,7 @@ GlobalLights()
 )"sv;
 
 constexpr auto expected_pth = R"(Version(10);
-PathCount(3);
+PathCount(4);
 
 Path("The Amazing Path")
 {
@@ -172,6 +172,181 @@ Path("type_EntityPath The Other Amazing Path")
 }
 
 Path("boundary")
+{
+	Data(0);
+	PathType(0);
+	PathSpeedType(0);
+	PathTime(0.000000);
+	OffsetPath(0);
+	SplineType("Hermite");
+
+	Properties(0)
+	{
+	}
+
+	Nodes(12)
+	{
+		Node()
+		{
+			Position(383.557434, 0.000000, -4.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(332.111023, 0.000000, 187.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(191.557434, 0.000000, 327.755798);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-0.442566, 0.000000, 379.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-192.442566, 0.000000, 327.755798);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-332.996155, 0.000000, 187.202209);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-384.442566, 0.000000, -4.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-332.996155, 0.000000, -196.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-192.442566, 0.000000, -337.351379);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-0.442566, 0.000000, -388.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(191.557434, 0.000000, -337.351379);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(332.111023, 0.000000, -196.797791);
+			Knot(0.000000);
+			Data(0);
+			Time(1.000000);
+			PauseTime(0.000000);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+	}
+
+}
+
+Path("boundary1")
 {
 	Data(0);
 	PathType(0);
@@ -472,6 +647,7 @@ Connection("Connection1")
 constexpr auto expected_bnd = R"(Boundary()
 {
 	Path("boundary");
+	Path("boundary1");
 }
 
 )"sv;
@@ -756,9 +932,15 @@ TEST_CASE("world saving", "[World][IO]")
                               .end = hub_ids[2],
                               .flags = ai_path_flags::hover}},
 
-      .boundaries = {{.name = "boundary",
-                      .position = {-0.442565918f, 4.79779053f},
-                      .size = {384.000000f, 384.000000f}}},
+      .boundaries =
+         {
+            boundary{.name = "boundary",
+                     .position = {-0.442565918f, 4.79779053f},
+                     .size = {384.000000f, 384.000000f}},
+            boundary{.name = "boundary1",
+                     .position = {-0.442565918f, 4.79779053f},
+                     .size = {384.000000f, 384.000000f}},
+         },
 
       .planning_hub_index = {{hub_ids[0], 0},
                              {hub_ids[1], 1},
