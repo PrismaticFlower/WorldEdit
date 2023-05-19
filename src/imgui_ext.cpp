@@ -350,28 +350,31 @@ bool InputTextAutoComplete(
       },
       &callback_user_data);
 
-   if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) and selected_index > 0) {
-      selected_index -= 1;
-   }
-
-   if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) and selected_index < 6) {
-      selected_index += 1;
-   }
-
-   if (ImGui::IsKeyPressed(ImGuiKey_Enter)) {
-      if (not autocomplete_entries) {
-         autocomplete_entries = fill_entries_callback(fill_entries_callback_user_data);
+   if (ImGui::IsItemActive()) {
+      if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) and selected_index > 0) {
+         selected_index -= 1;
       }
 
-      buffer->assign((*autocomplete_entries)[selected_index].begin(),
-                     (*autocomplete_entries)[selected_index].end());
+      if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) and selected_index < 6) {
+         selected_index += 1;
+      }
 
-      value_changed = true;
+      if (ImGui::IsKeyPressed(ImGuiKey_Enter)) {
+         if (not autocomplete_entries) {
+            autocomplete_entries =
+               fill_entries_callback(fill_entries_callback_user_data);
+         }
+
+         buffer->assign((*autocomplete_entries)[selected_index].begin(),
+                        (*autocomplete_entries)[selected_index].end());
+
+         value_changed = true;
+      }
    }
 
    const bool input_text_deactivated = ImGui::IsItemDeactivated();
 
-   if (ImGui::IsItemActive()) ImGui::OpenPopup("##autocomplete-entries");
+   if (ImGui::IsItemActivated()) ImGui::OpenPopup("##autocomplete-entries");
 
    {
       ImGui::SetNextWindowPos(
