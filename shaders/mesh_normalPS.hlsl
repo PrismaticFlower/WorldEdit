@@ -105,5 +105,9 @@ float4 main(input_vertex input) : SV_TARGET
                   specular_visibility;
    }
 
-   return float4(lighting, diffuse_color.a);
+   float alpha = diffuse_color.a;
+   
+   if (material.flags & flags::additive) alpha = 0.0;
+
+   return float4(lighting, alpha);
 }

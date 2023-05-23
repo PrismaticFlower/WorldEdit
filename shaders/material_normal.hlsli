@@ -13,6 +13,7 @@ enum flags {
    has_detail_map = 0b1000000,
    has_env_map = 0b10000000,
    tile_normal_map = 0b100000000,
+   additive = 0b1000000000,
 };
 
 struct material_input {

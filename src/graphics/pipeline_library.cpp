@@ -122,30 +122,11 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
 
       const bool transparent =
          are_flags_set(flags, material_pipeline_flags::transparent);
-      const bool additive = are_flags_set(flags, material_pipeline_flags::additive);
       const bool doublesided =
          are_flags_set(flags, material_pipeline_flags::doublesided);
 
-      const gpu::blend_state_desc blend_state = [&] {
-         if (additive) {
-            return blend_additive;
-         }
-         else if (transparent) {
-            return blend_premult_alpha;
-         }
-
-         return blend_disabled;
-      }();
-
-      const gpu::rasterizer_state_desc rasterizer_state =
-         doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing;
-
-      const gpu::depth_stencil_state_desc depth_stencil_state =
-         transparent ? depth_stencil_readonly_less_equal : depth_stencil_readonly_equal;
-
       const std::string pipeline_name =
-         fmt::format("{}{}{}{}", name_base, transparent ? "_transparent"sv : ""sv,
-                     additive ? "_additive"sv : ""sv,
+         fmt::format("{}{}{}", name_base, transparent ? "_transparent"sv : ""sv,
                      doublesided ? "_doublesided"sv : ""sv);
 
       pipelines[i] = {device.create_graphics_pipeline(
@@ -154,9 +135,10 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
                           .vs_bytecode = shader_library["meshVS"sv],
                           .ps_bytecode = shader_library["mesh_normalPS"sv],
 
-                          .blend_state = blend_state,
-                          .rasterizer_state = rasterizer_state,
-                          .depth_stencil_state = depth_stencil_state,
+                          .blend_state = transparent ? blend_premult_alpha : blend_disabled,
+                          .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
+                          .depth_stencil_state = transparent ? depth_stencil_readonly_less_equal
+                                                             : depth_stencil_readonly_equal,
                           .input_layout = mesh_input_layout,
 
                           .render_target_count = 1,

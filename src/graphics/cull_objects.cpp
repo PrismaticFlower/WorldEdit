@@ -26,9 +26,7 @@ void cull_objects_scalar(const frustum& frustum,
       if (not intersects(frustum, bbox[i])) continue;
 
       auto& render_list = are_flags_set(pipeline_flags[i].material,
-                                        material_pipeline_flags::transparent) or
-                                are_flags_set(pipeline_flags[i].material,
-                                              material_pipeline_flags::additive)
+                                        material_pipeline_flags::transparent)
                              ? out_transparent_list
                              : out_opaque_list;
 
@@ -208,9 +206,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
       const auto push_index = [&pipeline_flags, &out_opaque_list,
                                &out_transparent_list](const std::size_t i) {
          auto& render_list = are_flags_set(pipeline_flags[i].material,
-                                           material_pipeline_flags::transparent) or
-                                   are_flags_set(pipeline_flags[i].material,
-                                                 material_pipeline_flags::additive)
+                                           material_pipeline_flags::transparent)
                                 ? out_transparent_list
                                 : out_opaque_list;
 
@@ -235,9 +231,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
       }
 
       auto& render_list = are_flags_set(pipeline_flags[i].material,
-                                        material_pipeline_flags::transparent) or
-                                are_flags_set(pipeline_flags[i].material,
-                                              material_pipeline_flags::additive)
+                                        material_pipeline_flags::transparent)
                              ? out_transparent_list
                              : out_opaque_list;
 
@@ -258,9 +252,8 @@ void cull_objects_shadow_cascade_scalar(const frustum& frustum,
    for (std::size_t i = 0; i < bbox.size(); ++i) {
       if (not intersects_shadow_cascade(frustum, bbox[i])) continue;
 
-      if (not(are_flags_set(pipeline_flags[i].material, material_pipeline_flags::transparent) or
-              are_flags_set(pipeline_flags[i].material,
-                            material_pipeline_flags::additive))) {
+      if (not are_flags_set(pipeline_flags[i].material,
+                            material_pipeline_flags::transparent)) {
          out_list.push_back(static_cast<uint16>(i));
       }
    }
@@ -311,10 +304,8 @@ void cull_objects_shadow_cascade_avx2(
       if (not inside_mask) continue;
 
       const auto push_index = [&pipeline_flags, &out_list](const std::size_t i) {
-         if (not(are_flags_set(pipeline_flags[i].material,
-                               material_pipeline_flags::transparent) or
-                 are_flags_set(pipeline_flags[i].material,
-                               material_pipeline_flags::additive))) {
+         if (not are_flags_set(pipeline_flags[i].material,
+                               material_pipeline_flags::transparent)) {
             out_list.push_back(static_cast<uint16>(i));
          }
       };
@@ -336,9 +327,8 @@ void cull_objects_shadow_cascade_avx2(
          continue;
       }
 
-      if (not(are_flags_set(pipeline_flags[i].material, material_pipeline_flags::transparent) or
-              are_flags_set(pipeline_flags[i].material,
-                            material_pipeline_flags::additive))) {
+      if (not are_flags_set(pipeline_flags[i].material,
+                            material_pipeline_flags::transparent)) {
          out_list.push_back(static_cast<uint16>(i));
       }
    }

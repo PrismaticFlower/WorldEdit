@@ -31,7 +31,6 @@ enum class material_pipeline_flags : uint8 {
    none = 0b0,
    doublesided = 0b1,
    transparent = 0b10,
-   additive = 0b100,
 
    count = 0b1000
 };
