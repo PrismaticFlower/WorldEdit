@@ -208,10 +208,11 @@ void material::init_flags(const assets::msh::material& material)
    if (are_flags_set(material.flags, material_flags::transparent_doublesided)) {
       flags |= material_pipeline_flags::transparent;
       flags |= material_pipeline_flags::doublesided;
+      depth_prepass_flags |= depth_prepass_pipeline_flags::doublesided;
    }
 
    if (are_flags_set(material.flags, material_flags::hardedged)) {
-      flags |= material_pipeline_flags::alpha_cutout;
+      depth_prepass_flags |= depth_prepass_pipeline_flags::alpha_cutout;
       flags &= ~material_pipeline_flags::transparent;
    }
 

@@ -17,6 +17,8 @@ struct material {
    void process_updated_textures(gpu::copy_command_list& command_list,
                                  const updated_textures& updated, gpu::device& device);
 
+   depth_prepass_pipeline_flags depth_prepass_flags =
+      depth_prepass_pipeline_flags::none;
    material_pipeline_flags flags = material_pipeline_flags::none;
    gpu_virtual_address constant_buffer_view;
 

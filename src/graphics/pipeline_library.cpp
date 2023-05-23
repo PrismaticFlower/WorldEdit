@@ -6,6 +6,8 @@
 #include <array>
 #include <stdexcept>
 
+#include <fmt/core.h>
+
 using namespace std::literals;
 
 namespace we::graphics {
@@ -118,25 +120,17 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
    for (auto i = 0u; i < pipelines.size(); ++i) {
       const auto flags = static_cast<material_pipeline_flags>(i);
 
-      std::string pipeline_name{name_base};
-
-      if (are_flags_set(flags, material_pipeline_flags::transparent)) {
-         pipeline_name += "_transparent"sv;
-      }
-
-      if (are_flags_set(flags, material_pipeline_flags::additive)) {
-         pipeline_name += "_additive"sv;
-      }
-
-      if (are_flags_set(flags, material_pipeline_flags::doublesided)) {
-         pipeline_name += "_doublesided"sv;
-      }
+      const bool transparent =
+         are_flags_set(flags, material_pipeline_flags::transparent);
+      const bool additive = are_flags_set(flags, material_pipeline_flags::additive);
+      const bool doublesided =
+         are_flags_set(flags, material_pipeline_flags::doublesided);
 
       const gpu::blend_state_desc blend_state = [&] {
-         if (are_flags_set(flags, material_pipeline_flags::additive)) {
+         if (additive) {
             return blend_additive;
          }
-         else if (are_flags_set(flags, material_pipeline_flags::transparent)) {
+         else if (transparent) {
             return blend_premult_alpha;
          }
 
@@ -144,14 +138,15 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
       }();
 
       const gpu::rasterizer_state_desc rasterizer_state =
-         are_flags_set(flags, material_pipeline_flags::doublesided)
-            ? rasterizer_cull_none
-            : rasterizer_cull_backfacing;
+         doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing;
 
       const gpu::depth_stencil_state_desc depth_stencil_state =
-         are_flags_set(flags, material_pipeline_flags::transparent)
-            ? depth_stencil_readonly_less_equal
-            : depth_stencil_readonly_equal;
+         transparent ? depth_stencil_readonly_less_equal : depth_stencil_readonly_equal;
+
+      const std::string pipeline_name =
+         fmt::format("{}{}{}{}", name_base, transparent ? "_transparent"sv : ""sv,
+                     additive ? "_additive"sv : ""sv,
+                     doublesided ? "_doublesided"sv : ""sv);
 
       pipelines[i] = {device.create_graphics_pipeline(
                          {.root_signature = root_signature_library.mesh.get(),
@@ -175,6 +170,96 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
    return pipelines;
 }
 
+auto create_depth_prepass_pipelines(gpu::device& device, const std::string_view name_base,
+                                    const shader_library& shader_library,
+                                    const root_signature_library& root_signature_library)
+   -> depth_prepass_pipelines
+{
+   depth_prepass_pipelines pipelines;
+
+   for (auto i = 0u; i < pipelines.size(); ++i) {
+      const auto flags = static_cast<depth_prepass_pipeline_flags>(i);
+
+      const bool alpha_cutout =
+         are_flags_set(flags, depth_prepass_pipeline_flags::alpha_cutout);
+
+      const bool doublesided =
+         are_flags_set(flags, depth_prepass_pipeline_flags::doublesided);
+
+      const std::string pipeline_name =
+         fmt::format("{}{}{}", name_base, alpha_cutout ? "_alpha_cutout"sv : ""sv,
+                     doublesided ? "_doublesided"sv : ""sv);
+
+      pipelines[i] =
+         {device.create_graphics_pipeline(
+             {.root_signature = root_signature_library.mesh_depth_prepass.get(),
+
+              .vs_bytecode = alpha_cutout ? shader_library["meshVS"sv]
+                                          : shader_library["mesh_depth_prepassVS"sv],
+              .ps_bytecode = alpha_cutout ? shader_library["mesh_depth_cutoutPS"sv]
+                                          : std::span<const std::byte>{},
+
+              .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
+              .depth_stencil_state = depth_stencil_enabled,
+              .input_layout =
+                 alpha_cutout
+                    ? std::span<const gpu::input_element_desc>{mesh_input_layout}
+                    : std::span<const gpu::input_element_desc>{mesh_input_layout_position_only},
+
+              .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+              .debug_name = pipeline_name}),
+          device.direct_queue};
+   }
+
+   return pipelines;
+}
+
+auto create_shadow_pipelines(gpu::device& device, const std::string_view name_base,
+                             const shader_library& shader_library,
+                             const root_signature_library& root_signature_library)
+   -> depth_prepass_pipelines
+{
+   depth_prepass_pipelines pipelines;
+
+   for (auto i = 0u; i < pipelines.size(); ++i) {
+      const auto flags = static_cast<depth_prepass_pipeline_flags>(i);
+
+      const bool alpha_cutout =
+         are_flags_set(flags, depth_prepass_pipeline_flags::alpha_cutout);
+
+      const bool doublesided =
+         are_flags_set(flags, depth_prepass_pipeline_flags::doublesided);
+
+      const std::string pipeline_name =
+         fmt::format("{}{}{}", name_base, alpha_cutout ? "_alpha_cutout"sv : ""sv,
+                     doublesided ? "_doublesided"sv : ""sv);
+
+      pipelines[i] =
+         {device.create_graphics_pipeline(
+             {.root_signature = root_signature_library.mesh_shadow.get(),
+
+              .vs_bytecode = alpha_cutout ? shader_library["mesh_shadow_cutoutVS"sv]
+                                          : shader_library["mesh_shadowVS"sv],
+              .ps_bytecode = alpha_cutout ? shader_library["mesh_shadow_cutoutPS"sv]
+                                          : std::span<const std::byte>{},
+
+              .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
+              .depth_stencil_state = depth_stencil_enabled,
+              .input_layout =
+                 alpha_cutout
+                    ? std::span<const gpu::input_element_desc>{mesh_input_layout}
+                    : std::span<const gpu::input_element_desc>{mesh_input_layout_position_only},
+
+              .dsv_format = DXGI_FORMAT_D32_FLOAT,
+
+              .debug_name = pipeline_name}),
+          device.direct_queue};
+   }
+
+   return pipelines;
+}
+
 }
 
 pipeline_library::pipeline_library(gpu::device& device,
@@ -188,98 +273,6 @@ pipeline_library::pipeline_library(gpu::device& device,
 void pipeline_library::reload(gpu::device& device, const shader_library& shader_library,
                               const root_signature_library& root_signature_library)
 {
-   mesh_shadow = {device.create_graphics_pipeline(
-                     {.root_signature = root_signature_library.mesh_shadow.get(),
-
-                      .vs_bytecode = shader_library["mesh_shadowVS"sv],
-
-                      .rasterizer_state = rasterizer_cull_backfacing,
-                      .depth_stencil_state = depth_stencil_enabled,
-                      .input_layout = mesh_input_layout_position_only,
-
-                      .dsv_format = DXGI_FORMAT_D32_FLOAT,
-
-                      .debug_name = "mesh_shadow"sv}),
-                  device.direct_queue};
-
-   mesh_shadow_alpha_cutout =
-      {device.create_graphics_pipeline(
-          {.root_signature = root_signature_library.mesh_shadow.get(),
-
-           .vs_bytecode = shader_library["mesh_shadow_cutoutVS"sv],
-           .ps_bytecode = shader_library["mesh_shadow_cutoutPS"sv],
-
-           .rasterizer_state = rasterizer_cull_backfacing,
-           .depth_stencil_state = depth_stencil_enabled,
-           .input_layout = mesh_input_layout,
-
-           .dsv_format = DXGI_FORMAT_D32_FLOAT,
-
-           .debug_name = "mesh_shadow_cutout"sv}),
-       device.direct_queue};
-
-   mesh_depth_prepass = {device.create_graphics_pipeline(
-                            {.root_signature =
-                                root_signature_library.mesh_depth_prepass.get(),
-
-                             .vs_bytecode = shader_library["mesh_depth_prepassVS"sv],
-
-                             .rasterizer_state = rasterizer_cull_backfacing,
-                             .depth_stencil_state = depth_stencil_enabled,
-                             .input_layout = mesh_input_layout_position_only,
-
-                             .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-
-                             .debug_name = "mesh_depth_prepass"sv}),
-                         device.direct_queue};
-
-   mesh_depth_prepass_doublesided =
-      {device.create_graphics_pipeline(
-          {.root_signature = root_signature_library.mesh_depth_prepass.get(),
-
-           .vs_bytecode = shader_library["mesh_depth_prepassVS"sv],
-
-           .rasterizer_state = rasterizer_cull_none,
-           .depth_stencil_state = depth_stencil_enabled,
-           .input_layout = mesh_input_layout_position_only,
-
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-
-           .debug_name = "mesh_depth_prepass_doublesided"sv}),
-       device.direct_queue};
-
-   mesh_depth_prepass_alpha_cutout =
-      {device.create_graphics_pipeline(
-          {.root_signature = root_signature_library.mesh_depth_prepass.get(),
-
-           .vs_bytecode = shader_library["meshVS"sv],
-           .ps_bytecode = shader_library["mesh_depth_cutoutPS"sv],
-
-           .rasterizer_state = rasterizer_cull_backfacing,
-           .depth_stencil_state = depth_stencil_enabled,
-           .input_layout = mesh_input_layout,
-
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-
-           .debug_name = "mesh_depth_prepass_alpha_cutout"sv}),
-       device.direct_queue};
-
-   mesh_depth_prepass_alpha_cutout_doublesided =
-      {device.create_graphics_pipeline(
-          {.root_signature = root_signature_library.mesh_depth_prepass.get(),
-
-           .vs_bytecode = shader_library["meshVS"sv],
-           .ps_bytecode = shader_library["mesh_depth_cutoutPS"sv],
-
-           .rasterizer_state = rasterizer_cull_backfacing,
-           .depth_stencil_state = depth_stencil_enabled,
-           .input_layout = mesh_input_layout,
-
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-
-           .debug_name = "mesh_depth_prepass_alpha_cutout_doublesided"sv}),
-       device.direct_queue};
-
    mesh_basic = {device.create_graphics_pipeline(
                     {.root_signature = root_signature_library.mesh.get(),
 
@@ -314,6 +307,13 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                               .debug_name = "mesh_basic_lighting"sv}),
                           device.direct_queue};
+
+   mesh_shadow = create_shadow_pipelines(device, "mesh_shadow"sv,
+                                         shader_library, root_signature_library);
+
+   mesh_depth_prepass =
+      create_depth_prepass_pipelines(device, "mesh_depth_prepass"sv,
+                                     shader_library, root_signature_library);
 
    mesh_normal = create_material_pipelines(device, "mesh_normal"sv, shader_library,
                                            root_signature_library);

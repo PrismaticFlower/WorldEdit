@@ -44,18 +44,25 @@ struct world_bbox_soa {
    } max;
 };
 
+struct world_pipeline_flags {
+   depth_prepass_pipeline_flags depth_prepass : 4;
+   material_pipeline_flags material : 4;
+};
+
+static_assert(sizeof(world_pipeline_flags) == 1);
+
 struct world_mesh_list {
    world_bbox_soa bbox;
    std::vector<gpu_virtual_address> gpu_constants;
    std::vector<float3> position;
-   std::vector<gpu::pipeline_handle> pipeline;
-   std::vector<material_pipeline_flags> pipeline_flags;
+   std::vector<world_pipeline_flags> pipeline_flags;
    std::vector<gpu_virtual_address> material_constant_buffer;
    std::vector<world_mesh> mesh;
 
-   void push_back(math::bounding_box mesh_bbox, gpu_virtual_address mesh_gpu_constants,
-                  float3 mesh_position, gpu::pipeline_handle mesh_pipeline,
-                  material_pipeline_flags mesh_pipeline_flags,
+   void push_back(math::bounding_box mesh_bbox,
+                  gpu_virtual_address mesh_gpu_constants, float3 mesh_position,
+                  depth_prepass_pipeline_flags depth_prepass_pipeline_flags,
+                  material_pipeline_flags material_pipeline_flags,
                   gpu_virtual_address mesh_material_constant_buffer,
                   world_mesh world_mesh) noexcept
    {
@@ -67,8 +74,9 @@ struct world_mesh_list {
       bbox.max.z.push_back(mesh_bbox.max.z);
       gpu_constants.push_back(mesh_gpu_constants);
       position.push_back(mesh_position);
-      pipeline.push_back(mesh_pipeline);
-      pipeline_flags.push_back(mesh_pipeline_flags);
+      pipeline_flags.push_back(
+         world_pipeline_flags{.depth_prepass = depth_prepass_pipeline_flags,
+                              .material = material_pipeline_flags});
       material_constant_buffer.push_back(mesh_material_constant_buffer);
       mesh.push_back(world_mesh);
    }
@@ -96,7 +104,7 @@ private:
       };
 
       invoke_all(bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x, bbox.max.y,
-                 bbox.max.z, gpu_constants, position, pipeline, pipeline_flags,
+                 bbox.max.z, gpu_constants, position, pipeline_flags,
                  material_constant_buffer, mesh);
    }
 };

@@ -763,28 +763,21 @@ void light_clusters::draw_shadow_maps(
 
       command_list.om_set_render_targets(depth_stencil_view);
 
-      material_pipeline_flags pipeline_flags = material_pipeline_flags::none;
-
-      command_list.set_pipeline_state(pipelines.mesh_shadow.get());
+      depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::count; // Initialize to count to the loop below sets the pipeline on the first iteration.
 
       for (const uint16 i : _shadow_render_list) {
-         if (std::exchange(pipeline_flags, meshes.pipeline_flags[i]) !=
-             meshes.pipeline_flags[i]) {
+         [[unlikely]] if (pipeline_flags != meshes.pipeline_flags[i].depth_prepass) {
+            pipeline_flags = meshes.pipeline_flags[i].depth_prepass;
 
-            if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout)) {
-               command_list.set_pipeline_state(
-                  pipelines.mesh_shadow_alpha_cutout.get());
-            }
-            else {
-               command_list.set_pipeline_state(pipelines.mesh_shadow.get());
-            }
+            command_list.set_pipeline_state(
+               pipelines.mesh_shadow[pipeline_flags].get());
          }
 
          command_list.set_graphics_cbv(rs::mesh_shadow::object_cbv,
                                        meshes.gpu_constants[i]);
 
-         if (are_flags_set(meshes.pipeline_flags[i],
-                           material_pipeline_flags::alpha_cutout)) {
+         if (are_flags_set(meshes.pipeline_flags[i].depth_prepass,
+                           depth_prepass_pipeline_flags::alpha_cutout)) {
             command_list.set_graphics_cbv(rs::mesh_shadow::material_cbv,
                                           meshes.material_constant_buffer[i]);
          }

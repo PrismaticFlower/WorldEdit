@@ -11,7 +11,7 @@ using std::ranges::views::drop;
 
 void cull_objects_scalar(const frustum& frustum,
                          std::span<const math::bounding_box> bbox,
-                         std::span<const material_pipeline_flags> pipeline_flags,
+                         std::span<const world_pipeline_flags> pipeline_flags,
                          std::vector<uint16>& out_opaque_list,
                          std::vector<uint16>& out_transparent_list) noexcept
 {
@@ -25,11 +25,12 @@ void cull_objects_scalar(const frustum& frustum,
    for (std::size_t i = 0; i < bbox.size(); ++i) {
       if (not intersects(frustum, bbox[i])) continue;
 
-      auto& render_list =
-         are_flags_set(pipeline_flags[i], material_pipeline_flags::transparent) or
-               are_flags_set(pipeline_flags[i], material_pipeline_flags::additive)
-            ? out_transparent_list
-            : out_opaque_list;
+      auto& render_list = are_flags_set(pipeline_flags[i].material,
+                                        material_pipeline_flags::transparent) or
+                                are_flags_set(pipeline_flags[i].material,
+                                              material_pipeline_flags::additive)
+                             ? out_transparent_list
+                             : out_opaque_list;
 
       render_list.push_back(static_cast<uint16>(i));
    }
@@ -120,7 +121,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
                        std::span<const float> bbox_max_x,
                        std::span<const float> bbox_max_y,
                        std::span<const float> bbox_max_z,
-                       std::span<const material_pipeline_flags> pipeline_flags,
+                       std::span<const world_pipeline_flags> pipeline_flags,
                        std::vector<uint16>& out_opaque_list,
                        std::vector<uint16>& out_transparent_list) noexcept
 {
@@ -206,11 +207,12 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
 
       const auto push_index = [&pipeline_flags, &out_opaque_list,
                                &out_transparent_list](const std::size_t i) {
-         auto& render_list =
-            are_flags_set(pipeline_flags[i], material_pipeline_flags::transparent) or
-                  are_flags_set(pipeline_flags[i], material_pipeline_flags::additive)
-               ? out_transparent_list
-               : out_opaque_list;
+         auto& render_list = are_flags_set(pipeline_flags[i].material,
+                                           material_pipeline_flags::transparent) or
+                                   are_flags_set(pipeline_flags[i].material,
+                                                 material_pipeline_flags::additive)
+                                ? out_transparent_list
+                                : out_opaque_list;
 
          render_list.push_back(static_cast<uint16>(i));
       };
@@ -232,11 +234,12 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
          continue;
       }
 
-      auto& render_list =
-         are_flags_set(pipeline_flags[i], material_pipeline_flags::transparent) or
-               are_flags_set(pipeline_flags[i], material_pipeline_flags::additive)
-            ? out_transparent_list
-            : out_opaque_list;
+      auto& render_list = are_flags_set(pipeline_flags[i].material,
+                                        material_pipeline_flags::transparent) or
+                                are_flags_set(pipeline_flags[i].material,
+                                              material_pipeline_flags::additive)
+                             ? out_transparent_list
+                             : out_opaque_list;
 
       render_list.push_back(static_cast<uint16>(i));
    }
@@ -244,7 +247,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
 
 void cull_objects_shadow_cascade_scalar(const frustum& frustum,
                                         std::span<const math::bounding_box> bbox,
-                                        std::span<const material_pipeline_flags> pipeline_flags,
+                                        std::span<const world_pipeline_flags> pipeline_flags,
                                         std::vector<uint16>& out_list) noexcept
 {
    assert(bbox.size() == pipeline_flags.size());
@@ -255,8 +258,9 @@ void cull_objects_shadow_cascade_scalar(const frustum& frustum,
    for (std::size_t i = 0; i < bbox.size(); ++i) {
       if (not intersects_shadow_cascade(frustum, bbox[i])) continue;
 
-      if (not(are_flags_set(pipeline_flags[i], material_pipeline_flags::transparent) or
-              are_flags_set(pipeline_flags[i], material_pipeline_flags::additive))) {
+      if (not(are_flags_set(pipeline_flags[i].material, material_pipeline_flags::transparent) or
+              are_flags_set(pipeline_flags[i].material,
+                            material_pipeline_flags::additive))) {
          out_list.push_back(static_cast<uint16>(i));
       }
    }
@@ -267,7 +271,7 @@ void cull_objects_shadow_cascade_avx2(
    std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
    std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
    std::span<const float> bbox_max_z,
-   std::span<const material_pipeline_flags> pipeline_flags,
+   std::span<const world_pipeline_flags> pipeline_flags,
    std::vector<uint16>& out_list) noexcept
 {
    assert(bbox_min_x.size() == bbox_min_y.size());
@@ -307,8 +311,10 @@ void cull_objects_shadow_cascade_avx2(
       if (not inside_mask) continue;
 
       const auto push_index = [&pipeline_flags, &out_list](const std::size_t i) {
-         if (not(are_flags_set(pipeline_flags[i], material_pipeline_flags::transparent) or
-                 are_flags_set(pipeline_flags[i], material_pipeline_flags::additive))) {
+         if (not(are_flags_set(pipeline_flags[i].material,
+                               material_pipeline_flags::transparent) or
+                 are_flags_set(pipeline_flags[i].material,
+                               material_pipeline_flags::additive))) {
             out_list.push_back(static_cast<uint16>(i));
          }
       };
@@ -330,8 +336,9 @@ void cull_objects_shadow_cascade_avx2(
          continue;
       }
 
-      if (not(are_flags_set(pipeline_flags[i], material_pipeline_flags::transparent) or
-              are_flags_set(pipeline_flags[i], material_pipeline_flags::additive))) {
+      if (not(are_flags_set(pipeline_flags[i].material, material_pipeline_flags::transparent) or
+              are_flags_set(pipeline_flags[i].material,
+                            material_pipeline_flags::additive))) {
          out_list.push_back(static_cast<uint16>(i));
       }
    }

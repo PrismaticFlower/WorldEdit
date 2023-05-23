@@ -83,9 +83,9 @@ void sky::draw(gpu_virtual_address frame_constant_buffer_view,
                                       .movement_scale = dome_model.movement_scale,
                                       .offset = dome_model.offset,
                                       .alpha_cutout =
-                                         (mesh.material.flags &
-                                          material_pipeline_flags::alpha_cutout) ==
-                                         material_pipeline_flags::alpha_cutout};
+                                         (mesh.material.depth_prepass_flags &
+                                          depth_prepass_pipeline_flags::alpha_cutout) ==
+                                         depth_prepass_pipeline_flags::alpha_cutout};
 
          command_list.set_graphics_cbv(
             rs::sky_mesh::sky_mesh_cbv,

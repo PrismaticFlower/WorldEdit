@@ -15,20 +15,34 @@ namespace we::graphics {
 class shader_library;
 struct root_signature_library;
 
-enum class material_pipeline_flags : uint8 {
+enum class depth_prepass_pipeline_flags : uint8 {
    none = 0b0,
    alpha_cutout = 0b1,
    doublesided = 0b10,
-   transparent = 0b100,
-   additive = 0b1000,
 
-   count = 0b10000
+   count = 0b100
+};
+
+constexpr bool marked_as_enum_bitflag(depth_prepass_pipeline_flags)
+{
+   return true;
+}
+enum class material_pipeline_flags : uint8 {
+   none = 0b0,
+   doublesided = 0b1,
+   transparent = 0b10,
+   additive = 0b100,
+
+   count = 0b1000
 };
 
 constexpr bool marked_as_enum_bitflag(material_pipeline_flags)
 {
    return true;
 }
+
+using depth_prepass_pipelines =
+   container::enum_array<gpu::unique_pipeline_handle, depth_prepass_pipeline_flags>;
 
 using material_pipelines =
    container::enum_array<gpu::unique_pipeline_handle, material_pipeline_flags>;
@@ -40,14 +54,10 @@ struct pipeline_library {
    void reload(gpu::device& device, const shader_library& shader_library,
                const root_signature_library& root_signature_library);
 
-   gpu::unique_pipeline_handle mesh_depth_prepass;
-   gpu::unique_pipeline_handle mesh_depth_prepass_doublesided;
-   gpu::unique_pipeline_handle mesh_depth_prepass_alpha_cutout;
-   gpu::unique_pipeline_handle mesh_depth_prepass_alpha_cutout_doublesided;
-   gpu::unique_pipeline_handle mesh_shadow;
-   gpu::unique_pipeline_handle mesh_shadow_alpha_cutout;
    gpu::unique_pipeline_handle mesh_basic;
    gpu::unique_pipeline_handle mesh_basic_lighting;
+   depth_prepass_pipelines mesh_shadow;
+   depth_prepass_pipelines mesh_depth_prepass;
    material_pipelines mesh_normal;
    gpu::unique_pipeline_handle mesh_wireframe;
    gpu::unique_pipeline_handle mesh_wireframe_doublesided;

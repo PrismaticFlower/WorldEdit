@@ -589,13 +589,15 @@ void renderer_impl::draw_world_render_list(const std::vector<uint16>& list,
                                  _light_clusters.lights_constant_buffer_view());
    command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-   gpu::pipeline_handle pipeline_state = gpu::null_pipeline_handle;
+   material_pipeline_flags pipeline_flags = material_pipeline_flags::count; // Initialize to count to the loop below sets the pipeline on the first iteration.
 
    auto& meshes = _world_mesh_list;
 
    for (auto& i : list) {
-      if (std::exchange(pipeline_state, meshes.pipeline[i]) != meshes.pipeline[i]) {
-         command_list.set_pipeline_state(meshes.pipeline[i]);
+      [[unlikely]] if (pipeline_flags != meshes.pipeline_flags[i].material) {
+         pipeline_flags = meshes.pipeline_flags[i].material;
+
+         command_list.set_pipeline_state(_pipelines.mesh_normal[pipeline_flags].get());
       }
 
       command_list.set_graphics_cbv(rs::mesh::object_cbv, meshes.gpu_constants[i]);
@@ -619,38 +621,23 @@ void renderer_impl::draw_world_render_list_depth_prepass(
                                  _camera_constant_buffer_view);
    command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-   material_pipeline_flags pipeline_flags = material_pipeline_flags::none;
-
-   command_list.set_pipeline_state(_pipelines.mesh_depth_prepass.get());
+   depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::count; // Initialize to count to the loop below sets the pipeline on the first iteration.
 
    auto& meshes = _world_mesh_list;
 
    for (auto& i : list) {
-      if (std::exchange(pipeline_flags, meshes.pipeline_flags[i]) !=
-          meshes.pipeline_flags[i]) {
+      [[unlikely]] if (pipeline_flags != meshes.pipeline_flags[i].depth_prepass) {
+         pipeline_flags = meshes.pipeline_flags[i].depth_prepass;
 
-         if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout |
-                                              material_pipeline_flags::doublesided)) {
-            command_list.set_pipeline_state(
-               _pipelines.mesh_depth_prepass_alpha_cutout_doublesided.get());
-         }
-         else if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout)) {
-            command_list.set_pipeline_state(
-               _pipelines.mesh_depth_prepass_alpha_cutout.get());
-         }
-         else if (are_flags_set(pipeline_flags, material_pipeline_flags::doublesided)) {
-            command_list.set_pipeline_state(
-               _pipelines.mesh_depth_prepass_doublesided.get());
-         }
-         else {
-            command_list.set_pipeline_state(_pipelines.mesh_depth_prepass.get());
-         }
+         command_list.set_pipeline_state(
+            _pipelines.mesh_depth_prepass[pipeline_flags].get());
       }
 
       command_list.set_graphics_cbv(rs::mesh_depth_prepass::object_cbv,
                                     meshes.gpu_constants[i]);
 
-      if (are_flags_set(pipeline_flags, material_pipeline_flags::alpha_cutout)) {
+      [[unlikely]] if (are_flags_set(pipeline_flags,
+                                     depth_prepass_pipeline_flags::alpha_cutout)) {
          command_list.set_graphics_cbv(rs::mesh_depth_prepass::material_cbv,
                                        meshes.material_constant_buffer[i]);
       }
@@ -1777,12 +1764,10 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
       constants_data_size += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
-         const gpu::pipeline_handle pipeline =
-            _pipelines.mesh_normal[mesh.material.flags].get();
-
          _world_mesh_list.push_back(
-            object_bbox, object_constants_address, object.position, pipeline,
-            mesh.material.flags, mesh.material.constant_buffer_view,
+            object_bbox, object_constants_address, object.position,
+            mesh.material.depth_prepass_flags, mesh.material.flags,
+            mesh.material.constant_buffer_view,
             world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
                        .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
                                                model.gpu_buffer.attributes_vertex_buffer_view},
@@ -1814,12 +1799,10 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
       constants_data_size += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
-         const gpu::pipeline_handle pipeline =
-            _pipelines.mesh_normal[mesh.material.flags].get();
-
          _world_mesh_list.push_back(
             object_bbox, object_constants_address, creation_object->position,
-            pipeline, mesh.material.flags, mesh.material.constant_buffer_view,
+            mesh.material.depth_prepass_flags, mesh.material.flags,
+            mesh.material.constant_buffer_view,
             world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
                        .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
                                                model.gpu_buffer.attributes_vertex_buffer_view},
@@ -1842,10 +1825,6 @@ void renderer_impl::build_object_render_list(const frustum& view_frustum)
                      meshes.bbox.max.z, meshes.pipeline_flags,
                      _opaque_object_render_list, _transparent_object_render_list);
 
-   std::sort(_opaque_object_render_list.begin(), _opaque_object_render_list.end(),
-             [&](const uint16 l, const uint16 r) {
-                return meshes.pipeline[l] < meshes.pipeline[r];
-             });
    std::sort(_transparent_object_render_list.begin(),
              _transparent_object_render_list.end(),
              [&](const uint16 l, const uint16 r) {
