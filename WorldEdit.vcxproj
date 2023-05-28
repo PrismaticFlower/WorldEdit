@@ -251,6 +251,7 @@
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\sky.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
+    <ClCompile Include="src\graphics\water.cpp" />
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
     <ClCompile Include="src\imgui_ext.cpp" />
@@ -433,6 +434,7 @@
     <ClInclude Include="src\graphics\terrain.hpp" />
     <ClInclude Include="src\graphics\texture_manager.hpp" />
     <ClInclude Include="src\graphics\copy_command_list_pool.hpp" />
+    <ClInclude Include="src\graphics\water.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
     <ClInclude Include="src\hotkeys.hpp" />
     <ClInclude Include="src\hotkeys_io.hpp" />

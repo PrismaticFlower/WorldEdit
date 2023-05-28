@@ -18,10 +18,9 @@ struct water {
    void init(const world::terrain& terrain, gpu::copy_command_list& command_list,
              dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void draw(const frustum& view_frustum, gpu_virtual_address camera_constant_buffer_view,
+   void draw(gpu_virtual_address camera_constant_buffer_view,
              gpu::graphics_command_list& command_list,
-             root_signature_library& root_signatures, pipeline_library& pipelines,
-             dynamic_buffer_allocator& dynamic_buffer_allocator);
+             root_signature_library& root_signatures, pipeline_library& pipelines);
 
    void process_updated_texture(gpu::copy_command_list& command_list,
                                 const updated_textures& updated);
@@ -32,10 +31,15 @@ private:
 
    bool _active = false;
 
-   uint32 _point_count;
+   uint32 _patch_count = 0;
 
    gpu::unique_resource_handle _water_constants_buffer;
-   gpu::unique_resource_handle _point_buffer;
+   gpu::unique_resource_handle _patch_buffer;
+   gpu_virtual_address _water_constants_cbv;
+   gpu_virtual_address _patch_buffer_srv;
+
+   lowercase_string _color_map_name;
+   std::shared_ptr<const world_texture> _color_map;
 };
 
 }

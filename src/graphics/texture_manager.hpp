@@ -93,6 +93,13 @@ struct texture_manager {
       return _null_cube_map;
    }
 
+   /// @brief Texture with a color value of 1.0, 1.0, 1.0, 1.0.
+   /// @return The texture.
+   auto null_color_map() -> std::shared_ptr<const world_texture>
+   {
+      return _null_color_map;
+   }
+
    /// @brief Allows processing updated textures through a callback.
    /// @param callback The callback to invoke with a reference to the updated textures. The reference is only safe to use until the callback returns.
    void eval_updated_textures(std::invocable<const updated_textures&> auto callback) noexcept
@@ -178,6 +185,7 @@ private:
    std::shared_ptr<world_texture> _null_normal_map;
    std::shared_ptr<world_texture> _null_detail_map;
    std::shared_ptr<world_texture> _null_cube_map;
+   std::shared_ptr<world_texture> _null_color_map;
 
    event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>,
                        asset_data<assets::texture::texture>)>

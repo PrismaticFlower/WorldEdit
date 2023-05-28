@@ -29,6 +29,7 @@
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
+#include "water.hpp"
 #include "world/object_class_library.hpp"
 #include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"
@@ -160,8 +161,8 @@ private:
    output_stream& _error_output;
    float _display_scale = 1.0f;
 
-   gpu::device _device{gpu::device_desc{.enable_debug_layer = false,
-                                        .enable_gpu_based_validation = false}};
+   gpu::device _device{gpu::device_desc{.enable_debug_layer = true,
+                                        .enable_gpu_based_validation = true}};
    gpu::swap_chain _swap_chain;
    gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(
       {.allocator_name = "World Allocator", .debug_name = "Pre-Render Copy Command List"});
@@ -225,6 +226,7 @@ private:
    light_clusters _light_clusters{_device, _copy_command_list_pool,
                                   _swap_chain.width(), _swap_chain.height()};
    terrain _terrain{_device, _texture_manager};
+   water _water{_device, _texture_manager};
    sky _sky;
 
    constexpr static std::size_t max_drawn_objects = 2048;
@@ -326,6 +328,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       if (std::exchange(_terrain_dirty, false)) {
          _terrain.init(world.terrain, _pre_render_command_list,
                        _dynamic_buffer_allocator);
+         _water.init(world.terrain, _pre_render_command_list, _dynamic_buffer_allocator);
       }
 
       update_textures(_pre_render_command_list);
@@ -569,6 +572,14 @@ void renderer_impl::draw_world(const frustum& view_frustum,
 
       _sky.draw(_camera_constant_buffer_view, command_list, _root_signatures,
                 _pipelines, _dynamic_buffer_allocator);
+   }
+
+   if (active_entity_types.terrain) {
+      profile_section profile{"Water - Draw", command_list, _profiler,
+                              profiler_queue::direct};
+
+      _water.draw(_camera_constant_buffer_view, command_list, _root_signatures,
+                  _pipelines);
    }
 
    if (active_entity_types.objects) {
@@ -1918,6 +1929,7 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
          });
 
          _terrain.process_updated_texture(command_list, updated);
+         _water.process_updated_texture(command_list, updated);
       });
 }
 

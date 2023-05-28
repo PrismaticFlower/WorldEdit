@@ -68,6 +68,8 @@ struct pipeline_library {
    gpu::unique_pipeline_handle terrain_lighting;
    gpu::unique_pipeline_handle terrain_normal;
 
+   gpu::unique_pipeline_handle water;
+
    gpu::unique_pipeline_handle meta_draw_shape;
    gpu::unique_pipeline_handle meta_draw_shape_outlined;
    gpu::unique_pipeline_handle meta_draw_shape_wireframe;

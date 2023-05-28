@@ -411,6 +411,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                          .debug_name = "terrain_normal"sv}),
                      device.direct_queue};
 
+   water = {device.create_graphics_pipeline(
+               {.root_signature = root_signature_library.water.get(),
+
+                .vs_bytecode = shader_library["waterVS"sv],
+                .ps_bytecode = shader_library["waterPS"sv],
+
+                .blend_state = blend_alpha,
+                .rasterizer_state = rasterizer_cull_none,
+                .depth_stencil_state = depth_stencil_readonly_less_equal,
+
+                .render_target_count = 1,
+                .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                .debug_name = "water"sv}),
+            device.direct_queue};
+
    sky_mesh = {device.create_graphics_pipeline(
                   {.root_signature = root_signature_library.sky_mesh.get(),
 

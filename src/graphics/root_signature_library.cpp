@@ -12,9 +12,11 @@ constexpr uint32 material_cb_register = 3;
 constexpr uint32 terrain_cb_register = 4;
 constexpr uint32 meta_mesh_cb_register = 5;
 constexpr uint32 sky_mesh_cb_register = 6;
+constexpr uint32 water_cb_register = 7;
 
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
+constexpr uint32 water_patch_data_register = 2;
 
 constexpr gpu::root_parameter frame_constant_buffer = {
    .type = gpu::root_parameter_type::constant_buffer_view,
@@ -84,6 +86,33 @@ const gpu::root_signature_desc terrain_desc{
    .flags = {},
 
    .debug_name = "terrain_root_signature",
+};
+
+const gpu::root_signature_desc water_desc{
+   .parameters =
+      {
+         frame_constant_buffer,
+
+         // water constant buffer
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::constant_buffer_view,
+
+            .shader_register = water_cb_register,
+            .visibility = gpu::root_shader_visibility::all,
+         },
+
+         // water patches
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::shader_resource_view,
+
+            .shader_register = water_patch_data_register,
+            .visibility = gpu::root_shader_visibility::vertex,
+         },
+      },
+
+   .flags = {},
+
+   .debug_name = "water_root_signature",
 };
 
 const gpu::root_signature_desc mesh_shadow_desc{
@@ -244,6 +273,7 @@ root_signature_library::root_signature_library(gpu::device& device)
 {
    mesh = {device.create_root_signature(mesh_desc), device.direct_queue};
    terrain = {device.create_root_signature(terrain_desc), device.direct_queue};
+   water = {device.create_root_signature(water_desc), device.direct_queue};
    mesh_shadow = {device.create_root_signature(mesh_shadow_desc), device.direct_queue};
    mesh_depth_prepass = {device.create_root_signature(mesh_depth_prepass_desc),
                          device.direct_queue};

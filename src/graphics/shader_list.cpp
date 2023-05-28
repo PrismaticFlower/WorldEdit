@@ -56,6 +56,9 @@ std::initializer_list<shader_description> shader_list = {
    shader("sky_meshVS"),
    shader("sky_meshPS"),
 
+   shader("waterVS"),
+   shader("waterPS"),
+
    shader("meta_drawPS"),
    shader("meta_draw_wireframePS"),
    shader("meta_draw_wireframe_GS_fallbackPS"),
