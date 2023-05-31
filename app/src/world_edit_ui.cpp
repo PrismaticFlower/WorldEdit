@@ -9,6 +9,7 @@
 #include "edits/creation_entity_set.hpp"
 #include "edits/delete_game_mode.hpp"
 #include "edits/delete_layer.hpp"
+#include "edits/delete_sector_point.hpp"
 #include "edits/delete_world_req_entry.hpp"
 #include "edits/delete_world_req_list.hpp"
 #include "edits/game_mode_link_layer.hpp"
@@ -1962,17 +1963,71 @@ void world_edit::update_ui() noexcept
                ImGui::DragFloat("Height", sector, &world::sector::height,
                                 &_edit_stack_world, &_edit_context);
 
-               ImGui::Separator();
+               ImGui::SeparatorText("Points");
 
-               ImGui::Text("Points");
+               for (int i = 0; i < sector->points.size(); ++i) {
+                  ImGui::BeginGroup();
+                  ImGui::PushID(i);
 
-               for (const float2 point : sector->points) {
-                  ImGui::Text("X:%.3f Z:%.3f", point.x, point.y);
+                  float2 point = sector->points[i];
+
+                  ImGui::DragSectorPoint("##point", sector, i,
+                                         &_edit_stack_world, &_edit_context);
+
+                  ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+                  if (ImGui::Button("Move")) {
+                     _move_sector_point_id = sector->id;
+                     _move_sector_point_index = i;
+                     _move_selection_amount = {0.0f, 0.0f, 0.0f};
+                     _selection_edit_tool = selection_edit_tool::move_sector_point;
+                  }
+
+                  const bool disable_delete = sector->points.size() <= 2;
+
+                  if (disable_delete) ImGui::BeginDisabled();
+
+                  ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+                  if (ImGui ::Button("X")) {
+                     _edit_stack_world
+                        .apply(edits::make_delete_sector_point(sector->id, i, _world),
+                               _edit_context);
+                  }
+
+                  if (disable_delete) ImGui::EndDisabled();
+
+                  ImGui::PopID();
+                  ImGui::EndGroup();
+
+                  if (ImGui::IsItemHovered()) {
+                     const float3 bottom = float3{sector->points[i].x, sector->base,
+                                                  sector->points[i].y};
+                     const float3 top = float3{sector->points[i].x,
+                                               sector->base + sector->height,
+                                               sector->points[i].y};
+
+                     _tool_visualizers.lines
+                        .emplace_back(bottom - float3{1.0f, 0.0f, 0.0f},
+                                      bottom + float3{1.0f, 0.0f, 0.0f}, 0xffffffff);
+                     _tool_visualizers.lines
+                        .emplace_back(bottom - float3{0.0f, 1.0f, 0.0f},
+                                      bottom + float3{0.0f, 1.0f, 0.0f}, 0xffffffff);
+                     _tool_visualizers.lines
+                        .emplace_back(bottom - float3{0.0f, 0.0f, 1.0f},
+                                      bottom + float3{0.0f, 0.0f, 1.0f}, 0xffffffff);
+
+                     _tool_visualizers.lines.emplace_back(top - float3{1.0f, 0.0f, 0.0f},
+                                                          top + float3{1.0f, 0.0f, 0.0f},
+                                                          0xffffffff);
+                     _tool_visualizers.lines.emplace_back(top - float3{0.0f, 1.0f, 0.0f},
+                                                          top + float3{0.0f, 1.0f, 0.0f},
+                                                          0xffffffff);
+                     _tool_visualizers.lines.emplace_back(top - float3{0.0f, 0.0f, 1.0f},
+                                                          top + float3{0.0f, 0.0f, 1.0f},
+                                                          0xffffffff);
+                  }
                }
 
-               ImGui::Separator();
-
-               ImGui::Text("Contained Objects");
+               ImGui::SeparatorText("Contained Objects");
 
                if (ImGui::Button("Auto-Fill Sector", {ImGui::CalcItemWidth(), 0.0f})) {
                   _edit_stack_world.apply(
@@ -7212,6 +7267,57 @@ void world_edit::update_ui() noexcept
             else {
                open = false;
             }
+         }
+
+         if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
+            open = false;
+         }
+      }
+
+      if (not open) {
+         _edit_stack_world.close_last();
+         _selection_edit_tool = selection_edit_tool::none;
+      }
+
+      ImGui::End();
+   }
+
+   if (_selection_edit_tool == selection_edit_tool::move_sector_point) {
+      ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
+                              ImGuiCond_FirstUseEver, {0.0f, 0.0f});
+
+      bool open = true;
+
+      if (ImGui::Begin("Move Sector Point", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
+         const float3 last_move_amount = _move_selection_amount;
+
+         if (const world::sector* sector =
+                world::find_entity(_world.sectors, _move_sector_point_id);
+             sector and _move_sector_point_index < sector->points.size()) {
+            float2 point = sector->points[_move_sector_point_index];
+            float3 sector_centre = {0.0f, 0.0f, 0.0f};
+
+            const bool imgui_edited =
+               ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+            const bool gizmo_edited =
+               _gizmo.show_translate(float3{point.x,
+                                            sector->base + (sector->height / 2.0f),
+                                            point.y},
+                                     _move_selection_amount);
+
+            if (imgui_edited or gizmo_edited) {
+               const float3 move_delta = (_move_selection_amount - last_move_amount);
+
+               _edit_stack_world
+                  .apply(edits::make_set_sector_point(sector->id, _move_sector_point_index,
+                                                      point + float2{move_delta.x,
+                                                                     move_delta.z},
+                                                      point),
+                         _edit_context);
+            }
+         }
+         else {
+            open = false;
          }
 
          if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {

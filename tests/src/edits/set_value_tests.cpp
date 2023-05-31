@@ -82,6 +82,24 @@ TEST_CASE("edits set_instance_property_value", "[Edits]")
    REQUIRE(world.objects[0].instance_properties[0].value == "50000");
 }
 
+TEST_CASE("edits set_sector_point", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_set_sector_point(world.sectors[0].id, 0, float2{20.0f, 20.0f},
+                                     world.sectors[0].points[0]);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{20.0f, 20.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
+}
+
 TEST_CASE("edits set_creation_value", "[Edits]")
 {
    world::world world = test_world;
@@ -422,6 +440,33 @@ TEST_CASE("edits set_instance_property_value coalesce", "[Edits]")
    edit->revert(edit_context);
 
    REQUIRE(world.objects[0].instance_properties[0].value == "50000");
+}
+
+TEST_CASE("edits set_sector_point coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::object{};
+
+   auto edit = make_set_sector_point(world.sectors[0].id, 0, float2{20.0f, 20.0f},
+                                     world.sectors[0].points[0]);
+   auto other_edit =
+      make_set_sector_point(world.sectors[0].id, 0, float2{80.0f, 80.0f},
+                            float2{20.0f, 20.0f});
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{80.0f, 80.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
 
 TEST_CASE("edits set_creation_value coalesce", "[Edits]")

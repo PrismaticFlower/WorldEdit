@@ -576,6 +576,38 @@ inline bool DragQuat(const char* label, we::world::path* entity,
                        });
 }
 
+// Sector Editors
+
+inline bool DragSectorPoint(const char* label, const we::world::sector* sector,
+                            std::size_t point_index,
+                            we::edits::stack<we::world::edit_context>* edit_stack,
+                            we::world::edit_context* context,
+                            float v_speed = 1.0f, float v_min = 0.0f,
+                            float v_max = 0.0f, ImGuiSliderFlags flags = 0) noexcept
+{
+   using namespace we;
+   using namespace we::edits;
+   using namespace we::edits::imgui;
+
+   using edit_type = ui_edit_indexed<world::sector, float2>;
+
+   float2 value = sector->points[point_index];
+   float2 original_value = value;
+
+   const bool value_changed =
+      ImGui::DragFloat2XZ(label, &value, v_speed, v_min, v_max, flags);
+
+   if (value_changed) {
+      edit_stack->apply(std::make_unique<edit_type>(sector->id, &world::sector::points,
+                                                    point_index, value, original_value),
+                        *context);
+   }
+
+   if (ImGui::IsItemDeactivated()) edit_stack->close_last();
+
+   return value_changed;
+}
+
 // Path Node Vector/Array Property Editors
 
 template<typename T>

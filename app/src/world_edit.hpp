@@ -48,7 +48,13 @@ enum class placement_node_insert : uint8 { nearest, append };
 
 enum class placement_resize_mode : uint8 { off, extend, shrink };
 
-enum class selection_edit_tool : uint8 { none, move, move_path, rotate };
+enum class selection_edit_tool : uint8 {
+   none,
+   move,
+   move_path,
+   move_sector_point,
+   rotate
+};
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
@@ -325,6 +331,8 @@ private:
    float3 _move_selection_amount = {0.0f, 0.0f, 0.0f};
    float3 _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
    world::path_id _move_entire_path_id = {};
+   world::sector_id _move_sector_point_id = {};
+   std::size_t _move_sector_point_index = 0;
 
    gizmo _gizmo;
    commands _commands;

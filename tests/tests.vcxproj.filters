@@ -87,6 +87,7 @@
     <ClCompile Include="src\edits\delete_world_req_entry_tests.cpp" />
     <ClCompile Include="src\edits\delete_world_req_list_tests.cpp" />
     <ClCompile Include="src\assets\sky\io_tests.cpp" />
+    <ClCompile Include="src\edits\delete_sector_point_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
