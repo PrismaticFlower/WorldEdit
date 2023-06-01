@@ -8,7 +8,7 @@ using namespace std::literals;
 
 namespace we::edits::tests {
 
-TEST_CASE("edits delete_entity sector point", "[Edits]")
+TEST_CASE("edits delete_sector_point", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;

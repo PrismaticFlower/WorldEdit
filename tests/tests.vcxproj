@@ -231,6 +231,7 @@
     <ClCompile Include="src\edits\delete_entity_tests.cpp" />
     <ClCompile Include="src\edits\delete_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\delete_layer_tests.cpp" />
+    <ClCompile Include="src\edits\delete_sector_object_tests.cpp" />
     <ClCompile Include="src\edits\delete_sector_point_tests.cpp" />
     <ClCompile Include="src\edits\delete_world_req_entry_tests.cpp" />
     <ClCompile Include="src\edits\delete_world_req_list_tests.cpp" />

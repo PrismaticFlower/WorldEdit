@@ -9,6 +9,7 @@
 #include "edits/creation_entity_set.hpp"
 #include "edits/delete_game_mode.hpp"
 #include "edits/delete_layer.hpp"
+#include "edits/delete_sector_object.hpp"
 #include "edits/delete_sector_point.hpp"
 #include "edits/delete_world_req_entry.hpp"
 #include "edits/delete_world_req_list.hpp"
@@ -1987,7 +1988,7 @@ void world_edit::update_ui() noexcept
                   if (disable_delete) ImGui::BeginDisabled();
 
                   ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-                  if (ImGui ::Button("X")) {
+                  if (ImGui::Button("X")) {
                      _edit_stack_world
                         .apply(edits::make_delete_sector_point(sector->id, i, _world),
                                _edit_context);
@@ -2029,6 +2030,43 @@ void world_edit::update_ui() noexcept
 
                ImGui::SeparatorText("Contained Objects");
 
+               if (ImGui::BeginTable("Contained Objects", 3,
+                                     ImGuiTableFlags_SizingFixedFit)) {
+                  for (int i = 0; i < sector->objects.size(); ++i) {
+                     ImGui::PushID(i);
+
+                     bool hovered = false;
+
+                     ImGui::TableNextRow();
+
+                     ImGui::TableNextColumn();
+                     ImGui::Text(sector->objects[i].c_str());
+
+                     hovered |= ImGui::IsItemHovered();
+
+                     ImGui::TableNextColumn();
+                     if (ImGui::SmallButton("X")) {
+                        _edit_stack_world
+                           .apply(edits::make_delete_sector_object(sector->id, i, _world),
+                                  _edit_context);
+                     }
+
+                     hovered |= ImGui::IsItemHovered();
+
+                     if (hovered) {
+                        for (const auto& object : _world.objects) {
+                           if (object.name == sector->objects[i]) {
+                              _interaction_targets.hovered_entity = object.id;
+                           }
+                        }
+                     }
+
+                     ImGui::PopID();
+                  }
+
+                  ImGui::EndTable();
+               }
+
                if (ImGui::Button("Auto-Fill Sector", {ImGui::CalcItemWidth(), 0.0f})) {
                   _edit_stack_world.apply(
                      edits::make_set_value(sector->id, &world::sector::objects,
@@ -2036,10 +2074,6 @@ void world_edit::update_ui() noexcept
                                                               _object_classes),
                                            sector->objects),
                      _edit_context);
-               }
-
-               for (const auto& object : sector->objects) {
-                  ImGui::Text(object.c_str());
                }
             }
             else if (std::holds_alternative<world::portal_id>(selected)) {
