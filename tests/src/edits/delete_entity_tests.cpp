@@ -237,25 +237,25 @@ TEST_CASE("edits delete_entity planning_hub", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(world.planning_hubs.size() == 1);
-   REQUIRE(world.planning_hubs[0] == test_world.planning_hubs[1]);
+   REQUIRE(world.planning_hubs.size() == 2);
+   CHECK(world.planning_hubs[0] == test_world.planning_hubs[1]);
+   CHECK(world.planning_hubs[1] == test_world.planning_hubs[2]);
 
-   REQUIRE(world.planning_connections.empty());
+   REQUIRE(world.planning_connections.size() == 1);
+   CHECK(world.planning_connections[0].name == "Connection2");
 
    REQUIRE(not world.planning_hub_index.contains(test_world.planning_hubs[0].id));
-   REQUIRE(world.planning_hub_index.at(test_world.planning_hubs[1].id) == 0);
+   CHECK(world.planning_hub_index.at(test_world.planning_hubs[1].id) == 0);
+   CHECK(world.planning_hub_index.at(test_world.planning_hubs[2].id) == 1);
 
    edit->revert(edit_context);
 
-   REQUIRE(world.planning_hubs.size() == 2);
-   REQUIRE(world.planning_hubs[0] == test_world.planning_hubs[0]);
-   REQUIRE(world.planning_hubs[1] == test_world.planning_hubs[1]);
+   CHECK(world.planning_hubs == test_world.planning_hubs);
+   CHECK(world.planning_connections == test_world.planning_connections);
 
-   REQUIRE(world.planning_connections.size() == 1);
-   REQUIRE(world.planning_connections[0] == test_world.planning_connections[0]);
-
-   REQUIRE(world.planning_hub_index.at(test_world.planning_hubs[0].id) == 0);
-   REQUIRE(world.planning_hub_index.at(test_world.planning_hubs[1].id) == 1);
+   CHECK(world.planning_hub_index.at(test_world.planning_hubs[0].id) == 0);
+   CHECK(world.planning_hub_index.at(test_world.planning_hubs[1].id) == 1);
+   CHECK(world.planning_hub_index.at(test_world.planning_hubs[2].id) == 2);
 }
 
 TEST_CASE("edits delete_entity planning_connection", "[Edits]")

@@ -323,7 +323,7 @@ private:
 
 struct delete_planning_hub final : edit<world::edit_context> {
    struct broken_connection {
-      uint32 index;
+      int index;
       world::planning_connection connection;
    };
 
@@ -359,7 +359,8 @@ struct delete_planning_hub final : edit<world::edit_context> {
 
       context.world.planning_hub_index.emplace(_hub.id, _hub_index);
 
-      for (const auto& broken : _broken_connections) {
+      for (std::ptrdiff_t i = std::ssize(_broken_connections) - 1; i >= 0; --i) {
+         const auto& broken = _broken_connections[i];
          context.world.planning_connections
             .insert(context.world.planning_connections.begin() + broken.index,
                     broken.connection);
@@ -640,11 +641,14 @@ auto make_delete_entity(world::planning_hub_id planning_hub_id, const world::wor
 
    broken_connections.reserve(broken_connection_count);
 
-   for (uint32 i = 0; i < world.planning_connections.size(); ++i) {
+   int delete_offset = 0;
+
+   for (int i = 0; i < world.planning_connections.size(); ++i) {
       const world::planning_connection& connection = world.planning_connections[i];
 
       if (connection.start == planning_hub_id or connection.end == planning_hub_id) {
-         broken_connections.emplace_back(i, connection);
+         broken_connections.emplace_back(i - delete_offset, connection);
+         delete_offset += 1;
       }
    }
 

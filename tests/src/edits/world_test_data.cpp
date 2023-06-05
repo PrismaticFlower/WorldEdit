@@ -157,7 +157,12 @@ const we::world::world test_world = {
                      planning_hub{.name = "Hub1",
                                   .position = float3{-121.883095f, 0.0f, -30.046543f},
                                   .radius = 7.586431f,
-                                  .id = planning_hub_id{1}}},
+                                  .id = planning_hub_id{1}},
+
+                     planning_hub{.name = "Hub2",
+                                  .position = float3{-121.883095f, 0.0f, -60.046543f},
+                                  .radius = 7.586431f,
+                                  .id = planning_hub_id{2}}},
 
    .planning_connections =
       {planning_connection{.name = "Connection0",
@@ -165,10 +170,30 @@ const we::world::world test_world = {
                            .end = planning_hub_id{1},
                            .flags = (ai_path_flags::soldier | ai_path_flags::hover |
                                      ai_path_flags::small | ai_path_flags::medium |
-                                     ai_path_flags::huge | ai_path_flags::flyer)}},
+                                     ai_path_flags::huge | ai_path_flags::flyer),
+                           .id = planning_connection_id{0}},
+       planning_connection{.name = "Connection1",
+                           .start = planning_hub_id{0},
+                           .end = planning_hub_id{2},
+                           .flags = (ai_path_flags::soldier | ai_path_flags::hover |
+                                     ai_path_flags::small | ai_path_flags::medium |
+                                     ai_path_flags::huge | ai_path_flags::flyer),
+                           .id = planning_connection_id{1}},
+       planning_connection{.name = "Connection2",
+                           .start = planning_hub_id{1},
+                           .end = planning_hub_id{2},
+                           .flags = (ai_path_flags::soldier | ai_path_flags::hover |
+                                     ai_path_flags::small | ai_path_flags::medium |
+                                     ai_path_flags::huge | ai_path_flags::flyer),
+                           .id = planning_connection_id{2}}},
 
    .boundaries = {boundary{.name = "boundary"s}},
 
-   .planning_hub_index = {{planning_hub_id{0}, 0}, {planning_hub_id{1}, 1}},
+   .planning_hub_index =
+      {
+         {planning_hub_id{0}, 0},
+         {planning_hub_id{1}, 1},
+         {planning_hub_id{2}, 2},
+      },
 };
 }
