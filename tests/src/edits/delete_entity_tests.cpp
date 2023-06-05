@@ -268,12 +268,14 @@ TEST_CASE("edits delete_entity planning_connection", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(world.planning_connections.empty());
+   REQUIRE(world.planning_connections.size() == 2);
+   CHECK(world.planning_connections[0] == test_world.planning_connections[1]);
+   CHECK(world.planning_connections[1] == test_world.planning_connections[2]);
 
    edit->revert(edit_context);
 
-   REQUIRE(world.planning_connections.size() == 1);
-   REQUIRE(world.planning_connections[0] == test_world.planning_connections[0]);
+   REQUIRE(world.planning_connections.size() == 3);
+   CHECK(world.planning_connections == test_world.planning_connections);
 }
 
 TEST_CASE("edits delete_entity boundary", "[Edits]")
