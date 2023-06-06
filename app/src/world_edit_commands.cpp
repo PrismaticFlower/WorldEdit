@@ -104,6 +104,15 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_edit.new_from_selection"s,
                  [this] { new_entity_from_selection(); });
    _commands.add("entity_edit.open_odf"s, [this] { open_odfs_for_selected(); });
+   _commands.add("entity_edit.finish_add_sector_object"s, [this] {
+      _selection_edit_context.using_add_object_to_sector = false;
+      _selection_edit_context.add_hovered_object = true;
+   });
+   _commands.add("entity_edit.add_sector_object"s,
+                 [this] { _selection_edit_context.add_hovered_object = true; });
+   _commands.add("entity_edit.cancel_add_sector_object"s, [this] {
+      _selection_edit_context.using_add_object_to_sector = false;
+   });
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_config.placement_rotation) {
@@ -467,6 +476,22 @@ void world_edit::initialize_hotkeys() noexcept
             {"Stop Pick Sector (Escape)",
              "entity_creation.deactivate_pick_sector",
              {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Editing (Add Sector Object)",
+      .activated =
+         [this] { return _selection_edit_context.using_add_object_to_sector; },
+      .default_hotkeys =
+         {
+            {"Add Object and Finish", "entity_edit.finish_add_sector_object", {.key = key::mouse1}},
+            {"Add Object",
+             "entity_edit.add_sector_object",
+             {.key = key::mouse1, .modifiers = {.shift = true}}},
+            {"Cancel Add Object", "entity_edit.cancel_add_sector_object", {.key = key::escape}},
          },
 
       .hidden = true,

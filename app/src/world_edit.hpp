@@ -320,7 +320,12 @@ private:
    } _entity_creation_config;
 
    struct selection_edit_context {
+      bool using_add_object_to_sector = false;
+      bool add_hovered_object = false;
+
       bool ground_objects = false;
+
+      world::sector_id sector_to_add_object_to = world::max_id;
    } _selection_edit_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

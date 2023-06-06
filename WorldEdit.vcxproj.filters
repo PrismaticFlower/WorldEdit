@@ -730,6 +730,9 @@
     <ClInclude Include="src\edits\delete_sector_object.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\edits\add_sector_object.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1069,6 +1072,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\delete_sector_object.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\edits\add_sector_object.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

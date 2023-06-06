@@ -369,9 +369,14 @@ void world_edit::update_hovered_entity() noexcept
 
       const bool pick_sector_wants_hover = _entity_creation_context.using_pick_sector;
 
-      const bool tool_wants_hover = from_bbox_wants_hover or
-                                    connection_placement_wants_hover or
-                                    pick_sector_wants_hover;
+      const bool pick_sector_object_wants_hover =
+         (_selection_edit_context.using_add_object_to_sector or
+          _selection_edit_context.add_hovered_object) and
+         std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity);
+
+      const bool tool_wants_hover =
+         from_bbox_wants_hover or connection_placement_wants_hover or
+         pick_sector_wants_hover or pick_sector_object_wants_hover;
 
       if (not tool_wants_hover) {
          _interaction_targets.hovered_entity = std::nullopt;

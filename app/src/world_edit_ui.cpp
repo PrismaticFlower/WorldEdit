@@ -3,6 +3,7 @@
 #include "edits/add_game_mode.hpp"
 #include "edits/add_layer.hpp"
 #include "edits/add_property.hpp"
+#include "edits/add_sector_object.hpp"
 #include "edits/add_world_req_entry.hpp"
 #include "edits/add_world_req_list.hpp"
 #include "edits/bundle.hpp"
@@ -2074,6 +2075,38 @@ void world_edit::update_ui() noexcept
                                                               _object_classes),
                                            sector->objects),
                      _edit_context);
+               }
+
+               if (ImGui::Button("Add Object", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _selection_edit_context.using_add_object_to_sector = true;
+                  _selection_edit_context.sector_to_add_object_to = sector->id;
+               }
+
+               if (_selection_edit_context.sector_to_add_object_to == sector->id and
+                   std::exchange(_selection_edit_context.add_hovered_object, false) and
+                   _interaction_targets.hovered_entity and
+                   std::holds_alternative<world::object_id>(
+                      *_interaction_targets.hovered_entity)) {
+                  if (world::object* object =
+                         world::find_entity(_world.objects,
+                                            std::get<world::object_id>(
+                                               *_interaction_targets.hovered_entity));
+                      object) {
+                     bool already_has_object = false;
+
+                     for (const auto& other_object : sector->objects) {
+                        if (string::iequals(object->name, other_object)) {
+                           already_has_object = true;
+                        }
+                     }
+
+                     if (not already_has_object) {
+                        _edit_stack_world
+                           .apply(edits::make_add_sector_object(sector->id,
+                                                                object->name),
+                                  _edit_context);
+                     }
+                  }
                }
             }
             else if (std::holds_alternative<world::portal_id>(selected)) {

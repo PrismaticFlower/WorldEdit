@@ -223,6 +223,7 @@
     <ClCompile Include="src\edits\add_game_mode.cpp" />
     <ClCompile Include="src\edits\add_layer.cpp" />
     <ClCompile Include="src\edits\add_property.cpp" />
+    <ClCompile Include="src\edits\add_sector_object.cpp" />
     <ClCompile Include="src\edits\add_world_req_entry.cpp" />
     <ClCompile Include="src\edits\add_world_req_list.cpp" />
     <ClCompile Include="src\edits\bundle.cpp" />
@@ -383,6 +384,7 @@
     <ClInclude Include="src\container\paged_stack.hpp" />
     <ClInclude Include="src\edits\add_game_mode.hpp" />
     <ClInclude Include="src\edits\add_layer.hpp" />
+    <ClInclude Include="src\edits\add_sector_object.hpp" />
     <ClInclude Include="src\edits\add_world_req_list.hpp" />
     <ClInclude Include="src\edits\bundle.hpp" />
     <ClInclude Include="src\edits\creation_entity_set.hpp" />
