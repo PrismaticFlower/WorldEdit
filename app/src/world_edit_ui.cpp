@@ -2029,6 +2029,18 @@ void world_edit::update_ui() noexcept
                   }
                }
 
+               if (ImGui::Button("Add Points", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _edit_stack_world.apply(edits::make_creation_entity_set(
+                                             world::sector{.name = sector->name,
+                                                           .base = sector->base,
+                                                           .height = sector->height,
+                                                           .points = {float2{0.0f, 0.0f}},
+                                                           .id = world::max_id},
+                                             _interaction_targets.creation_entity),
+                                          _edit_context);
+                  _entity_creation_context = {};
+               }
+
                ImGui::SeparatorText("Contained Objects");
 
                if (ImGui::BeginTable("Contained Objects", 3,
