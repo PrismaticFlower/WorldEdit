@@ -4213,7 +4213,7 @@ void world_edit::update_ui() noexcept
          }
 
          ImGui::Checkbox("Auto-Fill Object List",
-                         &_entity_creation_context.auto_fill_sector);
+                         &_entity_creation_config.auto_fill_sector);
 
          if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip(

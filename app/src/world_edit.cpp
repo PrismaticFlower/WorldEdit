@@ -661,7 +661,7 @@ void world_edit::place_creation_entity() noexcept
                                                   sector.points[0]),
                          _edit_context);
 
-               if (_entity_creation_context.auto_fill_sector) {
+               if (_entity_creation_config.auto_fill_sector) {
                   _edit_stack_world.apply(
                      edits::make_set_value(existing_sector->id, &world::sector::objects,
                                            world::sector_fill(*existing_sector,
