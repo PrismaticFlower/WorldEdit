@@ -4158,6 +4158,11 @@ void world_edit::update_ui() noexcept
                                 world::create_unique_name(_world.sectors, *edited_value);
                           });
 
+         const bool using_from_object_bbox =
+            _entity_creation_context.using_from_object_bbox;
+
+         if (using_from_object_bbox) ImGui::BeginDisabled();
+
          ImGui::DragFloat("Base", &creation_entity, &world::sector::base,
                           &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 0.0f,
                           "Y:%.3f");
@@ -4169,7 +4174,8 @@ void world_edit::update_ui() noexcept
          ImGui::DragSectorPoint("Position", &creation_entity,
                                 &_edit_stack_world, &_edit_context);
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (_entity_creation_config.placement_mode == placement_mode::cursor and
+             not using_from_object_bbox) {
             float2 new_position = sector.points[0];
 
             new_position = {_cursor_positionWS.x, _cursor_positionWS.z};
@@ -4217,6 +4223,8 @@ void world_edit::update_ui() noexcept
                               "points to the current one.");
          }
 
+         if (using_from_object_bbox) ImGui::EndDisabled();
+
          ImGui::Checkbox("Auto-Fill Object List",
                          &_entity_creation_config.auto_fill_sector);
 
@@ -4229,9 +4237,15 @@ void world_edit::update_ui() noexcept
                "will add a separate entry to the Undo stack.");
          }
 
+         ImGui::Separator();
+         if (ImGui::Button("From Object Bounds", {ImGui::CalcItemWidth(), 0.0f})) {
+            _entity_creation_context.activate_from_object_bbox = true;
+         }
+
          if (const world::sector* existing_sector =
                 world::find_entity(_world.sectors, sector.name);
-             existing_sector and not existing_sector->points.empty()) {
+             existing_sector and not existing_sector->points.empty() and
+             not using_from_object_bbox) {
             const float2 start_point = existing_sector->points.back();
             const float2 mid_point = sector.points[0];
             const float2 end_point = existing_sector->points[0];
@@ -4260,10 +4274,36 @@ void world_edit::update_ui() noexcept
                                                  line_bottom_end, 0xffffffffu);
             _tool_visualizers.lines.emplace_back(line_top_mid, line_top_end, 0xffffffffu);
          }
+         if (using_from_object_bbox and _interaction_targets.hovered_entity and
+             std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity)) {
+            const world::object* object =
+               world::find_entity(_world.objects,
+                                  std::get<world::object_id>(
+                                     *_interaction_targets.hovered_entity));
+
+            if (object) {
+               std::array<float3, 8> corners = math::to_corners(
+                  _object_classes[object->class_name].model->bounding_box);
+
+               for (auto& corner : corners) {
+                  corner = object->rotation * corner + object->position;
+               }
+
+               _edit_stack_world.apply(edits::make_set_creation_value(
+                                          &world::sector::points,
+                                          {float2{corners[0].x, corners[0].z},
+                                           float2{corners[1].x, corners[1].z},
+                                           float2{corners[2].x, corners[2].z},
+                                           float2{corners[3].x, corners[3].z}},
+                                          sector.points),
+                                       _edit_context);
+            }
+         }
 
          traits = {.has_placement_rotation = false,
                    .has_point_at = false,
-                   .has_placement_ground = false};
+                   .has_placement_ground = false,
+                   .has_from_bbox = true};
       }
       else if (std::holds_alternative<world::portal>(creation_entity)) {
          const world::portal& portal = std::get<world::portal>(creation_entity);

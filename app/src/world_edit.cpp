@@ -659,7 +659,7 @@ void world_edit::place_creation_entity() noexcept
 
             if (const world::sector* existing_sector =
                    world::find_entity(_world.sectors, sector.name);
-                existing_sector) {
+                existing_sector and sector.points.size() == 1) {
                _edit_stack_world
                   .apply(edits::make_insert_point(existing_sector->id,
                                                   existing_sector->points.size(),
@@ -679,11 +679,25 @@ void world_edit::place_creation_entity() noexcept
             else {
                world::sector new_sector = sector;
 
-               new_sector.name = sector.name;
+               new_sector.name =
+                  world::create_unique_name(_world.sectors, sector.name);
                new_sector.id = _world.next_id.sectors.aquire();
+
+               if (_entity_creation_config.auto_fill_sector) {
+                  new_sector.objects =
+                     world::sector_fill(new_sector, _world.objects, _object_classes);
+               }
 
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
                                        _edit_context);
+
+               if (sector.points.size() > 1) {
+                  _edit_stack_world
+                     .apply(edits::make_set_creation_value(&world::sector::points,
+                                                           {sector.points[0]},
+                                                           sector.points),
+                            _edit_context, {.closed = true, .transparent = true});
+               }
             }
          },
          [&](const world::portal& portal) {
