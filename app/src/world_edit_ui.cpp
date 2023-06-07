@@ -2862,6 +2862,11 @@ void world_edit::update_ui() noexcept
             }
          }
 
+         if (not object.name.empty()) {
+            ImGui::Checkbox("Auto-Add Object to Sectors",
+                            &_entity_creation_config.auto_add_object_to_sectors);
+         }
+
          ImGui::Separator();
 
          if (_entity_creation_config.placement_rotation !=

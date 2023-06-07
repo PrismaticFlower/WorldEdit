@@ -2,6 +2,7 @@
 #include "world_edit.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
+#include "edits/add_sector_object.hpp"
 #include "edits/bundle.hpp"
 #include "edits/creation_entity_set.hpp"
 #include "edits/delete_entity.hpp"
@@ -546,6 +547,10 @@ void world_edit::place_creation_entity() noexcept
                command_post_auto_place_meta_entities(_world.objects.back());
             }
 
+            if (_entity_creation_config.auto_add_object_to_sectors) {
+               add_object_to_sectors(_world.objects.back());
+            }
+
             _last_created_entities.last_layer = object.layer;
          },
          [&](const world::light& light) {
@@ -887,6 +892,29 @@ void world_edit::command_post_auto_place_meta_entities(const world::object& obje
    _edit_stack_world.apply(edits::make_insert_entity(
                               std::move(command_post_linked_entities.spawn_path)),
                            _edit_context, {.transparent = true});
+}
+
+void world_edit::add_object_to_sectors(const world::object& object) noexcept
+{
+   if (object.name.empty()) return;
+
+   for (const auto& sector : _world.sectors) {
+      if (not world::inside_sector(sector, object, _object_classes)) continue;
+
+      bool already_exists = false;
+
+      for (const auto& sector_object : sector.objects) {
+         if (string::iequals(sector_object, object.name)) {
+            already_exists = true;
+            break;
+         }
+      }
+
+      if (already_exists) continue;
+
+      _edit_stack_world.apply(edits::make_add_sector_object(sector.id, object.name),
+                              _edit_context, {.transparent = true});
+   }
 }
 
 void world_edit::cycle_creation_entity_object_class() noexcept

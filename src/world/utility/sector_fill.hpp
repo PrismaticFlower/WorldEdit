@@ -11,4 +11,7 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
                  const object_class_library& object_classes)
    -> std::vector<std::string>;
 
+bool inside_sector(const sector& sector, const object& object,
+                   const object_class_library& object_classes);
+
 }

@@ -46,12 +46,16 @@ bool inside_sector(const std::span<const float2> sector_points,
 }
 
 bool inside_sector(const std::span<const float2> sector_points,
-                   const math::bounding_box bbox) noexcept
+                   const float2 sector_min, const math::bounding_box bbox) noexcept
 {
    const std::array bbox_corners{float2{bbox.min.x, bbox.min.z},
                                  float2{bbox.min.x, bbox.max.z},
                                  float2{bbox.max.x, bbox.max.z},
                                  float2{bbox.max.x, bbox.min.z}};
+
+   for (const auto& bbox_point : bbox_corners) {
+      if (inside_sector(sector_points, sector_min, bbox_point)) return true;
+   }
 
    struct line {
       float2 v0;
@@ -120,11 +124,46 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
 
       if (inside_sector(sector.points, {sector_min.x, sector_min.z},
                         {object_centre.x, object_centre.z}) or
-          inside_sector(sector.points, bbox)) {
+          inside_sector(sector.points, {sector_min.x, sector_min.z}, bbox)) {
          sector_objects.push_back(object.name);
       }
    }
 
    return sector_objects;
 }
+
+bool inside_sector(const sector& sector, const object& object,
+                   const object_class_library& object_classes)
+{
+   if (object.name.empty()) return false;
+
+   float3 sector_min{std::numeric_limits<float>::max(), 0.0f,
+                     std::numeric_limits<float>::max()};
+   float3 sector_max = -sector_min;
+
+   for (const auto& point : sector.points) {
+      sector_min = min(sector_min, {point.x, 0.0f, point.y});
+      sector_max = max(sector_max, {point.x, 0.0f, point.y});
+   }
+
+   sector_min.y = sector.base;
+   sector_max.y = sector.base + sector.height;
+
+   const math::bounding_box model_bbox =
+      object_classes[object.class_name].model->bounding_box;
+   const math::bounding_box bbox = object.rotation * model_bbox + object.position;
+
+   if (bbox.min.x > sector_max.x or bbox.max.x < sector_min.x or
+       bbox.min.y > sector_max.y or bbox.max.y < sector_min.y or
+       bbox.min.z > sector_max.z or bbox.max.z < sector_min.z) {
+      return false;
+   }
+
+   const float3 object_centre = (bbox.min + bbox.max) / 2.0f;
+
+   return inside_sector(sector.points, {sector_min.x, sector_min.z},
+                        {object_centre.x, object_centre.z}) or
+          inside_sector(sector.points, {sector_min.x, sector_min.z}, bbox);
+}
+
 }

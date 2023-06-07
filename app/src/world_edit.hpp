@@ -105,6 +105,8 @@ private:
 
    void command_post_auto_place_meta_entities(const world::object& object) noexcept;
 
+   void add_object_to_sectors(const world::object& object) noexcept;
+
    void cycle_creation_entity_object_class() noexcept;
 
    void undo() noexcept;
@@ -309,6 +311,7 @@ private:
 
       bool command_post_auto_place_meta_entities = true;
       bool auto_fill_sector = true;
+      bool auto_add_object_to_sectors = true;
 
       float command_post_capture_radius = 8.0f;
       float command_post_control_radius = 16.0f;
