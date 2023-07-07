@@ -117,6 +117,11 @@ struct hub_branch_weight_ref {
    ai_path_flags flag;
 };
 
+struct sequence_numbers {
+   int objects = 0;
+   int lights = 0;
+};
+
 auto get_hub_branch_weight_refs(const world& world)
    -> absl::flat_hash_map<planning_hub_id, absl::InlinedVector<hub_branch_weight_ref, 12>>
 {
@@ -153,8 +158,9 @@ auto get_hub_branch_weight_refs(const world& world)
    return refs;
 }
 
-void save_objects(const std::filesystem::path& path, const std::string_view layer_name,
-                  const int layer_index, const world& world)
+void save_objects(const std::filesystem::path& path,
+                  const std::string_view layer_name, const int layer_index,
+                  const world& world, sequence_numbers& sequence_numbers)
 {
    io::output_file file{path};
 
@@ -170,14 +176,15 @@ void save_objects(const std::filesystem::path& path, const std::string_view laye
 
    file.write_ln("NextSequence({});\n", world.objects.size());
 
-   for (std::size_t i = 0; i < world.objects.size(); ++i) {
-      const auto& object = world.objects[i];
+   for (const auto& object : world.objects) {
       const auto rotation = flip_rotation(object.rotation);
       const auto position = flip_position(object.position);
+      const int sequence_number = sequence_numbers.objects++;
 
       if (object.layer != layer_index) continue;
 
-      file.write_ln("Object(\"{}\", \"{}\", {})", object.name, object.class_name, i);
+      file.write_ln("Object(\"{}\", \"{}\", {})", object.name,
+                    object.class_name, sequence_number);
       file.write_ln("{");
 
       file.write_ln("\tChildRotation({:f}, {:f}, {:f}, {:f});", rotation.w,
@@ -428,20 +435,18 @@ void save_regions(const std::filesystem::path& path, const int layer_index,
 }
 
 void save_lights(const std::filesystem::path& path, const int layer_index,
-                 const world& world)
+                 const world& world, sequence_numbers& sequence_numbers)
 {
    io::output_file file{path};
 
-   for (std::size_t i = 0; i < world.lights.size(); ++i) {
-      auto& light = world.lights[i];
-
+   for (const auto& light : world.lights) {
       if (light.layer != layer_index) continue;
 
       const auto rotation = flip_rotation(light.rotation);
       const auto position = flip_position(light.position);
       const light_type light_type = flatten_light_type(light);
 
-      file.write_ln("Light(\"{}\", {})", light.name, i);
+      file.write_ln("Light(\"{}\", {})", light.name, sequence_numbers.lights++);
       file.write_ln("{");
       file.write_ln("\tRotation({:f}, {:f}, {:f}, {:f});", rotation.w,
                     rotation.x, rotation.y, rotation.z);
@@ -689,15 +694,16 @@ void save_boundaries(const std::filesystem::path& path, const world& world)
 /// @param layer_name The name of the layer ie `test` or `test_conquest`.
 /// @param layer_index The index of the layer, 0 is special and indicates the base layer.
 /// @param world The world that is being saved.
-void save_layer(const std::filesystem::path& world_dir, const std::string_view layer_name,
-                const int layer_index, const world& world)
+void save_layer(const std::filesystem::path& world_dir,
+                const std::string_view layer_name, const int layer_index,
+                const world& world, sequence_numbers& sequence_numbers)
 {
    save_objects(world_dir / layer_name += (layer_index == 0 ? L".wld"sv : L".lyr"sv),
-                layer_name, layer_index, world);
+                layer_name, layer_index, world, sequence_numbers);
 
    save_paths(world_dir / layer_name += L".pth"sv, layer_index, world);
    save_regions(world_dir / layer_name += L".rgn"sv, layer_index, world);
-   save_lights(world_dir / layer_name += L".lgt"sv, layer_index, world);
+   save_lights(world_dir / layer_name += L".lgt"sv, layer_index, world, sequence_numbers);
    save_hintnodes(world_dir / layer_name += L".hnt"sv, layer_index, world);
 
    if (layer_index == 0) {
@@ -795,17 +801,19 @@ void save_world(const std::filesystem::path& path, const world& world)
    const auto world_dir = path.parent_path();
    const auto world_name = path.stem().string();
 
+   sequence_numbers sequence_numbers;
+
    garbage_collect_files(world_dir, world_name, world);
 
    save_layer_index(std::filesystem::path{path}.replace_extension(L".ldx"sv), world);
 
-   save_layer(world_dir, world_name, 0, world);
+   save_layer(world_dir, world_name, 0, world, sequence_numbers);
 
    for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
       auto& layer = world.layer_descriptions[i];
 
       save_layer(world_dir, world_name + "_"s + layer.name,
-                 static_cast<uint32>(i), world);
+                 static_cast<uint32>(i), world, sequence_numbers);
    }
 
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv), world.terrain);
