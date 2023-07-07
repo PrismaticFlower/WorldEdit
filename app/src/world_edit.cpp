@@ -37,7 +37,9 @@ using namespace std::literals;
 namespace we {
 
 world_edit::world_edit(const HWND window, utility::command_line command_line)
-   : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext}, _window{window}
+   : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
+     _window{window},
+     _renderer_use_debug_layer{command_line.get_flag("-gpu_debug_layer")}
 {
    async::task<settings::settings> settings_load = _thread_pool->exec([]() {
       try {
@@ -52,7 +54,11 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 
    try {
       _renderer =
-         graphics::make_renderer(window, _thread_pool, _asset_libraries, _stream);
+         graphics::make_renderer({.window = window,
+                                  .thread_pool = _thread_pool,
+                                  .asset_libraries = _asset_libraries,
+                                  .error_output = _stream,
+                                  .use_debug_layer = _renderer_use_debug_layer});
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -1685,8 +1691,12 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
       _renderer = nullptr;
 
       try {
-         _renderer = graphics::make_renderer(_window, _thread_pool,
-                                             _asset_libraries, _stream);
+         _renderer =
+            graphics::make_renderer({.window = _window,
+                                     .thread_pool = _thread_pool,
+                                     .asset_libraries = _asset_libraries,
+                                     .error_output = _stream,
+                                     .use_debug_layer = _renderer_use_debug_layer});
 
          _renderer->recreate_imgui_font_atlas();
          _renderer->display_scale_changed(_display_scale);

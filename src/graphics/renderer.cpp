@@ -77,10 +77,7 @@ struct renderer_config {
 };
 
 struct renderer_impl final : renderer {
-   renderer_impl(const renderer::window_handle window,
-                 std::shared_ptr<async::thread_pool> thread_pool,
-                 assets::libraries_manager& asset_libraries,
-                 output_stream& error_output);
+   renderer_impl(const renderer_init& init);
 
    void wait_for_swap_chain_ready() override;
 
@@ -161,8 +158,7 @@ private:
    output_stream& _error_output;
    float _display_scale = 1.0f;
 
-   gpu::device _device{gpu::device_desc{.enable_debug_layer = true,
-                                        .enable_gpu_based_validation = true}};
+   gpu::device _device;
    gpu::swap_chain _swap_chain;
    gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(
       {.allocator_name = "World Allocator", .debug_name = "Pre-Render Copy Command List"});
@@ -256,19 +252,18 @@ private:
    renderer_config _config;
 };
 
-renderer_impl::renderer_impl(const renderer::window_handle window,
-                             std::shared_ptr<async::thread_pool> thread_pool,
-                             assets::libraries_manager& asset_libraries,
-                             output_stream& error_output)
-   : _thread_pool{thread_pool},
-     _error_output{error_output},
-     _swap_chain{_device.create_swap_chain({.window = window})},
-     _texture_manager{_device, _copy_command_list_pool, thread_pool,
-                      asset_libraries.textures},
+renderer_impl::renderer_impl(const renderer_init& init)
+   : _thread_pool{init.thread_pool},
+     _error_output{init.error_output},
+     _device{gpu::device_desc{.enable_debug_layer = init.use_debug_layer,
+                              .enable_gpu_based_validation = init.use_debug_layer}},
+     _swap_chain{_device.create_swap_chain({.window = init.window})},
+     _texture_manager{_device, _copy_command_list_pool, init.thread_pool,
+                      init.asset_libraries.textures},
      _model_manager{_device,          _copy_command_list_pool,
-                    _texture_manager, asset_libraries.models,
-                    thread_pool,      _error_output},
-     _sky{_device, _model_manager, asset_libraries}
+                    _texture_manager, init.asset_libraries.models,
+                    init.thread_pool, _error_output},
+     _sky{_device, _model_manager, init.asset_libraries}
 {
    // create object constants upload buffers
    for (std::size_t i = 0; i < _object_constants_upload_buffers.size(); ++i) {
@@ -1933,13 +1928,9 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
       });
 }
 
-auto make_renderer(const renderer::window_handle window,
-                   std::shared_ptr<async::thread_pool> thread_pool,
-                   assets::libraries_manager& asset_libraries,
-                   output_stream& error_output) -> std::unique_ptr<renderer>
+auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>
 {
-   return std::make_unique<renderer_impl>(window, thread_pool, asset_libraries,
-                                          error_output);
+   return std::make_unique<renderer_impl>(init);
 }
 
 }

@@ -11,9 +11,9 @@ namespace we::utility::tests {
 TEST_CASE("command_line tests", "[Utility][CommandLine]")
 {
    const std::array arguments =
-      {"Test Program Path", "-intval",   "457838",
-       "not a number",      "-floatval", "50.0",
-       "-stringval",        "Hello!",    "-missingval"};
+      {"Test Program Path", "-intval", "457838",     "not a number",
+       "-floatval",         "50.0",    "-stringval", "Hello!",
+       "-missingval",       "-flagval"};
 
    command_line command_line{static_cast<int>(arguments.size()), arguments.data()};
 
@@ -36,6 +36,12 @@ TEST_CASE("command_line tests", "[Utility][CommandLine]")
 
    // getting a missing value should return the fallback
    CHECK(command_line.get_or("-missingval", "fallback") == "fallback"sv);
+
+   // getting a flag works
+   CHECK(command_line.get_flag("-flagval"));
+
+   // a missing flag returns false
+   CHECK(not command_line.get_flag("-missing_flagval"));
 }
 
 }

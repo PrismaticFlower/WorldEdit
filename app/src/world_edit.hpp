@@ -190,6 +190,8 @@ private:
                                      .creation_entity =
                                         _interaction_targets.creation_entity};
 
+   bool _renderer_use_debug_layer = false;
+
    std::unique_ptr<graphics::renderer> _renderer;
    graphics::camera _camera;
 

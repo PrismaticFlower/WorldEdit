@@ -43,10 +43,18 @@ struct object_class_library;
 namespace we::graphics {
 
 class camera;
+using window_handle = void*;
+
+struct renderer_init {
+   const window_handle window;
+   const std::shared_ptr<async::thread_pool>& thread_pool;
+   assets::libraries_manager& asset_libraries;
+   output_stream& error_output;
+
+   bool use_debug_layer = false;
+};
 
 struct renderer {
-   using window_handle = void*;
-
    virtual ~renderer() = default;
 
    virtual void wait_for_swap_chain_ready() = 0;
@@ -70,9 +78,6 @@ struct renderer {
    virtual void reload_shaders() noexcept = 0;
 };
 
-auto make_renderer(const renderer::window_handle window,
-                   std::shared_ptr<async::thread_pool> thread_pool,
-                   assets::libraries_manager& asset_libraries,
-                   output_stream& error_output) -> std::unique_ptr<renderer>;
+auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>;
 
 }

@@ -41,6 +41,21 @@ public:
       return get_or_impl(name, fallback);
    }
 
+   /// @brief Gets a command line flag.
+   /// @param name The name of the flag.
+   /// @return True if the flag was passed, false if it wasn't.
+   bool get_flag(std::string_view name) const noexcept
+   {
+      // skip the program name
+      for (int i = 1; i < arg_count; ++i) {
+         if (name == std::string_view{args[i]}) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
 private:
    auto get_or_impl(std::string_view name, auto fallback) const noexcept
       -> decltype(fallback)
@@ -77,7 +92,7 @@ private:
                     [[maybe_unused]] std::string_view fallback) const noexcept
       -> std::string_view
    {
-      return str_value;
+      return str_value.starts_with("-") ? fallback : str_value;
    }
 
    int arg_count = 0;
