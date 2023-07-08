@@ -1421,7 +1421,8 @@ void world_edit::update_ui() noexcept
                                        &_edit_stack_world, &_edit_context);
                }
 
-               if (ImGui::BeginCombo("Add Property", "<select property>")) {
+               if (ImGui::BeginCombo("Add Property##node",
+                                     "<select property>")) {
                   for (const char* prop : world::get_path_node_properties(path->type)) {
                      if (ImGui::Selectable(prop)) {
                         _edit_stack_world.apply(edits::make_add_property(path->id, node_index,

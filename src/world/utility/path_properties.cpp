@@ -6,12 +6,13 @@ namespace we::world {
 
 namespace {
 
-constexpr std::array entity_follow_props{"MaxEntities",     "MaxSquadronSize",
-                                         "PathRoll",        "Speed",
-                                         "VarianceX",       "VarianceY",
-                                         "VarianceZ",       "BranchDifferent",
-                                         "SingleDirection", "Direction",
-                                         "Frequency",       "EnableObject"};
+constexpr std::array entity_follow_props{
+   "MaxEntities",     "MaxSquadronSize", "PathRoll",  "Speed",
+   "VarianceX",       "VarianceY",       "VarianceZ", "BranchDifferent",
+   "SingleDirection", "Direction",       "Frequency", "EnableObject",
+   "Class",           "Class1",          "Class2",    "Class3",
+   "Class4",          "Class5",
+};
 
 constexpr std::array entity_follow_node_props{
    "BranchProbability", "Range",        "BranchRegion", "MaxAngle",
