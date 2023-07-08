@@ -341,7 +341,7 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (raycast_mask.terrain) {
+   if (raycast_mask.terrain and _world.terrain.active_flags.terrain) {
       if (auto hit = _terrain_collision.raycast(ray.origin, ray.direction); hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = std::nullopt;
