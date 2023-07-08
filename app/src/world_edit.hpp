@@ -306,7 +306,7 @@ private:
       placement_mode placement_mode = placement_mode::cursor;
       placement_alignment placement_alignment = placement_alignment::none;
       placement_ground placement_ground = placement_ground::origin;
-      placement_node_insert placement_node_insert = placement_node_insert::nearest;
+      placement_node_insert placement_node_insert = placement_node_insert::append;
 
       float alignment = 4.0f;
       float snap_distance = 0.25f;
