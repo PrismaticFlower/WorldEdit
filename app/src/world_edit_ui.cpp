@@ -10,6 +10,7 @@
 #include "edits/creation_entity_set.hpp"
 #include "edits/delete_game_mode.hpp"
 #include "edits/delete_layer.hpp"
+#include "edits/delete_path_property.hpp"
 #include "edits/delete_sector_object.hpp"
 #include "edits/delete_sector_point.hpp"
 #include "edits/delete_world_req_entry.hpp"
@@ -1390,8 +1391,20 @@ void world_edit::update_ui() noexcept
                if (not path->properties.empty()) ImGui::Separator();
 
                for (std::size_t i = 0; i < path->properties.size(); ++i) {
+                  ImGui::PushID(static_cast<int>(i));
+
                   ImGui::InputKeyValue(path, &world::path::properties, i,
                                        &_edit_stack_world, &_edit_context);
+
+                  ImGui::SameLine();
+
+                  if (ImGui::Button("X")) {
+                     _edit_stack_world
+                        .apply(edits::make_delete_path_property(path->id, i, _world),
+                               _edit_context);
+                  }
+
+                  ImGui::PopID();
                }
 
                if (ImGui::BeginCombo("Add Property", "<select property>")) {
@@ -1417,8 +1430,20 @@ void world_edit::update_ui() noexcept
                for (std::size_t prop_index = 0;
                     prop_index < path->nodes[node_index].properties.size();
                     ++prop_index) {
+                  ImGui::PushID(static_cast<int>(prop_index));
+
                   ImGui::InputKeyValue(path, node_index, prop_index,
                                        &_edit_stack_world, &_edit_context);
+
+                  ImGui::SameLine();
+
+                  if (ImGui::Button("X")) {
+                     _edit_stack_world.apply(edits::make_delete_path_node_property(
+                                                path->id, node_index, prop_index, _world),
+                                             _edit_context);
+                  }
+
+                  ImGui::PopID();
                }
 
                if (ImGui::BeginCombo("Add Property##node",

@@ -231,6 +231,7 @@
     <ClCompile Include="src\edits\delete_entity.cpp" />
     <ClCompile Include="src\edits\delete_game_mode.cpp" />
     <ClCompile Include="src\edits\delete_layer.cpp" />
+    <ClCompile Include="src\edits\delete_path_property.cpp" />
     <ClCompile Include="src\edits\delete_sector_object.cpp" />
     <ClCompile Include="src\edits\delete_sector_point.cpp" />
     <ClCompile Include="src\edits\delete_world_req_entry.cpp" />
@@ -391,6 +392,7 @@
     <ClInclude Include="src\edits\delete_entity.hpp" />
     <ClInclude Include="src\edits\delete_game_mode.hpp" />
     <ClInclude Include="src\edits\delete_layer.hpp" />
+    <ClInclude Include="src\edits\delete_path_property.hpp" />
     <ClInclude Include="src\edits\delete_sector_object.hpp" />
     <ClInclude Include="src\edits\delete_sector_point.hpp" />
     <ClInclude Include="src\edits\delete_world_req_list.hpp" />
