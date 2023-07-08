@@ -990,6 +990,8 @@ void world_edit::delete_selected() noexcept
       return;
    }
 
+   bool first_delete = true;
+
    while (not _interaction_targets.selection.empty()) {
       const auto& generic_selected = _interaction_targets.selection.back();
 
@@ -1020,7 +1022,9 @@ void world_edit::delete_selected() noexcept
       std::visit(
          [&](const auto selected) {
             _edit_stack_world.apply(edits::make_delete_entity(selected, _world),
-                                    _edit_context);
+                                    _edit_context,
+                                    {.transparent =
+                                        not std::exchange(first_delete, false)});
          },
          generic_selected);
 
