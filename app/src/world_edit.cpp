@@ -990,16 +990,42 @@ void world_edit::delete_selected() noexcept
       return;
    }
 
-   for (const auto& generic_selected : _interaction_targets.selection) {
+   while (not _interaction_targets.selection.empty()) {
+      const auto& generic_selected = _interaction_targets.selection.back();
+
+      if (not is_valid(generic_selected, _world)) continue;
+
+      if (std::holds_alternative<world::path_id_node_pair>(generic_selected)) {
+         // This fixes up path node indices in the rest of the selection.
+
+         const world::path_id_node_pair dying_id_node =
+            std::get<world::path_id_node_pair>(generic_selected);
+
+         for (auto& other_generic_selected : _interaction_targets.selection) {
+            if (not std::holds_alternative<world::path_id_node_pair>(other_generic_selected) or
+                other_generic_selected == generic_selected) {
+               continue;
+            }
+
+            world::path_id_node_pair& path_id_node =
+               std::get<world::path_id_node_pair>(other_generic_selected);
+
+            if (dying_id_node.id == path_id_node.id and
+                path_id_node.node_index > dying_id_node.node_index) {
+               path_id_node.node_index -= 1;
+            }
+         }
+      }
+
       std::visit(
          [&](const auto selected) {
             _edit_stack_world.apply(edits::make_delete_entity(selected, _world),
                                     _edit_context);
          },
          generic_selected);
-   }
 
-   _interaction_targets.selection.clear();
+      _interaction_targets.selection.pop_back();
+   }
 }
 
 void world_edit::align_selection() noexcept

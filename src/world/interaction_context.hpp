@@ -51,4 +51,6 @@ bool is_selected(const selected_entity entity, const interaction_targets& target
 
 bool is_selected(const path_id entity, const interaction_targets& targets) noexcept;
 
+bool is_valid(const selected_entity entity, const world& world) noexcept;
+
 }
