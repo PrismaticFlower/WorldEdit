@@ -1916,8 +1916,66 @@ void world_edit::update_ui() noexcept
                                &_edit_stack_world, &_edit_context);
                ImGui::DragFloat3("Position", region, &world::region::position,
                                  &_edit_stack_world, &_edit_context);
-               ImGui::DragFloat3("Size", region, &world::region::size, &_edit_stack_world,
-                                 &_edit_context, 1.0f, 0.0f, 1e10f);
+
+               switch (region->shape) {
+               case world::region_shape::box: {
+                  ImGui::DragFloat3("Size", region, &world::region::size,
+                                    &_edit_stack_world, &_edit_context, 1.0f,
+                                    0.0f, 1e10f);
+               } break;
+               case world::region_shape::sphere: {
+                  float radius = length(region->size);
+
+                  if (ImGui::DragFloat("Radius", &radius, 0.1f)) {
+
+                     const float radius_sq = radius * radius;
+                     const float size = std::sqrt(radius_sq / 3.0f);
+
+                     _edit_stack_world.apply(edits::make_set_value(region->id,
+                                                                   &world::region::size,
+                                                                   {size, size, size},
+                                                                   region->size),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+
+               } break;
+               case world::region_shape::cylinder: {
+
+                  if (float height = region->size.y * 2.0f;
+                      ImGui::DragFloat("Height", &height, 0.1f, 0.0f, 1e10f)) {
+                     _edit_stack_world
+                        .apply(edits::make_set_value(region->id, &world::region::size,
+                                                     float3{region->size.x, height / 2.0f,
+                                                            region->size.z},
+                                                     region->size),
+                               _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+
+                  if (float radius = length(float2{region->size.x, region->size.z});
+                      ImGui::DragFloat("Radius", &radius, 0.1f, 0.0f, 1e10f)) {
+                     const float radius_sq = radius * radius;
+                     const float size = std::sqrt(radius_sq / 2.0f);
+
+                     _edit_stack_world
+                        .apply(edits::make_set_value(region->id, &world::region::size,
+                                                     float3{size, region->size.y, size},
+                                                     region->size),
+                               _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               }
 
                ImGui::Separator();
 
