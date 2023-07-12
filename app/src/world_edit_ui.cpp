@@ -2965,9 +2965,15 @@ void world_edit::update_ui() noexcept
                             &_edit_stack_world, &_edit_context);
          }
 
-         if (ImGui::DragFloat3("Position", &creation_entity, &world::object::position,
+         if (const float3 old_position = object.position;
+             ImGui::DragFloat3("Position", &creation_entity, &world::object::position,
                                &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != object.position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != object.position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != object.position.z;
          }
 
          if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
@@ -3095,9 +3101,15 @@ void world_edit::update_ui() noexcept
                             &_edit_stack_world, &_edit_context);
          }
 
-         if (ImGui::DragFloat3("Position", &creation_entity, &world::light::position,
+         if (const float3 old_position = light.position;
+             ImGui::DragFloat3("Position", &creation_entity, &world::light::position,
                                &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != light.position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != light.position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != light.position.z;
          }
 
          if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
@@ -3387,10 +3399,17 @@ void world_edit::update_ui() noexcept
                                     &_edit_stack_world, &_edit_context);
          }
 
-         if (ImGui::DragFloat3PathNode("Position", &creation_entity,
+         if (const float3 old_position = path.nodes[0].position;
+             ImGui::DragFloat3PathNode("Position", &creation_entity,
                                        &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != path.nodes[0].position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != path.nodes[0].position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != path.nodes[0].position.z;
          }
+
          if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
               _entity_creation_config.placement_mode == placement_mode::cursor or
               rotate_entity_forward or rotate_entity_back) and
@@ -3931,9 +3950,15 @@ void world_edit::update_ui() noexcept
                             &_edit_stack_world, &_edit_context);
          }
 
-         if (ImGui::DragFloat3("Position", &creation_entity, &world::region::position,
+         if (const float3 old_position = region.position;
+             ImGui::DragFloat3("Position", &creation_entity, &world::region::position,
                                &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != region.position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != region.position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != region.position.z;
          }
 
          if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
@@ -4255,8 +4280,14 @@ void world_edit::update_ui() noexcept
 
          if (sector.points.empty()) std::terminate();
 
-         ImGui::DragSectorPoint("Position", &creation_entity,
-                                &_edit_stack_world, &_edit_context);
+         if (const float2 old_position = sector.points[0];
+             ImGui::DragSectorPoint("Position", &creation_entity,
+                                    &_edit_stack_world, &_edit_context)) {
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != sector.points[0].x;
+            _entity_creation_context.lock_z_axis |=
+               old_position.y != sector.points[0].y;
+         }
 
          if (_entity_creation_config.placement_mode == placement_mode::cursor and
              not using_from_object_bbox) {
@@ -4490,10 +4521,17 @@ void world_edit::update_ui() noexcept
                             &_edit_stack_world, &_edit_context);
          }
 
-         if (ImGui::DragFloat3("Position", &creation_entity, &world::portal::position,
+         if (const float3 old_position = portal.position;
+             ImGui::DragFloat3("Position", &creation_entity, &world::portal::position,
                                &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != portal.position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != portal.position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != portal.position.z;
          }
+
          if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
               _entity_creation_config.placement_mode == placement_mode::cursor or
               rotate_entity_forward or rotate_entity_back) and
@@ -4648,9 +4686,15 @@ void world_edit::update_ui() noexcept
                             &_edit_stack_world, &_edit_context);
          }
 
-         if (ImGui::DragFloat3("Position", &creation_entity, &world::hintnode::position,
+         if (const float3 old_position = hintnode.position;
+             ImGui::DragFloat3("Position", &creation_entity, &world::hintnode::position,
                                &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != hintnode.position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != hintnode.position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != hintnode.position.z;
          }
 
          if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
@@ -4823,9 +4867,15 @@ void world_edit::update_ui() noexcept
          ImGui::DragBarrierRotation("Rotation", &creation_entity,
                                     &_edit_stack_world, &_edit_context);
 
-         if (ImGui::DragFloat3("Position", &creation_entity, &world::barrier::position,
+         if (const float3 old_position = barrier.position;
+             ImGui::DragFloat3("Position", &creation_entity, &world::barrier::position,
                                &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != barrier.position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != barrier.position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != barrier.position.z;
          }
 
          if ((_entity_creation_config.placement_mode == placement_mode::cursor or
@@ -5219,9 +5269,15 @@ void world_edit::update_ui() noexcept
                                                           *edited_value);
                           });
 
-         if (ImGui::DragFloat3("Position", &creation_entity, &world::planning_hub::position,
+         if (const float3 old_position = hub.position;
+             ImGui::DragFloat3("Position", &creation_entity, &world::planning_hub::position,
                                &_edit_stack_world, &_edit_context)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != hub.position.x;
+            _entity_creation_context.lock_y_axis |=
+               old_position.y != hub.position.y;
+            _entity_creation_context.lock_z_axis |=
+               old_position.z != hub.position.z;
          }
 
          if (_entity_creation_config.placement_mode == placement_mode::cursor and
@@ -5437,9 +5493,13 @@ void world_edit::update_ui() noexcept
                                                           *edited_value);
                           });
 
-         if (ImGui::DragFloat2XZ("Position", &creation_entity, &world::boundary::position,
+         if (const float2 old_position = boundary.position;
+             ImGui::DragFloat2XZ("Position", &creation_entity, &world::boundary::position,
                                  &_edit_stack_world, &_edit_context, 0.25f)) {
-            _entity_creation_config.placement_mode = placement_mode::manual;
+            _entity_creation_context.lock_x_axis |=
+               old_position.x != boundary.position.x;
+            _entity_creation_context.lock_z_axis |=
+               old_position.y != boundary.position.y;
          }
 
          if (_entity_creation_config.placement_mode == placement_mode::cursor and
