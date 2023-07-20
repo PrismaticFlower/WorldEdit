@@ -5136,6 +5136,8 @@ void world_edit::update_ui() noexcept
                                        _edit_context);
 
                if (std::exchange(_entity_creation_context.from_line_click, false)) {
+                  place_creation_entity();
+
                   _entity_creation_context.using_from_line = false;
                }
             }
