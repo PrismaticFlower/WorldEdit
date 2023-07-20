@@ -49,8 +49,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<light>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             const active_layers active_layers, std::span<const path> paths) noexcept
-   -> std::optional<raycast_result<path>>;
+             const active_layers active_layers, std::span<const path> paths,
+             const float node_size) noexcept -> std::optional<raycast_result<path>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const region> regions) noexcept

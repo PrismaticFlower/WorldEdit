@@ -674,14 +674,19 @@ void renderer_impl::draw_world_meta_objects(
       const auto add_path = [&](const world::path& path) {
          if (not active_layers[path.layer]) return;
 
+         const float path_node_size = settings.path_node_size;
+
          for (auto& node : path.nodes) {
-            if (not intersects(view_frustum, node.position, 0.5f)) continue;
+            if (not intersects(view_frustum, node.position, path_node_size)) {
+               continue;
+            }
 
             const float4x4 rotation = to_matrix(node.rotation);
-            float4x4 transform = rotation * float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
-                                                     {0.0f, 0.5f, 0.0f, 0.0f},
-                                                     {0.0f, 0.0f, 0.5f, 0.0f},
-                                                     {0.0f, 0.0f, 0.0f, 1.0f}};
+            float4x4 transform =
+               rotation * float4x4{{path_node_size, 0.0f, 0.0f, 0.0f},
+                                   {0.0f, path_node_size, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, path_node_size, 0.0f},
+                                   {0.0f, 0.0f, 0.0f, 1.0f}};
 
             transform[3] = {node.position, 1.0f};
 
@@ -690,14 +695,13 @@ void renderer_impl::draw_world_meta_objects(
 
             if (draw_orientation) {
                float4x4 orientation_transform =
-                  rotation * float4x4{{0.25f, 0.0f, 0.0f, 0.0f},
-                                      {0.0f, 0.25f, 0.0f, 0.0f},
-                                      {0.0f, 0.0f, 0.25f, 0.0f},
+                  rotation * float4x4{{path_node_size * 0.5f, 0.0f, 0.0f, 0.0f},
+                                      {0.0f, path_node_size * 0.5f, 0.0f, 0.0f},
+                                      {0.0f, 0.0f, path_node_size * 0.5f, 0.0f},
                                       {0.0f, 0.0f, 0.0f, 1.0f}};
                orientation_transform[3] = {node.position, 1.0f};
 
-               _meta_draw_batcher.add_arrow_outline_solid(orientation_transform,
-                                                          0.8f / 0.25f,
+               _meta_draw_batcher.add_arrow_outline_solid(orientation_transform, 3.2f,
                                                           utility::pack_srgb_bgra(
                                                              float4{settings.path_node_orientation_color,
                                                                     1.0f}));
@@ -1259,10 +1263,12 @@ void renderer_impl::draw_interaction_targets(
    (void)view_frustum; // TODO: frustum Culling (Is it worth it for interaction targets?)
 
    const auto draw_path_node = [&](const world::path::node& node, const float3 color) {
+      const float path_node_size = settings.path_node_size;
+
       float4x4 transform =
-         to_matrix(node.rotation) * float4x4{{0.5f, 0.0f, 0.0f, 0.0f},
-                                             {0.0f, 0.5f, 0.0f, 0.0f},
-                                             {0.0f, 0.0f, 0.5f, 0.0f},
+         to_matrix(node.rotation) * float4x4{{path_node_size, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, path_node_size, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, path_node_size, 0.0f},
                                              {0.0f, 0.0f, 0.0f, 1.0f}};
 
       transform[3] = {node.position, 1.0f};

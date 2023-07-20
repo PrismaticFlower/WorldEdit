@@ -45,6 +45,8 @@ struct graphics {
 
    float line_width = 2.5f;
 
+   float path_node_size = 0.5f;
+
    bool show_profiler = false;
 };
 

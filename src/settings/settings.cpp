@@ -126,6 +126,9 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
                              &graphics.planning_connection_height, 0.5f, 0.0f,
                              100000.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
+            ImGui::SliderFloat("Path Node Size", &graphics.path_node_size, 0.5f,
+                               32.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+
             ImGui::SeparatorText("Line Width");
 
             if (ImGui::SliderFloat("Line Width", &graphics.line_width, 0.5f,

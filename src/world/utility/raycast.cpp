@@ -176,8 +176,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             const active_layers active_layers, std::span<const path> paths) noexcept
-   -> std::optional<raycast_result<path>>
+             const active_layers active_layers, std::span<const path> paths,
+             const float node_size) noexcept -> std::optional<raycast_result<path>>
 {
    std::optional<path_id> hit;
    std::size_t hit_node = 0;
@@ -190,7 +190,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          const path::node& node = path.nodes[i];
 
          const float intersection =
-            sphIntersect(ray_origin, ray_direction, node.position, 0.707f);
+            sphIntersect(ray_origin, ray_direction, node.position,
+                         0.707f * (node_size / 0.5f));
 
          if (intersection < 0.0f) continue;
 

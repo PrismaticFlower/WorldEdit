@@ -91,6 +91,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(boundary_height);
             setting_entry(planning_hub_height);
             setting_entry(planning_connection_height);
+            setting_entry(path_node_size);
             setting_entry(line_width);
          }
 #undef setting_entry
@@ -170,6 +171,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(boundary_height));
       write(file, name_value(planning_hub_height));
       write(file, name_value(planning_connection_height));
+      write(file, name_value(path_node_size));
       write(file, name_value(line_width));
 
 #undef name_value
