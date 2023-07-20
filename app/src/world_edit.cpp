@@ -801,6 +801,37 @@ void world_edit::place_creation_entity() noexcept
             }
 
             if (_entity_creation_context.connection_link_started) {
+               for (auto& other_connection : _world.planning_connections) {
+                  if ((connection.start == other_connection.start and
+                       connection.end == other_connection.end) or
+                      (connection.start == other_connection.end and
+                       connection.end == other_connection.start)) {
+                     if (not _world.planning_hubs.empty()) {
+                        _edit_stack_world.apply(edits::make_set_creation_value(
+                                                   &world::planning_connection::start,
+                                                   _world.planning_hubs[0].id,
+                                                   connection.start),
+                                                _edit_context);
+
+                        _edit_stack_world.apply(edits::make_set_creation_value(
+                                                   &world::planning_connection::end,
+                                                   _world.planning_hubs[0].id,
+                                                   connection.start),
+                                                _edit_context, {.transparent = true});
+                     }
+                     else {
+                        _edit_stack_world.apply(edits::make_creation_entity_set(
+                                                   std::nullopt,
+                                                   _interaction_targets.creation_entity),
+                                                _edit_context);
+                     }
+
+                     _entity_creation_context.connection_link_started = false;
+
+                     return;
+                  }
+               }
+
                world::planning_connection new_connection = connection;
 
                new_connection.name =
