@@ -7764,7 +7764,7 @@ void world_edit::update_ui() noexcept
                   if (object) {
                      bundled_edits.push_back(
                         edits::make_set_value(object->id, &world::object::rotation,
-                                              object->rotation * rotation,
+                                              rotation * object->rotation,
                                               object->rotation));
                   }
                }
@@ -7776,7 +7776,7 @@ void world_edit::update_ui() noexcept
                   if (light) {
                      bundled_edits.push_back(
                         edits::make_set_value(light->id, &world::light::rotation,
-                                              light->rotation * rotation,
+                                              rotation * light->rotation,
                                               light->rotation));
                   }
                }
@@ -7792,7 +7792,7 @@ void world_edit::update_ui() noexcept
                      bundled_edits.push_back(
                         edits::make_set_path_node_value(path->id, node_index,
                                                         &world::path::node::rotation,
-                                                        node.rotation * rotation,
+                                                        rotation * node.rotation,
                                                         node.rotation));
                   }
                }
@@ -7804,7 +7804,7 @@ void world_edit::update_ui() noexcept
                   if (region) {
                      bundled_edits.push_back(
                         edits::make_set_value(region->id, &world::region::rotation,
-                                              region->rotation * rotation,
+                                              rotation * region->rotation,
                                               region->rotation));
                   }
                }
@@ -7848,7 +7848,7 @@ void world_edit::update_ui() noexcept
                   if (portal) {
                      bundled_edits.push_back(
                         edits::make_set_value(portal->id, &world::portal::rotation,
-                                              portal->rotation * rotation,
+                                              rotation * portal->rotation,
                                               portal->rotation));
                   }
                }
@@ -7860,7 +7860,7 @@ void world_edit::update_ui() noexcept
                   if (hintnode) {
                      bundled_edits.push_back(
                         edits::make_set_value(hintnode->id, &world::hintnode::rotation,
-                                              hintnode->rotation * rotation,
+                                              rotation * hintnode->rotation,
                                               hintnode->rotation));
                   }
                }
