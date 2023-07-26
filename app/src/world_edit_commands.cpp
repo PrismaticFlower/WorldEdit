@@ -1,6 +1,7 @@
 
 #include "edits/creation_entity_set.hpp"
 #include "math/vector_funcs.hpp"
+#include "world/utility/selection_centre.hpp"
 #include "world_edit.hpp"
 
 using namespace std::literals;
@@ -99,6 +100,13 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_edit.rotate_selection"s, [this] {
       _selection_edit_tool = selection_edit_tool::rotate;
       _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
+   });
+   _commands.add("entity_edit.rotate_selection_around_centre"s, [this] {
+      _selection_edit_tool = selection_edit_tool::rotate_around_centre;
+      _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
+
+      _rotate_selection_centre =
+         world::selection_centre_for_rotate_around(_world, _interaction_targets.selection);
    });
    _commands.add("entity_edit.align_selection"s, [this] { align_selection(); });
    _commands.add("entity_edit.new_from_selection"s,
@@ -319,6 +327,9 @@ void world_edit::initialize_hotkeys() noexcept
        .default_hotkeys{
           {"Move Selection", "entity_edit.move_selection", {.key = key::z}},
           {"Rotate Selection", "entity_edit.rotate_selection", {.key = key::x}},
+          {"Rotate Selection Around Centre",
+           "entity_edit.rotate_selection_around_centre",
+           {.key = key::c}},
           {"Ground Objects", "entity_edit.ground_objects", {.key = key::g}},
           {"Align Selection (Terrain Grid)",
            "entity_edit.align_selection",

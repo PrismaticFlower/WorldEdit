@@ -736,6 +736,9 @@
     <ClInclude Include="src\edits\delete_path_property.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\selection_centre.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1081,6 +1084,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\delete_path_property.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\selection_centre.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
