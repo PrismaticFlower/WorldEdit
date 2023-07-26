@@ -71,7 +71,7 @@ bool DragFloat2(const char* label, we::float2* v, float v_speed, float v_min,
    auto label_text =
       we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
-   if (not label_text.empty()) {
+   if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
       TextUnformatted(&label_text[0].front(), &label_text[0].back() + 1);
    }
@@ -104,7 +104,7 @@ bool DragFloat2XZ(const char* label, we::float2* v, float v_speed, float v_min,
    auto label_text =
       we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
-   if (not label_text.empty()) {
+   if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
       TextUnformatted(&label_text[0].front(), &label_text[0].back() + 1);
    }
@@ -141,7 +141,7 @@ bool DragFloat3(const char* label, we::float3* v, float v_speed, float v_min,
    auto label_text =
       we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
-   if (not label_text.empty()) {
+   if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
       TextUnformatted(&label_text[0].front(), &label_text[0].back() + 1);
    }
@@ -182,7 +182,7 @@ bool DragFloat4(const char* label, we::float4* v, float v_speed, float v_min,
    auto label_text =
       we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
-   if (not label_text.empty()) {
+   if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
       TextUnformatted(&label_text[0].front(), &label_text[0].back() + 1);
    }
@@ -223,7 +223,7 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed, float v_min,
    auto label_text =
       we::string::split_first_of_exclusive(std::string_view{label}, "##");
 
-   if (not label_text.empty()) {
+   if (not label_text[0].empty()) {
       SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
       TextUnformatted(&label_text[0].front(), &label_text[0].back() + 1);
    }
