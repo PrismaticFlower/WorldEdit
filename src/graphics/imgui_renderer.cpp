@@ -51,8 +51,7 @@ void imgui_renderer::render_draw_data(ImDrawData* draw_data,
    uint32 current_vertex_offset = 0;
    uint32 current_texture_index = UINT32_MAX;
 
-   for (const ImDrawList* cmd_list :
-        std::span{draw_data->CmdLists, draw_data->CmdLists + draw_data->CmdListsCount}) {
+   for (const ImDrawList* cmd_list : draw_data->CmdLists) {
       for (const ImDrawCmd& cmd : cmd_list->CmdBuffer) {
          if (cmd.UserCallback != nullptr) {
             if (cmd.UserCallback == ImDrawCallback_ResetRenderState) {
@@ -110,9 +109,7 @@ void imgui_renderer::upload_mesh_data(ImDrawData* draw_data)
    ImDrawVert* vertex_buffer = reinterpret_cast<ImDrawVert*>(
       _mesh_buffers_cpu[_device.frame_index()] + _vertices_offset);
 
-   for (const ImDrawList* cmd_list :
-        std::span{draw_data->CmdLists, draw_data->CmdLists + draw_data->CmdListsCount}) {
-
+   for (const ImDrawList* cmd_list : draw_data->CmdLists) {
       std::memcpy(index_buffer, cmd_list->IdxBuffer.Data,
                   cmd_list->IdxBuffer.Size * sizeof(uint16));
       std::memcpy(vertex_buffer, cmd_list->VtxBuffer.Data,
