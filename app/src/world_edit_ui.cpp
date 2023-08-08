@@ -603,7 +603,7 @@ void world_edit::update_ui() noexcept
    }
 
    ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});
-   ImGui::SetNextWindowSize({224.0f * _display_scale, 620.0f * _display_scale});
+   ImGui::SetNextWindowSize({256.0f * _display_scale, 620.0f * _display_scale});
 
    ImGui::Begin("World Active Context", nullptr,
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -639,13 +639,13 @@ void world_edit::update_ui() noexcept
          if (ImGui::IsItemHovered()) ImGui::SetTooltip(name.c_str());
 
          ImGui::TableNextColumn();
-         if (bool draw = _world_layers_draw_mask[i]; ImGui::Checkbox("Draw", &draw)) {
+         if (bool draw = _world_layers_draw_mask[i]; ImGui::Checkbox("Show", &draw)) {
             _world_layers_draw_mask[i] = draw;
             if (not draw) _world_layers_hit_mask[i] = false;
          }
 
          ImGui::TableNextColumn();
-         if (bool hit = _world_layers_hit_mask[i]; ImGui::Checkbox("Hit", &hit)) {
+         if (bool hit = _world_layers_hit_mask[i]; ImGui::Checkbox("Select", &hit)) {
             _world_layers_hit_mask[i] = hit;
             if (hit) _world_layers_draw_mask[i] = true;
          }
@@ -669,13 +669,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.objects;
-          ImGui::Checkbox("Draw##Objects", &draw)) {
+          ImGui::Checkbox("Show##Objects", &draw)) {
          _world_draw_mask.objects = draw;
          if (not draw) _world_hit_mask.objects = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.objects; ImGui::Checkbox("Hit##Objects", &hit)) {
+      if (bool hit = _world_hit_mask.objects;
+          ImGui::Checkbox("Select##Objects", &hit)) {
          _world_hit_mask.objects = hit;
          if (hit) _world_draw_mask.objects = true;
       }
@@ -686,13 +687,13 @@ void world_edit::update_ui() noexcept
       ImGui::TextUnformatted("Lights");
 
       ImGui::TableNextColumn();
-      if (bool draw = _world_draw_mask.lights; ImGui::Checkbox("Draw##Lights", &draw)) {
+      if (bool draw = _world_draw_mask.lights; ImGui::Checkbox("Show##Lights", &draw)) {
          _world_draw_mask.lights = draw;
          if (not draw) _world_hit_mask.lights = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.lights; ImGui::Checkbox("Hit##Lights", &hit)) {
+      if (bool hit = _world_hit_mask.lights; ImGui::Checkbox("Select##Lights", &hit)) {
          _world_hit_mask.lights = hit;
          if (hit) _world_draw_mask.lights = true;
       }
@@ -703,13 +704,13 @@ void world_edit::update_ui() noexcept
       ImGui::TextUnformatted("Paths");
 
       ImGui::TableNextColumn();
-      if (bool draw = _world_draw_mask.paths; ImGui::Checkbox("Draw##Paths", &draw)) {
+      if (bool draw = _world_draw_mask.paths; ImGui::Checkbox("Show##Paths", &draw)) {
          _world_draw_mask.paths = draw;
          if (not draw) _world_hit_mask.paths = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.paths; ImGui::Checkbox("Hit##Paths", &hit)) {
+      if (bool hit = _world_hit_mask.paths; ImGui::Checkbox("Select##Paths", &hit)) {
          _world_hit_mask.paths = hit;
          if (hit) _world_draw_mask.paths = true;
       }
@@ -721,13 +722,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.regions;
-          ImGui::Checkbox("Draw##Regions", &draw)) {
+          ImGui::Checkbox("Show##Regions", &draw)) {
          _world_draw_mask.regions = draw;
          if (not draw) _world_hit_mask.regions = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.regions; ImGui::Checkbox("Hit##Regions", &hit)) {
+      if (bool hit = _world_hit_mask.regions;
+          ImGui::Checkbox("Select##Regions", &hit)) {
          _world_hit_mask.regions = hit;
          if (hit) _world_draw_mask.regions = true;
       }
@@ -739,13 +741,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.sectors;
-          ImGui::Checkbox("Draw##Sectors", &draw)) {
+          ImGui::Checkbox("Show##Sectors", &draw)) {
          _world_draw_mask.sectors = draw;
          if (not draw) _world_hit_mask.sectors = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.sectors; ImGui::Checkbox("Hit##Sectors", &hit)) {
+      if (bool hit = _world_hit_mask.sectors;
+          ImGui::Checkbox("Select##Sectors", &hit)) {
          _world_hit_mask.sectors = hit;
          if (hit) _world_draw_mask.sectors = true;
       }
@@ -757,13 +760,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.portals;
-          ImGui::Checkbox("Draw##Portals", &draw)) {
+          ImGui::Checkbox("Show##Portals", &draw)) {
          _world_draw_mask.portals = draw;
          if (not draw) _world_hit_mask.portals = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.portals; ImGui::Checkbox("Hit##Portals", &hit)) {
+      if (bool hit = _world_hit_mask.portals;
+          ImGui::Checkbox("Select##Portals", &hit)) {
          _world_hit_mask.portals = hit;
          if (hit) _world_draw_mask.portals = true;
       }
@@ -775,14 +779,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.hintnodes;
-          ImGui::Checkbox("Draw##Hintnodes", &draw)) {
+          ImGui::Checkbox("Show##Hintnodes", &draw)) {
          _world_draw_mask.hintnodes = draw;
          if (not draw) _world_hit_mask.hintnodes = false;
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.hintnodes;
-          ImGui::Checkbox("Hit##Hintnodes", &hit)) {
+          ImGui::Checkbox("Select##Hintnodes", &hit)) {
          _world_hit_mask.hintnodes = hit;
          if (hit) _world_draw_mask.hintnodes = true;
       }
@@ -794,13 +798,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.barriers;
-          ImGui::Checkbox("Draw##Barriers", &draw)) {
+          ImGui::Checkbox("Show##Barriers", &draw)) {
          _world_draw_mask.barriers = draw;
          if (not draw) _world_hit_mask.barriers = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.barriers; ImGui::Checkbox("Hit##Barriers", &hit)) {
+      if (bool hit = _world_hit_mask.barriers;
+          ImGui::Checkbox("Select##Barriers", &hit)) {
          _world_hit_mask.barriers = hit;
          if (hit) _world_draw_mask.barriers = true;
       }
@@ -812,7 +817,7 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.planning_hubs or _world_draw_mask.planning_connections;
-          ImGui::Checkbox("Draw##AI Planning", &draw)) {
+          ImGui::Checkbox("Show##AI Planning", &draw)) {
          _world_draw_mask.planning_hubs = draw;
          _world_draw_mask.planning_connections = draw;
 
@@ -824,7 +829,7 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.planning_hubs or _world_hit_mask.planning_connections;
-          ImGui::Checkbox("Hit##AI Planning", &hit)) {
+          ImGui::Checkbox("Select##AI Planning", &hit)) {
          _world_hit_mask.planning_hubs = hit;
          _world_hit_mask.planning_connections = hit;
 
@@ -841,14 +846,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.boundaries;
-          ImGui::Checkbox("Draw##Boundaries", &draw)) {
+          ImGui::Checkbox("Show##Boundaries", &draw)) {
          _world_draw_mask.boundaries = draw;
          if (not draw) _world_hit_mask.boundaries = false;
       }
 
       ImGui::TableNextColumn();
       if (bool hit = _world_hit_mask.boundaries;
-          ImGui::Checkbox("Hit##Boundaries", &hit)) {
+          ImGui::Checkbox("Select##Boundaries", &hit)) {
          _world_hit_mask.boundaries = hit;
          if (hit) _world_draw_mask.boundaries = true;
       }
@@ -860,13 +865,14 @@ void world_edit::update_ui() noexcept
 
       ImGui::TableNextColumn();
       if (bool draw = _world_draw_mask.terrain;
-          ImGui::Checkbox("Draw##Terrain", &draw)) {
+          ImGui::Checkbox("Show##Terrain", &draw)) {
          _world_draw_mask.terrain = draw;
          if (not draw) _world_hit_mask.terrain = false;
       }
 
       ImGui::TableNextColumn();
-      if (bool hit = _world_hit_mask.terrain; ImGui::Checkbox("Hit##Terrain", &hit)) {
+      if (bool hit = _world_hit_mask.terrain;
+          ImGui::Checkbox("Select##Terrain", &hit)) {
          _world_hit_mask.terrain = hit;
          if (hit) _world_draw_mask.terrain = true;
       }
@@ -904,8 +910,10 @@ void world_edit::update_ui() noexcept
       ImGui::End();
    }
 
+   const float tool_window_start_x = 264.0f * _display_scale;
+
    if (not _interaction_targets.selection.empty()) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
       ImGui::SetNextWindowSizeConstraints({520.0f * _display_scale, 620.0f * _display_scale},
                                           {std::numeric_limits<float>::max(),
@@ -2886,7 +2894,7 @@ void world_edit::update_ui() noexcept
 
       bool continue_creation = true;
 
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
 
       ImGui::Begin("Create", &continue_creation,
@@ -5864,7 +5872,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_world_global_lights_editor_open) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
 
       ImGui::Begin("Global Lights", &_world_global_lights_editor_open,
@@ -5927,7 +5935,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_world_layers_editor_open) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
       ImGui::SetNextWindowSizeConstraints({400.0f * _display_scale, 256.0f * _display_scale},
                                           {400.0f * _display_scale,
@@ -6008,7 +6016,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_world_game_mode_editor_open) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
       ImGui::SetNextWindowSizeConstraints({400.0f * _display_scale, 256.0f * _display_scale},
                                           {512.0f * _display_scale,
@@ -6159,7 +6167,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_world_requirements_editor_open) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
       ImGui::SetNextWindowSizeConstraints({400.0f * _display_scale, 256.0f * _display_scale},
                                           {512.0f * _display_scale,
@@ -7089,7 +7097,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_camera_controls_open) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 32.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 32.0f * _display_scale},
                               ImGuiCond_Once, {0.0f, 0.0f});
 
       if (ImGui::Begin("Camera##Controls", &_camera_controls_open,
@@ -7173,7 +7181,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_selection_edit_tool == selection_edit_tool::move) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
       if (_interaction_targets.selection.empty()) {
@@ -7501,7 +7509,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_selection_edit_tool == selection_edit_tool::move_path) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
       bool open = true;
@@ -7576,7 +7584,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_selection_edit_tool == selection_edit_tool::move_sector_point) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
       bool open = true;
@@ -7627,7 +7635,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_selection_edit_tool == selection_edit_tool::rotate) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
       if (_interaction_targets.selection.empty()) {
@@ -7902,7 +7910,7 @@ void world_edit::update_ui() noexcept
    }
 
    if (_selection_edit_tool == selection_edit_tool::rotate_around_centre) {
-      ImGui::SetNextWindowPos({232.0f * _display_scale, 660.0f * _display_scale},
+      ImGui::SetNextWindowPos({tool_window_start_x, 660.0f * _display_scale},
                               ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
       if (_interaction_targets.selection.empty()) {
