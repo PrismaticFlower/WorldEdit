@@ -2772,7 +2772,8 @@ void world_edit::update_ui() noexcept
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
          }
 
-         if (ImGui::Button("Rotate Selection Around Centre")) {
+         if (ImGui::Button("Rotate Selection Around Centre",
+                           {ImGui::CalcItemWidth(), 0.0f})) {
             _selection_edit_tool = selection_edit_tool::rotate_around_centre;
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
 
