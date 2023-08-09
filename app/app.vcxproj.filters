@@ -7,6 +7,23 @@
     <ClCompile Include="src\world_edit_commands.cpp" />
     <ClCompile Include="src\world_edit_ui.cpp" />
     <ClCompile Include="src\new_delete_override.cpp" />
+    <ClCompile Include="src\world_edit_ui_main_menu_bar.cpp" />
+    <ClCompile Include="src\world_edit_ui_active_world_context.cpp" />
+    <ClCompile Include="src\world_edit_ui_hotkeys_view.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_creation_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_global_lights_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_layers_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_game_mode_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_requirements_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_explorer.cpp" />
+    <ClCompile Include="src\world_edit_ui_camera_controls.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_move.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_move_path.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_move_sector_point.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_rotate.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_rotate_around_centre.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_stats.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

@@ -59,6 +59,8 @@ enum class selection_edit_tool : uint8 {
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
+constexpr float tool_window_start_x = 264.0f;
+
 class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
@@ -97,6 +99,40 @@ private:
    void update_camera(const float delta_time);
 
    void update_ui() noexcept;
+
+   void ui_show_main_menu_bar() noexcept;
+
+   void ui_show_world_active_context() noexcept;
+
+   void ui_show_hotkeys_view() noexcept;
+
+   void ui_show_world_selection_editor() noexcept;
+
+   void ui_show_world_creation_editor() noexcept;
+
+   void ui_show_world_global_lights_editor() noexcept;
+
+   void ui_show_world_layers_editor() noexcept;
+
+   void ui_show_world_game_mode_editor() noexcept;
+
+   void ui_show_world_requirements_editor() noexcept;
+
+   void ui_show_world_explorer() noexcept;
+
+   void ui_show_world_stats() noexcept;
+
+   void ui_show_camera_controls() noexcept;
+
+   void ui_show_world_selection_move() noexcept;
+
+   void ui_show_world_selection_move_path() noexcept;
+
+   void ui_show_world_selection_move_sector_point() noexcept;
+
+   void ui_show_world_selection_rotate() noexcept;
+
+   void ui_show_world_selection_rotate_around_centre() noexcept;
 
    void select_hovered_entity(const select_method method) noexcept;
 
