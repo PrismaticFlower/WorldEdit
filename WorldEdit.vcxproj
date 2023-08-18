@@ -354,6 +354,7 @@
     <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
       <FileType>CppHeader</FileType>
     </ClCompile>
+    <ClInclude Include="src\assets\msh\merge_flat_models.hpp" />
     <ClInclude Include="src\assets\msh\mikktspace\mikktspace.h" />
     <ClInclude Include="src\assets\msh\scene.hpp" />
     <ClInclude Include="src\assets\msh\scene_io.hpp" />

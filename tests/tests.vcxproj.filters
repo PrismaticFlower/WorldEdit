@@ -92,6 +92,7 @@
     <ClCompile Include="src\edits\add_sector_object_tests.cpp" />
     <ClCompile Include="src\world\interaction_context_tests.cpp" />
     <ClCompile Include="src\edits\delete_path_property_tests.cpp" />
+    <ClCompile Include="src\assets\msh\merge_flat_models_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

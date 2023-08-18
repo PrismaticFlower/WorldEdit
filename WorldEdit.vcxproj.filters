@@ -739,6 +739,9 @@
     <ClInclude Include="src\world\utility\selection_centre.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\msh\merge_flat_models.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
