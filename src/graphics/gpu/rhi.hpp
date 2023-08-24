@@ -92,7 +92,27 @@ enum class render_target_blend {
    disabled,            // overwrite with src
    premult_alpha_blend, // src + (dest * (1.0 - src_alpha))
    additive_blend,      // src + dest
-   alpha_belnd          // (src * src_alpha) + (dest * (1.0 - src_alpha))
+   alpha_belnd         // (src * src_alpha) + (dest * (1.0 - src_alpha))
+};
+
+enum class logic_op {
+   disabled, // No logic op, use blending.
+   clear,
+   set,
+   copy,
+   copy_inverted,
+   noop,
+   invert,
+   _and,
+   nand,
+   _or,
+   nor,
+   _xor,
+   equiv,
+   and_reverse,
+   and_inverted,
+   or_reverse,
+   or_inverted
 };
 
 enum class cull_mode {
@@ -400,6 +420,7 @@ struct blend_state_desc {
    bool independent_blend_enabled = false;
 
    std::array<render_target_blend, 8> render_target{};
+   logic_op logic_op = logic_op::disabled;
 };
 
 struct rasterizer_state_desc {

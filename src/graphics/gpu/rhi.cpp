@@ -117,6 +117,12 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          continue;
       }
 
+      if (not options.OutputMergerLogicOp) {
+         debug_ouput.write_ln("GPU doesn't support OutputMergerLogicOp");
+
+         continue;
+      }
+
       if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3) {
          debug_ouput.write_ln(
             "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
@@ -716,6 +722,62 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
          break;
       default:
          std::unreachable();
+      }
+   }
+
+   if (desc.blend_state.logic_op != logic_op::disabled) {
+      blend_state.IndependentBlendEnable = false;
+      blend_state.RenderTarget[0].LogicOpEnable = true;
+
+      switch (desc.blend_state.logic_op) {
+      case logic_op::clear:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_CLEAR;
+         break;
+      case logic_op::set:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_SET;
+         break;
+      case logic_op::copy:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_COPY;
+         break;
+      case logic_op::copy_inverted:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_COPY_INVERTED;
+         break;
+      case logic_op::noop:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+         break;
+      case logic_op::invert:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_INVERT;
+         break;
+      case logic_op::_and:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_AND;
+         break;
+      case logic_op::nand:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NAND;
+         break;
+      case logic_op::_or:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_OR;
+         break;
+      case logic_op::nor:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOR;
+         break;
+      case logic_op::_xor:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_XOR;
+         break;
+      case logic_op::equiv:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_EQUIV;
+         break;
+      case logic_op::and_reverse:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_AND_REVERSE;
+         break;
+      case logic_op::and_inverted:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_AND_INVERTED;
+         break;
+      case logic_op::or_reverse:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_OR_REVERSE;
+         break;
+      case logic_op::or_inverted:
+         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_OR_INVERTED;
+         break;
       }
    }
 
