@@ -2,5 +2,6 @@
 	<PropertyGroup>
 		<!-- Apprently /MP can be broken atm and this is needed instead atm: https://developercommunity.visualstudio.com/t/VS-2022-RC-inappropriately-assigns-MPN/1560595 -->
 		<UseMultiToolTask>true</UseMultiToolTask>
+		<EnableStdModules>false</EnableStdModules>
 	</PropertyGroup>
 </Project>
