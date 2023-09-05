@@ -117,12 +117,6 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          continue;
       }
 
-      if (not options.OutputMergerLogicOp) {
-         debug_ouput.write_ln("GPU doesn't support OutputMergerLogicOp");
-
-         continue;
-      }
-
       if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3) {
          debug_ouput.write_ln(
             "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
@@ -725,67 +719,6 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
       }
    }
 
-   if (desc.blend_state.logic_op != logic_op::disabled) {
-      blend_state.IndependentBlendEnable = false;
-      blend_state.RenderTarget[0].LogicOpEnable = true;
-
-      switch (desc.blend_state.logic_op) {
-      case logic_op::clear:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_CLEAR;
-         break;
-      case logic_op::set:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_SET;
-         break;
-      case logic_op::copy:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_COPY;
-         break;
-      case logic_op::copy_inverted:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_COPY_INVERTED;
-         break;
-      case logic_op::noop:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
-         break;
-      case logic_op::invert:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_INVERT;
-         break;
-      case logic_op::_and:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_AND;
-         break;
-      case logic_op::nand:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NAND;
-         break;
-      case logic_op::_or:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_OR;
-         break;
-      case logic_op::nor:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOR;
-         break;
-      case logic_op::_xor:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_XOR;
-         break;
-      case logic_op::equiv:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_EQUIV;
-         break;
-      case logic_op::and_reverse:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_AND_REVERSE;
-         break;
-      case logic_op::and_inverted:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_AND_INVERTED;
-         break;
-      case logic_op::or_reverse:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_OR_REVERSE;
-         break;
-      case logic_op::or_inverted:
-         blend_state.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_OR_INVERTED;
-         break;
-      }
-   }
-
-   D3D12_DEPTH_STENCILOP_DESC stencilop_desc{.StencilFailOp = D3D12_STENCIL_OP_KEEP,
-                                             .StencilDepthFailOp = D3D12_STENCIL_OP_KEEP,
-                                             .StencilPassOp = D3D12_STENCIL_OP_KEEP,
-                                             .StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS};
-
    absl::InlinedVector<D3D12_INPUT_ELEMENT_DESC, 8> input_layout_elements;
    input_layout_elements.reserve(desc.input_layout.size());
 
@@ -819,14 +752,32 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
                              desc.rasterizer_state.conservative_raster
                                 ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON
                                 : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF},
-      .DepthStencilState = {.DepthEnable = desc.depth_stencil_state.depth_test_enabled,
-                            .DepthWriteMask = desc.depth_stencil_state.write_depth
-                                                 ? D3D12_DEPTH_WRITE_MASK_ALL
-                                                 : D3D12_DEPTH_WRITE_MASK_ZERO,
-                            .DepthFunc = static_cast<D3D12_COMPARISON_FUNC>(
-                               desc.depth_stencil_state.depth_test_func),
-                            .FrontFace = stencilop_desc,
-                            .BackFace = stencilop_desc},
+      .DepthStencilState =
+         {.DepthEnable = desc.depth_stencil_state.depth_test_enabled,
+          .DepthWriteMask = desc.depth_stencil_state.write_depth
+                               ? D3D12_DEPTH_WRITE_MASK_ALL
+                               : D3D12_DEPTH_WRITE_MASK_ZERO,
+          .DepthFunc = static_cast<D3D12_COMPARISON_FUNC>(
+             desc.depth_stencil_state.depth_test_func),
+          .StencilEnable = desc.depth_stencil_state.stencil_enabled,
+          .StencilReadMask = desc.depth_stencil_state.stencil_read_mask,
+          .StencilWriteMask = desc.depth_stencil_state.stencil_write_mask,
+          .FrontFace = {.StencilFailOp = static_cast<D3D12_STENCIL_OP>(
+                           desc.depth_stencil_state.stencil_front_face.fail_op),
+                        .StencilDepthFailOp = static_cast<D3D12_STENCIL_OP>(
+                           desc.depth_stencil_state.stencil_front_face.depth_fail_op),
+                        .StencilPassOp = static_cast<D3D12_STENCIL_OP>(
+                           desc.depth_stencil_state.stencil_front_face.pass_op),
+                        .StencilFunc = static_cast<D3D12_COMPARISON_FUNC>(
+                           desc.depth_stencil_state.stencil_front_face.func)},
+          .BackFace = {.StencilFailOp = static_cast<D3D12_STENCIL_OP>(
+                          desc.depth_stencil_state.stencil_back_face.fail_op),
+                       .StencilDepthFailOp = static_cast<D3D12_STENCIL_OP>(
+                          desc.depth_stencil_state.stencil_back_face.depth_fail_op),
+                       .StencilPassOp = static_cast<D3D12_STENCIL_OP>(
+                          desc.depth_stencil_state.stencil_back_face.pass_op),
+                       .StencilFunc = static_cast<D3D12_COMPARISON_FUNC>(
+                          desc.depth_stencil_state.stencil_back_face.func)}},
 
       .InputLayout = {.pInputElementDescs = not input_layout_elements.empty()
                                                ? input_layout_elements.data()
@@ -2229,6 +2180,11 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 [[msvc::forceinline]] void graphics_command_list::om_set_blend_factor(const float4& blend_factor)
 {
    state->command_list->OMSetBlendFactor(&blend_factor.x);
+}
+
+[[msvc::forceinline]] void graphics_command_list::om_set_stencil_ref(const uint32 stencil_ref)
+{
+   state->command_list->OMSetStencilRef(stencil_ref);
 }
 
 [[msvc::forceinline]] void graphics_command_list::om_set_render_targets(

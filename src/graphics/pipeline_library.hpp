@@ -80,6 +80,9 @@ struct pipeline_library {
    gpu::unique_pipeline_handle meta_draw_triangle;
    gpu::unique_pipeline_handle meta_draw_triangle_wireframe;
 
+   gpu::unique_pipeline_handle ai_overlay_shape;
+   gpu::unique_pipeline_handle ai_overlay_apply;
+
    gpu::unique_pipeline_handle tile_lights_clear;
    gpu::unique_pipeline_handle tile_lights_spheres;
 

@@ -92,27 +92,7 @@ enum class render_target_blend {
    disabled,            // overwrite with src
    premult_alpha_blend, // src + (dest * (1.0 - src_alpha))
    additive_blend,      // src + dest
-   alpha_belnd         // (src * src_alpha) + (dest * (1.0 - src_alpha))
-};
-
-enum class logic_op {
-   disabled, // No logic op, use blending.
-   clear,
-   set,
-   copy,
-   copy_inverted,
-   noop,
-   invert,
-   _and,
-   nand,
-   _or,
-   nor,
-   _xor,
-   equiv,
-   and_reverse,
-   and_inverted,
-   or_reverse,
-   or_inverted
+   alpha_belnd          // (src * src_alpha) + (dest * (1.0 - src_alpha))
 };
 
 enum class cull_mode {
@@ -130,6 +110,17 @@ enum class comparison_func {
    not_equal = 6,
    greater_equal = 7,
    always = 8
+};
+
+enum class stencil_op {
+   keep = 1,
+   zero = 2,
+   replace = 3,
+   incr_sat = 4,
+   decr_sat = 5,
+   invert = 6,
+   incr = 7,
+   decr = 8
 };
 
 enum class primitive_type {
@@ -420,7 +411,6 @@ struct blend_state_desc {
    bool independent_blend_enabled = false;
 
    std::array<render_target_blend, 8> render_target{};
-   logic_op logic_op = logic_op::disabled;
 };
 
 struct rasterizer_state_desc {
@@ -430,10 +420,22 @@ struct rasterizer_state_desc {
    bool conservative_raster = false;
 };
 
+struct stencil_op_desc {
+   stencil_op fail_op = stencil_op::keep;
+   stencil_op depth_fail_op = stencil_op::keep;
+   stencil_op pass_op = stencil_op::keep;
+   comparison_func func = comparison_func::always;
+};
+
 struct depth_stencil_state_desc {
    bool depth_test_enabled = false;
    comparison_func depth_test_func = comparison_func::less_equal;
    bool write_depth = true;
+   bool stencil_enabled = false;
+   uint8 stencil_read_mask = 0xffu;
+   uint8 stencil_write_mask = 0xffu;
+   stencil_op_desc stencil_front_face;
+   stencil_op_desc stencil_back_face;
 };
 
 struct input_element_desc {
@@ -1017,6 +1019,8 @@ struct graphics_command_list : compute_command_list {
    void rs_set_scissor_rects(const rect& scissor_rect);
 
    void om_set_blend_factor(const float4& blend_factor);
+
+   void om_set_stencil_ref(const uint32 stencil_ref);
 
    void om_set_render_targets(const std::span<const rtv_handle> render_targets);
 

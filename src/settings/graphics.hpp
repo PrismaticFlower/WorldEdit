@@ -15,7 +15,9 @@ struct graphics {
 
    float4 region_color = {0.25f, 0.4f, 1.0f, 0.3f};
 
-   float4 barrier_color = {1.0f, 0.2f, 0.2f, 0.3f};
+   float3 barrier_outline_color = {1.0f, 0.05f, 0.05f};
+
+   float4 barrier_overlay_color = {1.0f, 0.0f, 0.0f, 0.25f};
 
    float4 planning_color = {0.2f, 0.2f, 1.0f, 0.3f};
 
