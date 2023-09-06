@@ -836,8 +836,6 @@ void renderer_impl::draw_world_meta_objects(
 
          transform[3] = {barrier.position, 1.0f};
 
-         // TODO: Frustum cull
-
          // TODO: Batch these better.
          std::array<float4, 4> corners_f4 = {
             transform * float4{-1.0f, 0.0f, 1.0f, 1.0f},
@@ -851,6 +849,18 @@ void renderer_impl::draw_world_meta_objects(
             float3{corners_f4[2].x, corners_f4[2].y, corners_f4[2].z},
             float3{corners_f4[3].x, corners_f4[3].y, corners_f4[3].z},
          };
+
+         math::bounding_box bbox{.min = corners[0], .max = corners[0]};
+
+         for (std::size_t i = 1; i < corners.size(); ++i) {
+            bbox.min = min(bbox.min, corners[i]);
+            bbox.max = max(bbox.max, corners[i]);
+         }
+
+         bbox.min.y = -barrier_height;
+         bbox.max.y = barrier_height;
+
+         if (not intersects(view_frustum, bbox)) return;
 
          _meta_draw_batcher.add_line_overlay(corners[0], corners[1], barrier_color);
          _meta_draw_batcher.add_line_overlay(corners[1], corners[2], barrier_color);
