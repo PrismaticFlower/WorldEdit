@@ -81,6 +81,38 @@ struct library<T>::impl {
       }
    }
 
+   void remove(const std::filesystem::path& unpreferred_asset_path) noexcept
+   {
+      std::filesystem::path asset_path =
+         unpreferred_asset_path; // makes for prettier output messages
+
+      asset_path.make_preferred();
+
+      const lowercase_string name{asset_path.stem().string()};
+
+      const std::shared_ptr<asset_state<T>> asset_state = [&] {
+         std::scoped_lock lock{_assets_mutex};
+
+         auto it = _assets.find(name);
+
+         return it != _assets.end() ? it->second : nullptr;
+      }();
+
+      if (not asset_state) return;
+
+      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex,
+                            _existing_assets_mutex, asset_state->mutex};
+
+      if (asset_state->path != asset_path) return;
+
+      _assets.erase(name);
+
+      _load_tasks.erase(name);
+
+      std::erase_if(_existing_assets,
+                    [&](const stable_string& asset) { return asset == name; });
+   }
+
    auto operator[](const lowercase_string& name) noexcept -> asset_ref<T>
    {
       if (name.empty()) return asset_ref{_null_asset};
@@ -313,6 +345,12 @@ void library<T>::add(const std::filesystem::path& asset_path) noexcept
 }
 
 template<typename T>
+void library<T>::remove(const std::filesystem::path& asset_path) noexcept
+{
+   self->remove(asset_path);
+}
+
+template<typename T>
 auto library<T>::operator[](const lowercase_string& name) noexcept -> asset_ref<T>
 {
    return self.get()[name];
@@ -359,7 +397,10 @@ template struct library<sky::config>;
 
 libraries_manager::libraries_manager(output_stream& stream,
                                      std::shared_ptr<async::thread_pool> thread_pool) noexcept
-   : odfs{stream, thread_pool}, models{stream, thread_pool}, textures{stream, thread_pool}, skies{stream, thread_pool}
+   : odfs{stream, thread_pool},
+     models{stream, thread_pool},
+     textures{stream, thread_pool},
+     skies{stream, thread_pool}
 {
 }
 
@@ -408,6 +449,12 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
 
          register_asset(path);
       });
+   _file_removed_event =
+      _file_watcher->listen_file_removed([this](const std::filesystem::path& path) {
+         // TODO: Skip path if parent path is ignored.
+
+         forget_asset(path);
+      });
    _unknown_files_changed = _file_watcher->listen_unknown_files_changed([this]() {
       // TODO: manual scan here.
    });
@@ -443,6 +490,23 @@ void libraries_manager::register_asset(const std::filesystem::path& path) noexce
    }
    else if (string::iequals(extension.native(), L".sky"sv)) {
       skies.add(path);
+   }
+}
+
+void libraries_manager::forget_asset(const std::filesystem::path& path) noexcept
+{
+   if (const auto extension = path.extension();
+       string::iequals(extension.native(), L".odf"sv)) {
+      odfs.remove(path);
+   }
+   else if (string::iequals(extension.native(), L".msh"sv)) {
+      models.remove(path);
+   }
+   else if (string::iequals(extension.native(), L".tga"sv)) {
+      textures.remove(path);
+   }
+   else if (string::iequals(extension.native(), L".sky"sv)) {
+      skies.remove(path);
    }
 }
 

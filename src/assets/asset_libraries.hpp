@@ -54,6 +54,10 @@ struct library {
    /// @param asset_path The path to the asset.
    void add(const std::filesystem::path& asset_path) noexcept;
 
+   /// @brief Removes an asset from the library.
+   /// @param asset_path The path to the asset.
+   void remove(const std::filesystem::path& asset_path) noexcept;
+
    /// @brief Gets or creates a reference to an asset. The asset need not yet exist on disk.
    /// @param name The name of the asset.
    /// @return An asset_ref referencing to the asset.
@@ -111,8 +115,11 @@ private:
 
    void register_asset(const std::filesystem::path& path) noexcept;
 
+   void forget_asset(const std::filesystem::path& path) noexcept;
+
    std::unique_ptr<utility::file_watcher> _file_watcher;
    event_listener<void(const std::filesystem::path& path)> _file_changed_event;
+   event_listener<void(const std::filesystem::path& path)> _file_removed_event;
    event_listener<void()> _unknown_files_changed;
 };
 

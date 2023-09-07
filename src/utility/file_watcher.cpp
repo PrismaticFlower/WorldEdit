@@ -123,29 +123,33 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
 
       path.make_preferred();
 
-      if (not std::filesystem::is_regular_file(path)) continue;
-
       // TODO: Investigate why this doesn't work as expected.
       // if (auto long_path = get_long_path_name(path); long_path) {
       //    std::swap(*long_path, path);
       // }
 
       switch (info.Action) {
-      case FILE_ACTION_ADDED:
-         _file_changed_event.broadcast(path);
-         break;
-      case FILE_ACTION_REMOVED:
-         // File removed.
-         break;
-      case FILE_ACTION_MODIFIED:
-         _file_changed_event.broadcast(path);
-         break;
-      case FILE_ACTION_RENAMED_OLD_NAME:
-         // File removed.
-         break;
-      case FILE_ACTION_RENAMED_NEW_NAME:
-         _file_changed_event.broadcast(path);
-         break;
+      case FILE_ACTION_ADDED: {
+         if (std::filesystem::is_regular_file(path)) {
+            _file_changed_event.broadcast(path);
+         }
+      } break;
+      case FILE_ACTION_REMOVED: {
+         _file_removed_event.broadcast(path);
+      } break;
+      case FILE_ACTION_MODIFIED: {
+         if (std::filesystem::is_regular_file(path)) {
+            _file_changed_event.broadcast(path);
+         }
+      } break;
+      case FILE_ACTION_RENAMED_OLD_NAME: {
+         _file_removed_event.broadcast(path);
+      } break;
+      case FILE_ACTION_RENAMED_NEW_NAME: {
+         if (std::filesystem::is_regular_file(path)) {
+            _file_changed_event.broadcast(path);
+         }
+      } break;
       }
    }
 }

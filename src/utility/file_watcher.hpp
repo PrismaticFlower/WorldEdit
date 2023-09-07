@@ -21,6 +21,12 @@ public:
       return _file_changed_event.listen(callback);
    }
 
+   auto listen_file_removed(std::function<void(const std::filesystem::path& path)> callback) noexcept
+      -> event_listener<void(const std::filesystem::path& path)>
+   {
+      return _file_removed_event.listen(callback);
+   }
+
    auto listen_unknown_files_changed(std::function<void()> callback) noexcept
       -> event_listener<void()>
    {
@@ -40,6 +46,7 @@ private:
       _destroy_event.SetEvent_scope_exit();
 
    utility::event<void(const std::filesystem::path& path)> _file_changed_event;
+   utility::event<void(const std::filesystem::path& path)> _file_removed_event;
    utility::event<void()> _unknown_files_changed_event;
 };
 
