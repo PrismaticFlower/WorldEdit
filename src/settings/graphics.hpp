@@ -43,13 +43,13 @@ struct graphics {
 
    float3 creation_color = {0.0f, 0.5f, 1.0f};
 
-   float barrier_height = 64.0f;
+   float barrier_height = 32.0f;
 
    float boundary_height = 64.0f;
 
-   float planning_hub_height = 64.0f;
+   float planning_hub_height = 16.0f;
 
-   float planning_connection_height = 48.0f;
+   float planning_connection_height = 12.0f;
 
    float line_width = 2.5f;
 
