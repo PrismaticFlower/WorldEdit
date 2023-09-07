@@ -1110,7 +1110,10 @@ void renderer_impl::draw_world_meta_objects(
 
    if (active_entity_types.planning_hubs) {
       const float planning_hub_height = settings.planning_hub_height;
-      const float4 planning_color = settings.planning_color;
+      const uint32 packed_color =
+         utility::pack_srgb_bgra({settings.planning_hub_outline_color.x,
+                                  settings.planning_hub_outline_color.y,
+                                  settings.planning_hub_outline_color.z, 1.0f});
 
       const auto add_hub = [&](const world::planning_hub& hub) {
          const math::bounding_box bbox{
@@ -1119,12 +1122,54 @@ void renderer_impl::draw_world_meta_objects(
 
          if (not intersects(view_frustum, bbox)) return;
 
-         const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
-                                  {0.0f, planning_hub_height, 0.0f, 0.0f},
-                                  {0.0f, 0.0f, hub.radius, 0.0f},
-                                  {hub.position, 1.0f}};
+         const float3 scale = float3{hub.radius, 0.0f, hub.radius};
+         const float3 offset = hub.position;
 
-         _meta_draw_batcher.add_cylinder(transform, planning_color);
+         const std::array circle = {
+            float3{0.0f, 0.0f, 1.0f} * scale + offset,
+            float3{-0.195090f, 0.0f, 0.980785f} * scale + offset,
+            float3{-0.382683f, 0.0f, 0.923880f} * scale + offset,
+            float3{-0.555570f, 0.0f, 0.831470f} * scale + offset,
+            float3{-0.707107f, 0.0f, 0.707107f} * scale + offset,
+            float3{-0.831470f, 0.0f, 0.555570f} * scale + offset,
+            float3{-0.923880f, 0.0f, 0.382683f} * scale + offset,
+            float3{-0.980785f, 0.0f, 0.195090f} * scale + offset,
+            float3{-1.0f, 0.0f, 0.0f} * scale + offset,
+            float3{-0.980785f, 0.0f, -0.195090f} * scale + offset,
+            float3{-0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{-0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{-0.707107f, 0.0f, -0.707107f} * scale + offset,
+            float3{-0.555570f, 0.0f, -0.831470f} * scale + offset,
+            float3{-0.382683f, 0.0f, -0.923880f} * scale + offset,
+            float3{-0.195090f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.0f, 0.0f, -1.0f} * scale + offset,
+            float3{0.195091f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.382684f, 0.0f, -0.923879f} * scale + offset,
+            float3{0.555571f, 0.0f, -0.831469f} * scale + offset,
+            float3{0.707107f, 0.0f, -0.707106f} * scale + offset,
+            float3{0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{0.980785f, 0.0f, -0.195089f} * scale + offset,
+            float3{1.0f, 0.0f, 0.000001f} * scale + offset,
+            float3{0.980785f, 0.0f, 0.195091f} * scale + offset,
+            float3{0.923879f, 0.0f, 0.382684f} * scale + offset,
+            float3{0.831469f, 0.0f, 0.555571f} * scale + offset,
+            float3{0.707106f, 0.0f, 0.707108f} * scale + offset,
+            float3{0.555569f, 0.0f, 0.831470f} * scale + offset,
+            float3{0.382682f, 0.0f, 0.923880f} * scale + offset,
+            float3{0.195089f, 0.0f, 0.980786f} * scale + offset,
+         };
+
+         for (std::size_t i = 0; i < circle.size(); ++i) {
+            _meta_draw_batcher.add_line_overlay(circle[i],
+                                                circle[(i + 1) % circle.size()],
+                                                packed_color);
+         }
+
+         _ai_overlay_batches.hubs.push_back({{hub.radius, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, planning_hub_height, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, hub.radius, 0.0f},
+                                             {hub.position, 1.0f}});
       };
 
       for (auto& hub : world.planning_hubs) add_hub(hub);
@@ -1308,6 +1353,46 @@ void renderer_impl::draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
       command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
 
       const float4 color = settings.planning_connection_overlay_color;
+
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_apply.get());
+      command_list.set_graphics_32bit_constants(rs::ai_overlay_apply::color,
+                                                std::as_bytes(std::span{&color, 1}),
+                                                0);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_apply.get());
+
+      command_list.draw_instanced(3, 1, 0, 0);
+   }
+
+   if (not _ai_overlay_batches.hubs.empty()) {
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_shape.get());
+      command_list.set_graphics_cbv(rs::ai_overlay_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_shape.get());
+
+      auto hubs_allocation = _dynamic_buffer_allocator.allocate(
+         sizeof(float4x4) * _ai_overlay_batches.hubs.size());
+
+      std::memcpy(hubs_allocation.cpu_address, _ai_overlay_batches.hubs.data(),
+                  sizeof(float4x4) * _ai_overlay_batches.hubs.size());
+
+      command_list.set_graphics_srv(rs::ai_overlay_shape::instance_data_srv,
+                                    hubs_allocation.gpu_address);
+
+      const geometric_shape cylinder = _geometric_shapes.cylinder();
+
+      command_list.ia_set_index_buffer(cylinder.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, cylinder.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(cylinder.index_count,
+                                          static_cast<uint32>(
+                                             _ai_overlay_batches.hubs.size()),
+                                          0, 0, 0);
+
+      command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
+
+      const float4 color = settings.planning_hub_overlay_color;
 
       command_list.set_graphics_root_signature(_root_signatures.ai_overlay_apply.get());
       command_list.set_graphics_32bit_constants(rs::ai_overlay_apply::color,
@@ -1717,14 +1802,62 @@ void renderer_impl::draw_interaction_targets(
                                            corners[0] - height_offset, packed_color);
       },
       [&](const world::planning_hub& hub, const float3 color) {
-         const float height = settings.planning_hub_height;
+         const float3 height = {0.0f, settings.planning_hub_height, 0.0f};
+         const float3 scale = float3{hub.radius, 0.0f, hub.radius};
+         const float3 offset = hub.position;
 
-         const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
-                                  {0.0f, height, 0.0f, 0.0f},
-                                  {0.0f, 0.0f, hub.radius, 0.0f},
-                                  {hub.position, 1.0f}};
+         const std::array circle = {
+            float3{0.0f, 0.0f, 1.0f} * scale + offset,
+            float3{-0.195090f, 0.0f, 0.980785f} * scale + offset,
+            float3{-0.382683f, 0.0f, 0.923880f} * scale + offset,
+            float3{-0.555570f, 0.0f, 0.831470f} * scale + offset,
+            float3{-0.707107f, 0.0f, 0.707107f} * scale + offset,
+            float3{-0.831470f, 0.0f, 0.555570f} * scale + offset,
+            float3{-0.923880f, 0.0f, 0.382683f} * scale + offset,
+            float3{-0.980785f, 0.0f, 0.195090f} * scale + offset,
+            float3{-1.0f, 0.0f, 0.0f} * scale + offset,
+            float3{-0.980785f, 0.0f, -0.195090f} * scale + offset,
+            float3{-0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{-0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{-0.707107f, 0.0f, -0.707107f} * scale + offset,
+            float3{-0.555570f, 0.0f, -0.831470f} * scale + offset,
+            float3{-0.382683f, 0.0f, -0.923880f} * scale + offset,
+            float3{-0.195090f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.0f, 0.0f, -1.0f} * scale + offset,
+            float3{0.195091f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.382684f, 0.0f, -0.923879f} * scale + offset,
+            float3{0.555571f, 0.0f, -0.831469f} * scale + offset,
+            float3{0.707107f, 0.0f, -0.707106f} * scale + offset,
+            float3{0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{0.980785f, 0.0f, -0.195089f} * scale + offset,
+            float3{1.0f, 0.0f, 0.000001f} * scale + offset,
+            float3{0.980785f, 0.0f, 0.195091f} * scale + offset,
+            float3{0.923879f, 0.0f, 0.382684f} * scale + offset,
+            float3{0.831469f, 0.0f, 0.555571f} * scale + offset,
+            float3{0.707106f, 0.0f, 0.707108f} * scale + offset,
+            float3{0.555569f, 0.0f, 0.831470f} * scale + offset,
+            float3{0.382682f, 0.0f, 0.923880f} * scale + offset,
+            float3{0.195089f, 0.0f, 0.980786f} * scale + offset,
+         };
 
-         _meta_draw_batcher.add_cylinder_wireframe(transform, color);
+         const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
+
+         for (std::size_t i = 0; i < circle.size(); ++i) {
+            _meta_draw_batcher.add_line_overlay(circle[i],
+                                                circle[(i + 1) % circle.size()],
+                                                packed_color);
+
+            _meta_draw_batcher.add_line_solid(circle[i] - height,
+                                              circle[i] + height, packed_color);
+
+            _meta_draw_batcher.add_line_solid(circle[i] - height,
+                                              circle[(i + 1) % circle.size()] - height,
+                                              packed_color);
+            _meta_draw_batcher.add_line_solid(circle[i] + height,
+                                              circle[(i + 1) % circle.size()] + height,
+                                              packed_color);
+         }
       },
       [&](const world::planning_connection& connection, const float3 color) {
          const float height = settings.planning_connection_height;

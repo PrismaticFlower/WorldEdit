@@ -98,7 +98,11 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
 
             ImGui::ColorEdit4("Barrier Overlay", &graphics.barrier_overlay_color.x);
 
-            ImGui::ColorEdit4("AI Planning", &graphics.planning_color.x);
+            ImGui::ColorEdit3("AI Planning Hub Outline",
+                              &graphics.planning_hub_outline_color.x);
+
+            ImGui::ColorEdit4("AI Planning Hub Overlay",
+                              &graphics.planning_hub_overlay_color.x);
 
             ImGui::ColorEdit3("AI Planning Connection Outline",
                               &graphics.planning_connection_outline_color.x);

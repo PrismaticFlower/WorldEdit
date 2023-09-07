@@ -79,7 +79,8 @@ auto load(const std::string_view path) -> settings
             setting_entry(region_color);
             setting_entry(barrier_outline_color);
             setting_entry(barrier_overlay_color);
-            setting_entry(planning_color);
+            setting_entry(planning_hub_outline_color);
+            setting_entry(planning_hub_overlay_color);
             setting_entry(planning_connection_outline_color);
             setting_entry(planning_connection_overlay_color);
             setting_entry(sector_color);
@@ -162,7 +163,8 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(region_color));
       write(file, name_value(barrier_outline_color));
       write(file, name_value(barrier_overlay_color));
-      write(file, name_value(planning_color));
+      write(file, name_value(planning_hub_outline_color));
+      write(file, name_value(planning_hub_overlay_color));
       write(file, name_value(planning_connection_outline_color));
       write(file, name_value(planning_connection_overlay_color));
       write(file, name_value(sector_color));

@@ -19,7 +19,9 @@ struct graphics {
 
    float4 barrier_overlay_color = {1.0f, 0.0f, 0.0f, 0.25f};
 
-   float4 planning_color = {0.2f, 0.2f, 1.0f, 0.3f};
+   float3 planning_hub_outline_color = {0.0625f, 0.125f, 1.0f};
+
+   float4 planning_hub_overlay_color = {0.0f, 0.125f, 1.0f, 0.25f};
 
    float3 planning_connection_outline_color = {0.125f, 0.25f, 1.0f};
 
