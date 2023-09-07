@@ -270,6 +270,7 @@
     <ClCompile Include="src\settings\settings.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
     <ClCompile Include="src\utility\os_execute.cpp" />
+    <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
     <ClCompile Include="src\world\object_class_library.cpp" />

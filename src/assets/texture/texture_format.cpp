@@ -3,6 +3,7 @@
 #include "utility/float16_packing.hpp"
 #include "utility/srgb_conversion.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <stdexcept>
