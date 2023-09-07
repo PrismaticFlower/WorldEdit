@@ -21,6 +21,10 @@ struct graphics {
 
    float4 planning_color = {0.2f, 0.2f, 1.0f, 0.3f};
 
+   float3 planning_connection_outline_color = {0.125f, 0.25f, 1.0f};
+
+   float4 planning_connection_overlay_color = {0.0f, 0.25f, 1.0f, 0.25f};
+
    float4 sector_color = {0.6f, 0.3f, 1.0f, 0.3f};
 
    float4 portal_color = {0.3f, 0.9f, 0.0f, 0.3f};

@@ -100,6 +100,12 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
 
             ImGui::ColorEdit4("AI Planning", &graphics.planning_color.x);
 
+            ImGui::ColorEdit3("AI Planning Connection Outline",
+                              &graphics.planning_connection_outline_color.x);
+
+            ImGui::ColorEdit4("AI Planning Connection Overlay",
+                              &graphics.planning_connection_overlay_color.x);
+
             ImGui::ColorEdit4("Sector", &graphics.sector_color.x);
 
             ImGui::ColorEdit4("Portal", &graphics.portal_color.x);
