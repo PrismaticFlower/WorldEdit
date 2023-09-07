@@ -73,6 +73,10 @@ std::initializer_list<shader_description> shader_list = {
    shader("meta_draw_linePS"),
    shader("meta_draw_lineVS"),
 
+   shader("ai_overlay_shapeVS"),
+   shader("ai_overlay_applyVS"),
+   shader("ai_overlay_applyPS"),
+
    shader("tile_lights_clearCS"),
 
    shader("depth_reduce_minmaxCS"),

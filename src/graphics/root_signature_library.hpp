@@ -19,6 +19,9 @@ struct root_signature_library {
 
    gpu::unique_root_signature_handle meta_draw;
 
+   gpu::unique_root_signature_handle ai_overlay_shape;
+   gpu::unique_root_signature_handle ai_overlay_apply;
+
    gpu::unique_root_signature_handle tile_lights_clear;
    gpu::unique_root_signature_handle tile_lights;
 
@@ -76,6 +79,15 @@ constexpr uint32 frame_cbv = 2;
 namespace meta_draw {
 constexpr uint32 instance_data_srv = 0;
 constexpr uint32 frame_cbv = 1;
+}
+
+namespace ai_overlay_shape {
+constexpr uint32 instance_data_srv = 0;
+constexpr uint32 frame_cbv = 1;
+}
+
+namespace ai_overlay_apply {
+constexpr uint32 color = 0;
 }
 
 namespace tile_lights_clear {

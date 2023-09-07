@@ -64,6 +64,12 @@ constexpr gpu::depth_stencil_state_desc depth_stencil_readonly_less_equal = {
    .write_depth = false,
 };
 
+constexpr gpu::depth_stencil_state_desc depth_stencil_readonly_greater_equal = {
+   .depth_test_enabled = true,
+   .depth_test_func = gpu::comparison_func::greater_equal,
+   .write_depth = false,
+};
+
 constexpr gpu::depth_stencil_state_desc depth_stencil_disabled = {
    .depth_test_enabled = false,
 };
@@ -632,6 +638,52 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
 
            .debug_name = "meta_draw_triangle_wireframe"sv}),
+       device.direct_queue};
+
+   ai_overlay_shape =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.ai_overlay_shape.get(),
+
+           .vs_bytecode = shader_library["ai_overlay_shapeVS"sv],
+
+           .rasterizer_state = rasterizer_cull_none,
+           .depth_stencil_state =
+              {
+                 .depth_test_enabled = true,
+                 .depth_test_func = gpu::comparison_func::less_equal,
+                 .write_depth = false,
+                 .stencil_enabled = true,
+                 .stencil_front_face = {.depth_fail_op = gpu::stencil_op::decr},
+                 .stencil_back_face = {.depth_fail_op = gpu::stencil_op::incr},
+              },
+           .input_layout = meta_draw_input_layout,
+
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "ai_overlay_shape"sv}),
+       device.direct_queue};
+
+   ai_overlay_apply =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.ai_overlay_apply.get(),
+
+           .vs_bytecode = shader_library["ai_overlay_applyVS"sv],
+           .ps_bytecode = shader_library["ai_overlay_applyPS"sv],
+
+           .blend_state = blend_alpha,
+           .depth_stencil_state =
+              {
+                 .depth_test_enabled = false,
+                 .stencil_enabled = true,
+                 .stencil_front_face = {.pass_op = gpu::stencil_op::zero,
+                                        .func = gpu::comparison_func::not_equal},
+              },
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "ai_overlay_apply"sv}),
        device.direct_queue};
 
    tile_lights_clear = {device.create_compute_pipeline(

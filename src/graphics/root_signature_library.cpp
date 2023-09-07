@@ -191,6 +191,36 @@ const gpu::root_signature_desc meta_draw_desc{
    .debug_name = "meta_draw_root_signature",
 };
 
+const gpu::root_signature_desc ai_overlay_shape_desc{
+   .parameters =
+      {
+         // instance data srv
+         gpu::root_parameter{.type = gpu::root_parameter_type::shader_resource_view,
+                             .shader_register = meta_draw_instance_data_register},
+
+         frame_constant_buffer,
+      },
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "ai_overlay_shape_root_signature",
+};
+
+const gpu::root_signature_desc ai_overlay_apply_desc{
+   .parameters =
+      {
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::_32bit_constants,
+            .shader_register = 0,
+            .values_count = 4,
+         },
+      },
+
+   .flags = {.allow_input_assembler_input_layout = false},
+
+   .debug_name = "ai_overlay_apply_root_signature",
+};
+
 const gpu::root_signature_desc tile_lights_clear_desc{
    .parameters =
       {
@@ -281,6 +311,11 @@ root_signature_library::root_signature_library(gpu::device& device)
                      device.direct_queue};
    sky_mesh = {device.create_root_signature(sky_mesh_desc), device.direct_queue};
    meta_draw = {device.create_root_signature(meta_draw_desc), device.direct_queue};
+
+   ai_overlay_shape = {device.create_root_signature(ai_overlay_shape_desc),
+                       device.direct_queue};
+   ai_overlay_apply = {device.create_root_signature(ai_overlay_apply_desc),
+                       device.direct_queue};
 
    tile_lights_clear = {device.create_root_signature(tile_lights_clear_desc),
                         device.direct_queue};

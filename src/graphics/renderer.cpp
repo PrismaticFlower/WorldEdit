@@ -1,5 +1,6 @@
 
 #include "renderer.hpp"
+#include "ai_overlay_batches.hpp"
 #include "async/thread_pool.hpp"
 #include "camera.hpp"
 #include "copy_command_list_pool.hpp"
@@ -132,6 +133,10 @@ private:
                                 const world::tool_visualizers& tool_visualizers,
                                 const settings::graphics& settings);
 
+   void draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
+                        const settings::graphics& settings,
+                        gpu::graphics_command_list& command_list);
+
    void draw_interaction_targets(const frustum& view_frustum, const world::world& world,
                                  const world::interaction_targets& interaction_targets,
                                  const world::object_class_library& world_classes,
@@ -242,6 +247,7 @@ private:
    std::vector<uint16> _transparent_object_render_list;
 
    meta_draw_batcher _meta_draw_batcher;
+   ai_overlay_batches _ai_overlay_batches;
 
    imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
 
@@ -400,7 +406,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    command_list.clear_render_target_view(back_buffer_rtv,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
    command_list.clear_depth_stencil_view(_depth_stencil_view.get(),
-                                         {.clear_depth = true}, 1.0f, 0x0);
+                                         {.clear_depth = true, .clear_stencil = true},
+                                         1.0f, 0x0);
 
    command_list.rs_set_viewports(
       gpu::viewport{.width = static_cast<float>(_swap_chain.width()),
@@ -414,9 +421,12 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    // Render World Meta Objects
    _meta_draw_batcher.clear();
+   _ai_overlay_batches.clear();
 
    draw_world_meta_objects(view_frustum, world, interaction_targets, active_entity_types,
                            active_layers, tool_visualizers, settings);
+
+   draw_ai_overlay(back_buffer_rtv, settings, command_list);
 
    draw_interaction_targets(view_frustum, world, interaction_targets,
                             world_classes, settings, command_list);
@@ -810,7 +820,9 @@ void renderer_impl::draw_world_meta_objects(
 
    if (active_entity_types.barriers) {
       const float barrier_height = settings.barrier_height;
-      const float4 barrier_color = settings.barrier_color;
+      const uint32 barrier_color = utility::pack_srgb_bgra(
+         float4{settings.barrier_outline_color.x, settings.barrier_outline_color.y,
+                settings.barrier_outline_color.z, 1.0f});
 
       const auto add_barrier = [&](const world::barrier& barrier) {
          const float4x4 rotation =
@@ -824,7 +836,38 @@ void renderer_impl::draw_world_meta_objects(
 
          transform[3] = {barrier.position, 1.0f};
 
-         _meta_draw_batcher.add_box(transform, barrier_color); // TODO: Frustum cull
+         // TODO: Batch these better.
+         std::array<float4, 4> corners_f4 = {
+            transform * float4{-1.0f, 0.0f, 1.0f, 1.0f},
+            transform * float4{-1.0f, 0.0f, -1.0f, 1.0f},
+            transform * float4{1.0f, 0.0f, -1.0f, 1.0f},
+            transform * float4{1.0f, 0.0f, 1.0f, 1.0f},
+         };
+         std::array<float3, 4> corners = {
+            float3{corners_f4[0].x, corners_f4[0].y, corners_f4[0].z},
+            float3{corners_f4[1].x, corners_f4[1].y, corners_f4[1].z},
+            float3{corners_f4[2].x, corners_f4[2].y, corners_f4[2].z},
+            float3{corners_f4[3].x, corners_f4[3].y, corners_f4[3].z},
+         };
+
+         math::bounding_box bbox{.min = corners[0], .max = corners[0]};
+
+         for (std::size_t i = 1; i < corners.size(); ++i) {
+            bbox.min = min(bbox.min, corners[i]);
+            bbox.max = max(bbox.max, corners[i]);
+         }
+
+         bbox.min.y = -barrier_height;
+         bbox.max.y = barrier_height;
+
+         if (not intersects(view_frustum, bbox)) return;
+
+         _meta_draw_batcher.add_line_overlay(corners[0], corners[1], barrier_color);
+         _meta_draw_batcher.add_line_overlay(corners[1], corners[2], barrier_color);
+         _meta_draw_batcher.add_line_overlay(corners[2], corners[3], barrier_color);
+         _meta_draw_batcher.add_line_overlay(corners[3], corners[0], barrier_color);
+
+         _ai_overlay_batches.barriers.push_back(transform);
       };
 
       for (auto& barrier : world.barriers) add_barrier(barrier);
@@ -1067,7 +1110,10 @@ void renderer_impl::draw_world_meta_objects(
 
    if (active_entity_types.planning_hubs) {
       const float planning_hub_height = settings.planning_hub_height;
-      const float4 planning_color = settings.planning_color;
+      const uint32 packed_color =
+         utility::pack_srgb_bgra({settings.planning_hub_outline_color.x,
+                                  settings.planning_hub_outline_color.y,
+                                  settings.planning_hub_outline_color.z, 1.0f});
 
       const auto add_hub = [&](const world::planning_hub& hub) {
          const math::bounding_box bbox{
@@ -1076,12 +1122,54 @@ void renderer_impl::draw_world_meta_objects(
 
          if (not intersects(view_frustum, bbox)) return;
 
-         const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
-                                  {0.0f, planning_hub_height, 0.0f, 0.0f},
-                                  {0.0f, 0.0f, hub.radius, 0.0f},
-                                  {hub.position, 1.0f}};
+         const float3 scale = float3{hub.radius, 0.0f, hub.radius};
+         const float3 offset = hub.position;
 
-         _meta_draw_batcher.add_cylinder(transform, planning_color);
+         const std::array circle = {
+            float3{0.0f, 0.0f, 1.0f} * scale + offset,
+            float3{-0.195090f, 0.0f, 0.980785f} * scale + offset,
+            float3{-0.382683f, 0.0f, 0.923880f} * scale + offset,
+            float3{-0.555570f, 0.0f, 0.831470f} * scale + offset,
+            float3{-0.707107f, 0.0f, 0.707107f} * scale + offset,
+            float3{-0.831470f, 0.0f, 0.555570f} * scale + offset,
+            float3{-0.923880f, 0.0f, 0.382683f} * scale + offset,
+            float3{-0.980785f, 0.0f, 0.195090f} * scale + offset,
+            float3{-1.0f, 0.0f, 0.0f} * scale + offset,
+            float3{-0.980785f, 0.0f, -0.195090f} * scale + offset,
+            float3{-0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{-0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{-0.707107f, 0.0f, -0.707107f} * scale + offset,
+            float3{-0.555570f, 0.0f, -0.831470f} * scale + offset,
+            float3{-0.382683f, 0.0f, -0.923880f} * scale + offset,
+            float3{-0.195090f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.0f, 0.0f, -1.0f} * scale + offset,
+            float3{0.195091f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.382684f, 0.0f, -0.923879f} * scale + offset,
+            float3{0.555571f, 0.0f, -0.831469f} * scale + offset,
+            float3{0.707107f, 0.0f, -0.707106f} * scale + offset,
+            float3{0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{0.980785f, 0.0f, -0.195089f} * scale + offset,
+            float3{1.0f, 0.0f, 0.000001f} * scale + offset,
+            float3{0.980785f, 0.0f, 0.195091f} * scale + offset,
+            float3{0.923879f, 0.0f, 0.382684f} * scale + offset,
+            float3{0.831469f, 0.0f, 0.555571f} * scale + offset,
+            float3{0.707106f, 0.0f, 0.707108f} * scale + offset,
+            float3{0.555569f, 0.0f, 0.831470f} * scale + offset,
+            float3{0.382682f, 0.0f, 0.923880f} * scale + offset,
+            float3{0.195089f, 0.0f, 0.980786f} * scale + offset,
+         };
+
+         for (std::size_t i = 0; i < circle.size(); ++i) {
+            _meta_draw_batcher.add_line_overlay(circle[i],
+                                                circle[(i + 1) % circle.size()],
+                                                packed_color);
+         }
+
+         _ai_overlay_batches.hubs.push_back({{hub.radius, 0.0f, 0.0f, 0.0f},
+                                             {0.0f, planning_hub_height, 0.0f, 0.0f},
+                                             {0.0f, 0.0f, hub.radius, 0.0f},
+                                             {hub.position, 1.0f}});
       };
 
       for (auto& hub : world.planning_hubs) add_hub(hub);
@@ -1094,10 +1182,11 @@ void renderer_impl::draw_world_meta_objects(
 
    if (active_entity_types.planning_connections) {
       const float planning_connection_height = settings.planning_connection_height;
-      const float4 planning_color = settings.planning_color;
 
       const uint32 packed_color = utility::pack_srgb_bgra(
-         {planning_color.x, planning_color.y, planning_color.z, 1.0f / 255.0f});
+         {settings.planning_connection_outline_color.x,
+          settings.planning_connection_outline_color.y,
+          settings.planning_connection_outline_color.z, 1.0f});
 
       const auto add_connection = [&](const world::planning_connection& connection) {
          const world::planning_hub& start =
@@ -1140,67 +1229,36 @@ void renderer_impl::draw_world_meta_objects(
                                           quad[2] - height_offset,
                                           quad[3] - height_offset};
 
-         // Top
-         _meta_draw_batcher.add_triangle(corners[0], corners[2], corners[3],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[1], corners[0], corners[3],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[2], corners[0], corners[3],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[0], corners[1], corners[3],
-                                         packed_color);
+         _ai_overlay_batches.connections.push_back({
+            // Top
+            corners[3], corners[2], corners[0], //
+            corners[3], corners[0], corners[1], //
 
-         // Bottom
-         _meta_draw_batcher.add_triangle(corners[4], corners[6], corners[7],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[5], corners[4], corners[7],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[6], corners[4], corners[7],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[4], corners[5], corners[7],
-                                         packed_color);
+            // Bottom
+            corners[4], corners[6], corners[7], //
+            corners[5], corners[4], corners[7], //
 
-         // Side 0
+            // Side 0
+            corners[0], corners[6], corners[4], //
+            corners[0], corners[2], corners[6], //
 
-         _meta_draw_batcher.add_triangle(corners[0], corners[6], corners[4],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[0], corners[2], corners[6],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[6], corners[0], corners[4],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[2], corners[0], corners[6],
-                                         packed_color);
+            // Side 1
+            corners[1], corners[5], corners[7], //
+            corners[7], corners[3], corners[1], //
 
-         // Side 1
+            // Back
+            corners[4], corners[1], corners[0], //
+            corners[5], corners[1], corners[4], //
 
-         _meta_draw_batcher.add_triangle(corners[1], corners[7], corners[5],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[1], corners[3], corners[7],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[7], corners[1], corners[5],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[3], corners[1], corners[7],
-                                         packed_color);
+            // Front
+            corners[2], corners[3], corners[6], //
+            corners[6], corners[3], corners[7]  //
+         });
 
-         // Back
-         _meta_draw_batcher.add_triangle(corners[0], corners[1], corners[4],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[4], corners[1], corners[5],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[1], corners[0], corners[4],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[1], corners[4], corners[5],
-                                         packed_color);
-
-         // Front
-         _meta_draw_batcher.add_triangle(corners[2], corners[3], corners[6],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[6], corners[3], corners[7],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[3], corners[2], corners[6],
-                                         packed_color);
-         _meta_draw_batcher.add_triangle(corners[3], corners[6], corners[7],
-                                         packed_color);
+         _meta_draw_batcher.add_line_overlay(quad[0], quad[1], packed_color);
+         _meta_draw_batcher.add_line_overlay(quad[1], quad[3], packed_color);
+         _meta_draw_batcher.add_line_overlay(quad[3], quad[2], packed_color);
+         _meta_draw_batcher.add_line_overlay(quad[2], quad[0], packed_color);
       };
 
       for (auto& connection : world.planning_connections) {
@@ -1251,6 +1309,140 @@ void renderer_impl::draw_world_meta_objects(
 
    for (const auto& line : tool_visualizers.lines) {
       _meta_draw_batcher.add_line_overlay(line.v0, line.v1, line.color);
+   }
+}
+
+void renderer_impl::draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
+                                    const settings::graphics& settings,
+                                    gpu::graphics_command_list& command_list)
+{
+   if (_ai_overlay_batches.empty()) return;
+
+   command_list.om_set_render_targets(_depth_stencil_view.get());
+   command_list.om_set_stencil_ref(0x0);
+
+   if (not _ai_overlay_batches.connections.empty()) {
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_shape.get());
+      command_list.set_graphics_cbv(rs::ai_overlay_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_shape.get());
+
+      const std::size_t connections_bytes =
+         sizeof(std::array<float3, 36>) * _ai_overlay_batches.connections.size();
+
+      auto connections_allocation =
+         _dynamic_buffer_allocator.allocate(connections_bytes);
+
+      std::memcpy(connections_allocation.cpu_address,
+                  _ai_overlay_batches.connections.data(), connections_bytes);
+
+      command_list.set_graphics_srv(
+         rs::ai_overlay_shape::instance_data_srv,
+         _dynamic_buffer_allocator.allocate_and_copy(float4x4{}).gpu_address);
+
+      command_list.ia_set_vertex_buffers(
+         0, gpu::vertex_buffer_view{.buffer_location = connections_allocation.gpu_address,
+                                    .size_in_bytes = static_cast<uint32>(connections_bytes),
+                                    .stride_in_bytes = sizeof(float3)});
+
+      command_list.draw_instanced(static_cast<uint32>(
+                                     _ai_overlay_batches.connections.size() * 36),
+                                  1, 0, 0);
+
+      command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
+
+      const float4 color = settings.planning_connection_overlay_color;
+
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_apply.get());
+      command_list.set_graphics_32bit_constants(rs::ai_overlay_apply::color,
+                                                std::as_bytes(std::span{&color, 1}),
+                                                0);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_apply.get());
+
+      command_list.draw_instanced(3, 1, 0, 0);
+   }
+
+   if (not _ai_overlay_batches.hubs.empty()) {
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_shape.get());
+      command_list.set_graphics_cbv(rs::ai_overlay_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_shape.get());
+
+      auto hubs_allocation = _dynamic_buffer_allocator.allocate(
+         sizeof(float4x4) * _ai_overlay_batches.hubs.size());
+
+      std::memcpy(hubs_allocation.cpu_address, _ai_overlay_batches.hubs.data(),
+                  sizeof(float4x4) * _ai_overlay_batches.hubs.size());
+
+      command_list.set_graphics_srv(rs::ai_overlay_shape::instance_data_srv,
+                                    hubs_allocation.gpu_address);
+
+      const geometric_shape cylinder = _geometric_shapes.cylinder();
+
+      command_list.ia_set_index_buffer(cylinder.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, cylinder.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(cylinder.index_count,
+                                          static_cast<uint32>(
+                                             _ai_overlay_batches.hubs.size()),
+                                          0, 0, 0);
+
+      command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
+
+      const float4 color = settings.planning_hub_overlay_color;
+
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_apply.get());
+      command_list.set_graphics_32bit_constants(rs::ai_overlay_apply::color,
+                                                std::as_bytes(std::span{&color, 1}),
+                                                0);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_apply.get());
+
+      command_list.draw_instanced(3, 1, 0, 0);
+   }
+
+   if (not _ai_overlay_batches.barriers.empty()) {
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_shape.get());
+      command_list.set_graphics_cbv(rs::ai_overlay_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_shape.get());
+
+      auto barriers_allocation = _dynamic_buffer_allocator.allocate(
+         sizeof(float4x4) * _ai_overlay_batches.barriers.size());
+
+      std::memcpy(barriers_allocation.cpu_address,
+                  _ai_overlay_batches.barriers.data(),
+                  sizeof(float4x4) * _ai_overlay_batches.barriers.size());
+
+      command_list.set_graphics_srv(rs::ai_overlay_shape::instance_data_srv,
+                                    barriers_allocation.gpu_address);
+
+      const geometric_shape cube = _geometric_shapes.cube();
+
+      command_list.ia_set_index_buffer(cube.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, cube.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(cube.index_count,
+                                          static_cast<uint32>(
+                                             _ai_overlay_batches.barriers.size()),
+                                          0, 0, 0);
+
+      command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
+
+      const float4 color = settings.barrier_overlay_color;
+
+      command_list.set_graphics_root_signature(_root_signatures.ai_overlay_apply.get());
+      command_list.set_graphics_32bit_constants(rs::ai_overlay_apply::color,
+                                                std::as_bytes(std::span{&color, 1}),
+                                                0);
+
+      command_list.set_pipeline_state(_pipelines.ai_overlay_apply.get());
+
+      command_list.draw_instanced(3, 1, 0, 0);
    }
 }
 
@@ -1560,17 +1752,112 @@ void renderer_impl::draw_interaction_targets(
 
          transform[3] = {barrier.position, 1.0f};
 
-         _meta_draw_batcher.add_box_wireframe(transform, color);
+         std::array<float4, 4> corners_f4 = {
+            transform * float4{-1.0f, 0.0f, 1.0f, 1.0f},
+            transform * float4{-1.0f, 0.0f, -1.0f, 1.0f},
+            transform * float4{1.0f, 0.0f, -1.0f, 1.0f},
+            transform * float4{1.0f, 0.0f, 1.0f, 1.0f},
+         };
+         std::array<float3, 4> corners = {
+            float3{corners_f4[0].x, corners_f4[0].y, corners_f4[0].z},
+            float3{corners_f4[1].x, corners_f4[1].y, corners_f4[1].z},
+            float3{corners_f4[2].x, corners_f4[2].y, corners_f4[2].z},
+            float3{corners_f4[3].x, corners_f4[3].y, corners_f4[3].z},
+         };
+
+         const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
+
+         _meta_draw_batcher.add_line_overlay(corners[0], corners[1], packed_color);
+         _meta_draw_batcher.add_line_overlay(corners[1], corners[2], packed_color);
+         _meta_draw_batcher.add_line_overlay(corners[2], corners[3], packed_color);
+         _meta_draw_batcher.add_line_overlay(corners[3], corners[0], packed_color);
+
+         const float3 height_offset = {0.0f, barrier_height, 0.0f};
+
+         _meta_draw_batcher.add_line_solid(corners[0] + height_offset,
+                                           corners[0] - height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[1] + height_offset,
+                                           corners[1] - height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[2] + height_offset,
+                                           corners[2] - height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[3] + height_offset,
+                                           corners[3] - height_offset, packed_color);
+
+         _meta_draw_batcher.add_line_solid(corners[0] + height_offset,
+                                           corners[1] + height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[1] + height_offset,
+                                           corners[2] + height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[2] + height_offset,
+                                           corners[3] + height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[3] + height_offset,
+                                           corners[0] + height_offset, packed_color);
+
+         _meta_draw_batcher.add_line_solid(corners[0] - height_offset,
+                                           corners[1] - height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[1] - height_offset,
+                                           corners[2] - height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[2] - height_offset,
+                                           corners[3] - height_offset, packed_color);
+         _meta_draw_batcher.add_line_solid(corners[3] - height_offset,
+                                           corners[0] - height_offset, packed_color);
       },
       [&](const world::planning_hub& hub, const float3 color) {
-         const float height = settings.planning_hub_height;
+         const float3 height = {0.0f, settings.planning_hub_height, 0.0f};
+         const float3 scale = float3{hub.radius, 0.0f, hub.radius};
+         const float3 offset = hub.position;
 
-         const float4x4 transform{{hub.radius, 0.0f, 0.0f, 0.0f},
-                                  {0.0f, height, 0.0f, 0.0f},
-                                  {0.0f, 0.0f, hub.radius, 0.0f},
-                                  {hub.position, 1.0f}};
+         const std::array circle = {
+            float3{0.0f, 0.0f, 1.0f} * scale + offset,
+            float3{-0.195090f, 0.0f, 0.980785f} * scale + offset,
+            float3{-0.382683f, 0.0f, 0.923880f} * scale + offset,
+            float3{-0.555570f, 0.0f, 0.831470f} * scale + offset,
+            float3{-0.707107f, 0.0f, 0.707107f} * scale + offset,
+            float3{-0.831470f, 0.0f, 0.555570f} * scale + offset,
+            float3{-0.923880f, 0.0f, 0.382683f} * scale + offset,
+            float3{-0.980785f, 0.0f, 0.195090f} * scale + offset,
+            float3{-1.0f, 0.0f, 0.0f} * scale + offset,
+            float3{-0.980785f, 0.0f, -0.195090f} * scale + offset,
+            float3{-0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{-0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{-0.707107f, 0.0f, -0.707107f} * scale + offset,
+            float3{-0.555570f, 0.0f, -0.831470f} * scale + offset,
+            float3{-0.382683f, 0.0f, -0.923880f} * scale + offset,
+            float3{-0.195090f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.0f, 0.0f, -1.0f} * scale + offset,
+            float3{0.195091f, 0.0f, -0.980785f} * scale + offset,
+            float3{0.382684f, 0.0f, -0.923879f} * scale + offset,
+            float3{0.555571f, 0.0f, -0.831469f} * scale + offset,
+            float3{0.707107f, 0.0f, -0.707106f} * scale + offset,
+            float3{0.831470f, 0.0f, -0.555570f} * scale + offset,
+            float3{0.923880f, 0.0f, -0.382683f} * scale + offset,
+            float3{0.980785f, 0.0f, -0.195089f} * scale + offset,
+            float3{1.0f, 0.0f, 0.000001f} * scale + offset,
+            float3{0.980785f, 0.0f, 0.195091f} * scale + offset,
+            float3{0.923879f, 0.0f, 0.382684f} * scale + offset,
+            float3{0.831469f, 0.0f, 0.555571f} * scale + offset,
+            float3{0.707106f, 0.0f, 0.707108f} * scale + offset,
+            float3{0.555569f, 0.0f, 0.831470f} * scale + offset,
+            float3{0.382682f, 0.0f, 0.923880f} * scale + offset,
+            float3{0.195089f, 0.0f, 0.980786f} * scale + offset,
+         };
 
-         _meta_draw_batcher.add_cylinder_wireframe(transform, color);
+         const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
+
+         for (std::size_t i = 0; i < circle.size(); ++i) {
+            _meta_draw_batcher.add_line_overlay(circle[i],
+                                                circle[(i + 1) % circle.size()],
+                                                packed_color);
+
+            _meta_draw_batcher.add_line_solid(circle[i] - height,
+                                              circle[i] + height, packed_color);
+
+            _meta_draw_batcher.add_line_solid(circle[i] - height,
+                                              circle[(i + 1) % circle.size()] - height,
+                                              packed_color);
+            _meta_draw_batcher.add_line_solid(circle[i] + height,
+                                              circle[(i + 1) % circle.size()] + height,
+                                              packed_color);
+         }
       },
       [&](const world::planning_connection& connection, const float3 color) {
          const float height = settings.planning_connection_height;
@@ -1616,6 +1903,11 @@ void renderer_impl::draw_interaction_targets(
          _meta_draw_batcher.add_line_solid(corners[1], corners[5], packed_color);
          _meta_draw_batcher.add_line_solid(corners[2], corners[6], packed_color);
          _meta_draw_batcher.add_line_solid(corners[3], corners[7], packed_color);
+
+         _meta_draw_batcher.add_line_overlay(quad[0], quad[1], packed_color);
+         _meta_draw_batcher.add_line_overlay(quad[1], quad[3], packed_color);
+         _meta_draw_batcher.add_line_overlay(quad[3], quad[2], packed_color);
+         _meta_draw_batcher.add_line_overlay(quad[2], quad[0], packed_color);
       },
       [&](const world::boundary& boundary, const float3 color) {
          const float boundary_height = settings.boundary_height;
