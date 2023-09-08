@@ -71,6 +71,8 @@ void sky::draw(gpu_virtual_address frame_constant_buffer_view,
    for (auto& dome_model : _dome_models) {
       auto& model = _model_manager[dome_model.geometry];
 
+      if (_model_manager.is_placeholder(model)) continue;
+
       const std::array vertex_buffers{model.gpu_buffer.position_vertex_buffer_view,
                                       model.gpu_buffer.attributes_vertex_buffer_view};
 

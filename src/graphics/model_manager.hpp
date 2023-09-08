@@ -47,6 +47,11 @@ public:
    ///        Also destroys models for which model_manager is the only remaining reference for the asset.
    void trim_models() noexcept;
 
+   /// @brief Checks if model is the placeholder model.
+   /// @param model
+   /// @return If the model is the placeholder or not.
+   bool is_placeholder(const model& model) const noexcept;
+
 private:
    struct model_state {
       std::unique_ptr<model> model;

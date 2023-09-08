@@ -106,6 +106,11 @@ void model_manager::trim_models() noexcept
    _pending_destroys.clear();
 }
 
+bool model_manager::is_placeholder(const model& model) const noexcept
+{
+   return &model == &_placeholder_model;
+}
+
 void model_manager::model_loaded(const lowercase_string& name,
                                  asset_ref<assets::msh::flat_model> asset,
                                  asset_data<assets::msh::flat_model> data) noexcept
