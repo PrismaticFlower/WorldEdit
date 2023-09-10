@@ -16,10 +16,6 @@ void world_edit::ui_show_world_selection_rotate() noexcept
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 660.0f * _display_scale},
                            ImGuiCond_FirstUseEver, {0.0f, 0.0f});
 
-   if (_interaction_targets.selection.empty()) {
-      _selection_edit_tool = selection_edit_tool::none;
-   }
-
    bool open = _selection_edit_tool == selection_edit_tool::rotate;
 
    if (ImGui::Begin("Rotate Selection", &open, ImGuiWindowFlags_AlwaysAutoResize)) {

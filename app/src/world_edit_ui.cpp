@@ -64,6 +64,10 @@ void world_edit::update_ui() noexcept
       }
    }
 
+   if (_interaction_targets.selection.empty()) {
+      _selection_edit_tool = selection_edit_tool::none;
+   }
+
    if (_selection_edit_tool == selection_edit_tool::move) {
       ui_show_world_selection_move();
    }
