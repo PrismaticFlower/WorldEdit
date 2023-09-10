@@ -54,7 +54,8 @@ enum class selection_edit_tool : uint8 {
    move_path,
    move_sector_point,
    rotate,
-   rotate_around_centre
+   rotate_around_centre,
+   set_layer
 };
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
@@ -133,6 +134,8 @@ private:
    void ui_show_world_selection_rotate() noexcept;
 
    void ui_show_world_selection_rotate_around_centre() noexcept;
+
+   void ui_show_world_selection_set_layer() noexcept;
 
    void select_hovered_entity(const select_method method) noexcept;
 
@@ -380,6 +383,7 @@ private:
    world::path_id _move_entire_path_id = {};
    world::sector_id _move_sector_point_id = {};
    std::size_t _move_sector_point_index = 0;
+   int _selection_set_layer = 0;
 
    gizmo _gizmo;
    commands _commands;

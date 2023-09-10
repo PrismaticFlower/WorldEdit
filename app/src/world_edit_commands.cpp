@@ -111,6 +111,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_edit.align_selection"s, [this] { align_selection(); });
    _commands.add("entity_edit.new_from_selection"s,
                  [this] { new_entity_from_selection(); });
+   _commands.add("entity_edit.set_selection_layer"s, [this] {
+      _selection_edit_tool = selection_edit_tool::set_layer;
+   });
    _commands.add("entity_edit.open_odf"s, [this] { open_odfs_for_selected(); });
    _commands.add("entity_edit.finish_add_sector_object"s, [this] {
       _selection_edit_context.using_add_object_to_sector = false;
@@ -335,6 +338,9 @@ void world_edit::initialize_hotkeys() noexcept
            "entity_edit.align_selection",
            {.key = key::a, .modifiers = {.shift = true}}},
           {"New Entity from Selection", "entity_edit.new_from_selection", {.key = key::n}},
+          {"Set Selection Layer",
+           "entity_edit.set_selection_layer",
+           {.key = key::l, .modifiers = {.shift = true}}},
           {"Open .odf in Text Editor",
            "entity_edit.open_odf",
            {.key = key::o, .modifiers = {.ctrl = true}}},
