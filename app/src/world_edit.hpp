@@ -30,7 +30,7 @@ struct ImGuiContext;
 
 namespace we {
 
-enum class select_method : uint8 { single, multi };
+enum class select_method : uint8 { replace, add };
 
 enum class placement_mode : uint8 { manual, cursor };
 

@@ -74,7 +74,7 @@ void world_edit::initialize_commands() noexcept
          start_entity_select();
       }
       else {
-         finish_entity_select(select_method::single);
+         finish_entity_select(select_method::replace);
       }
    });
    _commands.add("selection.add"s, [this]() {
@@ -82,7 +82,7 @@ void world_edit::initialize_commands() noexcept
          start_entity_select();
       }
       else {
-         finish_entity_select(select_method::multi);
+         finish_entity_select(select_method::add);
       }
    });
    _commands.add("selection.remove"s, [this]() { deselect_hovered_entity(); });
