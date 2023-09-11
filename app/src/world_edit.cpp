@@ -510,7 +510,7 @@ void world_edit::ui_draw_select_box() noexcept
 
 void world_edit::start_entity_select() noexcept
 {
-   _select_start_position = std::bit_cast<float2>(ImGui::GetIO().MousePos);
+   _select_start_position = std::bit_cast<float2>(ImGui::GetMousePos());
    _selecting_entity = true;
 }
 
@@ -518,13 +518,20 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 {
    _selecting_entity = false;
 
-   const float2 current_cursor_position = {ImGui::GetIO().MousePos.x,
-                                           ImGui::GetIO().MousePos.y};
+   const float2 current_cursor_position =
+      std::bit_cast<float2>(ImGui::GetMousePos());
    const float2 rect_min = min(current_cursor_position, _select_start_position);
    const float2 rect_max = max(current_cursor_position, _select_start_position);
    const bool drag_select = distance(rect_max, rect_min) >= 2.0f;
 
    if (drag_select) {
+      const float2 window_size =
+         std::bit_cast<float2>(ImGui::GetMainViewport()->Size);
+
+      const float2 min_ndc_pos =
+         ((rect_min + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
+      const float2 max_ndc_pos =
+         ((rect_max + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
    }
    else {
       if (method == select_method::replace) {
