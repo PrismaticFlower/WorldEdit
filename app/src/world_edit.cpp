@@ -480,7 +480,9 @@ void world_edit::update_camera(const float delta_time)
    }
 }
 
-void world_edit::select_hovered_entity(const select_method method) noexcept
+void world_edit::start_entity_select() noexcept {}
+
+void world_edit::finish_entity_select(const select_method method) noexcept
 {
    if (method == select_method::single) {
       if (not _interaction_targets.hovered_entity) {

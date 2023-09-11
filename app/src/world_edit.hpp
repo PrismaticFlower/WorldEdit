@@ -137,7 +137,9 @@ private:
 
    void ui_show_world_selection_set_layer() noexcept;
 
-   void select_hovered_entity(const select_method method) noexcept;
+   void start_entity_select() noexcept;
+
+   void finish_entity_select(const select_method method) noexcept;
 
    void deselect_hovered_entity() noexcept;
 
@@ -244,6 +246,7 @@ private:
    bool _move_sprint = false;
    bool _rotate_camera = false;
    bool _pan_camera = false;
+   bool _selecting_entity = false;
 
    bool _hotkeys_view_show = false;
    bool _imgui_demo_open = false;
