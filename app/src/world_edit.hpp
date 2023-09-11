@@ -137,6 +137,8 @@ private:
 
    void ui_show_world_selection_set_layer() noexcept;
 
+   void ui_draw_select_box() noexcept;
+
    void start_entity_select() noexcept;
 
    void finish_entity_select(const select_method method) noexcept;
@@ -387,6 +389,8 @@ private:
    world::sector_id _move_sector_point_id = {};
    std::size_t _move_sector_point_index = 0;
    int _selection_set_layer = 0;
+
+   float2 _select_start_position;
 
    gizmo _gizmo;
    commands _commands;

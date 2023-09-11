@@ -70,7 +70,7 @@ void world_edit::initialize_commands() noexcept
                  [this] { _settings.camera.move_speed /= 2.0f; });
 
    _commands.add("selection.set"s, [this]() {
-      if (std::exchange(_selecting_entity, not _selecting_entity)) {
+      if (not _selecting_entity) {
          start_entity_select();
       }
       else {
@@ -78,7 +78,7 @@ void world_edit::initialize_commands() noexcept
       }
    });
    _commands.add("selection.add"s, [this]() {
-      if (std::exchange(_selecting_entity, not _selecting_entity)) {
+      if (not _selecting_entity) {
          start_entity_select();
       }
       else {

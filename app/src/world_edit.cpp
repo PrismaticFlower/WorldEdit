@@ -15,6 +15,7 @@
 #include "utility/file_pickers.hpp"
 #include "utility/os_execute.hpp"
 #include "utility/overload.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
@@ -134,6 +135,8 @@ void world_edit::update()
    update_camera(delta_time);
 
    _gizmo.draw(_tool_visualizers);
+
+   ui_draw_select_box();
 
    try {
       _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
@@ -480,10 +483,41 @@ void world_edit::update_camera(const float delta_time)
    }
 }
 
-void world_edit::start_entity_select() noexcept {}
+void world_edit::ui_draw_select_box() noexcept
+{
+   if (not _selecting_entity) return;
+
+   float2 current_cursor_position = {ImGui::GetIO().MousePos.x,
+                                     ImGui::GetIO().MousePos.y};
+   float2 rect_min = min(current_cursor_position, _select_start_position);
+   float2 rect_max = max(current_cursor_position, _select_start_position);
+
+   if (distance(rect_max, rect_min) >= 2.0f) {
+      const float3 color =
+         utility::compress_srgb(_settings.graphics.hover_color) * 255.0f + 0.5f;
+
+      ImGui::GetBackgroundDrawList()->AddRectFilled(std::bit_cast<ImVec2>(rect_min),
+                                                    std::bit_cast<ImVec2>(rect_max),
+                                                    IM_COL32(color.x, color.y,
+                                                             color.z, 0x10));
+      ImGui::GetBackgroundDrawList()->AddRect(std::bit_cast<ImVec2>(rect_min),
+                                              std::bit_cast<ImVec2>(rect_max),
+                                              IM_COL32(color.x, color.y, color.z, 0xff),
+                                              0.0f, ImDrawFlags_None,
+                                              1.0f * _display_scale);
+   }
+}
+
+void world_edit::start_entity_select() noexcept
+{
+   _select_start_position = {ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y};
+   _selecting_entity = true;
+}
 
 void world_edit::finish_entity_select(const select_method method) noexcept
 {
+   _selecting_entity = false;
+
    if (method == select_method::single) {
       if (not _interaction_targets.hovered_entity) {
          _interaction_targets.selection.clear();
