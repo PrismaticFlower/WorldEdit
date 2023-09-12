@@ -85,7 +85,14 @@ void world_edit::initialize_commands() noexcept
          finish_entity_select(select_method::add);
       }
    });
-   _commands.add("selection.remove"s, [this]() { deselect_hovered_entity(); });
+   _commands.add("selection.remove"s, [this]() {
+      if (not _selecting_entity) {
+         start_entity_deselect();
+      }
+      else {
+         finish_entity_deselect();
+      }
+   });
    _commands.add("selection.clear"s,
                  [this]() { _interaction_targets.selection.clear(); });
 

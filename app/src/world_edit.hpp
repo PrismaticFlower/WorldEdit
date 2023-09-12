@@ -143,7 +143,9 @@ private:
 
    void finish_entity_select(const select_method method) noexcept;
 
-   void deselect_hovered_entity() noexcept;
+   void start_entity_deselect() noexcept;
+
+   void finish_entity_deselect() noexcept;
 
    void place_creation_entity() noexcept;
 
