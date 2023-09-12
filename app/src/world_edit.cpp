@@ -10,11 +10,14 @@
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
 #include "edits/set_value.hpp"
+#include "graphics/frustum.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "resource.h"
 #include "utility/file_pickers.hpp"
 #include "utility/os_execute.hpp"
 #include "utility/overload.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
@@ -134,6 +137,8 @@ void world_edit::update()
    update_camera(delta_time);
 
    _gizmo.draw(_tool_visualizers);
+
+   ui_draw_select_box();
 
    try {
       _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
@@ -480,39 +485,627 @@ void world_edit::update_camera(const float delta_time)
    }
 }
 
-void world_edit::select_hovered_entity(const select_method method) noexcept
+void world_edit::ui_draw_select_box() noexcept
 {
-   if (method == select_method::single) {
-      if (not _interaction_targets.hovered_entity) {
-         _interaction_targets.selection.clear();
+   if (not _selecting_entity) return;
 
-         return;
-      }
+   const float2 current_cursor_position = {ImGui::GetIO().MousePos.x,
+                                           ImGui::GetIO().MousePos.y};
+   const float2 rect_min = min(current_cursor_position, _select_start_position);
+   const float2 rect_max = max(current_cursor_position, _select_start_position);
 
-      _interaction_targets.selection.clear();
+   if (distance(rect_max, rect_min) >= 2.0f) {
+      const float3 color =
+         utility::compress_srgb(_settings.graphics.hover_color) * 255.0f + 0.5f;
+
+      ImGui::GetBackgroundDrawList()->AddRectFilled(std::bit_cast<ImVec2>(rect_min),
+                                                    std::bit_cast<ImVec2>(rect_max),
+                                                    IM_COL32(color.x, color.y,
+                                                             color.z, 0x10));
+      ImGui::GetBackgroundDrawList()->AddRect(std::bit_cast<ImVec2>(rect_min),
+                                              std::bit_cast<ImVec2>(rect_max),
+                                              IM_COL32(color.x, color.y, color.z, 0xff),
+                                              0.0f, ImDrawFlags_None,
+                                              1.0f * _display_scale);
    }
-   else if (method == select_method::multi) {
-      if (not _interaction_targets.hovered_entity) {
-         return;
-      }
-
-      for (auto& selected : _interaction_targets.selection) {
-         if (selected == _interaction_targets.hovered_entity) return;
-      }
-   }
-
-   _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
-
-   _selection_edit_tool = selection_edit_tool::none;
 }
 
-void world_edit::deselect_hovered_entity() noexcept
+void world_edit::start_entity_select() noexcept
 {
-   if (not _interaction_targets.hovered_entity) return;
+   _select_start_position = std::bit_cast<float2>(ImGui::GetMousePos());
+   _selecting_entity = true;
+}
 
-   std::erase_if(_interaction_targets.selection, [&](const auto& selected) {
-      return selected == _interaction_targets.hovered_entity;
-   });
+void world_edit::finish_entity_select(const select_method method) noexcept
+{
+   _selecting_entity = false;
+
+   const float2 current_cursor_position =
+      std::bit_cast<float2>(ImGui::GetMousePos());
+   const float2 rect_min = min(current_cursor_position, _select_start_position);
+   const float2 rect_max = max(current_cursor_position, _select_start_position);
+   const bool drag_select = distance(rect_max, rect_min) >= 2.0f;
+
+   if (drag_select) {
+      const float2 window_size =
+         std::bit_cast<float2>(ImGui::GetMainViewport()->Size);
+
+      const float2 start_ndc_pos =
+         ((rect_min + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
+      const float2 end_ndc_pos =
+         ((rect_max + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
+
+      const float2 min_ndc_pos = min(start_ndc_pos, end_ndc_pos);
+      const float2 max_ndc_pos = max(start_ndc_pos, end_ndc_pos);
+
+      using namespace graphics;
+
+      if (method == select_method::replace) {
+         _interaction_targets.selection.clear();
+      }
+
+      frustum frustum{_camera.inv_view_projection_matrix(),
+                      {min_ndc_pos.x, min_ndc_pos.y, 0.0f},
+                      {max_ndc_pos.x, max_ndc_pos.y, 1.0f}};
+
+      if (_world_hit_mask.objects) {
+         for (auto& object : _world.objects) {
+            if (not _world_layers_hit_mask[object.layer]) continue;
+
+            math::bounding_box bbox =
+               _object_classes[object.class_name].model->bounding_box;
+            bbox = object.rotation * bbox + object.position;
+
+            if (intersects(frustum, bbox)) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(object.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(object.id);
+            }
+         }
+      }
+
+      if (_world_hit_mask.lights) {
+         for (auto& light : _world.lights) {
+            if (not _world_layers_hit_mask[light.layer]) continue;
+
+            const bool inside = [&] {
+               switch (light.light_type) {
+               case world::light_type::directional:
+                  return intersects(frustum, light.position, 2.8284f);
+               case world::light_type::point:
+                  return intersects(frustum, light.position, light.range);
+               case world::light_type::spot: {
+                  const float half_range = light.range / 2.0f;
+                  const float outer_cone_radius =
+                     half_range * std::tan(light.outer_cone_angle);
+                  const float inner_cone_radius =
+                     half_range * std::tan(light.inner_cone_angle);
+                  const float radius = std::min(outer_cone_radius, inner_cone_radius);
+
+                  math::bounding_box bbox{.min = {-radius, -radius, 0.0f},
+                                          .max = {radius, radius, light.range}};
+
+                  bbox = light.rotation * bbox + light.position;
+
+                  return intersects(frustum, bbox);
+               }
+               case world::light_type::directional_region_box: {
+                  math::bounding_box bbox{.min = {-light.region_size},
+                                          .max = {light.region_size}};
+
+                  bbox = light.region_rotation * bbox + light.position;
+
+                  return intersects(frustum, bbox);
+               }
+               case world::light_type::directional_region_sphere:
+                  return intersects(frustum, light.position, length(light.region_size));
+               case world::light_type::directional_region_cylinder: {
+                  const float cylinder_length =
+                     length(float2{light.region_size.x, light.region_size.z});
+
+                  math::bounding_box bbox{.min = {-cylinder_length,
+                                                  -light.region_size.y, -cylinder_length},
+                                          .max = {cylinder_length,
+                                                  light.region_size.y, cylinder_length}};
+
+                  bbox = light.region_rotation * bbox + light.position;
+
+                  return intersects(frustum, bbox);
+               }
+               default:
+                  return false;
+               }
+            }();
+
+            if (inside) {
+               const bool add = method != select_method::add or
+                                not world::is_selected(light.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(light.id);
+            }
+         }
+      }
+
+      if (_world_hit_mask.paths) {
+         for (auto& path : _world.paths) {
+            if (not _world_layers_hit_mask[path.layer]) continue;
+
+            for (std::size_t i = 0; i < path.nodes.size(); ++i) {
+               if (intersects(frustum, path.nodes[i].position,
+                              0.707f * (_settings.graphics.path_node_size / 0.5f))) {
+                  const bool add =
+                     method != select_method::add or
+                     not world::is_selected(world::path_id_node_pair{path.id, i},
+                                            _interaction_targets);
+
+                  if (add) {
+                     _interaction_targets.selection.emplace_back(
+                        world::path_id_node_pair{path.id, i});
+                  }
+               }
+            }
+         }
+      }
+
+      if (_world_hit_mask.regions) {
+         for (auto& region : _world.regions) {
+            if (not _world_layers_hit_mask[region.layer]) continue;
+
+            const bool inside = [&] {
+               switch (region.shape) {
+               case world::region_shape::box: {
+                  math::bounding_box bbox{.min = {-region.size}, .max = {region.size}};
+
+                  bbox = region.rotation * bbox + region.position;
+
+                  return intersects(frustum, bbox);
+               }
+               case world::region_shape::sphere:
+                  return intersects(frustum, region.position, length(region.size));
+               case world::region_shape::cylinder: {
+                  const float cylinder_length =
+                     length(float2{region.size.x, region.size.z});
+
+                  math::bounding_box bbox{.min = {-cylinder_length, -region.size.y,
+                                                  -cylinder_length},
+                                          .max = {cylinder_length, region.size.y,
+                                                  cylinder_length}};
+
+                  bbox = region.rotation * bbox + region.position;
+
+                  return intersects(frustum, bbox);
+               }
+               default:
+                  return false;
+               }
+            }();
+
+            if (inside) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(region.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(region.id);
+            }
+         }
+      }
+
+      if (_world_hit_mask.sectors) {
+         for (auto& sector : _world.sectors) {
+            float2 point_min{FLT_MAX, FLT_MAX};
+            float2 point_max{-FLT_MAX, -FLT_MAX};
+
+            for (auto& point : sector.points) {
+               point_min = min(point, point_min);
+               point_max = max(point, point_max);
+            }
+
+            math::bounding_box bbox{{point_min.x, sector.base, point_min.y},
+                                    {point_max.x, sector.base + sector.height,
+                                     point_max.y}};
+
+            if (intersects(frustum, bbox)) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(sector.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(sector.id);
+            }
+         }
+      }
+
+      if (_world_hit_mask.portals) {
+         for (auto& portal : _world.portals) {
+            if (intersects(frustum, portal.position,
+                           std::max(portal.height, portal.width))) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(portal.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(portal.id);
+            }
+         }
+      }
+
+      if (_world_hit_mask.hintnodes) {
+         for (auto& hintnode : _world.hintnodes) {
+            if (not _world_layers_hit_mask[hintnode.layer]) continue;
+
+            if (intersects(frustum, hintnode.position, 2.0f)) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(hintnode.id, _interaction_targets);
+
+               if (add) {
+                  _interaction_targets.selection.emplace_back(hintnode.id);
+               }
+            }
+         }
+      }
+
+      if (_world_hit_mask.barriers) {
+         for (auto& barrier : _world.barriers) {
+            math::bounding_box bbox{{-barrier.size.x, -_settings.graphics.barrier_height,
+                                     -barrier.size.y},
+                                    {barrier.size.x, _settings.graphics.barrier_height,
+                                     barrier.size.y}};
+            bbox = make_quat_from_euler({0.0f, barrier.rotation_angle, 0.0f}) * bbox +
+                   barrier.position;
+
+            if (intersects(frustum, bbox)) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(barrier.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(barrier.id);
+            }
+         }
+      }
+
+      if (_world_hit_mask.planning_hubs) {
+         for (auto& hub : _world.planning_hubs) {
+            math::bounding_box bbox{{-hub.radius, -_settings.graphics.planning_hub_height,
+                                     -hub.radius},
+                                    {hub.radius, _settings.graphics.planning_hub_height,
+                                     hub.radius}};
+            bbox = bbox + hub.position;
+
+            if (intersects(frustum, bbox)) {
+               const bool add = method != select_method::add or
+                                not world::is_selected(hub.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(hub.id);
+            }
+         }
+      }
+
+      // Skip connections
+
+      if (_world_hit_mask.boundaries) {
+         for (auto& boundary : _world.boundaries) {
+            math::bounding_box bbox{{-boundary.size.x + boundary.position.x,
+                                     -_settings.graphics.boundary_height,
+                                     -boundary.size.y + boundary.position.y},
+                                    {boundary.size.x + boundary.position.x,
+                                     _settings.graphics.boundary_height,
+                                     boundary.size.y + boundary.position.y}};
+
+            if (intersects(frustum, bbox)) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(boundary.id, _interaction_targets);
+
+               if (add) {
+                  _interaction_targets.selection.emplace_back(boundary.id);
+               }
+            }
+         }
+      }
+   }
+   else {
+      if (method == select_method::replace) {
+         _interaction_targets.selection.clear();
+
+         if (not _interaction_targets.hovered_entity) return;
+      }
+      else if (method == select_method::add) {
+         if (not _interaction_targets.hovered_entity) return;
+
+         for (auto& selected : _interaction_targets.selection) {
+            if (selected == _interaction_targets.hovered_entity) return;
+         }
+      }
+
+      _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
+
+      _selection_edit_tool = selection_edit_tool::none;
+   }
+}
+
+void world_edit::start_entity_deselect() noexcept
+{
+   start_entity_select();
+}
+
+void world_edit::finish_entity_deselect() noexcept
+{
+   _selecting_entity = false;
+
+   const float2 current_cursor_position =
+      std::bit_cast<float2>(ImGui::GetMousePos());
+   const float2 rect_min = min(current_cursor_position, _select_start_position);
+   const float2 rect_max = max(current_cursor_position, _select_start_position);
+   const bool drag_select = distance(rect_max, rect_min) >= 2.0f;
+
+   if (drag_select) {
+      const float2 window_size =
+         std::bit_cast<float2>(ImGui::GetMainViewport()->Size);
+
+      const float2 start_ndc_pos =
+         ((rect_min + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
+      const float2 end_ndc_pos =
+         ((rect_max + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
+
+      const float2 min_ndc_pos = min(start_ndc_pos, end_ndc_pos);
+      const float2 max_ndc_pos = max(start_ndc_pos, end_ndc_pos);
+
+      using namespace graphics;
+
+      frustum frustum{_camera.inv_view_projection_matrix(),
+                      {min_ndc_pos.x, min_ndc_pos.y, 0.0f},
+                      {max_ndc_pos.x, max_ndc_pos.y, 1.0f}};
+
+      if (_world_hit_mask.objects) {
+         for (auto& object : _world.objects) {
+            if (not _world_layers_hit_mask[object.layer]) continue;
+
+            math::bounding_box bbox =
+               _object_classes[object.class_name].model->bounding_box;
+            bbox = object.rotation * bbox + object.position;
+
+            if (intersects(frustum, bbox)) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{object.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.lights) {
+         for (auto& light : _world.lights) {
+            if (not _world_layers_hit_mask[light.layer]) continue;
+
+            const bool inside = [&] {
+               switch (light.light_type) {
+               case world::light_type::directional:
+                  return intersects(frustum, light.position, 2.8284f);
+               case world::light_type::point:
+                  return intersects(frustum, light.position, light.range);
+               case world::light_type::spot: {
+                  const float half_range = light.range / 2.0f;
+                  const float outer_cone_radius =
+                     half_range * std::tan(light.outer_cone_angle);
+                  const float inner_cone_radius =
+                     half_range * std::tan(light.inner_cone_angle);
+                  const float radius = std::min(outer_cone_radius, inner_cone_radius);
+
+                  math::bounding_box bbox{.min = {-radius, -radius, 0.0f},
+                                          .max = {radius, radius, light.range}};
+
+                  bbox = light.rotation * bbox + light.position;
+
+                  return intersects(frustum, bbox);
+               }
+               case world::light_type::directional_region_box: {
+                  math::bounding_box bbox{.min = {-light.region_size},
+                                          .max = {light.region_size}};
+
+                  bbox = light.region_rotation * bbox + light.position;
+
+                  return intersects(frustum, bbox);
+               }
+               case world::light_type::directional_region_sphere:
+                  return intersects(frustum, light.position, length(light.region_size));
+               case world::light_type::directional_region_cylinder: {
+                  const float cylinder_length =
+                     length(float2{light.region_size.x, light.region_size.z});
+
+                  math::bounding_box bbox{.min = {-cylinder_length,
+                                                  -light.region_size.y, -cylinder_length},
+                                          .max = {cylinder_length,
+                                                  light.region_size.y, cylinder_length}};
+
+                  bbox = light.region_rotation * bbox + light.position;
+
+                  return intersects(frustum, bbox);
+               }
+               default:
+                  return false;
+               }
+            }();
+
+            if (inside) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{light.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.paths) {
+         for (auto& path : _world.paths) {
+            if (not _world_layers_hit_mask[path.layer]) continue;
+
+            for (std::size_t i = 0; i < path.nodes.size(); ++i) {
+               if (intersects(frustum, path.nodes[i].position,
+                              0.707f * (_settings.graphics.path_node_size / 0.5f))) {
+                  std::erase(_interaction_targets.selection,
+                             world::selected_entity{
+                                world::path_id_node_pair{path.id, i}});
+               }
+            }
+         }
+      }
+
+      if (_world_hit_mask.regions) {
+         for (auto& region : _world.regions) {
+            if (not _world_layers_hit_mask[region.layer]) continue;
+
+            const bool inside = [&] {
+               switch (region.shape) {
+               case world::region_shape::box: {
+                  math::bounding_box bbox{.min = {-region.size}, .max = {region.size}};
+
+                  bbox = region.rotation * bbox + region.position;
+
+                  return intersects(frustum, bbox);
+               }
+               case world::region_shape::sphere:
+                  return intersects(frustum, region.position, length(region.size));
+               case world::region_shape::cylinder: {
+                  const float cylinder_length =
+                     length(float2{region.size.x, region.size.z});
+
+                  math::bounding_box bbox{.min = {-cylinder_length, -region.size.y,
+                                                  -cylinder_length},
+                                          .max = {cylinder_length, region.size.y,
+                                                  cylinder_length}};
+
+                  bbox = region.rotation * bbox + region.position;
+
+                  return intersects(frustum, bbox);
+               }
+               default:
+                  return false;
+               }
+            }();
+
+            if (inside) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{region.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.sectors) {
+         for (auto& sector : _world.sectors) {
+            float2 point_min{FLT_MAX, FLT_MAX};
+            float2 point_max{-FLT_MAX, -FLT_MAX};
+
+            for (auto& point : sector.points) {
+               point_min = min(point, point_min);
+               point_max = max(point, point_max);
+            }
+
+            math::bounding_box bbox{{point_min.x, sector.base, point_min.y},
+                                    {point_max.x, sector.base + sector.height,
+                                     point_max.y}};
+
+            if (intersects(frustum, bbox)) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{sector.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.portals) {
+         for (auto& portal : _world.portals) {
+            if (intersects(frustum, portal.position,
+                           std::max(portal.height, portal.width))) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{portal.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.hintnodes) {
+         for (auto& hintnode : _world.hintnodes) {
+            if (not _world_layers_hit_mask[hintnode.layer]) continue;
+
+            if (intersects(frustum, hintnode.position, 2.0f)) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{hintnode.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.barriers) {
+         for (auto& barrier : _world.barriers) {
+            math::bounding_box bbox{{-barrier.size.x, -_settings.graphics.barrier_height,
+                                     -barrier.size.y},
+                                    {barrier.size.x, _settings.graphics.barrier_height,
+                                     barrier.size.y}};
+            bbox = make_quat_from_euler({0.0f, barrier.rotation_angle, 0.0f}) * bbox +
+                   barrier.position;
+
+            if (intersects(frustum, bbox)) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{barrier.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.planning_hubs) {
+         for (auto& hub : _world.planning_hubs) {
+            math::bounding_box bbox{{-hub.radius, -_settings.graphics.planning_hub_height,
+                                     -hub.radius},
+                                    {hub.radius, _settings.graphics.planning_hub_height,
+                                     hub.radius}};
+            bbox = bbox + hub.position;
+
+            if (intersects(frustum, bbox)) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{hub.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.planning_connections) {
+         for (auto& connection : _world.planning_connections) {
+            const world::planning_hub& start =
+               _world.planning_hubs[_world.planning_hub_index.at(connection.start)];
+            const world::planning_hub& end =
+               _world.planning_hubs[_world.planning_hub_index.at(connection.end)];
+
+            const float height = _settings.graphics.planning_connection_height;
+
+            const math::bounding_box start_bbox{
+               .min = float3{-start.radius, -height, -start.radius} + start.position,
+               .max = float3{start.radius, height, start.radius} + start.position};
+            const math::bounding_box end_bbox{
+               .min = float3{-end.radius, -height, -end.radius} + end.position,
+               .max = float3{end.radius, height, end.radius} + end.position};
+
+            const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
+
+            if (intersects(frustum, bbox)) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{connection.id});
+            }
+         }
+      }
+
+      if (_world_hit_mask.boundaries) {
+         for (auto& boundary : _world.boundaries) {
+            math::bounding_box bbox{{-boundary.size.x + boundary.position.x,
+                                     -_settings.graphics.boundary_height,
+                                     -boundary.size.y + boundary.position.y},
+                                    {boundary.size.x + boundary.position.x,
+                                     _settings.graphics.boundary_height,
+                                     boundary.size.y + boundary.position.y}};
+
+            if (intersects(frustum, bbox)) {
+               std::erase(_interaction_targets.selection,
+                          world::selected_entity{boundary.id});
+            }
+         }
+      }
+   }
+   else {
+      if (not _interaction_targets.hovered_entity) return;
+
+      std::erase(_interaction_targets.selection, _interaction_targets.hovered_entity);
+   }
 }
 
 void world_edit::place_creation_entity() noexcept

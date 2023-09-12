@@ -30,7 +30,7 @@ struct ImGuiContext;
 
 namespace we {
 
-enum class select_method : uint8 { single, multi };
+enum class select_method : uint8 { replace, add };
 
 enum class placement_mode : uint8 { manual, cursor };
 
@@ -137,9 +137,15 @@ private:
 
    void ui_show_world_selection_set_layer() noexcept;
 
-   void select_hovered_entity(const select_method method) noexcept;
+   void ui_draw_select_box() noexcept;
 
-   void deselect_hovered_entity() noexcept;
+   void start_entity_select() noexcept;
+
+   void finish_entity_select(const select_method method) noexcept;
+
+   void start_entity_deselect() noexcept;
+
+   void finish_entity_deselect() noexcept;
 
    void place_creation_entity() noexcept;
 
@@ -244,6 +250,7 @@ private:
    bool _move_sprint = false;
    bool _rotate_camera = false;
    bool _pan_camera = false;
+   bool _selecting_entity = false;
 
    bool _hotkeys_view_show = false;
    bool _imgui_demo_open = false;
@@ -384,6 +391,8 @@ private:
    world::sector_id _move_sector_point_id = {};
    std::size_t _move_sector_point_index = 0;
    int _selection_set_layer = 0;
+
+   float2 _select_start_position;
 
    gizmo _gizmo;
    commands _commands;

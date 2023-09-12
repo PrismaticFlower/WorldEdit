@@ -69,11 +69,30 @@ void world_edit::initialize_commands() noexcept
    _commands.add("camera.halve_move_speed"s,
                  [this] { _settings.camera.move_speed /= 2.0f; });
 
-   _commands.add("selection.set"s,
-                 [this]() { select_hovered_entity(select_method::single); });
-   _commands.add("selection.add"s,
-                 [this]() { select_hovered_entity(select_method::multi); });
-   _commands.add("selection.remove"s, [this]() { deselect_hovered_entity(); });
+   _commands.add("selection.set"s, [this]() {
+      if (not _selecting_entity) {
+         start_entity_select();
+      }
+      else {
+         finish_entity_select(select_method::replace);
+      }
+   });
+   _commands.add("selection.add"s, [this]() {
+      if (not _selecting_entity) {
+         start_entity_select();
+      }
+      else {
+         finish_entity_select(select_method::add);
+      }
+   });
+   _commands.add("selection.remove"s, [this]() {
+      if (not _selecting_entity) {
+         start_entity_deselect();
+      }
+      else {
+         finish_entity_deselect();
+      }
+   });
    _commands.add("selection.clear"s,
                  [this]() { _interaction_targets.selection.clear(); });
 
@@ -299,9 +318,15 @@ void world_edit::initialize_hotkeys() noexcept
           {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
           {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
 
-          {"Select", "selection.set", {.key = key::mouse1}},
-          {"Select Multiple", "selection.add", {.key = key::mouse1, .modifiers = {.shift = true}}},
-          {"Deselect", "selection.remove", {.key = key::mouse1, .modifiers = {.ctrl = true}}},
+          {"Select", "selection.set", {.key = key::mouse1}, {.toggle = true}},
+          {"Select Multiple",
+           "selection.add",
+           {.key = key::mouse1, .modifiers = {.shift = true}},
+           {.toggle = true}},
+          {"Deselect",
+           "selection.remove",
+           {.key = key::mouse1, .modifiers = {.ctrl = true}},
+           {.toggle = true}},
           {"Clear Selection", "selection.clear", {.key = key::escape}},
 
           {"Undo", "edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
