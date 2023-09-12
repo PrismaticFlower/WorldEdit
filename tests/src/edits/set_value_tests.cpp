@@ -14,7 +14,7 @@ TEST_CASE("edits set_value", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   set_value edit{world.objects[0].id, &world::object::layer, 1, 0};
+   set_value edit{world.objects[0].id, &world::object::layer, int16{1}, int16{0}};
 
    edit.apply(edit_context);
 
@@ -108,7 +108,7 @@ TEST_CASE("edits set_creation_value", "[Edits]")
 
    interaction_targets.creation_entity = world::object{};
 
-   set_creation_value edit{&world::object::layer, 1, 0};
+   set_creation_value edit{&world::object::layer, int16{1}, int16{0}};
 
    edit.apply(edit_context);
 
@@ -128,8 +128,8 @@ TEST_CASE("edits set_creation_value_with_meta", "[Edits]")
    interaction_targets.creation_entity = world::object{};
 
    set_creation_value_with_meta edit{&world::object::layer,
-                                     1,
-                                     0,
+                                     int16{1},
+                                     int16{0},
                                      &world::edit_context::euler_rotation,
                                      {1.0f, 1.0f, 1.0f},
                                      {0.0f, 0.0f, 0.0f}};
@@ -347,8 +347,9 @@ TEST_CASE("edits set_value coalesce", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   set_value edit{world.objects[0].id, &world::object::layer, 1, 0};
-   set_value other_edit{world.objects[0].id, &world::object::layer, 2, 0};
+   set_value edit{world.objects[0].id, &world::object::layer, int16{1}, int16{0}};
+   set_value other_edit{world.objects[0].id, &world::object::layer, int16{2},
+                        int16{0}};
 
    REQUIRE(edit.is_coalescable(other_edit));
 
@@ -477,8 +478,8 @@ TEST_CASE("edits set_creation_value coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::object{};
 
-   set_creation_value edit{&world::object::layer, 1, 0};
-   set_creation_value other_edit{&world::object::layer, 2, 0};
+   set_creation_value edit{&world::object::layer, int16{1}, int16{0}};
+   set_creation_value other_edit{&world::object::layer, int16{2}, int16{0}};
 
    REQUIRE(edit.is_coalescable(other_edit));
 
@@ -502,14 +503,14 @@ TEST_CASE("edits set_creation_value_with_meta coalesce", "[Edits]")
    interaction_targets.creation_entity = world::object{};
 
    set_creation_value_with_meta edit{&world::object::layer,
-                                     1,
-                                     0,
+                                     int16{1},
+                                     int16{0},
                                      &world::edit_context::euler_rotation,
                                      {1.0f, 1.0f, 1.0f},
                                      {0.0f, 0.0f, 0.0f}};
    set_creation_value_with_meta other_edit{&world::object::layer,
-                                           2,
-                                           0,
+                                           int16{2},
+                                           int16{0},
                                            &world::edit_context::euler_rotation,
                                            {2.0f, 2.0f, 2.0f},
                                            {0.0f, 0.0f, 0.0f}};

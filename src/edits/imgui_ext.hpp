@@ -315,7 +315,7 @@ inline bool LayerPick(const char* label, const Entity* entity,
                       we::edits::stack<we::world::edit_context>* edit_stack,
                       we::world::edit_context* context) noexcept
 {
-   return EditWithUndo(entity, &Entity::layer, edit_stack, context, [=](int* layer) {
+   return EditWithUndo(entity, &Entity::layer, edit_stack, context, [=](we::int16* layer) {
       bool value_changed = false;
 
       if (ImGui::BeginCombo(label, [&] {
@@ -325,7 +325,7 @@ inline bool LayerPick(const char* label, const Entity* entity,
              return context->world.layer_descriptions[entity->layer].name.c_str();
           }())) {
 
-         for (int i = 0; i < std::ssize(context->world.layer_descriptions); ++i) {
+         for (we::int16 i = 0; i < std::ssize(context->world.layer_descriptions); ++i) {
             if (ImGui::Selectable(context->world.layer_descriptions[i].name.c_str())) {
                *layer = i;
                value_changed = true;
@@ -680,7 +680,7 @@ inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
 
 // Entity Creation Editors
 
-inline bool LayerPick(const char* label, int* layer, we::world::world* world) noexcept
+inline bool LayerPick(const char* label, we::int16* layer, we::world::world* world) noexcept
 {
    bool value_changed = false;
 
@@ -690,7 +690,7 @@ inline bool LayerPick(const char* label, int* layer, we::world::world* world) no
           return world->layer_descriptions[*layer].name.c_str();
        }())) {
 
-      for (int i = 0; i < std::ssize(world->layer_descriptions); ++i) {
+      for (we::int16 i = 0; i < std::ssize(world->layer_descriptions); ++i) {
          if (ImGui::Selectable(world->layer_descriptions[i].name.c_str())) {
             *layer = i;
             value_changed = true;
@@ -863,7 +863,7 @@ inline bool LayerPick(const char* label, we::world::creation_entity* entity,
                       we::edits::stack<we::world::edit_context>* edit_stack,
                       we::world::edit_context* context) noexcept
 {
-   return EditWithUndo(entity, &Entity::layer, edit_stack, context, [=](int* layer) {
+   return EditWithUndo(entity, &Entity::layer, edit_stack, context, [=](we::int16* layer) {
       bool value_changed = false;
 
       if (ImGui::BeginCombo(label, [&] {
@@ -872,7 +872,7 @@ inline bool LayerPick(const char* label, we::world::creation_entity* entity,
              return context->world.layer_descriptions[*layer].name.c_str();
           }())) {
 
-         for (int i = 0; i < std::ssize(context->world.layer_descriptions); ++i) {
+         for (we::int16 i = 0; i < std::ssize(context->world.layer_descriptions); ++i) {
             if (ImGui::Selectable(context->world.layer_descriptions[i].name.c_str())) {
                *layer = i;
                value_changed = true;

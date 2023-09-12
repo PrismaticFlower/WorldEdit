@@ -163,10 +163,10 @@ void world_edit::ui_show_main_menu_bar() noexcept
       }
 
       if (ImGui::BeginMenu("Create")) {
-         const int creation_layer = _last_created_entities.last_layer <
-                                          std::ssize(_world.layer_descriptions)
-                                       ? _last_created_entities.last_layer
-                                       : 0;
+         const int16 creation_layer = _last_created_entities.last_layer <
+                                            std::ssize(_world.layer_descriptions)
+                                         ? _last_created_entities.last_layer
+                                         : 0;
 
          if (ImGui::MenuItem("Object")) {
             const world::object* base_object =

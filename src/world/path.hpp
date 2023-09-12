@@ -14,7 +14,7 @@ enum class path_spline_type : int8 { none, linear, hermite, catmull_rom };
 
 struct path {
    std::string name;
-   int layer = 0;
+   int16 layer = 0;
 
    struct property {
       std::string key;

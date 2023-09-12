@@ -95,7 +95,7 @@ TEST_CASE("edits ui_creation_edit", "[Edits]")
 
    interaction_targets.creation_entity = world::object{};
 
-   ui_creation_edit edit{&world::object::layer, 1, 0};
+   ui_creation_edit edit{&world::object::layer, int16{1}, int16{0}};
 
    edit.apply(edit_context);
 
@@ -115,8 +115,8 @@ TEST_CASE("edits ui_creation_edit_with_meta", "[Edits]")
    interaction_targets.creation_entity = world::object{};
 
    ui_creation_edit_with_meta edit{&world::object::layer,
-                                   1,
-                                   0,
+                                   int16{1},
+                                   int16{0},
                                    &world::edit_context::euler_rotation,
                                    {1.0f, 1.0f, 1.0f},
                                    {0.0f, 0.0f, 0.0f}};
@@ -322,8 +322,8 @@ TEST_CASE("edits ui_creation_edit coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::object{};
 
-   ui_creation_edit edit{&world::object::layer, 1, 0};
-   ui_creation_edit other_edit{&world::object::layer, 4, 0};
+   ui_creation_edit edit{&world::object::layer, int16{1}, int16{0}};
+   ui_creation_edit other_edit{&world::object::layer, int16{4}, int16{0}};
 
    REQUIRE(edit.is_coalescable(other_edit));
 
@@ -347,14 +347,14 @@ TEST_CASE("edits ui_creation_edit_with_meta coalesce", "[Edits]")
    interaction_targets.creation_entity = world::object{};
 
    ui_creation_edit_with_meta edit{&world::object::layer,
-                                   1,
-                                   0,
+                                   int16{1},
+                                   int16{0},
                                    &world::edit_context::euler_rotation,
                                    {1.0f, 1.0f, 1.0f},
                                    {0.0f, 0.0f, 0.0f}};
    ui_creation_edit_with_meta other_edit{&world::object::layer,
-                                         4,
-                                         0,
+                                         int16{4},
+                                         int16{0},
                                          &world::edit_context::euler_rotation,
                                          {2.0f, 2.0f, 2.0f},
                                          {0.0f, 0.0f, 0.0f}};
@@ -475,8 +475,8 @@ TEST_CASE("edits ui_edit not coalescable", "[Edits]")
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
    ui_edit edit{world.objects[0].id, &world::object::team, 1, world.objects[0].team};
-   ui_edit other_edit{world.objects[0].id, &world::object::layer, 2,
-                      world.objects[0].team};
+   ui_edit other_edit{world.objects[0].id, &world::object::layer, int16{2},
+                      world.objects[0].layer};
 
    REQUIRE(not edit.is_coalescable(other_edit));
 }
@@ -546,7 +546,7 @@ TEST_CASE("edits ui_creation_edit not coalescable", "[Edits]")
 
    interaction_targets.creation_entity = world::object{};
 
-   ui_creation_edit edit{&world::object::layer, 1, 0};
+   ui_creation_edit edit{&world::object::layer, int16{1}, int16{0}};
    ui_creation_edit other_edit{&world::object::team, 4, 0};
 
    REQUIRE(not edit.is_coalescable(other_edit));
@@ -561,8 +561,8 @@ TEST_CASE("edits ui_creation_edit_with_meta not coalescable", "[Edits]")
    interaction_targets.creation_entity = world::object{};
 
    ui_creation_edit_with_meta edit{&world::object::layer,
-                                   1,
-                                   0,
+                                   int16{1},
+                                   int16{0},
                                    &world::edit_context::euler_rotation,
                                    {1.0f, 1.0f, 1.0f},
                                    {0.0f, 0.0f, 0.0f}};

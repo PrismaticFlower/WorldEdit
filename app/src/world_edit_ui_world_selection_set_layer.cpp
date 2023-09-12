@@ -21,7 +21,7 @@ void world_edit::ui_show_world_selection_set_layer() noexcept
 
       if (ImGui::BeginCombo("Layer",
                             _world.layer_descriptions[_selection_set_layer].name.c_str())) {
-         for (int i = 0; i < _world.layer_descriptions.size(); ++i) {
+         for (int16 i = 0; i < _world.layer_descriptions.size(); ++i) {
             if (ImGui::Selectable(_world.layer_descriptions[i].name.c_str())) {
                _selection_set_layer = i;
             }

@@ -16,7 +16,7 @@ struct command_post_linked_entities {
 
 struct make_command_post_linked_entities_inputs {
    std::string_view name;
-   int layer = 0;
+   int16 layer = 0;
    float3 position;
    float capture_radius = 0.0f;
    float control_radius = 0.0f;

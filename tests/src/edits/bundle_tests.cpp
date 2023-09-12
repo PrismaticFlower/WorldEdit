@@ -43,7 +43,7 @@ TEST_CASE("edits bundle coalesce", "[Edits]")
    bundle.push_back(make_set_value(world.objects[0].id, &world::object::team, 4,
                                    world.objects[0].team));
    bundle.push_back(make_set_value(world.objects[0].id, &world::object::layer,
-                                   8, world.objects[0].layer));
+                                   int16{8}, world.objects[0].layer));
 
    auto edit = make_bundle(std::move(bundle));
 
@@ -52,7 +52,7 @@ TEST_CASE("edits bundle coalesce", "[Edits]")
    other_bundle.push_back(make_set_value(world.objects[0].id, &world::object::team,
                                          8, world.objects[0].team));
    other_bundle.push_back(make_set_value(world.objects[0].id, &world::object::layer,
-                                         16, world.objects[0].layer));
+                                         int16{16}, world.objects[0].layer));
 
    auto other_edit = make_bundle(std::move(other_bundle));
 

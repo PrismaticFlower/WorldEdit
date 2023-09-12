@@ -26,7 +26,7 @@ namespace {
 // This can provide more clues as to when something went wrong with loading but also makes it 50x to 100x slower.
 constexpr bool verbose_output = false;
 
-using layer_remap = absl::flat_hash_map<int, int>;
+using layer_remap = absl::flat_hash_map<int, int16>;
 
 void throw_layer_load_failure(std::string_view type,
                               const std::filesystem::path& filepath, std::exception& e)
@@ -45,7 +45,7 @@ void throw_planning_missing_hub(std::string_view hub, std::string_view connectio
                                   hub, connection)};
 }
 
-auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap) -> int
+auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap) -> int16
 {
    if (const auto layer_it = node.find("Layer"sv); layer_it != node.cend()) {
       return layer_remap[layer_it->values.get<int>(0)];
@@ -133,7 +133,7 @@ auto load_layer_index(const std::filesystem::path& path, output_stream& output,
             }
 
             layer_remap[key_node.values.get<int>(1)] =
-               static_cast<int>(world_out.layer_descriptions.size());
+               static_cast<int16>(world_out.layer_descriptions.size());
             world_out.layer_descriptions.push_back(
                {.name = key_node.values.get<std::string>(0)});
 
@@ -230,7 +230,7 @@ void load_objects(const std::filesystem::path& path, const std::string_view laye
 }
 
 void load_lights(const std::filesystem::path& path, const std::string_view layer_name,
-                 output_stream& output, world& world_out, const int layer)
+                 output_stream& output, world& world_out, const int16 layer)
 {
    using namespace assets;
 
@@ -813,7 +813,7 @@ void load_boundaries(const std::filesystem::path& filepath,
 
 void load_hintnodes(const std::filesystem::path& filepath,
                     const std::string_view layer_name, output_stream& output,
-                    world& world_out, const int layer)
+                    world& world_out, const int16 layer)
 {
    using namespace assets;
 
@@ -870,7 +870,7 @@ void load_hintnodes(const std::filesystem::path& filepath,
 
 void load_layer(const std::filesystem::path& world_dir, const std::string_view layer_name,
                 const std::string_view world_ext, output_stream& output,
-                world& world_out, layer_remap& layer_remap, const int layer)
+                world& world_out, layer_remap& layer_remap, const int16 layer)
 {
    load_objects(world_dir / layer_name += world_ext, layer_name, output,
                 world_out, layer_remap);
@@ -1083,7 +1083,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
          auto layer = world.layer_descriptions[i];
 
          load_layer(world_dir, fmt::format("{}_{}", world.name, layer.name),
-                    ".lyr"sv, output, world, layer_remap, static_cast<int32>(i));
+                    ".lyr"sv, output, world, layer_remap, static_cast<int16>(i));
       }
 
       convert_light_regions(world);
