@@ -10,6 +10,7 @@
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
 #include "edits/set_value.hpp"
+#include "graphics/frustum.hpp"
 #include "math/vector_funcs.hpp"
 #include "resource.h"
 #include "utility/file_pickers.hpp"
@@ -528,10 +529,41 @@ void world_edit::finish_entity_select(const select_method method) noexcept
       const float2 window_size =
          std::bit_cast<float2>(ImGui::GetMainViewport()->Size);
 
-      const float2 min_ndc_pos =
+      const float2 start_ndc_pos =
          ((rect_min + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
-      const float2 max_ndc_pos =
+      const float2 end_ndc_pos =
          ((rect_max + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
+
+      const float2 min_ndc_pos = min(start_ndc_pos, end_ndc_pos);
+      const float2 max_ndc_pos = max(start_ndc_pos, end_ndc_pos);
+
+      using namespace graphics;
+
+      if (method == select_method::replace) {
+         _interaction_targets.selection.clear();
+      }
+
+      frustum frustum{_camera.inv_view_projection_matrix(),
+                      {min_ndc_pos.x, min_ndc_pos.y, 0.0f},
+                      {max_ndc_pos.x, max_ndc_pos.y, 1.0f}};
+
+      if (_world_hit_mask.objects) {
+         for (auto& object : _world.objects) {
+            if (not _world_layers_hit_mask[object.layer]) continue;
+
+            math::bounding_box bbox =
+               _object_classes[object.class_name].model->bounding_box;
+            bbox = object.rotation * bbox + object.position;
+
+            if (intersects(frustum, bbox)) {
+               const bool add =
+                  method != select_method::add or
+                  not world::is_selected(object.id, _interaction_targets);
+
+               if (add) _interaction_targets.selection.emplace_back(object.id);
+            }
+         }
+      }
    }
    else {
       if (method == select_method::replace) {
