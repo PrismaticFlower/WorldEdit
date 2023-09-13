@@ -9,6 +9,7 @@
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
 #include "utility/string_icompare.hpp"
+#include "world/utility/grounding.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/path_properties.hpp"
@@ -224,74 +225,15 @@ void world_edit::ui_show_world_selection_editor() noexcept
             }
 
             if (ground_object or ground_all_objects) {
-               const math::bounding_box bbox =
-                  object->rotation *
-                     _object_classes[object->class_name].model->bounding_box +
-                  object->position;
-
-               float hit_distance = std::numeric_limits<float>::max();
-
-               const float3 ray_origin = {object->position.x, bbox.min.y,
-                                          object->position.z};
-
-               if (std::optional<world::raycast_result<world::object>> hit =
-                      world::raycast(ray_origin, {0.0f, -1.0f, 0.0f}, _world_layers_hit_mask,
-                                     _world.objects, _object_classes, object->id);
-                   hit) {
-                  if (hit->distance < hit_distance) {
-                     hit_distance = hit->distance;
-                  }
-               }
-
-               if (auto hit =
-                      _terrain_collision.raycast(ray_origin, {0.0f, -1.0f, 0.0f});
-                   hit) {
-                  if (hit->distance < hit_distance) {
-                     hit_distance = hit->distance;
-                  }
-               }
-
-               // Try "digging" the object out of the ground.
-               if (hit_distance == std::numeric_limits<float>::max()) {
-                  if (std::optional<world::raycast_result<world::object>> hit =
-                         world::raycast(ray_origin, {0.0f, 1.0f, 0.0f},
-                                        _world_layers_hit_mask, _world.objects,
-                                        _object_classes, object->id);
-                      hit) {
-                     if (hit->distance < hit_distance) {
-                        hit_distance = hit->distance;
-                     }
-                  }
-
-                  if (auto hit = _terrain_collision.raycast(ray_origin,
-                                                            {0.0f, 1.0f, 0.0f});
-                      hit) {
-                     if (hit->distance < hit_distance) {
-                        hit_distance = hit->distance;
-                     }
-                  }
-
-                  // Make sure we're not about to "ceiling" the object instead.
-                  if (hit_distance < std::abs(bbox.max.y - bbox.min.y)) {
-                     hit_distance = -hit_distance;
-                  }
-                  else {
-                     hit_distance = std::numeric_limits<float>::max();
-                  }
-               }
-
-               if (hit_distance != std::numeric_limits<float>::max()) {
-                  const float3 new_position = {object->position.x,
-                                               object->position.y - hit_distance,
-                                               object->position.z};
-
-                  if (new_position != object->position) {
-                     _edit_stack_world.apply(edits::make_set_value(object->id,
-                                                                   &world::object::position,
-                                                                   new_position,
-                                                                   object->position),
-                                             _edit_context, {.closed = true});
-                  }
+               if (const std::optional<float3> grounded_position =
+                      world::ground_object(*object, _world, _object_classes,
+                                           _world_layers_hit_mask, _terrain_collision);
+                   grounded_position) {
+                  _edit_stack_world.apply(edits::make_set_value(object->id,
+                                                                &world::object::position,
+                                                                *grounded_position,
+                                                                object->position),
+                                          _edit_context, {.closed = true});
                }
             }
 

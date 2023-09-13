@@ -742,6 +742,9 @@
     <ClInclude Include="src\graphics\ai_overlay_batches.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\grounding.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1096,6 +1099,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\utility\srgb_conversion.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\grounding.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
