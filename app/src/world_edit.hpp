@@ -163,7 +163,11 @@ private:
 
    void align_selection() noexcept;
 
+   void hide_selection() noexcept;
+
    void new_entity_from_selection() noexcept;
+
+   void unhide_all() noexcept;
 
    void ask_to_save_world() noexcept;
 

@@ -128,6 +128,8 @@ void world_edit::initialize_commands() noexcept
          world::selection_centre_for_rotate_around(_world, _interaction_targets.selection);
    });
    _commands.add("entity_edit.align_selection"s, [this] { align_selection(); });
+   _commands.add("entity_edit.hide_selection"s, [this] { hide_selection(); });
+   _commands.add("entity_edit.unhide_all"s, [this] { unhide_all(); });
    _commands.add("entity_edit.new_from_selection"s,
                  [this] { new_entity_from_selection(); });
    _commands.add("entity_edit.set_selection_layer"s, [this] {
@@ -333,6 +335,10 @@ void world_edit::initialize_hotkeys() noexcept
           {"Redo", "edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
           {"Delete", "edit.delete", {.key = key::del}},
 
+          {"Unhide All Entities",
+           "entity_edit.unhide_all",
+           {.key = key::h, .modifiers = {.ctrl = true}}},
+
           {"Show Hotkeys", "show.hotkeys", {.key = key::f1}},
           {"Show Camera Controls", "show.camera_controls", {.key = key::f2}},
 
@@ -362,6 +368,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Align Selection (Terrain Grid)",
            "entity_edit.align_selection",
            {.key = key::a, .modifiers = {.shift = true}}},
+          {"Hide Selection", "entity_edit.hide_selection", {.key = key::h}},
           {"New Entity from Selection", "entity_edit.new_from_selection", {.key = key::n}},
           {"Set Selection Layer",
            "entity_edit.set_selection_layer",

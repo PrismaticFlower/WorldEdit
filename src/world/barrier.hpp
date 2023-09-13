@@ -12,6 +12,8 @@ namespace we::world {
 struct barrier {
    std::string name;
 
+   bool hidden = false;
+
    float3 position;
    float2 size = {2.0f, 2.0f};
    float rotation_angle = 0.0f;

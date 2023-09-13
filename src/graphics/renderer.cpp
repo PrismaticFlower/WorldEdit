@@ -682,7 +682,7 @@ void renderer_impl::draw_world_meta_objects(
       const float4 path_node_outline_color = {settings.path_node_outline_color, 1.0f};
 
       const auto add_path = [&](const world::path& path) {
-         if (not active_layers[path.layer]) return;
+         if (not active_layers[path.layer] or path.hidden) return;
 
          const float path_node_size = settings.path_node_size;
 
@@ -803,7 +803,7 @@ void renderer_impl::draw_world_meta_objects(
       const float4 region_color = settings.region_color;
 
       for (auto& region : world.regions) {
-         if (not active_layers[region.layer]) continue;
+         if (not active_layers[region.layer] or region.hidden) continue;
 
          add_region(region.rotation, region.position, region.size, region.shape,
                     region_color);
@@ -825,6 +825,8 @@ void renderer_impl::draw_world_meta_objects(
                 settings.barrier_outline_color.z, 1.0f});
 
       const auto add_barrier = [&](const world::barrier& barrier) {
+         if (barrier.hidden) return;
+
          const float4x4 rotation =
             make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
 
@@ -882,7 +884,7 @@ void renderer_impl::draw_world_meta_objects(
       const float volume_alpha = settings.light_volume_alpha;
 
       const auto add_light = [&](const world::light& light) {
-         if (not active_layers[light.layer]) return;
+         if (not active_layers[light.layer] or light.hidden) return;
 
          const float4 color{light.color, light.light_type == world::light_type::spot
                                             ? volume_alpha * 0.5f
@@ -993,6 +995,8 @@ void renderer_impl::draw_world_meta_objects(
       const uint32 sector_color = utility::pack_srgb_bgra(settings.sector_color);
 
       const auto add_sector = [&](const world::sector& sector) {
+         if (sector.hidden) return;
+
          for (std::size_t i = 0; i < sector.points.size(); ++i) {
             const float2 a = sector.points[i];
             const float2 b = sector.points[(i + 1) % sector.points.size()];
@@ -1042,6 +1046,8 @@ void renderer_impl::draw_world_meta_objects(
       const uint32 portal_color = utility::pack_srgb_bgra(settings.portal_color);
 
       const auto add_portal = [&](const world::portal& portal) {
+         if (portal.hidden) return;
+
          const float half_width = portal.width * 0.5f;
          const float half_height = portal.height * 0.5f;
 
@@ -1079,7 +1085,7 @@ void renderer_impl::draw_world_meta_objects(
       const uint32 packed_hintnode_color = utility::pack_srgb_bgra(hintnode_color);
 
       const auto add_hintnode = [&](const world::hintnode& hintnode) {
-         if (not active_layers[hintnode.layer]) return;
+         if (not active_layers[hintnode.layer] or hintnode.hidden) return;
 
          if (not intersects(view_frustum, hintnode.position, 3.0f)) return;
 
@@ -1116,6 +1122,8 @@ void renderer_impl::draw_world_meta_objects(
                                   settings.planning_hub_outline_color.z, 1.0f});
 
       const auto add_hub = [&](const world::planning_hub& hub) {
+         if (hub.hidden) return;
+
          const math::bounding_box bbox{
             .min = float3{-hub.radius, -planning_hub_height, -hub.radius} + hub.position,
             .max = float3{hub.radius, planning_hub_height, hub.radius} + hub.position};
@@ -1189,6 +1197,8 @@ void renderer_impl::draw_world_meta_objects(
           settings.planning_connection_outline_color.z, 1.0f});
 
       const auto add_connection = [&](const world::planning_connection& connection) {
+         if (connection.hidden) return;
+
          const world::planning_hub& start =
             world.planning_hubs[world.planning_hub_index.at(connection.start)];
          const world::planning_hub& end =
@@ -1278,6 +1288,8 @@ void renderer_impl::draw_world_meta_objects(
       const uint32 boundary_color = utility::pack_srgb_bgra(settings.boundary_color);
 
       const auto add_boundary = [&](const world::boundary& boundary) {
+         if (boundary.hidden) return;
+
          const std::array<float2, 12> nodes = world::get_boundary_nodes(boundary);
 
          for (std::size_t i = 0; i < nodes.size(); ++i) {
@@ -2049,7 +2061,7 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
       const auto& object = world.objects[i];
       auto& model = _model_manager[world_classes[object.class_name].model_name];
 
-      if (not active_layers[object.layer]) continue;
+      if (not active_layers[object.layer] or object.hidden) continue;
 
       const auto object_bbox = object.rotation * model.bbox + object.position;
 

@@ -9,6 +9,8 @@ namespace we::world {
 struct boundary {
    std::string name;
 
+   bool hidden = false;
+
    float2 position = {0.0f, 0.0f};
    float2 size = {8.0f, 8.0f};
 

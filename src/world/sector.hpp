@@ -11,6 +11,8 @@ namespace we::world {
 struct sector {
    std::string name;
 
+   bool hidden = false;
+
    float base = 0.0f;
    float height = 0.0f;
 

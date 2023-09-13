@@ -24,6 +24,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& object : objects) {
       if (not active_layers[object.layer]) continue;
+      if (object.hidden) continue;
       if (object.id == ignore_object) continue;
 
       quaternion inverse_object_rotation = conjugate(object.rotation);
@@ -73,6 +74,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& light : lights) {
       if (not active_layers[light.layer]) continue;
+      if (light.hidden) continue;
 
       if (light.light_type == light_type::directional) {
          const float intersection =
@@ -185,6 +187,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& path : paths) {
       if (not active_layers[path.layer]) continue;
+      if (path.hidden) continue;
 
       for (std::size_t i = 0; i < path.nodes.size(); ++i) {
          const path::node& node = path.nodes[i];
@@ -217,6 +220,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& region : regions) {
       if (not active_layers[region.layer]) continue;
+      if (region.hidden) continue;
 
       if (region.shape == region_shape::box) {
          quaternion inverse_light_region_rotation = conjugate(region.rotation);
@@ -284,6 +288,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float3 normalWS;
 
    for (auto& sector : sectors) {
+      if (sector.hidden) continue;
+
       for (std::size_t i = 0; i < sector.points.size(); ++i) {
          const float2 a = sector.points[i];
          const float2 b = sector.points[(i + 1) % sector.points.size()];
@@ -322,6 +328,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& portal : portals) {
+      if (portal.hidden) continue;
+
       const float half_width = portal.width * 0.5f;
       const float half_height = portal.height * 0.5f;
 
@@ -361,6 +369,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& hintnode : hintnodes) {
       if (not active_layers[hintnode.layer]) continue;
+      if (hintnode.hidden) continue;
 
       const float bounding_intersection =
          sphIntersect(ray_origin, ray_direction, hintnode.position, 2.0f);
@@ -417,6 +426,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& barrier : barriers) {
+      if (barrier.hidden) continue;
+
       float4x4 world_to_box = transpose(
          make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f}));
       world_to_box[3] = {world_to_box * -barrier.position, 1.0f};
@@ -449,6 +460,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& hub : hubs) {
+      if (hub.hidden) continue;
+
       const float3 top_position = hub.position + float3{0.0f, hub_height, 0.0f};
       const float3 bottom_position = hub.position + float3{0.0f, -hub_height, 0.0f};
 
@@ -480,6 +493,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& connection : connections) {
+      if (connection.hidden) continue;
+
       const planning_hub& start = hubs[planning_hub_index.at(connection.start)];
       const planning_hub& end = hubs[planning_hub_index.at(connection.end)];
 
@@ -554,6 +569,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& boundary : boundaries) {
+      if (boundary.hidden) continue;
+
       const std::array<float2, 12> nodes = get_boundary_nodes(boundary);
 
       for (std::size_t i = 0; i < nodes.size(); ++i) {

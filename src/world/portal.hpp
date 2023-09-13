@@ -10,6 +10,8 @@ namespace we::world {
 struct portal {
    std::string name;
 
+   bool hidden = false;
+
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    float3 position{};
 

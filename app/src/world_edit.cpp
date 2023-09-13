@@ -550,7 +550,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.objects) {
          for (auto& object : _world.objects) {
-            if (not _world_layers_hit_mask[object.layer]) continue;
+            if (not _world_layers_hit_mask[object.layer] or object.hidden) {
+               continue;
+            }
 
             math::bounding_box bbox =
                _object_classes[object.class_name].model->bounding_box;
@@ -568,7 +570,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.lights) {
          for (auto& light : _world.lights) {
-            if (not _world_layers_hit_mask[light.layer]) continue;
+            if (not _world_layers_hit_mask[light.layer] or light.hidden) {
+               continue;
+            }
 
             const bool inside = [&] {
                switch (light.light_type) {
@@ -630,7 +634,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.paths) {
          for (auto& path : _world.paths) {
-            if (not _world_layers_hit_mask[path.layer]) continue;
+            if (not _world_layers_hit_mask[path.layer] or path.hidden) {
+               continue;
+            }
 
             for (std::size_t i = 0; i < path.nodes.size(); ++i) {
                if (intersects(frustum, path.nodes[i].position,
@@ -651,7 +657,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.regions) {
          for (auto& region : _world.regions) {
-            if (not _world_layers_hit_mask[region.layer]) continue;
+            if (not _world_layers_hit_mask[region.layer] or region.hidden) {
+               continue;
+            }
 
             const bool inside = [&] {
                switch (region.shape) {
@@ -694,6 +702,8 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.sectors) {
          for (auto& sector : _world.sectors) {
+            if (sector.hidden) continue;
+
             float2 point_min{FLT_MAX, FLT_MAX};
             float2 point_max{-FLT_MAX, -FLT_MAX};
 
@@ -718,6 +728,8 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.portals) {
          for (auto& portal : _world.portals) {
+            if (portal.hidden) continue;
+
             if (intersects(frustum, portal.position,
                            std::max(portal.height, portal.width))) {
                const bool add =
@@ -731,7 +743,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.hintnodes) {
          for (auto& hintnode : _world.hintnodes) {
-            if (not _world_layers_hit_mask[hintnode.layer]) continue;
+            if (not _world_layers_hit_mask[hintnode.layer] or hintnode.hidden) {
+               continue;
+            }
 
             if (intersects(frustum, hintnode.position, 2.0f)) {
                const bool add =
@@ -747,6 +761,8 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.barriers) {
          for (auto& barrier : _world.barriers) {
+            if (barrier.hidden) continue;
+
             math::bounding_box bbox{{-barrier.size.x, -_settings.graphics.barrier_height,
                                      -barrier.size.y},
                                     {barrier.size.x, _settings.graphics.barrier_height,
@@ -766,6 +782,8 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.planning_hubs) {
          for (auto& hub : _world.planning_hubs) {
+            if (hub.hidden) continue;
+
             math::bounding_box bbox{{-hub.radius, -_settings.graphics.planning_hub_height,
                                      -hub.radius},
                                     {hub.radius, _settings.graphics.planning_hub_height,
@@ -785,6 +803,8 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (_world_hit_mask.boundaries) {
          for (auto& boundary : _world.boundaries) {
+            if (boundary.hidden) continue;
+
             math::bounding_box bbox{{-boundary.size.x + boundary.position.x,
                                      -_settings.graphics.boundary_height,
                                      -boundary.size.y + boundary.position.y},
@@ -859,7 +879,9 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.objects) {
          for (auto& object : _world.objects) {
-            if (not _world_layers_hit_mask[object.layer]) continue;
+            if (not _world_layers_hit_mask[object.layer] or object.hidden) {
+               continue;
+            }
 
             math::bounding_box bbox =
                _object_classes[object.class_name].model->bounding_box;
@@ -874,7 +896,9 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.lights) {
          for (auto& light : _world.lights) {
-            if (not _world_layers_hit_mask[light.layer]) continue;
+            if (not _world_layers_hit_mask[light.layer] or light.hidden) {
+               continue;
+            }
 
             const bool inside = [&] {
                switch (light.light_type) {
@@ -934,7 +958,9 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.paths) {
          for (auto& path : _world.paths) {
-            if (not _world_layers_hit_mask[path.layer]) continue;
+            if (not _world_layers_hit_mask[path.layer] or path.hidden) {
+               continue;
+            }
 
             for (std::size_t i = 0; i < path.nodes.size(); ++i) {
                if (intersects(frustum, path.nodes[i].position,
@@ -949,7 +975,9 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.regions) {
          for (auto& region : _world.regions) {
-            if (not _world_layers_hit_mask[region.layer]) continue;
+            if (not _world_layers_hit_mask[region.layer] or region.hidden) {
+               continue;
+            }
 
             const bool inside = [&] {
                switch (region.shape) {
@@ -989,6 +1017,8 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.sectors) {
          for (auto& sector : _world.sectors) {
+            if (sector.hidden) continue;
+
             float2 point_min{FLT_MAX, FLT_MAX};
             float2 point_max{-FLT_MAX, -FLT_MAX};
 
@@ -1010,6 +1040,8 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.portals) {
          for (auto& portal : _world.portals) {
+            if (portal.hidden) continue;
+
             if (intersects(frustum, portal.position,
                            std::max(portal.height, portal.width))) {
                std::erase(_interaction_targets.selection,
@@ -1020,7 +1052,9 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.hintnodes) {
          for (auto& hintnode : _world.hintnodes) {
-            if (not _world_layers_hit_mask[hintnode.layer]) continue;
+            if (not _world_layers_hit_mask[hintnode.layer] or hintnode.hidden) {
+               continue;
+            }
 
             if (intersects(frustum, hintnode.position, 2.0f)) {
                std::erase(_interaction_targets.selection,
@@ -1031,6 +1065,8 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.barriers) {
          for (auto& barrier : _world.barriers) {
+            if (barrier.hidden) continue;
+
             math::bounding_box bbox{{-barrier.size.x, -_settings.graphics.barrier_height,
                                      -barrier.size.y},
                                     {barrier.size.x, _settings.graphics.barrier_height,
@@ -1047,6 +1083,8 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.planning_hubs) {
          for (auto& hub : _world.planning_hubs) {
+            if (hub.hidden) continue;
+
             math::bounding_box bbox{{-hub.radius, -_settings.graphics.planning_hub_height,
                                      -hub.radius},
                                     {hub.radius, _settings.graphics.planning_hub_height,
@@ -1062,6 +1100,8 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.planning_connections) {
          for (auto& connection : _world.planning_connections) {
+            if (connection.hidden) continue;
+
             const world::planning_hub& start =
                _world.planning_hubs[_world.planning_hub_index.at(connection.start)];
             const world::planning_hub& end =
@@ -1087,6 +1127,8 @@ void world_edit::finish_entity_deselect() noexcept
 
       if (_world_hit_mask.boundaries) {
          for (auto& boundary : _world.boundaries) {
+            if (boundary.hidden) continue;
+
             math::bounding_box bbox{{-boundary.size.x + boundary.position.x,
                                      -_settings.graphics.boundary_height,
                                      -boundary.size.y + boundary.position.y},
@@ -1661,6 +1703,7 @@ void world_edit::align_selection() noexcept
    if (_interaction_targets.selection.empty()) return;
 
    edits::bundle_vector bundle;
+   bundle.reserve(_interaction_targets.selection.size());
 
    const float alignment = _world.terrain.grid_scale;
 
@@ -1785,6 +1828,129 @@ void world_edit::align_selection() noexcept
                edits::make_set_value(boundary->id, &world::boundary::position,
                                      round(boundary->position / alignment) * alignment,
                                      boundary->position));
+         }
+      }
+   }
+
+   if (bundle.size() == 1) {
+      _edit_stack_world.apply(std::move(bundle.back()), _edit_context,
+                              {.closed = true});
+   }
+   else if (not bundle.empty()) {
+      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                              _edit_context, {.closed = true});
+   }
+}
+
+void world_edit::hide_selection() noexcept
+{
+   edits::bundle_vector bundle;
+   bundle.reserve(_interaction_targets.selection.size());
+
+   for (const auto& selected : _interaction_targets.selection) {
+      if (std::holds_alternative<world::object_id>(selected)) {
+         const world::object* object =
+            world::find_entity(_world.objects, std::get<world::object_id>(selected));
+
+         if (object and not object->hidden) {
+            bundle.push_back(edits::make_set_value(object->id, &world::object::hidden,
+                                                   true, object->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::light_id>(selected)) {
+         const world::light* light =
+            world::find_entity(_world.lights, std::get<world::light_id>(selected));
+
+         if (light and not light->hidden) {
+            bundle.push_back(edits::make_set_value(light->id, &world::light::hidden,
+                                                   true, light->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+         const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+
+         const world::path* path = world::find_entity(_world.paths, id);
+
+         if (path and not path->hidden) {
+            bundle.push_back(edits::make_set_value(path->id, &world::path::hidden,
+                                                   true, path->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::region_id>(selected)) {
+         const world::region* region =
+            world::find_entity(_world.regions, std::get<world::region_id>(selected));
+
+         if (region and not region->hidden) {
+            bundle.push_back(edits::make_set_value(region->id, &world::region::hidden,
+                                                   true, region->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::sector_id>(selected)) {
+         const world::sector* sector =
+            world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
+
+         if (sector and not sector->hidden) {
+            bundle.push_back(edits::make_set_value(sector->id, &world::sector::hidden,
+                                                   true, sector->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::portal_id>(selected)) {
+         const world::portal* portal =
+            world::find_entity(_world.portals, std::get<world::portal_id>(selected));
+
+         if (portal and not portal->hidden) {
+            bundle.push_back(edits::make_set_value(portal->id, &world::portal::hidden,
+                                                   true, portal->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::hintnode_id>(selected)) {
+         const world::hintnode* hintnode =
+            world::find_entity(_world.hintnodes,
+                               std::get<world::hintnode_id>(selected));
+
+         if (hintnode and not hintnode->hidden) {
+            bundle.push_back(edits::make_set_value(hintnode->id, &world::hintnode::hidden,
+                                                   true, hintnode->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::barrier_id>(selected)) {
+         const world::barrier* barrier =
+            world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
+
+         if (barrier and not barrier->hidden) {
+            bundle.push_back(edits::make_set_value(barrier->id, &world::barrier::hidden,
+                                                   true, barrier->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+         const world::planning_hub* hub =
+            world::find_entity(_world.planning_hubs,
+                               std::get<world::planning_hub_id>(selected));
+
+         if (hub and not hub->hidden) {
+            bundle.push_back(edits::make_set_value(hub->id, &world::planning_hub::hidden,
+                                                   true, hub->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::planning_connection_id>(selected)) {
+         const world::planning_connection* connection =
+            world::find_entity(_world.planning_connections,
+                               std::get<world::planning_connection_id>(selected));
+
+         if (connection and not connection->hidden) {
+            bundle.push_back(edits::make_set_value(connection->id,
+                                                   &world::planning_connection::hidden,
+                                                   true, connection->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::boundary_id>(selected)) {
+         const world::boundary* boundary =
+            world::find_entity(_world.boundaries,
+                               std::get<world::boundary_id>(selected));
+
+         if (boundary and not boundary->hidden) {
+            bundle.push_back(edits::make_set_value(boundary->id, &world::boundary::hidden,
+                                                   true, boundary->hidden));
          }
       }
    }
@@ -2004,6 +2170,41 @@ void world_edit::new_entity_from_selection() noexcept
    }
 
    _entity_creation_context = {};
+}
+
+void world_edit::unhide_all() noexcept
+{
+   edits::bundle_vector bundle;
+
+   const auto unhide_entities = [&]<typename T>(const std::vector<T>& entities) {
+      for (const auto& entity : entities) {
+         if (entity.hidden) {
+            bundle.push_back(edits::make_set_value(entity.id, &T::hidden, false,
+                                                   entity.hidden));
+         }
+      }
+   };
+
+   unhide_entities(_world.objects);
+   unhide_entities(_world.lights);
+   unhide_entities(_world.paths);
+   unhide_entities(_world.regions);
+   unhide_entities(_world.sectors);
+   unhide_entities(_world.portals);
+   unhide_entities(_world.hintnodes);
+   unhide_entities(_world.barriers);
+   unhide_entities(_world.planning_hubs);
+   unhide_entities(_world.planning_connections);
+   unhide_entities(_world.boundaries);
+
+   if (bundle.size() == 1) {
+      _edit_stack_world.apply(std::move(bundle.back()), _edit_context,
+                              {.closed = true});
+   }
+   else if (not bundle.empty()) {
+      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                              _edit_context, {.closed = true});
+   }
 }
 
 void world_edit::ask_to_save_world() noexcept

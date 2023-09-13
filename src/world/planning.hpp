@@ -24,6 +24,8 @@ struct planning_branch_weights {
 struct planning_hub {
    std::string name;
 
+   bool hidden = false;
+
    float3 position;
    float radius = 1.0f;
 
@@ -36,6 +38,8 @@ using planning_hub_id = id<planning_hub>;
 
 struct planning_connection {
    std::string name;
+
+   bool hidden = false;
 
    planning_hub_id start;
    planning_hub_id end;

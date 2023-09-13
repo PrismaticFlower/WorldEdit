@@ -13,6 +13,7 @@ namespace we::world {
 struct object {
    std::string name;
    int16 layer = 0;
+   bool hidden = false;
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    float3 position{};

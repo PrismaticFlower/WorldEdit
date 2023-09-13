@@ -21,6 +21,7 @@ enum class texture_addressing : int8 { wrap = 0, clamp = 1 };
 struct light {
    std::string name;
    int16 layer = 0;
+   bool hidden = false;
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    float3 position{};
