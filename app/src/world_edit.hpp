@@ -157,6 +157,8 @@ private:
 
    void cycle_creation_entity_object_class() noexcept;
 
+   void cycle_planning_entity_type() noexcept;
+
    void undo() noexcept;
 
    void redo() noexcept;

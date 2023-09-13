@@ -1624,6 +1624,66 @@ void world_edit::cycle_creation_entity_object_class() noexcept
              _edit_context, {.closed = true});
 }
 
+void world_edit::cycle_planning_entity_type() noexcept
+{
+   if (not _interaction_targets.creation_entity) return;
+
+   if (std::holds_alternative<world::planning_hub>(*_interaction_targets.creation_entity)) {
+      const world::planning_connection* base_connection =
+         world::find_entity(_world.planning_connections,
+                            _last_created_entities.last_planning_connection);
+
+      world::planning_connection new_connection;
+
+      if (base_connection) {
+         new_connection = *base_connection;
+
+         new_connection.name = world::create_unique_name(_world.planning_connections,
+                                                         base_connection->name);
+         new_connection.id = world::max_id;
+      }
+      else {
+         new_connection =
+            world::planning_connection{.name = "Connection0",
+                                       .start = _world.planning_hubs[0].id,
+                                       .end = _world.planning_hubs[0].id,
+                                       .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_connection),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+   }
+   else if (std::holds_alternative<world::planning_connection>(
+               *_interaction_targets.creation_entity) and
+            not _world.planning_hubs.empty()) {
+      const world::planning_hub* base_hub =
+         world::find_entity(_world.planning_hubs,
+                            _last_created_entities.last_planning_hub);
+
+      world::planning_hub new_hub;
+
+      if (base_hub) {
+         new_hub = *base_hub;
+
+         new_hub.name =
+            world::create_unique_name(_world.planning_hubs, base_hub->name);
+         new_hub.id = world::max_id;
+      }
+      else {
+         new_hub = world::planning_hub{.name = "Hub0", .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_hub),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+   }
+}
+
 void world_edit::undo() noexcept
 {
    _edit_stack_world.revert(_edit_context);

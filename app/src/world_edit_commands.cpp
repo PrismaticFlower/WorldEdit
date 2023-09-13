@@ -199,6 +199,8 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("entity_creation.cycle_object_class"s,
                  [this] { cycle_creation_entity_object_class(); });
+   _commands.add("entity_creation.cycle_planning_entity"s,
+                 [this] { cycle_planning_entity_type(); });
 
    _commands.add("entity_creation.activate_point_at"s,
                  _entity_creation_context.activate_point_at);
@@ -431,6 +433,24 @@ void world_edit::initialize_hotkeys() noexcept
 
           {"Finish Path", "entity_creation.finish_path", {.key = key::g}},
        }});
+
+   _hotkeys.add_set({
+      .name = "Entity Creation (AI Planning)",
+      .activated =
+         [this] {
+            return _interaction_targets.creation_entity and
+                   (std::holds_alternative<world::planning_hub>(
+                       *_interaction_targets.creation_entity) or
+                    std::holds_alternative<world::planning_connection>(
+                       *_interaction_targets.creation_entity));
+         },
+      .default_hotkeys =
+         {
+            {"Cycle AI Planning Entity Type",
+             "entity_creation.cycle_planning_entity",
+             {.key = key::q}},
+         },
+   });
 
    _hotkeys.add_set({
       .name = "Entity Creation (Point At)",

@@ -37,6 +37,7 @@ struct placement_traits {
    bool has_from_bbox = false;
    bool has_from_line = false;
    bool has_draw_barrier = false;
+   bool has_cycle_ai_planning = false;
 };
 
 auto surface_rotation_degrees(const float3 surface_normal,
@@ -2576,6 +2577,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          .has_placement_rotation = false,
          .has_point_at = false,
          .has_placement_ground = false,
+         .has_cycle_ai_planning = true,
       };
    }
    else if (std::holds_alternative<world::planning_connection>(creation_entity)) {
@@ -2706,7 +2708,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_placement_mode = false,
                 .has_lock_axis = false,
                 .has_placement_alignment = false,
-                .has_placement_ground = false};
+                .has_placement_ground = false,
+                .has_cycle_ai_planning = true};
    }
    else if (std::holds_alternative<world::boundary>(creation_entity)) {
       const world::boundary& boundary = std::get<world::boundary>(creation_entity);
@@ -3042,6 +3045,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::Text("Draw Barrier");
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation", "Start Draw Barrier")));
+      }
+
+      if (traits.has_cycle_ai_planning) {
+         ImGui::Text("Cycle AI Planning Entity");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation (AI Planning)",
+                                   "Cycle AI Planning Entity Type")));
       }
 
       ImGui::End();
