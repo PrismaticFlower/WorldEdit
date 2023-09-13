@@ -1624,7 +1624,7 @@ void world_edit::cycle_creation_entity_object_class() noexcept
              _edit_context, {.closed = true});
 }
 
-void world_edit::cycle_planning_entity_type() noexcept
+void world_edit::toggle_planning_entity_type() noexcept
 {
    if (not _interaction_targets.creation_entity) return;
 

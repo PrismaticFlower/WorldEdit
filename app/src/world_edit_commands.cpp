@@ -199,8 +199,8 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("entity_creation.cycle_object_class"s,
                  [this] { cycle_creation_entity_object_class(); });
-   _commands.add("entity_creation.cycle_planning_entity"s,
-                 [this] { cycle_planning_entity_type(); });
+   _commands.add("entity_creation.toggle_planning_entity"s,
+                 [this] { toggle_planning_entity_type(); });
 
    _commands.add("entity_creation.activate_point_at"s,
                  _entity_creation_context.activate_point_at);
@@ -446,8 +446,8 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .default_hotkeys =
          {
-            {"Cycle AI Planning Entity Type",
-             "entity_creation.cycle_planning_entity",
+            {"Toggle AI Planning Entity Type",
+             "entity_creation.toggle_planning_entity",
              {.key = key::q}},
          },
    });

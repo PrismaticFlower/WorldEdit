@@ -3048,10 +3048,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (traits.has_cycle_ai_planning) {
-         ImGui::Text("Cycle AI Planning Entity");
+         ImGui::Text("Toggle AI Planning Entity Type");
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation (AI Planning)",
-                                   "Cycle AI Planning Entity Type")));
+                                   "Toggle AI Planning Entity Type")));
       }
 
       ImGui::End();
