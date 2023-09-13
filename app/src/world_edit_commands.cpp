@@ -4,6 +4,8 @@
 #include "world/utility/selection_centre.hpp"
 #include "world_edit.hpp"
 
+#include <imgui.h>
+
 using namespace std::literals;
 
 namespace we {
@@ -69,6 +71,8 @@ void world_edit::initialize_commands() noexcept
    _commands.add("camera.halve_move_speed"s,
                  [this] { _settings.camera.move_speed /= 2.0f; });
 
+   _commands.add("show_create_entity"s,
+                 [this] { ImGui::OpenPopup("Create Entity"); });
    _commands.add("selection.set"s, [this]() {
       if (not _selecting_entity) {
          start_entity_select();
@@ -319,6 +323,8 @@ void world_edit::initialize_hotkeys() noexcept
 
           {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
           {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
+
+          {"Show Create Entity Menu", "show_create_entity", {.key = key::space}},
 
           {"Select", "selection.set", {.key = key::mouse1}, {.toggle = true}},
           {"Select Multiple",

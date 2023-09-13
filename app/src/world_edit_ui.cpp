@@ -91,5 +91,12 @@ void world_edit::update_ui() noexcept
    if (_selection_edit_tool == selection_edit_tool::set_layer) {
       ui_show_world_selection_set_layer();
    }
+
+   if (ImGui::BeginPopup("Create Entity", ImGuiWindowFlags_AlwaysAutoResize |
+                                             ImGuiWindowFlags_NoDecoration)) {
+      ui_show_create_menu_items();
+
+      ImGui::EndPopup();
+   }
 }
 }

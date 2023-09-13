@@ -103,6 +103,8 @@ private:
 
    void ui_show_main_menu_bar() noexcept;
 
+   void ui_show_create_menu_items() noexcept;
+
    void ui_show_world_active_context() noexcept;
 
    void ui_show_hotkeys_view() noexcept;

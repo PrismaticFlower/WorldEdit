@@ -163,297 +163,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
       }
 
       if (ImGui::BeginMenu("Create")) {
-         const int16 creation_layer = _last_created_entities.last_layer <
-                                            std::ssize(_world.layer_descriptions)
-                                         ? _last_created_entities.last_layer
-                                         : 0;
-
-         if (ImGui::MenuItem("Object")) {
-            const world::object* base_object =
-               world::find_entity(_world.objects, _last_created_entities.last_object);
-
-            world::object new_object;
-
-            if (base_object) {
-               new_object = *base_object;
-
-               new_object.name =
-                  world::create_unique_name(_world.objects, base_object->name);
-               new_object.layer = creation_layer;
-               new_object.id = world::max_id;
-            }
-            else {
-               new_object = world::object{.name = "",
-                                          .layer = creation_layer,
-                                          .class_name = lowercase_string{""sv},
-                                          .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_object),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.objects = true;
-         }
-
-         if (ImGui::MenuItem("Light")) {
-            const world::light* base_light =
-               world::find_entity(_world.lights, _last_created_entities.last_light);
-
-            world::light new_light;
-
-            if (base_light) {
-               new_light = *base_light;
-
-               new_light.name =
-                  world::create_unique_name(_world.lights, base_light->name);
-               new_light.layer = creation_layer;
-               new_light.id = world::max_id;
-            }
-            else {
-               new_light =
-                  world::light{.name = "", .layer = creation_layer, .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_light),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.lights = true;
-         }
-
-         if (ImGui::MenuItem("Path")) {
-            const world::path* base_path =
-               world::find_entity(_world.paths, _last_created_entities.last_path);
-
-            _edit_stack_world.apply(
-               edits::make_creation_entity_set(
-                  world::path{.name = world::create_unique_name(_world.paths,
-                                                                base_path
-                                                                   ? base_path->name
-                                                                   : "Path 0"),
-                              .layer = base_path ? base_path->layer : creation_layer,
-                              .nodes = {world::path::node{}},
-                              .id = world::max_id},
-                  _interaction_targets.creation_entity),
-               _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.paths = true;
-         }
-
-         if (ImGui::MenuItem("Region")) {
-            const world::region* base_region =
-               world::find_entity(_world.regions, _last_created_entities.last_region);
-
-            world::region new_region;
-
-            if (base_region) {
-               new_region = *base_region;
-
-               new_region.name =
-                  world::create_unique_name(_world.regions, base_region->name);
-               new_region.layer = creation_layer;
-               new_region.id = world::max_id;
-            }
-            else {
-               new_region =
-                  world::region{.name = world::create_unique_name(_world.lights, "Region0"),
-                                .layer = creation_layer,
-                                .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_region),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.regions = true;
-         }
-
-         if (ImGui::MenuItem("Sector")) {
-            const world::sector* base_sector =
-               world::find_entity(_world.sectors, _last_created_entities.last_sector);
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(
-                         world::sector{.name = world::create_unique_name(
-                                          _world.sectors,
-                                          base_sector ? base_sector->name : "Sector0"),
-                                       .base = 0.0f,
-                                       .height = 10.0f,
-                                       .points = {{0.0f, 0.0f}},
-                                       .id = world::max_id},
-                         _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.sectors = true;
-         }
-
-         if (ImGui::MenuItem("Portal")) {
-            const world::portal* base_portal =
-               world::find_entity(_world.portals, _last_created_entities.last_portal);
-
-            world::portal new_portal;
-
-            if (base_portal) {
-               new_portal = *base_portal;
-
-               new_portal.name =
-                  world::create_unique_name(_world.portals, base_portal->name);
-               new_portal.id = world::max_id;
-            }
-            else {
-               new_portal = world::portal{.name = "Portal0", .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_portal),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.portals = true;
-         }
-
-         if (ImGui::MenuItem("Hintnode")) {
-            const world::hintnode* base_hintnode =
-               world::find_entity(_world.hintnodes, _last_created_entities.last_hintnode);
-
-            world::hintnode new_hintnode;
-
-            if (base_hintnode) {
-               new_hintnode = *base_hintnode;
-
-               new_hintnode.name =
-                  world::create_unique_name(_world.hintnodes, base_hintnode->name);
-               new_hintnode.layer = creation_layer;
-               new_hintnode.id = world::max_id;
-            }
-            else {
-               new_hintnode = world::hintnode{.name = "Hint0",
-                                              .layer = creation_layer,
-                                              .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_hintnode),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.hintnodes = true;
-         }
-
-         if (ImGui::MenuItem("Barrier")) {
-            const world::barrier* base_barrier =
-               world::find_entity(_world.barriers, _last_created_entities.last_barrier);
-
-            world::barrier new_barrier;
-
-            if (base_barrier) {
-               new_barrier = *base_barrier;
-
-               new_barrier.name =
-                  world::create_unique_name(_world.barriers, base_barrier->name);
-               new_barrier.id = world::max_id;
-            }
-            else {
-               new_barrier = world::barrier{.name = "Barrier0", .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_barrier),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.barriers = true;
-         }
-
-         if (ImGui::MenuItem("AI Planning Hub")) {
-            const world::planning_hub* base_hub =
-               world::find_entity(_world.planning_hubs,
-                                  _last_created_entities.last_planning_hub);
-
-            world::planning_hub new_hub;
-
-            if (base_hub) {
-               new_hub = *base_hub;
-
-               new_hub.name =
-                  world::create_unique_name(_world.planning_hubs, base_hub->name);
-               new_hub.id = world::max_id;
-            }
-            else {
-               new_hub = world::planning_hub{.name = "Hub0", .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_hub),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.planning_hubs = true;
-            _world_draw_mask.planning_connections = true;
-         }
-
-         if (ImGui::MenuItem("AI Planning Connection") and
-             not _world.planning_hubs.empty()) {
-            const world::planning_connection* base_connection =
-               world::find_entity(_world.planning_connections,
-                                  _last_created_entities.last_planning_connection);
-
-            world::planning_connection new_connection;
-
-            if (base_connection) {
-               new_connection = *base_connection;
-
-               new_connection.name =
-                  world::create_unique_name(_world.planning_connections,
-                                            base_connection->name);
-               new_connection.id = world::max_id;
-            }
-            else {
-               new_connection =
-                  world::planning_connection{.name = "Connection0",
-                                             .start = _world.planning_hubs[0].id,
-                                             .end = _world.planning_hubs[0].id,
-                                             .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_connection),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.planning_hubs = true;
-            _world_draw_mask.planning_connections = true;
-         }
-
-         if (ImGui::MenuItem("Boundary")) {
-            const world::boundary* base_boundary =
-               world::find_entity(_world.boundaries,
-                                  _last_created_entities.last_boundary);
-
-            world::boundary new_boundary;
-
-            if (base_boundary) {
-               new_boundary = *base_boundary;
-
-               new_boundary.name =
-                  world::create_unique_name(_world.boundaries, base_boundary->name);
-               new_boundary.id = world::max_id;
-            }
-            else {
-               new_boundary = world::boundary{.name = "Boundary", .id = world::max_id};
-            }
-
-            _edit_stack_world
-               .apply(edits::make_creation_entity_set(std::move(new_boundary),
-                                                      _interaction_targets.creation_entity),
-                      _edit_context);
-            _entity_creation_context = {};
-            _world_draw_mask.boundaries = true;
-         }
+         ui_show_create_menu_items();
 
          ImGui::EndMenu();
       }
@@ -512,6 +222,293 @@ void world_edit::ui_show_main_menu_bar() noexcept
       }
 
       ImGui::EndPopup();
+   }
+}
+
+void world_edit::ui_show_create_menu_items() noexcept
+{
+   const int16 creation_layer =
+      _last_created_entities.last_layer < std::ssize(_world.layer_descriptions)
+         ? _last_created_entities.last_layer
+         : 0;
+
+   if (ImGui::MenuItem("Object")) {
+      const world::object* base_object =
+         world::find_entity(_world.objects, _last_created_entities.last_object);
+
+      world::object new_object;
+
+      if (base_object) {
+         new_object = *base_object;
+
+         new_object.name =
+            world::create_unique_name(_world.objects, base_object->name);
+         new_object.layer = creation_layer;
+         new_object.id = world::max_id;
+      }
+      else {
+         new_object = world::object{.name = "",
+                                    .layer = creation_layer,
+                                    .class_name = lowercase_string{""sv},
+                                    .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_object),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.objects = true;
+   }
+
+   if (ImGui::MenuItem("Light")) {
+      const world::light* base_light =
+         world::find_entity(_world.lights, _last_created_entities.last_light);
+
+      world::light new_light;
+
+      if (base_light) {
+         new_light = *base_light;
+
+         new_light.name = world::create_unique_name(_world.lights, base_light->name);
+         new_light.layer = creation_layer;
+         new_light.id = world::max_id;
+      }
+      else {
+         new_light =
+            world::light{.name = "", .layer = creation_layer, .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_light),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.lights = true;
+   }
+
+   if (ImGui::MenuItem("Path")) {
+      const world::path* base_path =
+         world::find_entity(_world.paths, _last_created_entities.last_path);
+
+      _edit_stack_world.apply(
+         edits::make_creation_entity_set(
+            world::path{.name = world::create_unique_name(_world.paths,
+                                                          base_path ? base_path->name : "Path 0"),
+                        .layer = base_path ? base_path->layer : creation_layer,
+                        .nodes = {world::path::node{}},
+                        .id = world::max_id},
+            _interaction_targets.creation_entity),
+         _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.paths = true;
+   }
+
+   if (ImGui::MenuItem("Region")) {
+      const world::region* base_region =
+         world::find_entity(_world.regions, _last_created_entities.last_region);
+
+      world::region new_region;
+
+      if (base_region) {
+         new_region = *base_region;
+
+         new_region.name =
+            world::create_unique_name(_world.regions, base_region->name);
+         new_region.layer = creation_layer;
+         new_region.id = world::max_id;
+      }
+      else {
+         new_region = world::region{.name = world::create_unique_name(_world.lights, "Region0"),
+                                    .layer = creation_layer,
+                                    .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_region),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.regions = true;
+   }
+
+   if (ImGui::MenuItem("Sector")) {
+      const world::sector* base_sector =
+         world::find_entity(_world.sectors, _last_created_entities.last_sector);
+
+      _edit_stack_world.apply(edits::make_creation_entity_set(
+                                 world::sector{.name = world::create_unique_name(
+                                                  _world.sectors,
+                                                  base_sector ? base_sector->name : "Sector0"),
+                                               .base = 0.0f,
+                                               .height = 10.0f,
+                                               .points = {{0.0f, 0.0f}},
+                                               .id = world::max_id},
+                                 _interaction_targets.creation_entity),
+                              _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.sectors = true;
+   }
+
+   if (ImGui::MenuItem("Portal")) {
+      const world::portal* base_portal =
+         world::find_entity(_world.portals, _last_created_entities.last_portal);
+
+      world::portal new_portal;
+
+      if (base_portal) {
+         new_portal = *base_portal;
+
+         new_portal.name =
+            world::create_unique_name(_world.portals, base_portal->name);
+         new_portal.id = world::max_id;
+      }
+      else {
+         new_portal = world::portal{.name = "Portal0", .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_portal),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.portals = true;
+   }
+
+   if (ImGui::MenuItem("Hintnode")) {
+      const world::hintnode* base_hintnode =
+         world::find_entity(_world.hintnodes, _last_created_entities.last_hintnode);
+
+      world::hintnode new_hintnode;
+
+      if (base_hintnode) {
+         new_hintnode = *base_hintnode;
+
+         new_hintnode.name =
+            world::create_unique_name(_world.hintnodes, base_hintnode->name);
+         new_hintnode.layer = creation_layer;
+         new_hintnode.id = world::max_id;
+      }
+      else {
+         new_hintnode = world::hintnode{.name = "Hint0",
+                                        .layer = creation_layer,
+                                        .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_hintnode),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.hintnodes = true;
+   }
+
+   if (ImGui::MenuItem("Barrier")) {
+      const world::barrier* base_barrier =
+         world::find_entity(_world.barriers, _last_created_entities.last_barrier);
+
+      world::barrier new_barrier;
+
+      if (base_barrier) {
+         new_barrier = *base_barrier;
+
+         new_barrier.name =
+            world::create_unique_name(_world.barriers, base_barrier->name);
+         new_barrier.id = world::max_id;
+      }
+      else {
+         new_barrier = world::barrier{.name = "Barrier0", .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_barrier),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.barriers = true;
+   }
+
+   if (ImGui::MenuItem("AI Planning Hub")) {
+      const world::planning_hub* base_hub =
+         world::find_entity(_world.planning_hubs,
+                            _last_created_entities.last_planning_hub);
+
+      world::planning_hub new_hub;
+
+      if (base_hub) {
+         new_hub = *base_hub;
+
+         new_hub.name =
+            world::create_unique_name(_world.planning_hubs, base_hub->name);
+         new_hub.id = world::max_id;
+      }
+      else {
+         new_hub = world::planning_hub{.name = "Hub0", .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_hub),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.planning_hubs = true;
+      _world_draw_mask.planning_connections = true;
+   }
+
+   if (ImGui::MenuItem("AI Planning Connection") and not _world.planning_hubs.empty()) {
+      const world::planning_connection* base_connection =
+         world::find_entity(_world.planning_connections,
+                            _last_created_entities.last_planning_connection);
+
+      world::planning_connection new_connection;
+
+      if (base_connection) {
+         new_connection = *base_connection;
+
+         new_connection.name = world::create_unique_name(_world.planning_connections,
+                                                         base_connection->name);
+         new_connection.id = world::max_id;
+      }
+      else {
+         new_connection =
+            world::planning_connection{.name = "Connection0",
+                                       .start = _world.planning_hubs[0].id,
+                                       .end = _world.planning_hubs[0].id,
+                                       .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_connection),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.planning_hubs = true;
+      _world_draw_mask.planning_connections = true;
+   }
+
+   if (ImGui::MenuItem("Boundary")) {
+      const world::boundary* base_boundary =
+         world::find_entity(_world.boundaries, _last_created_entities.last_boundary);
+
+      world::boundary new_boundary;
+
+      if (base_boundary) {
+         new_boundary = *base_boundary;
+
+         new_boundary.name =
+            world::create_unique_name(_world.boundaries, base_boundary->name);
+         new_boundary.id = world::max_id;
+      }
+      else {
+         new_boundary = world::boundary{.name = "Boundary", .id = world::max_id};
+      }
+
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(std::move(new_boundary),
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+      _entity_creation_context = {};
+      _world_draw_mask.boundaries = true;
    }
 }
 
