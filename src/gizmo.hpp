@@ -13,7 +13,7 @@ struct gizmo {
    bool want_capture_mouse() const noexcept;
 
    void update(const graphics::camera_ray cursor_ray, const bool is_mouse_down,
-               const graphics::camera& camera) noexcept;
+               const graphics::camera& camera, const float gizmo_scale) noexcept;
 
    void draw(world::tool_visualizers& tool_visualizers) noexcept;
 

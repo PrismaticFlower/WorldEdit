@@ -33,6 +33,9 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
                                  "not contain quotes (\").");
             }
 
+            ImGui::DragFloat("Gizmo Scale", &ui.gizmo_scale, 0.125f, 0.0f,
+                             10.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+
             constexpr static std::array extra_scaling_factors{0.5f, 0.75f,
                                                               1.0f, 1.25f,
                                                               1.5f, 1.75f,

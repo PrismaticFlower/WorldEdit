@@ -118,7 +118,7 @@ void world_edit::update()
                                  {ImGui::GetMainViewport()->Size.x,
                                   ImGui::GetMainViewport()->Size.y}),
                  ImGui::IsKeyDown(ImGuiKey_MouseLeft) and not ImGui::GetIO().WantCaptureMouse,
-                 _camera);
+                 _camera, _settings.ui.gizmo_scale);
 
    // Input!
    update_input();
