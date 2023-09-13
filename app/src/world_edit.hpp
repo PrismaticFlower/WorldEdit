@@ -139,6 +139,8 @@ private:
 
    void ui_show_world_selection_set_layer() noexcept;
 
+   void ui_show_about_window() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    void start_entity_select() noexcept;
@@ -272,6 +274,7 @@ private:
    bool _world_stats_open = false;
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;
+   bool _about_window_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
 
