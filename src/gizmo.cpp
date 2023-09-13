@@ -34,6 +34,12 @@ auto make_circle_point(const float angle, const float radius) -> float2
    return {radius * std::cos(angle), radius * std::sin(angle)};
 }
 
+constexpr float translate_gizmo_size = 0.1f;
+constexpr float translate_gizmo_hit_length = 0.00625f;
+constexpr float rotate_gizmo_radius = 0.1f;
+constexpr float rotate_gizmo_hit_height = 0.00625f;
+constexpr float rotate_gizmo_hit_pad = 0.00625f;
+
 }
 
 bool gizmo::want_capture_mouse() const noexcept
@@ -53,8 +59,18 @@ bool gizmo::want_capture_mouse() const noexcept
    std::unreachable();
 }
 
-void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_down) noexcept
+void gizmo::update(const graphics::camera_ray cursor_ray,
+                   const bool is_mouse_down, const graphics::camera& camera) noexcept
 {
+   const float camera_scale = distance(camera.position(), _gizmo_position) *
+                              camera.projection_matrix()[0].x;
+
+   _translate_gizmo_size = translate_gizmo_size * camera_scale;
+   _translate_gizmo_hit_length = translate_gizmo_hit_length * camera_scale;
+   _rotate_gizmo_radius = rotate_gizmo_radius * camera_scale;
+   _rotate_gizmo_hit_height = rotate_gizmo_hit_height * camera_scale;
+   _rotate_gizmo_hit_pad = rotate_gizmo_hit_pad * camera_scale;
+
    const float3 ray_origin = cursor_ray.origin;
    const float3 offset_ray_origin = ray_origin - _gizmo_position;
    const float3 ray_direction = cursor_ray.direction;

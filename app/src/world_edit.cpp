@@ -117,8 +117,8 @@ void world_edit::update()
                                  {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
                                  {ImGui::GetMainViewport()->Size.x,
                                   ImGui::GetMainViewport()->Size.y}),
-                 ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
-                    not ImGui::GetIO().WantCaptureMouse);
+                 ImGui::IsKeyDown(ImGuiKey_MouseLeft) and not ImGui::GetIO().WantCaptureMouse,
+                 _camera);
 
    // Input!
    update_input();
