@@ -495,7 +495,7 @@ void world_edit::ui_draw_select_box() noexcept
    const float2 rect_min = min(current_cursor_position, _select_start_position);
    const float2 rect_max = max(current_cursor_position, _select_start_position);
 
-   if (distance(rect_max, rect_min) >= 2.0f) {
+   if (distance(rect_max, rect_min) >= (8.0f * _display_scale)) {
       const float3 color =
          utility::compress_srgb(_settings.graphics.hover_color) * 255.0f + 0.5f;
 
@@ -525,7 +525,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
       std::bit_cast<float2>(ImGui::GetMousePos());
    const float2 rect_min = min(current_cursor_position, _select_start_position);
    const float2 rect_max = max(current_cursor_position, _select_start_position);
-   const bool drag_select = distance(rect_max, rect_min) >= 2.0f;
+   const bool drag_select = distance(rect_max, rect_min) >= (8.0f * _display_scale);
 
    if (drag_select) {
       const float2 window_size =
@@ -858,7 +858,7 @@ void world_edit::finish_entity_deselect() noexcept
       std::bit_cast<float2>(ImGui::GetMousePos());
    const float2 rect_min = min(current_cursor_position, _select_start_position);
    const float2 rect_max = max(current_cursor_position, _select_start_position);
-   const bool drag_select = distance(rect_max, rect_min) >= 2.0f;
+   const bool drag_select = distance(rect_max, rect_min) >= (8.0f * _display_scale);
 
    if (drag_select) {
       const float2 window_size =
