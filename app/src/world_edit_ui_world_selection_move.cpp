@@ -217,6 +217,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                   bundled_edits.push_back(
                      edits::make_set_value(sector->id, &world::sector::points,
                                            std::move(new_points), sector->points));
+                  bundled_edits.push_back(
+                     edits::make_set_value(sector->id, &world::sector::base,
+                                           sector->base + move_delta.y, sector->base));
                }
             }
             else if (std::holds_alternative<world::portal_id>(selected)) {
