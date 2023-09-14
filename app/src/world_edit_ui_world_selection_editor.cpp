@@ -26,14 +26,6 @@ using namespace std::literals;
 
 namespace we {
 
-namespace {
-
-struct selection_traits {
-   bool has_ground_objects = false;
-};
-
-}
-
 void world_edit::ui_show_world_selection_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
@@ -41,11 +33,6 @@ void world_edit::ui_show_world_selection_editor() noexcept
    ImGui::SetNextWindowSizeConstraints({520.0f * _display_scale, 620.0f * _display_scale},
                                        {std::numeric_limits<float>::max(),
                                         620.0f * _display_scale});
-
-   const bool ground_all_objects =
-      std::exchange(_selection_edit_context.ground_objects, false);
-
-   selection_traits traits{};
 
    bool selection_open = true;
 
@@ -224,7 +211,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                }
             }
 
-            if (ground_object or ground_all_objects) {
+            if (ground_object) {
                if (const std::optional<float3> grounded_position =
                       world::ground_object(*object, _world, _object_classes,
                                            _world_layers_hit_mask, _terrain_collision);
@@ -236,8 +223,6 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                           _edit_context, {.closed = true});
                }
             }
-
-            traits.has_ground_objects = true;
          }
          else if (std::holds_alternative<world::light_id>(selected)) {
             world::light* light =
@@ -1822,6 +1807,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
          align_selection();
       }
 
+      if (ImGui::Button("Ground Selection", {ImGui::CalcItemWidth(), 0.0f})) {
+         ground_selection();
+      }
+
       if (ImGui::Button("Set Selection Layer", {ImGui::CalcItemWidth(), 0.0f})) {
          _selection_edit_tool = selection_edit_tool::set_layer;
       }
@@ -1835,12 +1824,6 @@ void world_edit::ui_show_world_selection_editor() noexcept
       ImGui::Begin("Hotkeys");
 
       ImGui::SeparatorText("Entity Editing");
-
-      if (traits.has_ground_objects) {
-         ImGui::Text("Ground Objects");
-         ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Editing", "Ground Objects")));
-      }
 
       ImGui::Text("Move Selection");
       ImGui::BulletText(get_display_string(
@@ -1863,6 +1846,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
       ImGui::Text("Hide Selection");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing", "Hide Selection")));
+
+      ImGui::Text("Ground Selection");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing", "Ground Selection")));
 
       ImGui::Text("New Entity from Selection");
       ImGui::BulletText(get_display_string(

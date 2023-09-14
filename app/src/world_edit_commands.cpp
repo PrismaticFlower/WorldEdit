@@ -115,7 +115,6 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
-   _commands.add("entity_edit.ground_objects"s, _selection_edit_context.ground_objects);
    _commands.add("entity_edit.move_selection"s, [this] {
       _selection_edit_tool = selection_edit_tool::move;
       _move_selection_amount = {0.0f, 0.0f, 0.0f};
@@ -133,6 +132,7 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("entity_edit.align_selection"s, [this] { align_selection(); });
    _commands.add("entity_edit.hide_selection"s, [this] { hide_selection(); });
+   _commands.add("entity_edit.ground_selection"s, [this] { ground_selection(); });
    _commands.add("entity_edit.unhide_all"s, [this] { unhide_all(); });
    _commands.add("entity_edit.new_from_selection"s,
                  [this] { new_entity_from_selection(); });
@@ -372,11 +372,11 @@ void world_edit::initialize_hotkeys() noexcept
           {"Rotate Selection Around Centre",
            "entity_edit.rotate_selection_around_centre",
            {.key = key::c}},
-          {"Ground Objects", "entity_edit.ground_objects", {.key = key::g}},
           {"Align Selection (Terrain Grid)",
            "entity_edit.align_selection",
            {.key = key::a, .modifiers = {.shift = true}}},
           {"Hide Selection", "entity_edit.hide_selection", {.key = key::h}},
+          {"Ground Selection", "entity_edit.ground_selection", {.key = key::g}},
           {"New Entity from Selection", "entity_edit.new_from_selection", {.key = key::n}},
           {"Set Selection Layer",
            "entity_edit.set_selection_layer",

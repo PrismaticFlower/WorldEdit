@@ -171,6 +171,8 @@ private:
 
    void hide_selection() noexcept;
 
+   void ground_selection() noexcept;
+
    void new_entity_from_selection() noexcept;
 
    void unhide_all() noexcept;
@@ -384,8 +386,6 @@ private:
    struct selection_edit_context {
       bool using_add_object_to_sector = false;
       bool add_hovered_object = false;
-
-      bool ground_objects = false;
 
       world::sector_id sector_to_add_object_to = world::max_id;
    } _selection_edit_context;

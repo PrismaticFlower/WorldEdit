@@ -20,6 +20,7 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
+#include "world/utility/grounding.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/raycast.hpp"
@@ -2011,6 +2012,164 @@ void world_edit::hide_selection() noexcept
          if (boundary and not boundary->hidden) {
             bundle.push_back(edits::make_set_value(boundary->id, &world::boundary::hidden,
                                                    true, boundary->hidden));
+         }
+      }
+   }
+
+   if (bundle.size() == 1) {
+      _edit_stack_world.apply(std::move(bundle.back()), _edit_context,
+                              {.closed = true});
+   }
+   else if (not bundle.empty()) {
+      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                              _edit_context, {.closed = true});
+   }
+}
+
+void world_edit::ground_selection() noexcept
+{
+   edits::bundle_vector bundle;
+   bundle.reserve(_interaction_targets.selection.size());
+
+   for (const auto& selected : _interaction_targets.selection) {
+      if (std::holds_alternative<world::object_id>(selected)) {
+         const world::object* object =
+            world::find_entity(_world.objects, std::get<world::object_id>(selected));
+
+         if (object) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_object(*object, _world, _object_classes,
+                                        _world_layers_hit_mask, _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_value(object->id, &world::object::position,
+                                        *grounded_position, object->position));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::light_id>(selected)) {
+         const world::light* light =
+            world::find_entity(_world.lights, std::get<world::light_id>(selected));
+
+         if (light) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_light(*light, _world, _object_classes,
+                                       _world_layers_hit_mask, _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_value(light->id, &world::light::position,
+                                        *grounded_position, light->position));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
+         const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+
+         const world::path* path = world::find_entity(_world.paths, id);
+
+         if (path and node_index < path->nodes.size()) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_point(path->nodes[node_index].position, _world,
+                                       _object_classes, _world_layers_hit_mask,
+                                       _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_path_node_value(path->id, node_index,
+                                                  &world::path::node::position,
+                                                  *grounded_position,
+                                                  path->nodes[node_index].position));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::region_id>(selected)) {
+         const world::region* region =
+            world::find_entity(_world.regions, std::get<world::region_id>(selected));
+
+         if (region) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_region(*region, _world, _object_classes,
+                                        _world_layers_hit_mask, _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_value(region->id, &world::region::position,
+                                        *grounded_position, region->position));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::sector_id>(selected)) {
+         const world::sector* sector =
+            world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
+
+         if (sector) {
+            if (const std::optional<float> grounded_base =
+                   world::ground_sector(*sector, _world, _object_classes,
+                                        _world_layers_hit_mask, _terrain_collision);
+                grounded_base) {
+               bundle.push_back(edits::make_set_value(sector->id, &world::sector::base,
+                                                      *grounded_base, sector->base));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::portal_id>(selected)) {
+         const world::portal* portal =
+            world::find_entity(_world.portals, std::get<world::portal_id>(selected));
+
+         if (portal) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_portal(*portal, _world, _object_classes,
+                                        _world_layers_hit_mask, _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_value(portal->id, &world::portal::position,
+                                        *grounded_position, portal->position));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::hintnode_id>(selected)) {
+         const world::hintnode* hintnode =
+            world::find_entity(_world.hintnodes,
+                               std::get<world::hintnode_id>(selected));
+
+         if (hintnode) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_point(hintnode->position, _world, _object_classes,
+                                       _world_layers_hit_mask, _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_value(hintnode->id, &world::hintnode::position,
+                                        *grounded_position, hintnode->position));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::barrier_id>(selected)) {
+         const world::barrier* barrier =
+            world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
+
+         if (barrier) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_point(barrier->position, _world, _object_classes,
+                                       _world_layers_hit_mask, _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_value(barrier->id, &world::barrier::position,
+                                        *grounded_position, barrier->position));
+            }
+         }
+      }
+      else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+         const world::planning_hub* hub =
+            world::find_entity(_world.planning_hubs,
+                               std::get<world::planning_hub_id>(selected));
+
+         if (hub) {
+            if (const std::optional<float3> grounded_position =
+                   world::ground_point(hub->position, _world, _object_classes,
+                                       _world_layers_hit_mask, _terrain_collision);
+                grounded_position) {
+               bundle.push_back(
+                  edits::make_set_value(hub->id, &world::planning_hub::position,
+                                        *grounded_position, hub->position));
+            }
          }
       }
    }
