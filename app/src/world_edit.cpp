@@ -467,8 +467,18 @@ void world_edit::update_camera(const float delta_time)
    if (_rotate_camera) {
       const float camera_look_scale = _settings.camera.look_sensitivity;
 
-      _camera.yaw(_camera.yaw() + (-_mouse_movement_x * camera_look_scale));
-      _camera.pitch(_camera.pitch() + (-_mouse_movement_y * camera_look_scale));
+      float pitch = -_mouse_movement_y * camera_look_scale;
+      float yaw = -_mouse_movement_x * camera_look_scale;
+
+      if (_camera.projection() == graphics::camera_projection::orthographic) {
+         constexpr float rotation_step = 0.17453292f;
+
+         pitch = std::floor(pitch / rotation_step) * rotation_step;
+         yaw = std::floor(yaw / rotation_step) * rotation_step;
+      }
+
+      _camera.rotation(make_quat_from_euler({0.0f, yaw, 0.0f}) * _camera.rotation() *
+                       make_quat_from_euler({pitch, 0.0f, 0.0f}));
    }
 
    if (_rotate_camera or _pan_camera) {
@@ -2484,9 +2494,8 @@ void world_edit::load_world(std::filesystem::path path) noexcept
       _world_path = path;
       _terrain_collision = world::terrain_collision{_world.terrain};
 
-      _camera.position({0.0f, 0.0f, 0.0f});
-      _camera.pitch(0.0f);
-      _camera.yaw(0.0f);
+      _camera.position({});
+      _camera.rotation({});
 
       SetWindowTextA(_window,
                      fmt::format("WorldEdit - {}", _world_path.filename().string())

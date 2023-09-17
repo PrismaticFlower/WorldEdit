@@ -35,6 +35,10 @@ public:
 
    auto inv_view_projection_matrix() const noexcept -> const float4x4&;
 
+   auto rotation() const noexcept -> quaternion;
+
+   void rotation(const quaternion new_rotation) noexcept;
+
    auto position() const noexcept -> float3;
 
    void position(const float3 new_position) noexcept;
@@ -54,14 +58,6 @@ public:
    void far_clip(const float new_far_clip) noexcept;
 
    auto far_clip() const noexcept -> float;
-
-   auto pitch() -> float;
-
-   void pitch(const float new_pitch);
-
-   auto yaw() -> float;
-
-   void yaw(const float new_yaw);
 
    auto view_width() const noexcept -> float;
 
@@ -87,14 +83,12 @@ private:
    float _near_clip = 1.0f;
    float _far_clip = 2000.0f;
 
+   quaternion _rotation;
    float3 _position{0.0f, 0.0f, 0.0f};
 
    float _aspect_ratio = 1.0f;
    float _fov = 1.2217305f;
    float _zoom = 1.0f;
-
-   float _pitch = 0.0f;
-   float _yaw = 0.0f;
 
    float _view_width = 256.0f;
 

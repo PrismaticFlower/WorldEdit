@@ -68,6 +68,18 @@ auto camera::position() const noexcept -> float3
    return _position;
 }
 
+auto camera::rotation() const noexcept -> quaternion
+{
+   return _rotation;
+}
+
+void camera::rotation(const quaternion new_rotation) noexcept
+{
+   _rotation = new_rotation;
+
+   update();
+}
+
 void camera::position(const float3 new_position) noexcept
 {
    _position = new_position;
@@ -123,30 +135,6 @@ auto camera::far_clip() const noexcept -> float
    return _far_clip;
 }
 
-auto camera::pitch() -> float
-{
-   return _pitch;
-}
-
-void camera::pitch(const float new_pitch)
-{
-   _pitch = new_pitch;
-
-   update();
-}
-
-auto camera::yaw() -> float
-{
-   return _yaw;
-}
-
-void camera::yaw(const float new_yaw)
-{
-   _yaw = new_yaw;
-
-   update();
-}
-
 auto camera::view_width() const noexcept -> float
 {
    return _view_width;
@@ -185,21 +173,7 @@ void camera::projection(const camera_projection new_projection) noexcept
 
 void camera::update() noexcept
 {
-   float pitch = 0.0f;
-   float yaw = 0.0f;
-
-   if (_projection == camera_projection::perspective) {
-      pitch = _pitch;
-      yaw = _yaw;
-   }
-   else {
-      constexpr float rotation_step = 0.17453292f;
-
-      pitch = std::floor(_pitch / rotation_step) * rotation_step;
-      yaw = std::floor(_yaw / rotation_step) * rotation_step;
-   }
-
-   float4x4 rotation = make_rotation_matrix_from_euler({pitch, yaw, 0.0f});
+   float4x4 rotation = to_matrix(_rotation);
 
    _world_matrix = rotation;
    _world_matrix[3] = {_position, 1.0f};
