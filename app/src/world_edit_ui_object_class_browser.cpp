@@ -29,45 +29,49 @@ void world_edit::ui_show_object_class_browser() noexcept
                continue;
             }
 
-            ImGui::PushID(asset.data(), asset.data() + asset.size());
-
             if (ImGui::IsRectVisible({button_size, button_size})) {
+               ImGui::PushID(asset.data(), asset.data() + asset.size());
+
                // Asset picture stuff!
-            }
 
-            if (ImGui::Button("", {button_size, button_size})) {
-               if (_interaction_targets.creation_entity and
-                   std::holds_alternative<world::object>(
-                      *_interaction_targets.creation_entity)) {
-                  const world::object& object =
-                     std::get<world::object>(*_interaction_targets.creation_entity);
+               if (ImGui::ImageButton("##add", ImGui::GetFont()->ContainerAtlas->TexID,
+                                      {button_size, button_size}, {}, {})) {
+                  if (_interaction_targets.creation_entity and
+                      std::holds_alternative<world::object>(
+                         *_interaction_targets.creation_entity)) {
+                     const world::object& object =
+                        std::get<world::object>(*_interaction_targets.creation_entity);
 
-                  _edit_stack_world
-                     .apply(edits::make_set_creation_value(&world::object::class_name,
-                                                           lowercase_string{asset},
-                                                           object.class_name),
-                            _edit_context);
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::object::class_name,
+                                                              lowercase_string{asset},
+                                                              object.class_name),
+                               _edit_context);
+                  }
+                  else {
+                     _edit_stack_world
+                        .apply(edits::make_creation_entity_set(
+                                  world::object{.name = "",
+                                                .layer = _last_created_entities.last_layer,
+                                                .class_name = lowercase_string{asset},
+                                                .id = world::max_id},
+                                  _interaction_targets.creation_entity),
+                               _edit_context);
+                     _entity_creation_context = {};
+                  }
                }
-               else {
-                  _edit_stack_world
-                     .apply(edits::make_creation_entity_set(
-                               world::object{.name = "",
-                                             .layer = _last_created_entities.last_layer,
-                                             .class_name = lowercase_string{asset},
-                                             .id = world::max_id},
-                               _interaction_targets.creation_entity),
-                            _edit_context);
-                  _entity_creation_context = {};
+
+               if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                  ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
+
+                  ImGui::EndTooltip();
                }
+
+               ImGui::PopID();
             }
-
-            if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
-               ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
-
-               ImGui::EndTooltip();
+            else {
+               ImGui::Dummy({button_size, button_size});
             }
-
-            ImGui::PopID();
 
             ImGui::SameLine();
 
