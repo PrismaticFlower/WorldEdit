@@ -52,6 +52,10 @@ void world_edit::update_ui() noexcept
       ui_show_world_stats();
    }
 
+   if (_object_class_browser_open) {
+      ui_show_object_class_browser();
+   }
+
    if (_camera_controls_open) {
       ui_show_camera_controls();
    }

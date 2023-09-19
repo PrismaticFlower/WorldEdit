@@ -141,6 +141,8 @@ private:
 
    void ui_show_about_window() noexcept;
 
+   void ui_show_object_class_browser() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    void start_entity_select() noexcept;
@@ -274,6 +276,7 @@ private:
    bool _world_requirements_editor_open = false;
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
+   bool _object_class_browser_open = false;
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;
    bool _about_window_open = false;
