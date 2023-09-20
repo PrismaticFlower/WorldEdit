@@ -30,12 +30,26 @@ void world_edit::ui_show_object_class_browser() noexcept
             }
 
             if (ImGui::IsRectVisible({button_size, button_size})) {
+               const std::optional<graphics::object_class_thumbnail> thumbnail =
+                  [&]() -> std::optional<graphics::object_class_thumbnail> {
+                  try {
+                     return _renderer->request_object_class_thumbnail(asset);
+                  }
+                  catch (graphics::gpu::exception& e) {
+                     handle_gpu_error(e);
+
+                     return std::nullopt;
+                  }
+               }();
+
+               if (not thumbnail) continue;
+
                ImGui::PushID(asset.data(), asset.data() + asset.size());
 
-               // Asset picture stuff!
-
-               if (ImGui::ImageButton("##add", ImGui::GetFont()->ContainerAtlas->TexID,
-                                      {button_size, button_size}, {}, {})) {
+               if (ImGui::ImageButton("##add", thumbnail->imgui_texture_id,
+                                      {button_size, button_size},
+                                      {thumbnail->uv_left, thumbnail->uv_top},
+                                      {thumbnail->uv_right, thumbnail->uv_bottom})) {
                   if (_interaction_targets.creation_entity and
                       std::holds_alternative<world::object>(
                          *_interaction_targets.creation_entity)) {

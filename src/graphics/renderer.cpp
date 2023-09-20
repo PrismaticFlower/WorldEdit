@@ -111,6 +111,18 @@ struct renderer_impl final : renderer {
       _pipelines.reload(_device, _shaders, _root_signatures);
    }
 
+   auto request_object_class_thumbnail(const std::string_view name)
+      -> object_class_thumbnail override
+   {
+      (void)name;
+
+      return {.imgui_texture_id = ImGui::GetFont()->ContainerAtlas->TexID,
+              .uv_left = 0.0f,
+              .uv_top = 0.0f,
+              .uv_right = 1.0f,
+              .uv_bottom = 1.0f};
+   }
+
 private:
    void update_frame_constant_buffer(const camera& camera,
                                      const settings::graphics& settings,

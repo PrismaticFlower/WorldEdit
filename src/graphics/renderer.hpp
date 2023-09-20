@@ -54,6 +54,14 @@ struct renderer_init {
    bool use_debug_layer = false;
 };
 
+struct object_class_thumbnail {
+   void* imgui_texture_id = nullptr;
+   float uv_left = 0.0f;
+   float uv_top = 0.0f;
+   float uv_right = 1.0f;
+   float uv_bottom = 1.0f;
+};
+
 struct renderer {
    virtual ~renderer() = default;
 
@@ -76,6 +84,9 @@ struct renderer {
    virtual void recreate_imgui_font_atlas() = 0;
 
    virtual void reload_shaders() noexcept = 0;
+
+   virtual auto request_object_class_thumbnail(const std::string_view name)
+      -> object_class_thumbnail = 0;
 };
 
 auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>;
