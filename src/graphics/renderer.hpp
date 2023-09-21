@@ -4,6 +4,7 @@
 #include "world/interaction_context.hpp"
 #include "world/object_class.hpp"
 #include "world/tool_visualizers.hpp"
+#include "object_class_thumbnail.hpp"
 
 #include <memory>
 
@@ -54,13 +55,6 @@ struct renderer_init {
    bool use_debug_layer = false;
 };
 
-struct object_class_thumbnail {
-   void* imgui_texture_id = nullptr;
-   float uv_left = 0.0f;
-   float uv_top = 0.0f;
-   float uv_right = 1.0f;
-   float uv_bottom = 1.0f;
-};
 
 struct renderer {
    virtual ~renderer() = default;

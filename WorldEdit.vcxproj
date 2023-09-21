@@ -256,6 +256,7 @@
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\sky.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
+    <ClCompile Include="src\graphics\thumbnail_manager.cpp" />
     <ClCompile Include="src\graphics\water.cpp" />
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
@@ -435,6 +436,7 @@
     <ClInclude Include="src\graphics\model_manager.hpp" />
     <ClInclude Include="src\graphics\geometric_shapes.hpp" />
     <ClInclude Include="src\graphics\cull_objects.hpp" />
+    <ClInclude Include="src\graphics\object_class_thumbnail.hpp" />
     <ClInclude Include="src\graphics\pipeline_library.hpp" />
     <ClInclude Include="src\graphics\profiler.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
@@ -447,6 +449,7 @@
     <ClInclude Include="src\graphics\terrain.hpp" />
     <ClInclude Include="src\graphics\texture_manager.hpp" />
     <ClInclude Include="src\graphics\copy_command_list_pool.hpp" />
+    <ClInclude Include="src\graphics\thumbnail_manager.hpp" />
     <ClInclude Include="src\graphics\water.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
     <ClInclude Include="src\hotkeys.hpp" />

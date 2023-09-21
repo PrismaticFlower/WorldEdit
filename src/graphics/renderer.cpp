@@ -35,6 +35,7 @@
 #include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
+#include "thumbnail_manager.hpp"
 
 #include <imgui.h>
 
@@ -114,13 +115,7 @@ struct renderer_impl final : renderer {
    auto request_object_class_thumbnail(const std::string_view name)
       -> object_class_thumbnail override
    {
-      (void)name;
-
-      return {.imgui_texture_id = ImGui::GetFont()->ContainerAtlas->TexID,
-              .uv_left = 0.0f,
-              .uv_top = 0.0f,
-              .uv_right = 1.0f,
-              .uv_bottom = 1.0f};
+      return _thumbnail_manager.request_object_class_thumbnail(name);
    }
 
 private:
@@ -268,6 +263,8 @@ private:
    profiler _profiler{_device, 256};
 
    renderer_config _config;
+
+   thumbnail_manager _thumbnail_manager;
 };
 
 renderer_impl::renderer_impl(const renderer_init& init)
