@@ -27,6 +27,7 @@
 #include "sky.hpp"
 #include "terrain.hpp"
 #include "texture_manager.hpp"
+#include "thumbnail_manager.hpp"
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
@@ -35,7 +36,6 @@
 #include "world/utility/boundary_nodes.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world.hpp"
-#include "thumbnail_manager.hpp"
 
 #include <imgui.h>
 
@@ -278,7 +278,9 @@ renderer_impl::renderer_impl(const renderer_init& init)
      _model_manager{_device,          _copy_command_list_pool,
                     _texture_manager, init.asset_libraries.models,
                     init.thread_pool, _error_output},
-     _sky{_device, _model_manager, init.asset_libraries}
+     _sky{_device, _model_manager, init.asset_libraries},
+     _thumbnail_manager{
+        thumbnail_manager_init{init.asset_libraries, init.error_output, _device}}
 {
    // create object constants upload buffers
    for (std::size_t i = 0; i < _object_constants_upload_buffers.size(); ++i) {
@@ -473,6 +475,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    command_list.flush_barriers();
 
    command_list.close();
+
+   _thumbnail_manager.draw_updated(_model_manager);
 
    _device.direct_queue.execute_command_lists(command_list);
 

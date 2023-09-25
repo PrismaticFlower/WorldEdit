@@ -101,7 +101,11 @@ private:
 
    void object_definition_loaded(const loaded_definition& loaded)
    {
-      _object_classes[loaded.name].update_definition(_asset_libraries, loaded.asset);
+      if (auto it = _object_classes.find(loaded.name); it != _object_classes.end()) {
+         auto& [_, object_class] = *it;
+
+         object_class.update_definition(_asset_libraries, loaded.asset);
+      }
    }
 
    void model_loaded(const loaded_model& loaded)

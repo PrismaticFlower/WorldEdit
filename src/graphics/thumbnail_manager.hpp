@@ -1,14 +1,42 @@
 #pragma once
 
+#include "gpu/rhi.hpp"
 #include "object_class_thumbnail.hpp"
 #include "utility/implementation_storage.hpp"
 
+#include <memory>
 #include <string_view>
+
+namespace we {
+
+class output_stream;
+
+}
+
+namespace we::async {
+
+class thread_pool;
+
+}
+
+namespace we::assets {
+
+struct libraries_manager;
+
+}
 
 namespace we::graphics {
 
+class model_manager;
+
+struct thumbnail_manager_init {
+   assets::libraries_manager& asset_libraries;
+   output_stream& error_output;
+   gpu::device& device;
+};
+
 struct thumbnail_manager {
-   thumbnail_manager();
+   explicit thumbnail_manager(const thumbnail_manager_init& init);
 
    ~thumbnail_manager();
 
@@ -19,9 +47,10 @@ struct thumbnail_manager {
    thumbnail_manager(thumbnail_manager&& other) noexcept = delete;
    auto operator=(thumbnail_manager&& other) noexcept -> thumbnail_manager& = delete;
 
-
-   auto request_object_class_thumbnail(const std::string_view name)
+   [[nodiscard]] auto request_object_class_thumbnail(const std::string_view name)
       -> object_class_thumbnail;
+
+   void draw_updated(model_manager& model_manager);
 
 private:
    struct impl;
