@@ -32,10 +32,24 @@ enum class material_pipeline_flags : uint8 {
    doublesided = 0b1,
    transparent = 0b10,
 
-   count = 0b1000
+   count = 0b100
 };
 
 constexpr bool marked_as_enum_bitflag(material_pipeline_flags)
+{
+   return true;
+}
+
+enum class thumbnail_mesh_pipeline_flags : uint8 {
+   none = 0b0,
+   doublesided = 0b1,
+   transparent = 0b10,
+   alpha_cutout = 0b100,
+
+   count = 0b1000
+};
+
+constexpr bool marked_as_enum_bitflag(thumbnail_mesh_pipeline_flags)
 {
    return true;
 }
@@ -45,6 +59,9 @@ using depth_prepass_pipelines =
 
 using material_pipelines =
    container::enum_array<gpu::unique_pipeline_handle, material_pipeline_flags>;
+
+using thumbnail_mesh_pipelines =
+   container::enum_array<gpu::unique_pipeline_handle, thumbnail_mesh_pipeline_flags>;
 
 struct pipeline_library {
    pipeline_library(gpu::device& device, const shader_library& shader_library,
@@ -69,6 +86,8 @@ struct pipeline_library {
    gpu::unique_pipeline_handle terrain_normal;
 
    gpu::unique_pipeline_handle water;
+
+   thumbnail_mesh_pipelines thumbnail_mesh;
 
    gpu::unique_pipeline_handle meta_draw_shape;
    gpu::unique_pipeline_handle meta_draw_shape_outlined;

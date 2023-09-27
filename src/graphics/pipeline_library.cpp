@@ -248,6 +248,53 @@ auto create_shadow_pipelines(gpu::device& device, const std::string_view name_ba
    return pipelines;
 }
 
+auto create_thumbnail_mesh_pipelines(gpu::device& device,
+                                     const shader_library& shader_library,
+                                     const root_signature_library& root_signature_library)
+   -> thumbnail_mesh_pipelines
+{
+   thumbnail_mesh_pipelines pipelines;
+
+   for (auto i = 0u; i < pipelines.size(); ++i) {
+      const auto flags = static_cast<thumbnail_mesh_pipeline_flags>(i);
+
+      const bool transparent =
+         are_flags_set(flags, thumbnail_mesh_pipeline_flags::transparent);
+      const bool doublesided =
+         are_flags_set(flags, thumbnail_mesh_pipeline_flags::doublesided);
+      const bool alpha_cutout =
+         are_flags_set(flags, thumbnail_mesh_pipeline_flags::alpha_cutout);
+
+      const std::string pipeline_name =
+         fmt::format("thumbnail_mesh{}{}{}", transparent ? "_transparent"sv : ""sv,
+                     doublesided ? "_doublesided"sv : ""sv,
+                     alpha_cutout ? "_alpha_cutout"sv : ""sv);
+
+      pipelines[i] =
+         {device.create_graphics_pipeline(
+             {.root_signature = root_signature_library.thumbnail_mesh.get(),
+
+              .vs_bytecode = shader_library["thumbnail_meshVS"sv],
+              .ps_bytecode =
+                 shader_library[alpha_cutout ? "thumbnail_mesh_alpha_cutoutPS"sv : "thumbnail_meshPS"sv],
+
+              .blend_state = transparent ? blend_premult_alpha : blend_disabled,
+              .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
+              .depth_stencil_state = transparent ? depth_stencil_readonly_less_equal
+                                                 : depth_stencil_enabled,
+              .input_layout = mesh_input_layout,
+
+              .render_target_count = 1,
+              .rtv_formats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+              .dsv_format = DXGI_FORMAT_D16_UNORM,
+
+              .debug_name = pipeline_name}),
+          device.direct_queue};
+   }
+
+   return pipelines;
+}
+
 }
 
 pipeline_library::pipeline_library(gpu::device& device,
@@ -305,6 +352,9 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
    mesh_normal = create_material_pipelines(device, "mesh_normal"sv, shader_library,
                                            root_signature_library);
+
+   thumbnail_mesh = create_thumbnail_mesh_pipelines(device, shader_library,
+                                                    root_signature_library);
 
    const bool supports_shader_barycentrics = device.supports_shader_barycentrics();
 

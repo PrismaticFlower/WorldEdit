@@ -13,6 +13,7 @@ constexpr uint32 terrain_cb_register = 4;
 constexpr uint32 meta_mesh_cb_register = 5;
 constexpr uint32 sky_mesh_cb_register = 6;
 constexpr uint32 water_cb_register = 7;
+constexpr uint32 thumbnail_camera_cb_register = 8;
 
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
@@ -153,6 +154,24 @@ const gpu::root_signature_desc sky_mesh_desc{
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "sky_mesh_root_signature",
+};
+
+const gpu::root_signature_desc thumbnail_mesh_desc{
+   .parameters =
+      {
+         material_constant_buffer,
+         gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
+                             .shader_register = thumbnail_camera_cb_register,
+                             .values_count = 3,
+                             .visibility = gpu::root_shader_visibility::pixel},
+         gpu::root_parameter{.type = gpu::root_parameter_type::constant_buffer_view,
+                             .shader_register = thumbnail_camera_cb_register,
+                             .visibility = gpu::root_shader_visibility::vertex},
+      },
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "thumbnail_mesh_root_signature",
 };
 
 const gpu::root_signature_desc mesh_wireframe_desc{
@@ -310,6 +329,8 @@ root_signature_library::root_signature_library(gpu::device& device)
    mesh_wireframe = {device.create_root_signature(mesh_wireframe_desc),
                      device.direct_queue};
    sky_mesh = {device.create_root_signature(sky_mesh_desc), device.direct_queue};
+   thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc),
+                     device.direct_queue};
    meta_draw = {device.create_root_signature(meta_draw_desc), device.direct_queue};
 
    ai_overlay_shape = {device.create_root_signature(ai_overlay_shape_desc),
