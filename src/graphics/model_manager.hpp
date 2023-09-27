@@ -11,7 +11,6 @@
 
 #include <memory>
 #include <shared_mutex>
-#include <unordered_map>
 #include <vector>
 
 #include <absl/container/flat_hash_map.h>
@@ -98,9 +97,9 @@ private:
 
    mutable std::shared_mutex _mutex;
 
-   std::unordered_map<lowercase_string, model_state> _models;
-   std::unordered_map<lowercase_string, pending_create_model> _pending_creations;
-   std::unordered_map<lowercase_string, asset_ref<assets::msh::flat_model>> _pending_loads;
+   absl::flat_hash_map<lowercase_string, model_state> _models;
+   absl::flat_hash_map<lowercase_string, pending_create_model> _pending_creations;
+   absl::flat_hash_map<lowercase_string, asset_ref<assets::msh::flat_model>> _pending_loads;
    absl::flat_hash_set<lowercase_string> _failed_creations;
    std::vector<std::unique_ptr<model>> _pending_destroys;
 
