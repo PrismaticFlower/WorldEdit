@@ -29,6 +29,8 @@ namespace we::graphics {
 
 class model_manager;
 struct dynamic_buffer_allocator;
+struct root_signature_library;
+struct pipeline_library;
 
 struct thumbnail_manager_init {
    assets::libraries_manager& asset_libraries;
@@ -52,6 +54,8 @@ struct thumbnail_manager {
       -> object_class_thumbnail;
 
    void draw_updated(model_manager& model_manager,
+                     root_signature_library& root_signature_library,
+                     pipeline_library& pipeline_library,
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
                      gpu::graphics_command_list& command_list);
 

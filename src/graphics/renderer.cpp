@@ -376,8 +376,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    command_list.reset(_sampler_heap.get());
 
-   _thumbnail_manager.draw_updated(_model_manager, _dynamic_buffer_allocator,
-                                   command_list);
+   _thumbnail_manager.draw_updated(_model_manager, _root_signatures, _pipelines,
+                                   _dynamic_buffer_allocator, command_list);
 
    _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
                                _dynamic_buffer_allocator, _profiler);

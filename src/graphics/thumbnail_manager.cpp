@@ -122,6 +122,8 @@ struct thumbnail_manager::impl {
    }
 
    void draw_updated(model_manager& model_manager,
+                     root_signature_library& root_signature_library,
+                     pipeline_library& pipeline_library,
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
                      gpu::graphics_command_list& command_list)
    {
@@ -148,7 +150,8 @@ struct thumbnail_manager::impl {
 
       if (status == model_status::ready or status == model_status::ready_textures_missing or
           status == model_status::ready_textures_loading) {
-         draw(model, _rendering->thumbnail_index, dynamic_buffer_allocator, command_list);
+         draw(model, _rendering->thumbnail_index, root_signature_library,
+              pipeline_library, dynamic_buffer_allocator, command_list);
 
          if (status == model_status::ready or
              status == model_status::ready_textures_missing) {
@@ -178,6 +181,8 @@ private:
    };
 
    void draw(const model& model, const thumbnail_index index,
+             root_signature_library& root_signature_library,
+             pipeline_library& pipeline_library,
              dynamic_buffer_allocator& dynamic_buffer_allocator,
              gpu::graphics_command_list& command_list)
    {
@@ -209,9 +214,9 @@ private:
          gpu::viewport{.width = static_cast<float>(temp_length),
                        .height = static_cast<float>(temp_length)});
       command_list.rs_set_scissor_rects({.right = temp_length, .bottom = temp_length});
-      command_list.om_set_render_targets(_render_rtv.get());
+      command_list.om_set_render_targets(_render_rtv.get(), _depth_dsv.get());
 
-      (void)model, dynamic_buffer_allocator;
+      (void)model, root_signature_library, pipeline_library, dynamic_buffer_allocator;
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(
@@ -383,10 +388,13 @@ auto thumbnail_manager::request_object_class_thumbnail(const std::string_view na
 }
 
 void thumbnail_manager::draw_updated(model_manager& model_manager,
+                                     root_signature_library& root_signature_library,
+                                     pipeline_library& pipeline_library,
                                      dynamic_buffer_allocator& dynamic_buffer_allocator,
                                      gpu::graphics_command_list& command_list)
 {
-   return _impl->draw_updated(model_manager, dynamic_buffer_allocator, command_list);
+   return _impl->draw_updated(model_manager, root_signature_library, pipeline_library,
+                              dynamic_buffer_allocator, command_list);
 }
 
 thumbnail_manager::thumbnail_manager(const thumbnail_manager_init& init)
