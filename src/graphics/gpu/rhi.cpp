@@ -417,17 +417,14 @@ void device::end_frame()
    // Onto the next frame.
    state->current_frame += 1;
 
-   const auto get_queue_sync_value = [&](command_queue& queue) -> uint64 {
-      std::scoped_lock lock{queue.state->sync_mutex};
-
-      return queue.state->sync_value;
-   };
-
-   const uint64 direct_queue_sync_value = get_queue_sync_value(direct_queue);
-   const uint64 compute_queue_sync_value = get_queue_sync_value(compute_queue);
-   const uint64 copy_queue_sync_value = get_queue_sync_value(copy_queue);
+   const uint64 direct_queue_sync_value =
+      direct_queue.state->sync_fence->GetCompletedValue();
+   const uint64 compute_queue_sync_value =
+      compute_queue.state->sync_fence->GetCompletedValue();
+   const uint64 copy_queue_sync_value =
+      copy_queue.state->sync_fence->GetCompletedValue();
    const uint64 background_copy_queue_sync_value =
-      get_queue_sync_value(background_copy_queue);
+      background_copy_queue.state->sync_fence->GetCompletedValue();
 
    direct_queue.state->release_queue_device_children.process(direct_queue_sync_value);
    direct_queue.state->release_queue_descriptors.process(direct_queue_sync_value);
