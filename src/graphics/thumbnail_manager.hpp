@@ -28,6 +28,7 @@ struct libraries_manager;
 namespace we::graphics {
 
 class model_manager;
+struct dynamic_buffer_allocator;
 
 struct thumbnail_manager_init {
    assets::libraries_manager& asset_libraries;
@@ -50,7 +51,9 @@ struct thumbnail_manager {
    [[nodiscard]] auto request_object_class_thumbnail(const std::string_view name)
       -> object_class_thumbnail;
 
-   void draw_updated(model_manager& model_manager);
+   void draw_updated(model_manager& model_manager,
+                     dynamic_buffer_allocator& dynamic_buffer_allocator,
+                     gpu::graphics_command_list& command_list);
 
 private:
    struct impl;

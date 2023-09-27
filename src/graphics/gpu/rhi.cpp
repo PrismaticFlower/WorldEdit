@@ -2364,7 +2364,7 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 
    RECT win32_rect{};
 
-   if (rect) win32_rect = std::bit_cast<RECT>(win32_rect);
+   if (rect) win32_rect = std::bit_cast<RECT>(*rect);
 
    state->command_list->ClearDepthStencilView(unpack_dsv_handle(depth_stencil),
                                               d3d12_flags, depth, stencil,
@@ -2377,7 +2377,7 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 {
    RECT win32_rect{};
 
-   if (rect) win32_rect = std::bit_cast<RECT>(win32_rect);
+   if (rect) win32_rect = std::bit_cast<RECT>(*rect);
 
    state->command_list->ClearRenderTargetView(unpack_rtv_handle(rendertarget),
                                               &color.x, rect ? 1 : 0,

@@ -376,6 +376,9 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    command_list.reset(_sampler_heap.get());
 
+   _thumbnail_manager.draw_updated(_model_manager, _dynamic_buffer_allocator,
+                                   command_list);
+
    _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
                                _dynamic_buffer_allocator, _profiler);
    _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures,
@@ -475,8 +478,6 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    command_list.flush_barriers();
 
    command_list.close();
-
-   _thumbnail_manager.draw_updated(_model_manager);
 
    _device.direct_queue.execute_command_lists(command_list);
 
