@@ -11,12 +11,22 @@
 
 #include <memory>
 #include <shared_mutex>
+#include <unordered_map>
 #include <vector>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
 namespace we::graphics {
+
+enum class model_status {
+   ready,
+   ready_textures_missing,
+   ready_textures_loading,
+   loading,
+   errored,
+   missing
+};
 
 class model_manager {
 public:
@@ -52,6 +62,11 @@ public:
    /// @return If the model is the placeholder or not.
    bool is_placeholder(const model& model) const noexcept;
 
+   /// @brief Query the status of a model.
+   /// @param name The name of the model to query the status of.
+   /// @return The status of the model.
+   auto status(const lowercase_string& name) const noexcept -> model_status;
+
 private:
    struct model_state {
       std::unique_ptr<model> model;
@@ -67,6 +82,9 @@ private:
                      asset_ref<assets::msh::flat_model> asset,
                      asset_data<assets::msh::flat_model> data) noexcept;
 
+   void model_load_failed(const lowercase_string& name,
+                          asset_ref<assets::msh::flat_model> asset) noexcept;
+
    /// @brief Creates a model asynchronously. _mutex **MUST** be held with exclusive ownership before calling this funciton.
    void enqueue_create_model(const lowercase_string& name,
                              asset_ref<assets::msh::flat_model> asset,
@@ -78,10 +96,11 @@ private:
    texture_manager& _texture_manager;
    output_stream& _error_output;
 
-   std::shared_mutex _mutex;
+   mutable std::shared_mutex _mutex;
 
-   absl::flat_hash_map<lowercase_string, model_state> _models;
-   absl::flat_hash_map<lowercase_string, pending_create_model> _pending_creations;
+   std::unordered_map<lowercase_string, model_state> _models;
+   std::unordered_map<lowercase_string, pending_create_model> _pending_creations;
+   std::unordered_map<lowercase_string, asset_ref<assets::msh::flat_model>> _pending_loads;
    absl::flat_hash_set<lowercase_string> _failed_creations;
    std::vector<std::unique_ptr<model>> _pending_destroys;
 
@@ -93,6 +112,10 @@ private:
                        asset_data<assets::msh::flat_model>)>
       _asset_load_listener = _model_assets.listen_for_loads(
          [this](const auto&... args) { model_loaded(args...); });
+
+   event_listener<void(const lowercase_string&, asset_ref<assets::msh::flat_model>)> _asset_load_failure_listener =
+      _model_assets.listen_for_load_failures(
+         [this](const auto&... args) { model_load_failed(args...); });
 };
 
 }

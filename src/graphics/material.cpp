@@ -197,7 +197,7 @@ void material::init_textures(const assets::msh::material& material,
    }
 
    if (not texture_names.env_map.empty() and
-       textures.env_map == texture_manager.null_normal_map()) {
+       textures.env_map == texture_manager.null_cube_map()) {
       texture_load_tokens.env_map =
          texture_manager.acquire_load_token(texture_names.env_map);
    }
@@ -340,4 +340,90 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
                                           textures.env_map->srv_srgb.index);
    }
 }
+
+auto material::status(const texture_manager& texture_manager) const noexcept -> material_status
+{
+   bool missing_textures = false;
+
+   if (not texture_names.diffuse_map.empty()) {
+      switch (texture_manager.status(texture_names.diffuse_map,
+                                     world_texture_dimension::_2d)) {
+      case texture_status::ready: {
+         if (textures.diffuse_map == texture_manager.null_diffuse_map()) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (not texture_names.normal_map.empty()) {
+      switch (texture_manager.status(texture_names.normal_map,
+                                     world_texture_dimension::_2d)) {
+      case texture_status::ready: {
+         if (textures.normal_map == texture_manager.null_normal_map()) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (not texture_names.detail_map.empty()) {
+      switch (texture_manager.status(texture_names.detail_map,
+                                     world_texture_dimension::_2d)) {
+      case texture_status::ready: {
+         if (textures.detail_map == texture_manager.null_detail_map()) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (not texture_names.env_map.empty()) {
+      switch (texture_manager.status(texture_names.env_map,
+                                     world_texture_dimension::cube)) {
+      case texture_status::ready: {
+         if (textures.env_map == texture_manager.null_cube_map()) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (missing_textures) return material_status::ready_textures_missing;
+
+   return material_status::ready;
+}
+
 }

@@ -231,6 +231,30 @@ void texture_manager::update_textures() noexcept
    }
 }
 
+auto texture_manager::status(const lowercase_string& name,
+                             const world_texture_dimension dimension) const noexcept
+   -> texture_status
+{
+   std::shared_lock lock{_shared_mutex};
+
+   if (auto it = _textures.find(name); it != _textures.end()) {
+      const texture_state& state = it->second;
+
+      if (auto texture = state.texture.lock(); texture) {
+         if (texture->dimension != dimension) {
+            return texture_status::dimension_mismatch;
+         }
+
+         return texture_status::ready;
+      }
+   }
+
+   if (_pending_textures.contains(name)) return texture_status::loading;
+   if (_copied_textures.contains(name)) return texture_status::loading;
+
+   return texture_status::missing;
+}
+
 void texture_manager::init_texture(gpu::resource_handle texture,
                                    const assets::texture::texture& cpu_texture)
 {

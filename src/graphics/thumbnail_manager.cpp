@@ -29,7 +29,7 @@ constexpr uint32 atlas_thumbnails = 256;
 struct thumbnail_manager::impl {
    explicit impl(const thumbnail_manager_init& init)
       : _asset_libraries{init.asset_libraries},
-        _error_output{_error_output},
+        _error_output{init.error_output},
         _device{init.device}
    {
       const uint32 atlas_items_width = max_texture_length / temp_length;
@@ -104,15 +104,39 @@ struct thumbnail_manager::impl {
                                 .model = pending.model};
       }
 
-      [[maybe_unused]] const model& model = model_manager[_rendering->model_name];
+      const model& model = model_manager[_rendering->model_name];
+      const model_status status = model_manager.status(_rendering->model_name);
 
-      // TODO: Render the thumbnail and stuff.
-      _items.emplace(_rendering->name,
-                     _free_items[_items.size() % _free_items.size()]);
+      if (status == model_status::ready or status == model_status::ready_textures_missing or
+          status == model_status::ready_textures_loading) {
+         // TODO: Render the thumbnail and stuff.
+         (void)model;
 
-      {
-         std::scoped_lock lock{_pending_render_mutex};
+         _error_output.write("Pretending to render thumbnail for {}\n",
+                             _rendering->name);
 
+         _items.emplace(_rendering->name,
+                        _free_items[_items.size() % _free_items.size()]);
+
+         if (status == model_status::ready or
+             status == model_status::ready_textures_missing) {
+            _error_output.write("Pretending to finalize thumbnail for {}\n",
+                                _rendering->name);
+
+            std::scoped_lock lock{_pending_render_mutex};
+
+            _pending_render.erase(_rendering->name);
+            _rendering = std::nullopt;
+         }
+      }
+      else if (status == model_status::errored or status == model_status::missing) {
+         _error_output.write(
+            "Unable to render thumbnail for '{}'. Model errored or missing.\n",
+            _rendering->name);
+
+         std::scoped_lock lock{_pending_render_mutex, _missing_model_odfs_mutex};
+
+         _missing_model_odfs.emplace(_rendering->name);
          _pending_render.erase(_rendering->name);
          _rendering = std::nullopt;
       }
@@ -219,7 +243,17 @@ private:
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,
                        asset_data<assets::odf::definition>)>
       _asset_load_listener = _asset_libraries.odfs.listen_for_loads(
-         [this](const auto&... args) { odf_loaded(args...); });
+         [this](const lowercase_string& name,
+                const asset_ref<assets::odf::definition>& ref,
+                const asset_data<assets::odf::definition>& data) {
+            {
+               std::shared_lock lock{_pending_odfs_mutex};
+
+               if (not _pending_odfs.contains(name)) return;
+            }
+
+            odf_loaded(name, ref, data);
+         });
 };
 
 auto thumbnail_manager::request_object_class_thumbnail(const std::string_view name)

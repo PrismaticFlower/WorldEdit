@@ -142,6 +142,13 @@ struct library<T>::impl {
       return _load_event.listen(std::move(callback));
    }
 
+   auto listen_for_load_failures(
+      std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
+      -> event_listener<void(const lowercase_string&, asset_ref<T>)>
+   {
+      return _load_failed_event.listen(std::move(callback));
+   }
+
    void update_loaded() noexcept
    {
    restart_loop:
@@ -300,6 +307,8 @@ private:
                                     asset_path.string(),
                                     string::indent(2, e.what()));
 
+               _load_failed_event.broadcast(name, asset);
+
                return nullptr;
             }
          });
@@ -330,6 +339,7 @@ private:
    const std::shared_ptr<asset_state<T>> _null_asset = make_placeholder_asset_state();
 
    utility::event<void(const lowercase_string&, asset_ref<T>, asset_data<T>)> _load_event;
+   utility::event<void(const lowercase_string&, asset_ref<T>)> _load_failed_event;
 };
 
 template<typename T>
@@ -362,6 +372,14 @@ auto library<T>::listen_for_loads(
    -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>
 {
    return self->listen_for_loads(std::move(callback));
+}
+
+template<typename T>
+auto library<T>::listen_for_load_failures(
+   std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
+   -> event_listener<void(const lowercase_string&, asset_ref<T>)>
+{
+   return self->listen_for_load_failures(std::move(callback));
 }
 
 template<typename T>

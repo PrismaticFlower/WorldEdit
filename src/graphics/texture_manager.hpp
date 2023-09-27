@@ -44,6 +44,14 @@ private:
 using updated_textures =
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>;
 
+enum class texture_status {
+   ready,
+   loading,
+   errored,
+   missing,
+   dimension_mismatch
+};
+
 struct texture_manager {
    texture_manager(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
                    std::shared_ptr<async::thread_pool> thread_pool,
@@ -67,35 +75,35 @@ struct texture_manager {
 
    /// @brief Texture with a color value of 0.75, 0.75, 0.75, 1.0.
    /// @return The texture.
-   auto null_diffuse_map() -> std::shared_ptr<const world_texture>
+   auto null_diffuse_map() const noexcept -> std::shared_ptr<const world_texture>
    {
       return _null_diffuse_map;
    }
 
    /// @brief Texture with a color value of 0.5, 0.5, 1.0, 1.0.
    /// @return The texture.
-   auto null_normal_map() -> std::shared_ptr<const world_texture>
+   auto null_normal_map() const noexcept -> std::shared_ptr<const world_texture>
    {
       return _null_normal_map;
    }
 
    /// @brief Texture with a color value of 0.5, 0.5, 0.5, 1.0.
    /// @return The texture.
-   auto null_detail_map() -> std::shared_ptr<const world_texture>
+   auto null_detail_map() const noexcept -> std::shared_ptr<const world_texture>
    {
       return _null_detail_map;
    }
 
    /// @brief Cube texture with a color value of 0.0, 0.0, 0.0, 1.0.
    /// @return The texture.
-   auto null_cube_map() -> std::shared_ptr<const world_texture>
+   auto null_cube_map() const noexcept -> std::shared_ptr<const world_texture>
    {
       return _null_cube_map;
    }
 
    /// @brief Texture with a color value of 1.0, 1.0, 1.0, 1.0.
    /// @return The texture.
-   auto null_color_map() -> std::shared_ptr<const world_texture>
+   auto null_color_map() const noexcept -> std::shared_ptr<const world_texture>
    {
       return _null_color_map;
    }
@@ -128,6 +136,13 @@ struct texture_manager {
 
    /// @brief Call at the start of a frame to update textures that have been created asynchronously. eval_updated_textures() implicitly calls this.
    void update_textures() noexcept;
+
+   /// @brief Query the status of a texture.
+   /// @param name The name of the texture to query the status of.
+   /// @param dimension The desired dimension of the texture to query the status.
+   /// @return The status of the texture.
+   auto status(const lowercase_string& name,
+               const world_texture_dimension dimension) const noexcept -> texture_status;
 
 private:
    void init_texture(gpu::resource_handle texture,
@@ -171,7 +186,7 @@ private:
    gpu::device& _device;
    copy_command_list_pool& _copy_command_list_pool;
 
-   std::shared_mutex _shared_mutex;
+   mutable std::shared_mutex _shared_mutex;
    absl::flat_hash_map<lowercase_string, texture_state> _textures;
    absl::flat_hash_map<lowercase_string, pending_texture> _pending_textures;
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>> _copied_textures;

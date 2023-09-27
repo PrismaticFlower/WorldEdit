@@ -38,7 +38,8 @@ auto model_manager::operator[](const lowercase_string& name) -> model&
          return *state->second.model;
       }
 
-      if (_pending_creations.contains(name) or _failed_creations.contains(name)) {
+      if (_pending_creations.contains(name) or _pending_loads.contains(name) or
+          _failed_creations.contains(name)) {
          return _placeholder_model;
       }
    }
@@ -51,7 +52,9 @@ auto model_manager::operator[](const lowercase_string& name) -> model&
 
    // Make sure another thread hasn't created the model inbetween us checking
    // for it and taking the write lock.
-   if (_pending_creations.contains(name)) return _placeholder_model;
+   if (_pending_creations.contains(name) or _pending_loads.contains(name)) {
+      return _placeholder_model;
+   }
 
    if (auto state = _models.find(name); state != _models.end()) {
       return *state->second.model;
@@ -59,7 +62,11 @@ auto model_manager::operator[](const lowercase_string& name) -> model&
 
    auto flat_model = asset.get_if();
 
-   if (flat_model == nullptr) return _placeholder_model;
+   if (flat_model == nullptr) {
+      _pending_loads.emplace(name, asset);
+
+      return _placeholder_model;
+   }
 
    enqueue_create_model(name, asset, flat_model);
 
@@ -111,6 +118,41 @@ bool model_manager::is_placeholder(const model& model) const noexcept
    return &model == &_placeholder_model;
 }
 
+auto model_manager::status(const lowercase_string& name) const noexcept -> model_status
+{
+   std::shared_lock lock{_mutex};
+
+   if (auto it = _models.find(name); it != _models.end()) {
+      const model& model = *it->second.model;
+
+      bool missing_textures = false;
+
+      for (const mesh_part& part : model.parts) {
+         switch (part.material.status(_texture_manager)) {
+         case material_status::ready:
+            break; // Nothing to do but handle the case anyway.
+         case material_status::ready_textures_missing:
+            missing_textures = true;
+            break;
+         case material_status::ready_textures_loading:
+            return model_status::ready_textures_loading;
+         }
+      }
+
+      if (missing_textures) return model_status::ready_textures_missing;
+
+      return model_status::ready;
+   }
+
+   if (_pending_creations.contains(name)) return model_status::loading;
+
+   if (_pending_loads.contains(name)) return model_status::loading;
+
+   if (_failed_creations.contains(name)) return model_status::errored;
+
+   return model_status::missing;
+}
+
 void model_manager::model_loaded(const lowercase_string& name,
                                  asset_ref<assets::msh::flat_model> asset,
                                  asset_data<assets::msh::flat_model> data) noexcept
@@ -126,10 +168,21 @@ void model_manager::model_loaded(const lowercase_string& name,
    enqueue_create_model(name, asset, data);
 }
 
+void model_manager::model_load_failed(const lowercase_string& name,
+                                      asset_ref<assets::msh::flat_model> asset) noexcept
+{
+   std::scoped_lock lock{_mutex};
+
+   _pending_loads.erase(name);
+   _failed_creations.emplace(name);
+}
+
 void model_manager::enqueue_create_model(const lowercase_string& name,
                                          asset_ref<assets::msh::flat_model> asset,
                                          asset_data<assets::msh::flat_model> flat_model) noexcept
 {
+   _pending_loads.erase(name);
+
    _pending_creations[name] =
       {.task =
           _thread_pool->exec(async::task_priority::low,
