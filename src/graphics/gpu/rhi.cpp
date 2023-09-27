@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <bit>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -259,7 +260,7 @@ struct device_state {
 
    com_ptr<ID3D12Fence> frame_fence =
       create_fence(*device, frame_pipeline_length - 1);
-   uint64 current_frame = frame_pipeline_length;
+   std::atomic_uint64_t current_frame = frame_pipeline_length;
 
    descriptor_heap srv_uav_descriptor_heap{*device,
                                            {.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
@@ -276,9 +277,15 @@ struct device_state {
                                         .NumDescriptors = num_dsv_descriptors,
                                         .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE}};
 
-   command_allocator_pool direct_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_DIRECT};
-   command_allocator_pool compute_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_COMPUTE};
-   command_allocator_pool copy_command_allocator_pool{*device, D3D12_COMMAND_LIST_TYPE_COPY};
+   command_allocator_pool direct_command_allocator_pool{*device, *frame_fence,
+                                                        current_frame,
+                                                        D3D12_COMMAND_LIST_TYPE_DIRECT};
+   command_allocator_pool compute_command_allocator_pool{*device, *frame_fence,
+                                                         current_frame,
+                                                         D3D12_COMMAND_LIST_TYPE_COMPUTE};
+   command_allocator_pool copy_command_allocator_pool{*device, *frame_fence,
+                                                      current_frame,
+                                                      D3D12_COMMAND_LIST_TYPE_COPY};
 
    const bool supports_enhanced_barriers : 1;
    const bool supports_shader_barycentrics : 1 =
@@ -305,9 +312,13 @@ struct swap_chain_state {
 
 struct command_queue_state {
    com_ptr<ID3D12CommandQueue> command_queue;
-   com_ptr<ID3D12Fence> work_fence;
 
-   std::atomic_uint64_t last_work_item = 0;
+   std::shared_mutex sync_mutex;
+   com_ptr<ID3D12Fence> sync_fence;
+   uint64 sync_value = 0;
+   uint64 release_last_sync_value = 0;
+
+   std::atomic_bool work_executed_since_release = false;
 
    release_queue<com_ptr<ID3D12DeviceChild>> release_queue_device_children;
    release_queue<unique_descriptor_releaser> release_queue_descriptors;
@@ -351,9 +362,6 @@ struct command_list_state {
 
    com_ptr<ID3D12CommandAllocator> command_allocator;
    com_ptr<ID3D12DescriptorHeap> descriptor_heap;
-
-   com_ptr<ID3D12Fence> execution_fence = nullptr;
-   uint64 execution_work_item = UINT64_MAX;
 
    command_allocator_pool* allocator_pool = nullptr;
    std::string allocator_name;
@@ -402,61 +410,67 @@ void device::end_frame()
                                              state->current_frame);
 
    // Wait for the oldest frame to complete if needed.
-   throw_if_fail(state->frame_fence->SetEventOnCompletion(state->current_frame -
-                                                             (frame_pipeline_length - 1),
-                                                          nullptr));
+   const uint64 completed_frame = state->current_frame - (frame_pipeline_length - 1);
+
+   throw_if_fail(state->frame_fence->SetEventOnCompletion(completed_frame, nullptr));
 
    // Onto the next frame.
    state->current_frame += 1;
 
-   // Also release any resources we can.
-   const uint64 direct_queue_completed_work_item =
-      direct_queue.state->work_fence->GetCompletedValue();
-   const uint64 compute_queue_completed_work_item =
-      compute_queue.state->work_fence->GetCompletedValue();
-   const uint64 copy_queue_completed_work_item =
-      copy_queue.state->work_fence->GetCompletedValue();
-   const uint64 background_copy_queue_completed_work_item =
-      background_copy_queue.state->work_fence->GetCompletedValue();
+   const auto get_queue_sync_value = [&](command_queue& queue) -> uint64 {
+      std::scoped_lock lock{queue.state->sync_mutex};
 
-   direct_queue.state->release_queue_device_children.process(
-      direct_queue_completed_work_item);
-   direct_queue.state->release_queue_descriptors.process(direct_queue_completed_work_item);
+      return queue.state->sync_value;
+   };
 
-   compute_queue.state->release_queue_device_children.process(
-      compute_queue_completed_work_item);
-   compute_queue.state->release_queue_descriptors.process(compute_queue_completed_work_item);
+   const uint64 direct_queue_sync_value = get_queue_sync_value(direct_queue);
+   const uint64 compute_queue_sync_value = get_queue_sync_value(compute_queue);
+   const uint64 copy_queue_sync_value = get_queue_sync_value(copy_queue);
+   const uint64 background_copy_queue_sync_value =
+      get_queue_sync_value(background_copy_queue);
 
-   copy_queue.state->release_queue_device_children.process(copy_queue_completed_work_item);
-   copy_queue.state->release_queue_descriptors.process(copy_queue_completed_work_item);
+   direct_queue.state->release_queue_device_children.process(direct_queue_sync_value);
+   direct_queue.state->release_queue_descriptors.process(direct_queue_sync_value);
+
+   compute_queue.state->release_queue_device_children.process(compute_queue_sync_value);
+   compute_queue.state->release_queue_descriptors.process(compute_queue_sync_value);
+
+   copy_queue.state->release_queue_device_children.process(copy_queue_sync_value);
+   copy_queue.state->release_queue_descriptors.process(copy_queue_sync_value);
 
    background_copy_queue.state->release_queue_device_children.process(
-      background_copy_queue_completed_work_item);
+      background_copy_queue_sync_value);
    background_copy_queue.state->release_queue_descriptors.process(
-      background_copy_queue_completed_work_item);
+      background_copy_queue_sync_value);
 }
 
 void device::wait_for_idle()
 {
-   const uint64 direct_queue_last_work_item =
-      direct_queue.state->last_work_item.load(std::memory_order_acquire);
-   const uint64 compute_queue_last_work_item =
-      compute_queue.state->last_work_item.load(std::memory_order_acquire);
-   const uint64 copy_queue_last_work_item =
-      copy_queue.state->last_work_item.load(std::memory_order_acquire);
-   const uint64 background_copy_queue_last_work_item =
-      background_copy_queue.state->last_work_item.load(std::memory_order_acquire);
+   const auto insert_queue_signal = [&](command_queue& queue) -> uint64 {
+      std::scoped_lock lock{queue.state->sync_mutex};
 
-   std::array fences{direct_queue.state->work_fence.get(),
-                     compute_queue.state->work_fence.get(),
-                     copy_queue.state->work_fence.get(),
-                     background_copy_queue.state->work_fence.get()};
+      const uint64 signal_value = ++queue.state->sync_value;
 
-   std::array last_work_items{direct_queue_last_work_item,
-                              compute_queue_last_work_item, copy_queue_last_work_item,
-                              background_copy_queue_last_work_item};
+      queue.state->command_queue->Signal(queue.state->sync_fence.get(), signal_value);
 
-   static_assert(fences.size() == last_work_items.size());
+      return signal_value;
+   };
+
+   const uint64 direct_queue_sync_value = insert_queue_signal(direct_queue);
+   const uint64 compute_queue_sync_value = insert_queue_signal(compute_queue);
+   const uint64 copy_queue_sync_value = insert_queue_signal(copy_queue);
+   const uint64 background_copy_queue_sync_value =
+      insert_queue_signal(background_copy_queue);
+
+   std::array fences{direct_queue.state->sync_fence.get(),
+                     compute_queue.state->sync_fence.get(),
+                     copy_queue.state->sync_fence.get(),
+                     background_copy_queue.state->sync_fence.get()};
+
+   std::array sync_values{direct_queue_sync_value, compute_queue_sync_value,
+                          copy_queue_sync_value, background_copy_queue_sync_value};
+
+   static_assert(fences.size() == sync_values.size());
 
    // Make sure we're not about to wait on a lost device.
    for (ID3D12Fence* const fence : fences) {
@@ -464,24 +478,24 @@ void device::wait_for_idle()
    }
 
    throw_if_fail(state->device->SetEventOnMultipleFenceCompletion(
-      fences.data(), last_work_items.data(), static_cast<uint32>(fences.size()),
+      fences.data(), sync_values.data(), static_cast<uint32>(fences.size()),
       D3D12_MULTIPLE_FENCE_WAIT_FLAG_ALL, nullptr));
 
    // Release resources we now know the GPU to be done with.
 
-   direct_queue.state->release_queue_device_children.process(direct_queue_last_work_item);
-   direct_queue.state->release_queue_descriptors.process(direct_queue_last_work_item);
+   direct_queue.state->release_queue_device_children.process(direct_queue_sync_value);
+   direct_queue.state->release_queue_descriptors.process(direct_queue_sync_value);
 
-   compute_queue.state->release_queue_device_children.process(compute_queue_last_work_item);
-   compute_queue.state->release_queue_descriptors.process(compute_queue_last_work_item);
+   compute_queue.state->release_queue_device_children.process(compute_queue_sync_value);
+   compute_queue.state->release_queue_descriptors.process(compute_queue_sync_value);
 
-   copy_queue.state->release_queue_device_children.process(copy_queue_last_work_item);
-   copy_queue.state->release_queue_descriptors.process(copy_queue_last_work_item);
+   copy_queue.state->release_queue_device_children.process(copy_queue_sync_value);
+   copy_queue.state->release_queue_descriptors.process(copy_queue_sync_value);
 
    background_copy_queue.state->release_queue_device_children.process(
-      background_copy_queue_last_work_item);
+      background_copy_queue_sync_value);
    background_copy_queue.state->release_queue_descriptors.process(
-      background_copy_queue_last_work_item);
+      background_copy_queue_sync_value);
 }
 
 auto device::create_copy_command_list(const command_list_desc& desc) -> copy_command_list
@@ -1471,7 +1485,7 @@ command_queue::command_queue(const command_queue_init& init)
    terminate_if_fail(
       state->device->device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                          IID_PPV_ARGS(
-                                            state->work_fence.clear_and_assign())));
+                                            state->sync_fence.clear_and_assign())));
 
    if (not init.debug_name.empty()) {
       set_debug_name(*state->command_queue, init.debug_name);
@@ -1493,94 +1507,197 @@ void command_queue::execute_command_lists(std::span<command_list*> command_lists
    state->command_queue->ExecuteCommandLists(static_cast<uint32>(
                                                 d3d12_command_lists.size()),
                                              d3d12_command_lists.data());
-
-   const uint64 work_item =
-      state->last_work_item.fetch_add(1, std::memory_order_release) + 1;
-
-   state->command_queue->Signal(state->work_fence.get(), work_item);
-
-   for (auto* list : command_lists) {
-      list->state->execution_fence = state->work_fence;
-      list->state->execution_work_item = work_item;
-   }
+   state->work_executed_since_release = true;
 }
 
 void command_queue::sync_with(command_queue& other)
 {
-   const uint64 last_work_item =
-      other.state->last_work_item.load(std::memory_order_acquire);
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{other.state->sync_mutex};
 
-   state->command_queue->Wait(other.state->work_fence.get(), last_work_item);
+      const uint64 signal_value = ++other.state->sync_value;
+
+      other.state->command_queue->Signal(other.state->sync_fence.get(), signal_value);
+
+      return signal_value;
+   }();
+
+   state->command_queue->Wait(other.state->sync_fence.get(), sync_value);
 }
 
 void command_queue::wait_for_idle()
 {
-   const uint64 last_work_item = state->last_work_item.load(std::memory_order_acquire);
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
 
-   state->work_fence->SetEventOnCompletion(last_work_item, nullptr);
+      const uint64 signal_value = ++state->sync_value;
 
-   state->release_queue_device_children.process(last_work_item);
-   state->release_queue_descriptors.process(last_work_item);
+      state->command_queue->Signal(state->sync_fence.get(), signal_value);
+
+      return signal_value;
+   }();
+
+   state->sync_fence->SetEventOnCompletion(sync_value, nullptr);
+
+   state->release_queue_device_children.process(sync_value);
+   state->release_queue_descriptors.process(sync_value);
 }
 
 void command_queue::release_root_signature(root_signature_handle root_signature)
 {
-   state->release_queue_device_children
-      .push(state->last_work_item.load(std::memory_order_acquire),
-            com_ptr{unpack_root_signature_handle(root_signature)});
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_device_children.push(sync_value, com_ptr{unpack_root_signature_handle(
+                                                            root_signature)});
 }
 
 void command_queue::release_pipeline(pipeline_handle pipeline)
 {
-   state->release_queue_device_children.push(state->last_work_item.load(
-                                                std::memory_order_acquire),
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_device_children.push(sync_value,
                                              com_ptr{unpack_pipeline_handle(pipeline)});
 }
 
 void command_queue::release_resource(resource_handle resource)
 {
-   state->release_queue_device_children.push(state->last_work_item.load(
-                                                std::memory_order_acquire),
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_device_children.push(sync_value,
                                              com_ptr{unpack_resource_handle(resource)});
 }
 
 void command_queue::release_resource_view(resource_view resource_view)
 {
-   state->release_queue_descriptors
-      .push(state->last_work_item.load(std::memory_order_acquire),
-            {resource_view.index, state->device->srv_uav_descriptor_heap.allocator});
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_descriptors.push(sync_value,
+                                         {resource_view.index,
+                                          state->device->srv_uav_descriptor_heap.allocator});
 }
 
 void command_queue::release_render_target_view(rtv_handle render_target_view)
 {
-   state->release_queue_descriptors
-      .push(state->last_work_item.load(std::memory_order_acquire),
-            {state->device->rtv_descriptor_heap.to_index(
-                unpack_rtv_handle(render_target_view)),
-             state->device->rtv_descriptor_heap.allocator});
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_descriptors.push(sync_value,
+                                         {state->device->rtv_descriptor_heap.to_index(
+                                             unpack_rtv_handle(render_target_view)),
+                                          state->device->rtv_descriptor_heap.allocator});
 }
 
 void command_queue::release_depth_stencil_view(dsv_handle depth_stencil_view)
 {
-   state->release_queue_descriptors
-      .push(state->last_work_item.load(std::memory_order_acquire),
-            {state->device->dsv_descriptor_heap.to_index(
-                unpack_dsv_handle(depth_stencil_view)),
-             state->device->dsv_descriptor_heap.allocator});
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_descriptors.push(sync_value,
+                                         {state->device->dsv_descriptor_heap.to_index(
+                                             unpack_dsv_handle(depth_stencil_view)),
+                                          state->device->dsv_descriptor_heap.allocator});
 }
 
 void command_queue::release_sampler_heap(sampler_heap_handle sampler_heap)
 {
-   state->release_queue_device_children
-      .push(state->last_work_item.load(std::memory_order_acquire),
-            com_ptr{unpack_sampler_heap_handle(sampler_heap)});
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_device_children.push(sync_value, com_ptr{unpack_sampler_heap_handle(
+                                                            sampler_heap)});
 }
 
 void command_queue::release_query_heap(query_heap_handle query_heap)
 {
-   state->release_queue_device_children
-      .push(state->last_work_item.load(std::memory_order_acquire),
-            com_ptr{unpack_query_heap_handle(query_heap)});
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_device_children.push(sync_value, com_ptr{unpack_query_heap_handle(
+                                                            query_heap)});
 }
 
 auto command_queue::get_timestamp_frequency() -> uint64
@@ -1608,13 +1725,8 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 [[msvc::forceinline]] void command_list::reset_common()
 {
    if (state->command_allocator) {
-      assert(state->execution_fence);
-      assert(state->execution_work_item != UINT64_MAX);
-
       state->allocator_pool->add(state->allocator_name,
-                                 std::exchange(state->command_allocator, nullptr),
-                                 std::exchange(state->execution_fence, nullptr),
-                                 std::exchange(state->execution_work_item, UINT64_MAX));
+                                 std::exchange(state->command_allocator, nullptr));
    }
 
    state->command_allocator = state->allocator_pool->aquire(state->allocator_name);
