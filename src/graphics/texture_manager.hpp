@@ -177,7 +177,7 @@ private:
       asset_ref<assets::texture::texture> asset;
    };
 
-   struct pending_texture {
+   struct pending_create_texture {
       async::task<std::shared_ptr<const world_texture>> task;
       asset_ref<assets::texture::texture> asset;
    };
@@ -188,7 +188,8 @@ private:
 
    mutable std::shared_mutex _shared_mutex;
    absl::flat_hash_map<lowercase_string, texture_state> _textures;
-   absl::flat_hash_map<lowercase_string, pending_texture> _pending_textures;
+   absl::flat_hash_map<lowercase_string, asset_ref<assets::texture::texture>> _pending_loads;
+   absl::flat_hash_map<lowercase_string, pending_create_texture> _pending_creations;
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>> _copied_textures;
 
    std::shared_mutex _texture_load_tokens_mutex;
