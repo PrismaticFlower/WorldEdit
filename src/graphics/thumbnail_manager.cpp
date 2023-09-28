@@ -3,6 +3,7 @@
 #include "assets/odf/definition.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "gpu/resource.hpp"
+#include "math/matrix_funcs.hpp"
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
@@ -26,6 +27,55 @@ namespace {
 constexpr uint32 max_texture_length = 16384;
 constexpr uint32 temp_length = 128;
 constexpr uint32 atlas_thumbnails = 256;
+
+struct camera_info {
+   float4x4 view_projection_matrix;
+   float3 camera_position;
+};
+
+auto make_camera_info(const model& model) -> camera_info
+{
+   constexpr float pitch = -0.7853982f;
+   constexpr float yaw = 0.7853982f;
+   constexpr float fov = 1.5707964f;
+
+   const float3 bounding_sphere_centre = (model.bbox.max + model.bbox.min) / 2.0f;
+   const float bounding_sphere_radius = distance(model.bbox.max, model.bbox.min) / 2.0f;
+
+   float4x4 rotation = make_rotation_matrix_from_euler({pitch, yaw, 0.0f});
+
+   const float3 backward{rotation[2].x, rotation[2].y, rotation[2].z};
+
+   const float camera_offset = bounding_sphere_radius / std::sin(fov / 2.0f);
+
+   const float3 position = bounding_sphere_centre + camera_offset * backward;
+
+   float4x4 world_matrix = rotation;
+   world_matrix[3] = {position, 1.0f};
+
+   float4x4 rotation_inverse = transpose(rotation);
+   float4x4 view_matrix = rotation_inverse;
+   view_matrix[3] = {rotation_inverse * -position, 1.0f};
+
+   float4x4 projection_matrix = {{0.0f, 0.0f, 0.0f, 0.0f}, //
+                                 {0.0f, 0.0f, 0.0f, 0.0f}, //
+                                 {0.0f, 0.0f, 0.0f, 0.0f}, //
+                                 {0.0f, 0.0f, 0.0f, 0.0f}};
+
+   const float near_clip = std::max(camera_offset, 0.01f);
+   const float far_clip = bounding_sphere_radius * 2.0f;
+
+   projection_matrix[0].x = 1.0f / std::tan(fov * 0.5f);
+   projection_matrix[1].y = projection_matrix[0].x;
+
+   projection_matrix[2].z = far_clip / (near_clip - far_clip);
+   projection_matrix[3].z = near_clip * projection_matrix[2].z;
+   projection_matrix[2].w = -1.0f;
+
+   const float4x4 view_projection_matrix = projection_matrix * view_matrix;
+
+   return {.view_projection_matrix = view_projection_matrix, .camera_position = position};
+}
 
 }
 
@@ -218,14 +268,16 @@ private:
 
       command_list.set_graphics_root_signature(root_signatures.thumbnail_mesh.get());
 
-      std::array<float, 3> camera_position{};
+      const camera_info camera = make_camera_info(model);
 
       command_list.set_graphics_32bit_constants(rs::thumbnail_mesh::camera_position,
-                                                std::as_bytes(std::span{camera_position}),
+                                                std::as_bytes(std::span{&camera.camera_position,
+                                                                        1}),
                                                 0);
-      command_list.set_graphics_cbv(
-         rs::thumbnail_mesh::camera_matrix_cbv,
-         dynamic_buffer_allocator.allocate_and_copy(float4x4{}).gpu_address);
+      command_list.set_graphics_cbv(rs::thumbnail_mesh::camera_matrix_cbv,
+                                    dynamic_buffer_allocator
+                                       .allocate_and_copy(camera.view_projection_matrix)
+                                       .gpu_address);
 
       command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
       command_list.ia_set_vertex_buffers(

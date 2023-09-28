@@ -8,7 +8,7 @@ struct camera_constants {
 
 ConstantBuffer<camera_constants> cb_camera : register(THUMBNAIL_CAMERA_CB_REGISTER);
 
-const static float3 light_directionOS = normalize(float3(-159.264923, 300.331013, -66.727310));
+const static float3 light_directionOS = normalize(float3(0.0, 1.0, 1.0));
 const static float3 light_color = float3(0.6, 0.6, 0.6);
 
 #ifdef THUMBNAIL_ALPHA_CUTOUT
@@ -41,7 +41,7 @@ float3 calculate_light(float3 normalOS, float3 viewOS, float3 diffuse_color, flo
    const float NdotH = saturate(dot(normalOS, half_vectorOS));
    const float3 specular = pow(NdotH, 64.0) * specular_color;
 
-   return (diffuse + specular) * light_color;
+   return (diffuse + specular) * light_color + (diffuse_color * 0.1);
 }
 
 float4 main(input_vertex input) : SV_TARGET
@@ -126,10 +126,10 @@ float4 main(input_vertex input) : SV_TARGET
                   specular_visibility;
    }
 
-   float alpha = diffuse_color.a;
+   float alpha = 1.0;
    
-   if (material.flags & flags::additive)
-      alpha = 0.0;
+   if (material.flags & flags::transparent)
+      alpha = diffuse_color.a;
 
    return float4(lighting, alpha);
 }
