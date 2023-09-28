@@ -214,7 +214,8 @@ auto texture_manager::acquire_load_token(const lowercase_string& name) noexcept
       if (token) return token;
    }
 
-   auto token = std::make_shared<const world_texture_load_token>();
+   auto token =
+      std::make_shared<const world_texture_load_token>(_texture_assets[name]);
 
    _texture_load_tokens.insert_or_assign(name, token);
 
@@ -341,9 +342,22 @@ void texture_manager::texture_loaded(const lowercase_string& name,
                                      asset_ref<assets::texture::texture> asset,
                                      asset_data<assets::texture::texture> data) noexcept
 {
+   const bool load_token = [&] {
+      std::shared_lock lock{_texture_load_tokens_mutex};
+
+      if (auto it = _texture_load_tokens.find(name); it != _texture_load_tokens.end()) {
+         return not it->second.expired();
+      }
+
+      return false;
+   }();
+
    std::scoped_lock lock{_shared_mutex};
 
-   if (not _pending_loads.contains(name)) return;
+   if (not _pending_loads.contains(name) and not _textures.contains(name) and
+       not load_token) {
+      return;
+   }
 
    create_texture_async(name, asset, data);
 }

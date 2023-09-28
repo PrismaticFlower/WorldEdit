@@ -17,7 +17,9 @@ namespace we::graphics {
 
 struct texture_manager;
 
-struct world_texture_load_token {};
+struct world_texture_load_token {
+   asset_ref<assets::texture::texture> asset_ref;
+};
 
 enum class world_texture_dimension { _2d, cube };
 
