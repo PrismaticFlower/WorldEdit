@@ -426,4 +426,23 @@ auto material::status(const texture_manager& texture_manager) const noexcept -> 
    return material_status::ready;
 }
 
+auto material::thumbnail_mesh_flags() const noexcept -> thumbnail_mesh_pipeline_flags
+{
+   thumbnail_mesh_pipeline_flags thumbnail_flags = thumbnail_mesh_pipeline_flags::none;
+
+   if (are_flags_set(flags, material_pipeline_flags::doublesided)) {
+      thumbnail_flags |= thumbnail_mesh_pipeline_flags::doublesided;
+   }
+
+   if (are_flags_set(flags, material_pipeline_flags::transparent)) {
+      thumbnail_flags |= thumbnail_mesh_pipeline_flags::transparent;
+   }
+
+   if (are_flags_set(depth_prepass_flags, depth_prepass_pipeline_flags::alpha_cutout)) {
+      thumbnail_flags |= thumbnail_mesh_pipeline_flags::alpha_cutout;
+   }
+
+   return thumbnail_flags;
+}
+
 }

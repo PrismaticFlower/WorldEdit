@@ -4,6 +4,8 @@
 #include "dynamic_buffer_allocator.hpp"
 #include "gpu/resource.hpp"
 #include "model_manager.hpp"
+#include "pipeline_library.hpp"
+#include "root_signature_library.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <optional>
@@ -122,8 +124,7 @@ struct thumbnail_manager::impl {
    }
 
    void draw_updated(model_manager& model_manager,
-                     root_signature_library& root_signature_library,
-                     pipeline_library& pipeline_library,
+                     root_signature_library& root_signatures, pipeline_library& pipelines,
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
                      gpu::graphics_command_list& command_list)
    {
@@ -150,8 +151,8 @@ struct thumbnail_manager::impl {
 
       if (status == model_status::ready or status == model_status::ready_textures_missing or
           status == model_status::ready_textures_loading) {
-         draw(model, _rendering->thumbnail_index, root_signature_library,
-              pipeline_library, dynamic_buffer_allocator, command_list);
+         draw(model, _rendering->thumbnail_index, root_signatures, pipelines,
+              dynamic_buffer_allocator, command_list);
 
          if (status == model_status::ready or
              status == model_status::ready_textures_missing) {
@@ -181,8 +182,7 @@ private:
    };
 
    void draw(const model& model, const thumbnail_index index,
-             root_signature_library& root_signature_library,
-             pipeline_library& pipeline_library,
+             root_signature_library& root_signatures, pipeline_library& pipelines,
              dynamic_buffer_allocator& dynamic_buffer_allocator,
              gpu::graphics_command_list& command_list)
    {
@@ -216,7 +216,62 @@ private:
       command_list.rs_set_scissor_rects({.right = temp_length, .bottom = temp_length});
       command_list.om_set_render_targets(_render_rtv.get(), _depth_dsv.get());
 
-      (void)model, root_signature_library, pipeline_library, dynamic_buffer_allocator;
+      command_list.set_graphics_root_signature(root_signatures.thumbnail_mesh.get());
+
+      std::array<float, 3> camera_position{};
+
+      command_list.set_graphics_32bit_constants(rs::thumbnail_mesh::camera_position,
+                                                std::as_bytes(std::span{camera_position}),
+                                                0);
+      command_list.set_graphics_cbv(
+         rs::thumbnail_mesh::camera_matrix_cbv,
+         dynamic_buffer_allocator.allocate_and_copy(float4x4{}).gpu_address);
+
+      command_list.ia_set_index_buffer(model.gpu_buffer.index_buffer_view);
+      command_list.ia_set_vertex_buffers(
+         0, std::array{model.gpu_buffer.position_vertex_buffer_view,
+                       model.gpu_buffer.attributes_vertex_buffer_view});
+      command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+
+      std::optional<thumbnail_mesh_pipeline_flags> current_pipeline_flags;
+
+      for (const auto& part : model.parts) {
+         const auto part_flags = part.material.thumbnail_mesh_flags();
+
+         if (are_flags_set(part_flags, thumbnail_mesh_pipeline_flags::transparent)) {
+            continue;
+         }
+
+         if (current_pipeline_flags != part_flags) {
+            command_list.set_pipeline_state(pipelines.thumbnail_mesh[part_flags].get());
+
+            current_pipeline_flags = part_flags;
+         }
+
+         command_list.set_graphics_cbv(rs::thumbnail_mesh::material_cbv,
+                                       part.material.constant_buffer_view);
+         command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                             part.start_vertex, 0);
+      }
+
+      for (const auto& part : model.parts) {
+         const auto part_flags = part.material.thumbnail_mesh_flags();
+
+         if (not are_flags_set(part_flags, thumbnail_mesh_pipeline_flags::transparent)) {
+            continue;
+         }
+
+         if (current_pipeline_flags != part_flags) {
+            command_list.set_pipeline_state(pipelines.thumbnail_mesh[part_flags].get());
+
+            current_pipeline_flags = part_flags;
+         }
+
+         command_list.set_graphics_cbv(rs::thumbnail_mesh::material_cbv,
+                                       part.material.constant_buffer_view);
+         command_list.draw_indexed_instanced(part.index_count, 1, part.start_index,
+                                             part.start_vertex, 0);
+      }
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(

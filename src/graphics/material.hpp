@@ -32,6 +32,10 @@ struct material {
    /// @return The status of the material's textures.
    auto status(const texture_manager& texture_manager) const noexcept -> material_status;
 
+   /// @brief Get the pipeline flags for using this material with the thumbnail mesh renderer.
+   /// @return The flags.
+   auto thumbnail_mesh_flags() const noexcept -> thumbnail_mesh_pipeline_flags;
+
    depth_prepass_pipeline_flags depth_prepass_flags =
       depth_prepass_pipeline_flags::none;
    material_pipeline_flags flags = material_pipeline_flags::none;
