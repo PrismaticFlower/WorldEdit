@@ -37,7 +37,6 @@ auto make_camera_info(const model& model) -> camera_info
 {
    constexpr float pitch = -0.7853982f;
    constexpr float yaw = 0.7853982f;
-   constexpr float fov = 1.5707964f;
 
    const float3 bounding_sphere_centre = (model.bbox.max + model.bbox.min) / 2.0f;
    const float bounding_sphere_radius = distance(model.bbox.max, model.bbox.min) / 2.0f;
@@ -46,9 +45,7 @@ auto make_camera_info(const model& model) -> camera_info
 
    const float3 backward{rotation[2].x, rotation[2].y, rotation[2].z};
 
-   const float camera_offset = bounding_sphere_radius / std::sin(fov / 2.0f);
-
-   const float3 position = bounding_sphere_centre + camera_offset * backward;
+   const float3 position = bounding_sphere_centre + bounding_sphere_radius * backward;
 
    float4x4 world_matrix = rotation;
    world_matrix[3] = {position, 1.0f};
@@ -57,20 +54,22 @@ auto make_camera_info(const model& model) -> camera_info
    float4x4 view_matrix = rotation_inverse;
    view_matrix[3] = {rotation_inverse * -position, 1.0f};
 
-   float4x4 projection_matrix = {{0.0f, 0.0f, 0.0f, 0.0f}, //
-                                 {0.0f, 0.0f, 0.0f, 0.0f}, //
-                                 {0.0f, 0.0f, 0.0f, 0.0f}, //
-                                 {0.0f, 0.0f, 0.0f, 0.0f}};
+   float4x4 projection_matrix = {{1.0f, 0.0f, 0.0f, 0.0f}, //
+                                 {0.0f, 1.0f, 0.0f, 0.0f}, //
+                                 {0.0f, 0.0f, 1.0f, 0.0f}, //
+                                 {0.0f, 0.0f, 0.0f, 1.0f}};
 
-   const float near_clip = std::max(camera_offset, 0.01f);
+   const float near_clip = 0.0f;
    const float far_clip = bounding_sphere_radius * 2.0f;
 
-   projection_matrix[0].x = 1.0f / std::tan(fov * 0.5f);
-   projection_matrix[1].y = projection_matrix[0].x;
+   const float view_width = bounding_sphere_radius * 2.0f;
+   const float view_height = bounding_sphere_radius * 2.0f;
+   const float z_range = 1.0f / (near_clip - far_clip);
 
-   projection_matrix[2].z = far_clip / (near_clip - far_clip);
-   projection_matrix[3].z = near_clip * projection_matrix[2].z;
-   projection_matrix[2].w = -1.0f;
+   projection_matrix[0].x = 2.0f / view_width;
+   projection_matrix[1].y = 2.0f / view_height;
+   projection_matrix[2].z = z_range;
+   projection_matrix[3].z = z_range * near_clip;
 
    const float4x4 view_projection_matrix = projection_matrix * view_matrix;
 
