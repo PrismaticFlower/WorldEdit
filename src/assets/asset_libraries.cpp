@@ -65,7 +65,10 @@ struct library<T>::impl {
       if (not inserted) {
          std::scoped_lock state_lock{state->mutex, _existing_assets_mutex};
 
-         if (not state->exists) insert_existing_asset(name);
+         if (not state->exists) {
+            _existing_assets.emplace_back(name);
+            _existing_assets_sorted = false;
+         }
 
          state->exists = true;
          state->load_failure = false;
@@ -73,7 +76,10 @@ struct library<T>::impl {
          state->start_load = [this, name] { enqueue_create_asset(name, false); };
       }
       else {
-         insert_existing_asset(name);
+         std::scoped_lock lock{_existing_assets_mutex};
+
+         _existing_assets.emplace_back(name);
+         _existing_assets_sorted = false;
       }
 
       if (state->ref_count.load(std::memory_order_relaxed) > 0) {
@@ -312,14 +318,6 @@ private:
                return nullptr;
             }
          });
-   }
-
-   void insert_existing_asset(const std::string_view name) noexcept
-   {
-      std::scoped_lock lock{_existing_assets_mutex};
-
-      _existing_assets.emplace_back(name);
-      _existing_assets_sorted = false;
    }
 
    we::output_stream& _output_stream;
