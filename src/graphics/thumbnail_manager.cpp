@@ -163,12 +163,12 @@ struct thumbnail_manager::impl {
                  .uv_bottom = (index.y + 1) / _atlas_items_height};
       }
 
-      if (auto it = _garbage_items.find(name); it != _garbage_items.end()) {
-         const thumbnail_index index = it->second;
+      if (auto it = _recycle_items.find(name); it != _recycle_items.end()) {
+         const thumbnail_index index = it->second.index;
 
          _back_items.emplace(name, index);
          _front_items.emplace(name, index);
-         _garbage_items.erase(it);
+         _recycle_items.erase(it);
 
          return {.imgui_texture_id =
                     reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
@@ -245,13 +245,15 @@ struct thumbnail_manager::impl {
 
       for (const auto& [name, index] : _front_items) {
          if (not _back_items.contains(name)) {
-            if (not _garbage_items.emplace(name, index).second) {
+            if (not _recycle_items.emplace(name, recycle_item{index, _frame}).second) {
                _free_items.push_back(index);
             }
          }
       }
 
       _front_items.clear();
+
+      _frame += 1;
    }
 
 private:
@@ -479,10 +481,22 @@ private:
          return thumbnail_index;
       }
 
-      if (not _garbage_items.empty()) {
-         const thumbnail_index thumbnail_index = _garbage_items.begin()->second;
+      if (not _recycle_items.empty()) {
+         uint64 oldest_frame = UINT64_MAX;
+         decltype(_recycle_items)::iterator recycle_it = _recycle_items.begin();
 
-         _garbage_items.erase(_garbage_items.begin());
+         for (auto it = _recycle_items.begin(); it != _recycle_items.end(); ++it) {
+            const auto& [_, item] = *it;
+
+            if (item.last_used_frame < oldest_frame) {
+               oldest_frame = item.last_used_frame;
+               recycle_it = it;
+            }
+         }
+
+         const thumbnail_index thumbnail_index = recycle_it->second.index;
+
+         _recycle_items.erase(recycle_it);
          _front_items.emplace(name, thumbnail_index);
 
          return thumbnail_index;
@@ -497,6 +511,8 @@ private:
 
    float _atlas_items_width = 1;
    float _atlas_items_height = 1;
+
+   uint64 _frame = 0;
 
    gpu::unique_resource_handle _atlas_texture;
    gpu::unique_resource_view _atlas_srv;
@@ -518,7 +534,13 @@ private:
    std::vector<thumbnail_index> _free_items;
    absl::flat_hash_map<std::string, thumbnail_index> _front_items;
    absl::flat_hash_map<std::string, thumbnail_index> _back_items;
-   absl::flat_hash_map<std::string, thumbnail_index> _garbage_items;
+
+   struct recycle_item {
+      thumbnail_index index;
+      uint64 last_used_frame;
+   };
+
+   absl::flat_hash_map<std::string, recycle_item> _recycle_items;
 
    std::shared_mutex _pending_odfs_mutex;
    absl::flat_hash_map<std::string, asset_ref<assets::odf::definition>> _pending_odfs;
