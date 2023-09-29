@@ -1,10 +1,10 @@
 #pragma once
 
+#include "object_class_thumbnail.hpp"
 #include "world/active_elements.hpp"
 #include "world/interaction_context.hpp"
 #include "world/object_class.hpp"
 #include "world/tool_visualizers.hpp"
-#include "object_class_thumbnail.hpp"
 
 #include <memory>
 
@@ -54,7 +54,6 @@ struct renderer_init {
 
    bool use_debug_layer = false;
 };
-
 
 struct renderer {
    virtual ~renderer() = default;

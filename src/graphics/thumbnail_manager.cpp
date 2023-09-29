@@ -16,8 +16,6 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
-#include <imgui.h>
-
 using namespace std::literals;
 
 namespace we::graphics {
@@ -152,24 +150,42 @@ struct thumbnail_manager::impl {
 
    auto request_object_class_thumbnail(const std::string_view name) -> object_class_thumbnail
    {
-      if (auto it = _items.find(name); it != _items.end()) {
-         auto [x, y] = it->second;
+      if (auto it = _back_items.find(name); it != _back_items.end()) {
+         const thumbnail_index index = it->second;
+
+         _front_items.emplace(name, index);
 
          return {.imgui_texture_id =
                     reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
-                 .uv_left = x / _atlas_items_width,
-                 .uv_top = y / _atlas_items_height,
-                 .uv_right = (x + 1) / _atlas_items_width,
-                 .uv_bottom = (y + 1) / _atlas_items_height};
+                 .uv_left = index.x / _atlas_items_width,
+                 .uv_top = index.y / _atlas_items_height,
+                 .uv_right = (index.x + 1) / _atlas_items_width,
+                 .uv_bottom = (index.y + 1) / _atlas_items_height};
+      }
+
+      if (auto it = _garbage_items.find(name); it != _garbage_items.end()) {
+         const thumbnail_index index = it->second;
+
+         _back_items.emplace(name, index);
+         _front_items.emplace(name, index);
+         _garbage_items.erase(it);
+
+         return {.imgui_texture_id =
+                    reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+                 .uv_left = index.x / _atlas_items_width,
+                 .uv_top = index.y / _atlas_items_height,
+                 .uv_right = (index.x + 1) / _atlas_items_width,
+                 .uv_bottom = (index.y + 1) / _atlas_items_height};
       }
 
       enqueue_create_thumbnail(name);
 
-      return {.imgui_texture_id = ImGui::GetFont()->ContainerAtlas->TexID,
+      return {.imgui_texture_id =
+                 reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
               .uv_left = 0.0f,
               .uv_top = 0.0f,
-              .uv_right = 1.0f,
-              .uv_bottom = 1.0f};
+              .uv_right = 0.0f,
+              .uv_bottom = 0.0f};
    }
 
    void draw_updated(model_manager& model_manager,
@@ -184,15 +200,9 @@ struct thumbnail_manager::impl {
 
          const auto& [name, pending] = *_pending_render.begin();
 
-         const thumbnail_index thumbnail_index =
-            _items
-               .emplace(name, _free_items[_items.size() % _free_items.size()])
-               .first->second;
-
          _rendering = rendering{.name = name,
                                 .model_name = pending.model_name,
-                                .model = pending.model,
-                                .thumbnail_index = thumbnail_index};
+                                .model = pending.model};
       }
 
       const model& model = model_manager[_rendering->model_name];
@@ -200,7 +210,12 @@ struct thumbnail_manager::impl {
 
       if (status == model_status::ready or status == model_status::ready_textures_missing or
           status == model_status::ready_textures_loading) {
-         draw(model, _rendering->thumbnail_index, root_signatures, pipelines,
+         const std::optional<thumbnail_index> thumbnail_index =
+            get_or_allocate_thumbnail_index(_rendering->name);
+
+         if (not thumbnail_index) return;
+
+         draw(model, *thumbnail_index, root_signatures, pipelines,
               dynamic_buffer_allocator, command_list);
 
          if (status == model_status::ready or
@@ -222,6 +237,21 @@ struct thumbnail_manager::impl {
          _pending_render.erase(_rendering->name);
          _rendering = std::nullopt;
       }
+   }
+
+   void end_frame()
+   {
+      std::swap(_back_items, _front_items);
+
+      for (const auto& [name, index] : _front_items) {
+         if (not _back_items.contains(name)) {
+            if (not _garbage_items.emplace(name, index).second) {
+               _free_items.push_back(index);
+            }
+         }
+      }
+
+      _front_items.clear();
    }
 
 private:
@@ -429,6 +459,38 @@ private:
       _missing_model_odfs.erase(name);
    }
 
+   auto get_or_allocate_thumbnail_index(const std::string_view name) noexcept
+      -> std::optional<thumbnail_index>
+   {
+      if (auto it = _back_items.find(name); it != _back_items.end()) {
+         return it->second;
+      }
+
+      if (auto it = _front_items.find(name); it != _front_items.end()) {
+         return it->second;
+      }
+
+      if (not _free_items.empty()) {
+         const thumbnail_index thumbnail_index = _free_items.back();
+
+         _free_items.pop_back();
+         _front_items.emplace(name, thumbnail_index);
+
+         return thumbnail_index;
+      }
+
+      if (not _garbage_items.empty()) {
+         const thumbnail_index thumbnail_index = _garbage_items.begin()->second;
+
+         _garbage_items.erase(_garbage_items.begin());
+         _front_items.emplace(name, thumbnail_index);
+
+         return thumbnail_index;
+      }
+
+      return std::nullopt;
+   }
+
    assets::libraries_manager& _asset_libraries;
    output_stream& _error_output;
    gpu::device& _device;
@@ -449,13 +511,14 @@ private:
       std::string name;
       lowercase_string model_name;
       asset_ref<assets::msh::flat_model> model;
-      thumbnail_index thumbnail_index;
    };
 
    std::optional<rendering> _rendering;
 
    std::vector<thumbnail_index> _free_items;
-   absl::flat_hash_map<std::string, thumbnail_index> _items;
+   absl::flat_hash_map<std::string, thumbnail_index> _front_items;
+   absl::flat_hash_map<std::string, thumbnail_index> _back_items;
+   absl::flat_hash_map<std::string, thumbnail_index> _garbage_items;
 
    std::shared_mutex _pending_odfs_mutex;
    absl::flat_hash_map<std::string, asset_ref<assets::odf::definition>> _pending_odfs;
@@ -501,6 +564,11 @@ void thumbnail_manager::draw_updated(model_manager& model_manager,
 {
    return _impl->draw_updated(model_manager, root_signature_library, pipeline_library,
                               dynamic_buffer_allocator, command_list);
+}
+
+void thumbnail_manager::end_frame()
+{
+   return _impl->end_frame();
 }
 
 thumbnail_manager::thumbnail_manager(const thumbnail_manager_init& init)

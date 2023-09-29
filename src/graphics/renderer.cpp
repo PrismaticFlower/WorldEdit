@@ -485,6 +485,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    _device.end_frame();
    _model_manager.trim_models();
+   _thumbnail_manager.end_frame();
 }
 
 void renderer_impl::window_resized(uint16 width, uint16 height)

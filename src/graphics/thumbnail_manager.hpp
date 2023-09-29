@@ -59,6 +59,8 @@ struct thumbnail_manager {
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
                      gpu::graphics_command_list& command_list);
 
+   void end_frame();
+
 private:
    struct impl;
 
