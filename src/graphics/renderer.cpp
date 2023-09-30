@@ -330,6 +330,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    _model_manager.update_models();
    _sky.update(world.name);
+   _thumbnail_manager.update_cache();
 
    if (settings.show_profiler) _profiler.show();
 

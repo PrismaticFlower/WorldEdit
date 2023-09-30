@@ -146,6 +146,23 @@ struct thumbnail_manager::impl {
                                                        .dimension =
                                                           gpu::dsv_dimension::texture2d}),
                     _device.direct_queue};
+
+      _readback_pitch = math::align_up<uint32>(temp_length * sizeof(uint32),
+                                               gpu::texture_data_pitch_alignment);
+      _readback_buffer =
+         {_device.create_buffer({.size = temp_length * _readback_pitch * gpu::frame_pipeline_length,
+                                 .debug_name = "Thumbnails Readback Buffer"},
+                                gpu::heap_type::readback),
+          _device.direct_queue};
+
+      const std::byte* const mapped_buffer = static_cast<std::byte*>(
+         _device.map(_readback_buffer.get(), 0,
+                     {0, temp_length * _readback_pitch * gpu::frame_pipeline_length}));
+
+      for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
+         _readback_offsets[i] = (temp_length * _readback_pitch) * i;
+         _readback_pointers[i] = mapped_buffer + _readback_offsets[i];
+      }
    }
 
    auto request_object_class_thumbnail(const std::string_view name) -> object_class_thumbnail
@@ -188,6 +205,15 @@ struct thumbnail_manager::impl {
               .uv_bottom = 0.0f};
    }
 
+   void update_cache()
+   {
+      if (not _readback_names[_device.frame_index()].empty()) {
+         // TODO: Stuff!
+
+         _readback_names[_device.frame_index()].clear();
+      }
+   }
+
    void draw_updated(model_manager& model_manager,
                      root_signature_library& root_signatures, pipeline_library& pipelines,
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
@@ -217,6 +243,8 @@ struct thumbnail_manager::impl {
 
          draw(model, *thumbnail_index, root_signatures, pipelines,
               dynamic_buffer_allocator, command_list);
+
+         _readback_names[_device.frame_index()] = _rendering->name;
 
          if (status == model_status::ready or
              status == model_status::ready_textures_missing) {
@@ -386,6 +414,13 @@ private:
 
       command_list.copy_texture_region(_atlas_texture.get(), 0, atlas_rect.left,
                                        atlas_rect.top, 0, _render_texture.get(), 0);
+      command_list.copy_texture_to_buffer(_readback_buffer.get(),
+                                          {.offset = _readback_offsets[_device.frame_index()],
+                                           .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                                           .width = temp_length,
+                                           .height = temp_length,
+                                           .row_pitch = _readback_pitch},
+                                          0, 0, 0, _render_texture.get(), 0);
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(
@@ -523,6 +558,12 @@ private:
    gpu::unique_resource_handle _depth_texture;
    gpu::unique_dsv_handle _depth_dsv;
 
+   uint32 _readback_pitch = 0;
+   gpu::unique_resource_handle _readback_buffer;
+   std::array<uint32, gpu::frame_pipeline_length> _readback_offsets;
+   std::array<const void*, gpu::frame_pipeline_length> _readback_pointers;
+   std::array<std::string, gpu::frame_pipeline_length> _readback_names;
+
    struct rendering {
       std::string name;
       lowercase_string model_name;
@@ -576,6 +617,11 @@ auto thumbnail_manager::request_object_class_thumbnail(const std::string_view na
    -> object_class_thumbnail
 {
    return _impl->request_object_class_thumbnail(name);
+}
+
+void thumbnail_manager::update_cache()
+{
+   return _impl->update_cache();
 }
 
 void thumbnail_manager::draw_updated(model_manager& model_manager,
