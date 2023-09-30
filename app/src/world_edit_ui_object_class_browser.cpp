@@ -19,6 +19,8 @@ void world_edit::ui_show_object_class_browser() noexcept
       const float item_size = button_size + ImGui::GetStyle().ItemSpacing.x;
       const float window_space =
          ImGui::GetWindowWidth() - ImGui::GetStyle().ScrollbarSize;
+      const ImU32 text_color = ImGui::GetColorU32(ImGuiCol_Text);
+      const float text_offset = 4.0f * _display_scale;
 
       _asset_libraries.odfs.view_existing([&](const std::span<const assets::stable_string> assets) {
          _world_explorer_object_classes.reserve(assets.size());
@@ -45,6 +47,8 @@ void world_edit::ui_show_object_class_browser() noexcept
                if (not thumbnail) continue;
 
                ImGui::PushID(asset.data(), asset.data() + asset.size());
+
+               const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
 
                if (ImGui::ImageButton("##add", thumbnail->imgui_texture_id,
                                       {button_size, button_size},
@@ -75,13 +79,29 @@ void world_edit::ui_show_object_class_browser() noexcept
                   }
                }
 
+               const ImVec4 label_clip{cursor_pos.x, cursor_pos.y,
+                                       cursor_pos.x + button_size,
+                                       cursor_pos.y + button_size};
+
+               ImGui::GetWindowDrawList()
+                  ->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
+                            {cursor_pos.x + text_offset, cursor_pos.y},
+                            text_color, asset.data(), asset.data() + asset.size(),
+                            button_size - text_offset, &label_clip);
+
                if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
                   ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
 
                   ImGui::EndTooltip();
                }
 
-               ImGui::PopID();
+               if (ImGui::BeginPopupContextItem("Class Name")) {
+                  if (ImGui::MenuItem("Open .odf in Text Editor")) {
+                     open_odf_in_text_editor(lowercase_string{asset});
+                  }
+
+                  ImGui::EndPopup();
+               }
             }
             else {
                ImGui::Dummy({button_size, button_size});
