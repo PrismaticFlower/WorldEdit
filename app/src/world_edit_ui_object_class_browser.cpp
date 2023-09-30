@@ -12,8 +12,10 @@ namespace we {
 void world_edit::ui_show_object_class_browser() noexcept
 {
    if (ImGui::Begin("Object Class Browser", &_object_class_browser_open)) {
-      ImGui::InputTextWithHint("Class Name Filter", "e.g. com_bldg_controlzone",
-                               &_world_explorer_class_filter);
+      if (ImGui::InputTextWithHint("Filter", "e.g. com_bldg_controlzone",
+                                   &_world_explorer_class_filter)) {
+         ImGui::SetNextWindowScroll({0.0f, 0.0f});
+      }
 
       const float button_size = 128.0f * _display_scale;
       const float item_size = button_size + ImGui::GetStyle().ItemSpacing.x;
@@ -21,6 +23,8 @@ void world_edit::ui_show_object_class_browser() noexcept
          ImGui::GetWindowWidth() - ImGui::GetStyle().ScrollbarSize;
       const ImU32 text_color = ImGui::GetColorU32(ImGuiCol_Text);
       const float text_offset = 4.0f * _display_scale;
+
+      ImGui::BeginChild("Classes", ImGui::GetContentRegionAvail());
 
       _asset_libraries.odfs.view_existing([&](const std::span<const assets::stable_string> assets) {
          _world_explorer_object_classes.reserve(assets.size());
@@ -114,6 +118,8 @@ void world_edit::ui_show_object_class_browser() noexcept
             }
          }
       });
+
+      ImGui::EndChild();
    }
 
    ImGui::End();
