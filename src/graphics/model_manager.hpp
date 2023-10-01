@@ -52,8 +52,7 @@ public:
    /// @brief Call at the start of a frame to update models that have been created asynchronously.
    void update_models() noexcept;
 
-   /// @brief Call at the end of a frame to destroy models that may have been updated and replaced midframe.
-   ///        Also destroys models for which model_manager is the only remaining reference for the asset.
+   /// @brief Call at the end of a frame to destroy models that went unused across the frame.
    void trim_models() noexcept;
 
    /// @brief Checks if model is the placeholder model.
@@ -69,12 +68,13 @@ public:
 private:
    struct model_state {
       std::unique_ptr<model> model;
-      asset_ref<assets::msh::flat_model> asset;
+      bool unused = true;
    };
 
    struct pending_create_model {
       async::task<model_state> task;
       asset_data<assets::msh::flat_model> flat_model;
+      asset_ref<assets::msh::flat_model> model_asset_ref;
    };
 
    void model_loaded(const lowercase_string& name,
@@ -98,10 +98,10 @@ private:
    mutable std::shared_mutex _mutex;
 
    absl::flat_hash_map<lowercase_string, model_state> _models;
+   absl::flat_hash_map<lowercase_string, asset_ref<assets::msh::flat_model>> _model_asset_refs;
    absl::flat_hash_map<lowercase_string, pending_create_model> _pending_creations;
    absl::flat_hash_map<lowercase_string, asset_ref<assets::msh::flat_model>> _pending_loads;
    absl::flat_hash_set<lowercase_string> _failed_creations;
-   std::vector<std::unique_ptr<model>> _pending_destroys;
 
    std::shared_ptr<async::thread_pool> _thread_pool;
 

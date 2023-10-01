@@ -34,8 +34,12 @@ auto model_manager::operator[](const lowercase_string& name) -> model&
    {
       std::shared_lock lock{_mutex};
 
-      if (auto state = _models.find(name); state != _models.end()) {
-         return *state->second.model;
+      if (auto it = _models.find(name); it != _models.end()) {
+         auto& [_, model_state] = *it;
+
+         std::atomic_ref<bool>{model_state.unused}.store(false, std::memory_order_relaxed);
+
+         return *model_state.model;
       }
 
       if (_pending_creations.contains(name) or _pending_loads.contains(name) or
@@ -56,8 +60,12 @@ auto model_manager::operator[](const lowercase_string& name) -> model&
       return _placeholder_model;
    }
 
-   if (auto state = _models.find(name); state != _models.end()) {
-      return *state->second.model;
+   if (auto it = _models.find(name); it != _models.end()) {
+      auto& [_, model_state] = *it;
+
+      model_state.unused = false;
+
+      return *model_state.model;
    }
 
    auto flat_model = asset.get_if();
@@ -83,9 +91,8 @@ void model_manager::update_models() noexcept
 
       if (pending_create.task.ready()) {
          try {
-            // TODO: Currently we don't have to worry about model lifetime here but if in the future we're rendering
-            // thumbnails in the background we may have to revist this.
             _models[name] = pending_create.task.get();
+            _model_asset_refs[name] = pending_create.model_asset_ref;
          }
          catch (std::exception& e) {
             _error_output.write(
@@ -104,13 +111,15 @@ void model_manager::trim_models() noexcept
 {
    std::lock_guard lock{_mutex};
 
-   erase_if(_models, [](const auto& key_value) {
-      const auto& [name, state] = key_value;
+   for (auto it = _models.begin(); it != _models.end();) {
+      auto elem_it = it++;
+      auto& [name, model_state] = *elem_it;
 
-      return state.asset.use_count() == 1;
-   });
-
-   _pending_destroys.clear();
+      if (std::exchange(model_state.unused, false)) {
+         _model_asset_refs.erase(name);
+         _models.erase(elem_it);
+      }
+   }
 }
 
 bool model_manager::is_placeholder(const model& model) const noexcept
@@ -203,9 +212,10 @@ void model_manager::enqueue_create_model(const lowercase_string& name,
                                    return {};
                                 }
 
-                                return {.model = std::move(new_model), .asset = asset};
+                                return {.model = std::move(new_model)};
                              }),
-       .flat_model = flat_model};
+       .flat_model = flat_model,
+       .model_asset_ref = asset};
 }
 
 }
