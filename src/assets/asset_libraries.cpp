@@ -85,6 +85,8 @@ struct library<T>::impl {
       if (state->ref_count.load(std::memory_order_relaxed) > 0) {
          enqueue_create_asset(name, true);
       }
+
+      _change_event.broadcast(name);
    }
 
    void remove(const std::filesystem::path& unpreferred_asset_path) noexcept
@@ -106,17 +108,22 @@ struct library<T>::impl {
 
       if (not asset_state) return;
 
-      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex,
-                            _existing_assets_mutex, asset_state->mutex};
+      // Remove Asset
+      {
+         std::scoped_lock lock{_assets_mutex, _load_tasks_mutex,
+                               _existing_assets_mutex, asset_state->mutex};
 
-      if (asset_state->path != asset_path) return;
+         if (asset_state->path != asset_path) return;
 
-      _assets.erase(name);
+         _assets.erase(name);
 
-      _load_tasks.erase(name);
+         _load_tasks.erase(name);
 
-      std::erase_if(_existing_assets,
-                    [&](const stable_string& asset) { return asset == name; });
+         std::erase_if(_existing_assets,
+                       [&](const stable_string& asset) { return asset == name; });
+      }
+
+      _change_event.broadcast(name);
    }
 
    auto operator[](const lowercase_string& name) noexcept -> asset_ref<T>
@@ -153,6 +160,12 @@ struct library<T>::impl {
       -> event_listener<void(const lowercase_string&, asset_ref<T>)>
    {
       return _load_failed_event.listen(std::move(callback));
+   }
+
+   auto listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+      -> event_listener<void(const lowercase_string&)>
+   {
+      return _change_event.listen(std::move(callback));
    }
 
    void update_loaded() noexcept
@@ -338,6 +351,7 @@ private:
 
    utility::event<void(const lowercase_string&, asset_ref<T>, asset_data<T>)> _load_event;
    utility::event<void(const lowercase_string&, asset_ref<T>)> _load_failed_event;
+   utility::event<void(const lowercase_string&)> _change_event;
 };
 
 template<typename T>
@@ -378,6 +392,12 @@ auto library<T>::listen_for_load_failures(
    -> event_listener<void(const lowercase_string&, asset_ref<T>)>
 {
    return self->listen_for_load_failures(std::move(callback));
+}
+template<typename T>
+auto library<T>::listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+   -> event_listener<void(const lowercase_string&)>
+{
+   return self->listen_for_changes(std::move(callback));
 }
 
 template<typename T>

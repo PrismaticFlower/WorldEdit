@@ -74,6 +74,191 @@ auto make_camera_info(const model& model) -> camera_info
    return {.view_projection_matrix = view_projection_matrix, .camera_position = position};
 }
 
+struct invalidation_tracker {
+   explicit invalidation_tracker(assets::libraries_manager& asset_libraries)
+      : _odf_change_listener{asset_libraries.odfs.listen_for_changes(
+           [this](const lowercase_string& name) { odf_changed(name); })},
+        _msh_change_listener{asset_libraries.models.listen_for_changes(
+           [this](const lowercase_string& name) { msh_changed(name); })},
+        _texture_change_listener{asset_libraries.textures.listen_for_changes(
+           [this](const lowercase_string& name) { texture_changed(name); })}
+   {
+   }
+
+   void track(std::string_view odf_name, std::string_view model_name,
+              const model& model) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      uint32 texture_count = 0;
+
+      for (const auto& part : model.parts) {
+         if (not part.material.texture_names.diffuse_map.empty()) {
+            texture_count += 1;
+         }
+         if (not part.material.texture_names.normal_map.empty()) {
+            texture_count += 1;
+         }
+         if (not part.material.texture_names.detail_map.empty()) {
+            texture_count += 1;
+         }
+         if (not part.material.texture_names.env_map.empty()) {
+            texture_count += 1;
+         }
+      }
+
+      odf_entry entry{.model = lowercase_string{model_name}};
+
+      entry.textures.reserve(texture_count);
+
+      for (const auto& part : model.parts) {
+         if (not part.material.texture_names.diffuse_map.empty()) {
+            entry.textures.push_back(part.material.texture_names.diffuse_map);
+         }
+         if (not part.material.texture_names.normal_map.empty()) {
+            entry.textures.push_back(part.material.texture_names.normal_map);
+         }
+         if (not part.material.texture_names.detail_map.empty()) {
+            entry.textures.push_back(part.material.texture_names.detail_map);
+         }
+         if (not part.material.texture_names.env_map.empty()) {
+            entry.textures.push_back(part.material.texture_names.env_map);
+         }
+      }
+
+      lowercase_string name{odf_name};
+
+      if (_odfs.contains(name)) release(name);
+
+      child_entry& model_entry = _models[entry.model];
+
+      model_entry.ref_count += 1;
+      model_entry.odfs.emplace_back(name);
+
+      for (auto& texture : entry.textures) {
+         child_entry& texture_entry = _textures[texture];
+
+         texture_entry.ref_count += 1;
+         texture_entry.odfs.emplace_back(name);
+      }
+
+      _odfs.emplace(std::move(name), std::move(entry));
+   }
+
+   auto get_invalidated() -> std::span<std::string>
+   {
+      _invalidated.clear();
+
+      std::scoped_lock lock{_mutex};
+
+      std::swap(_invalidated, _invalidated_background);
+
+      return _invalidated;
+   }
+
+private:
+   bool release(const lowercase_string& name)
+   {
+      auto odf_it = _odfs.find(name);
+
+      if (odf_it == _odfs.end()) return false;
+
+      const odf_entry& odf_entry = odf_it->second;
+
+      if (auto model_it = _models.find(odf_entry.model); model_it != _models.end()) {
+         child_entry& model_entry = model_it->second;
+
+         model_entry.ref_count -= 1;
+
+         std::erase(model_entry.odfs, name);
+
+         if (model_entry.ref_count == 0) _models.erase(model_it);
+      }
+
+      for (const auto& texture : odf_entry.textures) {
+         if (auto texture_it = _textures.find(texture); texture_it != _textures.end()) {
+            child_entry& texture_entry = texture_it->second;
+
+            texture_entry.ref_count -= 1;
+
+            std::erase(texture_entry.odfs, name);
+
+            if (texture_entry.ref_count == 0) _textures.erase(texture_it);
+         }
+      }
+
+      _odfs.erase(name);
+
+      return true;
+   }
+
+   void odf_changed(const lowercase_string& name) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      if (release(name)) {
+         _invalidated_background.emplace_back(name);
+      }
+   }
+
+   void msh_changed(const lowercase_string& name) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      const std::vector<lowercase_string> odfs = [&] {
+         if (auto it = _models.find(name); it != _models.end()) {
+            return std::move(it->second.odfs);
+         }
+
+         return std::vector<lowercase_string>{};
+      }();
+
+      for (const auto& odf_name : odfs) release(odf_name);
+
+      _invalidated_background.append_range(odfs);
+   }
+
+   void texture_changed(const lowercase_string& name) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      const std::vector<lowercase_string> odfs = [&] {
+         if (auto it = _textures.find(name); it != _textures.end()) {
+            return std::move(it->second.odfs);
+         }
+
+         return std::vector<lowercase_string>{};
+      }();
+
+      for (const auto& odf_name : odfs) release(odf_name);
+
+      _invalidated_background.append_range(odfs);
+   }
+
+   struct odf_entry {
+      lowercase_string model;
+      std::vector<lowercase_string> textures;
+   };
+
+   struct child_entry {
+      uint32 ref_count = 0;
+      std::vector<lowercase_string> odfs;
+   };
+
+   std::vector<std::string> _invalidated;
+
+   std::shared_mutex _mutex;
+   absl::flat_hash_map<lowercase_string, odf_entry> _odfs;
+   absl::flat_hash_map<lowercase_string, child_entry> _models;
+   absl::flat_hash_map<lowercase_string, child_entry> _textures;
+
+   std::vector<std::string> _invalidated_background;
+
+   event_listener<void(const lowercase_string&)> _odf_change_listener;
+   event_listener<void(const lowercase_string&)> _msh_change_listener;
+   event_listener<void(const lowercase_string&)> _texture_change_listener;
+};
+
 }
 
 struct thumbnail_manager::impl {
@@ -251,6 +436,7 @@ struct thumbnail_manager::impl {
             std::scoped_lock lock{_pending_render_mutex};
 
             _pending_render.erase(_rendering->name);
+            _invalidation_tracker.track(_rendering->name, _rendering->model_name, model);
             _rendering = std::nullopt;
          }
       }
@@ -282,6 +468,22 @@ struct thumbnail_manager::impl {
       _front_items.clear();
 
       _frame += 1;
+
+      for (const auto& name : _invalidation_tracker.get_invalidated()) {
+         if (auto it = _back_items.find(name); it != _back_items.end()) {
+            const thumbnail_index index = it->second;
+
+            _free_items.push_back(index);
+            _back_items.erase(it);
+         }
+
+         if (auto it = _recycle_items.find(name); it != _recycle_items.end()) {
+            const thumbnail_index index = it->second.index;
+
+            _free_items.push_back(index);
+            _recycle_items.erase(it);
+         }
+      }
    }
 
 private:
@@ -596,6 +798,8 @@ private:
 
    std::shared_mutex _missing_model_odfs_mutex;
    absl::flat_hash_set<std::string> _missing_model_odfs;
+
+   invalidation_tracker _invalidation_tracker{_asset_libraries};
 
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,
                        asset_data<assets::odf::definition>)>

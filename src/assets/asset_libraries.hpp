@@ -77,6 +77,12 @@ struct library {
       std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
       -> event_listener<void(const lowercase_string&, asset_ref<T>)>;
 
+   /// @brief Listens for asset changes.
+   /// @param callback Function to call whenever an asset has changed on disk.
+   /// @return The event_listener for the callback.
+   auto listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+      -> event_listener<void(const lowercase_string&)>;
+
    /// @brief Handles broadcasting notifications of any loaded or updated assets.
    void update_loaded() noexcept;
 
@@ -96,7 +102,7 @@ struct library {
 private:
    struct impl;
 
-   implementation_storage<impl, 216> self;
+   implementation_storage<impl, 232> self;
 };
 
 struct libraries_manager {
