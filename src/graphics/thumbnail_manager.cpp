@@ -259,6 +259,18 @@ private:
    event_listener<void(const lowercase_string&)> _texture_change_listener;
 };
 
+void texture_copy(std::byte* dest, const std::size_t dest_pitch,
+                  const std::byte* src, std::size_t src_pitch,
+                  const std::size_t length, const std::size_t elem_byte_size)
+{
+   for (std::size_t y = 0; y < length; ++y) {
+      std::memcpy(dest, src, length * elem_byte_size);
+
+      dest += dest_pitch;
+      src += src_pitch;
+   }
+}
+
 }
 
 struct thumbnail_manager::impl {
@@ -332,21 +344,42 @@ struct thumbnail_manager::impl {
                                                           gpu::dsv_dimension::texture2d}),
                     _device.direct_queue};
 
-      _readback_pitch = math::align_up<uint32>(temp_length * sizeof(uint32),
-                                               gpu::texture_data_pitch_alignment);
+      _upload_readback_pitch =
+         math::align_up<uint32>(temp_length * sizeof(uint32),
+                                gpu::texture_data_pitch_alignment);
+
+      _upload_buffer = {_device.create_buffer({.size = temp_length * _upload_readback_pitch *
+                                                       gpu::frame_pipeline_length,
+                                               .debug_name =
+                                                  "Thumbnails Upload Buffer"},
+                                              gpu::heap_type::upload),
+                        _device.direct_queue};
+
+      std::byte* const upload_mapped_buffer =
+         static_cast<std::byte*>(_device.map(_upload_buffer.get(), 0,
+                                             {0, temp_length * _upload_readback_pitch *
+                                                    gpu::frame_pipeline_length}));
+
+      for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
+         _upload_offsets[i] = (temp_length * _upload_readback_pitch) * i;
+         _upload_pointers[i] = upload_mapped_buffer + _upload_offsets[i];
+      }
+
       _readback_buffer =
-         {_device.create_buffer({.size = temp_length * _readback_pitch * gpu::frame_pipeline_length,
+         {_device.create_buffer({.size = temp_length * _upload_readback_pitch *
+                                         gpu::frame_pipeline_length,
                                  .debug_name = "Thumbnails Readback Buffer"},
                                 gpu::heap_type::readback),
           _device.direct_queue};
 
-      const std::byte* const mapped_buffer = static_cast<std::byte*>(
-         _device.map(_readback_buffer.get(), 0,
-                     {0, temp_length * _readback_pitch * gpu::frame_pipeline_length}));
+      const std::byte* const readback_mapped_buffer =
+         static_cast<std::byte*>(_device.map(_readback_buffer.get(), 0,
+                                             {0, temp_length * _upload_readback_pitch *
+                                                    gpu::frame_pipeline_length}));
 
       for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
-         _readback_offsets[i] = (temp_length * _readback_pitch) * i;
-         _readback_pointers[i] = mapped_buffer + _readback_offsets[i];
+         _readback_offsets[i] = (temp_length * _upload_readback_pitch) * i;
+         _readback_pointers[i] = readback_mapped_buffer + _readback_offsets[i];
       }
    }
 
@@ -380,6 +413,30 @@ struct thumbnail_manager::impl {
                  .uv_bottom = (index.y + 1) / _atlas_items_height};
       }
 
+      if (not _cache_upload_item) {
+         if (auto it = _cpu_memory_cache.find(name); it != _cpu_memory_cache.end()) {
+            if (const std::optional<thumbnail_index> index =
+                   get_or_allocate_thumbnail_index(name);
+                index) {
+               _cache_upload_item.emplace(*index);
+
+               const std::byte* const src_data = it->second.get();
+
+               texture_copy(_upload_pointers[_device.frame_index()],
+                            _upload_readback_pitch, src_data,
+                            temp_length * sizeof(uint32), temp_length,
+                            sizeof(uint32));
+
+               return {.imgui_texture_id =
+                          reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
+                       .uv_left = index->x / _atlas_items_width,
+                       .uv_top = index->y / _atlas_items_height,
+                       .uv_right = (index->x + 1) / _atlas_items_width,
+                       .uv_bottom = (index->y + 1) / _atlas_items_height};
+            }
+         }
+      }
+
       enqueue_create_thumbnail(name);
 
       return {.imgui_texture_id =
@@ -393,7 +450,18 @@ struct thumbnail_manager::impl {
    void update_cache()
    {
       if (not _readback_names[_device.frame_index()].empty()) {
-         // TODO: Stuff!
+         constexpr std::size_t size = temp_length * temp_length * sizeof(uint32);
+
+         std::unique_ptr<std::byte[]>& memory =
+            _cpu_memory_cache[_readback_names[_device.frame_index()]];
+
+         if (not memory) {
+            memory = std::make_unique_for_overwrite<std::byte[]>(size);
+         }
+
+         texture_copy(memory.get(), temp_length * sizeof(uint32),
+                      _readback_pointers[_device.frame_index()],
+                      _upload_readback_pitch, temp_length, sizeof(uint32));
 
          _readback_names[_device.frame_index()].clear();
       }
@@ -404,6 +472,12 @@ struct thumbnail_manager::impl {
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
                      gpu::graphics_command_list& command_list)
    {
+      if (_cache_upload_item) {
+         copy_cache_upload_item(_cache_upload_item->index, command_list);
+
+         _cache_upload_item = std::nullopt;
+      }
+
       if (not _rendering) {
          std::scoped_lock lock{_pending_render_mutex};
 
@@ -483,6 +557,8 @@ struct thumbnail_manager::impl {
             _free_items.push_back(index);
             _recycle_items.erase(it);
          }
+
+         _cpu_memory_cache.erase(name);
       }
    }
 
@@ -491,6 +567,48 @@ private:
       uint16 x = 0;
       uint16 y = 0;
    };
+
+   void copy_cache_upload_item(const thumbnail_index index,
+                               gpu::graphics_command_list& command_list)
+   {
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         // Barrier free access!
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = _atlas_texture.get(),
+            .state_before = gpu::legacy_resource_state::pixel_shader_resource,
+            .state_after = gpu::legacy_resource_state::copy_dest});
+
+         command_list.flush_barriers();
+      }
+
+      command_list.copy_buffer_to_texture(_atlas_texture.get(), 0,
+                                          index.x * temp_length, index.y * temp_length,
+                                          0, _upload_buffer.get(),
+                                          {.offset = _upload_offsets[_device.frame_index()],
+                                           .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                                           .width = temp_length,
+                                           .height = temp_length,
+                                           .row_pitch = _upload_readback_pitch});
+
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         command_list.deferred_barrier(
+            gpu::texture_barrier{.sync_before = gpu::barrier_sync::copy,
+                                 .sync_after = gpu::barrier_sync::pixel_shading,
+                                 .access_before = gpu::barrier_access::copy_dest,
+                                 .access_after = gpu::barrier_access::shader_resource,
+                                 .layout_before = gpu::barrier_layout::direct_queue_common,
+                                 .layout_after = gpu::barrier_layout::direct_queue_common,
+                                 .resource = _atlas_texture.get()});
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = _atlas_texture.get(),
+            .state_before = gpu::legacy_resource_state::copy_dest,
+            .state_after = gpu::legacy_resource_state::pixel_shader_resource});
+      }
+   }
 
    void draw(const model& model, const thumbnail_index index,
              root_signature_library& root_signatures, pipeline_library& pipelines,
@@ -609,19 +727,15 @@ private:
 
       command_list.flush_barriers();
 
-      const gpu::rect atlas_rect{.left = index.x * temp_length,
-                                 .top = index.y * temp_length,
-                                 .right = (index.x + 1) * temp_length,
-                                 .bottom = (index.y + 1) * temp_length};
-
-      command_list.copy_texture_region(_atlas_texture.get(), 0, atlas_rect.left,
-                                       atlas_rect.top, 0, _render_texture.get(), 0);
+      command_list.copy_texture_region(_atlas_texture.get(), 0,
+                                       index.x * temp_length, index.y * temp_length,
+                                       0, _render_texture.get(), 0);
       command_list.copy_texture_to_buffer(_readback_buffer.get(),
                                           {.offset = _readback_offsets[_device.frame_index()],
                                            .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                                            .width = temp_length,
                                            .height = temp_length,
-                                           .row_pitch = _readback_pitch},
+                                           .row_pitch = _upload_readback_pitch},
                                           0, 0, 0, _render_texture.get(), 0);
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
@@ -760,11 +874,22 @@ private:
    gpu::unique_resource_handle _depth_texture;
    gpu::unique_dsv_handle _depth_dsv;
 
-   uint32 _readback_pitch = 0;
+   uint32 _upload_readback_pitch = 0;
+
+   gpu::unique_resource_handle _upload_buffer;
+   std::array<uint32, gpu::frame_pipeline_length> _upload_offsets;
+   std::array<std::byte*, gpu::frame_pipeline_length> _upload_pointers;
+
    gpu::unique_resource_handle _readback_buffer;
    std::array<uint32, gpu::frame_pipeline_length> _readback_offsets;
-   std::array<const void*, gpu::frame_pipeline_length> _readback_pointers;
+   std::array<const std::byte*, gpu::frame_pipeline_length> _readback_pointers;
    std::array<std::string, gpu::frame_pipeline_length> _readback_names;
+
+   struct cache_upload_item {
+      thumbnail_index index;
+   };
+
+   std::optional<cache_upload_item> _cache_upload_item;
 
    struct rendering {
       std::string name;
@@ -784,6 +909,8 @@ private:
    };
 
    absl::flat_hash_map<std::string, recycle_item> _recycle_items;
+
+   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> _cpu_memory_cache;
 
    std::shared_mutex _pending_odfs_mutex;
    absl::flat_hash_map<std::string, asset_ref<assets::odf::definition>> _pending_odfs;
