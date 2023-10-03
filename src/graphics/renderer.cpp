@@ -120,6 +120,16 @@ struct renderer_impl final : renderer {
       return _thumbnail_manager.request_object_class_thumbnail(name);
    }
 
+   void async_save_thumbnail_disk_cache(const wchar_t* path) noexcept override
+   {
+      _thumbnail_manager.async_save_disk_cache(path);
+   }
+
+   void async_load_thumbnail_disk_cache(const wchar_t* path) noexcept override
+   {
+      _thumbnail_manager.async_load_disk_cache(path);
+   }
+
 private:
    void update_frame_constant_buffer(const camera& camera,
                                      const settings::graphics& settings,
@@ -282,8 +292,9 @@ renderer_impl::renderer_impl(const renderer_init& init)
                     _texture_manager, init.asset_libraries.models,
                     init.thread_pool, _error_output},
      _sky{_device, _model_manager, init.asset_libraries},
-     _thumbnail_manager{thumbnail_manager_init{init.asset_libraries, init.error_output,
-                                               _device, init.display_scale}}
+     _thumbnail_manager{
+        thumbnail_manager_init{init.thread_pool, init.asset_libraries,
+                               init.error_output, _device, init.display_scale}}
 {
    // create object constants upload buffers
    for (std::size_t i = 0; i < _object_constants_upload_buffers.size(); ++i) {

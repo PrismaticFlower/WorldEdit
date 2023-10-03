@@ -33,6 +33,7 @@ struct root_signature_library;
 struct pipeline_library;
 
 struct thumbnail_manager_init {
+   const std::shared_ptr<async::thread_pool>& thread_pool;
    assets::libraries_manager& asset_libraries;
    output_stream& error_output;
    gpu::device& device;
@@ -66,10 +67,14 @@ struct thumbnail_manager {
 
    void display_scale_changed(const float new_display_scale);
 
+   void async_save_disk_cache(const wchar_t* path) noexcept;
+
+   void async_load_disk_cache(const wchar_t* path) noexcept;
+
 private:
    struct impl;
 
-   implementation_storage<impl, 1024> _impl;
+   implementation_storage<impl, 1112> _impl;
 };
 
 }

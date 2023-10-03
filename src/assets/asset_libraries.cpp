@@ -30,9 +30,9 @@ namespace we::assets {
 namespace {
 
 const absl::flat_hash_set<std::wstring_view> ignored_folders =
-   {L"_BUILD"sv, L"_LVL_PC"sv, L"_LVL_PS2"sv, L"_LVL_PSP"sv, L"_LVL_XBOX"sv,
+   {L"_BUILD"sv, L"_LVL_PC"sv, L"_LVL_PS2"sv, L"_LVL_PSP"sv,  L"_LVL_XBOX"sv,
 
-    L".git"sv,   L".svn"sv,    L".vscode"sv};
+    L".git"sv,   L".svn"sv,    L".vscode"sv,  L".WorldEdit"sv};
 
 }
 

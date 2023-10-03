@@ -2452,9 +2452,31 @@ void world_edit::open_project(std::filesystem::path path) noexcept
       }
    }
 
+   if (not _project_dir.empty()) {
+      _renderer->async_save_thumbnail_disk_cache(
+         (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
+   }
+
    _project_dir = path;
    _asset_libraries.source_directory(_project_dir);
    _project_world_paths.clear();
+
+   const std::filesystem::path world_edit_project_files_path =
+      _project_dir / L".WorldEdit";
+
+   if (not std::filesystem::exists(world_edit_project_files_path)) {
+      if (std::error_code ec;
+          std::filesystem::create_directory(world_edit_project_files_path, ec)) {
+         SetFileAttributesW(world_edit_project_files_path.c_str(), FILE_ATTRIBUTE_HIDDEN);
+      }
+      else {
+         MessageBoxW(_window, L"Unable to .WorldEdit folder in selected folder. This folder is used to store things like the thumbnail disk cache. You can proceed but features that depend on this folder will be broken.",
+                     L"Unable to create folder.", MB_OK);
+      }
+   }
+
+   _renderer->async_load_thumbnail_disk_cache(
+      (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
 
    close_world();
    enumerate_project_worlds();

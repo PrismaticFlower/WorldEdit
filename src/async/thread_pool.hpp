@@ -20,7 +20,7 @@ struct task_context_base {
    std::atomic_bool execution_started = false;
 
    /// @brief Contains the function that executes the task.
-   std::function<void()> execute_function;
+   std::move_only_function<void()> execute_function;
 
    /// @brief Latch that will be counted down upon completion of the task. Once at 0 task_exception_ptr and result can be safely used.
    std::latch executed_latch{1};

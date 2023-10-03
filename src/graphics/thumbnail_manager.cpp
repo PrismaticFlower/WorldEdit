@@ -1,6 +1,7 @@
 #include "thumbnail_manager.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/definition.hpp"
+#include "async/thread_pool.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "gpu/resource.hpp"
 #include "math/matrix_funcs.hpp"
@@ -270,11 +271,31 @@ void texture_copy(std::byte* dest, const std::size_t dest_pitch,
    }
 }
 
+void save_disk_cache(
+   [[maybe_unused]] const std::wstring& path,
+   [[maybe_unused]] const absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>>& cpu_memory_cache,
+   [[maybe_unused]] const uint32 thumbnail_length) noexcept
+{
+}
+
+struct loaded_cache {
+   absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>> cpu_memory_cache;
+   uint32 thumbnail_length = 0;
+};
+
+auto load_disk_cache([[maybe_unused]] const std::wstring& path) noexcept -> loaded_cache
+{
+   loaded_cache loaded;
+
+   return loaded;
+}
+
 }
 
 struct thumbnail_manager::impl {
    explicit impl(const thumbnail_manager_init& init)
-      : _asset_libraries{init.asset_libraries},
+      : _thread_pool{init.thread_pool},
+        _asset_libraries{init.asset_libraries},
         _error_output{init.error_output},
         _device{init.device},
         _display_scale{init.display_scale}
@@ -284,6 +305,11 @@ struct thumbnail_manager::impl {
       _cpu_memory_cache.reserve(2048);
 
       create_gpu_resources();
+   }
+
+   ~impl()
+   {
+      if (_save_disk_cache_task) _save_disk_cache_task->wait();
    }
 
    auto request_object_class_thumbnail(const std::string_view name) -> object_class_thumbnail
@@ -367,6 +393,20 @@ struct thumbnail_manager::impl {
                       _upload_readback_pitch, _thumbnail_length, sizeof(uint32));
 
          _readback_names[_device.frame_index()].clear();
+      }
+
+      if (_save_disk_cache_task and _save_disk_cache_task->ready()) {
+         _save_disk_cache_task = std::nullopt;
+      }
+
+      if (_load_disk_cache_task and _load_disk_cache_task->ready()) {
+         loaded_cache loaded = _load_disk_cache_task->get();
+
+         _load_disk_cache_task = std::nullopt;
+
+         if (loaded.thumbnail_length == _thumbnail_length) {
+            _cpu_memory_cache = std::move(loaded.cpu_memory_cache);
+         }
       }
    }
 
@@ -480,6 +520,31 @@ struct thumbnail_manager::impl {
       _cpu_memory_cache.clear();
 
       create_gpu_resources();
+   }
+
+   void async_save_disk_cache(const wchar_t* path) noexcept
+   {
+      if (_cpu_memory_cache.empty()) return;
+
+      if (_save_disk_cache_task) _save_disk_cache_task->wait();
+
+      _save_disk_cache_task =
+         _thread_pool->exec(async::task_priority::low,
+                            [disk_cache_path = std::wstring{path},
+                             cpu_memory_cache = std::move(_cpu_memory_cache),
+                             thumbnail_length = _thumbnail_length] {
+                               save_disk_cache(disk_cache_path, cpu_memory_cache,
+                                               thumbnail_length);
+                            });
+   }
+
+   void async_load_disk_cache(const wchar_t* path) noexcept
+   {
+      _load_disk_cache_task =
+         _thread_pool->exec(async::task_priority::low,
+                            [disk_cache_path = std::wstring{path}] {
+                               return load_disk_cache(disk_cache_path);
+                            });
    }
 
 private:
@@ -887,6 +952,7 @@ private:
       }
    }
 
+   std::shared_ptr<async::thread_pool> _thread_pool;
    assets::libraries_manager& _asset_libraries;
    output_stream& _error_output;
    gpu::device& _device;
@@ -962,6 +1028,9 @@ private:
 
    invalidation_tracker _invalidation_tracker{_asset_libraries};
 
+   std::optional<async::task<void>> _save_disk_cache_task;
+   std::optional<async::task<loaded_cache>> _load_disk_cache_task;
+
    event_listener<void(const lowercase_string&, asset_ref<assets::odf::definition>,
                        asset_data<assets::odf::definition>)>
       _asset_load_listener = _asset_libraries.odfs.listen_for_loads(
@@ -1007,6 +1076,16 @@ void thumbnail_manager::end_frame()
 void thumbnail_manager::display_scale_changed(const float new_display_scale)
 {
    return _impl->display_scale_changed(new_display_scale);
+}
+
+void thumbnail_manager::async_save_disk_cache(const wchar_t* path) noexcept
+{
+   return _impl->async_save_disk_cache(path);
+}
+
+void thumbnail_manager::async_load_disk_cache(const wchar_t* path) noexcept
+{
+   return _impl->async_load_disk_cache(path);
 }
 
 thumbnail_manager::thumbnail_manager(const thumbnail_manager_init& init)
