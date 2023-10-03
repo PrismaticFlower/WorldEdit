@@ -36,6 +36,7 @@ struct thumbnail_manager_init {
    assets::libraries_manager& asset_libraries;
    output_stream& error_output;
    gpu::device& device;
+   float display_scale = 1.0f;
 };
 
 struct thumbnail_manager {
@@ -62,6 +63,8 @@ struct thumbnail_manager {
                      gpu::graphics_command_list& command_list);
 
    void end_frame();
+
+   void display_scale_changed(const float new_display_scale);
 
 private:
    struct impl;

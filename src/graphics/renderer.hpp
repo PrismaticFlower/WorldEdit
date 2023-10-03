@@ -52,6 +52,8 @@ struct renderer_init {
    assets::libraries_manager& asset_libraries;
    output_stream& error_output;
 
+   float display_scale = 1.0f;
+
    bool use_debug_layer = false;
 };
 
@@ -70,7 +72,7 @@ struct renderer {
 
    virtual void window_resized(uint16 width, uint16 height) = 0;
 
-   virtual void display_scale_changed(const float display_scale) noexcept = 0;
+   virtual void display_scale_changed(const float display_scale) = 0;
 
    virtual void mark_dirty_terrain() noexcept = 0;
 

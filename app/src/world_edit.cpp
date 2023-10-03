@@ -56,12 +56,17 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
       return settings::settings{};
    });
 
+   _current_dpi = GetDpiForWindow(_window);
+   _display_scale = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
+   _applied_user_display_scale = _settings.ui.extra_scaling;
+
    try {
       _renderer =
          graphics::make_renderer({.window = window,
                                   .thread_pool = _thread_pool,
                                   .asset_libraries = _asset_libraries,
                                   .error_output = _stream,
+                                  .display_scale = _display_scale,
                                   .use_debug_layer = _renderer_use_debug_layer});
    }
    catch (graphics::gpu::exception& e) {
@@ -73,8 +78,8 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 
    ImGui_ImplWin32_Init(window);
 
-   // Call this to initialize the ImGui font and display scaling values.
-   dpi_changed(GetDpiForWindow(_window));
+   initialize_imgui_font();
+   initialize_imgui_style();
 
    if (auto start_project = command_line.get_or("-project"sv, ""sv);
        not start_project.empty()) {
@@ -2711,6 +2716,19 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
    _display_scale = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
    _applied_user_display_scale = _settings.ui.extra_scaling;
 
+   initialize_imgui_font();
+   initialize_imgui_style();
+
+   try {
+      _renderer->display_scale_changed(_display_scale);
+   }
+   catch (graphics::gpu::exception& e) {
+      handle_gpu_error(e);
+   }
+}
+
+void world_edit::initialize_imgui_font() noexcept
+{
    const static std::span<std::byte> roboto_regular = [] {
       const HRSRC resource =
          FindResourceW(nullptr, MAKEINTRESOURCEW(RES_ID_ROBOTO_REGULAR),
@@ -2729,16 +2747,19 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
                                               static_cast<int>(roboto_regular.size()),
                                               std::floor(16.0f * _display_scale),
                                               &font_config);
-   ImGui::GetStyle() = ImGuiStyle{};
-   ImGui::GetStyle().ScaleAllSizes(_display_scale);
 
    try {
       _renderer->recreate_imgui_font_atlas();
-      _renderer->display_scale_changed(_display_scale);
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
    }
+}
+
+void world_edit::initialize_imgui_style() noexcept
+{
+   ImGui::GetStyle() = ImGuiStyle{};
+   ImGui::GetStyle().ScaleAllSizes(_display_scale);
 }
 
 void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept

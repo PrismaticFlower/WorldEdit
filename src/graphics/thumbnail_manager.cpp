@@ -23,7 +23,6 @@ namespace we::graphics {
 namespace {
 
 constexpr uint32 max_texture_length = 16384;
-constexpr uint32 temp_length = 128;
 constexpr uint32 atlas_thumbnails = 256;
 
 struct camera_info {
@@ -277,110 +276,14 @@ struct thumbnail_manager::impl {
    explicit impl(const thumbnail_manager_init& init)
       : _asset_libraries{init.asset_libraries},
         _error_output{init.error_output},
-        _device{init.device}
+        _device{init.device},
+        _display_scale{init.display_scale}
    {
-      const uint32 atlas_items_width = max_texture_length / temp_length;
-      const uint32 atlas_items_height =
-         (atlas_thumbnails + (atlas_items_width - 1)) / atlas_items_width;
+      _back_items.reserve(atlas_thumbnails);
+      _recycle_items.reserve(atlas_thumbnails);
+      _cpu_memory_cache.reserve(2048);
 
-      _atlas_texture =
-         {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
-                                  .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-                                  .width = atlas_items_width * temp_length,
-                                  .height = atlas_items_height * temp_length,
-                                  .debug_name = "Thumbnails Atlas"},
-                                 gpu::barrier_layout::direct_queue_common,
-                                 gpu::legacy_resource_state::pixel_shader_resource),
-          _device.direct_queue};
-      _atlas_srv = {_device.create_shader_resource_view(_atlas_texture.get(),
-                                                        {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}),
-                    _device.direct_queue};
-
-      _free_items.reserve(atlas_items_width * atlas_items_height);
-
-      for (uint16 y = 0; y < atlas_items_height; ++y) {
-         for (uint16 x = 0; x < atlas_items_width; ++x) {
-            _free_items.push_back({x, y});
-         }
-      }
-
-      _atlas_items_width = static_cast<float>(atlas_items_width);
-      _atlas_items_height = static_cast<float>(atlas_items_height);
-
-      _render_texture = {_device.create_texture(
-                            {.dimension = gpu::texture_dimension::t_2d,
-                             .flags = {.allow_render_target = true},
-                             .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-                             .width = temp_length,
-                             .height = temp_length,
-                             .optimized_clear_value = {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-                                                       .color = {0.0f, 0.0f, 0.0f, 0.0f}},
-                             .debug_name = "Thumbnails Render Target"},
-                            gpu::barrier_layout::direct_queue_copy_source,
-                            gpu::legacy_resource_state::copy_source),
-                         _device.direct_queue};
-      _render_rtv = {_device.create_render_target_view(_render_texture.get(),
-                                                       {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-                                                        .dimension =
-                                                           gpu::rtv_dimension::texture2d}),
-                     _device.direct_queue};
-
-      _depth_texture = {_device.create_texture(
-                           {.dimension = gpu::texture_dimension::t_2d,
-                            .flags = {.allow_depth_stencil = true,
-                                      .deny_shader_resource = true},
-                            .format = DXGI_FORMAT_D16_UNORM,
-                            .width = temp_length,
-                            .height = temp_length,
-                            .optimized_clear_value = {.format = DXGI_FORMAT_D16_UNORM,
-                                                      .depth_stencil = {.depth = 1.0f}},
-                            .debug_name = "Thumbnails Depth Buffer"},
-                           gpu::barrier_layout::depth_stencil_write,
-                           gpu::legacy_resource_state::depth_write),
-                        _device.direct_queue};
-      _depth_dsv = {_device.create_depth_stencil_view(_depth_texture.get(),
-                                                      {.format = DXGI_FORMAT_D16_UNORM,
-                                                       .dimension =
-                                                          gpu::dsv_dimension::texture2d}),
-                    _device.direct_queue};
-
-      _upload_readback_pitch =
-         math::align_up<uint32>(temp_length * sizeof(uint32),
-                                gpu::texture_data_pitch_alignment);
-
-      _upload_buffer = {_device.create_buffer({.size = temp_length * _upload_readback_pitch *
-                                                       gpu::frame_pipeline_length,
-                                               .debug_name =
-                                                  "Thumbnails Upload Buffer"},
-                                              gpu::heap_type::upload),
-                        _device.direct_queue};
-
-      std::byte* const upload_mapped_buffer =
-         static_cast<std::byte*>(_device.map(_upload_buffer.get(), 0,
-                                             {0, temp_length * _upload_readback_pitch *
-                                                    gpu::frame_pipeline_length}));
-
-      for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
-         _upload_offsets[i] = (temp_length * _upload_readback_pitch) * i;
-         _upload_pointers[i] = upload_mapped_buffer + _upload_offsets[i];
-      }
-
-      _readback_buffer =
-         {_device.create_buffer({.size = temp_length * _upload_readback_pitch *
-                                         gpu::frame_pipeline_length,
-                                 .debug_name = "Thumbnails Readback Buffer"},
-                                gpu::heap_type::readback),
-          _device.direct_queue};
-
-      const std::byte* const readback_mapped_buffer =
-         static_cast<std::byte*>(_device.map(_readback_buffer.get(), 0,
-                                             {0, temp_length * _upload_readback_pitch *
-                                                    gpu::frame_pipeline_length}));
-
-      for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
-         _readback_offsets[i] = (temp_length * _upload_readback_pitch) * i;
-         _readback_pointers[i] = readback_mapped_buffer + _readback_offsets[i];
-      }
+      create_gpu_resources();
    }
 
    auto request_object_class_thumbnail(const std::string_view name) -> object_class_thumbnail
@@ -424,8 +327,8 @@ struct thumbnail_manager::impl {
 
                texture_copy(_upload_pointers[_device.frame_index()],
                             _upload_readback_pitch, src_data,
-                            temp_length * sizeof(uint32), temp_length,
-                            sizeof(uint32));
+                            _thumbnail_length * sizeof(uint32),
+                            _thumbnail_length, sizeof(uint32));
 
                return {.imgui_texture_id =
                           reinterpret_cast<void*>(uint64{_atlas_srv.get().index}),
@@ -450,7 +353,7 @@ struct thumbnail_manager::impl {
    void update_cache()
    {
       if (not _readback_names[_device.frame_index()].empty()) {
-         constexpr std::size_t size = temp_length * temp_length * sizeof(uint32);
+         const uint32 size = _thumbnail_length * _thumbnail_length * sizeof(uint32);
 
          std::unique_ptr<std::byte[]>& memory =
             _cpu_memory_cache[_readback_names[_device.frame_index()]];
@@ -459,9 +362,9 @@ struct thumbnail_manager::impl {
             memory = std::make_unique_for_overwrite<std::byte[]>(size);
          }
 
-         texture_copy(memory.get(), temp_length * sizeof(uint32),
+         texture_copy(memory.get(), _thumbnail_length * sizeof(uint32),
                       _readback_pointers[_device.frame_index()],
-                      _upload_readback_pitch, temp_length, sizeof(uint32));
+                      _upload_readback_pitch, _thumbnail_length, sizeof(uint32));
 
          _readback_names[_device.frame_index()].clear();
       }
@@ -562,6 +465,23 @@ struct thumbnail_manager::impl {
       }
    }
 
+   void display_scale_changed(const float new_display_scale)
+   {
+      if (_display_scale == new_display_scale) return;
+
+      _display_scale = new_display_scale;
+
+      _thumbnail_length = static_cast<uint32>(128 * _display_scale);
+
+      _free_items.clear();
+      _front_items.clear();
+      _back_items.clear();
+      _recycle_items.clear();
+      _cpu_memory_cache.clear();
+
+      create_gpu_resources();
+   }
+
 private:
    struct thumbnail_index {
       uint16 x = 0;
@@ -584,12 +504,13 @@ private:
       }
 
       command_list.copy_buffer_to_texture(_atlas_texture.get(), 0,
-                                          index.x * temp_length, index.y * temp_length,
-                                          0, _upload_buffer.get(),
+                                          index.x * _thumbnail_length,
+                                          index.y * _thumbnail_length, 0,
+                                          _upload_buffer.get(),
                                           {.offset = _upload_offsets[_device.frame_index()],
                                            .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-                                           .width = temp_length,
-                                           .height = temp_length,
+                                           .width = _thumbnail_length,
+                                           .height = _thumbnail_length,
                                            .row_pitch = _upload_readback_pitch});
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
@@ -640,9 +561,10 @@ private:
                                             {.clear_depth = true}, 1.0f, 0x0);
 
       command_list.rs_set_viewports(
-         gpu::viewport{.width = static_cast<float>(temp_length),
-                       .height = static_cast<float>(temp_length)});
-      command_list.rs_set_scissor_rects({.right = temp_length, .bottom = temp_length});
+         gpu::viewport{.width = static_cast<float>(_thumbnail_length),
+                       .height = static_cast<float>(_thumbnail_length)});
+      command_list.rs_set_scissor_rects(
+         {.right = _thumbnail_length, .bottom = _thumbnail_length});
       command_list.om_set_render_targets(_render_rtv.get(), _depth_dsv.get());
 
       command_list.set_graphics_root_signature(root_signatures.thumbnail_mesh.get());
@@ -728,13 +650,14 @@ private:
       command_list.flush_barriers();
 
       command_list.copy_texture_region(_atlas_texture.get(), 0,
-                                       index.x * temp_length, index.y * temp_length,
-                                       0, _render_texture.get(), 0);
+                                       index.x * _thumbnail_length,
+                                       index.y * _thumbnail_length, 0,
+                                       _render_texture.get(), 0);
       command_list.copy_texture_to_buffer(_readback_buffer.get(),
                                           {.offset = _readback_offsets[_device.frame_index()],
                                            .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-                                           .width = temp_length,
-                                           .height = temp_length,
+                                           .width = _thumbnail_length,
+                                           .height = _thumbnail_length,
                                            .row_pitch = _upload_readback_pitch},
                                           0, 0, 0, _render_texture.get(), 0);
 
@@ -856,12 +779,123 @@ private:
       return std::nullopt;
    }
 
+   void create_gpu_resources()
+   {
+      const uint32 atlas_items_width = max_texture_length / _thumbnail_length;
+      const uint32 atlas_items_height =
+         std::min((atlas_thumbnails + (atlas_items_width - 1)) / atlas_items_width,
+                  max_texture_length / _thumbnail_length);
+
+      _atlas_texture =
+         {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                                  .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                                  .width = atlas_items_width * _thumbnail_length,
+                                  .height = atlas_items_height * _thumbnail_length,
+                                  .debug_name = "Thumbnails Atlas"},
+                                 gpu::barrier_layout::direct_queue_common,
+                                 gpu::legacy_resource_state::pixel_shader_resource),
+          _device.direct_queue};
+      _atlas_srv = {_device.create_shader_resource_view(_atlas_texture.get(),
+                                                        {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}),
+                    _device.direct_queue};
+
+      _free_items.clear();
+      _free_items.reserve(atlas_items_width * atlas_items_height);
+
+      for (uint16 y = 0; y < atlas_items_height; ++y) {
+         for (uint16 x = 0; x < atlas_items_width; ++x) {
+            _free_items.push_back({x, y});
+         }
+      }
+
+      _atlas_items_width = static_cast<float>(atlas_items_width);
+      _atlas_items_height = static_cast<float>(atlas_items_height);
+
+      _render_texture = {_device.create_texture(
+                            {.dimension = gpu::texture_dimension::t_2d,
+                             .flags = {.allow_render_target = true},
+                             .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                             .width = _thumbnail_length,
+                             .height = _thumbnail_length,
+                             .optimized_clear_value = {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                                                       .color = {0.0f, 0.0f, 0.0f, 0.0f}},
+                             .debug_name = "Thumbnails Render Target"},
+                            gpu::barrier_layout::direct_queue_copy_source,
+                            gpu::legacy_resource_state::copy_source),
+                         _device.direct_queue};
+      _render_rtv = {_device.create_render_target_view(_render_texture.get(),
+                                                       {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                                                        .dimension =
+                                                           gpu::rtv_dimension::texture2d}),
+                     _device.direct_queue};
+
+      _depth_texture = {_device.create_texture(
+                           {.dimension = gpu::texture_dimension::t_2d,
+                            .flags = {.allow_depth_stencil = true,
+                                      .deny_shader_resource = true},
+                            .format = DXGI_FORMAT_D16_UNORM,
+                            .width = _thumbnail_length,
+                            .height = _thumbnail_length,
+                            .optimized_clear_value = {.format = DXGI_FORMAT_D16_UNORM,
+                                                      .depth_stencil = {.depth = 1.0f}},
+                            .debug_name = "Thumbnails Depth Buffer"},
+                           gpu::barrier_layout::depth_stencil_write,
+                           gpu::legacy_resource_state::depth_write),
+                        _device.direct_queue};
+      _depth_dsv = {_device.create_depth_stencil_view(_depth_texture.get(),
+                                                      {.format = DXGI_FORMAT_D16_UNORM,
+                                                       .dimension =
+                                                          gpu::dsv_dimension::texture2d}),
+                    _device.direct_queue};
+
+      _upload_readback_pitch =
+         math::align_up<uint32>(_thumbnail_length * sizeof(uint32),
+                                gpu::texture_data_pitch_alignment);
+
+      _upload_buffer = {_device.create_buffer({.size = _thumbnail_length * _upload_readback_pitch *
+                                                       gpu::frame_pipeline_length,
+                                               .debug_name =
+                                                  "Thumbnails Upload Buffer"},
+                                              gpu::heap_type::upload),
+                        _device.direct_queue};
+
+      std::byte* const upload_mapped_buffer = static_cast<std::byte*>(
+         _device.map(_upload_buffer.get(), 0,
+                     {0, _thumbnail_length * _upload_readback_pitch *
+                            gpu::frame_pipeline_length}));
+
+      for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
+         _upload_offsets[i] = (_thumbnail_length * _upload_readback_pitch) * i;
+         _upload_pointers[i] = upload_mapped_buffer + _upload_offsets[i];
+      }
+
+      _readback_buffer =
+         {_device.create_buffer({.size = _thumbnail_length * _upload_readback_pitch *
+                                         gpu::frame_pipeline_length,
+                                 .debug_name = "Thumbnails Readback Buffer"},
+                                gpu::heap_type::readback),
+          _device.direct_queue};
+
+      const std::byte* const readback_mapped_buffer = static_cast<std::byte*>(
+         _device.map(_readback_buffer.get(), 0,
+                     {0, _thumbnail_length * _upload_readback_pitch *
+                            gpu::frame_pipeline_length}));
+
+      for (uint32 i = 0; i < gpu::frame_pipeline_length; ++i) {
+         _readback_offsets[i] = (_thumbnail_length * _upload_readback_pitch) * i;
+         _readback_pointers[i] = readback_mapped_buffer + _readback_offsets[i];
+      }
+   }
+
    assets::libraries_manager& _asset_libraries;
    output_stream& _error_output;
    gpu::device& _device;
 
    float _atlas_items_width = 1;
    float _atlas_items_height = 1;
+   float _display_scale = 1.0f;
+
+   uint32 _thumbnail_length = static_cast<uint32>(128 * _display_scale);
 
    uint64 _frame = 0;
 
@@ -968,6 +1002,11 @@ void thumbnail_manager::draw_updated(model_manager& model_manager,
 void thumbnail_manager::end_frame()
 {
    return _impl->end_frame();
+}
+
+void thumbnail_manager::display_scale_changed(const float new_display_scale)
+{
+   return _impl->display_scale_changed(new_display_scale);
 }
 
 thumbnail_manager::thumbnail_manager(const thumbnail_manager_init& init)

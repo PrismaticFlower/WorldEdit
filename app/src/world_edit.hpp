@@ -205,6 +205,10 @@ private:
 
    void initialize_hotkeys() noexcept;
 
+   void initialize_imgui_font() noexcept;
+
+   void initialize_imgui_style() noexcept;
+
    void handle_gpu_error(graphics::gpu::exception& e) noexcept;
 
    standard_output_stream _stream;

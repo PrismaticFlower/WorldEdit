@@ -93,9 +93,11 @@ struct renderer_impl final : renderer {
 
    void window_resized(uint16 width, uint16 height) override;
 
-   void display_scale_changed(const float display_scale) noexcept override
+   void display_scale_changed(const float display_scale) override
    {
       _display_scale = display_scale;
+
+      _thumbnail_manager.display_scale_changed(display_scale);
    }
 
    void mark_dirty_terrain() noexcept override;
@@ -270,6 +272,7 @@ private:
 renderer_impl::renderer_impl(const renderer_init& init)
    : _thread_pool{init.thread_pool},
      _error_output{init.error_output},
+     _display_scale{init.display_scale},
      _device{gpu::device_desc{.enable_debug_layer = init.use_debug_layer,
                               .enable_gpu_based_validation = init.use_debug_layer}},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
@@ -279,8 +282,8 @@ renderer_impl::renderer_impl(const renderer_init& init)
                     _texture_manager, init.asset_libraries.models,
                     init.thread_pool, _error_output},
      _sky{_device, _model_manager, init.asset_libraries},
-     _thumbnail_manager{
-        thumbnail_manager_init{init.asset_libraries, init.error_output, _device}}
+     _thumbnail_manager{thumbnail_manager_init{init.asset_libraries, init.error_output,
+                                               _device, init.display_scale}}
 {
    // create object constants upload buffers
    for (std::size_t i = 0; i < _object_constants_upload_buffers.size(); ++i) {
