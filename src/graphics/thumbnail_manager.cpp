@@ -27,7 +27,7 @@ namespace we::graphics {
 
 namespace {
 
-constexpr uint32 cache_save_version = 0;
+constexpr uint32 cache_save_version = 1;
 constexpr uint32 max_texture_length = 16384;
 constexpr uint32 atlas_thumbnails = 256;
 
@@ -80,9 +80,46 @@ auto make_camera_info(const model& model) -> camera_info
 }
 
 struct invalidation_save_entry {
-   lowercase_string odf;
-   lowercase_string model;
-   std::vector<lowercase_string> textures;
+   struct name_time {
+      template<typename T>
+      name_time(lowercase_string init_name, assets::library<T>& assets)
+         : name{std::move(init_name)}
+      {
+         time = assets.query_last_write_time(name);
+      }
+
+      name_time(std::string_view init_name, uint64 time)
+         : name{init_name}, time{time}
+      {
+      }
+
+      template<typename T>
+      bool invalidated(assets::library<T>& assets) const noexcept
+      {
+         return time != assets.query_last_write_time(name);
+      }
+
+      lowercase_string name;
+      uint64 time = 0;
+   };
+
+   bool invalidated(assets::libraries_manager& asset_libraries) const noexcept
+   {
+      if (odf.invalidated(asset_libraries.odfs)) return true;
+      if (model.invalidated(asset_libraries.models)) return true;
+
+      for (const auto& texture : textures) {
+         if (texture.invalidated(asset_libraries.textures)) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   name_time odf;
+   name_time model;
+   std::vector<name_time> textures;
 };
 
 struct invalidation_tracker {
@@ -92,7 +129,8 @@ struct invalidation_tracker {
         _msh_change_listener{asset_libraries.models.listen_for_changes(
            [this](const lowercase_string& name) { msh_changed(name); })},
         _texture_change_listener{asset_libraries.textures.listen_for_changes(
-           [this](const lowercase_string& name) { texture_changed(name); })}
+           [this](const lowercase_string& name) { texture_changed(name); })},
+        _asset_libraries{asset_libraries}
    {
    }
 
@@ -160,7 +198,7 @@ struct invalidation_tracker {
    {
       _invalidated.clear();
 
-      std::scoped_lock lock{_mutex};
+      std::scoped_lock lock{_invalidated_background_mutex};
 
       std::swap(_invalidated, _invalidated_background);
 
@@ -175,7 +213,18 @@ struct invalidation_tracker {
       save_data.reserve(_odfs.size());
 
       for (const auto& [name, entry] : _odfs) {
-         save_data.emplace_back(name, entry.model, entry.textures);
+         using name_time = invalidation_save_entry::name_time;
+
+         std::vector<name_time> textures;
+         textures.reserve(entry.textures.size());
+
+         for (const auto& texture : entry.textures) {
+            textures.emplace_back(texture, _asset_libraries.textures);
+         }
+
+         save_data.emplace_back(name_time{name, _asset_libraries.odfs},
+                                name_time{entry.model, _asset_libraries.models},
+                                std::move(textures));
       }
 
       return save_data;
@@ -183,26 +232,48 @@ struct invalidation_tracker {
 
    void restore_from_save_data(const std::span<const invalidation_save_entry> save_data) noexcept
    {
-      std::scoped_lock lock{_mutex};
+      {
+         std::scoped_lock lock{_mutex};
 
-      _odfs.reserve(save_data.size());
+         _odfs.reserve(save_data.size());
+      }
 
       for (const invalidation_save_entry& entry : save_data) {
-         if (_odfs.contains(entry.odf)) continue;
+         if (entry.invalidated(_asset_libraries)) {
+            std::scoped_lock lock{_mutex, _invalidated_background_mutex};
 
-         _odfs.emplace(entry.odf,
-                       odf_entry{.model = entry.model, .textures = entry.textures});
+            if (not _odfs.contains(entry.odf.name)) {
+               _invalidated_background.push_back(entry.odf.name);
+            }
 
-         child_entry& model_entry = _models[entry.model];
+            continue;
+         }
 
-         model_entry.ref_count += 1;
-         model_entry.odfs.emplace_back(entry.odf);
+         std::scoped_lock lock{_mutex};
+
+         if (_odfs.contains(entry.odf.name)) continue;
+
+         std::vector<lowercase_string> odf_entry_textures;
+         odf_entry_textures.reserve(entry.textures.size());
 
          for (auto& texture : entry.textures) {
-            child_entry& texture_entry = _textures[texture];
+            odf_entry_textures.emplace_back(texture.name);
+         }
+
+         _odfs.emplace(entry.odf.name,
+                       odf_entry{.model = entry.model.name,
+                                 .textures = std::move(odf_entry_textures)});
+
+         child_entry& model_entry = _models[entry.model.name];
+
+         model_entry.ref_count += 1;
+         model_entry.odfs.emplace_back(entry.odf.name);
+
+         for (auto& texture : entry.textures) {
+            child_entry& texture_entry = _textures[texture.name];
 
             texture_entry.ref_count += 1;
-            texture_entry.odfs.emplace_back(entry.odf);
+            texture_entry.odfs.emplace_back(entry.odf.name);
          }
       }
    }
@@ -245,7 +316,7 @@ private:
 
    void odf_changed(const lowercase_string& name) noexcept
    {
-      std::scoped_lock lock{_mutex};
+      std::scoped_lock lock{_mutex, _invalidated_background_mutex};
 
       if (release(name)) {
          _invalidated_background.emplace_back(name);
@@ -254,7 +325,7 @@ private:
 
    void msh_changed(const lowercase_string& name) noexcept
    {
-      std::scoped_lock lock{_mutex};
+      std::scoped_lock lock{_mutex, _invalidated_background_mutex};
 
       const std::vector<lowercase_string> odfs = [&] {
          if (auto it = _models.find(name); it != _models.end()) {
@@ -271,7 +342,7 @@ private:
 
    void texture_changed(const lowercase_string& name) noexcept
    {
-      std::scoped_lock lock{_mutex};
+      std::scoped_lock lock{_mutex, _invalidated_background_mutex};
 
       const std::vector<lowercase_string> odfs = [&] {
          if (auto it = _textures.find(name); it != _textures.end()) {
@@ -303,7 +374,10 @@ private:
    absl::flat_hash_map<lowercase_string, child_entry> _models;
    absl::flat_hash_map<lowercase_string, child_entry> _textures;
 
+   std::shared_mutex _invalidated_background_mutex;
    std::vector<std::string> _invalidated_background;
+
+   assets::libraries_manager& _asset_libraries;
 
    event_listener<void(const lowercase_string&)> _odf_change_listener;
    event_listener<void(const lowercase_string&)> _msh_change_listener;
@@ -374,16 +448,19 @@ void save_disk_cache(
          write_object(invalidation_save_data.size());
 
          for (const auto& entry : invalidation_save_data) {
-            write_object(entry.odf.size());
-            write_string(entry.odf);
-            write_object(entry.model.size());
-            write_string(entry.model);
+            write_object(entry.odf.name.size());
+            write_string(entry.odf.name);
+            write_object(entry.odf.time);
+            write_object(entry.model.name.size());
+            write_string(entry.model.name);
+            write_object(entry.model.time);
 
             write_object(entry.textures.size());
 
             for (const auto& texture : entry.textures) {
-               write_object(texture.size());
-               write_string(texture);
+               write_object(texture.name.size());
+               write_string(texture.name);
+               write_object(texture.time);
             }
          }
 
@@ -456,15 +533,19 @@ auto load_disk_cache(const std::wstring& path) noexcept -> loaded_cache
             cache.read_bytes(cache.read<std::size_t>());
          const std::string_view odf{reinterpret_cast<const char*>(odf_bytes.data()),
                                     odf_bytes.size()};
+         const uint64 odf_last_write_time = cache.read<uint64>();
 
          const std::span<const std::byte> model_bytes =
             cache.read_bytes(cache.read<std::size_t>());
          const std::string_view model{reinterpret_cast<const char*>(model_bytes.data()),
                                       model_bytes.size()};
+         const uint64 model_last_write_time = cache.read<uint64>();
 
          const std::size_t texture_count = cache.read<std::size_t>();
 
-         std::vector<lowercase_string> textures;
+         using name_time = invalidation_save_entry::name_time;
+
+         std::vector<name_time> textures;
          textures.reserve(texture_count);
 
          for (std::size_t texture_index = 0; texture_index < texture_count;
@@ -474,12 +555,13 @@ auto load_disk_cache(const std::wstring& path) noexcept -> loaded_cache
             const std::string_view texture{reinterpret_cast<const char*>(
                                               texture_bytes.data()),
                                            texture_bytes.size()};
+            const uint64 texture_last_write_time = cache.read<uint64>();
 
-            textures.emplace_back(texture);
+            textures.emplace_back(texture, texture_last_write_time);
          }
 
-         loaded.invalidation_save_data.emplace_back(lowercase_string{odf},
-                                                    lowercase_string{model},
+         loaded.invalidation_save_data.emplace_back(name_time{odf, odf_last_write_time},
+                                                    name_time{model, model_last_write_time},
                                                     std::move(textures));
       }
 

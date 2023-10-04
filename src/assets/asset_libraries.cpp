@@ -34,6 +34,16 @@ const absl::flat_hash_set<std::wstring_view> ignored_folders =
 
     L".git"sv,   L".svn"sv,    L".vscode"sv,  L".WorldEdit"sv};
 
+auto try_get_last_write_time(const std::filesystem::path& asset_path) noexcept -> uint64
+{
+   try {
+      return std::filesystem::last_write_time(asset_path).time_since_epoch().count();
+   }
+   catch (std::filesystem::filesystem_error&) {
+      return 0;
+   }
+}
+
 }
 
 template<typename T>
@@ -74,6 +84,8 @@ struct library<T>::impl {
          state->load_failure = false;
          state->path = asset_path;
          state->start_load = [this, name] { enqueue_create_asset(name, false); };
+         state->last_write_time.store(try_get_last_write_time(asset_path),
+                                      std::memory_order_relaxed);
       }
       else {
          std::scoped_lock lock{_existing_assets_mutex};
@@ -251,22 +263,34 @@ struct library<T>::impl {
       return state.path;
    }
 
+   auto query_last_write_time(const lowercase_string& name) noexcept -> uint64
+   {
+      std::shared_lock lock{_assets_mutex};
+
+      auto it = _assets.find(name);
+
+      if (it == _assets.end()) return 0;
+
+      asset_state<T>& state = *it->second;
+
+      return state.last_write_time.load(std::memory_order_relaxed);
+   }
+
 private:
    auto make_asset_state(const lowercase_string& name,
                          const std::filesystem::path& asset_path)
       -> std::shared_ptr<asset_state<T>>
    {
-      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{},
-                                              not asset_path.empty(),
-                                              asset_path, [this, name = name] {
-                                                 enqueue_create_asset(name, false);
-                                              });
+      return std::make_shared<asset_state<T>>(
+         std::weak_ptr<T>{}, not asset_path.empty(), asset_path,
+         [this, name = name] { enqueue_create_asset(name, false); },
+         try_get_last_write_time(asset_path));
    }
 
    auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
    {
-      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{}, false,
-                                              std::filesystem::path{}, [] {});
+      return std::make_shared<asset_state<T>>(
+         std::weak_ptr<T>{}, false, std::filesystem::path{}, [] {}, 0);
    }
 
    void enqueue_create_asset(lowercase_string name, bool preempt_current_load) noexcept
@@ -424,6 +448,12 @@ auto library<T>::query_path(const lowercase_string& name) noexcept
    -> std::filesystem::path
 {
    return self->query_path(name);
+}
+
+template<typename T>
+auto library<T>::query_last_write_time(const lowercase_string& name) noexcept -> uint64
+{
+   return self->query_last_write_time(name);
 }
 
 template struct library<odf::definition>;

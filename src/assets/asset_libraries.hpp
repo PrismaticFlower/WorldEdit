@@ -99,6 +99,11 @@ struct library {
    /// @return The file path to the asset. Can be empty if the asset does not exist.
    auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path;
 
+   /// @brief Query the last write time of an asset.
+   /// @param name The name of the asset.
+   /// @return The last write time of the asset. Can be 0 if the asset does not exist.
+   auto query_last_write_time(const lowercase_string& name) noexcept -> uint64;
+
 private:
    struct impl;
 
