@@ -66,6 +66,8 @@ class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
 
+   ~world_edit();
+
    void update();
 
    void resized(uint16 width, uint16 height);

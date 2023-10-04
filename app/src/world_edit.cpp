@@ -100,6 +100,14 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    _settings = settings_load.get();
 }
 
+world_edit::~world_edit()
+{
+   if (not _project_dir.empty()) {
+      _renderer->async_save_thumbnail_disk_cache(
+         (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
+   }
+}
+
 void world_edit::update()
 {
    const float delta_time =
