@@ -174,6 +174,20 @@ const gpu::root_signature_desc thumbnail_mesh_desc{
    .debug_name = "thumbnail_mesh_root_signature",
 };
 
+const gpu::root_signature_desc thumbnail_downsample_mesh_desc{
+   .parameters =
+      {
+         gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
+                             .shader_register = 0,
+                             .values_count = 1,
+                             .visibility = gpu::root_shader_visibility::pixel},
+      },
+
+   .flags = {.allow_input_assembler_input_layout = false},
+
+   .debug_name = "thumbnail_downsample_root_signature",
+};
+
 const gpu::root_signature_desc mesh_wireframe_desc{
    .parameters =
       {
@@ -331,6 +345,8 @@ root_signature_library::root_signature_library(gpu::device& device)
    sky_mesh = {device.create_root_signature(sky_mesh_desc), device.direct_queue};
    thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc),
                      device.direct_queue};
+   thumbnail_downsample = {device.create_root_signature(thumbnail_downsample_mesh_desc),
+                           device.direct_queue};
    meta_draw = {device.create_root_signature(meta_draw_desc), device.direct_queue};
 
    ai_overlay_shape = {device.create_root_signature(ai_overlay_shape_desc),

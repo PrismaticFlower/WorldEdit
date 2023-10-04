@@ -30,6 +30,7 @@ namespace {
 constexpr uint32 cache_save_version = 1;
 constexpr uint32 max_texture_length = 16384;
 constexpr uint32 atlas_thumbnails = 256;
+constexpr uint32 aa_factor = 4;
 
 struct camera_info {
    float4x4 view_projection_matrix;
@@ -900,14 +901,14 @@ private:
                                  .sync_after = gpu::barrier_sync::render_target,
                                  .access_before = gpu::barrier_access::no_access,
                                  .access_after = gpu::barrier_access::render_target,
-                                 .layout_before = gpu::barrier_layout::direct_queue_copy_source,
+                                 .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
                                  .layout_after = gpu::barrier_layout::render_target,
                                  .resource = _render_texture.get()});
       }
       else {
          command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
             .resource = _render_texture.get(),
-            .state_before = gpu::legacy_resource_state::copy_source,
+            .state_before = gpu::legacy_resource_state::pixel_shader_resource,
             .state_after = gpu::legacy_resource_state::render_target});
       }
 
@@ -919,10 +920,10 @@ private:
                                             {.clear_depth = true}, 1.0f, 0x0);
 
       command_list.rs_set_viewports(
-         gpu::viewport{.width = static_cast<float>(_thumbnail_length),
-                       .height = static_cast<float>(_thumbnail_length)});
-      command_list.rs_set_scissor_rects(
-         {.right = _thumbnail_length, .bottom = _thumbnail_length});
+         gpu::viewport{.width = static_cast<float>(_thumbnail_length * aa_factor),
+                       .height = static_cast<float>(_thumbnail_length * aa_factor)});
+      command_list.rs_set_scissor_rects({.right = _thumbnail_length * aa_factor,
+                                         .bottom = _thumbnail_length * aa_factor});
       command_list.om_set_render_targets(_render_rtv.get(), _depth_dsv.get());
 
       command_list.set_graphics_root_signature(root_signatures.thumbnail_mesh.get());
@@ -987,16 +988,66 @@ private:
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(
             gpu::texture_barrier{.sync_before = gpu::barrier_sync::render_target,
+                                 .sync_after = gpu::barrier_sync::pixel_shading,
+                                 .access_before = gpu::barrier_access::render_target,
+                                 .access_after = gpu::barrier_access::shader_resource,
+                                 .layout_before = gpu::barrier_layout::render_target,
+                                 .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
+                                 .resource = _render_texture.get()});
+         command_list.deferred_barrier(
+            gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
+                                 .sync_after = gpu::barrier_sync::render_target,
+                                 .access_before = gpu::barrier_access::no_access,
+                                 .access_after = gpu::barrier_access::render_target,
+                                 .layout_before = gpu::barrier_layout::direct_queue_copy_source,
+                                 .layout_after = gpu::barrier_layout::render_target,
+                                 .resource = _downsample_texture.get()});
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = _render_texture.get(),
+            .state_before = gpu::legacy_resource_state::render_target,
+            .state_after = gpu::legacy_resource_state::pixel_shader_resource});
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = _downsample_texture.get(),
+            .state_before = gpu::legacy_resource_state::copy_source,
+            .state_after = gpu::legacy_resource_state::render_target});
+      }
+
+      command_list.flush_barriers();
+
+      command_list.clear_render_target_view(_downsample_rtv.get(),
+                                            float4{0.0f, 0.0f, 0.0f, 0.0f});
+
+      command_list.rs_set_viewports(
+         gpu::viewport{.width = static_cast<float>(_thumbnail_length),
+                       .height = static_cast<float>(_thumbnail_length)});
+      command_list.rs_set_scissor_rects(
+         {.right = _thumbnail_length, .bottom = _thumbnail_length});
+      command_list.om_set_render_targets(_downsample_rtv.get());
+
+      command_list.set_graphics_root_signature(
+         root_signatures.thumbnail_downsample.get());
+      command_list.set_graphics_32bit_constant(rs::thumbnail_downsample::thumbnail,
+                                               _render_srv.get().index, 0);
+
+      command_list.set_pipeline_state(pipelines.thumbnail_downsample.get());
+
+      command_list.draw_instanced(3, 1, 0, 0);
+
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         command_list.deferred_barrier(
+            gpu::texture_barrier{.sync_before = gpu::barrier_sync::render_target,
                                  .sync_after = gpu::barrier_sync::copy,
                                  .access_before = gpu::barrier_access::render_target,
                                  .access_after = gpu::barrier_access::copy_source,
                                  .layout_before = gpu::barrier_layout::render_target,
                                  .layout_after = gpu::barrier_layout::direct_queue_copy_source,
-                                 .resource = _render_texture.get()});
+                                 .resource = _downsample_texture.get()});
       }
       else {
          command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
-            .resource = _render_texture.get(),
+            .resource = _downsample_texture.get(),
             .state_before = gpu::legacy_resource_state::render_target,
             .state_after = gpu::legacy_resource_state::copy_source});
          command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
@@ -1010,14 +1061,14 @@ private:
       command_list.copy_texture_region(_atlas_texture.get(), 0,
                                        index.x * _thumbnail_length,
                                        index.y * _thumbnail_length, 0,
-                                       _render_texture.get(), 0);
+                                       _downsample_texture.get(), 0);
       command_list.copy_texture_to_buffer(_readback_buffer.get(),
                                           {.offset = _readback_offsets[_device.frame_index()],
                                            .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                                            .width = _thumbnail_length,
                                            .height = _thumbnail_length,
                                            .row_pitch = _upload_readback_pitch},
-                                          0, 0, 0, _render_texture.get(), 0);
+                                          0, 0, 0, _downsample_texture.get(), 0);
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(
@@ -1173,18 +1224,21 @@ private:
                             {.dimension = gpu::texture_dimension::t_2d,
                              .flags = {.allow_render_target = true},
                              .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-                             .width = _thumbnail_length,
-                             .height = _thumbnail_length,
+                             .width = _thumbnail_length * aa_factor,
+                             .height = _thumbnail_length * aa_factor,
                              .optimized_clear_value = {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                                                        .color = {0.0f, 0.0f, 0.0f, 0.0f}},
                              .debug_name = "Thumbnails Render Target"},
-                            gpu::barrier_layout::direct_queue_copy_source,
-                            gpu::legacy_resource_state::copy_source),
+                            gpu::barrier_layout::direct_queue_shader_resource,
+                            gpu::legacy_resource_state::pixel_shader_resource),
                          _device.direct_queue};
       _render_rtv = {_device.create_render_target_view(_render_texture.get(),
                                                        {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                                                         .dimension =
                                                            gpu::rtv_dimension::texture2d}),
+                     _device.direct_queue};
+      _render_srv = {_device.create_shader_resource_view(_render_texture.get(),
+                                                         {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}),
                      _device.direct_queue};
 
       _depth_texture = {_device.create_texture(
@@ -1192,8 +1246,8 @@ private:
                             .flags = {.allow_depth_stencil = true,
                                       .deny_shader_resource = true},
                             .format = DXGI_FORMAT_D16_UNORM,
-                            .width = _thumbnail_length,
-                            .height = _thumbnail_length,
+                            .width = _thumbnail_length * aa_factor,
+                            .height = _thumbnail_length * aa_factor,
                             .optimized_clear_value = {.format = DXGI_FORMAT_D16_UNORM,
                                                       .depth_stencil = {.depth = 1.0f}},
                             .debug_name = "Thumbnails Depth Buffer"},
@@ -1205,6 +1259,25 @@ private:
                                                        .dimension =
                                                           gpu::dsv_dimension::texture2d}),
                     _device.direct_queue};
+
+      _downsample_texture =
+         {_device.create_texture(
+             {.dimension = gpu::texture_dimension::t_2d,
+              .flags = {.allow_render_target = true},
+              .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+              .width = _thumbnail_length,
+              .height = _thumbnail_length,
+              .optimized_clear_value = {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                                        .color = {0.0f, 0.0f, 0.0f, 0.0f}},
+              .debug_name = "Thumbnails Downsample Render Target"},
+             gpu::barrier_layout::direct_queue_copy_source,
+             gpu::legacy_resource_state::copy_source),
+          _device.direct_queue};
+      _downsample_rtv = {_device.create_render_target_view(
+                            _downsample_texture.get(),
+                            {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                             .dimension = gpu::rtv_dimension::texture2d}),
+                         _device.direct_queue};
 
       _upload_readback_pitch =
          math::align_up<uint32>(_thumbnail_length * sizeof(uint32),
@@ -1263,9 +1336,13 @@ private:
 
    gpu::unique_resource_handle _render_texture;
    gpu::unique_rtv_handle _render_rtv;
+   gpu::unique_resource_view _render_srv;
 
    gpu::unique_resource_handle _depth_texture;
    gpu::unique_dsv_handle _depth_dsv;
+
+   gpu::unique_resource_handle _downsample_texture;
+   gpu::unique_rtv_handle _downsample_rtv;
 
    uint32 _upload_readback_pitch = 0;
 

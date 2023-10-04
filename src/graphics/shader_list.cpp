@@ -63,6 +63,9 @@ std::initializer_list<shader_description> shader_list = {
    shader("thumbnail_meshPS"),
    shader("thumbnail_mesh_alpha_cutoutPS"),
 
+   shader("thumbnail_downsampleVS"),
+   shader("thumbnail_downsamplePS"),
+
    shader("meta_drawPS"),
    shader("meta_draw_wireframePS"),
    shader("meta_draw_wireframe_GS_fallbackPS"),

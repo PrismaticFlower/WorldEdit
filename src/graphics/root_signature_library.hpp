@@ -18,6 +18,7 @@ struct root_signature_library {
    gpu::unique_root_signature_handle sky_mesh;
 
    gpu::unique_root_signature_handle thumbnail_mesh;
+   gpu::unique_root_signature_handle thumbnail_downsample;
 
    gpu::unique_root_signature_handle meta_draw;
 
@@ -82,6 +83,10 @@ namespace thumbnail_mesh {
 constexpr uint32 material_cbv = 0;
 constexpr uint32 camera_position = 1;
 constexpr uint32 camera_matrix_cbv = 2;
+}
+
+namespace thumbnail_downsample {
+constexpr uint32 thumbnail = 0;
 }
 
 namespace meta_draw {

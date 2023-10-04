@@ -736,6 +736,19 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .debug_name = "ai_overlay_apply"sv}),
        device.direct_queue};
 
+   thumbnail_downsample =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.thumbnail_downsample.get(),
+
+           .vs_bytecode = shader_library["thumbnail_downsampleVS"sv],
+           .ps_bytecode = shader_library["thumbnail_downsamplePS"sv],
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+
+           .debug_name = "thumbnail_downsample"sv}),
+       device.direct_queue};
+
    tile_lights_clear = {device.create_compute_pipeline(
                            {.root_signature =
                                root_signature_library.tile_lights_clear.get(),
