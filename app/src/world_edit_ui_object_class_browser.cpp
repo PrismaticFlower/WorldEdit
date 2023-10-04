@@ -106,6 +106,8 @@ void world_edit::ui_show_object_class_browser() noexcept
 
                   ImGui::EndPopup();
                }
+
+               ImGui::PopID();
             }
             else {
                ImGui::Dummy({button_size, button_size});
