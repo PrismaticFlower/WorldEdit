@@ -272,6 +272,7 @@
     <ClCompile Include="src\settings\settings.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
     <ClCompile Include="src\utility\os_execute.cpp" />
+    <ClCompile Include="src\utility\show_in_explorer.cpp" />
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
@@ -512,6 +513,7 @@
     <ClInclude Include="src\utility\make_range.hpp" />
     <ClInclude Include="src\utility\os_execute.hpp" />
     <ClInclude Include="src\utility\overload.hpp" />
+    <ClInclude Include="src\utility\show_in_explorer.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />
     <ClInclude Include="src\utility\string_icompare.hpp" />
     <ClInclude Include="src\utility\string_ops.hpp" />

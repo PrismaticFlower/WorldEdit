@@ -17,6 +17,7 @@
 #include "utility/file_pickers.hpp"
 #include "utility/os_execute.hpp"
 #include "utility/overload.hpp"
+#include "utility/show_in_explorer.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
@@ -2679,6 +2680,15 @@ void world_edit::open_odf_in_text_editor(const lowercase_string& asset_name) noe
                      .c_str(),
                   "Failed to open .odf editor!", MB_OK);
    }
+}
+
+void world_edit::show_odf_in_explorer(const lowercase_string& asset_name) noexcept
+{
+   const auto asset_path = _asset_libraries.odfs.query_path(asset_name);
+
+   if (asset_path.empty()) return;
+
+   utility::try_show_in_explorer(asset_path);
 }
 
 void world_edit::resized(uint16 width, uint16 height)

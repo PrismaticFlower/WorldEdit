@@ -104,6 +104,10 @@ void world_edit::ui_show_object_class_browser() noexcept
                      open_odf_in_text_editor(lowercase_string{asset});
                   }
 
+                  if (ImGui::MenuItem("Show .odf in Explorer")) {
+                     show_odf_in_explorer({lowercase_string{asset}});
+                  }
+
                   ImGui::EndPopup();
                }
 

@@ -754,6 +754,9 @@
     <ClInclude Include="src\io\memory_mapped_file.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\utility\show_in_explorer.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1117,6 +1120,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\io\memory_mapped_file.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utility\show_in_explorer.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

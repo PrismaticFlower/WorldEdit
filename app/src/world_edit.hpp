@@ -203,6 +203,8 @@ private:
 
    void open_odf_in_text_editor(const lowercase_string& asset_name) noexcept;
 
+   void open_odf_in_explorer(const lowercase_string& asset_name) noexcept;
+
    void initialize_commands() noexcept;
 
    void initialize_hotkeys() noexcept;
