@@ -403,16 +403,20 @@ auto device::frame_index() -> uint64
    return state->current_frame % frame_pipeline_length;
 }
 
+void device::new_frame()
+{
+   // Wait for the oldest frame to complete if needed.
+   const uint64 completed_frame =
+      (state->current_frame - 1) - (frame_pipeline_length - 1);
+
+   throw_if_fail(state->frame_fence->SetEventOnCompletion(completed_frame, nullptr));
+}
+
 void device::end_frame()
 {
    // Signal for the current frame.
    direct_queue.state->command_queue->Signal(state->frame_fence.get(),
                                              state->current_frame);
-
-   // Wait for the oldest frame to complete if needed.
-   const uint64 completed_frame = state->current_frame - (frame_pipeline_length - 1);
-
-   throw_if_fail(state->frame_fence->SetEventOnCompletion(completed_frame, nullptr));
 
    // Onto the next frame.
    state->current_frame += 1;

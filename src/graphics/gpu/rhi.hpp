@@ -1192,6 +1192,9 @@ public:
    /// @return The index in the range [0, frame_pipeline_length - 1].
    auto frame_index() -> uint64;
 
+   /// @brief Perform necessary new frame tasks and synchronization.
+   void new_frame();
+
    /// @brief Perform necessary end-of-frame tasks and synchronization.
    void end_frame();
 

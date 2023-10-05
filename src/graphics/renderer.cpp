@@ -342,6 +342,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                const world::object_class_library& world_classes,
                                const settings::graphics& settings)
 {
+   _device.new_frame();
+
    const frustum view_frustum{camera.inv_view_projection_matrix()};
 
    auto [back_buffer, back_buffer_rtv] = _swap_chain.current_back_buffer();
