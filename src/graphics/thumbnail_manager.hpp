@@ -57,11 +57,11 @@ struct thumbnail_manager {
 
    void update_cpu_cache();
 
-   void draw_updated(model_manager& model_manager,
-                     root_signature_library& root_signature_library,
-                     pipeline_library& pipeline_library,
-                     dynamic_buffer_allocator& dynamic_buffer_allocator,
-                     gpu::graphics_command_list& command_list);
+   void update_gpu(model_manager& model_manager,
+                   root_signature_library& root_signature_library,
+                   pipeline_library& pipeline_library,
+                   dynamic_buffer_allocator& dynamic_buffer_allocator,
+                   gpu::graphics_command_list& command_list);
 
    void end_frame();
 

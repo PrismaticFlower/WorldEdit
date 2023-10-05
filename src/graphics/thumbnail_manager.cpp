@@ -704,10 +704,10 @@ struct thumbnail_manager::impl {
       }
    }
 
-   void draw_updated(model_manager& model_manager,
-                     root_signature_library& root_signatures, pipeline_library& pipelines,
-                     dynamic_buffer_allocator& dynamic_buffer_allocator,
-                     gpu::graphics_command_list& command_list)
+   void update_gpu(model_manager& model_manager,
+                   root_signature_library& root_signatures, pipeline_library& pipelines,
+                   dynamic_buffer_allocator& dynamic_buffer_allocator,
+                   gpu::graphics_command_list& command_list)
    {
       if (_cache_upload_item) {
          copy_cache_upload_item(_cache_upload_item->index, command_list);
@@ -1422,14 +1422,14 @@ void thumbnail_manager::update_cpu_cache()
    return _impl->update_cpu_cache();
 }
 
-void thumbnail_manager::draw_updated(model_manager& model_manager,
-                                     root_signature_library& root_signature_library,
-                                     pipeline_library& pipeline_library,
-                                     dynamic_buffer_allocator& dynamic_buffer_allocator,
-                                     gpu::graphics_command_list& command_list)
+void thumbnail_manager::update_gpu(model_manager& model_manager,
+                                   root_signature_library& root_signature_library,
+                                   pipeline_library& pipeline_library,
+                                   dynamic_buffer_allocator& dynamic_buffer_allocator,
+                                   gpu::graphics_command_list& command_list)
 {
-   return _impl->draw_updated(model_manager, root_signature_library, pipeline_library,
-                              dynamic_buffer_allocator, command_list);
+   return _impl->update_gpu(model_manager, root_signature_library, pipeline_library,
+                            dynamic_buffer_allocator, command_list);
 }
 
 void thumbnail_manager::end_frame()
