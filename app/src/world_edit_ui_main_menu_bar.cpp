@@ -14,6 +14,8 @@ void world_edit::ui_show_main_menu_bar() noexcept
 {
    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
+   bool open_clear_edit_stack_confirm = false;
+
    if (ImGui::BeginMainMenuBar()) {
       if (ImGui::BeginMenu("File")) {
          if (ImGui::MenuItem("Open Data Folder")) open_project_with_picker();
@@ -92,7 +94,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::Separator();
 
          if (ImGui::MenuItem("Clear Undo/Redo Stacks")) {
-            _clear_edit_stack_confirm_open = true;
+            open_clear_edit_stack_confirm = true;
          }
 
          if (ImGui::IsItemHovered()) {
@@ -209,14 +211,14 @@ void world_edit::ui_show_main_menu_bar() noexcept
    ImGui::PopStyleVar();
 
    // Clear Edit Stack Confirmation Window
-   if (_clear_edit_stack_confirm_open) {
+   if (open_clear_edit_stack_confirm) {
       ImGui::OpenPopup("Clear Undo/Redo Stacks?");
    }
 
    const ImVec2 imgui_center = ImGui::GetMainViewport()->GetCenter();
    ImGui::SetNextWindowPos(imgui_center, ImGuiCond_Appearing, {0.5f, 0.5f});
 
-   if (ImGui::BeginPopupModal("Clear Undo/Redo Stacks?", &_clear_edit_stack_confirm_open,
+   if (ImGui::BeginPopupModal("Clear Undo/Redo Stacks?", nullptr,
                               ImGuiWindowFlags_AlwaysAutoResize)) {
 
       ImGui::Text("Clear the Undo/Redo stacks to free memory? This "
@@ -225,12 +227,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
       if (ImGui::Button("OK", {120.0f, 0.0f})) {
          _edit_stack_world = {};
-         _clear_edit_stack_confirm_open = false;
+         ImGui::CloseCurrentPopup();
       }
       ImGui::SetItemDefaultFocus();
       ImGui::SameLine();
       if (ImGui::Button("Cancel", {120.0f, 0.0f})) {
-         _clear_edit_stack_confirm_open = false;
+         ImGui::CloseCurrentPopup();
       }
 
       ImGui::EndPopup();

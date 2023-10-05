@@ -187,6 +187,8 @@ private:
 
    void open_project_with_picker() noexcept;
 
+   void close_project() noexcept;
+
    void load_world(std::filesystem::path path) noexcept;
 
    void load_world_with_picker() noexcept;
@@ -277,7 +279,6 @@ private:
    bool _hotkeys_view_show = false;
    bool _imgui_demo_open = false;
    bool _hotkeys_editor_open = false;
-   bool _clear_edit_stack_confirm_open = false;
    bool _world_global_lights_editor_open = false;
    bool _world_layers_editor_open = false;
    bool _world_game_mode_editor_open = false;
