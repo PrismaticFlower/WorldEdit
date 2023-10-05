@@ -156,7 +156,7 @@ auto texture_manager::at_or(const lowercase_string& name,
 
    // Try to find an already existing texture using a shared lock.
    {
-      std::shared_lock lock{_shared_mutex};
+      std::shared_lock lock{_mutex};
 
       if (auto state_entry = _textures.find(name); state_entry != _textures.end()) {
          const auto& [_, state] = *state_entry;
@@ -166,7 +166,8 @@ auto texture_manager::at_or(const lowercase_string& name,
          }
       }
 
-      if (_pending_loads.contains(name) or _pending_creations.contains(name)) {
+      if (_pending_loads.contains(name) or _pending_creations.contains(name) or
+          _failed_creations.contains(name)) {
          return default_texture;
       }
    }
@@ -177,7 +178,7 @@ auto texture_manager::at_or(const lowercase_string& name,
 
    // Try and create a new texture.
    {
-      std::scoped_lock lock{_shared_mutex};
+      std::scoped_lock lock{_mutex};
 
       // Not a mistake, the texture could've been created inbetween releasing the shared lock and retaking it exlcusively.
       if (auto state_entry = _textures.find(name); state_entry != _textures.end()) {
@@ -224,7 +225,7 @@ auto texture_manager::acquire_load_token(const lowercase_string& name) noexcept
 
 void texture_manager::update_textures() noexcept
 {
-   std::scoped_lock lock{_shared_mutex};
+   std::scoped_lock lock{_mutex};
 
    for (auto it = _pending_creations.begin(); it != _pending_creations.end();) {
       auto elem_it = it++;
@@ -246,7 +247,7 @@ auto texture_manager::status(const lowercase_string& name,
                              const world_texture_dimension dimension) const noexcept
    -> texture_status
 {
-   std::shared_lock lock{_shared_mutex};
+   std::shared_lock lock{_mutex};
 
    if (auto it = _textures.find(name); it != _textures.end()) {
       const texture_state& state = it->second;
@@ -260,12 +261,9 @@ auto texture_manager::status(const lowercase_string& name,
       }
    }
 
-   if (_pending_loads.contains(name)) {
-      return texture_status::loading;
-   }
-   if (_pending_creations.contains(name)) {
-      return texture_status::loading;
-   }
+   if (_pending_loads.contains(name)) return texture_status::loading;
+   if (_pending_creations.contains(name)) return texture_status::loading;
+   if (_failed_creations.contains(name)) return texture_status::errored;
 
    return texture_status::missing;
 }
@@ -309,6 +307,7 @@ void texture_manager::create_texture_async(const lowercase_string& name,
                                            asset_ref<assets::texture::texture> asset,
                                            asset_data<assets::texture::texture> data)
 {
+   _failed_creations.erase(name);
    _pending_loads.erase(name);
    _pending_creations[name] =
       {.task = _thread_pool->exec(
@@ -352,7 +351,7 @@ void texture_manager::texture_loaded(const lowercase_string& name,
       return false;
    }();
 
-   std::scoped_lock lock{_shared_mutex};
+   std::scoped_lock lock{_mutex};
 
    if (not _pending_loads.contains(name) and not _textures.contains(name) and
        not load_token) {
@@ -360,6 +359,15 @@ void texture_manager::texture_loaded(const lowercase_string& name,
    }
 
    create_texture_async(name, asset, data);
+}
+
+void texture_manager::texture_load_failure(const lowercase_string& name,
+                                           asset_ref<assets::texture::texture> asset) noexcept
+{
+   std::scoped_lock lock{_mutex};
+
+   _pending_loads.erase(name);
+   _failed_creations.emplace(name);
 }
 
 }

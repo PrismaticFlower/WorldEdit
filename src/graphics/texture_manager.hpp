@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 
 namespace we::graphics {
 
@@ -116,7 +117,7 @@ struct texture_manager {
    {
       update_textures();
 
-      std::scoped_lock lock{_shared_mutex, _texture_load_tokens_mutex};
+      std::scoped_lock lock{_mutex, _texture_load_tokens_mutex};
 
       callback(_copied_textures);
 
@@ -159,6 +160,9 @@ private:
                        asset_ref<assets::texture::texture> asset,
                        asset_data<assets::texture::texture> data) noexcept;
 
+   void texture_load_failure(const lowercase_string& name,
+                             asset_ref<assets::texture::texture> asset) noexcept;
+
    static auto get_srgb_format(const DXGI_FORMAT format) noexcept -> DXGI_FORMAT
    {
       // clang-format off
@@ -188,11 +192,12 @@ private:
    gpu::device& _device;
    copy_command_list_pool& _copy_command_list_pool;
 
-   mutable std::shared_mutex _shared_mutex;
+   mutable std::shared_mutex _mutex;
    absl::flat_hash_map<lowercase_string, texture_state> _textures;
    absl::flat_hash_map<lowercase_string, asset_ref<assets::texture::texture>> _pending_loads;
    absl::flat_hash_map<lowercase_string, pending_create_texture> _pending_creations;
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>> _copied_textures;
+   absl::flat_hash_set<lowercase_string> _failed_creations;
 
    std::shared_mutex _texture_load_tokens_mutex;
    absl::flat_hash_map<lowercase_string, std::weak_ptr<const world_texture_load_token>> _texture_load_tokens;
@@ -211,6 +216,11 @@ private:
          [this](const lowercase_string& name, asset_ref<assets::texture::texture> asset,
                 asset_data<assets::texture::texture> data) {
             texture_loaded(name, asset, data);
+         });
+   event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>)> _asset_load_failure_listener =
+      _texture_assets.listen_for_load_failures(
+         [this](const lowercase_string& name, asset_ref<assets::texture::texture> asset) {
+            texture_load_failure(name, asset);
          });
 };
 
