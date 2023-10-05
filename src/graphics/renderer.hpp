@@ -86,6 +86,8 @@ struct renderer {
    virtual void async_save_thumbnail_disk_cache(const wchar_t* path) noexcept = 0;
 
    virtual void async_load_thumbnail_disk_cache(const wchar_t* path) noexcept = 0;
+
+   virtual void reset_thumbnails() noexcept = 0;
 };
 
 auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>;

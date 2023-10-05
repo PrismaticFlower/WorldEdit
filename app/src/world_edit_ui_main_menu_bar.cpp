@@ -192,7 +192,13 @@ void world_edit::ui_show_main_menu_bar() noexcept
             }
          }
 
+         if (ImGui::MenuItem("Reset Thumbnails")) {
+            _renderer->reset_thumbnails();
+         }
+
          ImGui::MenuItem("Show GPU Profiler", nullptr, &_settings.graphics.show_profiler);
+
+         ImGui::SetItemTooltip("Some GPU work is not measured.");
 
          ImGui::EndMenu();
       }

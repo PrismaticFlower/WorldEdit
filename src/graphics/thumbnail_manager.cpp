@@ -279,6 +279,18 @@ struct invalidation_tracker {
       }
    }
 
+   void clear() noexcept
+   {
+      _invalidated.clear();
+
+      std::scoped_lock lock{_mutex, _invalidated_background_mutex};
+
+      _odfs.clear();
+      _models.clear();
+      _textures.clear();
+      _invalidated_background.clear();
+   }
+
 private:
    bool release(const lowercase_string& name)
    {
@@ -839,6 +851,27 @@ struct thumbnail_manager::impl {
                             [disk_cache_path = std::wstring{path}] {
                                return load_disk_cache(disk_cache_path);
                             });
+   }
+
+   void reset() noexcept
+   {
+      create_gpu_resources();
+
+      _front_items.clear();
+      _back_items.clear();
+      _recycle_items.clear();
+      _cpu_memory_cache.clear();
+
+      {
+         std::scoped_lock lock{_pending_odfs_mutex, _pending_render_mutex,
+                               _missing_model_odfs_mutex};
+
+         _pending_odfs.clear();
+         _pending_render.clear();
+         _missing_model_odfs.clear();
+      }
+
+      _invalidation_tracker.clear();
    }
 
 private:
@@ -1450,6 +1483,11 @@ void thumbnail_manager::async_save_disk_cache(const wchar_t* path) noexcept
 void thumbnail_manager::async_load_disk_cache(const wchar_t* path) noexcept
 {
    return _impl->async_load_disk_cache(path);
+}
+
+void thumbnail_manager::reset() noexcept
+{
+   return _impl->reset();
 }
 
 thumbnail_manager::thumbnail_manager(const thumbnail_manager_init& init)

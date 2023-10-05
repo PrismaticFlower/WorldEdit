@@ -71,6 +71,8 @@ struct thumbnail_manager {
 
    void async_load_disk_cache(const wchar_t* path) noexcept;
 
+   void reset() noexcept;
+
 private:
    struct impl;
 

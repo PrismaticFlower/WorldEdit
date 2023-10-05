@@ -130,6 +130,11 @@ struct renderer_impl final : renderer {
       _thumbnail_manager.async_load_disk_cache(path);
    }
 
+   void reset_thumbnails() noexcept override
+   {
+      _thumbnail_manager.reset();
+   }
+
 private:
    void update_frame_constant_buffer(const camera& camera,
                                      const settings::graphics& settings,
