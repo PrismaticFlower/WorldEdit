@@ -17,6 +17,7 @@
 #include "utility/file_pickers.hpp"
 #include "utility/os_execute.hpp"
 #include "utility/overload.hpp"
+#include "utility/show_in_explorer.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
@@ -56,12 +57,17 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
       return settings::settings{};
    });
 
+   _current_dpi = GetDpiForWindow(_window);
+   _display_scale = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
+   _applied_user_display_scale = _settings.ui.extra_scaling;
+
    try {
       _renderer =
          graphics::make_renderer({.window = window,
                                   .thread_pool = _thread_pool,
                                   .asset_libraries = _asset_libraries,
                                   .error_output = _stream,
+                                  .display_scale = _display_scale,
                                   .use_debug_layer = _renderer_use_debug_layer});
    }
    catch (graphics::gpu::exception& e) {
@@ -73,8 +79,8 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 
    ImGui_ImplWin32_Init(window);
 
-   // Call this to initialize the ImGui font and display scaling values.
-   dpi_changed(GetDpiForWindow(_window));
+   initialize_imgui_font();
+   initialize_imgui_style();
 
    if (auto start_project = command_line.get_or("-project"sv, ""sv);
        not start_project.empty()) {
@@ -93,6 +99,14 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
                         static_cast<float>(rect.bottom - rect.top));
 
    _settings = settings_load.get();
+}
+
+world_edit::~world_edit()
+{
+   if (not _project_dir.empty()) {
+      _renderer->async_save_thumbnail_disk_cache(
+         (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
+   }
 }
 
 void world_edit::update()
@@ -2447,9 +2461,31 @@ void world_edit::open_project(std::filesystem::path path) noexcept
       }
    }
 
+   if (not _project_dir.empty()) {
+      _renderer->async_save_thumbnail_disk_cache(
+         (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
+   }
+
    _project_dir = path;
    _asset_libraries.source_directory(_project_dir);
    _project_world_paths.clear();
+
+   const std::filesystem::path world_edit_project_files_path =
+      _project_dir / L".WorldEdit";
+
+   if (not std::filesystem::exists(world_edit_project_files_path)) {
+      if (std::error_code ec;
+          std::filesystem::create_directory(world_edit_project_files_path, ec)) {
+         SetFileAttributesW(world_edit_project_files_path.c_str(), FILE_ATTRIBUTE_HIDDEN);
+      }
+      else {
+         MessageBoxW(_window, L"Unable to .WorldEdit folder in selected folder. This folder is used to store things like the thumbnail disk cache. You can proceed but features that depend on this folder will be broken.",
+                     L"Unable to create folder.", MB_OK);
+      }
+   }
+
+   _renderer->async_load_thumbnail_disk_cache(
+      (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
 
    close_world();
    enumerate_project_worlds();
@@ -2646,6 +2682,15 @@ void world_edit::open_odf_in_text_editor(const lowercase_string& asset_name) noe
    }
 }
 
+void world_edit::show_odf_in_explorer(const lowercase_string& asset_name) noexcept
+{
+   const auto asset_path = _asset_libraries.odfs.query_path(asset_name);
+
+   if (asset_path.empty()) return;
+
+   utility::try_show_in_explorer(asset_path);
+}
+
 void world_edit::resized(uint16 width, uint16 height)
 {
    if (width == 0 or height == 0) return;
@@ -2711,6 +2756,19 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
    _display_scale = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
    _applied_user_display_scale = _settings.ui.extra_scaling;
 
+   initialize_imgui_font();
+   initialize_imgui_style();
+
+   try {
+      _renderer->display_scale_changed(_display_scale);
+   }
+   catch (graphics::gpu::exception& e) {
+      handle_gpu_error(e);
+   }
+}
+
+void world_edit::initialize_imgui_font() noexcept
+{
    const static std::span<std::byte> roboto_regular = [] {
       const HRSRC resource =
          FindResourceW(nullptr, MAKEINTRESOURCEW(RES_ID_ROBOTO_REGULAR),
@@ -2729,16 +2787,19 @@ void world_edit::dpi_changed(const int new_dpi) noexcept
                                               static_cast<int>(roboto_regular.size()),
                                               std::floor(16.0f * _display_scale),
                                               &font_config);
-   ImGui::GetStyle() = ImGuiStyle{};
-   ImGui::GetStyle().ScaleAllSizes(_display_scale);
 
    try {
       _renderer->recreate_imgui_font_atlas();
-      _renderer->display_scale_changed(_display_scale);
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
    }
+}
+
+void world_edit::initialize_imgui_style() noexcept
+{
+   ImGui::GetStyle() = ImGuiStyle{};
+   ImGui::GetStyle().ScaleAllSizes(_display_scale);
 }
 
 void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept

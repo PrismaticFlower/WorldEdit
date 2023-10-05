@@ -133,6 +133,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   open_odf_in_text_editor(object->class_name);
                }
 
+               if (ImGui::MenuItem("Show .odf in Explorer")) {
+                  show_odf_in_explorer(object->class_name);
+               }
+
                ImGui::EndPopup();
             }
 

@@ -112,6 +112,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.world_requirements_editor"s, _world_requirements_editor_open);
    _commands.add("show.world_explorer"s, _world_explorer_open);
    _commands.add("show.world_stats"s, _world_stats_open);
+   _commands.add("show.object_class_browser"s, _object_class_browser_open);
 
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
@@ -358,6 +359,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show World Requirements Editor", "show.world_requirements_editor", {.key = key::f7}},
           {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
           {"Show World Stats", "show.world_stats", {.key = key::f9}},
+          {"Show Object Class Browser", "show.object_class_browser", {.key = key::f10}},
 
           {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
        }});

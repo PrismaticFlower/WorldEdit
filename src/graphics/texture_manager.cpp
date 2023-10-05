@@ -165,27 +165,37 @@ auto texture_manager::at_or(const lowercase_string& name,
             if (texture->dimension == expected_dimension) return texture;
          }
       }
+
+      if (_pending_loads.contains(name) or _pending_creations.contains(name)) {
+         return default_texture;
+      }
    }
+
+   asset_ref asset = _texture_assets[name];
+
+   if (not asset.exists()) return default_texture;
 
    // Try and create a new texture.
    {
       std::scoped_lock lock{_shared_mutex};
 
-      auto& state = _textures[name];
+      // Not a mistake, the texture could've been created inbetween releasing the shared lock and retaking it exlcusively.
+      if (auto state_entry = _textures.find(name); state_entry != _textures.end()) {
+         const auto& [_, state] = *state_entry;
 
-      if (auto texture = state.texture.lock(); texture) {
-         // Not a mistake, the texture could've been created inbetween releasing the shared lock and retaking it exlcusively.
-
-         if (texture->dimension == expected_dimension) return texture;
-      }
-      else {
-         state.asset = _texture_assets[name];
-
-         if (auto asset_data = state.asset.get_if(); asset_data) {
-            if (not _pending_textures.contains(name)) {
-               create_texture_async(name, state.asset, asset_data);
-            }
+         if (auto texture = state.texture.lock(); texture) {
+            if (texture->dimension == expected_dimension) return texture;
          }
+      }
+
+      const auto& [_, inserted] = _pending_loads.insert_or_assign(name, asset);
+
+      if (not inserted or _pending_creations.contains(name)) {
+         return default_texture;
+      }
+
+      if (auto asset_data = asset.get_if(); asset_data) {
+         create_texture_async(name, asset, asset_data);
       }
    }
 
@@ -204,7 +214,8 @@ auto texture_manager::acquire_load_token(const lowercase_string& name) noexcept
       if (token) return token;
    }
 
-   auto token = std::make_shared<const world_texture_load_token>();
+   auto token =
+      std::make_shared<const world_texture_load_token>(_texture_assets[name]);
 
    _texture_load_tokens.insert_or_assign(name, token);
 
@@ -215,7 +226,7 @@ void texture_manager::update_textures() noexcept
 {
    std::scoped_lock lock{_shared_mutex};
 
-   for (auto it = _pending_textures.begin(); it != _pending_textures.end();) {
+   for (auto it = _pending_creations.begin(); it != _pending_creations.end();) {
       auto elem_it = it++;
       auto& [name, pending_create] = *elem_it;
 
@@ -226,9 +237,37 @@ void texture_manager::update_textures() noexcept
                                                         .asset = pending_create.asset});
          _copied_textures.insert_or_assign(name, texture);
 
-         _pending_textures.erase(elem_it);
+         _pending_creations.erase(elem_it);
       }
    }
+}
+
+auto texture_manager::status(const lowercase_string& name,
+                             const world_texture_dimension dimension) const noexcept
+   -> texture_status
+{
+   std::shared_lock lock{_shared_mutex};
+
+   if (auto it = _textures.find(name); it != _textures.end()) {
+      const texture_state& state = it->second;
+
+      if (auto texture = state.texture.lock(); texture) {
+         if (texture->dimension != dimension) {
+            return texture_status::dimension_mismatch;
+         }
+
+         return texture_status::ready;
+      }
+   }
+
+   if (_pending_loads.contains(name)) {
+      return texture_status::loading;
+   }
+   if (_pending_creations.contains(name)) {
+      return texture_status::loading;
+   }
+
+   return texture_status::missing;
 }
 
 void texture_manager::init_texture(gpu::resource_handle texture,
@@ -270,41 +309,55 @@ void texture_manager::create_texture_async(const lowercase_string& name,
                                            asset_ref<assets::texture::texture> asset,
                                            asset_data<assets::texture::texture> data)
 {
-   pending_texture& pending = _pending_textures[name];
+   _pending_loads.erase(name);
+   _pending_creations[name] =
+      {.task = _thread_pool->exec(
+          async::task_priority::low,
+          [=]() -> std::shared_ptr<const world_texture> {
+             gpu::unique_resource_handle texture =
+                {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                                         .format = data->dxgi_format(),
+                                         .width = data->width(),
+                                         .height = data->height(),
+                                         .mip_levels = data->mip_levels(),
+                                         .array_size = data->array_size()},
+                                        gpu::barrier_layout::common,
+                                        gpu::legacy_resource_state::common),
+                 _device.direct_queue};
 
-   if (pending.task.valid()) pending.task.cancel();
+             init_texture(texture.get(), *data);
 
-   pending = {.task = _thread_pool->exec(
-                 async::task_priority::low,
-                 [=]() -> std::shared_ptr<const world_texture> {
-                    gpu::unique_resource_handle texture =
-                       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
-                                                .format = data->dxgi_format(),
-                                                .width = data->width(),
-                                                .height = data->height(),
-                                                .mip_levels = data->mip_levels(),
-                                                .array_size = data->array_size()},
-                                               gpu::barrier_layout::common,
-                                               gpu::legacy_resource_state::common),
-                        _device.direct_queue};
+             _device.background_copy_queue.wait_for_idle();
 
-                    init_texture(texture.get(), *data);
-
-                    _device.background_copy_queue.wait_for_idle();
-
-                    return std::make_shared<world_texture>(
-                       _device, std::move(texture), data->dxgi_format(),
-                       data->flags().cube_map ? world_texture_dimension::cube
-                                              : world_texture_dimension::_2d);
-                 }),
-              .asset = asset};
+             return std::make_shared<world_texture>(_device, std::move(texture),
+                                                    data->dxgi_format(),
+                                                    data->flags().cube_map
+                                                       ? world_texture_dimension::cube
+                                                       : world_texture_dimension::_2d);
+          }),
+       .asset = asset};
 }
 
 void texture_manager::texture_loaded(const lowercase_string& name,
                                      asset_ref<assets::texture::texture> asset,
                                      asset_data<assets::texture::texture> data) noexcept
 {
+   const bool load_token = [&] {
+      std::shared_lock lock{_texture_load_tokens_mutex};
+
+      if (auto it = _texture_load_tokens.find(name); it != _texture_load_tokens.end()) {
+         return not it->second.expired();
+      }
+
+      return false;
+   }();
+
    std::scoped_lock lock{_shared_mutex};
+
+   if (not _pending_loads.contains(name) and not _textures.contains(name) and
+       not load_token) {
+      return;
+   }
 
    create_texture_async(name, asset, data);
 }

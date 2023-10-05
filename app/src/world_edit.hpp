@@ -66,6 +66,8 @@ class world_edit {
 public:
    world_edit(const HWND window, utility::command_line command_line);
 
+   ~world_edit();
+
    void update();
 
    void resized(uint16 width, uint16 height);
@@ -141,6 +143,8 @@ private:
 
    void ui_show_about_window() noexcept;
 
+   void ui_show_object_class_browser() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    void start_entity_select() noexcept;
@@ -199,9 +203,15 @@ private:
 
    void open_odf_in_text_editor(const lowercase_string& asset_name) noexcept;
 
+   void show_odf_in_explorer(const lowercase_string& asset_name) noexcept;
+
    void initialize_commands() noexcept;
 
    void initialize_hotkeys() noexcept;
+
+   void initialize_imgui_font() noexcept;
+
+   void initialize_imgui_style() noexcept;
 
    void handle_gpu_error(graphics::gpu::exception& e) noexcept;
 
@@ -274,6 +284,7 @@ private:
    bool _world_requirements_editor_open = false;
    bool _world_explorer_open = false;
    bool _world_stats_open = false;
+   bool _object_class_browser_open = false;
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;
    bool _about_window_open = false;

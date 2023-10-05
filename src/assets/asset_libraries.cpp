@@ -30,9 +30,19 @@ namespace we::assets {
 namespace {
 
 const absl::flat_hash_set<std::wstring_view> ignored_folders =
-   {L"_BUILD"sv, L"_LVL_PC"sv, L"_LVL_PS2"sv, L"_LVL_PSP"sv, L"_LVL_XBOX"sv,
+   {L"_BUILD"sv, L"_LVL_PC"sv, L"_LVL_PS2"sv, L"_LVL_PSP"sv,  L"_LVL_XBOX"sv,
 
-    L".git"sv,   L".svn"sv,    L".vscode"sv};
+    L".git"sv,   L".svn"sv,    L".vscode"sv,  L".WorldEdit"sv};
+
+auto try_get_last_write_time(const std::filesystem::path& asset_path) noexcept -> uint64
+{
+   try {
+      return std::filesystem::last_write_time(asset_path).time_since_epoch().count();
+   }
+   catch (std::filesystem::filesystem_error&) {
+      return 0;
+   }
+}
 
 }
 
@@ -65,20 +75,30 @@ struct library<T>::impl {
       if (not inserted) {
          std::scoped_lock state_lock{state->mutex, _existing_assets_mutex};
 
-         if (not state->exists) insert_existing_asset(name);
+         if (not state->exists) {
+            _existing_assets.emplace_back(name);
+            _existing_assets_sorted = false;
+         }
 
          state->exists = true;
          state->load_failure = false;
          state->path = asset_path;
          state->start_load = [this, name] { enqueue_create_asset(name, false); };
+         state->last_write_time.store(try_get_last_write_time(asset_path),
+                                      std::memory_order_relaxed);
       }
       else {
-         insert_existing_asset(name);
+         std::scoped_lock lock{_existing_assets_mutex};
+
+         _existing_assets.emplace_back(name);
+         _existing_assets_sorted = false;
       }
 
       if (state->ref_count.load(std::memory_order_relaxed) > 0) {
          enqueue_create_asset(name, true);
       }
+
+      _change_event.broadcast(name);
    }
 
    void remove(const std::filesystem::path& unpreferred_asset_path) noexcept
@@ -100,17 +120,22 @@ struct library<T>::impl {
 
       if (not asset_state) return;
 
-      std::scoped_lock lock{_assets_mutex, _load_tasks_mutex,
-                            _existing_assets_mutex, asset_state->mutex};
+      // Remove Asset
+      {
+         std::scoped_lock lock{_assets_mutex, _load_tasks_mutex,
+                               _existing_assets_mutex, asset_state->mutex};
 
-      if (asset_state->path != asset_path) return;
+         if (asset_state->path != asset_path) return;
 
-      _assets.erase(name);
+         _assets.erase(name);
 
-      _load_tasks.erase(name);
+         _load_tasks.erase(name);
 
-      std::erase_if(_existing_assets,
-                    [&](const stable_string& asset) { return asset == name; });
+         std::erase_if(_existing_assets,
+                       [&](const stable_string& asset) { return asset == name; });
+      }
+
+      _change_event.broadcast(name);
    }
 
    auto operator[](const lowercase_string& name) noexcept -> asset_ref<T>
@@ -140,6 +165,19 @@ struct library<T>::impl {
       -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>
    {
       return _load_event.listen(std::move(callback));
+   }
+
+   auto listen_for_load_failures(
+      std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
+      -> event_listener<void(const lowercase_string&, asset_ref<T>)>
+   {
+      return _load_failed_event.listen(std::move(callback));
+   }
+
+   auto listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+      -> event_listener<void(const lowercase_string&)>
+   {
+      return _change_event.listen(std::move(callback));
    }
 
    void update_loaded() noexcept
@@ -225,22 +263,34 @@ struct library<T>::impl {
       return state.path;
    }
 
+   auto query_last_write_time(const lowercase_string& name) noexcept -> uint64
+   {
+      std::shared_lock lock{_assets_mutex};
+
+      auto it = _assets.find(name);
+
+      if (it == _assets.end()) return 0;
+
+      asset_state<T>& state = *it->second;
+
+      return state.last_write_time.load(std::memory_order_relaxed);
+   }
+
 private:
    auto make_asset_state(const lowercase_string& name,
                          const std::filesystem::path& asset_path)
       -> std::shared_ptr<asset_state<T>>
    {
-      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{},
-                                              not asset_path.empty(),
-                                              asset_path, [this, name = name] {
-                                                 enqueue_create_asset(name, false);
-                                              });
+      return std::make_shared<asset_state<T>>(
+         std::weak_ptr<T>{}, not asset_path.empty(), asset_path,
+         [this, name = name] { enqueue_create_asset(name, false); },
+         try_get_last_write_time(asset_path));
    }
 
    auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
    {
-      return std::make_shared<asset_state<T>>(std::weak_ptr<T>{}, false,
-                                              std::filesystem::path{}, [] {});
+      return std::make_shared<asset_state<T>>(
+         std::weak_ptr<T>{}, false, std::filesystem::path{}, [] {}, 0);
    }
 
    void enqueue_create_asset(lowercase_string name, bool preempt_current_load) noexcept
@@ -300,17 +350,11 @@ private:
                                     asset_path.string(),
                                     string::indent(2, e.what()));
 
+               _load_failed_event.broadcast(name, asset);
+
                return nullptr;
             }
          });
-   }
-
-   void insert_existing_asset(const std::string_view name) noexcept
-   {
-      std::scoped_lock lock{_existing_assets_mutex};
-
-      _existing_assets.emplace_back(name);
-      _existing_assets_sorted = false;
    }
 
    we::output_stream& _output_stream;
@@ -330,6 +374,8 @@ private:
    const std::shared_ptr<asset_state<T>> _null_asset = make_placeholder_asset_state();
 
    utility::event<void(const lowercase_string&, asset_ref<T>, asset_data<T>)> _load_event;
+   utility::event<void(const lowercase_string&, asset_ref<T>)> _load_failed_event;
+   utility::event<void(const lowercase_string&)> _change_event;
 };
 
 template<typename T>
@@ -365,6 +411,20 @@ auto library<T>::listen_for_loads(
 }
 
 template<typename T>
+auto library<T>::listen_for_load_failures(
+   std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
+   -> event_listener<void(const lowercase_string&, asset_ref<T>)>
+{
+   return self->listen_for_load_failures(std::move(callback));
+}
+template<typename T>
+auto library<T>::listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+   -> event_listener<void(const lowercase_string&)>
+{
+   return self->listen_for_changes(std::move(callback));
+}
+
+template<typename T>
 void library<T>::update_loaded() noexcept
 {
    self->update_loaded();
@@ -388,6 +448,12 @@ auto library<T>::query_path(const lowercase_string& name) noexcept
    -> std::filesystem::path
 {
    return self->query_path(name);
+}
+
+template<typename T>
+auto library<T>::query_last_write_time(const lowercase_string& name) noexcept -> uint64
+{
+   return self->query_last_write_time(name);
 }
 
 template struct library<odf::definition>;

@@ -159,6 +159,11 @@ void world_edit::ui_show_main_menu_bar() noexcept
                               "as object count, undo stack size, etc");
          }
 
+         ImGui::MenuItem("Object Class Browser",
+                         get_display_string(_hotkeys.query_binding(
+                            "", "Show Object Class Browser")),
+                         &_object_class_browser_open);
+
          ImGui::EndMenu();
       }
 
@@ -187,7 +192,13 @@ void world_edit::ui_show_main_menu_bar() noexcept
             }
          }
 
+         if (ImGui::MenuItem("Reset Thumbnails")) {
+            _renderer->reset_thumbnails();
+         }
+
          ImGui::MenuItem("Show GPU Profiler", nullptr, &_settings.graphics.show_profiler);
+
+         ImGui::SetItemTooltip("Some GPU work is not measured.");
 
          ImGui::EndMenu();
       }

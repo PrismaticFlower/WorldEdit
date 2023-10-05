@@ -17,6 +17,9 @@ struct root_signature_library {
    gpu::unique_root_signature_handle water;
    gpu::unique_root_signature_handle sky_mesh;
 
+   gpu::unique_root_signature_handle thumbnail_mesh;
+   gpu::unique_root_signature_handle thumbnail_downsample;
+
    gpu::unique_root_signature_handle meta_draw;
 
    gpu::unique_root_signature_handle ai_overlay_shape;
@@ -74,6 +77,16 @@ namespace sky_mesh {
 constexpr uint32 sky_mesh_cbv = 0;
 constexpr uint32 material_cbv = 1;
 constexpr uint32 frame_cbv = 2;
+}
+
+namespace thumbnail_mesh {
+constexpr uint32 material_cbv = 0;
+constexpr uint32 camera_position = 1;
+constexpr uint32 camera_matrix_cbv = 2;
+}
+
+namespace thumbnail_downsample {
+constexpr uint32 thumbnail = 0;
 }
 
 namespace meta_draw {

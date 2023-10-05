@@ -873,7 +873,7 @@ protected:
    friend device;
    friend command_queue;
 
-   implementation_storage<command_list_state, 224> state;
+   implementation_storage<command_list_state, 208> state;
 };
 
 struct copy_command_list : command_list {
@@ -1104,7 +1104,7 @@ private:
 
    auto operator=(command_queue&& other) noexcept -> command_queue& = delete;
 
-   implementation_storage<command_queue_state, 112> state;
+   implementation_storage<command_queue_state, 136> state;
 };
 
 /// Swapchain Definitions ///
@@ -1180,7 +1180,7 @@ struct device_desc {
 
 struct device {
 private:
-   implementation_storage<device_state, 448> state;
+   implementation_storage<device_state, 496> state;
 
 public:
    command_queue direct_queue;

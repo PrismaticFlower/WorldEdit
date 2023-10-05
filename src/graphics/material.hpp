@@ -9,13 +9,32 @@
 
 namespace we::graphics {
 
+enum class material_status {
+   ready,
+   ready_textures_missing,
+   ready_textures_loading
+};
+
 struct material {
    material(const assets::msh::material& material, const bool static_lighting,
             gpu::device& device, copy_command_list_pool& copy_command_list_pool,
             texture_manager& texture_manager);
 
+   /// @brief Process updated material textures.
+   /// @param command_list The copy command list to use to update the constant buffer.
+   /// @param updated The updated textures.
+   /// @param device The GPU device.
    void process_updated_textures(gpu::copy_command_list& command_list,
                                  const updated_textures& updated, gpu::device& device);
+
+   /// @brief Query the status of the material's textures.
+   /// @param texture_manager The texture manager.
+   /// @return The status of the material's textures.
+   auto status(const texture_manager& texture_manager) const noexcept -> material_status;
+
+   /// @brief Get the pipeline flags for using this material with the thumbnail mesh renderer.
+   /// @return The flags.
+   auto thumbnail_mesh_flags() const noexcept -> thumbnail_mesh_pipeline_flags;
 
    depth_prepass_pipeline_flags depth_prepass_flags =
       depth_prepass_pipeline_flags::none;

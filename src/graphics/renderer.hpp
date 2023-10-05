@@ -1,5 +1,6 @@
 #pragma once
 
+#include "object_class_thumbnail.hpp"
 #include "world/active_elements.hpp"
 #include "world/interaction_context.hpp"
 #include "world/object_class.hpp"
@@ -51,6 +52,8 @@ struct renderer_init {
    assets::libraries_manager& asset_libraries;
    output_stream& error_output;
 
+   float display_scale = 1.0f;
+
    bool use_debug_layer = false;
 };
 
@@ -69,13 +72,22 @@ struct renderer {
 
    virtual void window_resized(uint16 width, uint16 height) = 0;
 
-   virtual void display_scale_changed(const float display_scale) noexcept = 0;
+   virtual void display_scale_changed(const float display_scale) = 0;
 
    virtual void mark_dirty_terrain() noexcept = 0;
 
    virtual void recreate_imgui_font_atlas() = 0;
 
    virtual void reload_shaders() noexcept = 0;
+
+   virtual auto request_object_class_thumbnail(const std::string_view name)
+      -> object_class_thumbnail = 0;
+
+   virtual void async_save_thumbnail_disk_cache(const wchar_t* path) noexcept = 0;
+
+   virtual void async_load_thumbnail_disk_cache(const wchar_t* path) noexcept = 0;
+
+   virtual void reset_thumbnails() noexcept = 0;
 };
 
 auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>;

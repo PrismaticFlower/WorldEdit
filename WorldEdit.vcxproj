@@ -176,7 +176,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -256,10 +256,12 @@
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\sky.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
+    <ClCompile Include="src\graphics\thumbnail_manager.cpp" />
     <ClCompile Include="src\graphics\water.cpp" />
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
     <ClCompile Include="src\imgui_ext.cpp" />
+    <ClCompile Include="src\io\memory_mapped_file.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
     <ClCompile Include="src\key.cpp" />
@@ -270,6 +272,7 @@
     <ClCompile Include="src\settings\settings.cpp" />
     <ClCompile Include="src\utility\float16_packing.cpp" />
     <ClCompile Include="src\utility\os_execute.cpp" />
+    <ClCompile Include="src\utility\show_in_explorer.cpp" />
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
@@ -435,6 +438,7 @@
     <ClInclude Include="src\graphics\model_manager.hpp" />
     <ClInclude Include="src\graphics\geometric_shapes.hpp" />
     <ClInclude Include="src\graphics\cull_objects.hpp" />
+    <ClInclude Include="src\graphics\object_class_thumbnail.hpp" />
     <ClInclude Include="src\graphics\pipeline_library.hpp" />
     <ClInclude Include="src\graphics\profiler.hpp" />
     <ClInclude Include="src\graphics\renderer.hpp" />
@@ -447,11 +451,13 @@
     <ClInclude Include="src\graphics\terrain.hpp" />
     <ClInclude Include="src\graphics\texture_manager.hpp" />
     <ClInclude Include="src\graphics\copy_command_list_pool.hpp" />
+    <ClInclude Include="src\graphics\thumbnail_manager.hpp" />
     <ClInclude Include="src\graphics\water.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
     <ClInclude Include="src\hotkeys.hpp" />
     <ClInclude Include="src\hotkeys_io.hpp" />
     <ClInclude Include="src\imgui_ext.hpp" />
+    <ClInclude Include="src\io\memory_mapped_file.hpp" />
     <ClInclude Include="src\key.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />
@@ -507,6 +513,7 @@
     <ClInclude Include="src\utility\make_range.hpp" />
     <ClInclude Include="src\utility\os_execute.hpp" />
     <ClInclude Include="src\utility\overload.hpp" />
+    <ClInclude Include="src\utility\show_in_explorer.hpp" />
     <ClInclude Include="src\utility\srgb_conversion.hpp" />
     <ClInclude Include="src\utility\string_icompare.hpp" />
     <ClInclude Include="src\utility\string_ops.hpp" />

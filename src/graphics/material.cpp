@@ -197,7 +197,7 @@ void material::init_textures(const assets::msh::material& material,
    }
 
    if (not texture_names.env_map.empty() and
-       textures.env_map == texture_manager.null_normal_map()) {
+       textures.env_map == texture_manager.null_cube_map()) {
       texture_load_tokens.env_map =
          texture_manager.acquire_load_token(texture_names.env_map);
    }
@@ -340,4 +340,109 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
                                           textures.env_map->srv_srgb.index);
    }
 }
+
+auto material::status(const texture_manager& texture_manager) const noexcept -> material_status
+{
+   bool missing_textures = false;
+
+   if (not texture_names.diffuse_map.empty()) {
+      switch (texture_manager.status(texture_names.diffuse_map,
+                                     world_texture_dimension::_2d)) {
+      case texture_status::ready: {
+         if (texture_load_tokens.diffuse_map) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (not texture_names.normal_map.empty()) {
+      switch (texture_manager.status(texture_names.normal_map,
+                                     world_texture_dimension::_2d)) {
+      case texture_status::ready: {
+         if (texture_load_tokens.normal_map) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (not texture_names.detail_map.empty()) {
+      switch (texture_manager.status(texture_names.detail_map,
+                                     world_texture_dimension::_2d)) {
+      case texture_status::ready: {
+         if (texture_load_tokens.detail_map) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (not texture_names.env_map.empty()) {
+      switch (texture_manager.status(texture_names.env_map,
+                                     world_texture_dimension::cube)) {
+      case texture_status::ready: {
+         if (texture_load_tokens.env_map) {
+            return material_status::ready_textures_loading;
+         }
+      } break;
+      case texture_status::loading: {
+         return material_status::ready_textures_loading;
+      } break;
+      case texture_status::errored:
+      case texture_status::missing:
+      case texture_status::dimension_mismatch: {
+         missing_textures = true;
+      } break;
+      }
+   }
+
+   if (missing_textures) return material_status::ready_textures_missing;
+
+   return material_status::ready;
+}
+
+auto material::thumbnail_mesh_flags() const noexcept -> thumbnail_mesh_pipeline_flags
+{
+   thumbnail_mesh_pipeline_flags thumbnail_flags = thumbnail_mesh_pipeline_flags::none;
+
+   if (are_flags_set(flags, material_pipeline_flags::doublesided)) {
+      thumbnail_flags |= thumbnail_mesh_pipeline_flags::doublesided;
+   }
+
+   if (are_flags_set(flags, material_pipeline_flags::transparent)) {
+      thumbnail_flags |= thumbnail_mesh_pipeline_flags::transparent;
+   }
+
+   if (are_flags_set(depth_prepass_flags, depth_prepass_pipeline_flags::alpha_cutout)) {
+      thumbnail_flags |= thumbnail_mesh_pipeline_flags::alpha_cutout;
+   }
+
+   return thumbnail_flags;
+}
+
 }

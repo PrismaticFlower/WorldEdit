@@ -14,9 +14,8 @@ TEST_CASE("asset_ref use count", "[Assets][AssetRef]")
 
    REQUIRE(null_ref.use_count() == 0);
 
-   asset_ref<odf::definition> ref{
-      std::make_shared<asset_state<odf::definition>>(std::weak_ptr<odf::definition>{}, false,
-                                                     L"no such file.odf", [] {})};
+   asset_ref<odf::definition> ref{std::make_shared<asset_state<odf::definition>>(
+      std::weak_ptr<odf::definition>{}, false, L"no such file.odf", [] {}, 0)};
 
    REQUIRE(ref.use_count() == 1);
 

@@ -27,6 +27,7 @@
 #include "sky.hpp"
 #include "terrain.hpp"
 #include "texture_manager.hpp"
+#include "thumbnail_manager.hpp"
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
@@ -92,9 +93,11 @@ struct renderer_impl final : renderer {
 
    void window_resized(uint16 width, uint16 height) override;
 
-   void display_scale_changed(const float display_scale) noexcept override
+   void display_scale_changed(const float display_scale) override
    {
       _display_scale = display_scale;
+
+      _thumbnail_manager.display_scale_changed(display_scale);
    }
 
    void mark_dirty_terrain() noexcept override;
@@ -109,6 +112,27 @@ struct renderer_impl final : renderer {
       _device.wait_for_idle();
       _shaders.reload(shader_list);
       _pipelines.reload(_device, _shaders, _root_signatures);
+   }
+
+   auto request_object_class_thumbnail(const std::string_view name)
+      -> object_class_thumbnail override
+   {
+      return _thumbnail_manager.request_object_class_thumbnail(name);
+   }
+
+   void async_save_thumbnail_disk_cache(const wchar_t* path) noexcept override
+   {
+      _thumbnail_manager.async_save_disk_cache(path);
+   }
+
+   void async_load_thumbnail_disk_cache(const wchar_t* path) noexcept override
+   {
+      _thumbnail_manager.async_load_disk_cache(path);
+   }
+
+   void reset_thumbnails() noexcept override
+   {
+      _thumbnail_manager.reset();
    }
 
 private:
@@ -256,11 +280,14 @@ private:
    profiler _profiler{_device, 256};
 
    renderer_config _config;
+
+   thumbnail_manager _thumbnail_manager;
 };
 
 renderer_impl::renderer_impl(const renderer_init& init)
    : _thread_pool{init.thread_pool},
      _error_output{init.error_output},
+     _display_scale{init.display_scale},
      _device{gpu::device_desc{.enable_debug_layer = init.use_debug_layer,
                               .enable_gpu_based_validation = init.use_debug_layer}},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
@@ -269,7 +296,10 @@ renderer_impl::renderer_impl(const renderer_init& init)
      _model_manager{_device,          _copy_command_list_pool,
                     _texture_manager, init.asset_libraries.models,
                     init.thread_pool, _error_output},
-     _sky{_device, _model_manager, init.asset_libraries}
+     _sky{_device, _model_manager, init.asset_libraries},
+     _thumbnail_manager{
+        thumbnail_manager_init{init.thread_pool, init.asset_libraries,
+                               init.error_output, _device, init.display_scale}}
 {
    // create object constants upload buffers
    for (std::size_t i = 0; i < _object_constants_upload_buffers.size(); ++i) {
@@ -319,6 +349,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    _model_manager.update_models();
    _sky.update(world.name);
+   _thumbnail_manager.update_cpu_cache();
 
    if (settings.show_profiler) _profiler.show();
 
@@ -364,6 +395,9 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    auto& command_list = _world_command_list;
 
    command_list.reset(_sampler_heap.get());
+
+   _thumbnail_manager.update_gpu(_model_manager, _root_signatures, _pipelines,
+                                 _dynamic_buffer_allocator, command_list);
 
    _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
                                _dynamic_buffer_allocator, _profiler);
@@ -471,6 +505,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    _device.end_frame();
    _model_manager.trim_models();
+   _thumbnail_manager.end_frame();
 }
 
 void renderer_impl::window_resized(uint16 width, uint16 height)
