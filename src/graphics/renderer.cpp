@@ -228,11 +228,13 @@ private:
        _device.direct_queue};
    gpu::unique_resource_handle _depth_minmax_buffer =
       {_device.create_buffer({.size = sizeof(float4),
-                              .flags = {.allow_unordered_access = true}},
+                              .flags = {.allow_unordered_access = true},
+                              .debug_name = "Depth Min-Max Buffer"},
                              gpu::heap_type::default_),
        _device.direct_queue};
    gpu::unique_resource_handle _depth_minmax_readback_buffer =
-      {_device.create_buffer({.size = sizeof(float4) * gpu::frame_pipeline_length},
+      {_device.create_buffer({.size = sizeof(float4) * gpu::frame_pipeline_length,
+                              .debug_name = "Depth Min-Max Readback Buffer"},
                              gpu::heap_type::readback),
        _device.direct_queue};
    std::array<const float4*, gpu::frame_pipeline_length> _depth_minmax_readback_buffer_ptrs;
