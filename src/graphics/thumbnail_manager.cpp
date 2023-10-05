@@ -895,25 +895,6 @@ private:
              dynamic_buffer_allocator& dynamic_buffer_allocator,
              gpu::graphics_command_list& command_list)
    {
-      [[likely]] if (_device.supports_enhanced_barriers()) {
-         command_list.deferred_barrier(
-            gpu::texture_barrier{.sync_before = gpu::barrier_sync::none,
-                                 .sync_after = gpu::barrier_sync::render_target,
-                                 .access_before = gpu::barrier_access::no_access,
-                                 .access_after = gpu::barrier_access::render_target,
-                                 .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
-                                 .layout_after = gpu::barrier_layout::render_target,
-                                 .resource = _render_texture.get()});
-      }
-      else {
-         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
-            .resource = _render_texture.get(),
-            .state_before = gpu::legacy_resource_state::pixel_shader_resource,
-            .state_after = gpu::legacy_resource_state::render_target});
-      }
-
-      command_list.flush_barriers();
-
       command_list.clear_render_target_view(_render_rtv.get(),
                                             float4{0.0f, 0.0f, 0.0f, 0.0f});
       command_list.clear_depth_stencil_view(_depth_dsv.get(),
@@ -1037,6 +1018,14 @@ private:
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(
+            gpu::texture_barrier{.sync_before = gpu::barrier_sync::pixel_shading,
+                                 .sync_after = gpu::barrier_sync::none,
+                                 .access_before = gpu::barrier_access::shader_resource,
+                                 .access_after = gpu::barrier_access::no_access,
+                                 .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
+                                 .layout_after = gpu::barrier_layout::render_target,
+                                 .resource = _render_texture.get()});
+         command_list.deferred_barrier(
             gpu::texture_barrier{.sync_before = gpu::barrier_sync::render_target,
                                  .sync_after = gpu::barrier_sync::copy,
                                  .access_before = gpu::barrier_access::render_target,
@@ -1046,6 +1035,10 @@ private:
                                  .resource = _downsample_texture.get()});
       }
       else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = _render_texture.get(),
+            .state_before = gpu::legacy_resource_state::pixel_shader_resource,
+            .state_after = gpu::legacy_resource_state::render_target});
          command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
             .resource = _downsample_texture.get(),
             .state_before = gpu::legacy_resource_state::render_target,
@@ -1229,8 +1222,8 @@ private:
                              .optimized_clear_value = {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                                                        .color = {0.0f, 0.0f, 0.0f, 0.0f}},
                              .debug_name = "Thumbnails Render Target"},
-                            gpu::barrier_layout::direct_queue_shader_resource,
-                            gpu::legacy_resource_state::pixel_shader_resource),
+                            gpu::barrier_layout::render_target,
+                            gpu::legacy_resource_state::render_target),
                          _device.direct_queue};
       _render_rtv = {_device.create_render_target_view(_render_texture.get(),
                                                        {.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
