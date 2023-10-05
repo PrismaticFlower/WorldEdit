@@ -67,11 +67,13 @@ world_texture::~world_texture()
 texture_manager::texture_manager(gpu::device& device,
                                  copy_command_list_pool& copy_command_list_pool,
                                  std::shared_ptr<async::thread_pool> thread_pool,
-                                 assets::library<assets::texture::texture>& texture_assets)
+                                 assets::library<assets::texture::texture>& texture_assets,
+                                 output_stream& error_output)
    : _texture_assets{texture_assets},
      _device{device},
      _copy_command_list_pool{copy_command_list_pool},
-     _thread_pool{thread_pool}
+     _thread_pool{thread_pool},
+     _error_output{error_output}
 {
    using assets::texture::texture_format;
 
@@ -232,11 +234,24 @@ void texture_manager::update_textures() noexcept
       auto& [name, pending_create] = *elem_it;
 
       if (pending_create.task.ready()) {
-         auto texture = pending_create.task.get();
+         std::shared_ptr<const world_texture> texture;
 
-         _textures.insert_or_assign(name, texture_state{.texture = texture,
-                                                        .asset = pending_create.asset});
-         _copied_textures.insert_or_assign(name, texture);
+         try {
+            texture = pending_create.task.get();
+         }
+         catch (std::runtime_error& e) {
+            _failed_creations.emplace(name);
+            _error_output
+               .write("Failed to create texture '{}' for GPU.\n   Reason: {}\n",
+                      name, e.what());
+         }
+
+         if (texture) {
+            _textures.insert_or_assign(name,
+                                       texture_state{.texture = texture,
+                                                     .asset = pending_create.asset});
+            _copied_textures.insert_or_assign(name, texture);
+         }
 
          _pending_creations.erase(elem_it);
       }

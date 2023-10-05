@@ -5,6 +5,7 @@
 #include "copy_command_list_pool.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
+#include "output_stream.hpp"
 
 #include <concepts>
 #include <memory>
@@ -58,7 +59,8 @@ enum class texture_status {
 struct texture_manager {
    texture_manager(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
                    std::shared_ptr<async::thread_pool> thread_pool,
-                   assets::library<assets::texture::texture>& texture_assets);
+                   assets::library<assets::texture::texture>& texture_assets,
+                   output_stream& error_output);
 
    /// @brief Gets the specified texture or returns a default texture if it is not available.
    /// @param name Name of the texture to get.
@@ -209,6 +211,8 @@ private:
    std::shared_ptr<world_texture> _null_detail_map;
    std::shared_ptr<world_texture> _null_cube_map;
    std::shared_ptr<world_texture> _null_color_map;
+
+   output_stream& _error_output;
 
    event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>,
                        asset_data<assets::texture::texture>)>

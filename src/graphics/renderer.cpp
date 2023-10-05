@@ -294,7 +294,7 @@ renderer_impl::renderer_impl(const renderer_init& init)
                               .enable_gpu_based_validation = init.use_debug_layer}},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
      _texture_manager{_device, _copy_command_list_pool, init.thread_pool,
-                      init.asset_libraries.textures},
+                      init.asset_libraries.textures, init.error_output},
      _model_manager{_device,          _copy_command_list_pool,
                     _texture_manager, init.asset_libraries.models,
                     init.thread_pool, _error_output},
