@@ -271,14 +271,24 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
             if (auto texture = key_node.find("Texture"sv); texture != key_node.cend()) {
                light.texture = texture->values.get<std::string>(0);
 
-               switch (const auto addressing = texture->values.get<int>(1); addressing) {
-               case 0:
-               case 1:
-                  light.texture_addressing =
-                     static_cast<texture_addressing>(addressing);
-                  break;
-               default:
-                  output.write("Warning! World light '{}' has invalid texture "
+               if (texture->values.size() >= 2) {
+                  switch (const auto addressing = texture->values.get<int>(1);
+                          addressing) {
+                  case 0:
+                  case 1:
+                     light.texture_addressing =
+                        static_cast<texture_addressing>(addressing);
+                     break;
+                  default:
+                     output
+                        .write("Warning! World light '{}' has invalid texture "
+                               "addressing mode! Defaulting to clamp.\n",
+                               light.name);
+                     light.texture_addressing = texture_addressing::clamp;
+                  }
+               }
+               else {
+                  output.write("Warning! World light '{}' has no texture "
                                "addressing mode! Defaulting to clamp.\n",
                                light.name);
                   light.texture_addressing = texture_addressing::clamp;

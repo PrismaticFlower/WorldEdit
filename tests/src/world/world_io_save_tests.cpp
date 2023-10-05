@@ -41,6 +41,7 @@ constexpr auto expected_lgt = R"(Light("sun", 0)
 	Color(1.000000, 0.882353, 0.752941);
 	CastShadow();
 	Static();
+	Texture("sun_shadow", 1);
 	CastSpecular(1);
 	PS2BlendMode(0);
 	TileUV(1.000000, 1.000000);
@@ -790,6 +791,8 @@ TEST_CASE("world saving", "[World][IO]")
                     .shadow_caster = true,
                     .specular_caster = true,
                     .light_type = light_type::directional,
+                    .texture_addressing = texture_addressing::clamp,
+                    .texture = "sun_shadow",
                  },
 
                  light{

@@ -459,7 +459,8 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
       if (light.shadow_caster) file.write_ln("\tCastShadow();");
       if (light.static_) file.write_ln("\tStatic();");
       if (not light.texture.empty()) {
-         file.write_ln("\tTexture(\"{}\")", light.texture);
+         file.write_ln("\tTexture(\"{}\", {});", light.texture,
+                       static_cast<int>(light.texture_addressing));
       }
       if (light.specular_caster) file.write_ln("\tCastSpecular(1);");
 
