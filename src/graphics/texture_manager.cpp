@@ -1,6 +1,7 @@
 
 #include "texture_manager.hpp"
 #include "assets/texture/texture.hpp"
+#include "utility/string_ops.hpp"
 
 namespace we::graphics {
 
@@ -241,9 +242,10 @@ void texture_manager::update_textures() noexcept
          }
          catch (std::runtime_error& e) {
             _failed_creations.emplace(name);
-            _error_output
-               .write("Failed to create texture '{}' for GPU.\n   Reason: {}\n",
-                      name, e.what());
+
+            _error_output.write("Failed to create texture for GPU:\n   Name: "
+                                "{}\n   Message.\n \n{}\n",
+                                std::string_view{name}, string::indent(2, e.what()));
          }
 
          if (texture) {
