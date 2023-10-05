@@ -349,7 +349,7 @@ auto material::status(const texture_manager& texture_manager) const noexcept -> 
       switch (texture_manager.status(texture_names.diffuse_map,
                                      world_texture_dimension::_2d)) {
       case texture_status::ready: {
-         if (textures.diffuse_map == texture_manager.null_diffuse_map()) {
+         if (texture_load_tokens.diffuse_map) {
             return material_status::ready_textures_loading;
          }
       } break;
@@ -368,7 +368,7 @@ auto material::status(const texture_manager& texture_manager) const noexcept -> 
       switch (texture_manager.status(texture_names.normal_map,
                                      world_texture_dimension::_2d)) {
       case texture_status::ready: {
-         if (textures.normal_map == texture_manager.null_normal_map()) {
+         if (texture_load_tokens.normal_map) {
             return material_status::ready_textures_loading;
          }
       } break;
@@ -387,7 +387,7 @@ auto material::status(const texture_manager& texture_manager) const noexcept -> 
       switch (texture_manager.status(texture_names.detail_map,
                                      world_texture_dimension::_2d)) {
       case texture_status::ready: {
-         if (textures.detail_map == texture_manager.null_detail_map()) {
+         if (texture_load_tokens.detail_map) {
             return material_status::ready_textures_loading;
          }
       } break;
@@ -406,7 +406,7 @@ auto material::status(const texture_manager& texture_manager) const noexcept -> 
       switch (texture_manager.status(texture_names.env_map,
                                      world_texture_dimension::cube)) {
       case texture_status::ready: {
-         if (textures.env_map == texture_manager.null_cube_map()) {
+         if (texture_load_tokens.env_map) {
             return material_status::ready_textures_loading;
          }
       } break;
