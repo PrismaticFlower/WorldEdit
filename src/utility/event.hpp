@@ -62,7 +62,7 @@ template<typename... Args>
 class event<void(Args...)> {
 public:
    using listener_type = event_listener<void(Args...)>;
-   using callback_type = std::function<void(Args...)>;
+   using callback_type = std::move_only_function<void(Args...) const>;
 
    event() = default;
 
@@ -76,7 +76,7 @@ public:
 
    auto listen(callback_type callback) noexcept -> listener_type
    {
-      const auto id = _state->add_listener(callback);
+      const auto id = _state->add_listener(std::move(callback));
 
       return {id, _state};
    }

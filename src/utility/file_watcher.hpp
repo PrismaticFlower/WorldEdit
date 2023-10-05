@@ -15,22 +15,24 @@ class file_watcher {
 public:
    explicit file_watcher(const std::filesystem::path& path);
 
-   auto listen_file_changed(std::function<void(const std::filesystem::path& path)> callback) noexcept
+   auto listen_file_changed(
+      std::move_only_function<void(const std::filesystem::path& path) const> callback) noexcept
       -> event_listener<void(const std::filesystem::path& path)>
    {
-      return _file_changed_event.listen(callback);
+      return _file_changed_event.listen(std::move(callback));
    }
 
-   auto listen_file_removed(std::function<void(const std::filesystem::path& path)> callback) noexcept
+   auto listen_file_removed(
+      std::move_only_function<void(const std::filesystem::path& path) const> callback) noexcept
       -> event_listener<void(const std::filesystem::path& path)>
    {
-      return _file_removed_event.listen(callback);
+      return _file_removed_event.listen(std::move(callback));
    }
 
-   auto listen_unknown_files_changed(std::function<void()> callback) noexcept
+   auto listen_unknown_files_changed(std::move_only_function<void() const> callback) noexcept
       -> event_listener<void()>
    {
-      return _unknown_files_changed_event.listen(callback);
+      return _unknown_files_changed_event.listen(std::move(callback));
    }
 
 private:

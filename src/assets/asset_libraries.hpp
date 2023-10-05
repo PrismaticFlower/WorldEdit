@@ -67,20 +67,23 @@ struct library {
    /// @param callback Function to call whenever an asset is loaded or is reloaded.
    /// @return The event_listener for the callback.
    auto listen_for_loads(
-      std::function<void(const lowercase_string& name, asset_ref<T> asset, asset_data<T> data)> callback) noexcept
+      std::move_only_function<void(const lowercase_string& name,
+                                   asset_ref<T> asset, asset_data<T> data) const>
+         callback) noexcept
       -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>;
 
    /// @brief Listens for load failures on the assets.
    /// @param callback Function to call whenever an asset fails to load.
    /// @return The event_listener for the callback.
    auto listen_for_load_failures(
-      std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
+      std::move_only_function<void(const lowercase_string& name, asset_ref<T> asset) const> callback) noexcept
       -> event_listener<void(const lowercase_string&, asset_ref<T>)>;
 
    /// @brief Listens for asset changes.
    /// @param callback Function to call whenever an asset has changed on disk.
    /// @return The event_listener for the callback.
-   auto listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+   auto listen_for_changes(
+      std::move_only_function<void(const lowercase_string& name) const> callback) noexcept
       -> event_listener<void(const lowercase_string&)>;
 
    /// @brief Handles broadcasting notifications of any loaded or updated assets.
@@ -92,7 +95,7 @@ struct library {
    /// @brief Allows you to view a span of existing (on disk) assets. A shared lock is taken on the underlying data as such `add` or `clear` must not be called from within the callback.
    /// @param callback The function to call with a span of existing assets. The strings will be valid until clear is called.
    void view_existing(
-      const std::function<void(const std::span<const stable_string> assets)> callback) noexcept;
+      std::move_only_function<void(const std::span<const stable_string> assets)> callback) noexcept;
 
    /// @brief Query the file path of an asset.
    /// @param name The name of the asset.

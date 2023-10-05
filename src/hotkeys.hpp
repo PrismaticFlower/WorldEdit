@@ -56,7 +56,7 @@ struct hotkey_default {
 struct hotkey_set_desc {
    std::string name;
    std::string description;
-   std::function<bool()> activated;
+   std::move_only_function<bool()> activated;
    std::initializer_list<hotkey_default> default_hotkeys;
    const bool hidden = false;
 };
@@ -142,7 +142,7 @@ private:
 
    struct hotkey_set {
       std::string name;
-      std::function<bool()> activated_predicate;
+      std::move_only_function<bool()> activated_predicate;
       absl::flat_hash_map<hotkey_bind, hotkey> bindings;
       absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
       std::vector<hotkey> unbound_hotkeys;

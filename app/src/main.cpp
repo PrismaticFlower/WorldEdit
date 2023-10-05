@@ -38,7 +38,7 @@ void run_application(command_line command_line)
    const wchar_t* window_class_name = window_name;
    const HINSTANCE current_instance = GetModuleHandle(nullptr);
 
-   static std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> window_procedure =
+   static std::move_only_function<LRESULT(HWND, UINT, WPARAM, LPARAM)> window_procedure =
       [](HWND window, UINT message, WPARAM wparam, LPARAM lparam) noexcept {
          return DefWindowProcW(window, message, wparam, lparam);
       };

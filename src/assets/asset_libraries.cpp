@@ -161,20 +161,23 @@ struct library<T>::impl {
    }
 
    auto listen_for_loads(
-      std::function<void(const lowercase_string& name, asset_ref<T> asset, asset_data<T> data)> callback) noexcept
+      std::move_only_function<void(const lowercase_string& name,
+                                   asset_ref<T> asset, asset_data<T> data) const>
+         callback) noexcept
       -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>
    {
       return _load_event.listen(std::move(callback));
    }
 
    auto listen_for_load_failures(
-      std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
+      std::move_only_function<void(const lowercase_string& name, asset_ref<T> asset) const> callback) noexcept
       -> event_listener<void(const lowercase_string&, asset_ref<T>)>
    {
       return _load_failed_event.listen(std::move(callback));
    }
 
-   auto listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+   auto listen_for_changes(
+      std::move_only_function<void(const lowercase_string& name) const> callback) noexcept
       -> event_listener<void(const lowercase_string&)>
    {
       return _change_event.listen(std::move(callback));
@@ -235,7 +238,7 @@ struct library<T>::impl {
    }
 
    void view_existing(
-      const std::function<void(const std::span<const stable_string> assets)> callback) noexcept
+      std::move_only_function<void(const std::span<const stable_string> assets)> callback) noexcept
    {
       if (not _existing_assets_sorted.exchange(true)) {
          std::scoped_lock lock{_existing_assets_mutex};
@@ -404,7 +407,8 @@ auto library<T>::operator[](const lowercase_string& name) noexcept -> asset_ref<
 
 template<typename T>
 auto library<T>::listen_for_loads(
-   std::function<void(const lowercase_string& name, asset_ref<T> asset, asset_data<T> data)> callback) noexcept
+   std::move_only_function<void(const lowercase_string& name, asset_ref<T> asset, asset_data<T> data) const>
+      callback) noexcept
    -> event_listener<void(const lowercase_string&, asset_ref<T>, asset_data<T>)>
 {
    return self->listen_for_loads(std::move(callback));
@@ -412,13 +416,14 @@ auto library<T>::listen_for_loads(
 
 template<typename T>
 auto library<T>::listen_for_load_failures(
-   std::function<void(const lowercase_string& name, asset_ref<T> asset)> callback) noexcept
+   std::move_only_function<void(const lowercase_string& name, asset_ref<T> asset) const> callback) noexcept
    -> event_listener<void(const lowercase_string&, asset_ref<T>)>
 {
    return self->listen_for_load_failures(std::move(callback));
 }
 template<typename T>
-auto library<T>::listen_for_changes(std::function<void(const lowercase_string& name)> callback) noexcept
+auto library<T>::listen_for_changes(
+   std::move_only_function<void(const lowercase_string& name) const> callback) noexcept
    -> event_listener<void(const lowercase_string&)>
 {
    return self->listen_for_changes(std::move(callback));
@@ -438,7 +443,7 @@ void library<T>::clear() noexcept
 
 template<typename T>
 void library<T>::view_existing(
-   const std::function<void(const std::span<const stable_string> assets)> callback) noexcept
+   std::move_only_function<void(const std::span<const stable_string> assets)> callback) noexcept
 {
    self->view_existing(std::move(callback));
 }
