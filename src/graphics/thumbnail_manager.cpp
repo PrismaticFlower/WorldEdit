@@ -661,7 +661,7 @@ struct thumbnail_manager::impl {
               .uv_bottom = 0.0f};
    }
 
-   void update_cache()
+   void update_cpu_cache()
    {
       if (not _readback_names[_device.frame_index()].empty()) {
          const uint32 size = _thumbnail_length * _thumbnail_length * sizeof(uint32);
@@ -1417,9 +1417,9 @@ auto thumbnail_manager::request_object_class_thumbnail(const std::string_view na
    return _impl->request_object_class_thumbnail(name);
 }
 
-void thumbnail_manager::update_cache()
+void thumbnail_manager::update_cpu_cache()
 {
-   return _impl->update_cache();
+   return _impl->update_cpu_cache();
 }
 
 void thumbnail_manager::draw_updated(model_manager& model_manager,

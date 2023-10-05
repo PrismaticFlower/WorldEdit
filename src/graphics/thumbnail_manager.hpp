@@ -55,7 +55,7 @@ struct thumbnail_manager {
    [[nodiscard]] auto request_object_class_thumbnail(const std::string_view name)
       -> object_class_thumbnail;
 
-   void update_cache();
+   void update_cpu_cache();
 
    void draw_updated(model_manager& model_manager,
                      root_signature_library& root_signature_library,
