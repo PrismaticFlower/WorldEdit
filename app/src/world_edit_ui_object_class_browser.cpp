@@ -11,6 +11,11 @@ namespace we {
 
 void world_edit::ui_show_object_class_browser() noexcept
 {
+   ImGui::SetNextWindowPos({0.0f, ImGui::GetIO().DisplaySize.y},
+                           ImGuiCond_FirstUseEver, {0.0f, 1.0f});
+   ImGui::SetNextWindowSize({1216.0f * _display_scale, 272.0f * _display_scale},
+                            ImGuiCond_FirstUseEver);
+
    if (ImGui::Begin("Object Class Browser", &_object_class_browser_open)) {
       if (ImGui::InputTextWithHint("Filter", "e.g. com_bldg_controlzone",
                                    &_world_explorer_class_filter)) {
