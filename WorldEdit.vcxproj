@@ -286,6 +286,7 @@
     <ClCompile Include="src\world\utility\raycast.cpp" />
     <ClCompile Include="src\world\utility\region_properties.cpp" />
     <ClCompile Include="src\world\utility\sector_fill.cpp" />
+    <ClCompile Include="src\world\utility\selection_bbox.cpp" />
     <ClCompile Include="src\world\utility\selection_centre.cpp" />
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
@@ -550,6 +551,7 @@
     <ClInclude Include="src\world\utility\raycast.hpp" />
     <ClInclude Include="src\world\utility\region_properties.hpp" />
     <ClInclude Include="src\world\utility\sector_fill.hpp" />
+    <ClInclude Include="src\world\utility\selection_bbox.hpp" />
     <ClInclude Include="src\world\utility\selection_centre.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />

@@ -147,6 +147,8 @@ private:
 
    void ui_draw_select_box() noexcept;
 
+   void setup_orbit_camera() noexcept;
+
    void start_entity_select() noexcept;
 
    void finish_entity_select(const select_method method) noexcept;
@@ -239,6 +241,9 @@ private:
    int32 _mouse_movement_x = 0;
    int32 _mouse_movement_y = 0;
 
+   float3 _camera_orbit_centre = {0.0f, 0.0f, 0.0f};
+   float _camera_orbit_distance = 0.0f;
+
    std::unique_ptr<ImGuiContext, void (*)(ImGuiContext*)> _imgui_context;
 
    std::filesystem::path _project_dir;
@@ -276,6 +281,7 @@ private:
    bool _move_sprint = false;
    bool _rotate_camera = false;
    bool _pan_camera = false;
+   bool _orbit_camera_active = false;
    bool _selecting_entity = false;
 
    bool _hotkeys_view_show = false;

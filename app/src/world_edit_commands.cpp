@@ -56,9 +56,11 @@ void world_edit::initialize_commands() noexcept
                  [this] { _camera.zoom(std::max(_camera.zoom() - 0.25f, 1.0f)); });
    _commands.add("camera.step_forward"s, [this] {
       _camera.position(_camera.position() + _camera.forward() * _settings.camera.step_size);
+      _camera_orbit_distance += _settings.camera.step_size;
    });
    _commands.add("camera.step_back"s, [this] {
       _camera.position(_camera.position() + _camera.back() * _settings.camera.step_size);
+      _camera_orbit_distance += _settings.camera.step_size;
    });
    _commands.add("camera.set_perspective"s, [this]() {
       _camera.projection(graphics::camera_projection::perspective);
@@ -70,6 +72,11 @@ void world_edit::initialize_commands() noexcept
                  [this] { _settings.camera.move_speed *= 2.0f; });
    _commands.add("camera.halve_move_speed"s,
                  [this] { _settings.camera.move_speed /= 2.0f; });
+   _commands.add("camera.toggle_orbit"s, [this]() {
+      _orbit_camera_active = not _orbit_camera_active;
+
+      if (_orbit_camera_active) setup_orbit_camera();
+   });
 
    _commands.add("show_create_entity"s,
                  [this] { ImGui::OpenPopup("Create Entity"); });
@@ -328,6 +335,7 @@ void world_edit::initialize_hotkeys() noexcept
 
           {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
           {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
+          {"Toggle Orbit Camera", "camera.toggle_orbit", {.key = key::y}},
 
           {"Show Create Entity Menu", "show_create_entity", {.key = key::space}},
 

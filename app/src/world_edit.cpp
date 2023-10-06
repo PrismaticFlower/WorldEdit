@@ -26,6 +26,7 @@
 #include "world/utility/object_properties.hpp"
 #include "world/utility/raycast.hpp"
 #include "world/utility/sector_fill.hpp"
+#include "world/utility/selection_bbox.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
@@ -488,12 +489,64 @@ void world_edit::update_camera(const float delta_time)
                    _rotate_camera_cursor_position.y);
    }
 
+   if (_orbit_camera_active) {
+      if (_move_camera_forward) _camera_orbit_distance -= camera_movement_scale;
+      if (_move_camera_back) _camera_orbit_distance += camera_movement_scale;
+      if (_camera_orbit_distance < 0.0f) _camera_orbit_distance = 0.0f;
+
+      _camera.position(_camera_orbit_centre + _camera_orbit_distance * _camera.back());
+   }
+
    if (_camera.fov() != _settings.camera.fov) {
       _camera.fov(_settings.camera.fov);
    }
 
    if (_camera.view_width() != _settings.camera.view_width) {
       _camera.view_width(_settings.camera.view_width);
+   }
+}
+
+void world_edit::setup_orbit_camera() noexcept
+{
+   if (not _interaction_targets.selection.empty()) {
+      const math::bounding_box selection_bbox =
+         world::selection_bbox_for_camera(_world, _interaction_targets.selection,
+                                          _object_classes,
+                                          _settings.graphics.path_node_size);
+
+      const float3 bounding_sphere_centre =
+         (selection_bbox.max + selection_bbox.min) / 2.0f;
+      const float bounding_sphere_radius =
+         distance(selection_bbox.max, selection_bbox.min) / 2.0f;
+
+      _camera_orbit_centre = bounding_sphere_centre;
+      _camera_orbit_distance = bounding_sphere_radius;
+   }
+   else if (not _world.objects.empty()) {
+      math::bounding_box objects_bbox{.min = float3{FLT_MAX, FLT_MAX, FLT_MAX},
+                                      .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
+
+      for (const auto& object : _world.objects) {
+         math::bounding_box bbox =
+            _object_classes[object.class_name].model->bounding_box;
+
+         bbox = object.rotation * bbox + object.position;
+
+         objects_bbox = math::combine(bbox, objects_bbox);
+      }
+
+      const float3 bounding_sphere_centre =
+         (objects_bbox.max + objects_bbox.min) / 2.0f;
+      const float bounding_sphere_radius =
+         distance(objects_bbox.max, objects_bbox.min) / 2.0f;
+
+      _camera_orbit_centre = bounding_sphere_centre;
+      _camera_orbit_distance = bounding_sphere_radius;
+   }
+   else {
+      _camera_orbit_centre = float3{0.0f, 0.0f, 0.0f};
+      _camera_orbit_distance =
+         (_world.terrain.length * _world.terrain.grid_scale) / 2.0f;
    }
 }
 
@@ -2406,254 +2459,10 @@ void world_edit::focus_on_selection() noexcept
 {
    if (_interaction_targets.selection.empty()) return;
 
-   math::bounding_box selection_bbox{.min = float3{FLT_MAX, FLT_MAX, FLT_MAX},
-                                     .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
-
-   for (const auto& selected : _interaction_targets.selection) {
-      if (std::holds_alternative<world::object_id>(selected)) {
-         const world::object* object =
-            world::find_entity(_world.objects, std::get<world::object_id>(selected));
-
-         if (object) {
-            math::bounding_box bbox =
-               _object_classes[object->class_name].model->bounding_box;
-
-            bbox = object->rotation * bbox + object->position;
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
-
-         const world::path* path = world::find_entity(_world.paths, id);
-
-         if (path) {
-            const world::path::node& node = path->nodes[node_index];
-
-            const float path_node_size = _settings.graphics.path_node_size;
-
-            const math::bounding_box bbox{.min = node.position - path_node_size,
-                                          .max = node.position + path_node_size};
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::light_id>(selected)) {
-         const world::light* light =
-            world::find_entity(_world.lights, std::get<world::light_id>(selected));
-
-         if (light) {
-            switch (light->light_type) {
-            case world::light_type::directional: {
-               const math::bounding_box bbox{.min = light->position - 5.0f,
-                                             .max = light->position + 5.0f};
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-
-            } break;
-            case world::light_type::point: {
-               const math::bounding_box bbox{.min = light->position - light->range,
-                                             .max = light->position + light->range};
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            case world::light_type::spot: {
-               const float half_range = light->range / 2.0f;
-               const float outer_cone_radius =
-                  half_range * std::tan(light->outer_cone_angle);
-
-               math::bounding_box bbox{.min = {-outer_cone_radius, 0.0f, -outer_cone_radius},
-                                       .max = {outer_cone_radius, light->range,
-                                               outer_cone_radius}};
-
-               bbox = light->rotation * bbox + light->position;
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            case world::light_type::directional_region_box: {
-               math::bounding_box bbox{.min = {-light->region_size},
-                                       .max = {light->region_size}};
-
-               bbox = light->region_rotation * bbox + light->position;
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            case world::light_type::directional_region_sphere: {
-               const float sphere_radius = length(light->region_size);
-
-               const math::bounding_box bbox{.min = light->position - sphere_radius,
-                                             .max = light->position + sphere_radius};
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            case world::light_type::directional_region_cylinder: {
-               const float cylinder_length =
-                  length(float2{light->region_size.x, light->region_size.z});
-
-               math::bounding_box bbox{.min = {-cylinder_length,
-                                               -light->region_size.y, -cylinder_length},
-                                       .max = {cylinder_length,
-                                               light->region_size.y, cylinder_length}};
-
-               bbox = light->region_rotation * bbox + light->position;
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            }
-         }
-      }
-      else if (std::holds_alternative<world::region_id>(selected)) {
-         const world::region* region =
-            world::find_entity(_world.regions, std::get<world::region_id>(selected));
-
-         if (region) {
-            switch (region->shape) {
-            case world::region_shape::box: {
-               math::bounding_box bbox{.min = {-region->size}, .max = {region->size}};
-
-               bbox = region->rotation * bbox + region->position;
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            case world::region_shape::sphere: {
-               const float sphere_radius = length(region->size);
-
-               const math::bounding_box bbox{.min = region->position - sphere_radius,
-                                             .max = region->position + sphere_radius};
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            case world::region_shape::cylinder: {
-               const float cylinder_length =
-                  length(float2{region->size.x, region->size.z});
-
-               math::bounding_box bbox{.min = {-cylinder_length, -region->size.y,
-                                               -cylinder_length},
-                                       .max = {cylinder_length, region->size.y,
-                                               cylinder_length}};
-
-               bbox = region->rotation * bbox + region->position;
-
-               selection_bbox = math::combine(bbox, selection_bbox);
-            } break;
-            }
-         }
-      }
-      else if (std::holds_alternative<world::sector_id>(selected)) {
-         const world::sector* sector =
-            world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
-
-         if (sector) {
-            math::bounding_box bbox{.min = {FLT_MAX, sector->base, FLT_MAX},
-                                    .max = {-FLT_MAX, sector->base + sector->height,
-                                            -FLT_MAX}};
-
-            for (const auto& point : sector->points) {
-               bbox.min.x = std::min(point.x, bbox.min.x);
-               bbox.min.z = std::min(point.y, bbox.min.z);
-
-               bbox.max.x = std::max(point.x, bbox.max.x);
-               bbox.max.z = std::max(point.y, bbox.max.z);
-            }
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::portal_id>(selected)) {
-         const world::portal* portal =
-            world::find_entity(_world.portals, std::get<world::portal_id>(selected));
-
-         if (portal) {
-            const float half_width = portal->width * 0.5f;
-            const float half_height = portal->height * 0.5f;
-
-            math::bounding_box bbox{.min = {-half_width, -half_height, 0.0f},
-                                    .max = {half_width, half_height, 0.0f}};
-
-            bbox = portal->rotation * bbox + portal->position;
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::hintnode_id>(selected)) {
-         const world::hintnode* hintnode =
-            world::find_entity(_world.hintnodes,
-                               std::get<world::hintnode_id>(selected));
-
-         if (hintnode) {
-            const math::bounding_box bbox{.min = hintnode->position - 3.0f,
-                                          .max = hintnode->position + 3.0f};
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::barrier_id>(selected)) {
-         const world::barrier* barrier =
-            world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
-
-         if (barrier) {
-            const float radius = std::max(barrier->size.x, barrier->size.y);
-
-            const math::bounding_box bbox{.min = barrier->position - radius,
-                                          .max = barrier->position + radius};
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::planning_hub_id>(selected)) {
-         const world::planning_hub* hub =
-            world::find_entity(_world.planning_hubs,
-                               std::get<world::planning_hub_id>(selected));
-
-         if (hub) {
-            const math::bounding_box bbox{.min = hub->position - hub->radius,
-                                          .max = hub->position + hub->radius};
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::planning_connection_id>(selected)) {
-         const world::planning_connection* connection =
-            world::find_entity(_world.planning_connections,
-                               std::get<world::planning_connection_id>(selected));
-
-         if (connection) {
-            const world::planning_hub& start =
-               _world.planning_hubs[_world.planning_hub_index.at(connection->start)];
-            const world::planning_hub& end =
-               _world.planning_hubs[_world.planning_hub_index.at(connection->end)];
-
-            const math::bounding_box start_bbox{
-               .min = float3{-start.radius, 0.0f, -start.radius} + start.position,
-               .max = float3{start.radius, 0.0f, start.radius} + start.position};
-            const math::bounding_box end_bbox{
-               .min = float3{-end.radius, 0.0f, -end.radius} + end.position,
-               .max = float3{end.radius, 0.0f, end.radius} + end.position};
-
-            const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-      else if (std::holds_alternative<world::boundary_id>(selected)) {
-         const world::boundary* boundary =
-            world::find_entity(_world.boundaries,
-                               std::get<world::boundary_id>(selected));
-
-         if (boundary) {
-            const float2 boundary_min = boundary->position - boundary->size;
-            const float2 boundary_max = boundary->position + boundary->size;
-
-            const math::bounding_box bbox{.min = {boundary_min.x, 0.0f,
-                                                  boundary_min.y},
-                                          .max = {boundary_max.x, 0.0f,
-                                                  boundary_max.y}};
-
-            selection_bbox = math::combine(bbox, selection_bbox);
-         }
-      }
-   }
+   const math::bounding_box selection_bbox =
+      world::selection_bbox_for_camera(_world, _interaction_targets.selection,
+                                       _object_classes,
+                                       _settings.graphics.path_node_size);
 
    constexpr float pitch = -0.7853982f;
    constexpr float yaw = 0.7853982f;
