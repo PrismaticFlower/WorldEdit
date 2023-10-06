@@ -527,6 +527,9 @@ void world_edit::setup_orbit_camera() noexcept
                                       .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
 
       for (const auto& object : _world.objects) {
+         if (object.hidden) continue;
+         if (not _world_layers_draw_mask[object.layer]) continue;
+
          math::bounding_box bbox =
             _object_classes[object.class_name].model->bounding_box;
 
@@ -535,13 +538,22 @@ void world_edit::setup_orbit_camera() noexcept
          objects_bbox = math::combine(bbox, objects_bbox);
       }
 
-      const float3 bounding_sphere_centre =
-         (objects_bbox.max + objects_bbox.min) / 2.0f;
-      const float bounding_sphere_radius =
-         distance(objects_bbox.max, objects_bbox.min) / 2.0f;
+      const bool active_object = objects_bbox.min.x != FLT_MAX;
 
-      _camera_orbit_centre = bounding_sphere_centre;
-      _camera_orbit_distance = bounding_sphere_radius;
+      if (active_object) {
+         const float3 bounding_sphere_centre =
+            (objects_bbox.max + objects_bbox.min) / 2.0f;
+         const float bounding_sphere_radius =
+            distance(objects_bbox.max, objects_bbox.min) / 2.0f;
+
+         _camera_orbit_centre = bounding_sphere_centre;
+         _camera_orbit_distance = bounding_sphere_radius;
+      }
+      else {
+         _camera_orbit_centre = float3{0.0f, 0.0f, 0.0f};
+         _camera_orbit_distance =
+            (_world.terrain.length * _world.terrain.grid_scale) / 2.0f;
+      }
    }
    else {
       _camera_orbit_centre = float3{0.0f, 0.0f, 0.0f};

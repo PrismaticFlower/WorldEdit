@@ -63,6 +63,10 @@ void world_edit::ui_show_camera_controls() noexcept
          ImGui::EndCombo();
       }
 
+      if (ImGui::Checkbox("Orbit Mode", &_orbit_camera_active)) {
+         if (_orbit_camera_active) setup_orbit_camera();
+      }
+
       if (float zoom = _camera.zoom();
           ImGui::DragFloat("Zoom", &zoom, 0.025f, 1.0f, 10.0f)) {
          _camera.zoom(zoom);
