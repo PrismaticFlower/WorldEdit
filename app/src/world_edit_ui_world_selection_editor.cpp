@@ -1818,6 +1818,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
       if (ImGui::Button("Set Selection Layer", {ImGui::CalcItemWidth(), 0.0f})) {
          _selection_edit_tool = selection_edit_tool::set_layer;
       }
+
+      if (ImGui::Button("Focus on Selection", {ImGui::CalcItemWidth(), 0.0f})) {
+         focus_on_selection();
+      }
    }
 
    ImGui::End();
@@ -1863,6 +1867,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
       ImGui::Text("Set Selection Layer");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing", "Set Selection Layer")));
+
+      ImGui::Text("Focus on Selection");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing", "Focus on Selection")));
 
       ImGui::End();
    }

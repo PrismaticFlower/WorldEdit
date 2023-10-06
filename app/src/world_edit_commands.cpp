@@ -137,6 +137,8 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_edit.unhide_all"s, [this] { unhide_all(); });
    _commands.add("entity_edit.new_from_selection"s,
                  [this] { new_entity_from_selection(); });
+   _commands.add("entity_edit.focus_on_selection"s,
+                 [this] { focus_on_selection(); });
    _commands.add("entity_edit.set_selection_layer"s, [this] {
       _selection_edit_tool = selection_edit_tool::set_layer;
    });
@@ -386,6 +388,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Open .odf in Text Editor",
            "entity_edit.open_odf",
            {.key = key::o, .modifiers = {.ctrl = true}}},
+          {"Focus on Selection", "entity_edit.focus_on_selection", {.key = key::t}},
        }});
 
    _hotkeys.add_set(
