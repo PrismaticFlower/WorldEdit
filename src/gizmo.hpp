@@ -70,7 +70,6 @@ private:
    float _translate_gizmo_length = 4.0f;
    float _translate_gizmo_hit_pad = 0.25f;
    float _rotate_gizmo_radius = 4.0f;
-   float _rotate_gizmo_hit_height = 0.25f;
    float _rotate_gizmo_hit_pad = 0.25f;
 };
 

@@ -246,4 +246,12 @@ inline float plaIntersect(float3 ro, float3 rd, float4 p)
    return -(dot(ro, float3{p.x, p.y, p.z}) + p.w) / dot(rd, float3{p.x, p.y, p.z});
 }
 
+inline float diskIntersect(float3 ro, float3 rd, float3 c, float3 n, float r)
+{
+   float3 o = ro - c;
+   float t = -dot(n, o) / dot(rd, n);
+   float3 q = o + rd * t;
+   return (dot(q, q) < r * r) ? t : -1.0f;
+}
+
 }

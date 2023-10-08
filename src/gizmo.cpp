@@ -35,11 +35,21 @@ auto make_circle_point(const float angle, const float radius) -> float2
    return {radius * std::cos(angle), radius * std::sin(angle)};
 }
 
+auto rotate_gizmo_intersect(const float3 ray_origin, const float3 ray_direction,
+                            const float3 position, const float3 normal,
+                            const float nohit_radius, const float hit_radius) -> float
+{
+   if (diskIntersect(ray_origin, ray_direction, position, normal, nohit_radius) > 0.0f) {
+      return -1.0f;
+   }
+
+   return diskIntersect(ray_origin, ray_direction, position, normal, hit_radius);
+}
+
 constexpr float translate_gizmo_length = 0.1f;
 constexpr float translate_gizmo_hit_pad = 0.00625f;
 constexpr float rotate_gizmo_radius = 0.1f;
-constexpr float rotate_gizmo_hit_height = 0.00625f;
-constexpr float rotate_gizmo_hit_pad = 0.00625f;
+constexpr float rotate_gizmo_hit_pad = 0.01f;
 
 }
 
@@ -69,7 +79,6 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
    _translate_gizmo_length = translate_gizmo_length * camera_scale * gizmo_scale;
    _translate_gizmo_hit_pad = translate_gizmo_hit_pad * camera_scale * gizmo_scale;
    _rotate_gizmo_radius = rotate_gizmo_radius * camera_scale * gizmo_scale;
-   _rotate_gizmo_hit_height = rotate_gizmo_hit_height * camera_scale * gizmo_scale;
    _rotate_gizmo_hit_pad = rotate_gizmo_hit_pad * camera_scale * gizmo_scale;
 
    const float3 ray_origin = cursor_ray.origin;
@@ -153,24 +162,18 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
    } break;
    case mode::rotate: {
       if (not _rotate.rotating) {
-         const float radius = _rotate_gizmo_radius + _rotate_gizmo_hit_pad;
-         const float height = _rotate_gizmo_hit_height;
+         const float nohit_radius = _rotate_gizmo_radius - _rotate_gizmo_hit_pad;
+         const float hit_radius = _rotate_gizmo_radius + _rotate_gizmo_hit_pad;
 
          const float x_hit =
-            iCylinder(ray_origin, ray_direction,
-                      _gizmo_position + float3{1.0f, 0.0f, 0.0f} * height,
-                      _gizmo_position - float3{1.0f, 0.0f, 0.0f} * height, radius)
-               .x;
+            rotate_gizmo_intersect(ray_origin, ray_direction, _gizmo_position,
+                                   float3{1.0f, 0.0f, 0.0f}, nohit_radius, hit_radius);
          const float y_hit =
-            iCylinder(ray_origin, ray_direction,
-                      _gizmo_position + float3{0.0f, 1.0f, 0.0f} * height,
-                      _gizmo_position - float3{0.0f, 1.0f, 0.0f} * height, radius)
-               .x;
+            rotate_gizmo_intersect(ray_origin, ray_direction, _gizmo_position,
+                                   float3{0.0f, 1.0f, 0.0f}, nohit_radius, hit_radius);
          const float z_hit =
-            iCylinder(ray_origin, ray_direction,
-                      _gizmo_position + float3{0.0f, 0.0f, 1.0f} * height,
-                      _gizmo_position - float3{0.0f, 0.0f, 1.0f} * height, radius)
-               .x;
+            rotate_gizmo_intersect(ray_origin, ray_direction, _gizmo_position,
+                                   float3{0.0f, 0.0f, 1.0f}, nohit_radius, hit_radius);
 
          _rotate.active_axis = axis::none;
 
