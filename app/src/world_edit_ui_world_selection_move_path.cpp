@@ -38,7 +38,7 @@ void world_edit::ui_show_world_selection_move_path() noexcept
       const bool imgui_edited =
          ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
       const bool gizmo_edited =
-         _gizmo.show_translate(path_centre, _move_selection_amount);
+         _gizmo.show_translate(path_centre, quaternion{}, _move_selection_amount);
 
       if (imgui_edited or gizmo_edited) {
          const world::selected_entity selected =

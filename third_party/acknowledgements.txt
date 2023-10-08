@@ -1,0 +1,7 @@
+tinygizmo (https://github.com/ddiakopoulos/tinygizmo) & workbench (https://github.com/sgorsten/workbench)
+
+After struggling for a couple hours to get my gizmos working correctly when rotated I started to look for other implementations. Coming across tinygizmo I found these two lines that were what I had been missing. 
+https://github.com/ddiakopoulos/tinygizmo/blob/99c1c418d169774b0b8052b57fd1680b4c4de444/tiny-gizmo.cpp#L444-L445
+https://github.com/sgorsten/workbench/blob/5209bb405e0e0f4696b36684bbd1d7ecff7daa2f/src/engine/gizmo.cpp#L61-L62
+
+Both projects are in public domain and credit is not required but I'd be severely remissed to not do so. I find it unlikely either author will read this but if you do, thank you!

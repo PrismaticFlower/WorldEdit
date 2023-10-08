@@ -28,7 +28,7 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
          const bool gizmo_edited =
             _gizmo.show_translate(float3{point.x, sector->base + (sector->height / 2.0f),
                                          point.y},
-                                  _move_selection_amount);
+                                  quaternion{}, _move_selection_amount);
 
          if (imgui_edited or gizmo_edited) {
             const float3 move_delta = (_move_selection_amount - last_move_amount);

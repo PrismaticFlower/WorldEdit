@@ -1,6 +1,7 @@
 
 #include "gizmo.hpp"
 #include "math/intersectors.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 #include <cmath>
@@ -34,8 +35,8 @@ auto make_circle_point(const float angle, const float radius) -> float2
    return {radius * std::cos(angle), radius * std::sin(angle)};
 }
 
-constexpr float translate_gizmo_size = 0.1f;
-constexpr float translate_gizmo_hit_length = 0.00625f;
+constexpr float translate_gizmo_length = 0.1f;
+constexpr float translate_gizmo_hit_pad = 0.00625f;
 constexpr float rotate_gizmo_radius = 0.1f;
 constexpr float rotate_gizmo_hit_height = 0.00625f;
 constexpr float rotate_gizmo_hit_pad = 0.00625f;
@@ -65,8 +66,8 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
    const float camera_scale = distance(camera.position(), _gizmo_position) *
                               camera.projection_matrix()[0].x;
 
-   _translate_gizmo_size = translate_gizmo_size * camera_scale * gizmo_scale;
-   _translate_gizmo_hit_length = translate_gizmo_hit_length * camera_scale * gizmo_scale;
+   _translate_gizmo_length = translate_gizmo_length * camera_scale * gizmo_scale;
+   _translate_gizmo_hit_pad = translate_gizmo_hit_pad * camera_scale * gizmo_scale;
    _rotate_gizmo_radius = rotate_gizmo_radius * camera_scale * gizmo_scale;
    _rotate_gizmo_hit_height = rotate_gizmo_hit_height * camera_scale * gizmo_scale;
    _rotate_gizmo_hit_pad = rotate_gizmo_hit_pad * camera_scale * gizmo_scale;
@@ -85,14 +86,21 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
    } break;
    case mode::translate: {
       if (not _translate.translating) {
-         const float length = _translate_gizmo_hit_length;
+         const float3 local_ray_origin = conjugate(_gizmo_rotation) * offset_ray_origin;
+         const float3 local_ray_direction = conjugate(_gizmo_rotation) * ray_direction;
 
-         const float x_hit = boxIntersection(offset_ray_origin, ray_direction,
-                                             {_translate_gizmo_size, length, length});
-         const float y_hit = boxIntersection(offset_ray_origin, ray_direction,
-                                             {length, _translate_gizmo_size, length});
-         const float z_hit = boxIntersection(offset_ray_origin, ray_direction,
-                                             {length, length, _translate_gizmo_size});
+         const float half_length = _translate_gizmo_length / 2.0f;
+         const float padding = _translate_gizmo_hit_pad;
+
+         const float x_hit =
+            boxIntersection(local_ray_origin - float3{half_length, 0.0f, 0.0f},
+                            local_ray_direction, {half_length, padding, padding});
+         const float y_hit =
+            boxIntersection(local_ray_origin - float3{0.0f, half_length, 0.0f},
+                            local_ray_direction, {padding, half_length, padding});
+         const float z_hit =
+            boxIntersection(local_ray_origin - float3{0.0f, 0.0f, half_length},
+                            local_ray_direction, {padding, padding, half_length});
 
          _translate.active_axis = axis::none;
 
@@ -117,7 +125,7 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
          else if (is_mouse_down and not _translate.mouse_down_over_gizmo) {
             _translate.start_position = _gizmo_position;
             _translate.start_cursor_position =
-               get_translate_position(cursor_ray, _gizmo_position);
+               get_translate_position(cursor_ray, camera.position(), _gizmo_position);
             _translate.translating = true;
          }
       }
@@ -125,7 +133,8 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
       if (_translate.translating and is_mouse_down and
           _translate.active_axis != axis::none) {
          const float3 position =
-            get_translate_position(cursor_ray, _translate.start_cursor_position);
+            get_translate_position(cursor_ray, camera.position(),
+                                   _translate.start_cursor_position);
          const float3 movement = position - _translate.start_cursor_position;
 
          if (_translate.active_axis == axis::x) {
@@ -248,46 +257,44 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
 void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
 {
    if (_mode == mode::translate) {
-      const float size = _translate_gizmo_size;
+      const float length = _translate_gizmo_length;
 
       const bool x_hover = _translate.active_axis == axis::x;
       const bool y_hover = _translate.active_axis == axis::y;
       const bool z_hover = _translate.active_axis == axis::z;
 
+      const float3 x_axis = _gizmo_rotation * float3{1.0f, 0.0f, 0.0f};
+      const float3 y_axis = _gizmo_rotation * float3{0.0f, 1.0f, 0.0f};
+      const float3 z_axis = _gizmo_rotation * float3{0.0f, 0.0f, 1.0f};
+
       if (_translate.translating) {
          switch (_translate.active_axis) {
          case axis::x: {
-            tool_visualizers.lines.emplace_back(_translate.start_position -
-                                                   float3{1024.0f, 0.0f, 0.0f},
-                                                _translate.start_position +
-                                                   float3{1024.0f, 0.0f, 0.0f},
+            tool_visualizers.lines.emplace_back(_gizmo_position - x_axis * 1024.0f,
+                                                _gizmo_position + x_axis * 1024.0f,
                                                 x_color);
          } break;
          case axis::y: {
-            tool_visualizers.lines.emplace_back(_translate.start_position -
-                                                   float3{0.0f, 1024.0f, 0.0f},
-                                                _translate.start_position +
-                                                   float3{0.0f, 1024.0f, 0.0f},
+            tool_visualizers.lines.emplace_back(_gizmo_position - y_axis * 1024.0f,
+                                                _gizmo_position + y_axis * 1024.0f,
                                                 y_color);
          } break;
          case axis::z: {
-            tool_visualizers.lines.emplace_back(_translate.start_position -
-                                                   float3{0.0f, 0.0f, 1024.0f},
-                                                _translate.start_position +
-                                                   float3{0.0f, 0.0f, 1024.0f},
+            tool_visualizers.lines.emplace_back(_gizmo_position - z_axis * 1024.0f,
+                                                _gizmo_position + z_axis * 1024.0f,
                                                 z_color);
          } break;
          }
       }
 
       tool_visualizers.lines.emplace_back(_gizmo_position,
-                                          _gizmo_position + float3{size, 0.0f, 0.0f},
+                                          _gizmo_position + x_axis * length,
                                           x_hover ? x_color_hover : x_color);
       tool_visualizers.lines.emplace_back(_gizmo_position,
-                                          _gizmo_position + float3{0.0f, size, 0.0f},
+                                          _gizmo_position + y_axis * length,
                                           y_hover ? y_color_hover : y_color);
       tool_visualizers.lines.emplace_back(_gizmo_position,
-                                          _gizmo_position + float3{0.0f, 0.0f, size},
+                                          _gizmo_position + z_axis * length,
                                           z_hover ? z_color_hover : z_color);
    }
    else if (_mode == mode::rotate) {
@@ -354,9 +361,11 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
    }
 }
 
-bool gizmo::show_translate(const float3 gizmo_position, float3& movement) noexcept
+bool gizmo::show_translate(const float3 gizmo_position,
+                           const quaternion gizmo_rotation, float3& movement) noexcept
 {
    _gizmo_position = gizmo_position;
+   _gizmo_rotation = normalize(gizmo_rotation);
    _used_last_tick = true;
 
    if (not _translate.start_movement) _translate.start_movement = movement;
@@ -389,6 +398,7 @@ bool gizmo::show_translate(const float3 gizmo_position, float3& movement) noexce
 bool gizmo::show_rotate(const float3 gizmo_position, float3& rotation) noexcept
 {
    _gizmo_position = gizmo_position;
+   _gizmo_rotation = {};
    _used_last_tick = true;
 
    if (std::exchange(_mode, mode::rotate) != mode::rotate) {
@@ -413,58 +423,45 @@ bool gizmo::show_rotate(const float3 gizmo_position, float3& rotation) noexcept
    return start_rotation != rotation;
 }
 
-auto gizmo::get_translate_position(const graphics::camera_ray ray,
+void gizmo::deactivate() noexcept
+{
+   _mode = mode::inactive;
+   _used_last_tick = false;
+}
+
+auto gizmo::get_translate_position(graphics::camera_ray world_ray,
+                                   const float3 camera_position,
                                    const float3 fallback) const noexcept -> float3
 {
-   const float4 x_plane =
-      make_plane(_translate.start_position, float3{1.0f, 0.0f, 0.0f});
-   const float4 y_plane =
-      make_plane(_translate.start_position, float3{0.0f, 1.0f, 0.0f});
-   const float4 z_plane =
-      make_plane(_translate.start_position, float3{0.0f, 0.0f, 1.0f});
+   graphics::camera_ray ray;
 
-   float distance = std::numeric_limits<float>::max();
+   ray.origin = conjugate(_gizmo_rotation) * (world_ray.origin);
+   ray.direction = conjugate(_gizmo_rotation) * world_ray.direction;
 
-   if (_translate.active_axis == axis::x) {
-      if (const float y_plane_hit = plaIntersect(ray.origin, ray.direction, y_plane);
-          y_plane_hit > 0.0f) {
-         distance = std::min(y_plane_hit, distance);
+   const float3 eye_direction =
+      conjugate(_gizmo_rotation) * (_translate.start_position - camera_position);
+   const float3 axis = [&] {
+      if (_translate.active_axis == axis::x) {
+         return float3{1.0f, 0.0f, 0.0f};
+      }
+      else if (_translate.active_axis == axis::y) {
+         return float3{0.0f, 1.0f, 0.0f};
+      }
+      else if (_translate.active_axis == axis::z) {
+         return float3{0.0f, 0.0f, 1.0f};
       }
 
-      if (distance == std::numeric_limits<float>::max()) {
-         if (const float z_plane_hit = plaIntersect(ray.origin, ray.direction, z_plane);
-             z_plane_hit > 0.0f) {
-            distance = std::min(z_plane_hit, distance);
-         }
-      }
-   }
-   else if (_translate.active_axis == axis::y) {
-      if (const float x_plane_hit = plaIntersect(ray.origin, ray.direction, x_plane);
-          x_plane_hit > 0.0f) {
-         distance = std::min(x_plane_hit, distance);
-      }
+      return float3{};
+   }();
 
-      if (const float z_plane_hit = plaIntersect(ray.origin, ray.direction, z_plane);
-          z_plane_hit > 0.0f) {
-         distance = std::min(z_plane_hit, distance);
-      }
-   }
-   else {
-      if (const float y_plane_hit = plaIntersect(ray.origin, ray.direction, y_plane);
-          y_plane_hit > 0.0f) {
-         distance = std::min(y_plane_hit, distance);
-      }
+   const float3 plane_tangent = cross(axis, eye_direction);
+   const float3 plane_normal = cross(axis, plane_tangent);
 
-      if (distance == std::numeric_limits<float>::max()) {
-         if (const float x_plane_hit = plaIntersect(ray.origin, ray.direction, x_plane);
-             x_plane_hit > 0.0f) {
-            distance = std::min(x_plane_hit, distance);
-         }
-      }
-   }
+   const float4 plane =
+      make_plane(conjugate(_gizmo_rotation) * _translate.start_position, plane_normal);
 
-   if (distance != std::numeric_limits<float>::max()) {
-      return ray.origin + ray.direction * distance;
+   if (const float hit = plaIntersect(ray.origin, ray.direction, plane); hit > 0.0f) {
+      return ray.origin + ray.direction * hit;
    }
 
    return fallback;

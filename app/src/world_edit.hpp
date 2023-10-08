@@ -58,6 +58,8 @@ enum class selection_edit_tool : uint8 {
    set_layer
 };
 
+enum class selection_move_space : uint8 { world, local };
+
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
 constexpr float tool_window_start_x = 264.0f;
@@ -299,6 +301,7 @@ private:
    bool _about_window_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
+   selection_move_space _selection_move_space = selection_move_space::world;
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;
