@@ -1629,14 +1629,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                              *edited_value);
                              });
 
-            ImGui::Text("Start: %s", _world
-                                        .planning_hubs[_world.planning_hub_index.at(
-                                           connection->start)]
-                                        .name.c_str());
-            ImGui::Text("End: %s", _world
-                                      .planning_hubs[_world.planning_hub_index.at(
-                                         connection->end)]
-                                      .name.c_str());
+            ImGui::Text("Start: %s",
+                        _world.planning_hubs[connection->start_hub_index].name.c_str());
+            ImGui::Text("End: %s",
+                        _world.planning_hubs[connection->end_hub_index].name.c_str());
 
             ImGui::EditFlags("Flags", connection, &world::planning_connection::flags,
                              &_edit_stack_world, &_edit_context,

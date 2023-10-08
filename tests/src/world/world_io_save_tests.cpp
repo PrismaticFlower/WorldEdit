@@ -734,13 +734,6 @@ TEST_CASE("world saving", "[World][IO]")
 {
    std::filesystem::create_directory(L"temp/world");
 
-   id_generator<planning_hub> hub_id_generator;
-
-   const std::array<planning_hub_id, 4> hub_ids = {hub_id_generator.aquire(),
-                                                   hub_id_generator.aquire(),
-                                                   hub_id_generator.aquire(),
-                                                   hub_id_generator.aquire()};
-
    const world world{
       .name = "test",
 
@@ -897,28 +890,24 @@ TEST_CASE("world saving", "[World][IO]")
 
       .planning_hubs = {planning_hub{.name = "Hub0",
                                      .position = float3{-63.822487f, 0.0f, -9.202278f},
-                                     .radius = 8.0f,
-                                     .id = hub_ids[0]},
+                                     .radius = 8.0f},
 
                         planning_hub{.name = "Hub1",
                                      .position = float3{-121.883095f, 1.0f, -30.046543f},
-                                     .radius = 7.586431f,
-                                     .id = hub_ids[1]},
+                                     .radius = 7.586431f},
 
                         planning_hub{.name = "Hub2",
                                      .position = float3{-54.011314f, 2.0f, -194.037018f},
-                                     .radius = 13.120973f,
-                                     .id = hub_ids[2]},
+                                     .radius = 13.120973f},
 
                         planning_hub{.name = "Hub3",
                                      .position = float3{-163.852570f, 3.0f, -169.116760f},
-                                     .radius = 12.046540f,
-                                     .id = hub_ids[3]}},
+                                     .radius = 12.046540f}},
 
       .planning_connections =
          {planning_connection{.name = "Connection0",
-                              .start = hub_ids[0],
-                              .end = hub_ids[1],
+                              .start_hub_index = 0,
+                              .end_hub_index = 1,
                               .flags = (ai_path_flags::soldier | ai_path_flags::hover |
                                         ai_path_flags::small | ai_path_flags::medium |
                                         ai_path_flags::huge | ai_path_flags::flyer),
@@ -931,8 +920,8 @@ TEST_CASE("world saving", "[World][IO]")
                                                    .flyer = 100.0f}},
 
           planning_connection{.name = "Connection1",
-                              .start = hub_ids[3],
-                              .end = hub_ids[2],
+                              .start_hub_index = 3,
+                              .end_hub_index = 2,
                               .flags = ai_path_flags::hover}},
 
       .boundaries =
@@ -944,11 +933,7 @@ TEST_CASE("world saving", "[World][IO]")
                      .position = {-0.442565918f, 4.79779053f},
                      .size = {384.000000f, 384.000000f}},
          },
-
-      .planning_hub_index = {{hub_ids[0], 0},
-                             {hub_ids[1], 1},
-                             {hub_ids[2], 2},
-                             {hub_ids[3], 3}}};
+   };
 
    save_world(L"temp/world/test.wld", world);
 

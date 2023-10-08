@@ -233,6 +233,41 @@ TEST_CASE("edits delete_entity planning_hub", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
+   auto edit = make_delete_entity(world.planning_hubs[1].id, world);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.planning_hubs.size() == 2);
+   CHECK(world.planning_hubs[0] == test_world.planning_hubs[0]);
+   CHECK(world.planning_hubs[1] == test_world.planning_hubs[2]);
+
+   REQUIRE(world.planning_connections.size() == 1);
+   CHECK(world.planning_connections[0].name == "Connection1");
+   CHECK(world.planning_connections[0].start_hub_index == 0);
+   CHECK(world.planning_connections[0].end_hub_index == 1);
+
+   edit->revert(edit_context);
+
+   CHECK(world.planning_hubs == test_world.planning_hubs);
+
+   REQUIRE(world.planning_connections.size() == 3);
+   CHECK(world.planning_connections[0].name == "Connection0");
+   CHECK(world.planning_connections[0].start_hub_index == 0);
+   CHECK(world.planning_connections[0].end_hub_index == 1);
+   CHECK(world.planning_connections[1].name == "Connection1");
+   CHECK(world.planning_connections[1].start_hub_index == 0);
+   CHECK(world.planning_connections[1].end_hub_index == 2);
+   CHECK(world.planning_connections[2].name == "Connection2");
+   CHECK(world.planning_connections[2].start_hub_index == 1);
+   CHECK(world.planning_connections[2].end_hub_index == 2);
+}
+
+TEST_CASE("edits delete_entity planning_hub first", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
    auto edit = make_delete_entity(world.planning_hubs[0].id, world);
 
    edit->apply(edit_context);
@@ -243,19 +278,58 @@ TEST_CASE("edits delete_entity planning_hub", "[Edits]")
 
    REQUIRE(world.planning_connections.size() == 1);
    CHECK(world.planning_connections[0].name == "Connection2");
-
-   REQUIRE(not world.planning_hub_index.contains(test_world.planning_hubs[0].id));
-   CHECK(world.planning_hub_index.at(test_world.planning_hubs[1].id) == 0);
-   CHECK(world.planning_hub_index.at(test_world.planning_hubs[2].id) == 1);
+   CHECK(world.planning_connections[0].start_hub_index == 0);
+   CHECK(world.planning_connections[0].end_hub_index == 1);
 
    edit->revert(edit_context);
 
    CHECK(world.planning_hubs == test_world.planning_hubs);
-   CHECK(world.planning_connections == test_world.planning_connections);
 
-   CHECK(world.planning_hub_index.at(test_world.planning_hubs[0].id) == 0);
-   CHECK(world.planning_hub_index.at(test_world.planning_hubs[1].id) == 1);
-   CHECK(world.planning_hub_index.at(test_world.planning_hubs[2].id) == 2);
+   REQUIRE(world.planning_connections.size() == 3);
+   CHECK(world.planning_connections[0].name == "Connection0");
+   CHECK(world.planning_connections[0].start_hub_index == 0);
+   CHECK(world.planning_connections[0].end_hub_index == 1);
+   CHECK(world.planning_connections[1].name == "Connection1");
+   CHECK(world.planning_connections[1].start_hub_index == 0);
+   CHECK(world.planning_connections[1].end_hub_index == 2);
+   CHECK(world.planning_connections[2].name == "Connection2");
+   CHECK(world.planning_connections[2].start_hub_index == 1);
+   CHECK(world.planning_connections[2].end_hub_index == 2);
+}
+
+TEST_CASE("edits delete_entity planning_hub last", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_entity(world.planning_hubs[2].id, world);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.planning_hubs.size() == 2);
+   CHECK(world.planning_hubs[0] == test_world.planning_hubs[0]);
+   CHECK(world.planning_hubs[1] == test_world.planning_hubs[1]);
+
+   REQUIRE(world.planning_connections.size() == 1);
+   CHECK(world.planning_connections[0].name == "Connection0");
+   CHECK(world.planning_connections[0].start_hub_index == 0);
+   CHECK(world.planning_connections[0].end_hub_index == 1);
+
+   edit->revert(edit_context);
+
+   CHECK(world.planning_hubs == test_world.planning_hubs);
+
+   REQUIRE(world.planning_connections.size() == 3);
+   CHECK(world.planning_connections[0].name == "Connection0");
+   CHECK(world.planning_connections[0].start_hub_index == 0);
+   CHECK(world.planning_connections[0].end_hub_index == 1);
+   CHECK(world.planning_connections[1].name == "Connection1");
+   CHECK(world.planning_connections[1].start_hub_index == 0);
+   CHECK(world.planning_connections[1].end_hub_index == 2);
+   CHECK(world.planning_connections[2].name == "Connection2");
+   CHECK(world.planning_connections[2].start_hub_index == 1);
+   CHECK(world.planning_connections[2].end_hub_index == 2);
 }
 
 TEST_CASE("edits delete_entity planning_connection", "[Edits]")

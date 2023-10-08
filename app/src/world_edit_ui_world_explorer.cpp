@@ -713,14 +713,9 @@ void world_edit::ui_show_world_explorer() noexcept
                const bool hover_entity = ImGui::IsItemHovered();
                ImGui::TableNextColumn();
                ImGui::Text(
-                  _world
-                     .planning_hubs[_world.planning_hub_index.at(connection.start)]
-                     .name.c_str());
+                  _world.planning_hubs[connection.start_hub_index].name.c_str());
                ImGui::TableNextColumn();
-               ImGui::Text(
-                  _world
-                     .planning_hubs[_world.planning_hub_index.at(connection.end)]
-                     .name.c_str());
+               ImGui::Text(_world.planning_hubs[connection.end_hub_index].name.c_str());
                ImGui::TableNextColumn();
                ImGui::Text(soldier ? "X" : "-");
                ImGui::TableNextColumn();

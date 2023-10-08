@@ -667,16 +667,13 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
          }
       }
 
-      absl::flat_hash_map<std::string_view, planning_hub_id> hub_map;
+      absl::flat_hash_map<std::string_view, uint32> hub_map;
       hub_map.reserve(world_out.planning_hubs.size());
 
-      world_out.planning_hub_index.reserve(world_out.planning_hubs.size());
-
-      for (std::size_t i = 0; i < world_out.planning_hubs.size(); ++i) {
+      for (uint32 i = 0; i < world_out.planning_hubs.size(); ++i) {
          const planning_hub& hub = world_out.planning_hubs[i];
 
-         world_out.planning_hub_index.emplace(hub.id, i);
-         hub_map.emplace(hub.name, hub.id);
+         hub_map.emplace(hub.name, i);
       }
 
       for (auto& key_node : planning) {
@@ -698,7 +695,7 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
                      throw_planning_missing_hub(hub_name, connection.name);
                   }
 
-                  connection.start = hub_it->second;
+                  connection.start_hub_index = hub_it->second;
                }
                else if (child_key_node.key == "End"sv) {
                   const std::string_view hub_name =
@@ -710,7 +707,7 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
                      throw_planning_missing_hub(hub_name, connection.name);
                   }
 
-                  connection.end = hub_it->second;
+                  connection.end_hub_index = hub_it->second;
                }
                else if (child_key_node.key == "Flag"sv) {
                   connection.flags =
@@ -748,8 +745,8 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
          planning_connection& connection =
             *connection_map.at(branch_weight.connection);
          planning_branch_weights& weights =
-            world_out.planning_hubs[world_out.planning_hub_index.at(connection.start)]
-                     .name == branch_weight.start_hub
+            world_out.planning_hubs[connection.start_hub_index].name ==
+                  branch_weight.start_hub
                ? connection.forward_weights
                : connection.backward_weights;
 

@@ -1239,9 +1239,9 @@ void renderer_impl::draw_world_meta_objects(
          if (connection.hidden) return;
 
          const world::planning_hub& start =
-            world.planning_hubs[world.planning_hub_index.at(connection.start)];
+            world.planning_hubs[connection.start_hub_index];
          const world::planning_hub& end =
-            world.planning_hubs[world.planning_hub_index.at(connection.end)];
+            world.planning_hubs[connection.end_hub_index];
 
          const math::bounding_box start_bbox{
             .min = float3{-start.radius, -planning_connection_height, -start.radius} +
@@ -1914,9 +1914,9 @@ void renderer_impl::draw_interaction_targets(
          const float height = settings.planning_connection_height;
 
          const world::planning_hub& start =
-            world.planning_hubs[world.planning_hub_index.at(connection.start)];
+            world.planning_hubs[connection.start_hub_index];
          const world::planning_hub& end =
-            world.planning_hubs[world.planning_hub_index.at(connection.end)];
+            world.planning_hubs[connection.end_hub_index];
 
          const float3 normal =
             normalize(float3{-(start.position.z - end.position.z), 0.0f,

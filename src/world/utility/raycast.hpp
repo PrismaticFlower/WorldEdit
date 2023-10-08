@@ -7,8 +7,6 @@
 #include <optional>
 #include <span>
 
-#include <absl/container/flat_hash_map.h>
-
 namespace we::world {
 
 template<typename T>
@@ -78,9 +76,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              std::span<const planning_connection> connections,
-             std::span<const planning_hub> hubs,
-             const absl::flat_hash_map<planning_hub_id, std::size_t>& planning_hub_index,
-             const float connection_height) noexcept
+             std::span<const planning_hub> hubs, const float connection_height) noexcept
    -> std::optional<raycast_result<planning_connection>>;
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

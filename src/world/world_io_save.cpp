@@ -123,20 +123,19 @@ struct sequence_numbers {
 };
 
 auto get_hub_branch_weight_refs(const world& world)
-   -> absl::flat_hash_map<planning_hub_id, absl::InlinedVector<hub_branch_weight_ref, 12>>
+   -> absl::flat_hash_map<uint32, absl::InlinedVector<hub_branch_weight_ref, 12>>
 {
-   absl::flat_hash_map<planning_hub_id, absl::InlinedVector<hub_branch_weight_ref, 12>> refs;
+   absl::flat_hash_map<uint32, absl::InlinedVector<hub_branch_weight_ref, 12>> refs;
    refs.reserve(64);
 
    for (auto& connection : world.planning_connections) {
       const auto process_direction = [&](const planning_branch_weights& weights,
-                                         const planning_hub_id start_hub,
-                                         const planning_hub_id end_hub) {
+                                         const uint32 start_hub_index,
+                                         const uint32 end_hub_index) {
          const auto process_weight = [&](const float weight, const ai_path_flags flag) {
             if (weight != 0.0f) {
-               refs[start_hub].push_back(
-                  {.end_hub =
-                      world.planning_hubs[world.planning_hub_index.at(end_hub)].name,
+               refs[start_hub_index].push_back(
+                  {.end_hub = world.planning_hubs[end_hub_index].name,
                    .weight = weight,
                    .connection = connection.name,
                    .flag = flag});
@@ -151,8 +150,10 @@ auto get_hub_branch_weight_refs(const world& world)
          process_weight(weights.soldier, ai_path_flags::soldier);
       };
 
-      process_direction(connection.forward_weights, connection.start, connection.end);
-      process_direction(connection.backward_weights, connection.end, connection.start);
+      process_direction(connection.forward_weights, connection.start_hub_index,
+                        connection.end_hub_index);
+      process_direction(connection.backward_weights, connection.end_hub_index,
+                        connection.start_hub_index);
    }
 
    return refs;
@@ -623,12 +624,14 @@ void save_barriers(const std::filesystem::path& path, const world& world)
 
 void save_planning(const std::filesystem::path& path, const world& world)
 {
-   const absl::flat_hash_map<planning_hub_id, absl::InlinedVector<hub_branch_weight_ref, 12>> hub_branch_weights =
+   const absl::flat_hash_map<uint32, absl::InlinedVector<hub_branch_weight_ref, 12>> hub_branch_weights =
       get_hub_branch_weight_refs(world);
 
    io::output_file file{path};
 
-   for (auto& hub : world.planning_hubs) {
+   for (uint32 i = 0; i < world.planning_hubs.size(); ++i) {
+      const auto& hub = world.planning_hubs[i];
+
       file.write_ln("");
       file.write_ln("Hub(\"{}\")", hub.name);
       file.write_ln("{");
@@ -638,7 +641,7 @@ void save_planning(const std::filesystem::path& path, const world& world)
 
       file.write_ln("\tRadius({:f});", hub.radius);
 
-      if (auto branch_weights_it = hub_branch_weights.find(hub.id);
+      if (auto branch_weights_it = hub_branch_weights.find(i);
           branch_weights_it != hub_branch_weights.end()) {
          for (const auto& branch_weight : branch_weights_it->second) {
             file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});",
@@ -656,12 +659,10 @@ void save_planning(const std::filesystem::path& path, const world& world)
       file.write_ln("Connection(\"{}\")", connection.name);
       file.write_ln("{");
 
-      file.write_ln(
-         "\tStart(\"{}\");",
-         world.planning_hubs[world.planning_hub_index.at(connection.start)].name);
-      file.write_ln(
-         "\tEnd(\"{}\");",
-         world.planning_hubs[world.planning_hub_index.at(connection.end)].name);
+      file.write_ln("\tStart(\"{}\");",
+                    world.planning_hubs[connection.start_hub_index].name);
+      file.write_ln("\tEnd(\"{}\");",
+                    world.planning_hubs[connection.end_hub_index].name);
       file.write_ln("\tFlag({});", static_cast<int>(connection.flags));
 
       if (connection.dynamic_group != 0) {

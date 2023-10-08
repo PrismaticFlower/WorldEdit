@@ -2593,13 +2593,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
                        });
 
       ImGui::Text("Start: %s",
-                  _world
-                     .planning_hubs[_world.planning_hub_index.at(connection.start)]
-                     .name.c_str());
+                  _world.planning_hubs[connection.start_hub_index].name.c_str());
       ImGui::Text("End: %s",
-                  _world
-                     .planning_hubs[_world.planning_hub_index.at(connection.end)]
-                     .name.c_str());
+                  _world.planning_hubs[connection.end_hub_index].name.c_str());
 
       if (_entity_creation_context.connection_link_started and
           _interaction_targets.hovered_entity and
@@ -2608,9 +2604,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          const world::planning_hub_id end_id =
             std::get<world::planning_hub_id>(*_interaction_targets.hovered_entity);
 
-         _edit_stack_world.apply(edits::make_set_creation_value(&world::planning_connection::end,
-                                                                end_id,
-                                                                connection.end),
+         _edit_stack_world.apply(edits::make_set_creation_value(
+                                    &world::planning_connection::end_hub_index,
+                                    get_hub_index(_world.planning_hubs, end_id),
+                                    connection.end_hub_index),
                                  _edit_context);
       }
 

@@ -86,6 +86,9 @@ inline auto find_region_by_description(const world& world, const std::string_vie
    return nullptr;
 }
 
+auto get_hub_index(const std::span<const planning_hub> hubs, planning_hub_id id)
+   -> uint32;
+
 auto create_unique_name(const std::span<const object> entities,
                         const std::string_view reference_name) -> std::string;
 

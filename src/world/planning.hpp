@@ -41,8 +41,8 @@ struct planning_connection {
 
    bool hidden = false;
 
-   planning_hub_id start;
-   planning_hub_id end;
+   uint32 start_hub_index = 0;
+   uint32 end_hub_index = 0;
 
    ai_path_flags flags = ai_path_flags::soldier | ai_path_flags::hover |
                          ai_path_flags::small | ai_path_flags::medium |

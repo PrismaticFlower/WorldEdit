@@ -222,9 +222,8 @@ auto selection_bbox_for_camera(const world& world,
 
          if (connection) {
             const planning_hub& start =
-               world.planning_hubs[world.planning_hub_index.at(connection->start)];
-            const planning_hub& end =
-               world.planning_hubs[world.planning_hub_index.at(connection->end)];
+               world.planning_hubs[connection->start_hub_index];
+            const planning_hub& end = world.planning_hubs[connection->end_hub_index];
 
             const math::bounding_box start_bbox{
                .min = float3{-start.radius, 0.0f, -start.radius} + start.position,

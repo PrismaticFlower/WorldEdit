@@ -484,11 +484,10 @@ void world_edit::ui_show_create_menu_items() noexcept
          new_connection.id = world::max_id;
       }
       else {
-         new_connection =
-            world::planning_connection{.name = "Connection0",
-                                       .start = _world.planning_hubs[0].id,
-                                       .end = _world.planning_hubs[0].id,
-                                       .id = world::max_id};
+         new_connection = world::planning_connection{.name = "Connection0",
+                                                     .start_hub_index = 0,
+                                                     .end_hub_index = 0,
+                                                     .id = world::max_id};
       }
 
       _edit_stack_world

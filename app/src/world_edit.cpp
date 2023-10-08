@@ -336,8 +336,8 @@ void world_edit::update_hovered_entity() noexcept
 
    if (raycast_mask.planning_connections) {
       if (std::optional<world::raycast_result<world::planning_connection>> hit =
-             world::raycast(ray.origin, ray.direction, _world.planning_connections,
-                            _world.planning_hubs, _world.planning_hub_index,
+             world::raycast(ray.origin, ray.direction,
+                            _world.planning_connections, _world.planning_hubs,
                             _settings.graphics.planning_connection_height);
           hit) {
          if (hit->distance < hovered_entity_distance) {
@@ -1180,9 +1180,9 @@ void world_edit::finish_entity_deselect() noexcept
             if (connection.hidden) continue;
 
             const world::planning_hub& start =
-               _world.planning_hubs[_world.planning_hub_index.at(connection.start)];
+               _world.planning_hubs[connection.start_hub_index];
             const world::planning_hub& end =
-               _world.planning_hubs[_world.planning_hub_index.at(connection.end)];
+               _world.planning_hubs[connection.end_hub_index];
 
             const float height = _settings.graphics.planning_connection_height;
 
@@ -1487,10 +1487,8 @@ void world_edit::place_creation_entity() noexcept
 
                _last_created_entities.last_planning_hub = new_hub.id;
 
-               _edit_stack_world
-                  .apply(edits::make_insert_entity(std::move(new_hub),
-                                                   _world.planning_hubs.size()),
-                         _edit_context);
+               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
+                                       _edit_context);
 
                _edit_stack_world.apply(edits::make_set_creation_value(
                                           &world::planning_hub::name,
@@ -1514,21 +1512,19 @@ void world_edit::place_creation_entity() noexcept
 
             if (_entity_creation_context.connection_link_started) {
                for (auto& other_connection : _world.planning_connections) {
-                  if ((connection.start == other_connection.start and
-                       connection.end == other_connection.end) or
-                      (connection.start == other_connection.end and
-                       connection.end == other_connection.start)) {
+                  if ((connection.start_hub_index == other_connection.start_hub_index and
+                       connection.end_hub_index == other_connection.end_hub_index) or
+                      (connection.start_hub_index == other_connection.end_hub_index and
+                       connection.end_hub_index == other_connection.start_hub_index)) {
                      if (not _world.planning_hubs.empty()) {
                         _edit_stack_world.apply(edits::make_set_creation_value(
-                                                   &world::planning_connection::start,
-                                                   _world.planning_hubs[0].id,
-                                                   connection.start),
+                                                   &world::planning_connection::start_hub_index,
+                                                   uint32{0}, connection.start_hub_index),
                                                 _edit_context);
 
                         _edit_stack_world.apply(edits::make_set_creation_value(
-                                                   &world::planning_connection::end,
-                                                   _world.planning_hubs[0].id,
-                                                   connection.start),
+                                                   &world::planning_connection::end_hub_index,
+                                                   uint32{0}, connection.end_hub_index),
                                                 _edit_context, {.transparent = true});
                      }
                      else {
@@ -1566,12 +1562,14 @@ void world_edit::place_creation_entity() noexcept
                _entity_creation_context.connection_link_started = false;
             }
             else {
-               _edit_stack_world.apply(edits::make_set_creation_value(
-                                          &world::planning_connection::start,
+               _edit_stack_world
+                  .apply(edits::make_set_creation_value(
+                            &world::planning_connection::start_hub_index,
+                            get_hub_index(_world.planning_hubs,
                                           std::get<world::planning_hub_id>(
-                                             *_interaction_targets.hovered_entity),
-                                          connection.start),
-                                       _edit_context);
+                                             *_interaction_targets.hovered_entity)),
+                            connection.start_hub_index),
+                         _edit_context);
 
                _entity_creation_context.connection_link_started = true;
             }
@@ -1705,7 +1703,8 @@ void world_edit::toggle_planning_entity_type() noexcept
 {
    if (not _interaction_targets.creation_entity) return;
 
-   if (std::holds_alternative<world::planning_hub>(*_interaction_targets.creation_entity)) {
+   if (std::holds_alternative<world::planning_hub>(*_interaction_targets.creation_entity) and
+       not _world.planning_hubs.empty()) {
       const world::planning_connection* base_connection =
          world::find_entity(_world.planning_connections,
                             _last_created_entities.last_planning_connection);
@@ -1720,11 +1719,10 @@ void world_edit::toggle_planning_entity_type() noexcept
          new_connection.id = world::max_id;
       }
       else {
-         new_connection =
-            world::planning_connection{.name = "Connection0",
-                                       .start = _world.planning_hubs[0].id,
-                                       .end = _world.planning_hubs[0].id,
-                                       .id = world::max_id};
+         new_connection = world::planning_connection{.name = "Connection0",
+                                                     .start_hub_index = 0,
+                                                     .end_hub_index = 0,
+                                                     .id = world::max_id};
       }
 
       _edit_stack_world

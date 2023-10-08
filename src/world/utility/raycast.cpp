@@ -484,9 +484,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              std::span<const planning_connection> connections,
-             std::span<const planning_hub> hubs,
-             const absl::flat_hash_map<planning_hub_id, std::size_t>& planning_hub_index,
-             const float connection_height) noexcept
+             std::span<const planning_hub> hubs, const float connection_height) noexcept
    -> std::optional<raycast_result<planning_connection>>
 {
    std::optional<planning_connection_id> hit;
@@ -495,8 +493,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& connection : connections) {
       if (connection.hidden) continue;
 
-      const planning_hub& start = hubs[planning_hub_index.at(connection.start)];
-      const planning_hub& end = hubs[planning_hub_index.at(connection.end)];
+      const planning_hub& start = hubs[connection.start_hub_index];
+      const planning_hub& end = hubs[connection.end_hub_index];
 
       const math::bounding_box start_bbox{
          .min = float3{-start.radius, -connection_height, -start.radius} + start.position,

@@ -83,6 +83,12 @@ auto create_unique_name_impl(const std::span<const T> entities,
 
 }
 
+auto get_hub_index(const std::span<const planning_hub> hubs, planning_hub_id id) -> uint32
+{
+   return static_cast<uint32>(
+      find_entity<const planning_hub, planning_hub_id>(hubs, id) - hubs.data());
+}
+
 auto create_unique_name(const std::span<const object> entities,
                         const std::string_view reference_name) -> std::string
 {

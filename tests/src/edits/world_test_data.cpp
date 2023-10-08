@@ -166,34 +166,27 @@ const we::world::world test_world = {
 
    .planning_connections =
       {planning_connection{.name = "Connection0",
-                           .start = planning_hub_id{0},
-                           .end = planning_hub_id{1},
+                           .start_hub_index = 0,
+                           .end_hub_index = 1,
                            .flags = (ai_path_flags::soldier | ai_path_flags::hover |
                                      ai_path_flags::small | ai_path_flags::medium |
                                      ai_path_flags::huge | ai_path_flags::flyer),
                            .id = planning_connection_id{0}},
        planning_connection{.name = "Connection1",
-                           .start = planning_hub_id{0},
-                           .end = planning_hub_id{2},
+                           .start_hub_index = 0,
+                           .end_hub_index = 2,
                            .flags = (ai_path_flags::soldier | ai_path_flags::hover |
                                      ai_path_flags::small | ai_path_flags::medium |
                                      ai_path_flags::huge | ai_path_flags::flyer),
                            .id = planning_connection_id{1}},
        planning_connection{.name = "Connection2",
-                           .start = planning_hub_id{1},
-                           .end = planning_hub_id{2},
+                           .start_hub_index = 1,
+                           .end_hub_index = 2,
                            .flags = (ai_path_flags::soldier | ai_path_flags::hover |
                                      ai_path_flags::small | ai_path_flags::medium |
                                      ai_path_flags::huge | ai_path_flags::flyer),
                            .id = planning_connection_id{2}}},
 
    .boundaries = {boundary{.name = "boundary"s}},
-
-   .planning_hub_index =
-      {
-         {planning_hub_id{0}, 0},
-         {planning_hub_id{1}, 1},
-         {planning_hub_id{2}, 2},
-      },
 };
 }
