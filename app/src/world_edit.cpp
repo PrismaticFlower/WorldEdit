@@ -25,6 +25,7 @@
 #include "world/utility/make_command_post_linked_entities.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/raycast.hpp"
+#include "world/utility/raycast_terrain.hpp"
 #include "world/utility/sector_fill.hpp"
 #include "world/utility/selection_bbox.hpp"
 #include "world/utility/world_utilities.hpp"
@@ -125,6 +126,8 @@ void world_edit::update()
 
    ImGui_ImplWin32_NewFrame();
    ImGui::NewFrame();
+
+   _tool_visualizers.clear();
 
    _gizmo.update(make_camera_ray(_camera,
                                  {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
@@ -360,10 +363,10 @@ void world_edit::update_hovered_entity() noexcept
    }
 
    if (raycast_mask.terrain and _world.terrain.active_flags.terrain) {
-      if (auto hit = _terrain_collision.raycast(ray.origin, ray.direction); hit) {
-         if (hit->distance < hovered_entity_distance) {
+      if (auto hit = world::raycast(ray.origin, ray.direction, _world.terrain); hit) {
+         if (*hit < hovered_entity_distance) {
             _interaction_targets.hovered_entity = std::nullopt;
-            hovered_entity_distance = hit->distance;
+            hovered_entity_distance = *hit;
          }
       }
    }

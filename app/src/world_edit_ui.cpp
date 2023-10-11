@@ -13,8 +13,6 @@ void world_edit::update_ui() noexcept
       _hotkeys.show_imgui(_hotkeys_editor_open, _display_scale);
    }
 
-   _tool_visualizers.clear();
-
    ui_show_main_menu_bar();
    ui_show_world_active_context();
 
