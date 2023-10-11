@@ -38,6 +38,14 @@ struct mesh_part {
    material material;
 };
 
+struct mesh_terrain_cut {
+   math::bounding_box bbox;
+   uint32 index_count;
+   uint32 start_index;
+   uint32 start_vertex;
+   uint32 vertex_count;
+};
+
 struct mesh_data_offsets {
    std::size_t indices;
    std::size_t positions;
@@ -63,6 +71,10 @@ struct model {
    mesh_gpu_buffer gpu_buffer;
 
    absl::InlinedVector<mesh_part, 8> parts;
+
+   math::bounding_box terrain_cuts_bbox;
+
+   std::vector<mesh_terrain_cut> terrain_cuts;
 
 private:
    void init_gpu_buffer_async(gpu::device& device,
