@@ -87,6 +87,11 @@ bool is_mesh_node(const node& node) noexcept
    return true;
 }
 
+bool is_terrain_cut_node(const node& node) noexcept
+{
+   return string::istarts_with(node.name, "terraincutter"sv);
+}
+
 bool is_collision_node(const node& node) noexcept
 {
    if (node.name.starts_with("p_"sv)) return true;
@@ -171,6 +176,9 @@ flat_model::flat_model(const scene& scene) noexcept
          flatten_segments_to_meshes(node.segments, node_to_object,
                                     scene.materials, scene.options);
       }
+      else if (is_terrain_cut_node(node)) {
+         flatten_segments_to_terrain_cut(node.segments, node_to_object, scene.options);
+      }
       else if (is_collision_node(node)) {
          flatten_node_to_collision(node, node_to_object);
       }
@@ -197,11 +205,30 @@ void flat_model::regenerate_bounding_boxes() noexcept
                    .max = float3{std::numeric_limits<float>::lowest(),
                                  std::numeric_limits<float>::lowest(),
                                  std::numeric_limits<float>::lowest()}};
+   terrain_cuts_bounding_box = {.min = float3{std::numeric_limits<float>::max(),
+                                              std::numeric_limits<float>::max(),
+                                              std::numeric_limits<float>::max()},
+                                .max = float3{std::numeric_limits<float>::lowest(),
+                                              std::numeric_limits<float>::lowest(),
+                                              std::numeric_limits<float>::lowest()}};
+   collision_bounding_box = {.min = float3{std::numeric_limits<float>::max(),
+                                           std::numeric_limits<float>::max(),
+                                           std::numeric_limits<float>::max()},
+                             .max = float3{std::numeric_limits<float>::lowest(),
+                                           std::numeric_limits<float>::lowest(),
+                                           std::numeric_limits<float>::lowest()}};
 
    for (auto& mesh : meshes) {
       mesh.regenerate_bounding_box();
 
       bounding_box = math::combine(bounding_box, mesh.bounding_box);
+   }
+
+   for (auto& cut : terrain_cuts) {
+      cut.regenerate_bounding_box();
+
+      terrain_cuts_bounding_box =
+         math::combine(terrain_cuts_bounding_box, cut.bounding_box);
    }
 
    for (auto& coll : collision) {
@@ -261,6 +288,40 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
          mesh.triangles.push_back({static_cast<uint16>(i0 + vertex_offset),
                                    static_cast<uint16>(i1 + vertex_offset),
                                    static_cast<uint16>(i2 + vertex_offset)});
+      }
+   }
+}
+
+void flat_model::flatten_segments_to_terrain_cut(
+   const std::vector<geometry_segment>& segments,
+   const float4x4& node_to_object, [[maybe_unused]] const options& options)
+{
+   auto& cut = terrain_cuts.emplace_back();
+
+   std::size_t vertices_count = 0;
+   std::size_t triangles_count = 0;
+
+   for (const auto& segment : segments) {
+      vertices_count += segment.positions.size();
+      triangles_count += segment.triangles.size();
+   }
+
+   cut.positions.reserve(vertices_count);
+   cut.triangles.reserve(triangles_count);
+
+   for (const auto& segment : segments) {
+      if (segment.triangles.empty()) continue;
+
+      const std::size_t vertex_offset = cut.positions.size();
+
+      for (auto pos : segment.positions) {
+         cut.positions.emplace_back(node_to_object * pos);
+      }
+
+      for (auto [i0, i1, i2] : segment.triangles) {
+         cut.triangles.push_back({static_cast<uint16>(i0 + vertex_offset),
+                                  static_cast<uint16>(i1 + vertex_offset),
+                                  static_cast<uint16>(i2 + vertex_offset)});
       }
    }
 }
@@ -361,6 +422,20 @@ void flat_model::generate_tangents_for_meshes()
 }
 
 void mesh::regenerate_bounding_box() noexcept
+{
+   bounding_box = {.min = float3{std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max()},
+                   .max = float3{std::numeric_limits<float>::lowest(),
+                                 std::numeric_limits<float>::lowest(),
+                                 std::numeric_limits<float>::lowest()}};
+
+   for (const auto& pos : positions) {
+      bounding_box = math::integrate(bounding_box, pos);
+   }
+}
+
+void flat_model_terrain_cut::regenerate_bounding_box() noexcept
 {
    bounding_box = {.min = float3{std::numeric_limits<float>::max(),
                                  std::numeric_limits<float>::max(),
