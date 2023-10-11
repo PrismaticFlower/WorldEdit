@@ -1614,7 +1614,7 @@ void world_edit::command_post_auto_place_meta_entities(const world::object& obje
           .control_height = _entity_creation_config.command_post_control_height,
           .spawn_radius = _entity_creation_config.command_post_spawn_radius},
          _world.objects, _world.paths, _world.regions, _object_classes,
-         _terrain_collision);
+         _world.terrain);
 
    for (std::size_t i = 0; i < object.instance_properties.size(); ++i) {
       const auto& [key, value] = object.instance_properties[i];
@@ -2116,7 +2116,7 @@ void world_edit::ground_selection() noexcept
          if (object) {
             if (const std::optional<float3> grounded_position =
                    world::ground_object(*object, _world, _object_classes,
-                                        _world_layers_hit_mask, _terrain_collision);
+                                        _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(object->id, &world::object::position,
@@ -2131,7 +2131,7 @@ void world_edit::ground_selection() noexcept
          if (light) {
             if (const std::optional<float3> grounded_position =
                    world::ground_light(*light, _world, _object_classes,
-                                       _world_layers_hit_mask, _terrain_collision);
+                                       _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(light->id, &world::light::position,
@@ -2147,8 +2147,7 @@ void world_edit::ground_selection() noexcept
          if (path and node_index < path->nodes.size()) {
             if (const std::optional<float3> grounded_position =
                    world::ground_point(path->nodes[node_index].position, _world,
-                                       _object_classes, _world_layers_hit_mask,
-                                       _terrain_collision);
+                                       _object_classes, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_path_node_value(path->id, node_index,
@@ -2165,7 +2164,7 @@ void world_edit::ground_selection() noexcept
          if (region) {
             if (const std::optional<float3> grounded_position =
                    world::ground_region(*region, _world, _object_classes,
-                                        _world_layers_hit_mask, _terrain_collision);
+                                        _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(region->id, &world::region::position,
@@ -2180,7 +2179,7 @@ void world_edit::ground_selection() noexcept
          if (sector) {
             if (const std::optional<float> grounded_base =
                    world::ground_sector(*sector, _world, _object_classes,
-                                        _world_layers_hit_mask, _terrain_collision);
+                                        _world_layers_hit_mask);
                 grounded_base) {
                bundle.push_back(edits::make_set_value(sector->id, &world::sector::base,
                                                       *grounded_base, sector->base));
@@ -2194,7 +2193,7 @@ void world_edit::ground_selection() noexcept
          if (portal) {
             if (const std::optional<float3> grounded_position =
                    world::ground_portal(*portal, _world, _object_classes,
-                                        _world_layers_hit_mask, _terrain_collision);
+                                        _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(portal->id, &world::portal::position,
@@ -2209,8 +2208,8 @@ void world_edit::ground_selection() noexcept
 
          if (hintnode) {
             if (const std::optional<float3> grounded_position =
-                   world::ground_point(hintnode->position, _world, _object_classes,
-                                       _world_layers_hit_mask, _terrain_collision);
+                   world::ground_point(hintnode->position, _world,
+                                       _object_classes, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(hintnode->id, &world::hintnode::position,
@@ -2224,8 +2223,8 @@ void world_edit::ground_selection() noexcept
 
          if (barrier) {
             if (const std::optional<float3> grounded_position =
-                   world::ground_point(barrier->position, _world, _object_classes,
-                                       _world_layers_hit_mask, _terrain_collision);
+                   world::ground_point(barrier->position, _world,
+                                       _object_classes, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(barrier->id, &world::barrier::position,
@@ -2241,7 +2240,7 @@ void world_edit::ground_selection() noexcept
          if (hub) {
             if (const std::optional<float3> grounded_position =
                    world::ground_point(hub->position, _world, _object_classes,
-                                       _world_layers_hit_mask, _terrain_collision);
+                                       _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
                   edits::make_set_value(hub->id, &world::planning_hub::position,
@@ -2617,7 +2616,6 @@ void world_edit::load_world(std::filesystem::path path) noexcept
    try {
       _world = world::load_world(path, _stream);
       _world_path = path;
-      _terrain_collision = world::terrain_collision{_world.terrain};
 
       _camera.position({0.0f, 0.0f, 0.0f});
       _camera.pitch(0.0f);
@@ -2714,8 +2712,6 @@ void world_edit::close_world() noexcept
    _world_layers_draw_mask = {true};
    _world_layers_hit_mask = {true};
    _world_path.clear();
-
-   _terrain_collision = {};
 
    _edit_stack_world.clear();
    _edit_stack_world.clear_modified_flag();

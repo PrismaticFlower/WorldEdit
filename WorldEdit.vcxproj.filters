@@ -523,9 +523,6 @@
     <ClInclude Include="src\graphics\profiler.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\assets\terrain\terrain_collision.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\hotkeys.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -937,9 +934,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\profiler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\terrain\terrain_collision.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\hotkeys.cpp">

@@ -28,6 +28,6 @@ auto make_command_post_linked_entities(
    const make_command_post_linked_entities_inputs inputs,
    const std::span<const object> objects, const std::span<const path> paths,
    const std::span<const region> regions, const object_class_library& object_classes,
-   const terrain_collision& terrain_collision) noexcept -> command_post_linked_entities;
+   const terrain& terrain) noexcept -> command_post_linked_entities;
 
 }

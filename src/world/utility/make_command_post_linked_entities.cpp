@@ -1,6 +1,7 @@
 #include "make_command_post_linked_entities.hpp"
 #include "math/vector_funcs.hpp"
 #include "raycast.hpp"
+#include "raycast_terrain.hpp"
 #include "world_utilities.hpp"
 
 #include <cmath>
@@ -15,8 +16,7 @@ namespace {
 auto make_spawn_path_nodes(const make_command_post_linked_entities_inputs inputs,
                            const std::span<const object> objects,
                            const object_class_library& object_classes,
-                           const terrain_collision& terrain_collision)
-   -> std::vector<path::node>
+                           const terrain& terrain) -> std::vector<path::node>
 {
    constexpr std::array directions = {float3{0.000000f, 0.000000f, -1.000000f},
                                       float3{-0.707107f, 0.000000f, -0.707107f},
@@ -41,8 +41,9 @@ auto make_spawn_path_nodes(const make_command_post_linked_entities_inputs inputs
          if (hit->distance < hit_distance) hit_distance = hit->distance;
       }
 
-      if (auto hit = terrain_collision.raycast(inputs.position, direction); hit) {
-         if (hit->distance < hit_distance) hit_distance = hit->distance;
+      if (auto hit = raycast(inputs.position - direction * 0.1f, direction, terrain);
+          hit) {
+         if (*hit < hit_distance) hit_distance = *hit + 0.1f;
       }
 
       if (hit_distance >= inputs.spawn_radius) {
@@ -61,7 +62,7 @@ auto make_command_post_linked_entities(
    const make_command_post_linked_entities_inputs inputs,
    const std::span<const object> objects, const std::span<const path> paths,
    const std::span<const region> regions, const object_class_library& object_classes,
-   const terrain_collision& terrain_collision) noexcept -> command_post_linked_entities
+   const terrain& terrain) noexcept -> command_post_linked_entities
 {
    command_post_linked_entities linked;
 
@@ -91,12 +92,10 @@ auto make_command_post_linked_entities(
                             .shape = region_shape::cylinder,
                             .description = control_region_name};
 
-   linked.spawn_path = {.name =
-                           create_unique_name(paths,
-                                              fmt::format("{}_spawn", inputs.name)),
-                        .layer = inputs.layer,
-                        .nodes = make_spawn_path_nodes(inputs, objects, object_classes,
-                                                       terrain_collision)};
+   linked.spawn_path =
+      {.name = create_unique_name(paths, fmt::format("{}_spawn", inputs.name)),
+       .layer = inputs.layer,
+       .nodes = make_spawn_path_nodes(inputs, objects, object_classes, terrain)};
 
    return linked;
 }

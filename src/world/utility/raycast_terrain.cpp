@@ -47,6 +47,8 @@ auto raycast_terrain_quad(const float3 ray_origin, const float3 ray_direction,
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const terrain& terrain) noexcept -> std::optional<float>
 {
+   if (not terrain.active_flags.terrain) return std::nullopt;
+
    const float2 start =
       (float2{ray_origin.x / terrain.grid_scale, ray_origin.z / terrain.grid_scale} - 0.5f);
    const float2 end = ((start + float2{ray_direction.x, ray_direction.z} *
@@ -58,6 +60,14 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    const float step_count =
       x_step ? std::abs(difference.x) : std::abs(difference.y);
+
+   if (step_count == 0.0f) {
+      if (const float intersection =
+             raycast_terrain_quad(ray_origin, ray_direction, round(start), terrain);
+          intersection >= 0.0f) {
+         return intersection;
+      }
+   }
 
    const float2 increment = difference / step_count;
 

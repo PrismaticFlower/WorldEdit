@@ -17,8 +17,7 @@ namespace we::world {
 /// @return The grounded position of the object or nullopt.
 auto ground_object(const object& object, const world& world,
                    const object_class_library& object_classes,
-                   const active_layers active_layers,
-                   const terrain_collision& terrain_collision) noexcept
+                   const active_layers active_layers) noexcept
    -> std::optional<float3>;
 
 /// @brief Get the grounded position of a light. Or nullopt if the light is already grounded or can't be grounded.
@@ -30,9 +29,7 @@ auto ground_object(const object& object, const world& world,
 /// @return The grounded position of the light or nullopt.
 auto ground_light(const light& light, const world& world,
                   const object_class_library& object_classes,
-                  const active_layers active_layers,
-                  const terrain_collision& terrain_collision) noexcept
-   -> std::optional<float3>;
+                  const active_layers active_layers) noexcept -> std::optional<float3>;
 
 /// @brief Get the grounded position of a region. Or nullopt if the region is already grounded or can't be grounded.
 /// @param region The region to ground.
@@ -43,8 +40,7 @@ auto ground_light(const light& light, const world& world,
 /// @return The grounded position of the region or nullopt.
 auto ground_region(const region& region, const world& world,
                    const object_class_library& object_classes,
-                   const active_layers active_layers,
-                   const terrain_collision& terrain_collision) noexcept
+                   const active_layers active_layers) noexcept
    -> std::optional<float3>;
 
 /// @brief Get the grounded base of a sector. Or nullopt if the sector is already grounded or can't be grounded.
@@ -56,9 +52,7 @@ auto ground_region(const region& region, const world& world,
 /// @return The grounded base of the sector or nullopt.
 auto ground_sector(const sector& sector, const world& world,
                    const object_class_library& object_classes,
-                   const active_layers active_layers,
-                   const terrain_collision& terrain_collision) noexcept
-   -> std::optional<float>;
+                   const active_layers active_layers) noexcept -> std::optional<float>;
 
 /// @brief Get the grounded base of a portal. Or nullopt if the portal is already grounded or can't be grounded.
 /// @param portal The portal to ground.
@@ -69,8 +63,7 @@ auto ground_sector(const sector& sector, const world& world,
 /// @return The grounded base of the portal or nullopt.
 auto ground_portal(const portal& portal, const world& world,
                    const object_class_library& object_classes,
-                   const active_layers active_layers,
-                   const terrain_collision& terrain_collision) noexcept
+                   const active_layers active_layers) noexcept
    -> std::optional<float3>;
 
 /// @brief Get the grounded position of a point. Or nullopt if the point is already grounded or can't be grounded.
@@ -82,8 +75,6 @@ auto ground_portal(const portal& portal, const world& world,
 /// @return The grounded position of the point or nullopt.
 auto ground_point(const float3 point, const world& world,
                   const object_class_library& object_classes,
-                  const active_layers active_layers,
-                  const terrain_collision& terrain_collision) noexcept
-   -> std::optional<float3>;
+                  const active_layers active_layers) noexcept -> std::optional<float3>;
 
 }
