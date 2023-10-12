@@ -139,6 +139,7 @@ auto indexify_tri_list(const mesh_tri_list& tri_list) -> generate_tangents_outpu
    output.triangles.reserve(tri_list.positions.size());
 
    absl::flat_hash_map<cached_vertex, std::size_t> cache;
+   cache.reserve(reserve_size);
 
    for (std::size_t tri_index = 0; tri_index < tri_list.positions.size(); ++tri_index) {
       auto& tri = output.triangles.emplace_back();

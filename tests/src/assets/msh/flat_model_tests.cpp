@@ -137,6 +137,31 @@ const scene input_scene{
              },
           }},
    }};
+
+auto make_huge_segment(const float3 base_position, uint32 count) -> geometry_segment
+{
+   if (count < 3) std::terminate();
+
+   geometry_segment segment{.material_index = 0};
+
+   segment.positions.resize(count);
+
+   for (uint32 i = 0; i < count; ++i) {
+      segment.positions[i] = base_position + float3{i * 1.0f, 0.0f, i * 1.0f};
+   }
+
+   segment.triangles.reserve(count);
+
+   for (uint16 i = 2; i < count; ++i) {
+      segment.triangles.push_back(
+         {static_cast<uint16>(i - 2), static_cast<uint16>(i - 1), i});
+   }
+
+   segment.normals.emplace().resize(count, float3{0.0f, 1.0f, 0.0f});
+
+   return segment;
+}
+
 }
 
 TEST_CASE(".msh flat model creation", "[Assets][MSH]")
@@ -372,6 +397,86 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
                              transform_position_from_root(segment.positions[2])));
       }
    }
+}
+
+TEST_CASE(".msh flat excessive vertices test", "[Assets][MSH]")
+{
+   scene input_scene{
+      .materials = {{
+                       .name = "snow"s,
+                       .specular_color = {0.75f, 0.75f, 0.75f},
+                       .flags = material_flags::specular,
+                       .rendertype = rendertype::normalmap,
+                       .textures = {"snow"s, "snow_normalmap"s},
+                    },
+
+                    {
+                       .name = "dirt"s,
+                       .specular_color = {0.0f, 0.0f, 0.0f},
+                       .flags = material_flags::none,
+                       .rendertype = rendertype::normalmap,
+                       .textures = {"dirt"s, "dirt_normalmap"s},
+                    }},
+
+      .nodes = {
+         {.name = "geometry"s,
+          .transform =
+             {
+                .translation = {0.0f, 0.0f, 1.0f},
+                .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+             },
+          .type = node_type::static_mesh,
+          .segments = {make_huge_segment(float3{0.0f, 0.0f, 0.0f},
+                                         geometry_segment::max_vertex_count),
+                       make_huge_segment(float3{0.0f, 1.0f, 0.0f},
+                                         geometry_segment::max_vertex_count),
+                       make_huge_segment(float3{0.0f, 2.0f, 0.0f},
+                                         geometry_segment::max_vertex_count)}},
+      }};
+
+   flat_model model{input_scene};
+
+   REQUIRE(model.meshes.size() == 3);
+}
+
+TEST_CASE(".msh flat excessive terrain cut test", "[Assets][MSH]")
+{
+   scene input_scene{
+      .materials = {{
+                       .name = "snow"s,
+                       .specular_color = {0.75f, 0.75f, 0.75f},
+                       .flags = material_flags::specular,
+                       .rendertype = rendertype::normalmap,
+                       .textures = {"snow"s, "snow_normalmap"s},
+                    },
+
+                    {
+                       .name = "dirt"s,
+                       .specular_color = {0.0f, 0.0f, 0.0f},
+                       .flags = material_flags::none,
+                       .rendertype = rendertype::normalmap,
+                       .textures = {"dirt"s, "dirt_normalmap"s},
+                    }},
+
+      .nodes = {
+         {.name = "terraincutter"s,
+          .transform =
+             {
+                .translation = {0.0f, 0.0f, 1.0f},
+                .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+             },
+          .type = node_type::static_mesh,
+          .segments = {make_huge_segment(float3{0.0f, 0.0f, 0.0f},
+                                         geometry_segment::max_vertex_count),
+                       make_huge_segment(float3{0.0f, 1.0f, 0.0f},
+                                         geometry_segment::max_vertex_count),
+                       make_huge_segment(float3{0.0f, 2.0f, 0.0f},
+                                         geometry_segment::max_vertex_count)}},
+      }};
+
+   flat_model model{input_scene};
+
+   REQUIRE(model.terrain_cuts.size() == 3);
 }
 
 }
