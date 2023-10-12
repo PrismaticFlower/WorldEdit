@@ -272,6 +272,8 @@ private:
    std::vector<uint16> _opaque_object_render_list;
    std::vector<uint16> _transparent_object_render_list;
 
+   std::vector<terrain_cut> _terrain_cut_list;
+
    meta_draw_batcher _meta_draw_batcher;
    ai_overlay_batches _ai_overlay_batches;
 
@@ -577,21 +579,21 @@ void renderer_impl::draw_world(const frustum& view_frustum,
                                const world::active_entity_types active_entity_types,
                                gpu::graphics_command_list& command_list)
 {
-   if (active_entity_types.objects) {
-      profile_section profile{"World - Draw Render List Depth Prepass",
-                              command_list, _profiler, profiler_queue::direct};
-
-      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
-   }
-
    if (active_entity_types.terrain) {
       profile_section profile{"Terrain - Draw Depth Prepass", command_list,
                               _profiler, profiler_queue::direct};
 
       _terrain.draw(terrain_draw::depth_prepass, view_frustum,
-                    _camera_constant_buffer_view,
+                    _terrain_cut_list, _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
+
+   if (active_entity_types.objects) {
+      profile_section profile{"World - Draw Render List Depth Prepass",
+                              command_list, _profiler, profiler_queue::direct};
+
+      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
    }
 
    if (active_entity_types.objects) {
@@ -605,7 +607,8 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       profile_section profile{"Terrain - Draw", command_list, _profiler,
                               profiler_queue::direct};
 
-      _terrain.draw(terrain_draw::main, view_frustum, _camera_constant_buffer_view,
+      _terrain.draw(terrain_draw::main, view_frustum, _terrain_cut_list,
+                    _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
    }
@@ -2087,6 +2090,8 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
 {
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
+   _terrain_cut_list.clear();
+   _terrain_cut_list.reserve(256);
 
    auto& upload_buffer = _object_constants_upload_buffers[_device.frame_index()];
 
@@ -2130,6 +2135,19 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});
       }
+
+      for (auto& cut : model.terrain_cuts) {
+         _terrain_cut_list.push_back(
+            {.bbox = object.rotation * cut.bbox + object.position,
+
+             .constant_buffer = object_constants_address,
+             .index_buffer_view = model.gpu_buffer.index_buffer_view,
+             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
+
+             .index_count = cut.index_count,
+             .start_index = cut.start_index,
+             .start_vertex = cut.start_vertex});
+      }
    }
 
    if (creation_object and world.objects.size() < max_drawn_objects) {
@@ -2164,6 +2182,19 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
                        .index_count = mesh.index_count,
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});
+      }
+
+      for (auto& cut : model.terrain_cuts) {
+         _terrain_cut_list.push_back(
+            {.bbox = creation_object->rotation * cut.bbox + creation_object->position,
+
+             .constant_buffer = object_constants_address,
+             .index_buffer_view = model.gpu_buffer.index_buffer_view,
+             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
+
+             .index_count = cut.index_count,
+             .start_index = cut.start_index,
+             .start_vertex = cut.start_vertex});
       }
    }
 

@@ -89,6 +89,18 @@ const gpu::root_signature_desc terrain_desc{
    .debug_name = "terrain_root_signature",
 };
 
+const gpu::root_signature_desc terrain_cut_mesh_desc{
+   .parameters =
+      {
+         object_constant_buffer,
+         frame_constant_buffer,
+      },
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "terrain_cut_mesh_root_signature",
+};
+
 const gpu::root_signature_desc water_desc{
    .parameters =
       {
@@ -336,6 +348,8 @@ root_signature_library::root_signature_library(gpu::device& device)
 {
    mesh = {device.create_root_signature(mesh_desc), device.direct_queue};
    terrain = {device.create_root_signature(terrain_desc), device.direct_queue};
+   terrain_cut_mesh = {device.create_root_signature(terrain_cut_mesh_desc),
+                       device.direct_queue};
    water = {device.create_root_signature(water_desc), device.direct_queue};
    mesh_shadow = {device.create_root_signature(mesh_shadow_desc), device.direct_queue};
    mesh_depth_prepass = {device.create_root_signature(mesh_depth_prepass_desc),

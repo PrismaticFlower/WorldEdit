@@ -11,9 +11,22 @@
 #include "world/world.hpp"
 
 #include <bitset>
+#include <span>
 #include <vector>
 
 namespace we::graphics {
+
+struct terrain_cut {
+   math::bounding_box bbox;
+
+   gpu_virtual_address constant_buffer;
+   gpu::index_buffer_view index_buffer_view;
+   gpu::vertex_buffer_view position_vertex_buffer_view;
+
+   uint32 index_count = 0;
+   uint32 start_index = 0;
+   uint32 start_vertex = 0;
+};
 
 enum class terrain_draw { depth_prepass, main };
 
@@ -27,6 +40,7 @@ public:
              dynamic_buffer_allocator& dynamic_buffer_allocator);
 
    void draw(const terrain_draw draw, const frustum& view_frustum,
+             std::span<const terrain_cut> terrain_cuts,
              gpu_virtual_address camera_constant_buffer_view,
              gpu_virtual_address lights_constant_buffer_view,
              gpu::graphics_command_list& command_list,
@@ -61,6 +75,12 @@ private:
    void init_textures(const world::terrain& terrain);
 
    void init_patches_info(const world::terrain& terrain);
+
+   void draw_cuts(const frustum& view_frustum, std::span<const terrain_cut> terrain_cuts,
+                  gpu_virtual_address camera_constant_buffer_view,
+                  gpu::graphics_command_list& command_list,
+                  root_signature_library& root_signatures,
+                  pipeline_library& pipelines);
 
    gpu::device& _device;
    texture_manager& _texture_manager;

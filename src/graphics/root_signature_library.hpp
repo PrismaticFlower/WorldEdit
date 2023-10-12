@@ -14,6 +14,7 @@ struct root_signature_library {
    gpu::unique_root_signature_handle mesh;
    gpu::unique_root_signature_handle mesh_wireframe;
    gpu::unique_root_signature_handle terrain;
+   gpu::unique_root_signature_handle terrain_cut_mesh;
    gpu::unique_root_signature_handle water;
    gpu::unique_root_signature_handle sky_mesh;
 
@@ -65,6 +66,11 @@ constexpr uint32 frame_cbv = 0;
 constexpr uint32 lights_cbv = 1;
 constexpr uint32 terrain_cbv = 2;
 constexpr uint32 terrain_patch_data_srv = 3;
+}
+
+namespace terrain_cut_mesh {
+constexpr uint32 object_cbv = 0;
+constexpr uint32 frame_cbv = 1;
 }
 
 namespace water {
