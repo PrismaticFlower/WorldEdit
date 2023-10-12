@@ -760,6 +760,9 @@
     <ClInclude Include="src\world\utility\raycast_terrain.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\msh\flat_model_terrain_cut_bvh.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1129,6 +1132,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\utility\raycast_terrain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\msh\flat_model_terrain_cut_bvh.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

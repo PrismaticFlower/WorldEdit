@@ -195,6 +195,7 @@ flat_model::flat_model(const scene& scene) noexcept
    regenerate_bounding_boxes();
 
    bvh.build(meshes);
+   terrain_cut_bvh.build(terrain_cuts);
 }
 
 void flat_model::regenerate_bounding_boxes() noexcept

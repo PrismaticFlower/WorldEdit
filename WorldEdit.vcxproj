@@ -214,6 +214,7 @@
   <ItemGroup>
     <ClCompile Include="src\assets\asset_ref.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
+    <ClCompile Include="src\assets\msh\flat_model_terrain_cut_bvh.cpp" />
     <ClCompile Include="src\assets\msh\scene.cpp" />
     <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\sky\io.cpp" />
@@ -358,6 +359,7 @@
     <ClInclude Include="src\assets\msh\default_missing_scene.hpp" />
     <ClInclude Include="src\assets\msh\flat_model.hpp" />
     <ClInclude Include="src\assets\msh\flat_model_bvh.hpp" />
+    <ClInclude Include="src\assets\msh\flat_model_terrain_cut_bvh.hpp" />
     <ClInclude Include="src\assets\msh\material.hpp" />
     <ClCompile Include="src\assets\asset_traits.cpp" />
     <ClCompile Include="src\assets\msh\default_missing_scene.cpp">

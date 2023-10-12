@@ -1,6 +1,7 @@
 #pragma once
 
 #include "flat_model_bvh.hpp"
+#include "flat_model_terrain_cut_bvh.hpp"
 #include "math/bounding_box.hpp"
 #include "scene.hpp"
 
@@ -82,6 +83,7 @@ struct flat_model {
    std::vector<flat_model_node> node_hierarchy;
 
    flat_model_bvh bvh;
+   flat_model_terrain_cut_bvh terrain_cut_bvh;
 
    void regenerate_bounding_boxes() noexcept;
 
