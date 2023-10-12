@@ -798,7 +798,8 @@ void garbage_collect_files(const std::filesystem::path& world_dir,
 
 }
 
-void save_world(const std::filesystem::path& path, const world& world)
+void save_world(const std::filesystem::path& path, const world& world,
+                const std::span<const terrain_cut> terrain_cuts)
 {
    const auto world_dir = path.parent_path();
    const auto world_name = path.stem().string();
@@ -818,7 +819,8 @@ void save_world(const std::filesystem::path& path, const world& world)
                  static_cast<uint32>(i), world, sequence_numbers);
    }
 
-   save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv), world.terrain);
+   save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv),
+                world.terrain, terrain_cuts);
    save_requirements(world_dir, world_name, world);
 }
 }

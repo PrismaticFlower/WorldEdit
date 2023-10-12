@@ -11,4 +11,8 @@ bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
                               std::span<const object> objects,
                               const object_class_library& object_classes) noexcept;
 
+auto gather_terrain_cuts(std::span<const object> objects,
+                         const object_class_library& object_classes)
+   -> std::vector<terrain_cut>;
+
 }
