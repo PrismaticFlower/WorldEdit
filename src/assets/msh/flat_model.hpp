@@ -1,6 +1,7 @@
 #pragma once
 
 #include "flat_model_bvh.hpp"
+#include "flat_model_terrain_cut_bvh.hpp"
 #include "math/bounding_box.hpp"
 #include "scene.hpp"
 
@@ -37,6 +38,16 @@ struct flat_model_node {
    std::vector<flat_model_node> children;
 };
 
+struct flat_model_terrain_cut {
+   math::bounding_box bounding_box;
+
+   std::vector<float3> positions;
+
+   std::vector<std::array<uint16, 3>> triangles;
+
+   void regenerate_bounding_box() noexcept;
+};
+
 struct flat_model_collision {
    math::bounding_box bounding_box;
 
@@ -63,13 +74,16 @@ struct flat_model {
    explicit flat_model(const scene& scene) noexcept;
 
    math::bounding_box bounding_box;
+   math::bounding_box terrain_cuts_bounding_box;
    math::bounding_box collision_bounding_box;
 
    std::vector<mesh> meshes;
+   std::vector<flat_model_terrain_cut> terrain_cuts;
    std::vector<flat_model_collision> collision;
    std::vector<flat_model_node> node_hierarchy;
 
    flat_model_bvh bvh;
+   flat_model_terrain_cut_bvh terrain_cut_bvh;
 
    void regenerate_bounding_boxes() noexcept;
 
@@ -78,6 +92,10 @@ private:
                                    const float4x4& node_to_object,
                                    const std::vector<material>& scene_materials,
                                    const options& options);
+
+   void flatten_segments_to_terrain_cut(const std::vector<geometry_segment>& segments,
+                                        const float4x4& node_to_object,
+                                        const options& options);
 
    void flatten_node_to_collision(const node& node, const float4x4& node_to_object);
 

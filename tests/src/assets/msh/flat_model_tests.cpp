@@ -106,6 +106,36 @@ const scene input_scene{
           .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
           .triangles = {{0, 1, 2}},
        }}},
+
+      {.name = "terraincutter"s,
+       .parent = std::nullopt,
+       .transform =
+          {
+             .translation = {0.0f, 0.0f, 0.0f},
+             .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+          },
+       .type = node_type::static_mesh,
+       .segments =
+          {
+             {
+                .material_index = 0,
+                .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+                .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                               {0.0f, 1.0f, 1.0f},
+                                               {0.0f, 1.0f, 0.0f}},
+                .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                .triangles = {{0, 1, 2}, {1, 0, 2}},
+             },
+             {
+                .material_index = 0,
+                .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 2.0f}, {0.0f, 2.0f, 2.0f}},
+                .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                               {0.0f, 1.0f, 1.0f},
+                                               {0.0f, 1.0f, 0.0f}},
+                .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                .triangles = {{0, 1, 2}, {1, 0, 2}},
+             },
+          }},
    }};
 }
 
@@ -115,7 +145,7 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
 
    // hierarchy checks
    {
-      REQUIRE(model.node_hierarchy.size() == 1);
+      REQUIRE(model.node_hierarchy.size() == 2);
 
       // root
       {
@@ -185,6 +215,19 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
             }
          }
       }
+
+      // terraincut
+      {
+         auto& terraincut = model.node_hierarchy[1];
+
+         CHECK(terraincut.name == input_scene.nodes[5].name);
+         CHECK(approx_equals(terraincut.transform.translation,
+                             input_scene.nodes[5].transform.translation));
+         CHECK(approx_equals(terraincut.transform.rotation,
+                             input_scene.nodes[5].transform.rotation));
+         CHECK(terraincut.type == input_scene.nodes[5].type);
+         CHECK(terraincut.hidden == input_scene.nodes[5].hidden);
+      }
    }
 
    // mesh checks
@@ -247,6 +290,25 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
 
       // dirt mesh
       check_mesh(model.meshes[1], input_scene.nodes[2].segments[1]);
+   }
+
+   // terrain cut checks
+   {
+      REQUIRE(model.terrain_cuts.size() == 1);
+
+      REQUIRE(model.terrain_cuts[0].positions.size() == 6);
+      CHECK(model.terrain_cuts[0].positions[0] == float3{0.0f, 0.0f, 0.0f});
+      CHECK(model.terrain_cuts[0].positions[1] == float3{0.0f, 0.0f, 1.0f});
+      CHECK(model.terrain_cuts[0].positions[2] == float3{0.0f, 1.0f, 1.0f});
+      CHECK(model.terrain_cuts[0].positions[3] == float3{0.0f, 0.0f, 0.0f});
+      CHECK(model.terrain_cuts[0].positions[4] == float3{0.0f, 0.0f, 2.0f});
+      CHECK(model.terrain_cuts[0].positions[5] == float3{0.0f, 2.0f, 2.0f});
+
+      REQUIRE(model.terrain_cuts[0].triangles.size() == 4);
+      CHECK(model.terrain_cuts[0].triangles[0] == std::array<uint16, 3>{0, 1, 2});
+      CHECK(model.terrain_cuts[0].triangles[1] == std::array<uint16, 3>{1, 0, 2});
+      CHECK(model.terrain_cuts[0].triangles[2] == std::array<uint16, 3>{3, 4, 5});
+      CHECK(model.terrain_cuts[0].triangles[3] == std::array<uint16, 3>{4, 3, 5});
    }
 
    // collision checks

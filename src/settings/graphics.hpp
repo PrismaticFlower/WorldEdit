@@ -37,6 +37,8 @@ struct graphics {
 
    float light_volume_alpha = 0.05f;
 
+   float3 terrain_cutter_color = {1.0f, 0.01f, 0.01f};
+
    float3 hover_color = {1.0f, 1.0f, 0.07f};
 
    float3 selected_color = {1.0f, 1.0f, 1.0f};
@@ -54,6 +56,8 @@ struct graphics {
    float line_width = 2.5f;
 
    float path_node_size = 0.5f;
+
+   bool visualize_terrain_cutters = false;
 
    bool show_profiler = false;
 };

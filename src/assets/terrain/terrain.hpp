@@ -1,6 +1,7 @@
 #pragma once
 
 #include "container/dynamic_array_2d.hpp"
+#include "math/bounding_box.hpp"
 #include "types.hpp"
 
 #include <array>
@@ -57,8 +58,7 @@ struct foliage_patch {
 };
 
 struct terrain_cut {
-   float3 bbox_min;
-   float3 bbox_max;
+   math::bounding_box bbox;
    std::vector<float4> planes;
 };
 
@@ -107,8 +107,6 @@ struct terrain {
    container::dynamic_array_2d<bool> water_map{length / 4, length / 4};
 
    container::dynamic_array_2d<foliage_patch> foliage_map{length / 2, length / 2};
-
-   std::vector<terrain_cut> cuts;
 };
 
 }

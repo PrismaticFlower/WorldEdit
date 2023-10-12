@@ -502,6 +502,54 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                    .debug_name = "sky_mesh"sv}),
                device.direct_queue};
 
+   terrain_cut_mesh_mark =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.terrain_cut_mesh.get(),
+
+           .vs_bytecode = shader_library["mesh_depth_prepassVS"sv],
+
+           .rasterizer_state = rasterizer_cull_none,
+           .depth_stencil_state =
+              {
+                 .depth_test_enabled = true,
+                 .depth_test_func = gpu::comparison_func::less_equal,
+                 .write_depth = false,
+                 .stencil_enabled = true,
+                 .stencil_front_face = {.depth_fail_op = gpu::stencil_op::decr},
+                 .stencil_back_face = {.depth_fail_op = gpu::stencil_op::incr},
+              },
+           .input_layout = std::span<const gpu::input_element_desc>{mesh_input_layout_position_only},
+
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "terrain_cut_mesh_mark"sv}),
+       device.direct_queue};
+
+   terrain_cut_mesh_clear =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.terrain_cut_mesh.get(),
+
+           .vs_bytecode = shader_library["terrain_cut_mesh_clearVS"sv],
+
+           .rasterizer_state = {.cull_mode = gpu::cull_mode::none},
+           .depth_stencil_state =
+              {
+                 .depth_test_enabled = true,
+                 .depth_test_func = gpu::comparison_func::always,
+                 .write_depth = true,
+                 .stencil_enabled = true,
+                 .stencil_front_face = {.pass_op = gpu::stencil_op::zero,
+                                        .func = gpu::comparison_func::not_equal},
+                 .stencil_back_face = {.pass_op = gpu::stencil_op::zero,
+                                       .func = gpu::comparison_func::not_equal},
+              },
+           .input_layout = std::span<const gpu::input_element_desc>{mesh_input_layout_position_only},
+
+           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+           .debug_name = "terrain_cut_mesh_clear"sv}),
+       device.direct_queue};
+
    meta_draw_shape = {device.create_graphics_pipeline(
                          {.root_signature = root_signature_library.meta_draw.get(),
 

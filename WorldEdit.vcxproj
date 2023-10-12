@@ -214,6 +214,7 @@
   <ItemGroup>
     <ClCompile Include="src\assets\asset_ref.cpp" />
     <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
+    <ClCompile Include="src\assets\msh\flat_model_terrain_cut_bvh.cpp" />
     <ClCompile Include="src\assets\msh\scene.cpp" />
     <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\sky\io.cpp" />
@@ -291,6 +292,7 @@
     <ClCompile Include="src\world\utility\selection_bbox.cpp" />
     <ClCompile Include="src\world\utility\selection_centre.cpp" />
     <ClCompile Include="src\world\utility\snapping.cpp" />
+    <ClCompile Include="src\world\utility\terrain_cut.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
     <ClCompile Include="src\world\world_io_save.cpp" />
     <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
@@ -358,6 +360,7 @@
     <ClInclude Include="src\assets\msh\default_missing_scene.hpp" />
     <ClInclude Include="src\assets\msh\flat_model.hpp" />
     <ClInclude Include="src\assets\msh\flat_model_bvh.hpp" />
+    <ClInclude Include="src\assets\msh\flat_model_terrain_cut_bvh.hpp" />
     <ClInclude Include="src\assets\msh\material.hpp" />
     <ClCompile Include="src\assets\asset_traits.cpp" />
     <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
@@ -556,6 +559,7 @@
     <ClInclude Include="src\world\utility\selection_bbox.hpp" />
     <ClInclude Include="src\world\utility\selection_centre.hpp" />
     <ClInclude Include="src\world\utility\snapping.hpp" />
+    <ClInclude Include="src\world\utility\terrain_cut.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
     <ClInclude Include="src\world\world.hpp" />
     <ClInclude Include="src\world\world_io_load.hpp" />

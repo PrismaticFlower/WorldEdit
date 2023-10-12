@@ -28,6 +28,7 @@
 #include "world/utility/raycast_terrain.hpp"
 #include "world/utility/sector_fill.hpp"
 #include "world/utility/selection_bbox.hpp"
+#include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world/world_io_load.hpp"
 #include "world/world_io_save.hpp"
@@ -365,8 +366,13 @@ void world_edit::update_hovered_entity() noexcept
    if (raycast_mask.terrain and _world.terrain.active_flags.terrain) {
       if (auto hit = world::raycast(ray.origin, ray.direction, _world.terrain); hit) {
          if (*hit < hovered_entity_distance) {
-            _interaction_targets.hovered_entity = std::nullopt;
-            hovered_entity_distance = *hit;
+            if (not raycast_mask.objects or
+                not world::point_inside_terrain_cut(ray.origin + ray.direction * *hit,
+                                                    ray.direction, _world_layers_hit_mask,
+                                                    _world.objects, _object_classes)) {
+               _interaction_targets.hovered_entity = std::nullopt;
+               hovered_entity_distance = *hit;
+            }
          }
       }
    }
@@ -2661,7 +2667,8 @@ void world_edit::save_world(std::filesystem::path path) noexcept
          std::filesystem::create_directories(path.parent_path());
       }
 
-      world::save_world(path, _world);
+      world::save_world(path, _world,
+                        world::gather_terrain_cuts(_world.objects, _object_classes));
 
       _edit_stack_world.clear_modified_flag();
    }

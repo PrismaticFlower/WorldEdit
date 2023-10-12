@@ -110,6 +110,7 @@ void terrain::init(const world::terrain& terrain, gpu::copy_command_list& comman
 }
 
 void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
+                   std::span<const terrain_cut> terrain_cuts,
                    gpu_virtual_address camera_constant_buffer_view,
                    gpu_virtual_address lights_constant_buffer_view,
                    gpu::graphics_command_list& command_list,
@@ -154,6 +155,56 @@ void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
    command_list.draw_indexed_instanced(static_cast<uint32>(
                                           terrain_patch_indices.size() * 2 * 3),
                                        visible_patch_count, 0, 0, 0);
+
+   if (draw == terrain_draw::depth_prepass) {
+      draw_cuts(view_frustum, terrain_cuts, camera_constant_buffer_view,
+                command_list, root_signatures, pipelines);
+   }
+}
+
+void terrain::draw_cuts(const frustum& view_frustum,
+                        std::span<const terrain_cut> terrain_cuts,
+                        gpu_virtual_address camera_constant_buffer_view,
+                        gpu::graphics_command_list& command_list,
+                        root_signature_library& root_signatures,
+                        pipeline_library& pipelines)
+{
+   if (terrain_cuts.empty()) return;
+
+   command_list.om_set_stencil_ref(0x0);
+   command_list.set_graphics_root_signature(root_signatures.terrain_cut_mesh.get());
+   command_list.set_graphics_cbv(rs::terrain_cut_mesh::frame_cbv,
+                                 camera_constant_buffer_view);
+
+   command_list.set_pipeline_state(pipelines.terrain_cut_mesh_mark.get());
+
+   for (const auto& cut : terrain_cuts) {
+      if (not intersects(view_frustum, cut.bbox)) continue;
+
+      command_list.set_graphics_cbv(rs::terrain_cut_mesh::object_cbv,
+                                    cut.constant_buffer);
+
+      command_list.ia_set_index_buffer(cut.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, cut.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(cut.index_count, 1, cut.start_index,
+                                          cut.start_vertex, 0);
+   }
+
+   command_list.set_pipeline_state(pipelines.terrain_cut_mesh_clear.get());
+
+   for (const auto& cut : terrain_cuts) {
+      if (not intersects(view_frustum, cut.bbox)) continue;
+
+      command_list.set_graphics_cbv(rs::terrain_cut_mesh::object_cbv,
+                                    cut.constant_buffer);
+
+      command_list.ia_set_index_buffer(cut.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, cut.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(cut.index_count, 1, cut.start_index,
+                                          cut.start_vertex, 0);
+   }
 }
 
 void terrain::process_updated_texture(gpu::copy_command_list& command_list,

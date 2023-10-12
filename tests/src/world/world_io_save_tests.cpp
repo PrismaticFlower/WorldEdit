@@ -935,7 +935,7 @@ TEST_CASE("world saving", "[World][IO]")
          },
    };
 
-   save_world(L"temp/world/test.wld", world);
+   save_world(L"temp/world/test.wld", world, {});
 
    const auto written_wld = io::read_file_to_string(L"temp/world/test.wld");
 
@@ -1014,7 +1014,7 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
       // NB: Test that test_ctf.mrq already being gone causes no issues.
    }
 
-   save_world(L"temp/world_gc/test.wld", world);
+   save_world(L"temp/world_gc/test.wld", world, {});
 
    for (const auto& layer : world.deleted_layers) {
       for (const auto& file : layer_files) {

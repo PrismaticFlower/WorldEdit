@@ -157,6 +157,10 @@ private:
                                 const world::tool_visualizers& tool_visualizers,
                                 const settings::graphics& settings);
 
+   void draw_terrain_cut_visualizers(const frustum& view_frustum,
+                                     const settings::graphics& settings,
+                                     gpu::graphics_command_list& command_list);
+
    void draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
                         const settings::graphics& settings,
                         gpu::graphics_command_list& command_list);
@@ -271,6 +275,8 @@ private:
    world_mesh_list _world_mesh_list;
    std::vector<uint16> _opaque_object_render_list;
    std::vector<uint16> _transparent_object_render_list;
+
+   std::vector<terrain_cut> _terrain_cut_list;
 
    meta_draw_batcher _meta_draw_batcher;
    ai_overlay_batches _ai_overlay_batches;
@@ -461,6 +467,10 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _meta_draw_batcher.clear();
    _ai_overlay_batches.clear();
 
+   if (settings.visualize_terrain_cutters) {
+      draw_terrain_cut_visualizers(view_frustum, settings, command_list);
+   }
+
    draw_world_meta_objects(view_frustum, world, interaction_targets, active_entity_types,
                            active_layers, tool_visualizers, settings);
 
@@ -577,21 +587,21 @@ void renderer_impl::draw_world(const frustum& view_frustum,
                                const world::active_entity_types active_entity_types,
                                gpu::graphics_command_list& command_list)
 {
-   if (active_entity_types.objects) {
-      profile_section profile{"World - Draw Render List Depth Prepass",
-                              command_list, _profiler, profiler_queue::direct};
-
-      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
-   }
-
    if (active_entity_types.terrain) {
       profile_section profile{"Terrain - Draw Depth Prepass", command_list,
                               _profiler, profiler_queue::direct};
 
       _terrain.draw(terrain_draw::depth_prepass, view_frustum,
-                    _camera_constant_buffer_view,
+                    _terrain_cut_list, _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
+
+   if (active_entity_types.objects) {
+      profile_section profile{"World - Draw Render List Depth Prepass",
+                              command_list, _profiler, profiler_queue::direct};
+
+      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
    }
 
    if (active_entity_types.objects) {
@@ -605,7 +615,8 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       profile_section profile{"Terrain - Draw", command_list, _profiler,
                               profiler_queue::direct};
 
-      _terrain.draw(terrain_draw::main, view_frustum, _camera_constant_buffer_view,
+      _terrain.draw(terrain_draw::main, view_frustum, _terrain_cut_list,
+                    _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
    }
@@ -1363,6 +1374,34 @@ void renderer_impl::draw_world_meta_objects(
    }
 }
 
+void renderer_impl::draw_terrain_cut_visualizers(const frustum& view_frustum,
+                                                 const settings::graphics& settings,
+                                                 gpu::graphics_command_list& command_list)
+{
+   command_list.set_graphics_root_signature(_root_signatures.mesh_wireframe.get());
+   command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                 _camera_constant_buffer_view);
+   command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                 _dynamic_buffer_allocator
+                                    .allocate_and_copy(wireframe_constant_buffer{
+                                       .color = settings.terrain_cutter_color})
+                                    .gpu_address);
+
+   command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+   for (const auto& cut : _terrain_cut_list) {
+      if (not intersects(view_frustum, cut.bbox)) continue;
+
+      command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, cut.constant_buffer);
+
+      command_list.ia_set_index_buffer(cut.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, cut.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(cut.index_count, 1, cut.start_index,
+                                          cut.start_vertex, 0);
+   }
+}
+
 void renderer_impl::draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
                                     const settings::graphics& settings,
                                     gpu::graphics_command_list& command_list)
@@ -2087,6 +2126,8 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
 {
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
+   _terrain_cut_list.clear();
+   _terrain_cut_list.reserve(256);
 
    auto& upload_buffer = _object_constants_upload_buffers[_device.frame_index()];
 
@@ -2130,6 +2171,19 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});
       }
+
+      for (auto& cut : model.terrain_cuts) {
+         _terrain_cut_list.push_back(
+            {.bbox = object.rotation * cut.bbox + object.position,
+
+             .constant_buffer = object_constants_address,
+             .index_buffer_view = model.gpu_buffer.index_buffer_view,
+             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
+
+             .index_count = cut.index_count,
+             .start_index = cut.start_index,
+             .start_vertex = cut.start_vertex});
+      }
    }
 
    if (creation_object and world.objects.size() < max_drawn_objects) {
@@ -2164,6 +2218,19 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
                        .index_count = mesh.index_count,
                        .start_index = mesh.start_index,
                        .start_vertex = mesh.start_vertex});
+      }
+
+      for (auto& cut : model.terrain_cuts) {
+         _terrain_cut_list.push_back(
+            {.bbox = creation_object->rotation * cut.bbox + creation_object->position,
+
+             .constant_buffer = object_constants_address,
+             .index_buffer_view = model.gpu_buffer.index_buffer_view,
+             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
+
+             .index_count = cut.index_count,
+             .start_index = cut.start_index,
+             .start_vertex = cut.start_vertex});
       }
    }
 
