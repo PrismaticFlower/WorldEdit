@@ -34,7 +34,6 @@ struct mesh_part {
    uint32 index_count;
    uint32 start_index;
    uint32 start_vertex;
-   uint32 vertex_count;
    material material;
 };
 
@@ -43,7 +42,6 @@ struct mesh_terrain_cut {
    uint32 index_count;
    uint32 start_index;
    uint32 start_vertex;
-   uint32 vertex_count;
 };
 
 struct mesh_data_offsets {

@@ -142,7 +142,6 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
       parts.push_back({.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
                        .start_index = triangle_offset * 3,
                        .start_vertex = vertex_offset,
-                       .vertex_count = static_cast<uint32>(mesh.positions.size()),
                        .material = {mesh.material, mesh.colors_are_lighting, device,
                                     copy_command_list_pool, texture_manager}});
 
@@ -173,8 +172,7 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
          {.bbox = cut.bounding_box,
           .index_count = static_cast<uint32>(cut.triangles.size() * 3),
           .start_index = triangle_offset * 3,
-          .start_vertex = vertex_offset,
-          .vertex_count = static_cast<uint32>(cut.positions.size())});
+          .start_vertex = vertex_offset});
 
       std::uninitialized_copy_n(cut.triangles.cbegin(), cut.triangles.size(),
                                 indices.begin() + triangle_offset);
