@@ -25,6 +25,11 @@ void write(io::output_file& file, std::string_view name, float4 value)
                  value.z, value.w);
 }
 
+void write(io::output_file& file, std::string_view name, const bool value)
+{
+   file.write_ln("\t{}({});", name, static_cast<int>(value));
+}
+
 void write(io::output_file& file, std::string_view name, const std::string& value)
 {
    file.write_ln("\t{}(\"{}\");", name, value);
@@ -45,6 +50,11 @@ void read(assets::config::node& node, float4& out)
 {
    out = {node.values.get<float>(0), node.values.get<float>(1),
           node.values.get<float>(2), node.values.get<float>(3)};
+}
+
+void read(assets::config::node& node, bool& out)
+{
+   out = node.values.get<int>(0) != 0;
 }
 
 void read(assets::config::node& node, std::string& out)
@@ -88,6 +98,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(hintnode_color);
             setting_entry(boundary_color);
             setting_entry(light_volume_alpha);
+            setting_entry(terrain_cutter_color);
             setting_entry(hover_color);
             setting_entry(selected_color);
             setting_entry(creation_color);
@@ -97,6 +108,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(planning_connection_height);
             setting_entry(path_node_size);
             setting_entry(line_width);
+            setting_entry(visualize_terrain_cutters);
          }
 #undef setting_entry
       }
@@ -173,6 +185,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(hintnode_color));
       write(file, name_value(boundary_color));
       write(file, name_value(light_volume_alpha));
+      write(file, name_value(terrain_cutter_color));
       write(file, name_value(hover_color));
       write(file, name_value(selected_color));
       write(file, name_value(creation_color));
@@ -182,6 +195,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(planning_connection_height));
       write(file, name_value(path_node_size));
       write(file, name_value(line_width));
+      write(file, name_value(visualize_terrain_cutters));
 
 #undef name_value
 

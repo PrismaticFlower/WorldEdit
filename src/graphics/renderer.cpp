@@ -157,6 +157,10 @@ private:
                                 const world::tool_visualizers& tool_visualizers,
                                 const settings::graphics& settings);
 
+   void draw_terrain_cut_visualizers(const frustum& view_frustum,
+                                     const settings::graphics& settings,
+                                     gpu::graphics_command_list& command_list);
+
    void draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
                         const settings::graphics& settings,
                         gpu::graphics_command_list& command_list);
@@ -462,6 +466,10 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    // Render World Meta Objects
    _meta_draw_batcher.clear();
    _ai_overlay_batches.clear();
+
+   if (settings.visualize_terrain_cutters) {
+      draw_terrain_cut_visualizers(view_frustum, settings, command_list);
+   }
 
    draw_world_meta_objects(view_frustum, world, interaction_targets, active_entity_types,
                            active_layers, tool_visualizers, settings);
@@ -1363,6 +1371,34 @@ void renderer_impl::draw_world_meta_objects(
 
    for (const auto& line : tool_visualizers.lines) {
       _meta_draw_batcher.add_line_overlay(line.v0, line.v1, line.color);
+   }
+}
+
+void renderer_impl::draw_terrain_cut_visualizers(const frustum& view_frustum,
+                                                 const settings::graphics& settings,
+                                                 gpu::graphics_command_list& command_list)
+{
+   command_list.set_graphics_root_signature(_root_signatures.mesh_wireframe.get());
+   command_list.set_graphics_cbv(rs::mesh_wireframe::frame_cbv,
+                                 _camera_constant_buffer_view);
+   command_list.set_graphics_cbv(rs::mesh_wireframe::wireframe_cbv,
+                                 _dynamic_buffer_allocator
+                                    .allocate_and_copy(wireframe_constant_buffer{
+                                       .color = settings.terrain_cutter_color})
+                                    .gpu_address);
+
+   command_list.set_pipeline_state(_pipelines.mesh_wireframe.get());
+
+   for (const auto& cut : _terrain_cut_list) {
+      if (not intersects(view_frustum, cut.bbox)) continue;
+
+      command_list.set_graphics_cbv(rs::mesh_wireframe::object_cbv, cut.constant_buffer);
+
+      command_list.ia_set_index_buffer(cut.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, cut.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(cut.index_count, 1, cut.start_index,
+                                          cut.start_vertex, 0);
    }
 }
 

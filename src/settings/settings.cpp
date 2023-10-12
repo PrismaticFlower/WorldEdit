@@ -125,6 +125,8 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
                              &graphics.light_volume_alpha, 0.01f, 0.0f, 1.0f,
                              "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
+            ImGui::ColorEdit3("Terrain Cutter", &graphics.terrain_cutter_color.x);
+
             ImGui::SeparatorText("Visualizer Sizes");
 
             ImGui::DragFloat("Barrier Height", &graphics.barrier_height, 0.5f, 0.0f,
@@ -150,6 +152,11 @@ void show_imgui_editor(settings& settings, bool& open, float display_scale) noex
                                    16.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp)) {
                graphics.line_width = std::round(graphics.line_width * 4.0f) / 4.0f;
             }
+
+            ImGui::SeparatorText("Optional Visualizers");
+
+            ImGui::Checkbox("Visualize Terrain Cutters",
+                            &graphics.visualize_terrain_cutters);
 
             ImGui::SeparatorText("Reset");
 
