@@ -1145,7 +1145,7 @@ auto device::create_render_target_view(resource_handle resource,
       d3d12_desc.Texture1D = {.MipSlice = desc.texture1d.mip_slice};
    } break;
    case rtv_dimension::texture1d_array: {
-      d3d12_desc.Texture1DArray = {.MipSlice = desc.texture1d.mip_slice,
+      d3d12_desc.Texture1DArray = {.MipSlice = desc.texture1d_array.mip_slice,
                                    .FirstArraySlice = desc.texture1d_array.first_array_slice,
                                    .ArraySize = desc.texture1d_array.array_size};
    } break;
@@ -1154,7 +1154,7 @@ auto device::create_render_target_view(resource_handle resource,
 
    } break;
    case rtv_dimension::texture2d_array: {
-      d3d12_desc.Texture2DArray = {.MipSlice = desc.texture1d.mip_slice,
+      d3d12_desc.Texture2DArray = {.MipSlice = desc.texture2d_array.mip_slice,
                                    .FirstArraySlice = desc.texture2d_array.first_array_slice,
                                    .ArraySize = desc.texture2d_array.array_size};
 
@@ -1165,8 +1165,8 @@ auto device::create_render_target_view(resource_handle resource,
    } break;
    case rtv_dimension::texture2d_ms_array: {
       d3d12_desc.Texture2DMSArray = {.FirstArraySlice =
-                                        desc.texture2d_array.first_array_slice,
-                                     .ArraySize = desc.texture2d_array.array_size};
+                                        desc.texture2d_ms_array.first_array_slice,
+                                     .ArraySize = desc.texture2d_ms_array.array_size};
 
    } break;
    case rtv_dimension::texture3d: {

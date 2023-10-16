@@ -218,6 +218,7 @@
     <ClCompile Include="src\assets\msh\scene.cpp" />
     <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\sky\io.cpp" />
+    <ClCompile Include="src\assets\texture\save_env_map.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
     <ClCompile Include="src\edits\add_game_mode.cpp" />
@@ -381,6 +382,7 @@
     <ClInclude Include="src\assets\sky\sky.hpp" />
     <ClInclude Include="src\assets\terrain\terrain.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_io.hpp" />
+    <ClInclude Include="src\assets\texture\save_env_map.hpp" />
     <ClInclude Include="src\assets\texture\texture.hpp" />
     <ClInclude Include="src\assets\texture\texture_format.hpp" />
     <ClInclude Include="src\assets\texture\texture_io.hpp" />
@@ -614,6 +616,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\Microsoft.Direct3D.D3D12.1.608.3\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('packages\Microsoft.Direct3D.D3D12.1.608.3\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets" Condition="Exists('packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -621,5 +624,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\Microsoft.Direct3D.D3D12.1.608.3\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.Direct3D.D3D12.1.608.3\build\native\Microsoft.Direct3D.D3D12.props'))" />
     <Error Condition="!Exists('packages\Microsoft.Direct3D.D3D12.1.608.3\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.Direct3D.D3D12.1.608.3\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+    <Error Condition="!Exists('packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\WinPixEventRuntime.1.0.230302001\build\WinPixEventRuntime.targets'))" />
   </Target>
 </Project>

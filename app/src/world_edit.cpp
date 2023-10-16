@@ -2,6 +2,7 @@
 #include "world_edit.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
+#include "assets/texture/save_env_map.hpp"
 #include "edits/add_sector_object.hpp"
 #include "edits/bundle.hpp"
 #include "edits/creation_entity_set.hpp"
@@ -157,10 +158,25 @@ void world_edit::update()
 
    ui_draw_select_box();
 
+   const bool render_env_map = ImGui::Button("Render Env Map");
+
    try {
       _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
                             _world_layers_draw_mask, _tool_visualizers,
                             _object_classes, _settings.graphics);
+
+      if (render_env_map) {
+         graphics::env_map_result env_map =
+            _renderer->draw_env_map({.positionWS = _camera.position(), .length = 1024},
+                                    _world, _world_layers_draw_mask, _object_classes);
+
+         assets::texture::save_env_map(L"envmap.tga",
+                                       {.length = env_map.length,
+                                        .row_pitch = env_map.row_pitch,
+                                        .item_pitch = env_map.item_pitch,
+                                        .data = {env_map.data.get(),
+                                                 env_map.item_pitch * 6}});
+      }
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
