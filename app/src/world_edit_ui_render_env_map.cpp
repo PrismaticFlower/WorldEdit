@@ -5,6 +5,7 @@
 #include "imgui_ext.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/file_pickers.hpp"
+#include "world/utility/selection_centre.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -62,9 +63,29 @@ void world_edit::ui_show_render_env_map() noexcept
 
       ImGui::DragFloat3("Render Offset", &_env_map_render_offset);
 
-      float3 selection_centre;
+      const float3 selection_centre =
+         world::selection_centre_for_env_map(_world, _interaction_targets.selection,
+                                             _object_classes);
 
-      _env_map_render_params.positionWS = selection_centre + _env_map_render_offset;
+      const float3 positionWS = selection_centre + _env_map_render_offset;
+
+      _env_map_render_params.positionWS = positionWS;
+
+      const float marker_length = 0.1f * distance(_camera.position(), positionWS) *
+                                  _camera.projection_matrix()[0].x;
+
+      _tool_visualizers.lines.emplace_back(positionWS - float3{1.0f, 0.0f, 0.0f} * marker_length,
+                                           positionWS + float3{1.0f, 0.0f, 0.0f} * marker_length,
+                                           0xff'ff'ff'ffu);
+      _tool_visualizers.lines.emplace_back(positionWS - float3{0.0f, 1.0f, 0.0f} * marker_length,
+                                           positionWS + float3{0.0f, 1.0f, 0.0f} * marker_length,
+                                           0xff'ff'ff'ffu);
+      _tool_visualizers.lines.emplace_back(positionWS - float3{0.0f, 0.0f, 1.0f} * marker_length,
+                                           positionWS + float3{0.0f, 0.0f, 1.0f} * marker_length,
+                                           0xff'ff'ff'ffu);
+
+      ImGui::LabelText("Render Position", "X:%.3f Y:%.3f Z:%.3f", positionWS.x,
+                       positionWS.y, positionWS.z);
 
       if (ImGui::Button("Render & Save", {ImGui::CalcItemWidth(), 0.0f})) {
          static constexpr GUID save_env_map_picker_guid = {0xc0bd5c3d,
