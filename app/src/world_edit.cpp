@@ -158,24 +158,33 @@ void world_edit::update()
 
    ui_draw_select_box();
 
-   const bool render_env_map = ImGui::Button("Render Env Map");
+   if (ImGui::Button("Render Env Map")) _render_env_map_open = true;
 
    try {
       _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
                             _world_layers_draw_mask, _tool_visualizers,
                             _object_classes, _settings.graphics);
 
-      if (render_env_map) {
-         graphics::env_map_result env_map =
-            _renderer->draw_env_map({.positionWS = _camera.position(), .length = 1024},
-                                    _world, _world_layers_draw_mask, _object_classes);
+      if (_env_map_render_requested) {
+         _env_map_render_requested = false;
 
-         assets::texture::save_env_map(L"envmap.tga",
-                                       {.length = env_map.length,
-                                        .row_pitch = env_map.row_pitch,
-                                        .item_pitch = env_map.item_pitch,
-                                        .data = {env_map.data.get(),
-                                                 env_map.item_pitch * 6}});
+         graphics::env_map_result env_map =
+            _renderer->draw_env_map(_env_map_render_params, _world,
+                                    _world_layers_draw_mask, _object_classes);
+
+         try {
+            assets::texture::save_env_map(_env_map_save_path,
+                                          {.length = env_map.length,
+                                           .row_pitch = env_map.row_pitch,
+                                           .item_pitch = env_map.item_pitch,
+                                           .data = {env_map.data.get(),
+                                                    env_map.item_pitch * 6}});
+
+            _env_map_save_error.clear();
+         }
+         catch (std::runtime_error& e) {
+            _env_map_save_error = e.what();
+         }
       }
    }
    catch (graphics::gpu::exception& e) {

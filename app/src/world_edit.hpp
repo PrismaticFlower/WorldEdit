@@ -147,6 +147,8 @@ private:
 
    void ui_show_object_class_browser() noexcept;
 
+   void ui_show_render_env_map() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    void setup_orbit_camera() noexcept;
@@ -298,9 +300,12 @@ private:
    bool _camera_controls_open = false;
    bool _settings_editor_open = false;
    bool _about_window_open = false;
+   bool _render_env_map_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;
+
+   bool _env_map_render_requested = false;
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;
@@ -426,6 +431,11 @@ private:
    int16 _selection_set_layer = 0;
 
    float2 _select_start_position;
+
+   graphics::env_map_params _env_map_render_params;
+   float3 _env_map_render_offset;
+   std::filesystem::path _env_map_save_path;
+   std::string _env_map_save_error;
 
    gizmo _gizmo;
    commands _commands;

@@ -238,6 +238,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <ClCompile Include="src\world_edit_ui_hotkeys_view.cpp" />
     <ClCompile Include="src\world_edit_ui_main_menu_bar.cpp" />
     <ClCompile Include="src\world_edit_ui_object_class_browser.cpp" />
+    <ClCompile Include="src\world_edit_ui_render_env_map.cpp" />
     <ClCompile Include="src\world_edit_ui_world_creation_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_explorer.cpp" />
     <ClCompile Include="src\world_edit_ui_world_game_mode_editor.cpp" />
