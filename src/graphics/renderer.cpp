@@ -140,7 +140,8 @@ struct renderer_impl final : renderer {
    }
 
 private:
-   void update_frame_constant_buffer(const camera& camera, const gpu::viewport viewport,
+   void update_frame_constant_buffer(const camera_view& camera,
+                                     const gpu::viewport viewport,
                                      const bool scroll_textures, const float line_width,
                                      gpu::copy_command_list& command_list);
 
@@ -369,6 +370,13 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    if (settings.show_profiler) _profiler.show();
 
+   camera_view camera_view{.view_projection_matrix = camera.view_projection_matrix(),
+                           .inv_view_projection_matrix =
+                              camera.inv_view_projection_matrix(),
+                           .positionWS = camera.position(),
+                           .near_clip = camera.near_clip(),
+                           .far_clip = camera.far_clip()};
+
    // Pre-Render Work
    {
       _pre_render_command_list.reset();
@@ -385,15 +393,15 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                ? std::get_if<world::object>(
                                     &(*interaction_targets.creation_entity))
                                : nullptr);
-      update_frame_constant_buffer(camera, viewport, true, settings.line_width,
-                                   _pre_render_command_list);
+      update_frame_constant_buffer(camera_view, viewport, true,
+                                   settings.line_width, _pre_render_command_list);
       clear_depth_minmax(_pre_render_command_list);
 
       const float4 scene_depth_min_max =
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
 
       _light_clusters
-         .prepare_lights(camera, view_frustum, world,
+         .prepare_lights(camera_view, view_frustum, world,
                          interaction_targets.creation_entity
                             ? std::get_if<world::light>(
                                  &interaction_targets.creation_entity.value())
@@ -615,14 +623,21 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                                                  .array_size = 1}}),
           _device.direct_queue};
 
-      camera camera;
+      camera temp_camera;
 
-      camera.position(params.positionWS);
-      camera.fov(half_pi);
-      camera.yaw(camera_angles[i].x);
-      camera.pitch(camera_angles[i].y);
+      temp_camera.position(params.positionWS);
+      temp_camera.fov(half_pi);
+      temp_camera.yaw(camera_angles[i].x);
+      temp_camera.pitch(camera_angles[i].y);
 
-      const frustum view_frustum{camera.inv_view_projection_matrix()};
+      camera_view camera{.view_projection_matrix = temp_camera.view_projection_matrix(),
+                         .inv_view_projection_matrix =
+                            temp_camera.inv_view_projection_matrix(),
+                         .positionWS = temp_camera.position(),
+                         .near_clip = temp_camera.near_clip(),
+                         .far_clip = temp_camera.far_clip()};
+
+      const frustum view_frustum{camera.inv_view_projection_matrix};
       const gpu::viewport viewport{.width = static_cast<float>(params.length),
                                    .height = static_cast<float>(params.length)};
       // Pre-Render Work
@@ -772,16 +787,16 @@ void renderer_impl::mark_dirty_terrain() noexcept
    _terrain_dirty = true;
 }
 
-void renderer_impl::update_frame_constant_buffer(const camera& camera,
+void renderer_impl::update_frame_constant_buffer(const camera_view& camera,
                                                  const gpu::viewport viewport,
                                                  const bool scroll_textures,
                                                  const float line_width,
                                                  gpu::copy_command_list& command_list)
 {
    frame_constant_buffer constants{
-      .view_projection_matrix = camera.view_projection_matrix(),
+      .view_projection_matrix = camera.view_projection_matrix,
 
-      .view_positionWS = camera.position(),
+      .view_positionWS = camera.positionWS,
       .texture_scroll_duration =
          scroll_textures
             ? static_cast<float>(std::fmod(

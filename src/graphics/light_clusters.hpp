@@ -29,8 +29,8 @@ public:
 
    void update_render_resolution(uint32 width, uint32 height);
 
-   void prepare_lights(const camera& view_camera, const frustum& view_frustum,
-                       const world::world& world,
+   void prepare_lights(const camera_view& view_camera,
+                       const frustum& view_frustum, const world::world& world,
                        const world::light* optional_placement_light,
                        const std::array<float, 2> scene_depth_min_max,
                        gpu::copy_command_list& command_list,

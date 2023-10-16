@@ -147,17 +147,17 @@ constexpr std::array<uint16, 144> sphere_proxy_indices{
    9,  11, 19, 13, 8,  9,  7, 16, 9,  6,  8,  13, 22, 5,  6,  4,  17, 6,
    3,  5,  22, 21, 2,  3,  1, 18, 3,  0,  2,  21, 19, 11, 0,  10, 25, 0};
 
-auto make_shadow_cascade_splits(const camera& camera)
+auto make_shadow_cascade_splits(const camera_view& camera)
    -> std::array<float, cascade_count + 1>
 {
-   const float clip_ratio = camera.far_clip() / camera.near_clip();
-   const float clip_range = camera.far_clip() - camera.near_clip();
+   const float clip_ratio = camera.far_clip / camera.near_clip;
+   const float clip_range = camera.far_clip - camera.near_clip;
 
    std::array<float, 5> cascade_splits{};
 
    for (int i = 0; i < cascade_splits.size(); ++i) {
-      const float split = (camera.near_clip() * std::pow(clip_ratio, i / 4.0f));
-      const float split_normalized = (split - camera.near_clip()) / clip_range;
+      const float split = (camera.near_clip * std::pow(clip_ratio, i / 4.0f));
+      const float split_normalized = (split - camera.near_clip) / clip_range;
 
       cascade_splits[i] = split_normalized;
    }
@@ -222,11 +222,11 @@ auto make_cascade_shadow_camera(const float3 light_direction,
    return shadow_camera;
 }
 
-auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
+auto make_shadow_cascades(const quaternion light_rotation, const camera_view& camera,
                           const std::array<float, 2> scene_depth_min_max)
    -> std::array<shadow_ortho_camera, cascade_count>
 {
-   const frustum view_frustum{camera.inv_view_projection_matrix(),
+   const frustum view_frustum{camera.inv_view_projection_matrix,
                               scene_depth_min_max[0], scene_depth_min_max[1]};
 
    const float3 light_direction =
@@ -356,7 +356,7 @@ void light_clusters::update_descriptors()
    _tiling_inputs_cbv = _device.get_gpu_virtual_address(_tiling_inputs.get());
 }
 
-void light_clusters::prepare_lights(const camera& view_camera,
+void light_clusters::prepare_lights(const camera_view& view_camera,
                                     const frustum& view_frustum,
                                     const world::world& world,
                                     const world::light* optional_placement_light,
@@ -571,7 +571,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
    {
       tiling_inputs tiling_inputs{.tile_counts = {_tiles_width, _tiles_height},
                                   .view_projection_matrix =
-                                     view_camera.view_projection_matrix()};
+                                     view_camera.view_projection_matrix};
 
       auto upload_buffer = dynamic_buffer_allocator.allocate(sizeof(tiling_inputs));
 
