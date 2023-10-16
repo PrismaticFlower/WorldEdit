@@ -158,8 +158,6 @@ void world_edit::update()
 
    ui_draw_select_box();
 
-   if (ImGui::Button("Render Env Map")) _render_env_map_open = true;
-
    try {
       _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
                             _world_layers_draw_mask, _tool_visualizers,
