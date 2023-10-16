@@ -39,10 +39,6 @@
 
 #include <imgui.h>
 
-#include <Windows.h>
-
-#include <pix3.h>
-
 namespace we::graphics {
 
 namespace {
@@ -536,13 +532,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                  const world::object_class_library& world_classes)
    -> env_map_result
 {
-   PIXCaptureParameters pix_params;
-
-   pix_params.GpuCaptureParameters.FileName = L"Capture.wpix";
-
    _device.wait_for_idle();
-
-   PIXBeginCapture(PIX_CAPTURE_GPU, &pix_params);
 
    _device.new_frame();
    _dynamic_buffer_allocator.reset(_device.frame_index());
@@ -727,8 +717,6 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
    _light_clusters.update_render_resolution(_swap_chain.width(), _swap_chain.height());
 
    _device.direct_queue.wait_for_idle();
-
-   PIXEndCapture(false);
 
    const uint32 data_size = readback_item_pitch * 6;
 
