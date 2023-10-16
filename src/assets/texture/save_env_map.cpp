@@ -20,9 +20,12 @@ struct tga_header {
    uint16 image_y_origin = 0;
    uint16 image_width;
    uint16 image_height;
-   uint8 image_pixel_depth = 32;
+   uint8 image_pixel_depth = 24;
    uint8 image_description = 0;
 };
+
+using dest_texel = std::array<std::byte, 3>;
+static_assert(sizeof(dest_texel) == 3);
 
 }
 
@@ -32,7 +35,7 @@ void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
       io::memory_mapped_file_params{.path = path.c_str(),
                                     .size = sizeof(tga_header) +
                                             (env_map.length * env_map.length *
-                                             sizeof(uint32) * 4 * 3)}};
+                                             sizeof(dest_texel) * 4 * 3)}};
 
    const uint32 image_width = env_map.length * 4;
    const uint32 image_height = env_map.length * 3;
@@ -40,8 +43,8 @@ void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
    new (file.data()) tga_header{.image_width = static_cast<uint16>(image_width),
                                 .image_height = static_cast<uint16>(image_height)};
 
-   uint32* const image_data =
-      reinterpret_cast<uint32*>(file.data() + sizeof(tga_header));
+   dest_texel* const image_data =
+      reinterpret_cast<dest_texel*>(file.data() + sizeof(tga_header));
 
    const std::array<std::array<uint32, 2>, 6> item_offsets = {{
       {2 * env_map.length, 1 * env_map.length}, // +X
@@ -60,15 +63,18 @@ void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
 
       const uint32 length_minus_1 = env_map.length - 1;
 
-      (void)length_minus_1;
-
       for (uint32 y = 0; y < env_map.length; ++y) {
-         uint32* const dest_data =
+         dest_texel* dest_data =
             image_data + ((offset[1] + (length_minus_1 - y)) * image_width) +
             offset[0];
+         const std::byte* src_data = face_data + y * env_map.row_pitch;
 
-         std::memcpy(dest_data, face_data + y * env_map.row_pitch,
-                     env_map.length * sizeof(uint32));
+         for (uint32 x = 0; x < env_map.length; ++x) {
+            new (dest_data) dest_texel{src_data[0], src_data[1], src_data[2]};
+
+            dest_data += 1;
+            src_data += 4;
+         }
       }
    }
 
