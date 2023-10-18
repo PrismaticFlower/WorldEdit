@@ -93,6 +93,8 @@ struct pipeline_library {
    thumbnail_mesh_pipelines thumbnail_mesh;
    gpu::unique_pipeline_handle thumbnail_downsample;
 
+   gpu::unique_pipeline_handle resample_env_map;
+
    gpu::unique_pipeline_handle meta_draw_shape;
    gpu::unique_pipeline_handle meta_draw_shape_outlined;
    gpu::unique_pipeline_handle meta_draw_shape_wireframe;

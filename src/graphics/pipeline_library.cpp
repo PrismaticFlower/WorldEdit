@@ -797,6 +797,19 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .debug_name = "thumbnail_downsample"sv}),
        device.direct_queue};
 
+   resample_env_map = {device.create_graphics_pipeline(
+                          {.root_signature =
+                              root_signature_library.resample_env_map.get(),
+
+                           .vs_bytecode = shader_library["resample_env_mapVS"sv],
+                           .ps_bytecode = shader_library["resample_env_mapPS"sv],
+
+                           .render_target_count = 1,
+                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+
+                           .debug_name = "resample_env_map"sv}),
+                       device.direct_queue};
+
    tile_lights_clear = {device.create_compute_pipeline(
                            {.root_signature =
                                root_signature_library.tile_lights_clear.get(),
