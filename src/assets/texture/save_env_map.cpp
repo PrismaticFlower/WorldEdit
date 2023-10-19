@@ -27,6 +27,13 @@ struct tga_header {
 using dest_texel = std::array<std::byte, 3>;
 static_assert(sizeof(dest_texel) == 3);
 
+void clear_region(dest_texel* dest_data, uint32 length, uint32 row_pitch)
+{
+   for (uint32 y = 0; y < length; ++y) {
+      std::memset(&dest_data[y * row_pitch], 0, sizeof(dest_texel) * length);
+   }
+}
+
 }
 
 void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
@@ -76,6 +83,20 @@ void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
             src_data += 4;
          }
       }
+   }
+
+   const std::array<std::array<uint32, 2>, 6> clear_offsets = {{
+      {0 * env_map.length, 0 * env_map.length},
+      {2 * env_map.length, 0 * env_map.length}, // -X
+      {3 * env_map.length, 0 * env_map.length}, // +Y
+      {0 * env_map.length, 2 * env_map.length}, // -Y
+      {2 * env_map.length, 2 * env_map.length}, // +Z
+      {3 * env_map.length, 2 * env_map.length}  // -Z
+   }};
+
+   for (const auto& offset : clear_offsets) {
+      clear_region(image_data + (offset[1] * image_width) + offset[0],
+                   env_map.length, image_width);
    }
 
    file.reset();
