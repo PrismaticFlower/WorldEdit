@@ -704,6 +704,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
 
          _pre_render_command_list.close();
 
+         _device.copy_queue.sync_with(_device.direct_queue);
          _device.copy_queue.execute_command_lists(_pre_render_command_list);
          _device.direct_queue.sync_with(_device.copy_queue);
       }
