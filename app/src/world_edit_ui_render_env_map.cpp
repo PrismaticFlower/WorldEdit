@@ -87,6 +87,14 @@ void world_edit::ui_show_render_env_map() noexcept
       ImGui::LabelText("Render Position", "X:%.3f Y:%.3f Z:%.3f", positionWS.x,
                        positionWS.y, positionWS.z);
 
+      if (_env_map_render_params.length >= 4096) {
+         ImGui::SeparatorText("Warning");
+
+         ImGui::Text("Be aware that rendering at %ux%u will require multiple "
+                     "GBs of GPU memory.",
+                     _env_map_render_params.length, _env_map_render_params.length);
+      }
+
       if (ImGui::Button("Render & Save", {ImGui::CalcItemWidth(), 0.0f})) {
          static constexpr GUID save_env_map_picker_guid = {0xc0bd5c3d,
                                                            0x90e9,
