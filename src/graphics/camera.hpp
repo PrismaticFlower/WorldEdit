@@ -11,14 +11,6 @@ struct camera_ray {
 
 enum class camera_projection { perspective, orthographic };
 
-struct camera_view {
-   float4x4 view_projection_matrix;
-   float4x4 inv_view_projection_matrix;
-   float3 positionWS;
-   float near_clip = 1.0f;
-   float far_clip = 1.0f;
-};
-
 class camera {
 public:
    auto right() const noexcept -> float3;
