@@ -1009,22 +1009,22 @@ auto device::create_shader_resource_view(resource_handle resource,
    case D3D12_RESOURCE_DIMENSION_TEXTURE2D: {
       if (resource_desc.SampleDesc.Count <= 1) {
          if (resource_desc.DepthOrArraySize <= 1) {
-            if (desc.texture2d.texture_cube_view) {
-               d3d12_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-               d3d12_desc.TextureCube = {.MipLevels = d3d12_srv_all_mips};
-            }
-            else {
-               d3d12_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-               d3d12_desc.Texture2D = {.MipLevels = d3d12_srv_all_mips};
-            }
+            d3d12_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            d3d12_desc.Texture2D = {.MipLevels = d3d12_srv_all_mips};
          }
          else {
-            if (desc.texture2d.texture_cube_view) {
-               d3d12_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-               d3d12_desc.TextureCubeArray = {.MipLevels = d3d12_srv_all_mips,
-                                              .First2DArrayFace = 0,
-                                              .NumCubes =
-                                                 resource_desc.DepthOrArraySize / 6u};
+            if (desc.texture_cube_view) {
+               if (resource_desc.DepthOrArraySize <= 6) {
+                  d3d12_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+                  d3d12_desc.TextureCube = {.MipLevels = d3d12_srv_all_mips};
+               }
+               else {
+                  d3d12_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+                  d3d12_desc.TextureCubeArray = {.MipLevels = d3d12_srv_all_mips,
+                                                 .First2DArrayFace = 0,
+                                                 .NumCubes =
+                                                    resource_desc.DepthOrArraySize / 6u};
+               }
             }
             else {
                d3d12_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;

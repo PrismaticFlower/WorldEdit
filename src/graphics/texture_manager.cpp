@@ -46,14 +46,13 @@ world_texture::world_texture(gpu::device& device, gpu::unique_resource_handle te
 {
    const bool texture_cube_view = dimension == world_texture_dimension::cube;
 
-   srv = device.create_shader_resource_view(
-      texture.get(), {.format = strip_srgb_format(format),
-                      .texture2d = {.texture_cube_view = texture_cube_view},
-                      .texture2d_array = {.texture_cube_view = texture_cube_view}});
-   srv_srgb = device.create_shader_resource_view(
-      texture.get(), {.format = get_srgb_format(format),
-                      .texture2d = {.texture_cube_view = texture_cube_view},
-                      .texture2d_array = {.texture_cube_view = texture_cube_view}});
+   srv = device.create_shader_resource_view(texture.get(),
+                                            {.format = strip_srgb_format(format),
+                                             .texture_cube_view = texture_cube_view});
+   srv_srgb =
+      device.create_shader_resource_view(texture.get(),
+                                         {.format = get_srgb_format(format),
+                                          .texture_cube_view = texture_cube_view});
 
    this->texture = texture.release();
 }
