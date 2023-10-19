@@ -130,4 +130,22 @@ auto unpack_query_heap_handle(query_heap_handle heap) -> ID3D12QueryHeap*
    return std::bit_cast<ID3D12QueryHeap*>(heap);
 }
 
+auto pack_command_allocator_handle(ID3D12CommandAllocator* command_allocator)
+   -> command_allocator_handle
+{
+   static_assert(std::is_same_v<std::underlying_type_t<command_allocator_handle>, std::uintptr_t>,
+                 "command_allocator_handle's underlying type is incorrect");
+
+   return std::bit_cast<command_allocator_handle>(command_allocator);
+}
+
+auto unpack_command_allocator_handle(command_allocator_handle command_allocator)
+   -> ID3D12CommandAllocator*
+{
+   static_assert(std::is_same_v<std::underlying_type_t<command_allocator_handle>, std::uintptr_t>,
+                 "command_allocator_handle's underlying type is incorrect");
+
+   return std::bit_cast<ID3D12CommandAllocator*>(command_allocator);
+}
+
 }

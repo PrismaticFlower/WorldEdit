@@ -51,10 +51,8 @@ auto copy_command_list_pool::aquire_and_reset_manual_management() -> gpu::copy_c
       fmt::format("Pooled Copy Command List #{}",
                   _debug_count.fetch_add(1, std::memory_order_relaxed));
 
-   gpu::copy_command_list command_list = _device.create_copy_command_list({
-      .allocator_name = "Pooled Copy Command Lists Allocator",
-      .debug_name = debug_name,
-   });
+   gpu::copy_command_list command_list =
+      _device.create_copy_command_list({.debug_name = debug_name});
 
    command_list.reset();
 

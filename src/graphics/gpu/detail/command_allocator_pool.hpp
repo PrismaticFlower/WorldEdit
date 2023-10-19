@@ -5,45 +5,68 @@
 #include "utility/com_ptr.hpp"
 
 #include <atomic>
-#include <memory>
-#include <shared_mutex>
-#include <string>
-#include <string_view>
+#include <concepts>
 #include <vector>
-
-#include <absl/container/flat_hash_map.h>
 
 #include <d3d12.h>
 
 namespace we::graphics::gpu::detail {
 
 struct command_allocator_pool {
-   command_allocator_pool(ID3D12Device& device, ID3D12Fence& frame_fence,
-                          std::atomic_uint64_t& current_frame,
-                          D3D12_COMMAND_LIST_TYPE type)
-      : _device{device},
-        _frame_fence{frame_fence},
-        _current_frame{current_frame},
-        _type{type} {};
-
-   auto aquire(const std::string_view name) -> utility::com_ptr<ID3D12CommandAllocator>
+   auto try_aquire(std::atomic_uint64_t& current_frame, ID3D12Fence& frame_fence)
+      -> utility::com_ptr<ID3D12CommandAllocator>
    {
-      utility::com_ptr<ID3D12CommandAllocator> allocator =
-         get_subpool(name).try_get_ready_allocator(_frame_fence);
+#ifndef NDEBUG
+      exclusivity_assert exclusivity_assert{std::atomic_ref{_other_thread_using}};
+#endif
 
-      if (allocator) return allocator;
+      for (auto allocator_it = _allocators.begin();
+           allocator_it != _allocators.end(); ++allocator_it) {
+         if (allocator_it->frame_used == current_frame.load(std::memory_order_acquire)) {
+            utility::com_ptr<ID3D12CommandAllocator> allocator =
+               std::move(allocator_it->command_allocator);
 
-      throw_if_fail(
-         _device.CreateCommandAllocator(_type,
-                                        IID_PPV_ARGS(allocator.clear_and_assign())));
+            _allocators.erase(allocator_it);
 
-      return allocator;
+            return allocator;
+         }
+         else if (frame_fence.GetCompletedValue() >= allocator_it->frame_used) {
+            utility::com_ptr<ID3D12CommandAllocator> allocator =
+               std::move(allocator_it->command_allocator);
+
+            throw_if_fail(allocator->Reset());
+
+            _allocators.erase(allocator_it);
+
+            return allocator;
+         }
+      }
+
+      return nullptr;
    }
 
-   void add(const std::string_view name, utility::com_ptr<ID3D12CommandAllocator> allocator)
+   void add(utility::com_ptr<ID3D12CommandAllocator> allocator,
+            std::atomic_uint64_t& current_frame)
    {
-      get_subpool(name).add(std::move(allocator),
-                            _current_frame.load(std::memory_order_acquire));
+#ifndef NDEBUG
+      exclusivity_assert exclusivity_assert{std::atomic_ref{_other_thread_using}};
+#endif
+
+      _allocators.emplace_back(std::move(allocator),
+                               current_frame.load(std::memory_order_acquire));
+   }
+
+   void view_and_clear(std::invocable<utility::com_ptr<ID3D12CommandAllocator>> auto viewer)
+   {
+#ifndef NDEBUG
+      exclusivity_assert exclusivity_assert{std::atomic_ref{_other_thread_using}};
+#endif
+
+      for (auto& [allocator, frame_used] : _allocators) {
+         viewer(std::move(allocator));
+      }
+
+      _allocators.clear();
    }
 
 private:
@@ -52,57 +75,30 @@ private:
       uint64 frame_used = 0;
    };
 
-   struct subpool {
-      void add(utility::com_ptr<ID3D12CommandAllocator> allocator, uint64 frame_used)
+   std::vector<allocator> _allocators;
+
+#ifndef NDEBUG
+   struct exclusivity_assert {
+      exclusivity_assert(std::atomic_ref<bool> other_thread_using)
+         : other_thread_using{other_thread_using}
       {
-         std::scoped_lock lock{_mutex};
-
-         _allocators.emplace_back(std::move(allocator), frame_used);
-      }
-
-      auto try_get_ready_allocator(ID3D12Fence& frame_fence)
-         -> utility::com_ptr<ID3D12CommandAllocator>
-      {
-         std::scoped_lock subpool_lock{_mutex};
-
-         for (auto allocator_it = _allocators.begin();
-              allocator_it != _allocators.end(); ++allocator_it) {
-            if (frame_fence.GetCompletedValue() >= allocator_it->frame_used) {
-               utility::com_ptr<ID3D12CommandAllocator> allocator =
-                  std::move(allocator_it->command_allocator);
-
-               _allocators.erase(allocator_it);
-
-               return allocator;
-            }
+         if (other_thread_using.exchange(true)) {
+            std::terminate(); // Two threads using command_allocator_pool at once.
          }
-
-         return nullptr;
       }
 
-   private:
-      std::shared_mutex _mutex;
-      std::vector<allocator> _allocators;
+      ~exclusivity_assert()
+      {
+         if (not other_thread_using.exchange(false)) {
+            std::terminate(); // Two threads using command_allocator_pool at once.
+         }
+      }
+
+      std::atomic_ref<bool> other_thread_using;
    };
 
-   auto get_subpool(const std::string_view name) -> subpool&
-   {
-      std::scoped_lock lock{_subpools_mutex};
-
-      if (auto it = _subpools.find(name); it != _subpools.end()) {
-         return *it->second;
-      }
-
-      return *(_subpools[name] = std::make_unique<subpool>());
-   }
-
-   ID3D12Device& _device;
-   ID3D12Fence& _frame_fence;
-   std::atomic_uint64_t& _current_frame;
-   D3D12_COMMAND_LIST_TYPE _type;
-
-   std::shared_mutex _subpools_mutex;
-   absl::flat_hash_map<std::string, std::unique_ptr<subpool>> _subpools;
+   bool _other_thread_using = false;
+#endif
 };
 
 }

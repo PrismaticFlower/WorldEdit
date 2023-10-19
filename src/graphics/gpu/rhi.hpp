@@ -377,6 +377,9 @@ constexpr inline auto null_sampler_heap_handle = sampler_heap_handle{0};
 enum class query_heap_handle : std::uintptr_t {};
 constexpr inline auto null_query_heap_handle = query_heap_handle{0};
 
+enum class command_allocator_handle : std::uintptr_t {};
+constexpr inline auto null_command_allocator_handle = command_allocator_handle{0};
+
 /// Pipeline Desc Structures ///
 
 struct root_parameter {
@@ -788,14 +791,6 @@ struct legacy_resource_uav_barrier {
 /// Command List Structures and Definitions ///
 
 struct command_list_desc {
-   /// @brief Command allocators will be assigned to command lists based off
-   /// this name.
-   ///
-   /// Multiple command lists can share the same name. However they should only
-   /// share the same name if their workload is roughly the same size to avoid
-   /// wasting memory.
-   std::string_view allocator_name = "";
-
    std::string_view debug_name = "";
 };
 
@@ -867,7 +862,7 @@ protected:
    friend device;
    friend command_queue;
 
-   implementation_storage<command_list_state, 208> state;
+   implementation_storage<command_list_state, 216> state;
 };
 
 struct copy_command_list : command_list {
@@ -1078,6 +1073,8 @@ struct command_queue {
    void release_sampler_heap(sampler_heap_handle sampler_heap);
 
    void release_query_heap(query_heap_handle query_heap);
+
+   void release_command_allocator(command_allocator_handle command_allocator);
 
    auto get_timestamp_frequency() -> uint64;
 

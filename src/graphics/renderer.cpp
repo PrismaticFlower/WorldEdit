@@ -198,9 +198,9 @@ private:
    gpu::device _device;
    gpu::swap_chain _swap_chain;
    gpu::copy_command_list _pre_render_command_list = _device.create_copy_command_list(
-      {.allocator_name = "World Allocator", .debug_name = "Pre-Render Copy Command List"});
+      {.debug_name = "Pre-Render Copy Command List"});
    gpu::graphics_command_list _world_command_list = _device.create_graphics_command_list(
-      {.allocator_name = "World Allocator", .debug_name = "World Command List"});
+      {.debug_name = "World Command List"});
 
    dynamic_buffer_allocator _dynamic_buffer_allocator{1024 * 1024 * 4, _device};
    copy_command_list_pool _copy_command_list_pool{_device};

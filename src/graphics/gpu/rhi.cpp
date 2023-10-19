@@ -277,16 +277,6 @@ struct device_state {
                                         .NumDescriptors = num_dsv_descriptors,
                                         .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE}};
 
-   command_allocator_pool direct_command_allocator_pool{*device, *frame_fence,
-                                                        current_frame,
-                                                        D3D12_COMMAND_LIST_TYPE_DIRECT};
-   command_allocator_pool compute_command_allocator_pool{*device, *frame_fence,
-                                                         current_frame,
-                                                         D3D12_COMMAND_LIST_TYPE_COMPUTE};
-   command_allocator_pool copy_command_allocator_pool{*device, *frame_fence,
-                                                      current_frame,
-                                                      D3D12_COMMAND_LIST_TYPE_COPY};
-
    const bool supports_enhanced_barriers : 1;
    const bool supports_shader_barycentrics : 1 =
       check_shader_barycentrics_support(*device);
@@ -363,8 +353,9 @@ struct command_list_state {
    com_ptr<ID3D12CommandAllocator> command_allocator;
    com_ptr<ID3D12DescriptorHeap> descriptor_heap;
 
-   command_allocator_pool* allocator_pool = nullptr;
-   std::string allocator_name;
+   command_allocator_pool allocator_pool;
+   device_state* device_state = nullptr;
+   device* device = nullptr;
 };
 
 device::device(const device_desc& desc)
@@ -518,8 +509,8 @@ auto device::create_copy_command_list(const command_list_desc& desc) -> copy_com
                          .supports_enhanced_barriers = supports_enhanced_barriers(),
                          .command_allocator = nullptr,
                          .descriptor_heap = nullptr,
-                         .allocator_pool = &state->copy_command_allocator_pool,
-                         .allocator_name = std::string{desc.allocator_name}};
+                         .device_state = &state.get(),
+                         .device = this};
 
    return command_list;
 }
@@ -543,8 +534,8 @@ auto device::create_compute_command_list(const command_list_desc& desc) -> compu
                          .supports_enhanced_barriers = supports_enhanced_barriers(),
                          .command_allocator = nullptr,
                          .descriptor_heap = state->srv_uav_descriptor_heap.heap,
-                         .allocator_pool = &state->compute_command_allocator_pool,
-                         .allocator_name = std::string{desc.allocator_name}};
+                         .device_state = &state.get(),
+                         .device = this};
 
    return command_list;
 }
@@ -568,8 +559,8 @@ auto device::create_graphics_command_list(const command_list_desc& desc) -> grap
                          .supports_enhanced_barriers = supports_enhanced_barriers(),
                          .command_allocator = nullptr,
                          .descriptor_heap = state->srv_uav_descriptor_heap.heap,
-                         .allocator_pool = &state->direct_command_allocator_pool,
-                         .allocator_name = std::string{desc.allocator_name}};
+                         .device_state = &state.get(),
+                         .device = this};
 
    return command_list;
 }
@@ -1502,6 +1493,11 @@ void command_queue::execute_command_lists(std::span<command_list*> command_lists
    d3d12_command_lists.reserve(command_lists.size());
 
    for (auto* list : command_lists) {
+      if (not list->state->command_allocator) {
+         // Attempt to reuse a command list. This is not compatible with the pooling method used for command allocators.
+         std::terminate();
+      }
+
       d3d12_command_lists.push_back(list->state->command_list.get());
    }
 
@@ -1509,6 +1505,11 @@ void command_queue::execute_command_lists(std::span<command_list*> command_lists
                                                 d3d12_command_lists.size()),
                                              d3d12_command_lists.data());
    state->work_executed_since_release = true;
+
+   for (command_list* list : command_lists) {
+      list->state->allocator_pool.add(std::exchange(list->state->command_allocator, nullptr),
+                                      state->device->current_frame);
+   }
 }
 
 void command_queue::sync_with(command_queue& other)
@@ -1701,6 +1702,25 @@ void command_queue::release_query_heap(query_heap_handle query_heap)
                                                             query_heap)});
 }
 
+void command_queue::release_command_allocator(command_allocator_handle command_allocator)
+{
+   const uint64 sync_value = [&] {
+      std::scoped_lock lock{state->sync_mutex};
+
+      if (state->work_executed_since_release.exchange(false)) {
+         state->release_last_sync_value = ++state->sync_value;
+
+         state->command_queue->Signal(state->sync_fence.get(),
+                                      state->release_last_sync_value);
+      }
+
+      return state->release_last_sync_value;
+   }();
+
+   state->release_queue_device_children.push(sync_value, com_ptr{unpack_command_allocator_handle(
+                                                            command_allocator)});
+}
+
 auto command_queue::get_timestamp_frequency() -> uint64
 {
    uint64 frequency = 0;
@@ -1712,7 +1732,38 @@ auto command_queue::get_timestamp_frequency() -> uint64
 
 command_list::command_list() = default;
 
-command_list::~command_list() = default;
+command_list::~command_list()
+{
+   if (not state->command_list) return;
+
+   switch (state->command_list->GetType()) {
+   case D3D12_COMMAND_LIST_TYPE_DIRECT:
+      state->allocator_pool.view_and_clear(
+         [&](utility::com_ptr<ID3D12CommandAllocator> allocator) {
+            state->device->direct_queue.release_command_allocator(
+               pack_command_allocator_handle(allocator.release()));
+         });
+      break;
+   case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+      state->allocator_pool.view_and_clear(
+         [&](utility::com_ptr<ID3D12CommandAllocator> allocator) {
+            state->device->compute_queue.release_command_allocator(
+               pack_command_allocator_handle(allocator.release()));
+         });
+   case D3D12_COMMAND_LIST_TYPE_COPY:
+      state->allocator_pool.view_and_clear(
+         [&](utility::com_ptr<ID3D12CommandAllocator> allocator) {
+            auto allocator_ref_background = allocator;
+
+            state->device->copy_queue.release_command_allocator(
+               pack_command_allocator_handle(allocator.release()));
+            state->device->background_copy_queue.release_command_allocator(
+               pack_command_allocator_handle(allocator_ref_background.release()));
+         });
+   default:
+      state->device->wait_for_idle();
+   }
+}
 
 command_list::command_list(command_list&& other) noexcept = default;
 
@@ -1725,14 +1776,16 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 
 [[msvc::forceinline]] void command_list::reset_common()
 {
-   if (state->command_allocator) {
-      state->allocator_pool->add(state->allocator_name,
-                                 std::exchange(state->command_allocator, nullptr));
+   state->command_allocator =
+      state->allocator_pool.try_aquire(state->device_state->current_frame,
+                                       *state->device_state->frame_fence);
+
+   if (not state->command_allocator) {
+      throw_if_fail(state->device_state->device->CreateCommandAllocator(
+         state->command_list->GetType(),
+         IID_PPV_ARGS(state->command_allocator.clear_and_assign())));
    }
 
-   state->command_allocator = state->allocator_pool->aquire(state->allocator_name);
-
-   throw_if_fail(state->command_allocator->Reset());
    throw_if_fail(state->command_list->Reset(state->command_allocator.get(), nullptr));
 }
 
