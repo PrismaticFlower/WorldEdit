@@ -1,7 +1,7 @@
 #include <d3d12.h>
 
 extern "C" {
-__declspec(dllexport) extern const UINT D3D12SDKVersion = 608;
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 611;
 }
 
 extern "C" {
