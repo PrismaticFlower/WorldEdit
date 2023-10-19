@@ -745,6 +745,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
             .state_after = gpu::legacy_resource_state::pixel_shader_resource});
       }
 
+      command_list.flush_barriers();
+
       command_list.rs_set_viewports(
          gpu::viewport{.width = static_cast<float>(params.length),
                        .height = static_cast<float>(params.length)});
@@ -828,6 +830,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                .state_before = gpu::legacy_resource_state::render_target,
                .state_after = gpu::legacy_resource_state::copy_source});
          }
+
+         command_list.flush_barriers();
 
          for (uint32 subresource = 0; subresource < 6; ++subresource) {
             command_list.copy_texture_to_buffer(readback_buffer.get(),
