@@ -532,8 +532,6 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                  const world::object_class_library& world_classes)
    -> env_map_result
 {
-   _device.wait_for_idle();
-
    _device.new_frame();
    _dynamic_buffer_allocator.reset(_device.frame_index());
 
@@ -645,16 +643,21 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                              gpu::heap_type::readback),
        _device.direct_queue};
 
+   gpu::copy_command_list pre_render_command_list = _device.create_copy_command_list(
+      {.debug_name = "Pre-Env Map Render Copy Command List"});
+   gpu::graphics_command_list command_list = _device.create_graphics_command_list(
+      {.debug_name = "Env Map Command List"});
+
    // Pre-Render Work
    {
-      _pre_render_command_list.reset();
+      pre_render_command_list.reset();
 
-      build_world_mesh_list(_pre_render_command_list, world, active_layers,
+      build_world_mesh_list(pre_render_command_list, world, active_layers,
                             world_classes, nullptr);
 
-      _pre_render_command_list.close();
+      pre_render_command_list.close();
 
-      _device.copy_queue.execute_command_lists(_pre_render_command_list);
+      _device.copy_queue.execute_command_lists(pre_render_command_list);
    }
 
    for (uint32 i = 0; i < 6; ++i) {
@@ -678,25 +681,23 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                    .height = static_cast<float>(super_sample_length)};
       // Pre-Render Work
       {
-         _pre_render_command_list.reset();
+         pre_render_command_list.reset();
 
          update_frame_constant_buffer(camera, viewport, false, 1.0f,
-                                      _pre_render_command_list);
+                                      pre_render_command_list);
 
          _light_clusters.prepare_lights(camera, view_frustum, world, nullptr,
-                                        {0.0f, 1.0f}, _pre_render_command_list,
+                                        {0.0f, 1.0f}, pre_render_command_list,
                                         _dynamic_buffer_allocator);
 
-         _pre_render_command_list.close();
+         pre_render_command_list.close();
 
          _device.copy_queue.sync_with(_device.direct_queue);
-         _device.copy_queue.execute_command_lists(_pre_render_command_list);
+         _device.copy_queue.execute_command_lists(pre_render_command_list);
          _device.direct_queue.sync_with(_device.copy_queue);
       }
 
       build_object_render_list(view_frustum);
-
-      auto& command_list = _world_command_list;
 
       command_list.reset(_sampler_heap.get());
 
