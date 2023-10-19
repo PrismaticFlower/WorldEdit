@@ -766,6 +766,9 @@
     <ClInclude Include="src\world\utility\terrain_cut.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\texture\save_env_map.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1141,6 +1144,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\utility\terrain_cut.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\texture\save_env_map.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

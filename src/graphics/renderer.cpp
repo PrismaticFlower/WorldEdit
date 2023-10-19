@@ -91,6 +91,10 @@ struct renderer_impl final : renderer {
                    const world::object_class_library& world_classes,
                    const settings::graphics& settings) override;
 
+   auto draw_env_map(const env_map_params& params, const world::world& world,
+                     const world::active_layers active_layers,
+                     const world::object_class_library& world_classes) -> env_map_result;
+
    void window_resized(uint16 width, uint16 height) override;
 
    void display_scale_changed(const float display_scale) override
@@ -136,8 +140,8 @@ struct renderer_impl final : renderer {
    }
 
 private:
-   void update_frame_constant_buffer(const camera& camera,
-                                     const settings::graphics& settings,
+   void update_frame_constant_buffer(const camera& camera, const gpu::viewport viewport,
+                                     const bool scroll_textures, const float line_width,
                                      gpu::copy_command_list& command_list);
 
    void draw_world(const frustum& view_frustum,
@@ -353,6 +357,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _device.new_frame();
 
    const frustum view_frustum{camera.inv_view_projection_matrix()};
+   const gpu::viewport viewport{.width = static_cast<float>(_swap_chain.width()),
+                                .height = static_cast<float>(_swap_chain.height())};
 
    auto [back_buffer, back_buffer_rtv] = _swap_chain.current_back_buffer();
    _dynamic_buffer_allocator.reset(_device.frame_index());
@@ -379,7 +385,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                ? std::get_if<world::object>(
                                     &(*interaction_targets.creation_entity))
                                : nullptr);
-      update_frame_constant_buffer(camera, settings, _pre_render_command_list);
+      update_frame_constant_buffer(camera, viewport, true, settings.line_width,
+                                   _pre_render_command_list);
       clear_depth_minmax(_pre_render_command_list);
 
       const float4 scene_depth_min_max =
@@ -453,9 +460,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                          {.clear_depth = true, .clear_stencil = true},
                                          1.0f, 0x0);
 
-   command_list.rs_set_viewports(
-      gpu::viewport{.width = static_cast<float>(_swap_chain.width()),
-                    .height = static_cast<float>(_swap_chain.height())});
+   command_list.rs_set_viewports(viewport);
    command_list.rs_set_scissor_rects(
       {.right = _swap_chain.width(), .bottom = _swap_chain.height()});
    command_list.om_set_render_targets(back_buffer_rtv, _depth_stencil_view.get());
@@ -522,6 +527,357 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    _thumbnail_manager.end_frame();
 }
 
+auto renderer_impl::draw_env_map(const env_map_params& params, const world::world& world,
+                                 const world::active_layers active_layers,
+                                 const world::object_class_library& world_classes)
+   -> env_map_result
+{
+   _device.wait_for_idle();
+
+   _device.new_frame();
+   _dynamic_buffer_allocator.reset(_device.frame_index());
+
+   const float pi = 3.1415927f;
+   const float half_pi = 1.5707964f;
+
+   const std::array<float2, 6> camera_angles{float2{-half_pi, 0.0f},
+                                             float2{half_pi, 0.0f},
+                                             float2{0.0f, half_pi},
+                                             float2{0.0f, -half_pi},
+                                             float2{0.0f, 0.0f},
+                                             float2{pi, 0.0f}};
+
+   const uint32 super_sample_length = params.length * 4;
+
+   _light_clusters.update_render_resolution(super_sample_length, super_sample_length);
+
+   gpu::unique_resource_handle env_map_super_sample_render_texture =
+      {_device.create_texture(
+          {.dimension = gpu::texture_dimension::t_2d,
+           .flags = {.allow_render_target = true},
+           .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+           .width = super_sample_length,
+           .height = super_sample_length,
+           .optimized_clear_value = {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                     .color = float4{0.0f, 0.0f, 0.0f, 1.0f}},
+           .debug_name = "Env Map Super Sample Render Target"},
+          gpu::barrier_layout::render_target, gpu::legacy_resource_state::render_target),
+       _device.direct_queue};
+   gpu::unique_rtv_handle env_map_super_sample_rtv =
+      {_device.create_render_target_view(env_map_super_sample_render_texture.get(),
+                                         {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                          .dimension = gpu::rtv_dimension::texture2d}),
+       _device.direct_queue};
+   gpu::unique_resource_view env_map_super_sample_srv =
+      {_device.create_shader_resource_view(env_map_super_sample_render_texture.get(),
+                                           {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB}),
+       _device.direct_queue};
+
+   gpu::unique_resource_handle env_map_render_texture =
+      {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                               .flags = {.allow_render_target = true},
+                               .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                               .width = params.length,
+                               .height = params.length,
+                               .array_size = 6,
+                               .optimized_clear_value =
+                                  {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                   .color = float4{0.0f, 0.0f, 0.0f, 1.0f}},
+                               .debug_name = "Env Map Render Target"},
+                              gpu::barrier_layout::render_target,
+                              gpu::legacy_resource_state::render_target),
+       _device.direct_queue};
+   gpu::unique_resource_view env_map_srv =
+      {_device.create_shader_resource_view(env_map_render_texture.get(),
+                                           {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                            .texture_cube_view = true}),
+       _device.direct_queue};
+
+   gpu::unique_resource_handle env_map_resample_render_texture =
+      {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                               .flags = {.allow_render_target = true},
+                               .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                               .width = params.length,
+                               .height = params.length,
+                               .array_size = 6,
+                               .optimized_clear_value =
+                                  {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                   .color = float4{0.0f, 0.0f, 0.0f, 1.0f}},
+                               .debug_name = "Env Map Resample Render Target"},
+                              gpu::barrier_layout::render_target,
+                              gpu::legacy_resource_state::render_target),
+       _device.direct_queue};
+   gpu::unique_rtv_handle env_map_resample_rtv =
+      {_device.create_render_target_view(env_map_resample_render_texture.get(),
+                                         {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                          .dimension = gpu::rtv_dimension::texture2d_array,
+                                          .texture2d_array = {.first_array_slice = 0,
+                                                              .array_size = 6}}),
+       _device.direct_queue};
+
+   gpu::unique_resource_handle env_map_depth_stencil_texture =
+      {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                               .flags = {.allow_depth_stencil = true},
+                               .format = DXGI_FORMAT_R24G8_TYPELESS,
+                               .width = super_sample_length,
+                               .height = super_sample_length,
+                               .optimized_clear_value =
+                                  {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                   .depth_stencil = {.depth = 1.0f, .stencil = 0x0}},
+                               .debug_name = "Env Map Depth Stencil Target"},
+                              gpu::barrier_layout::depth_stencil_write,
+                              gpu::legacy_resource_state::depth_write),
+       _device.direct_queue};
+   gpu::unique_dsv_handle env_map_depth_stencil_view =
+      {_device.create_depth_stencil_view(env_map_depth_stencil_texture.get(),
+                                         {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                          .dimension = gpu::dsv_dimension::texture2d}),
+       _device.direct_queue};
+
+   const uint32 readback_row_pitch =
+      math::align_up<uint32>(params.length * sizeof(uint32),
+                             gpu::texture_data_pitch_alignment);
+   const uint32 readback_item_pitch = readback_row_pitch * params.length;
+
+   gpu::unique_resource_handle readback_buffer =
+      {_device.create_buffer({.size = readback_item_pitch * 6,
+                              .debug_name = "Env Map Readback Buffer"},
+                             gpu::heap_type::readback),
+       _device.direct_queue};
+
+   // Pre-Render Work
+   {
+      _pre_render_command_list.reset();
+
+      build_world_mesh_list(_pre_render_command_list, world, active_layers,
+                            world_classes, nullptr);
+
+      _pre_render_command_list.close();
+
+      _device.copy_queue.execute_command_lists(_pre_render_command_list);
+   }
+
+   for (uint32 i = 0; i < 6; ++i) {
+      gpu::unique_rtv_handle env_map_rtv =
+         {_device.create_render_target_view(env_map_render_texture.get(),
+                                            {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                             .dimension = gpu::rtv_dimension::texture2d_array,
+                                             .texture2d_array = {.first_array_slice = i,
+                                                                 .array_size = 1}}),
+          _device.direct_queue};
+
+      camera camera;
+
+      camera.position(params.positionWS);
+      camera.fov(half_pi);
+      camera.yaw(camera_angles[i].x);
+      camera.pitch(camera_angles[i].y);
+
+      const frustum view_frustum{camera.inv_view_projection_matrix()};
+      const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
+                                   .height = static_cast<float>(super_sample_length)};
+      // Pre-Render Work
+      {
+         _pre_render_command_list.reset();
+
+         update_frame_constant_buffer(camera, viewport, false, 1.0f,
+                                      _pre_render_command_list);
+
+         _light_clusters.prepare_lights(camera, view_frustum, world, nullptr,
+                                        {0.0f, 1.0f}, _pre_render_command_list,
+                                        _dynamic_buffer_allocator);
+
+         _pre_render_command_list.close();
+
+         _device.copy_queue.sync_with(_device.direct_queue);
+         _device.copy_queue.execute_command_lists(_pre_render_command_list);
+         _device.direct_queue.sync_with(_device.copy_queue);
+      }
+
+      build_object_render_list(view_frustum);
+
+      auto& command_list = _world_command_list;
+
+      command_list.reset(_sampler_heap.get());
+
+      _thumbnail_manager.update_gpu(_model_manager, _root_signatures, _pipelines,
+                                    _dynamic_buffer_allocator, command_list);
+
+      _light_clusters.tile_lights(_root_signatures, _pipelines, command_list,
+                                  _dynamic_buffer_allocator, _profiler);
+      _light_clusters.draw_shadow_maps(_world_mesh_list, _root_signatures,
+                                       _pipelines, command_list,
+                                       _dynamic_buffer_allocator, _profiler);
+
+      command_list.flush_barriers();
+
+      command_list.clear_render_target_view(env_map_super_sample_rtv.get(),
+                                            float4{0.0f, 0.0f, 0.0f, 1.0f});
+      command_list.clear_depth_stencil_view(env_map_depth_stencil_view.get(),
+                                            {.clear_depth = true, .clear_stencil = true},
+                                            1.0f, 0x0);
+
+      command_list.rs_set_viewports(viewport);
+      command_list.rs_set_scissor_rects(
+         {.right = super_sample_length, .bottom = super_sample_length});
+      command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
+                                         env_map_depth_stencil_view.get());
+
+      draw_world(view_frustum, {.objects = true, .terrain = true}, command_list);
+
+      // Downsample to desired size.
+
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         command_list.deferred_barrier(gpu::texture_barrier{
+            .sync_before = gpu::barrier_sync::render_target,
+            .sync_after = gpu::barrier_sync::pixel_shading,
+            .access_before = gpu::barrier_access::render_target,
+            .access_after = gpu::barrier_access::shader_resource,
+            .layout_before = gpu::barrier_layout::render_target,
+            .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
+            .resource = env_map_super_sample_render_texture.get(),
+         });
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = env_map_super_sample_render_texture.get(),
+            .state_before = gpu::legacy_resource_state::render_target,
+            .state_after = gpu::legacy_resource_state::pixel_shader_resource});
+      }
+
+      command_list.flush_barriers();
+
+      command_list.rs_set_viewports(
+         gpu::viewport{.width = static_cast<float>(params.length),
+                       .height = static_cast<float>(params.length)});
+      command_list.rs_set_scissor_rects(
+         {.right = params.length, .bottom = params.length});
+
+      command_list.om_set_render_targets(env_map_rtv.get());
+
+      command_list.set_graphics_root_signature(_root_signatures.resample_env_map.get());
+      command_list.set_graphics_32bit_constant(rs::resample_env_map::env_map,
+                                               env_map_super_sample_srv.get().index,
+                                               0);
+
+      command_list.set_pipeline_state(_pipelines.env_map_downsample.get());
+
+      command_list.draw_instanced(3, 1, 0, 0);
+
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         command_list.deferred_barrier(gpu::texture_barrier{
+            .sync_before = gpu::barrier_sync::pixel_shading,
+            .sync_after = gpu::barrier_sync::none,
+            .access_before = gpu::barrier_access::shader_resource,
+            .access_after = gpu::barrier_access::no_access,
+            .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
+            .layout_after = gpu::barrier_layout::render_target,
+            .resource = env_map_super_sample_render_texture.get(),
+         });
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = env_map_super_sample_render_texture.get(),
+            .state_before = gpu::legacy_resource_state::pixel_shader_resource,
+            .state_after = gpu::legacy_resource_state::render_target});
+      }
+
+      // Correct orientation and copy to CPU.
+      if (i == 5) {
+         [[likely]] if (_device.supports_enhanced_barriers()) {
+            command_list.deferred_barrier(gpu::texture_barrier{
+               .sync_before = gpu::barrier_sync::render_target,
+               .sync_after = gpu::barrier_sync::pixel_shading,
+               .access_before = gpu::barrier_access::render_target,
+               .access_after = gpu::barrier_access::shader_resource,
+               .layout_before = gpu::barrier_layout::render_target,
+               .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
+               .resource = env_map_render_texture.get(),
+            });
+         }
+         else {
+            command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+               .resource = env_map_render_texture.get(),
+               .state_before = gpu::legacy_resource_state::render_target,
+               .state_after = gpu::legacy_resource_state::pixel_shader_resource});
+         }
+
+         command_list.flush_barriers();
+
+         command_list.om_set_render_targets(env_map_resample_rtv.get());
+
+         command_list.set_graphics_32bit_constant(rs::resample_env_map::env_map,
+                                                  env_map_srv.get().index, 0);
+
+         command_list.set_pipeline_state(_pipelines.resample_env_map.get());
+
+         command_list.draw_instanced(3 * 6, 1, 0, 0);
+
+         [[likely]] if (_device.supports_enhanced_barriers()) {
+            command_list.deferred_barrier(gpu::texture_barrier{
+               .sync_before = gpu::barrier_sync::render_target,
+               .sync_after = gpu::barrier_sync::copy,
+               .access_before = gpu::barrier_access::render_target,
+               .access_after = gpu::barrier_access::copy_source,
+               .layout_before = gpu::barrier_layout::render_target,
+               .layout_after = gpu::barrier_layout::direct_queue_copy_source,
+               .resource = env_map_resample_render_texture.get(),
+            });
+         }
+         else {
+            command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+               .resource = env_map_resample_render_texture.get(),
+               .state_before = gpu::legacy_resource_state::render_target,
+               .state_after = gpu::legacy_resource_state::copy_source});
+         }
+
+         command_list.flush_barriers();
+
+         for (uint32 subresource = 0; subresource < 6; ++subresource) {
+            command_list.copy_texture_to_buffer(readback_buffer.get(),
+                                                {.offset = readback_item_pitch * subresource,
+                                                 .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+                                                 .width = params.length,
+                                                 .height = params.length,
+                                                 .depth = 1,
+                                                 .row_pitch = readback_row_pitch},
+                                                0, 0, 0,
+                                                env_map_resample_render_texture.get(),
+                                                subresource);
+         }
+      }
+      else {
+         command_list.flush_barriers();
+      }
+
+      command_list.close();
+
+      _device.direct_queue.execute_command_lists(command_list);
+   }
+
+   _device.end_frame();
+
+   _light_clusters.update_render_resolution(_swap_chain.width(), _swap_chain.height());
+
+   _device.direct_queue.wait_for_idle();
+
+   const uint32 data_size = readback_item_pitch * 6;
+
+   std::unique_ptr<std::byte[]> data =
+      std::make_unique_for_overwrite<std::byte[]>(data_size);
+
+   void* mapped_env_map = _device.map(readback_buffer.get(), 0, {0, data_size});
+
+   std::memcpy(data.get(), mapped_env_map, data_size);
+
+   _device.unmap(readback_buffer.get(), 0, {});
+
+   return {.length = params.length,
+           .row_pitch = readback_row_pitch,
+           .item_pitch = readback_item_pitch,
+           .data = std::move(data)};
+}
+
 void renderer_impl::window_resized(uint16 width, uint16 height)
 {
    if (width == _swap_chain.width() and height == _swap_chain.height()) {
@@ -560,21 +916,25 @@ void renderer_impl::mark_dirty_terrain() noexcept
 }
 
 void renderer_impl::update_frame_constant_buffer(const camera& camera,
-                                                 const settings::graphics& settings,
+                                                 const gpu::viewport viewport,
+                                                 const bool scroll_textures,
+                                                 const float line_width,
                                                  gpu::copy_command_list& command_list)
 {
    frame_constant_buffer constants{
       .view_projection_matrix = camera.view_projection_matrix(),
 
       .view_positionWS = camera.position(),
-      .texture_scroll_duration = static_cast<float>(std::fmod(
-         _texture_scroll_timer.elapsed<std::chrono::duration<double>>().count(), 255.0)),
+      .texture_scroll_duration =
+         scroll_textures
+            ? static_cast<float>(std::fmod(
+                 _texture_scroll_timer.elapsed<std::chrono::duration<double>>().count(), 255.0))
+            : 0.0f,
 
-      .viewport_size = {static_cast<float>(_swap_chain.width()),
-                        static_cast<float>(_swap_chain.height())},
-      .viewport_topleft = {0.0f, 0.0f},
+      .viewport_size = {viewport.width, viewport.height},
+      .viewport_topleft = {viewport.top_left_x, viewport.top_left_y},
 
-      .line_width = settings.line_width * _display_scale};
+      .line_width = line_width * _display_scale};
 
    auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 

@@ -57,6 +57,19 @@ struct renderer_init {
    bool use_debug_layer = false;
 };
 
+struct env_map_params {
+   float3 positionWS;
+   uint32 length = 512;
+};
+
+struct env_map_result {
+   uint32 length = 512;
+   uint32 row_pitch = 512;
+   uint32 item_pitch = row_pitch * length;
+
+   std::unique_ptr<std::byte[]> data;
+};
+
 struct renderer {
    virtual ~renderer() = default;
 
@@ -69,6 +82,11 @@ struct renderer {
                            const world::tool_visualizers& tool_visualizers,
                            const world::object_class_library& world_classes,
                            const settings::graphics& settings) = 0;
+
+   virtual auto draw_env_map(const env_map_params& params, const world::world& world,
+                             const world::active_layers active_layers,
+                             const world::object_class_library& world_classes)
+      -> env_map_result = 0;
 
    virtual void window_resized(uint16 width, uint16 height) = 0;
 

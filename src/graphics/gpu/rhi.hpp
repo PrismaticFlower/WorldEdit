@@ -557,13 +557,7 @@ struct shader_resource_view_desc {
       bool raw_buffer = false;
    } buffer;
 
-   struct {
-      bool texture_cube_view = false;
-   } texture2d;
-
-   struct {
-      bool texture_cube_view = false;
-   } texture2d_array;
+   bool texture_cube_view = false;
 };
 
 struct unordered_access_view_desc {

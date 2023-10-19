@@ -98,6 +98,10 @@ void world_edit::update_ui() noexcept
       ui_show_world_selection_set_layer();
    }
 
+   if (_render_env_map_open) {
+      ui_show_render_env_map();
+   }
+
    if (ImGui::BeginPopup("Create Entity", ImGuiWindowFlags_AlwaysAutoResize |
                                              ImGuiWindowFlags_NoDecoration)) {
       ui_show_create_menu_items();

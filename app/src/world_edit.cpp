@@ -2,6 +2,7 @@
 #include "world_edit.hpp"
 #include "assets/asset_libraries.hpp"
 #include "assets/odf/default_object_class_definition.hpp"
+#include "assets/texture/save_env_map.hpp"
 #include "edits/add_sector_object.hpp"
 #include "edits/bundle.hpp"
 #include "edits/creation_entity_set.hpp"
@@ -161,6 +162,28 @@ void world_edit::update()
       _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
                             _world_layers_draw_mask, _tool_visualizers,
                             _object_classes, _settings.graphics);
+
+      if (_env_map_render_requested) {
+         _env_map_render_requested = false;
+
+         graphics::env_map_result env_map =
+            _renderer->draw_env_map(_env_map_render_params, _world,
+                                    _world_layers_draw_mask, _object_classes);
+
+         try {
+            assets::texture::save_env_map(_env_map_save_path,
+                                          {.length = env_map.length,
+                                           .row_pitch = env_map.row_pitch,
+                                           .item_pitch = env_map.item_pitch,
+                                           .data = {env_map.data.get(),
+                                                    env_map.item_pitch * 6}});
+
+            _env_map_save_error.clear();
+         }
+         catch (std::runtime_error& e) {
+            _env_map_save_error = e.what();
+         }
+      }
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);

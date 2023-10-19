@@ -218,6 +218,7 @@
     <ClCompile Include="src\assets\msh\scene.cpp" />
     <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\sky\io.cpp" />
+    <ClCompile Include="src\assets\texture\save_env_map.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
     <ClCompile Include="src\edits\add_game_mode.cpp" />
@@ -381,6 +382,7 @@
     <ClInclude Include="src\assets\sky\sky.hpp" />
     <ClInclude Include="src\assets\terrain\terrain.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_io.hpp" />
+    <ClInclude Include="src\assets\texture\save_env_map.hpp" />
     <ClInclude Include="src\assets\texture\texture.hpp" />
     <ClInclude Include="src\assets\texture\texture_format.hpp" />
     <ClInclude Include="src\assets\texture\texture_io.hpp" />

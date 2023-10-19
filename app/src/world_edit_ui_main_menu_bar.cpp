@@ -166,6 +166,14 @@ void world_edit::ui_show_main_menu_bar() noexcept
                             "", "Show Object Class Browser")),
                          &_object_class_browser_open);
 
+         ImGui::Separator();
+
+         ImGui::MenuItem("Render Environment Map",
+                         get_display_string(
+                            _hotkeys.query_binding("",
+                                                   "Render Environment Map")),
+                         &_render_env_map_open);
+
          ImGui::EndMenu();
       }
 

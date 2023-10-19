@@ -68,6 +68,9 @@ std::initializer_list<shader_description> shader_list = {
    shader("thumbnail_downsampleVS"),
    shader("thumbnail_downsamplePS"),
 
+   shader("resample_env_mapVS"),
+   shader("resample_env_mapPS"),
+
    shader("meta_drawPS"),
    shader("meta_draw_wireframePS"),
    shader("meta_draw_wireframe_GS_fallbackPS"),

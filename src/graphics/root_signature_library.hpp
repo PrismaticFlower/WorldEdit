@@ -21,6 +21,8 @@ struct root_signature_library {
    gpu::unique_root_signature_handle thumbnail_mesh;
    gpu::unique_root_signature_handle thumbnail_downsample;
 
+   gpu::unique_root_signature_handle resample_env_map;
+
    gpu::unique_root_signature_handle meta_draw;
 
    gpu::unique_root_signature_handle ai_overlay_shape;
@@ -93,6 +95,10 @@ constexpr uint32 camera_matrix_cbv = 2;
 
 namespace thumbnail_downsample {
 constexpr uint32 thumbnail = 0;
+}
+
+namespace resample_env_map {
+constexpr uint32 env_map = 0;
 }
 
 namespace meta_draw {
