@@ -86,6 +86,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                   selection_centre += {point.x, 0.0f, point.y};
                   selection_axis_count += {1.0f, 0.0f, 1.0f};
                }
+
+               selection_centre +=
+                  {0.0f, sector->base + (sector->height / 2.0f), 0.0f};
+               selection_axis_count += {0.0f, 1.0f, 0.0f};
             }
          }
          else if (std::holds_alternative<world::portal_id>(selected)) {
