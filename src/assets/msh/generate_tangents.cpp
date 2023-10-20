@@ -1,6 +1,7 @@
 #include "generate_tangents.hpp"
 #include "mikktspace/mikktspace.h"
 
+#include <bit>
 #include <limits>
 #include <stdexcept>
 
@@ -110,17 +111,16 @@ struct cached_vertex {
    float2 texcoord;
    uint32 color;
 
-   bool operator==(const cached_vertex&) const noexcept = default;
+   bool operator==(const cached_vertex& other) const noexcept
+   {
+      return std::memcmp(&other, this, sizeof(cached_vertex)) == 0;
+   }
 
    template<typename H>
    friend H AbslHashValue(H h, const cached_vertex& cached)
    {
-      return H::combine(std::move(h), cached.position.x, cached.position.y,
-                        cached.position.z, cached.normal.x, cached.normal.y,
-                        cached.normal.z, cached.tangent.x, cached.tangent.y,
-                        cached.tangent.z, cached.bitangent.x,
-                        cached.bitangent.y, cached.bitangent.z,
-                        cached.texcoord.x, cached.texcoord.y, cached.color);
+      return H::combine(std::move(h),
+                        std::bit_cast<std::array<uint8, sizeof(cached_vertex)>>(cached));
    }
 };
 

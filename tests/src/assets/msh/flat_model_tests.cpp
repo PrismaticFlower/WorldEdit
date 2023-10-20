@@ -157,8 +157,6 @@ auto make_huge_segment(const float3 base_position, uint32 count) -> geometry_seg
          {static_cast<uint16>(i - 2), static_cast<uint16>(i - 1), i});
    }
 
-   segment.normals.emplace().resize(count, float3{0.0f, 1.0f, 0.0f});
-
    return segment;
 }
 
