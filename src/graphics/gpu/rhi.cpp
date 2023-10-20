@@ -400,7 +400,13 @@ void device::new_frame()
    const uint64 completed_frame =
       (state->current_frame - 1) - (frame_pipeline_length - 1);
 
-   throw_if_fail(state->frame_fence->SetEventOnCompletion(completed_frame, nullptr));
+   if (const HRESULT hr =
+          state->frame_fence->SetEventOnCompletion(completed_frame, nullptr);
+       FAILED(hr)) {
+      throw_if_fail(state->device->GetDeviceRemovedReason());
+
+      throw_if_fail(hr);
+   }
 }
 
 void device::end_frame()
@@ -465,9 +471,7 @@ void device::wait_for_idle()
    static_assert(fences.size() == sync_values.size());
 
    // Make sure we're not about to wait on a lost device.
-   for (ID3D12Fence* const fence : fences) {
-      if (fence->GetCompletedValue() == UINT64_MAX) return;
-   }
+   if (FAILED(state->device->GetDeviceRemovedReason())) return;
 
    throw_if_fail(state->device->SetEventOnMultipleFenceCompletion(
       fences.data(), sync_values.data(), static_cast<uint32>(fences.size()),
