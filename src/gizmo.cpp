@@ -273,32 +273,32 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
       if (_translate.translating) {
          switch (_translate.active_axis) {
          case axis::x: {
-            tool_visualizers.lines.emplace_back(_gizmo_position - x_axis * 1024.0f,
-                                                _gizmo_position + x_axis * 1024.0f,
-                                                x_color);
+            tool_visualizers.add_line_overlay(_gizmo_position - x_axis * 1024.0f,
+                                              _gizmo_position + x_axis * 1024.0f,
+                                              x_color);
          } break;
          case axis::y: {
-            tool_visualizers.lines.emplace_back(_gizmo_position - y_axis * 1024.0f,
-                                                _gizmo_position + y_axis * 1024.0f,
-                                                y_color);
+            tool_visualizers.add_line_overlay(_gizmo_position - y_axis * 1024.0f,
+                                              _gizmo_position + y_axis * 1024.0f,
+                                              y_color);
          } break;
          case axis::z: {
-            tool_visualizers.lines.emplace_back(_gizmo_position - z_axis * 1024.0f,
-                                                _gizmo_position + z_axis * 1024.0f,
-                                                z_color);
+            tool_visualizers.add_line_overlay(_gizmo_position - z_axis * 1024.0f,
+                                              _gizmo_position + z_axis * 1024.0f,
+                                              z_color);
          } break;
          }
       }
 
-      tool_visualizers.lines.emplace_back(_gizmo_position,
-                                          _gizmo_position + x_axis * length,
-                                          x_hover ? x_color_hover : x_color);
-      tool_visualizers.lines.emplace_back(_gizmo_position,
-                                          _gizmo_position + y_axis * length,
-                                          y_hover ? y_color_hover : y_color);
-      tool_visualizers.lines.emplace_back(_gizmo_position,
-                                          _gizmo_position + z_axis * length,
-                                          z_hover ? z_color_hover : z_color);
+      tool_visualizers.add_line_overlay(_gizmo_position,
+                                        _gizmo_position + x_axis * length,
+                                        x_hover ? x_color_hover : x_color);
+      tool_visualizers.add_line_overlay(_gizmo_position,
+                                        _gizmo_position + y_axis * length,
+                                        y_hover ? y_color_hover : y_color);
+      tool_visualizers.add_line_overlay(_gizmo_position,
+                                        _gizmo_position + z_axis * length,
+                                        z_hover ? z_color_hover : z_color);
    }
    else if (_mode == mode::rotate) {
       constexpr float pi_2 = std::numbers::pi_v<float> * 2.0f;
@@ -309,16 +309,13 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
       const bool y_hover = _rotate.active_axis == axis::y;
       const bool z_hover = _rotate.active_axis == axis::z;
 
-      tool_visualizers.lines.reserve(tool_visualizers.lines.size() +
-                                     circle_divisions * 4);
-
       if (_rotate.rotating) {
          const float3 direction =
             normalize(_rotate.current_cursor_position - _gizmo_position);
 
-         tool_visualizers.lines.emplace_back(_gizmo_position,
-                                             _gizmo_position + direction * radius,
-                                             0xff'ff'ff'ff);
+         tool_visualizers.add_line_overlay(_gizmo_position,
+                                           _gizmo_position + direction * radius,
+                                           0xff'ff'ff'ff);
       }
 
       for (uint32 i = 0; i <= circle_divisions; ++i) {
@@ -328,11 +325,10 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
             make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) * pi_2,
                               radius);
 
-         tool_visualizers.lines.emplace_back(_gizmo_position +
-                                                float3{0.0f, start.x, start.y},
-                                             _gizmo_position +
-                                                float3{0.0f, end.x, end.y},
-                                             x_hover ? x_color_hover : x_color);
+         tool_visualizers.add_line_overlay(_gizmo_position +
+                                              float3{0.0f, start.x, start.y},
+                                           _gizmo_position + float3{0.0f, end.x, end.y},
+                                           x_hover ? x_color_hover : x_color);
       }
 
       for (uint32 i = 0; i <= circle_divisions; ++i) {
@@ -342,11 +338,10 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
             make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) * pi_2,
                               radius);
 
-         tool_visualizers.lines.emplace_back(_gizmo_position +
-                                                float3{start.x, 0.0f, start.y},
-                                             _gizmo_position +
-                                                float3{end.x, 0.0f, end.y},
-                                             y_hover ? y_color_hover : y_color);
+         tool_visualizers.add_line_overlay(_gizmo_position +
+                                              float3{start.x, 0.0f, start.y},
+                                           _gizmo_position + float3{end.x, 0.0f, end.y},
+                                           y_hover ? y_color_hover : y_color);
       }
 
       for (uint32 i = 0; i <= circle_divisions; ++i) {
@@ -356,10 +351,10 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
             make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) * pi_2,
                               radius);
 
-         tool_visualizers.lines.emplace_back(_gizmo_position +
-                                                float3{start.x, start.y, 0.0f},
-                                             _gizmo_position + float3{end.x, end.y, 0.0f},
-                                             z_hover ? z_color_hover : z_color);
+         tool_visualizers.add_line_overlay(_gizmo_position +
+                                              float3{start.x, start.y, 0.0f},
+                                           _gizmo_position + float3{end.x, end.y, 0.0f},
+                                           z_hover ? z_color_hover : z_color);
       }
    }
 }

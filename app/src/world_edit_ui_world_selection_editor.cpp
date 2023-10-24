@@ -1136,25 +1136,25 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      float3{sector->points[i].x, sector->base + sector->height,
                             sector->points[i].y};
 
-                  _tool_visualizers.lines.emplace_back(bottom - float3{1.0f, 0.0f, 0.0f},
-                                                       bottom + float3{1.0f, 0.0f, 0.0f},
-                                                       0xffffffff);
-                  _tool_visualizers.lines.emplace_back(bottom - float3{0.0f, 1.0f, 0.0f},
-                                                       bottom + float3{0.0f, 1.0f, 0.0f},
-                                                       0xffffffff);
-                  _tool_visualizers.lines.emplace_back(bottom - float3{0.0f, 0.0f, 1.0f},
-                                                       bottom + float3{0.0f, 0.0f, 1.0f},
-                                                       0xffffffff);
+                  _tool_visualizers.add_line_overlay(bottom - float3{1.0f, 0.0f, 0.0f},
+                                                     bottom + float3{1.0f, 0.0f, 0.0f},
+                                                     0xffffffff);
+                  _tool_visualizers.add_line_overlay(bottom - float3{0.0f, 1.0f, 0.0f},
+                                                     bottom + float3{0.0f, 1.0f, 0.0f},
+                                                     0xffffffff);
+                  _tool_visualizers.add_line_overlay(bottom - float3{0.0f, 0.0f, 1.0f},
+                                                     bottom + float3{0.0f, 0.0f, 1.0f},
+                                                     0xffffffff);
 
-                  _tool_visualizers.lines.emplace_back(top - float3{1.0f, 0.0f, 0.0f},
-                                                       top + float3{1.0f, 0.0f, 0.0f},
-                                                       0xffffffff);
-                  _tool_visualizers.lines.emplace_back(top - float3{0.0f, 1.0f, 0.0f},
-                                                       top + float3{0.0f, 1.0f, 0.0f},
-                                                       0xffffffff);
-                  _tool_visualizers.lines.emplace_back(top - float3{0.0f, 0.0f, 1.0f},
-                                                       top + float3{0.0f, 0.0f, 1.0f},
-                                                       0xffffffff);
+                  _tool_visualizers.add_line_overlay(top - float3{1.0f, 0.0f, 0.0f},
+                                                     top + float3{1.0f, 0.0f, 0.0f},
+                                                     0xffffffff);
+                  _tool_visualizers.add_line_overlay(top - float3{0.0f, 1.0f, 0.0f},
+                                                     top + float3{0.0f, 1.0f, 0.0f},
+                                                     0xffffffff);
+                  _tool_visualizers.add_line_overlay(top - float3{0.0f, 0.0f, 1.0f},
+                                                     top + float3{0.0f, 0.0f, 1.0f},
+                                                     0xffffffff);
                }
             }
 

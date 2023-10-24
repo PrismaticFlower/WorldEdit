@@ -311,8 +311,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.using_point_at) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              object.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS, object.position,
+                                            0xffffffffu);
 
          const quaternion new_rotation =
             look_at_quat(_cursor_positionWS, object.position);
@@ -436,8 +436,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.using_point_at) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              light.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS, light.position,
+                                            0xffffffffu);
 
          const quaternion new_rotation =
             look_at_quat(_cursor_positionWS, light.position);
@@ -733,8 +733,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.using_point_at) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              path.nodes[0].position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS,
+                                            path.nodes[0].position, 0xffffffffu);
 
          const quaternion new_rotation =
             look_at_quat(_cursor_positionWS, path.nodes[0].position);
@@ -753,29 +753,29 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const world::clostest_node_result closest =
                find_closest_node(path.nodes[0].position, *existing_path);
 
-            _tool_visualizers.lines
-               .emplace_back(path.nodes[0].position,
-                             existing_path->nodes[closest.index].position,
-                             0xffffffffu);
+            _tool_visualizers
+               .add_line_overlay(path.nodes[0].position,
+                                 existing_path->nodes[closest.index].position,
+                                 0xffffffffu);
 
             if (closest.next_is_forward and
                 closest.index + 1 < existing_path->nodes.size()) {
-               _tool_visualizers.lines
-                  .emplace_back(path.nodes[0].position,
-                                existing_path->nodes[closest.index + 1].position,
-                                0xffffffffu);
+               _tool_visualizers
+                  .add_line_overlay(path.nodes[0].position,
+                                    existing_path->nodes[closest.index + 1].position,
+                                    0xffffffffu);
             }
             else if (closest.index > 0) {
-               _tool_visualizers.lines
-                  .emplace_back(path.nodes[0].position,
-                                existing_path->nodes[closest.index - 1].position,
-                                0xffffffffu);
+               _tool_visualizers
+                  .add_line_overlay(path.nodes[0].position,
+                                    existing_path->nodes[closest.index - 1].position,
+                                    0xffffffffu);
             }
          }
          else {
-            _tool_visualizers.lines.emplace_back(path.nodes[0].position,
-                                                 existing_path->nodes.back().position,
-                                                 0xffffffffu);
+            _tool_visualizers.add_line_overlay(path.nodes[0].position,
+                                               existing_path->nodes.back().position,
+                                               0xffffffffu);
          }
       }
 
@@ -1318,8 +1318,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.using_point_at) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              region.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS, region.position,
+                                            0xffffffffu);
 
          const quaternion new_rotation =
             look_at_quat(_cursor_positionWS, region.position);
@@ -1405,8 +1405,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _entity_creation_context.resize_start_size = region.size;
          }
 
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              region.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS, region.position,
+                                            0xffffffffu);
 
          const float3 region_start_size = *_entity_creation_context.resize_start_size;
 
@@ -1620,12 +1620,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                       existing_sector->base + existing_sector->height,
                                       end_point.y};
 
-         _tool_visualizers.lines.emplace_back(line_bottom_start,
-                                              line_bottom_mid, 0xffffffffu);
-         _tool_visualizers.lines.emplace_back(line_top_start, line_top_mid, 0xffffffffu);
-         _tool_visualizers.lines.emplace_back(line_bottom_mid, line_bottom_end,
-                                              0xffffffffu);
-         _tool_visualizers.lines.emplace_back(line_top_mid, line_top_end, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(line_bottom_start, line_bottom_mid,
+                                            0xffffffffu);
+         _tool_visualizers.add_line_overlay(line_top_start, line_top_mid, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(line_bottom_mid, line_bottom_end,
+                                            0xffffffffu);
+         _tool_visualizers.add_line_overlay(line_top_mid, line_top_end, 0xffffffffu);
       }
       if (using_from_object_bbox and _interaction_targets.hovered_entity and
           std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity)) {
@@ -1826,8 +1826,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.using_point_at) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              portal.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS, portal.position,
+                                            0xffffffffu);
 
          const quaternion new_rotation =
             look_at_quat(_cursor_positionWS, portal.position);
@@ -1859,8 +1859,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _entity_creation_context.resize_portal_start_height = portal.height;
          }
 
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              portal.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS, portal.position,
+                                            0xffffffffu);
 
          const quaternion inverse_rotation = conjugate(portal.rotation);
 
@@ -2001,8 +2001,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.using_point_at) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              hintnode.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS,
+                                            hintnode.position, 0xffffffffu);
 
          const quaternion new_rotation =
             look_at_quat(_cursor_positionWS, hintnode.position);
@@ -2169,8 +2169,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_context.using_point_at) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              barrier.position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS,
+                                            barrier.position, 0xffffffffu);
 
          const float new_angle =
             surface_rotation_degrees(normalize(barrier.position - _cursor_positionWS),
@@ -2209,8 +2209,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          const float2 barrier_start_size =
             *_entity_creation_context.resize_barrier_start_size;
 
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS,
-                                              barrier_start_position, 0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS,
+                                            barrier_start_position, 0xffffffffu);
 
          const float4x4 barrier_rotation =
             make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
@@ -2345,8 +2345,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          if (_entity_creation_context.from_line_start) {
-            _tool_visualizers.lines.emplace_back(*_entity_creation_context.from_line_start,
-                                                 _cursor_positionWS, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(*_entity_creation_context.from_line_start,
+                                               _cursor_positionWS, 0xffffffffu);
 
             const float3 start = *_entity_creation_context.from_line_start;
             const float3 end = _cursor_positionWS;
@@ -2423,10 +2423,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float3 draw_barrier_end =
                draw_barrier_mid + extend_normal * cursor_distance * normal_sign;
 
-            _tool_visualizers.lines.emplace_back(draw_barrier_start,
-                                                 draw_barrier_mid, 0xffffffffu);
-            _tool_visualizers.lines.emplace_back(draw_barrier_mid,
-                                                 draw_barrier_end, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_barrier_start,
+                                               draw_barrier_mid, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_barrier_mid,
+                                               draw_barrier_end, 0xffffffffu);
 
             const float3 position = (draw_barrier_start + draw_barrier_end) / 2.0f;
 
@@ -2470,8 +2470,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                     _edit_context);
          }
          else if (_entity_creation_context.draw_barrier_start) {
-            _tool_visualizers.lines.emplace_back(*_entity_creation_context.draw_barrier_start,
-                                                 _cursor_positionWS, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(*_entity_creation_context.draw_barrier_start,
+                                               _cursor_positionWS, 0xffffffffu);
          }
       }
 
@@ -2560,8 +2560,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                        &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
 
       if (_entity_creation_context.hub_sizing_started) {
-         _tool_visualizers.lines.emplace_back(_cursor_positionWS, hub.position,
-                                              0xffffffffu);
+         _tool_visualizers.add_line_overlay(_cursor_positionWS, hub.position,
+                                            0xffffffffu);
 
          const float new_radius = distance(_cursor_positionWS, hub.position);
 

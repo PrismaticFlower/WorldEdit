@@ -1305,6 +1305,9 @@
     <ClCompile Include="src\graphics\shaders\waterVS.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\world\tool_visualizers.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />

@@ -1734,7 +1734,7 @@ void renderer_impl::draw_world_meta_objects(
       }
    }
 
-   for (const auto& line : tool_visualizers.lines) {
+   for (const auto& line : tool_visualizers.lines_overlay()) {
       _meta_draw_batcher.add_line_overlay(line.v0, line.v1, line.color);
    }
 }

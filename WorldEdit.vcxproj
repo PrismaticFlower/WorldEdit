@@ -329,6 +329,7 @@
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
     <ClCompile Include="src\world\object_class_library.cpp" />
+    <ClCompile Include="src\world\tool_visualizers.cpp" />
     <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
     <ClCompile Include="src\world\utility\grounding.cpp" />
     <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp" />

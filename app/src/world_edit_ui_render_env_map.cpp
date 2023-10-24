@@ -74,15 +74,15 @@ void world_edit::ui_show_render_env_map() noexcept
       const float marker_length = 0.1f * distance(_camera.position(), positionWS) *
                                   _camera.projection_matrix()[0].x;
 
-      _tool_visualizers.lines.emplace_back(positionWS - float3{1.0f, 0.0f, 0.0f} * marker_length,
-                                           positionWS + float3{1.0f, 0.0f, 0.0f} * marker_length,
-                                           0xff'ff'ff'ffu);
-      _tool_visualizers.lines.emplace_back(positionWS - float3{0.0f, 1.0f, 0.0f} * marker_length,
-                                           positionWS + float3{0.0f, 1.0f, 0.0f} * marker_length,
-                                           0xff'ff'ff'ffu);
-      _tool_visualizers.lines.emplace_back(positionWS - float3{0.0f, 0.0f, 1.0f} * marker_length,
-                                           positionWS + float3{0.0f, 0.0f, 1.0f} * marker_length,
-                                           0xff'ff'ff'ffu);
+      _tool_visualizers.add_line_overlay(positionWS - float3{1.0f, 0.0f, 0.0f} * marker_length,
+                                         positionWS + float3{1.0f, 0.0f, 0.0f} * marker_length,
+                                         0xff'ff'ff'ffu);
+      _tool_visualizers.add_line_overlay(positionWS - float3{0.0f, 1.0f, 0.0f} * marker_length,
+                                         positionWS + float3{0.0f, 1.0f, 0.0f} * marker_length,
+                                         0xff'ff'ff'ffu);
+      _tool_visualizers.add_line_overlay(positionWS - float3{0.0f, 0.0f, 1.0f} * marker_length,
+                                         positionWS + float3{0.0f, 0.0f, 1.0f} * marker_length,
+                                         0xff'ff'ff'ffu);
 
       ImGui::LabelText("Render Position", "X:%.3f Y:%.3f Z:%.3f", positionWS.x,
                        positionWS.y, positionWS.z);
