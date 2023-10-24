@@ -251,7 +251,7 @@ private:
                                                        sampler_descriptions()),
                                                     _device.direct_queue};
 
-   shader_library _shaders{shader_list, _thread_pool};
+   shader_library _shaders{shader_list, _thread_pool, _error_output};
    root_signature_library _root_signatures{_device};
    pipeline_library _pipelines{_device, _shaders, _root_signatures};
 

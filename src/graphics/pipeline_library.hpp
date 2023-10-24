@@ -12,7 +12,7 @@
 
 namespace we::graphics {
 
-class shader_library;
+struct shader_library;
 struct root_signature_library;
 
 enum class depth_prepass_pipeline_flags : uint8 {

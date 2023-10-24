@@ -1,126 +1,115 @@
-
 #include "shader_list.hpp"
-
-#include <fmt/core.h>
-
-using namespace std::literals;
 
 namespace we::graphics {
 
-namespace {
+namespace shaders {
 
-auto type_from_name(const std::string_view name) -> shader_type
-{
-   if (name.ends_with("VS")) return shader_type::vertex;
-   if (name.ends_with("HS")) return shader_type::hull;
-   if (name.ends_with("DS")) return shader_type::domain;
-   if (name.ends_with("GS")) return shader_type::geometry;
-   if (name.ends_with("PS")) return shader_type::pixel;
-   if (name.ends_with("CS")) return shader_type::compute;
+auto mesh_shadowVS() noexcept -> shader_def;
+auto mesh_shadow_cutoutVS() noexcept -> shader_def;
+auto mesh_shadow_cutoutPS() noexcept -> shader_def;
+auto meshVS() noexcept -> shader_def;
+auto mesh_basicPS() noexcept -> shader_def;
+auto mesh_basic_lightingPS() noexcept -> shader_def;
+auto mesh_normalPS() noexcept -> shader_def;
+auto mesh_depth_prepassVS() noexcept -> shader_def;
+auto mesh_depth_cutoutPS() noexcept -> shader_def;
+auto mesh_wireframeVS() noexcept -> shader_def;
+auto mesh_wireframePS() noexcept -> shader_def;
+auto mesh_wireframe_GS_fallbackPS() noexcept -> shader_def;
+auto mesh_wireframe_GS_fallbackGS() noexcept -> shader_def;
+auto terrain_patchVS() noexcept -> shader_def;
+auto terrain_basicPS() noexcept -> shader_def;
+auto terrain_lightingPS() noexcept -> shader_def;
+auto terrain_normalPS() noexcept -> shader_def;
+auto terrain_cut_mesh_clearVS() noexcept -> shader_def;
+auto sky_meshVS() noexcept -> shader_def;
+auto sky_meshPS() noexcept -> shader_def;
+auto waterVS() noexcept -> shader_def;
+auto waterPS() noexcept -> shader_def;
+auto thumbnail_meshVS() noexcept -> shader_def;
+auto thumbnail_meshPS() noexcept -> shader_def;
+auto thumbnail_mesh_alpha_cutoutPS() noexcept -> shader_def;
+auto thumbnail_downsampleVS() noexcept -> shader_def;
+auto thumbnail_downsamplePS() noexcept -> shader_def;
+auto resample_env_mapVS() noexcept -> shader_def;
+auto resample_env_mapPS() noexcept -> shader_def;
+auto meta_drawPS() noexcept -> shader_def;
+auto meta_draw_wireframePS() noexcept -> shader_def;
+auto meta_draw_wireframe_GS_fallbackPS() noexcept -> shader_def;
+auto meta_draw_wireframe_GS_fallbackGS() noexcept -> shader_def;
+auto meta_draw_outlinedPS() noexcept -> shader_def;
+auto meta_draw_outlined_GS_fallbackPS() noexcept -> shader_def;
+auto meta_draw_outlined_GS_fallbackGS() noexcept -> shader_def;
+auto meta_draw_primitiveVS() noexcept -> shader_def;
+auto meta_draw_shape_outlinedVS() noexcept -> shader_def;
+auto meta_draw_shapeVS() noexcept -> shader_def;
+auto meta_draw_sphereVS() noexcept -> shader_def;
+auto meta_draw_linePS() noexcept -> shader_def;
+auto meta_draw_lineVS() noexcept -> shader_def;
+auto ai_overlay_shapeVS() noexcept -> shader_def;
+auto ai_overlay_applyVS() noexcept -> shader_def;
+auto ai_overlay_applyPS() noexcept -> shader_def;
+auto tile_lights_clearCS() noexcept -> shader_def;
+auto depth_reduce_minmaxCS() noexcept -> shader_def;
+auto tile_lightsVS() noexcept -> shader_def;
+auto tile_lightsPS() noexcept -> shader_def;
+auto imguiVS() noexcept -> shader_def;
+auto imguiPS() noexcept -> shader_def;
 
-   return shader_type::library;
 }
 
-auto shader(const std::string_view name) -> shader_description
-{
-   return {.name = std::string{name},
-           .entrypoint = L"main",
-           .type = type_from_name(name),
-           .model = shader_model_6_6,
-           .file = fmt::format("shaders/{}.hlsl", name)};
-}
-
-}
-
-std::initializer_list<shader_description> shader_list = {
-   shader("mesh_shadowVS"),
-   shader("mesh_shadow_cutoutVS"),
-   shader("mesh_shadow_cutoutPS"),
-
-   shader("meshVS"),
-   shader("mesh_basicPS"),
-   shader("mesh_basic_lightingPS"),
-   shader("mesh_normalPS"),
-   shader("mesh_depth_prepassVS"),
-   shader("mesh_depth_cutoutPS"),
-   shader("mesh_wireframeVS"),
-   shader("mesh_wireframePS"),
-   shader("mesh_wireframe_GS_fallbackPS"),
-   shader("mesh_wireframe_GS_fallbackGS"),
-
-   shader("terrain_patchVS"),
-   shader("terrain_basicPS"),
-   shader("terrain_lightingPS"),
-   shader("terrain_normalPS"),
-
-   shader("terrain_cut_mesh_clearVS"),
-
-   shader("sky_meshVS"),
-   shader("sky_meshPS"),
-
-   shader("waterVS"),
-   shader("waterPS"),
-
-   shader("thumbnail_meshVS"),
-   shader("thumbnail_meshPS"),
-   shader("thumbnail_mesh_alpha_cutoutPS"),
-
-   shader("thumbnail_downsampleVS"),
-   shader("thumbnail_downsamplePS"),
-
-   shader("resample_env_mapVS"),
-   shader("resample_env_mapPS"),
-
-   shader("meta_drawPS"),
-   shader("meta_draw_wireframePS"),
-   shader("meta_draw_wireframe_GS_fallbackPS"),
-   shader("meta_draw_wireframe_GS_fallbackGS"),
-   shader("meta_draw_outlinedPS"),
-   shader("meta_draw_outlined_GS_fallbackPS"),
-   shader("meta_draw_outlined_GS_fallbackGS"),
-   shader("meta_draw_primitiveVS"),
-   shader("meta_draw_shape_outlinedVS"),
-   shader("meta_draw_shapeVS"),
-   shader("meta_draw_sphereVS"),
-   shader("meta_draw_linePS"),
-   shader("meta_draw_lineVS"),
-
-   shader("ai_overlay_shapeVS"),
-   shader("ai_overlay_applyVS"),
-   shader("ai_overlay_applyPS"),
-
-   shader("tile_lights_clearCS"),
-
-   shader("depth_reduce_minmaxCS"),
-
-   shader_description{
-      .name = "tile_lightsVS",
-      .entrypoint = L"mainVS",
-      .type = shader_type::vertex,
-      .model = shader_model_6_6,
-      .file = "shaders/tile_lights.hlsl",
-   },
-   shader_description{
-      .name = "tile_lightsPS",
-      .entrypoint = L"mainPS",
-      .type = shader_type::pixel,
-      .model = shader_model_6_6,
-      .file = "shaders/tile_lights.hlsl",
-   },
-
-   shader_description{
-      .name = "imguiVS",
-      .entrypoint = L"mainVS",
-      .type = shader_type::vertex,
-      .model = shader_model_6_6,
-      .file = "shaders/imgui.hlsl",
-   },
-   shader_description{
-      .name = "imguiPS",
-      .entrypoint = L"mainPS",
-      .type = shader_type::pixel,
-      .model = shader_model_6_6,
-      .file = "shaders/imgui.hlsl",
-   },
+std::initializer_list<shader_def> shader_list = {
+shaders::mesh_shadowVS(),
+shaders::mesh_shadow_cutoutVS(),
+shaders::mesh_shadow_cutoutPS(),
+shaders::meshVS(),
+shaders::mesh_basicPS(),
+shaders::mesh_basic_lightingPS(),
+shaders::mesh_normalPS(),
+shaders::mesh_depth_prepassVS(),
+shaders::mesh_depth_cutoutPS(),
+shaders::mesh_wireframeVS(),
+shaders::mesh_wireframePS(),
+shaders::mesh_wireframe_GS_fallbackPS(),
+shaders::mesh_wireframe_GS_fallbackGS(),
+shaders::terrain_patchVS(),
+shaders::terrain_basicPS(),
+shaders::terrain_lightingPS(),
+shaders::terrain_normalPS(),
+shaders::terrain_cut_mesh_clearVS(),
+shaders::sky_meshVS(),
+shaders::sky_meshPS(),
+shaders::waterVS(),
+shaders::waterPS(),
+shaders::thumbnail_meshVS(),
+shaders::thumbnail_meshPS(),
+shaders::thumbnail_mesh_alpha_cutoutPS(),
+shaders::thumbnail_downsampleVS(),
+shaders::thumbnail_downsamplePS(),
+shaders::resample_env_mapVS(),
+shaders::resample_env_mapPS(),
+shaders::meta_drawPS(),
+shaders::meta_draw_wireframePS(),
+shaders::meta_draw_wireframe_GS_fallbackPS(),
+shaders::meta_draw_wireframe_GS_fallbackGS(),
+shaders::meta_draw_outlinedPS(),
+shaders::meta_draw_outlined_GS_fallbackPS(),
+shaders::meta_draw_outlined_GS_fallbackGS(),
+shaders::meta_draw_primitiveVS(),
+shaders::meta_draw_shape_outlinedVS(),
+shaders::meta_draw_shapeVS(),
+shaders::meta_draw_sphereVS(),
+shaders::meta_draw_linePS(),
+shaders::meta_draw_lineVS(),
+shaders::ai_overlay_shapeVS(),
+shaders::ai_overlay_applyVS(),
+shaders::ai_overlay_applyPS(),
+shaders::tile_lights_clearCS(),
+shaders::depth_reduce_minmaxCS(),
+shaders::tile_lightsVS(),
+shaders::tile_lightsPS(),
+shaders::imguiVS(),
+shaders::imguiPS(),
 };
+
 }

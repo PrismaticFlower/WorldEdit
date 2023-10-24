@@ -1,0 +1,73 @@
+// Each non-empty line defines a shader.
+//
+// mesh_shadowVS 
+// The above will compile mesh_shadowVS.hlsl as a vertex shader with an entrypoint of "main". The shader name will be mesh_shadowVS.
+//
+// tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
+// The above will compile tile_lights.hlsl as a vertex shader using mainVS as the entrypoint. The shader name will be tile_lightsVS.
+
+mesh_shadowVS
+mesh_shadow_cutoutVS
+mesh_shadow_cutoutPS
+
+meshVS
+mesh_basicPS
+mesh_basic_lightingPS
+mesh_normalPS
+mesh_depth_prepassVS
+mesh_depth_cutoutPS
+mesh_wireframeVS
+mesh_wireframePS
+mesh_wireframe_GS_fallbackPS
+mesh_wireframe_GS_fallbackGS
+ 
+terrain_patchVS
+terrain_basicPS
+terrain_lightingPS
+terrain_normalPS
+
+terrain_cut_mesh_clearVS
+
+sky_meshVS
+sky_meshPS
+
+waterVS
+waterPS
+
+thumbnail_meshVS
+thumbnail_meshPS
+thumbnail_mesh_alpha_cutoutPS
+
+thumbnail_downsampleVS
+thumbnail_downsamplePS
+
+resample_env_mapVS
+resample_env_mapPS
+
+meta_drawPS
+meta_draw_wireframePS
+meta_draw_wireframe_GS_fallbackPS
+meta_draw_wireframe_GS_fallbackGS
+meta_draw_outlinedPS
+meta_draw_outlined_GS_fallbackPS
+meta_draw_outlined_GS_fallbackGS
+meta_draw_primitiveVS
+meta_draw_shape_outlinedVS
+meta_draw_shapeVS
+meta_draw_sphereVS
+meta_draw_linePS
+meta_draw_lineVS
+
+ai_overlay_shapeVS
+ai_overlay_applyVS
+ai_overlay_applyPS
+
+tile_lights_clearCS
+
+depth_reduce_minmaxCS
+
+tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
+tile_lightsPS .entrypoint = mainPS .file = tile_lights.hlsl
+
+imguiVS .entrypoint = mainVS .file = imgui.hlsl
+imguiPS .entrypoint = mainPS .file = imgui.hlsl

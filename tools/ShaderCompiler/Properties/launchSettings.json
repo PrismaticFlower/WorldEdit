@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ShaderCompiler": {
+      "commandName": "Project",
+      "commandLineArgs": "shaders\\WorldEdit.shaders\r\nx64\\Debug\\shaders\r\nsrc\\graphics\\shaders\r\nsrc\\graphics\\shader_list.cpp\r\nthird_party\\dxc\\bin\\x64\\dxc.exe",
+      "workingDirectory": "..\\..\\",
+      "remoteDebugEnabled": false
+    }
+  }
+}

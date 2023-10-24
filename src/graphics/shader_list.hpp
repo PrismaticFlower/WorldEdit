@@ -1,11 +1,11 @@
 #pragma once
 
-#include "shader_library.hpp"
+#include "shaders/shader_def.hpp"
 
 #include <initializer_list>
 
 namespace we::graphics {
 
-extern std::initializer_list<shader_description> shader_list;
+extern std::initializer_list<shader_def> shader_list;
 
 }

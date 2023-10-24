@@ -254,6 +254,57 @@
     <ClCompile Include="src\graphics\cull_objects.cpp" />
     <ClCompile Include="src\graphics\profiler.cpp" />
     <ClCompile Include="src\graphics\renderer.cpp" />
+    <ClCompile Include="src\graphics\shaders\ai_overlay_applyPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\ai_overlay_applyVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\ai_overlay_shapeVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
+    <ClCompile Include="src\graphics\shaders\imguiPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\imguiVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meshVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_basicPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_basic_lightingPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_depth_cutoutPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_depth_prepassVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_normalPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_shadowVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_shadow_cutoutPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_shadow_cutoutVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframeVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackGS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_drawPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_linePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_lineVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_outlinedPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackGS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_primitiveVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_shapeVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_shape_outlinedVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_sphereVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_wireframePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_wireframe_GS_fallbackGS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_wireframe_GS_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\resample_env_mapPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\resample_env_mapVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\sky_meshPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\sky_meshVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_basicPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_cut_mesh_clearVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_lightingPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_normalPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_patchVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_downsamplePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_downsampleVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_meshPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_meshVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_mesh_alpha_cutoutPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\tile_lightsPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\tile_lightsVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\tile_lights_clearCS.cpp" />
+    <ClCompile Include="src\graphics\shaders\waterPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\waterVS.cpp" />
     <ClCompile Include="src\graphics\shadow_camera.cpp" />
     <ClCompile Include="src\graphics\sky.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
@@ -451,6 +502,7 @@
     <ClInclude Include="src\graphics\renderer.hpp" />
     <ClInclude Include="src\graphics\root_signature_library.hpp" />
     <ClInclude Include="src\graphics\sampler_list.hpp" />
+    <ClInclude Include="src\graphics\shaders\shader_def.hpp" />
     <ClInclude Include="src\graphics\shader_library.hpp" />
     <ClInclude Include="src\graphics\shader_list.hpp" />
     <ClInclude Include="src\graphics\shadow_camera.hpp" />
@@ -606,6 +658,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <CustomBuild Include="shaders\WorldEdit.shaders">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tools\ShaderCompiler\ShaderCompiler.exe shaders\WorldEdit.shaders shaders\build src\graphics\shaders src\graphics\shader_list.cpp third_party\dxc\bin\x64\dxc.exe</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">SoManyShaders</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">tools\ShaderCompiler\ShaderCompiler.exe shaders\WorldEdit.shaders shaders\build src\graphics\shaders src\graphics\shader_list.cpp third_party\dxc\bin\x64\dxc.exe</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">
+      </Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">SoManyShaders</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tools\ShaderCompiler\ShaderCompiler.exe shaders\WorldEdit.shaders shaders\build src\graphics\shaders src\graphics\shader_list.cpp third_party\dxc\bin\x64\dxc.exe</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">SoManyShaders</Outputs>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">false</VerifyInputsAndOutputsExist>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</VerifyInputsAndOutputsExist>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+    </CustomBuild>
     <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
     <None Include="third_party\licenses\vcpkg.json" />
   </ItemGroup>
