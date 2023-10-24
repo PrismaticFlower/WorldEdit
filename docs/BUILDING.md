@@ -15,13 +15,11 @@ For simplicity a regular old Visual Studio solution and projects are used for bu
 - WorldEditApp
 - WorldEditTests
 
-The bulk of code resides in WorldEdit with tests for this code unsurprisingly being in WorldEditTests. WorldEditApp contains the UI and the code that creates other componenets and ties them together. The resulting executable from `WorldEditApp` will be placed into `bin/$Config/` while `WorldEditTests` will go into `tests/bin/`.
+The bulk of code resides in WorldEdit with tests for this code unsurprisingly being in WorldEditTests. WorldEditApp contains the UI and the code that creates other components and ties them together. The resulting executable from `WorldEditApp` will be placed into `bin/$Config/` while `WorldEditTests` will go into `tests/bin/`.
 
 ## Running
- `WorldEditApp.exe` depends on the folders `shaders` and `fonts` being on the current path in order to run. For convenience the Post Build task will copy these folders into the output folder. This let's you easilly run executable.
- 
-For launching from in Visual Studio though the work directory must be explicitly set (either to the correct `bin/` folder or to the solution's root folder), go into the project properties, Debugging and change Work Directory to `$(SolutionDir)`. Starting the project from Visual Studio should now work. `WorldEditApp.exe` also depends on the other contents of the `bin` folder (excluding `WorldEditTests.exe`).
+Running `WorldEdit.exe` is simple just find it in `bin/$Config/` and launch it. It has no dependencies except the DX12 Agility SDK runtime (and on up-to-date Windows 11 it shouldn't even need this) which is in the `./D3D12` (relative the the executable).
 
-The settings on the Debugging page are per-user and not synced into the Git repository, thus you must set them up yourself.
+While developing and debugging it maybe useful to make use of the `-project`, `-world` and `-gpu_debug_layer` command line arguments. See [command line.txt](./command%20line.txt).
 
 `WorldEditTests.exe` depends on it's current directory being the `tests` folder. The default Debugging settings should already be set to this so running directly from within Visual Studio should work.
