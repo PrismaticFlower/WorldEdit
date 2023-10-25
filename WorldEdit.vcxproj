@@ -567,6 +567,7 @@
       <FileType>CppHeader</FileType>
     </ClInclude>
     <ClInclude Include="src\utility\float16_packing.hpp" />
+    <ClInclude Include="src\utility\function_ptr.hpp" />
     <ClInclude Include="src\utility\implementation_storage.hpp" />
     <ClInclude Include="src\utility\look_for.hpp" />
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
