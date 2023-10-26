@@ -1837,6 +1837,11 @@ void world_edit::ui_show_world_selection_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing", "Move Selection")));
 
+      ImGui::Text("Move Selection with Cursor");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing",
+                                "Move Selection with Cursor")));
+
       ImGui::Text("Rotate Selection");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing", "Rotate Selection")));
