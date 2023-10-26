@@ -95,7 +95,7 @@ void world_edit::ui_show_world_explorer() noexcept
          _world_explorer_object_classes.clear();
 
          _asset_libraries.odfs.view_existing(
-            [&](const std::span<const assets::stable_string> assets) {
+            [&](const std::span<const assets::stable_string> assets) noexcept {
                _world_explorer_object_classes.reserve(assets.size());
 
                for (std::string_view asset : assets) {

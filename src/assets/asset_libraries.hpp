@@ -3,6 +3,7 @@
 #include "asset_stable_string.hpp"
 #include "lowercase_string.hpp"
 #include "utility/event_listener.hpp"
+#include "utility/function_ptr.hpp"
 #include "utility/implementation_storage.hpp"
 
 #include <functional>
@@ -95,7 +96,7 @@ struct library {
    /// @brief Allows you to view a span of existing (on disk) assets. A shared lock is taken on the underlying data as such `add` or `clear` must not be called from within the callback.
    /// @param callback The function to call with a span of existing assets. The strings will be valid until clear is called.
    void view_existing(
-      std::move_only_function<void(const std::span<const stable_string> assets)> callback) noexcept;
+      function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept;
 
    /// @brief Query the file path of an asset.
    /// @param name The name of the asset.

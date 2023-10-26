@@ -32,8 +32,11 @@ struct function_ptr<R(Args...) noexcept> {
    /// @brief Construct an empty function_ptr. Trying to call this will be exciting.
    function_ptr() = default;
 
-   function_ptr(const function_ptr&) = delete;
+   function_ptr(const function_ptr&) = default;
    function_ptr(function_ptr&&) = delete;
+
+   auto operator=(const function_ptr&) -> function_ptr& = delete;
+   auto operator=(function_ptr&&) -> function_ptr& = delete;
 
    /// @brief Construct a function_ptr from a callable object, like a lambda
    /// @tparam T The type of the callable.

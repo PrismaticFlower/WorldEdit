@@ -238,7 +238,7 @@ struct library<T>::impl {
    }
 
    void view_existing(
-      std::move_only_function<void(const std::span<const stable_string> assets)> callback) noexcept
+      function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept
    {
       if (not _existing_assets_sorted.exchange(true)) {
          std::scoped_lock lock{_existing_assets_mutex};
@@ -443,9 +443,9 @@ void library<T>::clear() noexcept
 
 template<typename T>
 void library<T>::view_existing(
-   std::move_only_function<void(const std::span<const stable_string> assets)> callback) noexcept
+   function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept
 {
-   self->view_existing(std::move(callback));
+   self->view_existing(callback);
 }
 
 template<typename T>

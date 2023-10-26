@@ -161,7 +161,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             std::size_t matching_count = 0;
 
             _asset_libraries.odfs.view_existing(
-               [&](const std::span<const assets::stable_string> assets) {
+               [&](const std::span<const assets::stable_string> assets) noexcept {
                   for (const std::string_view asset : assets) {
                      if (matching_count == entries.size()) break;
                      if (not asset.contains(object.class_name)) {
@@ -506,7 +506,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             std::size_t matching_count = 0;
 
             _asset_libraries.textures.view_existing(
-               [&](const std::span<const assets::stable_string> assets) {
+               [&](const std::span<const assets::stable_string> assets) noexcept {
                   for (const std::string_view asset : assets) {
                      if (matching_count == entries.size()) break;
                      if (not asset.contains(light.texture)) {
