@@ -13,7 +13,7 @@
 namespace we::graphics::gpu::detail {
 
 struct command_allocator_pool {
-   auto try_aquire(std::atomic_uint64_t& current_frame, ID3D12Fence& frame_fence)
+   auto try_aquire(const uint64 current_frame, const uint64 frame_pipeline_length)
       -> utility::com_ptr<ID3D12CommandAllocator>
    {
 #ifndef NDEBUG
@@ -22,7 +22,7 @@ struct command_allocator_pool {
 
       for (auto allocator_it = _allocators.begin();
            allocator_it != _allocators.end(); ++allocator_it) {
-         if (allocator_it->frame_used == current_frame.load(std::memory_order_acquire)) {
+         if (allocator_it->frame_used == current_frame) {
             utility::com_ptr<ID3D12CommandAllocator> allocator =
                std::move(allocator_it->command_allocator);
 
@@ -30,7 +30,7 @@ struct command_allocator_pool {
 
             return allocator;
          }
-         else if (frame_fence.GetCompletedValue() >= allocator_it->frame_used) {
+         else if (current_frame - frame_pipeline_length >= allocator_it->frame_used) {
             utility::com_ptr<ID3D12CommandAllocator> allocator =
                std::move(allocator_it->command_allocator);
 
@@ -45,15 +45,13 @@ struct command_allocator_pool {
       return nullptr;
    }
 
-   void add(utility::com_ptr<ID3D12CommandAllocator> allocator,
-            std::atomic_uint64_t& current_frame)
+   void add(utility::com_ptr<ID3D12CommandAllocator> allocator, const uint64 current_frame)
    {
 #ifndef NDEBUG
       exclusivity_assert exclusivity_assert{std::atomic_ref{_other_thread_using}};
 #endif
 
-      _allocators.emplace_back(std::move(allocator),
-                               current_frame.load(std::memory_order_acquire));
+      _allocators.emplace_back(std::move(allocator), current_frame);
    }
 
    void view_and_clear(std::invocable<utility::com_ptr<ID3D12CommandAllocator>> auto viewer)

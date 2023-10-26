@@ -1512,7 +1512,7 @@ void command_queue::execute_command_lists(std::span<command_list*> command_lists
 
    for (command_list* list : command_lists) {
       list->state->allocator_pool.add(std::exchange(list->state->command_allocator, nullptr),
-                                      state->device->current_frame);
+                                      state->device->current_frame.load());
    }
 }
 
@@ -1781,8 +1781,8 @@ auto command_list::operator=(command_list&& other) noexcept -> command_list& = d
 [[msvc::forceinline]] void command_list::reset_common()
 {
    state->command_allocator =
-      state->allocator_pool.try_aquire(state->device_state->current_frame,
-                                       *state->device_state->frame_fence);
+      state->allocator_pool.try_aquire(state->device_state->current_frame.load(),
+                                       frame_pipeline_length);
 
    if (not state->command_allocator) {
       throw_if_fail(state->device_state->device->CreateCommandAllocator(
