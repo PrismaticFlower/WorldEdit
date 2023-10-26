@@ -128,6 +128,9 @@ void world_edit::initialize_commands() noexcept
       _selection_edit_tool = selection_edit_tool::move;
       _move_selection_amount = {0.0f, 0.0f, 0.0f};
    });
+   _commands.add("entity_edit.move_selection_with_cursor"s, [this] {
+      _selection_edit_tool = selection_edit_tool::move_with_cursor;
+   });
    _commands.add("entity_edit.rotate_selection"s, [this] {
       _selection_edit_tool = selection_edit_tool::rotate;
       _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
@@ -139,6 +142,8 @@ void world_edit::initialize_commands() noexcept
       _rotate_selection_centre =
          world::selection_centre_for_rotate_around(_world, _interaction_targets.selection);
    });
+   _commands.add("entity_edit.clear_selection_edit_tool"s,
+                 [this] { _selection_edit_tool = selection_edit_tool::none; });
    _commands.add("entity_edit.align_selection"s, [this] { align_selection(); });
    _commands.add("entity_edit.hide_selection"s, [this] { hide_selection(); });
    _commands.add("entity_edit.ground_selection"s, [this] { ground_selection(); });
@@ -383,6 +388,9 @@ void world_edit::initialize_hotkeys() noexcept
        .activated = [this] { return not _interaction_targets.selection.empty(); },
        .default_hotkeys{
           {"Move Selection", "entity_edit.move_selection", {.key = key::z}},
+          {"Move Selection with Cursor",
+           "entity_edit.move_selection_with_cursor",
+           {.key = key::z, .modifiers = {.shift = true}}},
           {"Rotate Selection", "entity_edit.rotate_selection", {.key = key::x}},
           {"Rotate Selection Around Centre",
            "entity_edit.rotate_selection_around_centre",
@@ -586,6 +594,21 @@ void world_edit::initialize_hotkeys() noexcept
              "entity_edit.add_sector_object",
              {.key = key::mouse1, .modifiers = {.shift = true}}},
             {"Cancel Add Object", "entity_edit.cancel_add_sector_object", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Editing (Move Selection with Cursor)",
+      .activated =
+         [this] {
+            return _selection_edit_tool == selection_edit_tool::move_with_cursor;
+         },
+      .default_hotkeys =
+         {
+            {"Finish", "entity_edit.clear_selection_edit_tool", {.key = key::mouse1}},
+            {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
          },
 
       .hidden = true,

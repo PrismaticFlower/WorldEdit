@@ -51,6 +51,7 @@ enum class placement_resize_mode : uint8 { off, extend, shrink };
 enum class selection_edit_tool : uint8 {
    none,
    move,
+   move_with_cursor,
    move_path,
    move_sector_point,
    rotate,
@@ -132,6 +133,8 @@ private:
    void ui_show_camera_controls() noexcept;
 
    void ui_show_world_selection_move() noexcept;
+
+   void ui_show_world_selection_move_with_cursor() noexcept;
 
    void ui_show_world_selection_move_path() noexcept;
 
@@ -429,6 +432,8 @@ private:
    world::sector_id _move_sector_point_id = {};
    std::size_t _move_sector_point_index = 0;
    int16 _selection_set_layer = 0;
+   bool _selection_cursor_move_ground_with_bbox = true;
+   world::active_entity_types _selection_cursor_move_hit_mask;
 
    float2 _select_start_position;
 

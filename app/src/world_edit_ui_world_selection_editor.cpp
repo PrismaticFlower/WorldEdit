@@ -1787,6 +1787,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
          _move_selection_amount = {0.0f, 0.0f, 0.0f};
       }
 
+      if (ImGui::Button("Move Selection with Cursor", {ImGui::CalcItemWidth(), 0.0f})) {
+         _selection_edit_tool = selection_edit_tool::move_with_cursor;
+      }
+
       if (ImGui::Button("Rotate Selection", {ImGui::CalcItemWidth(), 0.0f})) {
          _selection_edit_tool = selection_edit_tool::rotate;
          _rotate_selection_amount = {0.0f, 0.0f, 0.0f};

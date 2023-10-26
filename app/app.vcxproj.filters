@@ -28,6 +28,7 @@
     <ClCompile Include="src\world_edit_ui_about_window.cpp" />
     <ClCompile Include="src\world_edit_ui_object_class_browser.cpp" />
     <ClCompile Include="src\world_edit_ui_render_env_map.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_move_with_cursor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

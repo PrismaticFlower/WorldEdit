@@ -78,6 +78,10 @@ void world_edit::update_ui() noexcept
       ui_show_world_selection_move();
    }
 
+   if (_selection_edit_tool == selection_edit_tool::move_with_cursor) {
+      ui_show_world_selection_move_with_cursor();
+   }
+
    if (_selection_edit_tool == selection_edit_tool::move_path) {
       ui_show_world_selection_move_path();
    }
