@@ -18,9 +18,13 @@ auto ground_bbox(const float3 position, const math::bounding_box bbox,
 
    const float3 ray_origin = {position.x, bbox.min.y, position.z};
 
+   const auto raycast_filter = [ignore_object](const object& object) noexcept {
+      return object.id != ignore_object;
+   };
+
    if (std::optional<raycast_result<object>> hit =
           raycast(ray_origin, {0.0f, -1.0f, 0.0f}, active_layers, world.objects,
-                  object_classes, ignore_object);
+                  object_classes, raycast_filter);
        hit) {
       if (hit->distance < hit_distance) {
          hit_distance = hit->distance;
@@ -35,7 +39,7 @@ auto ground_bbox(const float3 position, const math::bounding_box bbox,
    if (hit_distance == std::numeric_limits<float>::max()) {
       if (std::optional<raycast_result<object>> hit =
              raycast(ray_origin, {0.0f, 1.0f, 0.0f}, active_layers,
-                     world.objects, object_classes, ignore_object);
+                     world.objects, object_classes, raycast_filter);
           hit) {
          if (hit->distance < hit_distance) {
             hit_distance = hit->distance;

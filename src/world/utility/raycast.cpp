@@ -13,7 +13,7 @@ namespace we::world {
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const object> objects,
              const object_class_library& object_classes,
-             std::optional<object_id> ignore_object) noexcept
+             function_ptr<bool(const object&) noexcept> filter) noexcept
    -> std::optional<raycast_result<object>>
 {
    using namespace assets;
@@ -25,7 +25,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& object : objects) {
       if (not active_layers[object.layer]) continue;
       if (object.hidden) continue;
-      if (object.id == ignore_object) continue;
+      if (filter and not filter(object)) continue;
 
       quaternion inverse_object_rotation = conjugate(object.rotation);
 
@@ -66,7 +66,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             const active_layers active_layers, std::span<const light> lights) noexcept
+             const active_layers active_layers, std::span<const light> lights,
+             function_ptr<bool(const light&) noexcept> filter) noexcept
    -> std::optional<raycast_result<light>>
 {
    std::optional<light_id> hit;
@@ -75,6 +76,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& light : lights) {
       if (not active_layers[light.layer]) continue;
       if (light.hidden) continue;
+      if (filter and not filter(light)) continue;
 
       if (light.light_type == light_type::directional) {
          const float intersection =
@@ -179,7 +181,9 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              const active_layers active_layers, std::span<const path> paths,
-             const float node_size) noexcept -> std::optional<raycast_result<path>>
+             const float node_size,
+             function_ptr<bool(const path&, uint32) noexcept> filter) noexcept
+   -> std::optional<raycast_result<path>>
 {
    std::optional<path_id> hit;
    std::size_t hit_node = 0;
@@ -189,7 +193,9 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (not active_layers[path.layer]) continue;
       if (path.hidden) continue;
 
-      for (std::size_t i = 0; i < path.nodes.size(); ++i) {
+      for (uint32 i = 0; i < path.nodes.size(); ++i) {
+         if (filter and not filter(path, i)) continue;
+
          const path::node& node = path.nodes[i];
 
          const float intersection =
@@ -212,7 +218,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             const active_layers active_layers, std::span<const region> regions) noexcept
+             const active_layers active_layers, std::span<const region> regions,
+             function_ptr<bool(const region&) noexcept> filter) noexcept
    -> std::optional<raycast_result<region>>
 {
    std::optional<region_id> hit;
@@ -221,6 +228,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& region : regions) {
       if (not active_layers[region.layer]) continue;
       if (region.hidden) continue;
+      if (filter and not filter(region)) continue;
 
       if (region.shape == region_shape::box) {
          quaternion inverse_light_region_rotation = conjugate(region.rotation);
@@ -280,7 +288,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const sector> sectors) noexcept
+             std::span<const sector> sectors,
+             function_ptr<bool(const sector&) noexcept> filter) noexcept
    -> std::optional<raycast_result<sector>>
 {
    std::optional<sector_id> hit;
@@ -289,6 +298,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& sector : sectors) {
       if (sector.hidden) continue;
+      if (filter and not filter(sector)) continue;
 
       for (std::size_t i = 0; i < sector.points.size(); ++i) {
          const float2 a = sector.points[i];
@@ -321,7 +331,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const portal> portals) noexcept
+             std::span<const portal> portals,
+             function_ptr<bool(const portal&) noexcept> filter) noexcept
    -> std::optional<raycast_result<portal>>
 {
    std::optional<portal_id> hit;
@@ -329,6 +340,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& portal : portals) {
       if (portal.hidden) continue;
+      if (filter and not filter(portal)) continue;
 
       const float half_width = portal.width * 0.5f;
       const float half_height = portal.height * 0.5f;
@@ -361,7 +373,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             const active_layers active_layers, std::span<const hintnode> hintnodes) noexcept
+             const active_layers active_layers, std::span<const hintnode> hintnodes,
+             function_ptr<bool(const hintnode&) noexcept> filter) noexcept
    -> std::optional<raycast_result<hintnode>>
 {
    std::optional<hintnode_id> hit;
@@ -370,6 +383,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    for (auto& hintnode : hintnodes) {
       if (not active_layers[hintnode.layer]) continue;
       if (hintnode.hidden) continue;
+      if (filter and not filter(hintnode)) continue;
 
       const float bounding_intersection =
          sphIntersect(ray_origin, ray_direction, hintnode.position, 2.0f);
@@ -419,7 +433,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const barrier> barriers, const float barrier_height) noexcept
+             std::span<const barrier> barriers, const float barrier_height,
+             function_ptr<bool(const barrier&) noexcept> filter) noexcept
    -> std::optional<raycast_result<barrier>>
 {
    std::optional<barrier_id> hit;
@@ -427,6 +442,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& barrier : barriers) {
       if (barrier.hidden) continue;
+      if (filter and not filter(barrier)) continue;
 
       float4x4 world_to_box = transpose(
          make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f}));
@@ -453,7 +469,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const planning_hub> hubs, const float hub_height) noexcept
+             std::span<const planning_hub> hubs, const float hub_height,
+             function_ptr<bool(const planning_hub&) noexcept> filter) noexcept
    -> std::optional<raycast_result<planning_hub>>
 {
    std::optional<planning_hub_id> hit;
@@ -461,6 +478,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& hub : hubs) {
       if (hub.hidden) continue;
+      if (filter and not filter(hub)) continue;
 
       const float3 top_position = hub.position + float3{0.0f, hub_height, 0.0f};
       const float3 bottom_position = hub.position + float3{0.0f, -hub_height, 0.0f};
@@ -484,7 +502,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
              std::span<const planning_connection> connections,
-             std::span<const planning_hub> hubs, const float connection_height) noexcept
+             std::span<const planning_hub> hubs, const float connection_height,
+             function_ptr<bool(const planning_connection&) noexcept> filter) noexcept
    -> std::optional<raycast_result<planning_connection>>
 {
    std::optional<planning_connection_id> hit;
@@ -492,6 +511,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& connection : connections) {
       if (connection.hidden) continue;
+      if (filter and not filter(connection)) continue;
 
       const planning_hub& start = hubs[connection.start_hub_index];
       const planning_hub& end = hubs[connection.end_hub_index];
@@ -560,7 +580,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
-             std::span<const boundary> boundaries, const float boundary_height) noexcept
+             std::span<const boundary> boundaries, const float boundary_height,
+             function_ptr<bool(const boundary&) noexcept> filter) noexcept
    -> std::optional<raycast_result<boundary>>
 {
    std::optional<boundary_id> hit;
@@ -568,6 +589,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 
    for (auto& boundary : boundaries) {
       if (boundary.hidden) continue;
+      if (filter and not filter(boundary)) continue;
 
       const std::array<float2, 12> nodes = get_boundary_nodes(boundary);
 
