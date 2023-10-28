@@ -67,9 +67,10 @@ void run_application(command_line command_line)
       [&] { UnregisterClassW(window_class_name, current_instance); });
 
    const wil::unique_hwnd window_handle{
-      CreateWindowExW(WS_EX_APPWINDOW, window_class_name, window_name,
-                      WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                      CW_USEDEFAULT, nullptr, nullptr, current_instance, nullptr)};
+      CreateWindowExW(WS_EX_APPWINDOW | WS_EX_NOREDIRECTIONBITMAP,
+                      window_class_name, window_name, WS_OVERLAPPEDWINDOW,
+                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                      nullptr, nullptr, current_instance, nullptr)};
 
    if (window_handle == nullptr) std::terminate();
 

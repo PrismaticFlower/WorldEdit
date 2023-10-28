@@ -22,6 +22,9 @@ auto load_bindings(const std::wstring_view path)
       for (const auto [line_number, line] : string::lines_iterator{string}) {
          if (line.starts_with("set")) {
             current_set = string::split_first_of_exclusive(line, " ")[1];
+
+            // Compatibility shim to avoid breaking peoples bindings.
+            if (current_set.empty()) current_set = "Global";
          }
          else {
             auto [name, bind_string] = string::split_first_of_exclusive(line, "=");

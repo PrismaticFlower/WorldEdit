@@ -13,6 +13,8 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
+struct ImFont;
+
 namespace we {
 
 struct hotkey_modifiers {
@@ -175,6 +177,7 @@ private:
    std::ptrdiff_t _user_editing_bind_set = 0;
    std::optional<hotkey_bind> _user_editing_bind;
    hotkey _user_editing_hotkey;
+   key _user_swapping_key = key::void_key;
 
    container::enum_array<key_state, key> _keys{};
 

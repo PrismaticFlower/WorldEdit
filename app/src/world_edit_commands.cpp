@@ -286,7 +286,7 @@ void world_edit::initialize_commands() noexcept
 void world_edit::initialize_hotkeys() noexcept
 {
    _hotkeys.add_set(
-      {.name = "",
+      {.name = "Global",
        .description = "Global hotkeys. These are always active.\n\nThese "
                       "bindings have a lower priority than any other set."s,
        .activated = [] { return true; },

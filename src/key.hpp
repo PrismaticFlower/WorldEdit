@@ -141,4 +141,9 @@ auto get_display_string(const key key, const bool ctrl, const bool shift,
 bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
                           bool& out_shift, bool& out_alt);
 
+/// @brief Gets the abbreviated name of a key as it would appear on a keyboard.
+/// @param key The key.
+/// @return The C string for passing to ImGui for display.
+auto get_key_name(const key key) -> const char*;
+
 }

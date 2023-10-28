@@ -52,7 +52,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          if (ImGui::MenuItem("Save World",
                              get_display_string(
-                                _hotkeys.query_binding("", "Save")))) {
+                                _hotkeys.query_binding("Global", "Save")))) {
             save_world(_world_path);
          }
 
@@ -70,12 +70,14 @@ void world_edit::ui_show_main_menu_bar() noexcept
       }
 
       if (ImGui::BeginMenu("Edit")) {
-         if (ImGui::MenuItem("Undo", get_display_string(
-                                        _hotkeys.query_binding("", "Undo")))) {
+         if (ImGui::MenuItem("Undo",
+                             get_display_string(
+                                _hotkeys.query_binding("Global", "Undo")))) {
             undo();
          }
-         if (ImGui::MenuItem("Redo", get_display_string(
-                                        _hotkeys.query_binding("", "Redo")))) {
+         if (ImGui::MenuItem("Redo",
+                             get_display_string(
+                                _hotkeys.query_binding("Global", "Redo")))) {
             redo();
          }
 
@@ -83,7 +85,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          if (ImGui::MenuItem("Delete",
                              get_display_string(
-                                _hotkeys.query_binding("", "Delete")))) {
+                                _hotkeys.query_binding("Global", "Delete")))) {
             delete_selected();
          }
 
@@ -110,7 +112,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
       if (ImGui::BeginMenu("View")) {
          ImGui::MenuItem("Hotkeys",
                          get_display_string(
-                            _hotkeys.query_binding("", "Show Hotkeys")),
+                            _hotkeys.query_binding("Global", "Show Hotkeys")),
                          &_hotkeys_view_show);
 
          if (ImGui::IsItemHovered()) {
@@ -120,40 +122,43 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::MenuItem("Camera Controls",
                          get_display_string(
-                            _hotkeys.query_binding("", "Show Camera Controls")),
+                            _hotkeys.query_binding("Global",
+                                                   "Show Camera Controls")),
                          &_camera_controls_open);
 
          ImGui::Separator();
 
          ImGui::MenuItem("World Global Lights Editor",
                          get_display_string(_hotkeys.query_binding(
-                            "", "Show World Global Lights Editor")),
+                            "Global", "Show World Global Lights Editor")),
                          &_world_global_lights_editor_open);
 
          ImGui::MenuItem("World Layers Editor",
                          get_display_string(
-                            _hotkeys.query_binding("",
+                            _hotkeys.query_binding("Global",
                                                    "Show World Layers Editor")),
                          &_world_layers_editor_open);
 
          ImGui::MenuItem("World Game Mode Editor",
                          get_display_string(_hotkeys.query_binding(
-                            "", "Show World Game Mode Editor")),
+                            "Global", "Show World Game Mode Editor")),
                          &_world_game_mode_editor_open);
 
          ImGui::MenuItem("World Requirements (.req) Editor",
                          get_display_string(_hotkeys.query_binding(
-                            "", "Show World Requirements Editor")),
+                            "Global", "Show World Requirements Editor")),
                          &_world_requirements_editor_open);
 
          ImGui::MenuItem("World Explorer",
                          get_display_string(
-                            _hotkeys.query_binding("", "Show World Explorer")),
+                            _hotkeys.query_binding("Global",
+                                                   "Show World Explorer")),
                          &_world_explorer_open);
 
          ImGui::MenuItem("World Stats",
                          get_display_string(
-                            _hotkeys.query_binding("", "Show World Stats")),
+                            _hotkeys.query_binding("Global",
+                                                   "Show World Stats")),
                          &_world_stats_open);
 
          if (ImGui::IsItemHovered()) {
@@ -163,14 +168,14 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::MenuItem("Object Class Browser",
                          get_display_string(_hotkeys.query_binding(
-                            "", "Show Object Class Browser")),
+                            "Global", "Show Object Class Browser")),
                          &_object_class_browser_open);
 
          ImGui::Separator();
 
          ImGui::MenuItem("Render Environment Map",
                          get_display_string(
-                            _hotkeys.query_binding("",
+                            _hotkeys.query_binding("Global",
                                                    "Render Environment Map")),
                          &_render_env_map_open);
 

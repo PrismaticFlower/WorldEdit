@@ -5,6 +5,7 @@
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
+#include <span>
 
 #include <imgui.h>
 
@@ -34,6 +35,189 @@ constexpr bool is_keyboard_key(const key key) noexcept
 {
    return not is_mouse_key(key);
 }
+
+enum class sizing_desc : uint8 {
+   normal,
+   fn_spacing,
+   backspace,
+   tab,
+   caps_lock,
+   enter,
+   lshift,
+   rshift,
+   ctrl_alt,
+   menu,
+   spacebar,
+   section_split,
+   numpad_0,
+};
+
+struct keyboard_entry {
+   key key = key::void_key;
+   sizing_desc sizing = sizing_desc::normal;
+};
+
+constexpr keyboard_entry keyboard_row0[] = {
+   {key::escape},
+   {key::void_key},
+   {key::f1},
+   {key::f2},
+   {key::f3},
+   {key::f4},
+   {key::void_key, sizing_desc::fn_spacing},
+   {key::f5},
+   {key::f6},
+   {key::f7},
+   {key::f8},
+   {key::void_key, sizing_desc::fn_spacing},
+   {key::f9},
+   {key::f10},
+   {key::f11},
+   {key::f12},
+   {key::void_key, sizing_desc::section_split},
+   {key::print_screen},
+   {key::scroll_lock},
+   {key::pause},
+};
+
+constexpr keyboard_entry keyboard_row1[] = {
+   {key::grave_accent},
+   {key::_1},
+   {key::_2},
+   {key::_3},
+   {key::_4},
+   {key::_5},
+   {key::_6},
+   {key::_7},
+   {key::_8},
+   {key::_9},
+   {key::_0},
+   {key::minus},
+   {key::equal},
+   {key::backspace, sizing_desc::backspace},
+   {key::void_key, sizing_desc::section_split},
+   {key::insert},
+   {key::home},
+   {key::page_up},
+   {key::void_key, sizing_desc::section_split},
+   {key::num_lock},
+   {key::numpad_divide},
+   {key::numpad_multiply},
+   {key::numpad_subtract},
+};
+
+constexpr keyboard_entry keyboard_row2[] = {
+   {key::tab, sizing_desc::tab},
+   {key::q},
+   {key::w},
+   {key::e},
+   {key::r},
+   {key::t},
+   {key::y},
+   {key::u},
+   {key::i},
+   {key::o},
+   {key::p},
+   {key::left_bracket},
+   {key::right_bracket},
+   {key::backslash, sizing_desc::tab},
+   {key::void_key, sizing_desc::section_split},
+   {key::del},
+   {key::end},
+   {key::page_down},
+   {key::void_key, sizing_desc::section_split},
+   {key::numpad_7},
+   {key::numpad_8},
+   {key::numpad_9},
+   {key::numpad_add},
+};
+
+constexpr keyboard_entry keyboard_row3[] = {
+   {key::caps_lock, sizing_desc::caps_lock}, //
+   {key::a},
+   {key::s},
+   {key::d},
+   {key::f},
+   {key::g},
+   {key::h},
+   {key::j},
+   {key::k},
+   {key::l},
+   {key::semicolon},
+   {key::apostrophe},
+   {key::enter, sizing_desc::enter},
+   {key::void_key, sizing_desc::section_split},
+   {key::void_key},
+   {key::void_key},
+   {key::void_key},
+   {key::void_key, sizing_desc::section_split},
+   {key::numpad_4},
+   {key::numpad_5},
+   {key::numpad_6},
+};
+
+constexpr keyboard_entry keyboard_row4[] = {
+   {key::shift, sizing_desc::lshift},
+   {key::z},
+   {key::x},
+   {key::c},
+   {key::v},
+   {key::b},
+   {key::n},
+   {key::m},
+   {key::comma},
+   {key::period},
+   {key::slash},
+   {key::shift, sizing_desc::rshift},
+   {key::void_key, sizing_desc::section_split},
+   {key::void_key},
+   {key::up_arrow},
+   {key::void_key},
+   {key::void_key, sizing_desc::section_split},
+   {key::numpad_1},
+   {key::numpad_2},
+   {key::numpad_3},
+};
+
+constexpr keyboard_entry keyboard_row5[] = {
+   {key::ctrl, sizing_desc::ctrl_alt},
+   {key::alt, sizing_desc::ctrl_alt},
+   {key::space, sizing_desc::spacebar},
+   {key::alt, sizing_desc::ctrl_alt},
+   {key::menu, sizing_desc::menu},
+   {key::ctrl, sizing_desc::ctrl_alt},
+   {key::void_key, sizing_desc::section_split},
+   {key::left_arrow},
+   {key::down_arrow},
+   {key::right_arrow},
+   {key::void_key, sizing_desc::section_split},
+   {key::numpad_0, sizing_desc::numpad_0},
+   {key::numpad_decimal},
+};
+
+constexpr std::array<std::span<const keyboard_entry>, 6> keyboard_rows =
+   {keyboard_row0, keyboard_row1, keyboard_row2,
+    keyboard_row3, keyboard_row4, keyboard_row5};
+
+constexpr key mouse_row_0[] = {key::void_key, key::mouse_wheel_forward,
+                               key::void_key, key::mouse4};
+constexpr key mouse_row_1[] = {key::mouse1, key::mouse3, key::mouse2};
+constexpr key mouse_row_2[] = {key::void_key, key::mouse_wheel_back,
+                               key::void_key, key::mouse5};
+
+constexpr std::array<std::span<const key>, 3> mouse_rows = {mouse_row_0, mouse_row_1,
+                                                            mouse_row_2};
+
+constexpr std::array<hotkey_modifiers, 8> modifier_variations = {
+   hotkey_modifiers{.ctrl = false, .shift = false, .alt = false},
+   hotkey_modifiers{.ctrl = true, .shift = false, .alt = false},
+   hotkey_modifiers{.ctrl = false, .shift = true, .alt = false},
+   hotkey_modifiers{.ctrl = true, .shift = true, .alt = false},
+   hotkey_modifiers{.ctrl = false, .shift = false, .alt = true},
+   hotkey_modifiers{.ctrl = true, .shift = false, .alt = true},
+   hotkey_modifiers{.ctrl = false, .shift = true, .alt = true},
+   hotkey_modifiers{.ctrl = true, .shift = true, .alt = true},
+};
 
 }
 
@@ -320,8 +504,212 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
 {
    ImGui::SetNextWindowSize({960.0f * display_scale, 540.0f * display_scale},
                             ImGuiCond_Once);
+   const ImVec2 imgui_center = ImGui::GetMainViewport()->GetCenter();
+   ImGui::SetNextWindowPos(imgui_center, ImGuiCond_FirstUseEver, {0.5f, 0.5f});
 
    if (ImGui::Begin("Hotkeys Editor", &window_open)) {
+      if (ImGui::CollapsingHeader("Keys Overview", ImGuiTreeNodeFlags_DefaultOpen)) {
+         bool open_swap_bindings_popup = false;
+
+         ImGui::SeparatorText("Keyboard");
+
+         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0.0f, 0.0f});
+
+         for (int i = 0; i < keyboard_rows.size(); ++i) {
+            if (i == 1) ImGui::Dummy({1.0f, 1.0f});
+
+            const float key_height = 32.0f * display_scale;
+
+            for (const auto& [key, sizing] : keyboard_rows[i]) {
+               float width = 32.0f * display_scale;
+
+               if (sizing == sizing_desc::fn_spacing) {
+                  width = width / 2.0f - ImGui::GetStyle().ItemSpacing.x * 0.5f;
+               }
+               else if (sizing == sizing_desc::backspace) {
+                  width = width * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+               }
+               else if (sizing == sizing_desc::tab) {
+                  width = width + (width / 2.0f) +
+                          ImGui::GetStyle().ItemSpacing.x * 0.5f;
+               }
+               else if (sizing == sizing_desc::caps_lock) {
+                  width = width + (width / 2.0f) +
+                          ImGui::GetStyle().ItemSpacing.x * 1.5f;
+               }
+               else if (sizing == sizing_desc::enter) {
+                  width = width * 2.5f + ImGui::GetStyle().ItemSpacing.x * 0.5f;
+               }
+               else if (sizing == sizing_desc::lshift) {
+                  width = width * 2.0f + ImGui::GetStyle().ItemSpacing.x * 2.0f;
+               }
+               else if (sizing == sizing_desc::rshift) {
+                  width = width * 3.0f + ImGui::GetStyle().ItemSpacing.x * 1.0f;
+               }
+               else if (sizing == sizing_desc::ctrl_alt) {
+                  width = width * 2.0f;
+               }
+               else if (sizing == sizing_desc::menu) {
+                  width = width * 1.5f;
+               }
+               else if (sizing == sizing_desc::spacebar) {
+
+                  width = width * 5.5f + ImGui::GetStyle().ItemSpacing.x * 9.0f;
+               }
+               else if (sizing == sizing_desc::section_split) {
+                  width = width / 4.0f;
+               }
+               else if (sizing == sizing_desc::numpad_0) {
+                  width = width * 2.0f + ImGui::GetStyle().ItemSpacing.x;
+               }
+
+               width = std::floor(width);
+
+               if (key == key::void_key) {
+                  ImGui::Dummy({width, key_height});
+               }
+               else {
+                  const bool has_bindings = [&] {
+                     for (const hotkey_set& set : _hotkey_sets) {
+                        for (const hotkey_modifiers& modifiers : modifier_variations) {
+                           if (set.hidden) continue;
+
+                           if (set.bindings.size() > modifier_variations.size()) {
+                              if (set.bindings.contains(hotkey_bind{key, modifiers})) {
+                                 return true;
+                              }
+                           }
+                        }
+                     }
+
+                     return false;
+                  }();
+
+                  if (not has_bindings) ImGui::BeginDisabled();
+
+                  ImGui::PushID(static_cast<int>(key));
+
+                  if (ImGui::Button(get_key_name(key), {width, key_height})) {
+                     _user_swapping_key = key;
+                     open_swap_bindings_popup = true;
+                  }
+
+                  ImGui::PopID();
+
+                  if (not has_bindings) ImGui::EndDisabled();
+
+                  if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                     ImGui::SeparatorText(get_display_string(key, false, false, false));
+
+                     for (const hotkey_set& set : _hotkey_sets) {
+                        if (set.hidden) continue;
+
+                        for (const hotkey_modifiers& modifiers : modifier_variations) {
+                           if (auto it = set.bindings.find(hotkey_bind{key, modifiers});
+                               it != set.bindings.end()) {
+                              const auto& [bind, hotkey] = *it;
+
+                              ImGui::Text("%s: %s", set.name.c_str(),
+                                          hotkey.name.c_str());
+                              ImGui::BulletText(get_display_string(bind));
+                           }
+                        }
+                     }
+
+                     ImGui::EndTooltip();
+                  }
+               }
+
+               ImGui::SameLine();
+            }
+
+            ImGui::NewLine();
+         }
+
+         ImGui::PopStyleVar();
+
+         ImGui::SeparatorText("Mouse");
+
+         for (const auto& row : mouse_rows) {
+            const float key_width = 128.0f * display_scale;
+            const float key_height = 32.0f * display_scale;
+
+            for (const key key : row) {
+
+               if (key == key::void_key) {
+                  ImGui::Dummy({key_width, key_height});
+               }
+               else {
+                  const bool has_bindings = [&] {
+                     for (const hotkey_set& set : _hotkey_sets) {
+                        for (const hotkey_modifiers& modifiers : modifier_variations) {
+                           if (set.hidden) continue;
+
+                           if (set.bindings.size() > modifier_variations.size()) {
+                              if (set.bindings.contains(hotkey_bind{key, modifiers})) {
+                                 return true;
+                              }
+                           }
+                        }
+                     }
+
+                     return false;
+                  }();
+
+                  if (not has_bindings) ImGui::BeginDisabled();
+
+                  ImGui::PushID(static_cast<int>(key));
+
+                  if (ImGui::Button(get_key_name(key), {key_width, key_height})) {
+                     _user_swapping_key = key;
+                     open_swap_bindings_popup = true;
+                  }
+
+                  ImGui::PopID();
+
+                  if (not has_bindings) ImGui::EndDisabled();
+
+                  if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                     ImGui::SeparatorText(get_display_string(key, false, false, false));
+
+                     for (const hotkey_set& set : _hotkey_sets) {
+                        if (set.hidden) continue;
+
+                        for (const hotkey_modifiers& modifiers : modifier_variations) {
+                           if (auto it = set.bindings.find(hotkey_bind{key, modifiers});
+                               it != set.bindings.end()) {
+                              const auto& [bind, hotkey] = *it;
+
+                              ImGui::Text("%s: %s", set.name.c_str(),
+                                          hotkey.name.c_str());
+                              ImGui::BulletText(get_display_string(bind));
+                           }
+                        }
+                     }
+
+                     ImGui::EndTooltip();
+                  }
+               }
+
+               ImGui::SameLine();
+            }
+
+            ImGui::NewLine();
+         }
+
+         ImGui::SeparatorText("Key Swap");
+
+         ImGui::Text("You can swap the bindings of two keys by clicking one.");
+
+         if (open_swap_bindings_popup) {
+            _user_inputting_new_binding = true;
+
+            ImGui::OpenPopup("Swap Bindings");
+         }
+      }
+
+      bool open_new_binding_popup = false;
+
       for (int set_index = 0; set_index < std::ssize(_hotkey_sets); ++set_index) {
          hotkey_set& set = _hotkey_sets[set_index];
 
@@ -357,7 +745,7 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
                                    ImGui::SameLine();
 
                                    if (ImGui::Selectable(get_display_string(hotkey_bind))) {
-                                      _user_inputting_new_binding = true;
+                                      open_new_binding_popup = true;
                                       _user_editing_bind_set = set_index;
                                       _user_editing_bind = hotkey_bind;
                                       _user_editing_hotkey = hotkey;
@@ -368,7 +756,7 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
                                    ImGui::SameLine();
 
                                    if (ImGui::Selectable("<unbound>")) {
-                                      _user_inputting_new_binding = true;
+                                      open_new_binding_popup = true;
                                       _user_editing_bind_set = set_index;
                                       _user_editing_bind = std::nullopt;
                                       _user_editing_hotkey = *hotkey;
@@ -382,65 +770,139 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
          ImGui::PopStyleVar();
          ImGui::PopID();
       }
+
+      if (open_new_binding_popup) {
+         _user_inputting_new_binding = true;
+
+         ImGui::OpenPopup("Press New Binding");
+      }
+
+      ImGui::SetNextWindowPos(imgui_center, ImGuiCond_Appearing, {0.5f, 0.5f});
+
+      if (ImGui::BeginPopupModal("Press New Binding", &_user_inputting_new_binding,
+                                 ImGuiWindowFlags_AlwaysAutoResize)) {
+         ImGui::Text("Press Escape to cancel and go back.");
+
+         const std::optional<key_event> last_key_event =
+            std::exchange(_user_editing_last_key_event, std::nullopt);
+
+         if (last_key_event) {
+            if (last_key_event->key == key::escape and
+                last_key_event->new_state == key_state::up) {
+               _user_inputting_new_binding = false;
+
+               ImGui::CloseCurrentPopup();
+            }
+            else if (last_key_event->new_state == key_state::up and
+                     last_key_event->key != key::ctrl and
+                     last_key_event->key != key::shift and
+                     last_key_event->key != key::alt) {
+               hotkey_set& set = _hotkey_sets[_user_editing_bind_set];
+
+               if (_user_editing_bind) {
+                  set.bindings.erase(*_user_editing_bind);
+               }
+
+               const hotkey_bind new_bind{.key = last_key_event->key,
+                                          .modifiers = {.ctrl = is_key_down(key::ctrl),
+                                                        .shift = is_key_down(key::shift),
+                                                        .alt = is_key_down(key::alt)}};
+
+               if (set.bindings.contains(new_bind)) {
+                  set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
+                  set.query_bindings.erase(set.unbound_hotkeys.back().name);
+
+                  _saved_bindings[set.name].erase(set.unbound_hotkeys.back().name);
+               }
+
+               set.bindings[new_bind] = _user_editing_hotkey;
+               set.query_bindings[_user_editing_hotkey.name] = new_bind;
+
+               std::erase_if(set.unbound_hotkeys, [&](const hotkey& hotkey) {
+                  return hotkey == _user_editing_hotkey;
+               });
+
+               _user_inputting_new_binding = false;
+
+               ImGui::CloseCurrentPopup();
+
+               _saved_bindings[set.name][_user_editing_hotkey.name] = new_bind;
+
+               save_bindings(save_path, _saved_bindings);
+            }
+         }
+
+         ImGui::EndPopup();
+      }
+
+      ImGui::SetNextWindowPos(imgui_center, ImGuiCond_Appearing, {0.5f, 0.5f});
+
+      if (ImGui::BeginPopupModal("Swap Bindings", &_user_inputting_new_binding,
+                                 ImGuiWindowFlags_AlwaysAutoResize)) {
+         ImGui::Text("Press Escape to cancel and go back.");
+
+         const std::optional<key_event> last_key_event =
+            std::exchange(_user_editing_last_key_event, std::nullopt);
+
+         if (last_key_event) {
+            if (last_key_event->key == key::escape and
+                last_key_event->new_state == key_state::up) {
+               _user_inputting_new_binding = false;
+
+               ImGui::CloseCurrentPopup();
+            }
+            else if (last_key_event->new_state == key_state::up and
+                     last_key_event->key != key::ctrl and
+                     last_key_event->key != key::shift and
+                     last_key_event->key != key::alt) {
+               absl::flat_hash_map<hotkey_bind, hotkey> bindings;
+               bindings.reserve(32);
+
+               const key new_key = last_key_event->key;
+               const key old_key = _user_swapping_key;
+
+               for (hotkey_set& set : _hotkey_sets) {
+                  bindings.clear();
+
+                  for (auto it = set.bindings.begin(); it != set.bindings.end();) {
+                     auto binding_it = it++;
+                     auto& [bind, hotkey] = *binding_it;
+
+                     if (bind.key == new_key or bind.key == old_key) {
+                        set.query_bindings.erase(hotkey.name);
+                        _saved_bindings[set.name].erase(hotkey.name);
+
+                        bindings.emplace(hotkey_bind{.key = bind.key == new_key ? old_key : new_key,
+                                                     .modifiers = bind.modifiers},
+                                         std::move(hotkey));
+                        set.bindings.erase(binding_it);
+                     }
+                  }
+
+                  for (const auto& [bind, hotkey] : bindings) {
+                     if (set.bindings.try_emplace(bind, hotkey).second) {
+                        set.query_bindings[hotkey.name] = bind;
+                        _saved_bindings[set.name][hotkey.name] = bind;
+                     }
+                     else {
+                        set.unbound_hotkeys.push_back(hotkey);
+                     }
+                  }
+               }
+
+               save_bindings(save_path, _saved_bindings);
+
+               _user_inputting_new_binding = false;
+
+               ImGui::CloseCurrentPopup();
+            }
+         }
+
+         ImGui::EndPopup();
+      }
    }
 
    ImGui::End();
-
-   if (_user_inputting_new_binding) {
-      ImGui::OpenPopup("Press New Binding##Hotkeys");
-   }
-
-   if (ImGui::BeginPopupModal("Press New Binding##Hotkeys", &_user_inputting_new_binding,
-                              ImGuiWindowFlags_AlwaysAutoResize)) {
-      ImGui::Text("Press Escape to cancel and go back.");
-
-      const std::optional<key_event> last_key_event =
-         std::exchange(_user_editing_last_key_event, std::nullopt);
-
-      if (last_key_event) {
-         if (last_key_event->key == key::escape and
-             last_key_event->new_state == key_state::up) {
-            _user_inputting_new_binding = false;
-         }
-         else if (last_key_event->new_state == key_state::up and
-                  last_key_event->key != key::ctrl and
-                  last_key_event->key != key::shift and
-                  last_key_event->key != key::alt) {
-            hotkey_set& set = _hotkey_sets[_user_editing_bind_set];
-
-            if (_user_editing_bind) {
-               set.bindings.erase(*_user_editing_bind);
-            }
-
-            const hotkey_bind new_bind{.key = last_key_event->key,
-                                       .modifiers = {.ctrl = is_key_down(key::ctrl),
-                                                     .shift = is_key_down(key::shift),
-                                                     .alt = is_key_down(key::alt)}};
-
-            if (set.bindings.contains(new_bind)) {
-               set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
-               set.query_bindings.erase(set.unbound_hotkeys.back().name);
-
-               _saved_bindings[set.name].erase(set.unbound_hotkeys.back().name);
-            }
-
-            set.bindings[new_bind] = _user_editing_hotkey;
-            set.query_bindings[_user_editing_hotkey.name] = new_bind;
-
-            std::erase_if(set.unbound_hotkeys, [&](const hotkey& hotkey) {
-               return hotkey == _user_editing_hotkey;
-            });
-
-            _user_inputting_new_binding = false;
-
-            _saved_bindings[set.name][_user_editing_hotkey.name] = new_bind;
-
-            save_bindings(save_path, _saved_bindings);
-         }
-      }
-
-      ImGui::EndPopup();
-   }
 
    if (not window_open) {
       _user_inputting_new_binding = false;
