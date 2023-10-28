@@ -509,6 +509,8 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
 
    if (ImGui::Begin("Hotkeys Editor", &window_open)) {
       if (ImGui::CollapsingHeader("Keys Overview", ImGuiTreeNodeFlags_DefaultOpen)) {
+         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+
          bool open_swap_bindings_popup = false;
 
          ImGui::SeparatorText("Keyboard");
@@ -706,6 +708,8 @@ void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
 
             ImGui::OpenPopup("Swap Bindings");
          }
+
+         ImGui::PopStyleVar();
       }
 
       bool open_new_binding_popup = false;
