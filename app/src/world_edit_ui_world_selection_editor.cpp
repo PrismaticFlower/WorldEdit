@@ -69,8 +69,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(object->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -249,8 +248,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(light->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -401,8 +399,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(
+                     world::path_id_node_pair{id, node_index});
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -551,8 +549,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(region->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -1067,8 +1064,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(sector->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -1270,8 +1266,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(portal->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -1366,8 +1361,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(hintnode->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -1494,8 +1488,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(barrier->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -1556,8 +1549,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(hub->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -1606,8 +1598,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(connection->id);
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -1748,8 +1739,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   continue;
                }
                else if (not keep_selected) {
-                  _interaction_targets.selection.erase(
-                     _interaction_targets.selection.begin() + selected_index);
+                  _interaction_targets.selection.remove(boundary->id);
 
                   selected_index -= 1;
                   id_offset += 1;

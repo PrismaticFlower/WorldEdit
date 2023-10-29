@@ -670,11 +670,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             bbox = object.rotation * bbox + object.position;
 
             if (intersects(frustum, bbox)) {
-               const bool add =
-                  method != select_method::add or
-                  not world::is_selected(object.id, _interaction_targets);
-
-               if (add) _interaction_targets.selection.emplace_back(object.id);
+               _interaction_targets.selection.add(object.id);
             }
          }
       }
@@ -735,10 +731,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }();
 
             if (inside) {
-               const bool add = method != select_method::add or
-                                not world::is_selected(light.id, _interaction_targets);
-
-               if (add) _interaction_targets.selection.emplace_back(light.id);
+               _interaction_targets.selection.add(light.id);
             }
          }
       }
@@ -752,15 +745,8 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             for (std::size_t i = 0; i < path.nodes.size(); ++i) {
                if (intersects(frustum, path.nodes[i].position,
                               0.707f * (_settings.graphics.path_node_size / 0.5f))) {
-                  const bool add =
-                     method != select_method::add or
-                     not world::is_selected(world::path_id_node_pair{path.id, i},
-                                            _interaction_targets);
-
-                  if (add) {
-                     _interaction_targets.selection.emplace_back(
-                        world::path_id_node_pair{path.id, i});
-                  }
+                  _interaction_targets.selection.add(
+                     world::path_id_node_pair{path.id, i});
                }
             }
          }
@@ -802,11 +788,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }();
 
             if (inside) {
-               const bool add =
-                  method != select_method::add or
-                  not world::is_selected(region.id, _interaction_targets);
-
-               if (add) _interaction_targets.selection.emplace_back(region.id);
+               _interaction_targets.selection.add(region.id);
             }
          }
       }
@@ -828,11 +810,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                      point_max.y}};
 
             if (intersects(frustum, bbox)) {
-               const bool add =
-                  method != select_method::add or
-                  not world::is_selected(sector.id, _interaction_targets);
-
-               if (add) _interaction_targets.selection.emplace_back(sector.id);
+               _interaction_targets.selection.add(sector.id);
             }
          }
       }
@@ -843,11 +821,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
             if (intersects(frustum, portal.position,
                            std::max(portal.height, portal.width))) {
-               const bool add =
-                  method != select_method::add or
-                  not world::is_selected(portal.id, _interaction_targets);
-
-               if (add) _interaction_targets.selection.emplace_back(portal.id);
+               _interaction_targets.selection.add(portal.id);
             }
          }
       }
@@ -859,13 +833,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }
 
             if (intersects(frustum, hintnode.position, 2.0f)) {
-               const bool add =
-                  method != select_method::add or
-                  not world::is_selected(hintnode.id, _interaction_targets);
-
-               if (add) {
-                  _interaction_targets.selection.emplace_back(hintnode.id);
-               }
+               _interaction_targets.selection.add(hintnode.id);
             }
          }
       }
@@ -882,11 +850,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                    barrier.position;
 
             if (intersects(frustum, bbox)) {
-               const bool add =
-                  method != select_method::add or
-                  not world::is_selected(barrier.id, _interaction_targets);
-
-               if (add) _interaction_targets.selection.emplace_back(barrier.id);
+               _interaction_targets.selection.add(barrier.id);
             }
          }
       }
@@ -902,10 +866,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             bbox = bbox + hub.position;
 
             if (intersects(frustum, bbox)) {
-               const bool add = method != select_method::add or
-                                not world::is_selected(hub.id, _interaction_targets);
-
-               if (add) _interaction_targets.selection.emplace_back(hub.id);
+               _interaction_targets.selection.add(hub.id);
             }
          }
       }
@@ -924,32 +885,19 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                      boundary.size.y + boundary.position.y}};
 
             if (intersects(frustum, bbox)) {
-               const bool add =
-                  method != select_method::add or
-                  not world::is_selected(boundary.id, _interaction_targets);
-
-               if (add) {
-                  _interaction_targets.selection.emplace_back(boundary.id);
-               }
+               _interaction_targets.selection.add(boundary.id);
             }
          }
       }
    }
    else {
+      if (not _interaction_targets.hovered_entity) return;
+
       if (method == select_method::replace) {
          _interaction_targets.selection.clear();
-
-         if (not _interaction_targets.hovered_entity) return;
-      }
-      else if (method == select_method::add) {
-         if (not _interaction_targets.hovered_entity) return;
-
-         for (auto& selected : _interaction_targets.selection) {
-            if (selected == _interaction_targets.hovered_entity) return;
-         }
       }
 
-      _interaction_targets.selection.push_back(*_interaction_targets.hovered_entity);
+      _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
 
       _selection_edit_tool = selection_edit_tool::none;
    }
@@ -999,8 +947,7 @@ void world_edit::finish_entity_deselect() noexcept
             bbox = object.rotation * bbox + object.position;
 
             if (intersects(frustum, bbox)) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{object.id});
+               _interaction_targets.selection.remove(object.id);
             }
          }
       }
@@ -1061,8 +1008,7 @@ void world_edit::finish_entity_deselect() noexcept
             }();
 
             if (inside) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{light.id});
+               _interaction_targets.selection.remove(light.id);
             }
          }
       }
@@ -1076,9 +1022,8 @@ void world_edit::finish_entity_deselect() noexcept
             for (std::size_t i = 0; i < path.nodes.size(); ++i) {
                if (intersects(frustum, path.nodes[i].position,
                               0.707f * (_settings.graphics.path_node_size / 0.5f))) {
-                  std::erase(_interaction_targets.selection,
-                             world::selected_entity{
-                                world::path_id_node_pair{path.id, i}});
+                  _interaction_targets.selection.remove(
+                     world::path_id_node_pair{path.id, i});
                }
             }
          }
@@ -1120,8 +1065,7 @@ void world_edit::finish_entity_deselect() noexcept
             }();
 
             if (inside) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{region.id});
+               _interaction_targets.selection.remove(region.id);
             }
          }
       }
@@ -1143,8 +1087,7 @@ void world_edit::finish_entity_deselect() noexcept
                                      point_max.y}};
 
             if (intersects(frustum, bbox)) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{sector.id});
+               _interaction_targets.selection.remove(sector.id);
             }
          }
       }
@@ -1155,8 +1098,7 @@ void world_edit::finish_entity_deselect() noexcept
 
             if (intersects(frustum, portal.position,
                            std::max(portal.height, portal.width))) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{portal.id});
+               _interaction_targets.selection.remove(portal.id);
             }
          }
       }
@@ -1168,8 +1110,7 @@ void world_edit::finish_entity_deselect() noexcept
             }
 
             if (intersects(frustum, hintnode.position, 2.0f)) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{hintnode.id});
+               _interaction_targets.selection.remove(hintnode.id);
             }
          }
       }
@@ -1186,8 +1127,7 @@ void world_edit::finish_entity_deselect() noexcept
                    barrier.position;
 
             if (intersects(frustum, bbox)) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{barrier.id});
+               _interaction_targets.selection.remove(barrier.id);
             }
          }
       }
@@ -1203,8 +1143,7 @@ void world_edit::finish_entity_deselect() noexcept
             bbox = bbox + hub.position;
 
             if (intersects(frustum, bbox)) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{hub.id});
+               _interaction_targets.selection.remove(hub.id);
             }
          }
       }
@@ -1230,8 +1169,7 @@ void world_edit::finish_entity_deselect() noexcept
             const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
 
             if (intersects(frustum, bbox)) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{connection.id});
+               _interaction_targets.selection.remove(connection.id);
             }
          }
       }
@@ -1248,8 +1186,7 @@ void world_edit::finish_entity_deselect() noexcept
                                      boundary.size.y + boundary.position.y}};
 
             if (intersects(frustum, bbox)) {
-               std::erase(_interaction_targets.selection,
-                          world::selected_entity{boundary.id});
+               _interaction_targets.selection.remove(boundary.id);
             }
          }
       }
@@ -1257,7 +1194,7 @@ void world_edit::finish_entity_deselect() noexcept
    else {
       if (not _interaction_targets.hovered_entity) return;
 
-      std::erase(_interaction_targets.selection, _interaction_targets.hovered_entity);
+      _interaction_targets.selection.remove(*_interaction_targets.hovered_entity);
    }
 }
 
@@ -1828,7 +1765,7 @@ void world_edit::delete_selected() noexcept
    bool first_delete = true;
 
    while (not _interaction_targets.selection.empty()) {
-      const auto& generic_selected = _interaction_targets.selection.back();
+      const auto& generic_selected = _interaction_targets.selection.view().back();
 
       if (not is_valid(generic_selected, _world)) continue;
 
@@ -1838,7 +1775,8 @@ void world_edit::delete_selected() noexcept
          const world::path_id_node_pair dying_id_node =
             std::get<world::path_id_node_pair>(generic_selected);
 
-         for (auto& other_generic_selected : _interaction_targets.selection) {
+         for (auto& other_generic_selected :
+              _interaction_targets.selection.view_updatable()) {
             if (not std::holds_alternative<world::path_id_node_pair>(other_generic_selected) or
                 other_generic_selected == generic_selected) {
                continue;
@@ -1863,7 +1801,7 @@ void world_edit::delete_selected() noexcept
          },
          generic_selected);
 
-      _interaction_targets.selection.pop_back();
+      _interaction_targets.selection.remove(generic_selected);
    }
 }
 
@@ -2295,7 +2233,7 @@ void world_edit::new_entity_from_selection() noexcept
 {
    if (_interaction_targets.selection.empty()) return;
 
-   auto& selected = _interaction_targets.selection.front();
+   auto& selected = _interaction_targets.selection.view().front();
 
    if (std::holds_alternative<world::object_id>(selected)) {
       world::object* object =

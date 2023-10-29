@@ -48,7 +48,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(object.id, _interaction_targets);
+                  world::is_selected(object.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -72,7 +72,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(object.id);
+                  _interaction_targets.selection.add(object.id);
                }
 
                if (hover) {
@@ -187,7 +187,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(light.id, _interaction_targets);
+                  world::is_selected(light.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -226,7 +226,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(light.id);
+                  _interaction_targets.selection.add(light.id);
                }
 
                if (hover) {
@@ -266,7 +266,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                for (int i = 0; i < (show_all_nodes ? path.nodes.size() : 1); ++i) {
                   const bool is_selected =
-                     world::is_selected(path.id, _interaction_targets);
+                     world::is_selected(path.id, _interaction_targets.selection);
 
                   ImGui::PushID(i);
 
@@ -290,7 +290,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                   if (select and path.nodes.size() != 0) {
                      _interaction_targets.selection.clear();
-                     _interaction_targets.selection.emplace_back(
+                     _interaction_targets.selection.add(
                         world::path_id_node_pair{path.id, static_cast<std::size_t>(i)});
                   }
 
@@ -330,7 +330,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(region.id, _interaction_targets);
+                  world::is_selected(region.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -359,7 +359,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(region.id);
+                  _interaction_targets.selection.add(region.id);
                }
 
                if (hover) {
@@ -393,7 +393,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(sector.id, _interaction_targets);
+                  world::is_selected(sector.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -411,7 +411,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(sector.id);
+                  _interaction_targets.selection.add(sector.id);
                }
 
                if (hover) {
@@ -445,7 +445,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(portal.id, _interaction_targets);
+                  world::is_selected(portal.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -463,7 +463,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(portal.id);
+                  _interaction_targets.selection.add(portal.id);
                }
 
                if (hover) {
@@ -497,7 +497,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(hintnode.id, _interaction_targets);
+                  world::is_selected(hintnode.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -530,7 +530,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(hintnode.id);
+                  _interaction_targets.selection.add(hintnode.id);
                }
 
                if (hover) {
@@ -568,7 +568,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(barrier.id, _interaction_targets);
+                  world::is_selected(barrier.id, _interaction_targets.selection);
 
                using world::ai_path_flags;
 
@@ -603,7 +603,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(barrier.id);
+                  _interaction_targets.selection.add(barrier.id);
                }
 
                if (hover_entity) {
@@ -635,7 +635,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(hub.id, _interaction_targets);
+                  world::is_selected(hub.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -649,7 +649,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(hub.id);
+                  _interaction_targets.selection.add(hub.id);
                }
 
                if (hover) {
@@ -691,7 +691,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(connection.id, _interaction_targets);
+                  world::is_selected(connection.id, _interaction_targets.selection);
 
                using world::ai_path_flags;
 
@@ -733,7 +733,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(connection.id);
+                  _interaction_targets.selection.add(connection.id);
                }
 
                if (hover_entity) {
@@ -766,7 +766,7 @@ void world_edit::ui_show_world_explorer() noexcept
                }
 
                const bool is_selected =
-                  world::is_selected(boundary.id, _interaction_targets);
+                  world::is_selected(boundary.id, _interaction_targets.selection);
 
                ImGui::TableNextRow();
 
@@ -780,7 +780,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                if (select) {
                   _interaction_targets.selection.clear();
-                  _interaction_targets.selection.emplace_back(boundary.id);
+                  _interaction_targets.selection.add(boundary.id);
                }
 
                if (hover) {

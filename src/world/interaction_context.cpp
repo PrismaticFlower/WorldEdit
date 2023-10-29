@@ -3,18 +3,79 @@
 
 namespace we::world {
 
-bool is_selected(const selected_entity entity, const interaction_targets& targets) noexcept
+auto selection::begin() const noexcept -> std::vector<selected_entity>::const_iterator
 {
-   for (const auto& selected : targets.selection) {
+   return _selection.begin();
+}
+
+auto selection::end() const noexcept -> std::vector<selected_entity>::const_iterator
+{
+   return _selection.end();
+}
+
+auto selection::view() const noexcept -> std::span<const selected_entity>
+{
+   return _selection;
+}
+
+auto selection::view_updatable() noexcept -> std::span<selected_entity>
+{
+   return _selection;
+}
+
+auto selection::operator[](const std::size_t i) const noexcept -> selected_entity
+{
+   assert(i < size());
+
+   return _selection[i];
+}
+
+void selection::add(const selected_entity entity) noexcept
+{
+   for (const selected_entity& selected : _selection) {
+      if (selected == entity) return;
+   }
+
+   _selection.push_back(entity);
+}
+
+void selection::remove(const selected_entity entity) noexcept
+{
+   for (auto it = _selection.begin(); it != _selection.end(); ++it) {
+      if (*it == entity) {
+         _selection.erase(it);
+         return;
+      }
+   }
+}
+
+void selection::clear() noexcept
+{
+   _selection.clear();
+}
+
+bool selection::empty() const noexcept
+{
+   return _selection.empty();
+}
+
+auto selection::size() const noexcept -> std::size_t
+{
+   return _selection.size();
+}
+
+bool is_selected(const selected_entity entity, const selection& selection) noexcept
+{
+   for (const auto& selected : selection) {
       if (selected == entity) return true;
    }
 
    return false;
 }
 
-bool is_selected(const path_id entity, const interaction_targets& targets) noexcept
+bool is_selected(const path_id entity, const selection& selection) noexcept
 {
-   for (const auto& selected : targets.selection) {
+   for (const auto& selected : selection) {
       if (not std::holds_alternative<path_id_node_pair>(selected)) continue;
 
       if (std::get<path_id_node_pair>(selected).id == entity) return true;
@@ -23,7 +84,7 @@ bool is_selected(const path_id entity, const interaction_targets& targets) noexc
    return false;
 }
 
-bool is_valid(const selected_entity entity, const world& world) noexcept
+bool is_valid(const interaction_target entity, const world& world) noexcept
 {
    if (std::holds_alternative<object_id>(entity)) {
       return find_entity(world.objects, std::get<object_id>(entity)) != nullptr;

@@ -41,8 +41,6 @@ void world_edit::ui_show_world_selection_move_path() noexcept
          _gizmo.show_translate(path_centre, quaternion{}, _move_selection_amount);
 
       if (imgui_edited or gizmo_edited) {
-         const world::selected_entity selected =
-            _interaction_targets.selection.back();
          const float3 move_delta = (_move_selection_amount - last_move_amount);
 
          const world::path* path =
