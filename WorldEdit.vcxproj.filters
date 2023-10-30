@@ -775,6 +775,9 @@
     <ClInclude Include="src\utility\function_ptr.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\scale_factor.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">

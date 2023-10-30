@@ -11,6 +11,7 @@
 #include "graphics/renderer.hpp"
 #include "hotkeys.hpp"
 #include "output_stream.hpp"
+#include "scale_factor.hpp"
 #include "settings/io.hpp"
 #include "settings/settings.hpp"
 #include "utility/command_line.hpp"
@@ -237,7 +238,7 @@ private:
    bool _window_unsaved_star = false;
    float _applied_user_display_scale = 1.0f;
    int _current_dpi = 96;
-   float _display_scale = 1.0f;
+   scale_factor _display_scale{.value = 1.0f};
    std::chrono::steady_clock::time_point _last_update =
       std::chrono::steady_clock::now();
    std::chrono::steady_clock::time_point _sprint_start =

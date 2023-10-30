@@ -4,6 +4,7 @@
 #include "container/enum_array.hpp"
 #include "key.hpp"
 #include "output_stream.hpp"
+#include "scale_factor.hpp"
 
 #include <initializer_list>
 #include <optional>
@@ -98,7 +99,7 @@ struct hotkeys {
 
    /// @brief Show an ImGui window for editing bindings.
    /// @param window_open If the ImGui window is still open or not.
-   void show_imgui(bool& window_open, const float display_scale) noexcept;
+   void show_imgui(bool& window_open, const scale_factor display_scale) noexcept;
 
 private:
    enum class key_state : bool { up, down };

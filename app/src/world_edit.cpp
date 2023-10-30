@@ -62,7 +62,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    });
 
    _current_dpi = GetDpiForWindow(_window);
-   _display_scale = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
+   _display_scale.value = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
    _applied_user_display_scale = _settings.ui.extra_scaling;
 
    try {
@@ -71,7 +71,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
                                   .thread_pool = _thread_pool,
                                   .asset_libraries = _asset_libraries,
                                   .error_output = _stream,
-                                  .display_scale = _display_scale,
+                                  .display_scale = _display_scale.value,
                                   .use_debug_layer = _renderer_use_debug_layer});
    }
    catch (graphics::gpu::exception& e) {
@@ -2818,14 +2818,14 @@ void world_edit::mouse_movement(const int32 x_movement, const int32 y_movement) 
 void world_edit::dpi_changed(const int new_dpi) noexcept
 {
    _current_dpi = new_dpi;
-   _display_scale = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
+   _display_scale.value = (_current_dpi / 96.0f) * _settings.ui.extra_scaling;
    _applied_user_display_scale = _settings.ui.extra_scaling;
 
    initialize_imgui_font();
    initialize_imgui_style();
 
    try {
-      _renderer->display_scale_changed(_display_scale);
+      _renderer->display_scale_changed(_display_scale.value);
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -2850,8 +2850,7 @@ void world_edit::initialize_imgui_font() noexcept
    ImGui::GetIO().Fonts->Clear();
    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(roboto_regular.data(),
                                               static_cast<int>(roboto_regular.size()),
-                                              std::floor(16.0f * _display_scale),
-                                              &font_config);
+                                              16.0f * _display_scale, &font_config);
 
    try {
       _renderer->recreate_imgui_font_atlas();
@@ -2864,7 +2863,7 @@ void world_edit::initialize_imgui_font() noexcept
 void world_edit::initialize_imgui_style() noexcept
 {
    ImGui::GetStyle() = ImGuiStyle{};
-   ImGui::GetStyle().ScaleAllSizes(_display_scale);
+   ImGui::GetStyle().ScaleAllSizes(_display_scale.value);
 }
 
 void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
@@ -2896,10 +2895,10 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
                                      .thread_pool = _thread_pool,
                                      .asset_libraries = _asset_libraries,
                                      .error_output = _stream,
+                                     .display_scale = _display_scale.value,
                                      .use_debug_layer = _renderer_use_debug_layer});
 
          _renderer->recreate_imgui_font_atlas();
-         _renderer->display_scale_changed(_display_scale);
       }
       catch (graphics::gpu::exception& e) {
          if (e.error() != error::device_removed) {

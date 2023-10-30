@@ -500,7 +500,7 @@ void hotkeys::try_execute_command(const std::string_view command) const noexcept
    }
 }
 
-void hotkeys::show_imgui(bool& window_open, const float display_scale) noexcept
+void hotkeys::show_imgui(bool& window_open, const scale_factor display_scale) noexcept
 {
    ImGui::SetNextWindowSize({960.0f * display_scale, 540.0f * display_scale},
                             ImGuiCond_Once);

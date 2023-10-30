@@ -8,7 +8,7 @@
 
 namespace we::settings {
 
-void show_imgui_editor(settings& settings, bool& open, float display_scale) noexcept
+void show_imgui_editor(settings& settings, bool& open, scale_factor display_scale) noexcept
 {
    ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x / 2.0f,
                             ImGui::GetIO().DisplaySize.y / 2.0f},
