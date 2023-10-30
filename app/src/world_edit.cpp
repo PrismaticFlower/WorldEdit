@@ -630,6 +630,7 @@ void world_edit::start_entity_select() noexcept
 void world_edit::finish_entity_select(const select_method method) noexcept
 {
    _selecting_entity = false;
+   _selection_edit_tool = selection_edit_tool::none;
 
    const float2 current_cursor_position =
       std::bit_cast<float2>(ImGui::GetMousePos());
@@ -898,8 +899,6 @@ void world_edit::finish_entity_select(const select_method method) noexcept
       }
 
       _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
-
-      _selection_edit_tool = selection_edit_tool::none;
    }
 }
 
