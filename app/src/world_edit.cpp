@@ -234,6 +234,7 @@ void world_edit::update_hovered_entity() noexcept
    float hovered_entity_distance = std::numeric_limits<float>::max();
 
    if (ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse()) return;
+   if (_rotate_camera or _pan_camera) return;
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 
