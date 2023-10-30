@@ -192,7 +192,6 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::MenuItem("Settings Editor", nullptr, &_settings_editor_open);
          ImGui::MenuItem("Hotkeys Editor", nullptr, &_hotkeys_editor_open);
          ImGui::MenuItem("About", nullptr, &_about_window_open);
-         ImGui::MenuItem("Show ImGui Demo", nullptr, &_imgui_demo_open);
 
          ImGui::EndMenu();
       }
@@ -214,6 +213,8 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::MenuItem("Show GPU Profiler", nullptr, &_settings.graphics.show_profiler);
 
          ImGui::SetItemTooltip("Some GPU work is not measured.");
+
+         ImGui::MenuItem("Show ImGui Demo", nullptr, &_imgui_demo_open);
 
          ImGui::EndMenu();
       }
