@@ -16,6 +16,9 @@ void world_edit::ui_show_world_explorer() noexcept
    ImGui::SetNextWindowSize({1216.0f * _display_scale, 272.0f * _display_scale},
                             ImGuiCond_Once);
 
+   const bool is_shift_down = ImGui::GetIO().KeyShift;
+   const bool is_ctrl_down = ImGui::GetIO().KeyCtrl;
+
    ImGui::Begin("World Explorer", &_world_explorer_open);
 
    if (ImGui::BeginTabBar("Explorer", ImGuiTabBarFlags_Reorderable)) {
@@ -71,8 +74,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(object.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(object.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(object.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(object.id);
+                  }
                }
 
                if (hover) {
@@ -145,8 +156,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(light.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(light.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(light.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(light.id);
+                  }
                }
 
                if (hover) {
@@ -209,9 +228,20 @@ void world_edit::ui_show_world_explorer() noexcept
                   ImGui::Text("%i", static_cast<int>(path.id));
 
                   if (select and path.nodes.size() != 0) {
-                     _interaction_targets.selection.clear();
-                     _interaction_targets.selection.add(
-                        world::path_id_node_pair{path.id, static_cast<std::size_t>(i)});
+                     if (is_ctrl_down) {
+                        _interaction_targets.selection.remove(
+                           world::path_id_node_pair{path.id,
+                                                    static_cast<std::size_t>(i)});
+                     }
+                     else {
+                        if (not is_shift_down) {
+                           _interaction_targets.selection.clear();
+                        }
+
+                        _interaction_targets.selection.add(
+                           world::path_id_node_pair{path.id,
+                                                    static_cast<std::size_t>(i)});
+                     }
                   }
 
                   if (hover and path.nodes.size() != 0) {
@@ -278,8 +308,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(region.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(region.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(region.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(region.id);
+                  }
                }
 
                if (hover) {
@@ -330,8 +368,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(sector.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(sector.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(sector.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(sector.id);
+                  }
                }
 
                if (hover) {
@@ -382,8 +428,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(portal.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(portal.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(portal.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(portal.id);
+                  }
                }
 
                if (hover) {
@@ -449,8 +503,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(hintnode.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(hintnode.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(hintnode.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(hintnode.id);
+                  }
                }
 
                if (hover) {
@@ -522,8 +584,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(barrier.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(barrier.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(barrier.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(barrier.id);
+                  }
                }
 
                if (hover_entity) {
@@ -568,8 +638,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(hub.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(hub.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(hub.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(hub.id);
+                  }
                }
 
                if (hover) {
@@ -652,8 +730,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(connection.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(connection.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(connection.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(connection.id);
+                  }
                }
 
                if (hover_entity) {
@@ -699,8 +785,16 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(boundary.id));
 
                if (select) {
-                  _interaction_targets.selection.clear();
-                  _interaction_targets.selection.add(boundary.id);
+                  if (is_ctrl_down) {
+                     _interaction_targets.selection.remove(boundary.id);
+                  }
+                  else {
+                     if (not is_shift_down) {
+                        _interaction_targets.selection.clear();
+                     }
+
+                     _interaction_targets.selection.add(boundary.id);
+                  }
                }
 
                if (hover) {
