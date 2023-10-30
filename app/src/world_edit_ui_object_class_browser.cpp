@@ -33,8 +33,6 @@ void world_edit::ui_show_object_class_browser() noexcept
 
       _asset_libraries.odfs.view_existing(
          [&](const std::span<const assets::stable_string> assets) noexcept {
-            _world_explorer_object_classes.reserve(assets.size());
-
             for (std::string_view asset : assets) {
                if (not _world_explorer_class_filter.empty() and
                    not string::icontains(asset, _world_explorer_class_filter)) {

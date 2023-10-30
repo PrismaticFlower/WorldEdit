@@ -319,8 +319,6 @@ private:
    std::string _world_explorer_filter;
    std::string _world_explorer_class_filter;
 
-   std::vector<std::string_view> _world_explorer_object_classes;
-
    bool _world_explorer_path_show_all_nodes = false;
 
    POINT _rotate_camera_cursor_position = {0, 0};
