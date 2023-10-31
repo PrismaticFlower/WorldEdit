@@ -2656,12 +2656,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::PushID("Forward Branch Weights");
 
          // clang-format off
-                  changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Flyer", &weights.flyer, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
          // clang-format on
 
          ImGui::PopID();
@@ -2682,12 +2681,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
          bool changed = false;
 
          // clang-format off
-                  changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-                  changed |= ImGui::DragFloat("Flyer", &weights.flyer, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+         changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
          // clang-format on
 
          ImGui::PopID();
