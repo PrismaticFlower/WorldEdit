@@ -190,6 +190,8 @@ void world_edit::update()
 
       ImGui::EndFrame();
    }
+
+   _world.terrain.untracked_clear_dirty_rects();
 }
 
 void world_edit::wait_for_swap_chain_ready() noexcept
@@ -2685,8 +2687,6 @@ void world_edit::close_world() noexcept
 
    _edit_stack_world.clear();
    _edit_stack_world.clear_modified_flag();
-
-   _renderer->mark_dirty_terrain();
 
    SetWindowTextA(_window, "WorldEdit");
    _window_unsaved_star = false;

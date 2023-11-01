@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <vector>
 
+using namespace std::literals;
+
 namespace we::assets::terrain {
 
 namespace {
@@ -162,6 +164,8 @@ auto build_clusters_info(const terrain& terrain) -> clusters_info
 
    return info;
 }
+
+void remove_tga_suffix(std::string& str);
 
 }
 
@@ -394,10 +398,13 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    }
 #endif
 
-   terrain.height_map_dirty.add({0, 0, terrain.length, terrain.length});
+   const uint32 length_u32 =
+      static_cast<uint32>(terrain.length); // TODO: Change terrain.length to uint32.
+
+   terrain.height_map_dirty.add({0, 0, length_u32, length_u32});
 
    for (auto& texture_weight_map_dirty : terrain.texture_weight_maps_dirty) {
-      texture_weight_map_dirty.add({0, 0, terrain.length, terrain.length});
+      texture_weight_map_dirty.add({0, 0, length_u32, length_u32});
    }
 
    return terrain;

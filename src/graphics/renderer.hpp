@@ -92,8 +92,6 @@ struct renderer {
 
    virtual void display_scale_changed(const float display_scale) = 0;
 
-   virtual void mark_dirty_terrain() noexcept = 0;
-
    virtual void recreate_imgui_font_atlas() = 0;
 
    virtual void reload_shaders() noexcept = 0;

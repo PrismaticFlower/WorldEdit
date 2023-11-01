@@ -111,6 +111,8 @@ struct terrain {
 
    dirty_rect_tracker height_map_dirty;
    std::array<dirty_rect_tracker, texture_count> texture_weight_maps_dirty;
+
+   void untracked_clear_dirty_rects() noexcept;
 };
 
 }

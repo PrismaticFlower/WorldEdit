@@ -1320,6 +1320,9 @@
     <ClCompile Include="src\assets\terrain\dirty_rect_tracker.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\assets\terrain\terrain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />

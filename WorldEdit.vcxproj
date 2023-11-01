@@ -219,6 +219,7 @@
     <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\sky\io.cpp" />
     <ClCompile Include="src\assets\terrain\dirty_rect_tracker.cpp" />
+    <ClCompile Include="src\assets\terrain\terrain.cpp" />
     <ClCompile Include="src\assets\texture\save_env_map.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />

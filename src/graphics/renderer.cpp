@@ -104,8 +104,6 @@ struct renderer_impl final : renderer {
       _thumbnail_manager.display_scale_changed(display_scale);
    }
 
-   void mark_dirty_terrain() noexcept override;
-
    void recreate_imgui_font_atlas() override
    {
       _imgui_renderer.recreate_font_atlas(_copy_command_list_pool);
@@ -260,7 +258,8 @@ private:
    geometric_shapes _geometric_shapes{_device, _copy_command_list_pool};
    light_clusters _light_clusters{_device, _copy_command_list_pool,
                                   _swap_chain.width(), _swap_chain.height()};
-   terrain _terrain{_device, _texture_manager};
+   terrain _terrain{_device, _copy_command_list_pool, _dynamic_buffer_allocator,
+                    _texture_manager};
    water _water{_device, _texture_manager};
    sky _sky;
 
@@ -374,8 +373,6 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       _pre_render_command_list.reset();
 
       if (std::exchange(_terrain_dirty, false)) {
-         _terrain.init(world.terrain, _pre_render_command_list,
-                       _dynamic_buffer_allocator);
          _water.init(world.terrain, _pre_render_command_list, _dynamic_buffer_allocator);
       }
 
@@ -392,6 +389,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       const float4 scene_depth_min_max =
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
 
+      _terrain.update(world.terrain, _pre_render_command_list,
+                      _dynamic_buffer_allocator, _texture_manager);
       _light_clusters
          .prepare_lights(camera, view_frustum, world,
                          interaction_targets.creation_entity
@@ -913,11 +912,6 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
        _device.direct_queue};
 
    _light_clusters.update_render_resolution(width, height);
-}
-
-void renderer_impl::mark_dirty_terrain() noexcept
-{
-   _terrain_dirty = true;
 }
 
 void renderer_impl::update_frame_constant_buffer(const camera& camera,
@@ -2704,7 +2698,7 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
             }
          });
 
-         _terrain.process_updated_texture(command_list, updated);
+         _terrain.process_updated_texture(updated);
          _water.process_updated_texture(command_list, updated);
       });
 }

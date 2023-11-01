@@ -34,10 +34,13 @@ class terrain {
 public:
    constexpr static std::size_t texture_count = assets::terrain::terrain::texture_count;
 
-   explicit terrain(gpu::device& device, texture_manager& texture_manager);
+   terrain(gpu::device& device, copy_command_list_pool& copy_command_list_pool,
+           dynamic_buffer_allocator& dynamic_buffer_allocator,
+           texture_manager& texture_manager);
 
-   void init(const world::terrain& terrain, gpu::copy_command_list& command_list,
-             dynamic_buffer_allocator& dynamic_buffer_allocator);
+   void update(const world::terrain& terrain, gpu::copy_command_list& command_list,
+               dynamic_buffer_allocator& dynamic_buffer_allocator,
+               texture_manager& texture_manager);
 
    void draw(const terrain_draw draw, const frustum& view_frustum,
              std::span<const terrain_cut> terrain_cuts,
@@ -47,8 +50,7 @@ public:
              root_signature_library& root_signatures, pipeline_library& pipelines,
              dynamic_buffer_allocator& dynamic_buffer_allocator);
 
-   void process_updated_texture(gpu::copy_command_list& command_list,
-                                const updated_textures& updated);
+   void process_updated_texture(const updated_textures& updated);
 
 private:
    struct terrain_patch {
@@ -58,23 +60,9 @@ private:
       std::bitset<16> active_textures;
    };
 
-   void init_gpu_resources(const world::terrain& terrain,
-                           gpu::copy_command_list& command_list,
-                           dynamic_buffer_allocator& dynamic_buffer_allocator);
+   void create_gpu_textures();
 
-   void init_gpu_height_map(const world::terrain& terrain,
-                            gpu::copy_command_list& command_list);
-
-   void init_gpu_texture_weight_map(const world::terrain& terrain,
-                                    gpu::copy_command_list& command_list);
-
-   void init_gpu_terrain_constants_buffer(const world::terrain& terrain,
-                                          gpu::copy_command_list& command_list,
-                                          dynamic_buffer_allocator& dynamic_buffer_allocator);
-
-   void init_textures(const world::terrain& terrain);
-
-   void init_patches_info(const world::terrain& terrain);
+   void create_unfilled_patch_info();
 
    void draw_cuts(const frustum& view_frustum, std::span<const terrain_cut> terrain_cuts,
                   gpu_virtual_address camera_constant_buffer_view,
@@ -83,16 +71,15 @@ private:
                   pipeline_library& pipelines);
 
    gpu::device& _device;
-   texture_manager& _texture_manager;
 
    bool _active = false;
 
-   uint32 _terrain_length;
-   uint32 _patch_count;
+   uint32 _terrain_length = 0;
+   uint32 _patch_count = 0;
 
-   float2 _terrain_half_world_size;
-   float _terrain_grid_size;
-   float _terrain_height_scale;
+   float2 _terrain_half_world_size = {0.0f, 0.0f};
+   float _terrain_grid_size = 0.0f;
+   float _terrain_height_scale = 0.0f;
 
    std::vector<terrain_patch> _patches;
 
@@ -108,8 +95,14 @@ private:
    std::array<lowercase_string, texture_count> _diffuse_maps_names;
    std::array<std::shared_ptr<const world_texture>, texture_count> _diffuse_maps;
 
-   gpu::unique_resource_handle _height_map_upload_buffer;
-   gpu::unique_resource_handle _texture_weight_upload_buffer;
+   uint32 _height_map_upload_row_pitch = 0;
+   uint32 _weight_map_upload_row_pitch = 0;
+
+   gpu::unique_resource_handle _upload_buffer;
+   std::array<std::byte*, gpu::frame_pipeline_length> _height_map_upload_ptr;
+   std::array<uint32, gpu::frame_pipeline_length> _height_map_upload_offset;
+   std::array<std::array<std::byte*, texture_count>, gpu::frame_pipeline_length> _weight_map_upload_ptr;
+   std::array<std::array<uint32, texture_count>, gpu::frame_pipeline_length> _weight_map_upload_offset;
 };
 
 }
