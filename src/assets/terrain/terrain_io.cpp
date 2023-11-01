@@ -3,6 +3,8 @@
 #include "utility/binary_reader.hpp"
 #include "utility/enum_bitflags.hpp"
 #include "utility/srgb_conversion.hpp"
+#include "utility/string_icompare.hpp"
+#include "utility/string_ops.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -22,26 +24,35 @@ constexpr uint32 cluster_info_water_bit = 0x10000;
 
 using terr_string = std::array<char, terrain_max_string_length>;
 
-struct terrain_string {
-   std::array<char, terrain_max_string_length> string;
-
-   operator std::string() const noexcept
-   {
-      return {string.cbegin(), std::find(string.cbegin(), string.cend(), '\0')};
-   }
-};
+using terrain_string = std::array<char, terrain_max_string_length>;
+;
 
 static_assert(sizeof(terrain_string) == 32);
 
-auto make_terrain_string(const std::string_view str) noexcept -> terrain_string
+auto make_texture_name(const terrain_string& terrain_string) noexcept -> std::string
+{
+   std::string_view str{terrain_string};
+
+   str = str.substr(0, str.find_first_of('\0'));
+
+   if (string::iends_with(str, ".tga")) {
+      str = str.substr(0, str.find_last_of('.'));
+   }
+
+   return std::string{str};
+}
+
+constexpr auto make_terrain_texture_string(const std::string_view str) noexcept -> terrain_string
 {
    terrain_string out{};
 
-   std::copy_n(str.begin(), std::min(str.size(), out.string.size()),
-               out.string.begin());
+   constexpr auto append_suffix = ".tga\0"sv;
 
-   // make sure the terrain string is null terminated
-   out.string.back() = '\0';
+   const std::size_t out_size =
+      std::min(str.size(), out.size() - append_suffix.size());
+
+   std::copy_n(str.begin(), out_size, out.begin());
+   std::copy_n(append_suffix.data(), append_suffix.size(), &out[out_size]);
 
    return out;
 }
@@ -219,12 +230,12 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
 
    // texture names
    for (int i = 0; i < terrain.texture_count; ++i) {
-      terrain.texture_names[i] = reader.read<terrain_string>();
+      terrain.texture_names[i] = make_texture_name(reader.read<terrain_string>());
 
       auto detail_name = reader.read<terrain_string>();
 
       if (i == 0) {
-         terrain.detail_texture_name = detail_name;
+         terrain.detail_texture_name = make_texture_name(detail_name);
       }
    }
 
@@ -239,7 +250,7 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    terrain.water_settings.u_velocity = water_settings[1].u_velocity;
    terrain.water_settings.v_velocity = water_settings[1].v_velocity;
    terrain.water_settings.color = utility::unpack_srgb_bgra(water_settings[1].colour);
-   terrain.water_settings.texture = water_settings[1].texture;
+   terrain.water_settings.texture = make_texture_name(water_settings[1].texture);
 
    // decals
    reader.read<std::array<terrain_string, 16>>(); // (unused) decal textures
@@ -452,10 +463,10 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain,
    }
 
    for (std::size_t i = 0; i < terrain.texture_count; ++i) {
-      file.write_object(make_terrain_string(terrain.texture_names[i]));
+      file.write_object(make_terrain_texture_string(terrain.texture_names[i]));
 
       if (i == 0) {
-         file.write_object(make_terrain_string(terrain.detail_texture_name));
+         file.write_object(make_terrain_texture_string(terrain.detail_texture_name));
       }
       else {
          file.write_object(terrain_string{}); // write empty strings for all other detail textures
@@ -469,7 +480,7 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain,
       .u_repeat = terrain.water_settings.u_repeat,
       .v_repeat = terrain.water_settings.v_repeat,
       .colour = utility::pack_srgb_bgra(terrain.water_settings.color),
-      .texture = make_terrain_string(terrain.water_settings.texture)};
+      .texture = make_terrain_texture_string(terrain.water_settings.texture)};
 
    file.write_object(terrain_water_settings{}); // write null unused water settings
    file.write_object(water_settings);           // write actual water settings

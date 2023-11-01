@@ -33,9 +33,9 @@ TEST_CASE("terrain io valid tests", "[Assets][Terrain]")
    CHECK(terrain.water_settings.color.y == 1.0_a);
    CHECK(terrain.water_settings.color.z == Approx(0.00972).margin(0.0025));
    CHECK(terrain.water_settings.color.w == 1.0_a);
-   CHECK(terrain.water_settings.texture == "white.tga"sv);
+   CHECK(terrain.water_settings.texture == "white"sv);
 
-   CHECK(terrain.texture_names[0] == "white.tga"sv);
+   CHECK(terrain.texture_names[0] == "white"sv);
    CHECK(terrain.texture_scales[0] == 0.0625_a);
    CHECK(terrain.texture_axes[0] == texture_axis::xy);
 
