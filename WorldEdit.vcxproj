@@ -218,6 +218,7 @@
     <ClCompile Include="src\assets\msh\scene.cpp" />
     <ClCompile Include="src\assets\req\io.cpp" />
     <ClCompile Include="src\assets\sky\io.cpp" />
+    <ClCompile Include="src\assets\terrain\dirty_rect_tracker.cpp" />
     <ClCompile Include="src\assets\texture\save_env_map.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
@@ -432,6 +433,7 @@
     <ClInclude Include="src\assets\req\requirement_list.hpp" />
     <ClInclude Include="src\assets\sky\io.hpp" />
     <ClInclude Include="src\assets\sky\sky.hpp" />
+    <ClInclude Include="src\assets\terrain\dirty_rect_tracker.hpp" />
     <ClInclude Include="src\assets\terrain\terrain.hpp" />
     <ClInclude Include="src\assets\terrain\terrain_io.hpp" />
     <ClInclude Include="src\assets\texture\save_env_map.hpp" />

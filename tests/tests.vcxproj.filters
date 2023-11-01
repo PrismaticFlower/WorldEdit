@@ -93,6 +93,7 @@
     <ClCompile Include="src\world\interaction_context_tests.cpp" />
     <ClCompile Include="src\edits\delete_path_property_tests.cpp" />
     <ClCompile Include="src\utility\function_ptr_tests.cpp" />
+    <ClCompile Include="src\assets\terrain\dirty_rect_tracker_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

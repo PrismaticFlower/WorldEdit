@@ -210,6 +210,7 @@
     <ClCompile Include="src\assets\req\io_tests.cpp" />
     <ClCompile Include="src\assets\sky\io_tests.cpp" />
     <ClCompile Include="src\assets\stable_string_tests.cpp" />
+    <ClCompile Include="src\assets\terrain\dirty_rect_tracker_tests.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io_tests.cpp" />
     <ClCompile Include="src\assets\texture\texture_io_tests.cpp" />
     <ClCompile Include="src\assets\texture\texture_tests.cpp" />

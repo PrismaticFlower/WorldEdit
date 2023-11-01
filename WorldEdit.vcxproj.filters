@@ -778,6 +778,9 @@
     <ClInclude Include="src\scale_factor.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\assets\terrain\dirty_rect_tracker.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1312,6 +1315,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\tool_visualizers.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\assets\terrain\dirty_rect_tracker.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
