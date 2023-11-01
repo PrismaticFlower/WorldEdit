@@ -7,10 +7,10 @@
 namespace we::assets::terrain {
 
 struct dirty_rect {
-   uint32 x = 0;
-   uint32 y = 0;
-   uint32 width = 0;
-   uint32 height = 0;
+   int32 x = 0;
+   int32 y = 0;
+   int32 width = 0;
+   int32 height = 0;
 
    constexpr bool operator==(const dirty_rect&) const noexcept = default;
 };

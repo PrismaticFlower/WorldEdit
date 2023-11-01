@@ -1,6 +1,7 @@
 #pragma once
 
 #include "container/dynamic_array_2d.hpp"
+#include "dirty_rect_tracker.hpp"
 #include "math/bounding_box.hpp"
 #include "types.hpp"
 
@@ -107,6 +108,9 @@ struct terrain {
    container::dynamic_array_2d<bool> water_map{length / 4, length / 4};
 
    container::dynamic_array_2d<foliage_patch> foliage_map{length / 2, length / 2};
+
+   dirty_rect_tracker height_map_dirty;
+   std::array<dirty_rect_tracker, texture_count> texture_weight_maps_dirty;
 };
 
 }

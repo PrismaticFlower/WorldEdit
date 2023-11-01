@@ -394,6 +394,12 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    }
 #endif
 
+   terrain.height_map_dirty.add({0, 0, terrain.length, terrain.length});
+
+   for (auto& texture_weight_map_dirty : terrain.texture_weight_maps_dirty) {
+      texture_weight_map_dirty.add({0, 0, terrain.length, terrain.length});
+   }
+
    return terrain;
 }
 
