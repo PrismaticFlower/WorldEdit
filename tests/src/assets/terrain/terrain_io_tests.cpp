@@ -61,11 +61,14 @@ TEST_CASE("terrain io valid tests", "[Assets][Terrain]")
 
    REQUIRE(terrain.height_map_dirty.size() == 1);
    CHECK(terrain.height_map_dirty[0] ==
-         dirty_rect{0, 0, terrain.length, terrain.length});
+         dirty_rect{0, 0, static_cast<uint32>(terrain.length),
+                    static_cast<uint32>(terrain.length)});
 
    for (const auto& weight_maps_dirty : terrain.texture_weight_maps_dirty) {
       REQUIRE(weight_maps_dirty.size() == 1);
-      CHECK(weight_maps_dirty[0] == dirty_rect{0, 0, terrain.length, terrain.length});
+      CHECK(weight_maps_dirty[0] ==
+            dirty_rect{0, 0, static_cast<uint32>(terrain.length),
+                       static_cast<uint32>(terrain.length)});
    }
 }
 
