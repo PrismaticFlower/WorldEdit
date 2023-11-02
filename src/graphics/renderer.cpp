@@ -372,10 +372,6 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    {
       _pre_render_command_list.reset();
 
-      if (std::exchange(_terrain_dirty, false)) {
-         _water.init(world.terrain, _pre_render_command_list, _dynamic_buffer_allocator);
-      }
-
       update_textures(_pre_render_command_list);
       build_world_mesh_list(_pre_render_command_list, world, active_layers, world_classes,
                             interaction_targets.creation_entity
@@ -391,6 +387,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
       _terrain.update(world.terrain, _pre_render_command_list,
                       _dynamic_buffer_allocator, _texture_manager);
+      _water.update(world.terrain, _pre_render_command_list,
+                    _dynamic_buffer_allocator, _texture_manager);
       _light_clusters
          .prepare_lights(camera, view_frustum, world,
                          interaction_targets.creation_entity
@@ -992,8 +990,8 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       profile_section profile{"Water - Draw", command_list, _profiler,
                               profiler_queue::direct};
 
-      _water.draw(_camera_constant_buffer_view, command_list, _root_signatures,
-                  _pipelines);
+      _water.draw(view_frustum, _camera_constant_buffer_view, command_list,
+                  _dynamic_buffer_allocator, _root_signatures, _pipelines);
    }
 
    if (active_entity_types.objects) {
@@ -2699,7 +2697,7 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
          });
 
          _terrain.process_updated_texture(updated);
-         _water.process_updated_texture(command_list, updated);
+         _water.process_updated_texture(updated);
       });
 }
 

@@ -13,30 +13,41 @@
 namespace we::graphics {
 
 struct water {
-   explicit water(gpu::device& device, texture_manager& texture_manager);
+   water(gpu::device& device, texture_manager& texture_manager);
 
-   void init(const world::terrain& terrain, gpu::copy_command_list& command_list,
-             dynamic_buffer_allocator& dynamic_buffer_allocator);
+   void update(const world::terrain& terrain, gpu::copy_command_list& command_list,
+               dynamic_buffer_allocator& dynamic_buffer_allocator,
+               texture_manager& texture_manager);
 
-   void draw(gpu_virtual_address camera_constant_buffer_view,
+   void draw(const frustum& view_frustum, gpu_virtual_address camera_constant_buffer_view,
              gpu::graphics_command_list& command_list,
+             dynamic_buffer_allocator& dynamic_buffer_allocator,
              root_signature_library& root_signatures, pipeline_library& pipelines);
 
-   void process_updated_texture(gpu::copy_command_list& command_list,
-                                const updated_textures& updated);
+   void process_updated_texture(const updated_textures& updated);
 
 private:
    gpu::device& _device;
-   texture_manager& _texture_manager;
 
    bool _active = false;
 
-   uint32 _patch_count = 0;
+   struct patch {
+      float2 min;
+      float2 max;
+   };
+
+   uint32 _water_map_length = 0;
+   uint32 _water_map_row_words = 0;
+
+   std::vector<uint64> _water_map;
+   std::vector<patch> _patches;
+
+   float _water_grid_scale = 0.0f;
+   float _half_water_map_length = 0.0f;
+   float _water_height = 0.0f;
 
    gpu::unique_resource_handle _water_constants_buffer;
-   gpu::unique_resource_handle _patch_buffer;
    gpu_virtual_address _water_constants_cbv;
-   gpu_virtual_address _patch_buffer_srv;
 
    lowercase_string _color_map_name;
    std::shared_ptr<const world_texture> _color_map;

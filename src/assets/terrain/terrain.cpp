@@ -9,6 +9,8 @@ void terrain::untracked_clear_dirty_rects() noexcept
    for (dirty_rect_tracker& dirty : texture_weight_maps_dirty) {
       dirty.clear();
    }
+
+   water_map_dirty.clear();
 }
 
 }

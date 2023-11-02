@@ -418,6 +418,8 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
       texture_weight_map_dirty.add({0, 0, length_u32, length_u32});
    }
 
+   terrain.water_map_dirty.add({0, 0, length_u32 / 4u, length_u32 / 4u});
+
    return terrain;
 }
 
