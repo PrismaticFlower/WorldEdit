@@ -132,7 +132,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       std::byte* const upload_ptr = _height_map_upload_ptr[_device.frame_index()];
       const uint32 row_pitch = _height_map_upload_row_pitch;
 
-      for (uint32 y = dirty.y; y < (_terrain_length + dirty.height); ++y) {
+      for (uint32 y = dirty.y; y < dirty.height; ++y) {
          std::memcpy(upload_ptr + (y * row_pitch) + dirty.x,
                      &terrain.height_map[{dirty.x, y}], sizeof(int16) * dirty.width);
       }
@@ -161,7 +161,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
             _weight_map_upload_ptr[_device.frame_index()][i];
          const uint32 row_pitch = _weight_map_upload_row_pitch;
 
-         for (uint32 y = dirty.y; y < (_terrain_length + dirty.height); ++y) {
+         for (uint32 y = dirty.y; y < dirty.height; ++y) {
             std::memcpy(upload_ptr + (y * row_pitch) + dirty.x,
                         &terrain.texture_weight_maps[i][{dirty.x, y}], dirty.width);
          }
