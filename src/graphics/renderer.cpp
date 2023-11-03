@@ -187,8 +187,6 @@ private:
 
    void update_textures(gpu::copy_command_list& command_list);
 
-   bool _terrain_dirty = true; // ughhhh, this feels so ugly
-
    std::shared_ptr<async::thread_pool> _thread_pool;
    output_stream& _error_output;
    float _display_scale = 1.0f;
