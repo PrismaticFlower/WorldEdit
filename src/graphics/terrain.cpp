@@ -120,8 +120,9 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
                      texture_manager& texture_manager)
 {
-   if (std::exchange(_terrain_length, static_cast<uint32>(terrain.length)) !=
-       _terrain_length) {
+   if (const uint32 length = static_cast<uint32>(terrain.length);
+       _terrain_length != length) {
+      _terrain_length = length;
       _patch_count = _terrain_length / patch_grid_count;
 
       create_gpu_textures();
@@ -197,7 +198,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    terrain_constants constants{
       .half_world_size = _terrain_half_world_size,
       .grid_size = _terrain_grid_size,
-      .height_scale = _terrain_height_scale,
+      .height_scale = terrain.height_scale * std::numeric_limits<int16>::max(),
 
       .height_map = _height_map_srv.get().index,
       .texture_weight_maps = _texture_weight_maps_srv.get().index,
@@ -276,7 +277,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
 
    _terrain_half_world_size = float2{terrain_half_world_size, terrain_half_world_size};
    _terrain_grid_size = terrain.grid_scale;
-   _terrain_height_scale = std::numeric_limits<int16>::max() * terrain.height_scale;
+   _terrain_height_scale = terrain.height_scale;
 
    for (const world::dirty_rect& dirty : terrain.height_map_dirty) {
       const uint32 start_patch_x = dirty.x / patch_grid_count;
@@ -289,33 +290,25 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
 
       for (uint32 patch_y = start_patch_y; patch_y < end_patch_y; ++patch_y) {
          for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
-            const float min_x = (patch_x * patch_grid_count * _terrain_grid_size) -
-                                _terrain_half_world_size.x;
-            const float max_x = min_x + (patch_grid_count * _terrain_grid_size);
-
-            const float min_z = (patch_y * patch_grid_count * _terrain_grid_size) -
-                                _terrain_half_world_size.y + _terrain_grid_size;
-            const float max_z = min_z + (patch_grid_count * _terrain_grid_size);
-
-            float min_y = std::numeric_limits<float>::max();
-            float max_y = std::numeric_limits<float>::lowest();
+            int16 min_y = std::numeric_limits<int16>::max();
+            int16 max_y = std::numeric_limits<int16>::lowest();
 
             for (uint32 local_y = 0; local_y < patch_point_count; ++local_y) {
                for (uint32 local_x = 0; local_x < patch_point_count; ++local_x) {
-                  const auto x = std::clamp(patch_x * patch_grid_count + local_x,
-                                            0u, terrain.length - 1u);
-                  const auto y = std::clamp(patch_y * patch_grid_count + local_y,
-                                            0u, terrain.length - 1u);
+                  const uint32 x = std::clamp(patch_x * patch_grid_count + local_x,
+                                              0u, terrain.length - 1u);
+                  const uint32 y = std::clamp(patch_y * patch_grid_count + local_y,
+                                              0u, terrain.length - 1u);
 
-                  const float height = terrain.height_map[{x, y}] * terrain.height_scale;
+                  const int16 height = terrain.height_map[{x, y}];
 
                   min_y = std::min(min_y, height);
                   max_y = std::max(max_y, height);
                }
             }
 
-            _patches[patch_y * _patch_count + patch_x].bbox =
-               {.min = {min_x, min_y, min_z}, .max = {max_x, max_y, max_z}};
+            _patches[patch_y * _patch_count + patch_x].min_y = min_y;
+            _patches[patch_y * _patch_count + patch_x].max_y = max_y;
          }
       }
    }
@@ -336,10 +329,10 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
 
                for (uint32 local_y = 0; local_y < patch_point_count; ++local_y) {
                   for (uint32 local_x = 0; local_x < patch_point_count; ++local_x) {
-                     const auto x = std::clamp(patch_x * patch_grid_count + local_x,
-                                               0u, terrain.length - 1u);
-                     const auto y = std::clamp(patch_y * patch_grid_count + local_y,
-                                               0u, terrain.length - 1u);
+                     const uint32 x = std::clamp(patch_x * patch_grid_count + local_x,
+                                                 0u, terrain.length - 1u);
+                     const uint32 y = std::clamp(patch_y * patch_grid_count + local_y,
+                                                 0u, terrain.length - 1u);
 
                      texture_active |=
                         terrain.texture_weight_maps[texture][{x, y}] > 0;
@@ -369,18 +362,36 @@ void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
 
    uint32 visible_patch_count = 0;
 
-   for (const auto& patch : _patches) {
-      if (not intersects(view_frustum, patch.bbox)) continue;
+   for (uint32 patch_y = 0; patch_y < _patch_count; ++patch_y) {
+      for (uint32 patch_x = 0; patch_x < _patch_count; ++patch_x) {
+         const terrain_patch& patch = _patches[patch_y * _patch_count + patch_x];
 
-      patch_info_shader info{.x = patch.x * patch_grid_count,
-                             .y = patch.y * patch_grid_count,
-                             .active_textures = patch.active_textures.to_ulong()};
+         const float min_x = (patch_x * patch_grid_count * _terrain_grid_size) -
+                             _terrain_half_world_size.x;
+         const float max_x = min_x + (patch_grid_count * _terrain_grid_size);
 
-      std::memcpy(patches_srv_allocation.cpu_address +
-                     (sizeof(patch_info_shader) * visible_patch_count),
-                  &info, sizeof(patch_info_shader));
+         const float min_y = patch.min_y * _terrain_height_scale;
+         const float max_y = patch.max_y * _terrain_height_scale;
 
-      ++visible_patch_count;
+         const float min_z = (patch_y * patch_grid_count * _terrain_grid_size) -
+                             _terrain_half_world_size.y + _terrain_grid_size;
+         const float max_z = min_z + (patch_grid_count * _terrain_grid_size);
+
+         const math::bounding_box bbox{.min = {min_x, min_y, min_z},
+                                       .max = {max_x, max_y, max_z}};
+
+         if (not intersects(view_frustum, bbox)) continue;
+
+         patch_info_shader info{.x = patch_x * patch_grid_count,
+                                .y = patch_y * patch_grid_count,
+                                .active_textures = patch.active_textures.word()};
+
+         std::memcpy(patches_srv_allocation.cpu_address +
+                        (sizeof(patch_info_shader) * visible_patch_count),
+                     &info, sizeof(patch_info_shader));
+
+         ++visible_patch_count;
+      }
    }
 
    command_list.set_pipeline_state(select_pipeline(draw, pipelines));
@@ -536,13 +547,7 @@ void terrain::create_gpu_textures()
 void terrain::create_unfilled_patch_info()
 {
    _patches.clear();
-   _patches.reserve(_patch_count * _patch_count);
-
-   for (uint32 patch_y = 0; patch_y < _patch_count; ++patch_y) {
-      for (uint32 patch_x = 0; patch_x < _patch_count; ++patch_x) {
-         _patches.push_back({.x = patch_x, .y = patch_y});
-      }
-   }
+   _patches.resize(_patch_count * _patch_count);
 }
 
 }

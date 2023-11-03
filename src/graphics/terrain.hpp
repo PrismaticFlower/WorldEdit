@@ -1,5 +1,6 @@
 #pragma once
 
+#include "container/slim_bitset.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "frustum.hpp"
 #include "gpu/resource.hpp"
@@ -10,7 +11,6 @@
 #include "types.hpp"
 #include "world/world.hpp"
 
-#include <bitset>
 #include <span>
 #include <vector>
 
@@ -54,10 +54,9 @@ public:
 
 private:
    struct terrain_patch {
-      math::bounding_box bbox;
-      uint32 x;
-      uint32 y;
-      std::bitset<16> active_textures;
+      int16 min_y = 0;
+      int16 max_y = 0;
+      container::slim_bitset<16> active_textures;
    };
 
    void create_gpu_textures();

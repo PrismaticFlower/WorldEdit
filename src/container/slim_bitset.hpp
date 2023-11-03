@@ -83,6 +83,11 @@ public:
       _bits |= (true << i);
    }
 
+   auto word() const noexcept -> storage_type
+   {
+      return _bits;
+   }
+
 private:
    storage_type _bits = {};
 };
