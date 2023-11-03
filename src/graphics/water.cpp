@@ -4,8 +4,6 @@
 
 #include <bit>
 
-#include <imgui.h>
-
 namespace we::graphics {
 
 namespace {
