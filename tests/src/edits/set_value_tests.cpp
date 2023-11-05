@@ -43,15 +43,16 @@ TEST_CASE("edits set_path_node_value", "[Edits]")
    REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_global_lights_value", "[Edits]")
+TEST_CASE("edits set_global_value", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit = make_set_global_lights_value(&world::global_lights::env_map_texture,
-                                            "starfield"s,
-                                            world.global_lights.env_map_texture);
+   auto edit =
+      make_set_global_value(&world::world::global_lights,
+                            &world::global_lights::env_map_texture,
+                            "starfield"s, world.global_lights.env_map_texture);
 
    edit->apply(edit_context);
 
@@ -388,18 +389,20 @@ TEST_CASE("edits set_path_node_value coalesce", "[Edits]")
    REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_global_lights_value coalesce", "[Edits]")
+TEST_CASE("edits set_global_value coalesce", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto edit = make_set_global_lights_value(&world::global_lights::env_map_texture,
-                                            "starfield"s,
-                                            world.global_lights.env_map_texture);
+   auto edit =
+      make_set_global_value(&world::world::global_lights,
+                            &world::global_lights::env_map_texture,
+                            "starfield"s, world.global_lights.env_map_texture);
    auto other_edit =
-      make_set_global_lights_value(&world::global_lights::env_map_texture,
-                                   "mountains"s, world.global_lights.env_map_texture);
+      make_set_global_value(&world::world::global_lights,
+                            &world::global_lights::env_map_texture,
+                            "mountains"s, world.global_lights.env_map_texture);
 
    REQUIRE(edit->is_coalescable(*other_edit));
 

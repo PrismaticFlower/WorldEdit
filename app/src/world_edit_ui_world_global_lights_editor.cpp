@@ -7,6 +7,20 @@
 
 namespace we {
 
+namespace {
+
+template<typename Value>
+inline auto make_set_global_lights_value(Value world::global_lights::*value_member_ptr,
+                                         Value new_value, Value original_value)
+   -> std::unique_ptr<edits::set_global_value<world::global_lights, Value>>
+{
+   return std::make_unique<edits::set_global_value<world::global_lights, Value>>(
+      &world::world::global_lights, value_member_ptr, std::move(new_value),
+      std::move(original_value));
+}
+
+}
+
 void world_edit::ui_show_world_global_lights_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
@@ -23,11 +37,10 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
             for (const auto& light : _world.lights) {
                if (light.light_type == world::light_type::directional) {
                   if (ImGui::Selectable(light.name.c_str())) {
-                     _edit_stack_world
-                        .apply(edits::make_set_global_lights_value(global_light_ptr,
-                                                                   light.name,
-                                                                   global_light),
-                               _edit_context, {.closed = true});
+                     _edit_stack_world.apply(make_set_global_lights_value(global_light_ptr,
+                                                                          light.name,
+                                                                          global_light),
+                                             _edit_context, {.closed = true});
                   }
                }
             }
@@ -44,8 +57,8 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
       float3 color = start_color;
 
       if (ImGui::ColorEdit3(label, &color.x)) {
-         _edit_stack_world.apply(edits::make_set_global_lights_value(ambient_ptr, color,
-                                                                     start_color),
+         _edit_stack_world.apply(make_set_global_lights_value(ambient_ptr, color,
+                                                              start_color),
                                  _edit_context);
       }
 
@@ -59,9 +72,9 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
 
    if (std::string env_map_texture = _world.global_lights.env_map_texture;
        ImGui::InputText("Global Environment Map", &env_map_texture)) {
-      _edit_stack_world.apply(edits::make_set_global_lights_value(
-                                 &world::global_lights::env_map_texture, env_map_texture,
-                                 _world.global_lights.env_map_texture),
+      _edit_stack_world.apply(make_set_global_lights_value(&world::global_lights::env_map_texture,
+                                                           env_map_texture,
+                                                           _world.global_lights.env_map_texture),
                               _edit_context);
    }
 

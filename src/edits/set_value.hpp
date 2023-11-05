@@ -128,62 +128,6 @@ inline auto make_set_path_node_value(world::path_id id, std::size_t node,
                                                    std::move(original_value));
 }
 
-template<typename T>
-struct set_global_lights_value final : edit<world::edit_context> {
-   using value_type = T;
-
-   set_global_lights_value(value_type world::global_lights::*value_member_ptr,
-                           value_type new_value, value_type original_value)
-      : value_member_ptr{value_member_ptr},
-        new_value{std::move(new_value)},
-        original_value{std::move(original_value)}
-   {
-   }
-
-   void apply(world::edit_context& context) const noexcept override
-   {
-      context.world.global_lights.*value_member_ptr = new_value;
-   }
-
-   void revert(world::edit_context& context) const noexcept override
-   {
-      context.world.global_lights.*value_member_ptr = original_value;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_global_lights_value* other =
-         dynamic_cast<const set_global_lights_value*>(&other_unknown);
-
-      if (not other) return false;
-
-      return this->value_member_ptr == other->value_member_ptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_global_lights_value& other =
-         dynamic_cast<set_global_lights_value&>(other_unknown);
-
-      new_value = std::move(other.new_value);
-   }
-
-   value_type world::global_lights::*value_member_ptr;
-
-   value_type new_value;
-   value_type original_value;
-};
-
-template<typename T>
-inline auto make_set_global_lights_value(T world::global_lights::*value_member_ptr,
-                                         T new_value, T original_value)
-   -> std::unique_ptr<set_global_lights_value<T>>
-{
-   return std::make_unique<set_global_lights_value<T>>(value_member_ptr,
-                                                       std::move(new_value),
-                                                       std::move(original_value));
-}
-
 template<typename Entity, typename T>
 struct set_creation_value final : edit<world::edit_context> {
    using entity_type = Entity;
@@ -440,6 +384,67 @@ inline auto make_set_creation_path_node_value(T world::path::node::*value_member
    -> std::unique_ptr<set_creation_path_node_value<T>>
 {
    return std::make_unique<set_creation_path_node_value<T>>(value_member_ptr,
+                                                            std::move(new_value),
+                                                            std::move(original_value));
+}
+
+template<typename Struct, typename Value>
+struct set_global_value final : edit<world::edit_context> {
+   using value_owner = Struct;
+   using value_type = Value;
+
+   set_global_value(value_owner world::world::*value_owner_ptr,
+                    value_type value_owner::*value_member_ptr,
+                    value_type new_value, value_type original_value)
+      : value_owner_ptr{value_owner_ptr},
+        value_member_ptr{value_member_ptr},
+        new_value{std::move(new_value)},
+        original_value{std::move(original_value)}
+   {
+   }
+
+   void apply(world::edit_context& context) const noexcept override
+   {
+      context.world.global_lights.*value_member_ptr = new_value;
+   }
+
+   void revert(world::edit_context& context) const noexcept override
+   {
+      context.world.global_lights.*value_member_ptr = original_value;
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_global_value* other =
+         dynamic_cast<const set_global_value*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->value_member_ptr == other->value_member_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_global_value& other = dynamic_cast<set_global_value&>(other_unknown);
+
+      new_value = std::move(other.new_value);
+   }
+
+   value_owner world::world::*value_owner_ptr;
+   value_type value_owner::*value_member_ptr;
+
+   value_type new_value;
+   value_type original_value;
+};
+
+template<typename Struct, typename Value>
+inline auto make_set_global_value(Struct world::world::*value_owner_ptr,
+                                  Value Struct::*value_member_ptr,
+                                  Value new_value, Value original_value)
+   -> std::unique_ptr<set_global_value<Struct, Value>>
+{
+   return std::make_unique<set_global_value<Struct, Value>>(value_owner_ptr,
+                                                            value_member_ptr,
                                                             std::move(new_value),
                                                             std::move(original_value));
 }
