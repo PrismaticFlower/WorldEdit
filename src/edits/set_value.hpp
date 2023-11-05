@@ -405,12 +405,12 @@ struct set_global_value final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) const noexcept override
    {
-      context.world.global_lights.*value_member_ptr = new_value;
+      context.world.*value_owner_ptr.*value_member_ptr = new_value;
    }
 
    void revert(world::edit_context& context) const noexcept override
    {
-      context.world.global_lights.*value_member_ptr = original_value;
+      context.world.*value_owner_ptr.*value_member_ptr = original_value;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
