@@ -147,6 +147,8 @@ private:
 
    void ui_show_world_selection_set_layer() noexcept;
 
+   void ui_show_terrain_editor() noexcept;
+
    void ui_show_about_window() noexcept;
 
    void ui_show_object_class_browser() noexcept;
