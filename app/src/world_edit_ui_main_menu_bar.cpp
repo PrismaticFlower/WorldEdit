@@ -179,6 +179,10 @@ void world_edit::ui_show_main_menu_bar() noexcept
                                                    "Render Environment Map")),
                          &_render_env_map_open);
 
+         ImGui::Separator();
+
+         ImGui::MenuItem("Terrain Editor", "Needs Hotkey", &_terrain_editor_open);
+
          ImGui::EndMenu();
       }
 

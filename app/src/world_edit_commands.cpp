@@ -281,6 +281,8 @@ void world_edit::initialize_commands() noexcept
                                                 _interaction_targets.creation_entity),
                 _edit_context);
    });
+
+   _commands.add("terrain.toggle_brush_paint"s, _terrain_editor_context.brush_painting);
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -622,6 +624,16 @@ void world_edit::initialize_hotkeys() noexcept
          {
             {"Increase Move Speed", "camera.double_move_speed", {.key = key::mouse_wheel_forward}},
             {"Decrease Move Speed", "camera.halve_move_speed", {.key = key::mouse_wheel_back}},
+         },
+   });
+
+   _hotkeys.add_set({
+      .name = "Terrain Editing",
+      .description = "Active while the terrain editor is open.."s,
+      .activated = [this] { return _terrain_editor_open; },
+      .default_hotkeys =
+         {
+            {"Paint", "terrain.toggle_brush_paint", {.key = key::mouse1}, {.toggle = true}},
          },
    });
 }

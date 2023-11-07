@@ -307,6 +307,7 @@ private:
    bool _settings_editor_open = false;
    bool _about_window_open = false;
    bool _render_env_map_open = false;
+   bool _terrain_editor_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;
@@ -420,6 +421,15 @@ private:
 
       world::sector_id sector_to_add_object_to = world::max_id;
    } _selection_edit_context;
+
+   struct terrain_editor_config {
+      float brush_radius = 1.0f;
+   } _terrain_editor_config;
+
+   struct terrain_editor_context {
+      bool brush_active = true;
+      bool brush_painting = false;
+   } _terrain_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

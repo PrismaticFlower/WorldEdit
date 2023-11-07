@@ -237,6 +237,7 @@ void world_edit::update_hovered_entity() noexcept
 
    if (ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse()) return;
    if (_rotate_camera or _pan_camera) return;
+   if (_terrain_editor_open) return;
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 
