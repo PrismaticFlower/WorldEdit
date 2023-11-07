@@ -123,7 +123,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    if (const uint32 length = static_cast<uint32>(terrain.length);
        _terrain_length != length) {
       _terrain_length = length;
-      _patch_count = _terrain_length / patch_grid_count;
+      _patch_count = (_terrain_length + patch_grid_count - 1u) / patch_grid_count;
 
       create_gpu_textures();
       create_unfilled_patch_info();
@@ -132,21 +132,23 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    for (const world::dirty_rect& dirty : terrain.height_map_dirty) {
       std::byte* const upload_ptr = _height_map_upload_ptr[_device.frame_index()];
       const uint32 row_pitch = _height_map_upload_row_pitch;
+      const uint32 dirty_width = (dirty.right - dirty.left);
 
-      for (uint32 y = dirty.y; y < dirty.height; ++y) {
-         std::memcpy(upload_ptr + (y * row_pitch) + dirty.x,
-                     &terrain.height_map[{dirty.x, y}], sizeof(int16) * dirty.width);
+      for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
+         std::memcpy(upload_ptr + (y * row_pitch) + (dirty.left * sizeof(int16)),
+                     &terrain.height_map[{dirty.left, y}],
+                     dirty_width * sizeof(int16));
       }
 
-      gpu::box src_box{.left = dirty.x,
-                       .top = dirty.y,
+      gpu::box src_box{.left = dirty.left,
+                       .top = dirty.top,
                        .front = 0,
-                       .right = dirty.x + dirty.width,
-                       .bottom = dirty.y + dirty.height,
+                       .right = dirty.right,
+                       .bottom = dirty.bottom,
                        .back = 1};
 
       command_list.copy_buffer_to_texture(
-         _height_map.get(), 0, dirty.x, dirty.y, 0, _upload_buffer.get(),
+         _height_map.get(), 0, dirty.left, dirty.top, 0, _upload_buffer.get(),
          {.offset = _height_map_upload_offset[_device.frame_index()],
           .format = DXGI_FORMAT_R16_SINT,
           .width = _terrain_length,
@@ -161,21 +163,23 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
          std::byte* const upload_ptr =
             _weight_map_upload_ptr[_device.frame_index()][i];
          const uint32 row_pitch = _weight_map_upload_row_pitch;
+         const uint32 dirty_width = dirty.right - dirty.left;
 
-         for (uint32 y = dirty.y; y < dirty.height; ++y) {
-            std::memcpy(upload_ptr + (y * row_pitch) + dirty.x,
-                        &terrain.texture_weight_maps[i][{dirty.x, y}], dirty.width);
+         for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
+            std::memcpy(upload_ptr + (y * row_pitch) + dirty.left,
+                        &terrain.texture_weight_maps[i][{dirty.left, y}], dirty_width);
          }
 
-         gpu::box src_box{.left = dirty.x,
-                          .top = dirty.y,
+         gpu::box src_box{.left = dirty.left,
+                          .top = dirty.top,
                           .front = 0,
-                          .right = dirty.x + dirty.width,
-                          .bottom = dirty.y + dirty.height,
+                          .right = dirty.right,
+                          .bottom = dirty.bottom,
                           .back = 1};
 
          command_list.copy_buffer_to_texture(
-            _texture_weight_maps.get(), i, dirty.x, dirty.y, 0, _upload_buffer.get(),
+            _texture_weight_maps.get(), i, dirty.left, dirty.top, 0,
+            _upload_buffer.get(),
             {.offset = _weight_map_upload_offset[_device.frame_index()][i],
              .format = DXGI_FORMAT_R8_UNORM,
              .width = _terrain_length,
@@ -280,13 +284,13 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
    _terrain_height_scale = terrain.height_scale;
 
    for (const world::dirty_rect& dirty : terrain.height_map_dirty) {
-      const uint32 start_patch_x = dirty.x / patch_grid_count;
+      const uint32 start_patch_x = dirty.left / patch_grid_count;
       const uint32 end_patch_x =
-         start_patch_x + (dirty.width + patch_grid_count - 1) / patch_grid_count;
+         (dirty.right + patch_grid_count - 1u) / patch_grid_count;
 
-      const uint32 start_patch_y = dirty.y / patch_grid_count;
+      const uint32 start_patch_y = dirty.top / patch_grid_count;
       const uint32 end_patch_y =
-         start_patch_y + (dirty.height + patch_grid_count - 1) / patch_grid_count;
+         (dirty.bottom + patch_grid_count - 1u) / patch_grid_count;
 
       for (uint32 patch_y = start_patch_y; patch_y < end_patch_y; ++patch_y) {
          for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {
@@ -315,13 +319,13 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
 
    for (uint32 texture = 0; texture < texture_count; ++texture) {
       for (const world::dirty_rect& dirty : terrain.texture_weight_maps_dirty[texture]) {
-         const uint32 start_patch_x = dirty.x / patch_grid_count;
+         const uint32 start_patch_x = dirty.left / patch_grid_count;
          const uint32 end_patch_x =
-            start_patch_x + (dirty.width + patch_grid_count - 1) / patch_grid_count;
+            (dirty.right + patch_grid_count - 1u) / patch_grid_count;
 
-         const uint32 start_patch_y = dirty.y / patch_grid_count;
+         const uint32 start_patch_y = dirty.top / patch_grid_count;
          const uint32 end_patch_y =
-            start_patch_y + (dirty.height + patch_grid_count - 1) / patch_grid_count;
+            (dirty.bottom + patch_grid_count - 1u) / patch_grid_count;
 
          for (uint32 patch_y = start_patch_y; patch_y < end_patch_y; ++patch_y) {
             for (uint32 patch_x = start_patch_x; patch_x < end_patch_x; ++patch_x) {

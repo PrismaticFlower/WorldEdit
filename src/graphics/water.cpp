@@ -47,8 +47,8 @@ void water::update(const world::terrain& terrain, gpu::copy_command_list& comman
    }
 
    for (const world::dirty_rect& dirty : terrain.water_map_dirty) {
-      for (uint32 y = dirty.y; y < dirty.height; ++y) {
-         for (uint32 x = dirty.x; x < dirty.width; ++x) {
+      for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
+         for (uint32 x = dirty.left; x < dirty.right; ++x) {
             uint64& word = _water_map[_water_map_row_words * y + (x / 64ull)];
             const uint64 bit = (1ull << (x % 64ull));
 

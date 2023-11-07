@@ -12,18 +12,18 @@ TEST_CASE("terrain dirty_rect_tracker base", "[Assets][Terrain]")
 
    REQUIRE(tracker.size() == 0);
 
-   tracker.add({.x = 0, .y = 0, .width = 8, .height = 8});
+   tracker.add({.left = 0, .top = 0, .right = 8, .bottom = 8});
 
    REQUIRE(tracker.size() == 1);
 
-   CHECK(tracker[0] == dirty_rect{.x = 0, .y = 0, .width = 8, .height = 8});
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 0, .right = 8, .bottom = 8});
 
-   tracker.add({.x = 16, .y = 16, .width = 8, .height = 8});
+   tracker.add({.left = 16, .top = 16, .right = 24, .bottom = 24});
 
    REQUIRE(tracker.size() == 2);
 
-   CHECK(tracker[0] == dirty_rect{.x = 0, .y = 0, .width = 8, .height = 8});
-   CHECK(tracker[1] == dirty_rect{.x = 16, .y = 16, .width = 8, .height = 8});
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 0, .right = 8, .bottom = 8});
+   CHECK(tracker[1] == dirty_rect{.left = 16, .top = 16, .right = 24, .bottom = 24});
 
    tracker.clear();
 
@@ -36,12 +36,12 @@ TEST_CASE("terrain dirty_rect_tracker overlap", "[Assets][Terrain]")
 
    REQUIRE(tracker.size() == 0);
 
-   tracker.add({.x = 0, .y = 0, .width = 8, .height = 8});
-   tracker.add({.x = 4, .y = 4, .width = 8, .height = 8});
+   tracker.add({.left = 0, .top = 0, .right = 8, .bottom = 8});
+   tracker.add({.left = 4, .top = 4, .right = 12, .bottom = 12});
 
    REQUIRE(tracker.size() == 1);
 
-   CHECK(tracker[0] == dirty_rect{.x = 0, .y = 0, .width = 12, .height = 12});
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 0, .right = 12, .bottom = 12});
 }
 
 TEST_CASE("terrain dirty_rect_tracker edge overlap", "[Assets][Terrain]")
@@ -50,12 +50,12 @@ TEST_CASE("terrain dirty_rect_tracker edge overlap", "[Assets][Terrain]")
 
    REQUIRE(tracker.size() == 0);
 
-   tracker.add({.x = 0, .y = 0, .width = 8, .height = 8});
-   tracker.add({.x = 8, .y = 0, .width = 8, .height = 8});
+   tracker.add({.left = 0, .top = 0, .right = 8, .bottom = 8});
+   tracker.add({.left = 8, .top = 0, .right = 16, .bottom = 8});
 
    REQUIRE(tracker.size() == 1);
 
-   CHECK(tracker[0] == dirty_rect{.x = 0, .y = 0, .width = 16, .height = 8});
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 0, .right = 16, .bottom = 8});
 }
 
 }
