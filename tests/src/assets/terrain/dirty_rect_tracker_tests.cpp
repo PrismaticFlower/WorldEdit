@@ -153,6 +153,38 @@ TEST_CASE("terrain dirty_rect_tracker overlap top", "[Assets][Terrain]")
    CHECK(tracker[1] == dirty_rect{.left = 0, .top = 0, .right = 4, .bottom = 4});
 }
 
+TEST_CASE("terrain dirty_rect_tracker overlap small left", "[Assets][Terrain]")
+{
+   dirty_rect_tracker tracker;
+
+   REQUIRE(tracker.size() == 0);
+
+   tracker.add({.left = 4, .top = 2, .right = 10, .bottom = 6});
+   tracker.add({.left = 0, .top = 0, .right = 8, .bottom = 8});
+
+   REQUIRE(tracker.size() == 3);
+
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
+   CHECK(tracker[1] == dirty_rect{.left = 0, .top = 0, .right = 8, .bottom = 2});
+   CHECK(tracker[2] == dirty_rect{.left = 0, .top = 6, .right = 8, .bottom = 8});
+}
+
+TEST_CASE("terrain dirty_rect_tracker overlap small right", "[Assets][Terrain]")
+{
+   dirty_rect_tracker tracker;
+
+   REQUIRE(tracker.size() == 0);
+
+   tracker.add({.left = 0, .top = 2, .right = 4, .bottom = 6});
+   tracker.add({.left = 2, .top = 0, .right = 10, .bottom = 8});
+
+   REQUIRE(tracker.size() == 3);
+
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
+   CHECK(tracker[1] == dirty_rect{.left = 2, .top = 0, .right = 10, .bottom = 2});
+   CHECK(tracker[2] == dirty_rect{.left = 2, .top = 6, .right = 10, .bottom = 8});
+}
+
 TEST_CASE("terrain dirty_rect_tracker overlap small top", "[Assets][Terrain]")
 {
    dirty_rect_tracker tracker;
