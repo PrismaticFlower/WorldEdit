@@ -31,7 +31,7 @@ struct add_layer final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       const int index = static_cast<int>(context.world.layer_descriptions.size());
 
@@ -54,7 +54,7 @@ struct add_layer final : edit<world::edit_context> {
       }
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.layer_descriptions.pop_back();
       context.world.game_modes.at(0).layers.pop_back();

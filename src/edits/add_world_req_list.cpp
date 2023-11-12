@@ -9,12 +9,12 @@ struct add_world_req_list final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.requirements.push_back({.file_type = _file_type});
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.requirements.pop_back();
    }

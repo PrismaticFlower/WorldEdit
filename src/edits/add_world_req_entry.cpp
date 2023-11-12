@@ -10,12 +10,12 @@ struct add_world_req_entry final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.requirements[_list_index].entries.push_back(_name);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.requirements[_list_index].entries.pop_back();
    }

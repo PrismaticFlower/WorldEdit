@@ -14,12 +14,12 @@ struct dummy_edit_state {
 };
 
 struct dummy_edit : edit<dummy_edit_state> {
-   void apply(dummy_edit_state& target) const noexcept override
+   void apply(dummy_edit_state& target) noexcept override
    {
       ++target.apply_call_count;
    }
 
-   void revert(dummy_edit_state& target) const noexcept override
+   void revert(dummy_edit_state& target) noexcept override
    {
       ++target.revert_call_count;
    }
@@ -39,12 +39,12 @@ struct dummy_edit_bools_state {
 struct dummy_ordering_edit : edit<dummy_edit_bools_state> {
    dummy_ordering_edit(int index) : index{index} {}
 
-   void apply(dummy_edit_bools_state& target) const noexcept override
+   void apply(dummy_edit_bools_state& target) noexcept override
    {
       target.toggles[index] = not target.toggles[index];
    }
 
-   void revert(dummy_edit_bools_state& target) const noexcept override
+   void revert(dummy_edit_bools_state& target) noexcept override
    {
       target.toggles[index] = not target.toggles[index];
    }
@@ -60,12 +60,12 @@ struct dummy_ordering_edit : edit<dummy_edit_bools_state> {
 };
 
 struct dummy_edit_coalesce : edit<int> {
-   void apply(int& target) const noexcept override
+   void apply(int& target) noexcept override
    {
       target = new_value;
    }
 
-   void revert(int& target) const noexcept override
+   void revert(int& target) noexcept override
    {
       target = old_value;
    }

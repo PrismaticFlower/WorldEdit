@@ -11,12 +11,12 @@ struct add_sector_object final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       world::find_entity(context.world.sectors, _id)->objects.emplace_back(_object);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       world::find_entity(context.world.sectors, _id)->objects.pop_back();
    }

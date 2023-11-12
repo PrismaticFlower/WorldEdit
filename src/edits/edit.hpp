@@ -12,11 +12,11 @@ struct edit {
 
    /// @brief Apply the edit to the target.
    /// @param target The target of the edit.
-   virtual void apply(edit_target& target) const noexcept = 0;
+   virtual void apply(edit_target& target) noexcept = 0;
 
    /// @brief Revert the edit from the target.
    /// @param world The target of the edit.
-   virtual void revert(edit_target& target) const noexcept = 0;
+   virtual void revert(edit_target& target) noexcept = 0;
 
    /// @brief Determines if an edit can be coalesced with another.
    /// @param other The new edit to check.

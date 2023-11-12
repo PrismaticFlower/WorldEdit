@@ -363,7 +363,7 @@ void revert_delete_entries(std::vector<world::game_mode_description>& game_modes
 struct delete_layer final : edit<world::edit_context> {
    delete_layer(delete_layer_data data) : _data{std::move(data)} {}
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       world::world& world = context.world;
 
@@ -387,7 +387,7 @@ struct delete_layer final : edit<world::edit_context> {
       apply_delete_entries(world.game_modes, _data.delete_game_mode_requirements);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       world::world& world = context.world;
 

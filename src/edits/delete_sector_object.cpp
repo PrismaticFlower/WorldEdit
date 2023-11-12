@@ -15,7 +15,7 @@ struct delete_sector_object final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::vector<std::string>& objects =
          world::find_entity(context.world.sectors, _id)->objects;
@@ -23,7 +23,7 @@ struct delete_sector_object final : edit<world::edit_context> {
       objects.erase(objects.begin() + _object_index);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::vector<std::string>& objects =
          world::find_entity(context.world.sectors, _id)->objects;

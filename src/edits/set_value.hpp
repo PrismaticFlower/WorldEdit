@@ -20,12 +20,12 @@ struct set_value final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       find_entity<entity_type>(context.world, id)->*value_member_ptr = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       find_entity<entity_type>(context.world, id)->*value_member_ptr = original_value;
    }
@@ -78,13 +78,13 @@ struct set_path_node_value final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       find_entity<world::path>(context.world, id)->nodes[node].*value_member_ptr =
          new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       find_entity<world::path>(context.world, id)->nodes[node].*value_member_ptr =
          original_value;
@@ -140,12 +140,12 @@ struct set_global_lights_value final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.global_lights.*value_member_ptr = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.global_lights.*value_member_ptr = original_value;
    }
@@ -197,12 +197,12 @@ struct set_creation_value final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
    }
@@ -260,13 +260,13 @@ struct set_creation_value_with_meta final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
       context.*meta_value_member_ptr = meta_original_value;
@@ -331,14 +331,14 @@ struct set_creation_location final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).rotation = new_rotation;
       std::get<entity_type>(*context.creation_entity).position = new_position;
       context.euler_rotation = new_euler_rotation;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).rotation = original_rotation;
       std::get<entity_type>(*context.creation_entity).position = original_position;
@@ -398,13 +398,13 @@ struct set_creation_path_node_value final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
          new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
          original_value;

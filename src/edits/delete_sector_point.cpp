@@ -15,7 +15,7 @@ struct delete_sector_point final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::vector<float2>& points =
          world::find_entity(context.world.sectors, _id)->points;
@@ -23,7 +23,7 @@ struct delete_sector_point final : edit<world::edit_context> {
       points.erase(points.begin() + _point_index);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::vector<float2>& points =
          world::find_entity(context.world.sectors, _id)->points;

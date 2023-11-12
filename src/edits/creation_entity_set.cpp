@@ -13,12 +13,12 @@ struct creation_entity_set final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.creation_entity = new_creation_entity;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.creation_entity = old_creation_entity;
    }
