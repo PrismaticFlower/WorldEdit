@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gpu/exception.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
 #include "math/align.hpp"
@@ -33,7 +34,8 @@ struct dynamic_buffer_allocator {
 
       [[unlikely]] if ((allocation_offset + aligned_size - _buffer_base_offset) >
                        _frame_section_size) {
-         std::terminate(); // OOM, let's go and cry now.
+         throw gpu::exception{gpu::error::out_of_memory,
+                              "Dynamic buffer allocator is out of memory."};
       }
 
       return {.cpu_address = _cpu_base_address + allocation_offset,
