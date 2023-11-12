@@ -12,14 +12,14 @@ struct insert_sector_point final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       auto& points = world::find_entity(context.world.sectors, _id)->points;
 
       points.insert(points.begin() + _insert_before_index, _point);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       auto& points = world::find_entity(context.world.sectors, _id)->points;
 

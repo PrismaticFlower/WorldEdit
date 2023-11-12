@@ -64,7 +64,7 @@ struct unlink_layer final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       world::world& world = context.world;
       world::game_mode_description& game_mode = world.game_modes[_game_mode_index];
@@ -78,7 +78,7 @@ struct unlink_layer final : edit<world::edit_context> {
       }
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       world::game_mode_description& game_mode =
          context.world.game_modes[_game_mode_index];

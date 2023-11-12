@@ -14,14 +14,14 @@ struct set_instance_property_value final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       find_entity<world::object>(context.world, id)
          ->instance_properties[property_index]
          .value = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       find_entity<world::object>(context.world, id)
          ->instance_properties[property_index]
@@ -60,12 +60,12 @@ struct set_sector_point final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       find_entity<world::sector>(context.world, id)->points[point_index] = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       find_entity<world::sector>(context.world, id)->points[point_index] =
          original_value;
@@ -109,14 +109,14 @@ struct set_creation_path_node_location final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].rotation = new_rotation;
       std::get<world::path>(*context.creation_entity).nodes[0].position = new_position;
       context.euler_rotation = new_euler_rotation;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].rotation =
          original_rotation;
@@ -165,14 +165,14 @@ struct set_creation_region_metrics final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::region>(*context.creation_entity).rotation = new_rotation;
       std::get<world::region>(*context.creation_entity).position = new_position;
       std::get<world::region>(*context.creation_entity).size = new_size;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::region>(*context.creation_entity).rotation = original_rotation;
       std::get<world::region>(*context.creation_entity).position = original_position;
@@ -212,12 +212,12 @@ struct set_creation_sector_point final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::sector>(*context.creation_entity).points[0] = new_position;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::sector>(*context.creation_entity).points[0] = original_position;
    }
@@ -245,17 +245,20 @@ struct set_creation_sector_point final : edit<world::edit_context> {
 struct set_creation_portal_size final : edit<world::edit_context> {
    set_creation_portal_size(float new_width, float original_width,
                             float new_height, float original_height)
-      : new_width{new_width}, original_width{original_width}, new_height{new_height}, original_height{original_height}
+      : new_width{new_width},
+        original_width{original_width},
+        new_height{new_height},
+        original_height{original_height}
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::portal>(*context.creation_entity).width = new_width;
       std::get<world::portal>(*context.creation_entity).height = new_height;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::portal>(*context.creation_entity).width = original_width;
       std::get<world::portal>(*context.creation_entity).height = original_height;
@@ -297,14 +300,14 @@ struct set_creation_barrier_metrics final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::barrier>(*context.creation_entity).rotation_angle = new_rotation;
       std::get<world::barrier>(*context.creation_entity).position = new_position;
       std::get<world::barrier>(*context.creation_entity).size = new_size;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::barrier>(*context.creation_entity).rotation_angle =
          original_rotation;

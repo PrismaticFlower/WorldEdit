@@ -12,14 +12,14 @@ struct delete_path_property final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       auto& properties = world::find_entity(context.world.paths, _id)->properties;
 
       properties.erase(properties.begin() + _property_index);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       auto& properties = world::find_entity(context.world.paths, _id)->properties;
 
@@ -42,11 +42,14 @@ private:
 struct delete_path_node_property final : edit<world::edit_context> {
    delete_path_node_property(world::path_id id, std::size_t node_index,
                              std::size_t property_index, world::path::property property)
-      : _id{id}, _node_index{node_index}, _property_index{property_index}, _property{std::move(property)}
+      : _id{id},
+        _node_index{node_index},
+        _property_index{property_index},
+        _property{std::move(property)}
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       auto& properties =
          world::find_entity(context.world.paths, _id)->nodes[_node_index].properties;
@@ -54,7 +57,7 @@ struct delete_path_node_property final : edit<world::edit_context> {
       properties.erase(properties.begin() + _property_index);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       auto& properties =
          world::find_entity(context.world.paths, _id)->nodes[_node_index].properties;

@@ -25,12 +25,12 @@ struct ui_edit final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) noexcept
    {
       find_entity<entity_type>(context.world, id)->*value_member_ptr = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) noexcept
    {
       find_entity<entity_type>(context.world, id)->*value_member_ptr = original_value;
    }
@@ -76,7 +76,7 @@ struct ui_edit_indexed final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) noexcept
    {
       std::vector<value_type>& vec =
          find_entity<entity_type>(context.world, id)->*value_member_ptr;
@@ -86,7 +86,7 @@ struct ui_edit_indexed final : edit<world::edit_context> {
       vec[item_index] = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) noexcept
    {
       std::vector<value_type>& vec =
          find_entity<entity_type>(context.world, id)->*value_member_ptr;
@@ -141,7 +141,7 @@ struct ui_edit_path_node final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) noexcept
    {
       world::path* path = find_entity<entity_type>(context.world, id);
 
@@ -152,7 +152,7 @@ struct ui_edit_path_node final : edit<world::edit_context> {
       node.*value_member_ptr = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) noexcept
    {
       world::path* path = find_entity<entity_type>(context.world, id);
 
@@ -210,7 +210,7 @@ struct ui_edit_path_node_indexed final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) noexcept
    {
       world::path* path = find_entity<entity_type>(context.world, id);
 
@@ -225,7 +225,7 @@ struct ui_edit_path_node_indexed final : edit<world::edit_context> {
       vec[item_index] = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) noexcept
    {
       world::path* path = find_entity<entity_type>(context.world, id);
 
@@ -285,12 +285,12 @@ struct ui_creation_edit final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept
+   void apply(world::edit_context& context) noexcept
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept
+   void revert(world::edit_context& context) noexcept
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
    }
@@ -338,13 +338,13 @@ struct ui_creation_edit_with_meta final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
       context.*meta_value_member_ptr = meta_original_value;
@@ -392,13 +392,13 @@ struct ui_creation_path_node_edit final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
          new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
          original_value;
@@ -446,14 +446,14 @@ struct ui_creation_path_node_edit_with_meta final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
          new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
          original_value;
@@ -498,12 +498,12 @@ struct ui_creation_sector_point_edit final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::get<world::sector>(*context.creation_entity).points[0] = new_value;
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::get<world::sector>(*context.creation_entity).points[0] = original_value;
    }

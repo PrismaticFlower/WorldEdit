@@ -5,14 +5,14 @@ namespace we::edits {
 struct bundle : edit<world::edit_context> {
    bundle(bundle_vector edits) : edits{std::move(edits)} {}
 
-   void apply(world::edit_context& target) const noexcept
+   void apply(world::edit_context& target) noexcept
    {
       for (auto& edit : edits) {
          edit->apply(target);
       }
    }
 
-   void revert(world::edit_context& target) const noexcept
+   void revert(world::edit_context& target) noexcept
    {
       for (std::ptrdiff_t i = (std::ssize(edits) - 1); i >= 0; --i) {
          edits[i]->revert(target);

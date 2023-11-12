@@ -12,14 +12,14 @@ struct insert_path_node final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       auto& nodes = world::find_entity(context.world.paths, _id)->nodes;
 
       nodes.insert(nodes.begin() + _insert_before_index, _node);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       auto& nodes = world::find_entity(context.world.paths, _id)->nodes;
 

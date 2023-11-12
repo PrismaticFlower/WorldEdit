@@ -53,7 +53,7 @@ struct delete_object final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.objects.erase(context.world.objects.begin() + _object_index);
 
@@ -75,7 +75,7 @@ struct delete_object final : edit<world::edit_context> {
       }
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.objects.insert(context.world.objects.begin() + _object_index,
                                    _object);
@@ -122,14 +122,14 @@ struct delete_entity final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::vector<T>& entities = world::select_entities<T>(context.world);
 
       entities.erase(entities.begin() + _entity_index);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::vector<T>& entities = world::select_entities<T>(context.world);
 
@@ -154,14 +154,14 @@ struct delete_path_node final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       std::vector<world::path::node>& nodes = context.world.paths[_path_index].nodes;
 
       nodes.erase(nodes.begin() + _node_index);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       std::vector<world::path::node>& nodes = context.world.paths[_path_index].nodes;
 
@@ -190,7 +190,7 @@ struct delete_path final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.paths.erase(context.world.paths.begin() + _path_index);
 
@@ -201,7 +201,7 @@ struct delete_path final : edit<world::edit_context> {
       }
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.paths.insert(context.world.paths.begin() + _path_index, _path);
 
@@ -234,7 +234,7 @@ struct delete_region final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.regions.erase(context.world.regions.begin() + _region_index);
 
@@ -245,7 +245,7 @@ struct delete_region final : edit<world::edit_context> {
       }
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.regions.insert(context.world.regions.begin() + _region_index,
                                    _region);
@@ -285,7 +285,7 @@ struct delete_sector final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.sectors.erase(context.world.sectors.begin() + _sector_index);
 
@@ -297,7 +297,7 @@ struct delete_sector final : edit<world::edit_context> {
       }
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.sectors.insert(context.world.sectors.begin() + _sector_index,
                                    _sector);
@@ -337,7 +337,7 @@ struct delete_planning_hub final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       context.world.planning_hubs.erase(context.world.planning_hubs.begin() + _hub_index);
 
@@ -357,7 +357,7 @@ struct delete_planning_hub final : edit<world::edit_context> {
       }
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       context.world.planning_hubs.insert(context.world.planning_hubs.begin() + _hub_index,
                                          _hub);

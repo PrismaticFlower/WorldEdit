@@ -11,12 +11,12 @@ struct add_property_path final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       world::find_entity(context.world.paths, _id)->properties.emplace_back(_property, "");
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       world::find_entity(context.world.paths, _id)->properties.pop_back();
    }
@@ -39,7 +39,7 @@ struct add_property_path_node final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       world::path::node& node =
          world::find_entity(context.world.paths, _id)->nodes[_node];
@@ -47,7 +47,7 @@ struct add_property_path_node final : edit<world::edit_context> {
       node.properties.emplace_back(_property, "");
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       world::path::node& node =
          world::find_entity(context.world.paths, _id)->nodes[_node];

@@ -13,14 +13,14 @@ struct insert_entity final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       auto& entities = world::select_entities<T>(context.world);
 
       entities.push_back(_entity);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       auto& entities = world::select_entities<T>(context.world);
 
@@ -38,7 +38,6 @@ private:
    const world::id<T> _id;
    const T _entity;
 };
-
 
 }
 

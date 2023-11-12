@@ -10,14 +10,14 @@ struct delete_world_req_entry final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) const noexcept override
+   void apply(world::edit_context& context) noexcept override
    {
       auto& entries = context.world.requirements[_list_index].entries;
 
       entries.erase(entries.begin() + _entry_index);
    }
 
-   void revert(world::edit_context& context) const noexcept override
+   void revert(world::edit_context& context) noexcept override
    {
       auto& entries = context.world.requirements[_list_index].entries;
 
