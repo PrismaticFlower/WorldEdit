@@ -44,9 +44,6 @@ bool is_zeroed(const container::dynamic_array_2d<int16>& array) noexcept
 
 }
 
-#undef TEST_CASE
-#define TEST_CASE(...) void func()
-
 TEST_CASE("edits set_terrain_area simple", "[Edits]")
 {
    world::world world{.terrain = {.length = terrain_length}};
