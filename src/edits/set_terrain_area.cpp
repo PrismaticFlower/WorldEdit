@@ -90,6 +90,11 @@ struct set_terrain_area : edit<world::edit_context> {
       world::terrain& terrain = context.world.terrain;
 
       for (area& area : _areas) {
+         assert(area.rect.left < area.rect.right);
+         assert(area.rect.top < area.rect.bottom);
+         assert(area.rect.right <= (uint32)context.world.terrain.length);
+         assert(area.rect.bottom <= (uint32)context.world.terrain.length);
+
          for (uint32 y = area.rect.top; y < area.rect.bottom; ++y) {
             for (uint32 x = area.rect.left; x < area.rect.right; ++x) {
                std::swap(terrain.height_map[{x, y}],
