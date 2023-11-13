@@ -576,6 +576,41 @@ TEST_CASE("edits set_terrain_area coalesce edge join", "[Edits]")
    CHECK(is_zeroed(world.terrain.height_map));
 }
 
+TEST_CASE("edits set_terrain_area coalesce edge touching", "[Edits]")
+{
+   world::world world{.terrain = {.length = terrain_length}};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_set_terrain_area(0, 0, make_2d_array(8, 8, 1));
+   auto other_edit = make_set_terrain_area(8, 0, make_2d_array(8, 7, 2));
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+   edit->apply(edit_context);
+
+   CHECK(check_area({0, 0, 8, 8}, 1, world.terrain));
+   CHECK(check_area({8, 0, 16, 7}, 2, world.terrain));
+
+   REQUIRE(world.terrain.height_map_dirty.size() == 2);
+   CHECK(world.terrain.height_map_dirty[0] == world::dirty_rect{0, 0, 8, 8});
+   CHECK(world.terrain.height_map_dirty[1] == world::dirty_rect{8, 0, 16, 7});
+
+   world.terrain.untracked_clear_dirty_rects();
+
+   edit->revert(edit_context);
+
+   CHECK(check_area({0, 0, 8, 8}, 0, world.terrain));
+   CHECK(check_area({8, 0, 16, 7}, 0, world.terrain));
+
+   REQUIRE(world.terrain.height_map_dirty.size() == 2);
+   CHECK(world.terrain.height_map_dirty[0] == world::dirty_rect{0, 0, 8, 8});
+   CHECK(world.terrain.height_map_dirty[1] == world::dirty_rect{8, 0, 16, 7});
+
+   CHECK(is_zeroed(world.terrain.height_map));
+}
+
 TEST_CASE("edits set_terrain_area coalesce complex", "[Edits]")
 {
    world::world world{.terrain = {.length = terrain_length}};

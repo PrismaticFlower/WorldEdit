@@ -15,6 +15,16 @@ struct area {
    container::dynamic_array_2d<int16> height_map;
 };
 
+bool is_touching(const dirty_rect& l, const dirty_rect& r) noexcept
+{
+   if (l.left == r.right) return true;
+   if (l.right == r.left) return true;
+   if (l.top == r.bottom) return true;
+   if (l.bottom == r.top) return true;
+
+   return false;
+}
+
 void copy_height_map(const dirty_rect dest_global_rect,
                      container::dynamic_array_2d<int16>& dst_height_map,
                      const dirty_rect src_global_rect,
@@ -117,6 +127,9 @@ struct set_terrain_area : edit<world::edit_context> {
             return true;
          }
          else if (edge_joinable(area.rect, rect)) {
+            return true;
+         }
+         else if (is_touching(area.rect, rect)) {
             return true;
          }
       }
