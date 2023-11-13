@@ -1,3 +1,4 @@
+#include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
 #include "math/vector_funcs.hpp"
 #include "world/utility/raycast_terrain.hpp"
@@ -106,19 +107,18 @@ void world_edit::ui_show_terrain_editor() noexcept
    ImGui::DragScalar("Y", ImGuiDataType_U32, &set_y);
 
    if (ImGui::Button("Set")) {
-      world::dirty_rect rect{.left = set_x,
-                             .top = set_y,
-                             .right = set_x + set_length,
-                             .bottom = set_y + set_length};
+      container::dynamic_array_2d<int16> area{set_length, set_length};
 
-      for (uint32 y = rect.top; y < rect.bottom; ++y) {
-         for (uint32 x = rect.left; x < rect.right; ++x) {
-            _world.terrain.height_map[{x, y}] = set_value;
-         }
-      }
+      for (int16& v : area) v = set_value;
 
-      _world.terrain.height_map_dirty.add(rect);
+      _edit_stack_world.apply(edits::make_set_terrain_area(set_x, set_y,
+                                                           std::move(area)),
+                              _edit_context);
    }
+
+   ImGui::SameLine();
+
+   if (ImGui::Button("Close Edit")) _edit_stack_world.close_last();
 
    if (not _terrain_editor_open) return;
 
