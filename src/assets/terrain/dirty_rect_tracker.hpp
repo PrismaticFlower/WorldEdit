@@ -15,7 +15,17 @@ struct dirty_rect {
    constexpr bool operator==(const dirty_rect&) const noexcept = default;
 };
 
+bool is_valid(const dirty_rect& rect) noexcept;
+
+bool overlaps(const dirty_rect& l, const dirty_rect& r) noexcept;
+
+bool contains(const dirty_rect& l, const dirty_rect& r) noexcept;
+
+bool edge_joinable(const dirty_rect& l, const dirty_rect& r) noexcept;
+
 auto combine(const dirty_rect& l, const dirty_rect& r) noexcept -> dirty_rect;
+
+auto intersection(const dirty_rect& l, const dirty_rect& r) noexcept -> dirty_rect;
 
 struct dirty_rect_tracker {
    void add(const dirty_rect rect) noexcept;

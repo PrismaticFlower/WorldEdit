@@ -5,16 +5,9 @@
 
 namespace we::assets::terrain {
 
-namespace {
-
 bool is_valid(const dirty_rect& rect) noexcept
 {
    return rect.left < rect.right and rect.top < rect.bottom;
-}
-
-bool has_area(const dirty_rect& rect) noexcept
-{
-   return (rect.right - rect.left) * (rect.bottom - rect.top) != 0;
 }
 
 bool overlaps(const dirty_rect& l, const dirty_rect& r) noexcept
@@ -25,7 +18,7 @@ bool overlaps(const dirty_rect& l, const dirty_rect& r) noexcept
    return x_overlaps and y_overlaps;
 }
 
-bool contains(const dirty_rect& l, const dirty_rect& r)
+bool contains(const dirty_rect& l, const dirty_rect& r) noexcept
 {
    const bool x_in = l.left <= r.left and l.right > r.left and l.right >= r.right;
    const bool y_in = l.top <= r.top and l.bottom > r.top and l.bottom >= r.bottom;
@@ -45,14 +38,20 @@ bool edge_joinable(const dirty_rect& l, const dirty_rect& r) noexcept
    return false;
 }
 
-}
-
 auto combine(const dirty_rect& l, const dirty_rect& r) noexcept -> dirty_rect
 {
    return {.left = std::min(l.left, r.left),
            .top = std::min(l.top, r.top),
            .right = std::max(l.right, r.right),
            .bottom = std::max(l.bottom, r.bottom)};
+}
+
+auto intersection(const dirty_rect& l, const dirty_rect& r) noexcept -> dirty_rect
+{
+   return {.left = std::max(l.left, r.left),
+           .top = std::max(l.top, r.top),
+           .right = std::min(l.right, r.right),
+           .bottom = std::min(l.bottom, r.bottom)};
 }
 
 void dirty_rect_tracker::add(const dirty_rect rect) noexcept
@@ -69,29 +68,31 @@ void dirty_rect_tracker::add(const dirty_rect rect) noexcept
          return;
       }
       else if (overlaps(rect, other)) {
-         if (rect.top < other.top) {
+         const dirty_rect overlapped = other;
+
+         if (rect.top < overlapped.top) {
             add({.left = rect.left,
                  .top = rect.top,
                  .right = rect.right,
-                 .bottom = other.top});
+                 .bottom = overlapped.top});
          }
-         if (rect.bottom > other.bottom) {
+         if (rect.bottom > overlapped.bottom) {
             add({.left = rect.left,
-                 .top = other.bottom,
+                 .top = overlapped.bottom,
                  .right = rect.right,
                  .bottom = rect.bottom});
          }
-         if (rect.left < other.left) {
+         if (rect.left < overlapped.left) {
             add({.left = rect.left,
-                 .top = std::max(rect.top, other.top),
-                 .right = other.left,
-                 .bottom = std::min(rect.bottom, other.bottom)});
+                 .top = std::max(rect.top, overlapped.top),
+                 .right = overlapped.left,
+                 .bottom = std::min(rect.bottom, overlapped.bottom)});
          }
-         if (rect.right > other.right) {
-            add({.left = other.right,
-                 .top = std::max(rect.top, other.top),
+         if (rect.right > overlapped.right) {
+            add({.left = overlapped.right,
+                 .top = std::max(rect.top, overlapped.top),
                  .right = rect.right,
-                 .bottom = std::min(rect.bottom, other.bottom)});
+                 .bottom = std::min(rect.bottom, overlapped.bottom)});
          }
 
          return;
