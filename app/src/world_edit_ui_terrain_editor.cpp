@@ -44,7 +44,24 @@ void world_edit::ui_show_terrain_editor() noexcept
                                         620.0f * _display_scale});
 
    if (ImGui::Begin("Terrain Editor", &_terrain_editor_open)) {
-      ImGui::SeparatorText("Brush");
+      ImGui::SeparatorText("Brush Mode");
+
+      if (ImGui::Selectable("Disabled", _terrain_editor_context.brush_mode ==
+                                           terrain_brush_mode::disabled)) {
+         _terrain_editor_context.brush_mode = terrain_brush_mode::disabled;
+      }
+
+      if (ImGui::Selectable("Overwrite", _terrain_editor_context.brush_mode ==
+                                            terrain_brush_mode::overwrite)) {
+         _terrain_editor_context.brush_mode = terrain_brush_mode::overwrite;
+      }
+
+      ImGui::SeparatorText("Brush Settings");
+
+      if (_terrain_editor_context.brush_mode == terrain_brush_mode::overwrite) {
+         ImGui::DragScalar("Overwrite Value", ImGuiDataType_S16,
+                           &_terrain_editor_config.brush_overwrite_value);
+      }
 
       ImGui::DragFloat("Brush Radius", &_terrain_editor_config.brush_radius,
                        1.0f, 0.0f, 64.0f, "%.0f",
@@ -53,7 +70,7 @@ void world_edit::ui_show_terrain_editor() noexcept
       _terrain_editor_config.brush_radius =
          std::trunc(_terrain_editor_config.brush_radius);
 
-      ImGui::SeparatorText("Settings");
+      ImGui::SeparatorText("Terrain Settings");
 
       if (bool active = _world.terrain.active_flags.terrain;
           ImGui::Checkbox("Terrain Enabled", &active)) {
@@ -122,7 +139,7 @@ void world_edit::ui_show_terrain_editor() noexcept
 
    if (not _terrain_editor_open) return;
 
-   if (_terrain_editor_context.brush_active) {
+   if (_terrain_editor_context.brush_mode != terrain_brush_mode::disabled) {
       graphics::camera_ray ray =
          make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
                          {ImGui::GetMainViewport()->Size.x,
