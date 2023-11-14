@@ -405,9 +405,9 @@ TEST_CASE("edits set_terrain_area coalesce small left", "[Edits]")
    CHECK(check_area({0, 0, 8, 8}, 2, world.terrain));
 
    REQUIRE(tracker.size() == 3);
-   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
-   CHECK(tracker[1] == dirty_rect{.left = 0, .top = 0, .right = 8, .bottom = 2});
-   CHECK(tracker[2] == dirty_rect{.left = 0, .top = 6, .right = 8, .bottom = 8});
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 0, .right = 8, .bottom = 2});
+   CHECK(tracker[1] == dirty_rect{.left = 0, .top = 6, .right = 8, .bottom = 8});
+   CHECK(tracker[2] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
 
    world.terrain.untracked_clear_dirty_rects();
 
@@ -417,9 +417,9 @@ TEST_CASE("edits set_terrain_area coalesce small left", "[Edits]")
    CHECK(check_area({0, 0, 8, 8}, 0, world.terrain));
 
    REQUIRE(tracker.size() == 3);
-   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
-   CHECK(tracker[1] == dirty_rect{.left = 0, .top = 0, .right = 8, .bottom = 2});
-   CHECK(tracker[2] == dirty_rect{.left = 0, .top = 6, .right = 8, .bottom = 8});
+   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 0, .right = 8, .bottom = 2});
+   CHECK(tracker[1] == dirty_rect{.left = 0, .top = 6, .right = 8, .bottom = 8});
+   CHECK(tracker[2] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
 
    CHECK(is_zeroed(world.terrain.height_map));
 }
@@ -443,9 +443,9 @@ TEST_CASE("edits set_terrain_area coalesce small right", "[Edits]")
    CHECK(check_area({2, 0, 10, 8}, 2, world.terrain));
 
    REQUIRE(tracker.size() == 3);
-   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
-   CHECK(tracker[1] == dirty_rect{.left = 2, .top = 0, .right = 10, .bottom = 2});
-   CHECK(tracker[2] == dirty_rect{.left = 2, .top = 6, .right = 10, .bottom = 8});
+   CHECK(tracker[0] == dirty_rect{.left = 2, .top = 0, .right = 10, .bottom = 2});
+   CHECK(tracker[1] == dirty_rect{.left = 2, .top = 6, .right = 10, .bottom = 8});
+   CHECK(tracker[2] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
 
    world.terrain.untracked_clear_dirty_rects();
 
@@ -455,9 +455,9 @@ TEST_CASE("edits set_terrain_area coalesce small right", "[Edits]")
    CHECK(check_area({2, 0, 10, 8}, 0, world.terrain));
 
    REQUIRE(tracker.size() == 3);
-   CHECK(tracker[0] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
-   CHECK(tracker[1] == dirty_rect{.left = 2, .top = 0, .right = 10, .bottom = 2});
-   CHECK(tracker[2] == dirty_rect{.left = 2, .top = 6, .right = 10, .bottom = 8});
+   CHECK(tracker[0] == dirty_rect{.left = 2, .top = 0, .right = 10, .bottom = 2});
+   CHECK(tracker[1] == dirty_rect{.left = 2, .top = 6, .right = 10, .bottom = 8});
+   CHECK(tracker[2] == dirty_rect{.left = 0, .top = 2, .right = 10, .bottom = 6});
 
    CHECK(is_zeroed(world.terrain.height_map));
 }
@@ -663,15 +663,15 @@ TEST_CASE("edits set_terrain_area coalesce complex", "[Edits]")
 
    REQUIRE(tracker.size() == 10);
    CHECK(tracker[0] == world::dirty_rect{8, 8, 16, 16});
-   CHECK(tracker[1] == world::dirty_rect{14, 16, 24, 22});
-   CHECK(tracker[2] == world::dirty_rect{16, 14, 22, 16});
-   CHECK(tracker[3] == world::dirty_rect{1, 10, 8, 13});
-   CHECK(tracker[4] == world::dirty_rect{17, 22, 19, 24});
-   CHECK(tracker[5] == world::dirty_rect{14, 24, 22, 27});
-   CHECK(tracker[6] == world::dirty_rect{14, 23, 17, 24});
-   CHECK(tracker[7] == world::dirty_rect{19, 23, 22, 24});
-   CHECK(tracker[8] == world::dirty_rect{1, 8, 7, 10});
-   CHECK(tracker[9] == world::dirty_rect{1, 13, 7, 16});
+   CHECK(tracker[1] == world::dirty_rect{16, 14, 22, 16});
+   CHECK(tracker[2] == world::dirty_rect{17, 22, 19, 24});
+   CHECK(tracker[3] == world::dirty_rect{14, 16, 24, 22});
+   CHECK(tracker[4] == world::dirty_rect{14, 24, 22, 27});
+   CHECK(tracker[5] == world::dirty_rect{14, 23, 17, 24});
+   CHECK(tracker[6] == world::dirty_rect{19, 23, 22, 24});
+   CHECK(tracker[7] == world::dirty_rect{1, 8, 7, 10});
+   CHECK(tracker[8] == world::dirty_rect{1, 13, 7, 16});
+   CHECK(tracker[9] == world::dirty_rect{1, 10, 8, 13});
 
    world.terrain.untracked_clear_dirty_rects();
 
@@ -689,15 +689,271 @@ TEST_CASE("edits set_terrain_area coalesce complex", "[Edits]")
 
    REQUIRE(tracker.size() == 10);
    CHECK(tracker[0] == world::dirty_rect{8, 8, 16, 16});
-   CHECK(tracker[1] == world::dirty_rect{14, 16, 24, 22});
-   CHECK(tracker[2] == world::dirty_rect{16, 14, 22, 16});
-   CHECK(tracker[3] == world::dirty_rect{1, 10, 8, 13});
-   CHECK(tracker[4] == world::dirty_rect{17, 22, 19, 24});
-   CHECK(tracker[5] == world::dirty_rect{14, 24, 22, 27});
-   CHECK(tracker[6] == world::dirty_rect{14, 23, 17, 24});
-   CHECK(tracker[7] == world::dirty_rect{19, 23, 22, 24});
-   CHECK(tracker[8] == world::dirty_rect{1, 8, 7, 10});
-   CHECK(tracker[9] == world::dirty_rect{1, 13, 7, 16});
+   CHECK(tracker[1] == world::dirty_rect{16, 14, 22, 16});
+   CHECK(tracker[2] == world::dirty_rect{17, 22, 19, 24});
+   CHECK(tracker[3] == world::dirty_rect{14, 16, 24, 22});
+   CHECK(tracker[4] == world::dirty_rect{14, 24, 22, 27});
+   CHECK(tracker[5] == world::dirty_rect{14, 23, 17, 24});
+   CHECK(tracker[6] == world::dirty_rect{19, 23, 22, 24});
+   CHECK(tracker[7] == world::dirty_rect{1, 8, 7, 10});
+   CHECK(tracker[8] == world::dirty_rect{1, 13, 7, 16});
+   CHECK(tracker[9] == world::dirty_rect{1, 10, 8, 13});
+
+   CHECK(is_zeroed(world.terrain.height_map));
+}
+
+TEST_CASE("edits set_terrain_area coalesce corner bottom left", "[Edits]")
+{
+   world::world world{.terrain = {.length = terrain_length}};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::dirty_rect_tracker& tracker = world.terrain.height_map_dirty;
+
+   auto edit = make_set_terrain_area(8, 8, make_2d_array(16, 8, 1));
+
+   std::array subsequent_edits{make_set_terrain_area(16, 8, make_2d_array(8, 16, 2)),
+                               make_set_terrain_area(12, 12, make_2d_array(8, 8, 3))};
+
+   for (auto& other_edit : subsequent_edits) {
+      REQUIRE(edit->is_coalescable(*other_edit));
+
+      edit->coalesce(*other_edit);
+   }
+
+   edit->apply(edit_context);
+
+   CHECK(check_area({8, 8, 16, 12}, 1, world.terrain));
+   CHECK(check_area({8, 12, 12, 16}, 1, world.terrain));
+
+   CHECK(check_area({16, 8, 24, 12}, 2, world.terrain));
+   CHECK(check_area({20, 12, 24, 20}, 2, world.terrain));
+   CHECK(check_area({16, 20, 24, 24}, 2, world.terrain));
+
+   CHECK(check_area({12, 12, 20, 20}, 3, world.terrain));
+
+   REQUIRE(tracker.size() == 3);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 16});
+   CHECK(tracker[1] == world::dirty_rect{16, 16, 24, 24});
+   CHECK(tracker[2] == world::dirty_rect{12, 16, 16, 20});
+
+   world.terrain.untracked_clear_dirty_rects();
+
+   edit->revert(edit_context);
+
+   CHECK(check_area({8, 8, 24, 16}, 0, world.terrain));
+   CHECK(check_area({16, 8, 24, 24}, 0, world.terrain));
+   CHECK(check_area({12, 12, 20, 20}, 0, world.terrain));
+
+   REQUIRE(tracker.size() == 3);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 16});
+   CHECK(tracker[1] == world::dirty_rect{16, 16, 24, 24});
+   CHECK(tracker[2] == world::dirty_rect{12, 16, 16, 20});
+
+   CHECK(is_zeroed(world.terrain.height_map));
+}
+
+TEST_CASE("edits set_terrain_area coalesce top 3 sides", "[Edits]")
+{
+   world::world world{.terrain = {.length = terrain_length}};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::dirty_rect_tracker& tracker = world.terrain.height_map_dirty;
+
+   auto edit = make_set_terrain_area(8, 16, make_2d_array(16, 8, 1));
+
+   std::array subsequent_edits{make_set_terrain_area(8, 8, make_2d_array(4, 16, 2)),
+                               make_set_terrain_area(20, 8, make_2d_array(4, 16, 3)),
+                               make_set_terrain_area(11, 8, make_2d_array(10, 10, 4))};
+
+   for (auto& other_edit : subsequent_edits) {
+      REQUIRE(edit->is_coalescable(*other_edit));
+
+      edit->coalesce(*other_edit);
+   }
+
+   edit->apply(edit_context);
+
+   CHECK(check_area({12, 18, 20, 24}, 1, world.terrain));
+
+   CHECK(check_area({8, 8, 11, 24}, 2, world.terrain));
+   CHECK(check_area({11, 18, 12, 24}, 2, world.terrain));
+
+   CHECK(check_area({21, 8, 24, 24}, 3, world.terrain));
+   CHECK(check_area({20, 18, 21, 24}, 3, world.terrain));
+
+   CHECK(check_area({11, 8, 21, 18}, 4, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
+
+   world.terrain.untracked_clear_dirty_rects();
+
+   edit->revert(edit_context);
+
+   CHECK(check_area({8, 16, 24, 24}, 0, world.terrain));
+   CHECK(check_area({8, 8, 12, 24}, 0, world.terrain));
+   CHECK(check_area({20, 8, 24, 24}, 0, world.terrain));
+   CHECK(check_area({11, 8, 21, 18}, 0, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
+
+   CHECK(is_zeroed(world.terrain.height_map));
+}
+
+TEST_CASE("edits set_terrain_area coalesce bottom 3 sides", "[Edits]")
+{
+   world::world world{.terrain = {.length = terrain_length}};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::dirty_rect_tracker& tracker = world.terrain.height_map_dirty;
+
+   auto edit = make_set_terrain_area(8, 8, make_2d_array(16, 8, 1));
+
+   std::array subsequent_edits{make_set_terrain_area(8, 8, make_2d_array(4, 16, 2)),
+                               make_set_terrain_area(20, 8, make_2d_array(4, 16, 3)),
+                               make_set_terrain_area(11, 14, make_2d_array(10, 10, 4))};
+
+   for (auto& other_edit : subsequent_edits) {
+      REQUIRE(edit->is_coalescable(*other_edit));
+
+      edit->coalesce(*other_edit);
+   }
+
+   edit->apply(edit_context);
+
+   CHECK(check_area({12, 8, 20, 14}, 1, world.terrain));
+
+   CHECK(check_area({8, 8, 12, 14}, 2, world.terrain));
+   CHECK(check_area({8, 14, 11, 24}, 2, world.terrain));
+
+   CHECK(check_area({20, 8, 14, 14}, 3, world.terrain));
+   CHECK(check_area({21, 14, 24, 24}, 3, world.terrain));
+
+   CHECK(check_area({11, 14, 21, 24}, 4, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
+
+   world.terrain.untracked_clear_dirty_rects();
+
+   edit->revert(edit_context);
+
+   CHECK(check_area({8, 8, 24, 16}, 0, world.terrain));
+   CHECK(check_area({8, 8, 12, 24}, 0, world.terrain));
+   CHECK(check_area({20, 8, 24, 24}, 0, world.terrain));
+   CHECK(check_area({11, 14, 21, 24}, 0, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
+
+   CHECK(is_zeroed(world.terrain.height_map));
+}
+
+TEST_CASE("edits set_terrain_area coalesce left 3 sides", "[Edits]")
+{
+   world::world world{.terrain = {.length = terrain_length}};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::dirty_rect_tracker& tracker = world.terrain.height_map_dirty;
+
+   auto edit = make_set_terrain_area(16, 8, make_2d_array(8, 16, 1));
+
+   std::array subsequent_edits{make_set_terrain_area(8, 8, make_2d_array(16, 4, 2)),
+                               make_set_terrain_area(8, 20, make_2d_array(16, 4, 3)),
+                               make_set_terrain_area(8, 11, make_2d_array(10, 10, 4))};
+
+   for (auto& other_edit : subsequent_edits) {
+      REQUIRE(edit->is_coalescable(*other_edit));
+
+      edit->coalesce(*other_edit);
+   }
+
+   edit->apply(edit_context);
+
+   CHECK(check_area({18, 12, 24, 20}, 1, world.terrain));
+
+   CHECK(check_area({8, 8, 24, 11}, 2, world.terrain));
+   CHECK(check_area({18, 11, 24, 12}, 2, world.terrain));
+
+   CHECK(check_area({8, 21, 24, 24}, 3, world.terrain));
+   CHECK(check_area({18, 20, 24, 21}, 3, world.terrain));
+
+   CHECK(check_area({8, 11, 18, 21}, 4, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
+
+   world.terrain.untracked_clear_dirty_rects();
+
+   edit->revert(edit_context);
+
+   CHECK(check_area({16, 8, 24, 24}, 0, world.terrain));
+   CHECK(check_area({8, 8, 24, 12}, 0, world.terrain));
+   CHECK(check_area({8, 20, 24, 24}, 0, world.terrain));
+   CHECK(check_area({8, 11, 18, 21}, 0, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
+
+   CHECK(is_zeroed(world.terrain.height_map));
+}
+
+TEST_CASE("edits set_terrain_area coalesce right 3 sides", "[Edits]")
+{
+   world::world world{.terrain = {.length = terrain_length}};
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::dirty_rect_tracker& tracker = world.terrain.height_map_dirty;
+
+   auto edit = make_set_terrain_area(8, 8, make_2d_array(8, 16, 1));
+
+   std::array subsequent_edits{make_set_terrain_area(8, 8, make_2d_array(16, 4, 2)),
+                               make_set_terrain_area(8, 20, make_2d_array(16, 4, 3)),
+                               make_set_terrain_area(14, 11, make_2d_array(10, 10, 4))};
+
+   for (auto& other_edit : subsequent_edits) {
+      REQUIRE(edit->is_coalescable(*other_edit));
+
+      edit->coalesce(*other_edit);
+   }
+
+   edit->apply(edit_context);
+
+   CHECK(check_area({8, 12, 14, 20}, 1, world.terrain));
+
+   CHECK(check_area({8, 8, 24, 11}, 2, world.terrain));
+   CHECK(check_area({8, 11, 14, 12}, 2, world.terrain));
+
+   CHECK(check_area({8, 21, 24, 24}, 3, world.terrain));
+   CHECK(check_area({8, 20, 14, 21}, 3, world.terrain));
+
+   CHECK(check_area({14, 11, 24, 21}, 4, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
+
+   world.terrain.untracked_clear_dirty_rects();
+
+   edit->revert(edit_context);
+
+   CHECK(check_area({8, 8, 16, 24}, 0, world.terrain));
+   CHECK(check_area({8, 8, 24, 12}, 0, world.terrain));
+   CHECK(check_area({8, 20, 24, 24}, 0, world.terrain));
+   CHECK(check_area({14, 11, 24, 21}, 0, world.terrain));
+
+   REQUIRE(tracker.size() == 1);
+
+   CHECK(tracker[0] == world::dirty_rect{8, 8, 24, 24});
 
    CHECK(is_zeroed(world.terrain.height_map));
 }
