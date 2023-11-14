@@ -58,49 +58,51 @@ void dirty_rect_tracker::add(const dirty_rect rect) noexcept
 {
    assert(is_valid(rect));
 
-   for (dirty_rect& other : _rects) {
+   for (std::size_t i = 0; i < _rects.size(); ++i) {
+      const dirty_rect other = _rects[i];
+
       if (contains(other, rect)) {
          return;
       }
       else if (contains(rect, other)) {
-         other = rect;
+         _rects.erase(_rects.begin() + i);
 
-         return;
+         return add(rect);
       }
       else if (overlaps(rect, other)) {
-         const dirty_rect overlapped = other;
-
-         if (rect.top < overlapped.top) {
+         if (rect.top < other.top) {
             add({.left = rect.left,
                  .top = rect.top,
                  .right = rect.right,
-                 .bottom = overlapped.top});
+                 .bottom = other.top});
          }
-         if (rect.bottom > overlapped.bottom) {
+         if (rect.bottom > other.bottom) {
             add({.left = rect.left,
-                 .top = overlapped.bottom,
+                 .top = other.bottom,
                  .right = rect.right,
                  .bottom = rect.bottom});
          }
-         if (rect.left < overlapped.left) {
+         if (rect.left < other.left) {
             add({.left = rect.left,
-                 .top = std::max(rect.top, overlapped.top),
-                 .right = overlapped.left,
-                 .bottom = std::min(rect.bottom, overlapped.bottom)});
+                 .top = std::max(rect.top, other.top),
+                 .right = other.left,
+                 .bottom = std::min(rect.bottom, other.bottom)});
          }
-         if (rect.right > overlapped.right) {
-            add({.left = overlapped.right,
-                 .top = std::max(rect.top, overlapped.top),
+         if (rect.right > other.right) {
+            add({.left = other.right,
+                 .top = std::max(rect.top, other.top),
                  .right = rect.right,
-                 .bottom = std::min(rect.bottom, overlapped.bottom)});
+                 .bottom = std::min(rect.bottom, other.bottom)});
          }
 
          return;
       }
       else if (edge_joinable(other, rect)) {
-         other = combine(rect, other);
+         const dirty_rect combined_rect = combine(rect, other);
 
-         return;
+         _rects.erase(_rects.begin() + i);
+
+         return add(combined_rect);
       }
    }
 
