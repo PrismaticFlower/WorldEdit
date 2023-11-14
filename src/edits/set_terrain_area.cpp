@@ -17,10 +17,13 @@ struct area {
 
 bool is_touching(const dirty_rect& l, const dirty_rect& r) noexcept
 {
-   if (l.left == r.right) return true;
-   if (l.right == r.left) return true;
-   if (l.top == r.bottom) return true;
-   if (l.bottom == r.top) return true;
+   const bool x_touches = l.left <= r.right and r.left <= l.right;
+   const bool y_touches = l.top <= r.bottom and r.top <= l.bottom;
+
+   if (l.left == r.right) return y_touches;
+   if (l.right == r.left) return y_touches;
+   if (l.top == r.bottom) return x_touches;
+   if (l.bottom == r.top) return x_touches;
 
    return false;
 }
@@ -115,11 +118,9 @@ struct set_terrain_area : edit<world::edit_context> {
          else if (edge_joinable(area.rect, rect)) {
             return true;
          }
-#if 0
          else if (is_touching(area.rect, rect)) {
             return true;
          }
-#endif
       }
 
       return false;
