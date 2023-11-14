@@ -54,8 +54,16 @@ void world_edit::ui_show_terrain_editor() noexcept
       ImGui::SeparatorText("Brush Settings");
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
-         ImGui::DragScalar("Overwrite Value", ImGuiDataType_S16,
-                           &_terrain_editor_config.brush_overwrite_value);
+         if (float height = _terrain_editor_config.brush_overwrite_value *
+                            _world.terrain.height_scale;
+             ImGui::DragFloat("Overwrite Height", &height, _world.terrain.height_scale,
+                              32768.0f * _world.terrain.height_scale,
+                              32767.0f * _world.terrain.height_scale, "%.3f",
+                              ImGuiSliderFlags_AlwaysClamp |
+                                 ImGuiSliderFlags_NoRoundToFormat)) {
+            _terrain_editor_config.brush_overwrite_value =
+               static_cast<int16>(height / _world.terrain.height_scale);
+         }
       }
 
       ImGui::DragInt("Brush Radius", &_terrain_editor_config.brush_radius, 1.0f,
