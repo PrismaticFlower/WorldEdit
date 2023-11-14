@@ -46,29 +46,21 @@ void world_edit::ui_show_terrain_editor() noexcept
    if (ImGui::Begin("Terrain Editor", &_terrain_editor_open)) {
       ImGui::SeparatorText("Brush Mode");
 
-      if (ImGui::Selectable("Disabled", _terrain_editor_context.brush_mode ==
-                                           terrain_brush_mode::disabled)) {
-         _terrain_editor_context.brush_mode = terrain_brush_mode::disabled;
-      }
-
-      if (ImGui::Selectable("Overwrite", _terrain_editor_context.brush_mode ==
+      if (ImGui::Selectable("Overwrite", _terrain_editor_config.brush_mode ==
                                             terrain_brush_mode::overwrite)) {
-         _terrain_editor_context.brush_mode = terrain_brush_mode::overwrite;
+         _terrain_editor_config.brush_mode = terrain_brush_mode::overwrite;
       }
 
       ImGui::SeparatorText("Brush Settings");
 
-      if (_terrain_editor_context.brush_mode == terrain_brush_mode::overwrite) {
+      if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
          ImGui::DragScalar("Overwrite Value", ImGuiDataType_S16,
                            &_terrain_editor_config.brush_overwrite_value);
       }
 
-      ImGui::DragFloat("Brush Radius", &_terrain_editor_config.brush_radius,
-                       1.0f, 0.0f, 64.0f, "%.0f",
-                       ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic);
-
-      _terrain_editor_config.brush_radius =
-         std::trunc(_terrain_editor_config.brush_radius);
+      ImGui::DragInt("Brush Radius", &_terrain_editor_config.brush_radius, 1.0f,
+                     0, 64, "%d",
+                     ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic);
 
       ImGui::SeparatorText("Terrain Settings");
 
@@ -113,93 +105,108 @@ void world_edit::ui_show_terrain_editor() noexcept
 
    ImGui::End();
 
-   static uint32 set_length = 0;
-   static int16 set_value = 0;
-   static uint32 set_x = 0;
-   static uint32 set_y = 0;
-
-   ImGui::DragScalar("Set Length", ImGuiDataType_U32, &set_length);
-   ImGui::DragScalar("Set Value", ImGuiDataType_S16, &set_value);
-   ImGui::DragScalar("X", ImGuiDataType_U32, &set_x);
-   ImGui::DragScalar("Y", ImGuiDataType_U32, &set_y);
-
-   if (ImGui::Button("Set")) {
-      container::dynamic_array_2d<int16> area{set_length, set_length};
-
-      for (int16& v : area) v = set_value;
-
-      _edit_stack_world.apply(edits::make_set_terrain_area(set_x, set_y,
-                                                           std::move(area)),
-                              _edit_context);
-   }
-
-   ImGui::SameLine();
-
-   if (ImGui::Button("Close Edit")) _edit_stack_world.close_last();
-
    if (not _terrain_editor_open) return;
 
-   if (_terrain_editor_context.brush_mode != terrain_brush_mode::disabled) {
-      graphics::camera_ray ray =
-         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
-                         {ImGui::GetMainViewport()->Size.x,
-                          ImGui::GetMainViewport()->Size.y});
+   graphics::camera_ray ray =
+      make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                      {ImGui::GetMainViewport()->Size.x,
+                       ImGui::GetMainViewport()->Size.y});
 
-      float hit_distance = 0.0f;
+   float hit_distance = 0.0f;
 
+   if (_terrain_editor_context.brush_active) {
+      if (float hit = -(dot(ray.origin, float3{0.0f, 1.0f, 0.0f}) -
+                        _terrain_editor_context.brush_plane_height) /
+                      dot(ray.direction, float3{0.0f, 1.0f, 0.0f});
+          hit > 0.0f) {
+         hit_distance = hit;
+      }
+   }
+   else {
       if (auto hit = world::raycast(ray.origin, ray.direction, _world.terrain); hit) {
          hit_distance = *hit;
       }
+   }
 
-      float3 cursor_positionWS = ray.origin + ray.direction * hit_distance;
+   float3 cursor_positionWS = ray.origin + ray.direction * hit_distance;
 
-      float2 terrain_point{cursor_positionWS.x, cursor_positionWS.z};
+   float2 terrain_point{cursor_positionWS.x, cursor_positionWS.z};
 
-      terrain_point /= _world.terrain.grid_scale;
-      terrain_point = round(terrain_point);
+   terrain_point /= _world.terrain.grid_scale;
+   terrain_point = round(terrain_point);
 
-      if (_terrain_editor_context.brush_painting) {
+   if (_terrain_editor_context.brush_held != _terrain_editor_context.brush_active) {
+      _terrain_editor_context.brush_active = _terrain_editor_context.brush_held;
+
+      if (not _terrain_editor_context.brush_held) {
+         _terrain_editor_context = {};
+         _edit_stack_world.close_last();
+      }
+   }
+
+   if (_terrain_editor_context.brush_active) {
+      const int32 terrain_half_length = _world.terrain.length / 2;
+
+      int32 x = static_cast<int32>(terrain_point.x) + terrain_half_length;
+      int32 y = static_cast<int32>(terrain_point.y) + terrain_half_length - 1;
+
+      int32 left = std::clamp(x - _terrain_editor_config.brush_radius, 0,
+                              _world.terrain.length - 1);
+      int32 top = std::clamp(y - _terrain_editor_config.brush_radius, 0,
+                             _world.terrain.length - 1);
+      int32 right = std::clamp(x + _terrain_editor_config.brush_radius + 1, 0,
+                               _world.terrain.length);
+      int32 bottom = std::clamp(y + _terrain_editor_config.brush_radius + 1, 0,
+                                _world.terrain.length);
+
+      container::dynamic_array_2d<int16> area{right - left, bottom - top};
+
+      if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
+         for (int16& v : area) v = _terrain_editor_config.brush_overwrite_value;
       }
 
-      const float radius = _terrain_editor_config.brush_radius;
+      _edit_stack_world.apply(edits::make_set_terrain_area(left, top, std::move(area)),
+                              _edit_context);
+   }
 
-      if (radius == 0.0f) {
-         const float3 point = get_position(terrain_point, _world.terrain);
+   const float radius = static_cast<float>(_terrain_editor_config.brush_radius);
 
-         _tool_visualizers.add_line_overlay(point,
-                                            point + float3{0.0f, _world.terrain.grid_scale,
-                                                           0.0f},
-                                            0xffffffff);
-      }
+   if (radius == 0.0f) {
+      const float3 point = get_position(terrain_point, _world.terrain);
 
-      for (float y = -radius; y < radius; ++y) {
-         for (float x = -radius; x < radius; ++x) {
-            const std::array vertices{
-               get_position(terrain_point + float2{0.0f + x, 0.0f + y}, _world.terrain),
-               get_position(terrain_point + float2{1.0f + x, 0.0f + y}, _world.terrain),
-               get_position(terrain_point + float2{1.0f + x, 1.0f + y}, _world.terrain),
-               get_position(terrain_point + float2{0.0f + x, 1.0f + y}, _world.terrain)};
+      _tool_visualizers.add_line_overlay(point,
+                                         point + float3{0.0f, _world.terrain.grid_scale,
+                                                        0.0f},
+                                         0xffffffff);
+   }
 
-            _tool_visualizers.add_line_overlay(vertices[0], vertices[1], 0xffffffff);
-            // _tool_visualizers.add_line_overlay(vertices[1], vertices[2], 0xffffffff);
-            // _tool_visualizers.add_line_overlay(vertices[2], vertices[3], 0xffffffff);
-            _tool_visualizers.add_line_overlay(vertices[3], vertices[0], 0xffffffff);
-         }
-      }
-
-      for (float y = -radius; y < radius; ++y) {
-         _tool_visualizers.add_line_overlay(
-            get_position(terrain_point + float2{radius, y}, _world.terrain),
-            get_position(terrain_point + float2{radius, y + 1.0f}, _world.terrain),
-            0xffffffff);
-      }
-
+   for (float y = -radius; y < radius; ++y) {
       for (float x = -radius; x < radius; ++x) {
-         _tool_visualizers.add_line_overlay(
-            get_position(terrain_point + float2{x, radius}, _world.terrain),
-            get_position(terrain_point + float2{x + 1.0f, radius}, _world.terrain),
-            0xffffffff);
+         const std::array vertices{
+            get_position(terrain_point + float2{0.0f + x, 0.0f + y}, _world.terrain),
+            get_position(terrain_point + float2{1.0f + x, 0.0f + y}, _world.terrain),
+            get_position(terrain_point + float2{1.0f + x, 1.0f + y}, _world.terrain),
+            get_position(terrain_point + float2{0.0f + x, 1.0f + y}, _world.terrain)};
+
+         _tool_visualizers.add_line_overlay(vertices[0], vertices[1], 0xffffffff);
+         // _tool_visualizers.add_line_overlay(vertices[1], vertices[2], 0xffffffff);
+         // _tool_visualizers.add_line_overlay(vertices[2], vertices[3], 0xffffffff);
+         _tool_visualizers.add_line_overlay(vertices[3], vertices[0], 0xffffffff);
       }
+   }
+
+   for (float y = -radius; y < radius; ++y) {
+      _tool_visualizers.add_line_overlay(
+         get_position(terrain_point + float2{radius, y}, _world.terrain),
+         get_position(terrain_point + float2{radius, y + 1.0f}, _world.terrain),
+         0xffffffff);
+   }
+
+   for (float x = -radius; x < radius; ++x) {
+      _tool_visualizers.add_line_overlay(
+         get_position(terrain_point + float2{x, radius}, _world.terrain),
+         get_position(terrain_point + float2{x + 1.0f, radius}, _world.terrain),
+         0xffffffff);
    }
 }
 

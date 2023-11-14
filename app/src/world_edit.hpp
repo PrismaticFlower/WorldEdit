@@ -64,7 +64,7 @@ enum class selection_move_space : uint8 { world, local };
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
-enum class terrain_brush_mode : uint8 { disabled, overwrite };
+enum class terrain_brush_mode : uint8 { overwrite };
 
 constexpr float tool_window_start_x = 264.0f;
 
@@ -425,13 +425,16 @@ private:
    } _selection_edit_context;
 
    struct terrain_editor_config {
-      float brush_radius = 1.0f;
+      terrain_brush_mode brush_mode = terrain_brush_mode::overwrite;
+      int32 brush_radius = 1;
       int16 brush_overwrite_value = 0;
    } _terrain_editor_config;
 
    struct terrain_editor_context {
-      terrain_brush_mode brush_mode = terrain_brush_mode::disabled;
-      bool brush_painting = false;
+      bool brush_held = false;
+      bool brush_active = false;
+
+      float brush_plane_height = 0.0f;
    } _terrain_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

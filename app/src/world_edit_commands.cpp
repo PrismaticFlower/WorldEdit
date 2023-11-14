@@ -282,7 +282,7 @@ void world_edit::initialize_commands() noexcept
                 _edit_context);
    });
 
-   _commands.add("terrain.toggle_brush_paint"s, _terrain_editor_context.brush_painting);
+   _commands.add("terrain.toggle_brush_paint"s, _terrain_editor_context.brush_held);
 }
 
 void world_edit::initialize_hotkeys() noexcept
