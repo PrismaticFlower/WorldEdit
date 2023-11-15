@@ -51,6 +51,11 @@ void world_edit::ui_show_terrain_editor() noexcept
          _terrain_editor_config.brush_mode = terrain_brush_mode::overwrite;
       }
 
+      ImGui::SeparatorText("Brush Shape");
+
+      ImGui::Selectable("Circle");
+      ImGui::Selectable("Square");
+
       ImGui::SeparatorText("Brush Settings");
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
@@ -158,19 +163,25 @@ void world_edit::ui_show_terrain_editor() noexcept
    if (_terrain_editor_context.brush_active) {
       const int32 terrain_half_length = _world.terrain.length / 2;
 
-      int32 x = static_cast<int32>(terrain_point.x) + terrain_half_length;
-      int32 y = static_cast<int32>(terrain_point.y) + terrain_half_length - 1;
+      int32 terrain_x = static_cast<int32>(terrain_point.x) + terrain_half_length;
+      int32 terrain_y = static_cast<int32>(terrain_point.y) + terrain_half_length - 1;
 
-      int32 left = std::clamp(x - _terrain_editor_config.brush_radius, 0,
-                              _world.terrain.length - 1);
-      int32 top = std::clamp(y - _terrain_editor_config.brush_radius, 0,
+      int32 left = std::clamp(terrain_x - _terrain_editor_config.brush_radius,
+                              0, _world.terrain.length - 1);
+      int32 top = std::clamp(terrain_y - _terrain_editor_config.brush_radius, 0,
                              _world.terrain.length - 1);
-      int32 right = std::clamp(x + _terrain_editor_config.brush_radius + 1, 0,
-                               _world.terrain.length);
-      int32 bottom = std::clamp(y + _terrain_editor_config.brush_radius + 1, 0,
-                                _world.terrain.length);
+      int32 right = std::clamp(terrain_x + _terrain_editor_config.brush_radius + 1,
+                               0, _world.terrain.length);
+      int32 bottom = std::clamp(terrain_y + _terrain_editor_config.brush_radius + 1,
+                                0, _world.terrain.length);
 
       container::dynamic_array_2d<int16> area{right - left, bottom - top};
+
+      for (int32 y = top; y < bottom; ++y) {
+         for (int32 x = left; x < right; ++x) {
+            area[{x - left, y - top}] = _world.terrain.height_map[{x, y}];
+         }
+      }
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
          for (int16& v : area) v = _terrain_editor_config.brush_overwrite_value;
