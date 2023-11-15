@@ -150,6 +150,9 @@ void world_edit::ui_show_terrain_editor() noexcept
          _terrain_editor_context = {};
          _edit_stack_world.close_last();
       }
+      else {
+         _terrain_editor_context.brush_plane_height = cursor_positionWS.y;
+      }
    }
 
    if (_terrain_editor_context.brush_active) {
