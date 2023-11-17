@@ -64,7 +64,7 @@ enum class selection_move_space : uint8 { world, local };
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
-enum class terrain_brush_mode : uint8 { overwrite, pull_towards };
+enum class terrain_brush_mode : uint8 { overwrite, pull_towards, blend };
 
 constexpr float tool_window_start_x = 264.0f;
 

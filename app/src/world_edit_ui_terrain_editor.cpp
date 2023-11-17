@@ -56,23 +56,32 @@ void world_edit::ui_show_terrain_editor() noexcept
          _terrain_editor_config.brush_mode = terrain_brush_mode::pull_towards;
       }
 
+      if (ImGui::Selectable("Blend", _terrain_editor_config.brush_mode ==
+                                        terrain_brush_mode::blend)) {
+         _terrain_editor_config.brush_mode = terrain_brush_mode::blend;
+      }
+
       ImGui::SeparatorText("Brush Settings");
 
-      if (float height = _terrain_editor_config.brush_height * _world.terrain.height_scale;
-          ImGui::DragFloat("Height", &height, _world.terrain.height_scale,
-                           32768.0f * _world.terrain.height_scale,
-                           32767.0f * _world.terrain.height_scale, "%.3f",
-                           ImGuiSliderFlags_AlwaysClamp |
-                              ImGuiSliderFlags_NoRoundToFormat)) {
-         _terrain_editor_config.brush_height =
-            static_cast<int16>(height / _world.terrain.height_scale);
+      if (_terrain_editor_config.brush_mode == terrain_brush_mode::pull_towards or
+          _terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
+         if (float height = _terrain_editor_config.brush_height * _world.terrain.height_scale;
+             ImGui::DragFloat("Height", &height, _world.terrain.height_scale,
+                              32768.0f * _world.terrain.height_scale,
+                              32767.0f * _world.terrain.height_scale, "%.3f",
+                              ImGuiSliderFlags_AlwaysClamp |
+                                 ImGuiSliderFlags_NoRoundToFormat)) {
+            _terrain_editor_config.brush_height =
+               static_cast<int16>(height / _world.terrain.height_scale);
+         }
       }
 
       ImGui::DragInt("Brush Radius", &_terrain_editor_config.brush_radius, 1.0f,
                      0, 64, "%d",
                      ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic);
 
-      if (_terrain_editor_config.brush_mode == terrain_brush_mode::pull_towards) {
+      if (_terrain_editor_config.brush_mode == terrain_brush_mode::pull_towards or
+          _terrain_editor_config.brush_mode == terrain_brush_mode::blend) {
          ImGui::SliderFloat("Brush Speed", &_terrain_editor_config.brush_speed,
                             0.125f, 1.0f, "%.2f");
       }
@@ -204,6 +213,22 @@ void world_edit::ui_show_terrain_editor() noexcept
             std::clamp(delta_time * _terrain_editor_config.brush_speed, 0.0f, 1.0f);
          const float target_height =
             static_cast<float>(_terrain_editor_config.brush_height);
+
+         for (int16& v : area) {
+            v = static_cast<int16>(
+               std::lerp(static_cast<float>(v), target_height, time_weight));
+         }
+      }
+      else if (_terrain_editor_config.brush_mode == terrain_brush_mode::blend) {
+         int64 average_height = 0;
+
+         for (int16& v : area) average_height += v;
+
+         average_height /= area.ssize();
+
+         const float time_weight =
+            std::clamp(delta_time * _terrain_editor_config.brush_speed, 0.0f, 1.0f);
+         const float target_height = static_cast<float>(average_height);
 
          for (int16& v : area) {
             v = static_cast<int16>(
