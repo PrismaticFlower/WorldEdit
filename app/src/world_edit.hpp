@@ -64,7 +64,13 @@ enum class selection_move_space : uint8 { world, local };
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
-enum class terrain_brush_mode : uint8 { overwrite, pull_towards, blend };
+enum class terrain_brush_mode : uint8 {
+   overwrite,
+   pull_towards,
+   raise,
+   lower,
+   blend
+};
 
 constexpr float tool_window_start_x = 264.0f;
 
@@ -429,6 +435,7 @@ private:
       int32 brush_radius = 1;
       int16 brush_height = 0;
       float brush_speed = 0.5f;
+      float brush_rate = 0.5f;
    } _terrain_editor_config;
 
    struct terrain_editor_context {
