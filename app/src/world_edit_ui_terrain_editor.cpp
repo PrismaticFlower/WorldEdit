@@ -131,8 +131,8 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
       }
 
-      ImGui::DragInt("Radius", &_terrain_editor_config.brush_radius, 1.0f, 0, 64, "%d",
-                     ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic);
+      ImGui::SliderInt("Radius", &_terrain_editor_config.brush_radius, 0,
+                       _world.terrain.length / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::pull_towards or
           _terrain_editor_config.brush_mode == terrain_brush_mode::blend) {
@@ -362,44 +362,62 @@ void world_edit::ui_show_terrain_editor() noexcept
                               _edit_context);
    }
 
-   const float radius = static_cast<float>(_terrain_editor_config.brush_radius);
+   if (_terrain_editor_config.brush_radius < 16) {
+      const float radius = static_cast<float>(_terrain_editor_config.brush_radius);
 
-   if (radius == 0.0f) {
+      if (radius == 0.0f) {
+         const float3 point = get_position(terrain_point, _world.terrain);
+
+         _tool_visualizers.add_line_overlay(point,
+                                            point + float3{0.0f, _world.terrain.grid_scale,
+                                                           0.0f},
+                                            0xffffffff);
+      }
+
+      for (float y = -radius; y < radius; ++y) {
+         for (float x = -radius; x < radius; ++x) {
+            const std::array vertices{
+               get_position(terrain_point + float2{0.0f + x, 0.0f + y}, _world.terrain),
+               get_position(terrain_point + float2{1.0f + x, 0.0f + y}, _world.terrain),
+               get_position(terrain_point + float2{1.0f + x, 1.0f + y}, _world.terrain),
+               get_position(terrain_point + float2{0.0f + x, 1.0f + y}, _world.terrain)};
+
+            _tool_visualizers.add_line_overlay(vertices[0], vertices[1], 0xffffffff);
+            _tool_visualizers.add_line_overlay(vertices[3], vertices[0], 0xffffffff);
+         }
+      }
+
+      for (float y = -radius; y < radius; ++y) {
+         _tool_visualizers.add_line_overlay(
+            get_position(terrain_point + float2{radius, y}, _world.terrain),
+            get_position(terrain_point + float2{radius, y + 1.0f}, _world.terrain),
+            0xffffffff);
+      }
+
+      for (float x = -radius; x < radius; ++x) {
+         _tool_visualizers.add_line_overlay(
+            get_position(terrain_point + float2{x, radius}, _world.terrain),
+            get_position(terrain_point + float2{x + 1.0f, radius}, _world.terrain),
+            0xffffffff);
+      }
+   }
+   else {
+      const float radius =
+         _terrain_editor_config.brush_radius * _world.terrain.grid_scale;
+
       const float3 point = get_position(terrain_point, _world.terrain);
 
       _tool_visualizers.add_line_overlay(point,
                                          point + float3{0.0f, _world.terrain.grid_scale,
                                                         0.0f},
                                          0xffffffff);
-   }
 
-   for (float y = -radius; y < radius; ++y) {
-      for (float x = -radius; x < radius; ++x) {
-         const std::array vertices{
-            get_position(terrain_point + float2{0.0f + x, 0.0f + y}, _world.terrain),
-            get_position(terrain_point + float2{1.0f + x, 0.0f + y}, _world.terrain),
-            get_position(terrain_point + float2{1.0f + x, 1.0f + y}, _world.terrain),
-            get_position(terrain_point + float2{0.0f + x, 1.0f + y}, _world.terrain)};
-
-         _tool_visualizers.add_line_overlay(vertices[0], vertices[1], 0xffffffff);
-         // _tool_visualizers.add_line_overlay(vertices[1], vertices[2], 0xffffffff);
-         // _tool_visualizers.add_line_overlay(vertices[2], vertices[3], 0xffffffff);
-         _tool_visualizers.add_line_overlay(vertices[3], vertices[0], 0xffffffff);
-      }
-   }
-
-   for (float y = -radius; y < radius; ++y) {
-      _tool_visualizers.add_line_overlay(
-         get_position(terrain_point + float2{radius, y}, _world.terrain),
-         get_position(terrain_point + float2{radius, y + 1.0f}, _world.terrain),
-         0xffffffff);
-   }
-
-   for (float x = -radius; x < radius; ++x) {
-      _tool_visualizers.add_line_overlay(
-         get_position(terrain_point + float2{x, radius}, _world.terrain),
-         get_position(terrain_point + float2{x + 1.0f, radius}, _world.terrain),
-         0xffffffff);
+      _tool_visualizers.add_line_overlay(point + float3{1.0f, 0.0f, 0.0f} * radius,
+                                         point + float3{-1.0f, 0.0f, 0.0f} * radius,
+                                         0xffffffff);
+      _tool_visualizers.add_line_overlay(point + float3{0.0f, 0.0f, 1.0f} * radius,
+                                         point + float3{0.0f, 0.0f, -1.0f} * radius,
+                                         0xffffffff);
    }
 }
 
