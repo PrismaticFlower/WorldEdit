@@ -361,7 +361,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                               _edit_context);
    }
 
-   if (_terrain_editor_config.brush_size < 16) {
+   if (_terrain_editor_config.brush_size <= 8) {
       const float size = static_cast<float>(_terrain_editor_config.brush_size);
 
       if (size == 0.0f) {
