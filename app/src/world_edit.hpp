@@ -435,7 +435,7 @@ private:
    struct terrain_editor_config {
       terrain_brush_mode brush_mode = terrain_brush_mode::overwrite;
       terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
-      int32 brush_radius = 1;
+      int32 brush_size = 1;
       float brush_height = 0.0f;
       float brush_speed = 0.5f;
       float brush_rate = 1000.0f;

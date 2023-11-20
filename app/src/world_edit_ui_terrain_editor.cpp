@@ -131,7 +131,7 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
       }
 
-      ImGui::SliderInt("Radius", &_terrain_editor_config.brush_radius, 0,
+      ImGui::SliderInt("Size", &_terrain_editor_config.brush_size, 0,
                        _world.terrain.length / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::pull_towards or
@@ -249,13 +249,13 @@ void world_edit::ui_show_terrain_editor() noexcept
       int32 terrain_x = static_cast<int32>(terrain_point.x) + terrain_half_length;
       int32 terrain_y = static_cast<int32>(terrain_point.y) + terrain_half_length - 1;
 
-      int32 left = std::clamp(terrain_x - _terrain_editor_config.brush_radius,
-                              0, _world.terrain.length - 1);
-      int32 top = std::clamp(terrain_y - _terrain_editor_config.brush_radius, 0,
+      int32 left = std::clamp(terrain_x - _terrain_editor_config.brush_size, 0,
+                              _world.terrain.length - 1);
+      int32 top = std::clamp(terrain_y - _terrain_editor_config.brush_size, 0,
                              _world.terrain.length - 1);
-      int32 right = std::clamp(terrain_x + _terrain_editor_config.brush_radius + 1,
+      int32 right = std::clamp(terrain_x + _terrain_editor_config.brush_size + 1,
                                0, _world.terrain.length);
-      int32 bottom = std::clamp(terrain_y + _terrain_editor_config.brush_radius + 1,
+      int32 bottom = std::clamp(terrain_y + _terrain_editor_config.brush_size + 1,
                                 0, _world.terrain.length);
 
       container::dynamic_array_2d<int16> area{right - left, bottom - top};
@@ -268,8 +268,7 @@ void world_edit::ui_show_terrain_editor() noexcept
 
       const float2 brush_center = {static_cast<float>(terrain_x),
                                    static_cast<float>(terrain_y)};
-      const float brush_radius =
-         static_cast<float>(_terrain_editor_config.brush_radius);
+      const float brush_radius = static_cast<float>(_terrain_editor_config.brush_size);
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
          for (int32 y = top; y < bottom; ++y) {
@@ -362,10 +361,10 @@ void world_edit::ui_show_terrain_editor() noexcept
                               _edit_context);
    }
 
-   if (_terrain_editor_config.brush_radius < 16) {
-      const float radius = static_cast<float>(_terrain_editor_config.brush_radius);
+   if (_terrain_editor_config.brush_size < 16) {
+      const float size = static_cast<float>(_terrain_editor_config.brush_size);
 
-      if (radius == 0.0f) {
+      if (size == 0.0f) {
          const float3 point = get_position(terrain_point, _world.terrain);
 
          _tool_visualizers.add_line_overlay(point,
@@ -374,8 +373,8 @@ void world_edit::ui_show_terrain_editor() noexcept
                                             0xffffffff);
       }
 
-      for (float y = -radius; y < radius; ++y) {
-         for (float x = -radius; x < radius; ++x) {
+      for (float y = -size; y < size; ++y) {
+         for (float x = -size; x < size; ++x) {
             const std::array vertices{
                get_position(terrain_point + float2{0.0f + x, 0.0f + y}, _world.terrain),
                get_position(terrain_point + float2{1.0f + x, 0.0f + y}, _world.terrain),
@@ -387,23 +386,22 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
       }
 
-      for (float y = -radius; y < radius; ++y) {
+      for (float y = -size; y < size; ++y) {
          _tool_visualizers.add_line_overlay(
-            get_position(terrain_point + float2{radius, y}, _world.terrain),
-            get_position(terrain_point + float2{radius, y + 1.0f}, _world.terrain),
+            get_position(terrain_point + float2{size, y}, _world.terrain),
+            get_position(terrain_point + float2{size, y + 1.0f}, _world.terrain),
             0xffffffff);
       }
 
-      for (float x = -radius; x < radius; ++x) {
+      for (float x = -size; x < size; ++x) {
          _tool_visualizers.add_line_overlay(
-            get_position(terrain_point + float2{x, radius}, _world.terrain),
-            get_position(terrain_point + float2{x + 1.0f, radius}, _world.terrain),
+            get_position(terrain_point + float2{x, size}, _world.terrain),
+            get_position(terrain_point + float2{x + 1.0f, size}, _world.terrain),
             0xffffffff);
       }
    }
    else {
-      const float radius =
-         _terrain_editor_config.brush_radius * _world.terrain.grid_scale;
+      const float radius = _terrain_editor_config.brush_size * _world.terrain.grid_scale;
 
       const float3 point = get_position(terrain_point, _world.terrain);
 
