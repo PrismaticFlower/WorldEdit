@@ -6,6 +6,8 @@
 
 #include "imgui.h"
 
+#include <numbers>
+
 namespace we {
 
 namespace {
@@ -31,6 +33,27 @@ auto get_position(const float2 point, const world::terrain& terrain) noexcept ->
                                                 0, terrain.length - 1)}] *
                     terrain.height_scale,
                  (point.y) * terrain.grid_scale};
+}
+
+auto brush_weight(int32 x, int32 y, float2 centre, float radius,
+                  terrain_brush_falloff falloff) noexcept -> float
+{
+   const float distance =
+      we::distance(float2{static_cast<float>(x), static_cast<float>(y)}, centre);
+   const float normalized_distance = std::clamp(distance / radius, 0.0f, 1.0f);
+
+   switch (falloff) {
+   case terrain_brush_falloff::none:
+      return 1.0f;
+   case terrain_brush_falloff::linear:
+      return std::clamp(1.0f - normalized_distance, 0.0f, 1.0f);
+   case terrain_brush_falloff::inverse_sq:
+      return std::clamp(1.0f - (normalized_distance * normalized_distance), 0.0f, 1.0f);
+   case terrain_brush_falloff::sine:
+      return (sinf(std::numbers::pi_v<float> * (normalized_distance + 0.5f))) * 0.5f + 0.5f;
+   }
+
+   std::unreachable();
 }
 
 }
@@ -71,18 +94,40 @@ void world_edit::ui_show_terrain_editor() noexcept
          _terrain_editor_config.brush_mode = terrain_brush_mode::blend;
       }
 
+      ImGui::SeparatorText("Brush Falloff");
+
+      if (ImGui::Selectable("None", _terrain_editor_config.brush_falloff ==
+                                       terrain_brush_falloff::none)) {
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::none;
+      }
+
+      if (ImGui::Selectable("Linear", _terrain_editor_config.brush_falloff ==
+                                         terrain_brush_falloff::linear)) {
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::linear;
+      }
+
+      if (ImGui::Selectable("Inverse Square", _terrain_editor_config.brush_falloff ==
+                                                 terrain_brush_falloff::inverse_sq)) {
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::inverse_sq;
+      }
+
+      if (ImGui::Selectable("Sine", _terrain_editor_config.brush_falloff ==
+                                       terrain_brush_falloff::sine)) {
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::sine;
+      }
+
       ImGui::SeparatorText("Brush Settings");
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::pull_towards or
           _terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
          if (float height = _terrain_editor_config.brush_height * _world.terrain.height_scale;
              ImGui::DragFloat("Height", &height, _world.terrain.height_scale,
-                              32768.0f * _world.terrain.height_scale,
+                              -32768.0f * _world.terrain.height_scale,
                               32767.0f * _world.terrain.height_scale, "%.3f",
                               ImGuiSliderFlags_AlwaysClamp |
                                  ImGuiSliderFlags_NoRoundToFormat)) {
             _terrain_editor_config.brush_height =
-               static_cast<int16>(height / _world.terrain.height_scale);
+               std::trunc(height / _world.terrain.height_scale);
          }
       }
 
@@ -221,34 +266,71 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
       }
 
+      const float2 brush_center = {static_cast<float>(terrain_x),
+                                   static_cast<float>(terrain_y)};
+      const float brush_radius =
+         static_cast<float>(_terrain_editor_config.brush_radius);
+
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
-         for (int16& v : area) {
-            v = _terrain_editor_config.brush_height;
+         for (int32 y = top; y < bottom; ++y) {
+            for (int32 x = left; x < right; ++x) {
+               int16& v = area[{x - left, y - top}];
+
+               const float weight =
+                  brush_weight(x, y, brush_center, brush_radius,
+                               _terrain_editor_config.brush_falloff);
+
+               v = static_cast<int16>(_terrain_editor_config.brush_height * weight);
+            }
          }
       }
       else if (_terrain_editor_config.brush_mode == terrain_brush_mode::pull_towards) {
          const float time_weight =
             std::clamp(delta_time * _terrain_editor_config.brush_speed, 0.0f, 1.0f);
-         const float target_height =
-            static_cast<float>(_terrain_editor_config.brush_height);
+         const float target_height = _terrain_editor_config.brush_height;
 
-         for (int16& v : area) {
-            v = static_cast<int16>(
-               std::lerp(static_cast<float>(v), target_height, time_weight));
+         for (int32 y = top; y < bottom; ++y) {
+            for (int32 x = left; x < right; ++x) {
+               int16& v = area[{x - left, y - top}];
+
+               const float weight =
+                  brush_weight(x, y, brush_center, brush_radius,
+                               _terrain_editor_config.brush_falloff);
+
+               v = static_cast<int16>(std::lerp(static_cast<float>(v),
+                                                target_height * weight, time_weight));
+            }
          }
       }
       else if (_terrain_editor_config.brush_mode == terrain_brush_mode::raise) {
          const float height_increase = _terrain_editor_config.brush_rate * delta_time;
 
-         for (int16& v : area) {
-            v = static_cast<int16>(std::min(v + height_increase, 32767.0f));
+         for (int32 y = top; y < bottom; ++y) {
+            for (int32 x = left; x < right; ++x) {
+               int16& v = area[{x - left, y - top}];
+
+               const float weight =
+                  brush_weight(x, y, brush_center, brush_radius,
+                               _terrain_editor_config.brush_falloff);
+
+               v = static_cast<int16>(std::min(v + (height_increase * weight), 32767.0f));
+            }
          }
       }
       else if (_terrain_editor_config.brush_mode == terrain_brush_mode::lower) {
          const float height_decrease = _terrain_editor_config.brush_rate * delta_time;
 
-         for (int16& v : area) {
-            v = static_cast<int16>(std::max(v - height_decrease, -32768.0f));
+         for (int32 y = top; y < bottom; ++y) {
+            for (int32 x = left; x < right; ++x) {
+               int16& v = area[{x - left, y - top}];
+
+               const float weight =
+                  brush_weight(x, y, brush_center, brush_radius,
+                               _terrain_editor_config.brush_falloff);
+
+               v = static_cast<int16>(
+                  std::max(v - (height_decrease * weight), -32768.0f));
+            }
          }
       }
       else if (_terrain_editor_config.brush_mode == terrain_brush_mode::blend) {
@@ -262,9 +344,17 @@ void world_edit::ui_show_terrain_editor() noexcept
             std::clamp(delta_time * _terrain_editor_config.brush_speed, 0.0f, 1.0f);
          const float target_height = static_cast<float>(average_height);
 
-         for (int16& v : area) {
-            v = static_cast<int16>(
-               std::lerp(static_cast<float>(v), target_height, time_weight));
+         for (int32 y = top; y < bottom; ++y) {
+            for (int32 x = left; x < right; ++x) {
+               int16& v = area[{x - left, y - top}];
+
+               const float weight =
+                  brush_weight(x, y, brush_center, brush_radius,
+                               _terrain_editor_config.brush_falloff);
+
+               v = static_cast<int16>(std::lerp(static_cast<float>(v), target_height,
+                                                std::lerp(0.0f, time_weight, weight)));
+            }
          }
       }
 
