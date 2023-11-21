@@ -194,27 +194,29 @@ void world_edit::ui_show_terrain_editor() noexcept
 
    if (not _terrain_editor_open) return;
 
-   ImGui::Begin("Hotkeys");
+   if (_hotkeys_view_show) {
+      ImGui::Begin("Hotkeys");
 
-   ImGui::SeparatorText("Terrain Editing");
+      ImGui::SeparatorText("Terrain Editing");
 
-   ImGui::Text("Cycle Brush Mode");
-   ImGui::BulletText(get_display_string(
-      _hotkeys.query_binding("Terrain Editing", "Cycle Brush Mode")));
+      ImGui::Text("Cycle Brush Mode");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Terrain Editing", "Cycle Brush Mode")));
 
-   ImGui::Text("Cycle Brush Falloff");
-   ImGui::BulletText(get_display_string(
-      _hotkeys.query_binding("Terrain Editing", "Cycle Brush Falloff")));
+      ImGui::Text("Cycle Brush Falloff");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Terrain Editing", "Cycle Brush Falloff")));
 
-   ImGui::Text("Increase Brush Size");
-   ImGui::BulletText(get_display_string(
-      _hotkeys.query_binding("Terrain Editing", "Increase Brush Size")));
+      ImGui::Text("Increase Brush Size");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Terrain Editing", "Increase Brush Size")));
 
-   ImGui::Text("Decrease Brush Size");
-   ImGui::BulletText(get_display_string(
-      _hotkeys.query_binding("Terrain Editing", "Decrease Brush Size")));
+      ImGui::Text("Decrease Brush Size");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Terrain Editing", "Decrease Brush Size")));
 
-   ImGui::End();
+      ImGui::End();
+   }
 
    graphics::camera_ray ray =
       make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
