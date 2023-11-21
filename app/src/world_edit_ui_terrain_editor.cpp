@@ -258,6 +258,8 @@ void world_edit::ui_show_terrain_editor() noexcept
       int32 bottom = std::clamp(terrain_y + _terrain_editor_config.brush_size + 1,
                                 0, _world.terrain.length);
 
+      if (left == right or top == bottom) return;
+
       container::dynamic_array_2d<int16> area{right - left, bottom - top};
 
       for (int32 y = top; y < bottom; ++y) {
