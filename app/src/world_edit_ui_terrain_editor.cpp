@@ -198,6 +198,14 @@ void world_edit::ui_show_terrain_editor() noexcept
 
    ImGui::SeparatorText("Terrain Editing");
 
+   ImGui::Text("Cycle Brush Mode");
+   ImGui::BulletText(get_display_string(
+      _hotkeys.query_binding("Terrain Editing", "Cycle Brush Mode")));
+
+   ImGui::Text("Cycle Brush Falloff");
+   ImGui::BulletText(get_display_string(
+      _hotkeys.query_binding("Terrain Editing", "Cycle Brush Falloff")));
+
    ImGui::Text("Increase Brush Size");
    ImGui::BulletText(get_display_string(
       _hotkeys.query_binding("Terrain Editing", "Increase Brush Size")));

@@ -293,6 +293,41 @@ void world_edit::initialize_commands() noexcept
          std::clamp(_terrain_editor_config.brush_size - 1, 0,
                     _world.terrain.length / 2);
    });
+   _commands.add("terrain.cycle_brush_mode"s, [this] {
+      switch (_terrain_editor_config.brush_mode) {
+      case terrain_brush_mode::overwrite:
+         _terrain_editor_config.brush_mode = terrain_brush_mode::pull_towards;
+         return;
+      case terrain_brush_mode::pull_towards:
+         _terrain_editor_config.brush_mode = terrain_brush_mode::raise;
+         return;
+      case terrain_brush_mode::raise:
+         _terrain_editor_config.brush_mode = terrain_brush_mode::lower;
+         return;
+      case terrain_brush_mode::lower:
+         _terrain_editor_config.brush_mode = terrain_brush_mode::blend;
+         return;
+      case terrain_brush_mode::blend:
+         _terrain_editor_config.brush_mode = terrain_brush_mode::overwrite;
+         return;
+      }
+   });
+   _commands.add("terrain.cycle_brush_falloff"s, [this] {
+      switch (_terrain_editor_config.brush_falloff) {
+      case terrain_brush_falloff::none:
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::linear;
+         return;
+      case terrain_brush_falloff::linear:
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::inverse_sq;
+         return;
+      case terrain_brush_falloff::inverse_sq:
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::sine;
+         return;
+      case terrain_brush_falloff::sine:
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::none;
+         return;
+      }
+   });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -646,6 +681,8 @@ void world_edit::initialize_hotkeys() noexcept
             {"Paint", "terrain.toggle_brush_paint", {.key = key::mouse1}, {.toggle = true}},
             {"Increase Brush Size", "terrain.increase_brush_size", {.key = key::mouse_wheel_forward}},
             {"Decrease Brush Size", "terrain.decrease_brush_size", {.key = key::mouse_wheel_back}},
+            {"Cycle Brush Mode", "terrain.cycle_brush_mode", {.key = key::z}},
+            {"Cycle Brush Falloff", "terrain.cycle_brush_falloff", {.key = key::x}},
          },
    });
 }
