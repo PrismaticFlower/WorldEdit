@@ -283,6 +283,16 @@ void world_edit::initialize_commands() noexcept
    });
 
    _commands.add("terrain.toggle_brush_paint"s, _terrain_editor_context.brush_held);
+   _commands.add("terrain.increase_brush_size"s, [this] {
+      _terrain_editor_config.brush_size =
+         std::clamp(_terrain_editor_config.brush_size + 1, 0,
+                    _world.terrain.length / 2);
+   });
+   _commands.add("terrain.decrease_brush_size"s, [this] {
+      _terrain_editor_config.brush_size =
+         std::clamp(_terrain_editor_config.brush_size - 1, 0,
+                    _world.terrain.length / 2);
+   });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -629,11 +639,13 @@ void world_edit::initialize_hotkeys() noexcept
 
    _hotkeys.add_set({
       .name = "Terrain Editing",
-      .description = "Active while the terrain editor is open.."s,
+      .description = "Active while the terrain editor is open."s,
       .activated = [this] { return _terrain_editor_open; },
       .default_hotkeys =
          {
             {"Paint", "terrain.toggle_brush_paint", {.key = key::mouse1}, {.toggle = true}},
+            {"Increase Brush Size", "terrain.increase_brush_size", {.key = key::mouse_wheel_forward}},
+            {"Decrease Brush Size", "terrain.decrease_brush_size", {.key = key::mouse_wheel_back}},
          },
    });
 }

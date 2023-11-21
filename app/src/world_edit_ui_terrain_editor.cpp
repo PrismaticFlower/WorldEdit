@@ -194,6 +194,20 @@ void world_edit::ui_show_terrain_editor() noexcept
 
    if (not _terrain_editor_open) return;
 
+   ImGui::Begin("Hotkeys");
+
+   ImGui::SeparatorText("Terrain Editing");
+
+   ImGui::Text("Increase Brush Size");
+   ImGui::BulletText(get_display_string(
+      _hotkeys.query_binding("Terrain Editing", "Increase Brush Size")));
+
+   ImGui::Text("Decrease Brush Size");
+   ImGui::BulletText(get_display_string(
+      _hotkeys.query_binding("Terrain Editing", "Decrease Brush Size")));
+
+   ImGui::End();
+
    graphics::camera_ray ray =
       make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
                       {ImGui::GetMainViewport()->Size.x,
