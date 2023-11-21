@@ -72,7 +72,7 @@ enum class terrain_brush_mode : uint8 {
    blend
 };
 
-enum class terrain_brush_falloff : uint8 { none, linear, inverse_sq, sine };
+enum class terrain_brush_falloff : uint8 { none, linear, smooth, sine };
 
 constexpr float tool_window_start_x = 264.0f;
 

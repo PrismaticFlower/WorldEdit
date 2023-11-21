@@ -318,9 +318,9 @@ void world_edit::initialize_commands() noexcept
          _terrain_editor_config.brush_falloff = terrain_brush_falloff::linear;
          return;
       case terrain_brush_falloff::linear:
-         _terrain_editor_config.brush_falloff = terrain_brush_falloff::inverse_sq;
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::smooth;
          return;
-      case terrain_brush_falloff::inverse_sq:
+      case terrain_brush_falloff::smooth:
          _terrain_editor_config.brush_falloff = terrain_brush_falloff::sine;
          return;
       case terrain_brush_falloff::sine:

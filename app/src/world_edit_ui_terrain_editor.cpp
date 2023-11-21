@@ -47,7 +47,7 @@ auto brush_weight(int32 x, int32 y, float2 centre, float radius,
       return 1.0f;
    case terrain_brush_falloff::linear:
       return std::clamp(1.0f - normalized_distance, 0.0f, 1.0f);
-   case terrain_brush_falloff::inverse_sq:
+   case terrain_brush_falloff::smooth:
       return std::clamp(1.0f - (normalized_distance * normalized_distance), 0.0f, 1.0f);
    case terrain_brush_falloff::sine:
       return (sinf(std::numbers::pi_v<float> * (normalized_distance + 0.5f))) * 0.5f + 0.5f;
@@ -106,9 +106,9 @@ void world_edit::ui_show_terrain_editor() noexcept
          _terrain_editor_config.brush_falloff = terrain_brush_falloff::linear;
       }
 
-      if (ImGui::Selectable("Inverse Square", _terrain_editor_config.brush_falloff ==
-                                                 terrain_brush_falloff::inverse_sq)) {
-         _terrain_editor_config.brush_falloff = terrain_brush_falloff::inverse_sq;
+      if (ImGui::Selectable("Smooth", _terrain_editor_config.brush_falloff ==
+                                         terrain_brush_falloff::smooth)) {
+         _terrain_editor_config.brush_falloff = terrain_brush_falloff::smooth;
       }
 
       if (ImGui::Selectable("Sine", _terrain_editor_config.brush_falloff ==
