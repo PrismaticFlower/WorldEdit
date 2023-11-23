@@ -64,6 +64,8 @@ enum class selection_move_space : uint8 { world, local };
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
+enum class terrain_edit_target : uint8 { height, texture, color };
+
 enum class terrain_brush_mode : uint8 {
    overwrite,
    pull_towards,
@@ -433,12 +435,15 @@ private:
    } _selection_edit_context;
 
    struct terrain_editor_config {
+      terrain_edit_target edit_target = terrain_edit_target::height;
       terrain_brush_mode brush_mode = terrain_brush_mode::overwrite;
       terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
       int32 brush_size = 1;
       float brush_height = 0.0f;
+      float brush_texture_weight = 255.0f;
       float brush_speed = 0.5f;
       float brush_rate = 1000.0f;
+      uint32 edit_texture = 0;
    } _terrain_editor_config;
 
    struct terrain_editor_context {
