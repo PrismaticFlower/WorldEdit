@@ -22,17 +22,15 @@ auto make_set_terrain_value(Value world::terrain::*value_member_ptr,
       std::move(original_value));
 }
 
-auto get_position(const float2 point, const world::terrain& terrain) noexcept -> float3
+auto get_position(int32 x, int32 y, const world::terrain& terrain) noexcept -> float3
 {
    const int32 terrain_half_length = terrain.length / 2;
 
-   return float3{(point.x) * terrain.grid_scale,
-                 terrain.height_map[{std::clamp(static_cast<int32>(point.x) + terrain_half_length,
-                                                0, terrain.length - 1),
-                                     std::clamp(static_cast<int32>(point.y) + terrain_half_length - 1,
-                                                0, terrain.length - 1)}] *
+   return float3{(x - terrain_half_length) * terrain.grid_scale,
+                 terrain.height_map[{std::clamp(x, 0, terrain.length - 1),
+                                     std::clamp(y, 0, terrain.length - 1)}] *
                     terrain.height_scale,
-                 (point.y) * terrain.grid_scale};
+                 (y - terrain_half_length + 1) * terrain.grid_scale};
 }
 
 auto brush_weight(int32 x, int32 y, float2 centre, float radius,
@@ -286,8 +284,11 @@ void world_edit::ui_show_terrain_editor() noexcept
 
    float2 terrain_point{cursor_positionWS.x, cursor_positionWS.z};
 
-   terrain_point /= _world.terrain.grid_scale;
-   terrain_point = round(terrain_point);
+   terrain_point = round(terrain_point / _world.terrain.grid_scale) +
+                   (_world.terrain.length / 2.0f) - float2{0.0f, 1.0f};
+
+   const int32 terrain_x = static_cast<int32>(terrain_point.x);
+   const int32 terrain_y = static_cast<int32>(terrain_point.y);
 
    if (_terrain_editor_context.brush_held != _terrain_editor_context.brush_active) {
       _terrain_editor_context.brush_active = _terrain_editor_context.brush_held;
@@ -310,11 +311,6 @@ void world_edit::ui_show_terrain_editor() noexcept
                           std::chrono::steady_clock::now()))
             .count();
 
-      const int32 terrain_half_length = _world.terrain.length / 2;
-
-      int32 terrain_x = static_cast<int32>(terrain_point.x) + terrain_half_length;
-      int32 terrain_y = static_cast<int32>(terrain_point.y) + terrain_half_length - 1;
-
       int32 left = std::clamp(terrain_x - _terrain_editor_config.brush_size, 0,
                               _world.terrain.length - 1);
       int32 top = std::clamp(terrain_y - _terrain_editor_config.brush_size, 0,
@@ -335,8 +331,6 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
 
-         const float2 brush_center = {static_cast<float>(terrain_x),
-                                      static_cast<float>(terrain_y)};
          const float brush_radius =
             static_cast<float>(_terrain_editor_config.brush_size);
 
@@ -346,7 +340,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   int16& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<int16>(_terrain_editor_config.brush_height * weight);
@@ -363,7 +357,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   int16& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<int16>(std::lerp(static_cast<float>(v),
@@ -379,7 +373,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   int16& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<int16>(
@@ -395,7 +389,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   int16& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<int16>(
@@ -419,7 +413,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   int16& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<int16>(
@@ -445,8 +439,6 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
 
-         const float2 brush_center = {static_cast<float>(terrain_x),
-                                      static_cast<float>(terrain_y)};
          const float brush_radius =
             static_cast<float>(_terrain_editor_config.brush_size);
 
@@ -456,7 +448,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   uint8& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<uint8>(
@@ -475,7 +467,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   uint8& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<uint8>(std::lerp(static_cast<float>(v),
@@ -492,7 +484,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   uint8& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<uint8>(
@@ -508,7 +500,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   uint8& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<uint8>(std::max(v - (height_decrease * weight), 0.0f));
@@ -532,7 +524,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   uint8& v = area[{x - left, y - top}];
 
                   const float weight =
-                     brush_weight(x, y, brush_center, brush_radius,
+                     brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<uint8>(
@@ -549,10 +541,10 @@ void world_edit::ui_show_terrain_editor() noexcept
    }
 
    if (_terrain_editor_config.brush_size <= 8) {
-      const float size = static_cast<float>(_terrain_editor_config.brush_size);
+      const int32 size = _terrain_editor_config.brush_size;
 
-      if (size == 0.0f) {
-         const float3 point = get_position(terrain_point, _world.terrain);
+      if (size == 0) {
+         const float3 point = get_position(terrain_x, terrain_y, _world.terrain);
 
          _tool_visualizers.add_line_overlay(point,
                                             point + float3{0.0f, _world.terrain.grid_scale,
@@ -560,37 +552,41 @@ void world_edit::ui_show_terrain_editor() noexcept
                                             0xffffffff);
       }
 
-      for (float y = -size; y < size; ++y) {
-         for (float x = -size; x < size; ++x) {
+      for (int32 y = -size; y < size; ++y) {
+         for (int32 x = -size; x < size; ++x) {
             const std::array vertices{
-               get_position(terrain_point + float2{0.0f + x, 0.0f + y}, _world.terrain),
-               get_position(terrain_point + float2{1.0f + x, 0.0f + y}, _world.terrain),
-               get_position(terrain_point + float2{1.0f + x, 1.0f + y}, _world.terrain),
-               get_position(terrain_point + float2{0.0f + x, 1.0f + y}, _world.terrain)};
+               get_position(terrain_x + x + 0, terrain_y + y + 0, _world.terrain),
+               get_position(terrain_x + x + 1, terrain_y + y + 0, _world.terrain),
+               get_position(terrain_x + x + 1, terrain_y + y + 1, _world.terrain),
+               get_position(terrain_x + x + 0, terrain_y + y + 1, _world.terrain)};
 
             _tool_visualizers.add_line_overlay(vertices[0], vertices[1], 0xffffffff);
             _tool_visualizers.add_line_overlay(vertices[3], vertices[0], 0xffffffff);
          }
       }
 
-      for (float y = -size; y < size; ++y) {
-         _tool_visualizers.add_line_overlay(
-            get_position(terrain_point + float2{size, y}, _world.terrain),
-            get_position(terrain_point + float2{size, y + 1.0f}, _world.terrain),
-            0xffffffff);
+      for (int32 y = -size; y < size; ++y) {
+         _tool_visualizers.add_line_overlay(get_position(terrain_x + size,
+                                                         terrain_y + y, _world.terrain),
+                                            get_position(terrain_x + size,
+                                                         terrain_y + y + 1,
+                                                         _world.terrain),
+                                            0xffffffff);
       }
 
-      for (float x = -size; x < size; ++x) {
-         _tool_visualizers.add_line_overlay(
-            get_position(terrain_point + float2{x, size}, _world.terrain),
-            get_position(terrain_point + float2{x + 1.0f, size}, _world.terrain),
-            0xffffffff);
+      for (int32 x = -size; x < size; ++x) {
+         _tool_visualizers.add_line_overlay(get_position(terrain_x + x, terrain_y + size,
+                                                         _world.terrain),
+                                            get_position(terrain_x + x + 1,
+                                                         terrain_y + size,
+                                                         _world.terrain),
+                                            0xffffffff);
       }
    }
    else {
       const float radius = _terrain_editor_config.brush_size * _world.terrain.grid_scale;
 
-      const float3 point = get_position(terrain_point, _world.terrain);
+      const float3 point = get_position(terrain_x, terrain_y, _world.terrain);
 
       _tool_visualizers.add_line_overlay(point,
                                          point + float3{0.0f, _world.terrain.grid_scale,
