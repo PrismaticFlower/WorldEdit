@@ -2,7 +2,7 @@
 
 struct input_vertex {
    noperspective float line_distance : LINE_DISTANCE;
-   nointerpolation float3 color : COLOR;
+   float4 color : COLOR;
 };
 
 [earlydepthstencil] float4 main(input_vertex input) : SV_TARGET
@@ -11,5 +11,5 @@ struct input_vertex {
 
    if (alpha == 0.0) discard;
 
-   return float4(input.color, alpha);
+   return float4(input.color.rgb, input.color.a * alpha);
 }

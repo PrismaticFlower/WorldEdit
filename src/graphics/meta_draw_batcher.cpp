@@ -149,7 +149,7 @@ void meta_draw_batcher::add_triangle(const float3& a, const float3& b,
 
 void meta_draw_batcher::add_line_solid(const float3& a, const float3& b, const uint32 color)
 {
-   _lines_solid.emplace_back(a, color, b);
+   _lines_solid.emplace_back(a, color, b, color);
 }
 
 void meta_draw_batcher::add_arrow_outline_solid(const float4x4& transform,
@@ -207,7 +207,13 @@ void meta_draw_batcher::add_triangle_wireframe(const float3& a, const float3& b,
 void meta_draw_batcher::add_line_overlay(const float3& a, const float3& b,
                                          const uint32 color)
 {
-   _lines_overlay.emplace_back(a, color, b);
+   _lines_overlay.emplace_back(a, color, b, color);
+}
+
+void meta_draw_batcher::add_line_overlay(const float3& a, const uint32 color_a,
+                                         const float3& b, const uint32 color_b)
+{
+   _lines_overlay.emplace_back(a, color_a, b, color_b);
 }
 
 void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,

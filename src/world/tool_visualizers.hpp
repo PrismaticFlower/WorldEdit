@@ -9,14 +9,17 @@ namespace we::world {
 
 struct tool_visualizers_line {
    float3 v0;
+   uint32 v0_color;
    float3 v1;
-   uint32 color;
+   uint32 v1_color;
 };
 
 struct tool_visualizers {
    tool_visualizers() noexcept;
 
    void add_line_overlay(float3 v0, float3 v1, uint32 color);
+
+   void add_line_overlay(float3 v0, uint32 v0_color, float3 v1, uint32 v1_color);
 
    void clear() noexcept;
 

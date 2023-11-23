@@ -45,9 +45,9 @@ static_assert(sizeof(meta_draw_vertex) == 16);
 
 struct alignas(16) meta_draw_line {
    float3 position0;
-   uint32 color;
-   float3 positio1;
-   uint32 pad;
+   uint32 color0;
+   float3 position1;
+   uint32 color1;
 };
 
 static_assert(sizeof(meta_draw_line) == 32);
@@ -97,6 +97,9 @@ struct meta_draw_batcher {
                                const float3& c, const uint32 color);
 
    void add_line_overlay(const float3& a, const float3& b, const uint32 color);
+
+   void add_line_overlay(const float3& a, const uint32 color_a, const float3& b,
+                         const uint32 color_b);
 
    void draw(gpu::graphics_command_list& command_list,
              gpu_virtual_address frame_constant_buffer,

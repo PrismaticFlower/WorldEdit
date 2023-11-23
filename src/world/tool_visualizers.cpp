@@ -9,7 +9,13 @@ tool_visualizers::tool_visualizers() noexcept
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
 {
-   _lines_overlay.emplace_back(v0, v1, color);
+   _lines_overlay.emplace_back(v0, color, v1, color);
+}
+
+void tool_visualizers::add_line_overlay(float3 v0, uint32 v0_color, float3 v1,
+                                        uint32 v1_color)
+{
+   _lines_overlay.emplace_back(v0, v0_color, v1, v1_color);
 }
 
 void tool_visualizers::clear() noexcept

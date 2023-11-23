@@ -5,16 +5,16 @@
 
 struct meta_draw_line {
    float3 position0WS;
-   uint color;
+   uint color0;
    float3 position1WS;
-   uint pad;
+   uint color1;
 };
 
 StructuredBuffer<meta_draw_line> lines : register(META_DRAW_INSTANCE_DATA_REGISTER);
 
 struct output_vertex {
    noperspective float line_distance : LINE_DISTANCE;
-   nointerpolation float3 color : COLOR;
+   float4 color : COLOR;
    float4 positionPS : SV_Position;
 };
 
@@ -38,37 +38,44 @@ output_vertex main(uint vertex_id : SV_VertexID)
    const float line_offset = floor(cb_frame.line_width + 0.5);
 
    float4 positionPS = 0.0;
+   float4 color = 0.0;
    float distance_sign = 1.0;
 
    switch (line_vertex_id) {
    case 0:
       positionPS = from_rendertarget_position((position0RT - line_normalRT * line_offset), position0PS);
+      color = unpack_bgra_srgb( ln.color0);
       distance_sign = -1.0;
       break;
    case 1:
       positionPS = from_rendertarget_position((position0RT + line_normalRT * line_offset), position0PS);
+      color = unpack_bgra_srgb( ln.color0);
       distance_sign = 1.0;
       break;
    case 2:
       positionPS = from_rendertarget_position((position1RT + line_normalRT * line_offset), position1PS);
+      color = unpack_bgra_srgb( ln.color1);
       distance_sign = 1.0;
       break;
    case 3:
       positionPS = from_rendertarget_position((position1RT + line_normalRT * line_offset), position1PS);
+      color = unpack_bgra_srgb( ln.color1);
       distance_sign = 1.0;
       break;
    case 4:
       positionPS = from_rendertarget_position((position0RT - line_normalRT * line_offset), position0PS);
+      color = unpack_bgra_srgb( ln.color0);
       distance_sign = -1.0;
       break;
    case 5:
       positionPS = from_rendertarget_position((position1RT - line_normalRT * line_offset), position1PS);
+      color = unpack_bgra_srgb( ln.color1);
       distance_sign = -1.0;
       break;
    }
 
    output.line_distance = line_offset * distance_sign;
-   output.color = unpack_bgra_srgb(ln.color).rgb;
+   output.color =color; unpack_bgra_srgb(line_vertex_id < 3 ? ln.color0 : ln.color1);
    output.positionPS = positionPS;
 
    return output;
