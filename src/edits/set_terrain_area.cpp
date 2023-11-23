@@ -10,9 +10,44 @@ namespace we::edits {
 
 namespace {
 
+struct access_height_map {
+   access_height_map() = default;
+
+   auto target_map(world::terrain& terrain) -> container::dynamic_array_2d<int16>&
+   {
+      return terrain.height_map;
+   }
+
+   void mark_dirty(world::terrain& terrain, dirty_rect rect)
+   {
+      terrain.height_map_dirty.add(rect);
+   }
+};
+
+struct access_texture_weight_map {
+   access_texture_weight_map(uint32 index) : _index{static_cast<uint8>(index)}
+   {
+      assert(index < terrain::texture_count);
+   };
+
+   auto target_map(world::terrain& terrain) -> container::dynamic_array_2d<uint8>&
+   {
+      return terrain.texture_weight_maps[_index];
+   }
+
+   void mark_dirty(world::terrain& terrain, dirty_rect rect)
+   {
+      terrain.texture_weight_maps_dirty[_index].add(rect);
+   }
+
+private:
+   uint8 _index = 0;
+};
+
+template<typename T>
 struct area {
    dirty_rect rect;
-   container::dynamic_array_2d<int16> height_map;
+   container::dynamic_array_2d<T> map;
 };
 
 bool is_touching(const dirty_rect& l, const dirty_rect& r) noexcept
@@ -28,43 +63,43 @@ bool is_touching(const dirty_rect& l, const dirty_rect& r) noexcept
    return false;
 }
 
-void copy_height_map(const dirty_rect dest_rect,
-                     container::dynamic_array_2d<int16>& dst_height_map,
-                     const dirty_rect src_rect,
-                     const container::dynamic_array_2d<int16>& src_height_map,
-                     const dirty_rect copy_rect)
+template<typename T>
+void copy_map(const dirty_rect dest_rect,
+              container::dynamic_array_2d<T>& dst_map, const dirty_rect src_rect,
+              const container::dynamic_array_2d<T>& src_map, const dirty_rect copy_rect)
 {
    assert(contains(dest_rect, copy_rect) and contains(src_rect, copy_rect));
 
    for (uint32 y = copy_rect.top; y < copy_rect.bottom; ++y) {
       for (uint32 x = copy_rect.left; x < copy_rect.right; ++x) {
-         dst_height_map[{x - dest_rect.left, y - dest_rect.top}] =
-            src_height_map[{x - src_rect.left, y - src_rect.top}];
+         dst_map[{x - dest_rect.left, y - dest_rect.top}] =
+            src_map[{x - src_rect.left, y - src_rect.top}];
       }
    }
 }
 
-auto clip_area(const dirty_rect clipped_rect, const area& new_area) -> area
+template<typename T>
+auto clip_area(const dirty_rect clipped_rect, const area<T>& new_area) -> area<T>
 {
    assert(contains(new_area.rect, clipped_rect));
 
-   container::dynamic_array_2d<int16> clipped_height_map{clipped_rect.right -
-                                                            clipped_rect.left,
-                                                         clipped_rect.bottom -
-                                                            clipped_rect.top};
+   container::dynamic_array_2d<T> clipped_map{clipped_rect.right - clipped_rect.left,
+                                              clipped_rect.bottom - clipped_rect.top};
 
    for (uint32 y = clipped_rect.top; y < clipped_rect.bottom; ++y) {
       for (uint32 x = clipped_rect.left; x < clipped_rect.right; ++x) {
-         clipped_height_map[{x - clipped_rect.left, y - clipped_rect.top}] =
-            new_area.height_map[{x - new_area.rect.left, y - new_area.rect.top}];
+         clipped_map[{x - clipped_rect.left, y - clipped_rect.top}] =
+            new_area.map[{x - new_area.rect.left, y - new_area.rect.top}];
       }
    }
 
-   return {clipped_rect, std::move(clipped_height_map)};
+   return {clipped_rect, std::move(clipped_map)};
 }
 
-struct set_terrain_area : edit<world::edit_context> {
-   set_terrain_area(area area)
+template<typename T, typename Access>
+struct set_terrain_area : edit<world::edit_context>, Access {
+   template<typename... Access_args>
+   set_terrain_area(area<T> area, Access_args... args) : Access{args...}
    {
       _areas.push_back(std::move(area));
    }
@@ -73,20 +108,20 @@ struct set_terrain_area : edit<world::edit_context> {
    {
       world::terrain& terrain = context.world.terrain;
 
-      for (area& area : _areas) {
+      for (area<T>& area : _areas) {
          assert(area.rect.left < area.rect.right);
          assert(area.rect.top < area.rect.bottom);
-         assert(area.rect.right <= (uint32)context.world.terrain.length);
-         assert(area.rect.bottom <= (uint32)context.world.terrain.length);
+         assert(area.rect.right <= (uint32)terrain.length);
+         assert(area.rect.bottom <= (uint32)terrain.length);
 
          for (uint32 y = area.rect.top; y < area.rect.bottom; ++y) {
             for (uint32 x = area.rect.left; x < area.rect.right; ++x) {
-               std::swap(terrain.height_map[{x, y}],
-                         area.height_map[{x - area.rect.left, y - area.rect.top}]);
+               std::swap(Access::target_map(terrain)[{x, y}],
+                         area.map[{x - area.rect.left, y - area.rect.top}]);
             }
          }
 
-         terrain.height_map_dirty.add(area.rect);
+         Access::mark_dirty(terrain, area.rect);
       }
    }
 
@@ -105,7 +140,7 @@ struct set_terrain_area : edit<world::edit_context> {
 
       const dirty_rect rect = other->_areas[0].rect;
 
-      for (const area& area : _areas) {
+      for (const area<T>& area : _areas) {
          if (contains(area.rect, rect)) {
             return true;
          }
@@ -136,12 +171,12 @@ struct set_terrain_area : edit<world::edit_context> {
    }
 
 private:
-   void add(area new_area) noexcept
+   void add(area<T> new_area) noexcept
    {
       for (std::size_t i = 0; i < _areas.size(); ++i) {
          if (contains(_areas[i].rect, new_area.rect)) {
-            copy_height_map(_areas[i].rect, _areas[i].height_map, new_area.rect,
-                            new_area.height_map, new_area.rect);
+            copy_map(_areas[i].rect, _areas[i].map, new_area.rect, new_area.map,
+                     new_area.rect);
 
             return;
          }
@@ -151,9 +186,8 @@ private:
             return add(std::move(new_area));
          }
          else if (overlaps(new_area.rect, _areas[i].rect)) {
-            copy_height_map(_areas[i].rect, _areas[i].height_map, new_area.rect,
-                            new_area.height_map,
-                            intersection(new_area.rect, _areas[i].rect));
+            copy_map(_areas[i].rect, _areas[i].map, new_area.rect, new_area.map,
+                     intersection(new_area.rect, _areas[i].rect));
 
             const dirty_rect existing_rect = _areas[i].rect;
 
@@ -192,26 +226,22 @@ private:
          }
          else if (edge_joinable(_areas[i].rect, new_area.rect)) {
             const dirty_rect new_rect = combine(new_area.rect, _areas[i].rect);
-            container::dynamic_array_2d<int16> new_height_map{new_rect.right -
-                                                                 new_rect.left,
-                                                              new_rect.bottom -
-                                                                 new_rect.top};
+            container::dynamic_array_2d<T> new_map{new_rect.right - new_rect.left,
+                                                   new_rect.bottom - new_rect.top};
 
-            copy_height_map(new_rect, new_height_map, _areas[i].rect,
-                            _areas[i].height_map, _areas[i].rect);
-            copy_height_map(new_rect, new_height_map, new_area.rect,
-                            new_area.height_map, new_area.rect);
+            copy_map(new_rect, new_map, _areas[i].rect, _areas[i].map, _areas[i].rect);
+            copy_map(new_rect, new_map, new_area.rect, new_area.map, new_area.rect);
 
             _areas.erase(_areas.begin() + i);
 
-            return add({new_rect, std::move(new_height_map)});
+            return add({new_rect, std::move(new_map)});
          }
       }
 
       _areas.emplace_back(std::move(new_area));
    }
 
-   std::vector<area> _areas;
+   std::vector<area<T>> _areas;
 };
 
 }
@@ -220,14 +250,30 @@ auto make_set_terrain_area(const uint32 rect_start_x, const uint32 rect_start_y,
                            container::dynamic_array_2d<int16> rect_height_map)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<set_terrain_area>(
-      area{.rect = {.left = rect_start_x,
-                    .top = rect_start_y,
-                    .right = static_cast<uint32>(rect_start_x +
-                                                 rect_height_map.shape()[0]),
-                    .bottom = static_cast<uint32>(rect_start_y +
-                                                  rect_height_map.shape()[1])},
-           .height_map = std::move(rect_height_map)});
+   return std::make_unique<set_terrain_area<int16, access_height_map>>(
+      area<int16>{.rect = {.left = rect_start_x,
+                           .top = rect_start_y,
+                           .right = static_cast<uint32>(
+                              rect_start_x + rect_height_map.shape()[0]),
+                           .bottom = static_cast<uint32>(
+                              rect_start_y + rect_height_map.shape()[1])},
+                  .map = std::move(rect_height_map)});
+}
+
+auto make_set_terrain_area(const uint32 rect_start_x, const uint32 rect_start_y,
+                           const uint32 texture_index,
+                           container::dynamic_array_2d<uint8> rect_weight_map)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_terrain_area<uint8, access_texture_weight_map>>(
+      area<uint8>{.rect = {.left = rect_start_x,
+                           .top = rect_start_y,
+                           .right = static_cast<uint32>(
+                              rect_start_x + rect_weight_map.shape()[0]),
+                           .bottom = static_cast<uint32>(
+                              rect_start_y + rect_weight_map.shape()[1])},
+                  .map = std::move(rect_weight_map)},
+      texture_index);
 }
 
 }
