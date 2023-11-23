@@ -54,6 +54,15 @@ auto brush_weight(int32 x, int32 y, float2 centre, float radius,
    std::unreachable();
 }
 
+auto brush_visualizer_color(int32 x, int32 y, float2 centre, float radius,
+                            terrain_brush_falloff falloff) -> uint32
+{
+   const uint32 weight =
+      static_cast<uint32>(brush_weight(x, y, centre, radius, falloff) * 255.0f + 0.5f);
+
+   return (weight << 24u) | 0x00ffffff;
+}
+
 }
 
 void world_edit::ui_show_terrain_editor() noexcept
@@ -303,6 +312,8 @@ void world_edit::ui_show_terrain_editor() noexcept
       }
    }
 
+   const float brush_radius = static_cast<float>(_terrain_editor_config.brush_size);
+
    if (_terrain_editor_context.brush_active) {
       const float delta_time =
          std::chrono::duration<float>(
@@ -330,9 +341,6 @@ void world_edit::ui_show_terrain_editor() noexcept
                area[{x - left, y - top}] = _world.terrain.height_map[{x, y}];
             }
          }
-
-         const float brush_radius =
-            static_cast<float>(_terrain_editor_config.brush_size);
 
          if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
             for (int32 y = top; y < bottom; ++y) {
@@ -439,9 +447,6 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
 
-         const float brush_radius =
-            static_cast<float>(_terrain_editor_config.brush_size);
-
          if (_terrain_editor_config.brush_mode == terrain_brush_mode::overwrite) {
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -540,18 +545,7 @@ void world_edit::ui_show_terrain_editor() noexcept
       }
    }
 
-   if (_terrain_editor_config.brush_size <= 8) {
-      const int32 size = _terrain_editor_config.brush_size;
-
-      if (size == 0) {
-         const float3 point = get_position(terrain_x, terrain_y, _world.terrain);
-
-         _tool_visualizers.add_line_overlay(point,
-                                            point + float3{0.0f, _world.terrain.grid_scale,
-                                                           0.0f},
-                                            0xffffffff);
-      }
-
+   if (const int32 size = _terrain_editor_config.brush_size; size <= 8) {
       for (int32 y = -size; y < size; ++y) {
          for (int32 x = -size; x < size; ++x) {
             const std::array vertices{
@@ -560,46 +554,69 @@ void world_edit::ui_show_terrain_editor() noexcept
                get_position(terrain_x + x + 1, terrain_y + y + 1, _world.terrain),
                get_position(terrain_x + x + 0, terrain_y + y + 1, _world.terrain)};
 
-            _tool_visualizers.add_line_overlay(vertices[0], vertices[1], 0xffffffff);
-            _tool_visualizers.add_line_overlay(vertices[3], vertices[0], 0xffffffff);
+            const std::array colors{
+               brush_visualizer_color(terrain_x + x + 0, terrain_y + y + 0,
+                                      terrain_point, brush_radius,
+                                      _terrain_editor_config.brush_falloff),
+               brush_visualizer_color(terrain_x + x + 1, terrain_y + y + 0,
+                                      terrain_point, brush_radius,
+                                      _terrain_editor_config.brush_falloff),
+               brush_visualizer_color(terrain_x + x + 1, terrain_y + y + 1,
+                                      terrain_point, brush_radius,
+                                      _terrain_editor_config.brush_falloff),
+               brush_visualizer_color(terrain_x + x + 0, terrain_y + y + 1,
+                                      terrain_point, brush_radius,
+                                      _terrain_editor_config.brush_falloff)};
+
+            _tool_visualizers.add_line_overlay(vertices[0], colors[0],
+                                               vertices[1], colors[1]);
+            _tool_visualizers.add_line_overlay(vertices[3], colors[3],
+                                               vertices[0], colors[0]);
          }
       }
 
       for (int32 y = -size; y < size; ++y) {
-         _tool_visualizers.add_line_overlay(get_position(terrain_x + size,
-                                                         terrain_y + y, _world.terrain),
-                                            get_position(terrain_x + size,
-                                                         terrain_y + y + 1,
-                                                         _world.terrain),
-                                            0xffffffff);
+         _tool_visualizers.add_line_overlay(
+            get_position(terrain_x + size, terrain_y + y, _world.terrain),
+            brush_visualizer_color(terrain_x + size, terrain_y + y, terrain_point,
+                                   brush_radius, _terrain_editor_config.brush_falloff),
+            get_position(terrain_x + size, terrain_y + y + 1, _world.terrain),
+            brush_visualizer_color(terrain_x + size, terrain_y + y + 1,
+                                   terrain_point, brush_radius,
+                                   _terrain_editor_config.brush_falloff));
       }
 
       for (int32 x = -size; x < size; ++x) {
-         _tool_visualizers.add_line_overlay(get_position(terrain_x + x, terrain_y + size,
-                                                         _world.terrain),
-                                            get_position(terrain_x + x + 1,
-                                                         terrain_y + size,
-                                                         _world.terrain),
-                                            0xffffffff);
+         _tool_visualizers.add_line_overlay(
+            get_position(terrain_x + x, terrain_y + size, _world.terrain),
+            brush_visualizer_color(terrain_x + x, terrain_y + size, terrain_point,
+                                   brush_radius, _terrain_editor_config.brush_falloff),
+            get_position(terrain_x + x + 1, terrain_y + size, _world.terrain),
+            brush_visualizer_color(terrain_x + x + 1, terrain_y + size,
+                                   terrain_point, brush_radius,
+                                   _terrain_editor_config.brush_falloff));
       }
    }
    else {
-      const float radius = _terrain_editor_config.brush_size * _world.terrain.grid_scale;
+      for (int32 y = -size; y < size; ++y) {
+         _tool_visualizers.add_line_overlay(
+            get_position(terrain_x, terrain_y + y, _world.terrain),
+            brush_visualizer_color(terrain_x, terrain_y + y, terrain_point, brush_radius,
+                                   _terrain_editor_config.brush_falloff),
+            get_position(terrain_x, terrain_y + y + 1, _world.terrain),
+            brush_visualizer_color(terrain_x, terrain_y + y + 1, terrain_point, brush_radius,
+                                   _terrain_editor_config.brush_falloff));
+      }
 
-      const float3 point = get_position(terrain_x, terrain_y, _world.terrain);
-
-      _tool_visualizers.add_line_overlay(point,
-                                         point + float3{0.0f, _world.terrain.grid_scale,
-                                                        0.0f},
-                                         0xffffffff);
-
-      _tool_visualizers.add_line_overlay(point + float3{1.0f, 0.0f, 0.0f} * radius,
-                                         point + float3{-1.0f, 0.0f, 0.0f} * radius,
-                                         0xffffffff);
-      _tool_visualizers.add_line_overlay(point + float3{0.0f, 0.0f, 1.0f} * radius,
-                                         point + float3{0.0f, 0.0f, -1.0f} * radius,
-                                         0xffffffff);
+      for (int32 x = -size; x < size; ++x) {
+         _tool_visualizers.add_line_overlay(
+            get_position(terrain_x + x, terrain_y, _world.terrain),
+            brush_visualizer_color(terrain_x + x, terrain_y, terrain_point, brush_radius,
+                                   _terrain_editor_config.brush_falloff),
+            get_position(terrain_x + x + 1, terrain_y, _world.terrain),
+            brush_visualizer_color(terrain_x + x + 1, terrain_y, terrain_point, brush_radius,
+                                   _terrain_editor_config.brush_falloff));
+      }
    }
 }
-
 }
