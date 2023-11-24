@@ -67,10 +67,10 @@ enum class gizmo_object_placement : uint8 { position, bbox_centre };
 enum class terrain_edit_target : uint8 { height, texture, color };
 
 enum class terrain_brush_mode : uint8 {
-   overwrite,
-   pull_towards,
    raise,
    lower,
+   overwrite,
+   pull_towards,
    blend
 };
 
@@ -436,7 +436,7 @@ private:
 
    struct terrain_editor_config {
       terrain_edit_target edit_target = terrain_edit_target::height;
-      terrain_brush_mode brush_mode = terrain_brush_mode::overwrite;
+      terrain_brush_mode brush_mode = terrain_brush_mode::raise;
       terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
       int32 brush_size = 1;
       float brush_height = 0.0f;
