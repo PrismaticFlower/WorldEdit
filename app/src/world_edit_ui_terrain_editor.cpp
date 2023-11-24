@@ -549,7 +549,18 @@ void world_edit::ui_show_terrain_editor() noexcept
       }
    }
 
-   if (const int32 size = _terrain_editor_config.brush_size; size <= 8) {
+   if (const int32 size = _terrain_editor_config.brush_size; size == 0) {
+      const float3 point = get_position(terrain_x, terrain_y, _world.terrain);
+      const uint32 color =
+         brush_visualizer_color(terrain_x, terrain_y, terrain_point, brush_radius,
+                                _terrain_editor_config.brush_falloff);
+
+      _tool_visualizers.add_line_overlay(point, color,
+                                         point + float3{0.0f, _world.terrain.grid_scale,
+                                                        0.0f},
+                                         color);
+   }
+   else if (size <= 8) {
       for (int32 y = -size; y < size; ++y) {
          for (int32 x = -size; x < size; ++x) {
             const std::array vertices{
