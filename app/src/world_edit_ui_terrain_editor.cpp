@@ -182,11 +182,8 @@ void world_edit::ui_show_terrain_editor() noexcept
 
       if (_terrain_editor_config.brush_mode == terrain_brush_mode::raise or
           _terrain_editor_config.brush_mode == terrain_brush_mode::lower) {
-         if (float rate = _terrain_editor_config.brush_rate * _world.terrain.height_scale;
-             ImGui::DragFloat("Rate", &rate, 0.02f, 0.1f, 10.0f)) {
-            _terrain_editor_config.brush_rate =
-               static_cast<int16>(rate / _world.terrain.height_scale);
-         }
+         ImGui::DragFloat("Rate", &_terrain_editor_config.brush_rate, 0.02f,
+                          0.1f, 10.0f);
       }
 
       if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
@@ -343,7 +340,9 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
 
          if (_terrain_editor_config.brush_mode == terrain_brush_mode::raise) {
-            const float height_increase = _terrain_editor_config.brush_rate * delta_time;
+            const float height_increase =
+               (_terrain_editor_config.brush_rate / _world.terrain.height_scale) *
+               delta_time;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -359,7 +358,9 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
          else if (_terrain_editor_config.brush_mode == terrain_brush_mode::lower) {
-            const float height_decrease = _terrain_editor_config.brush_rate * delta_time;
+            const float height_decrease =
+               (_terrain_editor_config.brush_rate / _world.terrain.height_scale) *
+               delta_time;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
