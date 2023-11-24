@@ -351,6 +351,8 @@ void world_edit::ui_show_terrain_editor() noexcept
                      brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
+                  if (weight <= 0.0f) continue;
+
                   v = static_cast<int16>(_terrain_editor_config.brush_height * weight);
                }
             }
@@ -455,6 +457,8 @@ void world_edit::ui_show_terrain_editor() noexcept
                   const float weight =
                      brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
+
+                  if (weight <= 0.0f) continue;
 
                   v = static_cast<uint8>(
                      _terrain_editor_config.brush_texture_weight * weight);
