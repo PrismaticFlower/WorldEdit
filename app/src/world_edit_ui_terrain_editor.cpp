@@ -409,15 +409,26 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
          else if (_terrain_editor_config.brush_mode == terrain_brush_mode::blend) {
-            int64 average_height = 0;
+            double total_height = 0.0;
+            double samples = 0.0;
 
-            for (int16& v : area) average_height += v;
+            for (int32 y = top; y < bottom; ++y) {
+               for (int32 x = left; x < right; ++x) {
+                  const float weight =
+                     brush_weight(x, y, terrain_point, brush_radius,
+                                  _terrain_editor_config.brush_falloff);
 
-            average_height /= area.ssize();
+                  if (weight <= 0.0f) continue;
+
+                  total_height += (area[{x - left, y - top}] * weight);
+                  samples += 1.0;
+               }
+            }
 
             const float time_weight =
                std::clamp(delta_time * _terrain_editor_config.brush_speed, 0.0f, 1.0f);
-            const float target_height = static_cast<float>(average_height);
+            const float target_height =
+               static_cast<float>(total_height / std::max(samples, 1.0));
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -518,16 +529,26 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
          else if (_terrain_editor_config.brush_mode == terrain_brush_mode::blend) {
-            int64 average_texture_weight = 0;
+            double total_texture_weight = 0.0;
+            double samples = 0.0;
 
-            for (uint8& v : area) average_texture_weight += v;
+            for (int32 y = top; y < bottom; ++y) {
+               for (int32 x = left; x < right; ++x) {
+                  const float weight =
+                     brush_weight(x, y, terrain_point, brush_radius,
+                                  _terrain_editor_config.brush_falloff);
 
-            average_texture_weight /= area.ssize();
+                  if (weight <= 0.0f) continue;
+
+                  total_texture_weight += (area[{x - left, y - top}] * weight);
+                  samples += 1.0;
+               }
+            }
 
             const float time_weight =
                std::clamp(delta_time * _terrain_editor_config.brush_speed, 0.0f, 1.0f);
             const float target_texture_weight =
-               static_cast<float>(average_texture_weight);
+               static_cast<float>(total_texture_weight / samples);
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
