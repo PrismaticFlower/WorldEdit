@@ -522,9 +522,8 @@ void world_edit::ui_show_terrain_editor() noexcept
                      brush_weight(x, y, terrain_point, brush_radius,
                                   _terrain_editor_config.brush_falloff);
 
-                  v = static_cast<uint8>(std::lerp(static_cast<float>(v),
-                                                   target_texture_weight * weight,
-                                                   time_weight));
+                  v = static_cast<uint8>(
+                     std::lerp(v / 255.0f, target_texture_weight * weight, time_weight));
                }
             }
          }
@@ -548,7 +547,7 @@ void world_edit::ui_show_terrain_editor() noexcept
             const float time_weight =
                std::clamp(delta_time * _terrain_editor_config.brush_speed, 0.0f, 1.0f);
             const float target_texture_weight =
-               static_cast<float>(total_texture_weight / samples);
+               static_cast<float>(total_texture_weight / samples) / 255.0f;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -559,8 +558,10 @@ void world_edit::ui_show_terrain_editor() noexcept
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<uint8>(
-                     std::lerp(static_cast<float>(v), target_texture_weight,
-                               std::lerp(0.0f, time_weight, weight)));
+                     std::lerp(v / 255.0f, target_texture_weight,
+                               std::lerp(0.0f, time_weight, weight)) *
+                        255.0f +
+                     0.5f);
                }
             }
          }
