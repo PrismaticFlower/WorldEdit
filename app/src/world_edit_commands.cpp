@@ -295,20 +295,20 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("terrain.cycle_brush_mode"s, [this] {
       switch (_terrain_editor_config.brush_mode) {
-      case terrain_brush_mode::overwrite:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::pull_towards;
-         return;
-      case terrain_brush_mode::pull_towards:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::raise;
-         return;
       case terrain_brush_mode::raise:
          _terrain_editor_config.brush_mode = terrain_brush_mode::lower;
          return;
       case terrain_brush_mode::lower:
+         _terrain_editor_config.brush_mode = terrain_brush_mode::overwrite;
+         return;
+      case terrain_brush_mode::overwrite:
+         _terrain_editor_config.brush_mode = terrain_brush_mode::pull_towards;
+         return;
+      case terrain_brush_mode::pull_towards:
          _terrain_editor_config.brush_mode = terrain_brush_mode::blend;
          return;
       case terrain_brush_mode::blend:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::overwrite;
+         _terrain_editor_config.brush_mode = terrain_brush_mode::raise;
          return;
       }
    });
