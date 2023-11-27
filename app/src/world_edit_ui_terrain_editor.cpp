@@ -462,7 +462,8 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
 
          if (_terrain_editor_config.brush_mode == terrain_brush_mode::raise) {
-            const float height_increase = _terrain_editor_config.brush_rate * delta_time;
+            const float height_increase =
+               _terrain_editor_config.brush_rate * delta_time * 255.0f;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -478,7 +479,8 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
          else if (_terrain_editor_config.brush_mode == terrain_brush_mode::lower) {
-            const float height_decrease = _terrain_editor_config.brush_rate * delta_time;
+            const float height_decrease =
+               _terrain_editor_config.brush_rate * delta_time * 255.0f;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -523,7 +525,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                                   _terrain_editor_config.brush_falloff);
 
                   v = static_cast<uint8>(
-                     std::lerp(v / 255.0f, target_texture_weight * weight, time_weight));
+                     std::lerp(v, target_texture_weight * weight, time_weight));
                }
             }
          }
