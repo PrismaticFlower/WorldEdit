@@ -294,38 +294,82 @@ void world_edit::initialize_commands() noexcept
                     _world.terrain.length / 2);
    });
    _commands.add("terrain.cycle_brush_mode"s, [this] {
-      switch (_terrain_editor_config.brush_mode) {
-      case terrain_brush_mode::raise:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::lower;
-         return;
-      case terrain_brush_mode::lower:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::overwrite;
-         return;
-      case terrain_brush_mode::overwrite:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::pull_towards;
-         return;
-      case terrain_brush_mode::pull_towards:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::blend;
-         return;
-      case terrain_brush_mode::blend:
-         _terrain_editor_config.brush_mode = terrain_brush_mode::raise;
-         return;
+      if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+         switch (terrain_brush_mode& mode = _terrain_editor_config.height.brush_mode;
+                 mode) {
+         case terrain_brush_mode::raise:
+            mode = terrain_brush_mode::lower;
+            return;
+         case terrain_brush_mode::lower:
+            mode = terrain_brush_mode::overwrite;
+            return;
+         case terrain_brush_mode::overwrite:
+            mode = terrain_brush_mode::pull_towards;
+            return;
+         case terrain_brush_mode::pull_towards:
+            mode = terrain_brush_mode::blend;
+            return;
+         case terrain_brush_mode::blend:
+            mode = terrain_brush_mode::raise;
+            return;
+         }
+      }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+         switch (terrain_brush_mode& mode = _terrain_editor_config.texture.brush_mode;
+                 mode) {
+         case terrain_brush_mode::raise:
+            mode = terrain_brush_mode::lower;
+            return;
+         case terrain_brush_mode::lower:
+            mode = terrain_brush_mode::overwrite;
+            return;
+         case terrain_brush_mode::overwrite:
+            mode = terrain_brush_mode::pull_towards;
+            return;
+         case terrain_brush_mode::pull_towards:
+            mode = terrain_brush_mode::blend;
+            return;
+         case terrain_brush_mode::blend:
+            mode = terrain_brush_mode::raise;
+            return;
+         }
       }
    });
    _commands.add("terrain.cycle_brush_falloff"s, [this] {
-      switch (_terrain_editor_config.brush_falloff) {
-      case terrain_brush_falloff::none:
-         _terrain_editor_config.brush_falloff = terrain_brush_falloff::linear;
-         return;
-      case terrain_brush_falloff::linear:
-         _terrain_editor_config.brush_falloff = terrain_brush_falloff::smooth;
-         return;
-      case terrain_brush_falloff::smooth:
-         _terrain_editor_config.brush_falloff = terrain_brush_falloff::sine;
-         return;
-      case terrain_brush_falloff::sine:
-         _terrain_editor_config.brush_falloff = terrain_brush_falloff::none;
-         return;
+      if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+         switch (terrain_brush_falloff& falloff = _terrain_editor_config.height.brush_falloff;
+                 falloff) {
+         case terrain_brush_falloff::none:
+            falloff = terrain_brush_falloff::linear;
+            return;
+         case terrain_brush_falloff::linear:
+            falloff = terrain_brush_falloff::smooth;
+            return;
+         case terrain_brush_falloff::smooth:
+            falloff = terrain_brush_falloff::sine;
+            return;
+         case terrain_brush_falloff::sine:
+            falloff = terrain_brush_falloff::none;
+            return;
+         }
+      }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+         switch (terrain_brush_falloff& falloff =
+                    _terrain_editor_config.texture.brush_falloff;
+                 falloff) {
+         case terrain_brush_falloff::none:
+            falloff = terrain_brush_falloff::linear;
+            return;
+         case terrain_brush_falloff::linear:
+            falloff = terrain_brush_falloff::smooth;
+            return;
+         case terrain_brush_falloff::smooth:
+            falloff = terrain_brush_falloff::sine;
+            return;
+         case terrain_brush_falloff::sine:
+            falloff = terrain_brush_falloff::none;
+            return;
+         }
       }
    });
 }

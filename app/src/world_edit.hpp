@@ -436,14 +436,24 @@ private:
 
    struct terrain_editor_config {
       terrain_edit_target edit_target = terrain_edit_target::height;
-      terrain_brush_mode brush_mode = terrain_brush_mode::raise;
-      terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
       int32 brush_size = 1;
-      float brush_height = 0.0f;
-      float brush_texture_weight = 255.0f;
-      float brush_speed = 0.5f;
-      float brush_rate = 2.5f;
-      uint32 edit_texture = 0;
+
+      struct height_config {
+         terrain_brush_mode brush_mode = terrain_brush_mode::raise;
+         terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
+         float brush_height = 0.0f;
+         float brush_speed = 0.5f;
+         float brush_rate = 2.5f;
+      } height;
+
+      struct texture_config {
+         terrain_brush_mode brush_mode = terrain_brush_mode::raise;
+         terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
+         float brush_texture_weight = 255.0f;
+         float brush_speed = 0.5f;
+         float brush_rate = 1.0f;
+         uint32 edit_texture = 0;
+      } texture;
    } _terrain_editor_config;
 
    struct terrain_editor_context {
