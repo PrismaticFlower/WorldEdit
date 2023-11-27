@@ -315,22 +315,17 @@ void world_edit::initialize_commands() noexcept
          }
       }
       else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
-         switch (terrain_brush_mode& mode = _terrain_editor_config.texture.brush_mode;
+         switch (terrain_texture_brush_mode& mode =
+                    _terrain_editor_config.texture.brush_mode;
                  mode) {
-         case terrain_brush_mode::raise:
-            mode = terrain_brush_mode::lower;
+         case terrain_texture_brush_mode::paint:
+            mode = terrain_texture_brush_mode::erase;
             return;
-         case terrain_brush_mode::lower:
-            mode = terrain_brush_mode::overwrite;
+         case terrain_texture_brush_mode::erase:
+            mode = terrain_texture_brush_mode::soften;
             return;
-         case terrain_brush_mode::overwrite:
-            mode = terrain_brush_mode::pull_towards;
-            return;
-         case terrain_brush_mode::pull_towards:
-            mode = terrain_brush_mode::blend;
-            return;
-         case terrain_brush_mode::blend:
-            mode = terrain_brush_mode::raise;
+         case terrain_texture_brush_mode::soften:
+            mode = terrain_texture_brush_mode::paint;
             return;
          }
       }

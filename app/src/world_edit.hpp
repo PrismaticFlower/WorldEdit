@@ -73,6 +73,7 @@ enum class terrain_brush_mode : uint8 {
    pull_towards,
    blend
 };
+enum class terrain_texture_brush_mode : uint8 { paint, erase, soften };
 
 enum class terrain_brush_falloff : uint8 { none, linear, smooth, sine };
 
@@ -447,9 +448,8 @@ private:
       } height;
 
       struct texture_config {
-         terrain_brush_mode brush_mode = terrain_brush_mode::raise;
+         terrain_texture_brush_mode brush_mode = terrain_texture_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
-         float brush_texture_weight = 255.0f;
          float brush_speed = 0.5f;
          float brush_rate = 1.0f;
          uint32 edit_texture = 0;

@@ -171,29 +171,19 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             ImGui::SeparatorText("Brush Mode");
 
-            if (ImGui::Selectable("Raise", config.brush_mode ==
-                                              terrain_brush_mode::raise)) {
-               config.brush_mode = terrain_brush_mode::raise;
+            if (ImGui::Selectable("Paint", config.brush_mode ==
+                                              terrain_texture_brush_mode::paint)) {
+               config.brush_mode = terrain_texture_brush_mode::paint;
             }
 
-            if (ImGui::Selectable("Lower", config.brush_mode ==
-                                              terrain_brush_mode::lower)) {
-               config.brush_mode = terrain_brush_mode::lower;
+            if (ImGui::Selectable("Erase", config.brush_mode ==
+                                              terrain_texture_brush_mode::erase)) {
+               config.brush_mode = terrain_texture_brush_mode::erase;
             }
 
-            if (ImGui::Selectable("Overwrite", config.brush_mode ==
-                                                  terrain_brush_mode::overwrite)) {
-               config.brush_mode = terrain_brush_mode::overwrite;
-            }
-
-            if (ImGui::Selectable("Pull Towards", config.brush_mode ==
-                                                     terrain_brush_mode::pull_towards)) {
-               config.brush_mode = terrain_brush_mode::pull_towards;
-            }
-
-            if (ImGui::Selectable("Blend", config.brush_mode ==
-                                              terrain_brush_mode::blend)) {
-               config.brush_mode = terrain_brush_mode::blend;
+            if (ImGui::Selectable("Soften", config.brush_mode ==
+                                               terrain_texture_brush_mode::soften)) {
+               config.brush_mode = terrain_texture_brush_mode::soften;
             }
 
             ImGui::SeparatorText("Brush Falloff");
@@ -224,22 +214,13 @@ void world_edit::ui_show_terrain_editor() noexcept
                              _world.terrain.length / 2, "%d",
                              ImGuiSliderFlags_AlwaysClamp);
 
-            if (config.brush_mode == terrain_brush_mode::pull_towards or
-                config.brush_mode == terrain_brush_mode::overwrite) {
-               ImGui::SliderFloat("Texture Weight", &config.brush_texture_weight,
-                                  0.0f, 255.0f, "%.0f",
-                                  ImGuiSliderFlags_AlwaysClamp |
-                                     ImGuiSliderFlags_NoRoundToFormat);
-            }
-
-            if (config.brush_mode == terrain_brush_mode::pull_towards or
-                config.brush_mode == terrain_brush_mode::blend) {
+            if (config.brush_mode == terrain_texture_brush_mode::soften) {
                ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f, "%.2f");
             }
 
-            if (config.brush_mode == terrain_brush_mode::raise or
-                config.brush_mode == terrain_brush_mode::lower) {
-               ImGui::DragFloat("Rate", &config.brush_rate, 0.02f, 0.1f, 10.0f);
+            if (config.brush_mode == terrain_texture_brush_mode::paint or
+                config.brush_mode == terrain_texture_brush_mode::erase) {
+               ImGui::DragFloat("Rate", &config.brush_rate, 0.05f, 0.1f, 10.0f);
             }
 
             const uint32 min_texture = 0;
@@ -525,7 +506,7 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
 
-         if (config.brush_mode == terrain_brush_mode::raise) {
+         if (config.brush_mode == terrain_texture_brush_mode::paint) {
             const float height_increase = config.brush_rate * delta_time * 255.0f;
 
             for (int32 y = top; y < bottom; ++y) {
@@ -540,7 +521,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                }
             }
          }
-         else if (config.brush_mode == terrain_brush_mode::lower) {
+         else if (config.brush_mode == terrain_texture_brush_mode::erase) {
             const float height_decrease = config.brush_rate * delta_time * 255.0f;
 
             for (int32 y = top; y < bottom; ++y) {
@@ -554,40 +535,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                }
             }
          }
-         else if (config.brush_mode == terrain_brush_mode::overwrite) {
-            for (int32 y = top; y < bottom; ++y) {
-               for (int32 x = left; x < right; ++x) {
-                  uint8& v = area[{x - left, y - top}];
-
-                  const float weight =
-                     brush_weight(x, y, terrain_point, brush_radius,
-                                  _terrain_editor_config.texture.brush_falloff);
-
-                  if (weight <= 0.0f) continue;
-
-                  v = static_cast<uint8>(
-                     _terrain_editor_config.texture.brush_texture_weight * weight);
-               }
-            }
-         }
-         else if (config.brush_mode == terrain_brush_mode::pull_towards) {
-            const float time_weight =
-               std::clamp(delta_time * config.brush_speed, 0.0f, 1.0f);
-            const float target_texture_weight = config.brush_texture_weight;
-
-            for (int32 y = top; y < bottom; ++y) {
-               for (int32 x = left; x < right; ++x) {
-                  uint8& v = area[{x - left, y - top}];
-
-                  const float weight = brush_weight(x, y, terrain_point, brush_radius,
-                                                    config.brush_falloff);
-
-                  v = static_cast<uint8>(
-                     std::lerp(v, target_texture_weight * weight, time_weight));
-               }
-            }
-         }
-         else if (config.brush_mode == terrain_brush_mode::blend) {
+         else if (config.brush_mode == terrain_texture_brush_mode::soften) {
             double total_texture_weight = 0.0;
             double samples = 0.0;
 
