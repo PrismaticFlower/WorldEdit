@@ -1,6 +1,7 @@
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/string_icompare.hpp"
 #include "world/utility/raycast_terrain.hpp"
 #include "world_edit.hpp"
 
@@ -16,10 +17,20 @@ namespace {
 template<typename Value>
 auto make_set_terrain_value(Value world::terrain::*value_member_ptr,
                             Value new_value, Value original_value)
-   -> std::unique_ptr<edits::set_global_value<world::terrain, Value>>
+   -> std::unique_ptr<edits::edit<world::edit_context>>
 {
    return std::make_unique<edits::set_global_value<world::terrain, Value>>(
       &world::world::terrain, value_member_ptr, std::move(new_value),
+      std::move(original_value));
+}
+
+template<typename Container, typename Value>
+auto make_set_terrain_value_indexed(Container world::terrain::*value_member_ptr,
+                                    uint32 index, Value new_value, Value original_value)
+   -> std::unique_ptr<edits::edit<world::edit_context>>
+{
+   return std::make_unique<edits::set_global_value_indexed<world::terrain, Container, Value>>(
+      &world::world::terrain, value_member_ptr, index, std::move(new_value),
       std::move(original_value));
 }
 
@@ -63,6 +74,26 @@ auto brush_visualizer_color(int32 x, int32 y, float2 centre, float radius,
 
    return (weight << 24u) | 0x00ffffff;
 }
+
+struct texture_axis_name {
+   world::texture_axis axis = {};
+   const char* name = nullptr;
+};
+
+constexpr std::array<texture_axis_name, 12> texture_axis_names = {
+   texture_axis_name{world::texture_axis::xz, "XZ"},
+   texture_axis_name{world::texture_axis::xy, "XY"},
+   texture_axis_name{world::texture_axis::yz, "YZ"},
+   texture_axis_name{world::texture_axis::zx, "ZX"},
+   texture_axis_name{world::texture_axis::yx, "YX"},
+   texture_axis_name{world::texture_axis::zy, "ZY"},
+   texture_axis_name{world::texture_axis::negative_xz, "Negative XZ"},
+   texture_axis_name{world::texture_axis::negative_xy, "Negative XY"},
+   texture_axis_name{world::texture_axis::negative_yz, "Negative YZ"},
+   texture_axis_name{world::texture_axis::negative_zx, "Negative ZX"},
+   texture_axis_name{world::texture_axis::negative_yx, "Negative YX"},
+   texture_axis_name{world::texture_axis::negative_zy, "Negative ZY"},
+};
 
 }
 
@@ -260,12 +291,86 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             const uint32 texture = _terrain_editor_config.texture.edit_texture;
 
-            ImGui::LabelText("Name", _world.terrain.texture_names[texture].c_str());
+            auto texture_name_auto_complete = [&] {
+               std::array<std::string_view, 6> entries;
+               std::size_t matching_count = 0;
 
-            ImGui::LabelText("Axis Mapping", "%i",
-                             (int)_world.terrain.texture_axes[texture]);
-            ImGui::LabelText("Scale", "%f",
-                             1.0f / _world.terrain.texture_scales[texture]);
+               _asset_libraries.textures.view_existing(
+                  [&](const std::span<const assets::stable_string> assets) noexcept {
+                     for (const std::string_view asset : assets) {
+                        if (matching_count == entries.size()) break;
+                        if (not string::icontains(asset,
+                                                  _world.terrain.texture_names[texture])) {
+                           continue;
+                        }
+
+                        entries[matching_count] = asset;
+
+                        ++matching_count;
+                     }
+                  });
+
+               return entries;
+            };
+
+            if (absl::InlinedVector<char, 256> texture_name =
+                   {_world.terrain.texture_names[texture].begin(),
+                    _world.terrain.texture_names[texture].end()};
+                ImGui::InputTextAutoComplete(
+                   "Name", &texture_name,
+                   [](void* callback) {
+                      return (*static_cast<decltype(texture_name_auto_complete)*>(
+                         callback))();
+                   },
+                   &texture_name_auto_complete)) {
+               _edit_stack_world.apply(make_set_terrain_value_indexed(
+                                          &world::terrain::texture_names, texture,
+                                          std::string{texture_name.begin(),
+                                                      texture_name.end()},
+                                          _world.terrain.texture_names[texture]),
+                                       _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+               _edit_stack_world.close_last();
+            }
+
+            if (ImGui::BeginCombo("Axis Mapping", [&] {
+                   for (auto [axis, name] : texture_axis_names) {
+                      if (axis == _world.terrain.texture_axes[texture])
+                         return name;
+                   }
+
+                   return "";
+                }())) {
+
+               for (auto [axis, name] : texture_axis_names) {
+                  if (ImGui::Selectable(name, axis == _world.terrain.texture_axes[texture])) {
+                     _edit_stack_world.apply(make_set_terrain_value_indexed(
+                                                &world::terrain::texture_axes,
+                                                texture, axis,
+                                                _world.terrain.texture_axes[texture]),
+                                             _edit_context, {.closed = true});
+                  }
+               }
+
+               ImGui::EndCombo();
+            }
+
+            if (float scale = 1.0f / _world.terrain.texture_scales[texture];
+                ImGui::DragFloat("Scale", &scale, 1.0f)) {
+               scale = std::max(scale, 1.0f);
+
+               _edit_stack_world.apply(make_set_terrain_value_indexed(
+                                          &world::terrain::texture_scales,
+                                          texture, 1.0f / scale,
+                                          _world.terrain.texture_scales[texture]),
+                                       _edit_context);
+            }
+
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+               _edit_stack_world.close_last();
+            }
 
             ImGui::EndTabItem();
          }
@@ -292,10 +397,37 @@ void world_edit::ui_show_terrain_editor() noexcept
                                  _edit_context, {.closed = true});
       }
 
+      auto detail_texture_auto_complete = [&] {
+         std::array<std::string_view, 6> entries;
+         std::size_t matching_count = 0;
+
+         _asset_libraries.textures.view_existing(
+            [&](const std::span<const assets::stable_string> assets) noexcept {
+               for (const std::string_view asset : assets) {
+                  if (matching_count == entries.size()) break;
+                  if (not string::icontains(asset, _world.terrain.detail_texture_name)) {
+                     continue;
+                  }
+
+                  entries[matching_count] = asset;
+
+                  ++matching_count;
+               }
+            });
+
+         return entries;
+      };
+
       if (absl::InlinedVector<char, 256> detail_texture =
              {_world.terrain.detail_texture_name.begin(),
               _world.terrain.detail_texture_name.end()};
-          ImGui::InputText("Detail Texture", &detail_texture)) {
+          ImGui::InputTextAutoComplete(
+             "Detail Texture", &detail_texture,
+             [](void* callback) {
+                return (*static_cast<decltype(detail_texture_auto_complete)*>(
+                   callback))();
+             },
+             &detail_texture_auto_complete)) {
          _edit_stack_world
             .apply(make_set_terrain_value(&world::terrain::detail_texture_name,
                                           std::string{detail_texture.begin(),
