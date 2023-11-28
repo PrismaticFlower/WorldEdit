@@ -22,6 +22,11 @@ struct access_height_map {
    {
       terrain.height_map_dirty.add(rect);
    }
+
+   bool can_coalesce(const access_height_map&) const noexcept
+   {
+      return true;
+   }
 };
 
 struct access_texture_weight_map {
@@ -38,6 +43,11 @@ struct access_texture_weight_map {
    void mark_dirty(world::terrain& terrain, dirty_rect rect)
    {
       terrain.texture_weight_maps_dirty[_index].add(rect);
+   }
+
+   bool can_coalesce(const access_texture_weight_map& other) const noexcept
+   {
+      return this->_index == other._index;
    }
 
 private:
@@ -137,6 +147,7 @@ struct set_terrain_area : edit<world::edit_context>, Access {
 
       if (not other) return false;
       if (other->_areas.size() != 1) return false;
+      if (not Access::can_coalesce(*other)) return false;
 
       const dirty_rect rect = other->_areas[0].rect;
 
