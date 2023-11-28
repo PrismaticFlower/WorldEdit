@@ -137,6 +137,11 @@ struct renderer_impl final : renderer {
       _thumbnail_manager.reset();
    }
 
+   auto terrain_texture_ids() noexcept -> std::array<void*, 16> override
+   {
+      return _terrain.terrain_texture_ids();
+   }
+
 private:
    void update_frame_constant_buffer(const camera& camera, const gpu::viewport viewport,
                                      const bool scroll_textures, const float line_width,

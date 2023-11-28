@@ -5,6 +5,7 @@
 #include "world_edit.hpp"
 
 #include "imgui.h"
+#include "imgui_ext.hpp"
 
 #include <numbers>
 
@@ -223,12 +224,48 @@ void world_edit::ui_show_terrain_editor() noexcept
                ImGui::DragFloat("Rate", &config.brush_rate, 0.05f, 0.1f, 10.0f);
             }
 
-            const uint32 min_texture = 0;
-            const uint32 max_texture = _world.terrain.texture_count;
+            ImGui::SeparatorText("Textures");
 
-            ImGui::SliderScalar("Texture", ImGuiDataType_U32,
-                                &config.edit_texture, &min_texture, &max_texture,
-                                "%u", ImGuiSliderFlags_AlwaysClamp);
+            const std::array<void*, world::terrain::texture_count> texture_ids =
+               _renderer->terrain_texture_ids();
+
+            for (uint32 i = 0; i < world::terrain::texture_count; ++i) {
+               const float size = 64.0f * _display_scale;
+
+               ImGui::PushID(i);
+
+               const ImVec2 cursor_position = ImGui::GetCursorPos();
+
+               if (ImGui::Selectable("##select", config.edit_texture == i,
+                                     ImGuiSelectableFlags_None, {size, size})) {
+                  config.edit_texture = i;
+               }
+
+               ImGui::SetCursorPos(cursor_position);
+               ImGui::Image(texture_ids[i], {size, size});
+
+               if (ImGui::IsItemHovered()) {
+                  ImGui::SetTooltip("%u - %s", i,
+                                    _world.terrain.texture_names[i].c_str());
+               }
+
+               ImGui::PopID();
+
+               if ((i + 1) % 4 != 0) {
+                  ImGui::SameLine();
+               }
+            }
+
+            ImGui::Separator();
+
+            const uint32 texture = _terrain_editor_config.texture.edit_texture;
+
+            ImGui::LabelText("Name", _world.terrain.texture_names[texture].c_str());
+
+            ImGui::LabelText("Axis Mapping", "%i",
+                             (int)_world.terrain.texture_axes[texture]);
+            ImGui::LabelText("Scale", "%f",
+                             1.0f / _world.terrain.texture_scales[texture]);
 
             ImGui::EndTabItem();
          }
@@ -255,9 +292,26 @@ void world_edit::ui_show_terrain_editor() noexcept
                                  _edit_context, {.closed = true});
       }
 
+      if (absl::InlinedVector<char, 256> detail_texture =
+             {_world.terrain.detail_texture_name.begin(),
+              _world.terrain.detail_texture_name.end()};
+          ImGui::InputText("Detail Texture", &detail_texture)) {
+         _edit_stack_world
+            .apply(make_set_terrain_value(&world::terrain::detail_texture_name,
+                                          std::string{detail_texture.begin(),
+                                                      detail_texture.end()},
+                                          _world.terrain.detail_texture_name),
+                   _edit_context);
+      }
+
+      if (ImGui::IsItemDeactivatedAfterEdit()) {
+         _edit_stack_world.close_last();
+      }
+
       ImGui::SeparatorText("Advanced");
 
-      ImGui::Text("Edit these if you're the adventurous sort or just know what "
+      ImGui::Text("Edit these if you're the adventurous sort or "
+                  "just know what "
                   "you're doing.");
 
       if (float height_scale = _world.terrain.height_scale;

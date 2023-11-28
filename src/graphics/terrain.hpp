@@ -52,6 +52,8 @@ public:
 
    void process_updated_texture(const updated_textures& updated);
 
+   auto terrain_texture_ids() noexcept -> std::array<void*, texture_count>;
+
 private:
    struct terrain_patch {
       int16 min_y = 0;

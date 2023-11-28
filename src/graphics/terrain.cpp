@@ -477,6 +477,17 @@ void terrain::process_updated_texture(const updated_textures& updated)
    }
 }
 
+auto terrain::terrain_texture_ids() noexcept -> std::array<void*, texture_count>
+{
+   std::array<void*, texture_count> ids;
+
+   for (uint32 i = 0; i < texture_count; ++i) {
+      ids[i] = reinterpret_cast<void*>(uint64{_diffuse_maps[i]->srv_srgb.index});
+   }
+
+   return ids;
+}
+
 void terrain::create_gpu_textures()
 {
    _height_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
