@@ -122,6 +122,19 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.object_class_browser"s, _object_class_browser_open);
    _commands.add("show.env_map_renderer"s, _render_env_map_open);
 
+   _commands.add("show.terrain_height_editor"s, [this] {
+      _terrain_editor_open = true;
+      _terrain_editor_config.edit_target = terrain_edit_target::height;
+   });
+   _commands.add("show.terrain_texture_editor"s, [this] {
+      _terrain_editor_open = true;
+      _terrain_editor_config.edit_target = terrain_edit_target::texture;
+   });
+   _commands.add("show.terrain_color_editor"s, [this] {
+      _terrain_editor_open = true;
+      _terrain_editor_config.edit_target = terrain_edit_target::color;
+   });
+
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
    _commands.add("entity_edit.move_selection"s, [this] {
@@ -493,6 +506,16 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
           {"Show World Stats", "show.world_stats", {.key = key::f9}},
           {"Show Object Class Browser", "show.object_class_browser", {.key = key::f10}},
+
+          {"Show Terrain Height Editor",
+           "show.terrain_height_editor",
+           {.key = key::f1, .modifiers = {.ctrl = true}}},
+          {"Show Terrain Texture Editor",
+           "show.terrain_texture_editor",
+           {.key = key::f2, .modifiers = {.ctrl = true}}},
+          {"Show Terrain Colour Editor",
+           "show.terrain_color_editor",
+           {.key = key::f3, .modifiers = {.ctrl = true}}},
 
           {"Render Environment Map", "show.env_map_renderer", {.key = key::backslash}},
 

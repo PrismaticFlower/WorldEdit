@@ -181,7 +181,26 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::Separator();
 
-         ImGui::MenuItem("Terrain Editor", "Needs Hotkey", &_terrain_editor_open);
+         if (ImGui::MenuItem("Terrain Height Editor",
+                             get_display_string(_hotkeys.query_binding(
+                                "Global", "Show Terrain Height Editor")))) {
+            _terrain_editor_open = true;
+            _terrain_editor_config.edit_target = terrain_edit_target::height;
+         }
+
+         if (ImGui::MenuItem("Terrain Texture Editor",
+                             get_display_string(_hotkeys.query_binding(
+                                "Global", "Show Terrain Texture Editor")))) {
+            _terrain_editor_open = true;
+            _terrain_editor_config.edit_target = terrain_edit_target::texture;
+         }
+
+         if (ImGui::MenuItem("Terrain Colour Editor",
+                             get_display_string(_hotkeys.query_binding(
+                                "Global", "Show Terrain Colour Editor")))) {
+            _terrain_editor_open = true;
+            _terrain_editor_config.edit_target = terrain_edit_target::color;
+         }
 
          ImGui::EndMenu();
       }
