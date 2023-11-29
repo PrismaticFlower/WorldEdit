@@ -10,6 +10,8 @@ void terrain::untracked_clear_dirty_rects() noexcept
       dirty.clear();
    }
 
+   color_map_dirty.clear();
+
    water_map_dirty.clear();
 }
 

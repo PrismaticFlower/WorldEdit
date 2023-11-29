@@ -5,6 +5,7 @@ struct output_vertex {
    float3 positionWS : POSITIONWS;
    float2 terrain_coords : TERRAINCOORDS;
    nointerpolation uint active_textures : ACTIVETEXTURES;
+   float3 color : COLOR;
 
    float4 positionPS : SV_Position;
 };
@@ -33,12 +34,14 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
       height_map[clamp(uint2(x, y), 0, get_height_map_length() - 1)] * terrain_constants.height_scale;
    const float3 positionWS = float3(patch_position.x - terrain_constants.half_world_size.x, height,
                                     patch_position.y - terrain_constants.half_world_size.y);
+   const float3 color = color_map[clamp(uint2(x, y), 0, get_height_map_length() - 1)];
 
    output_vertex output;
 
    output.positionWS = positionWS;
    output.terrain_coords = (positionWS.xz / terrain_constants.half_world_size.xy) * 0.5 + 0.5;
    output.active_textures = patch.active_textures;
+   output.color = color;
    output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
 
    return output;

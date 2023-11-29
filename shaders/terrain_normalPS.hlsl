@@ -11,7 +11,7 @@ float4 main(input_vertex input) : SV_Target0
 
    Texture2D<float3> base_diffuse_map = ResourceDescriptorHeap[terrain_constants.diffuse_maps_index[0]];
 
-   float3 diffuse_color =
+   float3 diffuse_color = 
       base_diffuse_map.Sample(sampler_anisotropic_wrap, get_terrain_texcoords(0, positionWS));
 
    const uint active_textures = input.active_textures;
@@ -34,7 +34,7 @@ float4 main(input_vertex input) : SV_Target0
    lighting_inputs.positionWS = positionWS;
    lighting_inputs.normalWS = normalWS;
    lighting_inputs.viewWS = viewWS;
-   lighting_inputs.diffuse_color = diffuse_color;
+   lighting_inputs.diffuse_color = input.color * diffuse_color;
    lighting_inputs.specular_color = 0.0;
    lighting_inputs.positionSS = input.positionSS.xy;
    lighting_inputs.receive_static_light = true;
