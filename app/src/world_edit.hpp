@@ -73,6 +73,7 @@ enum class terrain_brush_mode : uint8 {
    pull_towards,
    blend
 };
+
 enum class terrain_texture_brush_mode : uint8 { paint, erase, soften };
 
 enum class terrain_brush_falloff : uint8 { none, linear, smooth, sine };
