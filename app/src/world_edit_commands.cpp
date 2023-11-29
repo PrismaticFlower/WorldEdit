@@ -329,6 +329,20 @@ void world_edit::initialize_commands() noexcept
             return;
          }
       }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+         switch (terrain_color_brush_mode& mode = _terrain_editor_config.color.brush_mode;
+                 mode) {
+         case terrain_color_brush_mode::paint:
+            mode = terrain_color_brush_mode::spray;
+            return;
+         case terrain_color_brush_mode::spray:
+            mode = terrain_color_brush_mode::blur;
+            return;
+         case terrain_color_brush_mode::blur:
+            mode = terrain_color_brush_mode::paint;
+            return;
+         }
+      }
    });
    _commands.add("terrain.cycle_brush_falloff"s, [this] {
       if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
@@ -351,6 +365,23 @@ void world_edit::initialize_commands() noexcept
       else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
          switch (terrain_brush_falloff& falloff =
                     _terrain_editor_config.texture.brush_falloff;
+                 falloff) {
+         case terrain_brush_falloff::none:
+            falloff = terrain_brush_falloff::linear;
+            return;
+         case terrain_brush_falloff::linear:
+            falloff = terrain_brush_falloff::smooth;
+            return;
+         case terrain_brush_falloff::smooth:
+            falloff = terrain_brush_falloff::sine;
+            return;
+         case terrain_brush_falloff::sine:
+            falloff = terrain_brush_falloff::none;
+            return;
+         }
+      }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+         switch (terrain_brush_falloff& falloff = _terrain_editor_config.color.brush_falloff;
                  falloff) {
          case terrain_brush_falloff::none:
             falloff = terrain_brush_falloff::linear;

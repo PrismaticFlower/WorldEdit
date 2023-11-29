@@ -76,6 +76,8 @@ enum class terrain_brush_mode : uint8 {
 
 enum class terrain_texture_brush_mode : uint8 { paint, erase, soften };
 
+enum class terrain_color_brush_mode : uint8 { paint, spray, blur };
+
 enum class terrain_brush_falloff : uint8 { none, linear, smooth, sine };
 
 constexpr float tool_window_start_x = 264.0f;
@@ -455,6 +457,14 @@ private:
          float brush_rate = 1.0f;
          uint32 edit_texture = 0;
       } texture;
+
+      struct color_config {
+         terrain_color_brush_mode brush_mode = terrain_color_brush_mode::paint;
+         terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
+         float3 brush_color = {1.0f, 1.0f, 1.0f};
+         float brush_speed = 0.5f;
+         float brush_rate = 1.0f;
+      } color;
    } _terrain_editor_config;
 
    struct terrain_editor_context {

@@ -1,6 +1,7 @@
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/raycast_terrain.hpp"
 #include "world_edit.hpp"
@@ -184,7 +185,8 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             if (config.brush_mode == terrain_brush_mode::pull_towards or
                 config.brush_mode == terrain_brush_mode::blend) {
-               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f, "%.2f");
+               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
+                                  "%.2f", ImGuiSliderFlags_NoRoundToFormat);
             }
 
             if (config.brush_mode == terrain_brush_mode::raise or
@@ -247,7 +249,8 @@ void world_edit::ui_show_terrain_editor() noexcept
                              ImGuiSliderFlags_AlwaysClamp);
 
             if (config.brush_mode == terrain_texture_brush_mode::soften) {
-               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f, "%.2f");
+               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
+                                  "%.2f", ImGuiSliderFlags_NoRoundToFormat);
             }
 
             if (config.brush_mode == terrain_texture_brush_mode::paint or
@@ -377,6 +380,66 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          if (ImGui::BeginTabItem("Colour")) {
             _terrain_editor_config.edit_target = terrain_edit_target::color;
+
+            terrain_editor_config::color_config& config = _terrain_editor_config.color;
+
+            ImGui::SeparatorText("Brush Mode");
+
+            if (ImGui::Selectable("Paint", config.brush_mode ==
+                                              terrain_color_brush_mode::paint)) {
+               config.brush_mode = terrain_color_brush_mode::paint;
+            }
+
+            if (ImGui::Selectable("Spray", config.brush_mode ==
+                                              terrain_color_brush_mode::spray)) {
+               config.brush_mode = terrain_color_brush_mode::spray;
+            }
+
+            if (ImGui::Selectable("Blur", config.brush_mode ==
+                                             terrain_color_brush_mode::blur)) {
+               config.brush_mode = terrain_color_brush_mode::blur;
+            }
+
+            ImGui::SeparatorText("Brush Falloff");
+
+            if (ImGui::Selectable("None", config.brush_falloff ==
+                                             terrain_brush_falloff::none)) {
+               config.brush_falloff = terrain_brush_falloff::none;
+            }
+
+            if (ImGui::Selectable("Linear", config.brush_falloff ==
+                                               terrain_brush_falloff::linear)) {
+               config.brush_falloff = terrain_brush_falloff::linear;
+            }
+
+            if (ImGui::Selectable("Smooth", config.brush_falloff ==
+                                               terrain_brush_falloff::smooth)) {
+               config.brush_falloff = terrain_brush_falloff::smooth;
+            }
+
+            if (ImGui::Selectable("Sine", config.brush_falloff ==
+                                             terrain_brush_falloff::sine)) {
+               config.brush_falloff = terrain_brush_falloff::sine;
+            }
+
+            ImGui::SeparatorText("Brush Settings");
+
+            ImGui::SliderInt("Size", &_terrain_editor_config.brush_size, 0,
+                             _world.terrain.length / 2, "%d",
+                             ImGuiSliderFlags_AlwaysClamp);
+
+            if (config.brush_mode == terrain_color_brush_mode::paint or
+                config.brush_mode == terrain_color_brush_mode::spray) {
+               ImGui::ColorEdit3("Colour", &config.brush_color.x);
+            }
+
+            if (config.brush_mode == terrain_color_brush_mode::spray) {
+               ImGui::DragFloat("Rate", &config.brush_rate, 0.05f, 0.1f, 10.0f);
+            }
+
+            if (config.brush_mode == terrain_color_brush_mode::blur) {
+               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f, "%.2f");
+            }
 
             ImGui::EndTabItem();
          }
@@ -762,6 +825,111 @@ void world_edit::ui_show_terrain_editor() noexcept
                                                               std::move(area)),
                                  _edit_context);
       }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+         const terrain_editor_config::color_config& config =
+            _terrain_editor_config.color;
+
+         container::dynamic_array_2d<uint32> area{right - left, bottom - top};
+
+         for (int32 y = top; y < bottom; ++y) {
+            for (int32 x = left; x < right; ++x) {
+               area[{x - left, y - top}] = _world.terrain.color_map[{x, y}];
+            }
+         }
+
+         if (config.brush_mode == terrain_color_brush_mode::paint) {
+            const float4 brush_color = {config.brush_color, 1.0f};
+
+            for (int32 y = top; y < bottom; ++y) {
+               for (int32 x = left; x < right; ++x) {
+                  uint32& v = area[{x - left, y - top}];
+
+                  const float weight = brush_weight(x, y, terrain_point, brush_radius,
+                                                    config.brush_falloff);
+
+                  if (weight <= 0.0f) continue;
+
+                  float4 color = utility::unpack_srgb_bgra(v);
+
+                  color = weight * brush_color + (1.0f - weight) * color;
+
+                  color.w = 1.0f;
+
+                  v = utility::pack_srgb_bgra(color);
+               }
+            }
+         }
+         else if (config.brush_mode == terrain_color_brush_mode::spray) {
+            const float4 brush_color = {config.brush_color, 1.0f};
+            const float time_weight = config.brush_rate * delta_time;
+
+            for (int32 y = top; y < bottom; ++y) {
+               for (int32 x = left; x < right; ++x) {
+                  uint32& v = area[{x - left, y - top}];
+
+                  const float weight = brush_weight(x, y, terrain_point, brush_radius,
+                                                    config.brush_falloff) *
+                                       time_weight;
+
+                  if (weight <= 0.0f) continue;
+
+                  float4 color = utility::unpack_srgb_bgra(v);
+
+                  color = weight * brush_color + (1.0f - weight) * color;
+
+                  color.w = 1.0f;
+
+                  v = utility::pack_srgb_bgra(color);
+               }
+            }
+         }
+         else if (config.brush_mode == terrain_color_brush_mode::blur) {
+            float4 total_color;
+            float samples = 0.0f;
+
+            for (int32 y = top; y < bottom; ++y) {
+               for (int32 x = left; x < right; ++x) {
+                  const float weight = brush_weight(x, y, terrain_point, brush_radius,
+                                                    config.brush_falloff);
+
+                  if (weight <= 0.0f) continue;
+
+                  total_color +=
+                     utility::unpack_srgb_bgra(area[{x - left, y - top}]);
+                  samples += 1.0f;
+               }
+            }
+
+            const float time_weight =
+               std::clamp(delta_time * config.brush_speed, 0.0f, 1.0f);
+
+            const float4 target_color = total_color / samples;
+
+            for (int32 y = top; y < bottom; ++y) {
+               for (int32 x = left; x < right; ++x) {
+                  uint32& v = area[{x - left, y - top}];
+
+                  const float weight = brush_weight(x, y, terrain_point, brush_radius,
+                                                    config.brush_falloff) *
+                                       time_weight;
+
+                  if (weight <= 0.0f) continue;
+
+                  float4 color = utility::unpack_srgb_bgra(v);
+
+                  color = weight * target_color + (1.0f - weight) * color;
+
+                  color.w = 1.0f;
+
+                  v = utility::pack_srgb_bgra(color);
+               }
+            }
+         }
+
+         _edit_stack_world.apply(edits::make_set_terrain_area_color_map(left, top,
+                                                                        std::move(area)),
+                                 _edit_context);
+      }
    }
 
    const terrain_brush_falloff brush_falloff = [&] {
@@ -772,7 +940,7 @@ void world_edit::ui_show_terrain_editor() noexcept
          return _terrain_editor_config.texture.brush_falloff;
       }
       else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
-         return terrain_brush_falloff::none;
+         return _terrain_editor_config.color.brush_falloff;
       }
 
       return terrain_brush_falloff::none;

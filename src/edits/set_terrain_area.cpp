@@ -54,6 +54,25 @@ private:
    uint8 _index = 0;
 };
 
+struct access_color_map {
+   access_color_map() = default;
+
+   auto target_map(world::terrain& terrain) -> container::dynamic_array_2d<uint32>&
+   {
+      return terrain.color_map;
+   }
+
+   void mark_dirty(world::terrain& terrain, dirty_rect rect)
+   {
+      terrain.color_map_dirty.add(rect);
+   }
+
+   bool can_coalesce(const access_color_map&) const noexcept
+   {
+      return true;
+   }
+};
+
 template<typename T>
 struct area {
    dirty_rect rect;
@@ -285,6 +304,20 @@ auto make_set_terrain_area(const uint32 rect_start_x, const uint32 rect_start_y,
                               rect_start_y + rect_weight_map.shape()[1])},
                   .map = std::move(rect_weight_map)},
       texture_index);
+}
+
+auto make_set_terrain_area_color_map(const uint32 rect_start_x, const uint32 rect_start_y,
+                                     container::dynamic_array_2d<uint32> rect_color_map)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_terrain_area<uint32, access_color_map>>(
+      area<uint32>{.rect = {.left = rect_start_x,
+                            .top = rect_start_y,
+                            .right = static_cast<uint32>(
+                               rect_start_x + rect_color_map.shape()[0]),
+                            .bottom = static_cast<uint32>(
+                               rect_start_y + rect_color_map.shape()[1])},
+                   .map = std::move(rect_color_map)});
 }
 
 }

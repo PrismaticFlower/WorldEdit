@@ -17,4 +17,8 @@ auto make_set_terrain_area(const uint32 rect_start_x, const uint32 rect_start_y,
                            container::dynamic_array_2d<uint8> rect_weight_map)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_set_terrain_area_color_map(const uint32 rect_start_x, const uint32 rect_start_y,
+                                     container::dynamic_array_2d<uint32> rect_color_map)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }
