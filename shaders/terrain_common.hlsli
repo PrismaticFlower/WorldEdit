@@ -10,6 +10,9 @@ struct terrain_constants_ {
    float grid_size;
    float height_scale;
 
+   uint terrain_max_index;
+   float inv_terrain_length;
+
    uint height_map_index;
    uint texture_weight_maps_index;
    uint color_map_index;

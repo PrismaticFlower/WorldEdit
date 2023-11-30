@@ -30,8 +30,10 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
 
    const float2 patch_position =
       float2(x, y) * terrain_constants.grid_size + float2(0, terrain_constants.grid_size);
+
    const float height =
-      height_map[clamp(uint2(x, y), 0, get_height_map_length() - 1)] * terrain_constants.height_scale;
+      height_map[clamp(uint2(x, y), 0, terrain_constants.terrain_max_index)] * terrain_constants.height_scale;
+
    const float3 positionWS = float3(patch_position.x - terrain_constants.half_world_size.x, height,
                                     patch_position.y - terrain_constants.half_world_size.y);
    const float3 color = color_map[clamp(uint2(x, y), 0, get_height_map_length() - 1)];
@@ -39,7 +41,7 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
    output_vertex output;
 
    output.positionWS = positionWS;
-   output.terrain_coords = (positionWS.xz / terrain_constants.half_world_size.xy) * 0.5 + 0.5;
+   output.terrain_coords = (float2(x, y) + 0.5) * terrain_constants.inv_terrain_length;
    output.active_textures = patch.active_textures;
    output.color = color;
    output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));

@@ -16,10 +16,13 @@ struct alignas(16) terrain_constants {
    float grid_size;
    float height_scale;
 
+   uint32 terrain_max_index;
+   float inv_terrain_length;
+
    uint32 height_map;
    uint32 texture_weight_maps;
    uint32 color_map;
-   uint32 padding;
+   std::array<uint32, 3> padding;
 
    std::array<std::array<uint32, 4>, terrain::texture_count> diffuse_maps;
 
@@ -27,7 +30,7 @@ struct alignas(16) terrain_constants {
    std::array<float4, terrain::texture_count> texture_transform_y;
 };
 
-static_assert(sizeof(terrain_constants) == 800);
+static_assert(sizeof(terrain_constants) == 816);
 
 struct patch_info_shader {
    uint32 x;
@@ -233,6 +236,9 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       .half_world_size = _terrain_half_world_size,
       .grid_size = _terrain_grid_size,
       .height_scale = terrain.height_scale * std::numeric_limits<int16>::max(),
+
+      .terrain_max_index = _terrain_length - 1u,
+      .inv_terrain_length = 1.0f / _terrain_length,
 
       .height_map = _height_map_srv.get().index,
       .texture_weight_maps = _texture_weight_maps_srv.get().index,
