@@ -690,6 +690,7 @@ struct thumbnail_manager::impl {
                       _upload_readback_pitch, _thumbnail_length, sizeof(uint32));
 
          _readback_names[_device.frame_index()].clear();
+         _cpu_cache_dirty = true;
       }
 
       if (_save_disk_cache_task and _save_disk_cache_task->ready()) {
@@ -703,6 +704,7 @@ struct thumbnail_manager::impl {
 
          if (loaded.thumbnail_length == _thumbnail_length) {
             _cpu_memory_cache = std::move(loaded.cpu_memory_cache);
+            _cpu_cache_dirty = false;
 
             if (_restore_invalidation_tracker_task) {
                _restore_invalidation_tracker_task->wait();
@@ -830,6 +832,7 @@ struct thumbnail_manager::impl {
 
    void async_save_disk_cache(const wchar_t* path) noexcept
    {
+      if (not _cpu_cache_dirty) return;
       if (_cpu_memory_cache.empty()) return;
 
       if (_save_disk_cache_task) _save_disk_cache_task->wait();
@@ -1349,6 +1352,7 @@ private:
    output_stream& _error_output;
    gpu::device& _device;
 
+   bool _cpu_cache_dirty = false;
    float _atlas_items_width = 1;
    float _atlas_items_height = 1;
    float _display_scale = 1.0f;
