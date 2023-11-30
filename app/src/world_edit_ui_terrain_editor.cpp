@@ -705,8 +705,8 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
          else if (config.brush_mode == terrain_brush_mode::blend) {
-            double total_height = 0.0;
-            double samples = 0.0;
+            int64 total_height = 0;
+            float samples = 0.0f;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -715,15 +715,14 @@ void world_edit::ui_show_terrain_editor() noexcept
 
                   if (weight <= 0.0f) continue;
 
-                  total_height += (area[{x - left, y - top}] * weight);
-                  samples += 1.0;
+                  total_height += area[{x - left, y - top}];
+                  samples += 1.0f;
                }
             }
 
             const float time_weight =
                std::clamp(delta_time * config.brush_speed, 0.0f, 1.0f);
-            const float target_height =
-               static_cast<float>(total_height / std::max(samples, 1.0));
+            const float target_height = total_height / samples;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
