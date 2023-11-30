@@ -332,6 +332,9 @@ void world_edit::initialize_commands() noexcept
                     _terrain_editor_config.texture.brush_mode;
                  mode) {
          case terrain_texture_brush_mode::paint:
+            mode = terrain_texture_brush_mode::spray;
+            return;
+         case terrain_texture_brush_mode::spray:
             mode = terrain_texture_brush_mode::erase;
             return;
          case terrain_texture_brush_mode::erase:

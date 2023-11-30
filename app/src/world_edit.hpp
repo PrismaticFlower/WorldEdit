@@ -74,7 +74,7 @@ enum class terrain_brush_mode : uint8 {
    blend
 };
 
-enum class terrain_texture_brush_mode : uint8 { paint, erase, soften };
+enum class terrain_texture_brush_mode : uint8 { paint, spray, erase, soften };
 
 enum class terrain_color_brush_mode : uint8 { paint, spray, blur };
 
@@ -453,8 +453,9 @@ private:
       struct texture_config {
          terrain_texture_brush_mode brush_mode = terrain_texture_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
+         float brush_texture_weight = 255.0f;
          float brush_speed = 0.5f;
-         float brush_rate = 1.0f;
+         float brush_rate = 2.5f;
          uint32 edit_texture = 0;
       } texture;
 
