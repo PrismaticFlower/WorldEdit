@@ -454,7 +454,6 @@ private:
          terrain_texture_brush_mode brush_mode = terrain_texture_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
          float brush_texture_weight = 255.0f;
-         float brush_speed = 0.5f;
          float brush_rate = 2.5f;
          uint32 edit_texture = 0;
       } texture;

@@ -270,11 +270,6 @@ void world_edit::ui_show_terrain_editor() noexcept
                                0.0f, 255.0f, "%.0f", ImGuiSliderFlags_AlwaysClamp);
          }
 
-         if (config.brush_mode == terrain_texture_brush_mode::soften) {
-            ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
-                               "%.2f", ImGuiSliderFlags_NoRoundToFormat);
-         }
-
          if (config.brush_mode == terrain_texture_brush_mode::spray or
              config.brush_mode == terrain_texture_brush_mode::erase) {
             ImGui::DragFloat("Rate", &config.brush_rate, 0.05f, 0.1f, 10.0f);
@@ -815,8 +810,8 @@ void world_edit::ui_show_terrain_editor() noexcept
             }
          }
          else if (config.brush_mode == terrain_texture_brush_mode::soften) {
-            double total_texture_weight = 0.0;
-            double samples = 0.0;
+            uint64 total_texture_weight = 0;
+            float samples = 0.0;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -825,15 +820,12 @@ void world_edit::ui_show_terrain_editor() noexcept
 
                   if (weight <= 0.0f) continue;
 
-                  total_texture_weight += (area[{x - left, y - top}] * weight);
-                  samples += 1.0;
+                  total_texture_weight += area[{x - left, y - top}];
+                  samples += 1.0f;
                }
             }
 
-            const float time_weight =
-               std::clamp(delta_time * config.brush_speed, 0.0f, 1.0f);
-            const float target_texture_weight =
-               static_cast<float>(total_texture_weight / samples) / 255.0f;
+            const float target_texture_weight = total_texture_weight / samples;
 
             for (int32 y = top; y < bottom; ++y) {
                for (int32 x = left; x < right; ++x) {
@@ -842,11 +834,9 @@ void world_edit::ui_show_terrain_editor() noexcept
                   const float weight = brush_weight(x, y, terrain_point, brush_radius,
                                                     config.brush_falloff);
 
-                  v = static_cast<uint8>(
-                     std::lerp(v / 255.0f, target_texture_weight,
-                               std::lerp(0.0f, time_weight, weight)) *
-                        255.0f +
-                     0.5f);
+                  if (weight <= 0.0f) continue;
+
+                  v = static_cast<uint8>(std::lerp(v, target_texture_weight, weight));
                }
             }
          }
