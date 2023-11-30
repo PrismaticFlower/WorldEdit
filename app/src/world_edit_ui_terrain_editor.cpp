@@ -447,10 +447,6 @@ void world_edit::ui_show_terrain_editor() noexcept
          if (config.brush_mode == terrain_color_brush_mode::spray) {
             ImGui::DragFloat("Rate", &config.brush_rate, 0.05f, 0.1f, 10.0f);
          }
-
-         if (config.brush_mode == terrain_color_brush_mode::blur) {
-            ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f, "%.2f");
-         }
       }
 
       ImGui::SeparatorText("Terrain Settings");
@@ -920,9 +916,6 @@ void world_edit::ui_show_terrain_editor() noexcept
                }
             }
 
-            const float time_weight =
-               std::clamp(delta_time * config.brush_speed, 0.0f, 1.0f);
-
             const float4 target_color = total_color / samples;
 
             for (int32 y = top; y < bottom; ++y) {
@@ -930,8 +923,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                   uint32& v = area[{x - left, y - top}];
 
                   const float weight = brush_weight(x, y, terrain_point, brush_radius,
-                                                    config.brush_falloff) *
-                                       time_weight;
+                                                    config.brush_falloff);
 
                   if (weight <= 0.0f) continue;
 

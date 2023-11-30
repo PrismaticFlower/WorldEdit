@@ -462,7 +462,6 @@ private:
          terrain_color_brush_mode brush_mode = terrain_color_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
          float3 brush_color = {1.0f, 1.0f, 1.0f};
-         float brush_speed = 0.5f;
          float brush_rate = 1.0f;
       } color;
    } _terrain_editor_config;
