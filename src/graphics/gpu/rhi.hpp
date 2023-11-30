@@ -238,7 +238,7 @@ constexpr bool marked_as_enum_bitflag(barrier_access) noexcept
    return true;
 }
 
-enum texture_barrier_flags { none = 0, discard = 0x1 };
+enum class texture_barrier_flags { none = 0, discard = 0x1 };
 
 constexpr bool marked_as_enum_bitflag(texture_barrier_flags) noexcept
 {
