@@ -205,7 +205,12 @@ void world_edit::ui_show_world_explorer() noexcept
 
                for (int i = 0; i < (show_all_nodes ? path.nodes.size() : 1); ++i) {
                   const bool is_selected =
-                     world::is_selected(path.id, _interaction_targets.selection);
+                     show_all_nodes
+                        ? world::is_selected(world::path_id_node_pair{path.id,
+                                                                      static_cast<std::size_t>(
+                                                                         i)},
+                                             _interaction_targets.selection)
+                        : world::is_selected(path.id, _interaction_targets.selection);
 
                   ImGui::PushID(i);
 
@@ -227,20 +232,40 @@ void world_edit::ui_show_world_explorer() noexcept
                   ImGui::TableNextColumn();
                   ImGui::Text("%i", static_cast<int>(path.id));
 
-                  if (select and path.nodes.size() != 0) {
-                     if (is_ctrl_down) {
-                        _interaction_targets.selection.remove(
-                           world::path_id_node_pair{path.id,
-                                                    static_cast<std::size_t>(i)});
+                  if (show_all_nodes) {
+                     if (select and path.nodes.size() != 0) {
+                        if (is_ctrl_down) {
+                           _interaction_targets.selection.remove(
+                              world::path_id_node_pair{path.id,
+                                                       static_cast<std::size_t>(i)});
+                        }
+                        else {
+                           if (not is_shift_down) {
+                              _interaction_targets.selection.clear();
+                           }
+
+                           _interaction_targets.selection.add(
+                              world::path_id_node_pair{path.id,
+                                                       static_cast<std::size_t>(i)});
+                        }
                      }
-                     else {
+                  }
+                  else {
+                     if (select) {
                         if (not is_shift_down) {
                            _interaction_targets.selection.clear();
                         }
 
-                        _interaction_targets.selection.add(
-                           world::path_id_node_pair{path.id,
-                                                    static_cast<std::size_t>(i)});
+                        for (std::size_t node = 0; node < path.nodes.size(); ++node) {
+                           if (is_ctrl_down) {
+                              _interaction_targets.selection.remove(
+                                 world::path_id_node_pair{path.id, node});
+                           }
+                           else {
+                              _interaction_targets.selection.add(
+                                 world::path_id_node_pair{path.id, node});
+                           }
+                        }
                      }
                   }
 
