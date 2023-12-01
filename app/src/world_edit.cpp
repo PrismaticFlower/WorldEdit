@@ -896,11 +896,11 @@ void world_edit::finish_entity_select(const select_method method) noexcept
       }
    }
    else {
-      if (not _interaction_targets.hovered_entity) return;
-
       if (method == select_method::replace) {
          _interaction_targets.selection.clear();
       }
+
+      if (not _interaction_targets.hovered_entity) return;
 
       _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
    }
