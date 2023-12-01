@@ -29,10 +29,14 @@ struct stack {
    void apply(std::unique_ptr<edit_type> edit, edit_target& target,
               const apply_flags flags = {}) noexcept
    {
-      if (not _applied.empty() and                  //
-          not _applied.top()->is_closed() and       //
-          _applied.top()->is_coalescable(*edit) and //
-          not edit->is_closed()) {
+      if (flags.closed) edit->close();
+      if (flags.transparent) edit->mark_transparent();
+
+      if (not _applied.empty() and                                       //
+          not _applied.top()->is_closed() and                            //
+          not edit->is_closed() and                                      //
+          edit->is_transparent() == _applied.top()->is_transparent() and //
+          _applied.top()->is_coalescable(*edit)) {
          _applied.top()->revert(target);
          _applied.top()->coalesce(*edit);
          _applied.top()->apply(target);
@@ -44,9 +48,6 @@ struct stack {
       }
 
       _reverted.clear();
-
-      if (flags.closed) _applied.top()->close();
-      if (flags.transparent) _applied.top()->mark_transparent();
 
       _modified_flag = true;
    }

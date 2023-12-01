@@ -363,6 +363,62 @@ TEST_CASE("edits stack transparent tests", "[Edits]")
    REQUIRE(stack.reverted_size() == 0);
 }
 
+TEST_CASE("edits stack mixed-transparent no coalesce", "[Edits]")
+{
+   stack<int> stack;
+   int state = 0;
+
+   stack.apply(std::make_unique<dummy_edit_coalesce>(1, 0), state,
+               {.transparent = true});
+   stack.apply(std::make_unique<dummy_edit_coalesce>(2, 1), state);
+
+   REQUIRE(state == 2);
+   REQUIRE(stack.applied_size() == 2);
+
+   stack.revert(state);
+
+   REQUIRE(state == 1);
+
+   stack.revert(state);
+
+   REQUIRE(state == 0);
+}
+
+TEST_CASE("edits stack mixed-transparent after no coalesce", "[Edits]")
+{
+   stack<int> stack;
+   int state = 0;
+
+   stack.apply(std::make_unique<dummy_edit_coalesce>(1, 0), state);
+   stack.apply(std::make_unique<dummy_edit_coalesce>(2, 1), state,
+               {.transparent = true});
+
+   REQUIRE(state == 2);
+   REQUIRE(stack.applied_size() == 2);
+
+   stack.revert(state);
+
+   REQUIRE(state == 0);
+}
+
+TEST_CASE("edits stack transparent coalesce", "[Edits]")
+{
+   stack<int> stack;
+   int state = 0;
+
+   stack.apply(std::make_unique<dummy_edit_coalesce>(1, 0), state,
+               {.transparent = true});
+   stack.apply(std::make_unique<dummy_edit_coalesce>(2, 1), state,
+               {.transparent = true});
+
+   REQUIRE(state == 2);
+   REQUIRE(stack.applied_size() == 1);
+
+   stack.revert(state);
+
+   REQUIRE(state == 0);
+}
+
 TEST_CASE("edits stack modified flag tests", "[Edits]")
 {
    stack<dummy_edit_state> stack;
