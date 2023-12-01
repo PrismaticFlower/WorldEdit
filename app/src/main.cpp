@@ -91,8 +91,13 @@ void run_application(command_line command_line)
 
    we::world_edit app{window_handle.get(), command_line};
 
-   window_procedure = [&](HWND window, UINT message, WPARAM wparam,
-                          LPARAM lparam) noexcept -> LRESULT {
+   window_procedure =
+      [&, self_window = window_handle.get()](HWND window, UINT message, WPARAM wparam,
+                                             LPARAM lparam) noexcept -> LRESULT {
+      if (window != self_window) {
+         return DefWindowProcW(window, message, wparam, lparam);
+      }
+
       if (LRESULT result =
              ImGui_ImplWin32_WndProcHandler(window, message, wparam, lparam);
           result != 0) {

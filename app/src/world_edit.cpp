@@ -2905,6 +2905,19 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
          if (e.error() != error::device_removed) {
             return handle_gpu_error(e);
          }
+
+         switch (MessageBoxA(_window,
+                             "Failed to recover from GPU device "
+                             "removal.\n\nThe editor will now exit."
+                             "\n\nSave world?",
+                             "GPU Removed", MB_YESNO | MB_ICONERROR)) {
+         case IDYES:
+            save_world_with_picker();
+            [[fallthrough]];
+         case IDNO:
+         default:
+            std::terminate();
+         }
       }
 
    } break;
