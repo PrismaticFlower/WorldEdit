@@ -1485,6 +1485,10 @@ void world_edit::place_creation_entity() noexcept
             }
 
             if (_entity_creation_context.connection_link_started) {
+               if (connection.start_hub_index == connection.end_hub_index) {
+                  return;
+               }
+
                for (auto& other_connection : _world.planning_connections) {
                   if ((connection.start_hub_index == other_connection.start_hub_index and
                        connection.end_hub_index == other_connection.end_hub_index) or
