@@ -306,7 +306,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        new_rotation, object.rotation, new_position,
                                        object.position, new_euler_rotation,
                                        _edit_context.euler_rotation),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -431,7 +431,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        new_rotation, light.rotation, new_position,
                                        light.position, new_euler_rotation,
                                        _edit_context.euler_rotation),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -728,7 +728,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        new_rotation, path.nodes[0].rotation, new_position,
                                        path.nodes[0].position, new_euler_rotation,
                                        _edit_context.euler_rotation),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -1313,7 +1313,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        new_rotation, region.rotation, new_position,
                                        region.position, new_euler_rotation,
                                        _edit_context.euler_rotation),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -1560,7 +1560,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (new_position != sector.points[0]) {
             _edit_stack_world.apply(edits::make_set_creation_sector_point(new_position,
                                                                           sector.points[0]),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -1821,7 +1821,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        new_rotation, portal.rotation, new_position,
                                        portal.position, new_euler_rotation,
                                        _edit_context.euler_rotation),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -1996,7 +1996,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        new_rotation, hintnode.rotation, new_position,
                                        hintnode.position, new_euler_rotation,
                                        _edit_context.euler_rotation),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -2164,7 +2164,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        new_rotation, barrier.rotation_angle,
                                        new_position, barrier.position,
                                        barrier.size, barrier.size),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -2552,7 +2552,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _edit_stack_world.apply(edits::make_set_creation_value(&world::planning_hub::position,
                                                                    new_position,
                                                                    hub.position),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
@@ -2608,7 +2608,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                     &world::planning_connection::end_hub_index,
                                     get_hub_index(_world.planning_hubs, end_id),
                                     connection.end_hub_index),
-                                 _edit_context);
+                                 _edit_context, {.transparent = true});
       }
 
       ImGui::EditFlags("Flags", &creation_entity, &world::planning_connection::flags,
@@ -2764,7 +2764,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _edit_stack_world.apply(edits::make_set_creation_value(&world::boundary::position,
                                                                    new_position,
                                                                    boundary.position),
-                                    _edit_context);
+                                    _edit_context, {.transparent = true});
          }
       }
 
