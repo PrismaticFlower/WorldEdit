@@ -42,6 +42,31 @@ auto raycast_terrain_quad(const float3 ray_origin, const float3 ray_direction,
       .x;
 }
 
+auto make_ray_start(const float3 ray_origin, const float3 ray_direction,
+                    const terrain& terrain) -> float3
+{
+   const float terrain_half_length = (terrain.length / 2.0f) * terrain.grid_scale;
+
+   const bool x_inside =
+      ray_origin.x < terrain_half_length and ray_origin.x > -terrain_half_length;
+   const bool z_inside =
+      ray_origin.z < terrain_half_length and ray_origin.z > -terrain_half_length;
+
+   if (x_inside and z_inside) return ray_origin;
+
+   const float terrain_half_length_biased = terrain_half_length - terrain.grid_scale;
+
+   if (const float hit_distance =
+          boxIntersection(ray_origin, ray_direction,
+                          float3{terrain_half_length_biased, 32768.0f * terrain.height_scale,
+                                 terrain_half_length_biased});
+       hit_distance >= 0.0f) {
+      return ray_origin + ray_direction * hit_distance;
+   }
+
+   return ray_origin;
+}
+
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,
@@ -49,8 +74,10 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
 {
    if (not terrain.active_flags.terrain) return std::nullopt;
 
+   const float3 ray_start = make_ray_start(ray_origin, ray_direction, terrain);
+
    const float2 start =
-      (float2{ray_origin.x / terrain.grid_scale, ray_origin.z / terrain.grid_scale} - 0.5f);
+      (float2{ray_start.x / terrain.grid_scale, ray_start.z / terrain.grid_scale} - 0.5f);
    const float2 end = ((start + float2{ray_direction.x, ray_direction.z} *
                                    static_cast<float>(terrain.length)));
 
