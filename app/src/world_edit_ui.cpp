@@ -106,6 +106,10 @@ void world_edit::update_ui() noexcept
       ui_show_terrain_editor();
    }
 
+   if (_terrain_import_heightmap_open) {
+      ui_show_terrain_import_height_map();
+   }
+
    if (_render_env_map_open) {
       ui_show_render_env_map();
    }

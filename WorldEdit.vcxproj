@@ -244,6 +244,7 @@
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
     <ClCompile Include="src\edits\insert_point.cpp" />
+    <ClCompile Include="src\edits\set_terrain.cpp" />
     <ClCompile Include="src\edits\set_terrain_area.cpp" />
     <ClCompile Include="src\edits\set_value.cpp" />
     <ClCompile Include="src\gizmo.cpp" />
@@ -331,6 +332,7 @@
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
+    <ClCompile Include="src\world\utility\load_terrain_heightmap.cpp" />
     <ClCompile Include="src\world\object_class_library.cpp" />
     <ClCompile Include="src\world\tool_visualizers.cpp" />
     <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
@@ -474,6 +476,7 @@
     <ClInclude Include="src\edits\insert_node.hpp" />
     <ClInclude Include="src\edits\insert_point.hpp" />
     <ClInclude Include="src\edits\add_property.hpp" />
+    <ClInclude Include="src\edits\set_terrain.hpp" />
     <ClInclude Include="src\edits\set_terrain_area.hpp" />
     <ClInclude Include="src\edits\set_value.hpp" />
     <ClInclude Include="src\edits\stack.hpp" />
@@ -610,6 +613,7 @@
     <ClInclude Include="src\world\tool_visualizers.hpp" />
     <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
     <ClInclude Include="src\world\utility\grounding.hpp" />
+    <ClInclude Include="src\world\utility\load_terrain_heightmap.hpp" />
     <ClInclude Include="src\world\utility\make_command_post_linked_entities.hpp" />
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
     <ClInclude Include="src\world\utility\object_properties.hpp" />

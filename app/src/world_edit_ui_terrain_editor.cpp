@@ -1,10 +1,11 @@
+#include "world_edit.hpp"
+
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/raycast_terrain.hpp"
-#include "world_edit.hpp"
 
 #include "imgui.h"
 #include "imgui_ext.hpp"

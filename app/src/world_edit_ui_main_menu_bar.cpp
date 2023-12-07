@@ -202,6 +202,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _terrain_editor_config.edit_target = terrain_edit_target::color;
          }
 
+         if (ImGui::MenuItem("Import Terrain Heightmap")) {
+            _terrain_import_heightmap_open = true;
+            _terrain_import_heightmap_context = {};
+            _edit_stack_world.close_last();
+         }
+
          ImGui::EndMenu();
       }
 

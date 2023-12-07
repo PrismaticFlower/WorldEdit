@@ -165,6 +165,8 @@ private:
 
    void ui_show_terrain_editor() noexcept;
 
+   void ui_show_terrain_import_height_map() noexcept;
+
    void ui_show_about_window() noexcept;
 
    void ui_show_object_class_browser() noexcept;
@@ -324,6 +326,7 @@ private:
    bool _about_window_open = false;
    bool _render_env_map_open = false;
    bool _terrain_editor_open = false;
+   bool _terrain_import_heightmap_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;
@@ -474,6 +477,15 @@ private:
       std::chrono::steady_clock::time_point last_brush_update =
          std::chrono::steady_clock::now();
    } _terrain_editor_context;
+
+   struct terrain_import_heightmap_context {
+      container::dynamic_array_2d<uint8> loaded_heightmap;
+      std::string error_message;
+
+      float heightmap_peak_height = 0.0f;
+      float heightmap_terrain_world_size = 0.0f;
+      bool start_from_bottom = false;
+   } _terrain_import_heightmap_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
