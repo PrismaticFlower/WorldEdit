@@ -17,6 +17,8 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
                            ImGuiCond_Once, {0.0f, 0.0f});
 
    if (ImGui::Begin("Import Heightmap", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+      bool terrain_needs_update = false;
+
       if (ImGui::Button("Import Heightmap", {ImGui::CalcItemWidth(), 0.0f})) {
          static constexpr GUID load_heightmap_picker_guid = {0xe9ec2fc8,
                                                              0x774c,
@@ -61,6 +63,8 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
                      _terrain_import_heightmap_context.loaded_heightmap_u16.shape()[0] *
                      8.0f;
                }
+
+               terrain_needs_update = true;
             }
             catch (world::heightmap_load_error& e) {
                _terrain_import_heightmap_context.error_message = e.what();
@@ -85,6 +89,8 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
                            1.0f, 1.0f, 1e10f)) {
          _terrain_import_heightmap_context.heightmap_peak_height =
             std::max(_terrain_import_heightmap_context.heightmap_peak_height, 1.0f);
+
+         terrain_needs_update = true;
       }
 
       if (ImGui::DragFloat("Heightmap World Size",
@@ -93,6 +99,8 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          _terrain_import_heightmap_context.heightmap_terrain_world_size =
             std::max(_terrain_import_heightmap_context.heightmap_terrain_world_size,
                      1.0f);
+
+         terrain_needs_update = true;
       }
 
       ImGui::BeginDisabled(
@@ -100,8 +108,9 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
 
       ImGui::SeparatorText("8-bit Import Options");
 
-      ImGui::Checkbox("Start From Bottom",
-                      &_terrain_import_heightmap_context.start_from_bottom);
+      terrain_needs_update |=
+         ImGui::Checkbox("Start From Bottom",
+                         &_terrain_import_heightmap_context.start_from_bottom);
 
       ImGui::SetItemTooltip("Import the heightmap at the bottom of the "
                             "terrain instead of the midpoint.");
@@ -113,8 +122,9 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
 
       ImGui::SeparatorText("16-bit Import Options");
 
-      ImGui::Checkbox("Start From Midpoint",
-                      &_terrain_import_heightmap_context.start_from_midpoint);
+      terrain_needs_update |=
+         ImGui::Checkbox("Start From Midpoint",
+                         &_terrain_import_heightmap_context.start_from_midpoint);
 
       ImGui::SetItemTooltip(
          "Halve the precision of the imported heightmap and start from the "
@@ -132,8 +142,9 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          _edit_stack_world.close_last();
       }
 
-      if (not _terrain_import_heightmap_context.loaded_heightmap_u8.empty() or
-          not _terrain_import_heightmap_context.loaded_heightmap_u16.empty()) {
+      if (terrain_needs_update and
+          (not _terrain_import_heightmap_context.loaded_heightmap_u8.empty() or
+           not _terrain_import_heightmap_context.loaded_heightmap_u16.empty())) {
          const int32 new_length = static_cast<int32>(
             not _terrain_import_heightmap_context.loaded_heightmap_u8.empty()
                ? _terrain_import_heightmap_context.loaded_heightmap_u8.shape()[0]
