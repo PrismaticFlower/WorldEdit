@@ -479,12 +479,14 @@ private:
    } _terrain_editor_context;
 
    struct terrain_import_heightmap_context {
-      container::dynamic_array_2d<uint8> loaded_heightmap;
+      container::dynamic_array_2d<uint8> loaded_heightmap_u8;
+      container::dynamic_array_2d<uint16> loaded_heightmap_u16;
       std::string error_message;
 
       float heightmap_peak_height = 0.0f;
       float heightmap_terrain_world_size = 0.0f;
       bool start_from_bottom = false;
+      bool start_from_midpoint = false;
    } _terrain_import_heightmap_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

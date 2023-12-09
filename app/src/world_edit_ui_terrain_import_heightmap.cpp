@@ -35,15 +35,32 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
              .must_exist = true});
 
          if (path) {
-            _terrain_import_heightmap_context.loaded_heightmap = {};
+            _terrain_import_heightmap_context.loaded_heightmap_u8 = {};
+            _terrain_import_heightmap_context.loaded_heightmap_u16 = {};
             _terrain_import_heightmap_context.error_message.clear();
 
             try {
-               _terrain_import_heightmap_context.loaded_heightmap =
+               std::variant<container::dynamic_array_2d<uint8>, container::dynamic_array_2d<uint16>> loaded_heightmap =
                   world::load_heightmap(*path);
-               _terrain_import_heightmap_context.heightmap_peak_height = 25.5f;
-               _terrain_import_heightmap_context.heightmap_terrain_world_size =
-                  _terrain_import_heightmap_context.loaded_heightmap.shape()[0] * 8.0f;
+
+               if (std::holds_alternative<container::dynamic_array_2d<uint8>>(
+                      loaded_heightmap)) {
+                  _terrain_import_heightmap_context.loaded_heightmap_u8 = std::move(
+                     std::get<container::dynamic_array_2d<uint8>>(loaded_heightmap));
+                  _terrain_import_heightmap_context.heightmap_peak_height = 25.5f;
+                  _terrain_import_heightmap_context.heightmap_terrain_world_size =
+                     _terrain_import_heightmap_context.loaded_heightmap_u8.shape()[0] *
+                     8.0f;
+               }
+               else if (std::holds_alternative<container::dynamic_array_2d<uint16>>(
+                           loaded_heightmap)) {
+                  _terrain_import_heightmap_context.loaded_heightmap_u16 = std::move(
+                     std::get<container::dynamic_array_2d<uint16>>(loaded_heightmap));
+                  _terrain_import_heightmap_context.heightmap_peak_height = 655.35f;
+                  _terrain_import_heightmap_context.heightmap_terrain_world_size =
+                     _terrain_import_heightmap_context.loaded_heightmap_u16.shape()[0] *
+                     8.0f;
+               }
             }
             catch (world::heightmap_load_error& e) {
                _terrain_import_heightmap_context.error_message = e.what();
@@ -57,7 +74,9 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          ImGui::TextWrapped(_terrain_import_heightmap_context.error_message.c_str());
       }
 
-      ImGui::BeginDisabled(_terrain_import_heightmap_context.loaded_heightmap.empty());
+      ImGui::BeginDisabled(
+         _terrain_import_heightmap_context.loaded_heightmap_u8.empty() and
+         _terrain_import_heightmap_context.loaded_heightmap_u16.empty());
 
       ImGui::SeparatorText("Heightmap Import Options");
 
@@ -76,11 +95,32 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
                      1.0f);
       }
 
+      ImGui::BeginDisabled(
+         _terrain_import_heightmap_context.loaded_heightmap_u8.empty());
+
+      ImGui::SeparatorText("8-bit Import Options");
+
       ImGui::Checkbox("Start From Bottom",
                       &_terrain_import_heightmap_context.start_from_bottom);
 
       ImGui::SetItemTooltip("Import the heightmap at the bottom of the "
                             "terrain instead of the midpoint.");
+
+      ImGui::EndDisabled();
+
+      ImGui::BeginDisabled(
+         _terrain_import_heightmap_context.loaded_heightmap_u16.empty());
+
+      ImGui::SeparatorText("16-bit Import Options");
+
+      ImGui::Checkbox("Start From Midpoint",
+                      &_terrain_import_heightmap_context.start_from_midpoint);
+
+      ImGui::SetItemTooltip(
+         "Halve the precision of the imported heightmap and start from the "
+         "midpoint of the terrain instead of the bottom.");
+
+      ImGui::EndDisabled();
 
       ImGui::EndDisabled();
 
@@ -92,9 +132,12 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          _edit_stack_world.close_last();
       }
 
-      if (not _terrain_import_heightmap_context.loaded_heightmap.empty()) {
+      if (not _terrain_import_heightmap_context.loaded_heightmap_u8.empty() or
+          not _terrain_import_heightmap_context.loaded_heightmap_u16.empty()) {
          const int32 new_length = static_cast<int32>(
-            _terrain_import_heightmap_context.loaded_heightmap.shape()[0]);
+            not _terrain_import_heightmap_context.loaded_heightmap_u8.empty()
+               ? _terrain_import_heightmap_context.loaded_heightmap_u8.shape()[0]
+               : _terrain_import_heightmap_context.loaded_heightmap_u16.shape()[0]);
 
          if (_world.terrain.length != new_length) {
             world::terrain terrain{
@@ -118,30 +161,61 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          edits::bundle_vector bundle;
 
          container::dynamic_array_2d<int16> height_map{new_length, new_length};
+         float height_scale = 1.0f;
 
-         if (_terrain_import_heightmap_context.start_from_bottom) {
-            for (int32 y = 0; y < new_length; ++y) {
-               for (int32 x = 0; x < new_length; ++x) {
-                  height_map[{x, y}] = static_cast<int16>(
-                     -32768 +
-                     _terrain_import_heightmap_context.loaded_heightmap[{x, y}]);
+         if (not _terrain_import_heightmap_context.loaded_heightmap_u8.empty()) {
+            if (_terrain_import_heightmap_context.start_from_bottom) {
+               for (int32 y = 0; y < new_length; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     height_map[{x, y}] = static_cast<int16>(
+                        -32768 +
+                        _terrain_import_heightmap_context.loaded_heightmap_u8[{x, y}]);
+                  }
                }
             }
-         }
-         else {
-            for (int32 y = 0; y < new_length; ++y) {
-               for (int32 x = 0; x < new_length; ++x) {
-                  height_map[{x, y}] = static_cast<int16>(
-                     _terrain_import_heightmap_context.loaded_heightmap[{x, y}]);
+            else {
+               for (int32 y = 0; y < new_length; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     height_map[{x, y}] = static_cast<int16>(
+                        _terrain_import_heightmap_context.loaded_heightmap_u8[{x, y}]);
+                  }
                }
+            }
+
+            height_scale =
+               _terrain_import_heightmap_context.heightmap_peak_height / 255.0f;
+         }
+         else if (not _terrain_import_heightmap_context.loaded_heightmap_u16.empty()) {
+            if (_terrain_import_heightmap_context.start_from_midpoint) {
+               for (int32 y = 0; y < new_length; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     height_map[{x, y}] = static_cast<int16>(
+                        _terrain_import_heightmap_context.loaded_heightmap_u16[{x, y}] / 2);
+                  }
+               }
+
+               height_scale =
+                  _terrain_import_heightmap_context.heightmap_peak_height / 32767.0f;
+            }
+            else {
+               for (int32 y = 0; y < new_length; ++y) {
+                  for (int32 x = 0; x < new_length; ++x) {
+                     height_map[{x, y}] = static_cast<int16>(
+                        _terrain_import_heightmap_context.loaded_heightmap_u16[{x, y}] -
+                        32768);
+                  }
+               }
+
+               height_scale =
+                  _terrain_import_heightmap_context.heightmap_peak_height / 65535.0f;
             }
          }
 
          bundle.push_back(edits::make_set_terrain_area(0, 0, std::move(height_map)));
-         bundle.push_back(edits::make_set_global_value(
-            &world::world::terrain, &world::terrain::height_scale,
-            _terrain_import_heightmap_context.heightmap_peak_height / 255.0f,
-            _world.terrain.height_scale));
+         bundle.push_back(
+            edits::make_set_global_value(&world::world::terrain,
+                                         &world::terrain::height_scale, height_scale,
+                                         _world.terrain.height_scale));
          bundle.push_back(edits::make_set_global_value(
             &world::world::terrain, &world::terrain::grid_scale,
             _terrain_import_heightmap_context.heightmap_terrain_world_size / new_length,

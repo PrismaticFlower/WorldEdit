@@ -11,7 +11,7 @@
 namespace we::world {
 
 auto load_heightmap(const std::filesystem::path& file_path)
-   -> container::dynamic_array_2d<uint8>
+   -> std::variant<container::dynamic_array_2d<uint8>, container::dynamic_array_2d<uint16>>
 {
    DirectX::ScratchImage image;
 
@@ -109,7 +109,8 @@ auto load_heightmap(const std::filesystem::path& file_path)
                                  "max terrain length is 1024."};
    }
 
-   if (image.GetMetadata().format != DXGI_FORMAT_R8_UNORM) {
+   if (image.GetMetadata().format != DXGI_FORMAT_R8_UNORM and
+       image.GetMetadata().format != DXGI_FORMAT_R16_UNORM) {
       DirectX::ScratchImage converted_image;
 
       if (FAILED(DirectX::Convert(*image.GetImage(0, 0, 0), DXGI_FORMAT_R8_UNORM,
@@ -121,17 +122,35 @@ auto load_heightmap(const std::filesystem::path& file_path)
       std::swap(converted_image, image);
    }
 
-   container::dynamic_array_2d<uint8> heightmap{image.GetMetadata().width,
-                                                image.GetMetadata().width};
+   if (image.GetMetadata().format == DXGI_FORMAT_R8_UNORM) {
+      container::dynamic_array_2d<uint8> heightmap{image.GetMetadata().width,
+                                                   image.GetMetadata().width};
 
-   for (std::size_t y = 0; y < image.GetMetadata().height; ++y) {
-      std::memcpy(&heightmap[{0, static_cast<std::ptrdiff_t>(y)}],
-                  image.GetImage(0, 0, 0)->pixels +
-                     (image.GetImage(0, 0, 0)->rowPitch * y),
-                  image.GetMetadata().width * sizeof(uint8));
+      for (std::size_t y = 0; y < image.GetMetadata().height; ++y) {
+         std::memcpy(&heightmap[{0, static_cast<std::ptrdiff_t>(y)}],
+                     image.GetImage(0, 0, 0)->pixels +
+                        (image.GetImage(0, 0, 0)->rowPitch * y),
+                     image.GetMetadata().width * sizeof(uint8));
+      }
+
+      return heightmap;
    }
+   else if (image.GetMetadata().format == DXGI_FORMAT_R16_UNORM) {
+      container::dynamic_array_2d<uint16> heightmap{image.GetMetadata().width,
+                                                    image.GetMetadata().width};
 
-   return heightmap;
+      for (std::size_t y = 0; y < image.GetMetadata().height; ++y) {
+         std::memcpy(&heightmap[{0, static_cast<std::ptrdiff_t>(y)}],
+                     image.GetImage(0, 0, 0)->pixels +
+                        (image.GetImage(0, 0, 0)->rowPitch * y),
+                     image.GetMetadata().width * sizeof(uint16));
+      }
+
+      return heightmap;
+   }
+   else {
+      throw heightmap_load_error{"Unexpected image format."};
+   }
 }
 
 }
