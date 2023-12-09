@@ -28,7 +28,8 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          auto path = utility::show_file_open_picker(
             {.title = L"Import Heightmap",
              .ok_button_label = L"Import",
-             .filters = {utility::file_picker_filter{.name = L"Texture", .filter = L"*.tga"}},
+             .filters = {utility::file_picker_filter{.name = L"Texture",
+                                                     .filter = L"*.tga;*.png"}},
              .picker_guid = load_heightmap_picker_guid,
              .window = _window,
              .must_exist = true});

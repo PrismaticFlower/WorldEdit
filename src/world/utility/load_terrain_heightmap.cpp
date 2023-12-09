@@ -1,9 +1,12 @@
 #include "load_terrain_heightmap.hpp"
+#include "utility/com_ptr.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <bit>
 
 #include <DirectXTex.h>
+#include <wil/resource.h>
+#include <wincodec.h>
 
 namespace we::world {
 
@@ -12,8 +15,83 @@ auto load_heightmap(const std::filesystem::path& file_path)
 {
    DirectX::ScratchImage image;
 
-   if (FAILED(DirectX::LoadFromTGAFile(file_path.c_str(), nullptr, image))) {
-      throw heightmap_load_error{"Failed to load image."};
+   if (string::iequals(file_path.extension().string(), ".tga")) {
+      if (FAILED(DirectX::LoadFromTGAFile(file_path.c_str(), nullptr, image))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+   }
+   else if (string::iequals(file_path.extension().string(), ".png")) {
+      if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+
+      const auto cleanup = wil::scope_exit([] { CoUninitialize(); });
+
+      utility::com_ptr<IWICImagingFactory> factory;
+
+      if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                                  IID_PPV_ARGS(factory.clear_and_assign())))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+
+      utility::com_ptr<IWICBitmapDecoder> decoder;
+
+      if (FAILED(factory->CreateDecoderFromFilename(file_path.c_str(), nullptr, GENERIC_READ,
+                                                    WICDecodeMetadataCacheOnDemand,
+                                                    decoder.clear_and_assign()))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+
+      utility::com_ptr<IWICBitmapFrameDecode> frame_decode;
+
+      if (FAILED(decoder->GetFrame(0, frame_decode.clear_and_assign()))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+
+      WICPixelFormatGUID loaded_format{};
+
+      if (FAILED(frame_decode->GetPixelFormat(&loaded_format))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+
+      DXGI_FORMAT dxgi_format = DXGI_FORMAT_UNKNOWN;
+
+      if (loaded_format == GUID_WICPixelFormat8bppGray) {
+         dxgi_format = DXGI_FORMAT_R8_UNORM;
+      }
+      else if (loaded_format == GUID_WICPixelFormat16bppGray)
+         dxgi_format = DXGI_FORMAT_R16_UNORM;
+      else {
+         throw heightmap_load_error{"Unsupported image format. When loading a "
+                                    "heightmap from a .PNG file it's format "
+                                    "must be 8-bit gray or 16-bit gray."};
+      }
+
+      uint32 width = 0;
+      uint32 height = 0;
+
+      if (FAILED(frame_decode->GetSize(&width, &height))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+
+      if (FAILED(image.Initialize2D(dxgi_format, width, height, 1, 1))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+
+      if (image.GetImage(0, 0, 0)->rowPitch > UINT32_MAX or
+          image.GetImage(0, 0, 0)->slicePitch > UINT32_MAX) {
+         throw heightmap_load_error{"Failed to load image. Image too large."};
+      }
+
+      if (FAILED(frame_decode->CopyPixels(
+             nullptr, static_cast<uint32>(image.GetImage(0, 0, 0)->rowPitch),
+             static_cast<uint32>(image.GetImage(0, 0, 0)->slicePitch),
+             image.GetImage(0, 0, 0)->pixels))) {
+         throw heightmap_load_error{"Failed to load image."};
+      }
+   }
+   else {
+      throw heightmap_load_error{"Unsupported file type."};
    }
 
    if (image.GetMetadata().width != image.GetMetadata().height) {
