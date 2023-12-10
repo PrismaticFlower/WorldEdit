@@ -22,16 +22,28 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
             ui& ui = settings.ui;
             preferences& preferences = settings.preferences;
 
+            ImGui::DragFloat("At Cursor Placement Re-Enable Distance",
+                             &preferences.cursor_placement_reenable_distance,
+                             1.0f, 1.0f, 64.0f, "%.0f");
+
+            ImGui::SetItemTooltip(
+               "If after Undoing or Redoing an edit an entity is being "
+               "created with placement mode 'At Cursor' then the placement "
+               "mode will temporarily be forced to be 'Manual'.\n\n 'At "
+               "Cursor' placement will be reenabled will the mouse has moved "
+               "this many pixels.\n\nAll of this is done to give you a chance "
+               "to Redo changes that would otherwise by replaced by 'At "
+               "Cursor' placement edits.");
+
             if (ImGui::InputText("Text Editor", &preferences.text_editor)) {
                std::erase(preferences.text_editor, '"');
             }
 
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
-               ImGui::SetTooltip("The path to the app to use when opening text "
-                                 "files. The path can contain environment "
-                                 "variables such as %%ProgramFiles%%. But may "
-                                 "not contain quotes (\").");
-            }
+            ImGui::SetItemTooltip(
+               "The path to the app to use when opening text "
+               "files. The path can contain environment "
+               "variables such as %%ProgramFiles%%. But may "
+               "not contain quotes (\").");
 
             ImGui::DragFloat("Gizmo Scale", &ui.gizmo_scale, 0.125f, 0.0f,
                              10.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);

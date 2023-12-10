@@ -148,6 +148,7 @@ auto load(const std::string_view path) -> settings
       continue;                                                                \
    }
          for (auto& prop : node) {
+            setting_entry(cursor_placement_reenable_distance);
             setting_entry(text_editor);
          }
 #undef setting_entry
@@ -235,6 +236,7 @@ void save(const std::string_view path, const settings& settings) noexcept
 
 #define name_value(prop) #prop, settings.preferences.prop
 
+      write(file, name_value(cursor_placement_reenable_distance));
       write(file, name_value(text_editor));
 
 #undef name_value

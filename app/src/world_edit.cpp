@@ -1743,6 +1743,11 @@ void world_edit::undo() noexcept
 
    if (_interaction_targets.creation_entity) {
       _entity_creation_context = {};
+
+      _cursor_placement_undo_lock =
+         _entity_creation_config.placement_mode == placement_mode::cursor;
+      _cursor_placement_lock_position = {ImGui::GetMousePos().x,
+                                         ImGui::GetMousePos().y};
    }
 
    _selection_edit_tool = selection_edit_tool::none;
@@ -1751,6 +1756,15 @@ void world_edit::undo() noexcept
 void world_edit::redo() noexcept
 {
    _edit_stack_world.reapply(_edit_context);
+
+   if (_interaction_targets.creation_entity) {
+      _entity_creation_context = {};
+
+      _cursor_placement_undo_lock =
+         _entity_creation_config.placement_mode == placement_mode::cursor;
+      _cursor_placement_lock_position = {ImGui::GetMousePos().x,
+                                         ImGui::GetMousePos().y};
+   }
 }
 
 void world_edit::delete_selected() noexcept

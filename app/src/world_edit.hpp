@@ -310,6 +310,7 @@ private:
    bool _pan_camera = false;
    bool _orbit_camera_active = false;
    bool _selecting_entity = false;
+   bool _cursor_placement_undo_lock = false;
 
    bool _hotkeys_view_show = false;
    bool _imgui_demo_open = false;
@@ -505,6 +506,7 @@ private:
    world::active_entity_types _selection_cursor_move_hit_mask;
 
    float2 _select_start_position;
+   float2 _cursor_placement_lock_position;
 
    graphics::env_map_params _env_map_render_params;
    float3 _env_map_render_offset;

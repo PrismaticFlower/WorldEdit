@@ -145,6 +145,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
    placement_traits traits{};
 
+   const bool using_cursor_placement =
+      _entity_creation_config.placement_mode == placement_mode::cursor and
+      not _cursor_placement_undo_lock;
+
    if (std::holds_alternative<world::object>(creation_entity)) {
       const world::object& object = std::get<world::object>(creation_entity);
 
@@ -237,8 +241,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
-           _entity_creation_config.placement_mode == placement_mode::cursor or
-           rotate_entity_forward or rotate_entity_back) and
+           using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
           not _entity_creation_context.using_point_at) {
          quaternion new_rotation = object.rotation;
          float3 new_position = object.position;
@@ -255,7 +258,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
          }
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_ground == placement_ground::bbox) {
@@ -370,8 +373,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
-           _entity_creation_config.placement_mode == placement_mode::cursor or
-           rotate_entity_forward or rotate_entity_back) and
+           using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
           not _entity_creation_context.using_point_at) {
          quaternion new_rotation = light.rotation;
          float3 new_position = light.position;
@@ -388,7 +390,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
          }
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
@@ -665,8 +667,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
-           _entity_creation_config.placement_mode == placement_mode::cursor or
-           rotate_entity_forward or rotate_entity_back) and
+           using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
           not _entity_creation_context.using_point_at) {
          quaternion new_rotation = path.nodes[0].rotation;
          float3 new_position = path.nodes[0].position;
@@ -683,7 +684,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
          }
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_alignment ==
@@ -1208,8 +1209,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
-           _entity_creation_config.placement_mode == placement_mode::cursor or
-           rotate_entity_forward or rotate_entity_back) and
+           using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
           not _entity_creation_context.using_point_at) {
          quaternion new_rotation = region.rotation;
          float3 new_position = region.position;
@@ -1226,7 +1226,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
          }
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_ground == placement_ground::bbox) {
@@ -1533,8 +1533,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             old_position.y != sector.points[0].y;
       }
 
-      if (_entity_creation_config.placement_mode == placement_mode::cursor and
-          not using_from_object_bbox) {
+      if (using_cursor_placement and not using_from_object_bbox) {
          float2 new_position = sector.points[0];
 
          new_position = {_cursor_positionWS.x, _cursor_positionWS.z};
@@ -1769,8 +1768,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
-           _entity_creation_config.placement_mode == placement_mode::cursor or
-           rotate_entity_forward or rotate_entity_back) and
+           using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
           not _entity_creation_context.using_point_at and
           not _entity_creation_context.using_pick_sector) {
          quaternion new_rotation = portal.rotation;
@@ -1788,7 +1786,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
          }
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_ground == placement_ground::bbox) {
@@ -1934,8 +1932,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if ((_entity_creation_config.placement_rotation == placement_rotation::surface or
-           _entity_creation_config.placement_mode == placement_mode::cursor or
-           rotate_entity_forward or rotate_entity_back) and
+           using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
           not _entity_creation_context.using_point_at) {
          quaternion new_rotation = hintnode.rotation;
          float3 new_position = hintnode.position;
@@ -1952,7 +1949,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
          }
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_alignment ==
@@ -2115,13 +2112,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
             old_position.z != barrier.position.z;
       }
 
-      if ((_entity_creation_config.placement_mode == placement_mode::cursor or
-           rotate_entity_forward or rotate_entity_back) and
+      if ((using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
           not _entity_creation_context.using_point_at) {
          float3 new_position = barrier.position;
          float new_rotation = barrier.rotation_angle;
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_alignment ==
@@ -2510,11 +2506,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _entity_creation_context.lock_z_axis |= old_position.z != hub.position.z;
       }
 
-      if (_entity_creation_config.placement_mode == placement_mode::cursor and
-          not _entity_creation_context.hub_sizing_started) {
+      if (using_cursor_placement and not _entity_creation_context.hub_sizing_started) {
          float3 new_position = hub.position;
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_alignment ==
@@ -2725,11 +2720,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             old_position.y != boundary.position.y;
       }
 
-      if (_entity_creation_config.placement_mode == placement_mode::cursor and
-          not _entity_creation_context.using_point_at) {
+      if (using_cursor_placement and not _entity_creation_context.using_point_at) {
          float2 new_position = boundary.position;
 
-         if (_entity_creation_config.placement_mode == placement_mode::cursor) {
+         if (using_cursor_placement) {
             new_position = float2{_cursor_positionWS.x, _cursor_positionWS.z};
 
             if (_entity_creation_config.placement_alignment ==
@@ -3055,6 +3049,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
    if (not continue_creation) {
       _edit_stack_world.apply(edits::make_creation_entity_set(std::nullopt, creation_entity),
                               _edit_context);
+   }
+
+   if (_cursor_placement_undo_lock) {
+      ImGui::SetTooltip(
+         "At Cursor entity placement is disabled when undoing and "
+         "redoing edits. Move the mouse to re-enable.");
+
+      _cursor_placement_undo_lock =
+         distance(_cursor_placement_lock_position,
+                  float2{ImGui::GetMousePos().x, ImGui::GetMousePos().y}) <
+         _settings.preferences.cursor_placement_reenable_distance;
    }
 }
 
