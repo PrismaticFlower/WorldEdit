@@ -66,6 +66,7 @@ struct options {
    bool additive_emissive = false;
    bool vertex_lighting = false;
    std::vector<std::string> normal_maps;
+   float scale = 1.0f;
 };
 
 struct scene {

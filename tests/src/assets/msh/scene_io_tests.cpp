@@ -136,6 +136,25 @@ TEST_CASE(".msh reading", "[Assets][MSH]")
          CHECK(node.collision_primitive->length == 1.0_a);
       }
    }
+
+   // Option Checks
+   {
+      CHECK(not scene.options.additive_emissive);
+      CHECK(not scene.options.vertex_lighting);
+      CHECK(scene.options.normal_maps.empty());
+      CHECK(scene.options.scale == 1.0f);
+   }
+}
+
+TEST_CASE(".msh reading scale option", "[Assets][MSH]")
+{
+   auto scene = read_scene("data/sand_test_scale.msh");
+
+   CHECK(scene.options.scale == 2.5f);
+
+   // Sanity Checks (this is just a copy of sand_test.msh with an .option file added, so there is no point in checking it in depth).
+   REQUIRE(scene.materials.size() == 1);
+   REQUIRE(scene.nodes.size() == 3);
 }
 
 }

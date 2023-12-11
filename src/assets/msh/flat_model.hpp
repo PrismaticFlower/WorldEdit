@@ -97,7 +97,8 @@ private:
                                         const float4x4& node_to_object,
                                         const options& options);
 
-   void flatten_node_to_collision(const node& node, const float4x4& node_to_object);
+   void flatten_node_to_collision(const node& node, const float4x4& node_to_object,
+                                  const options& options);
 
    auto select_mesh_for_segment(const geometry_segment& segment, const material& material,
                                 const options& options) -> mesh&;

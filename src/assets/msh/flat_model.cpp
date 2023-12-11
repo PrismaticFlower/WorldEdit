@@ -28,22 +28,29 @@ auto build_node_to_object_transforms(const scene& scene) -> std::vector<float4x4
 
    transforms.reserve(scene.nodes.size());
 
+   const float scale = scene.options.scale;
+
    for (const auto& node : scene.nodes) {
-      auto& transform = transforms.emplace_back(node.transform);
+      auto& transform = transforms.emplace_back(
+         msh::transform{node.transform.translation * scale, node.transform.rotation});
 
       const auto apply_parent_transform =
          [](auto apply_parent_transform, float4x4& transform,
-            const std::string_view parent, const std::vector<msh::node>& nodes) -> void {
+            const std::string_view parent, const std::vector<msh::node>& nodes,
+            const float scale) -> void {
          if (auto parent_it = std::find_if(nodes.cbegin(), nodes.cend(),
                                            [&](const msh::node& node) {
                                               return node.name == parent;
                                            });
              parent_it != nodes.cend()) {
-            transform = float4x4{parent_it->transform} * transform;
+            transform =
+               float4x4{msh::transform{parent_it->transform.translation * scale,
+                                       parent_it->transform.rotation}} *
+               transform;
 
             if (parent_it->parent) {
                apply_parent_transform(apply_parent_transform, transform,
-                                      *parent_it->parent, nodes);
+                                      *parent_it->parent, nodes, scale);
             }
          }
          else {
@@ -54,7 +61,7 @@ auto build_node_to_object_transforms(const scene& scene) -> std::vector<float4x4
 
       if (node.parent) {
          apply_parent_transform(apply_parent_transform, transform, *node.parent,
-                                scene.nodes);
+                                scene.nodes, scale);
       }
    }
 
@@ -100,10 +107,12 @@ bool is_collision_node(const node& node) noexcept
    return false;
 }
 
-auto make_flat_scene_node(const node& base, const std::vector<node>& nodes) -> flat_model_node
+auto make_flat_scene_node(const node& base, const std::vector<node>& nodes,
+                          const float scale) -> flat_model_node
 {
    flat_model_node flat_node{.name = base.name,
-                             .transform = base.transform,
+                             .transform = {base.transform.translation * scale,
+                                           base.transform.rotation},
                              .type = base.type,
                              .hidden = base.hidden};
 
@@ -114,7 +123,7 @@ auto make_flat_scene_node(const node& base, const std::vector<node>& nodes) -> f
    for (const auto& node : nodes) {
       if (node.parent != base.name) continue;
 
-      flat_node.children.emplace_back(make_flat_scene_node(node, nodes));
+      flat_node.children.emplace_back(make_flat_scene_node(node, nodes, scale));
    }
 
    return flat_node;
@@ -180,14 +189,15 @@ flat_model::flat_model(const scene& scene) noexcept
          flatten_segments_to_terrain_cut(node.segments, node_to_object, scene.options);
       }
       else if (is_collision_node(node)) {
-         flatten_node_to_collision(node, node_to_object);
+         flatten_node_to_collision(node, node_to_object, scene.options);
       }
    }
 
    for (const auto& node : scene.nodes) {
       if (node.parent) continue;
 
-      node_hierarchy.emplace_back(make_flat_scene_node(node, scene.nodes));
+      node_hierarchy.emplace_back(
+         make_flat_scene_node(node, scene.nodes, scene.options.scale));
    }
 
    generate_tangents_for_meshes();
@@ -255,7 +265,7 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
       const auto vertex_offset = mesh.positions.size();
 
       for (auto pos : segment.positions) {
-         mesh.positions.emplace_back(node_to_object * pos);
+         mesh.positions.emplace_back(node_to_object * pos * options.scale);
       }
 
       const float3x3 normal_node_to_object{node_to_object};
@@ -293,9 +303,9 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
    }
 }
 
-void flat_model::flatten_segments_to_terrain_cut(
-   const std::vector<geometry_segment>& segments,
-   const float4x4& node_to_object, [[maybe_unused]] const options& options)
+void flat_model::flatten_segments_to_terrain_cut(const std::vector<geometry_segment>& segments,
+                                                 const float4x4& node_to_object,
+                                                 const options& options)
 {
    std::size_t vertices_count = 0;
    std::size_t triangles_count = 0;
@@ -327,7 +337,7 @@ void flat_model::flatten_segments_to_terrain_cut(
          const std::size_t vertex_offset = cut.positions.size();
 
          for (auto pos : segment.positions) {
-            cut.positions.emplace_back(node_to_object * pos);
+            cut.positions.emplace_back(node_to_object * pos * options.scale);
          }
 
          for (auto [i0, i1, i2] : segment.triangles) {
@@ -378,7 +388,9 @@ auto flat_model::select_mesh_for_segment(const geometry_segment& segment,
    return mesh;
 }
 
-void flat_model::flatten_node_to_collision(const node& node, const float4x4& node_to_object)
+void flat_model::flatten_node_to_collision(const node& node,
+                                           const float4x4& node_to_object,
+                                           const options& options)
 {
    auto& flat_collision = collision.emplace_back();
 
@@ -402,7 +414,7 @@ void flat_model::flatten_node_to_collision(const node& node, const float4x4& nod
          const auto base_vertex = mesh.positions.size();
 
          for (auto pos : segment.positions) {
-            mesh.positions.emplace_back(node_to_object * pos);
+            mesh.positions.emplace_back(node_to_object * pos * options.scale);
          }
 
          for (auto [i0, i1, i2] : segment.triangles) {

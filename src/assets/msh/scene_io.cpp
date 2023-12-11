@@ -7,6 +7,7 @@
 #include "utility/string_icompare.hpp"
 #include "validate_scene.hpp"
 
+#include <charconv>
 #include <numeric>
 #include <stdexcept>
 
@@ -391,6 +392,14 @@ auto read_scene_options(const std::filesystem::path& path) -> options
       }
       else if (string::iequals(opt.name, "-vertexlighting"sv)) {
          results.vertex_lighting = true;
+      }
+      else if (string::iequals(opt.name, "-scale"sv) and not opt.arguments.empty()) {
+         if (std::from_chars(opt.arguments[0].data(),
+                             opt.arguments[0].data() + opt.arguments[0].size(),
+                             results.scale)
+                .ec != std::error_code{}) {
+            results.scale = 1.0f;
+         }
       }
    }
 

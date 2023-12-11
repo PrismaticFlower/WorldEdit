@@ -397,6 +397,303 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
    }
 }
 
+TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
+{
+   const scene input_scene{
+      .materials = {{
+         .name = "snow"s,
+         .specular_color = {0.75f, 0.75f, 0.75f},
+         .flags = material_flags::specular,
+         .rendertype = rendertype::normalmap,
+         .textures = {"snow"s, "snow_normalmap"s},
+      }},
+
+      .nodes =
+         {
+            {.name = "root"s,
+             .transform =
+                {
+                   .translation = {2.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::null},
+
+            {.name = "null00"s,
+             .parent = "root"s,
+             .transform =
+                {
+                   .translation = {0.0f, 3.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::null},
+
+            {.name = "geometry"s,
+             .parent = "null00"s,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 1.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::static_mesh,
+             .segments = {{
+                .material_index = 0,
+                .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+                .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                               {0.0f, 1.0f, 1.0f},
+                                               {0.0f, 1.0f, 0.0f}},
+                .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                .triangles = {{0, 1, 2}},
+             }}},
+
+            {.name = "p_box"s,
+             .parent = "null00"s,
+             .transform =
+                {
+                   .translation = {1.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::null,
+             .collision_primitive =
+                collision_primitive{.shape = collision_primitive_shape::box,
+                                    .radius = 1.0f,
+                                    .height = 0.5f,
+                                    .length = 2.5f}},
+
+            {.name = "collision"s,
+             .parent = "null00"s,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 0.5f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::static_mesh,
+             .segments =
+                {
+                   {
+                      .material_index = 0,
+                      .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+                      .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                                     {0.0f, 1.0f, 1.0f},
+                                                     {0.0f, 1.0f, 0.0f}},
+                      .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                      .triangles = {{0, 1, 2}},
+                   }}},
+
+            {.name = "terraincutter"s,
+             .parent = std::nullopt,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::static_mesh,
+             .segments =
+                {
+                   {
+                      .material_index = 0,
+                      .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+                      .normals =
+                         std::vector<float3>{{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+                      .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                      .triangles = {{0, 1, 2}, {1, 0, 2}},
+                   }}},
+         },
+
+      .options = {.scale = 2.5f},
+   };
+
+   flat_model model{input_scene};
+
+   // hierarchy checks
+   {
+      REQUIRE(model.node_hierarchy.size() == 2);
+
+      // root
+      {
+         auto& root = model.node_hierarchy[0];
+
+         CHECK(root.name == input_scene.nodes[0].name);
+         CHECK(approx_equals(root.transform.translation,
+                             input_scene.nodes[0].transform.translation * 2.5f));
+         CHECK(approx_equals(root.transform.rotation,
+                             input_scene.nodes[0].transform.rotation));
+         CHECK(root.type == input_scene.nodes[0].type);
+         CHECK(root.hidden == input_scene.nodes[0].hidden);
+
+         REQUIRE(root.children.size() == 1);
+
+         // null00
+         {
+            auto& null00 = root.children[0];
+
+            CHECK(null00.name == input_scene.nodes[1].name);
+            CHECK(approx_equals(null00.transform.translation,
+                                input_scene.nodes[1].transform.translation * 2.5f));
+            CHECK(approx_equals(null00.transform.rotation,
+                                input_scene.nodes[1].transform.rotation));
+            CHECK(null00.type == input_scene.nodes[1].type);
+            CHECK(null00.hidden == input_scene.nodes[1].hidden);
+
+            REQUIRE(null00.children.size() == 3);
+
+            // geometry
+            {
+               auto& geometry = null00.children[0];
+
+               CHECK(geometry.name == input_scene.nodes[2].name);
+               CHECK(approx_equals(geometry.transform.translation,
+                                   input_scene.nodes[2].transform.translation * 2.5f));
+               CHECK(approx_equals(geometry.transform.rotation,
+                                   input_scene.nodes[2].transform.rotation));
+               CHECK(geometry.type == input_scene.nodes[2].type);
+               CHECK(geometry.hidden == input_scene.nodes[2].hidden);
+            }
+
+            // p_box
+            {
+               auto& p_box = null00.children[1];
+
+               CHECK(p_box.name == input_scene.nodes[3].name);
+               CHECK(approx_equals(p_box.transform.translation,
+                                   input_scene.nodes[3].transform.translation * 2.5f));
+               CHECK(approx_equals(p_box.transform.rotation,
+                                   input_scene.nodes[3].transform.rotation));
+               CHECK(p_box.type == input_scene.nodes[3].type);
+               CHECK(p_box.hidden == input_scene.nodes[3].hidden);
+            }
+
+            // collision
+            {
+               auto& collision = null00.children[2];
+
+               CHECK(collision.name == input_scene.nodes[4].name);
+               CHECK(approx_equals(collision.transform.translation,
+                                   input_scene.nodes[4].transform.translation * 2.5f));
+               CHECK(approx_equals(collision.transform.rotation,
+                                   input_scene.nodes[4].transform.rotation));
+               CHECK(collision.type == input_scene.nodes[4].type);
+               CHECK(collision.hidden == input_scene.nodes[4].hidden);
+            }
+         }
+      }
+
+      // terraincut
+      {
+         auto& terraincut = model.node_hierarchy[1];
+
+         CHECK(terraincut.name == input_scene.nodes[5].name);
+         CHECK(approx_equals(terraincut.transform.translation,
+                             input_scene.nodes[5].transform.translation * 2.5f));
+         CHECK(approx_equals(terraincut.transform.rotation,
+                             input_scene.nodes[5].transform.rotation));
+         CHECK(terraincut.type == input_scene.nodes[5].type);
+         CHECK(terraincut.hidden == input_scene.nodes[5].hidden);
+      }
+   }
+
+   // mesh checks
+   {
+      REQUIRE(model.meshes.size() == 1);
+
+      const auto translate_position_from_root = [&](float3 position) {
+         return position + input_scene.nodes[2].transform.translation * 2.5f +
+                input_scene.nodes[1].transform.translation * 2.5f +
+                input_scene.nodes[0].transform.translation * 2.5f;
+      };
+
+      const auto& mesh = model.meshes[0];
+      const auto& segment = input_scene.nodes[2].segments[0];
+
+      REQUIRE(mesh.material == input_scene.materials[segment.material_index]);
+      REQUIRE(mesh.positions.size() == segment.positions.size());
+      REQUIRE(mesh.normals.size() == segment.normals->size());
+      REQUIRE(mesh.texcoords.size() == segment.texcoords->size());
+      REQUIRE(mesh.triangles.size() == 1);
+
+      CHECK(approx_equals(mesh.positions[0],
+                          translate_position_from_root(segment.positions[0]) * 2.5f));
+      CHECK(approx_equals(mesh.positions[1],
+                          translate_position_from_root(segment.positions[1]) * 2.5f));
+      CHECK(approx_equals(mesh.positions[2],
+                          translate_position_from_root(segment.positions[2]) * 2.5f));
+
+      CHECK(mesh.triangles[0][0] == segment.triangles[0][0]);
+      CHECK(mesh.triangles[0][1] == segment.triangles[0][1]);
+      CHECK(mesh.triangles[0][2] == segment.triangles[0][2]);
+   }
+
+   // terrain cut checks
+   {
+      REQUIRE(model.terrain_cuts.size() == 1);
+
+      REQUIRE(model.terrain_cuts[0].positions.size() == 3);
+      CHECK(model.terrain_cuts[0].positions[0] == float3{0.0f, 0.0f, 0.0f} * 2.5f);
+      CHECK(model.terrain_cuts[0].positions[1] == float3{0.0f, 0.0f, 1.0f} * 2.5f);
+      CHECK(model.terrain_cuts[0].positions[2] == float3{0.0f, 1.0f, 1.0f} * 2.5f);
+
+      REQUIRE(model.terrain_cuts[0].triangles.size() == 2);
+      CHECK(model.terrain_cuts[0].triangles[0] == std::array<uint16, 3>{0, 1, 2});
+      CHECK(model.terrain_cuts[0].triangles[1] == std::array<uint16, 3>{1, 0, 2});
+   }
+
+   // collision checks
+   {
+      REQUIRE(model.collision.size() == 2);
+
+      // primitive
+      {
+         REQUIRE(std::holds_alternative<flat_model_collision::primitive>(
+            model.collision[0].geometry));
+
+         auto& primitive =
+            std::get<flat_model_collision::primitive>(model.collision[0].geometry);
+
+         CHECK(primitive.radius ==
+               Approx(input_scene.nodes[3].collision_primitive->radius));
+         CHECK(primitive.height ==
+               Approx(input_scene.nodes[3].collision_primitive->height));
+         CHECK(primitive.length ==
+               Approx(input_scene.nodes[3].collision_primitive->length));
+
+         const auto rotation = input_scene.nodes[0].transform.rotation *
+                               input_scene.nodes[1].transform.rotation *
+                               input_scene.nodes[3].transform.rotation;
+         const auto position = input_scene.nodes[3].transform.translation * 2.5f +
+                               input_scene.nodes[1].transform.translation * 2.5f +
+                               input_scene.nodes[0].transform.translation * 2.5f;
+
+         CHECK(approx_equals(primitive.transform.rotation, rotation));
+         CHECK(approx_equals(primitive.transform.translation, position));
+      }
+
+      // mesh
+      {
+         REQUIRE(std::holds_alternative<flat_model_collision::mesh>(
+            model.collision[1].geometry));
+
+         auto& mesh =
+            std::get<flat_model_collision::mesh>(model.collision[1].geometry);
+
+         CHECK(mesh.triangles == input_scene.nodes[4].segments[0].triangles);
+
+         const auto transform_position_from_root = [&](float3 position) {
+            return position + input_scene.nodes[4].transform.translation * 2.5f +
+                   input_scene.nodes[1].transform.translation * 2.5f +
+                   input_scene.nodes[0].transform.translation * 2.5f;
+         };
+
+         auto& segment = input_scene.nodes[4].segments[0];
+
+         CHECK(approx_equals(mesh.positions[0],
+                             transform_position_from_root(segment.positions[0]) * 2.5f));
+         CHECK(approx_equals(mesh.positions[1],
+                             transform_position_from_root(segment.positions[1]) * 2.5f));
+         CHECK(approx_equals(mesh.positions[2],
+                             transform_position_from_root(segment.positions[2]) * 2.5f));
+      }
+   }
+}
+
 TEST_CASE(".msh flat excessive vertices test", "[Assets][MSH]")
 {
    scene input_scene{
