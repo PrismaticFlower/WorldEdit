@@ -1300,7 +1300,7 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
    const HWND window = static_cast<HWND>(desc.window);
 
    RECT rect{};
-   GetWindowRect(window, &rect);
+   GetClientRect(window, &rect);
 
    const uint32 width = static_cast<uint32>(rect.right - rect.left);
    const uint32 height = static_cast<uint32>(rect.bottom - rect.top);
@@ -1778,7 +1778,7 @@ void command_list::close()
    throw_if_fail(state->command_list->Close());
 }
 
- void command_list::reset_common()
+void command_list::reset_common()
 {
    state->command_allocator =
       state->allocator_pool.try_aquire(state->device_state->current_frame.load(),
@@ -1793,7 +1793,7 @@ void command_list::close()
    throw_if_fail(state->command_list->Reset(state->command_allocator.get(), nullptr));
 }
 
- void command_list::reset()
+void command_list::reset()
 {
    reset_common();
 
@@ -1806,7 +1806,7 @@ void command_list::close()
    }
 }
 
- void command_list::reset(sampler_heap_handle sampler_heap)
+void command_list::reset(sampler_heap_handle sampler_heap)
 {
    reset_common();
 
@@ -1908,8 +1908,7 @@ void copy_command_list::deferred_barrier(
    }
 }
 
-void copy_command_list::deferred_barrier(
-   const legacy_resource_transition_barrier& barrier)
+void copy_command_list::deferred_barrier(const legacy_resource_transition_barrier& barrier)
 {
    deferred_barrier(std::span{&barrier, 1});
 }
@@ -1930,14 +1929,12 @@ void copy_command_list::deferred_barrier(
    }
 }
 
-void copy_command_list::deferred_barrier(
-   const legacy_resource_aliasing_barrier& barrier)
+void copy_command_list::deferred_barrier(const legacy_resource_aliasing_barrier& barrier)
 {
    deferred_barrier(std::span{&barrier, 1});
 }
 
-void copy_command_list::deferred_barrier(
-   const std::span<const legacy_resource_uav_barrier> barriers)
+void copy_command_list::deferred_barrier(const std::span<const legacy_resource_uav_barrier> barriers)
 {
    state->deferred_legacy_barriers.reserve(
       state->deferred_legacy_barriers.size() + barriers.size());
@@ -1950,13 +1947,12 @@ void copy_command_list::deferred_barrier(
    }
 }
 
-void copy_command_list::deferred_barrier(
-   const legacy_resource_uav_barrier& barrier)
+void copy_command_list::deferred_barrier(const legacy_resource_uav_barrier& barrier)
 {
    deferred_barrier(std::span{&barrier, 1});
 }
 
- void copy_command_list::flush_barriers()
+void copy_command_list::flush_barriers()
 {
    [[likely]] if (state->supports_enhanced_barriers) {
       if (not state->deferred_legacy_barriers.empty()) {

@@ -97,7 +97,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    }
 
    RECT rect{};
-   GetWindowRect(window, &rect);
+   GetClientRect(window, &rect);
 
    _camera.aspect_ratio(static_cast<float>(rect.right - rect.left) /
                         static_cast<float>(rect.bottom - rect.top));
