@@ -114,6 +114,8 @@ struct terrain {
    dirty_rect_tracker color_map_dirty;
    dirty_rect_tracker water_map_dirty;
 
+   void untracked_fill_dirty_rects() noexcept;
+
    void untracked_clear_dirty_rects() noexcept;
 };
 

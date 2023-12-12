@@ -184,14 +184,14 @@ void world_edit::update()
             _env_map_save_error = e.what();
          }
       }
+
+      _world.terrain.untracked_clear_dirty_rects();
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
 
       ImGui::EndFrame();
    }
-
-   _world.terrain.untracked_clear_dirty_rects();
 }
 
 void world_edit::wait_for_swap_chain_ready() noexcept
@@ -2913,6 +2913,10 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
                                      .use_debug_layer = _renderer_use_debug_layer});
 
          _renderer->recreate_imgui_font_atlas();
+
+         _stream.write("GPU Device was removed and has been recreated.\n");
+
+         _world.terrain.untracked_fill_dirty_rects();
       }
       catch (graphics::gpu::exception& e) {
          if (e.error() != error::device_removed) {

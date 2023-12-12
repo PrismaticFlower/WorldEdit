@@ -409,18 +409,7 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    }
 #endif
 
-   const uint32 length_u32 =
-      static_cast<uint32>(terrain.length); // TODO: Change terrain.length to uint32.
-
-   terrain.height_map_dirty.add({0, 0, length_u32, length_u32});
-
-   for (auto& texture_weight_map_dirty : terrain.texture_weight_maps_dirty) {
-      texture_weight_map_dirty.add({0, 0, length_u32, length_u32});
-   }
-
-   terrain.color_map_dirty.add({0, 0, length_u32, length_u32});
-
-   terrain.water_map_dirty.add({0, 0, length_u32 / 4u, length_u32 / 4u});
+   terrain.untracked_fill_dirty_rects();
 
    return terrain;
 }
