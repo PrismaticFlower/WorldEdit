@@ -392,6 +392,8 @@ void world_edit::ui_show_terrain_editor() noexcept
          if (ImGui::IsItemDeactivatedAfterEdit()) {
             _edit_stack_world.close_last();
          }
+
+         ImGui::SetItemTooltip("Also called 'Tilerange' in Zero Editor.");
       }
       else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
          terrain_editor_config::color_config& config = _terrain_editor_config.color;
