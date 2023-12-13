@@ -28,6 +28,7 @@
 #include "terrain.hpp"
 #include "texture_manager.hpp"
 #include "thumbnail_manager.hpp"
+#include "ui_texture_manager.hpp"
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/stopwatch.hpp"
@@ -137,9 +138,11 @@ struct renderer_impl final : renderer {
       _thumbnail_manager.reset();
    }
 
-   auto terrain_texture_ids() noexcept -> std::array<void*, 16> override
+   auto request_imgui_texture_id(const std::string_view name,
+                                 const fallback_imgui_texture fallback) noexcept
+      -> void* override
    {
-      return _terrain.terrain_texture_ids();
+      return _ui_texture_manager.request(name, fallback, _texture_manager);
    }
 
 private:
@@ -296,6 +299,7 @@ private:
    renderer_config _config;
 
    thumbnail_manager _thumbnail_manager;
+   ui_texture_manager _ui_texture_manager;
 };
 
 renderer_impl::renderer_impl(const renderer_init& init)
@@ -357,6 +361,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                const settings::graphics& settings)
 {
    _device.new_frame();
+   _ui_texture_manager.new_frame();
 
    const frustum view_frustum{camera.inv_view_projection_matrix()};
    const gpu::viewport viewport{.width = static_cast<float>(_swap_chain.width()),
@@ -2701,6 +2706,7 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
 
          _terrain.process_updated_texture(updated);
          _water.process_updated_texture(updated);
+         _ui_texture_manager.process_updated_textures(updated);
       });
 }
 

@@ -278,9 +278,6 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          ImGui::SeparatorText("Textures");
 
-         const std::array<void*, world::terrain::texture_count> texture_ids =
-            _renderer->terrain_texture_ids();
-
          for (uint32 i = 0; i < world::terrain::texture_count; ++i) {
             const float size = 64.0f * _display_scale;
 
@@ -293,8 +290,12 @@ void world_edit::ui_show_terrain_editor() noexcept
                config.edit_texture = i;
             }
 
+            void* const texture_id =
+               _renderer->request_imgui_texture_id(_world.terrain.texture_names[i],
+                                                   graphics::fallback_imgui_texture::missing_diffuse);
+
             ImGui::SetCursorPos(cursor_position);
-            ImGui::Image(texture_ids[i], {size, size});
+            ImGui::Image(texture_id, {size, size});
 
             if (ImGui::IsItemHovered()) {
                ImGui::SetTooltip("%u - %s", i,

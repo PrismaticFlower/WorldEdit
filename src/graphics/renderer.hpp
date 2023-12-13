@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fallback_imgui_texture.hpp"
 #include "object_class_thumbnail.hpp"
 #include "world/active_elements.hpp"
 #include "world/interaction_context.hpp"
@@ -105,7 +106,9 @@ struct renderer {
 
    virtual void reset_thumbnails() noexcept = 0;
 
-   virtual auto terrain_texture_ids() noexcept -> std::array<void*, 16> = 0;
+   virtual auto request_imgui_texture_id(const std::string_view name,
+                                         const fallback_imgui_texture fallback) noexcept
+      -> void* = 0;
 };
 
 auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>;

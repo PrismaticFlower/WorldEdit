@@ -313,6 +313,7 @@
     <ClCompile Include="src\graphics\sky.cpp" />
     <ClCompile Include="src\graphics\texture_manager.cpp" />
     <ClCompile Include="src\graphics\thumbnail_manager.cpp" />
+    <ClCompile Include="src\graphics\ui_texture_manager.cpp" />
     <ClCompile Include="src\graphics\water.cpp" />
     <ClCompile Include="src\hotkeys.cpp" />
     <ClCompile Include="src\hotkeys_io.cpp" />
@@ -487,6 +488,7 @@
     <ClInclude Include="src\graphics\ai_overlay_batches.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp" />
+    <ClInclude Include="src\graphics\fallback_imgui_texture.hpp" />
     <ClInclude Include="src\graphics\frustum.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\command_allocator_pool.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\descriptor_allocator.hpp" />
@@ -520,6 +522,7 @@
     <ClInclude Include="src\graphics\texture_manager.hpp" />
     <ClInclude Include="src\graphics\copy_command_list_pool.hpp" />
     <ClInclude Include="src\graphics\thumbnail_manager.hpp" />
+    <ClInclude Include="src\graphics\ui_texture_manager.hpp" />
     <ClInclude Include="src\graphics\water.hpp" />
     <ClInclude Include="src\graphics\world_mesh_list.hpp" />
     <ClInclude Include="src\hotkeys.hpp" />
