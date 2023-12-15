@@ -414,6 +414,8 @@ void world_edit::initialize_commands() noexcept
          }
       }
    });
+   _commands.add("terrain.cancel_resize"s,
+                 [this] { _terrain_resize_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -780,6 +782,17 @@ void world_edit::initialize_hotkeys() noexcept
             {"Cycle Brush Mode", "terrain.cycle_brush_mode", {.key = key::z}},
             {"Cycle Brush Falloff", "terrain.cycle_brush_falloff", {.key = key::x}},
          },
+   });
+
+   _hotkeys.add_set({
+      .name = "Terrain Editing (Resize)",
+      .activated = [this] { return _terrain_resize_open; },
+      .default_hotkeys =
+         {
+            {"Cancel", "terrain.cancel_resize", {.key = key::escape}},
+         },
+
+      .hidden = true,
    });
 }
 

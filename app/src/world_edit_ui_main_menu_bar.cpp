@@ -208,6 +208,11 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _edit_stack_world.close_last();
          }
 
+         if (ImGui::MenuItem("Resize Terrain")) {
+            _terrain_resize_open = true;
+            _terrain_resize_context = {};
+         }
+
          ImGui::EndMenu();
       }
 

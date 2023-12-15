@@ -31,6 +31,7 @@
     <ClCompile Include="src\world_edit_ui_world_selection_move_with_cursor.cpp" />
     <ClCompile Include="src\world_edit_ui_terrain_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_terrain_import_heightmap.cpp" />
+    <ClCompile Include="src\world_edit_ui_terrain_resize.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />
