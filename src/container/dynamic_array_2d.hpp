@@ -355,13 +355,13 @@ private:
                        const std::ptrdiff_t y) noexcept(std::is_same_v<Throwing, std::nothrow_t>)
       -> std::conditional_t<std::is_const_v<Self>, const_reference, reference>
    {
-      assert(x < self._width and y < self._height);
-
       if (x >= self._width or y >= self._height) {
          if constexpr (not std::is_same_v<Throwing, std::nothrow_t>) {
             throw std::out_of_range{"index for 2d array out of range"};
          }
       }
+
+      assert(x < self._width and y < self._height);
 
       return self._memory[(y * self._width) + x];
    }
