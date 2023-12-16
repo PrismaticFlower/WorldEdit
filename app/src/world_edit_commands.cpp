@@ -414,6 +414,8 @@ void world_edit::initialize_commands() noexcept
          }
       }
    });
+   _commands.add("terrain.close_editor"s,
+                 [this] { _terrain_editor_open = false; });
    _commands.add("terrain.cancel_resize"s,
                  [this] { _terrain_resize_open = false; });
    _commands.add("terrain.cancel_crop"s, [this] { _terrain_crop_open = false; });
@@ -784,6 +786,7 @@ void world_edit::initialize_hotkeys() noexcept
             {"Decrease Brush Size", "terrain.decrease_brush_size", {.key = key::mouse_wheel_back}},
             {"Cycle Brush Mode", "terrain.cycle_brush_mode", {.key = key::z}},
             {"Cycle Brush Falloff", "terrain.cycle_brush_falloff", {.key = key::x}},
+            {"Close Editor", "terrain.close_editor", {.key = key::escape}},
          },
    });
 
