@@ -169,6 +169,8 @@ private:
 
    void ui_show_terrain_resize() noexcept;
 
+   void ui_show_terrain_crop() noexcept;
+
    void ui_show_about_window() noexcept;
 
    void ui_show_object_class_browser() noexcept;
@@ -331,6 +333,7 @@ private:
    bool _terrain_editor_open = false;
    bool _terrain_import_heightmap_open = false;
    bool _terrain_resize_open = false;
+   bool _terrain_crop_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;
@@ -498,6 +501,10 @@ private:
       bool maintain_world_proportions = true;
       bool cubic_interpolation = false;
    } _terrain_resize_context;
+
+   struct terrain_crop_context {
+      int32 new_length = 0;
+   } _terrain_crop_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

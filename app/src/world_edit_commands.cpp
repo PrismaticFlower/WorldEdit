@@ -416,6 +416,7 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("terrain.cancel_resize"s,
                  [this] { _terrain_resize_open = false; });
+   _commands.add("terrain.cancel_crop"s, [this] { _terrain_crop_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -790,6 +791,17 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Cancel", "terrain.cancel_resize", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Terrain Editing (Crop)",
+      .activated = [this] { return _terrain_crop_open; },
+      .default_hotkeys =
+         {
+            {"Cancel", "terrain.cancel_crop", {.key = key::escape}},
          },
 
       .hidden = true,

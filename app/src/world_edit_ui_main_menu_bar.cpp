@@ -213,6 +213,11 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _terrain_resize_context = {};
          }
 
+         if (ImGui::MenuItem("Crop Terrain")) {
+            _terrain_crop_open = true;
+            _terrain_crop_context = {};
+         }
+
          ImGui::EndMenu();
       }
 
