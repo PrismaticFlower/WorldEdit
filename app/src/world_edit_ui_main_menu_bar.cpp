@@ -213,15 +213,24 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _terrain_resize_context = {};
          }
 
+         ImGui::SetItemTooltip("Resize the terrain, scaling it like an image.");
+
          if (ImGui::MenuItem("Crop Terrain")) {
             _terrain_crop_open = true;
             _terrain_crop_context = {};
          }
 
+         ImGui::SetItemTooltip(
+            "Crop the terrain, reducing it's size but perfectly maintaining "
+            "the uncropped terrain area.");
+
          if (ImGui::MenuItem("Extend Terrain")) {
             _terrain_extend_open = true;
             _terrain_extend_context = {};
          }
+
+         ImGui::SetItemTooltip("Extent the terrain, increasing it's size while "
+                               "keeping the current terrain area the same.");
 
          ImGui::EndMenu();
       }
