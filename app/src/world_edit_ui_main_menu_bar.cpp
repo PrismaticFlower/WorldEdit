@@ -218,6 +218,11 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _terrain_crop_context = {};
          }
 
+         if (ImGui::MenuItem("Extend Terrain")) {
+            _terrain_extend_open = true;
+            _terrain_extend_context = {};
+         }
+
          ImGui::EndMenu();
       }
 

@@ -118,6 +118,10 @@ void world_edit::update_ui() noexcept
       ui_show_terrain_crop();
    }
 
+   if (_terrain_extend_open) {
+      ui_show_terrain_extend();
+   }
+
    if (_render_env_map_open) {
       ui_show_render_env_map();
    }
