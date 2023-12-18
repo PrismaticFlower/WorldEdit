@@ -7,7 +7,7 @@ namespace we {
 void world_edit::ui_show_world_active_context() noexcept
 {
    ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});
-   ImGui::SetNextWindowSize({256.0f * _display_scale, 728.0f * _display_scale});
+   ImGui::SetNextWindowSize({256.0f * _display_scale, 674.0f * _display_scale});
 
    ImGui::Begin("World Active Context", nullptr,
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
