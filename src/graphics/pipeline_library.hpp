@@ -84,6 +84,7 @@ struct pipeline_library {
    gpu::unique_pipeline_handle terrain_basic;
    gpu::unique_pipeline_handle terrain_lighting;
    gpu::unique_pipeline_handle terrain_normal;
+   gpu::unique_pipeline_handle terrain_grid;
 
    gpu::unique_pipeline_handle terrain_cut_mesh_mark;
    gpu::unique_pipeline_handle terrain_cut_mesh_clear;

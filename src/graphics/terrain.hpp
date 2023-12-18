@@ -14,6 +14,12 @@
 #include <span>
 #include <vector>
 
+namespace we::settings {
+
+struct graphics;
+
+}
+
 namespace we::graphics {
 
 struct terrain_cut {
@@ -28,7 +34,7 @@ struct terrain_cut {
    uint32 start_vertex = 0;
 };
 
-enum class terrain_draw { depth_prepass, main };
+enum class terrain_draw { depth_prepass, main, grid };
 
 class terrain {
 public:
@@ -40,7 +46,7 @@ public:
 
    void update(const world::terrain& terrain, gpu::copy_command_list& command_list,
                dynamic_buffer_allocator& dynamic_buffer_allocator,
-               texture_manager& texture_manager);
+               texture_manager& texture_manager, const settings::graphics& settings);
 
    void draw(const terrain_draw draw, const frustum& view_frustum,
              std::span<const terrain_cut> terrain_cuts,

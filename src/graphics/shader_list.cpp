@@ -21,6 +21,7 @@ auto terrain_patchVS() noexcept -> shader_def;
 auto terrain_basicPS() noexcept -> shader_def;
 auto terrain_lightingPS() noexcept -> shader_def;
 auto terrain_normalPS() noexcept -> shader_def;
+auto terrain_gridPS() noexcept -> shader_def;
 auto terrain_cut_mesh_clearVS() noexcept -> shader_def;
 auto sky_meshVS() noexcept -> shader_def;
 auto sky_meshPS() noexcept -> shader_def;
@@ -76,6 +77,7 @@ shaders::terrain_patchVS(),
 shaders::terrain_basicPS(),
 shaders::terrain_lightingPS(),
 shaders::terrain_normalPS(),
+shaders::terrain_gridPS(),
 shaders::terrain_cut_mesh_clearVS(),
 shaders::sky_meshVS(),
 shaders::sky_meshPS(),

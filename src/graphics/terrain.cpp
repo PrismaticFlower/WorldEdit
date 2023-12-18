@@ -1,5 +1,6 @@
 #include "terrain.hpp"
 #include "math/align.hpp"
+#include "settings/graphics.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <limits>
@@ -22,7 +23,14 @@ struct alignas(16) terrain_constants {
    uint32 height_map;
    uint32 texture_weight_maps;
    uint32 color_map;
-   std::array<uint32, 3> padding;
+
+   float inv_grid_size;
+   float grid_line_width;
+
+   uint32 padding0;
+
+   float3 grid_line_color;
+   uint32 padding1;
 
    std::array<std::array<uint32, 4>, terrain::texture_count> diffuse_maps;
 
@@ -30,7 +38,7 @@ struct alignas(16) terrain_constants {
    std::array<float4, terrain::texture_count> texture_transform_y;
 };
 
-static_assert(sizeof(terrain_constants) == 816);
+static_assert(sizeof(terrain_constants) == 832);
 
 struct patch_info_shader {
    uint32 x;
@@ -79,6 +87,8 @@ auto select_pipeline(const terrain_draw draw, pipeline_library& pipelines)
       return pipelines.terrain_depth_prepass.get();
    case terrain_draw::main:
       return pipelines.terrain_normal.get();
+   case terrain_draw::grid:
+      return pipelines.terrain_grid.get();
    }
 
    std::unreachable();
@@ -122,7 +132,7 @@ terrain::terrain(gpu::device& device, copy_command_list_pool& copy_command_list_
 
 void terrain::update(const world::terrain& terrain, gpu::copy_command_list& command_list,
                      dynamic_buffer_allocator& dynamic_buffer_allocator,
-                     texture_manager& texture_manager)
+                     texture_manager& texture_manager, const settings::graphics& settings)
 {
    if (const uint32 length = static_cast<uint32>(terrain.length);
        _terrain_length != length) {
@@ -243,6 +253,10 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       .height_map = _height_map_srv.get().index,
       .texture_weight_maps = _texture_weight_maps_srv.get().index,
       .color_map = _color_map_srv.get().index,
+
+      .inv_grid_size = 1.0f / _terrain_grid_size,
+      .grid_line_width = settings.terrain_grid_line_width * (4.0f / _terrain_grid_size),
+      .grid_line_color = settings.terrain_grid_color,
    };
 
    for (uint32 i = 0; i < texture_count; ++i) {

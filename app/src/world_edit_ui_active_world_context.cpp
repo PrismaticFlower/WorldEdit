@@ -7,7 +7,7 @@ namespace we {
 void world_edit::ui_show_world_active_context() noexcept
 {
    ImGui::SetNextWindowPos({0.0f, 32.0f * _display_scale});
-   ImGui::SetNextWindowSize({256.0f * _display_scale, 620.0f * _display_scale});
+   ImGui::SetNextWindowSize({256.0f * _display_scale, 728.0f * _display_scale});
 
    ImGui::Begin("World Active Context", nullptr,
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -295,6 +295,10 @@ void world_edit::ui_show_world_active_context() noexcept
          "Height of the editor's 'floor' collision. Used when nothing else is "
          "hit. Useful for space maps and anything you can think of for it!");
    }
+
+   ImGui::SeparatorText("Grid");
+
+   ImGui::Checkbox("Show Terrain Grid", &_draw_terrain_grid);
 
    ImGui::End();
 }

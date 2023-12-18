@@ -296,6 +296,7 @@
     <ClCompile Include="src\graphics\shaders\sky_meshVS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_basicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_cut_mesh_clearVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_gridPS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_lightingPS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_normalPS.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_patchVS.cpp" />

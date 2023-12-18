@@ -159,9 +159,11 @@ void world_edit::update()
    ui_draw_select_box();
 
    try {
-      _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
-                            _world_layers_draw_mask, _tool_visualizers,
-                            _object_classes, _settings.graphics);
+      _renderer->draw_frame(_camera, _world, _interaction_targets,
+                            _world_draw_mask, _world_layers_draw_mask,
+                            _tool_visualizers, _object_classes,
+                            {.draw_terrain_grid = _draw_terrain_grid},
+                            _settings.graphics);
 
       if (_env_map_render_requested) {
          _env_map_render_requested = false;

@@ -45,6 +45,10 @@ struct graphics {
 
    float3 creation_color = {0.0f, 0.5f, 1.0f};
 
+   float3 terrain_grid_color = {0.0f, 0.0f, 0.0f};
+
+   float terrain_grid_line_width = 0.025f;
+
    float barrier_height = 32.0f;
 
    float boundary_height = 64.0f;

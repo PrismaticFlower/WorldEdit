@@ -133,6 +133,8 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
 
             ImGui::ColorEdit4("Bundary", &graphics.boundary_color.x);
 
+            ImGui::ColorEdit3("Terrain Grid Color", &graphics.terrain_grid_color.x);
+
             ImGui::DragFloat("Light Volume Transparency",
                              &graphics.light_volume_alpha, 0.01f, 0.0f, 1.0f,
                              "%.3f", ImGuiSliderFlags_AlwaysClamp);
@@ -159,6 +161,13 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                                32.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 
             ImGui::SeparatorText("Line Width");
+
+            ImGui::DragFloat("Terrain Grid line Width",
+                             &graphics.terrain_grid_line_width, 0.005f, 0.005f,
+                             0.5f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::SetItemTooltip("Note this is relative to the terrain grid "
+                                  "scale and is not in pixels!");
 
             if (ImGui::SliderFloat("Line Width", &graphics.line_width, 0.5f,
                                    16.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp)) {

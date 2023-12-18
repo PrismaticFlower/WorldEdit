@@ -25,6 +25,7 @@ terrain_patchVS
 terrain_basicPS
 terrain_lightingPS
 terrain_normalPS
+terrain_gridPS
 
 terrain_cut_mesh_clearVS
 

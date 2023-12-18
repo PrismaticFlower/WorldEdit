@@ -17,6 +17,12 @@ struct terrain_constants_ {
    uint texture_weight_maps_index;
    uint color_map_index;
 
+   float inv_grid_size;
+   float grid_line_width;
+   uint padding0;
+   
+   float3 grid_line_color;
+   
    uint diffuse_maps_index[TERRAIN_MAX_TEXTURES];
 
    float3 texture_transform_x[TERRAIN_MAX_TEXTURES];

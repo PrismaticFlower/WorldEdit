@@ -58,6 +58,10 @@ struct renderer_init {
    bool use_debug_layer = false;
 };
 
+struct draw_frame_options {
+   bool draw_terrain_grid = false;
+};
+
 struct env_map_params {
    float3 positionWS;
    uint32 length = 512;
@@ -82,6 +86,7 @@ struct renderer {
                            const world::active_layers active_layers,
                            const world::tool_visualizers& tool_visualizers,
                            const world::object_class_library& world_classes,
+                           const draw_frame_options frame_options,
                            const settings::graphics& settings) = 0;
 
    virtual auto draw_env_map(const env_map_params& params, const world::world& world,

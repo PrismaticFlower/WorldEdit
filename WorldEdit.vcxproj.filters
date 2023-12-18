@@ -1350,6 +1350,9 @@
     <ClCompile Include="src\graphics\ui_texture_manager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\shaders\terrain_gridPS.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="third_party\licenses\vcpkg.json" />

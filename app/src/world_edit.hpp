@@ -317,6 +317,7 @@ private:
    bool _orbit_camera_active = false;
    bool _selecting_entity = false;
    bool _cursor_placement_undo_lock = false;
+   bool _draw_terrain_grid = false;
 
    bool _hotkeys_view_show = false;
    bool _imgui_demo_open = false;

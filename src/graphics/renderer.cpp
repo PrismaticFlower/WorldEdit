@@ -75,10 +75,6 @@ static_assert(sizeof(meta_outlined_constant_buffer) == 256);
 
 }
 
-struct renderer_config {
-   bool use_raytracing = false;
-};
-
 struct renderer_impl final : renderer {
    renderer_impl(const renderer_init& init);
 
@@ -90,6 +86,7 @@ struct renderer_impl final : renderer {
                    const world::active_layers active_layers,
                    const world::tool_visualizers& tool_visualizers,
                    const world::object_class_library& world_classes,
+                   const draw_frame_options frame_options,
                    const settings::graphics& settings) override;
 
    auto draw_env_map(const env_map_params& params, const world::world& world,
@@ -296,8 +293,6 @@ private:
 
    profiler _profiler{_device, 256};
 
-   renderer_config _config;
-
    thumbnail_manager _thumbnail_manager;
    ui_texture_manager _ui_texture_manager;
 };
@@ -358,6 +353,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                const world::active_layers active_layers,
                                const world::tool_visualizers& tool_visualizers,
                                const world::object_class_library& world_classes,
+                               const draw_frame_options frame_options,
                                const settings::graphics& settings)
 {
    _device.new_frame();
@@ -394,7 +390,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
          *_depth_minmax_readback_buffer_ptrs[_device.frame_index()];
 
       _terrain.update(world.terrain, _pre_render_command_list,
-                      _dynamic_buffer_allocator, _texture_manager);
+                      _dynamic_buffer_allocator, _texture_manager, settings);
       _water.update(world.terrain, _pre_render_command_list,
                     _dynamic_buffer_allocator, _texture_manager);
       _light_clusters
@@ -480,6 +476,13 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    // Render World Meta Objects
    _meta_draw_batcher.clear();
    _ai_overlay_batches.clear();
+
+   if (frame_options.draw_terrain_grid) {
+      _terrain.draw(terrain_draw::grid, view_frustum, _terrain_cut_list,
+                    _camera_constant_buffer_view,
+                    _light_clusters.lights_constant_buffer_view(), command_list,
+                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
 
    if (settings.visualize_terrain_cutters) {
       draw_terrain_cut_visualizers(view_frustum, settings, command_list);
