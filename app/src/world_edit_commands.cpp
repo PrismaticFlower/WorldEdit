@@ -135,6 +135,9 @@ void world_edit::initialize_commands() noexcept
       _terrain_editor_config.edit_target = terrain_edit_target::color;
    });
 
+   _commands.add("show.overlay_grid"s, _draw_overlay_grid);
+   _commands.add("show.terrain_grid"s, _draw_terrain_grid);
+
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
    _commands.add("entity_edit.move_selection"s, [this] {
@@ -526,6 +529,13 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Terrain Colour Editor",
            "show.terrain_color_editor",
            {.key = key::f3, .modifiers = {.ctrl = true}}},
+
+          {"Show Floor Grid",
+           "show.overlay_grid",
+           {.key = key::g, .modifiers = {.ctrl = true, .shift = true}}},
+          {"Show Terrain Grid",
+           "show.terrain_grid",
+           {.key = key::t, .modifiers = {.ctrl = true, .shift = true}}},
 
           {"Render Environment Map", "show.env_map_renderer", {.key = key::backslash}},
 
