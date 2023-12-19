@@ -620,6 +620,7 @@ void world_edit::initialize_hotkeys() noexcept
 
    _hotkeys.add_set({
       .name = "Entity Creation (AI Planning)",
+      .description = "Hotkeys for while you are creating AI planning hubs and connections."s,
       .activated =
          [this] {
             return _interaction_targets.creation_entity and
