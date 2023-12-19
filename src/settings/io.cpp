@@ -110,6 +110,9 @@ auto load(const std::string_view path) -> settings
             setting_entry(planning_connection_height);
             setting_entry(path_node_size);
             setting_entry(line_width);
+            setting_entry(overlay_grid_color);
+            setting_entry(overlay_grid_line_width);
+            setting_entry(overlay_grid_major_grid_spacing);
             setting_entry(visualize_terrain_cutters);
          }
 #undef setting_entry
@@ -200,6 +203,9 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(planning_connection_height));
       write(file, name_value(path_node_size));
       write(file, name_value(line_width));
+      write(file, name_value(overlay_grid_color));
+      write(file, name_value(overlay_grid_line_width));
+      write(file, name_value(overlay_grid_major_grid_spacing));
       write(file, name_value(visualize_terrain_cutters));
 
 #undef name_value

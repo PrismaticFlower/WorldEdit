@@ -757,6 +757,7 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
                           .CullMode = static_cast<D3D12_CULL_MODE>(
                              desc.rasterizer_state.cull_mode),
                           .FrontCounterClockwise = true,
+                          .DepthBias = desc.rasterizer_state.depth_bias,
                           .AntialiasedLineEnable = desc.rasterizer_state.antialiased_lines,
                           .ConservativeRaster =
                              desc.rasterizer_state.conservative_raster

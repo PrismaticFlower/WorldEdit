@@ -280,8 +280,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             }
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -394,8 +393,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             new_position = _cursor_positionWS;
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -689,8 +687,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -1274,8 +1271,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -1539,8 +1535,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          new_position = {_cursor_positionWS.x, _cursor_positionWS.z};
 
          if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
-            new_position =
-               align_position_to_grid(new_position, _entity_creation_config.alignment);
+            new_position = align_position_to_grid(new_position, _editor_grid_size);
          }
          else if (_entity_creation_config.placement_alignment ==
                   placement_alignment::snapping) {
@@ -1954,8 +1949,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -2122,8 +2116,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -2514,8 +2507,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -2728,8 +2720,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
-               new_position =
-                  align_position_to_grid(new_position, _entity_creation_config.alignment);
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
@@ -2880,9 +2871,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
-            ImGui::DragFloat("Alignment Grid Size",
-                             &_entity_creation_config.alignment, 1.0f, 1.0f,
-                             1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::DragFloat("Grid Size", &_editor_grid_size, 1.0f, 1.0f, 1e10f,
+                             "%.3f", ImGuiSliderFlags_AlwaysClamp);
          }
          else if (_entity_creation_config.placement_alignment ==
                   placement_alignment::snapping) {

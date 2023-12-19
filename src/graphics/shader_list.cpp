@@ -52,6 +52,8 @@ auto ai_overlay_applyVS() noexcept -> shader_def;
 auto ai_overlay_applyPS() noexcept -> shader_def;
 auto tile_lights_clearCS() noexcept -> shader_def;
 auto depth_reduce_minmaxCS() noexcept -> shader_def;
+auto grid_overlayVS() noexcept -> shader_def;
+auto grid_overlayPS() noexcept -> shader_def;
 auto tile_lightsVS() noexcept -> shader_def;
 auto tile_lightsPS() noexcept -> shader_def;
 auto imguiVS() noexcept -> shader_def;
@@ -108,6 +110,8 @@ shaders::ai_overlay_applyVS(),
 shaders::ai_overlay_applyPS(),
 shaders::tile_lights_clearCS(),
 shaders::depth_reduce_minmaxCS(),
+shaders::grid_overlayVS(),
+shaders::grid_overlayPS(),
 shaders::tile_lightsVS(),
 shaders::tile_lightsPS(),
 shaders::imguiVS(),

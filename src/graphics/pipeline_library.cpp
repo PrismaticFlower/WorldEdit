@@ -519,6 +519,24 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                    .debug_name = "sky_mesh"sv}),
                device.direct_queue};
 
+   grid_overlay = {device.create_graphics_pipeline(
+                      {.root_signature = root_signature_library.grid_overlay.get(),
+
+                       .vs_bytecode = shader_library["grid_overlayVS"sv],
+                       .ps_bytecode = shader_library["grid_overlayPS"sv],
+
+                       .blend_state = blend_premult_alpha,
+                       .rasterizer_state = {.cull_mode = gpu::cull_mode::none,
+                                            .depth_bias = -200},
+                       .depth_stencil_state = depth_stencil_readonly_less_equal,
+
+                       .render_target_count = 1,
+                       .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                       .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                       .debug_name = "grid_overlay"sv}),
+                   device.direct_queue};
+
    terrain_cut_mesh_mark =
       {device.create_graphics_pipeline(
           {.root_signature = root_signature_library.terrain_cut_mesh.get(),

@@ -317,6 +317,7 @@ private:
    bool _orbit_camera_active = false;
    bool _selecting_entity = false;
    bool _cursor_placement_undo_lock = false;
+   bool _draw_overlay_grid = false;
    bool _draw_terrain_grid = false;
 
    bool _hotkeys_view_show = false;
@@ -430,7 +431,6 @@ private:
       placement_ground placement_ground = placement_ground::origin;
       placement_node_insert placement_node_insert = placement_node_insert::append;
 
-      float alignment = 4.0f;
       float snap_distance = 0.25f;
 
       bool command_post_auto_place_meta_entities = true;
@@ -519,6 +519,7 @@ private:
    std::optional<float3> _cursor_surface_normalWS;
 
    float _editor_floor_height = 0.0f;
+   float _editor_grid_size = 4.0f;
 
    float3 _move_selection_amount = {0.0f, 0.0f, 0.0f};
    float3 _rotate_selection_amount = {0.0f, 0.0f, 0.0f};

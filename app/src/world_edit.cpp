@@ -162,7 +162,12 @@ void world_edit::update()
       _renderer->draw_frame(_camera, _world, _interaction_targets,
                             _world_draw_mask, _world_layers_draw_mask,
                             _tool_visualizers, _object_classes,
-                            {.draw_terrain_grid = _draw_terrain_grid},
+                            {
+                               .draw_terrain_grid = _draw_terrain_grid,
+                               .draw_overlay_grid = _draw_overlay_grid,
+                               .overlay_grid_height = _editor_floor_height,
+                               .overlay_grid_size = _editor_grid_size,
+                            },
                             _settings.graphics);
 
       if (_env_map_render_requested) {

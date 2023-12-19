@@ -419,6 +419,8 @@ struct blend_state_desc {
 struct rasterizer_state_desc {
    cull_mode cull_mode = cull_mode::back;
 
+   int32 depth_bias = 0;
+
    bool antialiased_lines = false;
    bool conservative_raster = false;
 };

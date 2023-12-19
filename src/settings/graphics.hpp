@@ -61,6 +61,12 @@ struct graphics {
 
    float path_node_size = 0.5f;
 
+   float3 overlay_grid_color = {1.0f, 1.0f, 1.0f};
+
+   float overlay_grid_line_width = 0.01f;
+
+   float overlay_grid_major_grid_spacing = 8.0f;
+
    bool visualize_terrain_cutters = false;
 
    bool show_profiler = false;

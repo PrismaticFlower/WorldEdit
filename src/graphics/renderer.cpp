@@ -168,6 +168,10 @@ private:
                                      const settings::graphics& settings,
                                      gpu::graphics_command_list& command_list);
 
+   void draw_grid_overlay(const float height, const float length,
+                          const float grid_scale, const settings::graphics& settings,
+                          gpu::graphics_command_list& command_list);
+
    void draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
                         const settings::graphics& settings,
                         gpu::graphics_command_list& command_list);
@@ -482,6 +486,12 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                     _camera_constant_buffer_view,
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
+   }
+
+   if (frame_options.draw_overlay_grid) {
+      draw_grid_overlay(frame_options.overlay_grid_height,
+                        std::max(camera.far_clip(), 4096.0f),
+                        frame_options.overlay_grid_size, settings, command_list);
    }
 
    if (settings.visualize_terrain_cutters) {
@@ -1768,6 +1778,46 @@ void renderer_impl::draw_terrain_cut_visualizers(const frustum& view_frustum,
       command_list.draw_indexed_instanced(cut.index_count, 1, cut.start_index,
                                           cut.start_vertex, 0);
    }
+}
+
+void renderer_impl::draw_grid_overlay(const float height, const float length,
+                                      const float grid_scale,
+                                      const settings::graphics& settings,
+                                      gpu::graphics_command_list& command_list)
+{
+   struct grid_constants {
+      float3 grid_color;
+      float length;
+      float height;
+      float inv_grid_scale;
+      float line_width;
+      float inv_grid_major_scale;
+      float major_line_width;
+   };
+
+   const float line_width = settings.overlay_grid_line_width;
+   const float major_grid_scale = grid_scale * settings.overlay_grid_major_grid_spacing;
+
+   grid_constants grid_constants{
+      .grid_color = settings.overlay_grid_color,
+      .length = length,
+      .height = height,
+      .inv_grid_scale = 1.0f / grid_scale,
+      .line_width = line_width * (4.0f / grid_scale),
+      .inv_grid_major_scale = 1.0f / major_grid_scale,
+      .major_line_width = line_width * (16.0f / major_grid_scale),
+   };
+
+   command_list.set_graphics_root_signature(_root_signatures.grid_overlay.get());
+   command_list.set_graphics_32bit_constants(rs::grid_overlay::inputs,
+                                             std::as_bytes(std::span{&grid_constants, 1}),
+                                             0);
+   command_list.set_graphics_cbv(rs::grid_overlay::frame_cbv,
+                                 _camera_constant_buffer_view);
+
+   command_list.set_pipeline_state(_pipelines.grid_overlay.get());
+
+   command_list.draw_instanced(6, 1, 0, 0);
 }
 
 void renderer_impl::draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,

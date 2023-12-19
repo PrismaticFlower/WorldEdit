@@ -14,6 +14,7 @@ constexpr uint32 meta_mesh_cb_register = 5;
 constexpr uint32 sky_mesh_cb_register = 6;
 constexpr uint32 water_cb_register = 7;
 constexpr uint32 thumbnail_camera_cb_register = 8;
+constexpr uint32 grid_overlay_cb_register = 9;
 
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
@@ -166,6 +167,20 @@ const gpu::root_signature_desc sky_mesh_desc{
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "sky_mesh_root_signature",
+};
+
+const gpu::root_signature_desc grid_overlay_desc{
+   .parameters =
+      {
+         gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
+                             .shader_register = grid_overlay_cb_register,
+                             .values_count = 9},
+         frame_constant_buffer,
+      },
+
+   .flags = {.allow_input_assembler_input_layout = false},
+
+   .debug_name = "grid_overlay_root_signature",
 };
 
 const gpu::root_signature_desc thumbnail_mesh_desc{
@@ -371,6 +386,7 @@ root_signature_library::root_signature_library(gpu::device& device)
    mesh_wireframe = {device.create_root_signature(mesh_wireframe_desc),
                      device.direct_queue};
    sky_mesh = {device.create_root_signature(sky_mesh_desc), device.direct_queue};
+   grid_overlay = {device.create_root_signature(grid_overlay_desc), device.direct_queue};
    thumbnail_mesh = {device.create_root_signature(thumbnail_mesh_desc),
                      device.direct_queue};
    thumbnail_downsample = {device.create_root_signature(thumbnail_downsample_mesh_desc),
