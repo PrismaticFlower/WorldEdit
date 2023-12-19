@@ -1752,7 +1752,8 @@ void world_edit::undo() noexcept
       _entity_creation_context = {};
 
       _cursor_placement_undo_lock =
-         _entity_creation_config.placement_mode == placement_mode::cursor;
+         _entity_creation_config.placement_mode == placement_mode::cursor or
+         _entity_creation_config.placement_rotation == placement_rotation::surface;
       _cursor_placement_lock_position = {ImGui::GetMousePos().x,
                                          ImGui::GetMousePos().y};
    }
@@ -1768,7 +1769,8 @@ void world_edit::redo() noexcept
       _entity_creation_context = {};
 
       _cursor_placement_undo_lock =
-         _entity_creation_config.placement_mode == placement_mode::cursor;
+         _entity_creation_config.placement_mode == placement_mode::cursor or
+         _entity_creation_config.placement_rotation == placement_rotation::surface;
       _cursor_placement_lock_position = {ImGui::GetMousePos().x,
                                          ImGui::GetMousePos().y};
    }
