@@ -45,6 +45,8 @@ enum class placement_rotation : uint8 {
    surface
 };
 
+enum class surface_rotation_axis : uint8 { x, y, z, neg_x, neg_y, neg_z };
+
 enum class placement_node_insert : uint8 { nearest, append };
 
 enum class placement_resize_mode : uint8 { off, extend, shrink };
@@ -426,6 +428,7 @@ private:
 
    struct entity_creation_config {
       placement_rotation placement_rotation = placement_rotation::manual_euler;
+      surface_rotation_axis surface_rotation_axis = surface_rotation_axis::y;
       placement_mode placement_mode = placement_mode::cursor;
       placement_alignment placement_alignment = placement_alignment::none;
       placement_ground placement_ground = placement_ground::origin;

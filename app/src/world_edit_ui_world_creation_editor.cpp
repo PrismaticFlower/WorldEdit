@@ -40,19 +40,29 @@ struct placement_traits {
    bool has_cycle_ai_planning = false;
 };
 
-auto surface_rotation_degrees(const float3 surface_normal,
-                              const float fallback_angle) -> float
+auto surface_rotation(const float3 surface_normal,
+                      const surface_rotation_axis rotation_axis) noexcept -> quaternion
 {
-   if (surface_normal.x == 0.0f and surface_normal.z == 0.0f) {
-      return fallback_angle;
-   }
+   float3 axis = [rotation_axis]() {
+      switch (rotation_axis) {
+      case surface_rotation_axis::x:
+         return float3{1.0f, 0.0f, 0.0f};
+      case surface_rotation_axis::y:
+         return float3{0.0f, 1.0f, 0.0f};
+      case surface_rotation_axis::z:
+         return float3{0.0f, 0.0f, 1.0f};
+      case surface_rotation_axis::neg_x:
+         return float3{-1.0f, 0.0f, 0.0f};
+      case surface_rotation_axis::neg_y:
+         return float3{0.0f, -1.0f, 0.0f};
+      case surface_rotation_axis::neg_z:
+         return float3{0.0f, 0.0f, -1.0f};
+      default:
+         std::unreachable();
+      };
+   }();
 
-   const float2 direction = normalize(float2{surface_normal.x, surface_normal.z});
-
-   const float angle =
-      std::atan2(-direction.x, -direction.y) + std::numbers::pi_v<float>;
-
-   return std::fmod(angle * 180.0f / std::numbers::pi_v<float>, 360.0f);
+   return look_to_quat(surface_normal, axis);
 }
 
 auto align_position_to_grid(const float2 position, const float alignment) -> float2
@@ -218,8 +228,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      if (_entity_creation_config.placement_rotation !=
-          placement_rotation::manual_quaternion) {
+      if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
          ImGui::DragRotationEuler("Rotation", &creation_entity, &world::object::rotation,
                                   &world::edit_context::euler_rotation,
                                   &_edit_stack_world, &_edit_context);
@@ -249,13 +258,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (_entity_creation_config.placement_rotation == placement_rotation::surface and
              _cursor_surface_normalWS) {
-            const float new_y_angle =
-               surface_rotation_degrees(*_cursor_surface_normalWS,
-                                        _edit_context.euler_rotation.y);
-            new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
-                                  _edit_context.euler_rotation.z};
-            new_rotation = make_quat_from_euler(
-               new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+            new_rotation =
+               surface_rotation(*_cursor_surface_normalWS,
+                                _entity_creation_config.surface_rotation_axis);
          }
 
          if (using_cursor_placement) {
@@ -349,8 +354,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      if (_entity_creation_config.placement_rotation !=
-          placement_rotation::manual_quaternion) {
+      if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
          ImGui::DragRotationEuler("Rotation", &creation_entity, &world::light::rotation,
                                   &world::edit_context::euler_rotation,
                                   &_edit_stack_world, &_edit_context);
@@ -380,13 +384,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (_entity_creation_config.placement_rotation == placement_rotation::surface and
              _cursor_surface_normalWS) {
-            const float new_y_angle =
-               surface_rotation_degrees(*_cursor_surface_normalWS,
-                                        _edit_context.euler_rotation.y);
-            new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
-                                  _edit_context.euler_rotation.z};
-            new_rotation = make_quat_from_euler(
-               new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+            new_rotation =
+               surface_rotation(*_cursor_surface_normalWS,
+                                _entity_creation_config.surface_rotation_axis);
          }
 
          if (using_cursor_placement) {
@@ -542,8 +542,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                 edited_value->empty() ? light.name : *edited_value);
                           });
 
-         if (_entity_creation_config.placement_rotation !=
-             placement_rotation::manual_quaternion) {
+         if (_entity_creation_config.placement_rotation ==
+             placement_rotation::manual_euler) {
             ImGui::DragRotationEuler("Rotation", &creation_entity,
                                      &world::light::region_rotation,
                                      &world::edit_context::light_region_euler_rotation,
@@ -642,8 +642,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Text("Next Node");
 
-      if (_entity_creation_config.placement_rotation !=
-          placement_rotation::manual_quaternion) {
+      if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
          ImGui::DragRotationEulerPathNode("Rotation", &creation_entity,
                                           &world::edit_context::euler_rotation,
                                           &_edit_stack_world, &_edit_context);
@@ -673,13 +672,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (_entity_creation_config.placement_rotation == placement_rotation::surface and
              _cursor_surface_normalWS) {
-            const float new_y_angle =
-               surface_rotation_degrees(*_cursor_surface_normalWS,
-                                        _edit_context.euler_rotation.y);
-            new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
-                                  _edit_context.euler_rotation.z};
-            new_rotation = make_quat_from_euler(
-               new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+            new_rotation =
+               surface_rotation(*_cursor_surface_normalWS,
+                                _entity_creation_config.surface_rotation_axis);
          }
 
          if (using_cursor_placement) {
@@ -1183,8 +1178,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      if (_entity_creation_config.placement_rotation !=
-          placement_rotation::manual_quaternion) {
+      if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
          ImGui::DragRotationEuler("Rotation", &creation_entity, &world::region::rotation,
                                   &world::edit_context::euler_rotation,
                                   &_edit_stack_world, &_edit_context);
@@ -1214,13 +1208,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (_entity_creation_config.placement_rotation == placement_rotation::surface and
              _cursor_surface_normalWS) {
-            const float new_y_angle =
-               surface_rotation_degrees(*_cursor_surface_normalWS,
-                                        _edit_context.euler_rotation.y);
-            new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
-                                  _edit_context.euler_rotation.z};
-            new_rotation = make_quat_from_euler(
-               new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+            new_rotation =
+               surface_rotation(*_cursor_surface_normalWS,
+                                _entity_creation_config.surface_rotation_axis);
          }
 
          if (using_cursor_placement) {
@@ -1740,8 +1730,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_config.placement_rotation !=
-          placement_rotation::manual_quaternion) {
+      if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
          ImGui::DragRotationEuler("Rotation", &creation_entity, &world::portal::rotation,
                                   &world::edit_context::euler_rotation,
                                   &_edit_stack_world, &_edit_context);
@@ -1772,13 +1761,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (_entity_creation_config.placement_rotation == placement_rotation::surface and
              _cursor_surface_normalWS) {
-            const float new_y_angle =
-               surface_rotation_degrees(*_cursor_surface_normalWS,
-                                        _edit_context.euler_rotation.y);
-            new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
-                                  _edit_context.euler_rotation.z};
-            new_rotation = make_quat_from_euler(
-               new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+            new_rotation =
+               surface_rotation(*_cursor_surface_normalWS,
+                                _entity_creation_config.surface_rotation_axis);
          }
 
          if (using_cursor_placement) {
@@ -1903,8 +1888,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      if (_entity_creation_config.placement_rotation !=
-          placement_rotation::manual_quaternion) {
+      if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
          ImGui::DragRotationEuler("Rotation", &creation_entity,
                                   &world::hintnode::rotation,
                                   &world::edit_context::euler_rotation,
@@ -1935,13 +1919,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (_entity_creation_config.placement_rotation == placement_rotation::surface and
              _cursor_surface_normalWS) {
-            const float new_y_angle =
-               surface_rotation_degrees(*_cursor_surface_normalWS,
-                                        _edit_context.euler_rotation.y);
-            new_euler_rotation = {_edit_context.euler_rotation.x, new_y_angle,
-                                  _edit_context.euler_rotation.z};
-            new_rotation = make_quat_from_euler(
-               new_euler_rotation * std::numbers::pi_v<float> / 180.0f);
+            new_rotation =
+               surface_rotation(*_cursor_surface_normalWS,
+                                _entity_creation_config.surface_rotation_axis);
          }
 
          if (using_cursor_placement) {
@@ -2161,10 +2141,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _tool_visualizers.add_line_overlay(_cursor_positionWS,
                                             barrier.position, 0xffffffffu);
 
-         const float new_angle =
-            surface_rotation_degrees(normalize(barrier.position - _cursor_positionWS),
-                                     barrier.rotation_angle) /
-            180.0f * std::numbers::pi_v<float>;
+         const float3 cursor_directionWS =
+            normalize(barrier.position - _cursor_positionWS);
+         const float2 direction_xzWS =
+            normalize(float2{cursor_directionWS.x, cursor_directionWS.z});
+
+         const float new_angle = std::atan2(-direction_xzWS.x, -direction_xzWS.y) +
+                                 std::numbers::pi_v<float>;
 
          if (new_angle != barrier.rotation_angle) {
             _edit_stack_world.apply(edits::make_set_creation_value(&world::barrier::rotation_angle,
@@ -2784,16 +2767,67 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          ImGui::TableNextColumn();
-         if (ImGui::Selectable("Around Cursor", _entity_creation_config.placement_rotation ==
-                                                   placement_rotation::surface)) {
+         if (ImGui::Selectable("From Surface", _entity_creation_config.placement_rotation ==
+                                                  placement_rotation::surface)) {
             _entity_creation_config.placement_rotation = placement_rotation::surface;
          }
          ImGui::EndTable();
       }
+
+      if (_entity_creation_config.placement_rotation == placement_rotation::surface) {
+         ImGui::SeparatorText("Rotation Surface Axis");
+
+         if (ImGui::BeginTable("Rotation Surface Axis", 3,
+                               ImGuiTableFlags_NoSavedSettings |
+                                  ImGuiTableFlags_SizingStretchSame)) {
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("X", _entity_creation_config.surface_rotation_axis ==
+                                          surface_rotation_axis::x)) {
+               _entity_creation_config.surface_rotation_axis =
+                  surface_rotation_axis::x;
+            }
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Y", _entity_creation_config.surface_rotation_axis ==
+                                          surface_rotation_axis::y)) {
+               _entity_creation_config.surface_rotation_axis =
+                  surface_rotation_axis::y;
+            }
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Z", _entity_creation_config.surface_rotation_axis ==
+                                          surface_rotation_axis::z)) {
+               _entity_creation_config.surface_rotation_axis =
+                  surface_rotation_axis::z;
+            }
+
+            ImGui::TableNextRow();
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Negative X", _entity_creation_config.surface_rotation_axis ==
+                                                   surface_rotation_axis::neg_x)) {
+               _entity_creation_config.surface_rotation_axis =
+                  surface_rotation_axis::neg_x;
+            }
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Negative Y", _entity_creation_config.surface_rotation_axis ==
+                                                   surface_rotation_axis::neg_y)) {
+               _entity_creation_config.surface_rotation_axis =
+                  surface_rotation_axis::neg_y;
+            }
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Negative Z", _entity_creation_config.surface_rotation_axis ==
+                                                   surface_rotation_axis::neg_z)) {
+               _entity_creation_config.surface_rotation_axis =
+                  surface_rotation_axis::neg_z;
+            }
+
+            ImGui::EndTable();
+         }
+      }
    }
 
    if (traits.has_point_at) {
-      if (not traits.has_placement_rotation) ImGui::Separator();
+      ImGui::Separator();
 
       if (ImGui::Button("Point At", {ImGui::CalcItemWidth(), 0.0f})) {
          _entity_creation_context.activate_point_at = true;
