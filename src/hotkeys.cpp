@@ -929,18 +929,18 @@ void hotkeys::fill_sorted_info(const hotkey_set& set,
 
    std::sort(sorted_hotkey_set.begin(), sorted_hotkey_set.end(),
              [](const sorted_hotkey_variant& left, const sorted_hotkey_variant& right) {
-                const std::string& left_command =
+                const std::string& left_name =
                    std::holds_alternative<const std::pair<const hotkey_bind, hotkey>*>(left)
                       ? std::get<const std::pair<const hotkey_bind, hotkey>*>(left)
-                           ->second.command
-                      : std::get<const hotkey*>(left)->command;
-                const std::string& right_command =
+                           ->second.name
+                      : std::get<const hotkey*>(left)->name;
+                const std::string& right_name =
                    std::holds_alternative<const std::pair<const hotkey_bind, hotkey>*>(right)
                       ? std::get<const std::pair<const hotkey_bind, hotkey>*>(right)
-                           ->second.command
-                      : std::get<const hotkey*>(right)->command;
+                           ->second.name
+                      : std::get<const hotkey*>(right)->name;
 
-                return left_command < right_command;
+                return left_name < right_name;
              });
 }
 
