@@ -101,14 +101,4 @@ inline auto look_at_quat(const float3& to, const float3& from) -> quaternion
    return normalize(quat);
 }
 
-inline auto look_to_quat(const float3& direction, const float3& up) -> quaternion
-{
-   const float3 axis = cross(up, direction);
-   const float axis_dot = dot(up, direction);
-
-   quaternion quat{axis_dot + 1.0f, axis.x, axis.y, axis.z};
-
-   return normalize(quat);
-}
-
 }

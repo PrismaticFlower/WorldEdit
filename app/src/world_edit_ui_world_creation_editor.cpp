@@ -43,7 +43,7 @@ struct placement_traits {
 auto surface_rotation(const float3 surface_normal,
                       const surface_rotation_axis rotation_axis) noexcept -> quaternion
 {
-   float3 axis = [rotation_axis]() {
+   const float3 basis = [rotation_axis]() {
       switch (rotation_axis) {
       case surface_rotation_axis::x:
          return float3{1.0f, 0.0f, 0.0f};
@@ -62,7 +62,43 @@ auto surface_rotation(const float3 surface_normal,
       };
    }();
 
-   return look_to_quat(surface_normal, axis);
+   const float3 direction = normalize(surface_normal);
+
+   const float3 axis = cross(basis, direction);
+   const float cos_angle = dot(basis, direction);
+   const float sin_angle = std::sqrt(1.0f - cos_angle * cos_angle);
+
+   if (axis == float3{0.0f, 0.0f, 0.0f}) {
+      if (rotation_axis == surface_rotation_axis::y) {
+         return direction.y > 0.0f ? quaternion{1.0f, 0.0f, 0.0f, 0.0f}
+                                   : quaternion{0.0f, 0.0f, 0.0f, 1.0f};
+      }
+      else if (rotation_axis == surface_rotation_axis::neg_y) {
+         return direction.y > 0.0f ? quaternion{0.0f, 0.0f, 0.0f, 1.0f}
+                                   : quaternion{1.0f, 0.0f, 0.0f, 0.0f};
+      }
+      else if (rotation_axis == surface_rotation_axis::x) {
+         return direction.x > 0.0f ? quaternion{1.0f, 0.0f, 0.0f, 0.0f}
+                                   : quaternion{0.0f, 0.0f, 1.0f, 0.0f};
+      }
+      else if (rotation_axis == surface_rotation_axis::neg_x) {
+         return direction.x > 0.0f ? quaternion{0.0f, 0.0f, 1.0f, 0.0f}
+                                   : quaternion{1.0f, 0.0f, 0.0f, 0.0f};
+      }
+      else if (rotation_axis == surface_rotation_axis::z) {
+         return direction.z > 0.0f ? quaternion{1.0f, 0.0f, 0.0f, 0.0f}
+                                   : quaternion{0.0f, 0.0f, 1.0f, 0.0f};
+      }
+      else if (rotation_axis == surface_rotation_axis::neg_z) {
+         return direction.z > 0.0f ? quaternion{0.0f, 0.0f, 1.0f, 0.0f}
+                                   : quaternion{1.0f, 0.0f, 0.0f, 0.0f};
+      }
+   }
+
+   quaternion quat{cos_angle + 1.0f, axis.x * sin_angle, axis.y * sin_angle,
+                   axis.z * sin_angle};
+
+   return normalize(quat);
 }
 
 auto align_position_to_grid(const float2 position, const float alignment) -> float2
