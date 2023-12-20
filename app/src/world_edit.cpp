@@ -2459,6 +2459,10 @@ void world_edit::new_entity_from_selection() noexcept
    }
 
    _entity_creation_context = {};
+
+   if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
+      _entity_creation_config.placement_rotation = placement_rotation::manual_quaternion;
+   }
 }
 
 void world_edit::focus_on_selection() noexcept
