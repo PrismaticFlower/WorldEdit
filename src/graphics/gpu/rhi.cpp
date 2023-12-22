@@ -109,70 +109,83 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          continue;
       }
 
-      D3D12_FEATURE_DATA_D3D12_OPTIONS options{};
+      bool unsupported = false;
 
-      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS,
-                                             &options, sizeof(options)))) {
+      if (D3D12_FEATURE_DATA_D3D12_OPTIONS options{};
+          SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS,
+                                                &options, sizeof(options)))) {
+         if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3) {
+            debug_ouput.write_ln(
+               "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
+
+            unsupported = true;
+         }
+      }
+      else {
          debug_ouput.write_ln("Failed to query D3D12_FEATURE_D3D12_OPTIONS.");
 
-         continue;
+         unsupported = true;
       }
 
-      if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3) {
-         debug_ouput.write_ln(
-            "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
+      if (D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1{};
+          SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1,
+                                                &options1, sizeof(options1)))) {
+         if (not options1.WaveOps) {
+            debug_ouput.write_ln("GPU doesn't support WaveOps");
 
-         continue;
+            unsupported = true;
+         }
       }
-
-      D3D12_FEATURE_DATA_D3D12_OPTIONS1 options1{};
-
-      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1,
-                                             &options1, sizeof(options1)))) {
+      else {
          debug_ouput.write_ln("Failed to query D3D12_FEATURE_D3D12_OPTIONS1.");
 
-         continue;
+         unsupported = true;
       }
 
-      if (not options1.WaveOps) {
-         debug_ouput.write_ln("GPU doesn't support WaveOps");
+      if (D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
+          SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
+                                                &options3, sizeof(options3)))) {
+         if (not options3.WriteBufferImmediateSupportFlags &
+             (D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT | D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE |
+              D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY)) {
+            debug_ouput.write_ln("GPU doesn't support needed Write Buffer "
+                                 "Immediate Support Flags");
 
-         continue;
+            unsupported = true;
+         }
+
+         if (not options3.CastingFullyTypedFormatSupported) {
+            debug_ouput.write_ln("GPU doesn't support casting fully typed "
+                                 "formats. (Treating UNORM "
+                                 "as UNORM_SRGB and vice-versa.)");
+
+            unsupported = true;
+         }
       }
-
-      D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
-
-      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
-                                             &options3, sizeof(options3)))) {
+      else {
          debug_ouput.write_ln("Failed to query D3D12_FEATURE_D3D12_OPTIONS3");
 
-         continue;
+         unsupported = true;
       }
 
-      if (not options3.WriteBufferImmediateSupportFlags &
-          (D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT | D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE |
-           D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY)) {
-         debug_ouput.write_ln(
-            "GPU doesn't support needed Write Buffer Immediate Support Flags");
+      if (D3D12_FEATURE_DATA_SHADER_MODEL shader_model_support{
+             .HighestShaderModel = D3D_SHADER_MODEL_6_6};
+          SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shader_model_support,
+                                                sizeof(shader_model_support)))) {
 
-         continue;
+         if (shader_model_support.HighestShaderModel < D3D_SHADER_MODEL_6_6) {
+            debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_6");
+
+            unsupported = true;
+         }
       }
-
-      D3D12_FEATURE_DATA_SHADER_MODEL shader_model_support{
-         .HighestShaderModel = D3D_SHADER_MODEL_6_6};
-
-      if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shader_model_support,
-                                             sizeof(shader_model_support)))) {
+      else {
          debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_6");
 
-         continue;
+         unsupported = true;
       }
 
-      if (shader_model_support.HighestShaderModel < D3D_SHADER_MODEL_6_6) {
-         debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_6");
-
-         continue;
-      }
+      if (unsupported) continue;
 
       debug_ouput.write_ln("Requirements met. Using GPU.");
 
@@ -236,7 +249,6 @@ bool check_conservative_rasterization_support(ID3D12Device& device) noexcept
    return options.ConservativeRasterizationTier !=
           D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED;
 }
-
 }
 
 struct command_queue_init {
