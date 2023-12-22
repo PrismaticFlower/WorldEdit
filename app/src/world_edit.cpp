@@ -131,12 +131,16 @@ void world_edit::update()
 
    _tool_visualizers.clear();
 
-   _gizmo.update(make_camera_ray(_camera,
-                                 {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
-                                 {ImGui::GetMainViewport()->Size.x,
-                                  ImGui::GetMainViewport()->Size.y}),
-                 ImGui::IsKeyDown(ImGuiKey_MouseLeft) and not ImGui::GetIO().WantCaptureMouse,
-                 _camera, _settings.ui.gizmo_scale);
+   if (not _rotate_camera and not _pan_camera) {
+      _gizmo.update(make_camera_ray(_camera,
+                                    {ImGui::GetMousePos().x,
+                                     ImGui::GetMousePos().y},
+                                    {ImGui::GetMainViewport()->Size.x,
+                                     ImGui::GetMainViewport()->Size.y}),
+                    ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
+                       not ImGui::GetIO().WantCaptureMouse,
+                    _camera, _settings.ui.gizmo_scale);
+   }
 
    // Input!
    update_input();
