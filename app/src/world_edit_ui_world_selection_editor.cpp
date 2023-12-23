@@ -451,7 +451,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                ImGui::SameLine();
 
-               if (ImGui::Button("X")) {
+               if (ImGui::Button("X##path")) {
                   _edit_stack_world.apply(edits::make_delete_path_property(path->id,
                                                                            i, _world),
                                           _edit_context);
@@ -488,7 +488,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                ImGui::SameLine();
 
-               if (ImGui::Button("X")) {
+               if (ImGui::Button("X##node")) {
                   _edit_stack_world.apply(edits::make_delete_path_node_property(
                                              path->id, node_index, prop_index, _world),
                                           _edit_context);
