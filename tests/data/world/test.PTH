@@ -188,6 +188,7 @@ Path("Path 0")
 	Properties(1)
 	{
 		PropKey("PropValue");
+		PropEmpty();
 	}
 
 	Nodes(3)
@@ -203,6 +204,7 @@ Path("Path 0")
 			Properties(1)
 			{
 				PropKey("PropValue");
+				PropEmpty();
 			}
 		}
 

@@ -83,10 +83,11 @@ Path("The Amazing Path")
 	OffsetPath(0);
 	SplineType("Catmull-Rom");
 
-	Properties(2)
+	Properties(3)
 	{
 		FloatVal(5.0000);
 		StringVal("Such string, much wow");
+		EmptyVal("");
 	}
 
 	Nodes(2)
@@ -99,10 +100,11 @@ Path("The Amazing Path")
 			Time(1.000000);
 			PauseTime(0.000000);
 			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
-			Properties(2)
+			Properties(3)
 			{
 				FloatVal(5.0000);
 				StringVal("Such string, much wow");
+				EmptyVal("");
 			}
 		}
 
@@ -804,15 +806,16 @@ TEST_CASE("world saving", "[World][IO]")
       .paths =
          {path{.name = "The Amazing Path",
                .spline_type = path_spline_type::catmull_rom,
-               .properties = {path::property{.key = "FloatVal", .value = "5.0000"},
-                              path::property{.key = "StringVal",
-                                             .value = "Such string, much wow"}},
+               .properties = {{.key = "FloatVal", .value = "5.0000"},
+                              {.key = "StringVal", .value = "Such string, much wow"},
+                              {.key = "EmptyVal", .value = ""}},
 
                .nodes = {path::node{
                             .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
                             .position = {-2.006914f, -0.002500f, -56.238541f},
                             .properties = {{.key = "FloatVal", .value = "5.0000"},
-                                           {.key = "StringVal", .value = "Such string, much wow"}},
+                                           {.key = "StringVal", .value = "Such string, much wow"},
+                                           {.key = "EmptyVal", .value = ""}},
                          },
 
                          path::node{
@@ -825,9 +828,8 @@ TEST_CASE("world saving", "[World][IO]")
           path{.name = "The Other Amazing Path",
                .type = path_type::entity_follow,
                .spline_type = path_spline_type::catmull_rom,
-               .properties = {path::property{.key = "FloatVal", .value = "5.0000"},
-                              path::property{.key = "StringVal",
-                                             .value = "Such string, much wow"}},
+               .properties = {{.key = "FloatVal", .value = "5.0000"},
+                              {.key = "StringVal", .value = "Such string, much wow"}},
 
                .nodes = {path::node{
                             .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
@@ -1028,5 +1030,4 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
          fmt::format("temp/world_gc/test_{}.mrq", game_mode)));
    }
 }
-
 }

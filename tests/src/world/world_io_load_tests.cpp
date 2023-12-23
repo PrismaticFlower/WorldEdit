@@ -244,9 +244,11 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.paths[0].layer == 0);
          CHECK(world.paths[0].type == path_type::none);
          CHECK(world.paths[0].spline_type == path_spline_type::catmull_rom);
-         CHECK(world.paths[0].properties.size() == 1);
+         CHECK(world.paths[0].properties.size() == 2);
          CHECK(world.paths[0].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
+         CHECK(world.paths[0].properties[1] ==
+               path::property{.key = "PropEmpty"s, .value = ""s});
          CHECK(is_unique_id(0, world.paths));
 
          constexpr std::array<float3, 3> expected_positions{
@@ -259,9 +261,11 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(approx_equals(world.paths[0].nodes[0].position, expected_positions[0]));
          CHECK(approx_equals(world.paths[0].nodes[0].rotation,
                              {0.0f, 0.0f, 1.0f, 0.0f}));
-         REQUIRE(world.paths[0].nodes[0].properties.size() == 1);
+         REQUIRE(world.paths[0].nodes[0].properties.size() == 2);
          CHECK(world.paths[0].nodes[0].properties[0] ==
                path::property{.key = "PropKey"s, .value = "PropValue"s});
+         CHECK(world.paths[0].nodes[0].properties[1] ==
+               path::property{.key = "PropEmpty"s, .value = ""s});
 
          CHECK(approx_equals(world.paths[0].nodes[1].position, expected_positions[1]));
          CHECK(approx_equals(world.paths[0].nodes[1].rotation,

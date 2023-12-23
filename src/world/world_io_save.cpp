@@ -39,6 +39,8 @@ auto flip_position(float3 position) -> float3
 
 bool is_numeric_path_property(const std::string_view str) noexcept
 {
+   if (str.empty()) return false;
+
    for (auto& c : str) {
       if (not std::isdigit(static_cast<unsigned char>(c)) and c != '.') {
          return false;
