@@ -300,13 +300,19 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("terrain.toggle_brush_paint"s, _terrain_editor_context.brush_held);
    _commands.add("terrain.increase_brush_size"s, [this] {
-      _terrain_editor_config.brush_size =
-         std::clamp(_terrain_editor_config.brush_size + 1, 0,
+      _terrain_editor_config.brush_size_x =
+         std::clamp(_terrain_editor_config.brush_size_x + 1, 0,
+                    _world.terrain.length / 2);
+      _terrain_editor_config.brush_size_y =
+         std::clamp(_terrain_editor_config.brush_size_y + 1, 0,
                     _world.terrain.length / 2);
    });
    _commands.add("terrain.decrease_brush_size"s, [this] {
-      _terrain_editor_config.brush_size =
-         std::clamp(_terrain_editor_config.brush_size - 1, 0,
+      _terrain_editor_config.brush_size_x =
+         std::clamp(_terrain_editor_config.brush_size_x - 1, 0,
+                    _world.terrain.length / 2);
+      _terrain_editor_config.brush_size_y =
+         std::clamp(_terrain_editor_config.brush_size_y - 1, 0,
                     _world.terrain.length / 2);
    });
    _commands.add("terrain.cycle_brush_mode"s, [this] {

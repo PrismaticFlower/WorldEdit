@@ -457,7 +457,8 @@ private:
 
    struct terrain_editor_config {
       terrain_edit_target edit_target = terrain_edit_target::height;
-      int32 brush_size = 1;
+      int32 brush_size_x = 1;
+      int32 brush_size_y = 1;
 
       struct height_config {
          terrain_brush_mode brush_mode = terrain_brush_mode::raise;
