@@ -652,7 +652,7 @@ void world_edit::ui_show_terrain_editor() noexcept
       int32 bottom = std::clamp(terrain_y + _terrain_editor_config.brush_size + 1,
                                 0, _world.terrain.length);
 
-      if (left == right or top == bottom) return;
+      if (left >= right or top >= bottom) return;
 
       const int32 active_mask_factor = terrain_editor_maps::active_mask_factor;
       const int32 active_mask_left = left / active_mask_factor;
