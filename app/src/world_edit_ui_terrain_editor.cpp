@@ -584,7 +584,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                       {ImGui::GetMainViewport()->Size.x,
                        ImGui::GetMainViewport()->Size.y});
 
-   float hit_distance = 0.0f;
+   float hit_distance = -1.0f;
 
    if (_terrain_editor_context.brush_active and
        _terrain_editor_config.edit_target == terrain_edit_target::height and
@@ -601,6 +601,8 @@ void world_edit::ui_show_terrain_editor() noexcept
          hit_distance = *hit;
       }
    }
+
+   if (hit_distance < 0.0f) return;
 
    float3 cursor_positionWS = ray.origin + ray.direction * hit_distance;
 
