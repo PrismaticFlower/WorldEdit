@@ -471,7 +471,8 @@ private:
          terrain_texture_brush_mode brush_mode = terrain_texture_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
          float brush_texture_weight = 255.0f;
-         float brush_rate = 2.5f;
+         float brush_rate = 200.0f;
+         float brush_speed = 0.5f;
          uint32 edit_texture = 0;
       } texture;
 
@@ -480,6 +481,7 @@ private:
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
          float3 brush_color = {1.0f, 1.0f, 1.0f};
          float brush_rate = 1.0f;
+         float brush_speed = 0.5f;
       } color;
    } _terrain_editor_config;
 
@@ -491,6 +493,21 @@ private:
       std::chrono::steady_clock::time_point last_brush_update =
          std::chrono::steady_clock::now();
    } _terrain_editor_context;
+
+   struct terrain_editor_maps {
+      constexpr static int active_mask_factor = 4;
+      constexpr static int mask_word_bits = 64;
+
+      int32 length = 256;
+
+      container::dynamic_array_2d<uint64> active_mask{((length / active_mask_factor) +
+                                                       (mask_word_bits - 1)) /
+                                                         mask_word_bits,
+                                                      length / active_mask_factor};
+
+      container::dynamic_array_2d<float> height{length, length};
+      container::dynamic_array_2d<float3> color{length, length};
+   } _terrain_editor_maps;
 
    struct terrain_import_heightmap_context {
       container::dynamic_array_2d<uint8> loaded_heightmap_u8;
