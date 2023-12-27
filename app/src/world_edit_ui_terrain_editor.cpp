@@ -99,7 +99,27 @@ struct brush {
       case terrain_brush_falloff::sine:
          return (sinf(std::numbers::pi_v<float> * (normalized_distance + 0.5f))) * 0.5f +
                 0.5f;
-      case terrain_brush_falloff::custom:
+      case terrain_brush_falloff::ramp: {
+         float ramp_distance = 0.0f;
+
+         switch (rotation) {
+         case terrain_brush_rotation::r0:
+            ramp_distance = fabs(static_cast<float>(x) - radius - centre.x);
+            break;
+         case terrain_brush_rotation::r90:
+            ramp_distance = fabs(static_cast<float>(y) - radius - centre.y);
+            break;
+         case terrain_brush_rotation::r180:
+            ramp_distance = fabs(static_cast<float>(x) + radius - centre.x);
+            break;
+         case terrain_brush_rotation::r270:
+            ramp_distance = fabs(static_cast<float>(y) + radius - centre.y);
+            break;
+         }
+
+         return std::clamp(ramp_distance / (radius * 2.0f), 0.0f, 1.0f);
+      }
+      case terrain_brush_falloff::custom: {
          if (custom_brush_falloff_map.empty()) return 1.0f;
 
          int32 x_offset = brush_left;
@@ -132,6 +152,7 @@ struct brush {
          }
 
          std::unreachable();
+      }
       }
 
       std::unreachable();
@@ -327,6 +348,10 @@ void world_edit::ui_show_terrain_editor() noexcept
             brush_falloff = terrain_brush_falloff::sine;
          }
 
+         if (ImGui::Selectable("Ramp", brush_falloff == terrain_brush_falloff::ramp)) {
+            brush_falloff = terrain_brush_falloff::ramp;
+         }
+
          if (ImGui::Selectable("Custom", brush_falloff == terrain_brush_falloff::custom)) {
             brush_falloff = terrain_brush_falloff::custom;
          }
@@ -437,7 +462,10 @@ void world_edit::ui_show_terrain_editor() noexcept
                ImGui::SeparatorText("Custom Brush Error");
                ImGui::TextWrapped(_terrain_editor_config.custom_brush_error.c_str());
             }
+         }
 
+         if (brush_falloff == terrain_brush_falloff::ramp or
+             brush_falloff == terrain_brush_falloff::custom) {
             terrain_brush_rotation& brush_rotation = [&]() -> terrain_brush_rotation& {
                if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
                   return _terrain_editor_config.height.brush_rotation;

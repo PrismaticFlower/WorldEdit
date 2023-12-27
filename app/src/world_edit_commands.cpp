@@ -383,6 +383,9 @@ void world_edit::initialize_commands() noexcept
             falloff = terrain_brush_falloff::sine;
             return;
          case terrain_brush_falloff::sine:
+            falloff = terrain_brush_falloff::ramp;
+            return;
+         case terrain_brush_falloff::ramp:
             falloff = terrain_brush_falloff::none;
             return;
          }
@@ -401,6 +404,9 @@ void world_edit::initialize_commands() noexcept
             falloff = terrain_brush_falloff::sine;
             return;
          case terrain_brush_falloff::sine:
+            falloff = terrain_brush_falloff::ramp;
+            return;
+         case terrain_brush_falloff::ramp:
             falloff = terrain_brush_falloff::none;
             return;
          }
@@ -418,6 +424,9 @@ void world_edit::initialize_commands() noexcept
             falloff = terrain_brush_falloff::sine;
             return;
          case terrain_brush_falloff::sine:
+            falloff = terrain_brush_falloff::ramp;
+            return;
+         case terrain_brush_falloff::ramp:
             falloff = terrain_brush_falloff::none;
             return;
          }
