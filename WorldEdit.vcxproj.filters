@@ -796,6 +796,9 @@
     <ClInclude Include="src\graphics\fallback_imgui_texture.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\utility\load_terrain_brush.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -1357,6 +1360,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\shaders\grid_overlayVS.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\utility\load_terrain_brush.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

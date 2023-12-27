@@ -336,6 +336,7 @@
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
+    <ClCompile Include="src\world\utility\load_terrain_brush.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_heightmap.cpp" />
     <ClCompile Include="src\world\object_class_library.cpp" />
     <ClCompile Include="src\world\tool_visualizers.cpp" />
@@ -619,6 +620,7 @@
     <ClInclude Include="src\world\tool_visualizers.hpp" />
     <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
     <ClInclude Include="src\world\utility\grounding.hpp" />
+    <ClInclude Include="src\world\utility\load_terrain_brush.hpp" />
     <ClInclude Include="src\world\utility\load_terrain_heightmap.hpp" />
     <ClInclude Include="src\world\utility\make_command_post_linked_entities.hpp" />
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
