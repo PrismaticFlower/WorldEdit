@@ -49,17 +49,37 @@ auto get_position(int32 x, int32 y, const world::terrain& terrain) noexcept -> f
                  (y - terrain_half_length + 1) * terrain.grid_scale};
 }
 
+auto get_rotation_name(const terrain_brush_rotation rotation) -> const char*
+{
+   if (rotation == terrain_brush_rotation::r0) return "0d";
+   if (rotation == terrain_brush_rotation::r90) return "90d";
+   if (rotation == terrain_brush_rotation::r180) return "180d";
+   if (rotation == terrain_brush_rotation::r270) return "270d";
+
+   return "";
+}
+
 struct brush {
    brush(float2 centre, float radius, terrain_brush_falloff falloff,
-         int32 brush_left, int32 brush_top,
+         terrain_brush_rotation rotation, int32 brush_left, int32 brush_top,
          const container::dynamic_array_2d<uint8>* const custom_brush_falloff_map)
       : centre{centre},
         radius{radius},
         falloff{falloff},
+        rotation{rotation},
         brush_left{brush_left},
-        brush_top{brush_top},
-        custom_brush_falloff_map{custom_brush_falloff_map}
+        brush_top{brush_top}
    {
+      if (custom_brush_falloff_map) {
+         this->custom_brush_falloff_map = {custom_brush_falloff_map->data(),
+                                           custom_brush_falloff_map->size()};
+
+         custom_brush_width =
+            static_cast<int32>(custom_brush_falloff_map->sshape()[0]);
+         custom_brush_width_max = custom_brush_width - 1;
+         custom_brush_height_max =
+            static_cast<int32>(custom_brush_falloff_map->sshape()[1]) - 1;
+      }
    }
 
    auto weight(int32 x, int32 y) const noexcept -> float
@@ -80,16 +100,38 @@ struct brush {
          return (sinf(std::numbers::pi_v<float> * (normalized_distance + 0.5f))) * 0.5f +
                 0.5f;
       case terrain_brush_falloff::custom:
-         if (not custom_brush_falloff_map) return 1.0f;
+         if (custom_brush_falloff_map.empty()) return 1.0f;
 
-         const int64 clamped_x =
-            std::clamp(int64{x - brush_left}, 0ll,
-                       custom_brush_falloff_map->sshape()[0] - 1);
-         const int64 clamped_y =
-            std::clamp(int64{y - brush_top}, 0ll,
-                       custom_brush_falloff_map->sshape()[1] - 1);
+         int32 x_offset = brush_left;
+         int32 y_offset = brush_top;
 
-         return (*custom_brush_falloff_map)[{clamped_x, clamped_y}] / 255.0f;
+         if (rotation == terrain_brush_rotation::r90 or
+             rotation == terrain_brush_rotation::r270) {
+            std::swap(x, y);
+            std::swap(x_offset, y_offset);
+         }
+
+         const int32 clamped_x = std::clamp(x - x_offset, 0, custom_brush_width_max);
+         const int32 clamped_y = std::clamp(y - y_offset, 0, custom_brush_height_max);
+         const int32 flipped_x = custom_brush_width_max - clamped_x;
+         const int32 flipped_y = custom_brush_height_max - clamped_y;
+
+         switch (rotation) {
+         case terrain_brush_rotation::r0:
+            return custom_brush_falloff_map[clamped_y * custom_brush_width + clamped_x] /
+                   255.0f;
+         case terrain_brush_rotation::r90:
+            return custom_brush_falloff_map[flipped_y * custom_brush_width + clamped_x] /
+                   255.0f;
+         case terrain_brush_rotation::r180:
+            return custom_brush_falloff_map[flipped_y * custom_brush_width + flipped_x] /
+                   255.0f;
+         case terrain_brush_rotation::r270:
+            return custom_brush_falloff_map[clamped_y * custom_brush_width + flipped_x] /
+                   255.0f;
+         }
+
+         std::unreachable();
       }
 
       std::unreachable();
@@ -106,9 +148,13 @@ private:
    float2 centre;
    float radius = 0.0f;
    terrain_brush_falloff falloff = terrain_brush_falloff::none;
+   terrain_brush_rotation rotation = terrain_brush_rotation::r0;
    int32 brush_left = 0;
    int32 brush_top = 0;
-   const container::dynamic_array_2d<uint8>* const custom_brush_falloff_map = nullptr;
+   std::span<const uint8> custom_brush_falloff_map = {};
+   int32 custom_brush_width_max = 0;
+   int32 custom_brush_height_max = 0;
+   int32 custom_brush_width = 0;
 };
 
 struct texture_axis_name {
@@ -390,6 +436,31 @@ void world_edit::ui_show_terrain_editor() noexcept
             if (not _terrain_editor_config.custom_brush_error.empty()) {
                ImGui::SeparatorText("Custom Brush Error");
                ImGui::TextWrapped(_terrain_editor_config.custom_brush_error.c_str());
+            }
+
+            terrain_brush_rotation& brush_rotation = [&]() -> terrain_brush_rotation& {
+               if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+                  return _terrain_editor_config.height.brush_rotation;
+               }
+               else if (_terrain_editor_config.edit_target ==
+                        terrain_edit_target::texture) {
+                  return _terrain_editor_config.texture.brush_rotation;
+               }
+               else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+                  return _terrain_editor_config.color.brush_rotation;
+               }
+
+               return _terrain_editor_config.height.brush_rotation;
+            }();
+
+            if (int i = std::to_underlying(brush_rotation);
+                ImGui::SliderInt("Brush Rotation", &i, 0, 3,
+                                 get_rotation_name(brush_rotation),
+                                 ImGuiSliderFlags_AlwaysClamp)) {
+               if (i == 0) brush_rotation = terrain_brush_rotation::r0;
+               if (i == 1) brush_rotation = terrain_brush_rotation::r90;
+               if (i == 2) brush_rotation = terrain_brush_rotation::r180;
+               if (i == 3) brush_rotation = terrain_brush_rotation::r270;
             }
          }
 
@@ -688,6 +759,10 @@ void world_edit::ui_show_terrain_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Terrain Editing", "Cycle Brush Falloff")));
 
+      ImGui::Text("Cycle Brush Rotation");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Terrain Editing", "Cycle Brush Rotation")));
+
       ImGui::Text("Increase Brush Size");
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Terrain Editing", "Increase Brush Size")));
@@ -763,6 +838,20 @@ void world_edit::ui_show_terrain_editor() noexcept
       return terrain_brush_falloff::none;
    }();
 
+   const terrain_brush_rotation brush_rotation = [&] {
+      if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+         return _terrain_editor_config.height.brush_rotation;
+      }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+         return _terrain_editor_config.texture.brush_rotation;
+      }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+         return _terrain_editor_config.color.brush_rotation;
+      }
+
+      return terrain_brush_rotation::r0;
+   }();
+
    const container::dynamic_array_2d<uint8>* const custom_brush_falloff_map =
       [&]() -> const container::dynamic_array_2d<uint8>* {
       if (brush_falloff != terrain_brush_falloff::custom) {
@@ -779,14 +868,20 @@ void world_edit::ui_show_terrain_editor() noexcept
                  .falloff_map;
    }();
 
-   const int32 brush_size_x =
+   int32 brush_size_x =
       not custom_brush_falloff_map
          ? _terrain_editor_config.brush_size_x
          : static_cast<int32>(custom_brush_falloff_map->sshape()[0] - 1) / 2;
-   const int32 brush_size_y =
+   int32 brush_size_y =
       not custom_brush_falloff_map
          ? _terrain_editor_config.brush_size_y
          : static_cast<int32>(custom_brush_falloff_map->sshape()[1] - 1) / 2;
+
+   if (brush_falloff == terrain_brush_falloff::custom and
+       (brush_rotation == terrain_brush_rotation::r90 or
+        brush_rotation == terrain_brush_rotation::r270)) {
+      std::swap(brush_size_x, brush_size_y);
+   }
 
    const float brush_radius =
       static_cast<float>(std::max(brush_size_x, brush_size_y));
@@ -794,6 +889,7 @@ void world_edit::ui_show_terrain_editor() noexcept
    const brush brush{terrain_point,
                      brush_radius,
                      brush_falloff,
+                     brush_rotation,
                      terrain_x - brush_size_x,
                      terrain_y - brush_size_y,
                      custom_brush_falloff_map};

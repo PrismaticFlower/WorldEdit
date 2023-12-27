@@ -423,6 +423,62 @@ void world_edit::initialize_commands() noexcept
          }
       }
    });
+   _commands.add("terrain.cycle_brush_rotation"s, [this] {
+      if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+         switch (terrain_brush_rotation& rotation =
+                    _terrain_editor_config.height.brush_rotation;
+                 rotation) {
+         case terrain_brush_rotation::r0:
+            rotation = terrain_brush_rotation::r90;
+            return;
+         case terrain_brush_rotation::r90:
+            rotation = terrain_brush_rotation::r180;
+            return;
+         case terrain_brush_rotation::r180:
+            rotation = terrain_brush_rotation::r270;
+            return;
+         case terrain_brush_rotation::r270:
+            rotation = terrain_brush_rotation::r0;
+            return;
+         }
+      }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+         switch (terrain_brush_rotation& rotation =
+                    _terrain_editor_config.texture.brush_rotation;
+                 rotation) {
+         case terrain_brush_rotation::r0:
+            rotation = terrain_brush_rotation::r90;
+            return;
+         case terrain_brush_rotation::r90:
+            rotation = terrain_brush_rotation::r180;
+            return;
+         case terrain_brush_rotation::r180:
+            rotation = terrain_brush_rotation::r270;
+            return;
+         case terrain_brush_rotation::r270:
+            rotation = terrain_brush_rotation::r0;
+            return;
+         }
+      }
+      else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+         switch (terrain_brush_rotation& rotation =
+                    _terrain_editor_config.color.brush_rotation;
+                 rotation) {
+         case terrain_brush_rotation::r0:
+            rotation = terrain_brush_rotation::r90;
+            return;
+         case terrain_brush_rotation::r90:
+            rotation = terrain_brush_rotation::r180;
+            return;
+         case terrain_brush_rotation::r180:
+            rotation = terrain_brush_rotation::r270;
+            return;
+         case terrain_brush_rotation::r270:
+            rotation = terrain_brush_rotation::r0;
+            return;
+         }
+      }
+   });
    _commands.add("terrain.close_editor"s,
                  [this] { _terrain_editor_open = false; });
    _commands.add("terrain.cancel_resize"s,
@@ -803,6 +859,7 @@ void world_edit::initialize_hotkeys() noexcept
             {"Decrease Brush Size", "terrain.decrease_brush_size", {.key = key::mouse_wheel_back}},
             {"Cycle Brush Mode", "terrain.cycle_brush_mode", {.key = key::z}},
             {"Cycle Brush Falloff", "terrain.cycle_brush_falloff", {.key = key::x}},
+            {"Cycle Brush Rotation", "terrain.cycle_brush_rotation", {.key = key::c}},
             {"Close Editor", "terrain.close_editor", {.key = key::escape}},
          },
    });

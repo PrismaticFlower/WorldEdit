@@ -82,6 +82,8 @@ enum class terrain_color_brush_mode : uint8 { paint, spray, blur };
 
 enum class terrain_brush_falloff : uint8 { none, linear, smooth, sine, custom };
 
+enum class terrain_brush_rotation : uint8 { r0, r90, r180, r270 };
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -464,6 +466,7 @@ private:
       struct height_config {
          terrain_brush_mode brush_mode = terrain_brush_mode::raise;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
+         terrain_brush_rotation brush_rotation = terrain_brush_rotation::r0;
          float brush_height = 0.0f;
          float brush_speed = 0.5f;
          float brush_rate = 2.5f;
@@ -472,6 +475,7 @@ private:
       struct texture_config {
          terrain_texture_brush_mode brush_mode = terrain_texture_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
+         terrain_brush_rotation brush_rotation = terrain_brush_rotation::r0;
          float brush_texture_weight = 255.0f;
          float brush_rate = 200.0f;
          float brush_speed = 0.5f;
@@ -481,6 +485,7 @@ private:
       struct color_config {
          terrain_color_brush_mode brush_mode = terrain_color_brush_mode::paint;
          terrain_brush_falloff brush_falloff = terrain_brush_falloff::none;
+         terrain_brush_rotation brush_rotation = terrain_brush_rotation::r0;
          float3 brush_color = {1.0f, 1.0f, 1.0f};
          float brush_rate = 1.0f;
          float brush_speed = 0.5f;
