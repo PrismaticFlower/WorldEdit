@@ -80,7 +80,7 @@ enum class terrain_texture_brush_mode : uint8 { paint, spray, erase, soften };
 
 enum class terrain_color_brush_mode : uint8 { paint, spray, blur };
 
-enum class terrain_brush_falloff : uint8 { none, linear, smooth, sine };
+enum class terrain_brush_falloff : uint8 { none, linear, smooth, sine, custom };
 
 constexpr float tool_window_start_x = 264.0f;
 
@@ -459,6 +459,7 @@ private:
       terrain_edit_target edit_target = terrain_edit_target::height;
       int32 brush_size_x = 1;
       int32 brush_size_y = 1;
+      int32 custom_brush_index = 0;
 
       struct height_config {
          terrain_brush_mode brush_mode = terrain_brush_mode::raise;
@@ -484,6 +485,14 @@ private:
          float brush_rate = 1.0f;
          float brush_speed = 0.5f;
       } color;
+
+      struct custom_brush {
+         std::string name;
+         container::dynamic_array_2d<uint8> falloff_map;
+      };
+
+      std::vector<custom_brush> custom_brushes;
+      std::string custom_brush_error;
    } _terrain_editor_config;
 
    struct terrain_editor_context {
