@@ -30,7 +30,7 @@ auto load_brush(const std::filesystem::path& file_path)
    }
 
    container::dynamic_array_2d<uint8> heightmap{image.GetMetadata().width,
-                                                image.GetMetadata().width};
+                                                image.GetMetadata().height};
 
    for (std::size_t y = 0; y < image.GetMetadata().height; ++y) {
       std::memcpy(&heightmap[{0, static_cast<std::ptrdiff_t>(y)}],
