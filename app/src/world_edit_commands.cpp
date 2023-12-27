@@ -374,15 +374,15 @@ void world_edit::initialize_commands() noexcept
          switch (terrain_brush_falloff& falloff = _terrain_editor_config.height.brush_falloff;
                  falloff) {
          case terrain_brush_falloff::none:
-            falloff = terrain_brush_falloff::linear;
+            falloff = terrain_brush_falloff::cone;
             return;
-         case terrain_brush_falloff::linear:
+         case terrain_brush_falloff::cone:
             falloff = terrain_brush_falloff::smooth;
             return;
          case terrain_brush_falloff::smooth:
-            falloff = terrain_brush_falloff::sine;
+            falloff = terrain_brush_falloff::bell;
             return;
-         case terrain_brush_falloff::sine:
+         case terrain_brush_falloff::bell:
             falloff = terrain_brush_falloff::ramp;
             return;
          case terrain_brush_falloff::ramp:
@@ -395,15 +395,15 @@ void world_edit::initialize_commands() noexcept
                     _terrain_editor_config.texture.brush_falloff;
                  falloff) {
          case terrain_brush_falloff::none:
-            falloff = terrain_brush_falloff::linear;
+            falloff = terrain_brush_falloff::cone;
             return;
-         case terrain_brush_falloff::linear:
+         case terrain_brush_falloff::cone:
             falloff = terrain_brush_falloff::smooth;
             return;
          case terrain_brush_falloff::smooth:
-            falloff = terrain_brush_falloff::sine;
+            falloff = terrain_brush_falloff::bell;
             return;
-         case terrain_brush_falloff::sine:
+         case terrain_brush_falloff::bell:
             falloff = terrain_brush_falloff::ramp;
             return;
          case terrain_brush_falloff::ramp:
@@ -415,15 +415,15 @@ void world_edit::initialize_commands() noexcept
          switch (terrain_brush_falloff& falloff = _terrain_editor_config.color.brush_falloff;
                  falloff) {
          case terrain_brush_falloff::none:
-            falloff = terrain_brush_falloff::linear;
+            falloff = terrain_brush_falloff::cone;
             return;
-         case terrain_brush_falloff::linear:
+         case terrain_brush_falloff::cone:
             falloff = terrain_brush_falloff::smooth;
             return;
          case terrain_brush_falloff::smooth:
-            falloff = terrain_brush_falloff::sine;
+            falloff = terrain_brush_falloff::bell;
             return;
-         case terrain_brush_falloff::sine:
+         case terrain_brush_falloff::bell:
             falloff = terrain_brush_falloff::ramp;
             return;
          case terrain_brush_falloff::ramp:

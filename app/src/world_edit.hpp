@@ -82,9 +82,9 @@ enum class terrain_color_brush_mode : uint8 { paint, spray, blur };
 
 enum class terrain_brush_falloff : uint8 {
    none,
-   linear,
+   cone,
    smooth,
-   sine,
+   bell,
    ramp,
    custom
 };

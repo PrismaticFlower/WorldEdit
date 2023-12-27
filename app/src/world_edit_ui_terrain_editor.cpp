@@ -91,14 +91,13 @@ struct brush {
       switch (falloff) {
       case terrain_brush_falloff::none:
          return 1.0f;
-      case terrain_brush_falloff::linear:
-         return std::clamp(1.0f - normalized_distance, 0.0f, 1.0f);
+      case terrain_brush_falloff::cone:
+         return 1.0f - normalized_distance;
       case terrain_brush_falloff::smooth:
-         return std::clamp(1.0f - (normalized_distance * normalized_distance),
-                           0.0f, 1.0f);
-      case terrain_brush_falloff::sine:
-         return (sinf(std::numbers::pi_v<float> * (normalized_distance + 0.5f))) * 0.5f +
-                0.5f;
+         return 1.0f - (normalized_distance * normalized_distance);
+      case terrain_brush_falloff::bell:
+         return 1.0f - (normalized_distance * normalized_distance *
+                        (3.0f - 2.0f * normalized_distance)); // smoothstep, in case you're wondering
       case terrain_brush_falloff::ramp: {
          float ramp_distance = 0.0f;
 
@@ -336,16 +335,16 @@ void world_edit::ui_show_terrain_editor() noexcept
             brush_falloff = terrain_brush_falloff::none;
          }
 
-         if (ImGui::Selectable("Linear", brush_falloff == terrain_brush_falloff::linear)) {
-            brush_falloff = terrain_brush_falloff::linear;
+         if (ImGui::Selectable("Cone", brush_falloff == terrain_brush_falloff::cone)) {
+            brush_falloff = terrain_brush_falloff::cone;
          }
 
          if (ImGui::Selectable("Smooth", brush_falloff == terrain_brush_falloff::smooth)) {
             brush_falloff = terrain_brush_falloff::smooth;
          }
 
-         if (ImGui::Selectable("Sine", brush_falloff == terrain_brush_falloff::sine)) {
-            brush_falloff = terrain_brush_falloff::sine;
+         if (ImGui::Selectable("Bell", brush_falloff == terrain_brush_falloff::bell)) {
+            brush_falloff = terrain_brush_falloff::bell;
          }
 
          if (ImGui::Selectable("Ramp", brush_falloff == terrain_brush_falloff::ramp)) {
