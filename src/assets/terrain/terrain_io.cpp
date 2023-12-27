@@ -46,6 +46,8 @@ constexpr auto make_terrain_texture_string(const std::string_view str) noexcept 
 {
    terrain_string out{};
 
+   if (str.empty()) return out;
+
    constexpr auto append_suffix = ".tga\0"sv;
 
    const std::size_t out_size =
@@ -176,8 +178,6 @@ auto build_clusters_info(const terrain& terrain) -> clusters_info
    return info;
 }
 
-void remove_tga_suffix(std::string& str);
-
 }
 
 auto read_terrain(const std::span<const std::byte> bytes) -> terrain
@@ -209,6 +209,7 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
                    .length = header.active_right_offset - header.active_left_offset,
                    .height_scale = header.height_scale,
                    .grid_scale = header.grid_scale,
+                   .prelit = header.prelit != 0,
                    .texture_scales = header.texture_scales,
                    .texture_axes = header.texture_axes};
 
