@@ -141,7 +141,8 @@ void world_edit::ui_show_terrain_editor() noexcept
                                        {std::numeric_limits<float>::max(),
                                         620.0f * _display_scale});
 
-   if (ImGui::Begin("Terrain Editor", &_terrain_editor_open)) {
+   if (ImGui::Begin("Terrain Editor", &_terrain_editor_open,
+                    ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
       ImGui::SeparatorText("Edit Target");
 
       if (ImGui::BeginTable("Edit Target", 3,
@@ -169,161 +170,124 @@ void world_edit::ui_show_terrain_editor() noexcept
          ImGui::EndTable();
       }
 
-      const auto show_custom_brush_selector = [&] {
-         if (ImGui::BeginCombo("Custom Brush", [&] {
-                if (_terrain_editor_config.custom_brush_index >=
-                    std::ssize(_terrain_editor_config.custom_brushes)) {
-                   return "<none>";
-                }
+      if (ImGui::CollapsingHeader("Brush", ImGuiTreeNodeFlags_DefaultOpen)) {
+         if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+            terrain_editor_config::height_config& config =
+               _terrain_editor_config.height;
 
-                return _terrain_editor_config
-                   .custom_brushes[_terrain_editor_config.custom_brush_index]
-                   .name.c_str();
-             }())) {
+            ImGui::SeparatorText("Brush Mode");
 
-            for (int32 i = 0; i < _terrain_editor_config.custom_brushes.size(); ++i) {
-               if (ImGui::Selectable(_terrain_editor_config.custom_brushes[i]
-                                        .name.c_str(),
-                                     _terrain_editor_config.custom_brush_index == i)) {
-                  _terrain_editor_config.custom_brush_index = i;
-               }
+            if (ImGui::Selectable("Raise", config.brush_mode ==
+                                              terrain_brush_mode::raise)) {
+               config.brush_mode = terrain_brush_mode::raise;
             }
 
-            if (ImGui::Selectable("Load...")) {
-               static constexpr GUID load_brush_picker_guid = {0xc5b909c5,
-                                                               0xe07f,
-                                                               0x4380,
-                                                               {0x8a, 0xaf, 0x99,
-                                                                0x41, 0x21, 0xe5,
-                                                                0x2d, 0xea}};
-
-               auto path = utility::show_file_open_picker(
-                  {.title = L"Load brush...",
-                   .ok_button_label = L"Import",
-                   .filters = {utility::file_picker_filter{.name = L"Texture",
-                                                           .filter = L"*.tga"}},
-                   .picker_guid = load_brush_picker_guid,
-                   .window = _window,
-                   .must_exist = true});
-
-               if (path) {
-                  try {
-                     container::dynamic_array_2d<uint8> falloff_map =
-                        world::load_brush(*path);
-                     std::string name = path->stem().string();
-
-                     assert(falloff_map.shape()[0] % 2 == 1 and
-                            falloff_map.shape()[1] % 2 == 1);
-
-                     bool found = false;
-
-                     for (int32 i = 0;
-                          i < _terrain_editor_config.custom_brushes.size(); ++i) {
-                        auto& brush = _terrain_editor_config.custom_brushes[i];
-
-                        if (string::iequals(brush.name, name)) {
-                           brush.falloff_map = std::move(falloff_map);
-
-                           _terrain_editor_config.custom_brush_index = i;
-
-                           found = true;
-                           break;
-                        }
-                     }
-
-                     if (not found) {
-                        _terrain_editor_config.custom_brush_index = static_cast<int32>(
-                           _terrain_editor_config.custom_brushes.size());
-                        _terrain_editor_config.custom_brushes
-                           .emplace_back(std::move(name), std::move(falloff_map));
-                     }
-
-                     _terrain_editor_config.custom_brush_error.clear();
-                  }
-                  catch (world::brush_load_error& e) {
-                     _terrain_editor_config.custom_brush_error = e.what();
-                  }
-               }
+            if (ImGui::Selectable("Lower", config.brush_mode ==
+                                              terrain_brush_mode::lower)) {
+               config.brush_mode = terrain_brush_mode::lower;
             }
 
-            ImGui::EndCombo();
+            if (ImGui::Selectable("Overwrite", config.brush_mode ==
+                                                  terrain_brush_mode::overwrite)) {
+               config.brush_mode = terrain_brush_mode::overwrite;
+            }
+
+            if (ImGui::Selectable("Pull Towards", config.brush_mode ==
+                                                     terrain_brush_mode::pull_towards)) {
+               config.brush_mode = terrain_brush_mode::pull_towards;
+            }
+
+            if (ImGui::Selectable("Blend", config.brush_mode ==
+                                              terrain_brush_mode::blend)) {
+               config.brush_mode = terrain_brush_mode::blend;
+            }
+         }
+         else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+            terrain_editor_config::texture_config& config =
+               _terrain_editor_config.texture;
+
+            ImGui::SeparatorText("Brush Mode");
+
+            if (ImGui::Selectable("Paint", config.brush_mode ==
+                                              terrain_texture_brush_mode::paint)) {
+               config.brush_mode = terrain_texture_brush_mode::paint;
+            }
+
+            if (ImGui::Selectable("Spray", config.brush_mode ==
+                                              terrain_texture_brush_mode::spray)) {
+               config.brush_mode = terrain_texture_brush_mode::spray;
+            }
+
+            if (ImGui::Selectable("Erase", config.brush_mode ==
+                                              terrain_texture_brush_mode::erase)) {
+               config.brush_mode = terrain_texture_brush_mode::erase;
+            }
+
+            if (ImGui::Selectable("Soften", config.brush_mode ==
+                                               terrain_texture_brush_mode::soften)) {
+               config.brush_mode = terrain_texture_brush_mode::soften;
+            }
+         }
+         else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+            terrain_editor_config::color_config& config = _terrain_editor_config.color;
+
+            ImGui::SeparatorText("Brush Mode");
+
+            if (ImGui::Selectable("Paint", config.brush_mode ==
+                                              terrain_color_brush_mode::paint)) {
+               config.brush_mode = terrain_color_brush_mode::paint;
+            }
+
+            if (ImGui::Selectable("Spray", config.brush_mode ==
+                                              terrain_color_brush_mode::spray)) {
+               config.brush_mode = terrain_color_brush_mode::spray;
+            }
+
+            if (ImGui::Selectable("Blur", config.brush_mode ==
+                                             terrain_color_brush_mode::blur)) {
+               config.brush_mode = terrain_color_brush_mode::blur;
+            }
          }
 
-         if (not _terrain_editor_config.custom_brush_error.empty()) {
-            ImGui::SeparatorText("Custom Brush Error");
-            ImGui::TextWrapped(_terrain_editor_config.custom_brush_error.c_str());
-         }
-      };
+         terrain_brush_falloff& brush_falloff = [&]() -> terrain_brush_falloff& {
+            if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+               return _terrain_editor_config.height.brush_falloff;
+            }
+            else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+               return _terrain_editor_config.texture.brush_falloff;
+            }
+            else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+               return _terrain_editor_config.color.brush_falloff;
+            }
 
-      if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
-         terrain_editor_config::height_config& config = _terrain_editor_config.height;
-
-         ImGui::SeparatorText("Brush Mode");
-
-         if (ImGui::Selectable("Raise", config.brush_mode == terrain_brush_mode::raise)) {
-            config.brush_mode = terrain_brush_mode::raise;
-         }
-
-         if (ImGui::Selectable("Lower", config.brush_mode == terrain_brush_mode::lower)) {
-            config.brush_mode = terrain_brush_mode::lower;
-         }
-
-         if (ImGui::Selectable("Overwrite", config.brush_mode ==
-                                               terrain_brush_mode::overwrite)) {
-            config.brush_mode = terrain_brush_mode::overwrite;
-         }
-
-         if (ImGui::Selectable("Pull Towards", config.brush_mode ==
-                                                  terrain_brush_mode::pull_towards)) {
-            config.brush_mode = terrain_brush_mode::pull_towards;
-         }
-
-         if (ImGui::Selectable("Blend", config.brush_mode == terrain_brush_mode::blend)) {
-            config.brush_mode = terrain_brush_mode::blend;
-         }
+            return _terrain_editor_config.height.brush_falloff;
+         }();
 
          ImGui::SeparatorText("Brush Falloff");
 
-         if (ImGui::Selectable("None", config.brush_falloff ==
-                                          terrain_brush_falloff::none)) {
-            config.brush_falloff = terrain_brush_falloff::none;
+         if (ImGui::Selectable("None", brush_falloff == terrain_brush_falloff::none)) {
+            brush_falloff = terrain_brush_falloff::none;
          }
 
-         if (ImGui::Selectable("Linear", config.brush_falloff ==
-                                            terrain_brush_falloff::linear)) {
-            config.brush_falloff = terrain_brush_falloff::linear;
+         if (ImGui::Selectable("Linear", brush_falloff == terrain_brush_falloff::linear)) {
+            brush_falloff = terrain_brush_falloff::linear;
          }
 
-         if (ImGui::Selectable("Smooth", config.brush_falloff ==
-                                            terrain_brush_falloff::smooth)) {
-            config.brush_falloff = terrain_brush_falloff::smooth;
+         if (ImGui::Selectable("Smooth", brush_falloff == terrain_brush_falloff::smooth)) {
+            brush_falloff = terrain_brush_falloff::smooth;
          }
 
-         if (ImGui::Selectable("Sine", config.brush_falloff ==
-                                          terrain_brush_falloff::sine)) {
-            config.brush_falloff = terrain_brush_falloff::sine;
+         if (ImGui::Selectable("Sine", brush_falloff == terrain_brush_falloff::sine)) {
+            brush_falloff = terrain_brush_falloff::sine;
          }
 
-         if (ImGui::Selectable("Custom", config.brush_falloff ==
-                                            terrain_brush_falloff::custom)) {
-            config.brush_falloff = terrain_brush_falloff::custom;
+         if (ImGui::Selectable("Custom", brush_falloff == terrain_brush_falloff::custom)) {
+            brush_falloff = terrain_brush_falloff::custom;
          }
 
          ImGui::SeparatorText("Brush Settings");
 
-         if (config.brush_mode == terrain_brush_mode::pull_towards or
-             config.brush_mode == terrain_brush_mode::overwrite) {
-            if (float height = config.brush_height * _world.terrain.height_scale;
-                ImGui::DragFloat("Height", &height, _world.terrain.height_scale,
-                                 -32768.0f * _world.terrain.height_scale,
-                                 32767.0f * _world.terrain.height_scale, "%.3f",
-                                 ImGuiSliderFlags_AlwaysClamp |
-                                    ImGuiSliderFlags_NoRoundToFormat)) {
-               config.brush_height = std::trunc(height / _world.terrain.height_scale);
-            }
-         }
-
-         if (config.brush_falloff != terrain_brush_falloff::custom) {
+         if (brush_falloff != terrain_brush_falloff::custom) {
             if (int32 size = std::max(_terrain_editor_config.brush_size_x,
                                       _terrain_editor_config.brush_size_y);
                 ImGui::SliderInt("Size", &size, 0, _world.terrain.length / 2,
@@ -341,116 +305,166 @@ void world_edit::ui_show_terrain_editor() noexcept
                              ImGuiSliderFlags_AlwaysClamp);
          }
 
-         if (config.brush_falloff == terrain_brush_falloff::custom) {
-            show_custom_brush_selector();
+         if (brush_falloff == terrain_brush_falloff::custom) {
+            if (ImGui::BeginCombo("Custom Brush", [&] {
+                   if (_terrain_editor_config.custom_brush_index >=
+                       std::ssize(_terrain_editor_config.custom_brushes)) {
+                      return "<none>";
+                   }
+
+                   return _terrain_editor_config
+                      .custom_brushes[_terrain_editor_config.custom_brush_index]
+                      .name.c_str();
+                }())) {
+
+               for (int32 i = 0;
+                    i < _terrain_editor_config.custom_brushes.size(); ++i) {
+                  if (ImGui::Selectable(
+                         _terrain_editor_config.custom_brushes[i].name.c_str(),
+                         _terrain_editor_config.custom_brush_index == i)) {
+                     _terrain_editor_config.custom_brush_index = i;
+                  }
+               }
+
+               if (ImGui::Selectable("Load...")) {
+                  static constexpr GUID load_brush_picker_guid = {0xc5b909c5,
+                                                                  0xe07f,
+                                                                  0x4380,
+                                                                  {0x8a, 0xaf, 0x99,
+                                                                   0x41, 0x21, 0xe5,
+                                                                   0x2d, 0xea}};
+
+                  auto path = utility::show_file_open_picker(
+                     {.title = L"Load brush...",
+                      .ok_button_label = L"Import",
+                      .filters = {utility::file_picker_filter{
+                         .name = L"Texture", .filter = L"*.tga"}},
+                      .picker_guid = load_brush_picker_guid,
+                      .window = _window,
+                      .must_exist = true});
+
+                  if (path) {
+                     try {
+                        container::dynamic_array_2d<uint8> falloff_map =
+                           world::load_brush(*path);
+                        std::string name = path->stem().string();
+
+                        assert(falloff_map.shape()[0] % 2 == 1 and
+                               falloff_map.shape()[1] % 2 == 1);
+
+                        bool found = false;
+
+                        for (int32 i = 0;
+                             i < _terrain_editor_config.custom_brushes.size(); ++i) {
+                           auto& brush = _terrain_editor_config.custom_brushes[i];
+
+                           if (string::iequals(brush.name, name)) {
+                              brush.falloff_map = std::move(falloff_map);
+
+                              _terrain_editor_config.custom_brush_index = i;
+
+                              found = true;
+                              break;
+                           }
+                        }
+
+                        if (not found) {
+                           _terrain_editor_config.custom_brush_index =
+                              static_cast<int32>(
+                                 _terrain_editor_config.custom_brushes.size());
+                           _terrain_editor_config.custom_brushes
+                              .emplace_back(std::move(name), std::move(falloff_map));
+                        }
+
+                        _terrain_editor_config.custom_brush_error.clear();
+                     }
+                     catch (world::brush_load_error& e) {
+                        _terrain_editor_config.custom_brush_error = e.what();
+                     }
+                  }
+               }
+
+               ImGui::EndCombo();
+            }
+
+            if (not _terrain_editor_config.custom_brush_error.empty()) {
+               ImGui::SeparatorText("Custom Brush Error");
+               ImGui::TextWrapped(_terrain_editor_config.custom_brush_error.c_str());
+            }
          }
 
-         if (config.brush_mode == terrain_brush_mode::pull_towards or
-             config.brush_mode == terrain_brush_mode::blend) {
-            ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
-                               "%.2f", ImGuiSliderFlags_NoRoundToFormat);
-         }
+         if (_terrain_editor_config.edit_target == terrain_edit_target::height) {
+            terrain_editor_config::height_config& config =
+               _terrain_editor_config.height;
 
-         if (config.brush_mode == terrain_brush_mode::raise or
-             config.brush_mode == terrain_brush_mode::lower) {
-            ImGui::DragFloat("Rate", &config.brush_rate, 0.02f, 0.1f, 10.0f);
+            if (config.brush_mode == terrain_brush_mode::pull_towards or
+                config.brush_mode == terrain_brush_mode::overwrite) {
+               if (float height = config.brush_height * _world.terrain.height_scale;
+                   ImGui::DragFloat("Height", &height, _world.terrain.height_scale,
+                                    -32768.0f * _world.terrain.height_scale,
+                                    32767.0f * _world.terrain.height_scale, "%.3f",
+                                    ImGuiSliderFlags_AlwaysClamp |
+                                       ImGuiSliderFlags_NoRoundToFormat)) {
+                  config.brush_height =
+                     std::trunc(height / _world.terrain.height_scale);
+               }
+            }
+
+            if (config.brush_mode == terrain_brush_mode::pull_towards or
+                config.brush_mode == terrain_brush_mode::blend) {
+               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
+                                  "%.2f", ImGuiSliderFlags_NoRoundToFormat);
+            }
+
+            if (config.brush_mode == terrain_brush_mode::raise or
+                config.brush_mode == terrain_brush_mode::lower) {
+               ImGui::DragFloat("Rate", &config.brush_rate, 0.02f, 0.1f, 10.0f);
+            }
+         }
+         else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+            terrain_editor_config::texture_config& config =
+               _terrain_editor_config.texture;
+
+            if (config.brush_mode == terrain_texture_brush_mode::paint) {
+               ImGui::SliderFloat("Texture Weight", &config.brush_texture_weight, 0.0f,
+                                  255.0f, "%.0f", ImGuiSliderFlags_AlwaysClamp);
+            }
+
+            if (config.brush_mode == terrain_texture_brush_mode::spray or
+                config.brush_mode == terrain_texture_brush_mode::erase) {
+               if (float rate = config.brush_rate / 4.0f;
+                   ImGui::SliderFloat("Rate", &rate, 1.0f, 100.0f, "%.0f")) {
+                  config.brush_rate = rate * 4.0f;
+               }
+            }
+
+            if (config.brush_mode == terrain_texture_brush_mode::soften) {
+               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
+                                  "%.2f", ImGuiSliderFlags_NoRoundToFormat);
+            }
+         }
+         else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
+            terrain_editor_config::color_config& config = _terrain_editor_config.color;
+
+            if (config.brush_mode == terrain_color_brush_mode::paint or
+                config.brush_mode == terrain_color_brush_mode::spray) {
+               ImGui::ColorEdit3("Colour", &config.brush_color.x);
+            }
+
+            if (config.brush_mode == terrain_color_brush_mode::spray) {
+               ImGui::DragFloat("Rate", &config.brush_rate, 0.05f, 0.1f, 10.0f);
+            }
+
+            if (config.brush_mode == terrain_color_brush_mode::blur) {
+               ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
+                                  "%.2f", ImGuiSliderFlags_NoRoundToFormat);
+            }
          }
       }
-      else if (_terrain_editor_config.edit_target == terrain_edit_target::texture) {
+
+      if (_terrain_editor_config.edit_target == terrain_edit_target::texture and
+          ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen)) {
          terrain_editor_config::texture_config& config = _terrain_editor_config.texture;
-
-         ImGui::SeparatorText("Brush Mode");
-
-         if (ImGui::Selectable("Paint", config.brush_mode ==
-                                           terrain_texture_brush_mode::paint)) {
-            config.brush_mode = terrain_texture_brush_mode::paint;
-         }
-
-         if (ImGui::Selectable("Spray", config.brush_mode ==
-                                           terrain_texture_brush_mode::spray)) {
-            config.brush_mode = terrain_texture_brush_mode::spray;
-         }
-
-         if (ImGui::Selectable("Erase", config.brush_mode ==
-                                           terrain_texture_brush_mode::erase)) {
-            config.brush_mode = terrain_texture_brush_mode::erase;
-         }
-
-         if (ImGui::Selectable("Soften", config.brush_mode ==
-                                            terrain_texture_brush_mode::soften)) {
-            config.brush_mode = terrain_texture_brush_mode::soften;
-         }
-
-         ImGui::SeparatorText("Brush Falloff");
-
-         if (ImGui::Selectable("None", config.brush_falloff ==
-                                          terrain_brush_falloff::none)) {
-            config.brush_falloff = terrain_brush_falloff::none;
-         }
-
-         if (ImGui::Selectable("Linear", config.brush_falloff ==
-                                            terrain_brush_falloff::linear)) {
-            config.brush_falloff = terrain_brush_falloff::linear;
-         }
-
-         if (ImGui::Selectable("Smooth", config.brush_falloff ==
-                                            terrain_brush_falloff::smooth)) {
-            config.brush_falloff = terrain_brush_falloff::smooth;
-         }
-
-         if (ImGui::Selectable("Sine", config.brush_falloff ==
-                                          terrain_brush_falloff::sine)) {
-            config.brush_falloff = terrain_brush_falloff::sine;
-         }
-
-         if (ImGui::Selectable("Custom", config.brush_falloff ==
-                                            terrain_brush_falloff::custom)) {
-            config.brush_falloff = terrain_brush_falloff::custom;
-         }
-
-         ImGui::SeparatorText("Brush Settings");
-
-         if (config.brush_falloff != terrain_brush_falloff::custom) {
-            if (int32 size = std::max(_terrain_editor_config.brush_size_x,
-                                      _terrain_editor_config.brush_size_y);
-                ImGui::SliderInt("Size", &size, 0, _world.terrain.length / 2,
-                                 "%d", ImGuiSliderFlags_AlwaysClamp)) {
-               _terrain_editor_config.brush_size_x = size;
-               _terrain_editor_config.brush_size_y = size;
-            }
-
-            ImGui::SliderInt("Size (X)", &_terrain_editor_config.brush_size_x,
-                             0, _world.terrain.length / 2, "%d",
-                             ImGuiSliderFlags_AlwaysClamp);
-
-            ImGui::SliderInt("Size (Y)", &_terrain_editor_config.brush_size_y,
-                             0, _world.terrain.length / 2, "%d",
-                             ImGuiSliderFlags_AlwaysClamp);
-         }
-
-         if (config.brush_falloff == terrain_brush_falloff::custom) {
-            show_custom_brush_selector();
-         }
-
-         if (config.brush_mode == terrain_texture_brush_mode::paint) {
-            ImGui::SliderFloat("Texture Weight", &config.brush_texture_weight,
-                               0.0f, 255.0f, "%.0f", ImGuiSliderFlags_AlwaysClamp);
-         }
-
-         if (config.brush_mode == terrain_texture_brush_mode::spray or
-             config.brush_mode == terrain_texture_brush_mode::erase) {
-            if (float rate = config.brush_rate / 4.0f;
-                ImGui::SliderFloat("Rate", &rate, 1.0f, 100.0f, "%.0f")) {
-               config.brush_rate = rate * 4.0f;
-            }
-         }
-
-         if (config.brush_mode == terrain_texture_brush_mode::soften) {
-            ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
-                               "%.2f", ImGuiSliderFlags_NoRoundToFormat);
-         }
-
-         ImGui::SeparatorText("Textures");
 
          for (uint32 i = 0; i < world::terrain::texture_count; ++i) {
             const float size = 64.0f * _display_scale;
@@ -569,175 +583,92 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          ImGui::SetItemTooltip("Also called 'Tilerange' in Zero Editor.");
       }
-      else if (_terrain_editor_config.edit_target == terrain_edit_target::color) {
-         terrain_editor_config::color_config& config = _terrain_editor_config.color;
 
-         ImGui::SeparatorText("Brush Mode");
+      if (ImGui::CollapsingHeader("Terrain Settings")) {
+         if (bool active = _world.terrain.active_flags.terrain;
+             ImGui::Checkbox("Terrain Enabled", &active)) {
+            world::active_flags flags = _world.terrain.active_flags;
 
-         if (ImGui::Selectable("Paint", config.brush_mode ==
-                                           terrain_color_brush_mode::paint)) {
-            config.brush_mode = terrain_color_brush_mode::paint;
+            flags.terrain = active;
+
+            _edit_stack_world.apply(make_set_terrain_value(&world::terrain::active_flags,
+                                                           flags, _world.terrain.active_flags),
+                                    _edit_context, {.closed = true});
          }
 
-         if (ImGui::Selectable("Spray", config.brush_mode ==
-                                           terrain_color_brush_mode::spray)) {
-            config.brush_mode = terrain_color_brush_mode::spray;
-         }
+         auto detail_texture_auto_complete = [&] {
+            std::array<std::string_view, 6> entries;
+            std::size_t matching_count = 0;
 
-         if (ImGui::Selectable("Blur", config.brush_mode ==
-                                          terrain_color_brush_mode::blur)) {
-            config.brush_mode = terrain_color_brush_mode::blur;
-         }
+            _asset_libraries.textures.view_existing(
+               [&](const std::span<const assets::stable_string> assets) noexcept {
+                  for (const std::string_view asset : assets) {
+                     if (matching_count == entries.size()) break;
+                     if (not string::icontains(asset, _world.terrain.detail_texture_name)) {
+                        continue;
+                     }
 
-         ImGui::SeparatorText("Brush Falloff");
+                     entries[matching_count] = asset;
 
-         if (ImGui::Selectable("None", config.brush_falloff ==
-                                          terrain_brush_falloff::none)) {
-            config.brush_falloff = terrain_brush_falloff::none;
-         }
-
-         if (ImGui::Selectable("Linear", config.brush_falloff ==
-                                            terrain_brush_falloff::linear)) {
-            config.brush_falloff = terrain_brush_falloff::linear;
-         }
-
-         if (ImGui::Selectable("Smooth", config.brush_falloff ==
-                                            terrain_brush_falloff::smooth)) {
-            config.brush_falloff = terrain_brush_falloff::smooth;
-         }
-
-         if (ImGui::Selectable("Sine", config.brush_falloff ==
-                                          terrain_brush_falloff::sine)) {
-            config.brush_falloff = terrain_brush_falloff::sine;
-         }
-
-         if (ImGui::Selectable("Custom", config.brush_falloff ==
-                                            terrain_brush_falloff::custom)) {
-            config.brush_falloff = terrain_brush_falloff::custom;
-         }
-
-         ImGui::SeparatorText("Brush Settings");
-
-         if (config.brush_falloff != terrain_brush_falloff::custom) {
-            if (int32 size = std::max(_terrain_editor_config.brush_size_x,
-                                      _terrain_editor_config.brush_size_y);
-                ImGui::SliderInt("Size", &size, 0, _world.terrain.length / 2,
-                                 "%d", ImGuiSliderFlags_AlwaysClamp)) {
-               _terrain_editor_config.brush_size_x = size;
-               _terrain_editor_config.brush_size_y = size;
-            }
-
-            ImGui::SliderInt("Size (X)", &_terrain_editor_config.brush_size_x,
-                             0, _world.terrain.length / 2, "%d",
-                             ImGuiSliderFlags_AlwaysClamp);
-
-            ImGui::SliderInt("Size (Y)", &_terrain_editor_config.brush_size_y,
-                             0, _world.terrain.length / 2, "%d",
-                             ImGuiSliderFlags_AlwaysClamp);
-         }
-
-         if (config.brush_falloff == terrain_brush_falloff::custom) {
-            show_custom_brush_selector();
-         }
-
-         if (config.brush_mode == terrain_color_brush_mode::paint or
-             config.brush_mode == terrain_color_brush_mode::spray) {
-            ImGui::ColorEdit3("Colour", &config.brush_color.x);
-         }
-
-         if (config.brush_mode == terrain_color_brush_mode::spray) {
-            ImGui::DragFloat("Rate", &config.brush_rate, 0.05f, 0.1f, 10.0f);
-         }
-
-         if (config.brush_mode == terrain_color_brush_mode::blur) {
-            ImGui::SliderFloat("Speed", &config.brush_speed, 0.125f, 1.0f,
-                               "%.2f", ImGuiSliderFlags_NoRoundToFormat);
-         }
-      }
-
-      ImGui::SeparatorText("Terrain Settings");
-
-      if (bool active = _world.terrain.active_flags.terrain;
-          ImGui::Checkbox("Terrain Enabled", &active)) {
-         world::active_flags flags = _world.terrain.active_flags;
-
-         flags.terrain = active;
-
-         _edit_stack_world.apply(make_set_terrain_value(&world::terrain::active_flags,
-                                                        flags, _world.terrain.active_flags),
-                                 _edit_context, {.closed = true});
-      }
-
-      auto detail_texture_auto_complete = [&] {
-         std::array<std::string_view, 6> entries;
-         std::size_t matching_count = 0;
-
-         _asset_libraries.textures.view_existing(
-            [&](const std::span<const assets::stable_string> assets) noexcept {
-               for (const std::string_view asset : assets) {
-                  if (matching_count == entries.size()) break;
-                  if (not string::icontains(asset, _world.terrain.detail_texture_name)) {
-                     continue;
+                     ++matching_count;
                   }
+               });
 
-                  entries[matching_count] = asset;
+            return entries;
+         };
 
-                  ++matching_count;
-               }
-            });
+         if (absl::InlinedVector<char, 256> detail_texture =
+                {_world.terrain.detail_texture_name.begin(),
+                 _world.terrain.detail_texture_name.end()};
+             ImGui::InputTextAutoComplete(
+                "Detail Texture", &detail_texture,
+                [](void* callback) {
+                   return (*static_cast<decltype(detail_texture_auto_complete)*>(
+                      callback))();
+                },
+                &detail_texture_auto_complete)) {
+            _edit_stack_world
+               .apply(make_set_terrain_value(&world::terrain::detail_texture_name,
+                                             std::string{detail_texture.begin(),
+                                                         detail_texture.end()},
+                                             _world.terrain.detail_texture_name),
+                      _edit_context);
+         }
 
-         return entries;
-      };
+         if (ImGui::IsItemDeactivatedAfterEdit()) {
+            _edit_stack_world.close_last();
+         }
 
-      if (absl::InlinedVector<char, 256> detail_texture =
-             {_world.terrain.detail_texture_name.begin(),
-              _world.terrain.detail_texture_name.end()};
-          ImGui::InputTextAutoComplete(
-             "Detail Texture", &detail_texture,
-             [](void* callback) {
-                return (*static_cast<decltype(detail_texture_auto_complete)*>(
-                   callback))();
-             },
-             &detail_texture_auto_complete)) {
-         _edit_stack_world
-            .apply(make_set_terrain_value(&world::terrain::detail_texture_name,
-                                          std::string{detail_texture.begin(),
-                                                      detail_texture.end()},
-                                          _world.terrain.detail_texture_name),
-                   _edit_context);
+         ImGui::SeparatorText("Advanced");
+
+         ImGui::Text("Edit these if you're the adventurous sort or "
+                     "just know what "
+                     "you're doing.");
+
+         if (float height_scale = _world.terrain.height_scale;
+             ImGui::DragFloat("Height Scale", &height_scale, 0.0025f)) {
+            _edit_stack_world.apply(
+               make_set_terrain_value(&world::terrain::height_scale,
+                                      std::max(static_cast<float>(height_scale), 0.0f),
+                                      _world.terrain.height_scale),
+               _edit_context);
+         }
+
+         if (ImGui::IsItemDeactivatedAfterEdit())
+            _edit_stack_world.close_last();
+
+         if (float grid_scale = _world.terrain.grid_scale;
+             ImGui::DragFloat("Grid Scale", &grid_scale, 1.0f, 1.0f, 16777216.0f)) {
+            _edit_stack_world
+               .apply(make_set_terrain_value(&world::terrain::grid_scale,
+                                             std::max(static_cast<float>(grid_scale), 1.0f),
+                                             _world.terrain.grid_scale),
+                      _edit_context);
+         }
+
+         if (ImGui::IsItemDeactivatedAfterEdit())
+            _edit_stack_world.close_last();
       }
-
-      if (ImGui::IsItemDeactivatedAfterEdit()) {
-         _edit_stack_world.close_last();
-      }
-
-      ImGui::SeparatorText("Advanced");
-
-      ImGui::Text("Edit these if you're the adventurous sort or "
-                  "just know what "
-                  "you're doing.");
-
-      if (float height_scale = _world.terrain.height_scale;
-          ImGui::DragFloat("Height Scale", &height_scale, 0.0025f)) {
-         _edit_stack_world.apply(make_set_terrain_value(&world::terrain::height_scale,
-                                                        std::max(static_cast<float>(height_scale),
-                                                                 0.0f),
-                                                        _world.terrain.height_scale),
-                                 _edit_context);
-      }
-
-      if (ImGui::IsItemDeactivatedAfterEdit()) _edit_stack_world.close_last();
-
-      if (float grid_scale = _world.terrain.grid_scale;
-          ImGui::DragFloat("Grid Scale", &grid_scale, 1.0f, 1.0f, 16777216.0f)) {
-         _edit_stack_world.apply(make_set_terrain_value(&world::terrain::grid_scale,
-                                                        std::max(static_cast<float>(grid_scale),
-                                                                 1.0f),
-                                                        _world.terrain.grid_scale),
-                                 _edit_context);
-      }
-
-      if (ImGui::IsItemDeactivatedAfterEdit()) _edit_stack_world.close_last();
    }
 
    ImGui::End();
