@@ -332,6 +332,10 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
       CHECK(model.terrain_cuts[0].triangles[1] == std::array<uint16, 3>{1, 0, 2});
       CHECK(model.terrain_cuts[0].triangles[2] == std::array<uint16, 3>{3, 4, 5});
       CHECK(model.terrain_cuts[0].triangles[3] == std::array<uint16, 3>{4, 3, 5});
+
+      REQUIRE(model.terrain_cuts[0].planes.size() == 2);
+      CHECK(model.terrain_cuts[0].planes[0] == float4{-1.0f, 0.0f, 0.0f, 0.0f});
+      CHECK(model.terrain_cuts[0].planes[1] == float4{1.0f, 0.0f, 0.0f, -0.0f});
    }
 
    // collision checks
@@ -634,6 +638,10 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
       REQUIRE(model.terrain_cuts[0].triangles.size() == 2);
       CHECK(model.terrain_cuts[0].triangles[0] == std::array<uint16, 3>{0, 1, 2});
       CHECK(model.terrain_cuts[0].triangles[1] == std::array<uint16, 3>{1, 0, 2});
+
+      REQUIRE(model.terrain_cuts[0].planes.size() == 2);
+      CHECK(model.terrain_cuts[0].planes[0] == float4{-1.0f, 0.0f, 0.0f, -0.0f});
+      CHECK(model.terrain_cuts[0].planes[1] == float4{1.0f, 0.0f, 0.0f, -0.0f});
    }
 
    // collision checks
@@ -769,9 +777,7 @@ TEST_CASE(".msh flat excessive terrain cut test", "[Assets][MSH]")
                                          geometry_segment::max_vertex_count)}},
       }};
 
-   flat_model model{input_scene};
-
-   REQUIRE(model.terrain_cuts.size() == 3);
+   REQUIRE_THROWS(flat_model{input_scene});
 }
 
 }

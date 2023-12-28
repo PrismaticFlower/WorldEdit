@@ -6,19 +6,6 @@
 
 namespace we::world {
 
-namespace {
-
-auto get_plane(float3 v0, float3 v1, float3 v2) noexcept -> float4
-{
-   const float3 edge0 = v1 - v0;
-   const float3 edge1 = v2 - v0;
-   const float3 normal = normalize(cross(edge0, edge1));
-
-   return float4{normal, -dot(normal, v0)};
-}
-
-}
-
 bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
                               const active_layers active_layers,
                               std::span<const object> objects,
@@ -74,6 +61,11 @@ auto gather_terrain_cuts(std::span<const object> objects,
 
       if (model.terrain_cuts.empty()) continue;
 
+      float4x4 transform = to_matrix(normalize(object.rotation));
+      transform[3] = {object.position, 1.0f};
+
+      transform = transpose(inverse(transform));
+
       for (auto& cut : model.terrain_cuts) {
          math::bounding_box bbox = {.min =
                                        float3{std::numeric_limits<float>::max(),
@@ -88,14 +80,14 @@ auto gather_terrain_cuts(std::span<const object> objects,
             bbox = math::integrate(bbox, object.rotation * pos + object.position);
          }
 
-         std::vector<float4> planes;
-         planes.reserve(cut.triangles.size());
+         std::vector<float4> planes = cut.planes;
 
-         for (const auto& tri : cut.triangles) {
-            planes.push_back(
-               get_plane(object.rotation * cut.positions[tri[0]] + object.position,
-                         object.rotation * cut.positions[tri[1]] + object.position,
-                         object.rotation * cut.positions[tri[2]] + object.position));
+         for (float4& plane : planes) {
+            const float4 new_plane = transform * plane;
+            const float3 normal =
+               normalize(float3{new_plane.x, new_plane.y, new_plane.z});
+
+            plane = float4{normal, new_plane.w};
          }
 
          terrain_cuts.emplace_back(bbox, std::move(planes));

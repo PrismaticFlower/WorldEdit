@@ -39,11 +39,15 @@ struct flat_model_node {
 };
 
 struct flat_model_terrain_cut {
+   constexpr static std::size_t max_planes = 32;
+
    math::bounding_box bounding_box;
 
    std::vector<float3> positions;
 
    std::vector<std::array<uint16, 3>> triangles;
+
+   std::vector<float4> planes;
 
    void regenerate_bounding_box() noexcept;
 };
@@ -71,7 +75,7 @@ struct flat_model_collision {
 };
 
 struct flat_model {
-   explicit flat_model(const scene& scene) noexcept;
+   explicit flat_model(const scene& scene);
 
    math::bounding_box bounding_box;
    math::bounding_box terrain_cuts_bounding_box;
@@ -95,6 +99,7 @@ private:
 
    void flatten_segments_to_terrain_cut(const std::vector<geometry_segment>& segments,
                                         const float4x4& node_to_object,
+                                        const std::string_view node_name,
                                         const options& options);
 
    void flatten_node_to_collision(const node& node, const float4x4& node_to_object,

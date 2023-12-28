@@ -170,9 +170,18 @@ void patch_materials_with_options(std::vector<mesh>& meshes, const options& opts
    }
 }
 
+auto get_plane(float3 v0, float3 v1, float3 v2) noexcept -> float4
+{
+   const float3 edge0 = v1 - v0;
+   const float3 edge1 = v2 - v0;
+   const float3 normal = normalize(cross(edge0, edge1));
+
+   return float4{normal, -dot(normal, v0)};
 }
 
-flat_model::flat_model(const scene& scene) noexcept
+}
+
+flat_model::flat_model(const scene& scene)
 {
    const std::vector<float4x4> node_to_object_transforms =
       build_node_to_object_transforms(scene);
@@ -186,7 +195,8 @@ flat_model::flat_model(const scene& scene) noexcept
                                     scene.materials, scene.options);
       }
       else if (is_terrain_cut_node(node)) {
-         flatten_segments_to_terrain_cut(node.segments, node_to_object, scene.options);
+         flatten_segments_to_terrain_cut(node.segments, node_to_object,
+                                         node.name, scene.options);
       }
       else if (is_collision_node(node)) {
          flatten_node_to_collision(node, node_to_object, scene.options);
@@ -303,9 +313,9 @@ void flat_model::flatten_segments_to_meshes(const std::vector<geometry_segment>&
    }
 }
 
-void flat_model::flatten_segments_to_terrain_cut(const std::vector<geometry_segment>& segments,
-                                                 const float4x4& node_to_object,
-                                                 const options& options)
+void flat_model::flatten_segments_to_terrain_cut(
+   const std::vector<geometry_segment>& segments, const float4x4& node_to_object,
+   const std::string_view node_name, const options& options)
 {
    std::size_t vertices_count = 0;
    std::size_t triangles_count = 0;
@@ -316,36 +326,63 @@ void flat_model::flatten_segments_to_terrain_cut(const std::vector<geometry_segm
    }
 
    if (vertices_count > std::numeric_limits<uint16>::max()) {
-      for (const auto& segment : segments) {
-         if (segment.triangles.empty()) continue;
+      throw std::runtime_error{
+         fmt::format(".msh file load failure! Node '{}' has too many "
+                     "vertices to be a terrain cut.",
+                     node_name)};
+   }
 
-         auto& cut = terrain_cuts.emplace_back();
+   auto& cut = terrain_cuts.emplace_back();
 
-         cut.positions = segment.positions;
-         cut.triangles = segment.triangles;
+   cut.positions.reserve(vertices_count);
+   cut.triangles.reserve(triangles_count);
+
+   for (const auto& segment : segments) {
+      if (segment.triangles.empty()) continue;
+
+      const std::size_t vertex_offset = cut.positions.size();
+
+      for (auto pos : segment.positions) {
+         cut.positions.emplace_back(node_to_object * pos * options.scale);
+      }
+
+      for (auto [i0, i1, i2] : segment.triangles) {
+         cut.triangles.push_back({static_cast<uint16>(i0 + vertex_offset),
+                                  static_cast<uint16>(i1 + vertex_offset),
+                                  static_cast<uint16>(i2 + vertex_offset)});
       }
    }
-   else {
-      auto& cut = terrain_cuts.emplace_back();
 
-      cut.positions.reserve(vertices_count);
-      cut.triangles.reserve(triangles_count);
+   cut.planes.reserve(flat_model_terrain_cut::max_planes);
 
-      for (const auto& segment : segments) {
-         if (segment.triangles.empty()) continue;
+   for (const auto& tri : cut.triangles) {
+      const float4 tri_plane =
+         get_plane(cut.positions[tri[0]], cut.positions[tri[1]],
+                   cut.positions[tri[2]]);
 
-         const std::size_t vertex_offset = cut.positions.size();
+      for (const float4& plane : cut.planes) {
+         const float eps = 0.001f;
 
-         for (auto pos : segment.positions) {
-            cut.positions.emplace_back(node_to_object * pos * options.scale);
-         }
-
-         for (auto [i0, i1, i2] : segment.triangles) {
-            cut.triangles.push_back({static_cast<uint16>(i0 + vertex_offset),
-                                     static_cast<uint16>(i1 + vertex_offset),
-                                     static_cast<uint16>(i2 + vertex_offset)});
+         if (std::abs(plane.x - tri_plane.x) < eps and
+             std::abs(plane.y - tri_plane.y) < eps and
+             std::abs(plane.z - tri_plane.z) < eps and
+             std::abs(plane.w - tri_plane.w) < eps) {
+            goto next_tri;
          }
       }
+
+      cut.planes.push_back(tri_plane);
+
+   next_tri:
+      continue;
+   }
+
+   if (cut.planes.size() > flat_model_terrain_cut::max_planes) {
+      throw std::runtime_error{
+         fmt::format(".msh file load failure! Terrain cut '{}' has too many "
+                     "planes. Has '{}, max '{}'. Split it into multiple meshes "
+                     "to resolve this.",
+                     node_name, cut.planes.size(), flat_model_terrain_cut::max_planes)};
    }
 }
 
