@@ -141,9 +141,9 @@ void check_geometry_segment_attibutes_count_matches(const scene& scene)
                "   texcoords count: {}\n"
                "   colors count: {}",
                index, node.name, positions_count,
-               segment.normals ? std::to_string(segment.normals->size()) : "nullopt"sv,
-               segment.texcoords ? std::to_string(segment.texcoords->size()) : "nullopt"sv,
-               segment.colors ? std::to_string(segment.colors->size()) : "nullopt"sv)};
+               segment.normals ? std::to_string(segment.normals->size()) : "nullopt"s,
+               segment.texcoords ? std::to_string(segment.texcoords->size()) : "nullopt"s,
+               segment.colors ? std::to_string(segment.colors->size()) : "nullopt"s)};
          }
       }
    }
