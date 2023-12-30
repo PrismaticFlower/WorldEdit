@@ -43,10 +43,13 @@ auto build_node_to_object_transforms(const scene& scene) -> std::vector<float4x4
                                               return node.name == parent;
                                            });
              parent_it != nodes.cend()) {
-            transform =
-               float4x4{msh::transform{parent_it->transform.translation * scale,
-                                       parent_it->transform.rotation}} *
-               transform;
+            const float4x4 parent_matrix =
+               parent_it->parent
+                  ? float4x4{msh::transform{parent_it->transform.translation * scale,
+                                            parent_it->transform.rotation}}
+                  : float4x4{};
+
+            transform = parent_matrix * transform;
 
             if (parent_it->parent) {
                apply_parent_transform(apply_parent_transform, transform,

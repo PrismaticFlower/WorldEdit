@@ -35,8 +35,8 @@ const scene input_scene{
       {.name = "root"s,
        .transform =
           {
-             .translation = {2.0f, 0.0f, 0.0f},
-             .rotation = {0.924886f, 0.0f, 0.0f, 0.380245f},
+             .translation = {0.0f, 0.0f, 0.0f},
+             .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
           },
        .type = node_type::null},
 
@@ -417,7 +417,7 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
             {.name = "root"s,
              .transform =
                 {
-                   .translation = {2.0f, 0.0f, 0.0f},
+                   .translation = {0.0f, 0.0f, 0.0f},
                    .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
                 },
              .type = node_type::null},
@@ -699,6 +699,105 @@ TEST_CASE(".msh flat model creation with scale", "[Assets][MSH]")
          CHECK(approx_equals(mesh.positions[2],
                              transform_position_from_root(segment.positions[2]) * 2.5f));
       }
+   }
+}
+
+TEST_CASE(".msh flat model creation root transform skip", "[Assets][MSH]")
+{
+   const scene input_scene{
+      .materials = {{
+         .name = "snow"s,
+         .specular_color = {0.75f, 0.75f, 0.75f},
+         .flags = material_flags::specular,
+         .rendertype = rendertype::normalmap,
+         .textures = {"snow"s, "snow_normalmap"s},
+      }},
+
+      .nodes =
+         {
+            {.name = "root"s,
+             .transform =
+                {
+                   .translation = {0.0f, 5.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::null},
+
+            {.name = "geometry"s,
+             .parent = "root"s,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::static_mesh,
+             .segments = {{
+                .material_index = 0,
+                .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+                .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                               {0.0f, 1.0f, 1.0f},
+                                               {0.0f, 1.0f, 0.0f}},
+                .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                .triangles = {{0, 1, 2}},
+             }}},
+         },
+   };
+
+   flat_model model{input_scene};
+
+   // hierarchy checks
+   {
+      REQUIRE(model.node_hierarchy.size() == 1);
+
+      // root
+      {
+         auto& root = model.node_hierarchy[0];
+
+         CHECK(root.name == input_scene.nodes[0].name);
+         CHECK(approx_equals(root.transform.translation,
+                             input_scene.nodes[0].transform.translation));
+         CHECK(approx_equals(root.transform.rotation,
+                             input_scene.nodes[0].transform.rotation));
+         CHECK(root.type == input_scene.nodes[0].type);
+         CHECK(root.hidden == input_scene.nodes[0].hidden);
+
+         REQUIRE(root.children.size() == 1);
+
+         // geometry
+         {
+            auto& geometry = root.children[0];
+
+            CHECK(geometry.name == input_scene.nodes[1].name);
+            CHECK(approx_equals(geometry.transform.translation,
+                                input_scene.nodes[1].transform.translation));
+            CHECK(approx_equals(geometry.transform.rotation,
+                                input_scene.nodes[1].transform.rotation));
+            CHECK(geometry.type == input_scene.nodes[1].type);
+            CHECK(geometry.hidden == input_scene.nodes[1].hidden);
+         }
+      }
+   }
+
+   // mesh checks
+   {
+      REQUIRE(model.meshes.size() == 1);
+
+      const auto& mesh = model.meshes[0];
+      const auto& segment = input_scene.nodes[1].segments[0];
+
+      REQUIRE(mesh.material == input_scene.materials[segment.material_index]);
+      REQUIRE(mesh.positions.size() == segment.positions.size());
+      REQUIRE(mesh.normals.size() == segment.normals->size());
+      REQUIRE(mesh.texcoords.size() == segment.texcoords->size());
+      REQUIRE(mesh.triangles.size() == 1);
+
+      CHECK(approx_equals(mesh.positions[0], segment.positions[0]));
+      CHECK(approx_equals(mesh.positions[1], segment.positions[1]));
+      CHECK(approx_equals(mesh.positions[2], segment.positions[2]));
+
+      CHECK(mesh.triangles[0][0] == segment.triangles[0][0]);
+      CHECK(mesh.triangles[0][1] == segment.triangles[0][1]);
+      CHECK(mesh.triangles[0][2] == segment.triangles[0][2]);
    }
 }
 
