@@ -669,6 +669,9 @@ auto device::create_root_signature(const root_signature_desc& desc) -> root_sign
 
    const uint32 param_offset = supports_shader_model_6_6() ? 0 : 1;
 
+   std::array<D3D12_DESCRIPTOR_RANGE1, max_root_parameters> uav_descriptor_ranges_pool{};
+   uint32 allocated_uav_descriptor_ranges = 0;
+
    for (uint32 i = param_offset; i < d3d12_desc.NumParameters; ++i) {
       const root_parameter& param = desc.parameters[i - param_offset];
 
@@ -702,6 +705,27 @@ auto device::create_root_signature(const root_signature_desc& desc) -> root_sign
                           .ShaderVisibility =
                              static_cast<D3D12_SHADER_VISIBILITY>(param.visibility)};
          break;
+      case root_parameter_type::unordered_access_view_resource_view: {
+         if (allocated_uav_descriptor_ranges >= uav_descriptor_ranges_pool.size()) {
+            std::terminate();
+         }
+
+         D3D12_DESCRIPTOR_RANGE1* descriptor_range =
+            &uav_descriptor_ranges_pool[allocated_uav_descriptor_ranges++];
+
+         *descriptor_range = D3D12_DESCRIPTOR_RANGE1{
+            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+            .NumDescriptors = 1,
+            .BaseShaderRegister = param.shader_register,
+            .RegisterSpace = param.register_space,
+         };
+
+         parameters[i] = {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                          .DescriptorTable = {.NumDescriptorRanges = 1,
+                                              .pDescriptorRanges = descriptor_range},
+                          .ShaderVisibility =
+                             static_cast<D3D12_SHADER_VISIBILITY>(param.visibility)};
+      } break;
       default:
          std::terminate(); // Bad root parameter.
       }
@@ -2209,6 +2233,16 @@ void copy_command_list::flush_barriers()
                                                           buffer_location);
 }
 
+[[msvc::forceinline]] void compute_command_list::set_compute_uav_resource_view(
+   const uint32 parameter_index, const resource_view view)
+{
+   assert(view != invalid_resource_view);
+
+   state->command_list->SetComputeRootDescriptorTable(
+      parameter_index + state->root_param_offset,
+      state->device_state->srv_uav_descriptor_heap.index_gpu(view.index));
+}
+
 [[msvc::forceinline]] void compute_command_list::discard_resource(const resource_handle resource)
 {
    state->command_list->DiscardResource(unpack_resource_handle(resource), nullptr);
@@ -2317,6 +2351,16 @@ void copy_command_list::flush_barriers()
    state->command_list->SetGraphicsRootUnorderedAccessView(parameter_index +
                                                               state->root_param_offset,
                                                            buffer_location);
+}
+
+[[msvc::forceinline]] void graphics_command_list::set_graphics_uav_resource_view(
+   const uint32 parameter_index, const resource_view view)
+{
+   assert(view != invalid_resource_view);
+
+   state->command_list->SetGraphicsRootDescriptorTable(
+      parameter_index + state->root_param_offset,
+      state->device_state->srv_uav_descriptor_heap.index_gpu(view.index));
 }
 
 [[msvc::forceinline]] void graphics_command_list::ia_set_primitive_topology(

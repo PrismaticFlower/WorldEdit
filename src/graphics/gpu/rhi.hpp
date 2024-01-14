@@ -85,6 +85,7 @@ enum class root_parameter_type {
    constant_buffer_view,
    shader_resource_view,
    unordered_access_view,
+   unordered_access_view_resource_view,
 
    paramters_end
 };
@@ -951,6 +952,9 @@ struct compute_command_list : copy_command_list {
    void set_compute_uav(const uint32 parameter_index,
                         const gpu_virtual_address buffer_location);
 
+   void set_compute_uav_resource_view(const uint32 parameter_index,
+                                      const resource_view view);
+
    void discard_resource(const resource_handle resource);
 
    void query_timestamp(const query_heap_handle query_heap, const uint32 query_index);
@@ -995,6 +999,9 @@ struct graphics_command_list : compute_command_list {
 
    void set_graphics_uav(const uint32 parameter_index,
                          const gpu_virtual_address buffer_location);
+
+   void set_graphics_uav_resource_view(const uint32 parameter_index,
+                                       const resource_view view);
 
    void ia_set_primitive_topology(const primitive_topology primitive_topology);
 
