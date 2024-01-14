@@ -1,6 +1,5 @@
 
 #include "texture_format.hpp"
-#include "utility/float16_packing.hpp"
 #include "utility/srgb_conversion.hpp"
 
 #include <algorithm>
@@ -10,9 +9,6 @@
 #include <utility>
 
 namespace we::assets::texture {
-
-using utility::pack_float16;
-using utility::unpack_float16;
 
 namespace {
 
@@ -84,39 +80,6 @@ auto load_r16g16b16a16_unorm(const std::span<const std::byte> texel_bytes) noexc
            ((packed >> 48) & 0xffff) / 65535.f};
 }
 
-auto load_r16g16b16a16_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
-{
-   assert(texel_bytes.size() >= sizeof(std::array<uint16, 4>));
-
-   std::array<uint16, 4> packed{};
-
-   std::memcpy(&packed, texel_bytes.data(), sizeof(std::array<uint16, 4>));
-
-   return unpack_float16(packed);
-}
-
-auto load_r32g32b32_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
-{
-   assert(texel_bytes.size() >= sizeof(float3));
-
-   float3 value{};
-
-   std::memcpy(&value, texel_bytes.data(), sizeof(float3));
-
-   return {value, 1.0f};
-}
-
-auto load_r32g32b32a32_float(const std::span<const std::byte> texel_bytes) noexcept -> float4
-{
-   assert(texel_bytes.size() >= sizeof(float4));
-
-   float4 value{};
-
-   std::memcpy(&value, texel_bytes.data(), sizeof(float4));
-
-   return value;
-}
-
 void store_r8g8b8a8_unorm(const float4 value, const std::span<std::byte> texel_bytes) noexcept
 {
    assert(texel_bytes.size() >= sizeof(uint32));
@@ -167,33 +130,6 @@ void store_r16g16b16a16_unorm(const float4 value,
    std::memcpy(texel_bytes.data(), &packed, sizeof(uint64));
 }
 
-void store_r16g16b16a16_float(const float4 value,
-                              const std::span<std::byte> texel_bytes) noexcept
-{
-   assert(texel_bytes.size() >= sizeof(uint64));
-
-   const std::array<uint16, 4> packed = pack_float16(value);
-
-   std::memcpy(texel_bytes.data(), &packed, sizeof(std::array<uint16, 4>));
-}
-
-void store_r32g32b32_float(const float4 value, const std::span<std::byte> texel_bytes) noexcept
-
-{
-   assert(texel_bytes.size() >= sizeof(float3));
-
-   std::memcpy(texel_bytes.data(), &value, sizeof(float3));
-}
-
-void store_r32g32b32a32_float(const float4 value,
-                              const std::span<std::byte> texel_bytes) noexcept
-
-{
-   assert(texel_bytes.size() >= sizeof(float4));
-
-   std::memcpy(texel_bytes.data(), &value, sizeof(float4));
-}
-
 }
 
 auto load_texel(const texture_format format, const uint32 x, const uint32 y,
@@ -218,12 +154,6 @@ auto load_texel(const texture_format format, const uint32 x, const uint32 y,
       return load_b8g8r8a8_unorm_srgb(texel_bytes);
    case texture_format::r16g16b16a16_unorm:
       return load_r16g16b16a16_unorm(texel_bytes);
-   case texture_format::r16g16b16a16_float:
-      return load_r16g16b16a16_float(texel_bytes);
-   case texture_format::r32g32b32_float:
-      return load_r32g32b32_float(texel_bytes);
-   case texture_format::r32g32b32a32_float:
-      return load_r32g32b32a32_float(texel_bytes);
    }
 
    std::terminate();
@@ -255,15 +185,6 @@ void store_texel(const float4 value, const texture_format format,
       return;
    case texture_format::r16g16b16a16_unorm:
       store_r16g16b16a16_unorm(value, texel_bytes);
-      return;
-   case texture_format::r16g16b16a16_float:
-      store_r16g16b16a16_float(value, texel_bytes);
-      return;
-   case texture_format::r32g32b32_float:
-      store_r32g32b32_float(value, texel_bytes);
-      return;
-   case texture_format::r32g32b32a32_float:
-      store_r32g32b32a32_float(value, texel_bytes);
       return;
    }
 

@@ -505,9 +505,6 @@
     <ClInclude Include="src\math\quaternion_funcs.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\utility\float16_packing.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\utility\event_listener.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -955,9 +952,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\shadow_camera.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\float16_packing.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\model_manager.cpp">

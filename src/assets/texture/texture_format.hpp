@@ -16,9 +16,6 @@ enum class texture_format {
    b8g8r8a8_unorm,
    b8g8r8a8_unorm_srgb,
    r16g16b16a16_unorm,
-   r16g16b16a16_float,
-   r32g32b32_float,
-   r32g32b32a32_float
 };
 
 constexpr auto format_size(const texture_format format) -> std::size_t
@@ -31,12 +28,6 @@ constexpr auto format_size(const texture_format format) -> std::size_t
       return sizeof(uint32);
    case texture_format::r16g16b16a16_unorm:
       return sizeof(uint64);
-   case texture_format::r16g16b16a16_float:
-      return sizeof(uint64);
-   case texture_format::r32g32b32_float:
-      return sizeof(float3);
-   case texture_format::r32g32b32a32_float:
-      return sizeof(float4);
    }
 
    std::terminate();
@@ -55,12 +46,6 @@ constexpr auto to_dxgi_format(const texture_format format) -> DXGI_FORMAT
       return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
    case texture_format::r16g16b16a16_unorm:
       return DXGI_FORMAT_R16G16B16A16_UNORM;
-   case texture_format::r16g16b16a16_float:
-      return DXGI_FORMAT_R16G16B16A16_FLOAT;
-   case texture_format::r32g32b32_float:
-      return DXGI_FORMAT_R32G32B32_FLOAT;
-   case texture_format::r32g32b32a32_float:
-      return DXGI_FORMAT_R32G32B32A32_FLOAT;
    }
 
    std::terminate();

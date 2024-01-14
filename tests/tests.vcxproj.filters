@@ -57,7 +57,6 @@
     <ClCompile Include="src\graphics\gpu\detail\descriptor_allocator_tests.cpp" />
     <ClCompile Include="src\math\vector_funcs_tests.cpp" />
     <ClCompile Include="src\math\matrix_funcs_tests.cpp" />
-    <ClCompile Include="src\utility\float16_packing_tests.cpp" />
     <ClCompile Include="src\allocators\aligned_allocator_tests.cpp" />
     <ClCompile Include="src\edits\insert_entity_tests.cpp" />
     <ClCompile Include="src\edits\insert_node_tests.cpp" />

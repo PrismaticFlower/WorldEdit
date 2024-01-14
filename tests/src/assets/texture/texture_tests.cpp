@@ -177,66 +177,6 @@ TEST_CASE("texture texel load tests", "[Assets][Texture]")
                           {0.500007f, 0.500007f, 1.0f, 1.0f}));
    }
 
-   SECTION("r16g16b16a16_float load")
-   {
-      constexpr std::array<std::byte, 8> texel{
-         std::byte{0x00}, std::byte{0x58}, // red
-         std::byte{0x00}, std::byte{0xbc}, // green
-         std::byte{0x30}, std::byte{0x50}, // blue
-         std::byte{0x00}, std::byte{0x3c}  // alpha
-      };
-
-      init_params.format = texture_format::r16g16b16a16_float;
-
-      texture texture{init_params};
-
-      std::ranges::copy(texel, texture.data());
-
-      CHECK(approx_equals(texture.load({.mip_level = 0}, {0, 0}),
-                          {128.0f, -1.0f, 33.5f, 1.0f}));
-   }
-
-   SECTION("r32g32b32_float load")
-   {
-      constexpr std::array<std::byte, 16> texel{
-         // clang-format off
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x00}, std::byte{0x43}, // red
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x80}, std::byte{0xbf}, // green
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x06}, std::byte{0x42} // blue
-         // clang-format on
-      };
-
-      init_params.format = texture_format::r32g32b32_float;
-
-      texture texture{init_params};
-
-      std::ranges::copy(texel, texture.data());
-
-      CHECK(approx_equals(texture.load({.mip_level = 0}, {0, 0}),
-                          {128.0f, -1.0f, 33.5f, 1.0f}));
-   }
-
-   SECTION("r32g32b32a32_float load")
-   {
-      constexpr std::array<std::byte, 16> texel{
-         // clang-format off
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x00}, std::byte{0x43}, // red
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x80}, std::byte{0xbf}, // green
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x06}, std::byte{0x42}, // blue
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x80}, std::byte{0x3f}  // alpha
-         // clang-format on
-      };
-
-      init_params.format = texture_format::r32g32b32a32_float;
-
-      texture texture{init_params};
-
-      std::ranges::copy(texel, texture.data());
-
-      CHECK(approx_equals(texture.load({.mip_level = 0}, {0, 0}),
-                          {128.0f, -1.0f, 33.5f, 1.0f}));
-   }
-
    SECTION("invalid subresource load")
    {
       init_params.format = texture_format::r8g8b8a8_unorm;
@@ -337,66 +277,6 @@ TEST_CASE("texture texel store tests", "[Assets][Texture]")
       texture texture{init_params};
 
       texture.store({.mip_level = 0}, {0, 0}, {0.5f, 0.5f, 1.0f, 1.0f});
-
-      CHECK(std::ranges::equal(expected_texel,
-                               std::span{texture.data(), expected_texel.size()}));
-   }
-
-   SECTION("r16g16b16a16_float store")
-   {
-      constexpr std::array<std::byte, 8> expected_texel{
-         std::byte{0x00}, std::byte{0x58}, // red
-         std::byte{0x00}, std::byte{0xbc}, // green
-         std::byte{0x30}, std::byte{0x50}, // blue
-         std::byte{0x00}, std::byte{0x3c}  // alpha
-      };
-
-      init_params.format = texture_format::r16g16b16a16_float;
-
-      texture texture{init_params};
-
-      texture.store({.mip_level = 0}, {0, 0}, {128.0f, -1.0f, 33.5f, 1.0f});
-
-      CHECK(std::ranges::equal(expected_texel,
-                               std::span{texture.data(), expected_texel.size()}));
-   }
-
-   SECTION("r32g32b32_float store")
-   {
-      constexpr std::array<std::byte, 16> expected_texel{
-         // clang-format off
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x00}, std::byte{0x43}, // red
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x80}, std::byte{0xbf}, // green
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x06}, std::byte{0x42} // blue
-         // clang-format on
-      };
-
-      init_params.format = texture_format::r32g32b32_float;
-
-      texture texture{init_params};
-
-      texture.store({.mip_level = 0}, {0, 0}, {128.0f, -1.0f, 33.5f, 1.0f});
-
-      CHECK(std::ranges::equal(expected_texel,
-                               std::span{texture.data(), expected_texel.size()}));
-   }
-
-   SECTION("r32g32b32a32_float store")
-   {
-      constexpr std::array<std::byte, 16> expected_texel{
-         // clang-format off
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x00}, std::byte{0x43}, // red
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x80}, std::byte{0xbf}, // green
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x06}, std::byte{0x42}, // blue
-         std::byte{0x00}, std::byte{0x00}, std::byte{0x80}, std::byte{0x3f}  // alpha
-         // clang-format on
-      };
-
-      init_params.format = texture_format::r32g32b32a32_float;
-
-      texture texture{init_params};
-
-      texture.store({.mip_level = 0}, {0, 0}, {128.0f, -1.0f, 33.5f, 1.0f});
 
       CHECK(std::ranges::equal(expected_texel,
                                std::span{texture.data(), expected_texel.size()}));
