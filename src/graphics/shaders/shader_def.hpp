@@ -19,10 +19,12 @@ enum class shader_type {
 struct shader_def {
    std::string_view name;
    const wchar_t* entrypoint;
-   const wchar_t* target;
+   const wchar_t* target_6_1;
+   const wchar_t* target_6_6;
    const wchar_t* file;
 
-   std::span<const std::byte> dxil;
+   std::span<const std::byte> dxil_6_1;
+   std::span<const std::byte> dxil_6_6;
 };
 
 }

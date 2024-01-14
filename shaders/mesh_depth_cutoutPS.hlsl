@@ -1,5 +1,6 @@
 
 #include "material_normal.hlsli"
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 
 struct input_vertex {
@@ -12,7 +13,7 @@ struct input_vertex {
 
 void main(input_vertex input_vertex)
 {
-   Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map_index];
+   Texture2D diffuse_map = Texture2DHeap[material.diffuse_map_index];
 
    float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, input_vertex.texcoords);
 

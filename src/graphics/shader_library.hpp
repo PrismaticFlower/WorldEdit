@@ -12,6 +12,7 @@ namespace we::graphics {
 
 struct shader_library {
    shader_library(std::initializer_list<shader_def> shaders,
+                  const bool use_shader_model_6_6,
                   std::shared_ptr<async::thread_pool> thread_pool,
                   output_stream& compile_output);
 
@@ -33,6 +34,7 @@ private:
    std::vector<shader> _shaders;
 
 #ifndef NDEBUG
+   const bool _use_shader_model_6_6;
    std::shared_ptr<async::thread_pool> _thread_pool;
    output_stream& _compile_output;
 #endif

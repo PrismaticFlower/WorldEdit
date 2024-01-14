@@ -2,6 +2,7 @@
 #include "frame_constants.hlsli"
 #include "lights_common.hlsli"
 #include "material_normal.hlsli"
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 
 struct input_vertex {
@@ -22,7 +23,7 @@ float3 transform_normalWS(const input_vertex input, const float3 normalTS)
 
 float4 main(input_vertex input) : SV_TARGET
 {
-   Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map_index];
+   Texture2D diffuse_map = Texture2DHeap[material.diffuse_map_index];
 
    float2 texcoords = input.texcoords;
 
@@ -33,7 +34,7 @@ float4 main(input_vertex input) : SV_TARGET
    float4 normal_map_sample = float4(0.5, 0.5, 1.0, 1.0);
 
    if (material.flags & flags::has_normal_map) {
-      Texture2D<float4> normal_map = ResourceDescriptorHeap[material.normal_map_index];
+      Texture2D normal_map = Texture2DHeap[material.normal_map_index];
 
       if (material.flags & flags::tile_normal_map) {
          normal_map_sample =
@@ -52,10 +53,10 @@ float4 main(input_vertex input) : SV_TARGET
    float4 diffuse_color = diffuse_map.Sample(sampler_anisotropic_wrap, texcoords);
 
    if (material.flags & flags::has_detail_map) {
-      Texture2D<float3> detail_map = ResourceDescriptorHeap[material.detail_map_index];
+      Texture2D detail_map = Texture2DHeap[material.detail_map_index];
 
       diffuse_color.rgb *=
-         (detail_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale) * 2.0);
+         (detail_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale).rgb * 2.0);
    }
 
    const bool static_lighting = material.flags & flags::static_lighting;
@@ -97,11 +98,11 @@ float4 main(input_vertex input) : SV_TARGET
    }
 
    if (material.flags & flags::has_env_map) {
-      TextureCube<float3> env_map = ResourceDescriptorHeap[material.env_map_index];
+      TextureCube env_map = TextureCubeHeap[material.env_map_index];
 
       const float3 reflectionWS = normalize(reflect(-viewWS, normalWS));
 
-      lighting += env_map.Sample(sampler_anisotropic_wrap, reflectionWS) * material.env_color *
+      lighting += env_map.Sample(sampler_anisotropic_wrap, reflectionWS).rgb * material.env_color *
                   specular_visibility;
    }
 

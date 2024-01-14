@@ -2,6 +2,7 @@
 #include "bindings.hlsli"
 #include "frame_constants.hlsli"
 #include "material_normal.hlsli"
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 #include "sky_mesh_constants.hlsli"
 
@@ -12,7 +13,7 @@ struct input_vertex {
 
 float4 main(input_vertex input) : SV_TARGET
 {
-   Texture2D<float4> diffuse_map = ResourceDescriptorHeap[material.diffuse_map_index];
+   Texture2D diffuse_map = Texture2DHeap[material.diffuse_map_index];
 
    float2 texcoords = input.texcoords;
 
@@ -25,10 +26,10 @@ float4 main(input_vertex input) : SV_TARGET
    if (cb_mesh_constants.alpha_cutout && diffuse_color.a < 0.5) discard;
 
    if (material.flags & flags::has_detail_map) {
-      Texture2D<float3> detail_map = ResourceDescriptorHeap[material.detail_map_index];
+      Texture2D detail_map = Texture2DHeap[material.detail_map_index];
 
       diffuse_color.rgb *=
-         (detail_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale) * 2.0);
+         (detail_map.Sample(sampler_anisotropic_wrap, texcoords * material.detail_scale).rgb * 2.0);
    }
 
    const bool static_lighting = material.flags & flags::static_lighting;

@@ -18,6 +18,7 @@ namespace we::graphics::gpu {
 
 constexpr inline uint32 frame_pipeline_length = 2;
 constexpr inline uint32 max_root_parameters = 6;
+constexpr inline uint32 max_root_static_samplers = 16;
 constexpr inline uint32 append_aligned_input_element = 0xffffffffu;
 constexpr inline uint32 texture_barrier_all_subresources = 0xffffffffu;
 constexpr inline uint32 raw_uav_srv_byte_alignment = 16;
@@ -304,6 +305,14 @@ enum class texture_address_mode {
    mirror_once = 5
 };
 
+enum class static_border_color {
+   transparent_black = 0,
+   opaque_black = 1,
+   opaque_white = 2,
+   opaque_black_uint = 3,
+   opaque_white_uint = 4
+};
+
 enum class comparison_mode {
    equal = 3,
    not_equal = 6,
@@ -371,9 +380,6 @@ constexpr inline auto null_root_signature_handle = root_signature_handle{0};
 enum class pipeline_handle : std::uintptr_t {};
 constexpr inline auto null_pipeline_handle = pipeline_handle{0};
 
-enum class sampler_heap_handle : std::uintptr_t {};
-constexpr inline auto null_sampler_heap_handle = sampler_heap_handle{0};
-
 enum class query_heap_handle : std::uintptr_t {};
 constexpr inline auto null_query_heap_handle = query_heap_handle{0};
 
@@ -401,8 +407,27 @@ struct root_signature_flags {
    bool deny_mesh_shader_root_access : 1 = false;
 };
 
+struct static_sampler_desc {
+   filter filter = filter::point;
+
+   union {
+      texture_address_mode address_u, address = texture_address_mode::wrap;
+   };
+
+   texture_address_mode address_v = address;
+   texture_address_mode address_w = address;
+   float mip_lod_bias = 0.0f;
+   uint32 max_anisotropy = 1;
+   comparison_func comparison = comparison_func::never;
+   static_border_color border_color = static_border_color::transparent_black;
+
+   uint32 shader_register = 0;
+   root_shader_visibility visibility = root_shader_visibility::all;
+};
+
 struct root_signature_desc {
    std::array<root_parameter, max_root_parameters> parameters;
+   std::span<const static_sampler_desc> samplers;
 
    root_signature_flags flags;
 
@@ -687,23 +712,6 @@ struct depth_stencil_view_desc {
    };
 };
 
-/// Sampler Desc Structures ///
-
-struct sampler_desc {
-   filter filter = filter::point;
-
-   union {
-      texture_address_mode address, address_u = texture_address_mode::wrap;
-   };
-
-   texture_address_mode address_v = address;
-   texture_address_mode address_w = address;
-   float mip_lod_bias = 0.0f;
-   uint32 max_anisotropy = 1;
-   comparison_func comparison = comparison_func::never;
-   float4 border_color = {0.0f, 0.0f, 0.0f, 0.0f};
-};
-
 /// Swapchain Desc Structure ///
 
 struct swap_chain_desc {
@@ -837,10 +845,6 @@ struct command_list {
    void close();
 
    void reset();
-
-   /// @brief Reset the command list and bind the supplied sampler heap.
-   /// @param sampler_heap This will be set on the command list as part of it being reset.
-   void reset(sampler_heap_handle sampler_heap);
 
    void clear_state();
 
@@ -1072,8 +1076,6 @@ struct command_queue {
 
    void release_depth_stencil_view(dsv_handle depth_stencil_view);
 
-   void release_sampler_heap(sampler_heap_handle sampler_heap);
-
    void release_query_heap(query_heap_handle query_heap);
 
    void release_command_allocator(command_allocator_handle command_allocator);
@@ -1167,6 +1169,9 @@ struct device_desc {
 
    /// @brief Force usage of legacy barriers.
    bool force_legacy_barriers = false;
+
+   /// @brief Force the device to report SM 6.6 as unsupported.
+   bool force_no_shader_model_6_6 = false;
 };
 
 /// Device Definitions ///
@@ -1252,11 +1257,6 @@ public:
                                                 const depth_stencil_view_desc& desc)
       -> dsv_handle;
 
-   /// Sampler Functions ///
-
-   [[nodiscard]] auto create_sampler_heap(std::span<const sampler_desc> sampler_descs)
-      -> sampler_heap_handle;
-
    /// Query Functions ///
 
    [[nodiscard]] auto create_timestamp_query_heap(const uint32 count)
@@ -1273,6 +1273,8 @@ public:
    [[nodiscard]] bool supports_shader_barycentrics() const noexcept;
 
    [[nodiscard]] bool supports_conservative_rasterization() const noexcept;
+
+   [[nodiscard]] bool supports_shader_model_6_6() const noexcept;
 
    /// Constructors/Destructor ///
 

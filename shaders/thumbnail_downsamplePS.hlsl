@@ -1,3 +1,4 @@
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 
 struct apply_inputs {
@@ -6,7 +7,7 @@ struct apply_inputs {
 
 ConstantBuffer<apply_inputs> input : register(b0);
 
-static Texture2D thumbnail = ResourceDescriptorHeap[input.thumbnail_index];
+static Texture2D thumbnail = Texture2DHeap[input.thumbnail_index];
 
 float4 main(float2 texcoords : TEXCOORDS) : SV_TARGET
 {

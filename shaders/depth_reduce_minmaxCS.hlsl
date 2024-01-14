@@ -1,3 +1,4 @@
+#include "resource_heaps.hlsli"
 
 struct input_constant_buffer {
    uint depth_srv;
@@ -6,7 +7,7 @@ struct input_constant_buffer {
 
 ConstantBuffer<input_constant_buffer> input : register(b0);
 
-static Texture2D<float> depth_texture = ResourceDescriptorHeap[input.depth_srv];
+static Texture2D depth_texture = Texture2DHeap[input.depth_srv];
 
 RWByteAddressBuffer output : register(u0);
 
@@ -28,7 +29,7 @@ void main(uint2 DTid : SV_DispatchThreadID, uint group_index : SV_GroupIndex) { 
 
    if (DTid.x >= input.resolution.x || DTid.y >= input.resolution.y) return;
 
-   const float depth = depth_texture[DTid.xy];
+   const float depth = depth_texture[DTid.xy].r;
 
    if (depth != clear_depth) {
       const float wave_min_depth = WaveActiveMin(depth);

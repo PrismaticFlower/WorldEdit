@@ -48,7 +48,11 @@ namespace we {
 world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
      _window{window},
-     _renderer_use_debug_layer{command_line.get_flag("-gpu_debug_layer")}
+     _renderer_use_debug_layer{command_line.get_flag("-gpu_debug_layer")},
+     _renderer_use_legacy_barriers{
+        command_line.get_flag("-gpu_legacy_barriers")},
+     _renderer_never_use_shader_model_6_6{
+        command_line.get_flag("-gpu_no_shader_model_6_6")}
 {
    async::task<settings::settings> settings_load = _thread_pool->exec([]() {
       try {
@@ -66,13 +70,15 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    _applied_user_display_scale = _settings.ui.extra_scaling;
 
    try {
-      _renderer =
-         graphics::make_renderer({.window = window,
-                                  .thread_pool = _thread_pool,
-                                  .asset_libraries = _asset_libraries,
-                                  .error_output = _stream,
-                                  .display_scale = _display_scale.value,
-                                  .use_debug_layer = _renderer_use_debug_layer});
+      _renderer = graphics::make_renderer(
+         {.window = window,
+          .thread_pool = _thread_pool,
+          .asset_libraries = _asset_libraries,
+          .error_output = _stream,
+          .display_scale = _display_scale.value,
+          .use_debug_layer = _renderer_use_debug_layer,
+          .use_legacy_barriers = _renderer_use_legacy_barriers,
+          .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6});
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -2921,13 +2927,15 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
       _renderer = nullptr;
 
       try {
-         _renderer =
-            graphics::make_renderer({.window = _window,
-                                     .thread_pool = _thread_pool,
-                                     .asset_libraries = _asset_libraries,
-                                     .error_output = _stream,
-                                     .display_scale = _display_scale.value,
-                                     .use_debug_layer = _renderer_use_debug_layer});
+         _renderer = graphics::make_renderer(
+            {.window = _window,
+             .thread_pool = _thread_pool,
+             .asset_libraries = _asset_libraries,
+             .error_output = _stream,
+             .display_scale = _display_scale.value,
+             .use_debug_layer = _renderer_use_debug_layer,
+             .use_legacy_barriers = _renderer_use_legacy_barriers,
+             .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6});
 
          _renderer->recreate_imgui_font_atlas();
 

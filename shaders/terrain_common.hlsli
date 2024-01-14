@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bindings.hlsli"
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 
 #define TERRAIN_MAX_TEXTURES 16
@@ -48,10 +49,9 @@ struct input_vertex {
 ConstantBuffer<terrain_constants_> terrain_constants : register(TERRAIN_CB_REGISTER);
 StructuredBuffer<patch_info> patch_constants : register(TERRAIN_PATCH_DATA_REGISTER);
 
-static Texture2D<float> height_map = ResourceDescriptorHeap[terrain_constants.height_map_index];
-static Texture2DArray<float> texture_weight_maps =
-   ResourceDescriptorHeap[terrain_constants.texture_weight_maps_index];
-static Texture2D<float4> color_map = ResourceDescriptorHeap[terrain_constants.color_map_index];
+static Texture2D height_map = Texture2DHeap[terrain_constants.height_map_index];
+static Texture2DArray texture_weight_maps = Texture2DArrayHeap[terrain_constants.texture_weight_maps_index];
+static Texture2D color_map = Texture2DHeap[terrain_constants.color_map_index];
 
 const static uint patch_point_count = 17;
 const static uint terrain_max_textures = TERRAIN_MAX_TEXTURES;
@@ -61,10 +61,10 @@ float3 get_terrain_normalWS(float2 terrain_coords)
    const float height_scale = terrain_constants.height_scale;
    const float grid_size = terrain_constants.grid_size;
 
-   const float height0x = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(-1, 0));
-   const float height1x = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(1, 0));
-   const float height0z = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(0, -1));
-   const float height1z = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(0, 1));
+   const float height0x = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(-1, 0)).r;
+   const float height1x = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(1, 0)).r;
+   const float height0z = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(0, -1)).r;
+   const float height1z = height_map.Sample(sampler_bilinear_clamp, terrain_coords, int2(0, 1)).r;
 
    const float3 normalWS = normalize(float3((height0x - height1x) * height_scale / (grid_size * 2.0), 1.0,
                                             (height0z - height1z) * height_scale / (grid_size * 2.0)));

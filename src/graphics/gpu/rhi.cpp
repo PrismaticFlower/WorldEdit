@@ -40,6 +40,8 @@ constexpr uint32 num_cbv_srv_uav_descriptors = 131'072;
 constexpr uint32 num_rtv_descriptors = 1024;
 constexpr uint32 num_dsv_descriptors = 1024;
 
+constexpr uint32 bindless_descriptor_space_start = 10'000;
+
 auto create_dxgi_factory(const device_desc& device_desc) -> com_ptr<IDXGIFactory7>
 {
    com_ptr<IDXGIFactory7> factory;
@@ -114,9 +116,9 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       if (D3D12_FEATURE_DATA_D3D12_OPTIONS options{};
           SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS,
                                                 &options, sizeof(options)))) {
-         if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3) {
+         if (options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_2) {
             debug_ouput.write_ln(
-               "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_3");
+               "GPU doesn't support D3D12_RESOURCE_BINDING_TIER_2");
 
             unsupported = true;
          }
@@ -169,18 +171,18 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       }
 
       if (D3D12_FEATURE_DATA_SHADER_MODEL shader_model_support{
-             .HighestShaderModel = D3D_SHADER_MODEL_6_6};
+             .HighestShaderModel = D3D_SHADER_MODEL_6_1};
           SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shader_model_support,
                                                 sizeof(shader_model_support)))) {
 
-         if (shader_model_support.HighestShaderModel < D3D_SHADER_MODEL_6_6) {
-            debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_6");
+         if (shader_model_support.HighestShaderModel < D3D_SHADER_MODEL_6_1) {
+            debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_1");
 
             unsupported = true;
          }
       }
       else {
-         debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_6");
+         debug_ouput.write_ln("GPU doesn't support D3D_SHADER_MODEL_6_1");
 
          unsupported = true;
       }
@@ -249,6 +251,25 @@ bool check_conservative_rasterization_support(ID3D12Device& device) noexcept
    return options.ConservativeRasterizationTier !=
           D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED;
 }
+
+bool check_shader_model_6_6_support(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_SHADER_MODEL shader_model_support{.HighestShaderModel =
+                                                           D3D_SHADER_MODEL_6_6};
+
+   if (SUCCEEDED(device.CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shader_model_support,
+                                            sizeof(shader_model_support)))) {
+
+      if (shader_model_support.HighestShaderModel < D3D_SHADER_MODEL_6_6) {
+         return false;
+      }
+   }
+   else {
+      return false;
+   }
+
+   return true;
+}
 }
 
 struct command_queue_init {
@@ -263,7 +284,10 @@ struct device_state {
         device{create_d3d12_device(*factory, desc)},
         supports_enhanced_barriers{desc.force_legacy_barriers
                                       ? false
-                                      : check_enhanced_barriers_support(*device)}
+                                      : check_enhanced_barriers_support(*device)},
+        supports_shader_model_6_6{desc.force_no_shader_model_6_6
+                                     ? false
+                                     : check_shader_model_6_6_support(*device)}
    {
    }
 
@@ -294,6 +318,7 @@ struct device_state {
       check_shader_barycentrics_support(*device);
    const bool supports_conservative_rasterization : 1 =
       check_conservative_rasterization_support(*device);
+   const bool supports_shader_model_6_6 : 1;
 };
 
 struct swap_chain_state {
@@ -332,6 +357,9 @@ struct command_list_state {
    com_ptr<ID3D12GraphicsCommandList7> command_list;
 
    bool supports_enhanced_barriers = false;
+   bool supports_shader_model_6_6 = false;
+
+   uint8 root_param_offset = supports_shader_model_6_6 ? uint8{0} : uint8{1};
 
    std::vector<D3D12_GLOBAL_BARRIER> deferred_global_barriers = [] {
       std::vector<D3D12_GLOBAL_BARRIER> init;
@@ -523,6 +551,7 @@ auto device::create_copy_command_list(const command_list_desc& desc) -> copy_com
    command_list.state =
       command_list_state{.command_list = std::move(d3d12_command_list),
                          .supports_enhanced_barriers = supports_enhanced_barriers(),
+                         .supports_shader_model_6_6 = supports_shader_model_6_6(),
                          .command_allocator = nullptr,
                          .descriptor_heap = nullptr,
                          .device_state = &state.get(),
@@ -548,6 +577,7 @@ auto device::create_compute_command_list(const command_list_desc& desc) -> compu
    command_list.state =
       command_list_state{.command_list = std::move(d3d12_command_list),
                          .supports_enhanced_barriers = supports_enhanced_barriers(),
+                         .supports_shader_model_6_6 = supports_shader_model_6_6(),
                          .command_allocator = nullptr,
                          .descriptor_heap = state->srv_uav_descriptor_heap.heap,
                          .device_state = &state.get(),
@@ -573,6 +603,7 @@ auto device::create_graphics_command_list(const command_list_desc& desc) -> grap
    command_list.state =
       command_list_state{.command_list = std::move(d3d12_command_list),
                          .supports_enhanced_barriers = supports_enhanced_barriers(),
+                         .supports_shader_model_6_6 = supports_shader_model_6_6(),
                          .command_allocator = nullptr,
                          .descriptor_heap = state->srv_uav_descriptor_heap.heap,
                          .device_state = &state.get(),
@@ -583,11 +614,11 @@ auto device::create_graphics_command_list(const command_list_desc& desc) -> grap
 
 auto device::create_root_signature(const root_signature_desc& desc) -> root_signature_handle
 {
-   D3D12_ROOT_SIGNATURE_DESC1 d3d12_desc{
-      .NumStaticSamplers = 0,
-      .pStaticSamplers = nullptr,
-      .Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
-               D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED};
+   D3D12_ROOT_SIGNATURE_DESC1 d3d12_desc{.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE};
+
+   if (supports_shader_model_6_6()) {
+      d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+   }
 
    // clang-format off
    if (desc.flags.allow_input_assembler_input_layout) d3d12_desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -604,15 +635,44 @@ auto device::create_root_signature(const root_signature_desc& desc) -> root_sign
          }
       }
 
-      return 6;
+      return max_root_parameters;
    }();
 
-   std::array<D3D12_ROOT_PARAMETER1, max_root_parameters> parameters{};
+   std::array<D3D12_ROOT_PARAMETER1, max_root_parameters + 1> parameters{};
+   std::array<D3D12_DESCRIPTOR_RANGE1, 16> bindless_srv_descriptor_ranges{};
 
-   for (uint32 i = 0; i < d3d12_desc.NumParameters; ++i) {
-      const root_parameter& param = desc.parameters[i];
+   if (not supports_shader_model_6_6()) {
+      d3d12_desc.NumParameters += 1;
 
-      switch (desc.parameters[i].type) {
+      for (uint32 i = 0; i < bindless_srv_descriptor_ranges.size(); ++i) {
+         bindless_srv_descriptor_ranges[i] = {
+            .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            .NumDescriptors = UINT_MAX,
+            .BaseShaderRegister = 0,
+            .RegisterSpace = bindless_descriptor_space_start + i,
+            .Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+            .OffsetInDescriptorsFromTableStart = 0,
+         };
+      }
+
+      parameters[0] =
+         D3D12_ROOT_PARAMETER1{.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                               .DescriptorTable =
+                                  {
+                                     .NumDescriptorRanges = static_cast<uint32>(
+                                        bindless_srv_descriptor_ranges.size()),
+                                     .pDescriptorRanges =
+                                        bindless_srv_descriptor_ranges.data(),
+                                  },
+                               .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL};
+   }
+
+   const uint32 param_offset = supports_shader_model_6_6() ? 0 : 1;
+
+   for (uint32 i = param_offset; i < d3d12_desc.NumParameters; ++i) {
+      const root_parameter& param = desc.parameters[i - param_offset];
+
+      switch (param.type) {
       case root_parameter_type::_32bit_constants:
          parameters[i] = {.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
                           .Constants = {.ShaderRegister = param.shader_register,
@@ -648,6 +708,39 @@ auto device::create_root_signature(const root_signature_desc& desc) -> root_sign
    }
 
    d3d12_desc.pParameters = parameters.data();
+
+   std::array<D3D12_STATIC_SAMPLER_DESC, 16> static_samplers{};
+
+   if (desc.samplers.size() <= max_root_static_samplers) {
+      for (uint32 i = 0; i < desc.samplers.size(); ++i) {
+         static_samplers[i] =
+            {.Filter = static_cast<D3D12_FILTER>(desc.samplers[i].filter),
+             .AddressU =
+                static_cast<D3D12_TEXTURE_ADDRESS_MODE>(desc.samplers[i].address_u),
+             .AddressV =
+                static_cast<D3D12_TEXTURE_ADDRESS_MODE>(desc.samplers[i].address_v),
+             .AddressW =
+                static_cast<D3D12_TEXTURE_ADDRESS_MODE>(desc.samplers[i].address_w),
+             .MipLODBias = desc.samplers[i].mip_lod_bias,
+             .MaxAnisotropy = desc.samplers[i].max_anisotropy,
+             .ComparisonFunc =
+                static_cast<D3D12_COMPARISON_FUNC>(desc.samplers[i].comparison),
+             .BorderColor =
+                static_cast<D3D12_STATIC_BORDER_COLOR>(desc.samplers[i].border_color),
+             .MinLOD = 0.0f,
+             .MaxLOD = D3D12_FLOAT32_MAX,
+
+             .ShaderRegister = desc.samplers[i].shader_register,
+             .ShaderVisibility =
+                static_cast<D3D12_SHADER_VISIBILITY>(desc.samplers[i].visibility)};
+      }
+
+      d3d12_desc.pStaticSamplers = static_samplers.data();
+      d3d12_desc.NumStaticSamplers = static_cast<uint32>(desc.samplers.size());
+   }
+   else {
+      std::terminate(); // Too many static samplers. (For us, not D3D12).
+   }
 
    D3D12_VERSIONED_ROOT_SIGNATURE_DESC versioned_desc{.Version = D3D_ROOT_SIGNATURE_VERSION_1_1,
                                                       .Desc_1_1 = d3d12_desc};
@@ -1252,48 +1345,6 @@ auto device::create_depth_stencil_view(resource_handle resource,
    return pack_dsv_handle(descriptor);
 }
 
-auto device::create_sampler_heap(std::span<const sampler_desc> sampler_descs)
-   -> sampler_heap_handle
-{
-   D3D12_DESCRIPTOR_HEAP_DESC heap_desc{.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
-                                        .NumDescriptors =
-                                           static_cast<uint32>(sampler_descs.size()),
-                                        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE};
-
-   com_ptr<ID3D12DescriptorHeap> sampler_heap;
-
-   throw_if_fail(
-      state->device->CreateDescriptorHeap(&heap_desc,
-                                          IID_PPV_ARGS(sampler_heap.clear_and_assign())));
-
-   const std::size_t descriptor_size =
-      state->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-   const std::size_t base_address =
-      sampler_heap->GetCPUDescriptorHandleForHeapStart().ptr;
-
-   for (std::size_t i = 0; i < sampler_descs.size(); ++i) {
-      const float4 border_color = sampler_descs[i].border_color;
-
-      D3D12_SAMPLER_DESC desc{
-         .Filter = static_cast<D3D12_FILTER>(sampler_descs[i].filter),
-         .AddressU = static_cast<D3D12_TEXTURE_ADDRESS_MODE>(sampler_descs[i].address_u),
-         .AddressV = static_cast<D3D12_TEXTURE_ADDRESS_MODE>(sampler_descs[i].address_v),
-         .AddressW = static_cast<D3D12_TEXTURE_ADDRESS_MODE>(sampler_descs[i].address_w),
-         .MipLODBias = sampler_descs[i].mip_lod_bias,
-         .MaxAnisotropy = sampler_descs[i].max_anisotropy,
-         .ComparisonFunc =
-            static_cast<D3D12_COMPARISON_FUNC>(sampler_descs[i].comparison),
-         .BorderColor = {border_color.x, border_color.y, border_color.z,
-                         border_color.w},
-         .MinLOD = 0.0f,
-         .MaxLOD = D3D12_FLOAT32_MAX};
-
-      state->device->CreateSampler(&desc, {base_address + (i * descriptor_size)});
-   }
-
-   return pack_sampler_heap_handle(sampler_heap.release());
-}
-
 auto device::create_timestamp_query_heap(const uint32 count) -> query_heap_handle
 {
    const D3D12_QUERY_HEAP_DESC desc{.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
@@ -1400,6 +1451,11 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
 [[msvc::forceinline]] bool device::supports_conservative_rasterization() const noexcept
 {
    return state->supports_conservative_rasterization;
+}
+
+[[msvc::forceinline]] bool device::supports_shader_model_6_6() const noexcept
+{
+   return state->supports_shader_model_6_6;
 }
 
 swap_chain::swap_chain() = default;
@@ -1681,25 +1737,6 @@ void command_queue::release_depth_stencil_view(dsv_handle depth_stencil_view)
                                           state->device->dsv_descriptor_heap.allocator});
 }
 
-void command_queue::release_sampler_heap(sampler_heap_handle sampler_heap)
-{
-   const uint64 sync_value = [&] {
-      std::scoped_lock lock{state->sync_mutex};
-
-      if (state->work_executed_since_release.exchange(false)) {
-         state->release_last_sync_value = ++state->sync_value;
-
-         state->command_queue->Signal(state->sync_fence.get(),
-                                      state->release_last_sync_value);
-      }
-
-      return state->release_last_sync_value;
-   }();
-
-   state->release_queue_device_children.push(sync_value, com_ptr{unpack_sampler_heap_handle(
-                                                            sampler_heap)});
-}
-
 void command_queue::release_query_heap(query_heap_handle query_heap)
 {
    const uint64 sync_value = [&] {
@@ -1812,20 +1849,6 @@ void command_list::reset()
 
    if (state->command_list->GetType() != D3D12_COMMAND_LIST_TYPE_COPY) {
       std::array descriptor_heaps{state->descriptor_heap.get()};
-
-      state->command_list->SetDescriptorHeaps(static_cast<uint32>(
-                                                 descriptor_heaps.size()),
-                                              descriptor_heaps.data());
-   }
-}
-
-void command_list::reset(sampler_heap_handle sampler_heap)
-{
-   reset_common();
-
-   if (state->command_list->GetType() != D3D12_COMMAND_LIST_TYPE_COPY) {
-      std::array descriptor_heaps{state->descriptor_heap.get(),
-                                  unpack_sampler_heap_handle(sampler_heap)};
 
       state->command_list->SetDescriptorHeaps(static_cast<uint32>(
                                                  descriptor_heaps.size()),
@@ -2136,13 +2159,19 @@ void copy_command_list::flush_barriers()
 {
    state->command_list->SetComputeRootSignature(
       unpack_root_signature_handle(root_signature));
+
+   [[unlikely]] if (not state->supports_shader_model_6_6) {
+      state->command_list->SetComputeRootDescriptorTable(
+         0, state->descriptor_heap->GetGPUDescriptorHandleForHeapStart());
+   }
 }
 
 [[msvc::forceinline]] void compute_command_list::set_compute_32bit_constant(
    const uint32 parameter_index, const uint32 constant,
    const uint32 dest_offset_in_32bit_values)
 {
-   state->command_list->SetComputeRoot32BitConstant(parameter_index, constant,
+   state->command_list->SetComputeRoot32BitConstant(parameter_index + state->root_param_offset,
+                                                    constant,
                                                     dest_offset_in_32bit_values);
 }
 
@@ -2153,28 +2182,30 @@ void copy_command_list::flush_barriers()
    assert(constants.size() % 4 == 0);
 
    state->command_list->SetComputeRoot32BitConstants(
-      parameter_index, static_cast<uint32>(constants.size() / sizeof(uint32)),
-      constants.data(), dest_offset_in_32bit_values);
+      parameter_index + state->root_param_offset,
+      static_cast<uint32>(constants.size() / sizeof(uint32)), constants.data(),
+      dest_offset_in_32bit_values);
 }
 
 [[msvc::forceinline]] void compute_command_list::set_compute_cbv(
    const uint32 parameter_index, const gpu_virtual_address buffer_location)
 {
-   state->command_list->SetComputeRootConstantBufferView(parameter_index,
+   state->command_list->SetComputeRootConstantBufferView(parameter_index + state->root_param_offset,
                                                          buffer_location);
 }
 
 [[msvc::forceinline]] void compute_command_list::set_compute_srv(
    const uint32 parameter_index, const gpu_virtual_address buffer_location)
 {
-   state->command_list->SetComputeRootShaderResourceView(parameter_index,
+   state->command_list->SetComputeRootShaderResourceView(parameter_index + state->root_param_offset,
                                                          buffer_location);
 }
 
 [[msvc::forceinline]] void compute_command_list::set_compute_uav(
    const uint32 parameter_index, const gpu_virtual_address buffer_location)
 {
-   state->command_list->SetComputeRootUnorderedAccessView(parameter_index,
+   state->command_list->SetComputeRootUnorderedAccessView(parameter_index +
+                                                             state->root_param_offset,
                                                           buffer_location);
 }
 
@@ -2236,13 +2267,19 @@ void copy_command_list::flush_barriers()
 {
    state->command_list->SetGraphicsRootSignature(
       unpack_root_signature_handle(root_signature));
+
+   [[unlikely]] if (not state->supports_shader_model_6_6) {
+      state->command_list->SetGraphicsRootDescriptorTable(
+         0, state->descriptor_heap->GetGPUDescriptorHandleForHeapStart());
+   }
 }
 
 [[msvc::forceinline]] void graphics_command_list::set_graphics_32bit_constant(
    const uint32 parameter_index, const uint32 constant,
    const uint32 dest_offset_in_32bit_values)
 {
-   state->command_list->SetGraphicsRoot32BitConstant(parameter_index, constant,
+   state->command_list->SetGraphicsRoot32BitConstant(parameter_index + state->root_param_offset,
+                                                     constant,
                                                      dest_offset_in_32bit_values);
 }
 
@@ -2253,28 +2290,32 @@ void copy_command_list::flush_barriers()
    assert(constants.size() % 4 == 0);
 
    state->command_list->SetGraphicsRoot32BitConstants(
-      parameter_index, static_cast<uint32>(constants.size() / sizeof(uint32)),
-      constants.data(), dest_offset_in_32bit_values);
+      parameter_index + state->root_param_offset,
+      static_cast<uint32>(constants.size() / sizeof(uint32)), constants.data(),
+      dest_offset_in_32bit_values);
 }
 
 [[msvc::forceinline]] void graphics_command_list::set_graphics_cbv(
    const uint32 parameter_index, const gpu_virtual_address buffer_location)
 {
-   state->command_list->SetGraphicsRootConstantBufferView(parameter_index,
+   state->command_list->SetGraphicsRootConstantBufferView(parameter_index +
+                                                             state->root_param_offset,
                                                           buffer_location);
 }
 
 [[msvc::forceinline]] void graphics_command_list::set_graphics_srv(
    const uint32 parameter_index, const gpu_virtual_address buffer_location)
 {
-   state->command_list->SetGraphicsRootShaderResourceView(parameter_index,
+   state->command_list->SetGraphicsRootShaderResourceView(parameter_index +
+                                                             state->root_param_offset,
                                                           buffer_location);
 }
 
 [[msvc::forceinline]] void graphics_command_list::set_graphics_uav(
    const uint32 parameter_index, const gpu_virtual_address buffer_location)
 {
-   state->command_list->SetGraphicsRootUnorderedAccessView(parameter_index,
+   state->command_list->SetGraphicsRootUnorderedAccessView(parameter_index +
+                                                              state->root_param_offset,
                                                            buffer_location);
 }
 

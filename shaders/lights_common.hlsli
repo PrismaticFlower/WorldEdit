@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bindings.hlsli"
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 
 #define MAX_LIGHTS 256
@@ -82,11 +83,15 @@ const static int shadow_cascade_count = 4;
 const static uint light_tile_size = 8;
 const static uint light_tile_word_bits = 32;
 
+
+STRUCTURED_BUFFER_HEAP(uint[TILE_LIGHT_WORDS], LightTilesBufferHeap, STRUCTURED_BUFFER_HEAP_SPACE0);
+STRUCTURED_BUFFER_HEAP(light_region_description, LightRegionBufferHeap, STRUCTURED_BUFFER_HEAP_SPACE1);
+
 ConstantBuffer<light_constant_buffer> light_constants : register(LIGHTS_CB_REGISTER);
-static StructuredBuffer<uint[TILE_LIGHT_WORDS]> light_tiles =
-   ResourceDescriptorHeap[light_constants.light_tiles_index];
+static StructuredBuffer<uint[TILE_LIGHT_WORDS]> light_tiles = 
+   INDEX_STRUCTURED_BUFFER_HEAP(LightTilesBufferHeap, light_constants.light_tiles_index);
 static StructuredBuffer<light_region_description> light_region_list =
-   ResourceDescriptorHeap[light_constants.light_region_list_index];
+   INDEX_STRUCTURED_BUFFER_HEAP(LightRegionBufferHeap, light_constants.light_region_list_index);
 const static float shadow_map_bias = 0.001;
 
 float shadow_cascade_signed_distance(float3 positionLS)
@@ -113,7 +118,7 @@ uint select_shadow_map_cascade(float3 positionWS)
    return cascade_index;
 }
 
-float sample_shadow_map(Texture2DArray<float> shadow_map, float3 positionLS, uint cascade_index,
+float sample_shadow_map(Texture2DArray shadow_map, float3 positionLS, uint cascade_index,
                         float2 inv_shadow_map_resolution)
 {
    // Sampling pattern from MiniEngine https://github.com/microsoft/DirectX-Graphics-Samples/blob/0aa79bad78992da0b6a8279ddb9002c1753cb849/MiniEngine/Model/Shaders/Lighting.hlsli#L70
@@ -128,23 +133,23 @@ float sample_shadow_map(Texture2DArray<float> shadow_map, float3 positionLS, uin
    float d4 = dilation * inv_shadow_map_resolution.x * 0.375;
 
    float shadow =
-      (2.0 * shadow_map.SampleCmpLevelZero(sampler_shadow, float3(positionLS.xy, cascade_index), light_depth) +
+      (2.0 * shadow_map.SampleCmpLevelZero(sampler_shadow, float3(positionLS.xy, cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow,
-                                     float3(positionLS.xy + float2(-d2, d1), cascade_index), light_depth) +
+                                     float3(positionLS.xy + float2(-d2, d1), cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow,
-                                     float3(positionLS.xy + float2(-d1, -d2), cascade_index), light_depth) +
+                                     float3(positionLS.xy + float2(-d1, -d2), cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow,
-                                     float3(positionLS.xy + float2(d2, -d1), cascade_index), light_depth) +
+                                     float3(positionLS.xy + float2(d2, -d1), cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow,
-                                     float3(positionLS.xy + float2(d1, d2), cascade_index), light_depth) +
+                                     float3(positionLS.xy + float2(d1, d2), cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow,
-                                     float3(positionLS.xy + float2(-d4, d3), cascade_index), light_depth) +
+                                     float3(positionLS.xy + float2(-d4, d3), cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow,
-                                     float3(positionLS.xy + float2(-d3, -d4), cascade_index), light_depth) +
+                                     float3(positionLS.xy + float2(-d3, -d4), cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow,
-                                     float3(positionLS.xy + float2(d4, -d3), cascade_index), light_depth) +
+                                     float3(positionLS.xy + float2(d4, -d3), cascade_index), light_depth).r +
        shadow_map.SampleCmpLevelZero(sampler_shadow, float3(positionLS.xy + float2(d3, d4), cascade_index),
-                                     light_depth)) /
+                                     light_depth).r) /
       10.0;
 
    return shadow;
@@ -157,7 +162,7 @@ float sample_cascaded_shadow_map(float3 positionWS, float3 normalWS)
    float3 positionLS =
       mul(light_constants.shadow_cascade_transforms[cascade_index], float4(positionWS, 1.0)).xyz;
 
-   float shadow = sample_shadow_map(ResourceDescriptorHeap[light_constants.shadow_map_index], positionLS,
+   float shadow = sample_shadow_map(Texture2DArrayHeap[light_constants.shadow_map_index], positionLS,
                                     cascade_index, light_constants.inv_shadow_map_resolution);
 
    return shadow;

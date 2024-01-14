@@ -1,5 +1,6 @@
 
 #include "root_signature_library.hpp"
+#include "sampler_list.hpp"
 
 namespace we::graphics {
 
@@ -48,6 +49,12 @@ constexpr gpu::root_parameter material_constant_buffer{
    .visibility = gpu::root_shader_visibility::pixel,
 };
 
+constexpr std::array<gpu::static_sampler_desc, sampler_count> static_samplers =
+   sampler_descriptions(gpu::root_shader_visibility::all);
+
+constexpr std::array<gpu::static_sampler_desc, sampler_count> pixel_static_samplers =
+   sampler_descriptions(gpu::root_shader_visibility::pixel);
+
 const gpu::root_signature_desc mesh_desc{
    .parameters =
       {
@@ -56,6 +63,8 @@ const gpu::root_signature_desc mesh_desc{
          frame_constant_buffer,
          lights_constant_buffer,
       },
+
+   .samplers = pixel_static_samplers,
 
    .flags = {.allow_input_assembler_input_layout = true},
 
@@ -84,6 +93,8 @@ const gpu::root_signature_desc terrain_desc{
             .visibility = gpu::root_shader_visibility::vertex,
          },
       },
+
+   .samplers = pixel_static_samplers,
 
    .flags = {},
 
@@ -124,6 +135,8 @@ const gpu::root_signature_desc water_desc{
          },
       },
 
+   .samplers = pixel_static_samplers,
+
    .flags = {},
 
    .debug_name = "water_root_signature",
@@ -136,6 +149,8 @@ const gpu::root_signature_desc mesh_shadow_desc{
          material_constant_buffer,
          frame_constant_buffer,
       },
+
+   .samplers = pixel_static_samplers,
 
    .flags = {.allow_input_assembler_input_layout = true},
 
@@ -150,6 +165,8 @@ const gpu::root_signature_desc mesh_depth_prepass_desc{
          frame_constant_buffer,
       },
 
+   .samplers = pixel_static_samplers,
+
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "mesh_depth_prepass_root_signature",
@@ -163,6 +180,8 @@ const gpu::root_signature_desc sky_mesh_desc{
          material_constant_buffer,
          frame_constant_buffer,
       },
+
+   .samplers = pixel_static_samplers,
 
    .flags = {.allow_input_assembler_input_layout = true},
 
@@ -196,6 +215,8 @@ const gpu::root_signature_desc thumbnail_mesh_desc{
                              .visibility = gpu::root_shader_visibility::vertex},
       },
 
+   .samplers = pixel_static_samplers,
+
    .flags = {.allow_input_assembler_input_layout = true},
 
    .debug_name = "thumbnail_mesh_root_signature",
@@ -210,6 +231,8 @@ const gpu::root_signature_desc thumbnail_downsample_mesh_desc{
                              .visibility = gpu::root_shader_visibility::pixel},
       },
 
+   .samplers = pixel_static_samplers,
+
    .flags = {.allow_input_assembler_input_layout = false},
 
    .debug_name = "thumbnail_downsample_root_signature",
@@ -223,6 +246,8 @@ const gpu::root_signature_desc resample_env_map_desc{
                              .values_count = 1,
                              .visibility = gpu::root_shader_visibility::pixel},
       },
+
+   .samplers = pixel_static_samplers,
 
    .flags = {.allow_input_assembler_input_layout = false},
 
@@ -347,6 +372,8 @@ const gpu::root_signature_desc depth_reduce_minmax_desc{
                              .shader_register = 0},
       },
 
+   .samplers = static_samplers,
+
    .debug_name = "depth_reduce_minmax_root_signature",
 };
 
@@ -365,6 +392,8 @@ const gpu::root_signature_desc imgui_desc{
                              .values_count = 2,
                              .visibility = gpu::root_shader_visibility::vertex},
       },
+
+   .samplers = pixel_static_samplers,
 
    .flags = {.allow_input_assembler_input_layout = true},
 

@@ -6,3 +6,9 @@
 
 -gpu_debug_layer
    Enables the D3D12 Debug Layer + GPU Based Validation
+
+-gpu_legacy_barriers
+   Always use legacy D3D12 barriers.
+
+-gpu_no_shader_model_6_6
+  Never use Shader Model 6.6 shaders, even if supported by the GPU.

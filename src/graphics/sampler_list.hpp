@@ -20,29 +20,42 @@ constexpr static uint32 sampler_shadow = 6;
 
 constexpr static uint32 sampler_count = 7;
 
-inline constexpr auto sampler_descriptions(const uint32 max_anisotropy = sampler_max_anisotropy)
-   -> std::array<gpu::sampler_desc, sampler_count>
+inline constexpr auto sampler_descriptions(gpu::root_shader_visibility visibility,
+                                           const uint32 max_anisotropy = sampler_max_anisotropy)
+   -> std::array<gpu::static_sampler_desc, sampler_count>
 {
-   std::array<gpu::sampler_desc, sampler_count> s;
+   return {{
+      {.filter = gpu::filter::bilinear,
+       .shader_register = sampler_bilinear_wrap,
+       .visibility = visibility},
+      {.filter = gpu::filter::trilinear,
+       .shader_register = sampler_trilinear_wrap,
+       .visibility = visibility},
+      {.filter = gpu::filter::anisotropic,
+       .max_anisotropy = max_anisotropy,
+       .shader_register = sampler_anisotropic_wrap,
+       .visibility = visibility},
 
-   s[sampler_bilinear_wrap] = {.filter = gpu::filter::bilinear};
-   s[sampler_trilinear_wrap] = {.filter = gpu::filter::trilinear};
-   s[sampler_anisotropic_wrap] = {.filter = gpu::filter::anisotropic,
-                                  .max_anisotropy = max_anisotropy};
+      {.filter = gpu::filter::bilinear,
+       .address = gpu::texture_address_mode::clamp,
+       .shader_register = sampler_bilinear_clamp,
+       .visibility = visibility},
+      {.filter = gpu::filter::trilinear,
+       .address = gpu::texture_address_mode::clamp,
+       .shader_register = sampler_trilinear_clamp,
+       .visibility = visibility},
+      {.filter = gpu::filter::anisotropic,
+       .address = gpu::texture_address_mode::clamp,
+       .max_anisotropy = max_anisotropy,
+       .shader_register = sampler_anisotropic_clamp,
+       .visibility = visibility},
 
-   s[sampler_bilinear_clamp] = {.filter = gpu::filter::bilinear,
-                                .address = gpu::texture_address_mode::clamp};
-   s[sampler_trilinear_clamp] = {.filter = gpu::filter::trilinear,
-                                 .address = gpu::texture_address_mode::clamp};
-   s[sampler_anisotropic_clamp] = {.filter = gpu::filter::anisotropic,
-                                   .address = gpu::texture_address_mode::clamp,
-                                   .max_anisotropy = max_anisotropy};
-
-   s[sampler_shadow] = {.filter = gpu::filter::comparison_bilinear,
-                        .address = gpu::texture_address_mode::clamp,
-                        .comparison = gpu::comparison_func::less_equal};
-
-   return s;
+      {.filter = gpu::filter::comparison_bilinear,
+       .address = gpu::texture_address_mode::clamp,
+       .comparison = gpu::comparison_func::less_equal,
+       .shader_register = sampler_shadow,
+       .visibility = visibility},
+   }};
 }
 
 }

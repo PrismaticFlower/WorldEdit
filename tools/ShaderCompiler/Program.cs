@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-string targetShaderModel = "6_6";
+string[] targetShaderModels = { "6_1", "6_6" };
 
 if (args.Length != 5)
 {
@@ -127,31 +127,31 @@ for (int i = 0; i < shadersFileLines.Length; ++i)
 
 	if (shader.name.EndsWith("VS"))
 	{
-		shader.target = $"vs_{targetShaderModel}";
+		shader.targetPrefix = "vs_";
 	}
 	else if (shader.name.EndsWith("HS"))
 	{
-		shader.target = $"hs_{targetShaderModel}";
+		shader.targetPrefix = "hs_";
 	}
 	else if (shader.name.EndsWith("DS"))
 	{
-		shader.target = $"ds_{targetShaderModel}";
+		shader.targetPrefix = "ds_";
 	}
 	else if (shader.name.EndsWith("GS"))
 	{
-		shader.target = $"gs_{targetShaderModel}";
+		shader.targetPrefix = "gs_";
 	}
 	else if (shader.name.EndsWith("PS"))
 	{
-		shader.target = $"ps_{targetShaderModel}";
+		shader.targetPrefix = "ps_";
 	}
 	else if (shader.name.EndsWith("CS"))
 	{
-		shader.target = $"cs_{targetShaderModel}";
+		shader.targetPrefix = "cs_";
 	}
 	else if (shader.name.EndsWith("LIB"))
 	{
-		shader.target = $"lib_{targetShaderModel}";
+		shader.targetPrefix = "lib_";
 	}
 	else
 	{
@@ -190,7 +190,7 @@ for (uint i = 0; i < 256; ++i)
 Dictionary<string, ShaderDependencies> cachedShadersDependencies = loadShadersDependencies.Result;
 Dictionary<string, ShaderDependencies> shadersDependencies = new Dictionary<string, ShaderDependencies>(shaderDefs.Count);
 
-Parallel.For(0, shaderDefs.Count, i =>
+Parallel.For(0, shaderDefs.Count, async i =>
 {
 	ShaderDef shader = shaderDefs[i];
 	ShaderDependencies? dependencies = cachedShadersDependencies.GetValueOrDefault(shader.name);
@@ -205,75 +205,87 @@ Parallel.For(0, shaderDefs.Count, i =>
 		return;
 	}
 
-	Console.WriteLine($"Compiling {shader.name}({shader.file}:{shader.entryPoint})");
-
-	StringBuilder dxcArgsBase = new StringBuilder();
-
-	dxcArgsBase.Append(shadersFolder);
-	dxcArgsBase.Append("\\");
-	dxcArgsBase.Append(shader.file);
-	dxcArgsBase.Append(" ");
-
-	dxcArgsBase.Append("-E ");
-	dxcArgsBase.Append(shader.entryPoint);
-	dxcArgsBase.Append(" ");
-
-	dxcArgsBase.Append("-T ");
-	dxcArgsBase.Append(shader.target);
-	dxcArgsBase.Append(" ");
-
-	StringBuilder dxcArgs = new StringBuilder();
-
-	dxcArgs.Append(dxcArgsBase);
-
-	dxcArgs.Append("-Fo ");
-	dxcArgs.Append(intermediateFolder);
-	dxcArgs.Append("\\");
-	dxcArgs.Append(shader.name);
-	dxcArgs.Append(".dxil ");
-
-	dxcArgs.Append("-Zs -Fd ");
-	dxcArgs.Append(intermediateFolder);
-	dxcArgs.Append("\\");
-	dxcArgs.Append(shader.name);
-	dxcArgs.Append(".pdb ");
-
-	dxcArgs.Append("-Qstrip_reflect");
-
-
-	ProcessStartInfo startInfo = new ProcessStartInfo(dxcPath, dxcArgs.ToString());
-
-	startInfo.RedirectStandardError = true;
-	startInfo.UseShellExecute = false;
-
-	Process? process = Process.Start(startInfo);
-
-	if (process == null)
+	foreach (string targetShaderModel in targetShaderModels)
 	{
-		Console.Error.WriteLine($"Failed to launch DXC for '{shader.name}'.");
+		Console.WriteLine($"Compiling {shader.name}({shader.file}:{shader.entryPoint}) => {shader.targetPrefix}{targetShaderModel}");
 
-		compilationError = true;
+		StringBuilder dxcArgsBase = new StringBuilder();
 
-		return;
-	}
+		dxcArgsBase.Append(shadersFolder);
+		dxcArgsBase.Append("\\");
+		dxcArgsBase.Append(shader.file);
+		dxcArgsBase.Append(" ");
 
-	string errorMessages = process.StandardError.ReadToEnd();
+		dxcArgsBase.Append("-E ");
+		dxcArgsBase.Append(shader.entryPoint);
+		dxcArgsBase.Append(" ");
 
-	process.WaitForExit();
+		dxcArgsBase.Append("-T ");
+		dxcArgsBase.Append(shader.targetPrefix);
+		dxcArgsBase.Append(targetShaderModel);
+		dxcArgsBase.Append(" ");
 
-	if (process.ExitCode != 0)
-	{
-		if (errorMessages.Length != 0)
+		StringBuilder dxcArgs = new StringBuilder();
+
+		dxcArgs.Append(dxcArgsBase);
+
+		dxcArgs.Append("-Fo ");
+		dxcArgs.Append(intermediateFolder);
+		dxcArgs.Append("\\");
+		dxcArgs.Append(shader.name);
+		dxcArgs.Append("_");
+		dxcArgs.Append(targetShaderModel);
+		dxcArgs.Append(".dxil ");
+
+		dxcArgs.Append("-Zs -Fd ");
+		dxcArgs.Append(intermediateFolder);
+		dxcArgs.Append("\\");
+		dxcArgs.Append(shader.name);
+		dxcArgs.Append("_");
+		dxcArgs.Append(targetShaderModel);
+		dxcArgs.Append(".pdb ");
+
+		dxcArgs.Append("-Qstrip_reflect");
+
+
+		ProcessStartInfo startInfo = new ProcessStartInfo(dxcPath, dxcArgs.ToString());
+
+		startInfo.RedirectStandardError = true;
+		startInfo.UseShellExecute = false;
+
+		Process? process = Process.Start(startInfo);
+
+		if (process == null)
 		{
-			Console.Error.WriteLine(errorMessages);
+			Console.Error.WriteLine($"Failed to launch DXC for '{shader.name}'.");
+
+			compilationError = true;
+
+			return;
 		}
 
-		compilationError = true;
+		string errorMessages = process.StandardError.ReadToEnd();
 
-		return;
+		process.WaitForExit();
+
+		if (process.ExitCode != 0)
+		{
+			if (errorMessages.Length != 0)
+			{
+				Console.Error.WriteLine(errorMessages);
+			}
+
+			compilationError = true;
+
+			return;
+		}
 	}
 
-	byte[] dxilBytes = File.ReadAllBytes($"{intermediateFolder}\\{shader.name}.dxil");
+	Task<byte[]>[] dxilBytesRead = { File.ReadAllBytesAsync($"{intermediateFolder}\\{shader.name}_{targetShaderModels[0]}.dxil"), File.ReadAllBytesAsync($"{intermediateFolder}\\{shader.name}_{targetShaderModels[1]}.dxil") };
+
+	Task.WaitAll(dxilBytesRead);
+
+	byte[][] dxilBytes = { dxilBytesRead[0].Result, dxilBytesRead[1].Result };
 
 	StringBuilder cppBuilder = new StringBuilder();
 
@@ -281,34 +293,50 @@ Parallel.For(0, shaderDefs.Count, i =>
 	cppBuilder.Append("\n");
 	cppBuilder.Append("namespace we::graphics::shaders {\n");
 	cppBuilder.Append("\n");
-	cppBuilder.Append($"extern const char {shader.name}_dxil_bytes[{dxilBytes.Length + 1}];\n");
+	cppBuilder.Append($"extern const char {shader.name}_{targetShaderModels[0]}_dxil_bytes[{dxilBytes[0].Length + 1}];\n");
+	cppBuilder.Append($"extern const char {shader.name}_{targetShaderModels[1]}_dxil_bytes[{dxilBytes[1].Length + 1}];\n");
 	cppBuilder.Append("\n");
 	cppBuilder.Append($"auto {shader.name}() noexcept -> shader_def\n{{\n");
 	cppBuilder.Append($"   return {{\n");
 	cppBuilder.Append($"      .name = \"{shader.name}\",\n");
 	cppBuilder.Append($"      .entrypoint = L\"{shader.entryPoint}\",\n");
-	cppBuilder.Append($"      .target = L\"{shader.target}\",\n");
+	cppBuilder.Append($"      .target_{targetShaderModels[0]} = L\"{shader.targetPrefix}{targetShaderModels[0]}\",\n");
+	cppBuilder.Append($"      .target_{targetShaderModels[1]} = L\"{shader.targetPrefix}{targetShaderModels[1]}\",\n");
 	cppBuilder.Append($"      .file = L\"{shader.file}\",\n");
-	cppBuilder.Append($"      .dxil = {{reinterpret_cast<const std::byte*>({shader.name}_dxil_bytes),\n");
-	cppBuilder.Append($"               sizeof({shader.name}_dxil_bytes) - 1}},\n");
+	cppBuilder.Append($"      .dxil_{targetShaderModels[0]} = {{reinterpret_cast<const std::byte*>({shader.name}_{targetShaderModels[0]}_dxil_bytes),\n");
+	cppBuilder.Append($"                      sizeof({shader.name}_{targetShaderModels[0]}_dxil_bytes) - 1}},\n");
+	cppBuilder.Append($"      .dxil_{targetShaderModels[1]} = {{reinterpret_cast<const std::byte*>({shader.name}_{targetShaderModels[1]}_dxil_bytes),\n");
+	cppBuilder.Append($"                      sizeof({shader.name}_{targetShaderModels[1]}_dxil_bytes) - 1}},\n");
 	cppBuilder.Append("   };\n}\n\n");
-	cppBuilder.Append($"const char {shader.name}_dxil_bytes[{dxilBytes.Length + 1}] = \"");
 
-	string cppTail = "\";\n\n}";
+	string[] cppDxilStart = {
+		$"const char {shader.name}_{targetShaderModels[0]}_dxil_bytes[{dxilBytes[0].Length + 1}] = \"",
+		$"const char {shader.name}_{targetShaderModels[1]}_dxil_bytes[{dxilBytes[1].Length + 1}] = \"",
+	};
 
-	List<byte> cppBytes = new List<byte>(cppBuilder.Length + (dxilBytes.Length * 4) + cppTail.Length);
+	string cppDxilTail = "\";\n\n";
 
+	byte cppClose = (byte)'}';
+
+	List<byte> cppBytes = new List<byte>(cppBuilder.Length + cppDxilStart[0].Length + cppDxilStart[1].Length + (dxilBytes.Length * 4) + (cppDxilTail.Length * 2) + 1);
 
 	cppBytes.AddRange(cppBuilder.ToString().Select(ch => (byte)ch));
 
-	foreach (byte value in dxilBytes)
+	for (int j = 0; j < 2; ++j)
 	{
-		cppBytes.Add((byte)'\\');
-		cppBytes.Add((byte)'x');
-		cppBytes.AddRange(literalFormatTable[value].Select(ch => (byte)ch));
+		cppBytes.AddRange(cppDxilStart[j].Select(ch => (byte)ch));
+
+		foreach (byte value in dxilBytes[j])
+		{
+			cppBytes.Add((byte)'\\');
+			cppBytes.Add((byte)'x');
+			cppBytes.AddRange(literalFormatTable[value].Select(ch => (byte)ch));
+		}
+
+		cppBytes.AddRange(cppDxilTail.Select(ch => (byte)ch));
 	}
 
-	cppBytes.AddRange(cppTail.Select(ch => (byte)ch));
+	cppBytes.Add(cppClose);
 
 	using (FileStream file = new FileStream($"{outputFolder}\\{shader.name}.cpp", FileMode.Create))
 	{
@@ -319,17 +347,30 @@ Parallel.For(0, shaderDefs.Count, i =>
 
 	StringBuilder dxcMDArgs = new StringBuilder();
 
-	dxcMDArgs.Append(dxcArgsBase);
+	dxcMDArgs.Append(shadersFolder);
+	dxcMDArgs.Append("\\");
+	dxcMDArgs.Append(shader.file);
+	dxcMDArgs.Append(" ");
+
+	dxcMDArgs.Append("-E ");
+	dxcMDArgs.Append(shader.entryPoint);
+	dxcMDArgs.Append(" ");
+
+	dxcMDArgs.Append("-T ");
+	dxcMDArgs.Append(shader.targetPrefix);
+	dxcMDArgs.Append(targetShaderModels[1]);
+	dxcMDArgs.Append(" ");
+
 	dxcMDArgs.Append("-M");
 
-	startInfo = new ProcessStartInfo(dxcPath, dxcMDArgs.ToString());
+	ProcessStartInfo startInfoMD = new ProcessStartInfo(dxcPath, dxcMDArgs.ToString());
 
-	startInfo.RedirectStandardOutput = true;
-	startInfo.UseShellExecute = false;
+	startInfoMD.RedirectStandardOutput = true;
+	startInfoMD.UseShellExecute = false;
 
-	process = Process.Start(startInfo);
+	Process? processMD = Process.Start(startInfoMD);
 
-	if (process == null)
+	if (processMD == null)
 	{
 		Console.Error.WriteLine($"Failed to launch DXC for '{shader.name}'.");
 
@@ -340,12 +381,12 @@ Parallel.For(0, shaderDefs.Count, i =>
 
 	lock (shadersDependencies)
 	{
-		shadersDependencies[shader.name] = ShaderDependencies.CreateFromDXCOutput(process.StandardOutput.ReadToEnd());
+		shadersDependencies[shader.name] = ShaderDependencies.CreateFromDXCOutput(processMD.StandardOutput.ReadToEnd());
 	}
 
-	process.WaitForExit();
+	processMD.WaitForExit();
 
-	if (process.ExitCode != 0)
+	if (processMD.ExitCode != 0)
 	{
 		compilationError = true;
 
@@ -408,7 +449,7 @@ struct ShaderDef
 	public string name;
 	public string entryPoint;
 	public string file;
-	public string target;
+	public string targetPrefix;
 };
 
 class ShaderDependencies
@@ -467,6 +508,6 @@ class ShaderDependencies
 	public List<string> Files { get { return files; } }
 	public List<DateTime> FilesLastWriteTime { get { return filesLastWriteTime; } }
 
-	List<string> files;
-	List<DateTime> filesLastWriteTime;
+	List<string> files = new List<string>();
+	List<DateTime> filesLastWriteTime = new List<DateTime>();
 }

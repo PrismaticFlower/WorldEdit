@@ -98,22 +98,6 @@ auto unpack_pipeline_handle(pipeline_handle pipeline) -> ID3D12PipelineState*
    return std::bit_cast<ID3D12PipelineState*>(pipeline);
 }
 
-auto pack_sampler_heap_handle(ID3D12DescriptorHeap* heap) -> sampler_heap_handle
-{
-   static_assert(std::is_same_v<std::underlying_type_t<sampler_heap_handle>, std::uintptr_t>,
-                 "sampler_heap_handle's underlying type is incorrect");
-
-   return std::bit_cast<sampler_heap_handle>(heap);
-}
-
-auto unpack_sampler_heap_handle(sampler_heap_handle heap) -> ID3D12DescriptorHeap*
-{
-   static_assert(std::is_same_v<std::underlying_type_t<sampler_heap_handle>, std::uintptr_t>,
-                 "sampler_heap_handle's underlying type is incorrect");
-
-   return std::bit_cast<ID3D12DescriptorHeap*>(heap);
-}
-
 auto pack_query_heap_handle(ID3D12QueryHeap* heap) -> query_heap_handle
 {
    static_assert(std::is_same_v<std::underlying_type_t<query_heap_handle>, std::uintptr_t>,

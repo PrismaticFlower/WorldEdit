@@ -20,7 +20,6 @@
 #include "pipeline_library.hpp"
 #include "profiler.hpp"
 #include "root_signature_library.hpp"
-#include "sampler_list.hpp"
 #include "settings/graphics.hpp"
 #include "shader_library.hpp"
 #include "shader_list.hpp"
@@ -252,11 +251,8 @@ private:
        _device.direct_queue};
    std::array<const float4*, gpu::frame_pipeline_length> _depth_minmax_readback_buffer_ptrs;
 
-   gpu::unique_sampler_heap_handle _sampler_heap = {_device.create_sampler_heap(
-                                                       sampler_descriptions()),
-                                                    _device.direct_queue};
-
-   shader_library _shaders{shader_list, _thread_pool, _error_output};
+   shader_library _shaders{shader_list, _device.supports_shader_model_6_6(),
+                           _thread_pool, _error_output};
    root_signature_library _root_signatures{_device};
    pipeline_library _pipelines{_device, _shaders, _root_signatures};
 
@@ -306,7 +302,10 @@ renderer_impl::renderer_impl(const renderer_init& init)
      _error_output{init.error_output},
      _display_scale{init.display_scale},
      _device{gpu::device_desc{.enable_debug_layer = init.use_debug_layer,
-                              .enable_gpu_based_validation = init.use_debug_layer}},
+                              .enable_gpu_based_validation = init.use_debug_layer,
+                              .force_legacy_barriers = init.use_legacy_barriers,
+                              .force_no_shader_model_6_6 =
+                                 init.never_use_shader_model_6_6}},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
      _texture_manager{_device, _copy_command_list_pool, init.thread_pool,
                       init.asset_libraries.textures, init.error_output},
@@ -420,7 +419,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    auto& command_list = _world_command_list;
 
-   command_list.reset(_sampler_heap.get());
+   command_list.reset();
 
    _thumbnail_manager.update_gpu(_model_manager, _root_signatures, _pipelines,
                                  _dynamic_buffer_allocator, command_list);
@@ -721,7 +720,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
 
       build_object_render_list(view_frustum);
 
-      command_list.reset(_sampler_heap.get());
+      command_list.reset();
 
       _thumbnail_manager.update_gpu(_model_manager, _root_signatures, _pipelines,
                                     _dynamic_buffer_allocator, command_list);

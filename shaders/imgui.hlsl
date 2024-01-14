@@ -1,4 +1,5 @@
 
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 #include "srgb.hlsli"
 
@@ -41,7 +42,7 @@ output_vertex mainVS(input_vertex input)
 
 float4 mainPS(output_vertex input) : SV_Target0
 {
-   Texture2D tex = ResourceDescriptorHeap[texture_index];
+   Texture2D tex = Texture2DHeap[texture_index];
 
    return tex.Sample(sampler_bilinear_wrap, input.texcoords) * input.color;
 }

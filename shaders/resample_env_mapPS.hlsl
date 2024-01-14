@@ -1,3 +1,4 @@
+#include "resource_heaps.hlsli"
 #include "samplers.hlsli"
 
 struct apply_inputs {
@@ -6,7 +7,7 @@ struct apply_inputs {
 
 ConstantBuffer<apply_inputs> input : register(b0);
 
-static TextureCube env_map = ResourceDescriptorHeap[input.env_map_index];
+static TextureCube env_map = TextureCubeHeap[input.env_map_index];
 
 float4 main(float2 location : LOCATION, uint face_index : SV_RenderTargetArrayIndex) : SV_TARGET
 {

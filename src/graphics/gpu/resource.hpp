@@ -131,13 +131,6 @@ using unique_pipeline_handle =
                  },
                  command_queue>;
 
-using unique_sampler_heap_handle =
-   unique_handle<sampler_heap_handle, null_sampler_heap_handle,
-                 [](command_queue& queue, sampler_heap_handle handle) {
-                    queue.release_sampler_heap(handle);
-                 },
-                 command_queue>;
-
 using unique_query_heap_handle =
    unique_handle<query_heap_handle, null_query_heap_handle,
                  [](command_queue& queue, query_heap_handle handle) {

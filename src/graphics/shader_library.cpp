@@ -35,8 +35,8 @@ struct compile_result {
    std::unique_ptr<std::byte[]> dxil = nullptr;
 };
 
-auto compile(const shader_def& def, output_stream& output,
-             DxcCreateInstanceProc DxcCreateInstancePtr) -> compile_result
+auto compile(const shader_def& def, const bool use_shader_model_6_6,
+             output_stream& output, DxcCreateInstanceProc DxcCreateInstancePtr) -> compile_result
 {
    using utility::com_ptr;
 
@@ -54,7 +54,7 @@ auto compile(const shader_def& def, output_stream& output,
       L"-E",
       def.entrypoint,
       L"-T",
-      def.target,
+      use_shader_model_6_6 ? def.target_6_6 : def.target_6_1,
       L"-Zi", // enable debug information
       L"-Qstrip_reflect",
       L"-Qembed_debug",
@@ -109,16 +109,20 @@ auto compile(const shader_def& def, output_stream& output,
 #endif
 
 shader_library::shader_library(std::initializer_list<shader_def> shaders,
+                               const bool use_shader_model_6_6,
                                [[maybe_unused]] std::shared_ptr<async::thread_pool> thread_pool,
                                [[maybe_unused]] output_stream& error_output)
 #ifndef NDEBUG
-   : _thread_pool{thread_pool}, _compile_output{error_output}
+   : _use_shader_model_6_6{use_shader_model_6_6},
+     _thread_pool{thread_pool},
+     _compile_output{error_output}
 #endif
 {
    _shaders.reserve(shaders.size());
 
    for (auto& shader : shaders) {
-      _shaders.push_back({shader.name, shader.dxil});
+      _shaders.push_back({shader.name, use_shader_model_6_6 ? shader.dxil_6_6
+                                                            : shader.dxil_6_1});
    }
 
    std::sort(_shaders.begin(), _shaders.end(),
@@ -161,7 +165,8 @@ void shader_library::reload([[maybe_unused]] std::initializer_list<shader_def> s
                                const shader_def shader = *(shaders.begin() + i);
 
                                compile_result result =
-                                  compile(shader, _compile_output, DxcCreateInstancePtr);
+                                  compile(shader, _use_shader_model_6_6,
+                                          _compile_output, DxcCreateInstancePtr);
 
                                new_shaders[i] = {.name = shader.name,
                                                  .dxil = {result.dxil.get(),
