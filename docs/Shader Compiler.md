@@ -36,3 +36,7 @@ And for completeness using DXC directly from a simple batch script or something.
 3. Not supported.
 
 So I chose to go with what everyone seems to end up doing, I wrapped the actual shader compilers in another tool to call it and do what I want.
+
+## Shader Model 6.1 and Shader Model 6.6 Variants
+
+In order to enable GPUs that either fell out of support before SM 6.6 was released or simply can't support it (i.e no Resource Binding Tier 3) the shader compiler has been updated to compile both SM 6.1 and SM 6.6 versions of a shader. WorldEdit will pick which one to use at runtime.

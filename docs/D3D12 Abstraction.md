@@ -4,7 +4,7 @@ In the renderer Direct3D 12 is hidden away behind a small abstraction layer. The
 The entire public API is found in `gpu/rhi.hpp`. Additional public helpers can be found in the headers in `gpu/` but not in the subfolders.
 
 ### Resource Binding
-Resource (SRV/UAV/CBV) binding is mostly focused around Shader Model 6.6 bindless support. With APIs for creating resource views returning a struct with a single member containing the index of the view's descriptor in the descriptor heap. The descriptor heap itself for resource views is abstracted away and hidden from the user code. This gives a simple and powerful interface, although it does drop support for old GPUs. Which is regrettable but I wanted to focus on learning what an interface using modern techniques could look like.
+Shader resource view binding is mostly focused around Shader Model 6.6 bindless support. With APIs for creating resource views returning a struct with a single member containing the index of the view's descriptor in the descriptor heap. The descriptor heap itself for resource views is abstracted away and hidden from the user code. This gives a simple and powerful interface.
 
 ```c++
 struct resource_view {
@@ -12,28 +12,14 @@ struct resource_view {
 };
 ```
 
-Root paramaters are limited to just root SRV/UAV/CBV paramaters. For better or worse descriptor tables are not exposed, even for constant buffers.
+Root parameters are limited to root SRV/UAV/CBV parameters and UAV resource view parameters. For better or worse descriptor tables are not exposed for constant buffer views or shader resource views.
 
-### Sampler Heap
-Samplers are exposed directly as heaps. However the samplers in the heap must be specified at creation time. This was chosen as for my use case only a handful of samplers are ever used and there is no need to quickly change a single sampler binding. But it is still possible to change the samplers max anisotropy at runtime if needed (unlike with static samplers).
+In order to support Shader Model 6.1 shaders for older GPUs access to `ResourceDescriptorHeap` is abstracted by `resource_heaps.hlsli`. When SM 6.6 is not supported `gpu::device` will insert a hidden descriptor table at the start of each root signature. This hidden parameter will bind the descriptor heap to the first register of the [10000, 10015] binding spaces. And when a root signature is set on a command list the hidden paremter (again only when SM 6.6 is not supported) will be set with the base of the device's descriptor heap.
 
-The sampler heap is set on the command list when calling reset. And then inside shaders the samplers can be pulled from `SamplerDescriptorHeap` directly as needed. (Most likely in a `samplers.hlsli` include.) I assume it is probably advised to use a single sampler heap across a frame inline with advise for `ID3D12GraphicsCommandList::SetDescriptorHeaps`.
+All of this allows writing and maintaining the same shaders for both SM 6.1 and SM 6.6 with the lowest possible overhead for the SM 6.6 case. (And no more overhead than you'd normally have for bindless on pre 6.6 HW.)
 
-```c++
-   // Sampler heap creation from gpu::device
-
-   [[nodiscard]] auto create_sampler_heap(std::span<const sampler_desc> sampler_descs)
-      -> sampler_heap_handle;
-```
-
-```c++
-   // Resetting a command list with a sampler heap specified from gpu::command_list
-
-   /// @brief Reset the command list and bind the supplied sampler heap.
-   /// @param sampler_heap This will be set on the command list as part of it being reset.
-   void reset(sampler_heap_handle sampler_heap);
-```
-
+### Samplers
+Samplers are now only exposed as static samplers. They were initial exposed as an entire heap that would be bound to a command list. For simplicity during development of the SM 6.1 support this was changed. This maybe revisited in the future if the need to change the anisotropy level at runtime arises.
 
 ### Lifetime Management
 GPU objects can broken down into two categories. RAII Objects and Handle Objects. 
@@ -59,8 +45,6 @@ There is no restriction on what kind of Handle Objects a queue can release. i.e 
    void release_render_target_view(rtv_handle render_target_view);
 
    void release_depth_stencil_view(dsv_handle depth_stencil_view);
-
-   void release_sampler_heap(sampler_heap_handle sampler_heap);
 ```
 
 Included in `gpu/resource.hpp` is `gpu::unique_handle`. This provides a smart pointer like interface around a handle and manages it's lifetime using the provided queue at construction time. Managing the lifetime of a `gpu::resource_view` is also supported. In most cases this is what you'll want to use over manually managing object lifetime.
