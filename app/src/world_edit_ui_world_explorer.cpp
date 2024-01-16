@@ -50,6 +50,8 @@ void world_edit::ui_show_world_explorer() noexcept
                   continue;
                }
 
+               ImGui::PushID(std::to_underlying(object.id));
+
                const bool is_selected =
                   world::is_selected(object.id, _interaction_targets.selection);
 
@@ -89,6 +91,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = object.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -116,6 +120,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(light.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(light.id));
 
                const bool is_selected =
                   world::is_selected(light.id, _interaction_targets.selection);
@@ -171,6 +177,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = light.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -202,6 +210,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(path.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(path.id));
 
                for (int i = 0; i < (show_all_nodes ? path.nodes.size() : 1); ++i) {
                   const bool is_selected =
@@ -276,6 +286,8 @@ void world_edit::ui_show_world_explorer() noexcept
 
                   ImGui::PopID();
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -303,6 +315,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(region.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(region.id));
 
                const bool is_selected =
                   world::is_selected(region.id, _interaction_targets.selection);
@@ -348,6 +362,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = region.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -374,6 +390,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(sector.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(sector.id));
 
                const bool is_selected =
                   world::is_selected(sector.id, _interaction_targets.selection);
@@ -408,6 +426,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = sector.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -434,6 +454,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(portal.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(portal.id));
 
                const bool is_selected =
                   world::is_selected(portal.id, _interaction_targets.selection);
@@ -468,6 +490,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = portal.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -494,6 +518,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(hintnode.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(hintnode.id));
 
                const bool is_selected =
                   world::is_selected(hintnode.id, _interaction_targets.selection);
@@ -543,6 +569,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = hintnode.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -573,6 +601,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(barrier.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(barrier.id));
 
                const bool is_selected =
                   world::is_selected(barrier.id, _interaction_targets.selection);
@@ -624,6 +654,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover_entity) {
                   _interaction_targets.hovered_entity = barrier.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -648,6 +680,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(hub.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(hub.id));
 
                const bool is_selected =
                   world::is_selected(hub.id, _interaction_targets.selection);
@@ -678,6 +712,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = hub.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -712,6 +748,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(connection.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(connection.id));
 
                const bool is_selected =
                   world::is_selected(connection.id, _interaction_targets.selection);
@@ -770,6 +808,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover_entity) {
                   _interaction_targets.hovered_entity = connection.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
@@ -795,6 +835,8 @@ void world_edit::ui_show_world_explorer() noexcept
                    not string::icontains(boundary.name, _world_explorer_filter)) {
                   continue;
                }
+
+               ImGui::PushID(std::to_underlying(boundary.id));
 
                const bool is_selected =
                   world::is_selected(boundary.id, _interaction_targets.selection);
@@ -825,6 +867,8 @@ void world_edit::ui_show_world_explorer() noexcept
                if (hover) {
                   _interaction_targets.hovered_entity = boundary.id;
                }
+
+               ImGui::PopID();
             }
 
             ImGui::EndTable();
