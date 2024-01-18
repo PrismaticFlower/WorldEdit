@@ -223,6 +223,7 @@
     <ClCompile Include="src\assets\texture\save_env_map.cpp" />
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
+    <ClCompile Include="src\container\pinned_vector.cpp" />
     <ClCompile Include="src\edits\add_game_mode.cpp" />
     <ClCompile Include="src\edits\add_layer.cpp" />
     <ClCompile Include="src\edits\add_property.cpp" />
@@ -456,6 +457,7 @@
     <ClInclude Include="src\commands.hpp" />
     <ClInclude Include="src\container\dynamic_array_2d.hpp" />
     <ClInclude Include="src\container\enum_array.hpp" />
+    <ClInclude Include="src\container\pinned_vector.hpp" />
     <ClInclude Include="src\container\ring_set.hpp" />
     <ClInclude Include="src\container\slim_bitset.hpp" />
     <ClInclude Include="src\container\paged_stack.hpp" />
