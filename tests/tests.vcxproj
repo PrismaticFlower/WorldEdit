@@ -146,6 +146,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <BuildStlModules>false</BuildStlModules>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
