@@ -147,8 +147,8 @@ void water::draw(const frustum& view_frustum,
 
 void water::process_updated_texture(const updated_textures& updated)
 {
-   for (auto& [name, texture] : updated) {
-      if (name == _color_map_name) _color_map = texture;
+   if (auto new_texture = updated.check(_color_map_name); new_texture) {
+      _color_map = std::move(new_texture);
    }
 }
 

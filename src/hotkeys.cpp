@@ -1,11 +1,16 @@
 
 #include "hotkeys.hpp"
+#include "container/enum_array.hpp"
 #include "hotkeys_io.hpp"
 #include "utility/overload.hpp"
 #include "utility/string_ops.hpp"
 
 #include <algorithm>
 #include <span>
+#include <variant>
+
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 
 #include <imgui.h>
 
@@ -221,32 +226,142 @@ constexpr std::array<hotkey_modifiers, 8> modifier_variations = {
 
 }
 
-hotkeys::hotkeys(commands& commands, output_stream& error_output_stream) noexcept
-   : _commands{commands},
-     _error_output_stream{error_output_stream},
-     _saved_bindings{load_bindings(save_path)},
-     _saved_used_bindings{[this] {
-        absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> saved_used_bindings;
-        saved_used_bindings.reserve(_saved_bindings.size());
+struct hotkeys::impl {
+   impl(commands& commands, output_stream& error_output_stream) noexcept
+      : _commands{commands},
+        _error_output_stream{error_output_stream},
+        _saved_bindings{load_bindings(save_path)},
+        _saved_used_bindings{[this] {
+           absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> saved_used_bindings;
+           saved_used_bindings.reserve(_saved_bindings.size());
 
-        for (const auto& [set_name, saved] : _saved_bindings) {
-           absl::flat_hash_set<hotkey_bind>& used = saved_used_bindings[set_name];
+           for (const auto& [set_name, saved] : _saved_bindings) {
+              absl::flat_hash_set<hotkey_bind>& used = saved_used_bindings[set_name];
 
-           used.reserve(saved.size());
+              used.reserve(saved.size());
 
-           for (const auto& [name, binding] : saved) {
-              used.insert(binding);
+              for (const auto& [name, binding] : saved) {
+                 used.insert(binding);
+              }
            }
-        }
 
-        return saved_used_bindings;
-     }()}
-{
-   _hotkey_sets.reserve(16);
-   _key_events.reserve(256);
-}
+           return saved_used_bindings;
+        }()}
+   {
+      _hotkey_sets.reserve(16);
+      _key_events.reserve(256);
+   }
 
-void hotkeys::add_set(hotkey_set_desc desc)
+   void add_set(hotkey_set_desc desc);
+
+   void notify_key_down(const key key) noexcept;
+
+   void notify_key_up(const key key) noexcept;
+
+   void update(const bool imgui_has_mouse, const bool imgui_has_keyboard) noexcept;
+
+   void clear_state() noexcept;
+
+   auto query_binding(std::string_view set_name, std::string_view name) const noexcept
+
+      -> std::optional<hotkey_bind>;
+
+   void show_imgui(bool& window_open, const scale_factor display_scale) noexcept;
+
+private:
+   enum class key_state : bool { up, down };
+
+   void validate_command(const std::string_view command);
+
+   void release_all_toggles() noexcept;
+
+   void release_stale_toggles(const bool imgui_has_mouse,
+                              const bool imgui_has_keyboard) noexcept;
+
+   void release_toggles_using(const key key) noexcept;
+
+   void process_new_key_state(const key key, const key_state new_state,
+                              const bool imgui_has_mouse,
+                              const bool imgui_has_keyboard);
+
+   bool is_key_down(const key key) const noexcept;
+
+   void try_execute_command(const std::string_view command) const noexcept;
+
+   commands& _commands;
+   output_stream& _error_output_stream;
+
+   struct key_event {
+      key key;
+      key_state new_state;
+   };
+
+   std::vector<key_event> _key_events;
+
+   struct hotkey {
+      std::string command;
+
+      bool toggle = false;
+      bool toggle_active = false;
+      bool ignore_imgui_focus = false;
+
+      std::string name;
+
+      bool operator==(const hotkey&) const noexcept = default;
+   };
+
+   struct hotkey_set {
+      std::string name;
+      std::move_only_function<bool()> activated_predicate;
+      absl::flat_hash_map<hotkey_bind, hotkey> bindings;
+      absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
+      std::vector<hotkey> unbound_hotkeys;
+
+      std::string description;
+      bool hidden = false;
+   };
+
+   std::vector<hotkey_set> _hotkey_sets;
+
+   struct active_toggle {
+      std::ptrdiff_t set_index;
+      hotkey_bind bind;
+
+      template<typename H>
+      friend H AbslHashValue(H h, const active_toggle& active_toggle)
+      {
+         return H::combine(std::move(h), active_toggle.set_index, active_toggle.bind);
+      }
+
+      constexpr bool operator==(const active_toggle&) const noexcept = default;
+   };
+
+   using activated_hotkey = active_toggle;
+
+   absl::flat_hash_set<active_toggle> _active_toggles;
+
+   bool _user_inputting_new_binding = false;
+   std::optional<key_event> _user_editing_last_key_event;
+   std::ptrdiff_t _user_editing_bind_set = 0;
+   std::optional<hotkey_bind> _user_editing_bind;
+   hotkey _user_editing_hotkey;
+   key _user_swapping_key = key::void_key;
+
+   container::enum_array<key_state, key> _keys{};
+
+   using sorted_hotkey_variant =
+      std::variant<const std::pair<const hotkey_bind, hotkey>*, const hotkey*>;
+
+   std::vector<sorted_hotkey_variant> _sorted_hotkey_set;
+
+   absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>> _saved_bindings;
+   const absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> _saved_used_bindings;
+
+   static void fill_sorted_info(const hotkey_set& set,
+                                std::vector<sorted_hotkey_variant>& sorted_hotkey_set);
+};
+
+void hotkeys::impl::add_set(hotkey_set_desc desc)
 {
    absl::flat_hash_set<std::string> hotkey_set;
    absl::flat_hash_map<hotkey_bind, hotkey> bindings;
@@ -300,24 +415,24 @@ void hotkeys::add_set(hotkey_set_desc desc)
                              std::move(desc.description), desc.hidden);
 }
 
-void hotkeys::notify_key_down(const key key) noexcept
+void hotkeys::impl::notify_key_down(const key key) noexcept
 {
    _key_events.push_back({.key = key, .new_state = key_state::down});
 }
 
-void hotkeys::notify_key_up(const key key) noexcept
+void hotkeys::impl::notify_key_up(const key key) noexcept
 {
    _key_events.push_back({.key = key, .new_state = key_state::up});
 }
 
-void hotkeys::clear_state() noexcept
+void hotkeys::impl::clear_state() noexcept
 {
    release_all_toggles();
 
    _keys = {};
 }
 
-void hotkeys::update(const bool imgui_has_mouse, const bool imgui_has_keyboard) noexcept
+void hotkeys::impl::update(const bool imgui_has_mouse, const bool imgui_has_keyboard) noexcept
 {
    release_stale_toggles(imgui_has_mouse, imgui_has_keyboard);
 
@@ -333,7 +448,8 @@ void hotkeys::update(const bool imgui_has_mouse, const bool imgui_has_keyboard) 
    _key_events.clear();
 }
 
-auto hotkeys::query_binding(std::string_view set_name, std::string_view command) const noexcept
+auto hotkeys::impl::query_binding(std::string_view set_name,
+                                  std::string_view command) const noexcept
    -> std::optional<hotkey_bind>
 {
    for (const auto& set : _hotkey_sets) {
@@ -349,9 +465,9 @@ auto hotkeys::query_binding(std::string_view set_name, std::string_view command)
    return std::nullopt;
 }
 
-void hotkeys::process_new_key_state(const key key, const key_state new_state,
-                                    const bool imgui_has_mouse,
-                                    const bool imgui_has_keyboard)
+void hotkeys::impl::process_new_key_state(const key key, const key_state new_state,
+                                          const bool imgui_has_mouse,
+                                          const bool imgui_has_keyboard)
 {
    const key_state old_state = std::exchange(_keys[key], new_state);
 
@@ -403,7 +519,7 @@ void hotkeys::process_new_key_state(const key key, const key_state new_state,
    }
 }
 
-void hotkeys::validate_command(const std::string_view command)
+void hotkeys::impl::validate_command(const std::string_view command)
 {
    auto [command_name, command_args] = string::split_first_of_exclusive(command, " ");
 
@@ -412,7 +528,7 @@ void hotkeys::validate_command(const std::string_view command)
    }
 }
 
-void hotkeys::release_all_toggles() noexcept
+void hotkeys::impl::release_all_toggles() noexcept
 {
    for (auto& active : _active_toggles) {
       hotkey& hotkey = _hotkey_sets[active.set_index].bindings[active.bind];
@@ -425,8 +541,8 @@ void hotkeys::release_all_toggles() noexcept
    _active_toggles.clear();
 }
 
-void hotkeys::release_stale_toggles(const bool imgui_has_mouse,
-                                    const bool imgui_has_keyboard) noexcept
+void hotkeys::impl::release_stale_toggles(const bool imgui_has_mouse,
+                                          const bool imgui_has_keyboard) noexcept
 {
    for (auto it = _active_toggles.begin(); it != _active_toggles.end();) {
       auto active = it++;
@@ -457,7 +573,7 @@ void hotkeys::release_stale_toggles(const bool imgui_has_mouse,
    }
 }
 
-void hotkeys::release_toggles_using(const key key) noexcept
+void hotkeys::impl::release_toggles_using(const key key) noexcept
 {
    const bool is_ctrl = key == we::key::ctrl;
    const bool is_shift = key == we::key::shift;
@@ -484,12 +600,12 @@ void hotkeys::release_toggles_using(const key key) noexcept
    }
 }
 
-bool hotkeys::is_key_down(const key key) const noexcept
+bool hotkeys::impl::is_key_down(const key key) const noexcept
 {
    return _keys[key] == key_state::down;
 }
 
-void hotkeys::try_execute_command(const std::string_view command) const noexcept
+void hotkeys::impl::try_execute_command(const std::string_view command) const noexcept
 {
    try {
       _commands.execute(command);
@@ -500,7 +616,7 @@ void hotkeys::try_execute_command(const std::string_view command) const noexcept
    }
 }
 
-void hotkeys::show_imgui(bool& window_open, const scale_factor display_scale) noexcept
+void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_scale) noexcept
 {
    ImGui::SetNextWindowSize({960.0f * display_scale, 540.0f * display_scale},
                             ImGuiCond_Once);
@@ -913,8 +1029,8 @@ void hotkeys::show_imgui(bool& window_open, const scale_factor display_scale) no
    }
 }
 
-void hotkeys::fill_sorted_info(const hotkey_set& set,
-                               std::vector<sorted_hotkey_variant>& sorted_hotkey_set)
+void hotkeys::impl::fill_sorted_info(const hotkey_set& set,
+                                     std::vector<sorted_hotkey_variant>& sorted_hotkey_set)
 {
    sorted_hotkey_set.clear();
    sorted_hotkey_set.reserve(set.bindings.size());
@@ -951,4 +1067,48 @@ auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*
    return get_display_string(binding->key, binding->modifiers.ctrl,
                              binding->modifiers.shift, binding->modifiers.alt);
 }
+
+hotkeys::hotkeys(commands& commands, output_stream& error_output_stream) noexcept
+   : _impl{commands, error_output_stream}
+{
+}
+
+hotkeys::~hotkeys() = default;
+
+void hotkeys::add_set(hotkey_set_desc desc)
+{
+   return _impl->add_set(std::move(desc));
+}
+
+void hotkeys::notify_key_down(const key key) noexcept
+{
+   return _impl->notify_key_down(key);
+}
+
+void hotkeys::notify_key_up(const key key) noexcept
+{
+   return _impl->notify_key_up(key);
+}
+
+void hotkeys::update(const bool imgui_has_mouse, const bool imgui_has_keyboard) noexcept
+{
+   return _impl->update(imgui_has_mouse, imgui_has_keyboard);
+}
+
+void hotkeys::clear_state() noexcept
+{
+   return _impl->clear_state();
+}
+
+auto hotkeys::query_binding(std::string_view set_name, std::string_view name) const noexcept
+   -> std::optional<hotkey_bind>
+{
+   return _impl->query_binding(set_name, name);
+}
+
+void hotkeys::show_imgui(bool& window_open, const scale_factor display_scale) noexcept
+{
+   return _impl->show_imgui(window_open, display_scale);
+}
+
 }

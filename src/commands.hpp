@@ -1,13 +1,14 @@
 #pragma once
 
+#include "utility/implementation_storage.hpp"
+
 #include <charconv>
 #include <concepts>
 #include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-
-#include <absl/container/flat_hash_map.h>
 
 namespace we {
 
@@ -19,26 +20,36 @@ struct invalid_command_argument : std::runtime_error {
    using std::runtime_error::runtime_error;
 };
 
-class commands {
-public:
+struct commands {
+   commands();
+
+   commands(const commands&) noexcept = delete;
+   commands(commands&&) noexcept;
+
+   auto operator=(const commands&) noexcept -> commands& = delete;
+   auto operator=(commands&&) noexcept -> commands&;
+
+   ~commands();
+
    /// @brief Add an integral value as a command.
    /// @param name Name of the command.
    /// @param value A reference to the value. The value should outlive the commands class.
    void add(std::string name, std::integral auto& value) noexcept
    {
-      _commands[name] = make_command_ptr([&value](const std::string_view arg_str) {
-         if (const std::from_chars_result result =
-                std::from_chars(arg_str.data(), arg_str.data() + arg_str.size(), value);
-             result.ec == std::errc{}) {
-            return;
-         }
-         else if (result.ec == std::errc::invalid_argument) {
-            throw_invalid_argument(arg_str);
-         }
-         else if (result.ec == std::errc::result_out_of_range) {
-            throw_result_out_of_range(arg_str);
-         }
-      });
+      add(std::move(name), make_command_ptr([&value](const std::string_view arg_str) {
+             if (const std::from_chars_result result =
+                    std::from_chars(arg_str.data(),
+                                    arg_str.data() + arg_str.size(), value);
+                 result.ec == std::errc{}) {
+                return;
+             }
+             else if (result.ec == std::errc::invalid_argument) {
+                throw_invalid_argument(arg_str);
+             }
+             else if (result.ec == std::errc::result_out_of_range) {
+                throw_result_out_of_range(arg_str);
+             }
+          }));
    }
 
    /// @brief Add a floating point value as a command.
@@ -46,19 +57,20 @@ public:
    /// @param value A reference to the value. The value should outlive the commands class.
    void add(std::string name, std::floating_point auto& value) noexcept
    {
-      _commands[name] = make_command_ptr([&value](const std::string_view arg_str) {
-         if (const std::from_chars_result result =
-                std::from_chars(arg_str.data(), arg_str.data() + arg_str.size(), value);
-             result.ec == std::errc{}) {
-            return;
-         }
-         else if (result.ec == std::errc::invalid_argument) {
-            throw_invalid_argument(arg_str);
-         }
-         else if (result.ec == std::errc::result_out_of_range) {
-            throw_result_out_of_range(arg_str);
-         }
-      });
+      add(std::move(name), make_command_ptr([&value](const std::string_view arg_str) {
+             if (const std::from_chars_result result =
+                    std::from_chars(arg_str.data(),
+                                    arg_str.data() + arg_str.size(), value);
+                 result.ec == std::errc{}) {
+                return;
+             }
+             else if (result.ec == std::errc::invalid_argument) {
+                throw_invalid_argument(arg_str);
+             }
+             else if (result.ec == std::errc::result_out_of_range) {
+                throw_result_out_of_range(arg_str);
+             }
+          }));
    }
 
    /// @brief Add a boolean value as a command.
@@ -77,22 +89,23 @@ public:
    template<std::integral T>
    void add(std::string name, std::invocable<T> auto callback) noexcept
    {
-      _commands[name] = make_command_ptr([callback = std::move(callback)](
-                                            const std::string_view arg_str) {
-         T value{};
+      add(std::move(name), make_command_ptr([callback = std::move(callback)](
+                                               const std::string_view arg_str) {
+             T value{};
 
-         if (const std::from_chars_result result =
-                std::from_chars(arg_str.data(), arg_str.data() + arg_str.size(), value);
-             result.ec == std::errc{}) {
-            std::invoke(callback, value);
-         }
-         else if (result.ec == std::errc::invalid_argument) {
-            throw_invalid_argument(arg_str);
-         }
-         else if (result.ec == std::errc::result_out_of_range) {
-            throw_result_out_of_range(arg_str);
-         }
-      });
+             if (const std::from_chars_result result =
+                    std::from_chars(arg_str.data(),
+                                    arg_str.data() + arg_str.size(), value);
+                 result.ec == std::errc{}) {
+                std::invoke(callback, value);
+             }
+             else if (result.ec == std::errc::invalid_argument) {
+                throw_invalid_argument(arg_str);
+             }
+             else if (result.ec == std::errc::result_out_of_range) {
+                throw_result_out_of_range(arg_str);
+             }
+          }));
    }
 
    /// @brief Add a command taking a single floating point argument.
@@ -101,22 +114,23 @@ public:
    template<std::floating_point T>
    void add(std::string name, std::invocable<T> auto callback) noexcept
    {
-      _commands[name] = make_command_ptr([callback = std::move(callback)](
-                                            const std::string_view arg_str) {
-         T value{};
+      add(std::move(name), make_command_ptr([callback = std::move(callback)](
+                                               const std::string_view arg_str) {
+             T value{};
 
-         if (const std::from_chars_result result =
-                std::from_chars(arg_str.data(), arg_str.data() + arg_str.size(), value);
-             result.ec == std::errc{}) {
-            std::invoke(callback, value);
-         }
-         else if (result.ec == std::errc::invalid_argument) {
-            throw_invalid_argument(arg_str);
-         }
-         else if (result.ec == std::errc::result_out_of_range) {
-            throw_result_out_of_range(arg_str);
-         }
-      });
+             if (const std::from_chars_result result =
+                    std::from_chars(arg_str.data(),
+                                    arg_str.data() + arg_str.size(), value);
+                 result.ec == std::errc{}) {
+                std::invoke(callback, value);
+             }
+             else if (result.ec == std::errc::invalid_argument) {
+                throw_invalid_argument(arg_str);
+             }
+             else if (result.ec == std::errc::result_out_of_range) {
+                throw_result_out_of_range(arg_str);
+             }
+          }));
    }
 
    /// @brief Add a command taking a single boolean argument.
@@ -124,18 +138,18 @@ public:
    /// @param callback The callback to invoke for the command.
    void add(std::string name, std::invocable<bool> auto callback) noexcept
    {
-      _commands[name] = make_command_ptr(
-         [callback = std::move(callback)](const std::string_view arg_str) {
-            if (arg_str.starts_with("0")) {
-               std::invoke(callback, false);
-            }
-            else if (arg_str.starts_with("1")) {
-               std::invoke(callback, true);
-            }
-            else {
-               throw_invalid_argument(arg_str);
-            }
-         });
+      add(std::move(name), make_command_ptr([callback = std::move(callback)](
+                                               const std::string_view arg_str) {
+             if (arg_str.starts_with("0")) {
+                std::invoke(callback, false);
+             }
+             else if (arg_str.starts_with("1")) {
+                std::invoke(callback, true);
+             }
+             else {
+                throw_invalid_argument(arg_str);
+             }
+          }));
    }
 
    /// @brief Add a command taking a single string (as a string_view) argument.
@@ -143,10 +157,10 @@ public:
    /// @param callback The callback to invoke for the command.
    void add(std::string name, std::invocable<std::string_view> auto callback) noexcept
    {
-      _commands[name] = make_command_ptr(
-         [callback = std::move(callback)](const std::string_view arg_str) {
-            std::invoke(callback, arg_str);
-         });
+      add(std::move(name), make_command_ptr([callback = std::move(callback)](
+                                               const std::string_view arg_str) {
+             std::invoke(callback, arg_str);
+          }));
    }
 
    /// @brief Add a command that takes no arguments.
@@ -154,11 +168,11 @@ public:
    /// @param callback The callback to invoke for the command.
    void add(std::string name, std::invocable auto callback) noexcept
    {
-      _commands[name] =
-         make_command_ptr([callback = std::move(callback)](
-                             [[maybe_unused]] const std::string_view arg_str) {
-            std::invoke(callback);
-         });
+      add(std::move(name),
+          make_command_ptr([callback = std::move(callback)](
+                              [[maybe_unused]] const std::string_view arg_str) {
+             std::invoke(callback);
+          }));
    }
 
    /// @brief Execute a command string.
@@ -204,7 +218,11 @@ private:
 
    [[noreturn]] static void throw_result_out_of_range(const std::string_view arg_str);
 
-   absl::flat_hash_map<std::string, std::unique_ptr<command_base>> _commands;
+   void add(std::string name, std::unique_ptr<command_base> command) noexcept;
+
+   struct commands_storage;
+
+   implementation_storage<commands_storage, 40> _storage;
 };
 
 }

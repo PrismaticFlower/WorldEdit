@@ -2748,18 +2748,17 @@ void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list
 
 void renderer_impl::update_textures(gpu::copy_command_list& command_list)
 {
-   _texture_manager.eval_updated_textures(
-      [&](const absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>& updated) {
-         _model_manager.for_each([&](model& model) {
-            for (auto& part : model.parts) {
-               part.material.process_updated_textures(command_list, updated, _device);
-            }
-         });
-
-         _terrain.process_updated_texture(updated);
-         _water.process_updated_texture(updated);
-         _ui_texture_manager.process_updated_textures(updated);
+   _texture_manager.eval_updated_textures([&](const updated_textures& updated) noexcept {
+      _model_manager.for_each([&](model& model) noexcept {
+         for (auto& part : model.parts) {
+            part.material.process_updated_textures(command_list, updated, _device);
+         }
       });
+
+      _terrain.process_updated_texture(updated);
+      _water.process_updated_texture(updated);
+      _ui_texture_manager.process_updated_textures(updated);
+   });
 }
 
 auto make_renderer(const renderer_init& init) -> std::unique_ptr<renderer>

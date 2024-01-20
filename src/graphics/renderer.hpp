@@ -9,8 +9,6 @@
 
 #include <memory>
 
-#include <absl/container/flat_hash_map.h>
-
 namespace we {
 
 class output_stream;
