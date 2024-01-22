@@ -331,6 +331,7 @@
     <ClCompile Include="src\settings\io.cpp" />
     <ClCompile Include="src\settings\preferences.cpp" />
     <ClCompile Include="src\settings\settings.cpp" />
+    <ClCompile Include="src\string.cpp" />
     <ClCompile Include="src\utility\os_execute.cpp" />
     <ClCompile Include="src\utility\show_in_explorer.cpp" />
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
@@ -552,6 +553,7 @@
     <ClInclude Include="src\settings\preferences.hpp" />
     <ClInclude Include="src\settings\settings.hpp" />
     <ClInclude Include="src\settings\ui.hpp" />
+    <ClInclude Include="src\string.hpp" />
     <ClInclude Include="src\types.hpp" />
     <ClInclude Include="src\ucfb\reader.hpp" />
     <ClInclude Include="src\utility\binary_reader.hpp" />
