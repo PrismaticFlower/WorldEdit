@@ -1412,6 +1412,7 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
                                             },
                                          .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
                                          .BufferCount = desc.buffer_count,
+                                         .Scaling = DXGI_SCALING_NONE,
                                          .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
                                          .Flags = flags};
 
