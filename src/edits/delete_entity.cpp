@@ -693,4 +693,15 @@ auto make_delete_entity(world::boundary_id boundary_id, const world::world& worl
    return std::make_unique<delete_entity<world::boundary>>(boundary, boundary_index);
 }
 
+auto make_delete_entity(world::measurement_id measurement_id, const world::world& world)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   const uint32 measurement_index =
+      get_entity_index(world.measurements, measurement_id);
+   const world::measurement& measurement = world.measurements[measurement_index];
+
+   return std::make_unique<delete_entity<world::measurement>>(measurement,
+                                                              measurement_index);
+}
+
 }

@@ -173,6 +173,8 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::Separator();
 
+         ImGui::MenuItem("Measurement Tool", nullptr, &_measurement_tool_open);
+
          ImGui::MenuItem("Render Environment Map",
                          get_display_string(
                             _hotkeys.query_binding("Global",

@@ -549,4 +549,8 @@ auto make_set_creation_barrier_metrics(float new_rotation, float original_rotati
                                        float2 new_size, float2 original_size)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_set_creation_measurement_points(float3 new_start, float3 original_start,
+                                          float3 new_end, float3 original_end)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }

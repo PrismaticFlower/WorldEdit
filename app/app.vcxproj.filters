@@ -34,6 +34,7 @@
     <ClCompile Include="src\world_edit_ui_terrain_resize.cpp" />
     <ClCompile Include="src\world_edit_ui_terrain_crop.cpp" />
     <ClCompile Include="src\world_edit_ui_terrain_extend.cpp" />
+    <ClCompile Include="src\world_edit_ui_measurement_tool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

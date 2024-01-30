@@ -253,6 +253,15 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
+      else if (std::holds_alternative<measurement_id>(selected)) {
+         const measurement* measurement =
+            find_entity(world.measurements, std::get<measurement_id>(selected));
+
+         if (measurement) {
+            selection_bbox = math::integrate(selection_bbox, measurement->start);
+            selection_bbox = math::integrate(selection_bbox, measurement->end);
+         }
+      }
    }
 
    return selection_bbox;
@@ -461,6 +470,15 @@ auto selection_bbox_for_move(const world& world,
                                                   boundary_max.y}};
 
             selection_bbox = math::combine(bbox, selection_bbox);
+         }
+      }
+      else if (std::holds_alternative<measurement_id>(selected)) {
+         const measurement* measurement =
+            find_entity(world.measurements, std::get<measurement_id>(selected));
+
+         if (measurement) {
+            selection_bbox = math::integrate(selection_bbox, measurement->start);
+            selection_bbox = math::integrate(selection_bbox, measurement->end);
          }
       }
    }

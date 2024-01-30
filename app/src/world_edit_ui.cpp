@@ -126,6 +126,10 @@ void world_edit::update_ui() noexcept
       ui_show_render_env_map();
    }
 
+   if (_measurement_tool_open) {
+      ui_show_measurement_tool();
+   }
+
    if (ImGui::BeginPopup("Create Entity", ImGuiWindowFlags_AlwaysAutoResize |
                                              ImGuiWindowFlags_NoDecoration)) {
       ui_show_create_menu_items();

@@ -8,6 +8,7 @@
 #include "id.hpp"
 #include "layer_description.hpp"
 #include "light.hpp"
+#include "measurement.hpp"
 #include "object.hpp"
 #include "path.hpp"
 #include "planning.hpp"
@@ -43,6 +44,7 @@ struct world {
    std::vector<planning_hub> planning_hubs;
    std::vector<planning_connection> planning_connections;
    std::vector<boundary> boundaries;
+   std::vector<measurement> measurements;
 
    /// @brief Vector of layers to garbage collect the files of at save time.
    std::vector<std::string> deleted_layers;
@@ -62,6 +64,7 @@ struct world {
       id_generator<planning_hub> planning_hubs;
       id_generator<planning_connection> planning_connections;
       id_generator<boundary> boundaries;
+      id_generator<measurement> measurements;
    } next_id;
 };
 

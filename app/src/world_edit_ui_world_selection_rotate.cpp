@@ -102,6 +102,17 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                selection_axis_count += {1.0f, 1.0f, 1.0f};
             }
          }
+         else if (std::holds_alternative<world::measurement_id>(selected)) {
+            const world::measurement* measurement =
+               world::find_entity(_world.measurements,
+                                  std::get<world::measurement_id>(selected));
+
+            if (measurement) {
+               selection_centre += measurement->start;
+               selection_centre += measurement->end;
+               selection_axis_count += {2.0f, 2.0f, 2.0f};
+            }
+         }
       }
 
       selection_axis_count = max(selection_axis_count, float3{1.0f, 1.0f, 1.0f});
@@ -249,6 +260,24 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                                            barrier->rotation_angle +
                                               rotate_delta.y,
                                            barrier->rotation_angle));
+               }
+            }
+            else if (std::holds_alternative<world::measurement_id>(selected)) {
+               const world::measurement* measurement =
+                  world::find_entity(_world.measurements,
+                                     std::get<world::measurement_id>(selected));
+
+               if (measurement) {
+                  const float3 centre = (measurement->start + measurement->end) * 0.5f;
+
+                  bundled_edits.push_back(
+                     edits::make_set_value(measurement->id, &world::measurement::start,
+                                           (rotation * (measurement->start - centre)) + centre,
+                                           measurement->start));
+                  bundled_edits.push_back(
+                     edits::make_set_value(measurement->id, &world::measurement::end,
+                                           (rotation * (measurement->end - centre)) + centre,
+                                           measurement->end));
                }
             }
          }

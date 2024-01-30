@@ -1764,6 +1764,51 @@ void world_edit::ui_show_world_selection_editor() noexcept
             ImGui::DragFloat2XZ("Size", boundary, &world::boundary::size,
                                 &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
          }
+         else if (std::holds_alternative<world::measurement_id>(selected)) {
+            world::measurement* measurement =
+               world::find_entity(_world.measurements,
+                                  std::get<world::measurement_id>(selected));
+
+            if (not measurement) {
+               ImGui::PopID();
+
+               continue;
+            }
+
+            if (is_multi_select) {
+               bool keep_selected = true;
+
+               if (not ImGui::CollapsingHeader("Measurement", &keep_selected,
+                                               ImGuiTreeNodeFlags_DefaultOpen) and
+                   keep_selected) {
+                  ImGui::PopID();
+
+                  continue;
+               }
+               else if (not keep_selected) {
+                  _interaction_targets.selection.remove(measurement->id);
+
+                  selected_index -= 1;
+                  id_offset += 1;
+
+                  ImGui::PopID();
+
+                  continue;
+               }
+            }
+            else {
+               ImGui::SeparatorText("Measurement");
+            }
+
+            ImGui::InputText("Name", measurement, &world::measurement::name,
+                             &_edit_stack_world, &_edit_context, [](std::string*) {});
+            ImGui::DragFloat3("Start", measurement, &world::measurement::start,
+                              &_edit_stack_world, &_edit_context, 0.25f);
+            ImGui::DragFloat3("End", measurement, &world::measurement::end,
+                              &_edit_stack_world, &_edit_context, 0.25f);
+            ImGui::LabelText("Length", "%.2fm",
+                             distance(measurement->start, measurement->end));
+         }
 
          ImGui::PopID();
       }

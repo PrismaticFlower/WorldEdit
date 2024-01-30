@@ -17,6 +17,7 @@ struct active_entity_types {
    bool planning_hubs : 1 = false;
    bool planning_connections : 1 = false;
    bool boundaries : 1 = false;
+   bool measurements : 1 = true;
    bool terrain : 1 = true;
 };
 

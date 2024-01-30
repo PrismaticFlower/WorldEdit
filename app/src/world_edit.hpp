@@ -190,6 +190,8 @@ private:
 
    void ui_show_render_env_map() noexcept;
 
+   void ui_show_measurement_tool() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    void setup_orbit_camera() noexcept;
@@ -301,7 +303,7 @@ private:
    world::world _world;
    world::interaction_targets _interaction_targets;
    world::active_entity_types _world_draw_mask;
-   world::active_entity_types _world_hit_mask;
+   world::active_entity_types _world_hit_mask{};
    world::active_layers _world_layers_draw_mask{true};
    world::active_layers _world_layers_hit_mask{true};
    world::tool_visualizers _tool_visualizers;
@@ -347,6 +349,7 @@ private:
    bool _settings_editor_open = false;
    bool _about_window_open = false;
    bool _render_env_map_open = false;
+   bool _measurement_tool_open = false;
    bool _terrain_editor_open = false;
    bool _terrain_import_heightmap_open = false;
    bool _terrain_resize_open = false;
@@ -421,6 +424,8 @@ private:
 
       bool hub_sizing_started = false;
       bool connection_link_started = false;
+
+      bool measurement_started = false;
 
       int pick_sector_index = 0;
 

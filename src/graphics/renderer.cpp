@@ -156,7 +156,8 @@ private:
    void draw_world_render_list(const std::vector<uint16>& list,
                                gpu::graphics_command_list& command_list);
 
-   void draw_world_meta_objects(const frustum& view_frustum, const world::world& world,
+   void draw_world_meta_objects(const frustum& view_frustum,
+                                const camera& camera, const world::world& world,
                                 const world::interaction_targets& interaction_targets,
                                 const world::active_entity_types active_entity_types,
                                 const world::active_layers active_layers,
@@ -497,8 +498,9 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       draw_terrain_cut_visualizers(view_frustum, settings, command_list);
    }
 
-   draw_world_meta_objects(view_frustum, world, interaction_targets, active_entity_types,
-                           active_layers, tool_visualizers, settings);
+   draw_world_meta_objects(view_frustum, camera, world, interaction_targets,
+                           active_entity_types, active_layers, tool_visualizers,
+                           settings);
 
    draw_ai_overlay(back_buffer_rtv, settings, command_list);
 
@@ -1095,7 +1097,7 @@ void renderer_impl::draw_world_render_list_depth_prepass(
 }
 
 void renderer_impl::draw_world_meta_objects(
-   const frustum& view_frustum, const world::world& world,
+   const frustum& view_frustum, const camera& camera, const world::world& world,
    const world::interaction_targets& interaction_targets,
    const world::active_entity_types active_entity_types,
    const world::active_layers active_layers,
@@ -1743,6 +1745,65 @@ void renderer_impl::draw_world_meta_objects(
       if (interaction_targets.creation_entity and
           std::holds_alternative<world::boundary>(*interaction_targets.creation_entity)) {
          add_boundary(std::get<world::boundary>(*interaction_targets.creation_entity));
+      }
+   }
+
+   if (active_entity_types.measurements) {
+      const uint32 measurement_color =
+         utility::pack_srgb_bgra(float4{1.0f, 1.0f, 1.0f, 0.25f});
+      const float2 viewport_size = {static_cast<float>(_swap_chain.width()),
+                                    static_cast<float>(_swap_chain.height())};
+
+      const auto add_measurement = [&](const world::measurement& measurement) {
+         if (measurement.hidden) return;
+
+         const math::bounding_box bbox{.min = min(measurement.start, measurement.end),
+                                       .max = max(measurement.start, measurement.end)};
+
+         if (not intersects(view_frustum, bbox)) return;
+
+         _meta_draw_batcher.add_line_solid(measurement.start, measurement.end,
+                                           measurement_color);
+
+         const float3 centreWS = (measurement.start + measurement.end) * 0.5f;
+         const float4 centrePS =
+            camera.view_projection_matrix() * float4{centreWS, 1.0f};
+         const float2 centreNDC = {centrePS.x / centrePS.w,
+                                   centrePS.y / centrePS.w};
+
+         if (centreNDC.x > 1.0f or centreNDC.x < -1.0f or centreNDC.y > 1.0f or
+             centreNDC.y < -1.0f) {
+            return;
+         }
+
+         const float2 positionRT = {(centreNDC.x + 1.0f) * viewport_size.x * 0.5f,
+                                    (1.0f - centreNDC.y) * viewport_size.y * 0.5f};
+
+         std::array<char, 128> text;
+
+         const char* const text_end =
+            fmt::format_to_n(text.data(), text.size(), "{:.2f}m",
+                             distance(measurement.start, measurement.end))
+               .out;
+
+         const ImVec2 text_size = ImGui::CalcTextSize(text.data(), text_end);
+         const float2 text_size_half = {text_size.x * 0.5f, text_size.y * 0.5f};
+
+         ImGui::GetBackgroundDrawList()->AddRectFilled(
+            {positionRT.x - text_size_half.x, positionRT.y - text_size_half.y},
+            {positionRT.x + text_size_half.x, positionRT.y + text_size_half.y},
+            0x60'00'00'00);
+         ImGui::GetBackgroundDrawList()->AddText({positionRT.x - text_size_half.x,
+                                                  positionRT.y - text_size_half.y},
+                                                 0xff'ff'ff'ff, text.data(), text_end);
+      };
+
+      for (auto& measurement : world.measurements) add_measurement(measurement);
+
+      if (interaction_targets.creation_entity and
+          std::holds_alternative<world::measurement>(*interaction_targets.creation_entity)) {
+         add_measurement(
+            std::get<world::measurement>(*interaction_targets.creation_entity));
       }
    }
 
@@ -2438,6 +2499,12 @@ void renderer_impl::draw_interaction_targets(
             _meta_draw_batcher.add_line_solid(quad[3], quad[0], packed_color);
          }
       },
+      [&](const world::measurement& measurement, const float3 color) {
+         const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
+
+         _meta_draw_batcher.add_line_solid(measurement.start, measurement.end,
+                                           packed_color);
+      },
    };
 
    const auto draw_target = [&](world::interaction_target target, const float3 color) {
@@ -2513,6 +2580,12 @@ void renderer_impl::draw_interaction_targets(
                           find_entity(world.boundaries, id);
 
                        if (boundary) draw_entity(*boundary, color);
+                    },
+                    [&](world::measurement_id id) {
+                       const world::measurement* measurement =
+                          find_entity(world.measurements, id);
+
+                       if (measurement) draw_entity(*measurement, color);
                     },
                  },
                  target);
