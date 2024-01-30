@@ -496,6 +496,9 @@ void world_edit::initialize_commands() noexcept
    _commands.add("terrain.cancel_crop"s, [this] { _terrain_crop_open = false; });
    _commands.add("terrain.cancel_extend"s,
                  [this] { _terrain_extend_open = false; });
+
+   _commands.add("measurement_tool.close"s,
+                 [this] { _measurement_tool_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -904,6 +907,17 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Cancel", "terrain.cancel_extend", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Measurement Tool",
+      .activated = [this] { return _measurement_tool_open; },
+      .default_hotkeys =
+         {
+            {"Cancel", "measurement_tool.close", {.key = key::escape}},
          },
 
       .hidden = true,
