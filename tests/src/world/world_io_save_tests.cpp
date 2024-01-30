@@ -655,6 +655,22 @@ constexpr auto expected_bnd = R"(Boundary()
 
 )"sv;
 
+constexpr auto expected_msr = R"(MeasurementCount(2);
+
+Measurement("Measurement0")
+{
+	Start(1.000000, 0.000000, 0.000000);
+	End(2.000000, 0.000000, 1.000000);
+}
+
+Measurement("")
+{
+	Start(1.000000, 0.000000, -5.500000);
+	End(-1.000000, 0.000000, 0.000000);
+}
+
+)"sv;
+
 constexpr auto expected_ldx = R"(Version(1);
 NextID(2);
 
@@ -935,6 +951,14 @@ TEST_CASE("world saving", "[World][IO]")
                      .position = {-0.442565918f, 4.79779053f},
                      .size = {384.000000f, 384.000000f}},
          },
+
+      .measurements =
+         {
+            measurement{.start = {1.0f, 0.0f, -0.0f},
+                        .end = {2.0f, 0.0f, -1.0f},
+                        .name = "Measurement0"},
+            measurement{.start = {1.0f, 0.0f, 5.5f}, .end = {-1.0f, 0.0f, -0.0f}, .name = ""},
+         },
    };
 
    save_world(L"temp/world/test.wld", world, {});
@@ -974,6 +998,10 @@ TEST_CASE("world saving", "[World][IO]")
    const auto written_bnd = io::read_file_to_string(L"temp/world/test.bnd");
 
    CHECK(written_bnd == expected_bnd);
+
+   const auto written_msr = io::read_file_to_string(L"temp/world/test.msr");
+
+   CHECK(written_msr == expected_msr);
 
    const auto written_ldx = io::read_file_to_string(L"temp/world/test.ldx");
 
@@ -1030,4 +1058,5 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
          fmt::format("temp/world_gc/test_{}.mrq", game_mode)));
    }
 }
+
 }

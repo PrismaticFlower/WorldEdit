@@ -473,5 +473,14 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(world.boundaries[0].position == float2{-0.442565918f, 4.79779053f});
       CHECK(is_unique_id(0, world.boundaries));
    }
+
+   // measurements checks
+   {
+      REQUIRE(world.measurements.size() == 1);
+      CHECK(world.measurements[0].name == "Measurement0"sv);
+      CHECK(world.measurements[0].start == float3{1.0f, 0.0f, -0.0f});
+      CHECK(world.measurements[0].end == float3{2.0f, 0.0f, -1.0f});
+      CHECK(is_unique_id(0, world.measurements));
+   }
 }
 }
