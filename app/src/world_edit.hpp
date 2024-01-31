@@ -178,6 +178,8 @@ private:
 
    void ui_show_terrain_import_height_map() noexcept;
 
+   void ui_show_terrain_import_texture_weight_map() noexcept;
+
    void ui_show_terrain_resize() noexcept;
 
    void ui_show_terrain_crop() noexcept;
@@ -352,6 +354,7 @@ private:
    bool _measurement_tool_open = false;
    bool _terrain_editor_open = false;
    bool _terrain_import_heightmap_open = false;
+   bool _terrain_import_texture_weight_map_open = false;
    bool _terrain_resize_open = false;
    bool _terrain_crop_open = false;
    bool _terrain_extend_open = false;
@@ -551,6 +554,13 @@ private:
       bool start_from_bottom = false;
       bool start_from_midpoint = false;
    } _terrain_import_heightmap_context;
+
+   struct terrain_import_texture_weight_map_context {
+      container::dynamic_array_2d<uint8> loaded_weight_map;
+      std::string error_message;
+
+      int weight_map_index = -1;
+   } _terrain_import_texture_weight_map_context;
 
    struct terrain_resize_context {
       int32 new_length = 0;

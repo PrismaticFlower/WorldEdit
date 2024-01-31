@@ -35,6 +35,7 @@
     <ClCompile Include="src\world_edit_ui_terrain_crop.cpp" />
     <ClCompile Include="src\world_edit_ui_terrain_extend.cpp" />
     <ClCompile Include="src\world_edit_ui_measurement_tool.cpp" />
+    <ClCompile Include="src\world_edit_ui_terrain_import_texture_weight_map.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />

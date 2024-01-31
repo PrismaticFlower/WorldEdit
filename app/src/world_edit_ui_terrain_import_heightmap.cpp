@@ -66,7 +66,7 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
 
                terrain_needs_update = true;
             }
-            catch (world::heightmap_load_error& e) {
+            catch (world::terrain_map_load_error& e) {
                _terrain_import_heightmap_context.error_message = e.what();
             }
          }
