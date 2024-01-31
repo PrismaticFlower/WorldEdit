@@ -1,4 +1,4 @@
-#include "load_terrain_heightmap.hpp"
+#include "load_terrain_map.hpp"
 #include "utility/com_ptr.hpp"
 #include "utility/string_icompare.hpp"
 

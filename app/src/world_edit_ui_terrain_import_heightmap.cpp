@@ -5,7 +5,7 @@
 #include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
 #include "utility/file_pickers.hpp"
-#include "world/utility/load_terrain_heightmap.hpp"
+#include "world/utility/load_terrain_map.hpp"
 
 #include "imgui.h"
 

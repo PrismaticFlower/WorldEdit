@@ -781,7 +781,7 @@
     <ClInclude Include="src\edits\set_terrain_area.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\utility\load_terrain_heightmap.hpp">
+    <ClInclude Include="src\world\utility\load_terrain_map.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\edits\set_terrain.hpp">
@@ -1344,7 +1344,7 @@
     <ClCompile Include="src\edits\set_terrain_area.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\world\utility\load_terrain_heightmap.cpp">
+    <ClCompile Include="src\world\utility\load_terrain_map.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\edits\set_terrain.cpp">
