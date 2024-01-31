@@ -833,6 +833,21 @@ void world_edit::ui_show_terrain_editor() noexcept
    terrain_point = round(terrain_point / _world.terrain.grid_scale) +
                    (_world.terrain.length / 2.0f) - float2{0.0f, 1.0f};
 
+   if (_terrain_editor_context.brush_active and
+       _terrain_editor_config.edit_target == terrain_edit_target::height and
+       _terrain_editor_config.height.brush_mode != terrain_brush_mode::overwrite) {
+      const float2 mouse_position = std::bit_cast<float2>(ImGui::GetMousePos());
+
+      if (distance(_terrain_editor_context.brush_start_mouse_position, mouse_position) <
+          _settings.preferences.terrain_height_brush_stickiness) {
+         terrain_point = _terrain_editor_context.locked_terrain_point;
+      }
+      else {
+         _terrain_editor_context.brush_start_mouse_position = mouse_position;
+         _terrain_editor_context.locked_terrain_point = terrain_point;
+      }
+   }
+
    const int32 terrain_x = static_cast<int32>(terrain_point.x);
    const int32 terrain_y = static_cast<int32>(terrain_point.y);
 
@@ -844,6 +859,9 @@ void world_edit::ui_show_terrain_editor() noexcept
          _edit_stack_world.close_last();
       }
       else {
+         _terrain_editor_context.brush_start_mouse_position =
+            std::bit_cast<float2>(ImGui::GetMousePos());
+         _terrain_editor_context.locked_terrain_point = terrain_point;
          _terrain_editor_context.brush_plane_height = cursor_positionWS.y;
          _terrain_editor_context.last_brush_update = std::chrono::steady_clock::now();
 

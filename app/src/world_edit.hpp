@@ -518,6 +518,9 @@ private:
       bool brush_held = false;
       bool brush_active = false;
 
+      float2 brush_start_mouse_position;
+      float2 locked_terrain_point;
+
       float brush_plane_height = 0.0f;
       std::chrono::steady_clock::time_point last_brush_update =
          std::chrono::steady_clock::now();
