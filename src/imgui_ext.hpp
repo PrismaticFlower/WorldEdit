@@ -39,6 +39,11 @@ bool InputText(const char* label, absl::InlinedVector<char, 256>* buffer,
                ImGuiInputTextFlags flags = 0,
                ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr);
 
+bool InputTextWithClose(const char* label, absl::InlinedVector<char, 256>* buffer,
+                        bool* close_button, ImGuiInputTextFlags flags = 0,
+                        ImGuiInputTextCallback callback = nullptr,
+                        void* user_data = nullptr);
+
 bool InputTextAutoComplete(
    const char* label, absl::InlinedVector<char, 256>* buffer,
    const std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback,

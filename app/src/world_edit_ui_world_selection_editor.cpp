@@ -446,12 +446,13 @@ void world_edit::ui_show_world_selection_editor() noexcept
             for (std::size_t i = 0; i < path->properties.size(); ++i) {
                ImGui::PushID(static_cast<int>(i));
 
-               ImGui::InputKeyValue(path, &world::path::properties, i,
-                                    &_edit_stack_world, &_edit_context);
+               bool delete_property = false;
 
-               ImGui::SameLine();
+               ImGui::InputKeyValueWithDelete(path, &world::path::properties, i,
+                                              &delete_property,
+                                              &_edit_stack_world, &_edit_context);
 
-               if (ImGui::Button("X##path")) {
+               if (delete_property) {
                   _edit_stack_world.apply(edits::make_delete_path_property(path->id,
                                                                            i, _world),
                                           _edit_context);
@@ -479,16 +480,19 @@ void world_edit::ui_show_world_selection_editor() noexcept
             ImGui::DragFloat3("Position", path, node_index, &world::path::node::position,
                               &_edit_stack_world, &_edit_context);
 
+            ImGui::PushID("Node");
+
             for (std::size_t prop_index = 0;
                  prop_index < path->nodes[node_index].properties.size(); ++prop_index) {
                ImGui::PushID(static_cast<int>(prop_index));
 
-               ImGui::InputKeyValue(path, node_index, prop_index,
-                                    &_edit_stack_world, &_edit_context);
+               bool delete_property = false;
 
-               ImGui::SameLine();
+               ImGui::InputKeyValueWithDelete(path, node_index, prop_index,
+                                              &delete_property,
+                                              &_edit_stack_world, &_edit_context);
 
-               if (ImGui::Button("X##node")) {
+               if (delete_property) {
                   _edit_stack_world.apply(edits::make_delete_path_node_property(
                                              path->id, node_index, prop_index, _world),
                                           _edit_context);
@@ -496,6 +500,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                ImGui::PopID();
             }
+
+            ImGui::PopID();
 
             if (ImGui::BeginCombo("Add Property##node", "<select property>")) {
                for (const char* prop : world::get_path_node_properties(path->type)) {
