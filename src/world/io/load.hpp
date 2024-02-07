@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../world.hpp"
 #include "output_stream.hpp"
-#include "world.hpp"
 
 #include <filesystem>
 #include <stdexcept>

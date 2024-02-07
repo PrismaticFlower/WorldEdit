@@ -273,9 +273,6 @@
     <ClInclude Include="src\world\world.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src\world\world_io_load.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\camera.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -389,9 +386,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\io\output_file.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\world_io_save.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\io\read_file.hpp">
@@ -802,6 +796,12 @@
     <ClInclude Include="src\world\utility\mouse_pick_measurement.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\world\io\save.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\world\io\load.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\msh\scene_io.cpp">
@@ -823,9 +823,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\assets\terrain\terrain_io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\world_io_load.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\camera.cpp">
@@ -913,9 +910,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\io\output_file.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\world_io_save.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\io\read_file.cpp">
@@ -1366,6 +1360,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\world\utility\mouse_pick_measurement.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\io\load.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world\io\save.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

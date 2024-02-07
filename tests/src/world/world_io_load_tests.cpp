@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "approx_test_helpers.hpp"
-#include "world/world_io_load.hpp"
+#include "world/io/load.hpp"
 
 #include <span>
 

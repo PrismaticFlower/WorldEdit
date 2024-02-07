@@ -22,6 +22,8 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
+#include "world/io/load.hpp"
+#include "world/io/save.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
 #include "world/utility/mouse_pick_measurement.hpp"
@@ -32,8 +34,6 @@
 #include "world/utility/selection_bbox.hpp"
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
-#include "world/world_io_load.hpp"
-#include "world/world_io_save.hpp"
 
 #include <stdexcept>
 #include <type_traits>
