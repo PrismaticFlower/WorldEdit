@@ -800,6 +800,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\world\io\load.hpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClInclude Include="src\world\effects.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

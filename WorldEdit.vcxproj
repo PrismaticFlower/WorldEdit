@@ -600,6 +600,7 @@
     <ClInclude Include="src\world\ai_path_flags.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
+    <ClInclude Include="src\world\effects.hpp" />
     <ClInclude Include="src\world\id.hpp" />
     <ClInclude Include="src\world\game_mode_description.hpp" />
     <ClInclude Include="src\world\hintnode.hpp" />
