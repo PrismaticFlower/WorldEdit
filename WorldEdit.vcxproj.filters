@@ -1,1387 +1,470 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="include">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="src">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="resource">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="src\imgui">
-      <UniqueIdentifier>{196d1e49-d78c-4a7d-87e3-09141fc5b5eb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include\imgui">
-      <UniqueIdentifier>{e27b628c-ea5a-4c5a-8505-c3406633a1da}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include\editor">
-      <UniqueIdentifier>{66c31a31-9741-47af-8def-f077204835bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include\world">
-      <UniqueIdentifier>{a9a001a4-a3f9-4ec4-a47c-36f385551888}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\types.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\exceptions.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\msh\material.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\enum_bitflags.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\msh\scene.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\msh\scene_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\read_file.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ucfb\reader.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\make_from_bytes.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\string_ops.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\odf\definition.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\odf\properties.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\odf\definition_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\config\values.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\config\key_node.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\config\io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\terrain\terrain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\assets\terrain\terrain_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\binary_reader.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\srgb_conversion.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\world.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\layer_description.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\gamemode_description.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\light.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\object.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\path.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\region.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\sector.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\portal.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\hintnode.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\barrier.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\planning.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\ai_path_flags.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\boundary.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\terrain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\container\dynamic_array_2d.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\make_range.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\output_stream.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\world_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\model.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\bounding_box.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\gpu_device.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utility\com_ptr.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hresult_error.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ucfb\reader.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\model.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\container\dynamic_array_2d.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\terrain\terrain_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\terrain\terrain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\odf\properties.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\odf\definition_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\odf\definition.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\scene_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\scene.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\material.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\config\values.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\config\key_node.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\config\io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\binary_reader.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\com_ptr.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\enum_bitflags.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\make_from_bytes.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\make_range.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\srgb_conversion.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\string_ops.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\output_stream.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\types.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\ai_path_flags.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\barrier.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\boundary.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\game_mode_description.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\hintnode.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\layer_description.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\light.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\object.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\path.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\planning.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\portal.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\region.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\sector.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\terrain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\world.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\camera.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\container\enum_array.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\object_class.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\bounding_box.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\flat_model.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\asset_libraries.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\object_instance_property.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\model_manager.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\validate_scene.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\default_missing_scene.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\align.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\odf\default_object_class_definition.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\asset_traits.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\lowercase_string.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\texture\texture.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\texture\texture_format.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\geometric_shapes.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\frustum.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\light_clusters.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\texture\texture_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\material.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\texture_manager.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\terrain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\option_file.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\texture\texture_transforms.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\file_watcher.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\asset_ref.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\asset_state.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\event.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\world_mesh_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\generate_tangents.hpp" />
-    <ClInclude Include="src\assets\msh\mikktspace\mikktspace.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\root_signature_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\pipeline_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\shader_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\shader_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\file_pickers.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\command_line.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\io\output_file.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\io\read_file.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\io\error.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\settings\graphics.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\settings\settings.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\interaction_context.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\id.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\async\thread_pool.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\async\wait_all.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\async\get_all.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\stopwatch.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\async\for_each.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\overload.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\look_for.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\active_elements.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\container\slim_bitset.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\commands.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\intersectors.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\flat_model_bvh.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\shadow_camera.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\rhi.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\resource.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\renderer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\sampler_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\implementation_storage.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\exception.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\detail\descriptor_allocator.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\detail\descriptor_heap.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\detail\error.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\detail\handle_packing.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\detail\release_queue.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\gpu\detail\command_allocator_pool.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\copy_command_list_pool.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\imgui_renderer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\vector_funcs.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\matrix_funcs.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math\quaternion_funcs.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\event_listener.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\allocators\aligned_allocator.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\cull_objects.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\meta_draw_batcher.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\profiler.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\hotkeys.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\key.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\world_utilities.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\snapping.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\tool_visualizers.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\edit.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\imgui_ext.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\insert_entity.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\insert_node.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\stack.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\ui_action.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\creation_entity_set.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\set_value.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\insert_point.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\sector_fill.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\hintnode_traits.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\boundary_nodes.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\add_property.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\path_properties.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\object_properties.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\object_class_library.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\string_icompare.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\region_properties.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_entity.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\hotkeys_io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\make_command_post_linked_entities.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\container\paged_stack.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\world\lighting_settings.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\global_lights.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\container\ring_set.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\settings\camera.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\raycast.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\add_layer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_layer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\req\requirement_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\req\io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\requirement_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_game_mode.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\add_game_mode.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\game_mode_link_layer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\game_mode_unlink_layer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\settings\io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\bundle.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\asset_stable_string.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\add_world_req_entry.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_world_req_entry.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_world_req_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\add_world_req_list.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gizmo.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\settings\ui.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\os_execute.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\settings\preferences.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imconfig.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imgui.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imgui_internal.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imstb_rectpack.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imstb_textedit.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imstb_truetype.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui_ext.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\sky\sky.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\sky\io.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\sky.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\water.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_sector_point.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_sector_object.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\add_sector_object.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\delete_path_property.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\selection_centre.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\ai_overlay_batches.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\grounding.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\thumbnail_manager.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\object_class_thumbnail.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\io\memory_mapped_file.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\show_in_explorer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\selection_bbox.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\raycast_terrain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\msh\flat_model_terrain_cut_bvh.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\terrain_cut.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\texture\save_env_map.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\shaders\shader_def.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utility\function_ptr.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\scale_factor.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\assets\terrain\dirty_rect_tracker.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\set_terrain_area.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\load_terrain_map.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\edits\set_terrain.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\ui_texture_manager.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\graphics\fallback_imgui_texture.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\load_terrain_brush.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\measurement.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\utility\mouse_pick_measurement.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\io\save.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\world\io\load.hpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClInclude Include="src\world\effects.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\assets\msh\scene_io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\string_ops.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\odf\properties.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\odf\definition_io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\config\key_node.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\config\io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\terrain\terrain_io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\camera.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\output_stream.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\flat_model.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\asset_libraries.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\object_class.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\model.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\validate_scene.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\default_missing_scene.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\odf\default_object_class_definition.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\asset_traits.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\texture\texture.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\texture\texture_format.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\geometric_shapes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\frustum.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\light_clusters.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\texture\texture_io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\material.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\terrain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\option_file.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\texture\texture_transforms.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\file_watcher.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\generate_tangents.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\mikktspace\mikktspace.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\root_signature_library.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\pipeline_library.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shader_library.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shader_list.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\file_pickers.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\io\output_file.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\io\read_file.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\async\thread_pool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\commands.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\flat_model_bvh.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\texture_manager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\renderer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\gpu\rhi.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\copy_command_list_pool.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\imgui_renderer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\scene.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\math\matrix_funcs.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\math\bounding_box.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shadow_camera.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\model_manager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\asset_ref.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\cull_objects.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\meta_draw_batcher.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\profiler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\hotkeys.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\key.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\world_utilities.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\snapping.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\insert_entity.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\insert_node.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\creation_entity_set.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\insert_point.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\sector_fill.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\hintnode_traits.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\boundary_nodes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\set_value.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\add_property.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\path_properties.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\object_class_library.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\object_properties.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\string_icompare.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\region_properties.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_entity.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\hotkeys_io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\interaction_context.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\raycast.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\add_layer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_layer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\req\io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_game_mode.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\add_game_mode.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\game_mode_link_layer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\game_mode_unlink_layer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\settings\io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\settings\settings.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\bundle.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\add_world_req_entry.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\add_world_req_list.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_world_req_entry.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_world_req_list.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gizmo.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\os_execute.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\settings\preferences.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_demo.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_draw.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_tables.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_widgets.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\misc\freetype\imgui_freetype.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui_ext.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\sky\io.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\sky.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\water.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_sector_point.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_sector_object.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\add_sector_object.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\delete_path_property.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\selection_centre.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\ai_overlay_batches.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\srgb_conversion.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\grounding.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\thumbnail_manager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\io\memory_mapped_file.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utility\show_in_explorer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\selection_bbox.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\raycast_terrain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\msh\flat_model_terrain_cut_bvh.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\terrain_cut.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\texture\save_env_map.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\ai_overlay_applyPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\ai_overlay_applyVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\ai_overlay_shapeVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\imguiPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\imguiVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_basic_lightingPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_basicPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_depth_cutoutPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_depth_prepassVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_normalPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_shadow_cutoutPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_shadow_cutoutVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_shadowVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackGS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_wireframePS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\mesh_wireframeVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meshVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_linePS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_lineVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackGS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_outlinedPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_primitiveVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_shape_outlinedVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_shapeVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_sphereVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_wireframe_GS_fallbackGS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_wireframe_GS_fallbackPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_draw_wireframePS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\meta_drawPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\resample_env_mapPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\resample_env_mapVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\sky_meshPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\sky_meshVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\terrain_basicPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\terrain_cut_mesh_clearVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\terrain_lightingPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\terrain_normalPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\terrain_patchVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\thumbnail_downsamplePS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\thumbnail_downsampleVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\thumbnail_mesh_alpha_cutoutPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\thumbnail_meshPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\thumbnail_meshVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\tile_lights_clearCS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\tile_lightsPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\tile_lightsVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\waterPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\waterVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\tool_visualizers.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\terrain\dirty_rect_tracker.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\assets\terrain\terrain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\set_terrain_area.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\load_terrain_map.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\edits\set_terrain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\ui_texture_manager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\terrain_gridPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\grid_overlayPS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\shaders\grid_overlayVS.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\load_terrain_brush.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\utility\mouse_pick_measurement.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\io\load.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world\io\save.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="third_party\licenses\vcpkg.json" />
-    <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <Natvis Include="src\utility\implementation_storage.natvis" />
     <Natvis Include="third_party\imgui\misc\debuggers\imgui.natvis" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\assets\asset_ref.cpp" />
+    <ClCompile Include="src\assets\msh\flat_model_bvh.cpp" />
+    <ClCompile Include="src\assets\msh\flat_model_terrain_cut_bvh.cpp" />
+    <ClCompile Include="src\assets\msh\scene.cpp" />
+    <ClCompile Include="src\assets\req\io.cpp" />
+    <ClCompile Include="src\assets\sky\io.cpp" />
+    <ClCompile Include="src\assets\terrain\dirty_rect_tracker.cpp" />
+    <ClCompile Include="src\assets\terrain\terrain.cpp" />
+    <ClCompile Include="src\assets\texture\save_env_map.cpp" />
+    <ClCompile Include="src\async\thread_pool.cpp" />
+    <ClCompile Include="src\commands.cpp" />
+    <ClCompile Include="src\edits\add_game_mode.cpp" />
+    <ClCompile Include="src\edits\add_layer.cpp" />
+    <ClCompile Include="src\edits\add_property.cpp" />
+    <ClCompile Include="src\edits\add_sector_object.cpp" />
+    <ClCompile Include="src\edits\add_world_req_entry.cpp" />
+    <ClCompile Include="src\edits\add_world_req_list.cpp" />
+    <ClCompile Include="src\edits\bundle.cpp" />
+    <ClCompile Include="src\edits\creation_entity_set.cpp" />
+    <ClCompile Include="src\edits\delete_entity.cpp" />
+    <ClCompile Include="src\edits\delete_game_mode.cpp" />
+    <ClCompile Include="src\edits\delete_layer.cpp" />
+    <ClCompile Include="src\edits\delete_path_property.cpp" />
+    <ClCompile Include="src\edits\delete_sector_object.cpp" />
+    <ClCompile Include="src\edits\delete_sector_point.cpp" />
+    <ClCompile Include="src\edits\delete_world_req_entry.cpp" />
+    <ClCompile Include="src\edits\delete_world_req_list.cpp" />
+    <ClCompile Include="src\edits\game_mode_link_layer.cpp" />
+    <ClCompile Include="src\edits\game_mode_unlink_layer.cpp" />
+    <ClCompile Include="src\edits\insert_entity.cpp" />
+    <ClCompile Include="src\edits\insert_node.cpp" />
+    <ClCompile Include="src\edits\insert_point.cpp" />
+    <ClCompile Include="src\edits\set_terrain.cpp" />
+    <ClCompile Include="src\edits\set_terrain_area.cpp" />
+    <ClCompile Include="src\edits\set_value.cpp" />
+    <ClCompile Include="src\gizmo.cpp" />
+    <ClCompile Include="src\graphics\ai_overlay_batches.cpp" />
+    <ClCompile Include="src\graphics\copy_command_list_pool.cpp" />
+    <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp" />
+    <ClCompile Include="src\graphics\gpu\rhi.cpp" />
+    <ClCompile Include="src\graphics\imgui_renderer.cpp" />
+    <ClCompile Include="src\graphics\meta_draw_batcher.cpp" />
+    <ClCompile Include="src\graphics\model_manager.cpp" />
+    <ClCompile Include="src\graphics\cull_objects.cpp" />
+    <ClCompile Include="src\graphics\profiler.cpp" />
+    <ClCompile Include="src\graphics\renderer.cpp" />
+    <ClCompile Include="src\graphics\shaders\ai_overlay_applyPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\ai_overlay_applyVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\ai_overlay_shapeVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
+    <ClCompile Include="src\graphics\shaders\grid_overlayPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\grid_overlayVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\imguiPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\imguiVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meshVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_basicPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_basic_lightingPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_depth_cutoutPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_depth_prepassVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_normalPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_shadowVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_shadow_cutoutPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_shadow_cutoutVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframeVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackGS.cpp" />
+    <ClCompile Include="src\graphics\shaders\mesh_wireframe_GS_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_drawPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_linePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_lineVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_outlinedPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackGS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_outlined_GS_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_primitiveVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_shapeVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_shape_outlinedVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_sphereVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_wireframePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_wireframe_GS_fallbackGS.cpp" />
+    <ClCompile Include="src\graphics\shaders\meta_draw_wireframe_GS_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\resample_env_mapPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\resample_env_mapVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\sky_meshPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\sky_meshVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_basicPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_cut_mesh_clearVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_gridPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_lightingPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_normalPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_patchVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_downsamplePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_downsampleVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_meshPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_meshVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\thumbnail_mesh_alpha_cutoutPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\tile_lightsPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\tile_lightsVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\tile_lights_clearCS.cpp" />
+    <ClCompile Include="src\graphics\shaders\waterPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\waterVS.cpp" />
+    <ClCompile Include="src\graphics\shadow_camera.cpp" />
+    <ClCompile Include="src\graphics\sky.cpp" />
+    <ClCompile Include="src\graphics\texture_manager.cpp" />
+    <ClCompile Include="src\graphics\thumbnail_manager.cpp" />
+    <ClCompile Include="src\graphics\ui_texture_manager.cpp" />
+    <ClCompile Include="src\graphics\water.cpp" />
+    <ClCompile Include="src\hotkeys.cpp" />
+    <ClCompile Include="src\hotkeys_io.cpp" />
+    <ClCompile Include="src\imgui_ext.cpp" />
+    <ClCompile Include="src\io\memory_mapped_file.cpp" />
+    <ClCompile Include="src\io\output_file.cpp" />
+    <ClCompile Include="src\io\read_file.cpp" />
+    <ClCompile Include="src\key.cpp" />
+    <ClCompile Include="src\math\bounding_box.cpp" />
+    <ClCompile Include="src\math\matrix_funcs.cpp" />
+    <ClCompile Include="src\settings\io.cpp" />
+    <ClCompile Include="src\settings\preferences.cpp" />
+    <ClCompile Include="src\settings\settings.cpp" />
+    <ClCompile Include="src\utility\os_execute.cpp" />
+    <ClCompile Include="src\utility\show_in_explorer.cpp" />
+    <ClCompile Include="src\utility\srgb_conversion.cpp" />
+    <ClCompile Include="src\utility\string_icompare.cpp" />
+    <ClCompile Include="src\world\interaction_context.cpp" />
+    <ClCompile Include="src\world\io\load.cpp" />
+    <ClCompile Include="src\world\io\save.cpp" />
+    <ClCompile Include="src\world\utility\load_terrain_brush.cpp" />
+    <ClCompile Include="src\world\utility\load_terrain_map.cpp" />
+    <ClCompile Include="src\world\object_class_library.cpp" />
+    <ClCompile Include="src\world\tool_visualizers.cpp" />
+    <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
+    <ClCompile Include="src\world\utility\grounding.cpp" />
+    <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp" />
+    <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
+    <ClCompile Include="src\world\utility\mouse_pick_measurement.cpp" />
+    <ClCompile Include="src\world\utility\object_properties.cpp" />
+    <ClCompile Include="src\world\utility\path_properties.cpp" />
+    <ClCompile Include="src\world\utility\raycast.cpp" />
+    <ClCompile Include="src\world\utility\raycast_terrain.cpp" />
+    <ClCompile Include="src\world\utility\region_properties.cpp" />
+    <ClCompile Include="src\world\utility\sector_fill.cpp" />
+    <ClCompile Include="src\world\utility\selection_bbox.cpp" />
+    <ClCompile Include="src\world\utility\selection_centre.cpp" />
+    <ClCompile Include="src\world\utility\snapping.cpp" />
+    <ClCompile Include="src\world\utility\terrain_cut.cpp" />
+    <ClCompile Include="src\world\utility\world_utilities.cpp" />
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="third_party\imgui\imgui.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_demo.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp" />
+    <ClCompile Include="third_party\imgui\misc\freetype\imgui_freetype.cpp" />
+    <ClCompile Include="src\assets\asset_traits.cpp" />
+    <ClCompile Include="src\assets\msh\default_missing_scene.cpp" />
+    <ClCompile Include="src\assets\msh\generate_tangents.cpp" />
+    <ClCompile Include="src\assets\msh\mikktspace\mikktspace.c" />
+    <ClCompile Include="src\graphics\pipeline_library.cpp" />
+    <ClCompile Include="src\graphics\root_signature_library.cpp" />
+    <ClCompile Include="src\graphics\shader_library.cpp" />
+    <ClCompile Include="src\graphics\shader_list.cpp" />
+    <ClCompile Include="src\utility\file_pickers.cpp" />
+    <ClCompile Include="src\utility\file_watcher.cpp" />
+    <ClCompile Include="src\assets\asset_libraries.cpp" />
+    <ClCompile Include="src\assets\config\io.cpp" />
+    <ClCompile Include="src\assets\config\key_node.cpp" />
+    <ClCompile Include="src\assets\msh\flat_model.cpp" />
+    <ClCompile Include="src\assets\msh\scene_io.cpp" />
+    <ClCompile Include="src\assets\msh\validate_scene.cpp" />
+    <ClCompile Include="src\assets\odf\default_object_class_definition.cpp" />
+    <ClCompile Include="src\assets\odf\definition_io.cpp" />
+    <ClCompile Include="src\assets\odf\properties.cpp" />
+    <ClCompile Include="src\assets\option_file.cpp" />
+    <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
+    <ClCompile Include="src\assets\texture\texture.cpp" />
+    <ClCompile Include="src\assets\texture\texture_format.cpp" />
+    <ClCompile Include="src\assets\texture\texture_io.cpp" />
+    <ClCompile Include="src\assets\texture\texture_transforms.cpp" />
+    <ClCompile Include="src\graphics\camera.cpp" />
+    <ClCompile Include="src\graphics\frustum.cpp" />
+    <ClCompile Include="src\graphics\geometric_shapes.cpp" />
+    <ClCompile Include="src\graphics\light_clusters.cpp" />
+    <ClCompile Include="src\graphics\material.cpp" />
+    <ClCompile Include="src\graphics\model.cpp" />
+    <ClCompile Include="src\graphics\terrain.cpp" />
+    <ClCompile Include="src\output_stream.cpp" />
+    <ClCompile Include="src\utility\string_ops.cpp" />
+    <ClCompile Include="src\world\object_class.cpp" />
+    <ClCompile Include="src\world\io\load_effects.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\assets\config\io.hpp" />
+    <ClInclude Include="include\assets\config\key_node.hpp" />
+    <ClInclude Include="include\assets\config\values.hpp" />
+    <ClInclude Include="include\assets\msh\material.hpp" />
+    <ClInclude Include="include\assets\msh\scene.hpp" />
+    <ClInclude Include="include\assets\msh\scene_io.hpp" />
+    <ClInclude Include="include\assets\odf\definition.hpp" />
+    <ClInclude Include="include\assets\odf\definition_io.hpp" />
+    <ClInclude Include="include\assets\odf\properties.hpp" />
+    <ClInclude Include="include\assets\terrain\terrain.hpp" />
+    <ClInclude Include="include\assets\terrain\terrain_io.hpp" />
+    <ClInclude Include="include\utility\com_ptr.hpp" />
+    <ClInclude Include="include\container\dynamic_array_2d.hpp" />
+    <ClInclude Include="include\hresult_error.hpp" />
+    <ClInclude Include="include\exceptions.hpp" />
+    <ClInclude Include="include\graphics\bounding_box.hpp" />
+    <ClInclude Include="include\graphics\gpu_device.hpp" />
+    <ClInclude Include="include\graphics\model.hpp" />
+    <ClInclude Include="include\output_stream.hpp" />
+    <ClInclude Include="include\types.hpp" />
+    <ClInclude Include="include\ucfb\reader.hpp" />
+    <ClInclude Include="include\utility\binary_reader.hpp" />
+    <ClInclude Include="include\utility\enum_bitflags.hpp" />
+    <ClInclude Include="include\utility\make_from_bytes.hpp" />
+    <ClInclude Include="include\utility\make_range.hpp" />
+    <ClInclude Include="include\utility\read_file.hpp" />
+    <ClInclude Include="include\utility\srgb_conversion.hpp" />
+    <ClInclude Include="include\utility\string_ops.hpp" />
+    <ClInclude Include="include\world\ai_path_flags.hpp" />
+    <ClInclude Include="include\world\barrier.hpp" />
+    <ClInclude Include="include\world\boundary.hpp" />
+    <ClInclude Include="include\world\gamemode_description.hpp" />
+    <ClInclude Include="include\world\hintnode.hpp" />
+    <ClInclude Include="include\world\world_io.hpp" />
+    <ClInclude Include="include\world\layer_description.hpp" />
+    <ClInclude Include="include\world\light.hpp" />
+    <ClInclude Include="include\world\lighting_settings.hpp" />
+    <ClInclude Include="include\world\object.hpp" />
+    <ClInclude Include="include\world\path.hpp" />
+    <ClInclude Include="include\world\planning.hpp" />
+    <ClInclude Include="include\world\portal.hpp" />
+    <ClInclude Include="include\world\region.hpp" />
+    <ClInclude Include="include\world\sector.hpp" />
+    <ClInclude Include="include\world\terrain.hpp" />
+    <ClInclude Include="include\world\world.hpp" />
+    <ClInclude Include="src\allocators\aligned_allocator.hpp" />
+    <ClInclude Include="src\assets\asset_ref.hpp" />
+    <ClInclude Include="src\assets\asset_libraries.hpp" />
+    <ClInclude Include="src\assets\asset_stable_string.hpp" />
+    <ClInclude Include="src\assets\asset_state.hpp" />
+    <ClInclude Include="src\assets\asset_traits.hpp" />
+    <ClInclude Include="src\assets\config\io.hpp" />
+    <ClInclude Include="src\assets\config\key_node.hpp" />
+    <ClInclude Include="src\assets\config\values.hpp" />
+    <ClInclude Include="src\assets\msh\default_missing_scene.hpp" />
+    <ClInclude Include="src\assets\msh\flat_model.hpp" />
+    <ClInclude Include="src\assets\msh\flat_model_bvh.hpp" />
+    <ClInclude Include="src\assets\msh\flat_model_terrain_cut_bvh.hpp" />
+    <ClInclude Include="src\assets\msh\material.hpp" />
+    <ClInclude Include="src\assets\msh\mikktspace\mikktspace.h" />
+    <ClInclude Include="src\assets\msh\scene.hpp" />
+    <ClInclude Include="src\assets\msh\scene_io.hpp" />
+    <ClInclude Include="src\assets\msh\validate_scene.hpp" />
+    <ClInclude Include="src\assets\odf\default_object_class_definition.hpp" />
+    <ClInclude Include="src\assets\odf\definition.hpp" />
+    <ClInclude Include="src\assets\odf\definition_io.hpp" />
+    <ClInclude Include="src\assets\odf\properties.hpp" />
+    <ClInclude Include="src\assets\option_file.hpp" />
+    <ClInclude Include="src\assets\req\io.hpp" />
+    <ClInclude Include="src\assets\req\requirement_list.hpp" />
+    <ClInclude Include="src\assets\sky\io.hpp" />
+    <ClInclude Include="src\assets\sky\sky.hpp" />
+    <ClInclude Include="src\assets\terrain\dirty_rect_tracker.hpp" />
+    <ClInclude Include="src\assets\terrain\terrain.hpp" />
+    <ClInclude Include="src\assets\terrain\terrain_io.hpp" />
+    <ClInclude Include="src\assets\texture\save_env_map.hpp" />
+    <ClInclude Include="src\assets\texture\texture.hpp" />
+    <ClInclude Include="src\assets\texture\texture_format.hpp" />
+    <ClInclude Include="src\assets\texture\texture_io.hpp" />
+    <ClInclude Include="src\assets\texture\texture_transforms.hpp" />
+    <ClInclude Include="src\async\for_each.hpp" />
+    <ClInclude Include="src\async\get_all.hpp" />
+    <ClInclude Include="src\async\thread_pool.hpp" />
+    <ClInclude Include="src\async\wait_all.hpp" />
+    <ClInclude Include="src\commands.hpp" />
+    <ClInclude Include="src\container\dynamic_array_2d.hpp" />
+    <ClInclude Include="src\container\enum_array.hpp" />
+    <ClInclude Include="src\container\ring_set.hpp" />
+    <ClInclude Include="src\container\slim_bitset.hpp" />
+    <ClInclude Include="src\container\paged_stack.hpp" />
+    <ClInclude Include="src\edits\add_game_mode.hpp" />
+    <ClInclude Include="src\edits\add_layer.hpp" />
+    <ClInclude Include="src\edits\add_sector_object.hpp" />
+    <ClInclude Include="src\edits\add_world_req_list.hpp" />
+    <ClInclude Include="src\edits\bundle.hpp" />
+    <ClInclude Include="src\edits\creation_entity_set.hpp" />
+    <ClInclude Include="src\edits\delete_entity.hpp" />
+    <ClInclude Include="src\edits\delete_game_mode.hpp" />
+    <ClInclude Include="src\edits\delete_layer.hpp" />
+    <ClInclude Include="src\edits\delete_path_property.hpp" />
+    <ClInclude Include="src\edits\delete_sector_object.hpp" />
+    <ClInclude Include="src\edits\delete_sector_point.hpp" />
+    <ClInclude Include="src\edits\delete_world_req_list.hpp" />
+    <ClInclude Include="src\edits\edit.hpp" />
+    <ClInclude Include="src\edits\game_mode_link_layer.hpp" />
+    <ClInclude Include="src\edits\game_mode_unlink_layer.hpp" />
+    <ClInclude Include="src\edits\imgui_ext.hpp" />
+    <ClInclude Include="src\edits\insert_entity.hpp" />
+    <ClInclude Include="src\edits\insert_node.hpp" />
+    <ClInclude Include="src\edits\insert_point.hpp" />
+    <ClInclude Include="src\edits\add_property.hpp" />
+    <ClInclude Include="src\edits\set_terrain.hpp" />
+    <ClInclude Include="src\edits\set_terrain_area.hpp" />
+    <ClInclude Include="src\edits\set_value.hpp" />
+    <ClInclude Include="src\edits\stack.hpp" />
+    <ClInclude Include="src\edits\ui_action.hpp" />
+    <ClInclude Include="src\edits\add_world_req_entry.hpp" />
+    <ClInclude Include="src\edits\delete_world_req_entry.hpp" />
+    <ClInclude Include="src\gizmo.hpp" />
+    <ClInclude Include="src\graphics\ai_overlay_batches.hpp" />
+    <ClInclude Include="src\graphics\camera.hpp" />
+    <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp" />
+    <ClInclude Include="src\graphics\fallback_imgui_texture.hpp" />
+    <ClInclude Include="src\graphics\frustum.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\command_allocator_pool.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\descriptor_allocator.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\descriptor_heap.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\error.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\handle_packing.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\release_queue.hpp" />
+    <ClInclude Include="src\graphics\gpu\exception.hpp" />
+    <ClInclude Include="src\graphics\gpu\resource.hpp" />
+    <ClInclude Include="src\graphics\gpu\rhi.hpp" />
+    <ClInclude Include="src\graphics\imgui_renderer.hpp" />
+    <ClInclude Include="src\graphics\light_clusters.hpp" />
+    <ClInclude Include="src\graphics\material.hpp" />
+    <ClInclude Include="src\graphics\meta_draw_batcher.hpp" />
+    <ClInclude Include="src\graphics\model.hpp" />
+    <ClInclude Include="src\graphics\model_manager.hpp" />
+    <ClInclude Include="src\graphics\geometric_shapes.hpp" />
+    <ClInclude Include="src\graphics\cull_objects.hpp" />
+    <ClInclude Include="src\graphics\object_class_thumbnail.hpp" />
+    <ClInclude Include="src\graphics\pipeline_library.hpp" />
+    <ClInclude Include="src\graphics\profiler.hpp" />
+    <ClInclude Include="src\graphics\renderer.hpp" />
+    <ClInclude Include="src\graphics\root_signature_library.hpp" />
+    <ClInclude Include="src\graphics\sampler_list.hpp" />
+    <ClInclude Include="src\graphics\shaders\shader_def.hpp" />
+    <ClInclude Include="src\graphics\shader_library.hpp" />
+    <ClInclude Include="src\graphics\shader_list.hpp" />
+    <ClInclude Include="src\graphics\shadow_camera.hpp" />
+    <ClInclude Include="src\graphics\sky.hpp" />
+    <ClInclude Include="src\graphics\terrain.hpp" />
+    <ClInclude Include="src\graphics\texture_manager.hpp" />
+    <ClInclude Include="src\graphics\copy_command_list_pool.hpp" />
+    <ClInclude Include="src\graphics\thumbnail_manager.hpp" />
+    <ClInclude Include="src\graphics\ui_texture_manager.hpp" />
+    <ClInclude Include="src\graphics\water.hpp" />
+    <ClInclude Include="src\graphics\world_mesh_list.hpp" />
+    <ClInclude Include="src\hotkeys.hpp" />
+    <ClInclude Include="src\hotkeys_io.hpp" />
+    <ClInclude Include="src\imgui_ext.hpp" />
+    <ClInclude Include="src\io\memory_mapped_file.hpp" />
+    <ClInclude Include="src\key.hpp" />
+    <ClInclude Include="src\io\error.hpp" />
+    <ClInclude Include="src\io\output_file.hpp" />
+    <ClInclude Include="src\io\read_file.hpp" />
+    <ClInclude Include="src\lowercase_string.hpp" />
+    <ClInclude Include="src\math\align.hpp" />
+    <ClInclude Include="src\math\bounding_box.hpp" />
+    <ClInclude Include="src\math\intersectors.hpp" />
+    <ClInclude Include="src\math\matrix_funcs.hpp" />
+    <ClInclude Include="src\math\quaternion_funcs.hpp" />
+    <ClInclude Include="src\math\vector_funcs.hpp" />
+    <ClInclude Include="src\output_stream.hpp" />
+    <ClInclude Include="src\scale_factor.hpp" />
+    <ClInclude Include="src\settings\camera.hpp" />
+    <ClInclude Include="src\settings\graphics.hpp" />
+    <ClInclude Include="src\settings\io.hpp" />
+    <ClInclude Include="src\settings\preferences.hpp" />
+    <ClInclude Include="src\settings\settings.hpp" />
+    <ClInclude Include="src\settings\ui.hpp" />
+    <ClInclude Include="src\types.hpp" />
+    <ClInclude Include="src\ucfb\reader.hpp" />
+    <ClInclude Include="src\utility\binary_reader.hpp" />
+    <ClInclude Include="src\utility\command_line.hpp" />
+    <ClInclude Include="src\utility\com_ptr.hpp" />
+    <ClInclude Include="src\utility\enum_bitflags.hpp" />
+    <ClInclude Include="src\assets\msh\generate_tangents.hpp" />
+    <ClInclude Include="src\utility\event.hpp" />
+    <ClInclude Include="src\utility\event_listener.hpp" />
+    <ClInclude Include="src\utility\file_pickers.hpp" />
+    <ClInclude Include="src\utility\file_watcher.hpp" />
+    <ClInclude Include="src\utility\function_ptr.hpp" />
+    <ClInclude Include="src\utility\implementation_storage.hpp" />
+    <ClInclude Include="src\utility\look_for.hpp" />
+    <ClInclude Include="src\utility\make_from_bytes.hpp" />
+    <ClInclude Include="src\utility\make_range.hpp" />
+    <ClInclude Include="src\utility\os_execute.hpp" />
+    <ClInclude Include="src\utility\overload.hpp" />
+    <ClInclude Include="src\utility\show_in_explorer.hpp" />
+    <ClInclude Include="src\utility\srgb_conversion.hpp" />
+    <ClInclude Include="src\utility\string_icompare.hpp" />
+    <ClInclude Include="src\utility\string_ops.hpp" />
+    <ClInclude Include="src\utility\stopwatch.hpp" />
+    <ClInclude Include="src\world\active_elements.hpp" />
+    <ClInclude Include="src\world\ai_path_flags.hpp" />
+    <ClInclude Include="src\world\barrier.hpp" />
+    <ClInclude Include="src\world\boundary.hpp" />
+    <ClInclude Include="src\world\effects.hpp" />
+    <ClInclude Include="src\world\id.hpp" />
+    <ClInclude Include="src\world\game_mode_description.hpp" />
+    <ClInclude Include="src\world\hintnode.hpp" />
+    <ClInclude Include="src\world\io\load.hpp" />
+    <ClInclude Include="src\world\io\save.hpp" />
+    <ClInclude Include="src\world\layer_description.hpp" />
+    <ClInclude Include="src\world\light.hpp" />
+    <ClInclude Include="src\world\global_lights.hpp" />
+    <ClInclude Include="src\world\measurement.hpp" />
+    <ClInclude Include="src\world\object.hpp" />
+    <ClInclude Include="src\world\object_class.hpp" />
+    <ClInclude Include="src\world\object_class_library.hpp" />
+    <ClInclude Include="src\world\object_instance_property.hpp" />
+    <ClInclude Include="src\world\path.hpp" />
+    <ClInclude Include="src\world\planning.hpp" />
+    <ClInclude Include="src\world\portal.hpp" />
+    <ClInclude Include="src\world\region.hpp" />
+    <ClInclude Include="src\world\requirement_list.hpp" />
+    <ClInclude Include="src\world\sector.hpp" />
+    <ClInclude Include="src\world\interaction_context.hpp" />
+    <ClInclude Include="src\world\terrain.hpp" />
+    <ClInclude Include="src\world\tool_visualizers.hpp" />
+    <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
+    <ClInclude Include="src\world\utility\grounding.hpp" />
+    <ClInclude Include="src\world\utility\load_terrain_brush.hpp" />
+    <ClInclude Include="src\world\utility\load_terrain_map.hpp" />
+    <ClInclude Include="src\world\utility\make_command_post_linked_entities.hpp" />
+    <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
+    <ClInclude Include="src\world\utility\object_properties.hpp" />
+    <ClInclude Include="src\world\utility\path_properties.hpp" />
+    <ClInclude Include="src\world\utility\raycast.hpp" />
+    <ClInclude Include="src\world\utility\mouse_pick_measurement.hpp" />
+    <ClInclude Include="src\world\utility\raycast_terrain.hpp" />
+    <ClInclude Include="src\world\utility\region_properties.hpp" />
+    <ClInclude Include="src\world\utility\sector_fill.hpp" />
+    <ClInclude Include="src\world\utility\selection_bbox.hpp" />
+    <ClInclude Include="src\world\utility\selection_centre.hpp" />
+    <ClInclude Include="src\world\utility\snapping.hpp" />
+    <ClInclude Include="src\world\utility\terrain_cut.hpp" />
+    <ClInclude Include="src\world\utility\world_utilities.hpp" />
+    <ClInclude Include="src\world\world.hpp" />
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="third_party\imgui\imconfig.h" />
+    <ClInclude Include="third_party\imgui\imgui.h" />
+    <ClInclude Include="third_party\imgui\imgui_internal.h" />
+    <ClInclude Include="third_party\imgui\imstb_rectpack.h" />
+    <ClInclude Include="third_party\imgui\imstb_textedit.h" />
+    <ClInclude Include="third_party\imgui\imstb_truetype.h" />
+    <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h" />
+    <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h" />
+    <ClInclude Include="src\world\io\load_failure.hpp" />
+    <ClInclude Include="src\world\io\load_effects.hpp" />
+  </ItemGroup>
+  <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
+    <None Include="third_party\licenses\vcpkg.json" />
   </ItemGroup>
 </Project>

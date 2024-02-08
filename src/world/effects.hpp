@@ -9,44 +9,42 @@
 namespace we::world {
 
 // Properties in the world .fx file commonly vary based on platform. But not always. These macros assist in defining
-// members in our structs that can optionally vary per-platform. If these really bother you then you can easilly run
+// members in our structs that can optionally vary per-platform. If these really bother you then you can easily run
 // this file through the compiler with /P set and get a version without the macros.
 
 // The macros are undefined at the end of this scope and do not escape the file.
 
 #define PLATFORMED_VAR(type, name, ...)                                        \
-   bool per_platform_##name = false;                                           \
-   type pc_##name = __VA_ARGS__;                                               \
-   type ps2_##name = __VA_ARGS__;                                              \
-   type xbox_##name = __VA_ARGS__;
+   bool name##_per_platform = false;                                           \
+   type name##_pc = __VA_ARGS__;                                               \
+   type name##_ps2 = __VA_ARGS__;                                              \
+   type name##_xbox = __VA_ARGS__;
 
 #define PLATFORMED_PC_XB_VAR(type, name, ...)                                  \
-   bool per_platform_##name = false;                                           \
-   type pc_##name = __VA_ARGS__;                                               \
-   type xbox_##name = __VA_ARGS__;
+   bool name##_per_platform = false;                                           \
+   type name##_pc = __VA_ARGS__;                                               \
+   type name##_xbox = __VA_ARGS__;
 
 enum class precipitation_type { streaks, quads };
 
 struct color_control {
    PLATFORMED_VAR(bool, enable, false);
 
-   PLATFORMED_VAR(float, gamma_brightness, 0.5f);
+   PLATFORMED_PC_XB_VAR(float, gamma_brightness, 0.5f);
 
-   PLATFORMED_VAR(float, gamma_color_balance, 0.5f);
+   PLATFORMED_PC_XB_VAR(float, gamma_color_balance, 0.5f);
 
-   PLATFORMED_VAR(float, gamma_contrast, 0.5f);
+   PLATFORMED_PC_XB_VAR(float, gamma_contrast, 0.5f);
 
-   PLATFORMED_VAR(float, gamma_correction, 0.5f);
+   PLATFORMED_PC_XB_VAR(float, gamma_correction, 0.5f);
 
-   PLATFORMED_VAR(float, gamma_hue, 0.5f);
+   PLATFORMED_PC_XB_VAR(float, gamma_hue, 0.5f);
 
    PLATFORMED_VAR(float, world_brightness, 0.5f);
 
    PLATFORMED_VAR(float, world_contrast, 0.5f);
 
    PLATFORMED_VAR(float, world_saturation, 0.5f);
-
-   bool operator==(const color_control&) const noexcept = default;
 };
 
 struct fog_cloud {
@@ -67,8 +65,6 @@ struct fog_cloud {
    PLATFORMED_VAR(float, particle_size, 28.0f);
 
    PLATFORMED_VAR(float, particle_density, 60.0f);
-
-   bool operator==(const fog_cloud&) const noexcept = default;
 };
 
 struct wind {
@@ -79,8 +75,6 @@ struct wind {
    PLATFORMED_VAR(float, velocity_range, 1.0f);
 
    PLATFORMED_VAR(float, velocity_change_rate, 0.2f);
-
-   bool operator==(const wind&) const noexcept = default;
 };
 
 struct precipitation {
@@ -138,15 +132,16 @@ struct lightning {
 
    PLATFORMED_VAR(float2, time_between_sub_flashes_min_max, {0.01f, 0.5f});
 
-   PLATFORMED_VAR((std::array<int32, 2>), num_sub_flashes_min_max, {2, 5});
+   bool num_sub_flashes_min_max_per_platform = false;
+   std::array<int32, 2> num_sub_flashes_min_max_pc = {2, 5};
+   std::array<int32, 2> num_sub_flashes_min_max_ps2 = {2, 5};
+   std::array<int32, 2> num_sub_flashes_min_max_xbox = {2, 5};
 
    PLATFORMED_VAR(float2, horizon_angle_min_max, {30.0f, 60.0f});
 
    PLATFORMED_VAR(std::string, sound_crack, "kam_amb_thunder");
 
    PLATFORMED_VAR(std::string, sound_sub_crack, "kam_amb_thundersub");
-
-   bool operator==(const lightning&) const noexcept = default;
 };
 
 struct lightning_bolt {
@@ -187,8 +182,6 @@ struct lightning_bolt {
 
    PLATFORMED_VAR(float4, child_color,
                   {255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 150.0f / 255.0f});
-
-   bool operator==(const lightning_bolt&) const noexcept = default;
 };
 
 struct water {
@@ -204,7 +197,10 @@ struct water {
 
    PLATFORMED_VAR(bool, disable_low_res, false);
 
-   PLATFORMED_VAR((std::array<int32, 2>), patch_divisions, {4, 4});
+   bool patch_divisions_per_platform = false;
+   std::array<int32, 2> patch_divisions_pc = {4, 4};
+   std::array<int32, 2> patch_divisions_ps2 = {4, 4};
+   std::array<int32, 2> patch_divisions_xbox = {4, 4};
 
    PLATFORMED_VAR(float4, water_ring_color,
                   float4{148.0f / 255.0f, 170.0f / 255.0f, 192.0f / 255.0f,
@@ -288,8 +284,6 @@ struct water {
    float2 ps2_speckle_scroll_speed = {0.0f, 0.0f};
    float2 ps2_speckle_coord_shift = {5.0f, 5.0f};
    float2 ps2_light_azim_and_elev = {1.0f, 0.0f};
-
-   bool operator==(const water&) const noexcept = default;
 };
 
 struct godray {
@@ -322,8 +316,6 @@ struct godray {
    PLATFORMED_VAR(float3, texture_velocity, {1.0f, -0.1f, 1.0f});
 
    PLATFORMED_VAR(float, texture_jitter_speed, 0.05f);
-
-   bool operator==(const godray&) const noexcept = default;
 };
 
 struct heat_shimmer {
@@ -398,8 +390,6 @@ struct world_shadow_map {
    PLATFORMED_VAR(float2, animation_amplitude0, {2.0f, 0.0f});
 
    PLATFORMED_VAR(float2, animation_amplitude1, {0.05f, -0.1f});
-
-   bool operator==(const world_shadow_map&) const noexcept = default;
 };
 
 struct blur {
@@ -412,20 +402,14 @@ struct blur {
    PLATFORMED_VAR(float2, min_max_depth, {0.0f, 1.0f}); // Save if != {0, 1}
 
    PLATFORMED_VAR(int, mode, 0); // Save if != 0
-
-   bool operator==(const blur&) const noexcept = default;
 };
 
 struct motion_blur {
    PLATFORMED_VAR(bool, enable, true);
-
-   bool operator==(const motion_blur&) const noexcept = default;
 };
 
 struct scope_blur {
    PLATFORMED_VAR(bool, enable, true);
-
-   bool operator==(const scope_blur&) const noexcept = default;
 };
 
 struct hdr {
@@ -440,8 +424,6 @@ struct hdr {
    PLATFORMED_VAR(float, glow_threshold, 0.5f);
 
    PLATFORMED_VAR(float, glow_factor, 1.0f);
-
-   bool operator==(const hdr&) const noexcept = default;
 };
 
 struct shadow {
@@ -450,8 +432,6 @@ struct shadow {
    PLATFORMED_VAR(bool, blur_enable, false);
 
    PLATFORMED_VAR(float, intensity, 0.1f);
-
-   bool operator==(const shadow&) const noexcept = default;
 };
 
 struct sun_flare {
@@ -486,8 +466,6 @@ struct sun_flare {
                   {230.0f / 255.0f, 230.0f / 0.0f, 255.0f / 128.0f});
 
    PLATFORMED_VAR(float, spike_size, 20.0f);
-
-   bool operator==(const sun_flare&) const noexcept = default;
 };
 
 struct effects {
@@ -524,8 +502,6 @@ struct effects {
    shadow shadow;
 
    std::vector<sun_flare> sun_flares;
-
-   bool operator==(const effects&) const noexcept = default;
 };
 
 #undef PLATFORMED_VAR

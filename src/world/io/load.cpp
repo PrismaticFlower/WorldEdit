@@ -4,6 +4,7 @@
 #include "assets/req/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
 #include "io/read_file.hpp"
+#include "load_failure.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/stopwatch.hpp"
 #include "utility/string_icompare.hpp"
