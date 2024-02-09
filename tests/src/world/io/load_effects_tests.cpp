@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "math/vector_funcs.hpp"
 #include "world/io/load_effects.hpp"
 
 #include <bit>
@@ -102,6 +103,63 @@ Effect("ColorControl")
    CHECK(loaded.world_saturation_ps2 == 0.75f);
 
    CHECK(loaded.world_saturation_xbox == 0.65f);
+}
+
+TEST_CASE("world load effects fog cloud", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx_color_control = R"(
+Effect("FogCloud")
+{
+	Enable(1);
+	Texture("cloud");
+	Range(35.0, 110.0);
+	Color(168, 172, 180, 128);
+	Velocity(5.0, 0.0);
+	Rotation(0.1);
+	Height(24.0);
+	ParticleSize(32.0);
+	ParticleDensity(100.0);
+})"sv;
+
+   fog_cloud loaded = load_effects(world_fx_color_control, output).fog_cloud;
+
+   CHECK(not loaded.enable_per_platform);
+
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.texture_per_platform);
+
+   CHECK(loaded.texture_pc == "cloud");
+
+   CHECK(not loaded.range_per_platform);
+
+   CHECK(loaded.range_pc == float2{35.0f, 110.0f});
+
+   CHECK(not loaded.color_per_platform);
+
+   CHECK(loaded.color_pc == float4{168.0f, 172.0f, 180.0f, 128.0f} / 255.0f);
+
+   CHECK(not loaded.velocity_per_platform);
+
+   CHECK(loaded.velocity_pc == float2{5.0f, 0.0f});
+
+   CHECK(not loaded.rotation_per_platform);
+
+   CHECK(loaded.rotation_pc == 0.1f);
+
+   CHECK(not loaded.height_per_platform);
+
+   CHECK(loaded.height_pc == 24.0f);
+
+   CHECK(not loaded.particle_size_per_platform);
+
+   CHECK(loaded.particle_size_pc == 32.0f);
+
+   CHECK(not loaded.particle_density_per_platform);
+
+   CHECK(loaded.particle_density_pc == 100.0f);
 }
 
 }
