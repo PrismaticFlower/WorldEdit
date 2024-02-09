@@ -109,7 +109,7 @@ TEST_CASE("world load effects fog cloud", "[World][IO]")
 {
    null_output_stream output;
 
-   const std::string_view world_fx_color_control = R"(
+   const std::string_view world_fx = R"(
 Effect("FogCloud")
 {
 	Enable(1);
@@ -123,7 +123,7 @@ Effect("FogCloud")
 	ParticleDensity(100.0);
 })"sv;
 
-   fog_cloud loaded = load_effects(world_fx_color_control, output).fog_cloud;
+   fog_cloud loaded = load_effects(world_fx, output).fog_cloud;
 
    CHECK(not loaded.enable_per_platform);
 
@@ -160,6 +160,39 @@ Effect("FogCloud")
    CHECK(not loaded.particle_density_per_platform);
 
    CHECK(loaded.particle_density_pc == 100.0f);
+}
+
+TEST_CASE("world load effects wind", "[World][IO]")
+{
+
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Wind")
+{
+	Enable(1);
+	Velocity(3.0, 0.6);
+	VelocityRange(0.75);
+	VelocityChangeRate(0.2);
+})"sv;
+
+   wind loaded = load_effects(world_fx, output).wind;
+
+   CHECK(not loaded.enable_per_platform);
+
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.velocity_per_platform);
+
+   CHECK(loaded.velocity_pc == float2{3.0f, 0.6f});
+
+   CHECK(not loaded.velocity_range_per_platform);
+
+   CHECK(loaded.velocity_range_pc == 0.75f);
+
+   CHECK(not loaded.velocity_change_rate_per_platform);
+
+   CHECK(loaded.velocity_change_rate_pc == 0.2f);
 }
 
 }

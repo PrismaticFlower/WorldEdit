@@ -259,6 +259,23 @@ auto read_fog_cloud(assets::config::node& node) -> fog_cloud
    return cloud;
 }
 
+auto read_wind(assets::config::node& node) -> wind
+{
+
+   wind wind;
+
+   const property properties[] = {
+      {"Enable"sv, UNPACK_VAR(wind, enable)},
+      {"Velocity"sv, UNPACK_VAR(wind, velocity)},
+      {"VelocityRange"sv, UNPACK_VAR(wind, velocity_range)},
+      {"VelocityChangeRate"sv, UNPACK_VAR(wind, velocity_change_rate)},
+   };
+
+   read_node(node, properties);
+
+   return wind;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -276,6 +293,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "FogCloud"sv)) {
                effects.fog_cloud = read_fog_cloud(key_node);
+            }
+            else if (string::iequals(effect, "Wind"sv)) {
+               effects.wind = read_wind(key_node);
             }
             else {
                throw load_failure{
