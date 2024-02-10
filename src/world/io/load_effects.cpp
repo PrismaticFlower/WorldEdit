@@ -25,6 +25,16 @@ void read_bool(const assets::config::values& values, void* pc_value,
    if (xbox_value) *static_cast<bool*>(xbox_value) = value;
 }
 
+void read_int32(const assets::config::values& values, void* pc_value,
+                void* ps2_value, void* xbox_value)
+{
+   const int32 value = values.get<int32>(0);
+
+   if (pc_value) *static_cast<int32*>(pc_value) = value;
+   if (ps2_value) *static_cast<int32*>(ps2_value) = value;
+   if (xbox_value) *static_cast<int32*>(xbox_value) = value;
+}
+
 void read_float(const assets::config::values& values, void* pc_value,
                 void* ps2_value, void* xbox_value)
 {
@@ -43,6 +53,17 @@ void read_float2(const assets::config::values& values, void* pc_value,
    if (pc_value) *static_cast<float2*>(pc_value) = value;
    if (ps2_value) *static_cast<float2*>(ps2_value) = value;
    if (xbox_value) *static_cast<float2*>(xbox_value) = value;
+}
+
+void read_color3(const assets::config::values& values, void* pc_value,
+                 void* ps2_value, void* xbox_value)
+{
+   const float3 value =
+      float3{values.get<float>(0), values.get<float>(1), values.get<float>(2)} / 255.0f;
+
+   if (pc_value) *static_cast<float3*>(pc_value) = value;
+   if (ps2_value) *static_cast<float3*>(ps2_value) = value;
+   if (xbox_value) *static_cast<float3*>(xbox_value) = value;
 }
 
 void read_color4(const assets::config::values& values, void* pc_value,
@@ -67,6 +88,28 @@ void read_string(const assets::config::values& values, void* pc_value,
    if (xbox_value) *static_cast<std::string*>(xbox_value) = value;
 }
 
+void read_precipitation_type(const assets::config::values& values,
+                             void* pc_value, void* ps2_value, void* xbox_value)
+{
+   const std::string_view value = values.get<std::string_view>(0);
+
+   precipitation_type type{};
+
+   if (string::iequals(value, "streaks"sv)) {
+      type = precipitation_type::streaks;
+   }
+   else if (string::iequals(value, "quads"sv)) {
+      type = precipitation_type::quads;
+   }
+   else {
+      throw load_failure{fmt::format("Invalid Precipitation Type: '{}'", value)};
+   }
+
+   if (pc_value) *static_cast<precipitation_type*>(pc_value) = type;
+   if (ps2_value) *static_cast<precipitation_type*>(ps2_value) = type;
+   if (xbox_value) *static_cast<precipitation_type*>(xbox_value) = type;
+}
+
 struct color_property_t {};
 
 struct property {
@@ -75,6 +118,17 @@ struct property {
       : name{name},
         per_platform_value{per_platform_value},
         read_value{read_bool},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, bool* per_platform_value, int32* pc_value,
+            int32* ps2_value, int32* xbox_value)
+      : name{name},
+        per_platform_value{per_platform_value},
+        read_value{read_int32},
         pc_value{pc_value},
         ps2_value{ps2_value},
         xbox_value{xbox_value}
@@ -104,6 +158,17 @@ struct property {
    }
 
    property(std::string_view name, color_property_t, bool* per_platform_value,
+            float3* pc_value, float3* ps2_value, float3* xbox_value)
+      : name{name},
+        read_value{read_color3},
+        per_platform_value{per_platform_value},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, color_property_t, bool* per_platform_value,
             float4* pc_value, float4* ps2_value, float4* xbox_value)
       : name{name},
         read_value{read_color4},
@@ -118,6 +183,17 @@ struct property {
             std::string* pc_value, std::string* ps2_value, std::string* xbox_value)
       : name{name},
         read_value{read_string},
+        per_platform_value{per_platform_value},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, bool* per_platform_value, precipitation_type* pc_value,
+            precipitation_type* ps2_value, precipitation_type* xbox_value)
+      : name{name},
+        read_value{read_precipitation_type},
         per_platform_value{per_platform_value},
         pc_value{pc_value},
         ps2_value{ps2_value},
@@ -276,6 +352,39 @@ auto read_wind(assets::config::node& node) -> wind
    return wind;
 }
 
+auto read_precipitation(assets::config::node& node) -> precipitation
+{
+
+   precipitation precipitation;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(precipitation, enable)},
+      {"Type"sv, UNPACK_VAR(precipitation, type)},
+      {"Texture"sv, UNPACK_VAR(precipitation, texture)},
+      {"Range"sv, UNPACK_VAR(precipitation, range)},
+      {"Color"sv, color_property_t{}, UNPACK_VAR(precipitation, color)},
+      {"VelocityRange"sv, UNPACK_VAR(precipitation, velocity_range)},
+      {"ParticleDensityRange"sv, UNPACK_VAR(precipitation, particle_density_range)},
+      {"CameraCrossVelocityScale"sv, UNPACK_VAR(precipitation, camera_cross_velocity_scale)},
+      {"CameraAxialVelocityScale"sv, UNPACK_VAR(precipitation, camera_axial_velocity_scale)},
+      {"GroundEffect"sv, UNPACK_VAR(precipitation, ground_effect)},
+      {"GroundEffectSpread"sv, UNPACK_VAR(precipitation, ground_effect_spread)},
+      {"ParticleDensity"sv, UNPACK_VAR(precipitation, particle_density)},
+      {"Velocity"sv, UNPACK_VAR(precipitation, velocity)},
+      {"StreakLength"sv, UNPACK_VAR(precipitation, streak_length)},
+      {"GroundEffectsPerSec"sv, UNPACK_VAR(precipitation, ground_effects_per_sec)},
+      {"AlphaMinMax"sv, UNPACK_VAR(precipitation, alpha_min_max)},
+      {"ParticleSize"sv, UNPACK_VAR(precipitation, particle_size)},
+      {"RotationRange"sv, UNPACK_VAR(precipitation, rotation_range)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return precipitation;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -296,6 +405,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "Wind"sv)) {
                effects.wind = read_wind(key_node);
+            }
+            else if (string::iequals(effect, "Precipitation"sv)) {
+               effects.precipitation = read_precipitation(key_node);
             }
             else {
                throw load_failure{
