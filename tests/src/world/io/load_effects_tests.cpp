@@ -333,4 +333,76 @@ Effect("Precipitation")
    CHECK(loaded.rotation_range_pc == 25.0f);
 }
 
+TEST_CASE("world load effects lightning", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Lightning")
+{
+	Enable(1);
+	Color(220, 220, 255);
+	SunlightFadeFactor(0.2);
+	SkyDomeDarkenFactor(0.3);
+	BrightnessMin(0.7);
+	FadeTime(0.3);
+	TimeBetweenFlashesMinMax(2.0, 4.0);
+	TimeBetweenSubFlashesMinMax(0.02, 0.7);
+	NumSubFlashesMinMax(1, 8);
+	HorizonAngleMinMax(20, 80);
+	SoundCrack("test_amb_thunder");
+	SoundSubCrack("test_amb_thundersub");
+})"sv;
+
+   lightning loaded = load_effects(world_fx, output).lightning;
+
+   CHECK(not loaded.enable_per_platform);
+
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.color_per_platform);
+
+   CHECK(loaded.color_pc == float3{220.0f, 220.0f, 255.0f} / 255.0f);
+
+   CHECK(not loaded.sunlight_fade_factor_per_platform);
+
+   CHECK(loaded.sunlight_fade_factor_pc == 0.2f);
+
+   CHECK(not loaded.sky_dome_darken_factor_per_platform);
+
+   CHECK(loaded.sky_dome_darken_factor_pc == 0.3f);
+
+   CHECK(not loaded.brightness_min_per_platform);
+
+   CHECK(loaded.brightness_min_pc == 0.7f);
+
+   CHECK(not loaded.fade_time_per_platform);
+
+   CHECK(loaded.fade_time_pc == 0.3f);
+
+   CHECK(not loaded.time_between_flashes_min_max_per_platform);
+
+   CHECK(loaded.time_between_flashes_min_max_pc == float2{2.0f, 4.0f});
+
+   CHECK(not loaded.time_between_sub_flashes_min_max_per_platform);
+
+   CHECK(loaded.time_between_sub_flashes_min_max_pc == float2{0.02f, 0.7f});
+
+   CHECK(not loaded.num_sub_flashes_min_max_per_platform);
+
+   CHECK(loaded.num_sub_flashes_min_max_pc == std::array{1, 8});
+
+   CHECK(not loaded.horizon_angle_min_max_per_platform);
+
+   CHECK(loaded.horizon_angle_min_max_pc == std::array{20, 80});
+
+   CHECK(not loaded.sound_crack_per_platform);
+
+   CHECK(loaded.sound_crack_pc == "test_amb_thunder");
+
+   CHECK(not loaded.sound_sub_crack_per_platform);
+
+   CHECK(loaded.sound_sub_crack_pc == "test_amb_thundersub");
+}
+
 }

@@ -35,6 +35,16 @@ void read_int32(const assets::config::values& values, void* pc_value,
    if (xbox_value) *static_cast<int32*>(xbox_value) = value;
 }
 
+void read_int32_2(const assets::config::values& values, void* pc_value,
+                  void* ps2_value, void* xbox_value)
+{
+   const std::array<int32, 2> value = {values.get<int32>(0), values.get<int32>(1)};
+
+   if (pc_value) *static_cast<std::array<int32, 2>*>(pc_value) = value;
+   if (ps2_value) *static_cast<std::array<int32, 2>*>(ps2_value) = value;
+   if (xbox_value) *static_cast<std::array<int32, 2>*>(xbox_value) = value;
+}
+
 void read_float(const assets::config::values& values, void* pc_value,
                 void* ps2_value, void* xbox_value)
 {
@@ -129,6 +139,18 @@ struct property {
       : name{name},
         per_platform_value{per_platform_value},
         read_value{read_int32},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, bool* per_platform_value,
+            std::array<int32, 2>* pc_value, std::array<int32, 2>* ps2_value,
+            std::array<int32, 2>* xbox_value)
+      : name{name},
+        per_platform_value{per_platform_value},
+        read_value{read_int32_2},
         pc_value{pc_value},
         ps2_value{ps2_value},
         xbox_value{xbox_value}
@@ -385,6 +407,33 @@ auto read_precipitation(assets::config::node& node) -> precipitation
    return precipitation;
 }
 
+auto read_lightning(assets::config::node& node) -> lightning
+{
+
+   lightning lightning;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(lightning, enable)},
+      {"Color"sv, color_property_t{}, UNPACK_VAR(lightning, color)},
+      {"SunlightFadeFactor"sv, UNPACK_VAR(lightning, sunlight_fade_factor)},
+      {"SkyDomeDarkenFactor"sv, UNPACK_VAR(lightning, sky_dome_darken_factor)},
+      {"BrightnessMin"sv, UNPACK_VAR(lightning, brightness_min)},
+      {"FadeTime"sv, UNPACK_VAR(lightning, fade_time)},
+      {"TimeBetweenFlashesMinMax"sv, UNPACK_VAR(lightning, time_between_flashes_min_max)},
+      {"TimeBetweenSubFlashesMinMax"sv, UNPACK_VAR(lightning, time_between_sub_flashes_min_max)},
+      {"NumSubFlashesMinMax"sv, UNPACK_VAR(lightning, num_sub_flashes_min_max)},
+      {"HorizonAngleMinMax"sv, UNPACK_VAR(lightning, horizon_angle_min_max)},
+      {"SoundCrack"sv, UNPACK_VAR(lightning, sound_crack)},
+      {"SoundSubCrack"sv, UNPACK_VAR(lightning, sound_sub_crack)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return lightning;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -408,6 +457,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "Precipitation"sv)) {
                effects.precipitation = read_precipitation(key_node);
+            }
+            else if (string::iequals(effect, "Lightning"sv)) {
+               effects.lightning = read_lightning(key_node);
             }
             else {
                throw load_failure{

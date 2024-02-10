@@ -137,7 +137,10 @@ struct lightning {
    std::array<int32, 2> num_sub_flashes_min_max_ps2 = {2, 5};
    std::array<int32, 2> num_sub_flashes_min_max_xbox = {2, 5};
 
-   PLATFORMED_VAR(float2, horizon_angle_min_max, {30.0f, 60.0f});
+   bool horizon_angle_min_max_per_platform = false;
+   std::array<int32, 2> horizon_angle_min_max_pc = {30, 60};
+   std::array<int32, 2> horizon_angle_min_max_ps2 = {30, 60};
+   std::array<int32, 2> horizon_angle_min_max_xbox = {30, 60};
 
    PLATFORMED_VAR(std::string, sound_crack, "kam_amb_thunder");
 
