@@ -405,4 +405,90 @@ Effect("Lightning")
    CHECK(loaded.sound_sub_crack_pc == "test_amb_thundersub");
 }
 
+TEST_CASE("world load effects lightning bolt", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+LightningBolt("skybolt")
+{
+	Texture("lightning2");
+	Width(10.0);
+	FadeTime(0.25);
+	BreakDistance(30.0);
+	TextureSize(40.0);
+	SpreadFactor(30.0);
+	MaxBranches(3.0);
+	BranchFactor(0.75);
+	BranchSpreadFactor(16);
+	BranchLength(160.0);
+	InterpolationSpeed(0.7);
+	NumChildren(3);
+	ChildBreakDistance(5.0);
+	ChildTextureSize(4.0);
+	ChildWidth(2.0);
+	ChildSpreadFactor(20.0);
+	Color(200, 200, 255, 255);
+	ChildColor(200, 200, 255, 150);
+})"sv;
+
+   lightning_bolt loaded = load_effects(world_fx, output).lightning_bolt;
+
+   CHECK(not loaded.texture_per_platform);
+   CHECK(loaded.texture_pc == "lightning2");
+
+   CHECK(not loaded.width_per_platform);
+   CHECK(loaded.width_pc == 10.0f);
+
+   CHECK(not loaded.fade_time_per_platform);
+   CHECK(loaded.fade_time_pc == 0.25f);
+
+   CHECK(not loaded.break_distance_per_platform);
+   CHECK(loaded.break_distance_pc == 30.0f);
+
+   CHECK(not loaded.texture_size_per_platform);
+   CHECK(loaded.texture_size_pc == 40.0f);
+
+   CHECK(not loaded.spread_factor_per_platform);
+   CHECK(loaded.spread_factor_pc == 30.0f);
+
+   CHECK(not loaded.max_branches_per_platform);
+   CHECK(loaded.max_branches_pc == 3.0f);
+
+   CHECK(not loaded.branch_factor_per_platform);
+   CHECK(loaded.branch_factor_pc == 0.75f);
+
+   CHECK(not loaded.branch_spread_factor_per_platform);
+   CHECK(loaded.branch_spread_factor_pc == 16.0f);
+
+   CHECK(not loaded.branch_length_per_platform);
+   CHECK(loaded.branch_length_pc == 160.0f);
+
+   CHECK(not loaded.interpolation_speed_per_platform);
+   CHECK(loaded.interpolation_speed_pc == 0.7f);
+
+   CHECK(not loaded.num_children_per_platform);
+   CHECK(loaded.num_children_pc == 3);
+
+   CHECK(not loaded.child_break_distance_per_platform);
+   CHECK(loaded.child_break_distance_pc == 5.0f);
+
+   CHECK(not loaded.child_texture_size_per_platform);
+   CHECK(loaded.child_texture_size_pc == 4.0f);
+
+   CHECK(not loaded.child_width_per_platform);
+   CHECK(loaded.child_width_pc == 2.0f);
+
+   CHECK(not loaded.child_spread_factor_per_platform);
+   CHECK(loaded.child_spread_factor_pc == 20.0f);
+
+   CHECK(not loaded.child_spread_factor_per_platform);
+   CHECK(loaded.child_spread_factor_pc == 20.0f);
+
+   CHECK(not loaded.color_per_platform);
+   CHECK(loaded.color_pc == float4{200.0f, 200.0f, 255.0f, 255.0f} / 255.0f);
+
+   CHECK(not loaded.child_color_per_platform);
+   CHECK(loaded.child_color_pc == float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f);
+}
 }

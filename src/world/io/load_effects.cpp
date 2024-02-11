@@ -434,6 +434,39 @@ auto read_lightning(assets::config::node& node) -> lightning
    return lightning;
 }
 
+auto read_lightning_bolt(assets::config::node& node) -> lightning_bolt
+{
+
+   lightning_bolt bolt;
+
+   const property properties[] = {
+      // clang-format off
+      {"Texture"sv, UNPACK_VAR(bolt, texture)},
+      {"Width"sv, UNPACK_VAR(bolt, width)},
+      {"FadeTime"sv, UNPACK_VAR(bolt, fade_time)},
+      {"BreakDistance"sv, UNPACK_VAR(bolt, break_distance)},
+      {"TextureSize"sv, UNPACK_VAR(bolt, texture_size)},
+      {"SpreadFactor"sv, UNPACK_VAR(bolt, spread_factor)},
+      {"MaxBranches"sv, UNPACK_VAR(bolt, max_branches)},
+      {"BranchFactor"sv, UNPACK_VAR(bolt, branch_factor)},
+      {"BranchSpreadFactor"sv, UNPACK_VAR(bolt, branch_spread_factor)},
+      {"BranchLength"sv, UNPACK_VAR(bolt, branch_length)},
+      {"InterpolationSpeed"sv, UNPACK_VAR(bolt, interpolation_speed)},
+      {"NumChildren"sv, UNPACK_VAR(bolt, num_children)},
+      {"ChildBreakDistance"sv, UNPACK_VAR(bolt, child_break_distance)},
+      {"ChildTextureSize"sv, UNPACK_VAR(bolt, child_texture_size)},
+      {"ChildWidth"sv, UNPACK_VAR(bolt, child_width)},
+      {"ChildSpreadFactor"sv, UNPACK_VAR(bolt, child_spread_factor)},
+      {"Color"sv, color_property_t{}, UNPACK_VAR(bolt, color)},
+      {"ChildColor"sv, color_property_t{}, UNPACK_VAR(bolt, child_color)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return bolt;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -464,6 +497,13 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             else {
                throw load_failure{
                   fmt::format("Unknown Effect ('{}') in world effects file.", effect)};
+            }
+         }
+         else if (string::iequals(key_node.key, "LightningBolt"sv)) {
+            const std::string_view effect = key_node.values.get<std::string_view>(0);
+
+            if (string::iequals(effect, "skybolt"sv)) {
+               effects.lightning_bolt = read_lightning_bolt(key_node);
             }
          }
          else {
