@@ -25,6 +25,14 @@ void read_bool(const assets::config::values& values, void* pc_value,
    if (xbox_value) *static_cast<bool*>(xbox_value) = value;
 }
 
+void read_bool_tag([[maybe_unused]] const assets::config::values& values,
+                   void* pc_value, void* ps2_value, void* xbox_value)
+{
+   if (pc_value) *static_cast<bool*>(pc_value) = true;
+   if (ps2_value) *static_cast<bool*>(ps2_value) = true;
+   if (xbox_value) *static_cast<bool*>(xbox_value) = true;
+}
+
 void read_int32(const assets::config::values& values, void* pc_value,
                 void* ps2_value, void* xbox_value)
 {
@@ -120,7 +128,23 @@ void read_precipitation_type(const assets::config::values& values,
    if (xbox_value) *static_cast<precipitation_type*>(xbox_value) = type;
 }
 
+void read_animated_textures(const assets::config::values& values,
+                            void* pc_value, void* ps2_value, void* xbox_value)
+{
+   using animated_textures = water::animated_textures;
+
+   animated_textures texture{.prefix = values.get<std::string>(0),
+                             .count = values.get<int32>(1),
+                             .framerate = values.get<float>(2)};
+
+   if (pc_value) *static_cast<animated_textures*>(pc_value) = texture;
+   if (ps2_value) *static_cast<animated_textures*>(ps2_value) = texture;
+   if (xbox_value) *static_cast<animated_textures*>(xbox_value) = texture;
+}
+
 struct color_property_t {};
+
+struct tag_property_t {};
 
 struct property {
    property(std::string_view name, bool* per_platform_value, bool* pc_value,
@@ -128,6 +152,17 @@ struct property {
       : name{name},
         per_platform_value{per_platform_value},
         read_value{read_bool},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, tag_property_t, bool* per_platform_value,
+            bool* pc_value, bool* ps2_value, bool* xbox_value)
+      : name{name},
+        per_platform_value{per_platform_value},
+        read_value{read_bool_tag},
         pc_value{pc_value},
         ps2_value{ps2_value},
         xbox_value{xbox_value}
@@ -216,6 +251,18 @@ struct property {
             precipitation_type* ps2_value, precipitation_type* xbox_value)
       : name{name},
         read_value{read_precipitation_type},
+        per_platform_value{per_platform_value},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, bool* per_platform_value,
+            water::animated_textures* pc_value, water::animated_textures* ps2_value,
+            water::animated_textures* xbox_value)
+      : name{name},
+        read_value{read_animated_textures},
         per_platform_value{per_platform_value},
         pc_value{pc_value},
         ps2_value{ps2_value},
@@ -467,6 +514,70 @@ auto read_lightning_bolt(assets::config::node& node) -> lightning_bolt
    return bolt;
 }
 
+auto read_water(assets::config::node& node) -> water
+{
+   water water;
+
+   const property properties[] = {
+      // clang-format off
+      {"BorderDiffuseColor"sv, color_property_t{}, nullptr, nullptr, &water.border_diffuse_color_ps2, nullptr},
+      {"BumpMapTextures"sv,  nullptr, &water.bump_map_textures_pc, nullptr, nullptr},
+      {"DisableLowRes"sv, tag_property_t{}, UNPACK_VAR(water, disable_low_res)},
+      {"FarSceneRange"sv, nullptr, &water.far_scene_range_pc, nullptr, nullptr},
+      {"FoamTexture"sv, UNPACK_VAR(water, foam_texture)},
+      {"FoamTile"sv, UNPACK_VAR(water, foam_tile)},
+      {"FresnelMinMax"sv, UNPACK_PC_XB_VAR(water, fresnel_min_max)},
+      {"LODDecimation"sv, UNPACK_VAR(water, lod_decimation)},
+      {"LightAzimAndElev"sv, nullptr, nullptr, &water.light_azim_and_elev_ps2, nullptr},
+      {"MainTexture"sv, UNPACK_VAR(water, main_texture)},
+      {"MaxDiffuseColor"sv, color_property_t{}, nullptr, nullptr, &water.max_diffuse_color_ps2, nullptr},
+      {"MinDiffuseColor"sv, color_property_t{}, nullptr, nullptr, &water.min_diffuse_color_ps2, nullptr},
+      {"NormalMapTextures"sv, UNPACK_PC_XB_VAR(water, normal_map_textures)},
+      {"OceanEnable"sv, UNPACK_VAR(water, ocean_enable)},
+      {"OscillationEnable"sv, UNPACK_VAR(water, oscillation_enable)},
+      {"PatchDivisions"sv, UNPACK_VAR(water, patch_divisions)},
+      {"PhillipsConstant"sv, UNPACK_VAR(water, phillips_constant)},
+      {"ReflectionColor"sv, color_property_t{}, UNPACK_PC_XB_VAR(water, reflection_color)},
+      {"RefractionColor"sv, color_property_t{}, UNPACK_PC_XB_VAR(water, refraction_color)},
+      {"SpeckleAmbientColor"sv, color_property_t{}, nullptr, nullptr, &water.speckle_ambient_color_ps2, nullptr},
+      {"SpeckleCoordShift"sv, nullptr, nullptr, &water.speckle_coord_shift_ps2, nullptr},
+      {"SpeckleScrollSpeed"sv, nullptr, nullptr, &water.speckle_scroll_speed_ps2, nullptr},
+      {"SpeckleSpecularColor"sv, color_property_t{}, nullptr, nullptr, &water.speckle_specular_color_ps2, nullptr},
+      {"SpeckleTextures"sv, nullptr, nullptr, &water.speckle_textures_ps2, nullptr},
+      {"SpeckleTile"sv, nullptr, nullptr, &water.speckle_tile_ps2, nullptr},
+      {"SpecularColor"sv, color_property_t{}, nullptr, nullptr, &water.specular_color_ps2, nullptr},
+      {"SpecularMaskScrollSpeed"sv, nullptr, &water.specular_mask_scroll_speed_pc, nullptr, nullptr},
+      {"SpecularMaskTextures"sv, nullptr, &water.specular_mask_textures_pc, nullptr, nullptr},
+      {"SpecularMaskTile"sv, nullptr, &water.specular_mask_tile_pc, nullptr, nullptr},
+      {"Tile"sv, UNPACK_VAR(water, tile)},
+      {"UnderwaterColor"sv, color_property_t{}, UNPACK_PC_XB_VAR(water, underwater_color)},
+      {"Velocity"sv, UNPACK_VAR(water, velocity)},
+      {"WaterRingColor"sv, color_property_t{}, UNPACK_VAR(water, water_ring_color)},
+      {"WaterSplashColor"sv, color_property_t{}, UNPACK_VAR(water, water_splash_color)},
+      {"WaterWakeColor"sv, color_property_t{}, UNPACK_VAR(water, water_wake_color)},
+      {"WindDirection"sv, UNPACK_VAR(water, wind_direction)},
+      {"WindSpeed"sv, UNPACK_VAR(water, wind_speed)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   for (std::string* texture : {
+           &water.main_texture_pc,
+           &water.main_texture_ps2,
+           &water.main_texture_xbox,
+           &water.foam_texture_pc,
+           &water.foam_texture_ps2,
+           &water.foam_texture_xbox,
+        }) {
+      if (string::iends_with(*texture, ".tga"sv)) {
+         texture->resize(texture->size() - ".tga"sv.size());
+      }
+   }
+
+   return water;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -493,6 +604,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "Lightning"sv)) {
                effects.lightning = read_lightning(key_node);
+            }
+            else if (string::iequals(effect, "Water"sv)) {
+               effects.water = read_water(key_node);
             }
             else {
                throw load_failure{

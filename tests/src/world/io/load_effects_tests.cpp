@@ -429,4 +429,227 @@ LightningBolt("skybolt")
    CHECK(not loaded.child_color_per_platform);
    CHECK(loaded.child_color_pc == float4{200.0f, 200.0f, 255.0f, 150.0f} / 255.0f);
 }
+
+TEST_CASE("world load effects water", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Water")
+{
+	PatchDivisions(8, 8);
+
+   OscillationEnable(0);
+	OceanEnable(0);
+	DisableLowRes();
+
+	WaterRingColor(148, 170, 200, 255);
+	WaterWakeColor(200, 200, 200, 255);
+	WaterSplashColor((200, 200, 200, 255);
+
+
+	PC()
+	{
+		Tile(3.0, 3.0);
+		MainTexture("water_pc.tga");
+		LODDecimation(1);
+		RefractionColor(5, 230, 255, 255);
+		ReflectionColor(57, 100, 138, 255);
+		UnderwaterColor(61, 128, 144, 128);
+		FresnelMinMax(0.1, 0.75);
+		FarSceneRange(1500)
+
+		NormalMapTextures("water_pc_normalmap_", 8, 4.0);
+		BumpMapTextures("water_pc_bumpmap_", 32, 16.0);
+		SpecularMaskTextures("water_pc_specularmask_", 16, 8);
+		SpecularMaskTile(4.0, 4.0);
+		SpecularMaskScrollSpeed(0.2, 0.2);
+		Velocity(0.02, 0.02);
+	}
+
+	PS2()
+	{
+		Tile(1.0, 1.0);
+		Velocity(0.00, 0.00);
+		LODDecimation(8);
+		MainTexture("water_ps2");
+		MinDiffuseColor(45, 45, 45, 255);
+		MaxDiffuseColor(85, 85, 85, 255);
+		BorderDiffuseColor(25, 25, 25, 255);
+		SpecularColor(80, 80, 80, 152);
+		SpeckleSpecularColor(100, 100, 100, 150);
+		SpeckleAmbientColor(75, 75, 75, 80);
+		SpeckleTextures("water_ps2_specularmask_", 32, 2.0);
+		SpeckleTile(4.0, 4.0);
+		SpeckleScrollSpeed(0.1, 0.1);
+		SpeckleCoordShift(2.0, 2.0);
+		LightAzimAndElev(0.5, 0.0);
+	}
+
+	XBOX()
+	{
+		Tile(4.0, 4.0);
+		NormalMapTextures("water_xbox_normalmap_", 4, 16.0);
+		LODDecimation(2);
+		RefractionColor(110, 135, 139, 255);
+		ReflectionColor(110, 135, 139, 255);
+		UnderwaterColor(96, 96, 88, 128);
+		FresnelMinMax(0.3, 0.6);
+		Velocity(0.04, 0.008);
+	}
+})"sv;
+
+   water loaded = load_effects(world_fx, output).water;
+
+   CHECK(not loaded.ocean_enable_per_platform);
+   CHECK(not loaded.ocean_enable_pc);
+
+   CHECK(not loaded.oscillation_enable_per_platform);
+   CHECK(not loaded.oscillation_enable_pc);
+
+   CHECK(not loaded.disable_low_res_per_platform);
+   CHECK(loaded.disable_low_res_pc);
+
+   CHECK(not loaded.patch_divisions_per_platform);
+   CHECK(loaded.patch_divisions_pc == std::array{8, 8});
+
+   CHECK(not loaded.water_ring_color_per_platform);
+   CHECK(loaded.water_ring_color_pc == float4{148.0f, 170.0f, 200.0f, 255.0f} / 255.0f);
+
+   CHECK(not loaded.water_wake_color_per_platform);
+   CHECK(loaded.water_wake_color_pc == float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f);
+
+   CHECK(not loaded.water_splash_color_per_platform);
+   CHECK(loaded.water_splash_color_pc == float4{200.0f, 200.0f, 200.0f, 255.0f} / 255.0f);
+
+   CHECK(loaded.tile_per_platform);
+   CHECK(loaded.tile_pc == float2{3.0f, 3.0f});
+   CHECK(loaded.tile_ps2 == float2{1.0f, 1.0f});
+   CHECK(loaded.tile_xbox == float2{4.0f, 4.0f});
+
+   CHECK(loaded.main_texture_per_platform);
+   CHECK(loaded.main_texture_pc == "water_pc");
+   CHECK(loaded.main_texture_ps2 == "water_ps2");
+   CHECK(loaded.main_texture_xbox == "");
+
+   CHECK(loaded.lod_decimation_per_platform);
+   CHECK(loaded.lod_decimation_pc == 1);
+   CHECK(loaded.lod_decimation_ps2 == 8);
+   CHECK(loaded.lod_decimation_xbox == 2);
+
+   CHECK(loaded.refraction_color_per_platform);
+   CHECK(loaded.refraction_color_pc == float4{5.0f, 230.0f, 255.0f, 255.0f} / 255.0f);
+   CHECK(loaded.refraction_color_xbox == float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f);
+
+   CHECK(loaded.reflection_color_per_platform);
+   CHECK(loaded.reflection_color_pc == float4{57.0f, 100.0f, 138.0f, 255.0f} / 255.0f);
+   CHECK(loaded.reflection_color_xbox == float4{110.0f, 135.0f, 139.0f, 255.0f} / 255.0f);
+
+   CHECK(loaded.underwater_color_per_platform);
+   CHECK(loaded.underwater_color_pc == float4{61.0f, 128.0f, 144.0f, 128.0f} / 255.0f);
+   CHECK(loaded.underwater_color_xbox == float4{96.0f, 96.0f, 88.0f, 128.0f} / 255.0f);
+
+   CHECK(loaded.fresnel_min_max_per_platform);
+   CHECK(loaded.fresnel_min_max_pc == float2{0.1f, 0.75f});
+   CHECK(loaded.fresnel_min_max_xbox == float2{0.3f, 0.6f});
+
+   CHECK(loaded.far_scene_range_pc == 1500.0f);
+
+   CHECK(loaded.normal_map_textures_per_platform);
+   CHECK(loaded.normal_map_textures_pc ==
+         water::animated_textures{"water_pc_normalmap_", 8, 4.0f});
+   CHECK(loaded.normal_map_textures_xbox ==
+         water::animated_textures{"water_xbox_normalmap_", 4, 16.0f});
+
+   CHECK(loaded.bump_map_textures_pc ==
+         water::animated_textures{"water_pc_bumpmap_", 32, 16.0f});
+
+   CHECK(loaded.specular_mask_textures_pc ==
+         water::animated_textures{"water_pc_specularmask_", 16, 8.0f});
+   CHECK(loaded.specular_mask_tile_pc == float2{4.0f, 4.0f});
+   CHECK(loaded.specular_mask_scroll_speed_pc == float2{0.2f, 0.2f});
+
+   CHECK(loaded.velocity_per_platform);
+   CHECK(loaded.velocity_pc == float2{0.02f, 0.02f});
+   CHECK(loaded.velocity_ps2 == float2{0.0f, 0.0f});
+   CHECK(loaded.velocity_xbox == float2{0.04f, 0.008f});
+
+   CHECK(loaded.min_diffuse_color_ps2 == float4{45.0f, 45.0f, 45.0f, 255.0f} / 255.0f);
+
+   CHECK(loaded.max_diffuse_color_ps2 == float4{85.0f, 85.0f, 85.0f, 255.0f} / 255.0f);
+
+   CHECK(loaded.border_diffuse_color_ps2 == float4{25.0f, 25.0f, 25.0f, 255.0f} / 255.0f);
+
+   CHECK(loaded.specular_color_ps2 == float4{80.0f, 80.0f, 80.0f, 152.0f} / 255.0f);
+
+   CHECK(loaded.speckle_specular_color_ps2 ==
+         float4{100.0f, 100.0f, 100.0f, 150.0f} / 255.0f);
+
+   CHECK(loaded.speckle_ambient_color_ps2 == float4{75.0f, 75.0f, 75.0f, 80.0f} / 255.0f);
+
+   CHECK(loaded.speckle_textures_ps2 ==
+         water::animated_textures{"water_ps2_specularmask_", 32, 2.0f});
+
+   CHECK(loaded.speckle_tile_ps2 == float2{4.0f, 4.0f});
+
+   CHECK(loaded.speckle_scroll_speed_ps2 == float2{0.1f, 0.1f});
+
+   CHECK(loaded.speckle_coord_shift_ps2 == float2{2.0f, 2.0f});
+
+   CHECK(loaded.light_azim_and_elev_ps2 == float2{0.5f, 0.0f});
+}
+
+TEST_CASE("world load effects water ocean", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Water")
+{
+	OceanEnable(1);
+
+	FoamTexture("kam1_foam");
+	FoamTile(2.0, 2.0);
+	WindDirection(0.3, 0.9);
+	WindSpeed(32.0);
+
+	PC()
+	{
+		PhillipsConstant(0.001);
+	}
+
+	PS2()
+	{
+		PhillipsConstant(0.002);
+	}
+
+	XBOX()
+	{
+		PhillipsConstant(0.003);
+	}
+})"sv;
+
+   water loaded = load_effects(world_fx, output).water;
+
+   CHECK(not loaded.ocean_enable_per_platform);
+   CHECK(loaded.ocean_enable_pc);
+
+   CHECK(not loaded.foam_texture_per_platform);
+   CHECK(loaded.foam_texture_pc == "kam1_foam");
+
+   CHECK(not loaded.foam_tile_per_platform);
+   CHECK(loaded.foam_tile_pc == float2{2.0f, 2.0f});
+
+   CHECK(not loaded.wind_direction_per_platform);
+   CHECK(loaded.wind_direction_pc == float2{0.3f, 0.9f});
+
+   CHECK(not loaded.wind_speed_per_platform);
+   CHECK(loaded.wind_speed_pc == 32.0f);
+
+   CHECK(loaded.phillips_constant_per_platform);
+   CHECK(loaded.phillips_constant_pc == 0.001f);
+   CHECK(loaded.phillips_constant_ps2 == 0.002f);
+   CHECK(loaded.phillips_constant_xbox == 0.003f);
+}
+
 }

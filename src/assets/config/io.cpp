@@ -71,6 +71,9 @@ auto parse_value(const string::line line, std::string_view str, values& values_o
 
 void parse_values(const string::line line, std::string_view str, values& values_out)
 {
+   // Fixup double bracket open to values.
+   if (str.starts_with("(")) str = str.substr(1);
+
    while (not str.empty()) {
       str = string::trim_whitespace(str);
 

@@ -192,6 +192,8 @@ struct water {
       std::string prefix = "";
       int32 count = 0;
       float framerate = 0.0f;
+
+      bool operator==(const animated_textures&) const noexcept = default;
    };
 
    PLATFORMED_VAR(bool, ocean_enable, false);
@@ -223,11 +225,11 @@ struct water {
 
    PLATFORMED_VAR(float2, velocity, {0.01f, 0.01f});
 
-   PLATFORMED_VAR(std::string, main_texture, "kas2_water");
+   PLATFORMED_VAR(std::string, main_texture, "");
 
-   PLATFORMED_VAR(std::string, foam_texture, "kam1_water");
+   PLATFORMED_VAR(std::string, foam_texture, "");
 
-   PLATFORMED_VAR(float2, foam_tile, {2.0f, 2.0f});
+   PLATFORMED_VAR(float2, foam_tile, {5.0f, 5.0f});
 
    PLATFORMED_VAR(float2, wind_direction, {0.2f, 1.0f});
 
@@ -252,41 +254,41 @@ struct water {
    PLATFORMED_PC_XB_VAR(animated_textures, normal_map_textures,
                         {.prefix = "water_normalmap_", .count = 16, .framerate = 8.0f});
 
-   float pc_far_scene_range = 0.0f; // Save only if not zero
+   float far_scene_range_pc = 0.0f; // Save only if not zero
 
-   animated_textures pc_bump_map_textures = {.prefix = "water_bumpmap_",
+   animated_textures bump_map_textures_pc = {.prefix = "water_bumpmap_",
                                              .count = 16,
                                              .framerate = 8.0f};
 
-   animated_textures pc_specular_mask_textures = {.prefix =
+   animated_textures specular_mask_textures_pc = {.prefix =
                                                      "water_specularmask_",
                                                   .count = 25,
                                                   .framerate = 4.0f};
 
-   float2 pc_specular_mask_tile = {2.0f, 2.0f};
-   float2 pc_specular_mask_scroll_speed = {0.0f, 0.0f};
+   float2 specular_mask_tile_pc = {2.0f, 2.0f};
+   float2 specular_mask_scroll_speed_pc = {0.0f, 0.0f};
 
-   float4 ps2_min_diffuse_color =
+   float4 min_diffuse_color_ps2 =
       float4{30.0f / 255.0f, 30.0f / 255.0f, 30.0f / 255.0f, 255.0f / 255.0f};
-   float4 ps2_max_diffuse_color =
+   float4 max_diffuse_color_ps2 =
       float4{70.0f / 255.0f, 70.0f / 255.0f, 70.0f / 255.0f, 255.0f / 255.0f};
-   float4 ps2_border_diffuse_color =
+   float4 border_diffuse_color_ps2 =
       float4{160.0f, 160.0f / 255.0f, 160.0f / 255.0f, 255.0f / 255.0f};
-   float4 ps2_specular_color =
+   float4 specular_color_ps2 =
       float4{60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 152.0f / 255.0f};
-   float4 ps2_speckle_specular_color =
+   float4 speckle_specular_color_ps2 =
       float4{80.0f / 255.0f, 80.0f / 255.0f, 80.0f / 255.0f, 150.0f / 255.0f};
-   float4 ps2_speckle_ambient_color =
+   float4 speckle_ambient_color_ps2 =
       float4{50.0f / 255.0f, 50.0f / 255.0f, 50.0f / 255.0f, 80.0f / 255.0f};
 
-   animated_textures ps2_speckle_textures = {.prefix = "water_specularmask_",
+   animated_textures speckle_textures_ps2 = {.prefix = "water_specularmask_",
                                              .count = 25,
                                              .framerate = 4.0f};
 
-   float2 ps2_speckle_tile = {8.0f, 8.0f};
-   float2 ps2_speckle_scroll_speed = {0.0f, 0.0f};
-   float2 ps2_speckle_coord_shift = {5.0f, 5.0f};
-   float2 ps2_light_azim_and_elev = {1.0f, 0.0f};
+   float2 speckle_tile_ps2 = {8.0f, 8.0f};
+   float2 speckle_scroll_speed_ps2 = {0.0f, 0.0f};
+   float2 speckle_coord_shift_ps2 = {5.0f, 5.0f};
+   float2 light_azim_and_elev_ps2 = {1.0f, 0.0f};
 };
 
 struct godray {
