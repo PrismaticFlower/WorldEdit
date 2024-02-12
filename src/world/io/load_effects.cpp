@@ -753,6 +753,21 @@ auto read_blur(assets::config::node& node) -> blur
    return blur;
 }
 
+auto read_motion_blur(assets::config::node& node) -> motion_blur
+{
+   motion_blur blur;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(blur, enable)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return blur;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -797,6 +812,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "Blur"sv)) {
                effects.blur = read_blur(key_node);
+            }
+            else if (string::iequals(effect, "MotionBlur"sv)) {
+               effects.motion_blur = read_motion_blur(key_node);
             }
             else {
                throw load_failure{

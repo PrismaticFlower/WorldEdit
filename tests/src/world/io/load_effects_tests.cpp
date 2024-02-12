@@ -954,4 +954,20 @@ Effect("Blur")
    CHECK(loaded.mode_xbox == 1);
 }
 
+TEST_CASE("world load effects motion blur", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("MotionBlur")
+{
+	Enable(0);
+})"sv;
+
+   blur loaded = load_effects(world_fx, output).blur;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(not loaded.enable_pc);
+}
+
 }
