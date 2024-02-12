@@ -986,4 +986,40 @@ Effect("ScopeBlur")
    CHECK(not loaded.enable_pc);
 }
 
+TEST_CASE("world load effects hdr", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("HDR")
+{
+	Enable(1);
+	DownSizeFactor(0.125);
+	NumBloomPasses(3);
+	MaxTotalWeight(1.1);
+	GlowThreshold(0.75);
+	GlowFactor(0.25);
+})"sv;
+
+   hdr loaded = load_effects(world_fx, output).hdr;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.down_size_factor_per_platform);
+   CHECK(loaded.down_size_factor_pc == 0.125f);
+
+   CHECK(not loaded.num_bloom_passes_per_platform);
+   CHECK(loaded.num_bloom_passes_pc == 3);
+
+   CHECK(not loaded.max_total_weight_per_platform);
+   CHECK(loaded.max_total_weight_pc == 1.1f);
+
+   CHECK(not loaded.glow_threshold_per_platform);
+   CHECK(loaded.glow_threshold_pc == 0.75f);
+
+   CHECK(not loaded.glow_factor_per_platform);
+   CHECK(loaded.glow_factor_pc == 0.25f);
+}
+
 }

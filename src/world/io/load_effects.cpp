@@ -783,6 +783,26 @@ auto read_scope_blur(assets::config::node& node) -> scope_blur
    return blur;
 }
 
+auto read_hdr(assets::config::node& node) -> hdr
+{
+   hdr hdr;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(hdr, enable)},
+      {"DownSizeFactor"sv, UNPACK_VAR(hdr, down_size_factor)},
+      {"NumBloomPasses"sv, UNPACK_VAR(hdr, num_bloom_passes)},
+      {"MaxTotalWeight"sv, UNPACK_VAR(hdr, max_total_weight)},
+      {"GlowThreshold"sv, UNPACK_VAR(hdr, glow_threshold)},
+      {"GlowFactor"sv, UNPACK_VAR(hdr, glow_factor)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return hdr;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -833,6 +853,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "ScopeBlur"sv)) {
                effects.scope_blur = read_scope_blur(key_node);
+            }
+            else if (string::iequals(effect, "HDR"sv)) {
+               effects.hdr = read_hdr(key_node);
             }
             else {
                throw load_failure{
