@@ -166,6 +166,21 @@ void read_bump_map(const assets::config::values& values, void* pc_value,
    if (xbox_value) *static_cast<bump_map*>(xbox_value) = texture;
 }
 
+void read_halo_ring(const assets::config::values& values, void* pc_value,
+                    void* ps2_value, void* xbox_value)
+{
+   using halo_ring = sun_flare::halo_ring;
+
+   halo_ring ring{.size = values.get<float>(0),
+                  .color = float4{values.get<float>(1), values.get<float>(2),
+                                  values.get<float>(3), values.get<float>(4)} /
+                           255.0f};
+
+   if (pc_value) *static_cast<halo_ring*>(pc_value) = ring;
+   if (ps2_value) *static_cast<halo_ring*>(ps2_value) = ring;
+   if (xbox_value) *static_cast<halo_ring*>(xbox_value) = ring;
+}
+
 struct color_property_t {};
 
 struct tag_property_t {};
@@ -310,6 +325,18 @@ struct property {
             heat_shimmer::bump_map* xbox_value)
       : name{name},
         read_value{read_bump_map},
+        per_platform_value{per_platform_value},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, bool* per_platform_value,
+            sun_flare::halo_ring* pc_value, sun_flare::halo_ring* ps2_value,
+            sun_flare::halo_ring* xbox_value)
+      : name{name},
+        read_value{read_halo_ring},
         per_platform_value{per_platform_value},
         pc_value{pc_value},
         ps2_value{ps2_value},
@@ -820,6 +847,31 @@ auto read_shadow(assets::config::node& node) -> shadow
    return shadow;
 }
 
+auto read_sun_flare(assets::config::node& node) -> sun_flare
+{
+   sun_flare flare;
+
+   const property properties[] = {
+      // clang-format off
+      {"Angle"sv, UNPACK_VAR(flare, angle)},
+      {"Color"sv, color_property_t{}, UNPACK_VAR(flare, color)},
+      {"Size"sv, UNPACK_VAR(flare, size)},
+      {"FlareOutSize"sv, UNPACK_VAR(flare, flare_out_size)},
+      {"NumFlareOuts"sv, UNPACK_VAR(flare, num_flare_outs)},
+      {"InitialFlareOutAlpha"sv, UNPACK_VAR(flare, initial_flare_out_alpha)},
+      {"HaloInnerRing"sv, UNPACK_VAR(flare, halo_inner_ring)},
+      {"HaloMiddleRing"sv, UNPACK_VAR(flare, halo_middle_ring)},
+      {"HaloOutterRing"sv, UNPACK_VAR(flare, halo_outter_ring)},
+      {"SpikeColor"sv, color_property_t{}, UNPACK_VAR(flare, spike_color)},
+      {"SpikeSize"sv, UNPACK_VAR(flare, spike_size)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return flare;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -888,6 +940,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             if (string::iequals(effect, "skybolt"sv)) {
                effects.lightning_bolt = read_lightning_bolt(key_node);
             }
+         }
+         else if (string::iequals(key_node.key, "SunFlare"sv)) {
+            effects.sun_flares.push_back(read_sun_flare(key_node));
          }
          else {
             throw load_failure{

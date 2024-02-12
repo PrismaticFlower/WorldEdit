@@ -443,6 +443,8 @@ struct sun_flare {
    struct halo_ring {
       float size = 0.0f;
       float4 color = {255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f};
+
+      bool operator==(const halo_ring&) const noexcept = default;
    };
 
    PLATFORMED_VAR(float2, angle, {110.0f, -10.0f});
@@ -467,8 +469,8 @@ struct sun_flare {
    PLATFORMED_VAR(halo_ring, halo_outter_ring,
                   {30.0f, {130.0f / 255.0f, 76.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f}});
 
-   PLATFORMED_VAR(float3, spike_color,
-                  {230.0f / 255.0f, 230.0f / 0.0f, 255.0f / 128.0f});
+   PLATFORMED_VAR(float4, spike_color,
+                  {230.0f / 255.0f, 230.0f / 255.0f, 0.0f / 255.0f, 255.0f / 128.0f});
 
    PLATFORMED_VAR(float, spike_size, 20.0f);
 };

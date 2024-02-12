@@ -1046,4 +1046,132 @@ Effect("Shadow")
    CHECK(loaded.intensity_pc);
 }
 
+TEST_CASE("world load effects sun flare", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+SunFlare()
+{
+	Angle(130.000000, 130.000000);
+	Color(255, 150, 150);
+	Size(4.0);
+   FlareOutSize(5.0);
+	InitialFlareOutAlpha(50);
+   HaloInnerRing(1.0, 192, 255, 255, 255);
+   HaloMiddleRing(4.0, 192, 200, 0, 255);
+   HaloOutterRing(5.0, 192, 127, 0, 0);
+	SpikeColor(150, 100, 0, 128);
+	SpikeSize(10.0);
+
+	PC()
+	{
+		NumFlareOuts(30);
+	}
+	PS2()
+	{
+		NumFlareOuts(40);
+	}
+	XBOX()
+	{
+		NumFlareOuts(50);
+	}
+}
+
+SunFlare()
+{	
+   Angle(132.000000, 132.000000);
+	Color(255, 152, 150);
+	Size(6.0);
+   FlareOutSize(7.0);
+   NumFlareOuts(42);
+	InitialFlareOutAlpha(52);
+   HaloInnerRing(3.0, 194, 255, 255, 255);
+   HaloMiddleRing(6.0, 194, 200, 0, 255);
+   HaloOutterRing(7.0, 194, 127, 0, 0);
+	SpikeColor(152, 100, 0, 128);
+	SpikeSize(12.0);
+})"sv;
+
+   std::vector<sun_flare> loaded = load_effects(world_fx, output).sun_flares;
+
+   REQUIRE(loaded.size() == 2);
+
+   CHECK(not loaded[0].angle_per_platform);
+   CHECK(loaded[0].angle_pc == float2{130.0f, 130.0f});
+
+   CHECK(not loaded[0].color_per_platform);
+   CHECK(loaded[0].color_pc == float3{255.0f, 150.0f, 150.0f} / 255.0f);
+
+   CHECK(not loaded[0].size_per_platform);
+   CHECK(loaded[0].size_pc == 4.0f);
+
+   CHECK(not loaded[0].flare_out_size_per_platform);
+   CHECK(loaded[0].flare_out_size_pc == 5.0f);
+
+   CHECK(loaded[0].num_flare_outs_per_platform);
+   CHECK(loaded[0].num_flare_outs_pc == 30);
+   CHECK(loaded[0].num_flare_outs_ps2 == 40);
+   CHECK(loaded[0].num_flare_outs_xbox == 50);
+
+   CHECK(not loaded[0].initial_flare_out_alpha_per_platform);
+   CHECK(loaded[0].initial_flare_out_alpha_pc == 50);
+
+   using halo_ring = sun_flare::halo_ring;
+
+   CHECK(not loaded[0].halo_inner_ring_per_platform);
+   CHECK(loaded[0].halo_inner_ring_pc ==
+         halo_ring{1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f});
+
+   CHECK(not loaded[0].halo_middle_ring_per_platform);
+   CHECK(loaded[0].halo_middle_ring_pc ==
+         halo_ring{4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f});
+
+   CHECK(not loaded[0].halo_outter_ring_per_platform);
+   CHECK(loaded[0].halo_outter_ring_pc ==
+         halo_ring{5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f});
+
+   CHECK(not loaded[0].spike_color_per_platform);
+   CHECK(loaded[0].spike_color_pc == float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f);
+
+   CHECK(not loaded[0].spike_size_per_platform);
+   CHECK(loaded[0].spike_size_pc == 10.0f);
+
+   CHECK(not loaded[1].angle_per_platform);
+   CHECK(loaded[1].angle_pc == float2{132.0f, 132.0f});
+
+   CHECK(not loaded[1].color_per_platform);
+   CHECK(loaded[1].color_pc == float3{255.0f, 152.0f, 150.0f} / 255.0f);
+
+   CHECK(not loaded[1].size_per_platform);
+   CHECK(loaded[1].size_pc == 6.0f);
+
+   CHECK(not loaded[1].flare_out_size_per_platform);
+   CHECK(loaded[1].flare_out_size_pc == 7.0f);
+
+   CHECK(not loaded[1].num_flare_outs_per_platform);
+   CHECK(loaded[1].num_flare_outs_pc == 42);
+
+   CHECK(not loaded[1].initial_flare_out_alpha_per_platform);
+   CHECK(loaded[1].initial_flare_out_alpha_pc == 52);
+
+   CHECK(not loaded[1].halo_inner_ring_per_platform);
+   CHECK(loaded[1].halo_inner_ring_pc ==
+         halo_ring{3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f});
+
+   CHECK(not loaded[1].halo_middle_ring_per_platform);
+   CHECK(loaded[1].halo_middle_ring_pc ==
+         halo_ring{6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f});
+
+   CHECK(not loaded[1].halo_outter_ring_per_platform);
+   CHECK(loaded[1].halo_outter_ring_pc ==
+         halo_ring{7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f});
+
+   CHECK(not loaded[1].spike_color_per_platform);
+   CHECK(loaded[1].spike_color_pc == float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f);
+
+   CHECK(not loaded[1].spike_size_per_platform);
+   CHECK(loaded[1].spike_size_pc == 12.0f);
+}
+
 }
