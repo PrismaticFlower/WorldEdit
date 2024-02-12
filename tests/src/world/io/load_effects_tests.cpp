@@ -1022,4 +1022,28 @@ Effect("HDR")
    CHECK(loaded.glow_factor_pc == 0.25f);
 }
 
+TEST_CASE("world load effects shadow", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Shadow")
+{
+	Enable(1);
+	BlurEnable(1);
+	Intensity(0.2);
+})"sv;
+
+   shadow loaded = load_effects(world_fx, output).shadow;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.blur_enable_per_platform);
+   CHECK(loaded.blur_enable_pc);
+
+   CHECK(not loaded.intensity_per_platform);
+   CHECK(loaded.intensity_pc);
+}
+
 }

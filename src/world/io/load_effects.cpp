@@ -803,6 +803,23 @@ auto read_hdr(assets::config::node& node) -> hdr
    return hdr;
 }
 
+auto read_shadow(assets::config::node& node) -> shadow
+{
+   shadow shadow;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(shadow, enable)},
+      {"BlurEnable"sv, UNPACK_VAR(shadow, blur_enable)},
+      {"Intensity"sv, UNPACK_VAR(shadow, intensity)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return shadow;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -856,6 +873,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "HDR"sv)) {
                effects.hdr = read_hdr(key_node);
+            }
+            else if (string::iequals(effect, "Shadow"sv)) {
+               effects.shadow = read_shadow(key_node);
             }
             else {
                throw load_failure{

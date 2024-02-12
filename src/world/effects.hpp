@@ -432,11 +432,11 @@ struct hdr {
 };
 
 struct shadow {
-   PLATFORMED_VAR(bool, enable, false);
+   PLATFORMED_VAR(bool, enable, true);
 
    PLATFORMED_VAR(bool, blur_enable, false);
 
-   PLATFORMED_VAR(float, intensity, 0.1f);
+   PLATFORMED_VAR(float, intensity, 0.5f);
 };
 
 struct sun_flare {
