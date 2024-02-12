@@ -73,6 +73,17 @@ void read_float2(const assets::config::values& values, void* pc_value,
    if (xbox_value) *static_cast<float2*>(xbox_value) = value;
 }
 
+void read_float3(const assets::config::values& values, void* pc_value,
+                 void* ps2_value, void* xbox_value)
+{
+   const float3 value = {values.get<float>(0), values.get<float>(1),
+                         values.get<float>(2)};
+
+   if (pc_value) *static_cast<float3*>(pc_value) = value;
+   if (ps2_value) *static_cast<float3*>(ps2_value) = value;
+   if (xbox_value) *static_cast<float3*>(xbox_value) = value;
+}
+
 void read_color3(const assets::config::values& values, void* pc_value,
                  void* ps2_value, void* xbox_value)
 {
@@ -207,6 +218,17 @@ struct property {
             float2* ps2_value, float2* xbox_value)
       : name{name},
         read_value{read_float2},
+        per_platform_value{per_platform_value},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, bool* per_platform_value, float3* pc_value,
+            float3* ps2_value, float3* xbox_value)
+      : name{name},
+        read_value{read_float3},
         per_platform_value{per_platform_value},
         pc_value{pc_value},
         ps2_value{ps2_value},
@@ -578,6 +600,36 @@ auto read_water(assets::config::node& node) -> water
    return water;
 }
 
+auto read_godray(assets::config::node& node) -> godray
+{
+
+   godray godray;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(godray, enable)},
+      {"MaxGodraysInWorld"sv, UNPACK_VAR(godray, max_godrays_in_world)},
+      {"MaxGodraysOnScreen"sv, UNPACK_VAR(godray, max_godrays_on_screen)},
+      {"MaxViewDistance"sv, UNPACK_VAR(godray, max_view_distance)},
+      {"FadeViewDistance"sv, UNPACK_VAR(godray, fade_view_distance)},
+      {"MaxLength"sv, UNPACK_VAR(godray, max_length)},
+      {"OffsetAngle"sv, UNPACK_VAR(godray, offset_angle)},
+      {"MinRaysPerGodray"sv, UNPACK_VAR(godray, min_rays_per_godray)},
+      {"MaxRaysPerGodray"sv, UNPACK_VAR(godray, max_rays_per_godray)},
+      {"RadiusForMaxRays"sv, UNPACK_VAR(godray, radius_for_max_rays)},
+      {"DustVelocity"sv, UNPACK_VAR(godray, dust_velocity)},
+      {"Texture"sv, UNPACK_VAR(godray, texture)},
+      {"TextureScale"sv, UNPACK_VAR(godray, texture_scale)},
+      {"TextureVelocity"sv, UNPACK_VAR(godray, texture_velocity)},
+      {"TextureJitterSpeed"sv, UNPACK_VAR(godray, texture_jitter_speed)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return godray;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -607,6 +659,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "Water"sv)) {
                effects.water = read_water(key_node);
+            }
+            else if (string::iequals(effect, "Godray"sv)) {
+               effects.godray = read_godray(key_node);
             }
             else {
                throw load_failure{

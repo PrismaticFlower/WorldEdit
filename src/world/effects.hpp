@@ -314,7 +314,7 @@ struct godray {
 
    PLATFORMED_VAR(float3, dust_velocity, {0.0f, 0.0f, 0.0f});
 
-   PLATFORMED_VAR(std::string, texture, "fx_godray");
+   PLATFORMED_VAR(std::string, texture, "");
 
    PLATFORMED_VAR(float2, texture_scale, {1.0f, 1.0f});
 

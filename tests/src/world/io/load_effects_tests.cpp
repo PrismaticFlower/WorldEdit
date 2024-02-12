@@ -652,4 +652,81 @@ Effect("Water")
    CHECK(loaded.phillips_constant_xbox == 0.003f);
 }
 
+TEST_CASE("world load effects godray", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Godray")
+{
+	Enable(1);
+
+	MaxGodraysInWorld(100);
+	MaxGodraysOnScreen(4);
+
+	MaxViewDistance(40.0);
+	FadeViewDistance(30.0);
+	MaxLength(80.0);
+	OffsetAngle(-20.0);
+
+	MinRaysPerGodray(2);
+	MaxRaysPerGodray(8);
+	RadiusForMaxRays(4.0);
+
+	DustVelocity(0.0, -0.1, 0.0);
+
+	Texture("fx_godray");
+	TextureScale(1.5, 1.5);
+	TextureVelocity(0.0, -0.1, 0.0);
+	TextureJitterSpeed(0.1);
+})"sv;
+
+   godray loaded = load_effects(world_fx, output).godray;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.max_godrays_in_world_per_platform);
+   CHECK(loaded.max_godrays_in_world_pc == 100);
+
+   CHECK(not loaded.max_godrays_on_screen_per_platform);
+   CHECK(loaded.max_godrays_on_screen_pc == 4);
+
+   CHECK(not loaded.max_view_distance_per_platform);
+   CHECK(loaded.max_view_distance_pc == 40.0f);
+
+   CHECK(not loaded.fade_view_distance_per_platform);
+   CHECK(loaded.fade_view_distance_pc == 30.0f);
+
+   CHECK(not loaded.max_length_per_platform);
+   CHECK(loaded.max_length_pc == 80.0f);
+
+   CHECK(not loaded.offset_angle_per_platform);
+   CHECK(loaded.offset_angle_pc == -20.0f);
+
+   CHECK(not loaded.min_rays_per_godray_per_platform);
+   CHECK(loaded.min_rays_per_godray_pc == 2);
+
+   CHECK(not loaded.max_rays_per_godray_per_platform);
+   CHECK(loaded.max_rays_per_godray_pc == 8);
+
+   CHECK(not loaded.radius_for_max_rays_per_platform);
+   CHECK(loaded.radius_for_max_rays_pc == 4.0f);
+
+   CHECK(not loaded.dust_velocity_per_platform);
+   CHECK(loaded.dust_velocity_pc == float3{0.0f, -0.1f, 0.0f});
+
+   CHECK(not loaded.texture_per_platform);
+   CHECK(loaded.texture_pc == "fx_godray");
+
+   CHECK(not loaded.texture_scale_per_platform);
+   CHECK(loaded.texture_scale_pc == float2{1.5f, 1.5f});
+
+   CHECK(not loaded.texture_velocity_per_platform);
+   CHECK(loaded.texture_velocity_pc == float3{0.0f, -0.1f, 0.0f});
+
+   CHECK(not loaded.texture_jitter_speed_per_platform);
+   CHECK(loaded.texture_jitter_speed_pc == 0.1f);
+}
+
 }
