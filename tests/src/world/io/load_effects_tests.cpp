@@ -970,4 +970,20 @@ Effect("MotionBlur")
    CHECK(not loaded.enable_pc);
 }
 
+TEST_CASE("world load effects scope blur", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("ScopeBlur")
+{
+	Enable(0);
+})"sv;
+
+   blur loaded = load_effects(world_fx, output).blur;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(not loaded.enable_pc);
+}
+
 }
