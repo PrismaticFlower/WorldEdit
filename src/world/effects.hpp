@@ -327,6 +327,8 @@ struct heat_shimmer {
    struct bump_map {
       std::string name;
       float2 unknown = {1.0f, 1.0f}; // Presumably tiling but I can't even tell if this effect works on PC so.
+
+      bool operator==(const bump_map&) const noexcept = default;
    };
 
    PLATFORMED_VAR(bool, enable, false);
@@ -337,18 +339,16 @@ struct heat_shimmer {
 
    PLATFORMED_VAR(float, scroll_speed, 0.08f);
 
-   PLATFORMED_VAR(float, distortion_scale, 0.002f);
-
-   PLATFORMED_PC_XB_VAR(int32, tessellation, 2);
-
    PLATFORMED_PC_XB_VAR(bump_map, bump_map, {"shimmer_waves", {1.0f, 1.0f}});
 
-   bool per_platform_distortion_scale = true;
-   float pc_distortion_scale = 0.002f;
-   float ps2_distortion_scale = 0.03f;
-   float xbox_distortion_scale = 2.0f;
+   bool distortion_scale_per_platform = true;
+   float distortion_scale_pc = 0.002f;
+   float distortion_scale_ps2 = 0.03f;
+   float distortion_scale_xbox = 2.0f;
 
-   std::array<int32, 2> ps2_tessellation = {10, 20};
+   int32 tessellation_pc = 2;
+   std::array<int32, 2> tessellation_ps2 = {10, 20};
+   int32 tessellation_xbox = 2;
 };
 
 struct space_dust {

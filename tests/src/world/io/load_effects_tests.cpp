@@ -729,4 +729,68 @@ Effect("Godray")
    CHECK(loaded.texture_jitter_speed_pc == 0.1f);
 }
 
+TEST_CASE("world load effects heat shimmer", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("HeatShimmer")
+{
+	Enable(1);
+	WorldHeight(10.0);
+	GeometryHeight(4.0);
+	ScrollSpeed(0.08);
+
+
+	PC()
+	{
+		Tessellation(3);
+		BumpMap("shimmer_waves_pc", 1.5, 1.5);
+		DistortionScale(0.004);
+	}
+
+	PS2()
+	{
+		Tessellation(20, 40);
+		DistortionScale(0.06);
+	}
+
+	XBOX()
+	{
+		Tessellation(4);
+		BumpMap("shimmer_waves_xbox", 0.5, 0.5);
+		DistortionScale(4.0);
+	}
+})"sv;
+
+   heat_shimmer loaded = load_effects(world_fx, output).heat_shimmer;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.world_height_per_platform);
+   CHECK(loaded.world_height_pc == 10.0f);
+
+   CHECK(not loaded.geometry_height_per_platform);
+   CHECK(loaded.geometry_height_pc == 4.0f);
+
+   CHECK(not loaded.scroll_speed_per_platform);
+   CHECK(loaded.scroll_speed_pc == 0.08f);
+
+   CHECK(loaded.tessellation_pc == 3);
+   CHECK(loaded.tessellation_ps2 == std::array{20, 40});
+   CHECK(loaded.tessellation_xbox == 4);
+
+   CHECK(loaded.bump_map_per_platform);
+   CHECK(loaded.bump_map_pc ==
+         heat_shimmer::bump_map{"shimmer_waves_pc", {1.5f, 1.5f}});
+   CHECK(loaded.bump_map_xbox ==
+         heat_shimmer::bump_map{"shimmer_waves_xbox", {0.5f, 0.5f}});
+
+   CHECK(loaded.distortion_scale_per_platform);
+   CHECK(loaded.distortion_scale_pc == 0.004f);
+   CHECK(loaded.distortion_scale_ps2 == 0.06f);
+   CHECK(loaded.distortion_scale_xbox == 4.0f);
+}
+
 }

@@ -153,6 +153,19 @@ void read_animated_textures(const assets::config::values& values,
    if (xbox_value) *static_cast<animated_textures*>(xbox_value) = texture;
 }
 
+void read_bump_map(const assets::config::values& values, void* pc_value,
+                   void* ps2_value, void* xbox_value)
+{
+   using bump_map = heat_shimmer::bump_map;
+
+   bump_map texture{.name = values.get<std::string>(0),
+                    .unknown = {values.get<float>(1), values.get<float>(2)}};
+
+   if (pc_value) *static_cast<bump_map*>(pc_value) = texture;
+   if (ps2_value) *static_cast<bump_map*>(ps2_value) = texture;
+   if (xbox_value) *static_cast<bump_map*>(xbox_value) = texture;
+}
+
 struct color_property_t {};
 
 struct tag_property_t {};
@@ -285,6 +298,18 @@ struct property {
             water::animated_textures* xbox_value)
       : name{name},
         read_value{read_animated_textures},
+        per_platform_value{per_platform_value},
+        pc_value{pc_value},
+        ps2_value{ps2_value},
+        xbox_value{xbox_value}
+   {
+   }
+
+   property(std::string_view name, bool* per_platform_value,
+            heat_shimmer::bump_map* pc_value, heat_shimmer::bump_map* ps2_value,
+            heat_shimmer::bump_map* xbox_value)
+      : name{name},
+        read_value{read_bump_map},
         per_platform_value{per_platform_value},
         pc_value{pc_value},
         ps2_value{ps2_value},
@@ -602,7 +627,6 @@ auto read_water(assets::config::node& node) -> water
 
 auto read_godray(assets::config::node& node) -> godray
 {
-
    godray godray;
 
    const property properties[] = {
@@ -628,6 +652,38 @@ auto read_godray(assets::config::node& node) -> godray
    read_node(node, properties);
 
    return godray;
+}
+
+auto read_heat_shimmer(assets::config::node& node) -> heat_shimmer
+{
+   heat_shimmer shimmer;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(shimmer, enable)},
+      {"WorldHeight"sv, UNPACK_VAR(shimmer, world_height)},
+      {"GeometryHeight"sv, UNPACK_VAR(shimmer, geometry_height)},
+      {"ScrollSpeed"sv, UNPACK_VAR(shimmer, scroll_speed)},
+      {"BumpMap"sv, UNPACK_PC_XB_VAR(shimmer, bump_map)},
+      {"DistortionScale"sv, UNPACK_VAR(shimmer, distortion_scale)},
+      {"Tessellation"sv, nullptr, &shimmer.tessellation_pc, nullptr, &shimmer.tessellation_xbox},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   for (auto& platform_node : node) {
+      if (string::iequals(platform_node.key, "PS2"sv)) {
+         for (auto& key_node : platform_node) {
+            if (not string::iequals(key_node.key, "Tessellation"sv)) continue;
+
+            shimmer.tessellation_ps2 = {key_node.values.get<int>(0),
+                                        key_node.values.get<int>(1)};
+         }
+      }
+   }
+
+   return shimmer;
 }
 
 }
@@ -662,6 +718,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "Godray"sv)) {
                effects.godray = read_godray(key_node);
+            }
+            else if (string::iequals(effect, "HeatShimmer"sv)) {
+               effects.heat_shimmer = read_heat_shimmer(key_node);
             }
             else {
                throw load_failure{
