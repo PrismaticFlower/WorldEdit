@@ -865,4 +865,41 @@ Effect("SpaceDust")
    CHECK(loaded.particle_length_max_speed_pc == 200.0f);
 }
 
+TEST_CASE("world load effects world shadow map", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("WorldShadowMap")
+{
+	Enable(1);
+	Texture("shadowy_sun");
+	LightName("sun");
+	TextureScale(40.0);	
+	AnimationFrequency(0.2);
+	AnimationAmplitude0(4.0, 0.0);
+	AnimationAmplitude1(0.1,-0.1);
+})"sv;
+
+   world_shadow_map loaded = load_effects(world_fx, output).world_shadow_map;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.texture_per_platform);
+   CHECK(loaded.texture_pc == "shadowy_sun");
+
+   CHECK(not loaded.texture_scale_per_platform);
+   CHECK(loaded.texture_scale_pc == 40.0f);
+
+   CHECK(not loaded.animation_frequency_per_platform);
+   CHECK(loaded.animation_frequency_pc == 0.2f);
+
+   CHECK(not loaded.animation_amplitude0_per_platform);
+   CHECK(loaded.animation_amplitude0_pc == float2{4.0f, 0.0f});
+
+   CHECK(not loaded.animation_amplitude1_per_platform);
+   CHECK(loaded.animation_amplitude1_pc == float2{0.1f, -0.1f});
+}
+
 }

@@ -388,7 +388,7 @@ struct world_shadow_map {
 
    PLATFORMED_VAR(std::string, light_name, "");
 
-   PLATFORMED_VAR(float, texture_scale, 70.0f);
+   PLATFORMED_VAR(float, texture_scale, 1.0f);
 
    PLATFORMED_VAR(float, animation_frequency, 0.01f);
 

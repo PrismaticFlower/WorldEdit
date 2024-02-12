@@ -714,6 +714,26 @@ auto read_space_dust(assets::config::node& node) -> space_dust
    return dust;
 }
 
+auto read_world_shadow_map(assets::config::node& node) -> world_shadow_map
+{
+   world_shadow_map shadow;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(shadow, enable)},
+      {"Texture"sv, UNPACK_VAR(shadow, texture)},
+      {"TextureScale"sv, UNPACK_VAR(shadow, texture_scale)},
+      {"AnimationFrequency"sv, UNPACK_VAR(shadow, animation_frequency)},
+      {"AnimationAmplitude0"sv, UNPACK_VAR(shadow, animation_amplitude0)},
+      {"AnimationAmplitude1"sv, UNPACK_VAR(shadow, animation_amplitude1)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return shadow;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -752,6 +772,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "SpaceDust"sv)) {
                effects.space_dust = read_space_dust(key_node);
+            }
+            else if (string::iequals(effect, "WorldShadowMap"sv)) {
+               effects.world_shadow_map = read_world_shadow_map(key_node);
             }
             else {
                throw load_failure{
