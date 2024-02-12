@@ -902,4 +902,56 @@ Effect("WorldShadowMap")
    CHECK(loaded.animation_amplitude1_pc == float2{0.1f, -0.1f});
 }
 
+TEST_CASE("world load effects blur", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Blur")
+{
+	PC()
+	{
+		Enable(1);
+		Mode(0)
+		ConstantBlend(0.3)
+		DownSizeFactor(0.35)
+	}
+	PS2()
+	{
+		Enable(1);
+		MinMaxDepth(0.95, 1.0);
+	}
+	XBOX()
+	{
+		Enable(1);
+		Mode(1)
+		ConstantBlend(0.45)
+		DownSizeFactor(0.5)
+	}
+})"sv;
+
+   blur loaded = load_effects(world_fx, output).blur;
+
+   CHECK(loaded.enable_per_platform);
+   CHECK(loaded.enable_pc);
+   CHECK(loaded.enable_ps2);
+   CHECK(loaded.enable_xbox);
+
+   CHECK(loaded.constant_blend_per_platform);
+   CHECK(loaded.constant_blend_pc == 0.3f);
+   CHECK(loaded.constant_blend_ps2 == 0.25f);
+   CHECK(loaded.constant_blend_xbox == 0.45f);
+
+   CHECK(loaded.down_size_factor_per_platform);
+   CHECK(loaded.down_size_factor_pc == 0.35f);
+   CHECK(loaded.down_size_factor_ps2 == 0.25f);
+   CHECK(loaded.down_size_factor_xbox == 0.5f);
+
+   CHECK(loaded.min_max_depth_ps2 == float2{0.95f, 1.0f});
+
+   CHECK(loaded.mode_per_platform);
+   CHECK(loaded.mode_pc == 0);
+   CHECK(loaded.mode_xbox == 1);
+}
+
 }

@@ -734,6 +734,25 @@ auto read_world_shadow_map(assets::config::node& node) -> world_shadow_map
    return shadow;
 }
 
+auto read_blur(assets::config::node& node) -> blur
+{
+   blur blur;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(blur, enable)},
+      {"ConstantBlend"sv, UNPACK_VAR(blur, constant_blend)},
+      {"DownSizeFactor"sv, UNPACK_VAR(blur, down_size_factor)},
+      {"MinMaxDepth"sv, nullptr, nullptr, &blur.min_max_depth_ps2, nullptr},
+      {"Mode"sv, UNPACK_PC_XB_VAR(blur, mode)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return blur;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -775,6 +794,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "WorldShadowMap"sv)) {
                effects.world_shadow_map = read_world_shadow_map(key_node);
+            }
+            else if (string::iequals(effect, "Blur"sv)) {
+               effects.blur = read_blur(key_node);
             }
             else {
                throw load_failure{

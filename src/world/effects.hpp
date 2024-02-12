@@ -404,9 +404,9 @@ struct blur {
 
    PLATFORMED_VAR(float, down_size_factor, 0.25f);
 
-   PLATFORMED_VAR(float2, min_max_depth, {0.0f, 1.0f}); // Save if != {0, 1}
+   float2 min_max_depth_ps2 = {0.0f, 1.0f}; // Save if != {0, 1}
 
-   PLATFORMED_VAR(int, mode, 0); // Save if != 0
+   PLATFORMED_PC_XB_VAR(int, mode, 0); // Save if != 0
 };
 
 struct motion_blur {
