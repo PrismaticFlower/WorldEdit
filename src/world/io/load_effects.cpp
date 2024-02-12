@@ -686,6 +686,34 @@ auto read_heat_shimmer(assets::config::node& node) -> heat_shimmer
    return shimmer;
 }
 
+auto read_space_dust(assets::config::node& node) -> space_dust
+{
+   space_dust dust;
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(dust, enable)},
+      {"Texture"sv, UNPACK_VAR(dust, texture)},
+      {"SpawnDistance"sv, UNPACK_VAR(dust, spawn_distance)},
+      {"MaxRandomSideOffset"sv, UNPACK_VAR(dust, max_random_side_offset)},
+      {"CenterDeadZoneRadius"sv, UNPACK_VAR(dust, center_dead_zone_radius)},
+      {"MinParticleScale"sv, UNPACK_VAR(dust, min_particle_scale)},
+      {"MaxParticleScale"sv, UNPACK_VAR(dust, max_particle_scale)},
+      {"SpawnDelay"sv, UNPACK_VAR(dust, spawn_delay)},
+      {"ReferenceSpeed"sv, UNPACK_VAR(dust, reference_speed)},
+      {"DustParticleSpeed"sv, UNPACK_VAR(dust, dust_particle_speed)},
+      {"SpeedParticleMinLength"sv, UNPACK_VAR(dust, speed_particle_min_length)},
+      {"SpeedParticleMaxLength"sv, UNPACK_VAR(dust, speed_particle_max_length)},
+      {"ParticleLengthMinSpeed"sv, UNPACK_VAR(dust, particle_length_min_speed)},
+      {"ParticleLengthMaxSpeed"sv, UNPACK_VAR(dust, particle_length_max_speed)},
+      // clang-format on
+   };
+
+   read_node(node, properties);
+
+   return dust;
+}
+
 }
 
 auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& output)
@@ -721,6 +749,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
             }
             else if (string::iequals(effect, "HeatShimmer"sv)) {
                effects.heat_shimmer = read_heat_shimmer(key_node);
+            }
+            else if (string::iequals(effect, "SpaceDust"sv)) {
+               effects.space_dust = read_space_dust(key_node);
             }
             else {
                throw load_failure{

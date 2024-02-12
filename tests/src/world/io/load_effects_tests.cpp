@@ -793,4 +793,76 @@ Effect("HeatShimmer")
    CHECK(loaded.distortion_scale_xbox == 4.0f);
 }
 
+TEST_CASE("world load effects space dust", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("SpaceDust")
+{
+	Enable(1);
+
+	Texture("spacedust");
+
+	SpawnDistance(200.0);
+	MaxRandomSideOffset(80.0);
+	CenterDeadZoneRadius(40.0);
+
+	MinParticleScale(0.2);
+	MaxParticleScale(0.8);
+
+	SpawnDelay(0.2);
+	ReferenceSpeed(40.0);
+
+	DustParticleSpeed(50.0);
+
+	SpeedParticleMinLength(4.0);
+	SpeedParticleMaxLength(14.0);
+
+	ParticleLengthMinSpeed(70.0);
+	ParticleLengthMaxSpeed(200.0);
+})"sv;
+
+   space_dust loaded = load_effects(world_fx, output).space_dust;
+
+   CHECK(not loaded.enable_per_platform);
+   CHECK(loaded.enable_pc);
+
+   CHECK(not loaded.spawn_distance_per_platform);
+   CHECK(loaded.spawn_distance_pc == 200.0f);
+
+   CHECK(not loaded.max_random_side_offset_per_platform);
+   CHECK(loaded.max_random_side_offset_pc == 80.0f);
+
+   CHECK(not loaded.dust_particle_speed_per_platform);
+   CHECK(loaded.center_dead_zone_radius_pc == 40.0f);
+
+   CHECK(not loaded.min_particle_scale_per_platform);
+   CHECK(loaded.min_particle_scale_pc == 0.2f);
+
+   CHECK(not loaded.max_particle_scale_per_platform);
+   CHECK(loaded.max_particle_scale_pc == 0.8f);
+
+   CHECK(not loaded.spawn_delay_per_platform);
+   CHECK(loaded.spawn_delay_pc == 0.2f);
+
+   CHECK(not loaded.reference_speed_per_platform);
+   CHECK(loaded.reference_speed_pc == 40.0f);
+
+   CHECK(not loaded.dust_particle_speed_per_platform);
+   CHECK(loaded.dust_particle_speed_pc == 50.0f);
+
+   CHECK(not loaded.speed_particle_min_length_per_platform);
+   CHECK(loaded.speed_particle_min_length_pc == 4.0f);
+
+   CHECK(not loaded.speed_particle_max_length_per_platform);
+   CHECK(loaded.speed_particle_max_length_pc == 14.0f);
+
+   CHECK(not loaded.particle_length_min_speed_per_platform);
+   CHECK(loaded.particle_length_min_speed_pc == 70.0f);
+
+   CHECK(not loaded.particle_length_max_speed_per_platform);
+   CHECK(loaded.particle_length_max_speed_pc == 200.0f);
+}
+
 }
