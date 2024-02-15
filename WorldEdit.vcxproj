@@ -339,6 +339,7 @@
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
     <ClCompile Include="src\world\io\save.cpp" />
+    <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_brush.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_map.cpp" />
     <ClCompile Include="src\world\object_class_library.cpp" />
@@ -609,6 +610,7 @@
     <ClInclude Include="src\world\io\load_effects.hpp" />
     <ClInclude Include="src\world\io\load_failure.hpp" />
     <ClInclude Include="src\world\io\save.hpp" />
+    <ClInclude Include="src\world\io\save_effects.hpp" />
     <ClInclude Include="src\world\layer_description.hpp" />
     <ClInclude Include="src\world\light.hpp" />
     <ClInclude Include="src\world\global_lights.hpp" />

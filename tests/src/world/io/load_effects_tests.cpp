@@ -3,10 +3,6 @@
 #include "math/vector_funcs.hpp"
 #include "world/io/load_effects.hpp"
 
-#include <bit>
-#include <concepts>
-#include <type_traits>
-
 using namespace std::literals;
 
 namespace we::world::tests {

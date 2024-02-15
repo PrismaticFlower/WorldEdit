@@ -45,6 +45,8 @@ struct color_control {
    PLATFORMED_VAR(float, world_contrast, 0.5f);
 
    PLATFORMED_VAR(float, world_saturation, 0.5f);
+
+   bool operator==(const color_control&) const noexcept = default;
 };
 
 struct fog_cloud {
@@ -164,7 +166,7 @@ struct lightning_bolt {
 
    PLATFORMED_VAR(float, branch_factor, 0.5f);
 
-   PLATFORMED_VAR(float, branch_spread_factor, 8.0f);
+   PLATFORMED_VAR(int32, branch_spread_factor, 8);
 
    PLATFORMED_VAR(float, branch_length, 80.0f);
 
@@ -185,6 +187,8 @@ struct lightning_bolt {
 
    PLATFORMED_VAR(float4, child_color,
                   {255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 150.0f / 255.0f});
+
+   bool operator==(const lightning_bolt&) const noexcept = default;
 };
 
 struct water {
@@ -211,11 +215,11 @@ struct water {
                   float4{148.0f / 255.0f, 170.0f / 255.0f, 192.0f / 255.0f,
                          255.0f / 255.0f});
 
-   PLATFORMED_VAR(float4, water_splash_color,
+   PLATFORMED_VAR(float4, water_wake_color,
                   float4{192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f,
                          255.0f / 255.0f});
 
-   PLATFORMED_VAR(float4, water_wake_color,
+   PLATFORMED_VAR(float4, water_splash_color,
                   float4{192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f,
                          255.0f / 255.0f});
 

@@ -194,6 +194,7 @@
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\object_class.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
+    <ClCompile Include="src\world\io\save_effects.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -458,6 +459,7 @@
     <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h" />
     <ClInclude Include="src\world\io\load_failure.hpp" />
     <ClInclude Include="src\world\io\load_effects.hpp" />
+    <ClInclude Include="src\world\io\save_effects.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
