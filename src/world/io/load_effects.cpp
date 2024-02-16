@@ -749,6 +749,7 @@ auto read_world_shadow_map(assets::config::node& node) -> world_shadow_map
       // clang-format off
       {"Enable"sv, UNPACK_VAR(shadow, enable)},
       {"Texture"sv, UNPACK_VAR(shadow, texture)},
+      {"LightName"sv, UNPACK_VAR(shadow, light_name)},
       {"TextureScale"sv, UNPACK_VAR(shadow, texture_scale)},
       {"AnimationFrequency"sv, UNPACK_VAR(shadow, animation_frequency)},
       {"AnimationAmplitude0"sv, UNPACK_VAR(shadow, animation_amplitude0)},

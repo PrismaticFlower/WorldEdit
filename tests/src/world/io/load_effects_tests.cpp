@@ -885,6 +885,9 @@ Effect("WorldShadowMap")
    CHECK(not loaded.texture_per_platform);
    CHECK(loaded.texture_pc == "shadowy_sun");
 
+   CHECK(not loaded.light_name_per_platform);
+   CHECK(loaded.light_name_pc == "sun");
+
    CHECK(not loaded.texture_scale_per_platform);
    CHECK(loaded.texture_scale_pc == 40.0f);
 
