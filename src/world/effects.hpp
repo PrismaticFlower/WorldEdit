@@ -358,7 +358,7 @@ struct heat_shimmer {
 struct space_dust {
    PLATFORMED_VAR(bool, enable, false);
 
-   PLATFORMED_VAR(std::string, texture, "spacedust1");
+   PLATFORMED_VAR(std::string, texture, "");
 
    PLATFORMED_VAR(float, spawn_distance, 150.0f);
 

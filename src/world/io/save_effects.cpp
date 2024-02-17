@@ -721,6 +721,230 @@ void save_water(io::output_file& out, const water& water)
 
    out.write_ln("}\n");
 }
+
+void save_godray(io::output_file& out, const godray& godray)
+{
+   out.write_ln("Effect(\"Godray\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(godray, enable)},
+      {"MaxGodraysInWorld"sv, UNPACK_VAR(godray, max_godrays_in_world)},
+      {"MaxGodraysOnScreen"sv, UNPACK_VAR(godray, max_godrays_on_screen)},
+      {"MaxViewDistance"sv, UNPACK_VAR(godray, max_view_distance)},
+      {"FadeViewDistance"sv, UNPACK_VAR(godray, fade_view_distance)},
+      {"MaxLength"sv, UNPACK_VAR(godray, max_length)},
+      {"OffsetAngle"sv, UNPACK_VAR(godray, offset_angle)},
+      {"MinRaysPerGodray"sv, UNPACK_VAR(godray, min_rays_per_godray)},
+      {"MaxRaysPerGodray"sv, UNPACK_VAR(godray, max_rays_per_godray)},
+      {"RadiusForMaxRays"sv, UNPACK_VAR(godray, radius_for_max_rays)},
+      {"DustVelocity"sv, UNPACK_VAR(godray, dust_velocity)},
+      {"Texture"sv, UNPACK_VAR(godray, texture)},
+      {"TextureScale"sv, UNPACK_VAR(godray, texture_scale)},
+      {"TextureVelocity"sv, UNPACK_VAR(godray, texture_velocity)},
+      {"TextureJitterSpeed"sv, UNPACK_VAR(godray, texture_jitter_speed)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_heat_shimmer(io::output_file& out, const heat_shimmer& shimmer)
+{
+   out.write_ln("Effect(\"HeatShimmer\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(shimmer, enable)},
+      {"WorldHeight"sv, UNPACK_VAR(shimmer, world_height)},
+      {"GeometryHeight"sv, UNPACK_VAR(shimmer, geometry_height)},
+      {"ScrollSpeed"sv, UNPACK_VAR(shimmer, scroll_speed)},
+      {"Tessellation"sv, std::nullopt, &shimmer.tessellation_pc, nullptr, &shimmer.tessellation_xbox},
+      {"Tessellation"sv, std::nullopt, nullptr, &shimmer.tessellation_ps2, nullptr},
+      {"BumpMap"sv, UNPACK_PC_XB_VAR(shimmer, bump_map)},
+      {"DistortionScale"sv, UNPACK_VAR(shimmer, distortion_scale)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_space_dust(io::output_file& out, const space_dust& dust)
+{
+   out.write_ln("Effect(\"SpaceDust\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(dust, enable)},
+      {"Texture"sv, UNPACK_VAR(dust, texture)},
+      {"SpawnDistance"sv, UNPACK_VAR(dust, spawn_distance)},
+      {"MaxRandomSideOffset"sv, UNPACK_VAR(dust, max_random_side_offset)},
+      {"CenterDeadZoneRadius"sv, UNPACK_VAR(dust, center_dead_zone_radius)},
+      {"MinParticleScale"sv, UNPACK_VAR(dust, min_particle_scale)},
+      {"MaxParticleScale"sv, UNPACK_VAR(dust, max_particle_scale)},
+      {"SpawnDelay"sv, UNPACK_VAR(dust, spawn_delay)},
+      {"ReferenceSpeed"sv, UNPACK_VAR(dust, reference_speed)},
+      {"DustParticleSpeed"sv, UNPACK_VAR(dust, dust_particle_speed)},
+      {"SpeedParticleMinLength"sv, UNPACK_VAR(dust, speed_particle_min_length)},
+      {"SpeedParticleMaxLength"sv, UNPACK_VAR(dust, speed_particle_max_length)},
+      {"ParticleLengthMinSpeed"sv, UNPACK_VAR(dust, particle_length_min_speed)},
+      {"ParticleLengthMaxSpeed"sv, UNPACK_VAR(dust, particle_length_max_speed)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_world_shadow_map(io::output_file& out, const world_shadow_map& shadow)
+{
+   out.write_ln("Effect(\"WorldShadowMap\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(shadow, enable)},
+      {"Texture"sv, UNPACK_VAR(shadow, texture)},
+      {"LightName"sv, UNPACK_VAR(shadow, light_name)},
+      {"TextureScale"sv, UNPACK_VAR(shadow, texture_scale)},
+      {"AnimationFrequency"sv, UNPACK_VAR(shadow, animation_frequency)},
+      {"AnimationAmplitude0"sv, UNPACK_VAR(shadow, animation_amplitude0)},
+      {"AnimationAmplitude1"sv, UNPACK_VAR(shadow, animation_amplitude1)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_blur(io::output_file& out, const blur& blur)
+{
+   out.write_ln("Effect(\"Blur\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(blur, enable)},
+      {"Mode"sv, UNPACK_PC_XB_VAR(blur, mode), 0},
+      {"ConstantBlend"sv, UNPACK_VAR(blur, constant_blend)},
+      {"DownSizeFactor"sv, UNPACK_VAR(blur, down_size_factor)},
+      {"MinMaxDepth"sv, std::nullopt, nullptr , blur.min_max_depth_ps2 != float2{0.0f, 1.0f} ? &blur.min_max_depth_ps2 : nullptr, nullptr},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_motion_blur(io::output_file& out, const motion_blur& blur)
+{
+   out.write_ln("Effect(\"MotionBlur\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(blur, enable)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_scope_blur(io::output_file& out, const scope_blur& blur)
+{
+   out.write_ln("Effect(\"ScopeBlur\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(blur, enable)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_hdr(io::output_file& out, const hdr& hdr)
+{
+   out.write_ln("Effect(\"HDR\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(hdr, enable)},
+      {"DownSizeFactor"sv, UNPACK_VAR(hdr, down_size_factor)},
+      {"NumBloomPasses"sv, UNPACK_VAR(hdr, num_bloom_passes)},
+      {"MaxTotalWeight"sv, UNPACK_VAR(hdr, max_total_weight)},
+      {"GlowThreshold"sv, UNPACK_VAR(hdr, glow_threshold)},
+      {"GlowFactor"sv, UNPACK_VAR(hdr, glow_factor)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_shadow(io::output_file& out, const shadow& shadow)
+{
+   out.write_ln("Effect(\"Shadow\")");
+   out.write_ln("{");
+
+   const property properties[] = {
+      // clang-format off
+      {"Enable"sv, UNPACK_VAR(shadow, enable)},
+      {"BlurEnable"sv, UNPACK_VAR(shadow, blur_enable)},
+      {"Intensity"sv, UNPACK_VAR(shadow, intensity)},
+      // clang-format on
+   };
+
+   save_properties(out, properties);
+
+   out.write_ln("}\n");
+}
+
+void save_sun_flares(io::output_file& out, std::span<const sun_flare> sun_flares)
+{
+   for (const sun_flare& flare : sun_flares) {
+      out.write_ln("SunFlare()");
+      out.write_ln("{");
+
+      const property properties[] = {
+         // clang-format off
+         {"Angle"sv, UNPACK_VAR(flare, angle)},
+         {"Color"sv, color_property_t{}, UNPACK_VAR(flare, color)},
+         {"Size"sv, UNPACK_VAR(flare, size)},
+         {"FlareOutSize"sv, UNPACK_VAR(flare, flare_out_size)},
+         {"NumFlareOuts"sv, UNPACK_VAR(flare, num_flare_outs)},
+         {"InitialFlareOutAlpha"sv, UNPACK_VAR(flare, initial_flare_out_alpha)},
+         {"HaloInnerRing"sv, UNPACK_VAR(flare, halo_inner_ring)},
+         {"HaloMiddleRing"sv, UNPACK_VAR(flare, halo_middle_ring)},
+         {"HaloOutterRing"sv, UNPACK_VAR(flare, halo_outter_ring)},
+         {"SpikeColor"sv, color_property_t{}, UNPACK_VAR(flare, spike_color)},
+         {"SpikeSize"sv, UNPACK_VAR(flare, spike_size)},
+         // clang-format on
+      };
+
+      save_properties(out, properties);
+
+      out.write_ln("}\n");
+   }
+}
+
 }
 
 void save_effects(const std::filesystem::path& path, const effects& effects)
@@ -733,6 +957,16 @@ void save_effects(const std::filesystem::path& path, const effects& effects)
    save_precipitation(out, effects.precipitation);
    save_lightning(out, effects.lightning, effects.lightning_bolt);
    save_water(out, effects.water);
+   save_godray(out, effects.godray);
+   save_heat_shimmer(out, effects.heat_shimmer);
+   save_space_dust(out, effects.space_dust);
+   save_world_shadow_map(out, effects.world_shadow_map);
+   save_blur(out, effects.blur);
+   save_motion_blur(out, effects.motion_blur);
+   save_scope_blur(out, effects.scope_blur);
+   save_hdr(out, effects.hdr);
+   save_shadow(out, effects.shadow);
+   save_sun_flares(out, effects.sun_flares);
 }
 
 }

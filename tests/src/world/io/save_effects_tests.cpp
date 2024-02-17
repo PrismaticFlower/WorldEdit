@@ -190,6 +190,178 @@ Effect("Water")
 	}
 }
 
+Effect("Godray")
+{
+	Enable(1);
+	MaxGodraysInWorld(100);
+	MaxGodraysOnScreen(4);
+	MaxViewDistance(40.0);
+	FadeViewDistance(30.0);
+	MaxLength(80.0);
+	OffsetAngle(-20.0);
+	MinRaysPerGodray(2);
+	MaxRaysPerGodray(8);
+	RadiusForMaxRays(4.0);
+	DustVelocity(0.0, -0.1, 0.0);
+	Texture("fx_godray");
+	TextureScale(1.5, 1.5);
+	TextureVelocity(0.0, -0.1, 0.0);
+	TextureJitterSpeed(0.1);
+}
+
+Effect("HeatShimmer")
+{
+	Enable(1);
+	WorldHeight(10.0);
+	GeometryHeight(4.0);
+	ScrollSpeed(0.08);
+
+	PS2()
+	{
+		Tessellation(20, 40);
+		DistortionScale(0.06);
+	}
+
+	XBOX()
+	{
+		Tessellation(4);
+		BumpMap("shimmer_waves_xbox", 0.5, 0.5);
+		DistortionScale(4.0);
+	}
+
+	PC()
+	{
+		Tessellation(3);
+		BumpMap("shimmer_waves_pc", 1.5, 1.5);
+		DistortionScale(0.004);
+	}
+}
+
+Effect("SpaceDust")
+{
+	Enable(1);
+	Texture("spacedust");
+	SpawnDistance(200.0);
+	MaxRandomSideOffset(80.0);
+	CenterDeadZoneRadius(40.0);
+	MinParticleScale(0.2);
+	MaxParticleScale(0.8);
+	SpawnDelay(0.2);
+	ReferenceSpeed(40.0);
+	DustParticleSpeed(50.0);
+	SpeedParticleMinLength(4.0);
+	SpeedParticleMaxLength(14.0);
+	ParticleLengthMinSpeed(70.0);
+	ParticleLengthMaxSpeed(200.0);
+}
+
+Effect("WorldShadowMap")
+{
+	Enable(1);
+	Texture("shadowy_sun");
+	LightName("sun");
+	TextureScale(40.0);
+	AnimationFrequency(0.2);
+	AnimationAmplitude0(4.0, 0.0);
+	AnimationAmplitude1(0.1, -0.1);
+}
+
+Effect("Blur")
+{
+	Enable(1);
+
+	PS2()
+	{
+		ConstantBlend(0.25);
+		DownSizeFactor(0.25);
+		MinMaxDepth(0.95, 1.0);
+	}
+
+	XBOX()
+	{
+		Mode(1);
+		ConstantBlend(0.45);
+		DownSizeFactor(0.5);
+	}
+
+	PC()
+	{
+		ConstantBlend(0.3);
+		DownSizeFactor(0.35);
+	}
+}
+
+Effect("MotionBlur")
+{
+	Enable(0);
+}
+
+Effect("ScopeBlur")
+{
+	Enable(0);
+}
+
+Effect("HDR")
+{
+	Enable(1);
+	DownSizeFactor(0.125);
+	NumBloomPasses(3);
+	MaxTotalWeight(1.1);
+	GlowThreshold(0.75);
+	GlowFactor(0.25);
+}
+
+Effect("Shadow")
+{
+	Enable(1);
+	BlurEnable(1);
+	Intensity(0.2);
+}
+
+SunFlare()
+{
+	Angle(130.0, 130.0);
+	Color(255, 150, 150);
+	Size(4.0);
+	FlareOutSize(5.0);
+	InitialFlareOutAlpha(50);
+	HaloInnerRing(1.0, 192, 255, 255, 255);
+	HaloMiddleRing(4.0, 192, 200, 0, 255);
+	HaloOutterRing(5.0, 192, 127, 0, 0);
+	SpikeColor(150, 100, 0, 128);
+	SpikeSize(10.0);
+
+	PS2()
+	{
+		NumFlareOuts(40);
+	}
+
+	XBOX()
+	{
+		NumFlareOuts(50);
+	}
+
+	PC()
+	{
+		NumFlareOuts(30);
+	}
+}
+
+SunFlare()
+{
+	Angle(132.0, 132.0);
+	Color(255, 152, 150);
+	Size(6.0);
+	FlareOutSize(7.0);
+	NumFlareOuts(42);
+	InitialFlareOutAlpha(52);
+	HaloInnerRing(3.0, 194, 255, 255, 255);
+	HaloMiddleRing(6.0, 194, 200, 0, 255);
+	HaloOutterRing(7.0, 194, 127, 0, 0);
+	SpikeColor(152, 100, 0, 128);
+	SpikeSize(12.0);
+}
+
 )";
 
    effects effects{
@@ -377,6 +549,149 @@ Effect("Water")
             .speckle_scroll_speed_ps2 = {0.1f, 0.1f},
             .speckle_coord_shift_ps2 = {2.0f, 2.0f},
             .light_azim_and_elev_ps2 = {0.5f, 0.0f},
+         },
+
+      .godray =
+         {
+            .enable_pc = true,
+            .max_godrays_in_world_pc = 100,
+            .max_godrays_on_screen_pc = 4,
+            .max_view_distance_pc = 40.0f,
+            .fade_view_distance_pc = 30.0f,
+            .max_length_pc = 80.0f,
+            .offset_angle_pc = -20.0f,
+            .min_rays_per_godray_pc = 2,
+            .max_rays_per_godray_pc = 8,
+            .radius_for_max_rays_pc = 4.0f,
+            .dust_velocity_pc = {0.0f, -0.1f, 0.0f},
+            .texture_pc = "fx_godray",
+            .texture_scale_pc = {1.5f, 1.5f},
+            .texture_velocity_pc = {0.0f, -0.1f, 0.0f},
+            .texture_jitter_speed_pc = 0.1f,
+         },
+
+      .heat_shimmer =
+         {
+            .enable_pc = true,
+            .world_height_pc = 10.0f,
+            .geometry_height_pc = 4.0f,
+            .scroll_speed_pc = 0.08f,
+            .bump_map_per_platform = true,
+            .bump_map_pc = {"shimmer_waves_pc", {1.5f, 1.5f}},
+            .bump_map_xbox = {"shimmer_waves_xbox", {0.5f, 0.5f}},
+            .distortion_scale_per_platform = true,
+            .distortion_scale_pc = 0.004f,
+            .distortion_scale_ps2 = 0.06f,
+            .distortion_scale_xbox = 4.0f,
+            .tessellation_pc = 3,
+            .tessellation_ps2 = {20, 40},
+            .tessellation_xbox = 4,
+         },
+
+      .space_dust =
+         {
+            .enable_pc = true,
+            .texture_pc = "spacedust",
+            .spawn_distance_pc = 200.0f,
+            .max_random_side_offset_pc = 80.0f,
+            .center_dead_zone_radius_pc = 40.0f,
+            .min_particle_scale_pc = 0.2f,
+            .max_particle_scale_pc = 0.8f,
+            .spawn_delay_pc = 0.2f,
+            .reference_speed_pc = 40.0f,
+            .dust_particle_speed_pc = 50.0f,
+            .speed_particle_min_length_pc = 4.0f,
+            .speed_particle_max_length_pc = 14.0f,
+            .particle_length_min_speed_pc = 70.0f,
+            .particle_length_max_speed_pc = 200.0f,
+         },
+
+      .world_shadow_map =
+         {
+            .enable_pc = true,
+            .texture_pc = "shadowy_sun",
+            .light_name_pc = "sun",
+            .texture_scale_pc = 40.0f,
+            .animation_frequency_pc = 0.2f,
+            .animation_amplitude0_pc = {4.0f, 0.0f},
+            .animation_amplitude1_pc = {0.1f, -0.1f},
+         },
+
+      .blur =
+         {
+            .enable_pc = true,
+            .constant_blend_per_platform = true,
+            .constant_blend_pc = 0.3f,
+            .constant_blend_ps2 = 0.25f,
+            .constant_blend_xbox = 0.45f,
+            .down_size_factor_per_platform = true,
+            .down_size_factor_pc = 0.35f,
+            .down_size_factor_ps2 = 0.25f,
+            .down_size_factor_xbox = 0.5f,
+            .min_max_depth_ps2 = {0.95f, 1.0f},
+            .mode_per_platform = true,
+            .mode_pc = 0,
+            .mode_xbox = 1,
+         },
+
+      .motion_blur =
+         {
+            .enable_pc = false,
+         },
+
+      .scope_blur =
+         {
+            .enable_pc = false,
+         },
+
+      .hdr =
+         {
+            .enable_pc = true,
+            .down_size_factor_pc = 0.125f,
+            .num_bloom_passes_pc = 3,
+            .max_total_weight_pc = 1.1f,
+            .glow_threshold_pc = 0.75f,
+            .glow_factor_pc = 0.25f,
+         },
+
+      .shadow =
+         {
+            .enable_pc = true,
+            .blur_enable_pc = true,
+            .intensity_pc = 0.2f,
+         },
+
+      .sun_flares =
+         {
+            sun_flare{
+               .angle_pc = {130.0f, 130.0f},
+               .color_pc = float3{255.0f, 150.0f, 150.0f} / 255.0f,
+               .size_pc = 4.0f,
+               .flare_out_size_pc = 5.0f,
+               .num_flare_outs_per_platform = true,
+               .num_flare_outs_pc = 30,
+               .num_flare_outs_ps2 = 40,
+               .num_flare_outs_xbox = 50,
+               .initial_flare_out_alpha_pc = 50,
+               .halo_inner_ring_pc = {1.0f, float4{192.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
+               .halo_middle_ring_pc = {4.0f, float4{192.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
+               .halo_outter_ring_pc = {5.0f, float4{192.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
+               .spike_color_pc = float4{150.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
+               .spike_size_pc = 10.0f,
+            },
+            sun_flare{
+               .angle_pc = {132.0f, 132.0f},
+               .color_pc = float3{255.0f, 152.0f, 150.0f} / 255.0f,
+               .size_pc = 6.0f,
+               .flare_out_size_pc = 7.0f,
+               .num_flare_outs_pc = 42,
+               .initial_flare_out_alpha_pc = 52,
+               .halo_inner_ring_pc = {3.0f, float4{194.0f, 255.0f, 255.0f, 255.0f} / 255.0f},
+               .halo_middle_ring_pc = {6.0f, float4{194.0f, 200.0f, 0.0f, 255.0f} / 255.0f},
+               .halo_outter_ring_pc = {7.0f, float4{194.0f, 127.0f, 0.0f, 0.0f} / 255.0f},
+               .spike_color_pc = float4{152.0f, 100.0f, 0.0f, 128.0f} / 255.0f,
+               .spike_size_pc = 12.0f,
+            },
          },
    };
 
