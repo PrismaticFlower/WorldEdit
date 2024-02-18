@@ -2,6 +2,7 @@
 #include "save.hpp"
 #include "assets/req/io.hpp"
 #include "math/vector_funcs.hpp"
+#include "save_effects.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/boundary_nodes.hpp"
 
@@ -844,5 +845,6 @@ void save_world(const std::filesystem::path& path, const world& world,
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv),
                 world.terrain, terrain_cuts);
    save_requirements(world_dir, world_name, world);
+   save_effects(std::filesystem::path{path}.replace_extension(L".fx"sv), world.effects);
 }
 }

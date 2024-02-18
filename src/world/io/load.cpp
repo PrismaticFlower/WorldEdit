@@ -4,6 +4,7 @@
 #include "assets/req/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
 #include "io/read_file.hpp"
+#include "load_effects.hpp"
 #include "load_failure.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/stopwatch.hpp"
@@ -1176,6 +1177,29 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       }
 
       load_requirements_files(world_dir, world, output);
+
+      if (const auto fx_path = world_dir / world.name += ".fx"sv;
+          std::filesystem::exists(fx_path)) {
+         try {
+            utility::stopwatch load_timer;
+
+            world.effects = load_effects(io::read_file_to_string(fx_path), output);
+
+            output.write("Loaded {}.fx (time taken {:f}ms)\n", world.name,
+                         load_timer
+                            .elapsed<std::chrono::duration<double, std::milli>>()
+                            .count());
+         }
+         catch (std::exception& e) {
+            auto message =
+               fmt::format("Error while loading {}.fx:\n   Message: \n{}\n",
+                           world.name, string::indent(2, e.what()));
+
+            output.write(message);
+
+            throw load_failure{message};
+         }
+      }
    }
    catch (load_failure& failure) {
       output

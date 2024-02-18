@@ -2,6 +2,7 @@
 
 #include "barrier.hpp"
 #include "boundary.hpp"
+#include "effects.hpp"
 #include "game_mode_description.hpp"
 #include "global_lights.hpp"
 #include "hintnode.hpp"
@@ -45,6 +46,8 @@ struct world {
    std::vector<planning_connection> planning_connections;
    std::vector<boundary> boundaries;
    std::vector<measurement> measurements;
+
+   effects effects;
 
    /// @brief Vector of layers to garbage collect the files of at save time.
    std::vector<std::string> deleted_layers;
