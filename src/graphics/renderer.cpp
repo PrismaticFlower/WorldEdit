@@ -395,8 +395,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
       _terrain.update(world.terrain, _pre_render_command_list,
                       _dynamic_buffer_allocator, _texture_manager, settings);
-      _water.update(world.terrain, _pre_render_command_list,
-                    _dynamic_buffer_allocator, _texture_manager);
+      _water.update(world, _pre_render_command_list, _dynamic_buffer_allocator,
+                    _texture_manager);
       _light_clusters
          .prepare_lights(camera, view_frustum, world,
                          interaction_targets.creation_entity

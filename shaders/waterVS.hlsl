@@ -3,7 +3,7 @@
 
 struct output_vertex
 {
-   float3 positionWS : POSITIONWS;
+   float2 texcoords : TEXCOORDS;
    float4 positionPS : SV_Position;
 };
 
@@ -50,7 +50,7 @@ output_vertex main(uint vertex_index : SV_VertexID)
    
    output_vertex output;
 
-   output.positionWS = positionWS;
+   output.texcoords = positionWS.xz / cb_water.tiling + (cb_water.velocity * cb_frame.texture_scroll_duration);
    output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
 
    return output;

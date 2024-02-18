@@ -15,7 +15,7 @@ namespace we::graphics {
 struct water {
    water(gpu::device& device, texture_manager& texture_manager);
 
-   void update(const world::terrain& terrain, gpu::copy_command_list& command_list,
+   void update(const world::world& world, gpu::copy_command_list& command_list,
                dynamic_buffer_allocator& dynamic_buffer_allocator,
                texture_manager& texture_manager);
 
