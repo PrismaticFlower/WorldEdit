@@ -144,6 +144,16 @@ void read_animated_textures(const assets::config::values& values,
 {
    using animated_textures = water::animated_textures;
 
+   if (values.size() == 4) {
+      // work around for SpeckleTextures in Kamino1.fx (and possibly mod maps that copy from it).
+      if (std::holds_alternative<std::string>(values.at(0)) and
+          std::holds_alternative<std::string>(values.at(1)) and
+          std::holds_alternative<std::string>(values.at(2)) and
+          std::holds_alternative<std::string>(values.at(3))) {
+         return;
+      }
+   }
+
    animated_textures texture{.prefix = values.get<std::string>(0),
                              .count = values.get<int32>(1),
                              .framerate = values.get<float>(2)};

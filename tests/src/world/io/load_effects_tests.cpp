@@ -648,6 +648,21 @@ Effect("Water")
    CHECK(loaded.phillips_constant_xbox == 0.003f);
 }
 
+TEST_CASE("world load effects water speckle textures workaround", "[World][IO]")
+{
+   null_output_stream output;
+
+   const std::string_view world_fx = R"(
+Effect("Water")
+{
+   SpeckleTextures("water_specles0", "water_specles1", "water_specles2", "water_specles3");
+})"sv;
+
+   water loaded = load_effects(world_fx, output).water;
+
+   CHECK(loaded.speckle_textures_ps2 == water{}.speckle_textures_ps2);
+}
+
 TEST_CASE("world load effects godray", "[World][IO]")
 {
    null_output_stream output;
