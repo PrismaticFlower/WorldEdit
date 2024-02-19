@@ -2723,8 +2723,9 @@ void world_edit::load_world(std::filesystem::path path) noexcept
       _window_unsaved_star = false;
    }
    catch (std::exception& e) {
-      _stream.write(fmt::format("Failed to load world '{}'! Reason: {}",
-                                path.filename().string(), e.what()));
+      _stream.write(fmt::format("Failed to load world '{}'!\n   Reason: \n{}",
+                                path.filename().string(),
+                                string::indent(2, e.what())));
    }
 }
 
