@@ -403,7 +403,27 @@ void read_node(assets::config::node& node, std::span<const property> properties)
       for (const property& prop : properties) {
          if (not string::iequals(key_node.key, prop.name)) continue;
 
-         prop.read(key_node.values);
+         try {
+            prop.read(key_node.values);
+         }
+         catch (std::bad_variant_access&) {
+            throw load_failure{fmt::format(
+               "Error reading property '{}' in "
+               "world effects file.\n   Reason: "
+               "The type of one of the property's values is incorrect.",
+               key_node.key)};
+         }
+         catch (std::out_of_range&) {
+            throw load_failure{fmt::format("Error reading property '{}' in "
+                                           "world effects file.\n   Reason: "
+                                           "The property has too few values.",
+                                           key_node.key)};
+         }
+         catch (std::exception& e) {
+            throw load_failure{fmt::format("Error reading property '{}' in "
+                                           "world effects file.\n   Reason: {}",
+                                           key_node.key, e.what())};
+         }
 
          break;
       }
@@ -415,7 +435,29 @@ void read_node(assets::config::node& node, std::span<const property> properties)
             for (const property& prop : properties) {
                if (not string::iequals(key_node.key, prop.name)) continue;
 
-               prop.read_pc(key_node.values);
+               try {
+                  prop.read_pc(key_node.values);
+               }
+               catch (std::bad_variant_access&) {
+                  throw load_failure{fmt::format(
+                     "Error reading property '{}' from PC scope in "
+                     "world effects file.\n   Reason: "
+                     "The type of one of the property's values is incorrect.",
+                     key_node.key)};
+               }
+               catch (std::out_of_range&) {
+                  throw load_failure{
+                     fmt::format("Error reading property '{}' from PC scope in "
+                                 "world effects file.\n   Reason: "
+                                 "The property has too few values.",
+                                 key_node.key)};
+               }
+               catch (std::exception& e) {
+                  throw load_failure{
+                     fmt::format("Error reading property '{}' from PC scope in "
+                                 "world effects file.\n   Reason: {}",
+                                 key_node.key, e.what())};
+               }
 
                break;
             }
@@ -426,7 +468,29 @@ void read_node(assets::config::node& node, std::span<const property> properties)
             for (const property& prop : properties) {
                if (not string::iequals(key_node.key, prop.name)) continue;
 
-               prop.read_ps2(key_node.values);
+               try {
+                  prop.read_ps2(key_node.values);
+               }
+               catch (std::bad_variant_access&) {
+                  throw load_failure{fmt::format(
+                     "Error reading property '{}' from PS2 scope in "
+                     "world effects file.\n   Reason: "
+                     "The type of one of the property's values is incorrect.",
+                     key_node.key)};
+               }
+               catch (std::out_of_range&) {
+                  throw load_failure{fmt::format(
+                     "Error reading property '{}' from PS2 scope in "
+                     "world effects file.\n   Reason: "
+                     "The property has too few values.",
+                     key_node.key)};
+               }
+               catch (std::exception& e) {
+                  throw load_failure{fmt::format(
+                     "Error reading property '{}' from PS2 scope in "
+                     "world effects file.\n   Reason: {}",
+                     key_node.key, e.what())};
+               }
 
                break;
             }
@@ -437,7 +501,29 @@ void read_node(assets::config::node& node, std::span<const property> properties)
             for (const property& prop : properties) {
                if (not string::iequals(key_node.key, prop.name)) continue;
 
-               prop.read_xbox(key_node.values);
+               try {
+                  prop.read_xbox(key_node.values);
+               }
+               catch (std::bad_variant_access&) {
+                  throw load_failure{fmt::format(
+                     "Error reading property '{}' from XBOX scope in "
+                     "world effects file.\n   Reason: "
+                     "The type of one of the property's values is incorrect.",
+                     key_node.key)};
+               }
+               catch (std::out_of_range&) {
+                  throw load_failure{fmt::format(
+                     "Error reading property '{}' from XBOX scope in "
+                     "world effects file.\n   Reason: "
+                     "The property has too few values.",
+                     key_node.key)};
+               }
+               catch (std::exception& e) {
+                  throw load_failure{fmt::format(
+                     "Error reading property '{}' from XBOX scope in "
+                     "world effects file.\n   Reason: {}",
+                     key_node.key, e.what())};
+               }
 
                break;
             }
@@ -961,6 +1047,9 @@ auto load_effects(const std::string_view str, [[maybe_unused]] output_stream& ou
                            key_node.key)};
          }
       }
+   }
+   catch (load_failure&) {
+      throw;
    }
    catch (std::exception& e) {
       throw load_failure{e.what()};
