@@ -135,6 +135,10 @@ void world_edit::initialize_commands() noexcept
       _terrain_editor_open = true;
       _terrain_editor_config.edit_target = terrain_edit_target::color;
    });
+   _commands.add("show.water_editor"s, [this] {
+      _water_editor_open = true;
+      _water_editor_context = {};
+   });
 
    _commands.add("show.overlay_grid"s, _draw_overlay_grid);
    _commands.add("show.terrain_grid"s, _draw_terrain_grid);
@@ -499,6 +503,35 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("measurement_tool.close"s,
                  [this] { _measurement_tool_open = false; });
+
+   _commands.add("water.toggle_brush_paint"s, _water_editor_context.brush_held);
+   _commands.add("water.increase_brush_size"s, [this] {
+      _water_editor_config.brush_size_x =
+         std::clamp(_water_editor_config.brush_size_x + 1, 0,
+                    _world.terrain.length / 4 / 2);
+      _water_editor_config.brush_size_y =
+         std::clamp(_water_editor_config.brush_size_y + 1, 0,
+                    _world.terrain.length / 4 / 2);
+   });
+   _commands.add("water.decrease_brush_size"s, [this] {
+      _water_editor_config.brush_size_x =
+         std::clamp(_water_editor_config.brush_size_x - 1, 0,
+                    _world.terrain.length / 4 / 2);
+      _water_editor_config.brush_size_y =
+         std::clamp(_water_editor_config.brush_size_y - 1, 0,
+                    _world.terrain.length / 4 / 2);
+   });
+   _commands.add("water.cycle_brush_mode"s, [this] {
+      switch (water_brush_mode& mode = _water_editor_config.brush_mode; mode) {
+      case water_brush_mode::paint:
+         mode = water_brush_mode::erase;
+         return;
+      case water_brush_mode::erase:
+         mode = water_brush_mode::paint;
+         return;
+      }
+   });
+   _commands.add("water.close_editor"s, [this] { _water_editor_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -606,6 +639,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Terrain Colour Editor",
            "show.terrain_color_editor",
            {.key = key::f3, .modifiers = {.ctrl = true}}},
+          {"Show Water Editor",
+           "show.water_editor",
+           {.key = key::f4, .modifiers = {.ctrl = true}}},
 
           {"Show Floor Grid",
            "show.overlay_grid",
@@ -910,6 +946,20 @@ void world_edit::initialize_hotkeys() noexcept
          },
 
       .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Water Editing",
+      .description = "Active while the water editor is open."s,
+      .activated = [this] { return _water_editor_open; },
+      .default_hotkeys =
+         {
+            {"Paint", "water.toggle_brush_paint", {.key = key::mouse1}, {.toggle = true}},
+            {"Increase Brush Size", "water.increase_brush_size", {.key = key::mouse_wheel_forward}},
+            {"Decrease Brush Size", "water.decrease_brush_size", {.key = key::mouse_wheel_back}},
+            {"Cycle Brush Mode", "water.cycle_brush_mode", {.key = key::z}},
+            {"Close Editor", "water.close_editor", {.key = key::escape}},
+         },
    });
 
    _hotkeys.add_set({
