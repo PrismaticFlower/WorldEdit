@@ -532,6 +532,7 @@ void world_edit::initialize_commands() noexcept
       }
    });
    _commands.add("water.close_editor"s, [this] { _water_editor_open = false; });
+   _commands.add("water.toggle_flood_fill"s, _water_editor_context.flood_fill_active);
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -959,6 +960,7 @@ void world_edit::initialize_hotkeys() noexcept
             {"Decrease Brush Size", "water.decrease_brush_size", {.key = key::mouse_wheel_back}},
             {"Cycle Brush Mode", "water.cycle_brush_mode", {.key = key::z}},
             {"Close Editor", "water.close_editor", {.key = key::escape}},
+            {"Flood Fill", "water.toggle_flood_fill", {.key = key::x}},
          },
    });
 
