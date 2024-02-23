@@ -223,14 +223,12 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          }
 
          bundle.push_back(edits::make_set_terrain_area(0, 0, std::move(height_map)));
+         bundle.push_back(edits::make_set_memory_value(&_world.terrain.height_scale,
+                                                       height_scale));
          bundle.push_back(
-            edits::make_set_global_value(&world::world::terrain,
-                                         &world::terrain::height_scale, height_scale,
-                                         _world.terrain.height_scale));
-         bundle.push_back(edits::make_set_global_value(
-            &world::world::terrain, &world::terrain::grid_scale,
-            _terrain_import_heightmap_context.heightmap_terrain_world_size / new_length,
-            _world.terrain.grid_scale));
+            edits::make_set_memory_value(&_world.terrain.grid_scale,
+                                         _terrain_import_heightmap_context.heightmap_terrain_world_size /
+                                            new_length));
 
          _edit_stack_world.apply(edits::make_bundle(std::move(bundle)), _edit_context);
       }

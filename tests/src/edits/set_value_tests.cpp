@@ -43,16 +43,14 @@ TEST_CASE("edits set_path_node_value", "[Edits]")
    REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_global_value", "[Edits]")
+TEST_CASE("edits set_memory_value", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
    auto edit =
-      make_set_global_value(&world::world::global_lights,
-                            &world::global_lights::env_map_texture,
-                            "starfield"s, world.global_lights.env_map_texture);
+      make_set_memory_value(&world.global_lights.env_map_texture, "starfield"s);
 
    edit->apply(edit_context);
 
@@ -62,26 +60,6 @@ TEST_CASE("edits set_global_value", "[Edits]")
 
    REQUIRE(world.global_lights.env_map_texture ==
            test_world.global_lights.env_map_texture);
-}
-
-TEST_CASE("edits set_global_value_indexed", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   auto edit = make_set_global_value_indexed(&world::world::terrain,
-                                             &world::terrain::texture_names, 1u,
-                                             "starfield"s,
-                                             world.terrain.texture_names[1]);
-
-   edit->apply(edit_context);
-
-   REQUIRE(world.terrain.texture_names[1] == "starfield");
-
-   edit->revert(edit_context);
-
-   REQUIRE(world.terrain.texture_names[1] == test_world.terrain.texture_names[1]);
 }
 
 TEST_CASE("edits set_instance_property_value", "[Edits]")
@@ -437,20 +415,16 @@ TEST_CASE("edits set_path_node_value coalesce", "[Edits]")
    REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_global_value coalesce", "[Edits]")
+TEST_CASE("edits set_memory_value coalesce", "[Edits]")
 {
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
    auto edit =
-      make_set_global_value(&world::world::global_lights,
-                            &world::global_lights::env_map_texture,
-                            "starfield"s, world.global_lights.env_map_texture);
+      make_set_memory_value(&world.global_lights.env_map_texture, "starfield"s);
    auto other_edit =
-      make_set_global_value(&world::world::global_lights,
-                            &world::global_lights::env_map_texture,
-                            "mountains"s, world.global_lights.env_map_texture);
+      make_set_memory_value(&world.global_lights.env_map_texture, "mountains"s);
 
    REQUIRE(edit->is_coalescable(*other_edit));
 
@@ -464,34 +438,6 @@ TEST_CASE("edits set_global_value coalesce", "[Edits]")
 
    REQUIRE(world.global_lights.env_map_texture ==
            test_world.global_lights.env_map_texture);
-}
-
-TEST_CASE("edits set_global_value_indexed coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   auto edit = make_set_global_value_indexed(&world::world::terrain,
-                                             &world::terrain::texture_names, 1,
-                                             "starfield"s,
-                                             world.terrain.texture_names[1]);
-   auto other_edit =
-      make_set_global_value_indexed(&world::world::terrain,
-                                    &world::terrain::texture_names, 1,
-                                    "mountains"s, world.terrain.texture_names[1]);
-
-   REQUIRE(edit->is_coalescable(*other_edit));
-
-   edit->coalesce(*other_edit);
-
-   edit->apply(edit_context);
-
-   REQUIRE(world.terrain.texture_names[1] == "mountains");
-
-   edit->revert(edit_context);
-
-   REQUIRE(world.terrain.texture_names[1] == test_world.terrain.texture_names[1]);
 }
 
 TEST_CASE("edits set_instance_property_value coalesce", "[Edits]")
