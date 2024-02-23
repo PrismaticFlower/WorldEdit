@@ -716,7 +716,7 @@ TEST_CASE("pinned_vector erase begin", "[Container]")
                           std::initializer_list<int>{0, 1, 2, 3}};
 
    CHECK(vec.erase(vec.begin()) == vec.begin());
-   REQUIRE(vec.size() == 2);
+   REQUIRE(vec.size() == 3);
 
    CHECK(vec[0] == 1);
    CHECK(vec[1] == 2);
