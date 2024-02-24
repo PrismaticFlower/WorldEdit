@@ -20,7 +20,7 @@ namespace detail {
 [[nodiscard]] auto virtual_commit(void* begin, const std::size_t count,
                                   const std::size_t item_size) noexcept -> std::size_t;
 
-[[nodiscard]] void virtual_free(void* memory) noexcept;
+void virtual_free(void* memory) noexcept;
 
 }
 
