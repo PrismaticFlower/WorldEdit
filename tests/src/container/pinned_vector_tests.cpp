@@ -9,6 +9,8 @@
 
 namespace we::container::tests {
 
+inline namespace pinned_vector_helpers {
+
 namespace {
 
 struct lifetime_tracker {
@@ -73,18 +75,49 @@ private:
    int* alive_count = nullptr;
 };
 
+struct throw_when_copied : lifetime_tracker {
+   throw_when_copied(bool throws, int& alive_count)
+      : lifetime_tracker{alive_count}, throws{throws}
+   {
+   }
+
+   throw_when_copied(const throw_when_copied& other)
+      : lifetime_tracker{other}, throws{other.throws}
+   {
+      if (throws) throw std::exception{};
+   }
+
+   auto operator=(const throw_when_copied& other) -> throw_when_copied&
+   {
+      static_cast<lifetime_tracker&>(*this) = other;
+      this->throws = other.throws;
+
+      if (throws) throw std::exception{};
+
+      return *this;
+   }
+
+   throw_when_copied(throw_when_copied&&) = default;
+   auto operator=(throw_when_copied&&) -> throw_when_copied& = default;
+
+private:
+   bool throws = false;
+};
+
+}
+
 }
 
 /*
 
 Tests that still need writing!
 
-- Test for exception during copy construct
-- Test for exception during copy assign operator
+- Test for copy assign operator lifetime
 
 - Test for exception during resize.
 - Test for exception during emplace_back
 - Test for exception during emplace
+- Test for exception during assign
 - Test for exception during copy push_back
 - Test for exception during copy insert
 - Test for exception during copy insert count
@@ -168,7 +201,7 @@ TEST_CASE("pinned_vector move construct", "[Container]")
    for (int i = 0; i < 8; ++i) CHECK(old_data[i] == i);
 }
 
-TEST_CASE("pinned_vector copy assign construct", "[Container]")
+TEST_CASE("pinned_vector copy assign", "[Container]")
 {
    pinned_vector<int> base_vec{pinned_vector_init{.max_size = 65536},
                                std::initializer_list{0, 1, 2, 3, 4, 5, 6, 7}};
@@ -190,7 +223,7 @@ TEST_CASE("pinned_vector copy assign construct", "[Container]")
    for (int i = 0; i < 8; ++i) CHECK(base_data[i] == other_data[i]);
 }
 
-TEST_CASE("pinned_vector move assign construct", "[Container]")
+TEST_CASE("pinned_vector move assign", "[Container]")
 {
    pinned_vector<int> old_vec{pinned_vector_init{.max_size = 65536},
                               std::initializer_list{0, 1, 2, 3, 4, 5, 6, 7}};
@@ -251,6 +284,84 @@ TEST_CASE("pinned_vector destruction", "[Container]")
    }
 
    for (int i = 0; i < 8; ++i) CHECK(alive_counters[i] == 0);
+}
+
+TEST_CASE("pinned_vector construct from range exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   std::list<throw_when_copied> list;
+
+   list.emplace_back(false, alive_counters[0]);
+   list.emplace_back(false, alive_counters[1]);
+   list.emplace_back(true, alive_counters[2]);
+   list.emplace_back(false, alive_counters[3]);
+
+   CHECK_THROWS(
+      pinned_vector<throw_when_copied>{pinned_vector_init{.max_size = 65536}, list});
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+}
+
+TEST_CASE("pinned_vector copy construct exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> base_vec{pinned_vector_init{.max_size = 65536}};
+
+   base_vec.emplace_back(false, alive_counters[0]);
+   base_vec.emplace_back(false, alive_counters[1]);
+   base_vec.emplace_back(true, alive_counters[2]);
+   base_vec.emplace_back(false, alive_counters[3]);
+
+   CHECK_THROWS(pinned_vector<throw_when_copied>{base_vec});
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+}
+
+TEST_CASE("pinned_vector copy assign exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> base_vec{pinned_vector_init{.max_size = 65536}};
+
+   base_vec.emplace_back(false, alive_counters[0]);
+   base_vec.emplace_back(false, alive_counters[1]);
+   base_vec.emplace_back(true, alive_counters[2]);
+   base_vec.emplace_back(false, alive_counters[3]);
+
+   pinned_vector<throw_when_copied> other_vec{pinned_vector_init{.max_size = 65536}};
+
+   CHECK_THROWS(other_vec = base_vec);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+}
+
+TEST_CASE("pinned_vector operator= initializer_list exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536}};
+
+   CHECK_THROWS(vec = std::initializer_list<throw_when_copied>{
+                   throw_when_copied{false, alive_counters[0]},
+                   throw_when_copied{false, alive_counters[1]},
+                   throw_when_copied{true, alive_counters[2]},
+                   throw_when_copied{false, alive_counters[3]}});
+
+   CHECK(alive_counters[0] == 0);
+   CHECK(alive_counters[1] == 0);
+   CHECK(alive_counters[2] == 0);
+   CHECK(alive_counters[3] == 0);
 }
 
 TEST_CASE("pinned_vector assign value", "[Container]")

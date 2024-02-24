@@ -67,7 +67,8 @@ struct pinned_vector {
    }
 
    template<typename Range>
-   pinned_vector(const pinned_vector_init& init, const Range& range) noexcept
+   pinned_vector(const pinned_vector_init& init, const Range& range) noexcept(
+      std::is_nothrow_constructible_v<T, typename Range::const_reference>)
       : pinned_vector{pinned_vector_init{.max_size = init.max_size,
                                          .initial_capacity =
                                             init.initial_capacity > range.size()
@@ -77,7 +78,7 @@ struct pinned_vector {
       append_range(range);
    }
 
-   pinned_vector(const pinned_vector& other) noexcept
+   pinned_vector(const pinned_vector& other) noexcept(std::is_nothrow_copy_constructible_v<T>)
       : pinned_vector{pinned_vector_init{.max_size = other.max_size(),
                                          .initial_capacity = other.size()}}
    {
@@ -98,7 +99,8 @@ struct pinned_vector {
       detail::virtual_free(_begin);
    }
 
-   auto operator=(const pinned_vector& other) noexcept -> pinned_vector&
+   auto operator=(const pinned_vector& other) noexcept(std::is_nothrow_copy_assignable_v<T>)
+      -> pinned_vector&
    {
       pinned_vector discard{other};
 
@@ -117,7 +119,8 @@ struct pinned_vector {
       return *this;
    }
 
-   auto operator=(std::initializer_list<T> initializer_list) noexcept -> pinned_vector&
+   auto operator=(std::initializer_list<T> initializer_list) noexcept(
+      std::is_nothrow_copy_constructible_v<T>) -> pinned_vector&
    {
       assign_range(initializer_list);
 
@@ -510,7 +513,7 @@ struct pinned_vector {
 
    template<typename Range>
    void assign_range(const Range& range) noexcept(
-      std::is_nothrow_constructible_v<T, typename Range::value_type>)
+      std::is_nothrow_constructible_v<T, typename Range::const_reference>)
    {
       clear();
       ensure_space(range.size());
@@ -518,7 +521,7 @@ struct pinned_vector {
       T* item = _begin;
 
       for (auto& v : range) {
-         if constexpr (std::is_nothrow_constructible_v<T, typename Range::value_type>) {
+         if constexpr (std::is_nothrow_constructible_v<T, typename Range::const_reference>) {
             new (item) T{v};
          }
          else {
@@ -542,14 +545,14 @@ struct pinned_vector {
 
    template<typename Range>
    void append_range(const Range& range) noexcept(
-      std::is_nothrow_constructible_v<T, typename Range::value_type>)
+      std::is_nothrow_constructible_v<T, typename Range::const_reference>)
    {
       ensure_space(range.size());
 
       T* item = _end;
 
       for (auto& v : range) {
-         if constexpr (std::is_nothrow_constructible_v<T, typename Range::value_type>) {
+         if constexpr (std::is_nothrow_constructible_v<T, typename Range::const_reference>) {
             new (item) T{v};
          }
          else {
@@ -573,7 +576,7 @@ struct pinned_vector {
 
    template<typename Range>
    [[nodiscard]] auto insert_range(const_iterator position, const Range& range) noexcept(
-      std::is_nothrow_constructible_v<T, typename Range::value_type>) -> iterator
+      std::is_nothrow_constructible_v<T, typename Range::const_reference>) -> iterator
    {
       const std::ptrdiff_t count = static_cast<std::ptrdiff_t>(range.size());
 
@@ -585,7 +588,7 @@ struct pinned_vector {
       T* item = inserted_begin;
 
       for (auto& v : range) {
-         if constexpr (std::is_nothrow_constructible_v<T, typename Range::value_type>) {
+         if constexpr (std::is_nothrow_constructible_v<T, typename Range::const_reference>) {
             new (item) T{v};
          }
          else {
