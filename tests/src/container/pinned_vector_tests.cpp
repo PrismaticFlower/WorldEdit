@@ -112,8 +112,6 @@ private:
 
 Tests that still need writing!
 
-- Test for copy assign operator lifetime
-
 - Test for exception during resize.
 - Test for exception during emplace_back
 - Test for exception during emplace
@@ -344,6 +342,43 @@ TEST_CASE("pinned_vector copy assign exception", "[Container]")
    CHECK(alive_counters[1] == 1);
    CHECK(alive_counters[2] == 1);
    CHECK(alive_counters[3] == 1);
+}
+
+TEST_CASE("pinned_vector copy assign lifetime", "[Container]")
+{
+   int alive_counters[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+   pinned_vector<lifetime_tracker>
+      base_vec{pinned_vector_init{.max_size = 65536},
+               std::initializer_list{lifetime_tracker{alive_counters[0]},
+                                     lifetime_tracker{alive_counters[1]},
+                                     lifetime_tracker{alive_counters[2]},
+                                     lifetime_tracker{alive_counters[3]}}};
+
+   pinned_vector<lifetime_tracker>
+      other_vec{pinned_vector_init{.max_size = 65536},
+                std::initializer_list{lifetime_tracker{alive_counters[4]},
+                                      lifetime_tracker{alive_counters[6]},
+                                      lifetime_tracker{alive_counters[7]},
+                                      lifetime_tracker{alive_counters[8]}}};
+
+   other_vec = base_vec;
+
+   REQUIRE(other_vec.size() == 4);
+
+   CHECK(alive_counters[0] == 2);
+   CHECK(alive_counters[1] == 2);
+   CHECK(alive_counters[2] == 2);
+   CHECK(alive_counters[3] == 2);
+   CHECK(alive_counters[4] == 0);
+   CHECK(alive_counters[5] == 0);
+   CHECK(alive_counters[6] == 0);
+   CHECK(alive_counters[7] == 0);
+
+   CHECK(other_vec[0] == alive_counters[0]);
+   CHECK(other_vec[1] == alive_counters[1]);
+   CHECK(other_vec[2] == alive_counters[2]);
+   CHECK(other_vec[3] == alive_counters[3]);
 }
 
 TEST_CASE("pinned_vector operator= initializer_list exception", "[Container]")
@@ -1618,6 +1653,27 @@ TEST_CASE("pinned_vector erase iter range lifetime begin", "[Container]")
    CHECK(alive_counters[1] == 0);
    CHECK(alive_counters[2] == 1);
    CHECK(alive_counters[3] == 1);
+}
+
+TEST_CASE("pinned_vector clear lifetime", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<lifetime_tracker> vec{pinned_vector_init{.max_size = 65536},
+                                       std::initializer_list<lifetime_tracker>{
+                                          lifetime_tracker{alive_counters[0]},
+                                          lifetime_tracker{alive_counters[1]},
+                                          lifetime_tracker{alive_counters[2]},
+                                          lifetime_tracker{alive_counters[3]}}};
+
+   vec.clear();
+
+   REQUIRE(vec.size() == 0);
+
+   CHECK(alive_counters[0] == 0);
+   CHECK(alive_counters[1] == 0);
+   CHECK(alive_counters[2] == 0);
+   CHECK(alive_counters[3] == 0);
 }
 
 }
