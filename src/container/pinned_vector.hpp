@@ -407,6 +407,8 @@ struct pinned_vector {
                 Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
       -> iterator
    {
+      assert(position >= _begin and position <= _end);
+
       T* item = _begin + (position - _begin);
 
       insert_shift_forward(item, 1);
@@ -444,6 +446,8 @@ struct pinned_vector {
    auto insert(const_iterator position, size_type count,
                const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>) -> iterator
    {
+      assert(position >= _begin and position <= _end);
+
       T* const inserted_begin = _begin + (position - _begin);
       T* const inserted_end = inserted_begin + count;
 
@@ -580,6 +584,8 @@ struct pinned_vector {
    [[nodiscard]] auto insert_range(const_iterator position, const Range& range) noexcept(
       std::is_nothrow_constructible_v<T, typename Range::const_reference>) -> iterator
    {
+      assert(position >= _begin and position <= _end);
+
       const std::ptrdiff_t count = static_cast<std::ptrdiff_t>(range.size());
 
       T* inserted_begin = _begin + (position - _begin);
