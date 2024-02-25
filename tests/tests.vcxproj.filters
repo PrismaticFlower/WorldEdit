@@ -95,6 +95,7 @@
     <ClCompile Include="src\assets\terrain\dirty_rect_tracker_tests.cpp" />
     <ClCompile Include="src\edits\set_terrain_area_tests.cpp" />
     <ClCompile Include="src\edits\set_terrain_tests.cpp" />
+    <ClCompile Include="src\container\pinned_vector_tests.cpp" />
     <ClCompile Include="src\world\io\load_effects_tests.cpp" />
     <ClCompile Include="src\world\io\save_effects_tests.cpp" />
   </ItemGroup>
