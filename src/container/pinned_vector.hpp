@@ -699,4 +699,54 @@ private:
    T* _reserved_end = nullptr;
 };
 
+template<typename T>
+auto erase(pinned_vector<T>& vec, const T& value) noexcept -> std::size_t
+{
+   auto first = vec.begin();
+
+   for (; first != vec.end(); ++first) {
+      if (*first == value) break;
+   }
+
+   if (first == vec.end()) return 0;
+
+   for (auto it = first + 1; it != vec.end(); ++it) {
+      if (*it != value) {
+         *first = std::move(*it);
+         first += 1;
+      }
+   }
+
+   const std::size_t erased_count = vec.end() - first;
+
+   vec.erase(first, vec.end());
+
+   return erased_count;
+}
+
+template<typename T>
+auto erase_if(pinned_vector<T>& vec, auto predicate) noexcept -> std::size_t
+{
+   auto first = vec.begin();
+
+   for (; first != vec.end(); ++first) {
+      if (predicate(*first)) break;
+   }
+
+   if (first == vec.end()) return 0;
+
+   for (auto it = first + 1; it != vec.end(); ++it) {
+      if (not predicate(*it)) {
+         *first = std::move(*it);
+         first += 1;
+      }
+   }
+
+   const std::size_t erased_count = vec.end() - first;
+
+   vec.erase(first, vec.end());
+
+   return erased_count;
+}
+
 }

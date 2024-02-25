@@ -2274,4 +2274,60 @@ TEST_CASE("pinned_vector insert_range begin exception", "[Container]")
    CHECK(alive_counters[7] == 0);
 }
 
+TEST_CASE("pinned_vector erase value", "[Container]")
+{
+   pinned_vector<int> vec{pinned_vector_init{.max_size = 65536},
+                          std::initializer_list<int>{0, 1, 2, 2, 3}};
+
+   CHECK(erase(vec, 2) == 2);
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == 0);
+   CHECK(vec[1] == 1);
+   CHECK(vec[2] == 3);
+}
+
+TEST_CASE("pinned_vector erase value none", "[Container]")
+{
+   pinned_vector<int> vec{pinned_vector_init{.max_size = 65536},
+                          std::initializer_list<int>{0, 1, 2, 3, 4}};
+
+   CHECK(erase(vec, 6) == 0);
+   REQUIRE(vec.size() == 5);
+
+   CHECK(vec[0] == 0);
+   CHECK(vec[1] == 1);
+   CHECK(vec[2] == 2);
+   CHECK(vec[3] == 3);
+   CHECK(vec[4] == 4);
+}
+
+TEST_CASE("pinned_vector erase_if", "[Container]")
+{
+   pinned_vector<int> vec{pinned_vector_init{.max_size = 65536},
+                          std::initializer_list<int>{0, 1, 2, 2, 3}};
+
+   CHECK(erase_if(vec, [](const int& v) { return v == 2; }) == 2);
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == 0);
+   CHECK(vec[1] == 1);
+   CHECK(vec[2] == 3);
+}
+
+TEST_CASE("pinned_vector erase_if none", "[Container]")
+{
+   pinned_vector<int> vec{pinned_vector_init{.max_size = 65536},
+                          std::initializer_list<int>{0, 1, 2, 3, 4}};
+
+   CHECK(erase_if(vec, [](const int& v) { return v == 6; }) == 0);
+   REQUIRE(vec.size() == 5);
+
+   CHECK(vec[0] == 0);
+   CHECK(vec[1] == 1);
+   CHECK(vec[2] == 2);
+   CHECK(vec[3] == 3);
+   CHECK(vec[4] == 4);
+}
+
 }
