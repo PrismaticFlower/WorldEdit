@@ -10,8 +10,8 @@ namespace we::edits {
 namespace {
 
 template<typename Type>
-auto get_entity_index(const std::vector<Type>& entities, const world::id<Type> id) noexcept
-   -> uint32
+auto get_entity_index(const pinned_vector<Type>& entities,
+                      const world::id<Type> id) noexcept -> uint32
 {
    for (uint32 i = 0; i < entities.size(); ++i) {
       if (entities[i].id == id) return i;
@@ -124,14 +124,14 @@ struct delete_entity final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::vector<T>& entities = world::select_entities<T>(context.world);
+      pinned_vector<T>& entities = world::select_entities<T>(context.world);
 
       entities.erase(entities.begin() + _entity_index);
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::vector<T>& entities = world::select_entities<T>(context.world);
+      pinned_vector<T>& entities = world::select_entities<T>(context.world);
 
       entities.insert(entities.begin() + _entity_index, _entity);
    }

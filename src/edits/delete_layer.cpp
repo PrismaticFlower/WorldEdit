@@ -65,7 +65,7 @@ struct delete_layer_data {
 };
 
 template<typename T>
-auto make_remap_entries(int layer_index, const std::vector<T>& entities)
+auto make_remap_entries(int layer_index, const pinned_vector<T>& entities)
    -> std::vector<remap_entry<T>>
 {
    std::size_t count = 0;
@@ -115,14 +115,14 @@ auto make_game_mode_remap_entries(int layer_index,
 }
 
 template<typename T>
-void apply_remap_entries(std::vector<T>& entities,
+void apply_remap_entries(pinned_vector<T>& entities,
                          std::span<const remap_entry<std::type_identity_t<T>>> entries)
 {
    for (const auto& [index] : entries) entities[index].layer -= 1;
 }
 
 template<typename T>
-void revert_remap_entries(std::vector<T>& entities,
+void revert_remap_entries(pinned_vector<T>& entities,
                           std::span<const remap_entry<std::type_identity_t<T>>> entries)
 {
    for (const auto& [index] : entries) entities[index].layer += 1;
@@ -145,7 +145,7 @@ void revert_remap_entries(std::vector<world::game_mode_description>& game_modes,
 }
 
 template<typename T>
-auto make_delete_entries(int layer_index, const std::vector<T>& entities)
+auto make_delete_entries(int layer_index, const pinned_vector<T>& entities)
    -> std::vector<delete_entry<T>>
 {
    std::size_t count = 0;
@@ -277,7 +277,7 @@ auto makee_game_mode_requirements_delete_entries(
 }
 
 template<typename T>
-void apply_delete_entries(std::vector<T>& entities,
+void apply_delete_entries(pinned_vector<T>& entities,
                           std::span<const delete_entry<std::type_identity_t<T>>> entries)
 {
    for (const auto& [index, entity] : entries) {
@@ -286,7 +286,7 @@ void apply_delete_entries(std::vector<T>& entities,
 }
 
 template<typename T>
-void revert_delete_entries(std::vector<T>& entities,
+void revert_delete_entries(pinned_vector<T>& entities,
                            std::span<const delete_entry<std::type_identity_t<T>>> entries)
 {
    for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {

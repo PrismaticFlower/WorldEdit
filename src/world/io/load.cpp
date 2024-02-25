@@ -34,7 +34,7 @@ void throw_layer_load_failure(std::string_view type,
                               const std::filesystem::path& filepath, std::exception& e)
 {
    throw load_failure{fmt::format("Failed to load layer {}.\n   "
-                                  "File: {}\n   Message: {}\n",
+                                  "File: {}\n   Message: \n{}\n",
                                   type, filepath.string(),
                                   string::indent(2, e.what()))};
 }
@@ -45,6 +45,17 @@ void throw_planning_missing_hub(std::string_view hub, std::string_view connectio
                                   "by a connection was missing!.\n   "
                                   "Hub: {}\n   Connection: {}\n",
                                   hub, connection)};
+}
+
+template<typename T>
+void check_space(std::string_view name, pinned_vector<T>& vec)
+{
+   if (vec.size() == vec.max_size()) {
+      throw load_failure{
+         fmt::format("Too many {} for WorldEdit to handle. \n   "
+                     "Max Supported Count: {}\n",
+                     name, vec.max_size())};
+   }
 }
 
 auto read_layer_index(const assets::config::node& node, layer_remap& layer_remap) -> int16
@@ -195,6 +206,8 @@ void load_objects(const std::filesystem::path& path, const std::string_view laye
       for (auto& key_node : config::read_config(io::read_file_to_string(path))) {
          if (key_node.key != "Object"sv) continue;
 
+         check_space("objects", world_out.objects);
+
          auto& object = world_out.objects.emplace_back();
 
          object.name = key_node.values.get<std::string>(0);
@@ -246,6 +259,8 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(path))) {
          if (key_node.key == "Light"sv) {
+            check_space("lights", world_out.lights);
+
             auto& light = world_out.lights.emplace_back();
 
             light.name = key_node.values.get<std::string>(0);
@@ -372,6 +387,8 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Path"sv) continue;
 
+         check_space("paths", world_out.paths);
+
          auto& path = world_out.paths.emplace_back();
 
          path.name = key_node.values.get<std::string>(0);
@@ -450,6 +467,8 @@ void load_regions(const std::filesystem::path& filepath,
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Region"sv) continue;
 
+         check_space("regions", world_out.regions);
+
          auto& region = world_out.regions.emplace_back();
 
          region.name = key_node.contains("Name"sv)
@@ -500,6 +519,8 @@ void load_portals_sectors(const std::filesystem::path& filepath,
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key == "Sector"sv) {
+            check_space("sectors", world_out.sectors);
+
             auto& sector = world_out.sectors.emplace_back();
 
             sector.name = key_node.values.get<std::string>(0);
@@ -526,6 +547,8 @@ void load_portals_sectors(const std::filesystem::path& filepath,
             }
          }
          else if (key_node.key == "Portal"sv) {
+            check_space("portals", world_out.portals);
+
             auto& portal = world_out.portals.emplace_back();
 
             portal.name = key_node.values.get<std::string>(0);
@@ -567,6 +590,8 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
    try {
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Barrier"sv) continue;
+
+         check_space("barriers", world_out.barriers);
 
          auto& barrier = world_out.barriers.emplace_back();
 
@@ -642,6 +667,8 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
 
       for (auto& key_node : planning) {
          if (key_node.key == "Hub"sv) {
+            check_space("AI planning hubs", world_out.planning_hubs);
+
             planning_hub& hub = world_out.planning_hubs.emplace_back();
 
             hub.name = key_node.values.get<std::string>(0);
@@ -685,6 +712,8 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
 
       for (auto& key_node : planning) {
          if (key_node.key == "Connection") {
+            check_space("AI planning connections", world_out.planning_connections);
+
             planning_connection& connection =
                world_out.planning_connections.emplace_back();
 
@@ -806,6 +835,8 @@ void load_boundaries(const std::filesystem::path& filepath,
          for (auto& child_key_node : key_node) {
             if (child_key_node.key != "Path"sv) continue;
 
+            check_space("boundaries", world_out.boundaries);
+
             auto& boundary = world_out.boundaries.emplace_back();
 
             boundary.name = child_key_node.values.get<std::string>(0);
@@ -837,7 +868,7 @@ void load_hintnodes(const std::filesystem::path& filepath,
       for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
          if (key_node.key != "Hint"sv) continue;
 
-         if (key_node.key != "Hint"sv) continue;
+         check_space("hint nodes", world_out.hintnodes);
 
          auto& hint = world_out.hintnodes.emplace_back();
 
@@ -896,6 +927,8 @@ void load_measurements(const std::filesystem::path& filepath,
                                            key_node.values.get<std::size_t>(0));
          }
          else if (key_node.key == "Measurement"sv) {
+            check_space("measurements", world_out.measurements);
+
             auto& measurement = world_out.measurements.emplace_back();
 
             measurement.name = key_node.values.get<std::string>(0);
@@ -1077,7 +1110,7 @@ void convert_light_regions(world& world)
       regions_to_remove.emplace(region.id);
    }
 
-   std::erase_if(world.regions, [&](const region& region) {
+   erase_if(world.regions, [&](const region& region) {
       return regions_to_remove.contains(region.id);
    });
 }

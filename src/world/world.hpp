@@ -19,9 +19,16 @@
 #include "sector.hpp"
 #include "terrain.hpp"
 
+#include "container/pinned_vector.hpp"
+
 #include <vector>
 
 namespace we::world {
+
+constexpr std::size_t max_entities = 1'048'576;
+constexpr std::size_t reserved_entities = 2048;
+constexpr pinned_vector_init entities_init{.max_size = max_entities,
+                                           .initial_capacity = reserved_entities};
 
 struct world {
    std::string name;
@@ -34,18 +41,18 @@ struct world {
    terrain terrain;
    global_lights global_lights;
 
-   std::vector<object> objects;
-   std::vector<light> lights;
-   std::vector<path> paths;
-   std::vector<region> regions;
-   std::vector<sector> sectors;
-   std::vector<portal> portals;
-   std::vector<hintnode> hintnodes;
-   std::vector<barrier> barriers;
-   std::vector<planning_hub> planning_hubs;
-   std::vector<planning_connection> planning_connections;
-   std::vector<boundary> boundaries;
-   std::vector<measurement> measurements;
+   pinned_vector<object> objects = entities_init;
+   pinned_vector<light> lights = entities_init;
+   pinned_vector<path> paths = entities_init;
+   pinned_vector<region> regions = entities_init;
+   pinned_vector<sector> sectors = entities_init;
+   pinned_vector<portal> portals = entities_init;
+   pinned_vector<hintnode> hintnodes = entities_init;
+   pinned_vector<barrier> barriers = entities_init;
+   pinned_vector<planning_hub> planning_hubs = entities_init;
+   pinned_vector<planning_connection> planning_connections = entities_init;
+   pinned_vector<boundary> boundaries = entities_init;
+   pinned_vector<measurement> measurements = entities_init;
 
    effects effects;
 

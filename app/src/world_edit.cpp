@@ -1260,6 +1260,13 @@ void world_edit::place_creation_entity() noexcept
 {
    if (not _interaction_targets.creation_entity) return;
 
+   const auto report_limit_reached =
+      [this]<typename... Args>(fmt::format_string<Args...> string, const Args&... args) {
+         std::string display = fmt::vformat(string, fmt::make_format_args(args...));
+
+         MessageBoxA(_window, display.c_str(), "Limit Reached", MB_OK);
+      };
+
    std::visit(
       overload{
          [&](const world::object& object) {
@@ -1274,6 +1281,13 @@ void world_edit::place_creation_entity() noexcept
 
             _last_created_entities.last_object = new_object.id;
             _last_created_entities.last_used_object_classes.insert(new_object.class_name);
+
+            if (_world.objects.size() == _world.objects.max_size()) {
+               report_limit_reached("Max Objects ({}) Reached",
+                                    _world.objects.max_size());
+
+               return;
+            }
 
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object)),
                                     _edit_context);
@@ -1315,6 +1329,13 @@ void world_edit::place_creation_entity() noexcept
             }
 
             _last_created_entities.last_light = new_light.id;
+
+            if (_world.lights.size() == _world.lights.max_size()) {
+               report_limit_reached("Max Lights ({}) Reached",
+                                    _world.lights.max_size());
+
+               return;
+            }
 
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
                                     _edit_context);
@@ -1374,6 +1395,13 @@ void world_edit::place_creation_entity() noexcept
 
                _last_created_entities.last_path;
 
+               if (_world.paths.size() == _world.paths.max_size()) {
+                  report_limit_reached("Max Paths ({}) Reached",
+                                       _world.paths.max_size());
+
+                  return;
+               }
+
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
                                        _edit_context);
             }
@@ -1388,6 +1416,13 @@ void world_edit::place_creation_entity() noexcept
             new_region.id = _world.next_id.regions.aquire();
 
             _last_created_entities.last_region = new_region.id;
+
+            if (_world.regions.size() == _world.regions.max_size()) {
+               report_limit_reached("Max Regions ({}) Reached",
+                                    _world.regions.max_size());
+
+               return;
+            }
 
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
                                     _edit_context);
@@ -1435,6 +1470,13 @@ void world_edit::place_creation_entity() noexcept
                      world::sector_fill(new_sector, _world.objects, _object_classes);
                }
 
+               if (_world.sectors.size() == _world.sectors.max_size()) {
+                  report_limit_reached("Max sectors ({}) Reached",
+                                       _world.sectors.max_size());
+
+                  return;
+               }
+
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
                                        _edit_context);
 
@@ -1456,6 +1498,13 @@ void world_edit::place_creation_entity() noexcept
 
             _last_created_entities.last_portal = new_portal.id;
 
+            if (_world.portals.size() == _world.portals.max_size()) {
+               report_limit_reached("Max portals ({}) Reached",
+                                    _world.portals.max_size());
+
+               return;
+            }
+
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
                                     _edit_context);
 
@@ -1474,6 +1523,13 @@ void world_edit::place_creation_entity() noexcept
             new_hintnode.id = _world.next_id.hintnodes.aquire();
 
             _last_created_entities.last_hintnode = new_hintnode.id;
+
+            if (_world.hintnodes.size() == _world.hintnodes.max_size()) {
+               report_limit_reached("Max hintnodes ({}) Reached",
+                                    _world.hintnodes.max_size());
+
+               return;
+            }
 
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
                                     _edit_context);
@@ -1496,6 +1552,13 @@ void world_edit::place_creation_entity() noexcept
 
             _last_created_entities.last_barrier = new_barrier.id;
 
+            if (_world.barriers.size() == _world.barriers.max_size()) {
+               report_limit_reached("Max barriers ({}) Reached",
+                                    _world.barriers.max_size());
+
+               return;
+            }
+
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
                                     _edit_context);
 
@@ -1515,6 +1578,13 @@ void world_edit::place_creation_entity() noexcept
                new_hub.id = _world.next_id.planning_hubs.aquire();
 
                _last_created_entities.last_planning_hub = new_hub.id;
+
+               if (_world.planning_hubs.size() == _world.planning_hubs.max_size()) {
+                  report_limit_reached("Max AI planning hubs ({}) Reached",
+                                       _world.planning_hubs.max_size());
+
+                  return;
+               }
 
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
                                        _edit_context);
@@ -1582,6 +1652,15 @@ void world_edit::place_creation_entity() noexcept
 
                _last_created_entities.last_planning_connection = new_connection.id;
 
+               if (_world.planning_connections.size() ==
+                   _world.planning_connections.max_size()) {
+                  report_limit_reached(
+                     "Max AI planning connections ({}) Reached",
+                     _world.planning_connections.max_size());
+
+                  return;
+               }
+
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
                                        _edit_context);
 
@@ -1616,6 +1695,13 @@ void world_edit::place_creation_entity() noexcept
 
             _last_created_entities.last_boundary = new_boundary.id;
 
+            if (_world.boundaries.size() == _world.boundaries.max_size()) {
+               report_limit_reached("Max boundaries ({}) Reached",
+                                    _world.boundaries.max_size());
+
+               return;
+            }
+
             _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
                                     _edit_context);
 
@@ -1631,6 +1717,13 @@ void world_edit::place_creation_entity() noexcept
                world::measurement new_measurement = measurement;
 
                new_measurement.id = _world.next_id.measurements.aquire();
+
+               if (_world.measurements.size() == _world.measurements.max_size()) {
+                  report_limit_reached("Max measurements ({}) Reached",
+                                       _world.measurements.max_size());
+
+                  return;
+               }
 
                _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
                                        _edit_context);
@@ -2593,7 +2686,7 @@ void world_edit::unhide_all() noexcept
 {
    edits::bundle_vector bundle;
 
-   const auto unhide_entities = [&]<typename T>(const std::vector<T>& entities) {
+   const auto unhide_entities = [&]<typename T>(const pinned_vector<T>& entities) {
       for (const auto& entity : entities) {
          if (entity.hidden) {
             bundle.push_back(edits::make_set_value(entity.id, &T::hidden, false,

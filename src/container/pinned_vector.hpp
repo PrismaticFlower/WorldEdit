@@ -6,9 +6,9 @@
 #include <type_traits>
 #include <utility>
 
-namespace we::container {
+namespace we {
 
-namespace detail {
+namespace container::detail {
 
 [[noreturn]] void throw_std_out_of_range(std::size_t i, std::size_t size);
 
@@ -50,8 +50,8 @@ struct pinned_vector {
       if (init.max_size == 0) return;
 
       std::size_t allocated_count = 0;
-      void* memory =
-         detail::virtual_reserve(init.max_size, sizeof(T), allocated_count);
+      void* memory = container::detail::virtual_reserve(init.max_size, sizeof(T),
+                                                        allocated_count);
 
       _begin = static_cast<T*>(memory);
       _end = _begin;
@@ -60,7 +60,8 @@ struct pinned_vector {
 
       if (init.initial_capacity > 0) {
          const std::size_t committed_count =
-            detail::virtual_commit(_begin, init.initial_capacity, sizeof(T));
+            container::detail::virtual_commit(_begin, init.initial_capacity,
+                                              sizeof(T));
 
          _commited_end = _begin + committed_count;
       }
@@ -96,7 +97,7 @@ struct pinned_vector {
 
       clear();
 
-      detail::virtual_free(_begin);
+      container::detail::virtual_free(_begin);
    }
 
    auto operator=(const pinned_vector& other) noexcept(std::is_nothrow_copy_assignable_v<T>)
@@ -304,14 +305,18 @@ struct pinned_vector {
 
    [[nodiscard]] auto at(size_type index) const -> const T&
    {
-      if (_begin + index >= _end) detail::throw_std_out_of_range(index, size());
+      if (_begin + index >= _end) {
+         container::detail::throw_std_out_of_range(index, size());
+      }
 
       return _begin[index];
    }
 
    [[nodiscard]] auto at(size_type index) -> T&
    {
-      if (_begin + index >= _end) detail::throw_std_out_of_range(index, size());
+      if (_begin + index >= _end) {
+         container::detail::throw_std_out_of_range(index, size());
+      }
 
       return _begin[index];
    }
@@ -656,11 +661,11 @@ private:
          static_cast<std::size_t>(_reserved_end - _commited_end);
 
       [[unlikely]] if (remaining_space < count) {
-         detail::terminate_out_of_reserved_memory();
+         container::detail::terminate_out_of_reserved_memory();
       }
 
       const std::size_t committed_count =
-         detail::virtual_commit(_commited_end, count, sizeof(T));
+         container::detail::virtual_commit(_commited_end, count, sizeof(T));
 
       _commited_end = _end + committed_count;
    }

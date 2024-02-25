@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-	<Type Name="we::container::pinned_vector&lt;*&gt;">
+	<Type Name="we::pinned_vector&lt;*&gt;">
 		<DisplayString>{{ size={_end - _begin} }}</DisplayString>
 		<Expand>
 			<Item Name="[size]" ExcludeView="simple">_end - _begin</Item>

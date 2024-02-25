@@ -9,7 +9,7 @@
 namespace we::world {
 
 template<typename Type>
-inline auto select_entities(world& world) -> std::vector<Type>&
+inline auto select_entities(world& world) -> pinned_vector<Type>&
 {
    if constexpr (std::is_same_v<Type, object>) return world.objects;
    if constexpr (std::is_same_v<Type, light>) return world.lights;
@@ -41,14 +41,14 @@ inline auto find_entity(std::span<Type> entities, const Type_id id) -> Type*
 }
 
 template<typename Type>
-inline auto find_entity(std::vector<Type>& entities,
+inline auto find_entity(pinned_vector<Type>& entities,
                         const id<std::type_identity_t<Type>> id) -> Type*
 {
    return find_entity(std::span<Type>{entities.data(), entities.size()}, id);
 }
 
 template<typename Type>
-inline auto find_entity(const std::vector<Type>& entities,
+inline auto find_entity(const pinned_vector<Type>& entities,
                         const id<std::type_identity_t<Type>> id) -> const Type*
 {
    return find_entity(std::span<const Type>{entities.data(), entities.size()}, id);
@@ -62,8 +62,8 @@ inline auto find_entity(world& world, const id<std::type_identity_t<Type>> id)
 }
 
 template<typename Type>
-inline auto find_entity(const std::vector<Type>& entities, const std::string_view name)
-   -> const Type*
+inline auto find_entity(const pinned_vector<Type>& entities,
+                        const std::string_view name) -> const Type*
 {
    for (auto& entity : entities) {
       if (entity.name == name) return &entity;
