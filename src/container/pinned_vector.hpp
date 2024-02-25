@@ -280,10 +280,7 @@ struct pinned_vector {
 
       if (current_reservation >= size) return;
 
-      const std::size_t committed_count =
-         detail::virtual_commit(_commited_end, size - current_reservation, sizeof(T));
-
-      _commited_end += committed_count;
+      ensure_space(size - current_reservation);
    }
 
    void shrink_to_fit() noexcept
