@@ -2,6 +2,7 @@
 
 #include "container/pinned_vector.hpp"
 
+#include <array>
 #include <iterator>
 #include <list>
 #include <string>
@@ -71,6 +72,11 @@ struct lifetime_tracker {
 
    bool operator==(const lifetime_tracker& v) const noexcept = default;
 
+   int get_alive_count() const noexcept
+   {
+      return alive_count ? *alive_count : 0;
+   }
+
 private:
    int* alive_count = nullptr;
 };
@@ -104,24 +110,25 @@ private:
    bool throws = false;
 };
 
-}
+struct throw_when_copied_after_n : lifetime_tracker {
+   constexpr static int throw_at_copy = 3;
+
+   throw_when_copied_after_n(int& alive_count) : lifetime_tracker{alive_count}
+   {
+   }
+
+   throw_when_copied_after_n(const throw_when_copied_after_n& other)
+      : lifetime_tracker{other}
+   {
+      if (get_alive_count() == throw_at_copy) throw std::exception{};
+   }
+
+   auto operator=(const throw_when_copied_after_n& other) -> throw_when_copied& = delete;
+};
 
 }
 
-/*
-
-Tests that still need writing!
-
-- Test for exception during resize.
-- Test for exception during emplace_back
-- Test for exception during emplace
-- Test for exception during assign
-- Test for exception during copy push_back
-- Test for exception during copy insert
-- Test for exception during copy insert count
-- Test for exception during insert_range
-
-*/
+}
 
 TEST_CASE("pinned_vector construct empty", "[Container]")
 {
@@ -1674,6 +1681,597 @@ TEST_CASE("pinned_vector clear lifetime", "[Container]")
    CHECK(alive_counters[1] == 0);
    CHECK(alive_counters[2] == 0);
    CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector assign value exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   CHECK_THROWS(vec.assign(64, throw_when_copied{true, alive_counters[3]}));
+
+   CHECK(vec.size() == 0);
+
+   CHECK(alive_counters[0] == 0);
+   CHECK(alive_counters[1] == 0);
+   CHECK(alive_counters[2] == 0);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector assign initializer_list exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]}}};
+
+   CHECK_THROWS(vec.assign(
+      std::initializer_list{throw_when_copied{false, alive_counters[2]},
+                            throw_when_copied{true, alive_counters[3]}}));
+
+   CHECK(vec.size() == 0);
+
+   CHECK(alive_counters[0] == 0);
+   CHECK(alive_counters[1] == 0);
+   CHECK(alive_counters[2] == 0);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector resize up exception", "[Container]")
+{
+   thread_local std::array<int, 5> alive_counters;
+   thread_local int next_counter = 0;
+
+   alive_counters = {0, 0, 0, 0, 0};
+   next_counter = 0;
+
+   struct throw_when_constructed : lifetime_tracker {
+      throw_when_constructed()
+         : lifetime_tracker{alive_counters[next_counter++]}
+      {
+         if (next_counter >= 5) throw std::exception{};
+      }
+   };
+
+   pinned_vector<throw_when_constructed> vec{pinned_vector_init{.max_size = 65536}};
+
+   vec.emplace_back();
+   vec.emplace_back();
+   vec.emplace_back();
+
+   REQUIRE_THROWS(vec.resize(5));
+   REQUIRE(vec.size() == 3);
+
+   for (int i = 0; i < 3; ++i) CHECK(vec[i] == alive_counters[i]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+   CHECK(alive_counters[4] == 0);
+}
+
+TEST_CASE("pinned_vector resize up fill value exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied_after_n> vec{pinned_vector_init{.max_size = 65536}};
+
+   vec.emplace_back(alive_counters[0]);
+   vec.emplace_back(alive_counters[1]);
+   vec.emplace_back(alive_counters[2]);
+
+   REQUIRE_THROWS(vec.resize(8, throw_when_copied_after_n{alive_counters[3]}));
+   REQUIRE(vec.size() == 3);
+
+   for (int i = 0; i < 3; ++i) CHECK(vec[i] == alive_counters[i]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector emplace_back exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      throw_when_copied value{true, alive_counters[3]};
+
+      REQUIRE_THROWS(vec.emplace_back(value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector push_back copy exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      throw_when_copied value{true, alive_counters[3]};
+
+      REQUIRE_THROWS(vec.push_back(value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector emplace end exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      const throw_when_copied value{true, alive_counters[3]};
+
+      CHECK_THROWS(vec.emplace(vec.end(), value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector emplace midpoint exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      const throw_when_copied value{true, alive_counters[3]};
+
+      CHECK_THROWS(vec.emplace(vec.begin() + 1, value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector emplace begin exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      const throw_when_copied value{true, alive_counters[3]};
+
+      CHECK_THROWS(vec.emplace(vec.begin(), value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector insert copy end exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      const throw_when_copied value{true, alive_counters[3]};
+
+      CHECK_THROWS(vec.insert(vec.end(), value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector insert copy midpoint exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      const throw_when_copied value{true, alive_counters[3]};
+
+      CHECK_THROWS(vec.insert(vec.begin() + 1, value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector insert copy begin exception", "[Container]")
+{
+   int alive_counters[4] = {0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]}}};
+
+   {
+      const throw_when_copied value{true, alive_counters[3]};
+
+      CHECK_THROWS(vec.insert(vec.begin(), value));
+   }
+
+   REQUIRE(vec.size() == 3);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 0);
+}
+
+TEST_CASE("pinned_vector insert multiple copies end exception", "[Container]")
+{
+   int alive_counters[5] = {0, 0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied_after_n>
+      vec{pinned_vector_init{.max_size = 65536},
+          std::initializer_list<throw_when_copied_after_n>{
+             throw_when_copied_after_n{alive_counters[0]},
+             throw_when_copied_after_n{alive_counters[1]},
+             throw_when_copied_after_n{alive_counters[2]},
+             throw_when_copied_after_n{alive_counters[3]}}};
+
+   CHECK_THROWS(vec.insert(vec.end(), 3, throw_when_copied_after_n{alive_counters[4]}));
+   REQUIRE(vec.size() == 4);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+   CHECK(vec[3] == alive_counters[3]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+   CHECK(alive_counters[4] == 0);
+}
+
+TEST_CASE("pinned_vector insert multiple copies midpoint exception",
+          "[Container]")
+{
+   int alive_counters[5] = {0, 0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied_after_n>
+      vec{pinned_vector_init{.max_size = 65536},
+          std::initializer_list<throw_when_copied_after_n>{
+             throw_when_copied_after_n{alive_counters[0]},
+             throw_when_copied_after_n{alive_counters[1]},
+             throw_when_copied_after_n{alive_counters[2]},
+             throw_when_copied_after_n{alive_counters[3]}}};
+
+   CHECK_THROWS(vec.insert(vec.begin() + 2, 3,
+                           throw_when_copied_after_n{alive_counters[4]}));
+   REQUIRE(vec.size() == 4);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+   CHECK(vec[3] == alive_counters[3]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+   CHECK(alive_counters[4] == 0);
+}
+
+TEST_CASE("pinned_vector insert multiple copies begin exception", "[Container]")
+{
+   int alive_counters[5] = {0, 0, 0, 0, 0};
+   pinned_vector<throw_when_copied_after_n>
+      vec{pinned_vector_init{.max_size = 65536},
+          std::initializer_list<throw_when_copied_after_n>{
+             throw_when_copied_after_n{alive_counters[0]},
+             throw_when_copied_after_n{alive_counters[1]},
+             throw_when_copied_after_n{alive_counters[2]},
+             throw_when_copied_after_n{alive_counters[3]}}};
+
+   CHECK_THROWS(
+      vec.insert(vec.begin(), 3, throw_when_copied_after_n{alive_counters[4]}));
+   REQUIRE(vec.size() == 4);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+   CHECK(vec[3] == alive_counters[3]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+   CHECK(alive_counters[4] == 0);
+}
+
+TEST_CASE("pinned_vector assign_range exception", "[Container]")
+{
+   int alive_counters[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]},
+                                           throw_when_copied{false, alive_counters[3]},
+                                        }};
+
+   {
+      std::list<throw_when_copied> range;
+
+      range.emplace_back(throw_when_copied{false, alive_counters[0]});
+      range.emplace_back(throw_when_copied{false, alive_counters[1]});
+      range.emplace_back(throw_when_copied{true, alive_counters[2]});
+      range.emplace_back(throw_when_copied{false, alive_counters[3]});
+
+      CHECK_THROWS(vec.assign_range(range));
+   }
+
+   REQUIRE(vec.size() == 0);
+
+   for (int i = 0; i < 8; ++i) CHECK(alive_counters[i] == 0);
+}
+
+TEST_CASE("pinned_vector append_range exception", "[Container]")
+{
+   int alive_counters[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied> vec{pinned_vector_init{.max_size = 65536},
+                                        std::initializer_list<throw_when_copied>{
+                                           throw_when_copied{false, alive_counters[0]},
+                                           throw_when_copied{false, alive_counters[1]},
+                                           throw_when_copied{false, alive_counters[2]},
+                                           throw_when_copied{false, alive_counters[3]},
+                                        }};
+
+   {
+      std::list<throw_when_copied> range;
+
+      range.emplace_back(throw_when_copied{false, alive_counters[0]});
+      range.emplace_back(throw_when_copied{false, alive_counters[1]});
+      range.emplace_back(throw_when_copied{true, alive_counters[2]});
+      range.emplace_back(throw_when_copied{false, alive_counters[3]});
+
+      CHECK_THROWS(vec.append_range(range));
+   }
+
+   REQUIRE(vec.size() == 4);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+   CHECK(vec[3] == alive_counters[3]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+   CHECK(alive_counters[4] == 0);
+   CHECK(alive_counters[5] == 0);
+   CHECK(alive_counters[6] == 0);
+   CHECK(alive_counters[7] == 0);
+}
+
+TEST_CASE("pinned_vector insert_range end exception", "[Container]")
+{
+   int alive_counters[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied>
+      vec{pinned_vector_init{.max_size = 65536},
+          std::initializer_list<throw_when_copied>{
+             throw_when_copied{false, alive_counters[0]},
+             throw_when_copied{false, alive_counters[1]},
+             throw_when_copied{false, alive_counters[2]},
+             throw_when_copied{false, alive_counters[3]}}};
+
+   {
+      std::list<throw_when_copied> range;
+
+      range.emplace_back(throw_when_copied{false, alive_counters[0]});
+      range.emplace_back(throw_when_copied{false, alive_counters[1]});
+      range.emplace_back(throw_when_copied{true, alive_counters[2]});
+      range.emplace_back(throw_when_copied{false, alive_counters[3]});
+
+      CHECK_THROWS(vec.insert_range(vec.end(), range));
+   }
+
+   REQUIRE(vec.size() == 4);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+   CHECK(vec[3] == alive_counters[3]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+   CHECK(alive_counters[4] == 0);
+   CHECK(alive_counters[5] == 0);
+   CHECK(alive_counters[6] == 0);
+   CHECK(alive_counters[7] == 0);
+}
+
+TEST_CASE("pinned_vector insert_range midpoint exception", "[Container]")
+{
+   int alive_counters[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied>
+      vec{pinned_vector_init{.max_size = 65536},
+          std::initializer_list<throw_when_copied>{
+             throw_when_copied{false, alive_counters[0]},
+             throw_when_copied{false, alive_counters[1]},
+             throw_when_copied{false, alive_counters[2]},
+             throw_when_copied{false, alive_counters[3]}}};
+
+   {
+      std::list<throw_when_copied> range;
+
+      range.emplace_back(throw_when_copied{false, alive_counters[0]});
+      range.emplace_back(throw_when_copied{false, alive_counters[1]});
+      range.emplace_back(throw_when_copied{true, alive_counters[2]});
+      range.emplace_back(throw_when_copied{false, alive_counters[3]});
+
+      CHECK_THROWS(vec.insert_range(vec.begin() + 2, range));
+   }
+
+   REQUIRE(vec.size() == 4);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+   CHECK(vec[3] == alive_counters[3]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+   CHECK(alive_counters[4] == 0);
+   CHECK(alive_counters[5] == 0);
+   CHECK(alive_counters[6] == 0);
+   CHECK(alive_counters[7] == 0);
+}
+
+TEST_CASE("pinned_vector insert_range begin exception", "[Container]")
+{
+   int alive_counters[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+   pinned_vector<throw_when_copied>
+      vec{pinned_vector_init{.max_size = 65536},
+          std::initializer_list<throw_when_copied>{
+             throw_when_copied{false, alive_counters[0]},
+             throw_when_copied{false, alive_counters[1]},
+             throw_when_copied{false, alive_counters[2]},
+             throw_when_copied{false, alive_counters[3]}}};
+
+   {
+      std::list<throw_when_copied> range;
+
+      range.emplace_back(throw_when_copied{false, alive_counters[0]});
+      range.emplace_back(throw_when_copied{false, alive_counters[1]});
+      range.emplace_back(throw_when_copied{true, alive_counters[2]});
+      range.emplace_back(throw_when_copied{false, alive_counters[3]});
+
+      CHECK_THROWS(vec.insert_range(vec.begin(), range));
+   }
+
+   REQUIRE(vec.size() == 4);
+
+   CHECK(vec[0] == alive_counters[0]);
+   CHECK(vec[1] == alive_counters[1]);
+   CHECK(vec[2] == alive_counters[2]);
+   CHECK(vec[3] == alive_counters[3]);
+
+   CHECK(alive_counters[0] == 1);
+   CHECK(alive_counters[1] == 1);
+   CHECK(alive_counters[2] == 1);
+   CHECK(alive_counters[3] == 1);
+   CHECK(alive_counters[4] == 0);
+   CHECK(alive_counters[5] == 0);
+   CHECK(alive_counters[6] == 0);
+   CHECK(alive_counters[7] == 0);
 }
 
 }

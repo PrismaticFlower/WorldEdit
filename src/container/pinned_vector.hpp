@@ -136,14 +136,16 @@ struct pinned_vector {
       return *this;
    }
 
-   void assign(size_type count, const T& value) noexcept
+   void assign(size_type count,
+               const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
    {
       clear();
 
       insert(end(), count, value);
    }
 
-   void assign(std::initializer_list<T> initializer_list) noexcept
+   void assign(std::initializer_list<T> initializer_list) noexcept(
+      std::is_nothrow_copy_constructible_v<T>)
    {
       assign_range(initializer_list);
    }
@@ -678,10 +680,10 @@ private:
    {
       if (count == 0) return;
 
-      const std::ptrdiff_t items_to_shift = _end - from;
+      const std::ptrdiff_t items_to_shift = (_end + count) - from;
 
       for (std::ptrdiff_t i = 0; i < items_to_shift; ++i) {
-         new (from - i - count) T{std::move(from[i])};
+         new (from + i - count) T{std::move(from[i])};
 
          from[i].~T();
       }
