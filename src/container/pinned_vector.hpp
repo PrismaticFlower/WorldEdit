@@ -651,13 +651,14 @@ struct pinned_vector {
 private:
    void ensure_space(std::size_t count) noexcept
    {
-      assert(_end != _reserved_end);
-
       const std::size_t current_space = static_cast<std::size_t>(_commited_end - _end);
 
       if (current_space >= count) return;
 
-      [[unlikely]] if (_commited_end == _reserved_end) {
+      const std::size_t remaining_space =
+         static_cast<std::size_t>(_reserved_end - _commited_end);
+
+      [[unlikely]] if (remaining_space < count) {
          detail::terminate_out_of_reserved_memory();
       }
 
