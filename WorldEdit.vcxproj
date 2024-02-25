@@ -713,6 +713,7 @@
     <None Include="third_party\licenses\vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
+    <Natvis Include="src\container\container.natvis" />
     <Natvis Include="src\utility\implementation_storage.natvis" />
     <Natvis Include="third_party\imgui\misc\debuggers\imgui.natvis" />
   </ItemGroup>
