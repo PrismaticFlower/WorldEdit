@@ -91,6 +91,8 @@ enum class terrain_brush_falloff : uint8 {
 
 enum class terrain_brush_rotation : uint8 { r0, r90, r180, r270 };
 
+enum class water_brush_mode : uint8 { paint, erase };
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -178,17 +180,23 @@ private:
 
    void ui_show_terrain_import_height_map() noexcept;
 
+   void ui_show_terrain_import_texture_weight_map() noexcept;
+
    void ui_show_terrain_resize() noexcept;
 
    void ui_show_terrain_crop() noexcept;
 
    void ui_show_terrain_extend() noexcept;
 
+   void ui_show_water_editor() noexcept;
+
    void ui_show_about_window() noexcept;
 
    void ui_show_object_class_browser() noexcept;
 
    void ui_show_render_env_map() noexcept;
+
+   void ui_show_measurement_tool() noexcept;
 
    void ui_draw_select_box() noexcept;
 
@@ -301,7 +309,7 @@ private:
    world::world _world;
    world::interaction_targets _interaction_targets;
    world::active_entity_types _world_draw_mask;
-   world::active_entity_types _world_hit_mask;
+   world::active_entity_types _world_hit_mask{};
    world::active_layers _world_layers_draw_mask{true};
    world::active_layers _world_layers_hit_mask{true};
    world::tool_visualizers _tool_visualizers;
@@ -347,11 +355,14 @@ private:
    bool _settings_editor_open = false;
    bool _about_window_open = false;
    bool _render_env_map_open = false;
+   bool _measurement_tool_open = false;
    bool _terrain_editor_open = false;
    bool _terrain_import_heightmap_open = false;
+   bool _terrain_import_texture_weight_map_open = false;
    bool _terrain_resize_open = false;
    bool _terrain_crop_open = false;
    bool _terrain_extend_open = false;
+   bool _water_editor_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;
@@ -421,6 +432,8 @@ private:
 
       bool hub_sizing_started = false;
       bool connection_link_started = false;
+
+      bool measurement_started = false;
 
       int pick_sector_index = 0;
 
@@ -513,6 +526,9 @@ private:
       bool brush_held = false;
       bool brush_active = false;
 
+      float2 brush_start_mouse_position;
+      float2 locked_terrain_point;
+
       float brush_plane_height = 0.0f;
       std::chrono::steady_clock::time_point last_brush_update =
          std::chrono::steady_clock::now();
@@ -544,6 +560,13 @@ private:
       bool start_from_midpoint = false;
    } _terrain_import_heightmap_context;
 
+   struct terrain_import_texture_weight_map_context {
+      container::dynamic_array_2d<uint8> loaded_weight_map;
+      std::string error_message;
+
+      int weight_map_index = -1;
+   } _terrain_import_texture_weight_map_context;
+
    struct terrain_resize_context {
       int32 new_length = 0;
       bool maintain_world_proportions = true;
@@ -558,6 +581,18 @@ private:
       int32 new_length = 0;
       bool fill_from_edges = true;
    } _terrain_extend_context;
+
+   struct water_editor_config {
+      water_brush_mode brush_mode = water_brush_mode::paint;
+      int32 brush_size_x = 1;
+      int32 brush_size_y = 1;
+   } _water_editor_config;
+
+   struct water_editor_context {
+      bool flood_fill_active = false;
+      bool brush_held = false;
+      bool brush_active = false;
+   } _water_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

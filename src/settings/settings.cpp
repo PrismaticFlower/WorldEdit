@@ -22,9 +22,9 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
             ui& ui = settings.ui;
             preferences& preferences = settings.preferences;
 
-            ImGui::DragFloat("At Cursor Placement Re-Enable Distance",
-                             &preferences.cursor_placement_reenable_distance,
-                             1.0f, 1.0f, 64.0f, "%.0f");
+            ImGui::SliderFloat("At Cursor Placement Re-Enable Distance",
+                               &preferences.cursor_placement_reenable_distance,
+                               1.0f, 64.0f, "%.0f");
 
             ImGui::SetItemTooltip(
                "If after Undoing or Redoing an edit an entity is being "
@@ -34,6 +34,16 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                "this many pixels.\n\nAll of this is done to give you a chance "
                "to Redo changes that would otherwise by replaced by 'At "
                "Cursor' placement edits.");
+
+            ImGui::SliderFloat("Terrain Editor Height Brush Stickiness",
+                               &preferences.terrain_height_brush_stickiness,
+                               0.0f, 64.0f, "%.0f");
+
+            ImGui::SetItemTooltip(
+               "When using a brush to edit the terrain's "
+               "height the brush will be locked in "
+               "place until the mouse is moved. Higher 'stickiness' values "
+               "require more mouse movement to unlock and move the brush.");
 
             if (ImGui::InputText("Text Editor", &preferences.text_editor)) {
                std::erase(preferences.text_editor, '"');

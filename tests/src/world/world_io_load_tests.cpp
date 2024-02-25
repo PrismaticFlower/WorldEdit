@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "approx_test_helpers.hpp"
-#include "world/world_io_load.hpp"
+#include "world/io/load.hpp"
 
 #include <span>
 
@@ -472,6 +472,15 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(world.boundaries[0].size == float2{384.000000f, 384.000000f});
       CHECK(world.boundaries[0].position == float2{-0.442565918f, 4.79779053f});
       CHECK(is_unique_id(0, world.boundaries));
+   }
+
+   // measurements checks
+   {
+      REQUIRE(world.measurements.size() == 1);
+      CHECK(world.measurements[0].name == "Measurement0"sv);
+      CHECK(world.measurements[0].start == float3{1.0f, 0.0f, -0.0f});
+      CHECK(world.measurements[0].end == float3{2.0f, 0.0f, -1.0f});
+      CHECK(is_unique_id(0, world.measurements));
    }
 }
 }

@@ -73,6 +73,25 @@ struct access_color_map {
    }
 };
 
+struct access_water_map {
+   access_water_map() = default;
+
+   auto target_map(world::terrain& terrain) -> container::dynamic_array_2d<bool>&
+   {
+      return terrain.water_map;
+   }
+
+   void mark_dirty(world::terrain& terrain, dirty_rect rect)
+   {
+      terrain.water_map_dirty.add(rect);
+   }
+
+   bool can_coalesce(const access_water_map&) const noexcept
+   {
+      return true;
+   }
+};
+
 template<typename T>
 struct area {
    dirty_rect rect;
@@ -138,14 +157,16 @@ struct set_terrain_area : edit<world::edit_context>, Access {
       world::terrain& terrain = context.world.terrain;
 
       for (area<T>& area : _areas) {
+         container::dynamic_array_2d<T>& target_map = Access::target_map(terrain);
+
          assert(area.rect.left < area.rect.right);
          assert(area.rect.top < area.rect.bottom);
-         assert(area.rect.right <= (uint32)terrain.length);
-         assert(area.rect.bottom <= (uint32)terrain.length);
+         assert(area.rect.right <= (uint32)target_map.shape()[0]);
+         assert(area.rect.bottom <= (uint32)target_map.shape()[1]);
 
          for (uint32 y = area.rect.top; y < area.rect.bottom; ++y) {
             for (uint32 x = area.rect.left; x < area.rect.right; ++x) {
-               std::swap(Access::target_map(terrain)[{x, y}],
+               std::swap(target_map[{x, y}],
                          area.map[{x - area.rect.left, y - area.rect.top}]);
             }
          }
@@ -318,6 +339,20 @@ auto make_set_terrain_area_color_map(const uint32 rect_start_x, const uint32 rec
                             .bottom = static_cast<uint32>(
                                rect_start_y + rect_color_map.shape()[1])},
                    .map = std::move(rect_color_map)});
+}
+
+auto make_set_terrain_area_water_map(const uint32 rect_start_x, const uint32 rect_start_y,
+                                     container::dynamic_array_2d<bool> rect_water_map)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_terrain_area<bool, access_water_map>>(
+      area<bool>{.rect = {.left = rect_start_x,
+                          .top = rect_start_y,
+                          .right = static_cast<uint32>(rect_start_x +
+                                                       rect_water_map.shape()[0]),
+                          .bottom = static_cast<uint32>(
+                             rect_start_y + rect_water_map.shape()[1])},
+                 .map = std::move(rect_water_map)});
 }
 
 }

@@ -107,6 +107,16 @@ auto selection_centre_for_rotate_around(const world& world,
             selection_axis_count += {1.0f, 0.0f, 1.0f};
          }
       }
+      else if (std::holds_alternative<measurement_id>(selected)) {
+         const measurement* measurement =
+            find_entity(world.measurements, std::get<measurement_id>(selected));
+
+         if (measurement) {
+            selection_centre += measurement->start;
+            selection_centre += measurement->end;
+            selection_axis_count += {2.0f, 2.0f, 2.0f};
+         }
+      }
    }
 
    selection_axis_count = max(selection_axis_count, float3{1.0f, 1.0f, 1.0f});
@@ -237,6 +247,16 @@ auto selection_centre_for_env_map(const world& world,
          if (boundary) {
             selection_centre += {boundary->position.x, 0.0f, boundary->position.y};
             selection_axis_count += {1.0f, 0.0f, 1.0f};
+         }
+      }
+      else if (std::holds_alternative<measurement_id>(selected)) {
+         const measurement* measurement =
+            find_entity(world.measurements, std::get<measurement_id>(selected));
+
+         if (measurement) {
+            selection_centre += measurement->start;
+            selection_centre += measurement->end;
+            selection_axis_count += {2.0f, 2.0f, 2.0f};
          }
       }
    }

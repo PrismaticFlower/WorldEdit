@@ -6,14 +6,8 @@
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
 #include "output_stream.hpp"
-
-#include <concepts>
-#include <memory>
-#include <shared_mutex>
-#include <vector>
-
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
+#include "utility/function_ptr.hpp"
+#include "utility/implementation_storage.hpp"
 
 namespace we::graphics {
 
@@ -45,8 +39,23 @@ private:
    gpu::device& _device;
 };
 
-using updated_textures =
-   absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>;
+struct updated_textures {
+   auto check(const lowercase_string& name) const noexcept
+      -> std::shared_ptr<const world_texture>;
+
+   void eval_all(
+      function_ptr<void(const lowercase_string&, const std::shared_ptr<const world_texture>&) noexcept>
+         callback) const noexcept;
+
+private:
+   friend texture_manager;
+
+   updated_textures(const void* copied_textures) noexcept;
+
+   ~updated_textures() = default;
+
+   const void* _copied_textures = nullptr;
+};
 
 enum class texture_status {
    ready,
@@ -61,6 +70,11 @@ struct texture_manager {
                    std::shared_ptr<async::thread_pool> thread_pool,
                    assets::library<assets::texture::texture>& texture_assets,
                    output_stream& error_output);
+
+   texture_manager(const texture_manager&) = delete;
+   texture_manager(texture_manager&&) = delete;
+
+   ~texture_manager();
 
    /// @brief Gets the specified texture or returns a default texture if it is not available.
    /// @param name Name of the texture to get.
@@ -80,64 +94,27 @@ struct texture_manager {
 
    /// @brief Texture with a color value of 0.75, 0.75, 0.75, 1.0.
    /// @return The texture.
-   auto null_diffuse_map() const noexcept -> std::shared_ptr<const world_texture>
-   {
-      return _null_diffuse_map;
-   }
+   auto null_diffuse_map() const noexcept -> std::shared_ptr<const world_texture>;
 
    /// @brief Texture with a color value of 0.5, 0.5, 1.0, 1.0.
    /// @return The texture.
-   auto null_normal_map() const noexcept -> std::shared_ptr<const world_texture>
-   {
-      return _null_normal_map;
-   }
+   auto null_normal_map() const noexcept -> std::shared_ptr<const world_texture>;
 
    /// @brief Texture with a color value of 0.5, 0.5, 0.5, 1.0.
    /// @return The texture.
-   auto null_detail_map() const noexcept -> std::shared_ptr<const world_texture>
-   {
-      return _null_detail_map;
-   }
+   auto null_detail_map() const noexcept -> std::shared_ptr<const world_texture>;
 
    /// @brief Cube texture with a color value of 0.0, 0.0, 0.0, 1.0.
    /// @return The texture.
-   auto null_cube_map() const noexcept -> std::shared_ptr<const world_texture>
-   {
-      return _null_cube_map;
-   }
+   auto null_cube_map() const noexcept -> std::shared_ptr<const world_texture>;
 
    /// @brief Texture with a color value of 1.0, 1.0, 1.0, 1.0.
    /// @return The texture.
-   auto null_color_map() const noexcept -> std::shared_ptr<const world_texture>
-   {
-      return _null_color_map;
-   }
+   auto null_color_map() const noexcept -> std::shared_ptr<const world_texture>;
 
    /// @brief Allows processing updated textures through a callback.
    /// @param callback The callback to invoke with a reference to the updated textures. The reference is only safe to use until the callback returns.
-   void eval_updated_textures(std::invocable<const updated_textures&> auto callback) noexcept
-   {
-      update_textures();
-
-      std::scoped_lock lock{_mutex, _texture_load_tokens_mutex};
-
-      callback(_copied_textures);
-
-      absl::erase_if(_copied_textures,
-                     [this](const std::pair<const lowercase_string,
-                                            std::shared_ptr<const world_texture>>& copied) {
-                        if (auto token = _texture_load_tokens.find(copied.first);
-                            token != _texture_load_tokens.end()) {
-                           return token->second.expired();
-                        }
-
-                        return true;
-                     });
-
-      absl::erase_if(_texture_load_tokens,
-                     [this](const std::pair<const lowercase_string, std::weak_ptr<const world_texture_load_token>>&
-                               token) { return token.second.expired(); });
-   }
+   void eval_updated_textures(function_ptr<void(const updated_textures&) noexcept> callback) noexcept;
 
    /// @brief Call at the start of a frame to update textures that have been created asynchronously. eval_updated_textures() implicitly calls this.
    void update_textures() noexcept;
@@ -150,82 +127,9 @@ struct texture_manager {
                const world_texture_dimension dimension) const noexcept -> texture_status;
 
 private:
-   void init_texture(gpu::resource_handle texture,
-                     const assets::texture::texture& cpu_texture);
+   struct impl;
 
-   /// @brief Creates a texture asynchronously. _shared_mutex must be held before calling this.
-   void create_texture_async(const lowercase_string& name,
-                             asset_ref<assets::texture::texture> asset,
-                             asset_data<assets::texture::texture> data);
-
-   void texture_loaded(const lowercase_string& name,
-                       asset_ref<assets::texture::texture> asset,
-                       asset_data<assets::texture::texture> data) noexcept;
-
-   void texture_load_failure(const lowercase_string& name,
-                             asset_ref<assets::texture::texture> asset) noexcept;
-
-   static auto get_srgb_format(const DXGI_FORMAT format) noexcept -> DXGI_FORMAT
-   {
-      // clang-format off
-      if (format == DXGI_FORMAT_R8G8B8A8_UNORM) return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-      if (format == DXGI_FORMAT_BC1_UNORM) return DXGI_FORMAT_BC1_UNORM_SRGB;
-      if (format == DXGI_FORMAT_BC2_UNORM) return DXGI_FORMAT_BC2_UNORM_SRGB;
-      if (format == DXGI_FORMAT_BC3_UNORM) return DXGI_FORMAT_BC3_UNORM_SRGB;
-      if (format == DXGI_FORMAT_B8G8R8A8_UNORM) return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-      if (format == DXGI_FORMAT_B8G8R8X8_UNORM) return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
-      if (format == DXGI_FORMAT_BC7_UNORM) return DXGI_FORMAT_BC7_UNORM_SRGB;
-      // clang-format on
-
-      return format;
-   }
-
-   struct texture_state {
-      std::weak_ptr<const world_texture> texture;
-      asset_ref<assets::texture::texture> asset;
-   };
-
-   struct pending_create_texture {
-      async::task<std::shared_ptr<const world_texture>> task;
-      asset_ref<assets::texture::texture> asset;
-   };
-
-   assets::library<assets::texture::texture>& _texture_assets;
-   gpu::device& _device;
-   copy_command_list_pool& _copy_command_list_pool;
-
-   mutable std::shared_mutex _mutex;
-   absl::flat_hash_map<lowercase_string, texture_state> _textures;
-   absl::flat_hash_map<lowercase_string, asset_ref<assets::texture::texture>> _pending_loads;
-   absl::flat_hash_map<lowercase_string, pending_create_texture> _pending_creations;
-   absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>> _copied_textures;
-   absl::flat_hash_set<lowercase_string> _failed_creations;
-
-   std::shared_mutex _texture_load_tokens_mutex;
-   absl::flat_hash_map<lowercase_string, std::weak_ptr<const world_texture_load_token>> _texture_load_tokens;
-
-   std::shared_ptr<async::thread_pool> _thread_pool;
-
-   std::shared_ptr<world_texture> _null_diffuse_map;
-   std::shared_ptr<world_texture> _null_normal_map;
-   std::shared_ptr<world_texture> _null_detail_map;
-   std::shared_ptr<world_texture> _null_cube_map;
-   std::shared_ptr<world_texture> _null_color_map;
-
-   output_stream& _error_output;
-
-   event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>,
-                       asset_data<assets::texture::texture>)>
-      _asset_load_listener = _texture_assets.listen_for_loads(
-         [this](const lowercase_string& name, asset_ref<assets::texture::texture> asset,
-                asset_data<assets::texture::texture> data) {
-            texture_loaded(name, asset, data);
-         });
-   event_listener<void(const lowercase_string&, asset_ref<assets::texture::texture>)> _asset_load_failure_listener =
-      _texture_assets.listen_for_load_failures(
-         [this](const lowercase_string& name, asset_ref<assets::texture::texture> asset) {
-            texture_load_failure(name, asset);
-         });
+   implementation_storage<impl, 432> _impl;
 };
 
 }

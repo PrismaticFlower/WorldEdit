@@ -6,12 +6,12 @@
 
 struct input_vertex
 {
-   float3 positionWS : POSITIONWS;
+   float2 texcoords : TEXCOORDS;
 };
 
 float4 main(input_vertex input) : SV_TARGET
 {
    Texture2D color_map = Texture2DHeap[cb_water.color_map_index];
 
-   return cb_water.color * color_map.Sample(sampler_anisotropic_wrap, input.positionWS.xz);
+   return color_map.Sample(sampler_anisotropic_wrap, input.texcoords) * cb_water.color;
 }

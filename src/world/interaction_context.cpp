@@ -127,6 +127,9 @@ bool is_valid(const interaction_target entity, const world& world) noexcept
    if (std::holds_alternative<boundary_id>(entity)) {
       return find_entity(world.boundaries, std::get<boundary_id>(entity)) != nullptr;
    }
+   if (std::holds_alternative<measurement_id>(entity)) {
+      return find_entity(world.measurements, std::get<measurement_id>(entity)) != nullptr;
+   }
 
    return false;
 }

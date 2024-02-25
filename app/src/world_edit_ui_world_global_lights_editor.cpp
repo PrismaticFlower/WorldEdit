@@ -1,25 +1,11 @@
 #include "world_edit.hpp"
 
 #include "edits/set_value.hpp"
+#include "imgui_ext.hpp"
 
 #include <imgui.h>
-#include <misc/cpp/imgui_stdlib.h>
 
 namespace we {
-
-namespace {
-
-template<typename Value>
-inline auto make_set_global_lights_value(Value world::global_lights::*value_member_ptr,
-                                         Value new_value, Value original_value)
-   -> std::unique_ptr<edits::set_global_value<world::global_lights, Value>>
-{
-   return std::make_unique<edits::set_global_value<world::global_lights, Value>>(
-      &world::world::global_lights, value_member_ptr, std::move(new_value),
-      std::move(original_value));
-}
-
-}
 
 void world_edit::ui_show_world_global_lights_editor() noexcept
 {
@@ -29,36 +15,27 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
    ImGui::Begin("Global Lights", &_world_global_lights_editor_open,
                 ImGuiWindowFlags_AlwaysAutoResize);
 
-   const auto global_light_editor =
-      [&](const char* label, std::string world::global_lights::*global_light_ptr) {
-         const std::string& global_light = _world.global_lights.*global_light_ptr;
-
-         if (ImGui::BeginCombo(label, global_light.c_str())) {
-            for (const auto& light : _world.lights) {
-               if (light.light_type == world::light_type::directional) {
-                  if (ImGui::Selectable(light.name.c_str())) {
-                     _edit_stack_world.apply(make_set_global_lights_value(global_light_ptr,
-                                                                          light.name,
-                                                                          global_light),
-                                             _edit_context, {.closed = true});
-                  }
+   const auto global_light_editor = [&](const char* label, std::string* global_light) {
+      if (ImGui::BeginCombo(label, global_light->c_str())) {
+         for (const auto& light : _world.lights) {
+            if (light.light_type == world::light_type::directional) {
+               if (ImGui::Selectable(light.name.c_str())) {
+                  _edit_stack_world.apply(edits::make_set_memory_value(global_light,
+                                                                       light.name),
+                                          _edit_context, {.closed = true});
                }
             }
-            ImGui::EndCombo();
          }
-      };
+         ImGui::EndCombo();
+      }
+   };
 
-   global_light_editor("Global Light 1", &world::global_lights::global_light_1);
-   global_light_editor("Global Light 2", &world::global_lights::global_light_2);
+   global_light_editor("Global Light 1", &_world.global_lights.global_light_1);
+   global_light_editor("Global Light 2", &_world.global_lights.global_light_2);
 
-   const auto ambient_editor = [&](const char* label,
-                                   float3 world::global_lights::*ambient_ptr) {
-      const float3 start_color = _world.global_lights.*ambient_ptr;
-      float3 color = start_color;
-
-      if (ImGui::ColorEdit3(label, &color.x)) {
-         _edit_stack_world.apply(make_set_global_lights_value(ambient_ptr, color,
-                                                              start_color),
+   const auto ambient_editor = [&](const char* label, float3* ambient_color) {
+      if (float3 color = *ambient_color; ImGui::ColorEdit3(label, &color.x)) {
+         _edit_stack_world.apply(edits::make_set_memory_value(ambient_color, color),
                                  _edit_context);
       }
 
@@ -67,15 +44,18 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
       }
    };
 
-   ambient_editor("Ambient Sky Color", &world::global_lights::ambient_sky_color);
-   ambient_editor("Ambient Ground Color", &world::global_lights::ambient_ground_color);
+   ambient_editor("Ambient Sky Color", &_world.global_lights.ambient_sky_color);
+   ambient_editor("Ambient Ground Color", &_world.global_lights.ambient_ground_color);
 
-   if (std::string env_map_texture = _world.global_lights.env_map_texture;
+   if (absl::InlinedVector<char, 256>
+          env_map_texture{_world.global_lights.env_map_texture.begin(),
+                          _world.global_lights.env_map_texture.end()};
        ImGui::InputText("Global Environment Map", &env_map_texture)) {
-      _edit_stack_world.apply(make_set_global_lights_value(&world::global_lights::env_map_texture,
-                                                           env_map_texture,
-                                                           _world.global_lights.env_map_texture),
-                              _edit_context);
+      _edit_stack_world
+         .apply(edits::make_set_memory_value(&_world.global_lights.env_map_texture,
+                                             std::string{env_map_texture.data(),
+                                                         env_map_texture.size()}),
+                _edit_context);
    }
 
    if (ImGui::IsItemDeactivatedAfterEdit()) {

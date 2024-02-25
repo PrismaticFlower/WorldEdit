@@ -1,9 +1,10 @@
 
-#include "world_io_save.hpp"
+#include "save.hpp"
 #include "assets/req/io.hpp"
 #include "math/vector_funcs.hpp"
-#include "utility/boundary_nodes.hpp"
+#include "save_effects.hpp"
 #include "utility/string_icompare.hpp"
+#include "world/utility/boundary_nodes.hpp"
 
 #include <cctype>
 #include <cstddef>
@@ -693,6 +694,25 @@ void save_boundaries(const std::filesystem::path& path, const world& world)
    file.write_ln("}\n");
 }
 
+void save_measurements(const std::filesystem::path& path, const world& world)
+{
+   io::output_file file{path};
+
+   file.write_ln("MeasurementCount({});\n", world.measurements.size());
+
+   for (auto& measurement : world.measurements) {
+      file.write_ln("Measurement(\"{}\")", measurement.name);
+      file.write_ln("{");
+
+      file.write_ln("\tStart({:f}, {:f}, {:f});", measurement.start.x,
+                    measurement.start.y, -measurement.start.z);
+      file.write_ln("\tEnd({:f}, {:f}, {:f});", measurement.end.x,
+                    measurement.end.y, -measurement.end.z);
+
+      file.write_ln("}\n");
+   }
+}
+
 /// @brief Saves a world layer.
 /// @param world_dir The directory to save the layer into.
 /// @param layer_name The name of the layer ie `test` or `test_conquest`.
@@ -715,6 +735,7 @@ void save_layer(const std::filesystem::path& world_dir,
       save_barriers(world_dir / layer_name += L".bar"sv, world);
       save_planning(world_dir / layer_name += L".pln"sv, world);
       save_portals_sectors(world_dir / layer_name += L".pvs"sv, world);
+      save_measurements(world_dir / layer_name += L".msr"sv, world);
    }
 }
 
@@ -824,5 +845,6 @@ void save_world(const std::filesystem::path& path, const world& world,
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv),
                 world.terrain, terrain_cuts);
    save_requirements(world_dir, world_name, world);
+   save_effects(std::filesystem::path{path}.replace_extension(L".fx"sv), world.effects);
 }
 }

@@ -2848,6 +2848,66 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_point_at = false,
                 .has_placement_ground = false};
    }
+   else if (std::holds_alternative<world::measurement>(creation_entity)) {
+      const world::measurement& measurement =
+         std::get<world::measurement>(creation_entity);
+
+      ImGui::InputText("Name", &creation_entity, &world::measurement::name,
+                       &_edit_stack_world, &_edit_context, [](std::string*) {});
+
+      ImGui::LabelText("Length", "%.2fm",
+                       distance(measurement.start, measurement.end));
+
+      const float3 current_position = _entity_creation_context.measurement_started
+                                         ? measurement.end
+                                         : measurement.start;
+
+      if (using_cursor_placement) {
+         float3 new_position = current_position;
+
+         new_position = _cursor_positionWS;
+
+         if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
+            new_position = align_position_to_grid(new_position, _editor_grid_size);
+         }
+         else if (_entity_creation_config.placement_alignment ==
+                  placement_alignment::snapping) {
+            const std::optional<float3> snapped_position =
+               world::get_snapped_position(new_position, _world.objects,
+                                           _entity_creation_config.snap_distance,
+                                           _object_classes);
+
+            if (snapped_position) new_position = *snapped_position;
+         }
+
+         if (_entity_creation_context.lock_x_axis) {
+            new_position.x = current_position.x;
+         }
+         if (_entity_creation_context.lock_y_axis) {
+            new_position.y = current_position.y;
+         }
+         if (_entity_creation_context.lock_z_axis) {
+            new_position.z = current_position.z;
+         }
+
+         if (new_position != current_position) {
+            const bool started = _entity_creation_context.measurement_started;
+
+            _edit_stack_world.apply(edits::make_set_creation_measurement_points(
+                                       started ? measurement.start : new_position,
+                                       measurement.start, new_position,
+                                       measurement.end),
+                                    _edit_context, {.transparent = true});
+         }
+      }
+
+      traits = {
+         .has_placement_rotation = false,
+         .has_point_at = false,
+         .has_placement_mode = false,
+         .has_placement_ground = false,
+      };
+   }
 
    if (traits.has_placement_rotation) {
       ImGui::SeparatorText("Rotation");
@@ -3191,5 +3251,4 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _settings.preferences.cursor_placement_reenable_distance;
    }
 }
-
 }

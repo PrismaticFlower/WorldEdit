@@ -146,6 +146,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <BuildStlModules>false</BuildStlModules>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -273,6 +274,8 @@
     <ClCompile Include="src\utility\string_ops_tests.cpp" />
     <ClCompile Include="src\world\id_tests.cpp" />
     <ClCompile Include="src\world\interaction_context_tests.cpp" />
+    <ClCompile Include="src\world\io\load_effects_tests.cpp" />
+    <ClCompile Include="src\world\io\save_effects_tests.cpp" />
     <ClCompile Include="src\world\utility\region_properties_tests.cpp" />
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
     <ClCompile Include="src\world\world_io_save_tests.cpp" />

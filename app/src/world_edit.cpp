@@ -22,8 +22,11 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
+#include "world/io/load.hpp"
+#include "world/io/save.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
+#include "world/utility/mouse_pick_measurement.hpp"
 #include "world/utility/object_properties.hpp"
 #include "world/utility/raycast.hpp"
 #include "world/utility/raycast_terrain.hpp"
@@ -31,8 +34,6 @@
 #include "world/utility/selection_bbox.hpp"
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
-#include "world/world_io_load.hpp"
-#include "world/world_io_save.hpp"
 
 #include <stdexcept>
 #include <type_traits>
@@ -406,6 +407,17 @@ void world_edit::update_hovered_entity() noexcept
             _interaction_targets.hovered_entity = hit->id;
             hovered_entity_distance = hit->distance;
          }
+      }
+   }
+
+   if (raycast_mask.measurements) {
+      if (std::optional<world::measurement_id> hit =
+             world::mouse_pick(std::bit_cast<float2>(ImGui::GetMousePos()),
+                               std::bit_cast<float2>(ImGui::GetMainViewport()->Size),
+                               _camera.view_projection_matrix(), _world.measurements);
+          hit) {
+         _interaction_targets.hovered_entity = *hit;
+         hovered_entity_distance = 0.0f;
       }
    }
 
@@ -911,6 +923,19 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }
          }
       }
+
+      if (_world_hit_mask.measurements) {
+         for (auto& measurement : _world.measurements) {
+            if (measurement.hidden) continue;
+
+            math::bounding_box bbox{min(measurement.start, measurement.end),
+                                    max(measurement.start, measurement.end)};
+
+            if (intersects(frustum, bbox)) {
+               _interaction_targets.selection.add(measurement.id);
+            }
+         }
+      }
    }
    else {
       if (method == select_method::replace) {
@@ -1207,6 +1232,19 @@ void world_edit::finish_entity_deselect() noexcept
 
             if (intersects(frustum, bbox)) {
                _interaction_targets.selection.remove(boundary.id);
+            }
+         }
+      }
+
+      if (_world_hit_mask.measurements) {
+         for (auto& measurement : _world.measurements) {
+            if (measurement.hidden) continue;
+
+            math::bounding_box bbox{min(measurement.start, measurement.end),
+                                    max(measurement.start, measurement.end)};
+
+            if (intersects(frustum, bbox)) {
+               _interaction_targets.selection.remove(measurement.id);
             }
          }
       }
@@ -1588,6 +1626,21 @@ void world_edit::place_creation_entity() noexcept
                                        boundary.name),
                                     _edit_context, {.transparent = true});
          },
+         [&](const world::measurement& measurement) {
+            if (_entity_creation_context.measurement_started) {
+               world::measurement new_measurement = measurement;
+
+               new_measurement.id = _world.next_id.measurements.aquire();
+
+               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
+                                       _edit_context);
+
+               _entity_creation_context.measurement_started = false;
+            }
+            else {
+               _entity_creation_context.measurement_started = true;
+            }
+         },
       },
       *_interaction_targets.creation_entity);
 
@@ -1828,7 +1881,7 @@ void world_edit::delete_selected() noexcept
       }
 
       std::visit(
-         [&](const auto selected) {
+         [&](const auto& selected) {
             _edit_stack_world.apply(edits::make_delete_entity(selected, _world),
                                     _edit_context,
                                     {.transparent =
@@ -1972,6 +2025,22 @@ void world_edit::align_selection() noexcept
                                      boundary->position));
          }
       }
+      else if (std::holds_alternative<world::measurement_id>(selected)) {
+         const world::measurement* measurement =
+            world::find_entity(_world.measurements,
+                               std::get<world::measurement_id>(selected));
+
+         if (measurement) {
+            bundle.push_back(
+               edits::make_set_value(measurement->id, &world::measurement::start,
+                                     round(measurement->start / alignment) * alignment,
+                                     measurement->start));
+            bundle.push_back(
+               edits::make_set_value(measurement->id, &world::measurement::end,
+                                     round(measurement->end / alignment) * alignment,
+                                     measurement->end));
+         }
+      }
    }
 
    if (bundle.size() == 1) {
@@ -2093,6 +2162,17 @@ void world_edit::hide_selection() noexcept
          if (boundary and not boundary->hidden) {
             bundle.push_back(edits::make_set_value(boundary->id, &world::boundary::hidden,
                                                    true, boundary->hidden));
+         }
+      }
+      else if (std::holds_alternative<world::measurement_id>(selected)) {
+         const world::measurement* measurement =
+            world::find_entity(_world.measurements,
+                               std::get<world::measurement_id>(selected));
+
+         if (measurement and not measurement->hidden) {
+            bundle.push_back(edits::make_set_value(measurement->id,
+                                                   &world::measurement::hidden,
+                                                   true, measurement->hidden));
          }
       }
    }
@@ -2467,6 +2547,13 @@ void world_edit::new_entity_from_selection() noexcept
                 _edit_context);
       _world_draw_mask.boundaries = true;
    }
+   else if (std::holds_alternative<world::measurement_id>(selected)) {
+      _measurement_tool_open = true;
+      _edit_stack_world
+         .apply(edits::make_creation_entity_set(world::measurement{},
+                                                _interaction_targets.creation_entity),
+                _edit_context);
+   }
 
    _entity_creation_context = {};
 
@@ -2526,6 +2613,7 @@ void world_edit::unhide_all() noexcept
    unhide_entities(_world.planning_hubs);
    unhide_entities(_world.planning_connections);
    unhide_entities(_world.boundaries);
+   unhide_entities(_world.measurements);
 
    if (bundle.size() == 1) {
       _edit_stack_world.apply(std::move(bundle.back()), _edit_context,
@@ -2635,8 +2723,9 @@ void world_edit::load_world(std::filesystem::path path) noexcept
       _window_unsaved_star = false;
    }
    catch (std::exception& e) {
-      _stream.write(fmt::format("Failed to load world '{}'! Reason: {}",
-                                path.filename().string(), e.what()));
+      _stream.write(fmt::format("Failed to load world '{}'!\n   Reason: \n{}",
+                                path.filename().string(),
+                                string::indent(2, e.what())));
    }
 }
 

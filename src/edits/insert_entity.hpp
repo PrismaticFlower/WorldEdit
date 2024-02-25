@@ -40,4 +40,7 @@ auto make_insert_entity(world::planning_connection planning_connection)
 auto make_insert_entity(world::boundary boundary)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_insert_entity(world::measurement measurement)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }

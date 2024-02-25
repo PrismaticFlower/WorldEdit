@@ -107,4 +107,10 @@ auto make_insert_entity(world::boundary boundary)
    return std::make_unique<insert_entity<world::boundary>>(std::move(boundary));
 }
 
+auto make_insert_entity(world::measurement measurement)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<insert_entity<world::measurement>>(std::move(measurement));
+}
+
 }

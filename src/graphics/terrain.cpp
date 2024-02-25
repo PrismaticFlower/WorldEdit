@@ -521,9 +521,8 @@ void terrain::draw_cuts(const frustum& view_frustum,
 void terrain::process_updated_texture(const updated_textures& updated)
 {
    for (std::size_t i = 0; i < texture_count; ++i) {
-      if (auto new_texture = updated.find(_diffuse_maps_names[i]);
-          new_texture != updated.end()) {
-         _diffuse_maps[i] = new_texture->second;
+      if (auto new_texture = updated.check(_diffuse_maps_names[i]); new_texture) {
+         _diffuse_maps[i] = std::move(new_texture);
       }
    }
 }

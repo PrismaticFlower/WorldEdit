@@ -295,10 +295,9 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
    const gpu_virtual_address constant_buffer_address =
       device.get_gpu_virtual_address(constant_buffer.get());
 
-   if (auto new_texture = updated.find(texture_names.diffuse_map);
-       new_texture != updated.end() and
-       new_texture->second->dimension == world_texture_dimension::_2d) {
-      textures.diffuse_map = new_texture->second;
+   if (auto new_texture = updated.check(texture_names.diffuse_map);
+       new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+      textures.diffuse_map = std::move(new_texture);
       texture_load_tokens.diffuse_map = nullptr;
 
       command_list.write_buffer_immediate(constant_buffer_address +
@@ -307,10 +306,9 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
                                           textures.diffuse_map->srv_srgb.index);
    }
 
-   if (auto new_texture = updated.find(texture_names.normal_map);
-       new_texture != updated.end() and
-       new_texture->second->dimension == world_texture_dimension::_2d) {
-      textures.normal_map = new_texture->second;
+   if (auto new_texture = updated.check(texture_names.normal_map);
+       new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+      textures.normal_map = std::move(new_texture);
       texture_load_tokens.normal_map = nullptr;
 
       command_list.write_buffer_immediate(constant_buffer_address +
@@ -318,10 +316,9 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
                                           textures.normal_map->srv.index);
    }
 
-   if (auto new_texture = updated.find(texture_names.detail_map);
-       new_texture != updated.end() and
-       new_texture->second->dimension == world_texture_dimension::_2d) {
-      textures.detail_map = new_texture->second;
+   if (auto new_texture = updated.check(texture_names.detail_map);
+       new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+      textures.detail_map = std::move(new_texture);
       texture_load_tokens.detail_map = nullptr;
 
       command_list.write_buffer_immediate(constant_buffer_address +
@@ -329,10 +326,9 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
                                           textures.detail_map->srv.index);
    }
 
-   if (auto new_texture = updated.find(texture_names.env_map);
-       new_texture != updated.end() and
-       new_texture->second->dimension == world_texture_dimension::cube) {
-      textures.env_map = new_texture->second;
+   if (auto new_texture = updated.check(texture_names.env_map);
+       new_texture and new_texture->dimension == world_texture_dimension::cube) {
+      textures.env_map = std::move(new_texture);
       texture_load_tokens.env_map = nullptr;
 
       command_list.write_buffer_immediate(constant_buffer_address +

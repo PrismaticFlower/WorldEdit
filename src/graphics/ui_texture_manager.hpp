@@ -2,13 +2,18 @@
 
 #include "fallback_imgui_texture.hpp"
 #include "texture_manager.hpp"
-
-#include <absl/container/flat_hash_map.h>
-#include <vector>
+#include "utility/implementation_storage.hpp"
 
 namespace we::graphics {
 
 struct ui_texture_manager {
+   ui_texture_manager() noexcept;
+
+   ui_texture_manager(const ui_texture_manager&) = delete;
+   ui_texture_manager(ui_texture_manager&&) = delete;
+
+   ~ui_texture_manager();
+
    /// @brief Mark the start of a new frame. Releasing any textures that were not used in the previous frame.
    void new_frame() noexcept;
 
@@ -24,10 +29,9 @@ struct ui_texture_manager {
    void process_updated_textures(const updated_textures& updated) noexcept;
 
 private:
-   absl::flat_hash_map<std::string, std::shared_ptr<const world_texture>> _front_textures;
-   absl::flat_hash_map<std::string, std::shared_ptr<const world_texture>> _back_textures;
-   std::vector<std::shared_ptr<const world_texture>> _front_garbage;
-   std::vector<std::shared_ptr<const world_texture>> _back_garbage;
+   struct impl;
+
+   implementation_storage<impl, 144> _impl;
 };
 
 }

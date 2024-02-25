@@ -1,18 +1,14 @@
 #pragma once
 
 #include "commands.hpp"
-#include "container/enum_array.hpp"
 #include "key.hpp"
 #include "output_stream.hpp"
 #include "scale_factor.hpp"
+#include "utility/implementation_storage.hpp"
 
 #include <initializer_list>
 #include <optional>
 #include <string_view>
-#include <variant>
-
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
 
 struct ImFont;
 
@@ -67,6 +63,11 @@ struct hotkey_set_desc {
 struct hotkeys {
    hotkeys(commands& commands, output_stream& error_output_stream) noexcept;
 
+   hotkeys(const hotkeys&) = delete;
+   hotkeys(hotkeys&&) = delete;
+
+   ~hotkeys();
+
    /// @brief Adds a set of hotkeys.
    /// @param set_name The name of the set.
    /// @param activated Predicate to call to test if the set is active or not.
@@ -102,96 +103,9 @@ struct hotkeys {
    void show_imgui(bool& window_open, const scale_factor display_scale) noexcept;
 
 private:
-   enum class key_state : bool { up, down };
+   struct impl;
 
-   void validate_command(const std::string_view command);
-
-   void release_all_toggles() noexcept;
-
-   void release_stale_toggles(const bool imgui_has_mouse,
-                              const bool imgui_has_keyboard) noexcept;
-
-   void release_toggles_using(const key key) noexcept;
-
-   void process_new_key_state(const key key, const key_state new_state,
-                              const bool imgui_has_mouse,
-                              const bool imgui_has_keyboard);
-
-   bool is_key_down(const key key) const noexcept;
-
-   void try_execute_command(const std::string_view command) const noexcept;
-
-   commands& _commands;
-   output_stream& _error_output_stream;
-
-   struct key_event {
-      key key;
-      key_state new_state;
-   };
-
-   std::vector<key_event> _key_events;
-
-   struct hotkey {
-      std::string command;
-
-      bool toggle = false;
-      bool toggle_active = false;
-      bool ignore_imgui_focus = false;
-
-      std::string name;
-
-      bool operator==(const hotkey&) const noexcept = default;
-   };
-
-   struct hotkey_set {
-      std::string name;
-      std::move_only_function<bool()> activated_predicate;
-      absl::flat_hash_map<hotkey_bind, hotkey> bindings;
-      absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
-      std::vector<hotkey> unbound_hotkeys;
-
-      std::string description;
-      bool hidden = false;
-   };
-
-   std::vector<hotkey_set> _hotkey_sets;
-
-   struct active_toggle {
-      std::ptrdiff_t set_index;
-      hotkey_bind bind;
-
-      template<typename H>
-      friend H AbslHashValue(H h, const active_toggle& active_toggle)
-      {
-         return H::combine(std::move(h), active_toggle.set_index, active_toggle.bind);
-      }
-
-      constexpr bool operator==(const active_toggle&) const noexcept = default;
-   };
-
-   using activated_hotkey = active_toggle;
-
-   absl::flat_hash_set<active_toggle> _active_toggles;
-
-   bool _user_inputting_new_binding = false;
-   std::optional<key_event> _user_editing_last_key_event;
-   std::ptrdiff_t _user_editing_bind_set = 0;
-   std::optional<hotkey_bind> _user_editing_bind;
-   hotkey _user_editing_hotkey;
-   key _user_swapping_key = key::void_key;
-
-   container::enum_array<key_state, key> _keys{};
-
-   using sorted_hotkey_variant =
-      std::variant<const std::pair<const hotkey_bind, hotkey>*, const hotkey*>;
-
-   std::vector<sorted_hotkey_variant> _sorted_hotkey_set;
-
-   absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>> _saved_bindings;
-   const absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> _saved_used_bindings;
-
-   static void fill_sorted_info(const hotkey_set& set,
-                                std::vector<sorted_hotkey_variant>& sorted_hotkey_set);
+   implementation_storage<impl, 456> _impl;
 };
 
 auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*;

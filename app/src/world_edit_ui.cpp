@@ -110,6 +110,10 @@ void world_edit::update_ui() noexcept
       ui_show_terrain_import_height_map();
    }
 
+   if (_terrain_import_texture_weight_map_open) {
+      ui_show_terrain_import_texture_weight_map();
+   }
+
    if (_terrain_resize_open) {
       ui_show_terrain_resize();
    }
@@ -122,8 +126,16 @@ void world_edit::update_ui() noexcept
       ui_show_terrain_extend();
    }
 
+   if (_water_editor_open) {
+      ui_show_water_editor();
+   }
+
    if (_render_env_map_open) {
       ui_show_render_env_map();
+   }
+
+   if (_measurement_tool_open) {
+      ui_show_measurement_tool();
    }
 
    if (ImGui::BeginPopup("Create Entity", ImGuiWindowFlags_AlwaysAutoResize |

@@ -41,4 +41,7 @@ auto make_delete_entity(world::planning_connection_id planning_connection,
 auto make_delete_entity(world::boundary_id boundary_id, const world::world& world)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_delete_entity(world::measurement_id measurement_id, const world::world& world)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }

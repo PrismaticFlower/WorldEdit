@@ -23,6 +23,7 @@ inline auto select_entities(world& world) -> std::vector<Type>&
    if constexpr (std::is_same_v<Type, planning_connection>)
       return world.planning_connections;
    if constexpr (std::is_same_v<Type, boundary>) return world.boundaries;
+   if constexpr (std::is_same_v<Type, measurement>) return world.measurements;
 }
 
 template<typename Type, typename Type_id>

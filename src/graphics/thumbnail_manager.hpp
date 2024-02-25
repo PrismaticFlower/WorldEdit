@@ -27,7 +27,7 @@ struct libraries_manager;
 
 namespace we::graphics {
 
-class model_manager;
+struct model_manager;
 struct dynamic_buffer_allocator;
 struct root_signature_library;
 struct pipeline_library;

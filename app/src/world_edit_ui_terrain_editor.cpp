@@ -18,26 +18,6 @@ namespace we {
 
 namespace {
 
-template<typename Value>
-auto make_set_terrain_value(Value world::terrain::*value_member_ptr,
-                            Value new_value, Value original_value)
-   -> std::unique_ptr<edits::edit<world::edit_context>>
-{
-   return std::make_unique<edits::set_global_value<world::terrain, Value>>(
-      &world::world::terrain, value_member_ptr, std::move(new_value),
-      std::move(original_value));
-}
-
-template<typename Container, typename Value>
-auto make_set_terrain_value_indexed(Container world::terrain::*value_member_ptr,
-                                    uint32 index, Value new_value, Value original_value)
-   -> std::unique_ptr<edits::edit<world::edit_context>>
-{
-   return std::make_unique<edits::set_global_value_indexed<world::terrain, Container, Value>>(
-      &world::world::terrain, value_member_ptr, index, std::move(new_value),
-      std::move(original_value));
-}
-
 auto get_position(int32 x, int32 y, const world::terrain& terrain) noexcept -> float3
 {
    const int32 terrain_half_length = terrain.length / 2;
@@ -631,12 +611,11 @@ void world_edit::ui_show_terrain_editor() noexcept
                       callback))();
                 },
                 &texture_name_auto_complete)) {
-            _edit_stack_world.apply(make_set_terrain_value_indexed(
-                                       &world::terrain::texture_names, texture,
-                                       std::string{texture_name.begin(),
-                                                   texture_name.end()},
-                                       _world.terrain.texture_names[texture]),
-                                    _edit_context);
+            _edit_stack_world.apply(
+               edits::make_set_memory_value(&_world.terrain.texture_names[texture],
+                                            std::string{texture_name.begin(),
+                                                        texture_name.end()}),
+               _edit_context);
          }
 
          if (ImGui::IsItemDeactivatedAfterEdit()) {
@@ -654,9 +633,8 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             for (auto [axis, name] : texture_axis_names) {
                if (ImGui::Selectable(name, axis == _world.terrain.texture_axes[texture])) {
-                  _edit_stack_world.apply(make_set_terrain_value_indexed(
-                                             &world::terrain::texture_axes, texture, axis,
-                                             _world.terrain.texture_axes[texture]),
+                  _edit_stack_world.apply(edits::make_set_memory_value(
+                                             &_world.terrain.texture_axes[texture], axis),
                                           _edit_context, {.closed = true});
                }
             }
@@ -668,10 +646,8 @@ void world_edit::ui_show_terrain_editor() noexcept
              ImGui::DragFloat("Scale", &scale, 1.0f)) {
             scale = std::max(scale, 1.0f);
 
-            _edit_stack_world.apply(make_set_terrain_value_indexed(
-                                       &world::terrain::texture_scales, texture,
-                                       1.0f / scale,
-                                       _world.terrain.texture_scales[texture]),
+            _edit_stack_world.apply(edits::make_set_memory_value(&_world.terrain.texture_scales[texture],
+                                                                 1.0f / scale),
                                     _edit_context);
          }
 
@@ -689,8 +665,8 @@ void world_edit::ui_show_terrain_editor() noexcept
 
             flags.terrain = active;
 
-            _edit_stack_world.apply(make_set_terrain_value(&world::terrain::active_flags,
-                                                           flags, _world.terrain.active_flags),
+            _edit_stack_world.apply(edits::make_set_memory_value(&_world.terrain.active_flags,
+                                                                 flags),
                                     _edit_context, {.closed = true});
          }
 
@@ -725,12 +701,11 @@ void world_edit::ui_show_terrain_editor() noexcept
                       callback))();
                 },
                 &detail_texture_auto_complete)) {
-            _edit_stack_world
-               .apply(make_set_terrain_value(&world::terrain::detail_texture_name,
-                                             std::string{detail_texture.begin(),
-                                                         detail_texture.end()},
-                                             _world.terrain.detail_texture_name),
-                      _edit_context);
+            _edit_stack_world.apply(
+               edits::make_set_memory_value(&_world.terrain.detail_texture_name,
+                                            std::string{detail_texture.begin(),
+                                                        detail_texture.end()}),
+               _edit_context);
          }
 
          if (ImGui::IsItemDeactivatedAfterEdit()) {
@@ -745,11 +720,10 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          if (float height_scale = _world.terrain.height_scale;
              ImGui::DragFloat("Height Scale", &height_scale, 0.0025f)) {
-            _edit_stack_world.apply(
-               make_set_terrain_value(&world::terrain::height_scale,
-                                      std::max(static_cast<float>(height_scale), 0.0f),
-                                      _world.terrain.height_scale),
-               _edit_context);
+            _edit_stack_world.apply(edits::make_set_memory_value(
+                                       &_world.terrain.height_scale,
+                                       std::max(static_cast<float>(height_scale), 0.0f)),
+                                    _edit_context);
          }
 
          if (ImGui::IsItemDeactivatedAfterEdit())
@@ -757,11 +731,10 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          if (float grid_scale = _world.terrain.grid_scale;
              ImGui::DragFloat("Grid Scale", &grid_scale, 1.0f, 1.0f, 16777216.0f)) {
-            _edit_stack_world
-               .apply(make_set_terrain_value(&world::terrain::grid_scale,
-                                             std::max(static_cast<float>(grid_scale), 1.0f),
-                                             _world.terrain.grid_scale),
-                      _edit_context);
+            _edit_stack_world.apply(edits::make_set_memory_value(
+                                       &_world.terrain.grid_scale,
+                                       std::max(static_cast<float>(grid_scale), 1.0f)),
+                                    _edit_context);
          }
 
          if (ImGui::IsItemDeactivatedAfterEdit())
@@ -833,6 +806,21 @@ void world_edit::ui_show_terrain_editor() noexcept
    terrain_point = round(terrain_point / _world.terrain.grid_scale) +
                    (_world.terrain.length / 2.0f) - float2{0.0f, 1.0f};
 
+   if (_terrain_editor_context.brush_active and
+       _terrain_editor_config.edit_target == terrain_edit_target::height and
+       _terrain_editor_config.height.brush_mode != terrain_brush_mode::overwrite) {
+      const float2 mouse_position = std::bit_cast<float2>(ImGui::GetMousePos());
+
+      if (distance(_terrain_editor_context.brush_start_mouse_position, mouse_position) <
+          _settings.preferences.terrain_height_brush_stickiness) {
+         terrain_point = _terrain_editor_context.locked_terrain_point;
+      }
+      else {
+         _terrain_editor_context.brush_start_mouse_position = mouse_position;
+         _terrain_editor_context.locked_terrain_point = terrain_point;
+      }
+   }
+
    const int32 terrain_x = static_cast<int32>(terrain_point.x);
    const int32 terrain_y = static_cast<int32>(terrain_point.y);
 
@@ -844,6 +832,9 @@ void world_edit::ui_show_terrain_editor() noexcept
          _edit_stack_world.close_last();
       }
       else {
+         _terrain_editor_context.brush_start_mouse_position =
+            std::bit_cast<float2>(ImGui::GetMousePos());
+         _terrain_editor_context.locked_terrain_point = terrain_point;
          _terrain_editor_context.brush_plane_height = cursor_positionWS.y;
          _terrain_editor_context.last_brush_update = std::chrono::steady_clock::now();
 

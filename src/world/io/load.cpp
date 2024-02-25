@@ -1,9 +1,11 @@
 
-#include "world_io_load.hpp"
+#include "load.hpp"
 #include "assets/config/io.hpp"
 #include "assets/req/io.hpp"
 #include "assets/terrain/terrain_io.hpp"
 #include "io/read_file.hpp"
+#include "load_effects.hpp"
+#include "load_failure.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/stopwatch.hpp"
 #include "utility/string_icompare.hpp"
@@ -880,6 +882,52 @@ void load_hintnodes(const std::filesystem::path& filepath,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
+void load_measurements(const std::filesystem::path& filepath,
+                       output_stream& output, world& world_out)
+{
+   using namespace assets;
+
+   utility::stopwatch load_timer;
+
+   try {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
+         if (key_node.key == "MeasurementCount"sv) {
+            world_out.measurements.reserve(world_out.measurements.size() +
+                                           key_node.values.get<std::size_t>(0));
+         }
+         else if (key_node.key == "Measurement"sv) {
+            auto& measurement = world_out.measurements.emplace_back();
+
+            measurement.name = key_node.values.get<std::string>(0);
+            measurement.id = world_out.next_id.measurements.aquire();
+
+            for (auto& child_key_node : key_node) {
+               if (child_key_node.key == "Start"sv) {
+                  measurement.start = {child_key_node.values.get<float>(0),
+                                       child_key_node.values.get<float>(1),
+                                       -child_key_node.values.get<float>(2)};
+               }
+               else if (child_key_node.key == "End"sv) {
+                  measurement.end = {child_key_node.values.get<float>(0),
+                                     child_key_node.values.get<float>(1),
+                                     -child_key_node.values.get<float>(2)};
+               }
+            }
+
+            if (verbose_output) {
+               output.write("Loaded measurement '{}'\n", measurement.name);
+            }
+         }
+      }
+   }
+   catch (std::exception& e) {
+      throw_layer_load_failure("measurements", filepath.string(), e);
+   }
+
+   output.write("Loaded world measurements (time taken {:f}ms)\n",
+                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+}
+
 void load_layer(const std::filesystem::path& world_dir, const std::string_view layer_name,
                 const std::string_view world_ext, output_stream& output,
                 world& world_out, layer_remap& layer_remap, const int16 layer)
@@ -926,6 +974,11 @@ void load_layer(const std::filesystem::path& world_dir, const std::string_view l
       if (const auto bnd_path = world_dir / layer_name += ".bnd"sv;
           std::filesystem::exists(bnd_path)) {
          load_boundaries(bnd_path, output, world_out);
+      }
+
+      if (const auto msr_path = world_dir / layer_name += ".msr"sv;
+          std::filesystem::exists(msr_path)) {
+         load_measurements(msr_path, output, world_out);
       }
    }
 }
@@ -1124,6 +1177,29 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
       }
 
       load_requirements_files(world_dir, world, output);
+
+      if (const auto fx_path = world_dir / world.name += ".fx"sv;
+          std::filesystem::exists(fx_path)) {
+         try {
+            utility::stopwatch load_timer;
+
+            world.effects = load_effects(io::read_file_to_string(fx_path), output);
+
+            output.write("Loaded {}.fx (time taken {:f}ms)\n", world.name,
+                         load_timer
+                            .elapsed<std::chrono::duration<double, std::milli>>()
+                            .count());
+         }
+         catch (std::exception& e) {
+            auto message =
+               fmt::format("Error while loading {}.fx:\n   Message: \n{}\n",
+                           world.name, string::indent(2, e.what()));
+
+            output.write(message);
+
+            throw load_failure{message};
+         }
+      }
    }
    catch (load_failure& failure) {
       output

@@ -227,6 +227,22 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                                            boundary->position));
                }
             }
+            else if (std::holds_alternative<world::measurement_id>(selected)) {
+               const world::measurement* measurement =
+                  world::find_entity(_world.measurements,
+                                     std::get<world::measurement_id>(selected));
+
+               if (measurement) {
+                  bundled_edits.push_back(
+                     edits::make_set_value(measurement->id, &world::measurement::start,
+                                           (rotation * (measurement->start - centre)) + centre,
+                                           measurement->start));
+                  bundled_edits.push_back(
+                     edits::make_set_value(measurement->id, &world::measurement::end,
+                                           (rotation * (measurement->end - centre)) + centre,
+                                           measurement->end));
+               }
+            }
          }
 
          if (bundled_edits.size() == 1) {

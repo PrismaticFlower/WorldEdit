@@ -370,4 +370,22 @@ TEST_CASE("edits delete_entity boundary", "[Edits]")
    REQUIRE(world.boundaries[0] == test_world.boundaries[0]);
 }
 
+TEST_CASE("edits delete_entity measurement", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_entity(world.measurements[0].id, world);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.measurements.empty());
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.measurements.size() == 1);
+   REQUIRE(world.measurements[0] == test_world.measurements[0]);
+}
+
 }

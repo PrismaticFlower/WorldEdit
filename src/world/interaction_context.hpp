@@ -18,8 +18,8 @@ struct path_id_node_pair {
 
 /// @brief Represents an entity being interacted with (hovered or selected).
 using interaction_target =
-   std::variant<object_id, light_id, path_id_node_pair, region_id, sector_id, portal_id,
-                hintnode_id, barrier_id, planning_hub_id, planning_connection_id, boundary_id>;
+   std::variant<object_id, light_id, path_id_node_pair, region_id, sector_id, portal_id, hintnode_id,
+                barrier_id, planning_hub_id, planning_connection_id, boundary_id, measurement_id>;
 
 /// @brief Represents an entity being hovered over.
 using hovered_entity = interaction_target;
@@ -29,7 +29,7 @@ using selected_entity = interaction_target;
 
 using creation_entity =
    std::variant<object, light, path, region, sector, portal, barrier, hintnode,
-                planning_hub, planning_connection, boundary>;
+                planning_hub, planning_connection, boundary, measurement>;
 
 /// @brief Holds a selection and ensures only each entity is present at most once.
 struct selection {

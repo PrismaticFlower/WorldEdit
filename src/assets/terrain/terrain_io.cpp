@@ -304,111 +304,115 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
       read_map(terrain.light_map);
       if (extra_light_map) read_map(terrain.light_map_extra);
       read_map(texture_weight_map);
+
+      // deinterleave texture weights
+      for (int y = 0; y < terrain.length; ++y) {
+         for (int x = 0; x < terrain.length; ++x) {
+            for (int i = 0; i < terrain.texture_count; ++i) {
+               terrain.texture_weight_maps[i][{x, y}] =
+                  texture_weight_map[{x, y}][i];
+            }
+         }
+      }
+
+      const int loaded_cluster_length = terrain.length / cluster_size;
+      const int cluster_length = header.terrain_length / cluster_size;
+      const int cluster_count = cluster_length * cluster_length;
+      const int cluster_active_offset = active_offset / cluster_size;
+      const int cluster_active_end = active_end / cluster_size;
+
+      reader.skip(cluster_count * sizeof(int16));
+      reader.skip(cluster_count * sizeof(int16));
+
+      for (int y = cluster_length - 1; y >= 0; --y) {
+         reader.skip(cluster_active_offset * sizeof(uint32));
+
+         if ((y >= cluster_active_offset) and (y < cluster_active_end)) {
+            for (int x = 0; x < loaded_cluster_length; ++x) {
+               uint32 cluster_flags = reader.read<uint32>();
+
+               terrain.water_map[{x, y - cluster_active_offset}] =
+                  (cluster_flags & cluster_info_water_bit) != 0;
+            }
+         }
+         else {
+            reader.skip(loaded_cluster_length * sizeof(uint32));
+         }
+
+         reader.skip(cluster_active_offset * sizeof(uint32));
+      }
+
+      container::dynamic_array_2d<uint8> foliage_map{foliage_map_length,
+                                                     foliage_map_length};
+
+      for (int y = foliage_map_length - 1; y >= 0; --y) {
+         for (int x = 0; x < foliage_map_length; x += 2) {
+
+            const uint8 packed_foliage = reader.read<uint8>();
+
+            foliage_map[{x, y}] = packed_foliage & 0xfu;
+            foliage_map[{x + 1, y}] = (packed_foliage >> 4u) & 0xfu;
+         }
+      }
+
+      const int active_foliage_length = (terrain.length / 2);
+      const int active_foliage_offset =
+         (foliage_map_length - active_foliage_length) / 2;
+
+      for (int y = 0; y < active_foliage_length; ++y) {
+         for (int x = 0; x < active_foliage_length; ++x) {
+            const uint8 foliage =
+               foliage_map[{x + active_foliage_offset, y + active_foliage_offset}];
+
+            terrain.foliage_map[{x, y}] = {.layer0 = (foliage & 0b1) != 0,
+                                           .layer1 = (foliage & 0b10) != 0,
+                                           .layer2 = (foliage & 0b100) != 0,
+                                           .layer3 = (foliage & 0b1000) != 0};
+         }
+      }
+
+      const std::size_t unused_sections_size = 262'144 + 131'072;
+
+      reader.skip(unused_sections_size);
+
+#if 0
+      // This is how you would read terrain cuts in. We have to recreate them based off
+      // world objects so we don't do this but it is kept around for completeness sake.
+
+      [[maybe_unused]] const uint32 terrain_cuts_size = reader.read<uint32>();
+      const uint32 terrain_cut_count = reader.read<uint32>();
+
+      terrain.cuts.reserve(terrain_cut_count);
+
+      for (uint32 i = 0; i < terrain_cut_count; ++i) {
+         const uint32 plane_count = reader.read<uint32>();
+
+         const float3 bbox_min = reader.read<float3>();
+         const float3 bbox_max = reader.read<float3>();
+
+         const float3 flipped_bbox_min = {bbox_min.x, bbox_min.y, -bbox_max.z};
+         const float3 flipped_bbox_max = {bbox_max.x, bbox_max.y, -bbox_max.z};
+
+         std::vector<float4> planes;
+         planes.reserve(plane_count);
+
+         for (uint32 plane_index = 0; plane_index < plane_count; ++plane_index) {
+            float4 plane = reader.read<float4>();
+
+            plane.z = -plane.z;
+
+            planes.push_back(plane);
+         }
+
+         terrain.cuts.emplace_back(math::bounding_box{flipped_bbox_min, flipped_bbox_max},
+                                   std::move(planes));
+      }
+#endif
    }
    catch (utility::binary_reader_overflow&) {
       // some .ter files in the stock assets end without all their data present
       // to ensure they load we catch the exception and just let the data be the default (0)
    }
-
-   // deinterleave texture weights
-   for (int y = 0; y < terrain.length; ++y) {
-      for (int x = 0; x < terrain.length; ++x) {
-         for (int i = 0; i < terrain.texture_count; ++i) {
-            terrain.texture_weight_maps[i][{x, y}] = texture_weight_map[{x, y}][i];
-         }
-      }
-   }
-
-   const int loaded_cluster_length = terrain.length / cluster_size;
-   const int cluster_length = header.terrain_length / cluster_size;
-   const int cluster_count = cluster_length * cluster_length;
-   const int cluster_active_offset = active_offset / cluster_size;
-   const int cluster_active_end = active_end / cluster_size;
-
-   reader.skip(cluster_count * sizeof(int16));
-   reader.skip(cluster_count * sizeof(int16));
-
-   for (int y = cluster_length - 1; y >= 0; --y) {
-      reader.skip(cluster_active_offset * sizeof(uint32));
-
-      if ((y >= cluster_active_offset) and (y < cluster_active_end)) {
-         for (int x = 0; x < loaded_cluster_length; ++x) {
-            uint32 cluster_flags = reader.read<uint32>();
-
-            terrain.water_map[{x, y - cluster_active_offset}] =
-               (cluster_flags & cluster_info_water_bit) != 0;
-         }
-      }
-      else {
-         reader.skip(loaded_cluster_length * sizeof(uint32));
-      }
-
-      reader.skip(cluster_active_offset * sizeof(uint32));
-   }
-
-   container::dynamic_array_2d<uint8> foliage_map{foliage_map_length, foliage_map_length};
-
-   for (int y = foliage_map_length - 1; y >= 0; --y) {
-      for (int x = 0; x < foliage_map_length; x += 2) {
-
-         const uint8 packed_foliage = reader.read<uint8>();
-
-         foliage_map[{x, y}] = packed_foliage & 0xfu;
-         foliage_map[{x + 1, y}] = (packed_foliage >> 4u) & 0xfu;
-      }
-   }
-
-   const int active_foliage_length = (terrain.length / 2);
-   const int active_foliage_offset = (foliage_map_length - active_foliage_length) / 2;
-
-   for (int y = 0; y < active_foliage_length; ++y) {
-      for (int x = 0; x < active_foliage_length; ++x) {
-         const uint8 foliage =
-            foliage_map[{x + active_foliage_offset, y + active_foliage_offset}];
-
-         terrain.foliage_map[{x, y}] = {.layer0 = (foliage & 0b1) != 0,
-                                        .layer1 = (foliage & 0b10) != 0,
-                                        .layer2 = (foliage & 0b100) != 0,
-                                        .layer3 = (foliage & 0b1000) != 0};
-      }
-   }
-
-   const std::size_t unused_sections_size = 262'144 + 131'072;
-
-   reader.skip(unused_sections_size);
-
-#if 0 
-   // This is how you would read terrain cuts in. We have to recreate them based off 
-   // world objects so we don't do this but it is kept around for completeness sake.
-
-   [[maybe_unused]] const uint32 terrain_cuts_size = reader.read<uint32>();
-   const uint32 terrain_cut_count = reader.read<uint32>();
-
-   terrain.cuts.reserve(terrain_cut_count);
-
-   for (uint32 i = 0; i < terrain_cut_count; ++i) {
-      const uint32 plane_count = reader.read<uint32>();
-
-      const float3 bbox_min = reader.read<float3>();
-      const float3 bbox_max = reader.read<float3>();
-
-      const float3 flipped_bbox_min = {bbox_min.x, bbox_min.y, -bbox_max.z};
-      const float3 flipped_bbox_max = {bbox_max.x, bbox_max.y, -bbox_max.z};
-
-      std::vector<float4> planes;
-      planes.reserve(plane_count);
-
-      for (uint32 plane_index = 0; plane_index < plane_count; ++plane_index) {
-         float4 plane = reader.read<float4>();
-
-         plane.z = -plane.z;
-
-         planes.push_back(plane);
-      }
-
-      terrain.cuts.emplace_back(math::bounding_box{flipped_bbox_min, flipped_bbox_max}, std::move(planes));
-   }
-#endif
 
    terrain.untracked_fill_dirty_rects();
 

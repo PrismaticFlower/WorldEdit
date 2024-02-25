@@ -340,6 +340,24 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                                         new_position, boundary->position));
             }
          }
+         else if (std::holds_alternative<world::measurement_id>(selected)) {
+            const world::measurement* measurement =
+               world::find_entity(_world.measurements,
+                                  std::get<world::measurement_id>(selected));
+
+            if (measurement) {
+               float3 new_start =
+                  measurement->start - selection_centre + cursor_positionWS;
+               float3 new_end = measurement->end - selection_centre + cursor_positionWS;
+
+               bundled_edits.push_back(
+                  edits::make_set_value(measurement->id, &world::measurement::start,
+                                        new_start, measurement->start));
+               bundled_edits.push_back(
+                  edits::make_set_value(measurement->id, &world::measurement::end,
+                                        new_end, measurement->end));
+            }
+         }
       }
 
       if (bundled_edits.size() == 1) {

@@ -306,6 +306,41 @@ bool InputText(const char* label, absl::InlinedVector<char, 256>* buffer,
    return edited;
 }
 
+bool InputTextWithClose(const char* label, absl::InlinedVector<char, 256>* buffer,
+                        bool* close_button, ImGuiInputTextFlags flags,
+                        ImGuiInputTextCallback callback, void* user_data)
+{
+   IM_ASSERT(close_button);
+
+   const float close_width =
+      CalcTextSize("X", nullptr, true).x + (GetStyle().FramePadding.x * 2.0f);
+   const float inner_spacing = GetStyle().ItemInnerSpacing.x;
+
+   BeginGroup();
+   PushID(label);
+
+   SetNextItemWidth(CalcItemWidth() - inner_spacing - close_width);
+
+   const bool value_changed = InputText("##text", buffer, flags, callback, user_data);
+
+   SameLine(0.0f, inner_spacing);
+
+   *close_button = Button("X", {close_width, 0.0f});
+
+   auto label_text =
+      we::string::split_first_of_exclusive(std::string_view{label}, "##");
+
+   if (not label_text[0].empty()) {
+      SameLine(0.0f, inner_spacing);
+      TextUnformatted(&label_text[0].front(), &label_text[0].back() + 1);
+   }
+
+   PopID();
+   EndGroup();
+
+   return value_changed;
+}
+
 bool InputTextAutoComplete(
    const char* label, absl::InlinedVector<char, 256>* buffer,
    const std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback,

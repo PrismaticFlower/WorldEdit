@@ -48,9 +48,24 @@ Nodes(2) // Another Comment
    }
 }
 )"sv;
+
+const auto double_open_bracket_values_test = R"(
+Value((1, 2, 3)
+{
+   ChildValue((1, 2, 3, 4);
+}
+
+)"sv;
+
+const auto elided_values_comma_test = R"(
+Value(1 2, 3)
+{
+   ChildValue(1, 2 3 4);
+})"sv;
 }
 
 namespace we::assets::config::tests {
+
 TEST_CASE("config io valid tests", "[Assets][Config]")
 {
    node config = read_config(valid_config_test);
@@ -198,6 +213,58 @@ TEST_CASE("config io valid tests", "[Assets][Config]")
       REQUIRE(nodes_list_it != config_it->end());
       {
          node_test(nodes_list_it, {-133.385574f, 0.0f, -247.513336f});
+      }
+   }
+}
+
+TEST_CASE("config io double open bracket values", "[Assets][Config]")
+{
+   node config = read_config(double_open_bracket_values_test);
+
+   auto config_it = config.begin();
+
+   REQUIRE(config_it != config.end());
+   {
+      REQUIRE(config_it->key == "Value"sv);
+      CHECK(config_it->values.get<int>(0) == 1);
+      CHECK(config_it->values.get<int>(1) == 2);
+      CHECK(config_it->values.get<int>(2) == 3);
+
+      auto values_it = config_it->begin();
+
+      REQUIRE(values_it != config_it->end());
+      {
+         REQUIRE(values_it->key == "ChildValue"sv);
+         CHECK(values_it->values.get<int>(0) == 1);
+         CHECK(values_it->values.get<int>(1) == 2);
+         CHECK(values_it->values.get<int>(2) == 3);
+         CHECK(values_it->values.get<int>(3) == 4);
+      }
+   }
+}
+
+TEST_CASE("config io elided values comma", "[Assets][Config]")
+{
+   node config = read_config(elided_values_comma_test);
+
+   auto config_it = config.begin();
+
+   REQUIRE(config_it != config.end());
+   {
+      REQUIRE(config_it->key == "Value"sv);
+      CHECK(config_it->values.get<int>(0) == 1);
+      CHECK(config_it->values.get<int>(1) == 2);
+      CHECK(config_it->values.get<int>(2) == 3);
+
+      auto values_it = config_it->begin();
+
+      REQUIRE(values_it != config_it->end());
+      {
+         REQUIRE(values_it->key == "ChildValue"sv);
+         CHECK(values_it->values.get<int>(0) == 1);
+         CHECK(values_it->values.get<int>(1) == 2);
+         CHECK(values_it->values.get<int>(2) == 3);
+         CHECK(values_it->values.get<int>(3) == 4);
       }
    }
 }

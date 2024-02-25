@@ -1,0 +1,7 @@
+MeasurementCount(1);
+
+Measurement("Measurement0")
+{
+	Start(1.000000, 0.000000, 0.000000);
+	End(2.000000, 0.000000, 1.000000);
+}

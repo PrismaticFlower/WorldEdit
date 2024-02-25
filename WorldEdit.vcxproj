@@ -153,6 +153,7 @@
       <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
       <BuildStlModules>false</BuildStlModules>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -336,14 +337,19 @@
     <ClCompile Include="src\utility\srgb_conversion.cpp" />
     <ClCompile Include="src\utility\string_icompare.cpp" />
     <ClCompile Include="src\world\interaction_context.cpp" />
+    <ClCompile Include="src\world\io\load.cpp" />
+    <ClCompile Include="src\world\io\load_effects.cpp" />
+    <ClCompile Include="src\world\io\save.cpp" />
+    <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\world\utility\load_terrain_brush.cpp" />
-    <ClCompile Include="src\world\utility\load_terrain_heightmap.cpp" />
+    <ClCompile Include="src\world\utility\load_terrain_map.cpp" />
     <ClCompile Include="src\world\object_class_library.cpp" />
     <ClCompile Include="src\world\tool_visualizers.cpp" />
     <ClCompile Include="src\world\utility\boundary_nodes.cpp" />
     <ClCompile Include="src\world\utility\grounding.cpp" />
     <ClCompile Include="src\world\utility\make_command_post_linked_entities.cpp" />
     <ClCompile Include="src\world\utility\hintnode_traits.cpp" />
+    <ClCompile Include="src\world\utility\mouse_pick_measurement.cpp" />
     <ClCompile Include="src\world\utility\object_properties.cpp" />
     <ClCompile Include="src\world\utility\path_properties.cpp" />
     <ClCompile Include="src\world\utility\raycast.cpp" />
@@ -357,7 +363,6 @@
     <ClCompile Include="src\world\utility\snapping.cpp" />
     <ClCompile Include="src\world\utility\terrain_cut.cpp" />
     <ClCompile Include="src\world\utility\world_utilities.cpp" />
-    <ClCompile Include="src\world\world_io_save.cpp" />
     <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="third_party\imgui\imgui.cpp" />
     <ClCompile Include="third_party\imgui\imgui_demo.cpp" />
@@ -599,12 +604,19 @@
     <ClInclude Include="src\world\ai_path_flags.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
+    <ClInclude Include="src\world\effects.hpp" />
     <ClInclude Include="src\world\id.hpp" />
     <ClInclude Include="src\world\game_mode_description.hpp" />
     <ClInclude Include="src\world\hintnode.hpp" />
+    <ClInclude Include="src\world\io\load.hpp" />
+    <ClInclude Include="src\world\io\load_effects.hpp" />
+    <ClInclude Include="src\world\io\load_failure.hpp" />
+    <ClInclude Include="src\world\io\save.hpp" />
+    <ClInclude Include="src\world\io\save_effects.hpp" />
     <ClInclude Include="src\world\layer_description.hpp" />
     <ClInclude Include="src\world\light.hpp" />
     <ClInclude Include="src\world\global_lights.hpp" />
+    <ClInclude Include="src\world\measurement.hpp" />
     <ClInclude Include="src\world\object.hpp" />
     <ClInclude Include="src\world\object_class.hpp" />
     <ClInclude Include="src\world\object_class_library.hpp" />
@@ -621,12 +633,13 @@
     <ClInclude Include="src\world\utility\boundary_nodes.hpp" />
     <ClInclude Include="src\world\utility\grounding.hpp" />
     <ClInclude Include="src\world\utility\load_terrain_brush.hpp" />
-    <ClInclude Include="src\world\utility\load_terrain_heightmap.hpp" />
+    <ClInclude Include="src\world\utility\load_terrain_map.hpp" />
     <ClInclude Include="src\world\utility\make_command_post_linked_entities.hpp" />
     <ClInclude Include="src\world\utility\hintnode_traits.hpp" />
     <ClInclude Include="src\world\utility\object_properties.hpp" />
     <ClInclude Include="src\world\utility\path_properties.hpp" />
     <ClInclude Include="src\world\utility\raycast.hpp" />
+    <ClInclude Include="src\world\utility\mouse_pick_measurement.hpp" />
     <ClInclude Include="src\world\utility\raycast_terrain.hpp" />
     <ClInclude Include="src\world\utility\region_properties.hpp" />
     <ClInclude Include="src\world\utility\sector_fill.hpp" />
@@ -636,8 +649,6 @@
     <ClInclude Include="src\world\utility\terrain_cut.hpp" />
     <ClInclude Include="src\world\utility\world_utilities.hpp" />
     <ClInclude Include="src\world\world.hpp" />
-    <ClInclude Include="src\world\world_io_load.hpp" />
-    <ClInclude Include="src\world\world_io_save.hpp" />
     <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="third_party\imgui\imconfig.h" />
     <ClInclude Include="third_party\imgui\imgui.h" />
@@ -674,7 +685,6 @@
     <ClCompile Include="src\output_stream.cpp" />
     <ClCompile Include="src\utility\string_ops.cpp" />
     <ClCompile Include="src\world\object_class.cpp" />
-    <ClCompile Include="src\world\world_io_load.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

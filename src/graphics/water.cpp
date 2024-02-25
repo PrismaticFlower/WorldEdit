@@ -9,12 +9,15 @@ namespace we::graphics {
 namespace {
 
 struct alignas(16) water_constants {
-   float4 color;
+   float2 tiling;
+   float2 velocity;
    float height;
    uint32 color_map_index = 0;
+   std::array<uint32, 2> pad;
+   float4 color;
 };
 
-static_assert(sizeof(water_constants) == 32);
+static_assert(sizeof(water_constants) == 48);
 
 }
 
@@ -31,12 +34,12 @@ water::water(gpu::device& device, texture_manager& texture_manager)
 {
 }
 
-void water::update(const world::terrain& terrain, gpu::copy_command_list& command_list,
+void water::update(const world::world& world, gpu::copy_command_list& command_list,
                    dynamic_buffer_allocator& dynamic_buffer_allocator,
                    texture_manager& texture_manager)
 {
-   if (terrain.water_map.shape()[0] != _water_map_length) {
-      _water_map_length = static_cast<uint32>(terrain.water_map.shape()[0]);
+   if (world.terrain.water_map.shape()[0] != _water_map_length) {
+      _water_map_length = static_cast<uint32>(world.terrain.water_map.shape()[0]);
       _water_map_row_words = (_water_map_length + 63u) / 64u;
 
       _water_map.clear();
@@ -46,13 +49,13 @@ void water::update(const world::terrain& terrain, gpu::copy_command_list& comman
       _patches.reserve(_water_map_length * _water_map_length);
    }
 
-   for (const world::dirty_rect& dirty : terrain.water_map_dirty) {
+   for (const world::dirty_rect& dirty : world.terrain.water_map_dirty) {
       for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
          for (uint32 x = dirty.left; x < dirty.right; ++x) {
             uint64& word = _water_map[_water_map_row_words * y + (x / 64ull)];
             const uint64 bit = (1ull << (x % 64ull));
 
-            if (terrain.water_map[{x, y}]) {
+            if (world.terrain.water_map[{x, y}]) {
                word |= bit;
             }
             else {
@@ -62,20 +65,22 @@ void water::update(const world::terrain& terrain, gpu::copy_command_list& comman
       }
    }
 
-   if (not string::iequals(_color_map_name, terrain.water_settings.texture)) {
-      _color_map_name = lowercase_string{terrain.water_settings.texture};
+   if (not string::iequals(_color_map_name, world.effects.water.main_texture_pc)) {
+      _color_map_name = lowercase_string{world.effects.water.main_texture_pc};
       _color_map = texture_manager.at_or(_color_map_name, world_texture_dimension::_2d,
                                          texture_manager.null_color_map());
    }
 
-   _active = terrain.active_flags.water;
-   _water_grid_scale = terrain.grid_scale * 4.0f;
+   _active = world.terrain.active_flags.water;
+   _water_grid_scale = world.terrain.grid_scale * 4.0f;
    _half_water_map_length = (_water_map_length / 2.0f) * _water_grid_scale;
-   _water_height = terrain.water_settings.height;
+   _water_height = world.terrain.water_settings.height;
 
-   water_constants constants{.color = terrain.water_settings.color,
-                             .height = terrain.water_settings.height,
-                             .color_map_index = _color_map->srv_srgb.index};
+   water_constants constants{.tiling = _water_grid_scale / world.effects.water.tile_pc,
+                             .velocity = world.effects.water.velocity_pc,
+                             .height = world.terrain.water_settings.height,
+                             .color_map_index = _color_map->srv_srgb.index,
+                             .color = world.effects.water.refraction_color_pc};
 
    command_list
       .copy_buffer_region(_water_constants_buffer.get(), 0,
@@ -147,8 +152,8 @@ void water::draw(const frustum& view_frustum,
 
 void water::process_updated_texture(const updated_textures& updated)
 {
-   for (auto& [name, texture] : updated) {
-      if (name == _color_map_name) _color_map = texture;
+   if (auto new_texture = updated.check(_color_map_name); new_texture) {
+      _color_map = std::move(new_texture);
    }
 }
 

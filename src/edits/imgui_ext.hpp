@@ -501,6 +501,42 @@ inline bool InputKeyValueAutoComplete(const Entity* entity,
    return value_changed;
 }
 
+template<typename Entity, we::edits::imgui::input_key_value_type T>
+inline bool InputKeyValueWithDelete(
+   const Entity* entity, std::vector<T> Entity::*value_member_ptr,
+   const std::size_t item_index, bool* delete_property,
+   we::edits::stack<we::world::edit_context>* edit_stack,
+   we::world::edit_context* context, ImGuiInputTextFlags flags = 0,
+   ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr) noexcept
+{
+   assert(delete_property);
+
+   const T& key_value = (entity->*value_member_ptr)[item_index];
+
+   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
+                                         key_value.value.end()};
+
+   const bool value_changed =
+      ImGui::InputTextWithClose(key_value.key.c_str(), &buffer, delete_property,
+                                flags, callback, user_data);
+   const bool deactivated = ImGui::IsItemDeactivated();
+
+   if (value_changed) {
+      const std::string_view new_value_view{buffer.data(), buffer.size()};
+
+      T new_key_value{key_value.key, std::string{new_value_view}};
+
+      edit_stack->apply(std::make_unique<we::edits::ui_edit_indexed<Entity, T>>(
+                           entity->id, value_member_ptr, item_index,
+                           std::move(new_key_value), key_value),
+                        *context);
+   }
+
+   if (deactivated) edit_stack->close_last();
+
+   return value_changed;
+}
+
 // Path Node Property Editors
 
 template<typename T>
@@ -642,14 +678,14 @@ inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
    return valued_changed;
 }
 
-inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
-                          const std::size_t item_index,
-                          we::edits::stack<we::world::edit_context>* edit_stack,
-                          we::world::edit_context* context,
-                          ImGuiInputTextFlags flags = 0,
-                          ImGuiInputTextCallback callback = nullptr,
-                          void* user_data = nullptr) noexcept
+inline bool InputKeyValueWithDelete(
+   we::world::path* entity, const std::size_t node_index, const std::size_t item_index,
+   bool* delete_property, we::edits::stack<we::world::edit_context>* edit_stack,
+   we::world::edit_context* context, ImGuiInputTextFlags flags = 0,
+   ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr) noexcept
 {
+   assert(delete_property);
+
    using namespace we::world;
 
    const path::property& key_value = entity->nodes[node_index].properties[item_index];
@@ -658,7 +694,8 @@ inline bool InputKeyValue(we::world::path* entity, const std::size_t node_index,
                                          key_value.value.end()};
 
    const bool value_changed =
-      ImGui::InputText(key_value.key.c_str(), &buffer, flags, callback, user_data);
+      ImGui::InputTextWithClose(key_value.key.c_str(), &buffer, delete_property,
+                                flags, callback, user_data);
    const bool deactivated = ImGui::IsItemDeactivated();
 
    if (value_changed) {
