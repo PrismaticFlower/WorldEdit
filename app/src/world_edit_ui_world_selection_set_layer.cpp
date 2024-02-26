@@ -35,59 +35,54 @@ void world_edit::ui_show_world_selection_set_layer() noexcept
 
          for (const auto& selected : _interaction_targets.selection) {
             if (std::holds_alternative<world::object_id>(selected)) {
-               const world::object* object =
+               world::object* object =
                   world::find_entity(_world.objects,
                                      std::get<world::object_id>(selected));
 
                if (object and object->layer != _selection_set_layer) {
                   bundled_edits.push_back(
-                     edits::make_set_value(object->id, &world::object::layer,
-                                           _selection_set_layer, object->layer));
+                     edits::make_set_value(&object->layer, _selection_set_layer));
                }
             }
             else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
                const auto [id, node_index] =
                   std::get<world::path_id_node_pair>(selected);
 
-               const world::path* path = world::find_entity(_world.paths, id);
+               world::path* path = world::find_entity(_world.paths, id);
 
                if (path and path->layer != _selection_set_layer) {
                   bundled_edits.push_back(
-                     edits::make_set_value(path->id, &world::path::layer,
-                                           _selection_set_layer, path->layer));
+                     edits::make_set_value(&path->layer, _selection_set_layer));
                }
             }
             else if (std::holds_alternative<world::light_id>(selected)) {
-               const world::light* light =
+               world::light* light =
                   world::find_entity(_world.lights,
                                      std::get<world::light_id>(selected));
 
                if (light and light->layer != _selection_set_layer) {
                   bundled_edits.push_back(
-                     edits::make_set_value(light->id, &world::light::layer,
-                                           _selection_set_layer, light->layer));
+                     edits::make_set_value(&light->layer, _selection_set_layer));
                }
             }
             else if (std::holds_alternative<world::region_id>(selected)) {
-               const world::region* region =
+               world::region* region =
                   world::find_entity(_world.regions,
                                      std::get<world::region_id>(selected));
 
                if (region and region->layer != _selection_set_layer) {
                   bundled_edits.push_back(
-                     edits::make_set_value(region->id, &world::region::layer,
-                                           _selection_set_layer, region->layer));
+                     edits::make_set_value(&region->layer, _selection_set_layer));
                }
             }
             else if (std::holds_alternative<world::hintnode_id>(selected)) {
-               const world::hintnode* hintnode =
+               world::hintnode* hintnode =
                   world::find_entity(_world.hintnodes,
                                      std::get<world::hintnode_id>(selected));
 
                if (hintnode and hintnode->layer != _selection_set_layer) {
                   bundled_edits.push_back(
-                     edits::make_set_value(hintnode->id, &world::hintnode::layer,
-                                           _selection_set_layer, hintnode->layer));
+                     edits::make_set_value(&hintnode->layer, _selection_set_layer));
                }
             }
          }
