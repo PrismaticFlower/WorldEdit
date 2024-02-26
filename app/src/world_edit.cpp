@@ -1439,7 +1439,7 @@ void world_edit::place_creation_entity() noexcept
          [&](const world::sector& sector) {
             if (sector.points.empty()) std::terminate();
 
-            if (const world::sector* existing_sector =
+            if (world::sector* existing_sector =
                    world::find_entity(_world.sectors, sector.name);
                 existing_sector and sector.points.size() == 1) {
                _edit_stack_world
@@ -1450,11 +1450,10 @@ void world_edit::place_creation_entity() noexcept
 
                if (_entity_creation_config.auto_fill_sector) {
                   _edit_stack_world.apply(
-                     edits::make_set_value(existing_sector->id, &world::sector::objects,
+                     edits::make_set_value(&existing_sector->objects,
                                            world::sector_fill(*existing_sector,
                                                               _world.objects,
-                                                              _object_classes),
-                                           existing_sector->objects),
+                                                              _object_classes)),
                      _edit_context);
                }
             }
