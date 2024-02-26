@@ -45,34 +45,32 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
 
          for (const auto& selected : _interaction_targets.selection) {
             if (std::holds_alternative<world::object_id>(selected)) {
-               const world::object* object =
+               world::object* object =
                   world::find_entity(_world.objects,
                                      std::get<world::object_id>(selected));
 
                if (object) {
                   bundled_edits.push_back(
-                     edits::make_set_value(object->id, &world::object::rotation,
-                                           rotation * object->rotation,
-                                           object->rotation));
+                     edits::make_set_value(&object->rotation,
+                                           rotation * object->rotation));
                   bundled_edits.push_back(
-                     edits::make_set_value(object->id, &world::object::position,
-                                           (rotation * (object->position - centre)) + centre,
-                                           object->position));
+                     edits::make_set_value(&object->position,
+                                           (rotation * (object->position - centre)) +
+                                              centre));
                }
             }
             else if (std::holds_alternative<world::light_id>(selected)) {
-               const world::light* light =
+               world::light* light =
                   world::find_entity(_world.lights,
                                      std::get<world::light_id>(selected));
 
                if (light) {
                   bundled_edits.push_back(
-                     edits::make_set_value(light->id, &world::light::rotation,
-                                           rotation * light->rotation, light->rotation));
+                     edits::make_set_value(&light->rotation, rotation * light->rotation));
                   bundled_edits.push_back(
-                     edits::make_set_value(light->id, &world::light::position,
-                                           (rotation * (light->position - centre)) + centre,
-                                           light->position));
+                     edits::make_set_value(&light->position,
+                                           (rotation * (light->position - centre)) +
+                                              centre));
                }
             }
             else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
@@ -95,23 +93,22 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                }
             }
             else if (std::holds_alternative<world::region_id>(selected)) {
-               const world::region* region =
+               world::region* region =
                   world::find_entity(_world.regions,
                                      std::get<world::region_id>(selected));
 
                if (region) {
                   bundled_edits.push_back(
-                     edits::make_set_value(region->id, &world::region::rotation,
-                                           rotation * region->rotation,
-                                           region->rotation));
+                     edits::make_set_value(&region->rotation,
+                                           rotation * region->rotation));
                   bundled_edits.push_back(
-                     edits::make_set_value(region->id, &world::region::position,
-                                           (rotation * (region->position - centre)) + centre,
-                                           region->position));
+                     edits::make_set_value(&region->position,
+                                           (rotation * (region->position - centre)) +
+                                              centre));
                }
             }
             else if (std::holds_alternative<world::sector_id>(selected)) {
-               const world::sector* sector =
+               world::sector* sector =
                   world::find_entity(_world.sectors,
                                      std::get<world::sector_id>(selected));
 
@@ -145,73 +142,68 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                   }
 
                   bundled_edits.push_back(
-                     edits::make_set_value(sector->id, &world::sector::points,
-                                           std::move(new_points), sector->points));
+                     edits::make_set_value(&sector->points, std::move(new_points)));
                }
             }
             else if (std::holds_alternative<world::portal_id>(selected)) {
-               const world::portal* portal =
+               world::portal* portal =
                   world::find_entity(_world.portals,
                                      std::get<world::portal_id>(selected));
 
                if (portal) {
                   bundled_edits.push_back(
-                     edits::make_set_value(portal->id, &world::portal::rotation,
-                                           rotation * portal->rotation,
-                                           portal->rotation));
+                     edits::make_set_value(&portal->rotation,
+                                           rotation * portal->rotation));
                   bundled_edits.push_back(
-                     edits::make_set_value(portal->id, &world::portal::position,
-                                           (rotation * (portal->position - centre)) + centre,
-                                           portal->position));
+                     edits::make_set_value(&portal->position,
+                                           (rotation * (portal->position - centre)) +
+                                              centre));
                }
             }
             else if (std::holds_alternative<world::hintnode_id>(selected)) {
-               const world::hintnode* hintnode =
+               world::hintnode* hintnode =
                   world::find_entity(_world.hintnodes,
                                      std::get<world::hintnode_id>(selected));
 
                if (hintnode) {
                   bundled_edits.push_back(
-                     edits::make_set_value(hintnode->id, &world::hintnode::rotation,
-                                           rotation * hintnode->rotation,
-                                           hintnode->rotation));
+                     edits::make_set_value(&hintnode->rotation,
+                                           rotation * hintnode->rotation));
                   bundled_edits.push_back(
-                     edits::make_set_value(hintnode->id, &world::hintnode::position,
-                                           (rotation * (hintnode->position - centre)) + centre,
-                                           hintnode->position));
+                     edits::make_set_value(&hintnode->position,
+                                           (rotation * (hintnode->position - centre)) +
+                                              centre));
                }
             }
             else if (std::holds_alternative<world::barrier_id>(selected)) {
-               const world::barrier* barrier =
+               world::barrier* barrier =
                   world::find_entity(_world.barriers,
                                      std::get<world::barrier_id>(selected));
 
                if (barrier) {
                   bundled_edits.push_back(
-                     edits::make_set_value(barrier->id, &world::barrier::rotation_angle,
+                     edits::make_set_value(&barrier->rotation_angle,
                                            barrier->rotation_angle +
-                                              rotate_delta.y,
-                                           barrier->rotation_angle));
+                                              rotate_delta.y));
                   bundled_edits.push_back(
-                     edits::make_set_value(barrier->id, &world::barrier::position,
-                                           (rotation * (barrier->position - centre)) + centre,
-                                           barrier->position));
+                     edits::make_set_value(&barrier->position,
+                                           (rotation * (barrier->position - centre)) +
+                                              centre));
                }
             }
             else if (std::holds_alternative<world::planning_hub_id>(selected)) {
-               const world::planning_hub* hub =
+               world::planning_hub* hub =
                   world::find_entity(_world.planning_hubs,
                                      std::get<world::planning_hub_id>(selected));
 
                if (hub) {
                   bundled_edits.push_back(
-                     edits::make_set_value(hub->id, &world::planning_hub::position,
-                                           (rotation * (hub->position - centre)) + centre,
-                                           hub->position));
+                     edits::make_set_value(&hub->position,
+                                           (rotation * (hub->position - centre)) + centre));
                }
             }
             else if (std::holds_alternative<world::boundary_id>(selected)) {
-               const world::boundary* boundary =
+               world::boundary* boundary =
                   world::find_entity(_world.boundaries,
                                      std::get<world::boundary_id>(selected));
 
@@ -222,25 +214,24 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                      centre;
 
                   bundled_edits.push_back(
-                     edits::make_set_value(boundary->id, &world::boundary::position,
-                                           float2{position.x, position.z},
-                                           boundary->position));
+                     edits::make_set_value(&boundary->position,
+                                           float2{position.x, position.z}));
                }
             }
             else if (std::holds_alternative<world::measurement_id>(selected)) {
-               const world::measurement* measurement =
+               world::measurement* measurement =
                   world::find_entity(_world.measurements,
                                      std::get<world::measurement_id>(selected));
 
                if (measurement) {
                   bundled_edits.push_back(
-                     edits::make_set_value(measurement->id, &world::measurement::start,
-                                           (rotation * (measurement->start - centre)) + centre,
-                                           measurement->start));
+                     edits::make_set_value(&measurement->start,
+                                           (rotation * (measurement->start - centre)) +
+                                              centre));
                   bundled_edits.push_back(
-                     edits::make_set_value(measurement->id, &world::measurement::end,
-                                           (rotation * (measurement->end - centre)) + centre,
-                                           measurement->end));
+                     edits::make_set_value(&measurement->end,
+                                           (rotation * (measurement->end - centre)) +
+                                              centre));
                }
             }
          }
