@@ -6,63 +6,6 @@
 
 namespace we::edits {
 
-template<typename Entity, typename T>
-struct set_value final : edit<world::edit_context> {
-   using entity_type = Entity;
-   using value_type = T;
-
-   set_value(world::id<Entity> id, value_type entity_type::*value_member_ptr,
-             value_type new_value, value_type original_value)
-      : id{id},
-        value_member_ptr{value_member_ptr},
-        new_value{std::move(new_value)},
-        original_value{std::move(original_value)}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      find_entity<entity_type>(context.world, id)->*value_member_ptr = new_value;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      find_entity<entity_type>(context.world, id)->*value_member_ptr = original_value;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_value* other = dynamic_cast<const set_value*>(&other_unknown);
-
-      if (not other) return false;
-
-      return this->id == other->id and this->value_member_ptr == other->value_member_ptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_value& other = dynamic_cast<set_value&>(other_unknown);
-
-      new_value = std::move(other.new_value);
-   }
-
-   world::id<Entity> id;
-   value_type entity_type::*value_member_ptr;
-
-   value_type new_value;
-   value_type original_value;
-};
-
-template<typename Entity, typename T>
-inline auto make_set_value(world::id<Entity> id, T Entity::*value_member_ptr,
-                           T new_value, T original_value)
-   -> std::unique_ptr<set_value<Entity, T>>
-{
-   return std::make_unique<set_value<Entity, T>>(id, value_member_ptr,
-                                                 std::move(new_value),
-                                                 std::move(original_value));
-}
-
 template<typename T>
 struct set_path_node_value final : edit<world::edit_context> {
    using value_type = T;
@@ -429,6 +372,13 @@ private:
 
 template<typename T>
 inline auto make_set_memory_value(T* value_address, T new_value)
+   -> std::unique_ptr<set_memory_value<T>>
+{
+   return std::make_unique<set_memory_value<T>>(value_address, std::move(new_value));
+}
+
+template<typename T>
+inline auto make_set_value(T* value_address, T new_value)
    -> std::unique_ptr<set_memory_value<T>>
 {
    return std::make_unique<set_memory_value<T>>(value_address, std::move(new_value));
