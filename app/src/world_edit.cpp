@@ -2140,119 +2140,105 @@ void world_edit::hide_selection() noexcept
 
    for (const auto& selected : _interaction_targets.selection) {
       if (std::holds_alternative<world::object_id>(selected)) {
-         const world::object* object =
+         world::object* object =
             world::find_entity(_world.objects, std::get<world::object_id>(selected));
 
          if (object and not object->hidden) {
-            bundle.push_back(edits::make_set_value(object->id, &world::object::hidden,
-                                                   true, object->hidden));
+            bundle.push_back(edits::make_set_value(&object->hidden, true));
          }
       }
       else if (std::holds_alternative<world::light_id>(selected)) {
-         const world::light* light =
+         world::light* light =
             world::find_entity(_world.lights, std::get<world::light_id>(selected));
 
          if (light and not light->hidden) {
-            bundle.push_back(edits::make_set_value(light->id, &world::light::hidden,
-                                                   true, light->hidden));
+            bundle.push_back(edits::make_set_value(&light->hidden, true));
          }
       }
       else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
          const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
 
-         const world::path* path = world::find_entity(_world.paths, id);
+         world::path* path = world::find_entity(_world.paths, id);
 
          if (path and not path->hidden) {
-            bundle.push_back(edits::make_set_value(path->id, &world::path::hidden,
-                                                   true, path->hidden));
+            bundle.push_back(edits::make_set_value(&path->hidden, true));
          }
       }
       else if (std::holds_alternative<world::region_id>(selected)) {
-         const world::region* region =
+         world::region* region =
             world::find_entity(_world.regions, std::get<world::region_id>(selected));
 
          if (region and not region->hidden) {
-            bundle.push_back(edits::make_set_value(region->id, &world::region::hidden,
-                                                   true, region->hidden));
+            bundle.push_back(edits::make_set_value(&region->hidden, true));
          }
       }
       else if (std::holds_alternative<world::sector_id>(selected)) {
-         const world::sector* sector =
+         world::sector* sector =
             world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
 
          if (sector and not sector->hidden) {
-            bundle.push_back(edits::make_set_value(sector->id, &world::sector::hidden,
-                                                   true, sector->hidden));
+            bundle.push_back(edits::make_set_value(&sector->hidden, true));
          }
       }
       else if (std::holds_alternative<world::portal_id>(selected)) {
-         const world::portal* portal =
+         world::portal* portal =
             world::find_entity(_world.portals, std::get<world::portal_id>(selected));
 
          if (portal and not portal->hidden) {
-            bundle.push_back(edits::make_set_value(portal->id, &world::portal::hidden,
-                                                   true, portal->hidden));
+            bundle.push_back(edits::make_set_value(&portal->hidden, true));
          }
       }
       else if (std::holds_alternative<world::hintnode_id>(selected)) {
-         const world::hintnode* hintnode =
+         world::hintnode* hintnode =
             world::find_entity(_world.hintnodes,
                                std::get<world::hintnode_id>(selected));
 
          if (hintnode and not hintnode->hidden) {
-            bundle.push_back(edits::make_set_value(hintnode->id, &world::hintnode::hidden,
-                                                   true, hintnode->hidden));
+            bundle.push_back(edits::make_set_value(&hintnode->hidden, true));
          }
       }
       else if (std::holds_alternative<world::barrier_id>(selected)) {
-         const world::barrier* barrier =
+         world::barrier* barrier =
             world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
 
          if (barrier and not barrier->hidden) {
-            bundle.push_back(edits::make_set_value(barrier->id, &world::barrier::hidden,
-                                                   true, barrier->hidden));
+            bundle.push_back(edits::make_set_value(&barrier->hidden, true));
          }
       }
       else if (std::holds_alternative<world::planning_hub_id>(selected)) {
-         const world::planning_hub* hub =
+         world::planning_hub* hub =
             world::find_entity(_world.planning_hubs,
                                std::get<world::planning_hub_id>(selected));
 
          if (hub and not hub->hidden) {
-            bundle.push_back(edits::make_set_value(hub->id, &world::planning_hub::hidden,
-                                                   true, hub->hidden));
+            bundle.push_back(edits::make_set_value(&hub->hidden, true));
          }
       }
       else if (std::holds_alternative<world::planning_connection_id>(selected)) {
-         const world::planning_connection* connection =
+         world::planning_connection* connection =
             world::find_entity(_world.planning_connections,
                                std::get<world::planning_connection_id>(selected));
 
          if (connection and not connection->hidden) {
-            bundle.push_back(edits::make_set_value(connection->id,
-                                                   &world::planning_connection::hidden,
-                                                   true, connection->hidden));
+            bundle.push_back(edits::make_set_value(&connection->hidden, true));
          }
       }
       else if (std::holds_alternative<world::boundary_id>(selected)) {
-         const world::boundary* boundary =
+         world::boundary* boundary =
             world::find_entity(_world.boundaries,
                                std::get<world::boundary_id>(selected));
 
          if (boundary and not boundary->hidden) {
-            bundle.push_back(edits::make_set_value(boundary->id, &world::boundary::hidden,
-                                                   true, boundary->hidden));
+            bundle.push_back(edits::make_set_value(&boundary->hidden, true));
          }
       }
       else if (std::holds_alternative<world::measurement_id>(selected)) {
-         const world::measurement* measurement =
+         world::measurement* measurement =
             world::find_entity(_world.measurements,
                                std::get<world::measurement_id>(selected));
 
          if (measurement and not measurement->hidden) {
-            bundle.push_back(edits::make_set_value(measurement->id,
-                                                   &world::measurement::hidden,
-                                                   true, measurement->hidden));
+            bundle.push_back(edits::make_set_value(&measurement->hidden, true));
          }
       }
    }
