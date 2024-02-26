@@ -2659,11 +2659,10 @@ void world_edit::unhide_all() noexcept
 {
    edits::bundle_vector bundle;
 
-   const auto unhide_entities = [&]<typename T>(const pinned_vector<T>& entities) {
-      for (const auto& entity : entities) {
+   const auto unhide_entities = [&]<typename T>(pinned_vector<T>& entities) {
+      for (auto& entity : entities) {
          if (entity.hidden) {
-            bundle.push_back(edits::make_set_value(entity.id, &T::hidden, false,
-                                                   entity.hidden));
+            bundle.push_back(edits::make_set_value(&entity.hidden, false));
          }
       }
    };
