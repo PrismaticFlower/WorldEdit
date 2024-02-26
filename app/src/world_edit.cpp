@@ -2260,7 +2260,7 @@ void world_edit::ground_selection() noexcept
 
    for (const auto& selected : _interaction_targets.selection) {
       if (std::holds_alternative<world::object_id>(selected)) {
-         const world::object* object =
+         world::object* object =
             world::find_entity(_world.objects, std::get<world::object_id>(selected));
 
          if (object) {
@@ -2269,13 +2269,12 @@ void world_edit::ground_selection() noexcept
                                         _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
-                  edits::make_set_value(object->id, &world::object::position,
-                                        *grounded_position, object->position));
+                  edits::make_set_value(&object->position, *grounded_position));
             }
          }
       }
       else if (std::holds_alternative<world::light_id>(selected)) {
-         const world::light* light =
+         world::light* light =
             world::find_entity(_world.lights, std::get<world::light_id>(selected));
 
          if (light) {
@@ -2284,8 +2283,7 @@ void world_edit::ground_selection() noexcept
                                        _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
-                  edits::make_set_value(light->id, &world::light::position,
-                                        *grounded_position, light->position));
+                  edits::make_set_value(&light->position, *grounded_position));
             }
          }
       }
@@ -2308,7 +2306,7 @@ void world_edit::ground_selection() noexcept
          }
       }
       else if (std::holds_alternative<world::region_id>(selected)) {
-         const world::region* region =
+         world::region* region =
             world::find_entity(_world.regions, std::get<world::region_id>(selected));
 
          if (region) {
@@ -2317,13 +2315,12 @@ void world_edit::ground_selection() noexcept
                                         _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
-                  edits::make_set_value(region->id, &world::region::position,
-                                        *grounded_position, region->position));
+                  edits::make_set_value(&region->position, *grounded_position));
             }
          }
       }
       else if (std::holds_alternative<world::sector_id>(selected)) {
-         const world::sector* sector =
+         world::sector* sector =
             world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
 
          if (sector) {
@@ -2331,13 +2328,12 @@ void world_edit::ground_selection() noexcept
                    world::ground_sector(*sector, _world, _object_classes,
                                         _world_layers_hit_mask);
                 grounded_base) {
-               bundle.push_back(edits::make_set_value(sector->id, &world::sector::base,
-                                                      *grounded_base, sector->base));
+               bundle.push_back(edits::make_set_value(&sector->base, *grounded_base));
             }
          }
       }
       else if (std::holds_alternative<world::portal_id>(selected)) {
-         const world::portal* portal =
+         world::portal* portal =
             world::find_entity(_world.portals, std::get<world::portal_id>(selected));
 
          if (portal) {
@@ -2346,13 +2342,12 @@ void world_edit::ground_selection() noexcept
                                         _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
-                  edits::make_set_value(portal->id, &world::portal::position,
-                                        *grounded_position, portal->position));
+                  edits::make_set_value(&portal->position, *grounded_position));
             }
          }
       }
       else if (std::holds_alternative<world::hintnode_id>(selected)) {
-         const world::hintnode* hintnode =
+         world::hintnode* hintnode =
             world::find_entity(_world.hintnodes,
                                std::get<world::hintnode_id>(selected));
 
@@ -2361,14 +2356,13 @@ void world_edit::ground_selection() noexcept
                    world::ground_point(hintnode->position, _world,
                                        _object_classes, _world_layers_hit_mask);
                 grounded_position) {
-               bundle.push_back(
-                  edits::make_set_value(hintnode->id, &world::hintnode::position,
-                                        *grounded_position, hintnode->position));
+               bundle.push_back(edits::make_set_value(&hintnode->position,
+                                                      *grounded_position));
             }
          }
       }
       else if (std::holds_alternative<world::barrier_id>(selected)) {
-         const world::barrier* barrier =
+         world::barrier* barrier =
             world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
 
          if (barrier) {
@@ -2377,13 +2371,12 @@ void world_edit::ground_selection() noexcept
                                        _object_classes, _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
-                  edits::make_set_value(barrier->id, &world::barrier::position,
-                                        *grounded_position, barrier->position));
+                  edits::make_set_value(&barrier->position, *grounded_position));
             }
          }
       }
       else if (std::holds_alternative<world::planning_hub_id>(selected)) {
-         const world::planning_hub* hub =
+         world::planning_hub* hub =
             world::find_entity(_world.planning_hubs,
                                std::get<world::planning_hub_id>(selected));
 
@@ -2393,8 +2386,7 @@ void world_edit::ground_selection() noexcept
                                        _world_layers_hit_mask);
                 grounded_position) {
                bundle.push_back(
-                  edits::make_set_value(hub->id, &world::planning_hub::position,
-                                        *grounded_position, hub->position));
+                  edits::make_set_value(&hub->position, *grounded_position));
             }
          }
       }
