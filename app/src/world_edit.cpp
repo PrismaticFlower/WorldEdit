@@ -2002,13 +2002,12 @@ void world_edit::align_selection() noexcept
 
    for (const auto& selected : _interaction_targets.selection) {
       if (std::holds_alternative<world::object_id>(selected)) {
-         const world::object* object =
+         world::object* object =
             world::find_entity(_world.objects, std::get<world::object_id>(selected));
 
          if (object) {
-            bundle.push_back(edits::make_set_value(object->id, &world::object::position,
-                                                   align_position(object->position),
-                                                   object->position));
+            bundle.push_back(edits::make_set_value(&object->position,
+                                                   align_position(object->position)));
          }
       }
       else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
@@ -2027,27 +2026,25 @@ void world_edit::align_selection() noexcept
          }
       }
       else if (std::holds_alternative<world::light_id>(selected)) {
-         const world::light* light =
+         world::light* light =
             world::find_entity(_world.lights, std::get<world::light_id>(selected));
 
          if (light) {
-            bundle.push_back(edits::make_set_value(light->id, &world::light::position,
-                                                   align_position(light->position),
-                                                   light->position));
+            bundle.push_back(edits::make_set_value(&light->position,
+                                                   align_position(light->position)));
          }
       }
       else if (std::holds_alternative<world::region_id>(selected)) {
-         const world::region* region =
+         world::region* region =
             world::find_entity(_world.regions, std::get<world::region_id>(selected));
 
          if (region) {
-            bundle.push_back(edits::make_set_value(region->id, &world::region::position,
-                                                   align_position(region->position),
-                                                   region->position));
+            bundle.push_back(edits::make_set_value(&region->position,
+                                                   align_position(region->position)));
          }
       }
       else if (std::holds_alternative<world::sector_id>(selected)) {
-         const world::sector* sector =
+         world::sector* sector =
             world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
 
          if (sector) {
@@ -2058,80 +2055,71 @@ void world_edit::align_selection() noexcept
             }
 
             bundle.push_back(
-               edits::make_set_value(sector->id, &world::sector::points,
-                                     std::move(new_points), sector->points));
+               edits::make_set_value(&sector->points, std::move(new_points)));
          }
       }
       else if (std::holds_alternative<world::portal_id>(selected)) {
-         const world::portal* portal =
+         world::portal* portal =
             world::find_entity(_world.portals, std::get<world::portal_id>(selected));
 
          if (portal) {
-            bundle.push_back(edits::make_set_value(portal->id, &world::portal::position,
-                                                   align_position(portal->position),
-                                                   portal->position));
+            bundle.push_back(edits::make_set_value(&portal->position,
+                                                   align_position(portal->position)));
          }
       }
       else if (std::holds_alternative<world::hintnode_id>(selected)) {
-         const world::hintnode* hintnode =
+         world::hintnode* hintnode =
             world::find_entity(_world.hintnodes,
                                std::get<world::hintnode_id>(selected));
 
          if (hintnode) {
-            bundle.push_back(
-               edits::make_set_value(hintnode->id, &world::hintnode::position,
-                                     align_position(hintnode->position),
-                                     hintnode->position));
+            bundle.push_back(edits::make_set_value(&hintnode->position,
+                                                   align_position(hintnode->position)));
          }
       }
       else if (std::holds_alternative<world::barrier_id>(selected)) {
-         const world::barrier* barrier =
+         world::barrier* barrier =
             world::find_entity(_world.barriers, std::get<world::barrier_id>(selected));
 
          if (barrier) {
-            bundle.push_back(edits::make_set_value(barrier->id, &world::barrier::position,
-                                                   align_position(barrier->position),
-                                                   barrier->position));
+            bundle.push_back(edits::make_set_value(&barrier->position,
+                                                   align_position(barrier->position)));
          }
       }
       else if (std::holds_alternative<world::planning_hub_id>(selected)) {
-         const world::planning_hub* planning_hub =
+         world::planning_hub* planning_hub =
             world::find_entity(_world.planning_hubs,
                                std::get<world::planning_hub_id>(selected));
 
          if (planning_hub) {
             bundle.push_back(
-               edits::make_set_value(planning_hub->id, &world::planning_hub::position,
-                                     align_position(planning_hub->position),
-                                     planning_hub->position));
+               edits::make_set_value(&planning_hub->position,
+                                     align_position(planning_hub->position)));
          }
       }
       else if (std::holds_alternative<world::boundary_id>(selected)) {
-         const world::boundary* boundary =
+         world::boundary* boundary =
             world::find_entity(_world.boundaries,
                                std::get<world::boundary_id>(selected));
 
          if (boundary) {
             bundle.push_back(
-               edits::make_set_value(boundary->id, &world::boundary::position,
-                                     round(boundary->position / alignment) * alignment,
-                                     boundary->position));
+               edits::make_set_value(&boundary->position,
+                                     round(boundary->position / alignment) * alignment));
          }
       }
       else if (std::holds_alternative<world::measurement_id>(selected)) {
-         const world::measurement* measurement =
+         world::measurement* measurement =
             world::find_entity(_world.measurements,
                                std::get<world::measurement_id>(selected));
 
          if (measurement) {
             bundle.push_back(
-               edits::make_set_value(measurement->id, &world::measurement::start,
-                                     round(measurement->start / alignment) * alignment,
-                                     measurement->start));
+               edits::make_set_value(&measurement->start,
+                                     round(measurement->start / alignment) * alignment));
             bundle.push_back(
-               edits::make_set_value(measurement->id, &world::measurement::end,
-                                     round(measurement->end / alignment) * alignment,
-                                     measurement->end));
+               edits::make_set_value(&measurement->end,
+                                     round(measurement->end / alignment) * alignment));
          }
       }
    }
