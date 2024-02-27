@@ -705,7 +705,7 @@ private:
 };
 
 template<typename T>
-auto erase(pinned_vector<T>& vec, const T& value) noexcept -> std::size_t
+inline auto erase(pinned_vector<T>& vec, const T& value) noexcept -> std::size_t
 {
    auto first = vec.begin();
 
@@ -730,7 +730,7 @@ auto erase(pinned_vector<T>& vec, const T& value) noexcept -> std::size_t
 }
 
 template<typename T>
-auto erase_if(pinned_vector<T>& vec, auto predicate) noexcept -> std::size_t
+inline auto erase_if(pinned_vector<T>& vec, auto predicate) noexcept -> std::size_t
 {
    auto first = vec.begin();
 
