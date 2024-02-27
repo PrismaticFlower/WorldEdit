@@ -19,23 +19,23 @@ const we::world::world test_world = {
    .terrain = {},
    .global_lights = {.env_map_texture = "sky"},
 
-   .objects = {object{.id = object_id{0}}},
+   .objects = {entities_init, std::initializer_list{object{.id = object_id{0}}}},
 
-   .paths = {path{
-      .name = "test_path",
-      .layer = 0,
+   .paths = {entities_init, std::initializer_list{path{
+                               .name = "test_path",
+                               .layer = 0,
 
-      .nodes = {{
-                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
-                   .position = {0.0f, 0.0f, 0.0f},
-                },
-                {
-                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
-                   .position = {1.0f, 1.0f, 1.0f},
-                }},
+                               .nodes = {{
+                                            .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                                            .position = {0.0f, 0.0f, 0.0f},
+                                         },
+                                         {
+                                            .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                                            .position = {1.0f, 1.0f, 1.0f},
+                                         }},
 
-      .id = path_id{3},
-   }},
+                               .id = path_id{3},
+                            }}},
 };
 
 }
@@ -111,5 +111,4 @@ TEST_CASE("world selection", "[World][ID]")
 
    CHECK(selection.empty());
 }
-
 }

@@ -2330,4 +2330,37 @@ TEST_CASE("pinned_vector erase_if none", "[Container]")
    CHECK(vec[4] == 4);
 }
 
+TEST_CASE("pinned_vector operator==", "[Container]")
+{
+   pinned_vector<int> a{pinned_vector_init{.max_size = 65536},
+                        std::initializer_list<int>{0, 1, 2, 3, 4}};
+
+   pinned_vector<int> b{pinned_vector_init{.max_size = 65536},
+                        std::initializer_list<int>{0, 1, 2, 3, 4}};
+
+   CHECK(a == b);
+}
+
+TEST_CASE("pinned_vector operator!= values mismatch", "[Container]")
+{
+   pinned_vector<int> a{pinned_vector_init{.max_size = 65536},
+                        std::initializer_list<int>{0, 1, 0, 3, 4}};
+
+   pinned_vector<int> b{pinned_vector_init{.max_size = 65536},
+                        std::initializer_list<int>{0, 1, 2, 3, 4}};
+
+   CHECK(a != b);
+}
+
+TEST_CASE("pinned_vector operator!= size mismatch", "[Container]")
+{
+   pinned_vector<int> a{pinned_vector_init{.max_size = 65536},
+                        std::initializer_list<int>{0, 1, 2, 3, 4}};
+
+   pinned_vector<int> b{pinned_vector_init{.max_size = 65536},
+                        std::initializer_list<int>{0, 1, 3, 4}};
+
+   CHECK(a != b);
+}
+
 }

@@ -754,4 +754,16 @@ inline auto erase_if(pinned_vector<T>& vec, auto predicate) noexcept -> std::siz
    return erased_count;
 }
 
+template<typename T>
+inline bool operator==(const pinned_vector<T>& left, const pinned_vector<T>& right) noexcept
+{
+   if (left.size() != right.size()) return false;
+
+   for (std::size_t i = 0; i < left.size(); ++i) {
+      if (left[i] != right[i]) return false;
+   }
+
+   return true;
+}
+
 }

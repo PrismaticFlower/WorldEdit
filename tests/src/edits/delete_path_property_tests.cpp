@@ -13,40 +13,43 @@ namespace {
 const we::world::world delete_path_property_test_world = {
    .paths =
       {
-         {
-            .properties =
-               {
-                  {"Key", "Value"},
-                  {"Cake", "Mm"},
-                  {"MMm", "Cake"},
-               },
-            .nodes =
-               {
+         world::entities_init,
+         std::initializer_list<world::path>{
+            {
+               .properties =
                   {
-                     .properties =
-                        {
-                           {"Key", "Value"},
-                        },
+                     {"Key", "Value"},
+                     {"Cake", "Mm"},
+                     {"MMm", "Cake"},
+                  },
+               .nodes =
+                  {
+                     {
+                        .properties =
+                           {
+                              {"Key", "Value"},
+                           },
+                     },
+
+                     {
+                        .properties =
+                           {
+                              {"Sunflower", "Pretty"},
+                              {"Key", "Value"},
+                              {"OtherFlowers", "AlsoPretty"},
+                           },
+                     },
+
+                     {
+                        .properties =
+                           {
+                              {"Key", "Value"},
+                           },
+                     },
                   },
 
-                  {
-                     .properties =
-                        {
-                           {"Sunflower", "Pretty"},
-                           {"Key", "Value"},
-                           {"OtherFlowers", "AlsoPretty"},
-                        },
-                  },
-
-                  {
-                     .properties =
-                        {
-                           {"Key", "Value"},
-                        },
-                  },
-               },
-
-            .id = world::path_id{0},
+               .id = world::path_id{0},
+            },
          },
       },
 };
