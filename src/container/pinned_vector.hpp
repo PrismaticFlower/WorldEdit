@@ -667,7 +667,7 @@ private:
       const std::size_t committed_count =
          container::detail::virtual_commit(_commited_end, count, sizeof(T));
 
-      _commited_end = _end + committed_count;
+      _commited_end = _commited_end + committed_count;
    }
 
    void insert_shift_forward(T* from, std::ptrdiff_t count) noexcept
