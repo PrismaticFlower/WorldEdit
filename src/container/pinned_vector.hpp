@@ -667,7 +667,7 @@ private:
       const std::size_t committed_count =
          container::detail::virtual_commit(_commited_end, count, sizeof(T));
 
-      _commited_end = _end + committed_count;
+      _commited_end = _commited_end + committed_count;
    }
 
    void insert_shift_forward(T* from, std::ptrdiff_t count) noexcept
@@ -705,7 +705,7 @@ private:
 };
 
 template<typename T>
-auto erase(pinned_vector<T>& vec, const T& value) noexcept -> std::size_t
+inline auto erase(pinned_vector<T>& vec, const T& value) noexcept -> std::size_t
 {
    auto first = vec.begin();
 
@@ -730,7 +730,7 @@ auto erase(pinned_vector<T>& vec, const T& value) noexcept -> std::size_t
 }
 
 template<typename T>
-auto erase_if(pinned_vector<T>& vec, auto predicate) noexcept -> std::size_t
+inline auto erase_if(pinned_vector<T>& vec, auto predicate) noexcept -> std::size_t
 {
    auto first = vec.begin();
 
@@ -752,6 +752,18 @@ auto erase_if(pinned_vector<T>& vec, auto predicate) noexcept -> std::size_t
    vec.erase(first, vec.end());
 
    return erased_count;
+}
+
+template<typename T>
+inline bool operator==(const pinned_vector<T>& left, const pinned_vector<T>& right) noexcept
+{
+   if (left.size() != right.size()) return false;
+
+   for (std::size_t i = 0; i < left.size(); ++i) {
+      if (left[i] != right[i]) return false;
+   }
+
+   return true;
 }
 
 }

@@ -35,42 +35,42 @@ const we::world::world layer_delete_test_world = {
          },
       },
 
-   .objects =
-      {
-         object{.name = "Object0", .layer = 0},
-         object{.name = "Object1", .layer = 1},
-         object{.name = "Object2", .layer = 2},
-         object{.name = "Object3", .layer = 1},
-         object{.name = "Object4", .layer = 2},
-      },
+   .objects = {world::entities_init,
+               std::initializer_list{
+                  object{.name = "Object0", .layer = 0},
+                  object{.name = "Object1", .layer = 1},
+                  object{.name = "Object2", .layer = 2},
+                  object{.name = "Object3", .layer = 1},
+                  object{.name = "Object4", .layer = 2},
+               }},
 
-   .lights =
-      {
-         light{.name = "Light0", .layer = 0},
-         light{.name = "Light1", .layer = 1},
-         light{.name = "Light2", .layer = 2},
-      },
+   .lights = {world::entities_init,
+              std::initializer_list{
+                 light{.name = "Light0", .layer = 0},
+                 light{.name = "Light1", .layer = 1},
+                 light{.name = "Light2", .layer = 2},
+              }},
 
-   .paths =
-      {
-         path{.name = "Path0", .layer = 0},
-         path{.name = "Path1", .layer = 1},
-         path{.name = "Path2", .layer = 2},
-      },
+   .paths = {world::entities_init,
+             std::initializer_list{
+                path{.name = "Path0", .layer = 0},
+                path{.name = "Path1", .layer = 1},
+                path{.name = "Path2", .layer = 2},
+             }},
 
-   .regions =
-      {
-         region{.name = "Region0", .layer = 0},
-         region{.name = "Region1", .layer = 1},
-         region{.name = "Region2", .layer = 2},
-      },
+   .regions = {world::entities_init,
+               std::initializer_list{
+                  region{.name = "Region0", .layer = 0},
+                  region{.name = "Region1", .layer = 1},
+                  region{.name = "Region2", .layer = 2},
+               }},
 
-   .hintnodes =
-      {
-         hintnode{.name = "Hintnode0", .layer = 0},
-         hintnode{.name = "Hintnode1", .layer = 1},
-         hintnode{.name = "Hintnode2", .layer = 2},
-      },
+   .hintnodes = {world::entities_init,
+                 std::initializer_list{
+                    hintnode{.name = "Hintnode0", .layer = 0},
+                    hintnode{.name = "Hintnode1", .layer = 1},
+                    hintnode{.name = "Hintnode2", .layer = 2},
+                 }},
 };
 
 }

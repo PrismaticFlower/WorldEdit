@@ -13,21 +13,19 @@ namespace we::container::detail {
 namespace {
 
 struct system_page_info {
-   system_page_info()
-   {
-      SYSTEM_INFO system_info{};
-
-      GetSystemInfo(&system_info);
-
-      size = system_info.dwPageSize;
-      allocation_granularity = system_info.dwAllocationGranularity;
-   }
-
    DWORD size = 0;
    DWORD allocation_granularity = 0;
 };
 
-const system_page_info page_info;
+auto get_system_page_info() noexcept -> system_page_info
+{
+   SYSTEM_INFO system_info{};
+
+   GetSystemInfo(&system_info);
+
+   return {.size = system_info.dwPageSize,
+           .allocation_granularity = system_info.dwAllocationGranularity};
+}
 
 }
 
@@ -45,6 +43,8 @@ const system_page_info page_info;
 auto virtual_reserve(const std::size_t count, const std::size_t item_size,
                      std::size_t& allocated_count) noexcept -> void*
 {
+   const system_page_info page_info = get_system_page_info();
+
    const std::size_t needed_bytes = count * item_size;
    const std::size_t aligned_needed_bytes =
       ((needed_bytes + (page_info.size - 1)) / page_info.size) * page_info.size;
@@ -69,6 +69,8 @@ auto virtual_reserve(const std::size_t count, const std::size_t item_size,
 auto virtual_commit(void* begin, const std::size_t count,
                     const std::size_t item_size) noexcept -> std::size_t
 {
+   const system_page_info page_info = get_system_page_info();
+
    const std::size_t committed_count = std::max(page_info.size / item_size, count);
 
    if (not VirtualAlloc(begin, committed_count * item_size, MEM_COMMIT, PAGE_READWRITE)) {

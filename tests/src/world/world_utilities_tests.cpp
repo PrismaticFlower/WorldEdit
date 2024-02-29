@@ -11,7 +11,10 @@ namespace we::world::tests {
 
 TEST_CASE("world utilities find_entity by name", "[World][Utilities]")
 {
-   world world{.regions = {region{.name = "some_region"s, .description = "some_desc"s}}};
+   world world{.regions = {entities_init, std::initializer_list{
+                                             region{.name = "some_region"s,
+                                                    .description = "some_desc"s},
+                                          }}};
 
    REQUIRE(find_entity(world.regions, "some_region"sv) == &world.regions[0]);
    REQUIRE(find_entity(world.regions, "no_region"sv) == nullptr);
@@ -53,7 +56,9 @@ TEST_CASE("world utilities find_entity by id", "[World][Utilities]")
 
 TEST_CASE("world utilities find_region", "[World][Utilities]")
 {
-   world world{.regions = {region{.name = "some_region"s, .description = "some_desc"s}}};
+   world world{.regions = {entities_init, std::initializer_list{
+                                             region{.name = "some_region"s,
+                                                    .description = "some_desc"s}}}};
 
    REQUIRE(find_region(world, "some_region"sv) == &world.regions[0]);
    REQUIRE(find_region(world, "no_region"sv) == nullptr);
@@ -61,7 +66,9 @@ TEST_CASE("world utilities find_region", "[World][Utilities]")
 
 TEST_CASE("world utilities find_region_by_description", "[World][Utilities]")
 {
-   world world{.regions = {region{.name = "some_region"s, .description = "some_desc"s}}};
+   world world{.regions = {entities_init, std::initializer_list{
+                                             region{.name = "some_region"s,
+                                                    .description = "some_desc"s}}}};
 
    REQUIRE(find_region_by_description(world, "some_desc"sv) == &world.regions[0]);
    REQUIRE(find_region_by_description(world, "no_desc"sv) == nullptr);
@@ -69,7 +76,9 @@ TEST_CASE("world utilities find_region_by_description", "[World][Utilities]")
 
 TEST_CASE("world utilities create_unique_name", "[World][Utilities]")
 {
-   world world{.objects = {object{.name = "Amazing Object 32"s}, object{.name = "62"s}}};
+   world world{.objects = {entities_init,
+                           std::initializer_list{object{.name = "Amazing Object 32"s},
+                                                 object{.name = "62"s}}}};
 
    REQUIRE(create_unique_name(world.objects, "Amazing Object 32") ==
            "Amazing Object 0");
@@ -86,8 +95,8 @@ TEST_CASE("world utilities create_unique_light_region_name",
           "[World][Utilities]")
 {
    world world{
-      .lights = {light{.name = "Light0"s}},
-      .regions = {region{.name = "Region0"s}},
+      .lights = {entities_init, std::initializer_list{light{.name = "Light0"s}}},
+      .regions = {entities_init, std::initializer_list{region{.name = "Region0"s}}},
    };
 
    REQUIRE(create_unique_light_region_name(world.lights, world.regions, "Light0") ==

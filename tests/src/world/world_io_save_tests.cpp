@@ -782,182 +782,229 @@ TEST_CASE("world saving", "[World][IO]")
                         .ambient_sky_color = {1.0f, 1.0f, 1.0f},
                         .ambient_ground_color = {0.5f, 0.5f, 0.5f}},
 
-      .objects = {object{.name = "object",
+      .objects = {entities_init,
+                  std::initializer_list{
+                     object{.name = "object",
 
-                         .rotation = {0.659295f, 0.2138f, 0.691417f, -0.203867f},
-                         .position = {-136.0f, 0.0f, 24.0f},
+                            .rotation = {0.659295f, 0.2138f, 0.691417f, -0.203867f},
+                            .position = {-136.0f, 0.0f, 24.0f},
 
-                         .team = 0,
+                            .team = 0,
 
-                         .class_name = lowercase_string{"bldg_real_object"sv},
-                         .instance_properties = {{.key = "SomeProperty", .value = "An Amazing Value"}}}},
+                            .class_name = lowercase_string{"bldg_real_object"sv},
+                            .instance_properties = {{.key = "SomeProperty", .value = "An Amazing Value"}}},
+                  }},
 
-      .lights = {light{
-                    .name = "sun",
+      .lights = {entities_init,
+                 std::initializer_list{
+                    light{
+                       .name = "sun",
 
-                    .rotation = {-0.039506f, 0.008607f, 0.922542f, -0.383802f},
-                    .position = {-159.264923f, 19.331013f, 66.727310f},
-                    .color = {1.0f, 0.882353f, 0.752941f},
-                    .static_ = true,
-                    .shadow_caster = true,
-                    .specular_caster = true,
-                    .light_type = light_type::directional,
-                    .texture_addressing = texture_addressing::clamp,
-                    .texture = "sun_shadow",
-                 },
+                       .rotation = {-0.039506f, 0.008607f, 0.922542f, -0.383802f},
+                       .position = {-159.264923f, 19.331013f, 66.727310f},
+                       .color = {1.0f, 0.882353f, 0.752941f},
+                       .static_ = true,
+                       .shadow_caster = true,
+                       .specular_caster = true,
+                       .light_type = light_type::directional,
+                       .texture_addressing = texture_addressing::clamp,
+                       .texture = "sun_shadow",
+                    },
 
-                 light{
-                    .name = "Region Light",
+                    light{
+                       .name = "Region Light",
 
-                    .rotation = {0.435918f, 0.610941f, 0.581487f, -0.314004f},
-                    .position = {-216.604019f, 2.231649f, 18.720726f},
-                    .color = {1.0f, 0.501961f, 0.501961f},
-                    .static_ = true,
-                    .light_type = light_type::directional_region_sphere,
-                    .region_name = "lightregion",
-                    .region_size = {4.591324f, 0.100000f, 1.277475f},
-                    .region_rotation = {0.0f, 0.0f, 1.0f, 0.0f},
+                       .rotation = {0.435918f, 0.610941f, 0.581487f, -0.314004f},
+                       .position = {-216.604019f, 2.231649f, 18.720726f},
+                       .color = {1.0f, 0.501961f, 0.501961f},
+                       .static_ = true,
+                       .light_type = light_type::directional_region_sphere,
+                       .region_name = "lightregion",
+                       .region_size = {4.591324f, 0.100000f, 1.277475f},
+                       .region_rotation = {0.0f, 0.0f, 1.0f, 0.0f},
+                    },
                  }},
 
       .paths =
-         {path{.name = "The Amazing Path",
-               .spline_type = path_spline_type::catmull_rom,
-               .properties = {{.key = "FloatVal", .value = "5.0000"},
-                              {.key = "StringVal", .value = "Such string, much wow"},
-                              {.key = "EmptyVal", .value = ""}},
+         {entities_init,
+          std::initializer_list{
+             path{.name = "The Amazing Path",
+                  .spline_type = path_spline_type::catmull_rom,
+                  .properties = {{.key = "FloatVal", .value = "5.0000"},
+                                 {.key = "StringVal", .value = "Such string, much wow"},
+                                 {.key = "EmptyVal", .value = ""}},
 
-               .nodes = {path::node{
-                            .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
-                            .position = {-2.006914f, -0.002500f, -56.238541f},
-                            .properties = {{.key = "FloatVal", .value = "5.0000"},
-                                           {.key = "StringVal", .value = "Such string, much wow"},
-                                           {.key = "EmptyVal", .value = ""}},
-                         },
+                  .nodes = {path::node{
+                               .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
+                               .position = {-2.006914f, -0.002500f, -56.238541f},
+                               .properties = {{.key = "FloatVal", .value = "5.0000"},
+                                              {.key = "StringVal", .value = "Such string, much wow"},
+                                              {.key = "EmptyVal", .value = ""}},
+                            },
 
-                         path::node{
-                            .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
-                            .position = {-0.484701f, -0.002500f, -54.641960f},
-                         }}
+                            path::node{
+                               .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
+                               .position = {-0.484701f, -0.002500f, -54.641960f},
+                            }}
 
-          },
+             },
 
-          path{.name = "The Other Amazing Path",
-               .type = path_type::entity_follow,
-               .spline_type = path_spline_type::catmull_rom,
-               .properties = {{.key = "FloatVal", .value = "5.0000"},
-                              {.key = "StringVal", .value = "Such string, much wow"}},
+             path{.name = "The Other Amazing Path",
+                  .type = path_type::entity_follow,
+                  .spline_type = path_spline_type::catmull_rom,
+                  .properties = {{.key = "FloatVal", .value = "5.0000"},
+                                 {.key = "StringVal", .value = "Such string, much wow"}},
 
-               .nodes = {path::node{
-                            .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
-                            .position = {-2.006914f, -0.002500f, -56.238541f},
-                            .properties = {{.key = "FloatVal", .value = "5.0000"},
-                                           {.key = "StringVal", .value = "Such string, much wow"}},
-                         },
+                  .nodes = {path::node{
+                               .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
+                               .position = {-2.006914f, -0.002500f, -56.238541f},
+                               .properties = {{.key = "FloatVal", .value = "5.0000"},
+                                              {.key = "StringVal", .value = "Such string, much wow"}},
+                            },
 
-                         path::node{
-                            .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
-                            .position = {-0.484701f, -0.002500f, -54.641960f},
-                         }}}},
+                            path::node{
+                               .rotation = {0.710354f, -0.0f, 0.703845f, -0.0f},
+                               .position = {-0.484701f, -0.002500f, -54.641960f},
+                            }}},
+          }},
 
-      .regions = {region{.name = "lightregion2",
-                         .rotation = {0.027578f, -0.836273f, 0.546265f, -0.038489f},
-                         .position = {-188.456131f, -2.336851f, 7.291678f},
-                         .size = {0.100000f, 10.0f, 3.284148f},
-                         .shape = region_shape::cylinder,
-                         .description = "lightregion2"}},
+      .regions = {entities_init,
+                  std::initializer_list{
+                     region{.name = "lightregion2",
+                            .rotation = {0.027578f, -0.836273f, 0.546265f, -0.038489f},
+                            .position = {-188.456131f, -2.336851f, 7.291678f},
+                            .size = {0.100000f, 10.0f, 3.284148f},
+                            .shape = region_shape::cylinder,
+                            .description = "lightregion2"},
+                  }},
 
-      .sectors = {sector{.name = "sector-1",
-                         .base = 0.0f,
-                         .height = 10.0f,
-                         .points = {{-157.581009f, -4.900336f},
-                                    {-227.199097f, -7.364827f},
-                                    {-228.642029f, 40.347687f},
-                                    {-159.451279f, 40.488800f}},
-                         .objects = {"really_complex_object"}},
+      .sectors = {entities_init,
+                  std::initializer_list{
+                     sector{.name = "sector-1",
+                            .base = 0.0f,
+                            .height = 10.0f,
+                            .points = {{-157.581009f, -4.900336f},
+                                       {-227.199097f, -7.364827f},
+                                       {-228.642029f, 40.347687f},
+                                       {-159.451279f, 40.488800f}},
+                            .objects = {"really_complex_object"}},
 
-                  sector{.name = "sector-2",
-                         .base = 0.0f,
-                         .height = 10.0f,
-                         .points = {{-196.648041f, 125.908623f},
-                                    {-195.826218f, 49.666763f},
-                                    {-271.034851f, 48.864563f},
-                                    {-274.260132f, 128.690567f}},
-                         .objects = {"also_complex_object"}}},
+                     sector{.name = "sector-2",
+                            .base = 0.0f,
+                            .height = 10.0f,
+                            .points = {{-196.648041f, 125.908623f},
+                                       {-195.826218f, 49.666763f},
+                                       {-271.034851f, 48.864563f},
+                                       {-274.260132f, 128.690567f}},
+                            .objects = {"also_complex_object"}},
+                  }},
 
-      .portals = {portal{.name = "Portal",
-                         .rotation = {0.027578f, -0.836273f, 0.546265f, -0.038489f},
-                         .position = {-193.661575f, 2.097009f, 31.728502f},
-                         .width = 2.92f,
-                         .height = 4.12f,
-                         .sector1 = "sector-1",
-                         .sector2 = "sector-2"}},
+      .portals =
+         {
+            entities_init,
+            std::initializer_list{
+               portal{.name = "Portal",
+                      .rotation = {0.027578f, -0.836273f, 0.546265f, -0.038489f},
+                      .position = {-193.661575f, 2.097009f, 31.728502f},
+                      .width = 2.92f,
+                      .height = 4.12f,
+                      .sector1 = "sector-1",
+                      .sector2 = "sector-2"},
+            },
+         },
 
-      .hintnodes = {hintnode{.name = "HintNode0",
-                             .rotation = {-0.569245f, 0.651529f, 0.303753f, -0.399004f},
-                             .position = {-70.045296f, 1.000582f, 19.298828f},
-                             .type = hintnode_type::mine,
-                             .mode = hintnode_mode::none,
-                             .radius = 7.692307f,
-                             .command_post = "cp2"}},
+      .hintnodes =
+         {
+            entities_init,
+            std::initializer_list{
+               hintnode{.name = "HintNode0",
+                        .rotation = {-0.569245f, 0.651529f, 0.303753f, -0.399004f},
+                        .position = {-70.045296f, 1.000582f, 19.298828f},
+                        .type = hintnode_type::mine,
+                        .mode = hintnode_mode::none,
+                        .radius = 7.692307f,
+                        .command_post = "cp2"},
+            },
+         },
 
-      .barriers = {barrier{.name = "Barrier0",
-                           .position = {86.2013702f, 1.0f, 18.6642666f},
-                           .size = {7.20497799f, 17.0095882f},
-                           .rotation_angle = {2.71437049f},
-                           .flags = ai_path_flags::flyer}},
+      .barriers =
+         {
+            entities_init,
+            std::initializer_list{
+               barrier{.name = "Barrier0",
+                       .position = {86.2013702f, 1.0f, 18.6642666f},
+                       .size = {7.20497799f, 17.0095882f},
+                       .rotation_angle = {2.71437049f},
+                       .flags = ai_path_flags::flyer},
+            },
+         },
 
-      .planning_hubs = {planning_hub{.name = "Hub0",
-                                     .position = float3{-63.822487f, 0.0f, -9.202278f},
-                                     .radius = 8.0f},
+      .planning_hubs =
+         {
+            entities_init,
+            std::initializer_list{
+               planning_hub{.name = "Hub0",
+                            .position = float3{-63.822487f, 0.0f, -9.202278f},
+                            .radius = 8.0f},
 
-                        planning_hub{.name = "Hub1",
-                                     .position = float3{-121.883095f, 1.0f, -30.046543f},
-                                     .radius = 7.586431f},
+               planning_hub{.name = "Hub1",
+                            .position = float3{-121.883095f, 1.0f, -30.046543f},
+                            .radius = 7.586431f},
 
-                        planning_hub{.name = "Hub2",
-                                     .position = float3{-54.011314f, 2.0f, -194.037018f},
-                                     .radius = 13.120973f},
+               planning_hub{.name = "Hub2",
+                            .position = float3{-54.011314f, 2.0f, -194.037018f},
+                            .radius = 13.120973f},
 
-                        planning_hub{.name = "Hub3",
-                                     .position = float3{-163.852570f, 3.0f, -169.116760f},
-                                     .radius = 12.046540f}},
+               planning_hub{.name = "Hub3",
+                            .position = float3{-163.852570f, 3.0f, -169.116760f},
+                            .radius = 12.046540f}},
+         },
 
       .planning_connections =
-         {planning_connection{.name = "Connection0",
-                              .start_hub_index = 0,
-                              .end_hub_index = 1,
-                              .flags = (ai_path_flags::soldier | ai_path_flags::hover |
-                                        ai_path_flags::small | ai_path_flags::medium |
-                                        ai_path_flags::huge | ai_path_flags::flyer),
+         {entities_init,
+          std::initializer_list{
+             planning_connection{.name = "Connection0",
+                                 .start_hub_index = 0,
+                                 .end_hub_index = 1,
+                                 .flags = (ai_path_flags::soldier | ai_path_flags::hover |
+                                           ai_path_flags::small | ai_path_flags::medium |
+                                           ai_path_flags::huge | ai_path_flags::flyer),
 
-                              .backward_weights = {.soldier = 20.0f,
-                                                   .hover = 15.0f,
-                                                   .small = 7.5f,
-                                                   .medium = 25.0f,
-                                                   .huge = 75.0f,
-                                                   .flyer = 100.0f}},
+                                 .backward_weights = {.soldier = 20.0f,
+                                                      .hover = 15.0f,
+                                                      .small = 7.5f,
+                                                      .medium = 25.0f,
+                                                      .huge = 75.0f,
+                                                      .flyer = 100.0f}},
 
-          planning_connection{.name = "Connection1",
-                              .start_hub_index = 3,
-                              .end_hub_index = 2,
-                              .flags = ai_path_flags::hover}},
+             planning_connection{.name = "Connection1",
+                                 .start_hub_index = 3,
+                                 .end_hub_index = 2,
+                                 .flags = ai_path_flags::hover},
+          }},
 
       .boundaries =
          {
-            boundary{.name = "boundary",
-                     .position = {-0.442565918f, 4.79779053f},
-                     .size = {384.000000f, 384.000000f}},
-            boundary{.name = "boundary1",
-                     .position = {-0.442565918f, 4.79779053f},
-                     .size = {384.000000f, 384.000000f}},
+            entities_init,
+            std::initializer_list{
+               boundary{.name = "boundary",
+                        .position = {-0.442565918f, 4.79779053f},
+                        .size = {384.000000f, 384.000000f}},
+               boundary{.name = "boundary1",
+                        .position = {-0.442565918f, 4.79779053f},
+                        .size = {384.000000f, 384.000000f}},
+            },
          },
 
       .measurements =
          {
-            measurement{.start = {1.0f, 0.0f, -0.0f},
-                        .end = {2.0f, 0.0f, -1.0f},
-                        .name = "Measurement0"},
-            measurement{.start = {1.0f, 0.0f, 5.5f}, .end = {-1.0f, 0.0f, -0.0f}, .name = ""},
+            entities_init,
+            std::initializer_list{
+               measurement{.start = {1.0f, 0.0f, -0.0f},
+                           .end = {2.0f, 0.0f, -1.0f},
+                           .name = "Measurement0"},
+               measurement{.start = {1.0f, 0.0f, 5.5f}, .end = {-1.0f, 0.0f, -0.0f}, .name = ""},
+            },
          },
    };
 
