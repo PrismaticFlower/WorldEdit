@@ -8,41 +8,6 @@ using namespace std::literals;
 
 namespace we::edits::tests {
 
-TEST_CASE("edits set_value", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   set_value edit{world.objects[0].id, &world::object::layer, int16{1}, int16{0}};
-
-   edit.apply(edit_context);
-
-   REQUIRE(world.objects[0].layer == 1);
-
-   edit.revert(edit_context);
-
-   REQUIRE(world.objects[0].layer == 0);
-}
-
-TEST_CASE("edits set_path_node_value", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   set_path_node_value edit{world.paths[0].id, 0, &world::path::node::position,
-                            float3{1.0f, 1.0f, 1.0f}, float3{0.0f, 0.0f, 0.0f}};
-
-   edit.apply(edit_context);
-
-   REQUIRE(world.paths[0].nodes[0].position == float3{1.0f, 1.0f, 1.0f});
-
-   edit.revert(edit_context);
-
-   REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
-}
-
 TEST_CASE("edits set_memory_value", "[Edits]")
 {
    world::world world = test_world;
@@ -60,6 +25,42 @@ TEST_CASE("edits set_memory_value", "[Edits]")
 
    REQUIRE(world.global_lights.env_map_texture ==
            test_world.global_lights.env_map_texture);
+}
+
+TEST_CASE("edits set_vector_value", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_set_vector_value(&world.paths[0].nodes, 0,
+                                     &world::path::node::position,
+                                     float3{1.0f, 1.0f, 1.0f});
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{1.0f, 1.0f, 1.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
+}
+
+TEST_CASE("edits set_vector_value alt constructor", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_set_vector_value(&world.sectors[0].points, 0, float2{8.0f, 8.0f});
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{8.0f, 8.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
 
 TEST_CASE("edits set_instance_property_value", "[Edits]")
@@ -368,53 +369,6 @@ TEST_CASE("edits set_creation_measurement_points", "[Edits]")
            float3{0.5f, 0.5f, 0.5f});
 }
 
-TEST_CASE("edits set_value coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   set_value edit{world.objects[0].id, &world::object::layer, int16{1}, int16{0}};
-   set_value other_edit{world.objects[0].id, &world::object::layer, int16{2},
-                        int16{0}};
-
-   REQUIRE(edit.is_coalescable(other_edit));
-
-   edit.coalesce(other_edit);
-
-   edit.apply(edit_context);
-
-   REQUIRE(world.objects[0].layer == 2);
-
-   edit.revert(edit_context);
-
-   REQUIRE(world.objects[0].layer == 0);
-}
-
-TEST_CASE("edits set_path_node_value coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   set_path_node_value edit{world.paths[0].id, 0, &world::path::node::position,
-                            float3{1.0f, 1.0f, 1.0f}, float3{0.0f, 0.0f, 0.0f}};
-   set_path_node_value other_edit{world.paths[0].id, 0, &world::path::node::position,
-                                  float3{2.0f, 2.0f, 2.0f}, float3{1.0f, 1.0f, 1.0f}};
-
-   REQUIRE(edit.is_coalescable(other_edit));
-
-   edit.coalesce(other_edit);
-
-   edit.apply(edit_context);
-
-   REQUIRE(world.paths[0].nodes[0].position == float3{2.0f, 2.0f, 2.0f});
-
-   edit.revert(edit_context);
-
-   REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
-}
-
 TEST_CASE("edits set_memory_value coalesce", "[Edits]")
 {
    world::world world = test_world;
@@ -438,6 +392,56 @@ TEST_CASE("edits set_memory_value coalesce", "[Edits]")
 
    REQUIRE(world.global_lights.env_map_texture ==
            test_world.global_lights.env_map_texture);
+}
+
+TEST_CASE("edits set_vector_value coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_set_vector_value(&world.paths[0].nodes, 0,
+                                     &world::path::node::position,
+                                     float3{1.0f, 1.0f, 1.0f});
+   auto other_edit = make_set_vector_value(&world.paths[0].nodes, 0,
+                                           &world::path::node::position,
+                                           float3{2.0f, 2.0f, 2.0f});
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{2.0f, 2.0f, 2.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].position == float3{0.0f, 0.0f, 0.0f});
+}
+
+TEST_CASE("edits set_vector_value alt constructor coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_vector_value(&world.sectors[0].points, 0, float2{16.0f, 16.0f});
+   auto other_edit =
+      make_set_vector_value(&world.sectors[0].points, 0, float2{32.0f, 32.0f});
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{32.0f, 32.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
 
 TEST_CASE("edits set_instance_property_value coalesce", "[Edits]")

@@ -186,7 +186,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
    -> std::optional<raycast_result<path>>
 {
    std::optional<path_id> hit;
-   std::size_t hit_node = 0;
+   uint32 hit_node = 0;
    float min_distance = std::numeric_limits<float>::max();
 
    for (auto& path : paths) {

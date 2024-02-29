@@ -43,21 +43,20 @@ void world_edit::ui_show_world_selection_move_path() noexcept
       if (imgui_edited or gizmo_edited) {
          const float3 move_delta = (_move_selection_amount - last_move_amount);
 
-         const world::path* path =
-            world::find_entity(_world.paths, _move_entire_path_id);
+         world::path* path = world::find_entity(_world.paths, _move_entire_path_id);
 
          if (path) {
             edits::bundle_vector bundled_edits;
 
             bundled_edits.reserve(path->nodes.size());
 
-            for (std::size_t i = 0; i < path->nodes.size(); ++i) {
+            for (uint32 i = 0; i < path->nodes.size(); ++i) {
                const world::path::node& node = path->nodes[i];
 
                bundled_edits.push_back(
-                  edits::make_set_path_node_value(path->id, i, &world::path::node::position,
-                                                  node.position + move_delta,
-                                                  node.position));
+                  edits::make_set_vector_value(&path->nodes, i,
+                                               &world::path::node::position,
+                                               node.position + move_delta));
             }
 
             _edit_stack_world.apply(edits::make_bundle(std::move(bundled_edits)),

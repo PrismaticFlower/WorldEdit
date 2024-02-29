@@ -6,71 +6,6 @@
 
 namespace we::edits {
 
-template<typename T>
-struct set_path_node_value final : edit<world::edit_context> {
-   using value_type = T;
-
-   set_path_node_value(world::path_id id, std::size_t node,
-                       value_type world::path::node::*value_member_ptr,
-                       value_type new_value, value_type original_value)
-      : id{id},
-        node{node},
-        value_member_ptr{value_member_ptr},
-        new_value{std::move(new_value)},
-        original_value{std::move(original_value)}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      find_entity<world::path>(context.world, id)->nodes[node].*value_member_ptr =
-         new_value;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      find_entity<world::path>(context.world, id)->nodes[node].*value_member_ptr =
-         original_value;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_path_node_value* other =
-         dynamic_cast<const set_path_node_value*>(&other_unknown);
-
-      if (not other) return false;
-
-      return this->id == other->id and this->node == other->node and
-             this->value_member_ptr == other->value_member_ptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_path_node_value& other = dynamic_cast<set_path_node_value&>(other_unknown);
-
-      new_value = std::move(other.new_value);
-   }
-
-private:
-   world::path_id id;
-   std::size_t node;
-   value_type world::path::node::*value_member_ptr;
-
-   value_type new_value;
-   value_type original_value;
-};
-
-template<typename T>
-inline auto make_set_path_node_value(world::path_id id, std::size_t node,
-                                     T world::path::node::*value_member_ptr,
-                                     T new_value, T original_value)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_path_node_value<T>>(id, node, value_member_ptr,
-                                                   std::move(new_value),
-                                                   std::move(original_value));
-}
-
 template<typename Entity, typename T>
 struct set_creation_value final : edit<world::edit_context> {
    using entity_type = Entity;
@@ -374,6 +309,8 @@ template<typename T>
 inline auto make_set_memory_value(T* value_address, T new_value)
    -> std::unique_ptr<set_memory_value<T>>
 {
+   assert(value_address);
+
    return std::make_unique<set_memory_value<T>>(value_address, std::move(new_value));
 }
 
@@ -381,7 +318,92 @@ template<typename T>
 inline auto make_set_value(T* value_address, T new_value)
    -> std::unique_ptr<set_memory_value<T>>
 {
+   assert(value_address);
+
    return std::make_unique<set_memory_value<T>>(value_address, std::move(new_value));
+}
+
+template<typename Vector_value, typename Value>
+struct set_vector_value final : edit<world::edit_context> {
+   set_vector_value(std::vector<Vector_value>* vector_address, const uint32 index,
+                    const uint32 value_offset, Value new_value)
+      : vector_ptr{vector_address},
+        index{index},
+        value_offset{value_offset},
+        value{std::move(new_value)}
+   {
+   }
+
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      std::swap(*value_ptr(), value);
+   }
+
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      std::swap(*value_ptr(), value);
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_vector_value* other =
+         dynamic_cast<const set_vector_value*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->vector_ptr == other->vector_ptr and this->index == other->index and
+             this->value_offset == other->value_offset;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_vector_value& other = dynamic_cast<set_vector_value&>(other_unknown);
+
+      value = std::move(other.value);
+   }
+
+private:
+   auto value_ptr() const noexcept -> Value*
+   {
+      return reinterpret_cast<Value*>(
+         (reinterpret_cast<char*>((&(*vector_ptr)[index])) + value_offset));
+   }
+
+   std::vector<Vector_value>* vector_ptr = nullptr;
+   uint32 index = 0;
+   uint32 value_offset = 0;
+   Value value;
+};
+
+template<typename Vector_value, typename Value>
+inline auto make_set_vector_value(std::vector<Vector_value>* vector_address,
+                                  const uint32 index,
+                                  Value Vector_value::*value_member_ptr, Value new_value)
+   -> std::unique_ptr<set_vector_value<Vector_value, Value>>
+{
+   assert(vector_address);
+   assert(index < vector_address->size());
+   assert(value_member_ptr);
+
+   const uint32 value_offset = static_cast<uint32>(
+      reinterpret_cast<const char*>(&((*vector_address)[index].*value_member_ptr)) -
+      reinterpret_cast<const char*>(&(*vector_address)[index]));
+
+   return std::make_unique<set_vector_value<Vector_value, Value>>(vector_address,
+                                                                  index, value_offset,
+                                                                  std::move(new_value));
+}
+
+template<typename Value>
+inline auto make_set_vector_value(std::vector<Value>* vector_address,
+                                  const uint32 index, Value new_value)
+   -> std::unique_ptr<set_vector_value<Value, Value>>
+{
+   assert(vector_address);
+   assert(index < vector_address->size());
+
+   return std::make_unique<set_vector_value<Value, Value>>(vector_address, index, 0,
+                                                           std::move(new_value));
 }
 
 auto make_set_instance_property_value(world::object_id id, std::size_t property_index,

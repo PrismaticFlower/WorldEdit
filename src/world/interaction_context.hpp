@@ -11,7 +11,7 @@ namespace we::world {
 /// @brief A reference to a path node.
 struct path_id_node_pair {
    path_id id;
-   std::size_t node_index;
+   uint32 node_index;
 
    bool operator==(const path_id_node_pair&) const noexcept = default;
 };

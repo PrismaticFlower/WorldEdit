@@ -27,7 +27,7 @@ template<>
 struct raycast_result<path> {
    float distance = 0.0f;
    path_id id;
-   std::size_t node_index = 0;
+   uint32 node_index = 0;
 };
 
 template<>

@@ -217,8 +217,7 @@ void world_edit::ui_show_world_explorer() noexcept
                   const bool is_selected =
                      show_all_nodes
                         ? world::is_selected(world::path_id_node_pair{path.id,
-                                                                      static_cast<std::size_t>(
-                                                                         i)},
+                                                                      static_cast<uint32>(i)},
                                              _interaction_targets.selection)
                         : world::is_selected(path.id, _interaction_targets.selection);
 
@@ -247,7 +246,7 @@ void world_edit::ui_show_world_explorer() noexcept
                         if (is_ctrl_down) {
                            _interaction_targets.selection.remove(
                               world::path_id_node_pair{path.id,
-                                                       static_cast<std::size_t>(i)});
+                                                       static_cast<uint32>(i)});
                         }
                         else {
                            if (not is_shift_down) {
@@ -256,7 +255,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                            _interaction_targets.selection.add(
                               world::path_id_node_pair{path.id,
-                                                       static_cast<std::size_t>(i)});
+                                                       static_cast<uint32>(i)});
                         }
                      }
                   }
@@ -266,7 +265,7 @@ void world_edit::ui_show_world_explorer() noexcept
                            _interaction_targets.selection.clear();
                         }
 
-                        for (std::size_t node = 0; node < path.nodes.size(); ++node) {
+                        for (uint32 node = 0; node < path.nodes.size(); ++node) {
                            if (is_ctrl_down) {
                               _interaction_targets.selection.remove(
                                  world::path_id_node_pair{path.id, node});
@@ -281,7 +280,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                   if (hover and path.nodes.size() != 0) {
                      _interaction_targets.hovered_entity =
-                        world::path_id_node_pair{path.id, static_cast<std::size_t>(i)};
+                        world::path_id_node_pair{path.id, static_cast<uint32>(i)};
                   }
 
                   ImGui::PopID();

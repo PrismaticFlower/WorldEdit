@@ -207,7 +207,7 @@ void world_edit::ui_show_world_selection_move() noexcept
                const auto [id, node_index] =
                   std::get<world::path_id_node_pair>(selected);
 
-               const world::path* path = world::find_entity(_world.paths, id);
+               world::path* path = world::find_entity(_world.paths, id);
 
                if (path) {
                   const world::path::node& node = path->nodes[node_index];
@@ -225,9 +225,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                   }
 
                   bundled_edits.push_back(
-                     edits::make_set_path_node_value(path->id, node_index,
-                                                     &world::path::node::position,
-                                                     new_position, node.position));
+                     edits::make_set_vector_value(&path->nodes, node_index,
+                                                  &world::path::node::position,
+                                                  new_position));
                }
             }
             else if (std::holds_alternative<world::light_id>(selected)) {
