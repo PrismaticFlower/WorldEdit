@@ -382,9 +382,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
       update_textures(_pre_render_command_list);
       build_world_mesh_list(_pre_render_command_list, world, active_layers, world_classes,
-                            interaction_targets.creation_entity
-                               ? std::get_if<world::object>(
-                                    &(*interaction_targets.creation_entity))
+                            interaction_targets.creation_entity.is<world::object>()
+                               ? &interaction_targets.creation_entity.get<world::object>()
                                : nullptr);
       update_frame_constant_buffer(camera, viewport, true, settings.line_width,
                                    _pre_render_command_list);
@@ -399,9 +398,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                     _texture_manager);
       _light_clusters
          .prepare_lights(camera, view_frustum, world,
-                         interaction_targets.creation_entity
-                            ? std::get_if<world::light>(
-                                 &interaction_targets.creation_entity.value())
+                         interaction_targets.creation_entity.is<world::light>()
+                            ? &interaction_targets.creation_entity.get<world::light>()
                             : nullptr,
                          {scene_depth_min_max.x, scene_depth_min_max.y},
                          _pre_render_command_list, _dynamic_buffer_allocator);
@@ -1162,9 +1160,8 @@ void renderer_impl::draw_world_meta_objects(
 
       for (const auto& path : world.paths) add_path(path);
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::path>(*interaction_targets.creation_entity)) {
-         add_path(std::get<world::path>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::path>()) {
+         add_path(interaction_targets.creation_entity.get<world::path>());
       }
    }
 
@@ -1238,9 +1235,8 @@ void renderer_impl::draw_world_meta_objects(
                     region_color);
       }
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::region>(*interaction_targets.creation_entity)) {
-         auto& region = std::get<world::region>(*interaction_targets.creation_entity);
+      if (interaction_targets.creation_entity.is<world::region>()) {
+         auto& region = interaction_targets.creation_entity.get<world::region>();
 
          add_region(region.rotation, region.position, region.size, region.shape,
                     region_color);
@@ -1303,9 +1299,8 @@ void renderer_impl::draw_world_meta_objects(
 
       for (auto& barrier : world.barriers) add_barrier(barrier);
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::barrier>(*interaction_targets.creation_entity)) {
-         add_barrier(std::get<world::barrier>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::barrier>()) {
+         add_barrier(interaction_targets.creation_entity.get<world::barrier>());
       }
    }
 
@@ -1414,9 +1409,8 @@ void renderer_impl::draw_world_meta_objects(
          add_light(light);
       }
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::light>(*interaction_targets.creation_entity)) {
-         add_light(std::get<world::light>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::light>()) {
+         add_light(interaction_targets.creation_entity.get<world::light>());
       }
    }
 
@@ -1465,9 +1459,8 @@ void renderer_impl::draw_world_meta_objects(
          add_sector(sector);
       }
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::sector>(*interaction_targets.creation_entity)) {
-         add_sector(std::get<world::sector>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::sector>()) {
+         add_sector(interaction_targets.creation_entity.get<world::sector>());
       }
    }
 
@@ -1503,9 +1496,8 @@ void renderer_impl::draw_world_meta_objects(
 
       for (auto& portal : world.portals) add_portal(portal);
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::portal>(*interaction_targets.creation_entity)) {
-         add_portal(std::get<world::portal>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::portal>()) {
+         add_portal(interaction_targets.creation_entity.get<world::portal>());
       }
    }
 
@@ -1537,9 +1529,8 @@ void renderer_impl::draw_world_meta_objects(
 
       for (auto& hintnode : world.hintnodes) add_hintnode(hintnode);
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::hintnode>(*interaction_targets.creation_entity)) {
-         add_hintnode(std::get<world::hintnode>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::hintnode>()) {
+         add_hintnode(interaction_targets.creation_entity.get<world::hintnode>());
       }
    }
 
@@ -1611,9 +1602,8 @@ void renderer_impl::draw_world_meta_objects(
 
       for (auto& hub : world.planning_hubs) add_hub(hub);
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::planning_hub>(*interaction_targets.creation_entity)) {
-         add_hub(std::get<world::planning_hub>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::planning_hub>()) {
+         add_hub(interaction_targets.creation_entity.get<world::planning_hub>());
       }
    }
 
@@ -1704,11 +1694,9 @@ void renderer_impl::draw_world_meta_objects(
          add_connection(connection);
       }
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::planning_connection>(
-             *interaction_targets.creation_entity)) {
-         add_connection(std::get<world::planning_connection>(
-            *interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::planning_connection>()) {
+         add_connection(
+            interaction_targets.creation_entity.get<world::planning_connection>());
       }
    }
 
@@ -1742,9 +1730,8 @@ void renderer_impl::draw_world_meta_objects(
 
       for (auto& boundary : world.boundaries) add_boundary(boundary);
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::boundary>(*interaction_targets.creation_entity)) {
-         add_boundary(std::get<world::boundary>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::boundary>()) {
+         add_boundary(interaction_targets.creation_entity.get<world::boundary>());
       }
    }
 
@@ -1800,10 +1787,8 @@ void renderer_impl::draw_world_meta_objects(
 
       for (auto& measurement : world.measurements) add_measurement(measurement);
 
-      if (interaction_targets.creation_entity and
-          std::holds_alternative<world::measurement>(*interaction_targets.creation_entity)) {
-         add_measurement(
-            std::get<world::measurement>(*interaction_targets.creation_entity));
+      if (interaction_targets.creation_entity.is<world::measurement>()) {
+         add_measurement(interaction_targets.creation_entity.get<world::measurement>());
       }
    }
 
@@ -2601,10 +2586,55 @@ void renderer_impl::draw_interaction_targets(
       }
    }
 
-   if (interaction_targets.creation_entity) {
-      std::visit([&](const auto&
-                        entity) { draw_entity(entity, settings.creation_color); },
-                 *interaction_targets.creation_entity);
+   if (interaction_targets.creation_entity.holds_entity()) {
+      if (interaction_targets.creation_entity.is<world::object>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::object>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::light>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::light>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::path>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::path>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::region>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::region>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::sector>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::sector>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::portal>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::portal>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::barrier>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::barrier>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::hintnode>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::hintnode>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::planning_hub>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::planning_hub>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::planning_connection>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::planning_connection>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::boundary>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::boundary>(),
+                     settings.creation_color);
+      }
+      else if (interaction_targets.creation_entity.is<world::measurement>()) {
+         draw_entity(interaction_targets.creation_entity.get<world::measurement>(),
+                     settings.creation_color);
+      }
    }
 }
 

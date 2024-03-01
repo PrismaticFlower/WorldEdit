@@ -22,7 +22,7 @@ void world_edit::update_ui() noexcept
       ui_show_world_selection_editor();
    }
 
-   if (_interaction_targets.creation_entity) {
+   if (_interaction_targets.creation_entity.holds_entity()) {
       ui_show_world_creation_editor();
    }
 

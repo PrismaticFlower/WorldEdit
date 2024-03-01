@@ -295,12 +295,10 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("entity_creation.place"s, [this] { place_creation_entity(); });
    _commands.add("entity_creation.cancel"s, [this] {
-      if (not _interaction_targets.creation_entity) return;
+      if (not _interaction_targets.creation_entity.holds_entity()) return;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::nullopt,
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none),
+                              _edit_context);
    });
 
    _commands.add("terrain.toggle_brush_paint"s, _terrain_editor_context.brush_held);
@@ -688,7 +686,7 @@ void world_edit::initialize_hotkeys() noexcept
       {.name = "Entity Creation",
        .description = "Hotkeys for creating new entities.\n\nThese are active while a new entity is being created. Their bindings currently only have lower priority than tool bindings. Like Point At."s,
        .activated =
-          [this] { return _interaction_targets.creation_entity.has_value(); },
+          [this] { return _interaction_targets.creation_entity.holds_entity(); },
        .default_hotkeys = {
           {"Change Rotation Mode",
            "entity_creation.cycle_rotation_mode",
@@ -737,11 +735,9 @@ void world_edit::initialize_hotkeys() noexcept
       .description = "Hotkeys for while you are creating AI planning hubs and connections."s,
       .activated =
          [this] {
-            return _interaction_targets.creation_entity and
-                   (std::holds_alternative<world::planning_hub>(
-                       *_interaction_targets.creation_entity) or
-                    std::holds_alternative<world::planning_connection>(
-                       *_interaction_targets.creation_entity));
+            return _interaction_targets.creation_entity.holds_entity() and
+                   (_interaction_targets.creation_entity.is<world::planning_hub>() or
+                    _interaction_targets.creation_entity.is<world::planning_connection>());
          },
       .default_hotkeys =
          {
@@ -755,7 +751,7 @@ void world_edit::initialize_hotkeys() noexcept
       .name = "Entity Creation (Point At)",
       .activated =
          [this] {
-            return _interaction_targets.creation_entity and
+            return _interaction_targets.creation_entity.holds_entity() and
                    _entity_creation_context.using_point_at;
          },
       .default_hotkeys =
@@ -771,7 +767,7 @@ void world_edit::initialize_hotkeys() noexcept
       .name = "Entity Creation (Resize To)",
       .activated =
          [this] {
-            return _interaction_targets.creation_entity and
+            return _interaction_targets.creation_entity.holds_entity() and
                    (_entity_creation_context.using_extend_to or
                     _entity_creation_context.using_shrink_to);
          },
@@ -790,7 +786,7 @@ void world_edit::initialize_hotkeys() noexcept
       .name = "Entity Creation (From BBOX)",
       .activated =
          [this] {
-            return _interaction_targets.creation_entity and
+            return _interaction_targets.creation_entity.holds_entity() and
                    _entity_creation_context.using_from_object_bbox;
          },
       .default_hotkeys =
@@ -810,7 +806,7 @@ void world_edit::initialize_hotkeys() noexcept
       .name = "Entity Creation (From Line)",
       .activated =
          [this] {
-            return _interaction_targets.creation_entity and
+            return _interaction_targets.creation_entity.holds_entity() and
                    _entity_creation_context.using_from_line;
          },
       .default_hotkeys =
@@ -828,7 +824,7 @@ void world_edit::initialize_hotkeys() noexcept
       .name = "Entity Creation (Draw Barrier)",
       .activated =
          [this] {
-            return _interaction_targets.creation_entity and
+            return _interaction_targets.creation_entity.holds_entity() and
                    _entity_creation_context.using_draw_barrier;
          },
       .default_hotkeys =
@@ -844,7 +840,7 @@ void world_edit::initialize_hotkeys() noexcept
       .name = "Entity Creation (Pick Sector)",
       .activated =
          [this] {
-            return _interaction_targets.creation_entity and
+            return _interaction_targets.creation_entity.holds_entity() and
                    _entity_creation_context.using_pick_sector;
          },
       .default_hotkeys =

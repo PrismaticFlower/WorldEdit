@@ -8,6 +8,26 @@
 
 namespace we::world {
 
+namespace detail {
+
+enum class active_entity {
+   none,
+   object,
+   light,
+   path,
+   region,
+   sector,
+   portal,
+   barrier,
+   hintnode,
+   planning_hub,
+   planning_connection,
+   boundary,
+   measurement,
+};
+
+}
+
 /// @brief A reference to a path node.
 struct path_id_node_pair {
    path_id id;
@@ -27,9 +47,211 @@ using hovered_entity = interaction_target;
 /// @brief Represents an entity that is currently selected.
 using selected_entity = interaction_target;
 
-using creation_entity =
-   std::variant<object, light, path, region, sector, portal, barrier, hintnode,
-                planning_hub, planning_connection, boundary, measurement>;
+struct creation_entity_none_t {};
+
+inline constexpr creation_entity_none_t creation_entity_none;
+
+/// @brief A variant class for holding the creation entity. Guarantees address stability of the held entities to in order to enable a simpler undo system.
+struct creation_entity {
+   creation_entity() = default;
+
+   creation_entity(creation_entity_none_t);
+
+   template<typename T>
+   creation_entity(const T& entity) noexcept
+   {
+      if constexpr (std::is_same_v<std::remove_cvref_t<T>, object>) {
+         new (&_storage.object) object{entity};
+         _active = detail::active_entity::object;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, light>) {
+         new (&_storage.light) light{entity};
+         _active = detail::active_entity::light;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, path>) {
+         new (&_storage.path) path{entity};
+         _active = detail::active_entity::path;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, region>) {
+         new (&_storage.region) region{entity};
+         _active = detail::active_entity::region;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, sector>) {
+         new (&_storage.sector) sector{entity};
+         _active = detail::active_entity::sector;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, portal>) {
+         new (&_storage.portal) portal{entity};
+         _active = detail::active_entity::portal;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, barrier>) {
+         new (&_storage.barrier) barrier{entity};
+         _active = detail::active_entity::barrier;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, hintnode>) {
+         new (&_storage.hintnode) hintnode{entity};
+         _active = detail::active_entity::hintnode;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_hub>) {
+         new (&_storage.planning_hub) planning_hub{entity};
+         _active = detail::active_entity::planning_hub;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection>) {
+         new (&_storage.planning_connection) planning_connection{entity};
+         _active = detail::active_entity::planning_connection;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary>) {
+         new (&_storage.boundary) boundary{entity};
+         _active = detail::active_entity::boundary;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement>) {
+         new (&_storage.measurement) measurement{entity};
+         _active = detail::active_entity::measurement;
+      }
+      else {
+         static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>,
+                       "T is not an entity type");
+      }
+   }
+
+   template<typename T>
+   creation_entity(T&& entity) noexcept
+   {
+      using entity_type = std::remove_cvref_t<T>;
+
+      if constexpr (std::is_same_v<entity_type, object>) {
+         new (&_storage.object) object{std::forward<T>(entity)};
+         _active = detail::active_entity::object;
+      }
+      else if constexpr (std::is_same_v<entity_type, light>) {
+         new (&_storage.light) light{std::forward<T>(entity)};
+         _active = detail::active_entity::light;
+      }
+      else if constexpr (std::is_same_v<entity_type, path>) {
+         new (&_storage.path) path{std::forward<T>(entity)};
+         _active = detail::active_entity::path;
+      }
+      else if constexpr (std::is_same_v<entity_type, region>) {
+         new (&_storage.region) region{std::forward<T>(entity)};
+         _active = detail::active_entity::region;
+      }
+      else if constexpr (std::is_same_v<entity_type, sector>) {
+         new (&_storage.sector) sector{std::forward<T>(entity)};
+         _active = detail::active_entity::sector;
+      }
+      else if constexpr (std::is_same_v<entity_type, portal>) {
+         new (&_storage.portal) portal{std::forward<T>(entity)};
+         _active = detail::active_entity::portal;
+      }
+      else if constexpr (std::is_same_v<entity_type, barrier>) {
+         new (&_storage.barrier) barrier{std::forward<T>(entity)};
+         _active = detail::active_entity::barrier;
+      }
+      else if constexpr (std::is_same_v<entity_type, hintnode>) {
+         new (&_storage.hintnode) hintnode{std::forward<T>(entity)};
+         _active = detail::active_entity::hintnode;
+      }
+      else if constexpr (std::is_same_v<entity_type, planning_hub>) {
+         new (&_storage.planning_hub) planning_hub{std::forward<T>(entity)};
+         _active = detail::active_entity::planning_hub;
+      }
+      else if constexpr (std::is_same_v<entity_type, planning_connection>) {
+         new (&_storage.planning_connection)
+            planning_connection{std::forward<T>(entity)};
+         _active = detail::active_entity::planning_connection;
+      }
+      else if constexpr (std::is_same_v<entity_type, boundary>) {
+         new (&_storage.boundary) boundary{std::forward<T>(entity)};
+         _active = detail::active_entity::boundary;
+      }
+      else if constexpr (std::is_same_v<entity_type, measurement>) {
+         new (&_storage.measurement) measurement{std::forward<T>(entity)};
+         _active = detail::active_entity::measurement;
+      }
+      else {
+         static_assert(not std::is_same_v<entity_type, T>,
+                       "T is not an entity type");
+      }
+   }
+
+   creation_entity(creation_entity&& other) noexcept;
+
+   auto operator=(creation_entity&& other) noexcept -> creation_entity&;
+
+   ~creation_entity();
+
+   template<typename T>
+   [[nodiscard]] bool is() const noexcept
+   {
+      // clang-format off
+
+      if constexpr (std::is_same_v<std::remove_cvref_t<T>, object>) return _active == detail::active_entity::object;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, light>) return _active == detail::active_entity::light;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, path>) return _active == detail::active_entity::path;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, region>) return _active == detail::active_entity::region;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, sector>) return _active == detail::active_entity::sector;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, portal>) return _active == detail::active_entity::portal;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, barrier>) return _active == detail::active_entity::barrier;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, hintnode>) return _active == detail::active_entity::hintnode;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_hub>) return _active == detail::active_entity::planning_hub;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection>) return _active == detail::active_entity::planning_connection;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary>) return _active == detail::active_entity::boundary;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement>) return _active == detail::active_entity::measurement;
+      else static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>, "T is not an entity type");
+
+      // clang-format on
+   }
+
+   [[nodiscard]] bool holds_entity() const noexcept
+   {
+      return _active != detail::active_entity::none;
+   }
+
+   template<typename T>
+   [[nodiscard]] auto get(this auto&& self) noexcept -> auto&
+   {
+      // clang-format off
+
+      if constexpr (std::is_same_v<std::remove_cvref_t<T>, object>) { if (self._active != detail::active_entity::object) std::terminate(); return self._storage.object; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, light>) { if (self._active != detail::active_entity::light) std::terminate(); return self._storage.light; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, path>) { if (self._active != detail::active_entity::path) std::terminate(); return self._storage.path; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, region>) { if (self._active != detail::active_entity::region) std::terminate(); return self._storage.region; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, sector>) { if (self._active != detail::active_entity::sector) std::terminate(); return self._storage.sector; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, portal>) { if (self._active != detail::active_entity::portal) std::terminate(); return self._storage.portal; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, barrier>) { if (self._active != detail::active_entity::barrier) std::terminate(); return self._storage.barrier; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, hintnode>) { if (self._active != detail::active_entity::hintnode) std::terminate(); return self._storage.hintnode; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_hub>) { if (self._active != detail::active_entity::planning_hub) std::terminate(); return self._storage.planning_hub; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection>) { if (self._active != detail::active_entity::planning_connection) std::terminate(); return self._storage.planning_connection; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary>) { if (self._active != detail::active_entity::boundary) std::terminate(); return self._storage.boundary; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement>) { if (self._active != detail::active_entity::measurement) std::terminate(); return self._storage.measurement; }
+      else static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>, "T is not an entity type");
+
+      // clang-format on
+   }
+
+private:
+   detail::active_entity _active = detail::active_entity::none;
+
+   union storage {
+      ~storage(){};
+
+      void destroy(detail::active_entity active);
+
+      char none = '\0';
+      object object;
+      light light;
+      path path;
+      region region;
+      sector sector;
+      portal portal;
+      barrier barrier;
+      hintnode hintnode;
+      planning_hub planning_hub;
+      planning_connection planning_connection;
+      boundary boundary;
+      measurement measurement;
+   } _storage;
+};
 
 /// @brief Holds a selection and ensures only each entity is present at most once.
 struct selection {
@@ -62,13 +284,13 @@ struct interaction_targets {
    std::optional<hovered_entity> hovered_entity;
    selection selection;
 
-   std::optional<creation_entity> creation_entity;
+   creation_entity creation_entity;
 };
 
 /// @brief References to data that is managed by an edit stack.
 struct edit_context {
    world& world;
-   std::optional<creation_entity>& creation_entity;
+   creation_entity& creation_entity;
    float3 euler_rotation;
    float3 light_region_euler_rotation;
 };

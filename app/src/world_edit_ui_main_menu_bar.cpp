@@ -356,10 +356,8 @@ void world_edit::ui_show_create_menu_items() noexcept
                                     .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_object),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_object)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.objects = true;
    }
@@ -382,10 +380,8 @@ void world_edit::ui_show_create_menu_items() noexcept
             world::light{.name = "", .layer = creation_layer, .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_light),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_light)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.lights = true;
    }
@@ -400,8 +396,7 @@ void world_edit::ui_show_create_menu_items() noexcept
                                                           base_path ? base_path->name : "Path 0"),
                         .layer = base_path ? base_path->layer : creation_layer,
                         .nodes = {world::path::node{}},
-                        .id = world::max_id},
-            _interaction_targets.creation_entity),
+                        .id = world::max_id}),
          _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.paths = true;
@@ -427,10 +422,8 @@ void world_edit::ui_show_create_menu_items() noexcept
                                     .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_region),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_region)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.regions = true;
    }
@@ -446,8 +439,7 @@ void world_edit::ui_show_create_menu_items() noexcept
                                                .base = 0.0f,
                                                .height = 10.0f,
                                                .points = {{0.0f, 0.0f}},
-                                               .id = world::max_id},
-                                 _interaction_targets.creation_entity),
+                                               .id = world::max_id}),
                               _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.sectors = true;
@@ -470,10 +462,8 @@ void world_edit::ui_show_create_menu_items() noexcept
          new_portal = world::portal{.name = "Portal0", .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_portal),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_portal)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.portals = true;
    }
@@ -498,10 +488,8 @@ void world_edit::ui_show_create_menu_items() noexcept
                                         .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_hintnode),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hintnode)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.hintnodes = true;
    }
@@ -523,10 +511,8 @@ void world_edit::ui_show_create_menu_items() noexcept
          new_barrier = world::barrier{.name = "Barrier0", .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_barrier),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_barrier)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.barriers = true;
    }
@@ -549,10 +535,8 @@ void world_edit::ui_show_create_menu_items() noexcept
          new_hub = world::planning_hub{.name = "Hub0", .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_hub),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hub)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.planning_hubs = true;
       _world_draw_mask.planning_connections = true;
@@ -579,10 +563,8 @@ void world_edit::ui_show_create_menu_items() noexcept
                                                      .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_connection),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_connection)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.planning_hubs = true;
       _world_draw_mask.planning_connections = true;
@@ -605,10 +587,8 @@ void world_edit::ui_show_create_menu_items() noexcept
          new_boundary = world::boundary{.name = "Boundary", .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_boundary),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_boundary)),
+                              _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.boundaries = true;
    }

@@ -99,11 +99,11 @@ TEST_CASE("edits ui_creation_edit", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 1);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 1);
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
 }
 
 TEST_CASE("edits ui_creation_edit_with_meta", "[Edits]")
@@ -123,12 +123,12 @@ TEST_CASE("edits ui_creation_edit_with_meta", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 1);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 1);
    REQUIRE(edit_context.euler_rotation == float3{1.0f, 1.0f, 1.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
@@ -146,12 +146,12 @@ TEST_CASE("edits ui_creation_path_node_edit", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{-1.0f, 0.0f, 0.0f, 0.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
 }
 
@@ -172,13 +172,13 @@ TEST_CASE("edits ui_creation_path_node_edit_with_meta", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{-1.0f, 0.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{1.0f, 1.0f, 1.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
@@ -195,12 +195,12 @@ TEST_CASE("edits ui_creation_sector_point_edit", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{-1.0f, 0.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{1.0f, 0.0f});
 }
 
@@ -331,11 +331,11 @@ TEST_CASE("edits ui_creation_edit coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 4);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 4);
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
 }
 
 TEST_CASE("edits ui_creation_edit_with_meta coalesce", "[Edits]")
@@ -365,12 +365,12 @@ TEST_CASE("edits ui_creation_edit_with_meta coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 4);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 4);
    REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
@@ -395,12 +395,12 @@ TEST_CASE("edits ui_creation_path_node_edit coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
 }
 
@@ -431,13 +431,13 @@ TEST_CASE("edits ui_creation_path_node_edit_with_meta coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
@@ -459,12 +459,12 @@ TEST_CASE("edits ui_creation_sector_point_edit coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{0.0f, 1.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{1.0f, 0.0f});
 }
 

@@ -111,11 +111,11 @@ TEST_CASE("edits set_creation_value", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 1);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 1);
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
 }
 
 TEST_CASE("edits set_creation_value_with_meta", "[Edits]")
@@ -135,12 +135,12 @@ TEST_CASE("edits set_creation_value_with_meta", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 1);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 1);
    REQUIRE(edit_context.euler_rotation == float3{1.0f, 1.0f, 1.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
@@ -161,17 +161,17 @@ TEST_CASE("edits set_creation_location", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
            float3{1.0f, 1.0f, 1.0f});
    REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
            float3{0.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
@@ -190,12 +190,12 @@ TEST_CASE("edits set_creation_path_node_value", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{-1.0f, 0.0f, 0.0f, 0.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
 }
 
@@ -217,17 +217,17 @@ TEST_CASE("edits set_creation_path_node_location", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].position ==
            float3{1.0f, 1.0f, 1.0f});
    REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].position ==
            float3{0.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
@@ -249,20 +249,20 @@ TEST_CASE("edits set_creation_region_metrics", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().position ==
            float3{1.0f, 1.0f, 1.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().size ==
            float3{2.0f, 2.0f, 2.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().position ==
            float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().size ==
            float3{0.0f, 0.0f, 0.0f});
 }
 
@@ -278,12 +278,12 @@ TEST_CASE("edits set_creation_sector_point", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{1.0f, 1.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{0.0f, 0.0f});
 }
 
@@ -299,13 +299,13 @@ TEST_CASE("edits set_creation_portal_size", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 2.0f);
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 4.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 2.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 4.0f);
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 1.0f);
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 2.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 1.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 2.0f);
 }
 
 TEST_CASE("edits set_creation_barrier_metrics", "[Edits]")
@@ -323,20 +323,20 @@ TEST_CASE("edits set_creation_barrier_metrics", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
            2.0f);
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
            float3{1.0f, 1.0f, 1.0f});
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
            float2{2.0f, 2.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
            0.0f);
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
            float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
            float2{0.0f, 0.0f});
 }
 
@@ -355,16 +355,16 @@ TEST_CASE("edits set_creation_measurement_points", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).start ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().start ==
            float3{1.0f, 1.0f, 1.0f});
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).end ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().end ==
            float3{2.0f, 2.0f, 2.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).start ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().start ==
            float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).end ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().end ==
            float3{0.5f, 0.5f, 0.5f});
 }
 
@@ -512,11 +512,11 @@ TEST_CASE("edits set_creation_value coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 2);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 2);
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
 }
 
 TEST_CASE("edits set_creation_value_with_meta coalesce", "[Edits]")
@@ -546,12 +546,12 @@ TEST_CASE("edits set_creation_value_with_meta coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 2);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 2);
    REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).layer == 0);
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
@@ -582,17 +582,17 @@ TEST_CASE("edits set_creation_location coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
            quaternion{0.0f, 0.0f, 1.0f, 0.0f});
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
            float3{2.0f, 2.0f, 2.0f});
    REQUIRE(edit_context.euler_rotation == float3{4.0f, 4.0f, 4.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::object>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
            float3{0.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
@@ -618,12 +618,12 @@ TEST_CASE("edits set_creation_path_node_value coalesce", "[Edits]")
 
    edit.apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{0.0f, 1.0f, 0.0f, 0.0f});
 
    edit.revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
 }
 
@@ -656,17 +656,17 @@ TEST_CASE("edits set_creation_path_node_location coalesce", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{0.0f, 0.0f, 1.0f, 0.0f});
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].position ==
            float3{2.0f, 2.0f, 2.0f});
    REQUIRE(edit_context.euler_rotation == float3{4.0f, 4.0f, 4.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::path>(*interaction_targets.creation_entity).nodes[0].position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::path>().nodes[0].position ==
            float3{0.0f, 0.0f, 0.0f});
    REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
@@ -699,20 +699,20 @@ TEST_CASE("edits set_creation_region_metrics coalesce", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().rotation ==
            quaternion{0.0f, 0.0f, 1.0f, 0.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().position ==
            float3{2.0f, 2.0f, 2.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().size ==
            float3{4.0f, 4.0f, 4.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).rotation ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().rotation ==
            quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().position ==
            float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::region>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::region>().size ==
            float3{0.0f, 0.0f, 0.0f});
 }
 
@@ -734,12 +734,12 @@ TEST_CASE("edits set_creation_sector_point coalesce", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{2.0f, 2.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::sector>(*interaction_targets.creation_entity).points[0] ==
+   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
            float2{0.0f, 0.0f});
 }
 
@@ -760,13 +760,13 @@ TEST_CASE("edits set_creation_portal_size coalesce", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 8.0f);
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 16.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 8.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 16.0f);
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).width == 1.0f);
-   REQUIRE(std::get<world::portal>(*interaction_targets.creation_entity).height == 2.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 1.0f);
+   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 2.0f);
 }
 
 TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
@@ -792,20 +792,20 @@ TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
            2.0f);
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
            float3{2.0f, 2.0f, 2.0f});
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
            float2{4.0f, 4.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).rotation_angle ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
            0.0f);
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).position ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
            float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::barrier>(*interaction_targets.creation_entity).size ==
+   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
            float2{0.0f, 0.0f});
 }
 
@@ -833,16 +833,16 @@ TEST_CASE("edits set_creation_measurement_points coalesce", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).start ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().start ==
            float3{3.0f, 3.0f, 3.0f});
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).end ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().end ==
            float3{4.0f, 4.0f, 4.0f});
 
    edit->revert(edit_context);
 
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).start ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().start ==
            float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(std::get<world::measurement>(*interaction_targets.creation_entity).end ==
+   REQUIRE(interaction_targets.creation_entity.get<world::measurement>().end ==
            float3{0.5f, 0.5f, 0.5f});
 }
 }

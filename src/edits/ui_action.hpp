@@ -287,12 +287,12 @@ struct ui_creation_edit final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = new_value;
    }
 
    void revert(world::edit_context& context) noexcept
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = original_value;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
@@ -340,13 +340,13 @@ struct ui_creation_edit_with_meta final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = original_value;
       context.*meta_value_member_ptr = meta_original_value;
    }
 
@@ -394,13 +394,12 @@ struct ui_creation_path_node_edit final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
-         new_value;
+      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr = new_value;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
+      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr =
          original_value;
    }
 
@@ -448,14 +447,13 @@ struct ui_creation_path_node_edit_with_meta final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
-         new_value;
+      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr = new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
+      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr =
          original_value;
       context.*meta_value_member_ptr = meta_original_value;
    }
@@ -500,12 +498,12 @@ struct ui_creation_sector_point_edit final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::sector>(*context.creation_entity).points[0] = new_value;
+      context.creation_entity.get<world::sector>().points[0] = new_value;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::sector>(*context.creation_entity).points[0] = original_value;
+      context.creation_entity.get<world::sector>().points[0] = original_value;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override

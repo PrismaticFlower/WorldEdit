@@ -259,12 +259,11 @@ void world_edit::update_hovered_entity() noexcept
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 
-   if (_interaction_targets.creation_entity) {
+   if (_interaction_targets.creation_entity.holds_entity()) {
       if (_entity_creation_context.using_from_object_bbox) {
          raycast_mask = world::active_entity_types{.objects = true, .terrain = false};
       }
-      else if (std::holds_alternative<world::planning_connection>(
-                  *_interaction_targets.creation_entity)) {
+      else if (_interaction_targets.creation_entity.is<world::planning_connection>()) {
          raycast_mask = world::active_entity_types{.objects = false,
                                                    .planning_hubs = true,
                                                    .terrain = false};
@@ -448,16 +447,16 @@ void world_edit::update_hovered_entity() noexcept
       _cursor_positionWS = ray.origin + ray.direction * hovered_entity_distance;
    }
 
-   if (_interaction_targets.creation_entity and _interaction_targets.hovered_entity) {
+   if (_interaction_targets.creation_entity.holds_entity() and
+       _interaction_targets.hovered_entity) {
       const bool from_bbox_wants_hover =
          (_entity_creation_context.using_from_object_bbox and
           std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity));
 
       const bool connection_placement_wants_hover =
-         (std::holds_alternative<world::planning_connection>(
-             *_interaction_targets.creation_entity) and
-          std::holds_alternative<world::planning_hub_id>(
-             *_interaction_targets.hovered_entity));
+         _interaction_targets.creation_entity.is<world::planning_connection>() and
+         std::holds_alternative<world::planning_hub_id>(
+            *_interaction_targets.hovered_entity);
 
       const bool pick_sector_wants_hover = _entity_creation_context.using_pick_sector;
 
@@ -480,10 +479,9 @@ void world_edit::update_object_classes() noexcept
 {
    std::array<std::span<const world::object>, 2> object_spans{_world.objects};
 
-   if (_interaction_targets.creation_entity and
-       std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
+   if (_interaction_targets.creation_entity.is<world::object>()) {
       object_spans[1] =
-         std::span{&std::get<world::object>(*_interaction_targets.creation_entity), 1};
+         std::span{&_interaction_targets.creation_entity.get<world::object>(), 1};
    }
 
    _object_classes.update(object_spans);
@@ -1258,7 +1256,7 @@ void world_edit::finish_entity_deselect() noexcept
 
 void world_edit::place_creation_entity() noexcept
 {
-   if (not _interaction_targets.creation_entity) return;
+   if (not _interaction_targets.creation_entity.holds_entity()) return;
 
    const auto report_limit_reached =
       [this]<typename... Args>(fmt::format_string<Args...> string, const Args&... args) {
@@ -1267,475 +1265,475 @@ void world_edit::place_creation_entity() noexcept
          MessageBoxA(_window, display.c_str(), "Limit Reached", MB_OK);
       };
 
-   std::visit(
-      overload{
-         [&](const world::object& object) {
-            world::object new_object = object;
+   if (_interaction_targets.creation_entity.is<world::object>()) {
+      world::object& object =
+         _interaction_targets.creation_entity.get<world::object>();
+      world::object new_object = object;
 
-            new_object.name =
-               world::create_unique_name(_world.objects, new_object.name);
-            new_object.instance_properties = world::make_object_instance_properties(
-               *_object_classes[object.class_name].definition,
-               new_object.instance_properties);
-            new_object.id = _world.next_id.objects.aquire();
+      new_object.name = world::create_unique_name(_world.objects, new_object.name);
+      new_object.instance_properties = world::make_object_instance_properties(
+         *_object_classes[object.class_name].definition, new_object.instance_properties);
+      new_object.id = _world.next_id.objects.aquire();
 
-            _last_created_entities.last_object = new_object.id;
-            _last_created_entities.last_used_object_classes.insert(new_object.class_name);
+      _last_created_entities.last_object = new_object.id;
+      _last_created_entities.last_used_object_classes.insert(new_object.class_name);
 
-            if (_world.objects.size() == _world.objects.max_size()) {
-               report_limit_reached("Max Objects ({}) Reached",
-                                    _world.objects.max_size());
+      if (_world.objects.size() == _world.objects.max_size()) {
+         report_limit_reached("Max Objects ({}) Reached", _world.objects.max_size());
 
-               return;
-            }
+         return;
+      }
 
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object)),
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object)),
+                              _edit_context);
+
+      if (not object.name.empty()) {
+         _edit_stack_world.apply(
+            edits::make_set_creation_value(&world::object::name,
+                                           world::create_unique_name(_world.objects,
+                                                                     object.name),
+                                           object.name),
+            _edit_context, {.transparent = true});
+      }
+
+      if (_entity_creation_config.command_post_auto_place_meta_entities and
+          string::iequals(_object_classes[object.class_name].definition->header.class_label,
+                          "commandpost")) {
+         command_post_auto_place_meta_entities(_world.objects.back());
+      }
+
+      if (_entity_creation_config.auto_add_object_to_sectors) {
+         add_object_to_sectors(_world.objects.back());
+      }
+
+      _last_created_entities.last_layer = object.layer;
+   }
+   else if (_interaction_targets.creation_entity.is<world::light>()) {
+      world::light& light = _interaction_targets.creation_entity.get<world::light>();
+      world::light new_light = light;
+
+      new_light.name = world::create_unique_name(_world.lights, new_light.name);
+      new_light.id = _world.next_id.lights.aquire();
+
+      if (world::is_region_light(light)) {
+         new_light.region_name =
+            world::create_unique_light_region_name(_world.lights, _world.regions,
+                                                   light.region_name.empty()
+                                                      ? light.name
+                                                      : light.region_name);
+      }
+
+      _last_created_entities.last_light = new_light.id;
+
+      if (_world.lights.size() == _world.lights.max_size()) {
+         report_limit_reached("Max Lights ({}) Reached", _world.lights.max_size());
+
+         return;
+      }
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
+                              _edit_context);
+
+      _edit_stack_world.apply(edits::make_set_creation_value(
+                                 &world::light::name,
+                                 world::create_unique_name(_world.lights, light.name),
+                                 light.name),
+                              _edit_context, {.transparent = true});
+
+      if (world::is_region_light(light)) {
+         _edit_stack_world.apply(edits::make_set_creation_value(
+                                    &world::light::region_name,
+                                    world::create_unique_light_region_name(
+                                       _world.lights, _world.regions,
+                                       light.region_name.empty() ? light.name
+                                                                 : light.region_name),
+                                    light.region_name),
+                                 _edit_context, {.transparent = true});
+      }
+
+      _last_created_entities.last_layer = light.layer;
+   }
+   else if (_interaction_targets.creation_entity.is<world::path>()) {
+      world::path& path = _interaction_targets.creation_entity.get<world::path>();
+
+      if (const world::path* existing_path =
+             world::find_entity(_world.paths, path.name);
+          existing_path) {
+         if (path.nodes.empty()) std::terminate();
+
+         if (_entity_creation_config.placement_node_insert ==
+             placement_node_insert::nearest) {
+
+            const world::clostest_node_result closest =
+               find_closest_node(path.nodes[0].position, *existing_path);
+
+            _edit_stack_world.apply(edits::make_insert_node(existing_path->id,
+                                                            closest.next_is_forward
+                                                               ? closest.index + 1
+                                                               : closest.index,
+                                                            path.nodes[0]),
                                     _edit_context);
-
-            if (not object.name.empty()) {
-               _edit_stack_world.apply(edits::make_set_creation_value(
-                                          &world::object::name,
-                                          world::create_unique_name(_world.objects,
-                                                                    object.name),
-                                          object.name),
-                                       _edit_context, {.transparent = true});
-            }
-
-            if (_entity_creation_config.command_post_auto_place_meta_entities and
-                string::iequals(_object_classes[object.class_name]
-                                   .definition->header.class_label,
-                                "commandpost")) {
-               command_post_auto_place_meta_entities(_world.objects.back());
-            }
-
-            if (_entity_creation_config.auto_add_object_to_sectors) {
-               add_object_to_sectors(_world.objects.back());
-            }
-
-            _last_created_entities.last_layer = object.layer;
-         },
-         [&](const world::light& light) {
-            world::light new_light = light;
-
-            new_light.name = world::create_unique_name(_world.lights, new_light.name);
-            new_light.id = _world.next_id.lights.aquire();
-
-            if (world::is_region_light(light)) {
-               new_light.region_name =
-                  world::create_unique_light_region_name(_world.lights, _world.regions,
-                                                         light.region_name.empty()
-                                                            ? light.name
-                                                            : light.region_name);
-            }
-
-            _last_created_entities.last_light = new_light.id;
-
-            if (_world.lights.size() == _world.lights.max_size()) {
-               report_limit_reached("Max Lights ({}) Reached",
-                                    _world.lights.max_size());
-
-               return;
-            }
-
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
+         }
+         else {
+            _edit_stack_world.apply(edits::make_insert_node(existing_path->id,
+                                                            existing_path->nodes.size(),
+                                                            path.nodes[0]),
                                     _edit_context);
+         }
+      }
+      else {
+         world::path new_path = path;
 
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::light::name,
-                                       world::create_unique_name(_world.lights,
-                                                                 light.name),
-                                       light.name),
-                                    _edit_context, {.transparent = true});
+         new_path.name = path.name;
+         new_path.id = _world.next_id.paths.aquire();
 
-            if (world::is_region_light(light)) {
-               _edit_stack_world.apply(edits::make_set_creation_value(
-                                          &world::light::region_name,
-                                          world::create_unique_light_region_name(
-                                             _world.lights, _world.regions,
-                                             light.region_name.empty() ? light.name
-                                                                       : light.region_name),
-                                          light.region_name),
-                                       _edit_context, {.transparent = true});
-            }
+         _last_created_entities.last_path;
 
-            _last_created_entities.last_layer = light.layer;
-         },
-         [&](const world::path& path) {
-            if (const world::path* existing_path =
-                   world::find_entity(_world.paths, path.name);
-                existing_path) {
-               if (path.nodes.empty()) std::terminate();
+         if (_world.paths.size() == _world.paths.max_size()) {
+            report_limit_reached("Max Paths ({}) Reached", _world.paths.max_size());
 
-               if (_entity_creation_config.placement_node_insert ==
-                   placement_node_insert::nearest) {
+            return;
+         }
 
-                  const world::clostest_node_result closest =
-                     find_closest_node(path.nodes[0].position, *existing_path);
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
+                                 _edit_context);
+      }
 
-                  _edit_stack_world.apply(edits::make_insert_node(existing_path->id,
-                                                                  closest.next_is_forward
-                                                                     ? closest.index + 1
-                                                                     : closest.index,
-                                                                  path.nodes[0]),
+      _last_created_entities.last_layer = path.layer;
+   }
+   else if (_interaction_targets.creation_entity.is<world::region>()) {
+      world::region& region =
+         _interaction_targets.creation_entity.get<world::region>();
+      world::region new_region = region;
+
+      new_region.name = world::create_unique_name(_world.regions, new_region.name);
+      new_region.id = _world.next_id.regions.aquire();
+
+      _last_created_entities.last_region = new_region.id;
+
+      if (_world.regions.size() == _world.regions.max_size()) {
+         report_limit_reached("Max Regions ({}) Reached", _world.regions.max_size());
+
+         return;
+      }
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
+                              _edit_context);
+
+      _edit_stack_world
+         .apply(edits::make_set_creation_value(&world::region::name,
+                                               world::create_unique_name(_world.regions,
+                                                                         region.name),
+                                               region.name),
+                _edit_context, {.transparent = true});
+
+      _last_created_entities.last_layer = region.layer;
+   }
+   else if (_interaction_targets.creation_entity.is<world::sector>()) {
+      world::sector& sector =
+         _interaction_targets.creation_entity.get<world::sector>();
+
+      if (sector.points.empty()) std::terminate();
+
+      if (const world::sector* existing_sector =
+             world::find_entity(_world.sectors, sector.name);
+          existing_sector and sector.points.size() == 1) {
+         _edit_stack_world
+            .apply(edits::make_insert_point(existing_sector->id,
+                                            existing_sector->points.size(),
+                                            sector.points[0]),
+                   _edit_context);
+
+         if (_entity_creation_config.auto_fill_sector) {
+            _edit_stack_world.apply(
+               edits::make_set_value(existing_sector->id, &world::sector::objects,
+                                     world::sector_fill(*existing_sector, _world.objects,
+                                                        _object_classes),
+                                     existing_sector->objects),
+               _edit_context);
+         }
+      }
+      else {
+         world::sector new_sector = sector;
+
+         new_sector.name = world::create_unique_name(_world.sectors, sector.name);
+         new_sector.id = _world.next_id.sectors.aquire();
+
+         if (_entity_creation_config.auto_fill_sector) {
+            new_sector.objects =
+               world::sector_fill(new_sector, _world.objects, _object_classes);
+         }
+
+         if (_world.sectors.size() == _world.sectors.max_size()) {
+            report_limit_reached("Max sectors ({}) Reached",
+                                 _world.sectors.max_size());
+
+            return;
+         }
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
+                                 _edit_context);
+
+         if (sector.points.size() > 1) {
+            _edit_stack_world.apply(edits::make_set_creation_value(&world::sector::points,
+                                                                   {sector.points[0]},
+                                                                   sector.points),
+                                    _edit_context,
+                                    {.closed = true, .transparent = true});
+         }
+      }
+   }
+   else if (_interaction_targets.creation_entity.is<world::portal>()) {
+      world::portal& portal =
+         _interaction_targets.creation_entity.get<world::portal>();
+      world::portal new_portal = portal;
+
+      new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
+      new_portal.id = _world.next_id.portals.aquire();
+
+      _last_created_entities.last_portal = new_portal.id;
+
+      if (_world.portals.size() == _world.portals.max_size()) {
+         report_limit_reached("Max portals ({}) Reached", _world.portals.max_size());
+
+         return;
+      }
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
+                              _edit_context);
+
+      _edit_stack_world
+         .apply(edits::make_set_creation_value(&world::portal::name,
+                                               world::create_unique_name(_world.portals,
+                                                                         portal.name),
+                                               portal.name),
+                _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::hintnode>()) {
+      world::hintnode& hintnode =
+         _interaction_targets.creation_entity.get<world::hintnode>();
+      world::hintnode new_hintnode = hintnode;
+
+      new_hintnode.name =
+         world::create_unique_name(_world.hintnodes, new_hintnode.name);
+      new_hintnode.id = _world.next_id.hintnodes.aquire();
+
+      _last_created_entities.last_hintnode = new_hintnode.id;
+
+      if (_world.hintnodes.size() == _world.hintnodes.max_size()) {
+         report_limit_reached("Max hintnodes ({}) Reached",
+                              _world.hintnodes.max_size());
+
+         return;
+      }
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
+                              _edit_context);
+
+      _edit_stack_world.apply(
+         edits::make_set_creation_value(&world::hintnode::name,
+                                        world::create_unique_name(_world.hintnodes,
+                                                                  hintnode.name),
+                                        hintnode.name),
+         _edit_context, {.transparent = true});
+
+      _last_created_entities.last_layer = hintnode.layer;
+   }
+   else if (_interaction_targets.creation_entity.is<world::barrier>()) {
+      world::barrier& barrier =
+         _interaction_targets.creation_entity.get<world::barrier>();
+      world::barrier new_barrier = barrier;
+
+      new_barrier.name = world::create_unique_name(_world.barriers, new_barrier.name);
+      new_barrier.id = _world.next_id.barriers.aquire();
+
+      _last_created_entities.last_barrier = new_barrier.id;
+
+      if (_world.barriers.size() == _world.barriers.max_size()) {
+         report_limit_reached("Max barriers ({}) Reached", _world.barriers.max_size());
+
+         return;
+      }
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
+                              _edit_context);
+
+      _edit_stack_world
+         .apply(edits::make_set_creation_value(&world::barrier::name,
+                                               world::create_unique_name(_world.barriers,
+                                                                         barrier.name),
+                                               barrier.name),
+                _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::planning_hub>()) {
+      if (_entity_creation_context.hub_sizing_started) {
+         world::planning_hub& hub =
+            _interaction_targets.creation_entity.get<world::planning_hub>();
+         world::planning_hub new_hub = hub;
+
+         new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
+         new_hub.id = _world.next_id.planning_hubs.aquire();
+
+         _last_created_entities.last_planning_hub = new_hub.id;
+
+         if (_world.planning_hubs.size() == _world.planning_hubs.max_size()) {
+            report_limit_reached("Max AI planning hubs ({}) Reached",
+                                 _world.planning_hubs.max_size());
+
+            return;
+         }
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
+                                 _edit_context);
+
+         _edit_stack_world.apply(edits::make_set_creation_value(
+                                    &world::planning_hub::name,
+                                    world::create_unique_name(_world.planning_hubs,
+                                                              hub.name),
+                                    hub.name),
+                                 _edit_context, {.transparent = true});
+
+         _entity_creation_context.hub_sizing_started = false;
+      }
+      else {
+         _entity_creation_context.hub_sizing_started = true;
+      }
+   }
+   else if (_interaction_targets.creation_entity.is<world::planning_connection>()) {
+      world::planning_connection& connection =
+         _interaction_targets.creation_entity.get<world::planning_connection>();
+
+      if (not(_interaction_targets.hovered_entity and
+              std::holds_alternative<world::planning_hub_id>(
+                 *_interaction_targets.hovered_entity))) {
+         return;
+      }
+
+      if (_entity_creation_context.connection_link_started) {
+         if (connection.start_hub_index == connection.end_hub_index) {
+            return;
+         }
+
+         for (auto& other_connection : _world.planning_connections) {
+            if ((connection.start_hub_index == other_connection.start_hub_index and
+                 connection.end_hub_index == other_connection.end_hub_index) or
+                (connection.start_hub_index == other_connection.end_hub_index and
+                 connection.end_hub_index == other_connection.start_hub_index)) {
+               if (not _world.planning_hubs.empty()) {
+                  _edit_stack_world.apply(edits::make_set_creation_value(
+                                             &world::planning_connection::start_hub_index,
+                                             uint32{0}, connection.start_hub_index),
                                           _edit_context);
+
+                  _edit_stack_world.apply(edits::make_set_creation_value(
+                                             &world::planning_connection::end_hub_index,
+                                             uint32{0}, connection.end_hub_index),
+                                          _edit_context, {.transparent = true});
                }
                else {
-                  _edit_stack_world
-                     .apply(edits::make_insert_node(existing_path->id,
-                                                    existing_path->nodes.size(),
-                                                    path.nodes[0]),
-                            _edit_context);
+                  _edit_stack_world.apply(edits::make_creation_entity_set(
+                                             world::creation_entity_none),
+                                          _edit_context);
                }
-            }
-            else {
-               world::path new_path = path;
-
-               new_path.name = path.name;
-               new_path.id = _world.next_id.paths.aquire();
-
-               _last_created_entities.last_path;
-
-               if (_world.paths.size() == _world.paths.max_size()) {
-                  report_limit_reached("Max Paths ({}) Reached",
-                                       _world.paths.max_size());
-
-                  return;
-               }
-
-               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
-                                       _edit_context);
-            }
-
-            _last_created_entities.last_layer = path.layer;
-         },
-         [&](const world::region& region) {
-            world::region new_region = region;
-
-            new_region.name =
-               world::create_unique_name(_world.regions, new_region.name);
-            new_region.id = _world.next_id.regions.aquire();
-
-            _last_created_entities.last_region = new_region.id;
-
-            if (_world.regions.size() == _world.regions.max_size()) {
-               report_limit_reached("Max Regions ({}) Reached",
-                                    _world.regions.max_size());
-
-               return;
-            }
-
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
-                                    _edit_context);
-
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::region::name,
-                                       world::create_unique_name(_world.regions,
-                                                                 region.name),
-                                       region.name),
-                                    _edit_context, {.transparent = true});
-
-            _last_created_entities.last_layer = region.layer;
-         },
-         [&](const world::sector& sector) {
-            if (sector.points.empty()) std::terminate();
-
-            if (const world::sector* existing_sector =
-                   world::find_entity(_world.sectors, sector.name);
-                existing_sector and sector.points.size() == 1) {
-               _edit_stack_world
-                  .apply(edits::make_insert_point(existing_sector->id,
-                                                  existing_sector->points.size(),
-                                                  sector.points[0]),
-                         _edit_context);
-
-               if (_entity_creation_config.auto_fill_sector) {
-                  _edit_stack_world.apply(
-                     edits::make_set_value(existing_sector->id, &world::sector::objects,
-                                           world::sector_fill(*existing_sector,
-                                                              _world.objects,
-                                                              _object_classes),
-                                           existing_sector->objects),
-                     _edit_context);
-               }
-            }
-            else {
-               world::sector new_sector = sector;
-
-               new_sector.name =
-                  world::create_unique_name(_world.sectors, sector.name);
-               new_sector.id = _world.next_id.sectors.aquire();
-
-               if (_entity_creation_config.auto_fill_sector) {
-                  new_sector.objects =
-                     world::sector_fill(new_sector, _world.objects, _object_classes);
-               }
-
-               if (_world.sectors.size() == _world.sectors.max_size()) {
-                  report_limit_reached("Max sectors ({}) Reached",
-                                       _world.sectors.max_size());
-
-                  return;
-               }
-
-               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
-                                       _edit_context);
-
-               if (sector.points.size() > 1) {
-                  _edit_stack_world
-                     .apply(edits::make_set_creation_value(&world::sector::points,
-                                                           {sector.points[0]},
-                                                           sector.points),
-                            _edit_context, {.closed = true, .transparent = true});
-               }
-            }
-         },
-         [&](const world::portal& portal) {
-            world::portal new_portal = portal;
-
-            new_portal.name =
-               world::create_unique_name(_world.portals, new_portal.name);
-            new_portal.id = _world.next_id.portals.aquire();
-
-            _last_created_entities.last_portal = new_portal.id;
-
-            if (_world.portals.size() == _world.portals.max_size()) {
-               report_limit_reached("Max portals ({}) Reached",
-                                    _world.portals.max_size());
-
-               return;
-            }
-
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
-                                    _edit_context);
-
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::portal::name,
-                                       world::create_unique_name(_world.portals,
-                                                                 portal.name),
-                                       portal.name),
-                                    _edit_context, {.transparent = true});
-         },
-         [&](const world::hintnode& hintnode) {
-            world::hintnode new_hintnode = hintnode;
-
-            new_hintnode.name =
-               world::create_unique_name(_world.hintnodes, new_hintnode.name);
-            new_hintnode.id = _world.next_id.hintnodes.aquire();
-
-            _last_created_entities.last_hintnode = new_hintnode.id;
-
-            if (_world.hintnodes.size() == _world.hintnodes.max_size()) {
-               report_limit_reached("Max hintnodes ({}) Reached",
-                                    _world.hintnodes.max_size());
-
-               return;
-            }
-
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
-                                    _edit_context);
-
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::hintnode::name,
-                                       world::create_unique_name(_world.hintnodes,
-                                                                 hintnode.name),
-                                       hintnode.name),
-                                    _edit_context, {.transparent = true});
-
-            _last_created_entities.last_layer = hintnode.layer;
-         },
-         [&](const world::barrier& barrier) {
-            world::barrier new_barrier = barrier;
-
-            new_barrier.name =
-               world::create_unique_name(_world.barriers, new_barrier.name);
-            new_barrier.id = _world.next_id.barriers.aquire();
-
-            _last_created_entities.last_barrier = new_barrier.id;
-
-            if (_world.barriers.size() == _world.barriers.max_size()) {
-               report_limit_reached("Max barriers ({}) Reached",
-                                    _world.barriers.max_size());
-
-               return;
-            }
-
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
-                                    _edit_context);
-
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::barrier::name,
-                                       world::create_unique_name(_world.barriers,
-                                                                 barrier.name),
-                                       barrier.name),
-                                    _edit_context, {.transparent = true});
-         },
-         [&](const world::planning_hub& hub) {
-            if (_entity_creation_context.hub_sizing_started) {
-               world::planning_hub new_hub = hub;
-
-               new_hub.name =
-                  world::create_unique_name(_world.planning_hubs, new_hub.name);
-               new_hub.id = _world.next_id.planning_hubs.aquire();
-
-               _last_created_entities.last_planning_hub = new_hub.id;
-
-               if (_world.planning_hubs.size() == _world.planning_hubs.max_size()) {
-                  report_limit_reached("Max AI planning hubs ({}) Reached",
-                                       _world.planning_hubs.max_size());
-
-                  return;
-               }
-
-               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
-                                       _edit_context);
-
-               _edit_stack_world.apply(edits::make_set_creation_value(
-                                          &world::planning_hub::name,
-                                          world::create_unique_name(_world.planning_hubs,
-                                                                    hub.name),
-                                          hub.name),
-                                       _edit_context, {.transparent = true});
-
-               _entity_creation_context.hub_sizing_started = false;
-            }
-            else {
-               _entity_creation_context.hub_sizing_started = true;
-            }
-         },
-         [&](const world::planning_connection& connection) {
-            if (not(_interaction_targets.hovered_entity and
-                    std::holds_alternative<world::planning_hub_id>(
-                       *_interaction_targets.hovered_entity))) {
-               return;
-            }
-
-            if (_entity_creation_context.connection_link_started) {
-               if (connection.start_hub_index == connection.end_hub_index) {
-                  return;
-               }
-
-               for (auto& other_connection : _world.planning_connections) {
-                  if ((connection.start_hub_index == other_connection.start_hub_index and
-                       connection.end_hub_index == other_connection.end_hub_index) or
-                      (connection.start_hub_index == other_connection.end_hub_index and
-                       connection.end_hub_index == other_connection.start_hub_index)) {
-                     if (not _world.planning_hubs.empty()) {
-                        _edit_stack_world.apply(edits::make_set_creation_value(
-                                                   &world::planning_connection::start_hub_index,
-                                                   uint32{0}, connection.start_hub_index),
-                                                _edit_context);
-
-                        _edit_stack_world.apply(edits::make_set_creation_value(
-                                                   &world::planning_connection::end_hub_index,
-                                                   uint32{0}, connection.end_hub_index),
-                                                _edit_context, {.transparent = true});
-                     }
-                     else {
-                        _edit_stack_world.apply(edits::make_creation_entity_set(
-                                                   std::nullopt,
-                                                   _interaction_targets.creation_entity),
-                                                _edit_context);
-                     }
-
-                     _entity_creation_context.connection_link_started = false;
-
-                     return;
-                  }
-               }
-
-               world::planning_connection new_connection = connection;
-
-               new_connection.name =
-                  world::create_unique_name(_world.planning_connections,
-                                            new_connection.name);
-               new_connection.id = _world.next_id.planning_connections.aquire();
-
-               _last_created_entities.last_planning_connection = new_connection.id;
-
-               if (_world.planning_connections.size() ==
-                   _world.planning_connections.max_size()) {
-                  report_limit_reached(
-                     "Max AI planning connections ({}) Reached",
-                     _world.planning_connections.max_size());
-
-                  return;
-               }
-
-               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
-                                       _edit_context);
-
-               _edit_stack_world.apply(edits::make_set_creation_value(
-                                          &world::planning_connection::name,
-                                          world::create_unique_name(_world.planning_connections,
-                                                                    connection.name),
-                                          connection.name),
-                                       _edit_context, {.transparent = true});
 
                _entity_creation_context.connection_link_started = false;
-            }
-            else {
-               _edit_stack_world
-                  .apply(edits::make_set_creation_value(
-                            &world::planning_connection::start_hub_index,
-                            get_hub_index(_world.planning_hubs,
-                                          std::get<world::planning_hub_id>(
-                                             *_interaction_targets.hovered_entity)),
-                            connection.start_hub_index),
-                         _edit_context);
-
-               _entity_creation_context.connection_link_started = true;
-            }
-         },
-         [&](const world::boundary& boundary) {
-            world::boundary new_boundary = boundary;
-
-            new_boundary.name =
-               world::create_unique_name(_world.boundaries, new_boundary.name);
-            new_boundary.id = _world.next_id.boundaries.aquire();
-
-            _last_created_entities.last_boundary = new_boundary.id;
-
-            if (_world.boundaries.size() == _world.boundaries.max_size()) {
-               report_limit_reached("Max boundaries ({}) Reached",
-                                    _world.boundaries.max_size());
 
                return;
             }
+         }
 
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
-                                    _edit_context);
+         world::planning_connection new_connection = connection;
 
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::boundary::name,
-                                       world::create_unique_name(_world.boundaries,
-                                                                 boundary.name),
-                                       boundary.name),
-                                    _edit_context, {.transparent = true});
-         },
-         [&](const world::measurement& measurement) {
-            if (_entity_creation_context.measurement_started) {
-               world::measurement new_measurement = measurement;
+         new_connection.name = world::create_unique_name(_world.planning_connections,
+                                                         new_connection.name);
+         new_connection.id = _world.next_id.planning_connections.aquire();
 
-               new_measurement.id = _world.next_id.measurements.aquire();
+         _last_created_entities.last_planning_connection = new_connection.id;
 
-               if (_world.measurements.size() == _world.measurements.max_size()) {
-                  report_limit_reached("Max measurements ({}) Reached",
-                                       _world.measurements.max_size());
+         if (_world.planning_connections.size() ==
+             _world.planning_connections.max_size()) {
+            report_limit_reached("Max AI planning connections ({}) Reached",
+                                 _world.planning_connections.max_size());
 
-                  return;
-               }
+            return;
+         }
 
-               _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
-                                       _edit_context);
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
+                                 _edit_context);
 
-               _entity_creation_context.measurement_started = false;
-            }
-            else {
-               _entity_creation_context.measurement_started = true;
-            }
-         },
-      },
-      *_interaction_targets.creation_entity);
+         _edit_stack_world.apply(edits::make_set_creation_value(
+                                    &world::planning_connection::name,
+                                    world::create_unique_name(_world.planning_connections,
+                                                              connection.name),
+                                    connection.name),
+                                 _edit_context, {.transparent = true});
+
+         _entity_creation_context.connection_link_started = false;
+      }
+      else {
+         _edit_stack_world.apply(edits::make_set_creation_value(
+                                    &world::planning_connection::start_hub_index,
+                                    get_hub_index(_world.planning_hubs,
+                                                  std::get<world::planning_hub_id>(
+                                                     *_interaction_targets.hovered_entity)),
+                                    connection.start_hub_index),
+                                 _edit_context);
+
+         _entity_creation_context.connection_link_started = true;
+      }
+   }
+   else if (_interaction_targets.creation_entity.is<world::boundary>()) {
+      world::boundary& boundary =
+         _interaction_targets.creation_entity.get<world::boundary>();
+      world::boundary new_boundary = boundary;
+
+      new_boundary.name =
+         world::create_unique_name(_world.boundaries, new_boundary.name);
+      new_boundary.id = _world.next_id.boundaries.aquire();
+
+      _last_created_entities.last_boundary = new_boundary.id;
+
+      if (_world.boundaries.size() == _world.boundaries.max_size()) {
+         report_limit_reached("Max boundaries ({}) Reached",
+                              _world.boundaries.max_size());
+
+         return;
+      }
+
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
+                              _edit_context);
+
+      _edit_stack_world.apply(
+         edits::make_set_creation_value(&world::boundary::name,
+                                        world::create_unique_name(_world.boundaries,
+                                                                  boundary.name),
+                                        boundary.name),
+         _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::measurement>()) {
+      if (_entity_creation_context.measurement_started) {
+         world::measurement& measurement =
+            _interaction_targets.creation_entity.get<world::measurement>();
+         world::measurement new_measurement = measurement;
+
+         new_measurement.id = _world.next_id.measurements.aquire();
+
+         if (_world.measurements.size() == _world.measurements.max_size()) {
+            report_limit_reached("Max measurements ({}) Reached",
+                                 _world.measurements.max_size());
+
+            return;
+         }
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
+                                 _edit_context);
+
+         _entity_creation_context.measurement_started = false;
+      }
+      else {
+         _entity_creation_context.measurement_started = true;
+      }
+   }
 
    _entity_creation_config.placement_mode = placement_mode::cursor;
 }
@@ -1821,8 +1819,7 @@ void world_edit::add_object_to_sectors(const world::object& object) noexcept
 
 void world_edit::cycle_creation_entity_object_class() noexcept
 {
-   if (not _interaction_targets.creation_entity or
-       not std::holds_alternative<world::object>(*_interaction_targets.creation_entity)) {
+   if (not _interaction_targets.creation_entity.is<world::object>()) {
       return;
    }
 
@@ -1836,15 +1833,13 @@ void world_edit::cycle_creation_entity_object_class() noexcept
    _edit_stack_world
       .apply(edits::make_set_creation_value(
                 &world::object::class_name, class_name,
-                std::get<world::object>(*_interaction_targets.creation_entity).class_name),
+                _interaction_targets.creation_entity.get<world::object>().class_name),
              _edit_context, {.closed = true});
 }
 
 void world_edit::toggle_planning_entity_type() noexcept
 {
-   if (not _interaction_targets.creation_entity) return;
-
-   if (std::holds_alternative<world::planning_hub>(*_interaction_targets.creation_entity) and
+   if (_interaction_targets.creation_entity.is<world::planning_hub>() and
        not _world.planning_hubs.empty()) {
       const world::planning_connection* base_connection =
          world::find_entity(_world.planning_connections,
@@ -1866,14 +1861,11 @@ void world_edit::toggle_planning_entity_type() noexcept
                                                      .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_connection),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_connection)),
+                              _edit_context);
       _entity_creation_context = {};
    }
-   else if (std::holds_alternative<world::planning_connection>(
-               *_interaction_targets.creation_entity) and
+   else if (_interaction_targets.creation_entity.is<world::planning_connection>() and
             not _world.planning_hubs.empty()) {
       const world::planning_hub* base_hub =
          world::find_entity(_world.planning_hubs,
@@ -1892,10 +1884,8 @@ void world_edit::toggle_planning_entity_type() noexcept
          new_hub = world::planning_hub{.name = "Hub0", .id = world::max_id};
       }
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_hub),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hub)),
+                              _edit_context);
       _entity_creation_context = {};
    }
 }
@@ -1904,7 +1894,7 @@ void world_edit::undo() noexcept
 {
    _edit_stack_world.revert(_edit_context);
 
-   if (_interaction_targets.creation_entity) {
+   if (_interaction_targets.creation_entity.holds_entity()) {
       _entity_creation_context = {};
 
       _cursor_placement_undo_lock =
@@ -1921,7 +1911,7 @@ void world_edit::redo() noexcept
 {
    _edit_stack_world.reapply(_edit_context);
 
-   if (_interaction_targets.creation_entity) {
+   if (_interaction_targets.creation_entity.holds_entity()) {
       _entity_creation_context = {};
 
       _cursor_placement_undo_lock =
@@ -1934,11 +1924,9 @@ void world_edit::redo() noexcept
 
 void world_edit::delete_selected() noexcept
 {
-   if (_interaction_targets.creation_entity) {
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::nullopt,
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+   if (_interaction_targets.creation_entity.holds_entity()) {
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none),
+                              _edit_context);
 
       return;
    }
@@ -2454,10 +2442,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_object.name = world::create_unique_name(_world.objects, new_object.name);
       new_object.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_object),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_object)),
+                              _edit_context);
       _world_draw_mask.objects = true;
    }
    else if (std::holds_alternative<world::light_id>(selected)) {
@@ -2471,10 +2457,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_light.name = world::create_unique_name(_world.lights, new_light.name);
       new_light.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_light),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_light)),
+                              _edit_context);
       _world_draw_mask.lights = true;
    }
    else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
@@ -2490,10 +2474,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_path.nodes = {world::path::node{}};
       new_path.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_path),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_path)),
+                              _edit_context);
       _world_draw_mask.paths = true;
    }
    else if (std::holds_alternative<world::region_id>(selected)) {
@@ -2507,10 +2489,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_region.name = world::create_unique_name(_world.regions, new_region.name);
       new_region.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_region),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_region)),
+                              _edit_context);
       _world_draw_mask.regions = true;
    }
    else if (std::holds_alternative<world::sector_id>(selected)) {
@@ -2525,10 +2505,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_sector.points = {{0.0f, 0.0f}};
       new_sector.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_sector),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_sector)),
+                              _edit_context);
       _world_draw_mask.sectors = true;
    }
    else if (std::holds_alternative<world::portal_id>(selected)) {
@@ -2542,10 +2520,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
       new_portal.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_portal),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_portal)),
+                              _edit_context);
       _world_draw_mask.portals = true;
    }
    else if (std::holds_alternative<world::hintnode_id>(selected)) {
@@ -2560,10 +2536,8 @@ void world_edit::new_entity_from_selection() noexcept
          world::create_unique_name(_world.hintnodes, new_hintnode.name);
       new_hintnode.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_hintnode),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hintnode)),
+                              _edit_context);
       _world_draw_mask.hintnodes = true;
    }
    else if (std::holds_alternative<world::barrier_id>(selected)) {
@@ -2577,10 +2551,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_barrier.name = world::create_unique_name(_world.barriers, new_barrier.name);
       new_barrier.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_barrier),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_barrier)),
+                              _edit_context);
       _world_draw_mask.barriers = true;
    }
    else if (std::holds_alternative<world::planning_hub_id>(selected)) {
@@ -2595,10 +2567,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
       new_hub.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_hub),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hub)),
+                              _edit_context);
       _world_draw_mask.planning_hubs = true;
       _world_draw_mask.planning_connections = true;
    }
@@ -2615,10 +2585,8 @@ void world_edit::new_entity_from_selection() noexcept
          world::create_unique_name(_world.planning_connections, new_connection.name);
       new_connection.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_connection),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_connection)),
+                              _edit_context);
       _world_draw_mask.planning_hubs = true;
       _world_draw_mask.planning_connections = true;
    }
@@ -2634,18 +2602,14 @@ void world_edit::new_entity_from_selection() noexcept
          world::create_unique_name(_world.boundaries, new_boundary.name);
       new_boundary.id = world::max_id;
 
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(std::move(new_boundary),
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_boundary)),
+                              _edit_context);
       _world_draw_mask.boundaries = true;
    }
    else if (std::holds_alternative<world::measurement_id>(selected)) {
       _measurement_tool_open = true;
-      _edit_stack_world
-         .apply(edits::make_creation_entity_set(world::measurement{},
-                                                _interaction_targets.creation_entity),
-                _edit_context);
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::measurement{}),
+                              _edit_context);
    }
 
    _entity_creation_context = {};

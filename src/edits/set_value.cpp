@@ -111,17 +111,15 @@ struct set_creation_path_node_location final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].rotation = new_rotation;
-      std::get<world::path>(*context.creation_entity).nodes[0].position = new_position;
+      context.creation_entity.get<world::path>().nodes[0].rotation = new_rotation;
+      context.creation_entity.get<world::path>().nodes[0].position = new_position;
       context.euler_rotation = new_euler_rotation;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].rotation =
-         original_rotation;
-      std::get<world::path>(*context.creation_entity).nodes[0].position =
-         original_position;
+      context.creation_entity.get<world::path>().nodes[0].rotation = original_rotation;
+      context.creation_entity.get<world::path>().nodes[0].position = original_position;
       context.euler_rotation = original_euler_rotation;
    }
 
@@ -167,16 +165,16 @@ struct set_creation_region_metrics final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::region>(*context.creation_entity).rotation = new_rotation;
-      std::get<world::region>(*context.creation_entity).position = new_position;
-      std::get<world::region>(*context.creation_entity).size = new_size;
+      context.creation_entity.get<world::region>().rotation = new_rotation;
+      context.creation_entity.get<world::region>().position = new_position;
+      context.creation_entity.get<world::region>().size = new_size;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::region>(*context.creation_entity).rotation = original_rotation;
-      std::get<world::region>(*context.creation_entity).position = original_position;
-      std::get<world::region>(*context.creation_entity).size = original_size;
+      context.creation_entity.get<world::region>().rotation = original_rotation;
+      context.creation_entity.get<world::region>().position = original_position;
+      context.creation_entity.get<world::region>().size = original_size;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
@@ -214,12 +212,12 @@ struct set_creation_sector_point final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::sector>(*context.creation_entity).points[0] = new_position;
+      context.creation_entity.get<world::sector>().points[0] = new_position;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::sector>(*context.creation_entity).points[0] = original_position;
+      context.creation_entity.get<world::sector>().points[0] = original_position;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
@@ -254,14 +252,14 @@ struct set_creation_portal_size final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::portal>(*context.creation_entity).width = new_width;
-      std::get<world::portal>(*context.creation_entity).height = new_height;
+      context.creation_entity.get<world::portal>().width = new_width;
+      context.creation_entity.get<world::portal>().height = new_height;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::portal>(*context.creation_entity).width = original_width;
-      std::get<world::portal>(*context.creation_entity).height = original_height;
+      context.creation_entity.get<world::portal>().width = original_width;
+      context.creation_entity.get<world::portal>().height = original_height;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
@@ -302,17 +300,16 @@ struct set_creation_barrier_metrics final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::barrier>(*context.creation_entity).rotation_angle = new_rotation;
-      std::get<world::barrier>(*context.creation_entity).position = new_position;
-      std::get<world::barrier>(*context.creation_entity).size = new_size;
+      context.creation_entity.get<world::barrier>().rotation_angle = new_rotation;
+      context.creation_entity.get<world::barrier>().position = new_position;
+      context.creation_entity.get<world::barrier>().size = new_size;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::barrier>(*context.creation_entity).rotation_angle =
-         original_rotation;
-      std::get<world::barrier>(*context.creation_entity).position = original_position;
-      std::get<world::barrier>(*context.creation_entity).size = original_size;
+      context.creation_entity.get<world::barrier>().rotation_angle = original_rotation;
+      context.creation_entity.get<world::barrier>().position = original_position;
+      context.creation_entity.get<world::barrier>().size = original_size;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
@@ -354,14 +351,14 @@ struct set_creation_measurement_points final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::measurement>(*context.creation_entity).start = new_start;
-      std::get<world::measurement>(*context.creation_entity).end = new_end;
+      context.creation_entity.get<world::measurement>().start = new_start;
+      context.creation_entity.get<world::measurement>().end = new_end;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::measurement>(*context.creation_entity).start = original_start;
-      std::get<world::measurement>(*context.creation_entity).end = original_end;
+      context.creation_entity.get<world::measurement>().start = original_start;
+      context.creation_entity.get<world::measurement>().end = original_end;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override

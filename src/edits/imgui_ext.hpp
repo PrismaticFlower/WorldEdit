@@ -782,7 +782,7 @@ inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_me
    using edit_type = ui_creation_edit<Entity, T>;
    using value_type = T;
 
-   value_type value = std::get_if<Entity>(entity)->*value_member_ptr;
+   value_type value = entity->get<Entity>().*value_member_ptr;
    value_type original_value = value;
 
    auto [valued_changed, item_deactivated] = editor(&value);
@@ -812,7 +812,7 @@ inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_me
    using value_type = T;
    using meta_value_type = U;
 
-   value_type value = std::get_if<Entity>(entity)->*value_member_ptr;
+   value_type value = entity->get<Entity>().*value_member_ptr;
    value_type original_value = value;
    meta_value_type meta_value = context->*meta_value_member_ptr;
    meta_value_type meta_original_value = meta_value;
@@ -838,7 +838,7 @@ inline bool InputText(const char* label, we::world::creation_entity* entity,
                       we::world::edit_context* context,
                       std::invocable<T*> auto edit_filter) noexcept
 {
-   const T& raw_value = std::get_if<Entity>(entity)->*value_member_ptr;
+   const T& raw_value = entity->get<Entity>().*value_member_ptr;
 
    absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
 
@@ -870,7 +870,7 @@ inline bool InputTextAutoComplete(const char* label, we::world::creation_entity*
                                   Fill fill_entries_callback) noexcept
    requires std::is_invocable_r_v<std::array<std::string_view, 6>, Fill>
 {
-   const T& raw_value = std::get_if<Entity>(entity)->*value_member_ptr;
+   const T& raw_value = entity->get<Entity>().*value_member_ptr;
 
    absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
 
@@ -1185,7 +1185,7 @@ inline bool EditWithUndoPathNode(we::world::creation_entity* entity,
    using edit_type = ui_creation_path_node_edit<T>;
    using value_type = T;
 
-   value_type value = std::get_if<we::world::path>(entity)->nodes[0].*value_member_ptr;
+   value_type value = entity->get<we::world::path>().nodes[0].*value_member_ptr;
    value_type original_value = value;
 
    auto [valued_changed, item_deactivated] = editor(&value);
@@ -1216,7 +1216,7 @@ inline bool EditWithUndoPathNode(
    using value_type = quaternion;
    using meta_value_type = float3;
 
-   value_type value = std::get_if<we::world::path>(entity)->nodes[0].*value_member_ptr;
+   value_type value = entity->get<we::world::path>().nodes[0].*value_member_ptr;
    value_type original_value = value;
    meta_value_type meta_value = context->*meta_value_member_ptr;
    meta_value_type meta_original_value = meta_value;
@@ -1294,7 +1294,7 @@ inline bool DragSectorPoint(const char* label, we::world::creation_entity* entit
 
    using edit_type = ui_creation_sector_point_edit;
 
-   float2 value = std::get_if<we::world::sector>(entity)->points[0];
+   float2 value = entity->get<we::world::sector>().points[0];
    float2 original_value = value;
 
    const bool value_changed =
