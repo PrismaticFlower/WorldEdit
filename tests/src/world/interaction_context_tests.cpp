@@ -40,6 +40,48 @@ const we::world::world test_world = {
 
 }
 
+TEST_CASE("world creation_entity", "[World]")
+{
+   creation_entity entity{barrier{.name = "Barrier"}};
+
+   CHECK(entity.holds_entity());
+   CHECK(entity.is<barrier>());
+   CHECK(entity.get<barrier>().name == "Barrier");
+
+   auto check_type = [&]<typename T>(T value) {
+      entity = value;
+
+      CHECK(entity.holds_entity());
+      CHECK(entity.is<T>());
+      CHECK(entity.get<T>() == value);
+   };
+
+   check_type(object{.name = "Object", .position = {0.0f, 1.0f, 1.0f}});
+   check_type(light{.name = "Light", .position = {0.0f, 8.0f, 1.0f}});
+   check_type(path{.name = "Path"});
+   check_type(region{.name = "Region", .size = {10.0f, 1.0f, 1.0f}});
+   check_type(sector{.name = "Sector"});
+   check_type(portal{.name = "Portal", .width = 10.0f, .height = 16.0f});
+   check_type(barrier{.name = "Barrier", .size = {15.0f, 14.0f}});
+   check_type(hintnode{.name = "Hintnode", .position = {2.0f, 2.0f, 2.0f}});
+   check_type(planning_hub{.name = "Hub", .position = {0.0f, 8.0f, 0.0f}});
+   check_type(planning_connection{.name = "Connection", .jet_jump = true});
+   check_type(boundary{.name = "Boundary", .position = {0.5f, 0.5f}});
+   check_type(measurement{.start = {0.0f, 0.5f, 0.0f}, .name = "Measurement"});
+
+   creation_entity other_entity{creation_entity_none};
+
+   CHECK(not other_entity.holds_entity());
+
+   other_entity = std::move(entity);
+
+   CHECK(not entity.holds_entity());
+
+   CHECK(other_entity.holds_entity());
+   CHECK(other_entity.is<measurement>());
+   CHECK(other_entity.get<measurement>().name == "Measurement");
+}
+
 TEST_CASE("world interaction_context is_valid", "[World][ID]")
 {
    CHECK(is_valid(object_id{0}, test_world));

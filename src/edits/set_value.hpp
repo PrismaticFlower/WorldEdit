@@ -21,12 +21,12 @@ struct set_creation_value final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = new_value;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = original_value;
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
@@ -84,13 +84,13 @@ struct set_creation_value_with_meta final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = new_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = new_value;
       context.*meta_value_member_ptr = meta_new_value;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).*value_member_ptr = original_value;
+      context.creation_entity.get<entity_type>().*value_member_ptr = original_value;
       context.*meta_value_member_ptr = meta_original_value;
    }
 
@@ -155,15 +155,15 @@ struct set_creation_location final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).rotation = new_rotation;
-      std::get<entity_type>(*context.creation_entity).position = new_position;
+      context.creation_entity.get<entity_type>().rotation = new_rotation;
+      context.creation_entity.get<entity_type>().position = new_position;
       context.euler_rotation = new_euler_rotation;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<entity_type>(*context.creation_entity).rotation = original_rotation;
-      std::get<entity_type>(*context.creation_entity).position = original_position;
+      context.creation_entity.get<entity_type>().rotation = original_rotation;
+      context.creation_entity.get<entity_type>().position = original_position;
       context.euler_rotation = original_euler_rotation;
    }
 
@@ -222,13 +222,12 @@ struct set_creation_path_node_value final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
-         new_value;
+      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr = new_value;
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::get<world::path>(*context.creation_entity).nodes[0].*value_member_ptr =
+      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr =
          original_value;
    }
 

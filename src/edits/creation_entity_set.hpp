@@ -7,8 +7,7 @@
 
 namespace we::edits {
 
-auto make_creation_entity_set(std::optional<world::creation_entity> new_creation_entity,
-                              std::optional<world::creation_entity> old_creation_entity)
+auto make_creation_entity_set(world::creation_entity new_creation_entity)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

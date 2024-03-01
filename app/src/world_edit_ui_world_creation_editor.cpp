@@ -187,7 +187,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
                    ImGuiWindowFlags_AlwaysAutoResize);
 
-   world::creation_entity& creation_entity = *_interaction_targets.creation_entity;
+   world::creation_entity& creation_entity = _interaction_targets.creation_entity;
 
    placement_traits traits{};
 
@@ -198,8 +198,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       _entity_creation_config.placement_rotation == placement_rotation::surface and
       not _cursor_placement_undo_lock;
 
-   if (std::holds_alternative<world::object>(creation_entity)) {
-      const world::object& object = std::get<world::object>(creation_entity);
+   if (creation_entity.is<world::object>()) {
+      const world::object& object = creation_entity.get<world::object>();
 
       ImGui::InputText("Name", &creation_entity, &world::object::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -390,8 +390,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       traits = {.has_cycle_object_class = true};
    }
-   else if (std::holds_alternative<world::light>(creation_entity)) {
-      const world::light& light = std::get<world::light>(creation_entity);
+   else if (creation_entity.is<world::light>()) {
+      const world::light& light = creation_entity.get<world::light>();
 
       ImGui::InputText("Name", &creation_entity, &world::light::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -622,8 +622,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       traits = {.has_placement_ground = false};
    }
-   else if (std::holds_alternative<world::path>(creation_entity)) {
-      const world::path& path = std::get<world::path>(creation_entity);
+   else if (creation_entity.is<world::path>()) {
+      const world::path& path = creation_entity.get<world::path>();
 
       const world::path* existing_path = world::find_entity(_world.paths, path.name);
 
@@ -863,8 +863,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       traits = {.has_new_path = true, .has_node_placement_insert = true};
    }
-   else if (std::holds_alternative<world::region>(creation_entity)) {
-      const world::region& region = std::get<world::region>(creation_entity);
+   else if (creation_entity.is<world::region>()) {
+      const world::region& region = creation_entity.get<world::region>();
       ImGui::InputText("Name", &creation_entity, &world::region::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
                           *edited_value =
@@ -1572,8 +1572,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       traits = {.has_resize_to = true, .has_from_bbox = true};
    }
-   else if (std::holds_alternative<world::sector>(creation_entity)) {
-      const world::sector& sector = std::get<world::sector>(creation_entity);
+   else if (creation_entity.is<world::sector>()) {
+      const world::sector& sector = creation_entity.get<world::sector>();
 
       ImGui::InputText("Name", &creation_entity, &world::sector::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -1725,8 +1725,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_placement_ground = false,
                 .has_from_bbox = true};
    }
-   else if (std::holds_alternative<world::portal>(creation_entity)) {
-      const world::portal& portal = std::get<world::portal>(creation_entity);
+   else if (creation_entity.is<world::portal>()) {
+      const world::portal& portal = creation_entity.get<world::portal>();
 
       ImGui::InputText("Name", &creation_entity, &world::portal::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -1967,8 +1967,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       traits = {.has_placement_alignment = false, .has_resize_to = true};
    }
-   else if (std::holds_alternative<world::hintnode>(creation_entity)) {
-      const world::hintnode& hintnode = std::get<world::hintnode>(creation_entity);
+   else if (creation_entity.is<world::hintnode>()) {
+      const world::hintnode& hintnode = creation_entity.get<world::hintnode>();
 
       ImGui::InputText("Name", &creation_entity, &world::hintnode::name,
                        &_edit_stack_world, &_edit_context,
@@ -2167,8 +2167,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       traits = {.has_placement_ground = false};
    }
-   else if (std::holds_alternative<world::barrier>(creation_entity)) {
-      const world::barrier& barrier = std::get<world::barrier>(creation_entity);
+   else if (creation_entity.is<world::barrier>()) {
+      const world::barrier& barrier = creation_entity.get<world::barrier>();
 
       ImGui::InputText("Name", &creation_entity, &world::barrier::name,
                        &_edit_stack_world, &_edit_context,
@@ -2568,8 +2568,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_from_line = true,
                 .has_draw_barrier = true};
    }
-   else if (std::holds_alternative<world::planning_hub>(creation_entity)) {
-      const world::planning_hub& hub = std::get<world::planning_hub>(creation_entity);
+   else if (creation_entity.is<world::planning_hub>()) {
+      const world::planning_hub& hub = creation_entity.get<world::planning_hub>();
 
       ImGui::InputText("Name", &creation_entity, &world::planning_hub::name,
                        &_edit_stack_world, &_edit_context,
@@ -2655,9 +2655,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
          .has_cycle_ai_planning = true,
       };
    }
-   else if (std::holds_alternative<world::planning_connection>(creation_entity)) {
+   else if (creation_entity.is<world::planning_connection>()) {
       const world::planning_connection& connection =
-         std::get<world::planning_connection>(creation_entity);
+         creation_entity.get<world::planning_connection>();
 
       ImGui::InputText("Name", &creation_entity,
                        &world::planning_connection::name, &_edit_stack_world,
@@ -2781,8 +2781,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_placement_ground = false,
                 .has_cycle_ai_planning = true};
    }
-   else if (std::holds_alternative<world::boundary>(creation_entity)) {
-      const world::boundary& boundary = std::get<world::boundary>(creation_entity);
+   else if (creation_entity.is<world::boundary>()) {
+      const world::boundary& boundary = creation_entity.get<world::boundary>();
 
       ImGui::InputText("Name", &creation_entity, &world::boundary::name,
                        &_edit_stack_world, &_edit_context,
@@ -2848,9 +2848,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_point_at = false,
                 .has_placement_ground = false};
    }
-   else if (std::holds_alternative<world::measurement>(creation_entity)) {
+   else if (creation_entity.is<world::measurement>()) {
       const world::measurement& measurement =
-         std::get<world::measurement>(creation_entity);
+         creation_entity.get<world::measurement>();
 
       ImGui::InputText("Name", &creation_entity, &world::measurement::name,
                        &_edit_stack_world, &_edit_context, [](std::string*) {});
@@ -3236,7 +3236,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
    }
 
    if (not continue_creation) {
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::nullopt, creation_entity),
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none),
                               _edit_context);
    }
 

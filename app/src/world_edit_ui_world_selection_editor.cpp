@@ -518,8 +518,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                           world::path{.name = path->name,
                                                       .layer = path->layer,
                                                       .nodes = {world::path::node{}},
-                                                      .id = world::max_id},
-                                          _interaction_targets.creation_entity),
+                                                      .id = world::max_id}),
                                        _edit_context);
                _entity_creation_context = {};
             }
@@ -1145,8 +1144,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                         .base = sector->base,
                                                         .height = sector->height,
                                                         .points = {float2{0.0f, 0.0f}},
-                                                        .id = world::max_id},
-                                          _interaction_targets.creation_entity),
+                                                        .id = world::max_id}),
                                        _edit_context);
                _entity_creation_context = {};
             }

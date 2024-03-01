@@ -31,103 +31,99 @@ void world_edit::ui_show_object_class_browser() noexcept
 
       ImGui::BeginChild("Classes", ImGui::GetContentRegionAvail());
 
-      _asset_libraries.odfs.view_existing(
-         [&](const std::span<const assets::stable_string> assets) noexcept {
-            for (std::string_view asset : assets) {
-               if (not _world_explorer_class_filter.empty() and
-                   not string::icontains(asset, _world_explorer_class_filter)) {
-                  continue;
-               }
-
-               if (ImGui::IsRectVisible({button_size, button_size})) {
-                  const std::optional<graphics::object_class_thumbnail> thumbnail =
-                     [&]() -> std::optional<graphics::object_class_thumbnail> {
-                     try {
-                        return _renderer->request_object_class_thumbnail(asset);
-                     }
-                     catch (graphics::gpu::exception& e) {
-                        handle_gpu_error(e);
-
-                        return std::nullopt;
-                     }
-                  }();
-
-                  if (not thumbnail) continue;
-
-                  ImGui::PushID(asset.data(), asset.data() + asset.size());
-
-                  const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
-
-                  if (ImGui::ImageButton("##add", thumbnail->imgui_texture_id,
-                                         {button_size, button_size},
-                                         {thumbnail->uv_left, thumbnail->uv_top},
-                                         {thumbnail->uv_right, thumbnail->uv_bottom})) {
-                     if (_interaction_targets.creation_entity and
-                         std::holds_alternative<world::object>(
-                            *_interaction_targets.creation_entity)) {
-                        const world::object& object = std::get<world::object>(
-                           *_interaction_targets.creation_entity);
-
-                        _edit_stack_world.apply(edits::make_set_creation_value(
-                                                   &world::object::class_name,
-                                                   lowercase_string{asset},
-                                                   object.class_name),
-                                                _edit_context);
-                     }
-                     else {
-                        _edit_stack_world.apply(
-                           edits::make_creation_entity_set(
-                              world::object{.name = "",
-                                            .layer = _last_created_entities.last_layer,
-                                            .class_name = lowercase_string{asset},
-                                            .id = world::max_id},
-                              _interaction_targets.creation_entity),
-                           _edit_context);
-                        _entity_creation_context = {};
-                     }
-                  }
-
-                  const ImVec4 label_clip{cursor_pos.x, cursor_pos.y,
-                                          cursor_pos.x + button_size,
-                                          cursor_pos.y + button_size};
-
-                  ImGui::GetWindowDrawList()
-                     ->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
-                               {cursor_pos.x + text_offset, cursor_pos.y}, text_color,
-                               asset.data(), asset.data() + asset.size(),
-                               button_size - text_offset, &label_clip);
-
-                  if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
-                     ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
-
-                     ImGui::EndTooltip();
-                  }
-
-                  if (ImGui::BeginPopupContextItem("Class Name")) {
-                     if (ImGui::MenuItem("Open .odf in Text Editor")) {
-                        open_odf_in_text_editor(lowercase_string{asset});
-                     }
-
-                     if (ImGui::MenuItem("Show .odf in Explorer")) {
-                        show_odf_in_explorer({lowercase_string{asset}});
-                     }
-
-                     ImGui::EndPopup();
-                  }
-
-                  ImGui::PopID();
-               }
-               else {
-                  ImGui::Dummy({button_size, button_size});
-               }
-
-               ImGui::SameLine();
-
-               if (ImGui::GetCursorPosX() + item_size > window_space) {
-                  ImGui::NewLine();
-               }
+      _asset_libraries.odfs.view_existing([&](const std::span<const assets::stable_string> assets) noexcept {
+         for (std::string_view asset : assets) {
+            if (not _world_explorer_class_filter.empty() and
+                not string::icontains(asset, _world_explorer_class_filter)) {
+               continue;
             }
-         });
+
+            if (ImGui::IsRectVisible({button_size, button_size})) {
+               const std::optional<graphics::object_class_thumbnail> thumbnail =
+                  [&]() -> std::optional<graphics::object_class_thumbnail> {
+                  try {
+                     return _renderer->request_object_class_thumbnail(asset);
+                  }
+                  catch (graphics::gpu::exception& e) {
+                     handle_gpu_error(e);
+
+                     return std::nullopt;
+                  }
+               }();
+
+               if (not thumbnail) continue;
+
+               ImGui::PushID(asset.data(), asset.data() + asset.size());
+
+               const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+
+               if (ImGui::ImageButton("##add", thumbnail->imgui_texture_id,
+                                      {button_size, button_size},
+                                      {thumbnail->uv_left, thumbnail->uv_top},
+                                      {thumbnail->uv_right, thumbnail->uv_bottom})) {
+                  if (_interaction_targets.creation_entity.is<world::object>()) {
+                     const world::object& object =
+                        _interaction_targets.creation_entity.get<world::object>();
+
+                     _edit_stack_world
+                        .apply(edits::make_set_creation_value(&world::object::class_name,
+                                                              lowercase_string{asset},
+                                                              object.class_name),
+                               _edit_context);
+                  }
+                  else {
+                     _edit_stack_world
+                        .apply(edits::make_creation_entity_set(
+                                  world::object{.name = "",
+                                                .layer = _last_created_entities.last_layer,
+                                                .class_name = lowercase_string{asset},
+                                                .id = world::max_id}),
+                               _edit_context);
+                     _entity_creation_context = {};
+                  }
+               }
+
+               const ImVec4 label_clip{cursor_pos.x, cursor_pos.y,
+                                       cursor_pos.x + button_size,
+                                       cursor_pos.y + button_size};
+
+               ImGui::GetWindowDrawList()
+                  ->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
+                            {cursor_pos.x + text_offset, cursor_pos.y},
+                            text_color, asset.data(), asset.data() + asset.size(),
+                            button_size - text_offset, &label_clip);
+
+               if (ImGui::IsItemHovered() and ImGui::BeginTooltip()) {
+                  ImGui::TextUnformatted(asset.data(), asset.data() + asset.size());
+
+                  ImGui::EndTooltip();
+               }
+
+               if (ImGui::BeginPopupContextItem("Class Name")) {
+                  if (ImGui::MenuItem("Open .odf in Text Editor")) {
+                     open_odf_in_text_editor(lowercase_string{asset});
+                  }
+
+                  if (ImGui::MenuItem("Show .odf in Explorer")) {
+                     show_odf_in_explorer({lowercase_string{asset}});
+                  }
+
+                  ImGui::EndPopup();
+               }
+
+               ImGui::PopID();
+            }
+            else {
+               ImGui::Dummy({button_size, button_size});
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::GetCursorPosX() + item_size > window_space) {
+               ImGui::NewLine();
+            }
+         }
+      });
 
       ImGui::EndChild();
    }
