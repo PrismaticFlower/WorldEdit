@@ -293,6 +293,15 @@ struct edit_context {
    creation_entity& creation_entity;
    float3 euler_rotation;
    float3 light_region_euler_rotation;
+
+   /// @brief Check if an address is within the edit context and won't move due to container reallocations.
+   bool is_memory_valid(const void* ptr, std::size_t size) const noexcept;
+
+   template<typename T>
+   bool is_memory_valid(const T* ptr) const noexcept
+   {
+      return is_memory_valid(ptr, sizeof(T));
+   }
 };
 
 bool is_selected(const path_id path, const selection& selection) noexcept;

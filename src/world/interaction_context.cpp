@@ -3,6 +3,30 @@
 
 namespace we::world {
 
+namespace {
+
+struct address_range {
+   template<typename T>
+   static auto object(const T& object) -> address_range
+   {
+      return {.begin = reinterpret_cast<std::uintptr_t>(&object),
+              .end = reinterpret_cast<std::uintptr_t>(&object) + sizeof(T)};
+   }
+
+   template<typename T>
+   static auto container(const T& container) -> address_range
+   {
+      return {.begin = reinterpret_cast<std::uintptr_t>(container.data()),
+              .end = reinterpret_cast<std::uintptr_t>(container.data() +
+                                                      container.size())};
+   }
+
+   std::uintptr_t begin = 0;
+   std::uintptr_t end = 0;
+};
+
+}
+
 creation_entity::creation_entity(creation_entity_none_t) {}
 
 creation_entity::creation_entity(creation_entity&& other) noexcept
@@ -143,6 +167,43 @@ bool selection::empty() const noexcept
 auto selection::size() const noexcept -> std::size_t
 {
    return _selection.size();
+}
+
+bool edit_context::is_memory_valid(const void* ptr, std::size_t size) const noexcept
+{
+   const address_range ranges[] = {
+      address_range::object(world),
+      address_range::object(creation_entity),
+      address_range::object(euler_rotation),
+      address_range::object(light_region_euler_rotation),
+
+      address_range::container(world.objects),
+      address_range::container(world.lights),
+      address_range::container(world.paths),
+      address_range::container(world.regions),
+      address_range::container(world.sectors),
+      address_range::container(world.portals),
+      address_range::container(world.hintnodes),
+      address_range::container(world.barriers),
+      address_range::container(world.planning_hubs),
+      address_range::container(world.planning_connections),
+      address_range::container(world.boundaries),
+      address_range::container(world.measurements),
+   };
+
+   std::uintptr_t memory_begin = reinterpret_cast<std::uintptr_t>(ptr);
+   std::uintptr_t memory_end = memory_begin + size;
+
+   for (const auto& [range_begin, range_end] : ranges) {
+      if (memory_begin >= range_begin and //
+          memory_begin < range_end and    //
+          memory_end > range_begin and    //
+          memory_end <= range_end) {
+         return true;
+      }
+   }
+
+   return false;
 }
 
 bool is_selected(const selected_entity entity, const selection& selection) noexcept

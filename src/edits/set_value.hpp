@@ -274,11 +274,15 @@ struct set_memory_value final : edit<world::edit_context> {
 
    void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
+      assert(context.is_memory_valid(value_ptr));
+
       std::swap(*value_ptr, value);
    }
 
    void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
+      assert(context.is_memory_valid(value_ptr));
+
       std::swap(*value_ptr, value);
    }
 
@@ -335,11 +339,15 @@ struct set_vector_value final : edit<world::edit_context> {
 
    void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
+      assert(context.is_memory_valid(vector_ptr));
+
       std::swap(*value_ptr(), value);
    }
 
    void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
+      assert(context.is_memory_valid(vector_ptr));
+
       std::swap(*value_ptr(), value);
    }
 
