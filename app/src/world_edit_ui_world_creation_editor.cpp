@@ -1927,9 +1927,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                           size.y * 2.0f);
 
          if (width != portal.width or height != portal.height) {
-            _edit_stack_world.apply(edits::make_set_creation_portal_size(width,
-                                                                         portal.width, height,
-                                                                         portal.height),
+            _edit_stack_world.apply(edits::make_set_multi_value(&portal.width, width,
+                                                                &portal.height, height),
                                     _edit_context);
          }
       }

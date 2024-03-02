@@ -113,51 +113,6 @@ struct set_creation_region_metrics final : edit<world::edit_context> {
    float3 original_size;
 };
 
-struct set_creation_portal_size final : edit<world::edit_context> {
-   set_creation_portal_size(float new_width, float original_width,
-                            float new_height, float original_height)
-      : new_width{new_width},
-        original_width{original_width},
-        new_height{new_height},
-        original_height{original_height}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::portal>().width = new_width;
-      context.creation_entity.get<world::portal>().height = new_height;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::portal>().width = original_width;
-      context.creation_entity.get<world::portal>().height = original_height;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_creation_portal_size* other =
-         dynamic_cast<const set_creation_portal_size*>(&other_unknown);
-
-      return other != nullptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_creation_portal_size& other =
-         dynamic_cast<set_creation_portal_size&>(other_unknown);
-
-      this->new_width = other.new_width;
-      this->new_height = other.new_height;
-   }
-
-   float new_width;
-   float original_width;
-   float new_height;
-   float original_height;
-};
-
 struct set_creation_measurement_points final : edit<world::edit_context> {
    set_creation_measurement_points(float3 new_start, float3 original_start,
                                    float3 new_end, float3 original_end)
@@ -229,14 +184,6 @@ auto make_set_creation_region_metrics(quaternion new_rotation,
    return std::make_unique<set_creation_region_metrics>(new_rotation, original_rotation,
                                                         new_position, original_position,
                                                         new_size, original_size);
-}
-
-auto make_set_creation_portal_size(float new_width, float original_width,
-                                   float new_height, float original_height)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_creation_portal_size>(new_width, original_width,
-                                                     new_height, original_height);
 }
 
 auto make_set_creation_measurement_points(float3 new_start, float3 original_start,

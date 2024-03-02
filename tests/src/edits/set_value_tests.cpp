@@ -213,27 +213,6 @@ TEST_CASE("edits set_creation_region_metrics", "[Edits]")
            float3{0.0f, 0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_creation_portal_size", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::portal{};
-
-   auto edit = make_set_creation_portal_size(2.0f, 1.0f, 4.0f, 2.0f);
-
-   edit->apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 2.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 4.0f);
-
-   edit->revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 1.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 2.0f);
-}
-
 TEST_CASE("edits set_creation_measurement_points", "[Edits]")
 {
    world::world world = test_world;
@@ -529,32 +508,6 @@ TEST_CASE("edits set_creation_region_metrics coalesce", "[Edits]")
            float3{0.0f, 0.0f, 0.0f});
    REQUIRE(interaction_targets.creation_entity.get<world::region>().size ==
            float3{0.0f, 0.0f, 0.0f});
-}
-
-TEST_CASE("edits set_creation_portal_size coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::portal{};
-
-   auto edit = make_set_creation_portal_size(2.0f, 1.0f, 4.0f, 2.0f);
-   auto other_edit = make_set_creation_portal_size(8.0f, 2.0f, 16.0f, 4.0f);
-
-   REQUIRE(edit->is_coalescable(*other_edit));
-
-   edit->coalesce(*other_edit);
-
-   edit->apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 8.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 16.0f);
-
-   edit->revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 1.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 2.0f);
 }
 
 TEST_CASE("edits set_creation_measurement_points coalesce", "[Edits]")
