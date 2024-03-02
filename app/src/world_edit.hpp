@@ -605,7 +605,7 @@ private:
    float3 _rotate_selection_centre = {0.0f, 0.0f, 0.0f};
    world::path_id _move_entire_path_id = {};
    world::sector_id _move_sector_point_id = {};
-   std::size_t _move_sector_point_index = 0;
+   uint32 _move_sector_point_index = 0;
    int16 _selection_set_layer = 0;
    bool _selection_cursor_move_ground_with_bbox = true;
    world::active_entity_types _selection_cursor_move_hit_mask;

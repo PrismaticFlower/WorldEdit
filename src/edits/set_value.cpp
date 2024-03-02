@@ -4,48 +4,6 @@ namespace we::edits {
 
 namespace {
 
-struct set_sector_point final : edit<world::edit_context> {
-   set_sector_point(world::sector_id id, std::size_t point_index,
-                    float2 new_value, float2 original_value)
-      : id{id}, point_index{point_index}, new_value{new_value}, original_value{original_value}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      find_entity<world::sector>(context.world, id)->points[point_index] = new_value;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      find_entity<world::sector>(context.world, id)->points[point_index] =
-         original_value;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_sector_point* other =
-         dynamic_cast<const set_sector_point*>(&other_unknown);
-
-      if (not other) return false;
-
-      return this->id == other->id and this->point_index == other->point_index;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_sector_point& other = dynamic_cast<set_sector_point&>(other_unknown);
-
-      new_value = std::move(other.new_value);
-   }
-
-   world::sector_id id;
-   std::size_t point_index;
-
-   float2 new_value;
-   const float2 original_value;
-};
-
 struct set_creation_path_node_location final : edit<world::edit_context> {
    set_creation_path_node_location(quaternion new_rotation, quaternion original_rotation,
                                    float3 new_position, float3 original_position,
@@ -335,14 +293,6 @@ struct set_creation_measurement_points final : edit<world::edit_context> {
    float3 original_end;
 };
 
-}
-
-auto make_set_sector_point(world::sector_id id, std::size_t point_index,
-                           float2 new_position, float2 original_position)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_sector_point>(id, point_index, new_position,
-                                             original_position);
 }
 
 auto make_set_creation_path_node_location(quaternion new_rotation,

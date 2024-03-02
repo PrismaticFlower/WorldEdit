@@ -17,7 +17,7 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
    if (ImGui::Begin("Move Sector Point", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
       const float3 last_move_amount = _move_selection_amount;
 
-      if (const world::sector* sector =
+      if (world::sector* sector =
              world::find_entity(_world.sectors, _move_sector_point_id);
           sector and _move_sector_point_index < sector->points.size()) {
          float2 point = sector->points[_move_sector_point_index];
@@ -33,9 +33,9 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
          if (imgui_edited or gizmo_edited) {
             const float3 move_delta = (_move_selection_amount - last_move_amount);
 
-            _edit_stack_world.apply(edits::make_set_sector_point(
-                                       sector->id, _move_sector_point_index,
-                                       point + float2{move_delta.x, move_delta.z}, point),
+            _edit_stack_world.apply(edits::make_set_vector_value(
+                                       &sector->points, _move_sector_point_index,
+                                       point + float2{move_delta.x, move_delta.z}),
                                     _edit_context);
          }
       }
