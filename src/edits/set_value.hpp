@@ -225,6 +225,157 @@ inline auto make_set_vector_value(std::vector<Value>* vector_address,
                                                            std::move(new_value));
 }
 
+template<typename T1, typename T2>
+struct set_multi_value2 final : edit<world::edit_context> {
+   set_multi_value2(T1* value1_address, T1 new_value1, T2* value2_address, T2 new_value2)
+      : value1_ptr{value1_address},
+        value2_ptr{value2_address},
+        value1{std::move(new_value1)},
+        value2{std::move(new_value2)}
+   {
+   }
+
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      assert(context.is_memory_valid(value1_ptr));
+      assert(context.is_memory_valid(value2_ptr));
+
+      std::swap(*value1_ptr, value1);
+      std::swap(*value2_ptr, value2);
+   }
+
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      assert(context.is_memory_valid(value1_ptr));
+      assert(context.is_memory_valid(value2_ptr));
+
+      std::swap(*value1_ptr, value1);
+      std::swap(*value2_ptr, value2);
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_multi_value2* other =
+         dynamic_cast<const set_multi_value2*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->value1_ptr == other->value1_ptr and
+             this->value2_ptr == other->value2_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_multi_value2& other = dynamic_cast<set_multi_value2&>(other_unknown);
+
+      value1 = std::move(other.value1);
+      value2 = std::move(other.value2);
+   }
+
+private:
+   T1* value1_ptr = nullptr;
+   T2* value2_ptr = nullptr;
+
+   T1 value1;
+   T2 value2;
+};
+
+template<typename T1, typename T2, typename T3>
+struct set_multi_value3 final : edit<world::edit_context> {
+   set_multi_value3(T1* value1_address, T1 new_value1, //
+                    T2* value2_address, T2 new_value2, //
+                    T3* value3_address, T3 new_value3)
+      : value1_ptr{value1_address},
+        value2_ptr{value2_address},
+        value3_ptr{value3_address},
+        value1{std::move(new_value1)},
+        value2{std::move(new_value2)},
+        value3{std::move(new_value3)}
+   {
+   }
+
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      assert(context.is_memory_valid(value1_ptr));
+      assert(context.is_memory_valid(value2_ptr));
+      assert(context.is_memory_valid(value3_ptr));
+
+      std::swap(*value1_ptr, value1);
+      std::swap(*value2_ptr, value2);
+      std::swap(*value3_ptr, value3);
+   }
+
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      assert(context.is_memory_valid(value1_ptr));
+      assert(context.is_memory_valid(value2_ptr));
+      assert(context.is_memory_valid(value3_ptr));
+
+      std::swap(*value1_ptr, value1);
+      std::swap(*value2_ptr, value2);
+      std::swap(*value3_ptr, value3);
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_multi_value3* other =
+         dynamic_cast<const set_multi_value3*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->value1_ptr == other->value1_ptr and
+             this->value2_ptr == other->value2_ptr and
+             this->value3_ptr == other->value3_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_multi_value3& other = dynamic_cast<set_multi_value3&>(other_unknown);
+
+      value1 = std::move(other.value1);
+      value2 = std::move(other.value2);
+      value3 = std::move(other.value3);
+   }
+
+private:
+   T1* value1_ptr = nullptr;
+   T2* value2_ptr = nullptr;
+   T3* value3_ptr = nullptr;
+
+   T1 value1;
+   T2 value2;
+   T3 value3;
+};
+
+template<typename T1, typename T2>
+inline auto make_set_multi_value(T1* value1_address, T1 new_value1,
+                                 T2* value2_address, T2 new_value2)
+   -> std::unique_ptr<set_multi_value2<T1, T2>>
+{
+   assert(value1_address and value2_address);
+
+   return std::make_unique<set_multi_value2<T1, T2>>(value1_address,
+                                                     std::move(new_value1),
+                                                     value2_address,
+                                                     std::move(new_value2));
+}
+
+template<typename T1, typename T2, typename T3>
+inline auto make_set_multi_value(T1* value1_address, T1 new_value1, //
+                                 T2* value2_address, T2 new_value2, //
+                                 T3* value3_address, T3 new_value3)
+   -> std::unique_ptr<set_multi_value3<T1, T2, T3>>
+{
+   assert(value1_address and value2_address and value3_address);
+
+   return std::make_unique<set_multi_value3<T1, T2, T3>>(value1_address,
+                                                         std::move(new_value1),
+                                                         value2_address,
+                                                         std::move(new_value2),
+                                                         value3_address,
+                                                         std::move(new_value3));
+}
+
 auto make_set_creation_path_node_location(quaternion new_rotation,
                                           quaternion original_rotation,
                                           float3 new_position, float3 original_position,
@@ -240,11 +391,6 @@ auto make_set_creation_region_metrics(quaternion new_rotation,
 
 auto make_set_creation_portal_size(float new_width, float original_width,
                                    float new_height, float original_height)
-   -> std::unique_ptr<edit<world::edit_context>>;
-
-auto make_set_creation_barrier_metrics(float new_rotation, float original_rotation,
-                                       float3 new_position, float3 original_position,
-                                       float2 new_size, float2 original_size)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 auto make_set_creation_measurement_points(float3 new_start, float3 original_start,

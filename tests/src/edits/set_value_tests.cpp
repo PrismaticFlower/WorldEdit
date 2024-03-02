@@ -63,6 +63,57 @@ TEST_CASE("edits set_vector_value alt constructor", "[Edits]")
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
 
+TEST_CASE("edits set_multi_value2", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::portal{.width = 1.0f, .height = 2.0f};
+
+   world::portal& portal = interaction_targets.creation_entity.get<world::portal>();
+
+   auto edit = make_set_multi_value(&portal.width, 2.0f, &portal.height, 4.0f);
+
+   edit->apply(edit_context);
+
+   REQUIRE(portal.width == 2.0f);
+   REQUIRE(portal.height == 4.0f);
+
+   edit->revert(edit_context);
+
+   REQUIRE(portal.width == 1.0f);
+   REQUIRE(portal.height == 2.0f);
+}
+
+TEST_CASE("edits set_multi_value3", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::barrier{.size = {0.0f, 0.0f}};
+
+   world::barrier& barrier =
+      interaction_targets.creation_entity.get<world::barrier>();
+
+   auto edit = make_set_multi_value(&barrier.rotation_angle, 2.0f,
+                                    &barrier.position, float3{1.0f, 1.0f, 1.0f},
+                                    &barrier.size, float2{2.0f, 2.0f});
+
+   edit->apply(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 2.0f);
+   REQUIRE(barrier.position == float3{1.0f, 1.0f, 1.0f});
+   REQUIRE(barrier.size == float2{2.0f, 2.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 0.0f);
+   REQUIRE(barrier.position == float3{0.0f, 0.0f, 0.0f});
+   REQUIRE(barrier.size == float2{0.0f, 0.0f});
+}
+
 TEST_CASE("edits set_creation_location", "[Edits]")
 {
    world::world world = test_world;
@@ -183,38 +234,6 @@ TEST_CASE("edits set_creation_portal_size", "[Edits]")
    REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 2.0f);
 }
 
-TEST_CASE("edits set_creation_barrier_metrics", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::barrier{};
-
-   auto edit =
-      make_set_creation_barrier_metrics(2.0f, 0.0f, float3{1.0f, 1.0f, 1.0f},
-                                        float3{0.0f, 0.0f, 0.0f},
-                                        float2{2.0f, 2.0f}, float2{0.0f, 0.0f});
-
-   edit->apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
-           2.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
-           float3{1.0f, 1.0f, 1.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
-           float2{2.0f, 2.0f});
-
-   edit->revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
-           0.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
-           float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
-           float2{0.0f, 0.0f});
-}
-
 TEST_CASE("edits set_creation_measurement_points", "[Edits]")
 {
    world::world world = test_world;
@@ -317,6 +336,70 @@ TEST_CASE("edits set_vector_value alt constructor coalesce", "[Edits]")
 
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
+
+TEST_CASE("edits set_multi_value2 coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::portal{.width = 1.0f, .height = 2.0f};
+
+   world::portal& portal = interaction_targets.creation_entity.get<world::portal>();
+
+   auto edit = make_set_multi_value(&portal.width, 2.0f, &portal.height, 4.0f);
+   auto other_edit = make_set_multi_value(&portal.width, 8.0f, &portal.height, 16.0f);
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(portal.width == 8.0f);
+   REQUIRE(portal.height == 16.0f);
+
+   edit->revert(edit_context);
+
+   REQUIRE(portal.width == 1.0f);
+   REQUIRE(portal.height == 2.0f);
+}
+
+TEST_CASE("edits set_multi_value3 coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::barrier{.size = {0.0f, 0.0f}};
+
+   world::barrier& barrier =
+      interaction_targets.creation_entity.get<world::barrier>();
+
+   auto edit = make_set_multi_value(&barrier.rotation_angle, 1.0f,
+                                    &barrier.position, float3{1.0f, 1.0f, 1.0f},
+                                    &barrier.size, float2{2.0f, 2.0f});
+   auto other_edit = make_set_multi_value(&barrier.rotation_angle, 2.0f,
+                                          &barrier.position, float3{2.0f, 2.0f, 2.0f},
+                                          &barrier.size, float2{4.0f, 4.0f});
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 2.0f);
+   REQUIRE(barrier.position == float3{2.0f, 2.0f, 2.0f});
+   REQUIRE(barrier.size == float2{4.0f, 4.0f});
+
+   edit->revert(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 0.0f);
+   REQUIRE(barrier.position == float3{0.0f, 0.0f, 0.0f});
+   REQUIRE(barrier.size == float2{0.0f, 0.0f});
+}
+
 TEST_CASE("edits set_creation_location coalesce", "[Edits]")
 {
    world::world world = test_world;
@@ -472,46 +555,6 @@ TEST_CASE("edits set_creation_portal_size coalesce", "[Edits]")
 
    REQUIRE(interaction_targets.creation_entity.get<world::portal>().width == 1.0f);
    REQUIRE(interaction_targets.creation_entity.get<world::portal>().height == 2.0f);
-}
-
-TEST_CASE("edits set_creation_barrier_metrics coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::barrier{};
-
-   auto edit =
-      make_set_creation_barrier_metrics(1.0f, 0.0f, float3{1.0f, 1.0f, 1.0f},
-                                        float3{0.0f, 0.0f, 0.0f},
-                                        float2{2.0f, 2.0f}, float2{0.0f, 0.0f});
-   auto other_edit =
-      make_set_creation_barrier_metrics(2.0f, 1.0f, float3{2.0f, 2.0f, 2.0f},
-                                        float3{0.0f, 0.0f, 0.0f},
-                                        float2{4.0f, 4.0f}, float2{0.0f, 0.0f});
-
-   REQUIRE(edit->is_coalescable(*other_edit));
-
-   edit->coalesce(*other_edit);
-
-   edit->apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
-           2.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
-           float3{2.0f, 2.0f, 2.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
-           float2{4.0f, 4.0f});
-
-   edit->revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().rotation_angle ==
-           0.0f);
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().position ==
-           float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::barrier>().size ==
-           float2{0.0f, 0.0f});
 }
 
 TEST_CASE("edits set_creation_measurement_points coalesce", "[Edits]")

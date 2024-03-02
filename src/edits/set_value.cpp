@@ -158,60 +158,6 @@ struct set_creation_portal_size final : edit<world::edit_context> {
    float original_height;
 };
 
-struct set_creation_barrier_metrics final : edit<world::edit_context> {
-   set_creation_barrier_metrics(float new_rotation, float original_rotation,
-                                float3 new_position, float3 original_position,
-                                float2 new_size, float2 original_size)
-      : new_rotation{new_rotation},
-        new_position{new_position},
-        new_size{new_size},
-        original_rotation{original_rotation},
-        original_position{original_position},
-        original_size{original_size}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::barrier>().rotation_angle = new_rotation;
-      context.creation_entity.get<world::barrier>().position = new_position;
-      context.creation_entity.get<world::barrier>().size = new_size;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::barrier>().rotation_angle = original_rotation;
-      context.creation_entity.get<world::barrier>().position = original_position;
-      context.creation_entity.get<world::barrier>().size = original_size;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_creation_barrier_metrics* other =
-         dynamic_cast<const set_creation_barrier_metrics*>(&other_unknown);
-
-      return other != nullptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_creation_barrier_metrics& other =
-         dynamic_cast<set_creation_barrier_metrics&>(other_unknown);
-
-      new_rotation = other.new_rotation;
-      new_position = other.new_position;
-      new_size = other.new_size;
-   }
-
-   float new_rotation;
-   float3 new_position;
-   float2 new_size;
-
-   float original_rotation;
-   float3 original_position;
-   float2 original_size;
-};
-
 struct set_creation_measurement_points final : edit<world::edit_context> {
    set_creation_measurement_points(float3 new_start, float3 original_start,
                                    float3 new_end, float3 original_end)
@@ -291,16 +237,6 @@ auto make_set_creation_portal_size(float new_width, float original_width,
 {
    return std::make_unique<set_creation_portal_size>(new_width, original_width,
                                                      new_height, original_height);
-}
-
-auto make_set_creation_barrier_metrics(float new_rotation, float original_rotation,
-                                       float3 new_position, float3 original_position,
-                                       float2 new_size, float2 original_size)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_creation_barrier_metrics>(new_rotation, original_rotation,
-                                                         new_position, original_position,
-                                                         new_size, original_size);
 }
 
 auto make_set_creation_measurement_points(float3 new_start, float3 original_start,

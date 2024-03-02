@@ -2204,10 +2204,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_position != barrier.position or new_rotation != barrier.rotation_angle) {
-            _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
-                                       new_rotation, barrier.rotation_angle,
-                                       new_position, barrier.position,
-                                       barrier.size, barrier.size),
+            _edit_stack_world.apply(edits::make_set_multi_value(&barrier.rotation_angle,
+                                                                new_rotation,
+                                                                &barrier.position,
+                                                                new_position),
                                     _edit_context, {.transparent = true});
          }
       }
@@ -2325,10 +2325,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (barrier_new_position != barrier_start_position or
              barrier_new_size != barrier_start_size) {
-            _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
-                                       barrier.rotation_angle, barrier.rotation_angle,
-                                       barrier_new_position, barrier_start_position,
-                                       barrier_new_size, barrier_start_size),
+            _edit_stack_world.apply(edits::make_set_multi_value(&barrier.position,
+                                                                barrier_new_position,
+                                                                &barrier.size,
+                                                                barrier_new_size),
                                     _edit_context);
          }
       }
@@ -2370,11 +2370,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float rotation_angle =
                std::atan2(corners[1].z - corners[0].z, corners[1].x - corners[0].x);
 
-            _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
-                                       rotation_angle, barrier.rotation_angle,
-                                       position, barrier.position,
-                                       float2{size.x, size.z}, barrier.size),
-                                    _edit_context);
+            _edit_stack_world
+               .apply(edits::make_set_multi_value(&barrier.rotation_angle,
+                                                  rotation_angle, &barrier.position,
+                                                  position, &barrier.size,
+                                                  float2{size.x, size.z}),
+                      _edit_context);
          }
       }
 
@@ -2402,11 +2403,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float rotation_angle =
                std::atan2(start.x - end.x, start.z - end.z);
 
-            _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
-                                       rotation_angle, barrier.rotation_angle,
-                                       position, barrier.position,
-                                       float2{barrier.size.x, height}, barrier.size),
-                                    _edit_context);
+            _edit_stack_world
+               .apply(edits::make_set_multi_value(&barrier.rotation_angle,
+                                                  rotation_angle, &barrier.position,
+                                                  position, &barrier.size,
+                                                  float2{barrier.size.x, height}),
+                      _edit_context);
 
             if (std::exchange(_entity_creation_context.from_line_click, false)) {
                place_creation_entity();
@@ -2510,9 +2512,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             const float2 size = abs(barrier_max - barrier_min) / 2.0f;
 
-            _edit_stack_world.apply(edits::make_set_creation_barrier_metrics(
-                                       rotation_angle, barrier.rotation_angle, position,
-                                       barrier.position, size, barrier.size),
+            _edit_stack_world.apply(edits::make_set_multi_value(&barrier.rotation_angle,
+                                                                rotation_angle,
+                                                                &barrier.position, position,
+                                                                &barrier.size, size),
                                     _edit_context);
          }
          else if (_entity_creation_context.draw_barrier_start) {
