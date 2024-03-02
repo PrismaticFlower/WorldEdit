@@ -63,25 +63,6 @@ TEST_CASE("edits set_vector_value alt constructor", "[Edits]")
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_instance_property_value", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   auto edit =
-      make_set_instance_property_value(world.objects[0].id, 0, "10",
-                                       world.objects[0].instance_properties[0].value);
-
-   edit->apply(edit_context);
-
-   REQUIRE(world.objects[0].instance_properties[0].value == "10");
-
-   edit->revert(edit_context);
-
-   REQUIRE(world.objects[0].instance_properties[0].value == "50000");
-}
-
 TEST_CASE("edits set_sector_point", "[Edits]")
 {
    world::world world = test_world;
@@ -374,34 +355,6 @@ TEST_CASE("edits set_vector_value alt constructor coalesce", "[Edits]")
    edit->revert(edit_context);
 
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
-}
-
-TEST_CASE("edits set_instance_property_value coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::object{};
-
-   auto edit =
-      make_set_instance_property_value(world.objects[0].id, 0, "10",
-                                       world.objects[0].instance_properties[0].value);
-   auto other_edit =
-      make_set_instance_property_value(world.objects[0].id, 0, "20",
-                                       world.objects[0].instance_properties[0].value);
-
-   REQUIRE(edit->is_coalescable(*other_edit));
-
-   edit->coalesce(*other_edit);
-
-   edit->apply(edit_context);
-
-   REQUIRE(world.objects[0].instance_properties[0].value == "20");
-
-   edit->revert(edit_context);
-
-   REQUIRE(world.objects[0].instance_properties[0].value == "50000");
 }
 
 TEST_CASE("edits set_sector_point coalesce", "[Edits]")

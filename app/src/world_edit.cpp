@@ -1725,7 +1725,7 @@ void world_edit::place_creation_entity() noexcept
    _entity_creation_config.placement_mode = placement_mode::cursor;
 }
 
-void world_edit::command_post_auto_place_meta_entities(const world::object& object) noexcept
+void world_edit::command_post_auto_place_meta_entities(world::object& object) noexcept
 {
    world::command_post_linked_entities command_post_linked_entities =
       world::make_command_post_linked_entities(
@@ -1739,30 +1739,31 @@ void world_edit::command_post_auto_place_meta_entities(const world::object& obje
          _world.objects, _world.paths, _world.regions, _object_classes,
          _world.terrain);
 
-   for (std::size_t i = 0; i < object.instance_properties.size(); ++i) {
-      const auto& [key, value] = object.instance_properties[i];
+   for (uint32 i = 0; i < object.instance_properties.size(); ++i) {
+      const std::string_view key = object.instance_properties[i].key;
+
       if (string::iequals(key, "CaptureRegion")) {
-         _edit_stack_world.apply(edits::make_set_instance_property_value(
-                                    object.id, i,
-                                    command_post_linked_entities.capture_region.description,
-                                    value),
+         _edit_stack_world.apply(edits::make_set_vector_value(
+                                    &object.instance_properties, i,
+                                    &world::instance_property::value,
+                                    command_post_linked_entities.capture_region.description),
                                  _edit_context,
                                  {.closed = true, .transparent = true});
       }
       else if (string::iequals(key, "ControlRegion")) {
-         _edit_stack_world.apply(edits::make_set_instance_property_value(
-                                    object.id, i,
-                                    command_post_linked_entities.control_region.description,
-                                    value),
+         _edit_stack_world.apply(edits::make_set_vector_value(
+                                    &object.instance_properties, i,
+                                    &world::instance_property::value,
+                                    command_post_linked_entities.control_region.description),
                                  _edit_context,
                                  {.closed = true, .transparent = true});
       }
       else if (string::iequals(key, "SpawnPath")) {
-         _edit_stack_world.apply(edits::make_set_instance_property_value(
-                                    object.id, i,
-                                    command_post_linked_entities.spawn_path.name, value),
-                                 _edit_context,
-                                 {.closed = true, .transparent = true});
+         _edit_stack_world.apply(
+            edits::make_set_vector_value(&object.instance_properties, i,
+                                         &world::instance_property::value,
+                                         command_post_linked_entities.spawn_path.name),
+            _edit_context, {.closed = true, .transparent = true});
       }
    }
 

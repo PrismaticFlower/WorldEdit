@@ -4,55 +4,6 @@ namespace we::edits {
 
 namespace {
 
-struct set_instance_property_value final : edit<world::edit_context> {
-   set_instance_property_value(world::object_id id, std::size_t property_index,
-                               std::string new_value, std::string original_value)
-      : id{id},
-        property_index{property_index},
-        new_value{std::move(new_value)},
-        original_value{std::move(original_value)}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      find_entity<world::object>(context.world, id)
-         ->instance_properties[property_index]
-         .value = new_value;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      find_entity<world::object>(context.world, id)
-         ->instance_properties[property_index]
-         .value = original_value;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_instance_property_value* other =
-         dynamic_cast<const set_instance_property_value*>(&other_unknown);
-
-      if (not other) return false;
-
-      return this->id == other->id and this->property_index == other->property_index;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_instance_property_value& other =
-         dynamic_cast<set_instance_property_value&>(other_unknown);
-
-      new_value = std::move(other.new_value);
-   }
-
-   world::object_id id;
-   std::size_t property_index;
-
-   std::string new_value;
-   const std::string original_value;
-};
-
 struct set_sector_point final : edit<world::edit_context> {
    set_sector_point(world::sector_id id, std::size_t point_index,
                     float2 new_value, float2 original_value)
@@ -384,15 +335,6 @@ struct set_creation_measurement_points final : edit<world::edit_context> {
    float3 original_end;
 };
 
-}
-
-auto make_set_instance_property_value(world::object_id id, std::size_t property_index,
-                                      std::string new_value, std::string original_value)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_instance_property_value>(id, property_index,
-                                                        std::move(new_value),
-                                                        std::move(original_value));
 }
 
 auto make_set_sector_point(world::sector_id id, std::size_t point_index,

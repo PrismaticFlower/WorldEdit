@@ -225,10 +225,6 @@ inline auto make_set_vector_value(std::vector<Value>* vector_address,
                                                            std::move(new_value));
 }
 
-auto make_set_instance_property_value(world::object_id id, std::size_t property_index,
-                                      std::string new_value, std::string original_value)
-   -> std::unique_ptr<edit<world::edit_context>>;
-
 auto make_set_sector_point(world::sector_id id, std::size_t point_index,
                            float2 new_position, float2 original_position)
    -> std::unique_ptr<edit<world::edit_context>>;
