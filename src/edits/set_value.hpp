@@ -238,9 +238,6 @@ auto make_set_creation_region_metrics(quaternion new_rotation,
                                       float3 new_size, float3 original_size)
    -> std::unique_ptr<edit<world::edit_context>>;
 
-auto make_set_creation_sector_point(float2 new_position, float2 original_position)
-   -> std::unique_ptr<edit<world::edit_context>>;
-
 auto make_set_creation_portal_size(float new_width, float original_width,
                                    float new_height, float original_height)
    -> std::unique_ptr<edit<world::edit_context>>;

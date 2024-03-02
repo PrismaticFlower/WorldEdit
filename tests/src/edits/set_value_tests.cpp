@@ -162,27 +162,6 @@ TEST_CASE("edits set_creation_region_metrics", "[Edits]")
            float3{0.0f, 0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_creation_sector_point", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::sector{.points = {{0.0f, 0.0f}}};
-
-   auto edit = make_set_creation_sector_point(float2{1.0f, 1.0f}, float2{0.0f, 0.0f});
-
-   edit->apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
-           float2{1.0f, 1.0f});
-
-   edit->revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
-           float2{0.0f, 0.0f});
-}
-
 TEST_CASE("edits set_creation_portal_size", "[Edits]")
 {
    world::world world = test_world;
@@ -467,33 +446,6 @@ TEST_CASE("edits set_creation_region_metrics coalesce", "[Edits]")
            float3{0.0f, 0.0f, 0.0f});
    REQUIRE(interaction_targets.creation_entity.get<world::region>().size ==
            float3{0.0f, 0.0f, 0.0f});
-}
-
-TEST_CASE("edits set_creation_sector_point coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::sector{.points = {{0.0f, 0.0f}}};
-
-   auto edit = make_set_creation_sector_point(float2{1.0f, 1.0f}, float2{0.0f, 0.0f});
-   auto other_edit =
-      make_set_creation_sector_point(float2{2.0f, 2.0f}, float2{0.0f, 0.0f});
-
-   REQUIRE(edit->is_coalescable(*other_edit));
-
-   edit->coalesce(*other_edit);
-
-   edit->apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
-           float2{2.0f, 2.0f});
-
-   edit->revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::sector>().points[0] ==
-           float2{0.0f, 0.0f});
 }
 
 TEST_CASE("edits set_creation_portal_size coalesce", "[Edits]")

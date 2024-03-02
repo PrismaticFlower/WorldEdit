@@ -113,42 +113,6 @@ struct set_creation_region_metrics final : edit<world::edit_context> {
    float3 original_size;
 };
 
-struct set_creation_sector_point final : edit<world::edit_context> {
-   set_creation_sector_point(float2 new_position, float2 original_position)
-      : new_position{new_position}, original_position{original_position}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::sector>().points[0] = new_position;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::sector>().points[0] = original_position;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_creation_sector_point* other =
-         dynamic_cast<const set_creation_sector_point*>(&other_unknown);
-
-      return other != nullptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_creation_sector_point& other =
-         dynamic_cast<set_creation_sector_point&>(other_unknown);
-
-      new_position = other.new_position;
-   }
-
-   float2 new_position;
-   float2 original_position;
-};
-
 struct set_creation_portal_size final : edit<world::edit_context> {
    set_creation_portal_size(float new_width, float original_width,
                             float new_height, float original_height)
@@ -319,12 +283,6 @@ auto make_set_creation_region_metrics(quaternion new_rotation,
    return std::make_unique<set_creation_region_metrics>(new_rotation, original_rotation,
                                                         new_position, original_position,
                                                         new_size, original_size);
-}
-
-auto make_set_creation_sector_point(float2 new_position, float2 original_position)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_creation_sector_point>(new_position, original_position);
 }
 
 auto make_set_creation_portal_size(float new_width, float original_width,

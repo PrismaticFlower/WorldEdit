@@ -1605,8 +1605,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_position != sector.points[0]) {
-            _edit_stack_world.apply(edits::make_set_creation_sector_point(new_position,
-                                                                          sector.points[0]),
+            _edit_stack_world.apply(edits::make_set_vector_value(&sector.points,
+                                                                 0, new_position),
                                     _edit_context, {.transparent = true});
          }
       }
