@@ -100,25 +100,6 @@ TEST_CASE("edits set_sector_point", "[Edits]")
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_creation_value", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::object{};
-
-   set_creation_value edit{&world::object::layer, int16{1}, int16{0}};
-
-   edit.apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 1);
-
-   edit.revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
-}
-
 TEST_CASE("edits set_creation_value_with_meta", "[Edits]")
 {
    world::world world = test_world;
@@ -497,30 +478,6 @@ TEST_CASE("edits set_sector_point coalesce", "[Edits]")
    edit->revert(edit_context);
 
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
-}
-
-TEST_CASE("edits set_creation_value coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::object{};
-
-   set_creation_value edit{&world::object::layer, int16{1}, int16{0}};
-   set_creation_value other_edit{&world::object::layer, int16{2}, int16{0}};
-
-   REQUIRE(edit.is_coalescable(other_edit));
-
-   edit.coalesce(other_edit);
-
-   edit.apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 2);
-
-   edit.revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
 }
 
 TEST_CASE("edits set_creation_value_with_meta coalesce", "[Edits]")

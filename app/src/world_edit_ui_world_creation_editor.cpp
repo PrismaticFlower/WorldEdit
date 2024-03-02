@@ -199,7 +199,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       not _cursor_placement_undo_lock;
 
    if (creation_entity.is<world::object>()) {
-      const world::object& object = creation_entity.get<world::object>();
+      world::object& object = creation_entity.get<world::object>();
 
       ImGui::InputText("Name", &creation_entity, &world::object::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -375,9 +375,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             look_at_quat(_cursor_positionWS, object.position);
 
          if (new_rotation != object.rotation) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::object::rotation,
-                                                                   new_rotation,
-                                                                   object.rotation),
+            _edit_stack_world.apply(edits::make_set_value(&object.rotation, new_rotation),
                                     _edit_context);
          }
       }
@@ -391,7 +389,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {.has_cycle_object_class = true};
    }
    else if (creation_entity.is<world::light>()) {
-      const world::light& light = creation_entity.get<world::light>();
+      world::light& light = creation_entity.get<world::light>();
 
       ImGui::InputText("Name", &creation_entity, &world::light::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -504,9 +502,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             look_at_quat(_cursor_positionWS, light.position);
 
          if (new_rotation != light.rotation) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::light::rotation,
-                                                                   new_rotation,
-                                                                   light.rotation),
+            _edit_stack_world.apply(edits::make_set_value(&light.rotation, new_rotation),
                                     _edit_context);
          }
       }
@@ -623,7 +619,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {.has_placement_ground = false};
    }
    else if (creation_entity.is<world::path>()) {
-      const world::path& path = creation_entity.get<world::path>();
+      world::path& path = creation_entity.get<world::path>();
 
       const world::path* existing_path = world::find_entity(_world.paths, path.name);
 
@@ -849,11 +845,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
       if (ImGui::Button("New Path", {ImGui::CalcItemWidth(), 0.0f}) or
           std::exchange(_entity_creation_context.finish_current_path, false)) {
 
-         _edit_stack_world.apply(edits::make_set_creation_value(
-                                    &world::path::name,
-                                    world::create_unique_name(_world.paths, path.name),
-                                    path.name),
-                                 _edit_context);
+         _edit_stack_world
+            .apply(edits::make_set_value(&path.name,
+                                         world::create_unique_name(_world.paths,
+                                                                   path.name)),
+                   _edit_context);
       }
 
       if (ImGui::IsItemHovered()) {
@@ -864,7 +860,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {.has_new_path = true, .has_node_placement_insert = true};
    }
    else if (creation_entity.is<world::region>()) {
-      const world::region& region = creation_entity.get<world::region>();
+      world::region& region = creation_entity.get<world::region>();
+
       ImGui::InputText("Name", &creation_entity, &world::region::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
                           *edited_value =
@@ -902,9 +899,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                    world::region_type::colorgrading},
              })) {
          if (region_type != start_region_type) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::region::description,
-                                                                   to_string(region_type),
-                                                                   region.description),
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          to_string(region_type)),
                                     _edit_context);
 
             const world::region_allowed_shapes allowed_shapes =
@@ -912,19 +908,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (allowed_shapes == world::region_allowed_shapes::sphere and
                 region.shape != world::region_shape::sphere) {
-               _edit_stack_world
-                  .apply(edits::make_set_creation_value(&world::region::shape,
-                                                        world::region_shape::sphere,
-                                                        region.shape),
-                         _edit_context, {.closed = true, .transparent = true});
+               _edit_stack_world.apply(edits::make_set_value(&region.shape,
+                                                             world::region_shape::sphere),
+                                       _edit_context,
+                                       {.closed = true, .transparent = true});
             }
             else if (allowed_shapes == world::region_allowed_shapes::box_cylinder and
                      region.shape == world::region_shape::sphere) {
-               _edit_stack_world
-                  .apply(edits::make_set_creation_value(&world::region::shape,
-                                                        world::region_shape::box,
-                                                        region.shape),
-                         _edit_context, {.closed = true, .transparent = true});
+               _edit_stack_world.apply(edits::make_set_value(&region.shape,
+                                                             world::region_shape::box),
+                                       _edit_context,
+                                       {.closed = true, .transparent = true});
             }
          }
       }
@@ -946,10 +940,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
                              1000000.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
          if (value_changed) {
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::region::description,
-                                       world::pack_region_sound_stream(properties),
-                                       region.description),
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_sound_stream(
+                                                             properties)),
                                     _edit_context);
          }
 
@@ -975,10 +968,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
                              1000000.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
          if (value_changed) {
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::region::description,
-                                       world::pack_region_sound_static(properties),
-                                       region.description),
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_sound_static(
+                                                             properties)),
                                     _edit_context);
          }
 
@@ -993,10 +985,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
             world::unpack_region_sound_space(region.description);
 
          if (ImGui::InputText("Sound Space Name", &properties.sound_space_name)) {
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::region::description,
-                                       world::pack_region_sound_space(properties),
-                                       region.description),
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_sound_space(
+                                                             properties)),
                                     _edit_context);
          }
 
@@ -1009,10 +1000,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
             world::unpack_region_sound_trigger(region.description);
 
          if (ImGui::InputText("Region Name", &properties.region_name)) {
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::region::description,
-                                       world::pack_region_sound_trigger(properties),
-                                       region.description),
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_sound_trigger(
+                                                             properties)),
                                     _edit_context);
          }
 
@@ -1025,11 +1015,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             world::unpack_region_foley_fx(region.description);
 
          if (ImGui::InputText("Group ID", &properties.group_id)) {
-            _edit_stack_world
-               .apply(edits::make_set_creation_value(&world::region::description,
-                                                     world::pack_region_foley_fx(properties),
-                                                     region.description),
-                      _edit_context);
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_foley_fx(
+                                                             properties)),
+                                    _edit_context);
          }
 
          if (ImGui::IsItemDeactivatedAfterEdit()) {
@@ -1074,11 +1063,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          value_changed |= ImGui::InputText("Environment Map", &properties.env_map);
 
          if (value_changed) {
-            _edit_stack_world
-               .apply(edits::make_set_creation_value(&world::region::description,
-                                                     world::pack_region_shadow(properties),
-                                                     region.description),
-                      _edit_context);
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_shadow(
+                                                             properties)),
+                                    _edit_context);
          }
 
          ImGui::EndGroup();
@@ -1100,11 +1088,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             ImGui::InputText("Particle Effect", &properties.particle_effect);
 
          if (value_changed) {
-            _edit_stack_world
-               .apply(edits::make_set_creation_value(&world::region::description,
-                                                     world::pack_region_rumble(properties),
-                                                     region.description),
-                      _edit_context);
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_rumble(
+                                                             properties)),
+                                    _edit_context);
          }
 
          ImGui::EndGroup();
@@ -1170,11 +1157,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (value_changed) {
-            _edit_stack_world
-               .apply(edits::make_set_creation_value(&world::region::description,
-                                                     world::pack_region_damage(properties),
-                                                     region.description),
-                      _edit_context);
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_damage(
+                                                             properties)),
+                                    _edit_context);
          }
 
          ImGui::EndGroup();
@@ -1204,11 +1190,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (value_changed) {
-            _edit_stack_world
-               .apply(edits::make_set_creation_value(&world::region::description,
-                                                     world::pack_region_ai_vis(properties),
-                                                     region.description),
-                      _edit_context);
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_ai_vis(
+                                                             properties)),
+                                    _edit_context);
          }
 
          ImGui::EndGroup();
@@ -1229,10 +1214,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
          value_changed |= ImGui::DragFloat("Fade Length", &properties.fade_length);
 
          if (value_changed) {
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::region::description,
-                                       world::pack_region_colorgrading(properties),
-                                       region.description),
+            _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                          world::pack_region_colorgrading(
+                                                             properties)),
                                     _edit_context);
          }
 
@@ -1394,9 +1378,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             look_at_quat(_cursor_positionWS, region.position);
 
          if (new_rotation != region.rotation) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::region::rotation,
-                                                                   new_rotation,
-                                                                   region.rotation),
+            _edit_stack_world.apply(edits::make_set_value(&region.rotation, new_rotation),
                                     _edit_context);
          }
       }
@@ -1531,9 +1513,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (region_size != region.size) {
-         _edit_stack_world.apply(edits::make_set_creation_value(&world::region::size,
-                                                                region_size,
-                                                                region.size),
+         _edit_stack_world.apply(edits::make_set_value(&region.size, region_size),
                                  _edit_context);
       }
 
@@ -1573,7 +1553,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {.has_resize_to = true, .has_from_bbox = true};
    }
    else if (creation_entity.is<world::sector>()) {
-      const world::sector& sector = creation_entity.get<world::sector>();
+      world::sector& sector = creation_entity.get<world::sector>();
 
       ImGui::InputText("Name", &creation_entity, &world::sector::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -1634,12 +1614,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
       if (ImGui::Button("New Sector", {ImGui::CalcItemWidth(), 0.0f}) or
           std::exchange(_entity_creation_context.finish_current_sector, false)) {
 
-         _edit_stack_world.apply(
-            edits::make_set_creation_value(&world::sector::name,
-                                           world::create_unique_name(_world.sectors,
-                                                                     sector.name),
-                                           sector.name),
-            _edit_context);
+         _edit_stack_world
+            .apply(edits::make_set_value(&sector.name,
+                                         world::create_unique_name(_world.sectors,
+                                                                   sector.name)),
+                   _edit_context);
       }
 
       if (ImGui::IsItemHovered()) {
@@ -1709,14 +1688,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
                corner = object->rotation * corner + object->position;
             }
 
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::sector::points,
-                                       {float2{corners[0].x, corners[0].z},
-                                        float2{corners[1].x, corners[1].z},
-                                        float2{corners[2].x, corners[2].z},
-                                        float2{corners[3].x, corners[3].z}},
-                                       sector.points),
-                                    _edit_context);
+            _edit_stack_world
+               .apply(edits::make_set_value(&sector.points,
+                                            {float2{corners[0].x, corners[0].z},
+                                             float2{corners[1].x, corners[1].z},
+                                             float2{corners[2].x, corners[2].z},
+                                             float2{corners[3].x, corners[3].z}}),
+                      _edit_context);
          }
       }
 
@@ -1726,7 +1704,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_from_bbox = true};
    }
    else if (creation_entity.is<world::portal>()) {
-      const world::portal& portal = creation_entity.get<world::portal>();
+      world::portal& portal = creation_entity.get<world::portal>();
 
       ImGui::InputText("Name", &creation_entity, &world::portal::name, &_edit_stack_world,
                        &_edit_context, [&](std::string* edited_value) {
@@ -1797,19 +1775,16 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                            *_interaction_targets.hovered_entity));
 
          if (sector) {
-            std::string world::portal::*sector_member = nullptr;
-
             if (_entity_creation_context.pick_sector_index == 1) {
-               sector_member = &world::portal::sector1;
+               _edit_stack_world.apply(edits::make_set_value(&portal.sector1,
+                                                             sector->name),
+                                       _edit_context);
             }
             else if (_entity_creation_context.pick_sector_index == 2) {
-               sector_member = &world::portal::sector2;
+               _edit_stack_world.apply(edits::make_set_value(&portal.sector2,
+                                                             sector->name),
+                                       _edit_context);
             }
-
-            _edit_stack_world.apply(edits::make_set_creation_value(sector_member,
-                                                                   sector->name,
-                                                                   portal.*sector_member),
-                                    _edit_context);
          }
       }
 
@@ -1905,9 +1880,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             look_at_quat(_cursor_positionWS, portal.position);
 
          if (new_rotation != portal.rotation) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::portal::rotation,
-                                                                   new_rotation,
-                                                                   portal.rotation),
+            _edit_stack_world.apply(edits::make_set_value(&portal.rotation, new_rotation),
                                     _edit_context);
          }
       }
@@ -1968,7 +1941,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {.has_placement_alignment = false, .has_resize_to = true};
    }
    else if (creation_entity.is<world::hintnode>()) {
-      const world::hintnode& hintnode = creation_entity.get<world::hintnode>();
+      world::hintnode& hintnode = creation_entity.get<world::hintnode>();
 
       ImGui::InputText("Name", &creation_entity, &world::hintnode::name,
                        &_edit_stack_world, &_edit_context,
@@ -2084,9 +2057,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             look_at_quat(_cursor_positionWS, hintnode.position);
 
          if (new_rotation != hintnode.rotation) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::hintnode::rotation,
-                                                                   new_rotation,
-                                                                   hintnode.rotation),
+            _edit_stack_world.apply(edits::make_set_value(&hintnode.rotation, new_rotation),
                                     _edit_context);
          }
       }
@@ -2119,9 +2090,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                if (string::iequals(definition.header.class_label,
                                    "commandpost")) {
                   if (ImGui::Selectable(object.name.c_str())) {
-                     _edit_stack_world.apply(edits::make_set_creation_value(
-                                                &world::hintnode::command_post,
-                                                object.name, hintnode.command_post),
+                     _edit_stack_world.apply(edits::make_set_value(&hintnode.command_post,
+                                                                   object.name),
                                              _edit_context);
                   }
                }
@@ -2168,7 +2138,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {.has_placement_ground = false};
    }
    else if (creation_entity.is<world::barrier>()) {
-      const world::barrier& barrier = creation_entity.get<world::barrier>();
+      world::barrier& barrier = creation_entity.get<world::barrier>();
 
       ImGui::InputText("Name", &creation_entity, &world::barrier::name,
                        &_edit_stack_world, &_edit_context,
@@ -2255,9 +2225,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                  std::numbers::pi_v<float>;
 
          if (new_angle != barrier.rotation_angle) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::barrier::rotation_angle,
-                                                                   new_angle,
-                                                                   barrier.rotation_angle),
+            _edit_stack_world.apply(edits::make_set_value(&barrier.rotation_angle,
+                                                          new_angle),
                                     _edit_context);
          }
       }
@@ -2569,7 +2538,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_draw_barrier = true};
    }
    else if (creation_entity.is<world::planning_hub>()) {
-      const world::planning_hub& hub = creation_entity.get<world::planning_hub>();
+      world::planning_hub& hub = creation_entity.get<world::planning_hub>();
 
       ImGui::InputText("Name", &creation_entity, &world::planning_hub::name,
                        &_edit_stack_world, &_edit_context,
@@ -2624,9 +2593,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_position != hub.position) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::planning_hub::position,
-                                                                   new_position,
-                                                                   hub.position),
+            _edit_stack_world.apply(edits::make_set_value(&hub.position, new_position),
                                     _edit_context, {.transparent = true});
          }
       }
@@ -2641,9 +2608,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          const float new_radius = distance(_cursor_positionWS, hub.position);
 
          if (new_radius != hub.radius) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::planning_hub::radius,
-                                                                   new_radius,
-                                                                   hub.radius),
+            _edit_stack_world.apply(edits::make_set_value(&hub.radius, new_radius),
                                     _edit_context);
          }
       }
@@ -2656,7 +2621,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       };
    }
    else if (creation_entity.is<world::planning_connection>()) {
-      const world::planning_connection& connection =
+      world::planning_connection& connection =
          creation_entity.get<world::planning_connection>();
 
       ImGui::InputText("Name", &creation_entity,
@@ -2679,10 +2644,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
          const world::planning_hub_id end_id =
             std::get<world::planning_hub_id>(*_interaction_targets.hovered_entity);
 
-         _edit_stack_world.apply(edits::make_set_creation_value(
-                                    &world::planning_connection::end_hub_index,
-                                    get_hub_index(_world.planning_hubs, end_id),
-                                    connection.end_hub_index),
+         _edit_stack_world.apply(edits::make_set_value(&connection.end_hub_index,
+                                                       get_hub_index(_world.planning_hubs,
+                                                                     end_id)),
                                  _edit_context, {.transparent = true});
       }
 
@@ -2709,11 +2673,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
       bool is_dynamic = connection.dynamic_group != 0;
 
       if (ImGui::Checkbox("Dynamic", &is_dynamic)) {
-         _edit_stack_world
-            .apply(edits::make_set_creation_value(&world::planning_connection::dynamic_group,
-                                                  is_dynamic ? int8{1} : int8{0},
-                                                  connection.dynamic_group),
-                   _edit_context);
+         _edit_stack_world.apply(edits::make_set_value(&connection.dynamic_group,
+                                                       is_dynamic ? int8{1} : int8{0}),
+                                 _edit_context);
       }
 
       if (is_dynamic) {
@@ -2741,9 +2703,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::PopID();
 
          if (changed) {
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::planning_connection::forward_weights,
-                                       weights, connection.forward_weights),
+            _edit_stack_world.apply(edits::make_set_value(&connection.forward_weights,
+                                                          weights),
                                     _edit_context);
          }
       }
@@ -2766,9 +2727,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::PopID();
 
          if (changed) {
-            _edit_stack_world.apply(edits::make_set_creation_value(
-                                       &world::planning_connection::backward_weights,
-                                       weights, connection.backward_weights),
+            _edit_stack_world.apply(edits::make_set_value(&connection.backward_weights,
+                                                          weights),
                                     _edit_context);
          }
       }
@@ -2782,7 +2742,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_cycle_ai_planning = true};
    }
    else if (creation_entity.is<world::boundary>()) {
-      const world::boundary& boundary = creation_entity.get<world::boundary>();
+      world::boundary& boundary = creation_entity.get<world::boundary>();
 
       ImGui::InputText("Name", &creation_entity, &world::boundary::name,
                        &_edit_stack_world, &_edit_context,
@@ -2834,9 +2794,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_position != boundary.position) {
-            _edit_stack_world.apply(edits::make_set_creation_value(&world::boundary::position,
-                                                                   new_position,
-                                                                   boundary.position),
+            _edit_stack_world.apply(edits::make_set_value(&boundary.position, new_position),
                                     _edit_context, {.transparent = true});
          }
       }

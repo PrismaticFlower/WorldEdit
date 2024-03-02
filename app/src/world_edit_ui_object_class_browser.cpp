@@ -62,14 +62,12 @@ void world_edit::ui_show_object_class_browser() noexcept
                                       {thumbnail->uv_left, thumbnail->uv_top},
                                       {thumbnail->uv_right, thumbnail->uv_bottom})) {
                   if (_interaction_targets.creation_entity.is<world::object>()) {
-                     const world::object& object =
+                     world::object& object =
                         _interaction_targets.creation_entity.get<world::object>();
 
-                     _edit_stack_world
-                        .apply(edits::make_set_creation_value(&world::object::class_name,
-                                                              lowercase_string{asset},
-                                                              object.class_name),
-                               _edit_context);
+                     _edit_stack_world.apply(edits::make_set_value(&object.class_name,
+                                                                   lowercase_string{asset}),
+                                             _edit_context);
                   }
                   else {
                      _edit_stack_world
