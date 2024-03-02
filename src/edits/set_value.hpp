@@ -312,12 +312,6 @@ auto make_set_creation_path_node_location(quaternion new_rotation,
                                           float3 original_euler_rotation)
    -> std::unique_ptr<edit<world::edit_context>>;
 
-auto make_set_creation_region_metrics(quaternion new_rotation,
-                                      quaternion original_rotation,
-                                      float3 new_position, float3 original_position,
-                                      float3 new_size, float3 original_size)
-   -> std::unique_ptr<edit<world::edit_context>>;
-
 auto make_set_creation_measurement_points(float3 new_start, float3 original_start,
                                           float3 new_end, float3 original_end)
    -> std::unique_ptr<edit<world::edit_context>>;

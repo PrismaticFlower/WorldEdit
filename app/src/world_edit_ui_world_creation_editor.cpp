@@ -1545,9 +1545,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
                object->rotation * ((conjugate(object->rotation) * object->position) +
                                    ((bbox.min + bbox.max) / 2.0f));
 
-            _edit_stack_world.apply(edits::make_set_creation_region_metrics(
-                                       object->rotation, region.rotation, position,
-                                       region.position, size, region.size),
+            _edit_stack_world.apply(edits::make_set_multi_value(&region.rotation,
+                                                                object->rotation,
+                                                                &region.position, position,
+                                                                &region.size, size),
                                     _edit_context);
          }
       }
