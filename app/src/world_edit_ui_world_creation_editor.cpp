@@ -801,9 +801,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
             look_at_quat(_cursor_positionWS, path.nodes[0].position);
 
          if (new_rotation != path.nodes[0].rotation) {
-            _edit_stack_world.apply(edits::make_set_creation_path_node_value(
-                                       &world::path::node::rotation,
-                                       new_rotation, path.nodes[0].rotation),
+            _edit_stack_world.apply(edits::make_set_vector_value(&path.nodes, 0,
+                                                                 &world::path::node::rotation,
+                                                                 new_rotation),
                                     _edit_context);
          }
       }

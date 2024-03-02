@@ -78,63 +78,6 @@ inline auto make_set_creation_location(quaternion new_rotation,
 }
 
 template<typename T>
-struct set_creation_path_node_value final : edit<world::edit_context> {
-   using value_type = T;
-
-   set_creation_path_node_value(value_type world::path::node::*value_member_ptr,
-                                value_type new_value, value_type original_value)
-      : value_member_ptr{value_member_ptr},
-        new_value{std::move(new_value)},
-        original_value{std::move(original_value)}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr = new_value;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::path>().nodes[0].*value_member_ptr =
-         original_value;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_creation_path_node_value* other =
-         dynamic_cast<const set_creation_path_node_value*>(&other_unknown);
-
-      if (not other) return false;
-
-      return this->value_member_ptr == other->value_member_ptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_creation_path_node_value& other =
-         dynamic_cast<set_creation_path_node_value&>(other_unknown);
-
-      new_value = std::move(other.new_value);
-   }
-
-   value_type world::path::node::*value_member_ptr;
-
-   value_type new_value;
-   value_type original_value;
-};
-
-template<typename T>
-inline auto make_set_creation_path_node_value(T world::path::node::*value_member_ptr,
-                                              T new_value, T original_value)
-   -> std::unique_ptr<set_creation_path_node_value<T>>
-{
-   return std::make_unique<set_creation_path_node_value<T>>(value_member_ptr,
-                                                            std::move(new_value),
-                                                            std::move(original_value));
-}
-
-template<typename T>
 struct set_memory_value final : edit<world::edit_context> {
    set_memory_value(T* value_address, T new_value)
       : value_ptr{value_address}, value{std::move(new_value)}
