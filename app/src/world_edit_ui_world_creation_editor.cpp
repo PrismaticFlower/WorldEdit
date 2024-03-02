@@ -2814,8 +2814,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_placement_ground = false};
    }
    else if (creation_entity.is<world::measurement>()) {
-      const world::measurement& measurement =
-         creation_entity.get<world::measurement>();
+      world::measurement& measurement = creation_entity.get<world::measurement>();
 
       ImGui::InputText("Name", &creation_entity, &world::measurement::name,
                        &_edit_stack_world, &_edit_context, [](std::string*) {});
@@ -2858,10 +2857,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (new_position != current_position) {
             const bool started = _entity_creation_context.measurement_started;
 
-            _edit_stack_world.apply(edits::make_set_creation_measurement_points(
-                                       started ? measurement.start : new_position,
-                                       measurement.start, new_position,
-                                       measurement.end),
+            _edit_stack_world.apply(edits::make_set_multi_value(&measurement.start,
+                                                                started
+                                                                   ? measurement.start
+                                                                   : new_position,
+                                                                &measurement.end,
+                                                                new_position),
                                     _edit_context, {.transparent = true});
          }
       }

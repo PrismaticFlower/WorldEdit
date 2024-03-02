@@ -59,51 +59,6 @@ struct set_creation_path_node_location final : edit<world::edit_context> {
    float3 original_euler_rotation;
 };
 
-struct set_creation_measurement_points final : edit<world::edit_context> {
-   set_creation_measurement_points(float3 new_start, float3 original_start,
-                                   float3 new_end, float3 original_end)
-      : new_start{new_start},
-        original_start{original_start},
-        new_end{new_end},
-        original_end{original_end}
-   {
-   }
-
-   void apply(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::measurement>().start = new_start;
-      context.creation_entity.get<world::measurement>().end = new_end;
-   }
-
-   void revert(world::edit_context& context) noexcept override
-   {
-      context.creation_entity.get<world::measurement>().start = original_start;
-      context.creation_entity.get<world::measurement>().end = original_end;
-   }
-
-   bool is_coalescable(const edit& other_unknown) const noexcept override
-   {
-      const set_creation_measurement_points* other =
-         dynamic_cast<const set_creation_measurement_points*>(&other_unknown);
-
-      return other != nullptr;
-   }
-
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_creation_measurement_points& other =
-         dynamic_cast<set_creation_measurement_points&>(other_unknown);
-
-      new_start = other.new_start;
-      new_end = other.new_end;
-   }
-
-   float3 new_start;
-   float3 original_start;
-   float3 new_end;
-   float3 original_end;
-};
-
 }
 
 auto make_set_creation_path_node_location(quaternion new_rotation,
@@ -119,14 +74,6 @@ auto make_set_creation_path_node_location(quaternion new_rotation,
                                                             original_position,
                                                             new_euler_rotation,
                                                             original_euler_rotation);
-}
-
-auto make_set_creation_measurement_points(float3 new_start, float3 original_start,
-                                          float3 new_end, float3 original_end)
-   -> std::unique_ptr<edit<world::edit_context>>
-{
-   return std::make_unique<set_creation_measurement_points>(new_start, original_start,
-                                                            new_end, original_end);
 }
 
 }
