@@ -114,38 +114,6 @@ TEST_CASE("edits set_multi_value3", "[Edits]")
    REQUIRE(barrier.size == float2{0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_creation_location", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   set_creation_location<world::object> edit{quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                             quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                             float3{1.0f, 1.0f, 1.0f},
-                                             float3{0.0f, 0.0f, 0.0f},
-                                             float3{2.0f, 2.0f, 2.0f},
-                                             float3{0.0f, 0.0f, 0.0f}};
-
-   interaction_targets.creation_entity = world::object{};
-
-   edit.apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
-           quaternion{0.0f, 1.0f, 0.0f, 0.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
-           float3{1.0f, 1.0f, 1.0f});
-   REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
-
-   edit.revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
-           quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
-           float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
-}
-
 TEST_CASE("edits set_creation_path_node_location", "[Edits]")
 {
    world::world world = test_world;
@@ -377,48 +345,6 @@ TEST_CASE("edits set_multi_value3 coalesce", "[Edits]")
    REQUIRE(barrier.rotation_angle == 0.0f);
    REQUIRE(barrier.position == float3{0.0f, 0.0f, 0.0f});
    REQUIRE(barrier.size == float2{0.0f, 0.0f});
-}
-
-TEST_CASE("edits set_creation_location coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::object{};
-
-   set_creation_location<world::object> edit{quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                             quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                             float3{1.0f, 1.0f, 1.0f},
-                                             float3{0.0f, 0.0f, 0.0f},
-                                             float3{2.0f, 2.0f, 2.0f},
-                                             float3{0.0f, 0.0f, 0.0f}};
-   set_creation_location<world::object> other_edit{quaternion{0.0f, 0.0f, 1.0f, 0.0f},
-                                                   quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                                   float3{2.0f, 2.0f, 2.0f},
-                                                   float3{0.0f, 0.0f, 0.0f},
-                                                   float3{4.0f, 4.0f, 4.0f},
-                                                   float3{0.0f, 0.0f, 0.0f}};
-
-   REQUIRE(edit.is_coalescable(other_edit));
-
-   edit.coalesce(other_edit);
-
-   edit.apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
-           quaternion{0.0f, 0.0f, 1.0f, 0.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
-           float3{2.0f, 2.0f, 2.0f});
-   REQUIRE(edit_context.euler_rotation == float3{4.0f, 4.0f, 4.0f});
-
-   edit.revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().rotation ==
-           quaternion{1.0f, 0.0f, 0.0f, 0.0f});
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().position ==
-           float3{0.0f, 0.0f, 0.0f});
-   REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
 TEST_CASE("edits set_creation_path_node_location coalesce", "[Edits]")

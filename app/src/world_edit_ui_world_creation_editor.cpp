@@ -359,11 +359,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_rotation != object.rotation or new_position != object.position) {
-            _edit_stack_world.apply(edits::make_set_creation_location<world::object>(
-                                       new_rotation, object.rotation, new_position,
-                                       object.position, new_euler_rotation,
-                                       _edit_context.euler_rotation),
-                                    _edit_context, {.transparent = true});
+            _edit_stack_world
+               .apply(edits::make_set_multi_value(&object.rotation, new_rotation,
+                                                  &object.position, new_position,
+                                                  &_edit_context.euler_rotation,
+                                                  new_euler_rotation),
+                      _edit_context, {.transparent = true});
          }
       }
 
@@ -486,10 +487,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_rotation != light.rotation or new_position != light.position) {
-            _edit_stack_world.apply(edits::make_set_creation_location<world::light>(
-                                       new_rotation, light.rotation, new_position,
-                                       light.position, new_euler_rotation,
-                                       _edit_context.euler_rotation),
+            _edit_stack_world.apply(edits::make_set_multi_value(&light.rotation, new_rotation,
+                                                                &light.position, new_position,
+                                                                &_edit_context.euler_rotation,
+                                                                new_euler_rotation),
                                     _edit_context, {.transparent = true});
          }
       }
@@ -1362,11 +1363,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_rotation != region.rotation or new_position != region.position) {
-            _edit_stack_world.apply(edits::make_set_creation_location<world::region>(
-                                       new_rotation, region.rotation, new_position,
-                                       region.position, new_euler_rotation,
-                                       _edit_context.euler_rotation),
-                                    _edit_context, {.transparent = true});
+            _edit_stack_world
+               .apply(edits::make_set_multi_value(&region.rotation, new_rotation,
+                                                  &region.position, new_position,
+                                                  &_edit_context.euler_rotation,
+                                                  new_euler_rotation),
+                      _edit_context, {.transparent = true});
          }
       }
 
@@ -1864,11 +1866,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_rotation != portal.rotation or new_position != portal.position) {
-            _edit_stack_world.apply(edits::make_set_creation_location<world::portal>(
-                                       new_rotation, portal.rotation, new_position,
-                                       portal.position, new_euler_rotation,
-                                       _edit_context.euler_rotation),
-                                    _edit_context, {.transparent = true});
+            _edit_stack_world
+               .apply(edits::make_set_multi_value(&portal.rotation, new_rotation,
+                                                  &portal.position, new_position,
+                                                  &_edit_context.euler_rotation,
+                                                  new_euler_rotation),
+                      _edit_context, {.transparent = true});
          }
       }
 
@@ -2040,11 +2043,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (new_rotation != hintnode.rotation or new_position != hintnode.position) {
-            _edit_stack_world.apply(edits::make_set_creation_location<world::hintnode>(
-                                       new_rotation, hintnode.rotation, new_position,
-                                       hintnode.position, new_euler_rotation,
-                                       _edit_context.euler_rotation),
-                                    _edit_context, {.transparent = true});
+            _edit_stack_world
+               .apply(edits::make_set_multi_value(&hintnode.rotation, new_rotation,
+                                                  &hintnode.position, new_position,
+                                                  &_edit_context.euler_rotation,
+                                                  new_euler_rotation),
+                      _edit_context, {.transparent = true});
          }
       }
 
