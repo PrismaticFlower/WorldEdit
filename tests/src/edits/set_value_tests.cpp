@@ -100,32 +100,6 @@ TEST_CASE("edits set_sector_point", "[Edits]")
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
 }
 
-TEST_CASE("edits set_creation_value_with_meta", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::object{};
-
-   set_creation_value_with_meta edit{&world::object::layer,
-                                     int16{1},
-                                     int16{0},
-                                     &world::edit_context::euler_rotation,
-                                     {1.0f, 1.0f, 1.0f},
-                                     {0.0f, 0.0f, 0.0f}};
-
-   edit.apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 1);
-   REQUIRE(edit_context.euler_rotation == float3{1.0f, 1.0f, 1.0f});
-
-   edit.revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
-   REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
-}
-
 TEST_CASE("edits set_creation_location", "[Edits]")
 {
    world::world world = test_world;
@@ -478,42 +452,6 @@ TEST_CASE("edits set_sector_point coalesce", "[Edits]")
    edit->revert(edit_context);
 
    REQUIRE(world.sectors[0].points[0] == float2{0.0f, 0.0f});
-}
-
-TEST_CASE("edits set_creation_value_with_meta coalesce", "[Edits]")
-{
-   world::world world = test_world;
-   world::interaction_targets interaction_targets;
-   world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   interaction_targets.creation_entity = world::object{};
-
-   set_creation_value_with_meta edit{&world::object::layer,
-                                     int16{1},
-                                     int16{0},
-                                     &world::edit_context::euler_rotation,
-                                     {1.0f, 1.0f, 1.0f},
-                                     {0.0f, 0.0f, 0.0f}};
-   set_creation_value_with_meta other_edit{&world::object::layer,
-                                           int16{2},
-                                           int16{0},
-                                           &world::edit_context::euler_rotation,
-                                           {2.0f, 2.0f, 2.0f},
-                                           {0.0f, 0.0f, 0.0f}};
-
-   REQUIRE(edit.is_coalescable(other_edit));
-
-   edit.coalesce(other_edit);
-
-   edit.apply(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 2);
-   REQUIRE(edit_context.euler_rotation == float3{2.0f, 2.0f, 2.0f});
-
-   edit.revert(edit_context);
-
-   REQUIRE(interaction_targets.creation_entity.get<world::object>().layer == 0);
-   REQUIRE(edit_context.euler_rotation == float3{0.0f, 0.0f, 0.0f});
 }
 
 TEST_CASE("edits set_creation_location coalesce", "[Edits]")
