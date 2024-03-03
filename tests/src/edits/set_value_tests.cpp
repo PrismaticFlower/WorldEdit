@@ -122,13 +122,9 @@ TEST_CASE("edits set_creation_path_node_location", "[Edits]")
 
    interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
 
-   auto edit =
-      make_set_creation_path_node_location(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                           quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                           float3{1.0f, 1.0f, 1.0f},
-                                           float3{0.0f, 0.0f, 0.0f},
-                                           float3{2.0f, 2.0f, 2.0f},
-                                           float3{0.0f, 0.0f, 0.0f});
+   auto edit = make_set_creation_path_node_location(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                                    float3{1.0f, 1.0f, 1.0f},
+                                                    float3{2.0f, 2.0f, 2.0f});
 
    edit->apply(edit_context);
 
@@ -293,20 +289,13 @@ TEST_CASE("edits set_creation_path_node_location coalesce", "[Edits]")
 
    interaction_targets.creation_entity = world::path{.nodes = {world::path::node{}}};
 
-   auto edit =
-      make_set_creation_path_node_location(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
-                                           quaternion{1.0f, 0.0f, 0.0f, 0.0f},
-                                           float3{1.0f, 1.0f, 1.0f},
-                                           float3{0.0f, 0.0f, 0.0f},
-                                           float3{2.0f, 2.0f, 2.0f},
-                                           float3{0.0f, 0.0f, 0.0f});
+   auto edit = make_set_creation_path_node_location(quaternion{0.0f, 1.0f, 0.0f, 0.0f},
+                                                    float3{1.0f, 1.0f, 1.0f},
+                                                    float3{2.0f, 2.0f, 2.0f});
    auto other_edit =
       make_set_creation_path_node_location(quaternion{0.0f, 0.0f, 1.0f, 0.0f},
-                                           quaternion{1.0f, 0.0f, 0.0f, 0.0f},
                                            float3{2.0f, 2.0f, 2.0f},
-                                           float3{0.0f, 0.0f, 0.0f},
-                                           float3{4.0f, 4.0f, 4.0f},
-                                           float3{0.0f, 0.0f, 0.0f});
+                                           float3{4.0f, 4.0f, 4.0f});
 
    REQUIRE(edit->is_coalescable(*other_edit));
 

@@ -305,11 +305,8 @@ inline auto make_set_multi_value(T1* value1_address, T1 new_value1, //
                                                          std::move(new_value3));
 }
 
-auto make_set_creation_path_node_location(quaternion new_rotation,
-                                          quaternion original_rotation,
-                                          float3 new_position, float3 original_position,
-                                          float3 new_euler_rotation,
-                                          float3 original_euler_rotation)
+auto make_set_creation_path_node_location(quaternion new_rotation, float3 new_position,
+                                          float3 new_euler_rotation)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 }

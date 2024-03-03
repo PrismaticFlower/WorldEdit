@@ -787,9 +787,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (new_rotation != path.nodes[0].rotation or
              new_position != path.nodes[0].position) {
             _edit_stack_world.apply(edits::make_set_creation_path_node_location(
-                                       new_rotation, path.nodes[0].rotation, new_position,
-                                       path.nodes[0].position, new_euler_rotation,
-                                       _edit_context.euler_rotation),
+                                       new_rotation, new_position, new_euler_rotation),
                                     _edit_context, {.transparent = true});
          }
       }

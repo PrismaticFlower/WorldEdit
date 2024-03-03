@@ -5,31 +5,30 @@ namespace we::edits {
 namespace {
 
 struct set_creation_path_node_location final : edit<world::edit_context> {
-   set_creation_path_node_location(quaternion new_rotation, quaternion original_rotation,
-                                   float3 new_position, float3 original_position,
-                                   float3 new_euler_rotation,
-                                   float3 original_euler_rotation)
-      : new_rotation{new_rotation},
-        new_position{new_position},
-        new_euler_rotation{new_euler_rotation},
-        original_rotation{original_rotation},
-        original_position{original_position},
-        original_euler_rotation{original_euler_rotation}
+   set_creation_path_node_location(quaternion new_rotation, float3 new_position,
+                                   float3 new_euler_rotation)
+      : rotation{new_rotation}, position{new_position}, euler_rotation{new_euler_rotation}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
-      context.creation_entity.get<world::path>().nodes[0].rotation = new_rotation;
-      context.creation_entity.get<world::path>().nodes[0].position = new_position;
-      context.euler_rotation = new_euler_rotation;
+      assert(context.creation_entity.is<world::path>());
+      assert(context.creation_entity.get<world::path>().nodes.size() >= 1);
+
+      std::swap(context.creation_entity.get<world::path>().nodes[0].rotation, rotation);
+      std::swap(context.creation_entity.get<world::path>().nodes[0].position, position);
+      std::swap(context.euler_rotation, euler_rotation);
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      context.creation_entity.get<world::path>().nodes[0].rotation = original_rotation;
-      context.creation_entity.get<world::path>().nodes[0].position = original_position;
-      context.euler_rotation = original_euler_rotation;
+      assert(context.creation_entity.is<world::path>());
+      assert(context.creation_entity.get<world::path>().nodes.size() >= 1);
+
+      std::swap(context.creation_entity.get<world::path>().nodes[0].rotation, rotation);
+      std::swap(context.creation_entity.get<world::path>().nodes[0].position, position);
+      std::swap(context.euler_rotation, euler_rotation);
    }
 
    bool is_coalescable(const edit& other_unknown) const noexcept override
@@ -45,35 +44,24 @@ struct set_creation_path_node_location final : edit<world::edit_context> {
       set_creation_path_node_location& other =
          dynamic_cast<set_creation_path_node_location&>(other_unknown);
 
-      new_rotation = other.new_rotation;
-      new_position = other.new_position;
-      new_euler_rotation = other.new_euler_rotation;
+      rotation = other.rotation;
+      position = other.position;
+      euler_rotation = other.euler_rotation;
    }
 
-   quaternion new_rotation;
-   float3 new_position;
-   float3 new_euler_rotation;
-
-   quaternion original_rotation;
-   float3 original_position;
-   float3 original_euler_rotation;
+   quaternion rotation;
+   float3 position;
+   float3 euler_rotation;
 };
 
 }
 
-auto make_set_creation_path_node_location(quaternion new_rotation,
-                                          quaternion original_rotation,
-                                          float3 new_position, float3 original_position,
-                                          float3 new_euler_rotation,
-                                          float3 original_euler_rotation)
+auto make_set_creation_path_node_location(quaternion new_rotation, float3 new_position,
+                                          float3 new_euler_rotation)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<set_creation_path_node_location>(new_rotation,
-                                                            original_rotation,
-                                                            new_position,
-                                                            original_position,
-                                                            new_euler_rotation,
-                                                            original_euler_rotation);
+   return std::make_unique<set_creation_path_node_location>(new_rotation, new_position,
+                                                            new_euler_rotation);
 }
 
 }
