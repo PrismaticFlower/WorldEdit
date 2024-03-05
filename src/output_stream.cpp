@@ -1,13 +1,13 @@
 
 #include "output_stream.hpp"
 
-#include <iostream>
+#include <cstdio>
 
 namespace we {
 
 void standard_output_stream::write(const std::string_view string) noexcept
 {
-   std::cout << string;
+   std::fwrite(string.data(), string.size(), 1, stdout);
 }
 
 }
