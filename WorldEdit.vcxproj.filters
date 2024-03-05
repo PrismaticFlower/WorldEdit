@@ -396,7 +396,6 @@
     <ClInclude Include="src\utility\implementation_storage.hpp" />
     <ClInclude Include="src\utility\look_for.hpp" />
     <ClInclude Include="src\utility\make_from_bytes.hpp" />
-    <ClInclude Include="src\utility\make_range.hpp" />
     <ClInclude Include="src\utility\os_execute.hpp" />
     <ClInclude Include="src\utility\overload.hpp" />
     <ClInclude Include="src\utility\show_in_explorer.hpp" />

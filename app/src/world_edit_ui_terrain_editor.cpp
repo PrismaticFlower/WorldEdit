@@ -55,10 +55,10 @@ struct brush {
                                            custom_brush_falloff_map->size()};
 
          custom_brush_width =
-            static_cast<int32>(custom_brush_falloff_map->sshape()[0]);
+            static_cast<int32>(custom_brush_falloff_map->s_width());
          custom_brush_width_max = custom_brush_width - 1;
          custom_brush_height_max =
-            static_cast<int32>(custom_brush_falloff_map->sshape()[1]) - 1;
+            static_cast<int32>(custom_brush_falloff_map->s_height()) - 1;
       }
    }
 
@@ -399,8 +399,8 @@ void world_edit::ui_show_terrain_editor() noexcept
                            world::load_brush(*path);
                         std::string name = path->stem().string();
 
-                        assert(falloff_map.shape()[0] % 2 == 1 and
-                               falloff_map.shape()[1] % 2 == 1);
+                        assert(falloff_map.width() % 2 == 1 and
+                               falloff_map.height() % 2 == 1);
 
                         bool found = false;
 
@@ -873,11 +873,11 @@ void world_edit::ui_show_terrain_editor() noexcept
    int32 brush_size_x =
       not custom_brush_falloff_map
          ? _terrain_editor_config.brush_size_x
-         : static_cast<int32>(custom_brush_falloff_map->sshape()[0] - 1) / 2;
+         : static_cast<int32>(custom_brush_falloff_map->s_width() - 1) / 2;
    int32 brush_size_y =
       not custom_brush_falloff_map
          ? _terrain_editor_config.brush_size_y
-         : static_cast<int32>(custom_brush_falloff_map->sshape()[1] - 1) / 2;
+         : static_cast<int32>(custom_brush_falloff_map->s_height() - 1) / 2;
 
    if (brush_falloff == terrain_brush_falloff::custom and
        (brush_rotation == terrain_brush_rotation::r90 or

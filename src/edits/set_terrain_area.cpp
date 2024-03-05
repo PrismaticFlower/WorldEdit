@@ -161,8 +161,8 @@ struct set_terrain_area : edit<world::edit_context>, Access {
 
          assert(area.rect.left < area.rect.right);
          assert(area.rect.top < area.rect.bottom);
-         assert(area.rect.right <= (uint32)target_map.shape()[0]);
-         assert(area.rect.bottom <= (uint32)target_map.shape()[1]);
+         assert(area.rect.right <= (uint32)target_map.width());
+         assert(area.rect.bottom <= (uint32)target_map.height());
 
          for (uint32 y = area.rect.top; y < area.rect.bottom; ++y) {
             for (uint32 x = area.rect.left; x < area.rect.right; ++x) {
@@ -304,10 +304,10 @@ auto make_set_terrain_area(const uint32 rect_start_x, const uint32 rect_start_y,
    return std::make_unique<set_terrain_area<int16, access_height_map>>(
       area<int16>{.rect = {.left = rect_start_x,
                            .top = rect_start_y,
-                           .right = static_cast<uint32>(
-                              rect_start_x + rect_height_map.shape()[0]),
+                           .right = static_cast<uint32>(rect_start_x +
+                                                        rect_height_map.width()),
                            .bottom = static_cast<uint32>(
-                              rect_start_y + rect_height_map.shape()[1])},
+                              rect_start_y + rect_height_map.height())},
                   .map = std::move(rect_height_map)});
 }
 
@@ -319,10 +319,10 @@ auto make_set_terrain_area(const uint32 rect_start_x, const uint32 rect_start_y,
    return std::make_unique<set_terrain_area<uint8, access_texture_weight_map>>(
       area<uint8>{.rect = {.left = rect_start_x,
                            .top = rect_start_y,
-                           .right = static_cast<uint32>(
-                              rect_start_x + rect_weight_map.shape()[0]),
+                           .right = static_cast<uint32>(rect_start_x +
+                                                        rect_weight_map.width()),
                            .bottom = static_cast<uint32>(
-                              rect_start_y + rect_weight_map.shape()[1])},
+                              rect_start_y + rect_weight_map.height())},
                   .map = std::move(rect_weight_map)},
       texture_index);
 }
@@ -334,10 +334,10 @@ auto make_set_terrain_area_color_map(const uint32 rect_start_x, const uint32 rec
    return std::make_unique<set_terrain_area<uint32, access_color_map>>(
       area<uint32>{.rect = {.left = rect_start_x,
                             .top = rect_start_y,
-                            .right = static_cast<uint32>(
-                               rect_start_x + rect_color_map.shape()[0]),
+                            .right = static_cast<uint32>(rect_start_x +
+                                                         rect_color_map.width()),
                             .bottom = static_cast<uint32>(
-                               rect_start_y + rect_color_map.shape()[1])},
+                               rect_start_y + rect_color_map.height())},
                    .map = std::move(rect_color_map)});
 }
 
@@ -345,14 +345,12 @@ auto make_set_terrain_area_water_map(const uint32 rect_start_x, const uint32 rec
                                      container::dynamic_array_2d<bool> rect_water_map)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<set_terrain_area<bool, access_water_map>>(
-      area<bool>{.rect = {.left = rect_start_x,
-                          .top = rect_start_y,
-                          .right = static_cast<uint32>(rect_start_x +
-                                                       rect_water_map.shape()[0]),
-                          .bottom = static_cast<uint32>(
-                             rect_start_y + rect_water_map.shape()[1])},
-                 .map = std::move(rect_water_map)});
+   return std::make_unique<set_terrain_area<bool, access_water_map>>(area<bool>{
+      .rect = {.left = rect_start_x,
+               .top = rect_start_y,
+               .right = static_cast<uint32>(rect_start_x + rect_water_map.width()),
+               .bottom = static_cast<uint32>(rect_start_y + rect_water_map.height())},
+      .map = std::move(rect_water_map)});
 }
 
 }

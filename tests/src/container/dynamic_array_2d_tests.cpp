@@ -2,7 +2,29 @@
 
 #include "container/dynamic_array_2d.hpp"
 
+#include <array>
+
 namespace we::container::tests {
+
+namespace {
+
+template<typename T, std::size_t width>
+auto make_test_array(std::initializer_list<std::array<T, width>> initializer) noexcept
+{
+   dynamic_array_2d<T> out{width, initializer.size()};
+
+   const auto src_rows = initializer.begin();
+
+   for (std::ptrdiff_t y = 0; y < out.s_height(); ++y) {
+      for (std::ptrdiff_t x = 0; x < out.s_width(); ++x) {
+         out[{x, y}] = src_rows[y][x];
+      }
+   }
+
+   return out;
+}
+
+}
 
 TEST_CASE("dynamic array 2d", "[Container][DynamicArray2D]")
 {
@@ -10,8 +32,10 @@ TEST_CASE("dynamic array 2d", "[Container][DynamicArray2D]")
 
    REQUIRE(array.size() == 8);
    REQUIRE(array.ssize() == 8);
-   REQUIRE(array.shape() == std::array<std::size_t, 2>{2, 4});
-   REQUIRE(array.sshape() == std::array<std::ptrdiff_t, 2>{2, 4});
+   REQUIRE(array.width() == 2);
+   REQUIRE(array.height() == 4);
+   REQUIRE(array.s_width() == 2);
+   REQUIRE(array.s_height() == 4);
    REQUIRE(not array.empty());
 
    array[{0, 0}] = 23;
@@ -27,10 +51,10 @@ TEST_CASE("dynamic array 2d", "[Container][DynamicArray2D]")
    REQUIRE(*array.cbegin() == 23);
    REQUIRE(*(array.cbegin() + 2) == 60);
 
-   REQUIRE(array == dynamic_array_2d<int>{{std::array{23, 0}, std::array{60, 0},
-                                           std::array{0, 0}, std::array{0, 0}}});
-   REQUIRE(array != dynamic_array_2d<int>{
-                       {std::array{24, 0, 60, 0}, std::array{0, 0, 0, 0}}});
+   std::initializer_list<int[3]> v = {{0, 1, 2}};
+
+   REQUIRE(array == make_test_array<int, 2>({{23, 0}, {60, 0}, {0, 0}, {0, 0}}));
+   REQUIRE(array != make_test_array<int, 4>({{24, 0, 60, 0}, {0, 0, 0, 0}}));
 
    // test copy construction
    auto array_copy{array};

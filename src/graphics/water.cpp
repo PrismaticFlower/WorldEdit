@@ -38,8 +38,8 @@ void water::update(const world::world& world, gpu::copy_command_list& command_li
                    dynamic_buffer_allocator& dynamic_buffer_allocator,
                    texture_manager& texture_manager)
 {
-   if (world.terrain.water_map.shape()[0] != _water_map_length) {
-      _water_map_length = static_cast<uint32>(world.terrain.water_map.shape()[0]);
+   if (world.terrain.water_map.width() != _water_map_length) {
+      _water_map_length = static_cast<uint32>(world.terrain.water_map.width());
       _water_map_row_words = (_water_map_length + 63u) / 64u;
 
       _water_map.clear();

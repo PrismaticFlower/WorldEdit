@@ -82,7 +82,7 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
                   world::load_texture_weight_map(*path);
 
                const std::ptrdiff_t imported_length =
-                  _terrain_import_texture_weight_map_context.loaded_weight_map.sshape()[0];
+                  _terrain_import_texture_weight_map_context.loaded_weight_map.s_width();
 
                if (imported_length != _world.terrain.length) {
                   throw world::terrain_map_load_error{fmt::format(

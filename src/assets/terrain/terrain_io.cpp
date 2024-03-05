@@ -497,10 +497,8 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain,
    file.write_object(int32{0});
 
    auto write_map = [&](const auto& map) {
-      const auto rows = map.rows_begin();
-
       for (int y = int{terrain.length} - 1; y >= 0; --y) {
-         file.write(std::as_bytes(rows[y]));
+         file.write(std::as_bytes(std::span{&map[{0, y}], map.width()}));
       }
    };
 

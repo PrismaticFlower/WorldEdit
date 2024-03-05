@@ -2,6 +2,7 @@
 #include "math/intersectors.hpp"
 #include "math/vector_funcs.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <utility>

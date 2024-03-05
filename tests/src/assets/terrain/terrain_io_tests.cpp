@@ -39,25 +39,25 @@ TEST_CASE("terrain io valid tests", "[Assets][Terrain]")
    CHECK(terrain.texture_scales[0] == 0.0625_a);
    CHECK(terrain.texture_axes[0] == texture_axis::xy);
 
-   REQUIRE(terrain.height_map.shape()[0] == terrain.length);
-   REQUIRE(terrain.height_map.shape()[1] == terrain.length);
+   REQUIRE(terrain.height_map.width() == terrain.length);
+   REQUIRE(terrain.height_map.height() == terrain.length);
    CHECK(terrain.height_map[{0, 0}] == 200);
    CHECK(terrain.height_map[{0, 15}] == 200);
    CHECK(terrain.height_map[{15, 0}] == 200);
    CHECK(terrain.height_map[{15, 15}] == 200);
 
-   REQUIRE(terrain.color_map.shape()[0] == terrain.length);
-   REQUIRE(terrain.color_map.shape()[1] == terrain.length);
+   REQUIRE(terrain.color_map.width() == terrain.length);
+   REQUIRE(terrain.color_map.height() == terrain.length);
    CHECK(terrain.color_map[{0, 0}] == 0xff00ff);
    CHECK(terrain.color_map[{0, 15}] == 0xffff00ff);
    CHECK(terrain.color_map[{15, 0}] == 0xff00ff);
    CHECK(terrain.color_map[{15, 15}] == 0xff00ff);
 
-   REQUIRE(terrain.light_map.shape()[0] == terrain.length);
-   REQUIRE(terrain.light_map.shape()[1] == terrain.length);
+   REQUIRE(terrain.light_map.width() == terrain.length);
+   REQUIRE(terrain.light_map.height() == terrain.length);
 
-   REQUIRE(terrain.light_map_extra.shape()[0] == terrain.length);
-   REQUIRE(terrain.light_map_extra.shape()[1] == terrain.length);
+   REQUIRE(terrain.light_map_extra.width() == terrain.length);
+   REQUIRE(terrain.light_map_extra.height() == terrain.length);
 
    REQUIRE(terrain.height_map_dirty.size() == 1);
    CHECK(terrain.height_map_dirty[0] ==

@@ -4,6 +4,8 @@
 #include "world/interaction_context.hpp"
 #include "world/utility/world_utilities.hpp"
 
+#include <memory>
+
 namespace we::edits {
 
 template<typename T>

@@ -2,6 +2,8 @@
 
 #include "../world.hpp"
 
+#include <span>
+
 namespace we::world {
 
 auto mouse_pick(const float2 mouse_position, const float2 viewport_size,

@@ -3,6 +3,7 @@
 #include "settings/graphics.hpp"
 #include "utility/string_icompare.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <stdexcept>
 
