@@ -2,8 +2,10 @@
 
 #include "edits/add_property.hpp"
 #include "edits/creation_entity_set.hpp"
+#include "edits/delete_path_property.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/hintnode_traits.hpp"
@@ -201,15 +203,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
    if (creation_entity.is<world::object>()) {
       world::object& object = creation_entity.get<world::object>();
 
-      ImGui::InputText("Name", &creation_entity, &world::object::name, &_edit_stack_world,
-                       &_edit_context, [&](std::string* edited_value) {
+      ImGui::InputText("Name", &object.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.objects, *edited_value);
                        });
 
       ImGui::InputTextAutoComplete(
-         "Class Name", &creation_entity, &world::object::class_name,
-         &_edit_stack_world, &_edit_context, [&] {
+         "Class Name", &object.class_name, _edit_stack_world, _edit_context, [&]() noexcept {
             std::array<std::string_view, 6> entries;
             std::size_t matching_count = 0;
 
@@ -238,8 +239,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::EndPopup();
       }
 
-      ImGui::LayerPick<world::object>("Layer", &creation_entity,
-                                      &_edit_stack_world, &_edit_context);
+      ImGui::LayerPick("Layer", &object.layer, _edit_stack_world, _edit_context);
 
       if (string::iequals(_object_classes[object.class_name].definition->header.class_label,
                           "commandpost")) {
@@ -268,18 +268,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::Separator();
 
       if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
-         ImGui::DragRotationEuler("Rotation", &creation_entity, &world::object::rotation,
-                                  &world::edit_context::euler_rotation,
-                                  &_edit_stack_world, &_edit_context);
+         ImGui::DragRotationEuler("Rotation", &object.rotation,
+                                  &_edit_context.euler_rotation,
+                                  _edit_stack_world, _edit_context);
       }
       else {
-         ImGui::DragQuat("Rotation", &creation_entity, &world::object::rotation,
-                         &_edit_stack_world, &_edit_context);
+         ImGui::DragQuat("Rotation", &object.rotation, _edit_stack_world, _edit_context);
       }
 
       if (const float3 old_position = object.position;
-          ImGui::DragFloat3("Position", &creation_entity, &world::object::position,
-                            &_edit_stack_world, &_edit_context)) {
+          ImGui::DragFloat3("Position", &object.position, _edit_stack_world,
+                            _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != object.position.x;
          _entity_creation_context.lock_y_axis |=
@@ -383,39 +382,36 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      ImGui::SliderInt("Team", &creation_entity, &world::object::team,
-                       &_edit_stack_world, &_edit_context, 0, 15, "%d",
-                       ImGuiSliderFlags_AlwaysClamp);
+      ImGui::SliderInt("Team", &object.team, _edit_stack_world, _edit_context,
+                       0, 15, "%d", ImGuiSliderFlags_AlwaysClamp);
 
       traits = {.has_cycle_object_class = true};
    }
    else if (creation_entity.is<world::light>()) {
       world::light& light = creation_entity.get<world::light>();
 
-      ImGui::InputText("Name", &creation_entity, &world::light::name, &_edit_stack_world,
-                       &_edit_context, [&](std::string* edited_value) {
+      ImGui::InputText("Name", &light.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.lights, *edited_value);
                        });
 
-      ImGui::LayerPick<world::light>("Layer", &creation_entity,
-                                     &_edit_stack_world, &_edit_context);
+      ImGui::LayerPick("Layer", &light.layer, _edit_stack_world, _edit_context);
 
       ImGui::Separator();
 
       if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
-         ImGui::DragRotationEuler("Rotation", &creation_entity, &world::light::rotation,
-                                  &world::edit_context::euler_rotation,
-                                  &_edit_stack_world, &_edit_context);
+         ImGui::DragRotationEuler("Rotation", &light.rotation,
+                                  &_edit_context.euler_rotation,
+                                  _edit_stack_world, _edit_context);
       }
       else {
-         ImGui::DragQuat("Rotation", &creation_entity, &world::light::rotation,
-                         &_edit_stack_world, &_edit_context);
+         ImGui::DragQuat("Rotation", &light.rotation, _edit_stack_world, _edit_context);
       }
 
       if (const float3 old_position = light.position;
-          ImGui::DragFloat3("Position", &creation_entity, &world::light::position,
-                            &_edit_stack_world, &_edit_context)) {
+          ImGui::DragFloat3("Position", &light.position, _edit_stack_world,
+                            _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != light.position.x;
          _entity_creation_context.lock_y_axis |=
@@ -510,22 +506,19 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      ImGui::ColorEdit3("Color", &creation_entity, &world::light::color,
-                        &_edit_stack_world, &_edit_context,
+      ImGui::ColorEdit3("Color", &light.color, _edit_stack_world, _edit_context,
                         ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR);
 
-      ImGui::Checkbox("Static", &creation_entity, &world::light::static_,
-                      &_edit_stack_world, &_edit_context);
+      ImGui::Checkbox("Static", &light.static_, _edit_stack_world, _edit_context);
       ImGui::SameLine();
-      ImGui::Checkbox("Shadow Caster", &creation_entity, &world::light::shadow_caster,
-                      &_edit_stack_world, &_edit_context);
+      ImGui::Checkbox("Shadow Caster", &light.shadow_caster, _edit_stack_world,
+                      _edit_context);
       ImGui::SameLine();
-      ImGui::Checkbox("Specular Caster", &creation_entity, &world::light::specular_caster,
-                      &_edit_stack_world, &_edit_context);
+      ImGui::Checkbox("Specular Caster", &light.specular_caster,
+                      _edit_stack_world, _edit_context);
 
       ImGui::EnumSelect(
-         "Light Type", &creation_entity, &world::light::light_type,
-         &_edit_stack_world, &_edit_context,
+         "Light Type", &light.light_type, _edit_stack_world, _edit_context,
          {enum_select_option{"Directional", world::light_type::directional},
           enum_select_option{"Point", world::light_type::point},
           enum_select_option{"Spot", world::light_type::spot},
@@ -540,26 +533,24 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if (light.light_type == world::light_type::point or
           light.light_type == world::light_type::spot) {
-         ImGui::DragFloat("Range", &creation_entity, &world::light::range,
-                          &_edit_stack_world, &_edit_context);
+         ImGui::DragFloat("Range", &light.range, _edit_stack_world, _edit_context);
 
          if (light.light_type == world::light_type::spot) {
-            ImGui::DragFloat("Inner Cone Angle", &creation_entity,
-                             &world::light::inner_cone_angle, &_edit_stack_world,
-                             &_edit_context, 0.01f, 0.0f, light.outer_cone_angle,
-                             "%.3f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Outer Cone Angle", &creation_entity,
-                             &world::light::outer_cone_angle, &_edit_stack_world,
-                             &_edit_context, 0.01f, light.inner_cone_angle,
-                             1.570f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::DragFloat("Inner Cone Angle", &light.inner_cone_angle,
+                             _edit_stack_world, _edit_context, 0.01f, 0.0f,
+                             light.outer_cone_angle, "%.3f",
+                             ImGuiSliderFlags_AlwaysClamp);
+            ImGui::DragFloat("Outer Cone Angle", &light.outer_cone_angle,
+                             _edit_stack_world, _edit_context, 0.01f,
+                             light.inner_cone_angle, 1.570f, "%.3f",
+                             ImGuiSliderFlags_AlwaysClamp);
          }
 
          ImGui::Separator();
       }
 
       ImGui::InputTextAutoComplete(
-         "Texture", &creation_entity, &world::light::texture,
-         &_edit_stack_world, &_edit_context, [&] {
+         "Texture", &light.texture, _edit_stack_world, _edit_context, [&]() noexcept {
             std::array<std::string_view, 6> entries;
             std::size_t matching_count = 0;
 
@@ -581,20 +572,19 @@ void world_edit::ui_show_world_creation_editor() noexcept
          });
 
       if (world::is_directional_light(light) and not light.texture.empty()) {
-         ImGui::DragFloat2("Directional Texture Tiling", &creation_entity,
-                           &world::light::directional_texture_tiling,
-                           &_edit_stack_world, &_edit_context, 0.01f);
-         ImGui::DragFloat2("Directional Texture Offset", &creation_entity,
-                           &world::light::directional_texture_offset,
-                           &_edit_stack_world, &_edit_context, 0.01f);
+         ImGui::DragFloat2("Directional Texture Tiling",
+                           &light.directional_texture_tiling, _edit_stack_world,
+                           _edit_context, 0.01f);
+         ImGui::DragFloat2("Directional Texture Offset",
+                           &light.directional_texture_offset, _edit_stack_world,
+                           _edit_context, 0.01f);
       }
 
       if (is_region_light(light)) {
          ImGui::Separator();
 
-         ImGui::InputText("Region Name", &creation_entity,
-                          &world::light::region_name, &_edit_stack_world,
-                          &_edit_context, [&](std::string* edited_value) {
+         ImGui::InputText("Region Name", &light.region_name, _edit_stack_world,
+                          _edit_context, [&](std::string* edited_value) noexcept {
                              *edited_value = world::create_unique_light_region_name(
                                 _world.lights, _world.regions,
                                 edited_value->empty() ? light.name : *edited_value);
@@ -602,19 +592,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (_entity_creation_config.placement_rotation ==
              placement_rotation::manual_euler) {
-            ImGui::DragRotationEuler("Rotation", &creation_entity,
-                                     &world::light::region_rotation,
-                                     &world::edit_context::light_region_euler_rotation,
-                                     &_edit_stack_world, &_edit_context);
+            ImGui::DragRotationEuler("Rotation", &light.region_rotation,
+                                     &_edit_context.light_region_euler_rotation,
+                                     _edit_stack_world, _edit_context);
          }
          else {
-            ImGui::DragQuat("Region Rotation", &creation_entity,
-                            &world::light::region_rotation, &_edit_stack_world,
-                            &_edit_context);
+            ImGui::DragQuat("Region Rotation", &light.region_rotation,
+                            _edit_stack_world, _edit_context);
          }
 
-         ImGui::DragFloat3("Region Size", &creation_entity, &world::light::region_size,
-                           &_edit_stack_world, &_edit_context);
+         ImGui::DragFloat3("Region Size", &light.region_size, _edit_stack_world,
+                           _edit_context);
       }
 
       traits = {.has_placement_ground = false};
@@ -622,14 +610,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::path>()) {
       world::path& path = creation_entity.get<world::path>();
 
-      const world::path* existing_path = world::find_entity(_world.paths, path.name);
+      world::path* existing_path = world::find_entity(_world.paths, path.name);
 
       if (existing_path) {
          ImGui::LabelText("Name", existing_path->name.c_str());
-         ImGui::LayerPick("Layer", existing_path, &_edit_stack_world, &_edit_context);
+         ImGui::LayerPick("Layer", &existing_path->layer, _edit_stack_world,
+                          _edit_context);
 
-         ImGui::EnumSelect("Path Type", existing_path, &world::path::type,
-                           &_edit_stack_world, &_edit_context,
+         ImGui::EnumSelect("Path Type", &existing_path->type, _edit_stack_world,
+                           _edit_context,
                            {enum_select_option{"None", world::path_type::none},
                             enum_select_option{"Entity Follow",
                                                world::path_type::entity_follow},
@@ -637,8 +626,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                             enum_select_option{"Patrol", world::path_type::patrol}});
 
          ImGui::EnumSelect(
-            "Spline Type", existing_path, &world::path::spline_type,
-            &_edit_stack_world, &_edit_context,
+            "Spline Type", &existing_path->spline_type, _edit_stack_world, _edit_context,
             {enum_select_option{"None", world::path_spline_type::none},
              enum_select_option{"Linear", world::path_spline_type::linear},
              enum_select_option{"Hermite", world::path_spline_type::hermite},
@@ -646,9 +634,22 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          ImGui::Separator();
 
-         for (std::size_t i = 0; i < existing_path->properties.size(); ++i) {
-            ImGui::InputKeyValue(existing_path, &world::path::properties, i,
-                                 &_edit_stack_world, &_edit_context);
+         for (uint32 i = 0; i < existing_path->properties.size(); ++i) {
+            ImGui::PushID(static_cast<int>(i));
+
+            bool delete_property = false;
+
+            ImGui::InputKeyValueWithDelete(&existing_path->properties, i,
+                                           &delete_property, _edit_stack_world,
+                                           _edit_context);
+
+            if (delete_property) {
+               _edit_stack_world
+                  .apply(edits::make_delete_path_property(existing_path->id, i, _world),
+                         _edit_context);
+            }
+
+            ImGui::PopID();
          }
 
          if (ImGui::BeginCombo("Add Property", "<select property>")) {
@@ -663,9 +664,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
       else {
-         ImGui::InputText("Name", &creation_entity, &world::path::name,
-                          &_edit_stack_world, &_edit_context,
-                          [&](std::string* edited_value) {
+         ImGui::InputText("Name", &path.name, _edit_stack_world, _edit_context,
+                          [&](std::string* edited_value) noexcept {
                              *edited_value =
                                 world::create_unique_name(_world.paths,
                                                           edited_value->empty()
@@ -674,11 +674,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                                                   *edited_value});
                           });
 
-         ImGui::LayerPick<world::path>("Layer", &creation_entity,
-                                       &_edit_stack_world, &_edit_context);
+         ImGui::LayerPick("Layer", &path.layer, _edit_stack_world, _edit_context);
 
-         ImGui::EnumSelect("Path Type", &creation_entity, &world::path::type,
-                           &_edit_stack_world, &_edit_context,
+         ImGui::EnumSelect("Path Type", &path.type, _edit_stack_world, _edit_context,
                            {enum_select_option{"None", world::path_type::none},
                             enum_select_option{"Entity Follow",
                                                world::path_type::entity_follow},
@@ -686,8 +684,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                             enum_select_option{"Patrol", world::path_type::patrol}});
 
          ImGui::EnumSelect(
-            "Spline Type", &creation_entity, &world::path::spline_type,
-            &_edit_stack_world, &_edit_context,
+            "Spline Type", &path.spline_type, _edit_stack_world, _edit_context,
             {enum_select_option{"None", world::path_spline_type::none},
              enum_select_option{"Linear", world::path_spline_type::linear},
              enum_select_option{"Hermite", world::path_spline_type::hermite},
@@ -701,18 +698,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::Text("Next Node");
 
       if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
-         ImGui::DragRotationEulerPathNode("Rotation", &creation_entity,
-                                          &world::edit_context::euler_rotation,
-                                          &_edit_stack_world, &_edit_context);
+         ImGui::DragPathNodeRotationEuler("Rotation", &creation_entity,
+                                          _edit_stack_world, _edit_context);
       }
       else {
-         ImGui::DragQuatPathNode("Rotation", &creation_entity,
-                                 &_edit_stack_world, &_edit_context);
+         ImGui::DragPathNodeRotation("Rotation", &path.nodes, 0,
+                                     _edit_stack_world, _edit_context);
       }
 
       if (const float3 old_position = path.nodes[0].position;
-          ImGui::DragFloat3PathNode("Position", &creation_entity,
-                                    &_edit_stack_world, &_edit_context)) {
+          ImGui::DragPathNodePosition("Position", &path.nodes, 0,
+                                      _edit_stack_world, _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != path.nodes[0].position.x;
          _entity_creation_context.lock_y_axis |=
@@ -861,14 +857,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::region>()) {
       world::region& region = creation_entity.get<world::region>();
 
-      ImGui::InputText("Name", &creation_entity, &world::region::name, &_edit_stack_world,
-                       &_edit_context, [&](std::string* edited_value) {
+      ImGui::InputText("Name", &region.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.regions, *edited_value);
                        });
 
-      ImGui::LayerPick<world::region>("Layer", &creation_entity,
-                                      &_edit_stack_world, &_edit_context);
+      ImGui::LayerPick("Layer", &region.layer, _edit_stack_world, _edit_context);
 
       ImGui::Separator();
 
@@ -1227,25 +1222,23 @@ void world_edit::ui_show_world_creation_editor() noexcept
       } break;
       }
 
-      ImGui::InputText("Description", &creation_entity, &world::region::description,
-                       &_edit_stack_world, &_edit_context,
-                       [&]([[maybe_unused]] std::string* edited_value) {});
+      ImGui::InputText("Description", &region.description, _edit_stack_world,
+                       _edit_context);
 
       ImGui::Separator();
 
       if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
-         ImGui::DragRotationEuler("Rotation", &creation_entity, &world::region::rotation,
-                                  &world::edit_context::euler_rotation,
-                                  &_edit_stack_world, &_edit_context);
+         ImGui::DragRotationEuler("Rotation", &region.rotation,
+                                  &_edit_context.euler_rotation,
+                                  _edit_stack_world, _edit_context);
       }
       else {
-         ImGui::DragQuat("Rotation", &creation_entity, &world::region::rotation,
-                         &_edit_stack_world, &_edit_context);
+         ImGui::DragQuat("Rotation", &region.rotation, _edit_stack_world, _edit_context);
       }
 
       if (const float3 old_position = region.position;
-          ImGui::DragFloat3("Position", &creation_entity, &world::region::position,
-                            &_edit_stack_world, &_edit_context)) {
+          ImGui::DragFloat3("Position", &region.position, _edit_stack_world,
+                            _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != region.position.x;
          _entity_creation_context.lock_y_axis |=
@@ -1387,8 +1380,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       switch (world::get_region_allowed_shapes(region_type)) {
       case world::region_allowed_shapes::all: {
-         ImGui::EnumSelect("Shape", &creation_entity, &world::region::shape,
-                           &_edit_stack_world, &_edit_context,
+         ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world, _edit_context,
                            {enum_select_option{"Box", world::region_shape::box},
                             enum_select_option{"Sphere", world::region_shape::sphere},
                             enum_select_option{"Cylinder",
@@ -1398,8 +1390,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::LabelText("Shape", "Sphere");
       } break;
       case world::region_allowed_shapes::box_cylinder: {
-         ImGui::EnumSelect("Shape", &creation_entity, &world::region::shape,
-                           &_edit_stack_world, &_edit_context,
+         ImGui::EnumSelect("Shape", &region.shape, _edit_stack_world, _edit_context,
                            {enum_select_option{"Box", world::region_shape::box},
                             enum_select_option{"Cylinder",
                                                world::region_shape::cylinder}});
@@ -1556,8 +1547,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::sector>()) {
       world::sector& sector = creation_entity.get<world::sector>();
 
-      ImGui::InputText("Name", &creation_entity, &world::sector::name, &_edit_stack_world,
-                       &_edit_context, [&](std::string* edited_value) {
+      ImGui::InputText("Name", &sector.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.sectors, *edited_value);
                        });
@@ -1567,16 +1558,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if (using_from_object_bbox) ImGui::BeginDisabled();
 
-      ImGui::DragFloat("Base", &creation_entity, &world::sector::base,
-                       &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 0.0f, "Y:%.3f");
-      ImGui::DragFloat("Height", &creation_entity, &world::sector::height,
-                       &_edit_stack_world, &_edit_context);
+      ImGui::DragFloat("Base", &sector.base, _edit_stack_world, _edit_context,
+                       1.0f, 0.0f, 0.0f, "Y:%.3f");
+      ImGui::DragFloat("Height", &sector.height, _edit_stack_world, _edit_context);
 
       if (sector.points.empty()) std::terminate();
 
       if (const float2 old_position = sector.points[0];
-          ImGui::DragSectorPoint("Position", &creation_entity,
-                                 &_edit_stack_world, &_edit_context)) {
+          ImGui::DragSectorPoint("Position", &sector.points, 0,
+                                 _edit_stack_world, _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != sector.points[0].x;
          _entity_creation_context.lock_z_axis |=
@@ -1707,20 +1697,19 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::portal>()) {
       world::portal& portal = creation_entity.get<world::portal>();
 
-      ImGui::InputText("Name", &creation_entity, &world::portal::name, &_edit_stack_world,
-                       &_edit_context, [&](std::string* edited_value) {
+      ImGui::InputText("Name", &portal.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.portals, *edited_value);
                        });
 
-      ImGui::DragFloat("Width", &creation_entity, &world::portal::width,
-                       &_edit_stack_world, &_edit_context, 1.0f, 0.25f, 1e10f);
-      ImGui::DragFloat("Height", &creation_entity, &world::portal::height,
-                       &_edit_stack_world, &_edit_context, 1.0f, 0.25f, 1e10f);
+      ImGui::DragFloat("Width", &portal.width, _edit_stack_world, _edit_context,
+                       1.0f, 0.25f, 1e10f);
+      ImGui::DragFloat("Height", &portal.height, _edit_stack_world,
+                       _edit_context, 1.0f, 0.25f, 1e10f);
 
-      ImGui::InputTextAutoComplete("Linked Sector 1", &creation_entity,
-                                   &world::portal::sector1, &_edit_stack_world,
-                                   &_edit_context, [&] {
+      ImGui::InputTextAutoComplete("Linked Sector 1", &portal.sector1,
+                                   _edit_stack_world, _edit_context, [&]() noexcept {
                                       std::array<std::string_view, 6> entries;
                                       std::size_t matching_count = 0;
 
@@ -1743,9 +1732,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _entity_creation_context.pick_sector_index = 1;
       }
 
-      ImGui::InputTextAutoComplete("Linked Sector 2", &creation_entity,
-                                   &world::portal::sector2, &_edit_stack_world,
-                                   &_edit_context, [&] {
+      ImGui::InputTextAutoComplete("Linked Sector 2", &portal.sector2,
+                                   _edit_stack_world, _edit_context, [&]() noexcept {
                                       std::array<std::string_view, 6> entries;
                                       std::size_t matching_count = 0;
 
@@ -1790,18 +1778,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
-         ImGui::DragRotationEuler("Rotation", &creation_entity, &world::portal::rotation,
-                                  &world::edit_context::euler_rotation,
-                                  &_edit_stack_world, &_edit_context);
+         ImGui::DragRotationEuler("Rotation", &portal.rotation,
+                                  &_edit_context.euler_rotation,
+                                  _edit_stack_world, _edit_context);
       }
       else {
-         ImGui::DragQuat("Rotation", &creation_entity, &world::portal::rotation,
-                         &_edit_stack_world, &_edit_context);
+         ImGui::DragQuat("Rotation", &portal.rotation, _edit_stack_world, _edit_context);
       }
 
       if (const float3 old_position = portal.position;
-          ImGui::DragFloat3("Position", &creation_entity, &world::portal::position,
-                            &_edit_stack_world, &_edit_context)) {
+          ImGui::DragFloat3("Position", &portal.position, _edit_stack_world,
+                            _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != portal.position.x;
          _entity_creation_context.lock_y_axis |=
@@ -1944,32 +1931,29 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::hintnode>()) {
       world::hintnode& hintnode = creation_entity.get<world::hintnode>();
 
-      ImGui::InputText("Name", &creation_entity, &world::hintnode::name,
-                       &_edit_stack_world, &_edit_context,
-                       [&](std::string* edited_value) {
+      ImGui::InputText("Name", &hintnode.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.hintnodes, *edited_value);
                        });
 
-      ImGui::LayerPick<world::hintnode>("Layer", &creation_entity,
-                                        &_edit_stack_world, &_edit_context);
+      ImGui::LayerPick("Layer", &hintnode.layer, _edit_stack_world, _edit_context);
 
       ImGui::Separator();
 
       if (_entity_creation_config.placement_rotation == placement_rotation::manual_euler) {
-         ImGui::DragRotationEuler("Rotation", &creation_entity,
-                                  &world::hintnode::rotation,
-                                  &world::edit_context::euler_rotation,
-                                  &_edit_stack_world, &_edit_context);
+         ImGui::DragRotationEuler("Rotation", &hintnode.rotation,
+                                  &_edit_context.euler_rotation,
+                                  _edit_stack_world, _edit_context);
       }
       else {
-         ImGui::DragQuat("Rotation", &creation_entity, &world::hintnode::rotation,
-                         &_edit_stack_world, &_edit_context);
+         ImGui::DragQuat("Rotation", &hintnode.rotation, _edit_stack_world,
+                         _edit_context);
       }
 
       if (const float3 old_position = hintnode.position;
-          ImGui::DragFloat3("Position", &creation_entity, &world::hintnode::position,
-                            &_edit_stack_world, &_edit_context)) {
+          ImGui::DragFloat3("Position", &hintnode.position, _edit_stack_world,
+                            _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != hintnode.position.x;
          _entity_creation_context.lock_y_axis |=
@@ -2066,19 +2050,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      ImGui::EnumSelect("Type", &creation_entity, &world::hintnode::type,
-                        &_edit_stack_world, &_edit_context,
-                        {enum_select_option{"Snipe", world::hintnode_type::snipe},
-                         enum_select_option{"Patrol", world::hintnode_type::patrol},
-                         enum_select_option{"Cover", world::hintnode_type::cover},
-                         enum_select_option{"Access", world::hintnode_type::access},
-                         enum_select_option{"Jet Jump", world::hintnode_type::jet_jump},
-                         enum_select_option{"Mine", world::hintnode_type::mine},
-                         enum_select_option{"Land", world::hintnode_type::land},
-                         enum_select_option{"Fortification",
-                                            world::hintnode_type::fortification},
-                         enum_select_option{"Vehicle Cover",
-                                            world::hintnode_type::vehicle_cover}});
+      ImGui::EnumSelect(
+         "Type", &hintnode.type, _edit_stack_world, _edit_context,
+         {enum_select_option{"Snipe", world::hintnode_type::snipe},
+          enum_select_option{"Patrol", world::hintnode_type::patrol},
+          enum_select_option{"Cover", world::hintnode_type::cover},
+          enum_select_option{"Access", world::hintnode_type::access},
+          enum_select_option{"Jet Jump", world::hintnode_type::jet_jump},
+          enum_select_option{"Mine", world::hintnode_type::mine},
+          enum_select_option{"Land", world::hintnode_type::land},
+          enum_select_option{"Fortification", world::hintnode_type::fortification},
+          enum_select_option{"Vehicle Cover", world::hintnode_type::vehicle_cover}});
 
       const world::hintnode_traits hintnode_traits =
          world::get_hintnode_traits(hintnode.type);
@@ -2103,18 +2085,16 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (hintnode_traits.has_primary_stance) {
-         ImGui::EditFlags("Primary Stance", &creation_entity,
-                          &world::hintnode::primary_stance, &_edit_stack_world,
-                          &_edit_context,
+         ImGui::EditFlags("Primary Stance", &hintnode.primary_stance,
+                          _edit_stack_world, _edit_context,
                           {{"Stand", world::stance_flags::stand},
                            {"Crouch", world::stance_flags::crouch},
                            {"Prone", world::stance_flags::prone}});
       }
 
       if (hintnode_traits.has_secondary_stance) {
-         ImGui::EditFlags("Secondary Stance", &creation_entity,
-                          &world::hintnode::secondary_stance,
-                          &_edit_stack_world, &_edit_context,
+         ImGui::EditFlags("Secondary Stance", &hintnode.secondary_stance,
+                          _edit_stack_world, _edit_context,
                           {{"Stand", world::stance_flags::stand},
                            {"Crouch", world::stance_flags::crouch},
                            {"Prone", world::stance_flags::prone},
@@ -2123,8 +2103,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (hintnode_traits.has_mode) {
-         ImGui::EnumSelect("Mode", &creation_entity, &world::hintnode::mode,
-                           &_edit_stack_world, &_edit_context,
+         ImGui::EnumSelect("Mode", &hintnode.mode, _edit_stack_world, _edit_context,
                            {enum_select_option{"None", world::hintnode_mode::none},
                             enum_select_option{"Attack", world::hintnode_mode::attack},
                             enum_select_option{"Defend", world::hintnode_mode::defend},
@@ -2132,9 +2111,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (hintnode_traits.has_radius) {
-         ImGui::DragFloat("Radius", &creation_entity, &world::hintnode::radius,
-                          &_edit_stack_world, &_edit_context, 0.25f, 0.0f,
-                          1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+         ImGui::DragFloat("Radius", &hintnode.radius, _edit_stack_world,
+                          _edit_context, 0.25f, 0.0f, 1e10f, "%.3f",
+                          ImGuiSliderFlags_AlwaysClamp);
       }
 
       traits = {.has_placement_ground = false};
@@ -2142,19 +2121,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::barrier>()) {
       world::barrier& barrier = creation_entity.get<world::barrier>();
 
-      ImGui::InputText("Name", &creation_entity, &world::barrier::name,
-                       &_edit_stack_world, &_edit_context,
-                       [&](std::string* edited_value) {
+      ImGui::InputText("Name", &barrier.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.barriers, *edited_value);
                        });
 
-      ImGui::DragBarrierRotation("Rotation", &creation_entity,
-                                 &_edit_stack_world, &_edit_context);
+      ImGui::DragBarrierRotation("Rotation", &barrier.rotation_angle,
+                                 _edit_stack_world, _edit_context);
 
       if (const float3 old_position = barrier.position;
-          ImGui::DragFloat3("Position", &creation_entity, &world::barrier::position,
-                            &_edit_stack_world, &_edit_context)) {
+          ImGui::DragFloat3("Position", &barrier.position, _edit_stack_world,
+                            _edit_context)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != barrier.position.x;
          _entity_creation_context.lock_y_axis |=
@@ -2233,8 +2211,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      ImGui::DragFloat2XZ("Size", &creation_entity, &world::barrier::size,
-                          &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
+      ImGui::DragFloat2XZ("Size", &barrier.size, _edit_stack_world,
+                          _edit_context, 1.0f, 0.0f, 1e10f);
 
       if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
          _entity_creation_context.activate_extend_to = true;
@@ -2526,8 +2504,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      ImGui::EditFlags("Flags", &creation_entity, &world::barrier::flags,
-                       &_edit_stack_world, &_edit_context,
+      ImGui::EditFlags("Flags", &barrier.flags, _edit_stack_world, _edit_context,
                        {{"Soldier", world::ai_path_flags::soldier},
                         {"Hover", world::ai_path_flags::hover},
                         {"Small", world::ai_path_flags::small},
@@ -2545,17 +2522,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::planning_hub>()) {
       world::planning_hub& hub = creation_entity.get<world::planning_hub>();
 
-      ImGui::InputText("Name", &creation_entity, &world::planning_hub::name,
-                       &_edit_stack_world, &_edit_context,
-                       [&](std::string* edited_value) {
+      ImGui::InputText("Name", &hub.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.planning_hubs,
                                                        *edited_value);
                        });
 
       if (const float3 old_position = hub.position;
-          ImGui::DragFloat3("Position", &creation_entity, &world::planning_hub::position,
-                            &_edit_stack_world, &_edit_context)) {
+          ImGui::DragFloat3("Position", &hub.position, _edit_stack_world, _edit_context)) {
          _entity_creation_context.lock_x_axis |= old_position.x != hub.position.x;
          _entity_creation_context.lock_y_axis |= old_position.y != hub.position.y;
          _entity_creation_context.lock_z_axis |= old_position.z != hub.position.z;
@@ -2603,8 +2578,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      ImGui::DragFloat("Radius", &creation_entity, &world::planning_hub::radius,
-                       &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
+      ImGui::DragFloat("Radius", &hub.radius, _edit_stack_world, _edit_context,
+                       1.0f, 0.0f, 1e10f);
 
       if (_entity_creation_context.hub_sizing_started) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS, hub.position,
@@ -2629,9 +2604,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       world::planning_connection& connection =
          creation_entity.get<world::planning_connection>();
 
-      ImGui::InputText("Name", &creation_entity,
-                       &world::planning_connection::name, &_edit_stack_world,
-                       &_edit_context, [&](std::string* edited_value) {
+      ImGui::InputText("Name", &connection.name, _edit_stack_world,
+                       _edit_context, [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.planning_connections,
                                                        *edited_value);
@@ -2655,8 +2629,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                  _edit_context, {.transparent = true});
       }
 
-      ImGui::EditFlags("Flags", &creation_entity, &world::planning_connection::flags,
-                       &_edit_stack_world, &_edit_context,
+      ImGui::EditFlags("Flags", &connection.flags, _edit_stack_world, _edit_context,
                        {{"Soldier", world::ai_path_flags::soldier},
                         {"Hover", world::ai_path_flags::hover},
                         {"Small", world::ai_path_flags::small},
@@ -2666,14 +2639,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
 
-      ImGui::Checkbox("Jump", &creation_entity, &world::planning_connection::jump,
-                      &_edit_stack_world, &_edit_context);
+      ImGui::Checkbox("Jump", &connection.jump, _edit_stack_world, _edit_context);
       ImGui::SameLine();
-      ImGui::Checkbox("Jet Jump", &creation_entity, &world::planning_connection::jet_jump,
-                      &_edit_stack_world, &_edit_context);
+      ImGui::Checkbox("Jet Jump", &connection.jet_jump, _edit_stack_world, _edit_context);
       ImGui::SameLine();
-      ImGui::Checkbox("One Way", &creation_entity, &world::planning_connection::one_way,
-                      &_edit_stack_world, &_edit_context);
+      ImGui::Checkbox("One Way", &connection.one_way, _edit_stack_world, _edit_context);
 
       bool is_dynamic = connection.dynamic_group != 0;
 
@@ -2684,9 +2654,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (is_dynamic) {
-         ImGui::SliderInt("Dynamic Group", &creation_entity,
-                          &world::planning_connection::dynamic_group,
-                          &_edit_stack_world, &_edit_context, 1, 8, "%d",
+         ImGui::SliderInt("Dynamic Group", &connection.dynamic_group,
+                          _edit_stack_world, _edit_context, 1, 8, "%d",
                           ImGuiSliderFlags_AlwaysClamp);
       }
 
@@ -2749,16 +2718,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::boundary>()) {
       world::boundary& boundary = creation_entity.get<world::boundary>();
 
-      ImGui::InputText("Name", &creation_entity, &world::boundary::name,
-                       &_edit_stack_world, &_edit_context,
-                       [&](std::string* edited_value) {
+      ImGui::InputText("Name", &boundary.name, _edit_stack_world, _edit_context,
+                       [&](std::string* edited_value) noexcept {
                           *edited_value =
                              world::create_unique_name(_world.boundaries, *edited_value);
                        });
 
       if (const float2 old_position = boundary.position;
-          ImGui::DragFloat2XZ("Position", &creation_entity, &world::boundary::position,
-                              &_edit_stack_world, &_edit_context, 0.25f)) {
+          ImGui::DragFloat2XZ("Position", &boundary.position, _edit_stack_world,
+                              _edit_context, 0.25f)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != boundary.position.x;
          _entity_creation_context.lock_z_axis |=
@@ -2804,8 +2772,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      ImGui::DragFloat2XZ("Size", &creation_entity, &world::boundary::size,
-                          &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
+      ImGui::DragFloat2XZ("Size", &boundary.size, _edit_stack_world,
+                          _edit_context, 1.0f, 0.0f, 1e10f);
 
       traits = {.has_placement_rotation = false,
                 .has_point_at = false,
@@ -2814,8 +2782,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::measurement>()) {
       world::measurement& measurement = creation_entity.get<world::measurement>();
 
-      ImGui::InputText("Name", &creation_entity, &world::measurement::name,
-                       &_edit_stack_world, &_edit_context, [](std::string*) {});
+      ImGui::InputText("Name", &measurement.name, _edit_stack_world, _edit_context);
 
       ImGui::LabelText("Length", "%.2fm",
                        distance(measurement.start, measurement.end));

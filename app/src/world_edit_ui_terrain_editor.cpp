@@ -579,38 +579,30 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          const uint32 texture = _terrain_editor_config.texture.edit_texture;
 
-         auto texture_name_auto_complete = [&] {
-            std::array<std::string_view, 6> entries;
-            std::size_t matching_count = 0;
-
-            _asset_libraries.textures.view_existing(
-               [&](const std::span<const assets::stable_string> assets) noexcept {
-                  for (const std::string_view asset : assets) {
-                     if (matching_count == entries.size()) break;
-                     if (not string::icontains(asset,
-                                               _world.terrain.texture_names[texture])) {
-                        continue;
-                     }
-
-                     entries[matching_count] = asset;
-
-                     ++matching_count;
-                  }
-               });
-
-            return entries;
-         };
-
          if (absl::InlinedVector<char, 256> texture_name =
                 {_world.terrain.texture_names[texture].begin(),
                  _world.terrain.texture_names[texture].end()};
-             ImGui::InputTextAutoComplete(
-                "Name", &texture_name,
-                [](void* callback) {
-                   return (*static_cast<decltype(texture_name_auto_complete)*>(
-                      callback))();
-                },
-                &texture_name_auto_complete)) {
+             ImGui::InputTextAutoComplete("Name", &texture_name, [&]() noexcept {
+                std::array<std::string_view, 6> entries;
+                std::size_t matching_count = 0;
+
+                _asset_libraries.textures.view_existing(
+                   [&](const std::span<const assets::stable_string> assets) noexcept {
+                      for (const std::string_view asset : assets) {
+                         if (matching_count == entries.size()) break;
+                         if (not string::icontains(asset,
+                                                   _world.terrain.texture_names[texture])) {
+                            continue;
+                         }
+
+                         entries[matching_count] = asset;
+
+                         ++matching_count;
+                      }
+                   });
+
+                return entries;
+             })) {
             _edit_stack_world.apply(
                edits::make_set_memory_value(&_world.terrain.texture_names[texture],
                                             std::string{texture_name.begin(),
@@ -670,37 +662,29 @@ void world_edit::ui_show_terrain_editor() noexcept
                                     _edit_context, {.closed = true});
          }
 
-         auto detail_texture_auto_complete = [&] {
-            std::array<std::string_view, 6> entries;
-            std::size_t matching_count = 0;
-
-            _asset_libraries.textures.view_existing(
-               [&](const std::span<const assets::stable_string> assets) noexcept {
-                  for (const std::string_view asset : assets) {
-                     if (matching_count == entries.size()) break;
-                     if (not string::icontains(asset, _world.terrain.detail_texture_name)) {
-                        continue;
-                     }
-
-                     entries[matching_count] = asset;
-
-                     ++matching_count;
-                  }
-               });
-
-            return entries;
-         };
-
          if (absl::InlinedVector<char, 256> detail_texture =
                 {_world.terrain.detail_texture_name.begin(),
                  _world.terrain.detail_texture_name.end()};
-             ImGui::InputTextAutoComplete(
-                "Detail Texture", &detail_texture,
-                [](void* callback) {
-                   return (*static_cast<decltype(detail_texture_auto_complete)*>(
-                      callback))();
-                },
-                &detail_texture_auto_complete)) {
+             ImGui::InputTextAutoComplete("Detail Texture", &detail_texture, [&]() noexcept {
+                std::array<std::string_view, 6> entries;
+                std::size_t matching_count = 0;
+
+                _asset_libraries.textures.view_existing(
+                   [&](const std::span<const assets::stable_string> assets) noexcept {
+                      for (const std::string_view asset : assets) {
+                         if (matching_count == entries.size()) break;
+                         if (not string::icontains(asset, _world.terrain.detail_texture_name)) {
+                            continue;
+                         }
+
+                         entries[matching_count] = asset;
+
+                         ++matching_count;
+                      }
+                   });
+
+                return entries;
+             })) {
             _edit_stack_world.apply(
                edits::make_set_memory_value(&_world.terrain.detail_texture_name,
                                             std::string{detail_texture.begin(),

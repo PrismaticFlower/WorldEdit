@@ -8,6 +8,7 @@
 #include "edits/delete_sector_point.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
+#include "math/vector_funcs.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/hintnode_traits.hpp"
@@ -83,15 +84,15 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Object");
             }
 
-            ImGui::InputText("Name", object, &world::object::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &object->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.objects,
                                                              *edited_value);
                              });
             ImGui::InputTextAutoComplete(
-               "Class Name", object, &world::object::class_name,
-               &_edit_stack_world, &_edit_context, [&] {
+               "Class Name", &object->class_name, _edit_stack_world,
+               _edit_context, [&]() noexcept {
                   std::array<std::string_view, 6> entries;
                   std::size_t matching_count = 0;
 
@@ -137,33 +138,32 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::EndPopup();
             }
 
-            ImGui::LayerPick("Layer", object, &_edit_stack_world, &_edit_context);
+            ImGui::LayerPick("Layer", &object->layer, _edit_stack_world, _edit_context);
 
             ImGui::Separator();
 
-            ImGui::DragQuat("Rotation", object, &world::object::rotation,
-                            &_edit_stack_world, &_edit_context);
-            ImGui::DragFloat3("Position", object, &world::object::position,
-                              &_edit_stack_world, &_edit_context);
+            ImGui::DragQuat("Rotation", &object->rotation, _edit_stack_world,
+                            _edit_context);
+            ImGui::DragFloat3("Position", &object->position, _edit_stack_world,
+                              _edit_context);
 
             const bool ground_object =
                ImGui::Button("Ground Object", {ImGui::CalcItemWidth(), 0.0f});
 
             ImGui::Separator();
 
-            ImGui::SliderInt("Team", object, &world::object::team,
-                             &_edit_stack_world, &_edit_context, 0, 15, "%d",
-                             ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderInt("Team", &object->team, _edit_stack_world, _edit_context,
+                             0, 15, "%d", ImGuiSliderFlags_AlwaysClamp);
 
             ImGui::Separator();
 
-            for (std::size_t i = 0; i < object->instance_properties.size(); ++i) {
+            for (uint32 i = 0; i < object->instance_properties.size(); ++i) {
                world::instance_property& prop = object->instance_properties[i];
 
                if (prop.key.contains("Path")) {
                   ImGui::InputKeyValueAutoComplete(
-                     object, &world::object::instance_properties, i,
-                     &_edit_stack_world, &_edit_context, [&] {
+                     &object->instance_properties, i, _edit_stack_world,
+                     _edit_context, [&]() noexcept {
                         std::array<std::string_view, 6> entries;
 
                         std::size_t matching_count = 0;
@@ -185,8 +185,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                }
                else if (prop.key.contains("Region")) {
                   ImGui::InputKeyValueAutoComplete(
-                     object, &world::object::instance_properties, i,
-                     &_edit_stack_world, &_edit_context, [&] {
+                     &object->instance_properties, i, _edit_stack_world,
+                     _edit_context, [&]() noexcept {
                         std::array<std::string_view, 6> entries;
 
                         std::size_t matching_count = 0;
@@ -207,8 +207,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      });
                }
                else {
-                  ImGui::InputKeyValue(object, &world::object::instance_properties,
-                                       i, &_edit_stack_world, &_edit_context);
+                  ImGui::InputKeyValue(&object->instance_properties, i,
+                                       _edit_stack_world, _edit_context);
                }
             }
 
@@ -258,39 +258,36 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Light");
             }
 
-            ImGui::InputText("Name", light, &world::light::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &light->name, _edit_stack_world, _edit_context,
+                             [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.lights,
                                                              *edited_value);
                              });
-            ImGui::LayerPick("Layer", light, &_edit_stack_world, &_edit_context);
+            ImGui::LayerPick("Layer", &light->layer, _edit_stack_world, _edit_context);
 
             ImGui::Separator();
 
-            ImGui::DragQuat("Rotation", light, &world::light::rotation,
-                            &_edit_stack_world, &_edit_context);
-            ImGui::DragFloat3("Position", light, &world::light::position,
-                              &_edit_stack_world, &_edit_context);
+            ImGui::DragQuat("Rotation", &light->rotation, _edit_stack_world,
+                            _edit_context);
+            ImGui::DragFloat3("Position", &light->position, _edit_stack_world,
+                              _edit_context);
 
             ImGui::Separator();
 
-            ImGui::ColorEdit3("Color", light, &world::light::color,
-                              &_edit_stack_world, &_edit_context,
+            ImGui::ColorEdit3("Color", &light->color, _edit_stack_world, _edit_context,
                               ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR);
 
-            ImGui::Checkbox("Static", light, &world::light::static_,
-                            &_edit_stack_world, &_edit_context);
+            ImGui::Checkbox("Static", &light->static_, _edit_stack_world, _edit_context);
             ImGui::SameLine();
-            ImGui::Checkbox("Shadow Caster", light, &world::light::shadow_caster,
-                            &_edit_stack_world, &_edit_context);
+            ImGui::Checkbox("Shadow Caster", &light->shadow_caster,
+                            _edit_stack_world, _edit_context);
             ImGui::SameLine();
-            ImGui::Checkbox("Specular Caster", light, &world::light::specular_caster,
-                            &_edit_stack_world, &_edit_context);
+            ImGui::Checkbox("Specular Caster", &light->specular_caster,
+                            _edit_stack_world, _edit_context);
 
             ImGui::EnumSelect(
-               "Light Type", light, &world::light::light_type,
-               &_edit_stack_world, &_edit_context,
+               "Light Type", &light->light_type, _edit_stack_world, _edit_context,
                {enum_select_option{"Directional", world::light_type::directional},
                 enum_select_option{"Point", world::light_type::point},
                 enum_select_option{"Spot", world::light_type::spot},
@@ -305,27 +302,24 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
             if (light->light_type == world::light_type::point or
                 light->light_type == world::light_type::spot) {
-               ImGui::DragFloat("Range", light, &world::light::range,
-                                &_edit_stack_world, &_edit_context);
+               ImGui::DragFloat("Range", &light->range, _edit_stack_world, _edit_context);
 
                if (light->light_type == world::light_type::spot) {
-                  ImGui::DragFloat("Inner Cone Angle", light,
-                                   &world::light::inner_cone_angle,
-                                   &_edit_stack_world, &_edit_context, 0.01f,
+                  ImGui::DragFloat("Inner Cone Angle", &light->inner_cone_angle,
+                                   _edit_stack_world, _edit_context, 0.01f,
                                    0.0f, light->outer_cone_angle, "%.3f",
                                    ImGuiSliderFlags_AlwaysClamp);
-                  ImGui::DragFloat("Outer Cone Angle", light,
-                                   &world::light::outer_cone_angle, &_edit_stack_world,
-                                   &_edit_context, 0.01f, light->inner_cone_angle,
-                                   1.570f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                  ImGui::DragFloat("Outer Cone Angle", &light->outer_cone_angle,
+                                   _edit_stack_world, _edit_context, 0.01f,
+                                   light->inner_cone_angle, 1.570f, "%.3f",
+                                   ImGuiSliderFlags_AlwaysClamp);
                }
 
                ImGui::Separator();
             }
 
             ImGui::InputTextAutoComplete(
-               "Texture", light, &world::light::texture, &_edit_stack_world,
-               &_edit_context, [&] {
+               "Texture", &light->texture, _edit_stack_world, _edit_context, [&]() noexcept {
                   std::array<std::string_view, 6> entries;
                   std::size_t matching_count = 0;
 
@@ -347,30 +341,30 @@ void world_edit::ui_show_world_selection_editor() noexcept
                });
 
             if (world::is_directional_light(*light) and not light->texture.empty()) {
-               ImGui::DragFloat2("Directional Texture Tiling", light,
-                                 &world::light::directional_texture_tiling,
-                                 &_edit_stack_world, &_edit_context, 0.01f);
-               ImGui::DragFloat2("Directional Texture Offset", light,
-                                 &world::light::directional_texture_offset,
-                                 &_edit_stack_world, &_edit_context, 0.01f);
+               ImGui::DragFloat2("Directional Texture Tiling",
+                                 &light->directional_texture_tiling,
+                                 _edit_stack_world, _edit_context, 0.01f);
+               ImGui::DragFloat2("Directional Texture Offset",
+                                 &light->directional_texture_offset,
+                                 _edit_stack_world, _edit_context, 0.01f);
             }
 
             ImGui::Separator();
 
             if (is_region_light(*light)) {
-               ImGui::InputText("Region Name", light,
-                                &world::light::region_name, &_edit_stack_world,
-                                &_edit_context, [&](std::string* edited_value) {
+               ImGui::InputText("Region Name", &light->region_name,
+                                _edit_stack_world, _edit_context,
+                                [&](std::string* edited_value) noexcept {
                                    *edited_value =
                                       world::create_unique_light_region_name(
                                          _world.lights, _world.regions,
                                          edited_value->empty() ? light->name
                                                                : *edited_value);
                                 });
-               ImGui::DragQuat("Region Rotation", light, &world::light::region_rotation,
-                               &_edit_stack_world, &_edit_context);
-               ImGui::DragFloat3("Region Size", light, &world::light::region_size,
-                                 &_edit_stack_world, &_edit_context);
+               ImGui::DragQuat("Region Rotation", &light->region_rotation,
+                               _edit_stack_world, _edit_context);
+               ImGui::DragFloat3("Region Size", &light->region_size,
+                                 _edit_stack_world, _edit_context);
             }
          }
          else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
@@ -410,8 +404,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Path Node");
             }
 
-            ImGui::InputText("Name", path, &world::path::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &path->name, _edit_stack_world, _edit_context,
+                             [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.paths,
                                                              edited_value->empty()
@@ -419,10 +413,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                                 : std::string_view{
                                                                      *edited_value});
                              });
-            ImGui::LayerPick("Layer", path, &_edit_stack_world, &_edit_context);
+            ImGui::LayerPick("Layer", &path->layer, _edit_stack_world, _edit_context);
 
-            ImGui::EnumSelect("Path Type", path, &world::path::type,
-                              &_edit_stack_world, &_edit_context,
+            ImGui::EnumSelect("Path Type", &path->type, _edit_stack_world, _edit_context,
                               {enum_select_option{"None", world::path_type::none},
                                enum_select_option{"Entity Follow",
                                                   world::path_type::entity_follow},
@@ -430,8 +423,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                enum_select_option{"Patrol", world::path_type::patrol}});
 
             ImGui::EnumSelect(
-               "Spline Type", path, &world::path::spline_type,
-               &_edit_stack_world, &_edit_context,
+               "Spline Type", &path->spline_type, _edit_stack_world, _edit_context,
                {enum_select_option{"None", world::path_spline_type::none},
                 enum_select_option{"Linear", world::path_spline_type::linear},
                 enum_select_option{"Hermite", world::path_spline_type::hermite},
@@ -439,14 +431,13 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
             if (not path->properties.empty()) ImGui::Separator();
 
-            for (std::size_t i = 0; i < path->properties.size(); ++i) {
+            for (uint32 i = 0; i < path->properties.size(); ++i) {
                ImGui::PushID(static_cast<int>(i));
 
                bool delete_property = false;
 
-               ImGui::InputKeyValueWithDelete(path, &world::path::properties, i,
-                                              &delete_property,
-                                              &_edit_stack_world, &_edit_context);
+               ImGui::InputKeyValueWithDelete(&path->properties, i, &delete_property,
+                                              _edit_stack_world, _edit_context);
 
                if (delete_property) {
                   _edit_stack_world.apply(edits::make_delete_path_property(path->id,
@@ -471,22 +462,22 @@ void world_edit::ui_show_world_selection_editor() noexcept
             ImGui::Separator();
             ImGui::Text("Node %i", static_cast<int>(node_index));
 
-            ImGui::DragQuat("Rotation", path, node_index, &world::path::node::rotation,
-                            &_edit_stack_world, &_edit_context);
-            ImGui::DragFloat3("Position", path, node_index, &world::path::node::position,
-                              &_edit_stack_world, &_edit_context);
+            ImGui::DragPathNodeRotation("Rotation", &path->nodes, node_index,
+                                        _edit_stack_world, _edit_context);
+            ImGui::DragPathNodePosition("Position", &path->nodes, node_index,
+                                        _edit_stack_world, _edit_context);
 
             ImGui::PushID("Node");
 
-            for (std::size_t prop_index = 0;
+            for (uint32 prop_index = 0;
                  prop_index < path->nodes[node_index].properties.size(); ++prop_index) {
                ImGui::PushID(static_cast<int>(prop_index));
 
                bool delete_property = false;
 
-               ImGui::InputKeyValueWithDelete(path, node_index, prop_index,
-                                              &delete_property,
-                                              &_edit_stack_world, &_edit_context);
+               ImGui::InputKeyValueWithDelete(&path->nodes, node_index,
+                                              prop_index, &delete_property,
+                                              _edit_stack_world, _edit_context);
 
                if (delete_property) {
                   _edit_stack_world.apply(edits::make_delete_path_node_property(
@@ -564,13 +555,13 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Region");
             }
 
-            ImGui::InputText("Name", region, &world::region::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &region->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.regions,
                                                              *edited_value);
                              });
-            ImGui::LayerPick("Layer", region, &_edit_stack_world, &_edit_context);
+            ImGui::LayerPick("Layer", &region->layer, _edit_stack_world, _edit_context);
 
             ImGui::Separator();
 
@@ -938,21 +929,20 @@ void world_edit::ui_show_world_selection_editor() noexcept
             } break;
             }
 
-            ImGui::InputText("Description", region, &world::region::description,
-                             &_edit_stack_world, &_edit_context,
-                             [&](std::string*) {});
+            ImGui::InputText("Description", &region->description, _edit_stack_world,
+                             _edit_context, [&](std::string*) noexcept {});
 
             ImGui::Separator();
 
-            ImGui::DragQuat("Rotation", region, &world::region::rotation,
-                            &_edit_stack_world, &_edit_context);
-            ImGui::DragFloat3("Position", region, &world::region::position,
-                              &_edit_stack_world, &_edit_context);
+            ImGui::DragQuat("Rotation", &region->rotation, _edit_stack_world,
+                            _edit_context);
+            ImGui::DragFloat3("Position", &region->position, _edit_stack_world,
+                              _edit_context);
 
             switch (region->shape) {
             case world::region_shape::box: {
-               ImGui::DragFloat3("Size", region, &world::region::size, &_edit_stack_world,
-                                 &_edit_context, 1.0f, 0.0f, 1e10f);
+               ImGui::DragFloat3("Size", &region->size, _edit_stack_world,
+                                 _edit_context, 1.0f, 0.0f, 1e10f);
             } break;
             case world::region_shape::sphere: {
                float radius = length(region->size);
@@ -1008,19 +998,18 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
             switch (world::get_region_allowed_shapes(region_type)) {
             case world::region_allowed_shapes::all: {
-               ImGui::EnumSelect("Shape", region, &world::region::shape,
-                                 &_edit_stack_world, &_edit_context,
-                                 {enum_select_option{"Box", world::region_shape::box},
-                                  enum_select_option{"Sphere", world::region_shape::sphere},
-                                  enum_select_option{"Cylinder",
-                                                     world::region_shape::cylinder}});
+               ImGui::EnumSelect(
+                  "Shape", &region->shape, _edit_stack_world, _edit_context,
+                  {enum_select_option{"Box", world::region_shape::box},
+                   enum_select_option{"Sphere", world::region_shape::sphere},
+                   enum_select_option{"Cylinder", world::region_shape::cylinder}});
             } break;
             case world::region_allowed_shapes::sphere: {
                ImGui::LabelText("Shape", "Sphere");
             } break;
             case world::region_allowed_shapes::box_cylinder: {
-               ImGui::EnumSelect("Shape", region, &world::region::shape,
-                                 &_edit_stack_world, &_edit_context,
+               ImGui::EnumSelect("Shape", &region->shape, _edit_stack_world,
+                                 _edit_context,
                                  {enum_select_option{"Box", world::region_shape::box},
                                   enum_select_option{"Cylinder",
                                                      world::region_shape::cylinder}});
@@ -1062,17 +1051,16 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Sector");
             }
 
-            ImGui::InputText("Name", sector, &world::sector::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &sector->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.sectors,
                                                              *edited_value);
                              });
 
-            ImGui::DragFloat("Base", sector, &world::sector::base, &_edit_stack_world,
-                             &_edit_context, 1.0f, 0.0f, 0.0f, "Y:%.3f");
-            ImGui::DragFloat("Height", sector, &world::sector::height,
-                             &_edit_stack_world, &_edit_context);
+            ImGui::DragFloat("Base", &sector->base, _edit_stack_world,
+                             _edit_context, 1.0f, 0.0f, 0.0f, "Y:%.3f");
+            ImGui::DragFloat("Height", &sector->height, _edit_stack_world, _edit_context);
 
             ImGui::SeparatorText("Points");
 
@@ -1082,8 +1070,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                float2 point = sector->points[i];
 
-               ImGui::DragSectorPoint("##point", sector, i, &_edit_stack_world,
-                                      &_edit_context);
+               ImGui::DragSectorPoint("##point", &sector->points, i,
+                                      _edit_stack_world, _edit_context);
 
                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
                if (ImGui::Button("Move")) {
@@ -1262,21 +1250,20 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Portal");
             }
 
-            ImGui::InputText("Name", portal, &world::portal::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &portal->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.portals,
                                                              *edited_value);
                              });
 
-            ImGui::DragFloat("Width", portal, &world::portal::width,
-                             &_edit_stack_world, &_edit_context, 1.0f, 0.25f, 1e10f);
-            ImGui::DragFloat("Height", portal, &world::portal::height,
-                             &_edit_stack_world, &_edit_context, 1.0f, 0.25f, 1e10f);
+            ImGui::DragFloat("Width", &portal->width, _edit_stack_world,
+                             _edit_context, 1.0f, 0.25f, 1e10f);
+            ImGui::DragFloat("Height", &portal->height, _edit_stack_world,
+                             _edit_context, 1.0f, 0.25f, 1e10f);
 
-            ImGui::InputTextAutoComplete("Linked Sector 1", portal,
-                                         &world::portal::sector1,
-                                         &_edit_stack_world, &_edit_context, [&] {
+            ImGui::InputTextAutoComplete("Linked Sector 1", &portal->sector1,
+                                         _edit_stack_world, _edit_context, [&]() noexcept {
                                             std::array<std::string_view, 6> entries;
                                             std::size_t matching_count = 0;
 
@@ -1295,9 +1282,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                             return entries;
                                          });
 
-            ImGui::InputTextAutoComplete("Linked Sector 2", portal,
-                                         &world::portal::sector2,
-                                         &_edit_stack_world, &_edit_context, [&] {
+            ImGui::InputTextAutoComplete("Linked Sector 2", &portal->sector2,
+                                         _edit_stack_world, _edit_context, [&]() noexcept {
                                             std::array<std::string_view, 6> entries;
                                             std::size_t matching_count = 0;
 
@@ -1316,10 +1302,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                             return entries;
                                          });
 
-            ImGui::DragQuat("Rotation", portal, &world::portal::rotation,
-                            &_edit_stack_world, &_edit_context);
-            ImGui::DragFloat3("Position", portal, &world::portal::position,
-                              &_edit_stack_world, &_edit_context);
+            ImGui::DragQuat("Rotation", &portal->rotation, _edit_stack_world,
+                            _edit_context);
+            ImGui::DragFloat3("Position", &portal->position, _edit_stack_world,
+                              _edit_context);
          }
          else if (std::holds_alternative<world::hintnode_id>(selected)) {
             world::hintnode* hintnode =
@@ -1357,26 +1343,25 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Hintnode");
             }
 
-            ImGui::InputText("Name", hintnode, &world::hintnode::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &hintnode->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.hintnodes,
                                                              *edited_value);
                              });
-            ImGui::LayerPick("Layer", hintnode, &_edit_stack_world, &_edit_context);
+            ImGui::LayerPick("Layer", &hintnode->layer, _edit_stack_world, _edit_context);
 
             ImGui::Separator();
 
-            ImGui::DragQuat("Rotation", hintnode, &world::hintnode::rotation,
-                            &_edit_stack_world, &_edit_context);
-            ImGui::DragFloat3("Position", hintnode, &world::hintnode::position,
-                              &_edit_stack_world, &_edit_context);
+            ImGui::DragQuat("Rotation", &hintnode->rotation, _edit_stack_world,
+                            _edit_context);
+            ImGui::DragFloat3("Position", &hintnode->position,
+                              _edit_stack_world, _edit_context);
 
             ImGui::Separator();
 
             ImGui::EnumSelect(
-               "Type", hintnode, &world::hintnode::type, &_edit_stack_world,
-               &_edit_context,
+               "Type", &hintnode->type, _edit_stack_world, _edit_context,
                {enum_select_option{"Snipe", world::hintnode_type::snipe},
                 enum_select_option{"Patrol", world::hintnode_type::patrol},
                 enum_select_option{"Cover", world::hintnode_type::cover},
@@ -1411,18 +1396,16 @@ void world_edit::ui_show_world_selection_editor() noexcept
             }
 
             if (hintnode_traits.has_primary_stance) {
-               ImGui::EditFlags("Primary Stance", hintnode,
-                                &world::hintnode::primary_stance,
-                                &_edit_stack_world, &_edit_context,
+               ImGui::EditFlags("Primary Stance", &hintnode->primary_stance,
+                                _edit_stack_world, _edit_context,
                                 {{"Stand", world::stance_flags::stand},
                                  {"Crouch", world::stance_flags::crouch},
                                  {"Prone", world::stance_flags::prone}});
             }
 
             if (hintnode_traits.has_secondary_stance) {
-               ImGui::EditFlags("Secondary Stance", hintnode,
-                                &world::hintnode::secondary_stance,
-                                &_edit_stack_world, &_edit_context,
+               ImGui::EditFlags("Secondary Stance", &hintnode->secondary_stance,
+                                _edit_stack_world, _edit_context,
                                 {{"Stand", world::stance_flags::stand},
                                  {"Crouch", world::stance_flags::crouch},
                                  {"Prone", world::stance_flags::prone},
@@ -1432,8 +1415,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
             if (hintnode_traits.has_mode) {
                ImGui::EnumSelect(
-                  "Mode", hintnode, &world::hintnode::mode, &_edit_stack_world,
-                  &_edit_context,
+                  "Mode", &hintnode->mode, _edit_stack_world, _edit_context,
                   {enum_select_option{"None", world::hintnode_mode::none},
                    enum_select_option{"Attack", world::hintnode_mode::attack},
                    enum_select_option{"Defend", world::hintnode_mode::defend},
@@ -1441,9 +1423,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
             }
 
             if (hintnode_traits.has_radius) {
-               ImGui::DragFloat("Radius", hintnode, &world::hintnode::radius,
-                                &_edit_stack_world, &_edit_context, 0.25f, 0.0f,
-                                1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Radius", &hintnode->radius, _edit_stack_world,
+                                _edit_context, 0.25f, 0.0f, 1e10f, "%.3f",
+                                ImGuiSliderFlags_AlwaysClamp);
             }
          }
          else if (std::holds_alternative<world::barrier_id>(selected)) {
@@ -1482,24 +1464,23 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Barrier");
             }
 
-            ImGui::InputText("Name", barrier, &world::barrier::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &barrier->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.barriers,
                                                              *edited_value);
                              });
 
-            ImGui::DragBarrierRotation("Rotation", barrier, &_edit_stack_world,
-                                       &_edit_context);
+            ImGui::DragBarrierRotation("Rotation", &barrier->rotation_angle,
+                                       _edit_stack_world, _edit_context);
 
-            ImGui::DragFloat3("Position", barrier, &world::barrier::position,
-                              &_edit_stack_world, &_edit_context, 0.25f);
+            ImGui::DragFloat3("Position", &barrier->position, _edit_stack_world,
+                              _edit_context, 0.25f);
 
-            ImGui::DragFloat2XZ("Size", barrier, &world::barrier::size,
-                                &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
+            ImGui::DragFloat2XZ("Size", &barrier->size, _edit_stack_world,
+                                _edit_context, 1.0f, 0.0f, 1e10f);
 
-            ImGui::EditFlags("Flags", barrier, &world::barrier::flags,
-                             &_edit_stack_world, &_edit_context,
+            ImGui::EditFlags("Flags", &barrier->flags, _edit_stack_world, _edit_context,
                              {{"Soldier", world::ai_path_flags::soldier},
                               {"Hover", world::ai_path_flags::hover},
                               {"Small", world::ai_path_flags::small},
@@ -1543,18 +1524,18 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("AI Planning Hub");
             }
 
-            ImGui::InputText("Name", hub, &world::planning_hub::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &hub->name, _edit_stack_world, _edit_context,
+                             [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.planning_hubs,
                                                              *edited_value);
                              });
 
-            ImGui::DragFloat3("Position", hub, &world::planning_hub::position,
-                              &_edit_stack_world, &_edit_context);
+            ImGui::DragFloat3("Position", &hub->position, _edit_stack_world,
+                              _edit_context);
 
-            ImGui::DragFloat("Radius", hub, &world::planning_hub::radius,
-                             &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
+            ImGui::DragFloat("Radius", &hub->radius, _edit_stack_world,
+                             _edit_context, 1.0f, 0.0f, 1e10f);
          }
          else if (std::holds_alternative<world::planning_connection_id>(selected)) {
             world::planning_connection* connection =
@@ -1592,9 +1573,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("AI Planning Connection");
             }
 
-            ImGui::InputText("Name", connection, &world::planning_connection::name,
-                             &_edit_stack_world, &_edit_context,
-                             [&](std::string* edited_value) {
+            ImGui::InputText("Name", &connection->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.planning_connections,
                                                              *edited_value);
@@ -1605,8 +1585,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
             ImGui::Text("End: %s",
                         _world.planning_hubs[connection->end_hub_index].name.c_str());
 
-            ImGui::EditFlags("Flags", connection, &world::planning_connection::flags,
-                             &_edit_stack_world, &_edit_context,
+            ImGui::EditFlags("Flags", &connection->flags, _edit_stack_world,
+                             _edit_context,
                              {{"Soldier", world::ai_path_flags::soldier},
                               {"Hover", world::ai_path_flags::hover},
                               {"Small", world::ai_path_flags::small},
@@ -1616,14 +1596,13 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
             ImGui::Separator();
 
-            ImGui::Checkbox("Jump", connection, &world::planning_connection::jump,
-                            &_edit_stack_world, &_edit_context);
+            ImGui::Checkbox("Jump", &connection->jump, _edit_stack_world, _edit_context);
             ImGui::SameLine();
-            ImGui::Checkbox("Jet Jump", connection, &world::planning_connection::jet_jump,
-                            &_edit_stack_world, &_edit_context);
+            ImGui::Checkbox("Jet Jump", &connection->jet_jump,
+                            _edit_stack_world, _edit_context);
             ImGui::SameLine();
-            ImGui::Checkbox("One Way", connection, &world::planning_connection::one_way,
-                            &_edit_stack_world, &_edit_context);
+            ImGui::Checkbox("One Way", &connection->one_way, _edit_stack_world,
+                            _edit_context);
 
             bool is_dynamic = connection->dynamic_group != 0;
 
@@ -1635,9 +1614,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
             }
 
             if (is_dynamic) {
-               ImGui::SliderInt("Dynamic Group", connection,
-                                &world::planning_connection::dynamic_group,
-                                &_edit_stack_world, &_edit_context, 1, 8, "%d",
+               ImGui::SliderInt("Dynamic Group", &connection->dynamic_group,
+                                _edit_stack_world, _edit_context, 1, 8, "%d",
                                 ImGuiSliderFlags_AlwaysClamp);
             }
 
@@ -1725,18 +1703,18 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Boundary");
             }
 
-            ImGui::InputText("Name", boundary, &world::boundary::name, &_edit_stack_world,
-                             &_edit_context, [&](std::string* edited_value) {
+            ImGui::InputText("Name", &boundary->name, _edit_stack_world,
+                             _edit_context, [&](std::string* edited_value) noexcept {
                                 *edited_value =
                                    world::create_unique_name(_world.boundaries,
                                                              *edited_value);
                              });
 
-            ImGui::DragFloat2XZ("Position", boundary, &world::boundary::position,
-                                &_edit_stack_world, &_edit_context, 0.25f);
+            ImGui::DragFloat2XZ("Position", &boundary->position,
+                                _edit_stack_world, _edit_context, 0.25f);
 
-            ImGui::DragFloat2XZ("Size", boundary, &world::boundary::size,
-                                &_edit_stack_world, &_edit_context, 1.0f, 0.0f, 1e10f);
+            ImGui::DragFloat2XZ("Size", &boundary->size, _edit_stack_world,
+                                _edit_context, 1.0f, 0.0f, 1e10f);
          }
          else if (std::holds_alternative<world::measurement_id>(selected)) {
             world::measurement* measurement =
@@ -1774,12 +1752,12 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::SeparatorText("Measurement");
             }
 
-            ImGui::InputText("Name", measurement, &world::measurement::name,
-                             &_edit_stack_world, &_edit_context, [](std::string*) {});
-            ImGui::DragFloat3("Start", measurement, &world::measurement::start,
-                              &_edit_stack_world, &_edit_context, 0.25f);
-            ImGui::DragFloat3("End", measurement, &world::measurement::end,
-                              &_edit_stack_world, &_edit_context, 0.25f);
+            ImGui::InputText("Name", &measurement->name, _edit_stack_world,
+                             _edit_context, [](std::string*) noexcept {});
+            ImGui::DragFloat3("Start", &measurement->start, _edit_stack_world,
+                              _edit_context, 0.25f);
+            ImGui::DragFloat3("End", &measurement->end, _edit_stack_world,
+                              _edit_context, 0.25f);
             ImGui::LabelText("Length", "%.2fm",
                              distance(measurement->start, measurement->end));
          }

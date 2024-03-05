@@ -61,7 +61,6 @@
     <ClCompile Include="src\edits\insert_entity_tests.cpp" />
     <ClCompile Include="src\edits\insert_node_tests.cpp" />
     <ClCompile Include="src\edits\stack_tests.cpp" />
-    <ClCompile Include="src\edits\ui_action_tests.cpp" />
     <ClCompile Include="src\edits\world_test_data.cpp" />
     <ClCompile Include="src\edits\set_value_tests.cpp" />
     <ClCompile Include="src\edits\insert_point_tests.cpp" />
