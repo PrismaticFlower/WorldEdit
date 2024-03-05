@@ -114,6 +114,24 @@ TEST_CASE("edits set_multi_value3", "[Edits]")
    REQUIRE(barrier.size == float2{0.0f, 0.0f});
 }
 
+TEST_CASE("edits make_set_path_node_property_value", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_path_node_property_value(&world.paths[0].nodes, 0, 0, "NewValue");
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].properties[0].value == "NewValue");
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].properties[0].value == "Value");
+}
+
 TEST_CASE("edits set_creation_path_node_location", "[Edits]")
 {
    world::world world = test_world;
@@ -279,6 +297,30 @@ TEST_CASE("edits set_multi_value3 coalesce", "[Edits]")
    REQUIRE(barrier.rotation_angle == 0.0f);
    REQUIRE(barrier.position == float3{0.0f, 0.0f, 0.0f});
    REQUIRE(barrier.size == float2{0.0f, 0.0f});
+}
+
+TEST_CASE("edits make_set_path_node_property_value coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_path_node_property_value(&world.paths[0].nodes, 0, 0, "NewValue");
+   auto other_edit =
+      make_set_path_node_property_value(&world.paths[0].nodes, 0, 0, "NewerValue");
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].properties[0].value == "NewerValue");
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.paths[0].nodes[0].properties[0].value == "Value");
 }
 
 TEST_CASE("edits set_creation_path_node_location coalesce", "[Edits]")
