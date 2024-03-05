@@ -113,6 +113,8 @@ struct set_vector_value final : edit<world::edit_context> {
 private:
    auto value_ptr() const noexcept -> Value*
    {
+      assert(index < vector_ptr->size());
+
       return reinterpret_cast<Value*>(
          (reinterpret_cast<char*>((&(*vector_ptr)[index])) + value_offset));
    }
@@ -304,6 +306,12 @@ inline auto make_set_multi_value(T1* value1_address, T1 new_value1, //
                                                          value3_address,
                                                          std::move(new_value3));
 }
+
+auto make_set_path_node_property_value(std::vector<world::path::node>* nodes,
+                                       const we::uint32 node_index,
+                                       const we::uint32 property_index,
+                                       std::string new_value)
+   -> std::unique_ptr<edit<world::edit_context>>;
 
 auto make_set_creation_path_node_location(quaternion new_rotation, float3 new_position,
                                           float3 new_euler_rotation)

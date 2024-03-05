@@ -1,31 +1,17 @@
 #pragma once
 
 #include "../imgui_ext.hpp"
-#include "math/quaternion_funcs.hpp"
+#include "set_value.hpp"
 #include "stack.hpp"
 #include "types.hpp"
-#include "ui_action.hpp"
+#include "utility/function_ptr.hpp"
 #include "world/interaction_context.hpp"
-#include "world/world.hpp"
-
-#include <array>
-#include <initializer_list>
-#include <memory>
-#include <numbers>
-#include <optional>
-#include <type_traits>
-#include <utility>
 
 #include <imgui.h>
 
 // Wrappers for ImGui controls that integrate with the Undo-Redo stack.
 
 namespace we::edits::imgui {
-
-struct edit_widget_result {
-   bool value_changed;
-   bool item_deactivated;
-};
 
 template<typename T>
 struct enum_select_option {
@@ -39,712 +25,210 @@ struct edit_flag {
    T bit = {};
 };
 
-template<typename Callback, typename T>
-concept edit_widget_callback =
-   std::is_invocable_r_v<edit_widget_result, Callback, T*>;
-
-template<typename Callback, typename T, typename U>
-concept edit_widget_double_callback =
-   std::is_invocable_r_v<edit_widget_result, Callback, T*, U*>;
-
-// clang-format off
-template<typename T>
-concept input_key_value_type = requires(T t)
-{
-   { t.key } -> std::convertible_to<std::string&>;
-   { t.value } -> std::convertible_to<std::string&>;
-};
-// clang-format on
-
 }
 
 namespace we {
 using we::edits::imgui::edit_flag;
-using we::edits::imgui::edit_widget_result;
 using we::edits::imgui::enum_select_option;
 }
 
 namespace ImGui {
 
-// Entity Property Editors
+bool Checkbox(const char* label, bool* value,
+              we::edits::stack<we::world::edit_context>& edit_stack,
+              we::world::edit_context& context) noexcept;
 
-template<typename Entity, typename T>
-inline bool EditWithUndo(const Entity* object, T Entity::*value_member_ptr,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context,
-                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
+bool DragFloat(const char* label, float* value,
+               we::edits::stack<we::world::edit_context>& edit_stack,
+               we::world::edit_context& context, float v_speed = 1.0f,
+               float v_min = 0.0f, float v_max = 0.0f,
+               const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept;
 
-   using edit_type = ui_edit<Entity, T>;
-   using value_type = T;
+bool DragFloat2(const char* label, we::float2* value,
+                we::edits::stack<we::world::edit_context>& edit_stack,
+                we::world::edit_context& context, float v_speed = 1.0f,
+                float v_min = 0.0f, float v_max = 0.0f,
+                ImGuiSliderFlags flags = 0) noexcept;
 
-   value_type value = object->*value_member_ptr;
-   value_type original_value = value;
+bool DragFloat2XZ(const char* label, we::float2* value,
+                  we::edits::stack<we::world::edit_context>& edit_stack,
+                  we::world::edit_context& context, float v_speed = 1.0f,
+                  float v_min = 0.0f, float v_max = 0.0f,
+                  ImGuiSliderFlags flags = 0) noexcept;
 
-   auto [valued_changed, item_deactivated] = editor(&value);
+bool DragFloat3(const char* label, we::float3* value,
+                we::edits::stack<we::world::edit_context>& edit_stack,
+                we::world::edit_context& context, float v_speed = 1.0f,
+                float v_min = 0.0f, float v_max = 0.0f,
+                ImGuiSliderFlags flags = 0) noexcept;
 
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(object->id, value_member_ptr,
-                                                    value, original_value),
-                        *context);
-   }
+bool DragQuat(const char* label, we::quaternion* value,
+              we::edits::stack<we::world::edit_context>& edit_stack,
+              we::world::edit_context& context, float v_speed = 0.001f,
+              ImGuiSliderFlags flags = 0) noexcept;
 
-   if (item_deactivated) edit_stack->close_last();
+bool SliderInt(const char* label, int* value,
+               we::edits::stack<we::world::edit_context>& edit_stack,
+               we::world::edit_context& context, int v_min = 0, int v_max = 0,
+               const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept;
 
-   return valued_changed;
-}
+bool SliderInt(const char* label, we::int8* value,
+               we::edits::stack<we::world::edit_context>& edit_stack,
+               we::world::edit_context& context, we::int8 v_min = 0,
+               we::int8 v_max = 0, const char* format = "%d",
+               ImGuiSliderFlags flags = 0) noexcept;
 
-template<typename Entity>
-inline bool Checkbox(const char* label, const Entity* entity,
-                     bool Entity::*value_member_ptr,
-                     we::edits::stack<we::world::edit_context>* edit_stack,
-                     we::world::edit_context* context) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](bool* value) {
-      bool value_changed = ImGui::Checkbox(label, value);
+bool ColorEdit3(const char* label, we::float3* value,
+                we::edits::stack<we::world::edit_context>& edit_stack,
+                we::world::edit_context& context, ImGuiColorEditFlags flags = 0) noexcept;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
+bool InputText(const char* label, std::string* str,
+               we::edits::stack<we::world::edit_context>& edit_stack,
+               we::world::edit_context& context,
+               we::function_ptr<void(std::string*) noexcept> edit_filter = nullptr) noexcept;
 
-template<typename Entity>
-inline bool DragFloat(const char* label, const Entity* entity,
-                      float Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context, float v_speed = 1.0f,
-                      float v_min = 0.0f, float v_max = 0.0f,
-                      const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](float* value) {
-      bool value_changed =
-         ImGui::DragFloat(label, value, v_speed, v_min, v_max, format, flags);
+bool InputTextAutoComplete(
+   const char* label, std::string* str,
+   we::edits::stack<we::world::edit_context>& edit_stack,
+   we::world::edit_context& context,
+   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
+bool InputTextAutoComplete(
+   const char* label, we::lowercase_string* str,
+   we::edits::stack<we::world::edit_context>& edit_stack,
+   we::world::edit_context& context,
+   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept;
 
-template<typename Entity>
-inline bool DragFloat2(const char* label, const Entity* entity,
-                       we::float2 Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context, float v_speed = 1.0f,
-                       float v_min = 0.0f, float v_max = 0.0f,
-                       ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float2* value) {
-      bool value_changed =
-         ImGui::DragFloat2(label, value, v_speed, v_min, v_max, flags);
+bool LayerPick(const char* label, we::int16* layer,
+               we::edits::stack<we::world::edit_context>& edit_stack,
+               we::world::edit_context& context) noexcept;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
+bool InputKeyValue(std::vector<we::world::instance_property>* properties,
+                   const we::uint32 item_index,
+                   we::edits::stack<we::world::edit_context>& edit_stack,
+                   we::world::edit_context& context) noexcept;
 
-template<typename Entity>
-inline bool DragFloat2XZ(const char* label, const Entity* entity,
-                         we::float2 Entity::*value_member_ptr,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context, float v_speed = 1.0f,
+bool InputKeyValueAutoComplete(
+   std::vector<we::world::instance_property>* properties,
+   const we::uint32 item_index, we::edits::stack<we::world::edit_context>& edit_stack,
+   we::world::edit_context& context,
+   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept;
+
+bool InputKeyValueWithDelete(std::vector<we::world::path::property>* properties,
+                             const we::uint32 item_index, bool* delete_property,
+                             we::edits::stack<we::world::edit_context>& edit_stack,
+                             we::world::edit_context& context) noexcept;
+
+bool InputKeyValueWithDelete(std::vector<we::world::path::node>* nodes,
+                             const we::uint32 node_index,
+                             const we::uint32 item_index, bool* delete_property,
+                             we::edits::stack<we::world::edit_context>& edit_stack,
+                             we::world::edit_context& context) noexcept;
+
+bool DragRotationEuler(const char* label, we::quaternion* quat_rotation,
+                       we::float3* euler_rotation,
+                       we::edits::stack<we::world::edit_context>& edit_stack,
+                       we::world::edit_context& context, float v_speed = 0.001f,
+                       ImGuiSliderFlags flags = 0) noexcept;
+
+bool DragBarrierRotation(const char* label, float* value,
+                         we::edits::stack<we::world::edit_context>& edit_stack,
+                         we::world::edit_context& context, float v_speed = 1.0f,
                          float v_min = 0.0f, float v_max = 0.0f,
-                         ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float2* value) {
-      bool value_changed =
-         ImGui::DragFloat2XZ(label, value, v_speed, v_min, v_max, flags);
+                         const char* format = "%.3f",
+                         ImGuiSliderFlags flags = 0) noexcept;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
+bool DragPathNodeRotation(const char* label, std::vector<we::world::path::node>* nodes,
+                          const we::uint32 node_index,
+                          we::edits::stack<we::world::edit_context>& edit_stack,
+                          we::world::edit_context& context, float v_speed = 1.0f,
+                          ImGuiSliderFlags flags = 0) noexcept;
 
-template<typename Entity>
-inline bool DragFloat3(const char* label, const Entity* entity,
-                       we::float3 Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context, float v_speed = 1.0f,
-                       float v_min = 0.0f, float v_max = 0.0f,
-                       ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float3* value) {
-      bool value_changed =
-         ImGui::DragFloat3(label, value, v_speed, v_min, v_max, flags);
+bool DragPathNodeRotationEuler(const char* label, we::world::creation_entity* entity,
+                               we::edits::stack<we::world::edit_context>& edit_stack,
+                               we::world::edit_context& context, float v_speed = 0.001f,
+                               ImGuiSliderFlags flags = 0) noexcept;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
+bool DragPathNodePosition(const char* label, std::vector<we::world::path::node>* nodes,
+                          const we::uint32 node_index,
+                          we::edits::stack<we::world::edit_context>& edit_stack,
+                          we::world::edit_context& context, float v_speed = 0.001f,
+                          ImGuiSliderFlags flags = 0) noexcept;
 
-template<typename Entity>
-inline bool DragQuat(const char* label, const Entity* entity,
-                     we::quaternion Entity::*value_member_ptr,
-                     we::edits::stack<we::world::edit_context>* edit_stack,
-                     we::world::edit_context* context, float v_speed = 0.001f,
-                     ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::quaternion* value) {
-      bool value_changed = ImGui::DragQuat(label, value, v_speed, 0.0f, 0.0f, flags);
+bool DragSectorPoint(const char* label, std::vector<we::float2>* points,
+                     const we::uint32 point_index,
+                     we::edits::stack<we::world::edit_context>& edit_stack,
+                     we::world::edit_context& context, float v_speed = 0.001f,
+                     ImGuiSliderFlags flags = 0) noexcept;
 
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool SliderInt(const char* label, const Entity* entity,
-                      int Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context, int v_min = 0, int v_max = 0,
-                      const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](int* value) {
-      bool value_changed = ImGui::SliderInt(label, value, v_min, v_max, format, flags);
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool SliderInt(const char* label, const Entity* entity,
-                      we::int8 Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context, int v_min = 0, int v_max = 0,
-                      const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::int8* value) {
-      int int_value = *value;
-
-      bool value_changed =
-         ImGui::SliderInt(label, &int_value, v_min, v_max, format, flags);
-
-      if (value_changed) *value = static_cast<we::int8>(int_value);
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool ColorEdit3(const char* label, const Entity* entity,
-                       we::float3 Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context,
-                       ImGuiColorEditFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float3* value) {
-      bool value_changed = ImGui::ColorEdit3(label, &value->x, flags);
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity, typename T>
-inline bool InputText(const char* label, const Entity* entity,
-                      T Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context,
-                      std::invocable<T*> auto edit_filter) noexcept
-{
-   const T& raw_value = entity->*value_member_ptr;
-
-   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
-
-   const bool value_changed = ImGui::InputText(label, &buffer);
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      T new_value{new_value_view};
-
-      edit_filter(&new_value);
-
-      edit_stack->apply(std::make_unique<we::edits::ui_edit<Entity, T>>(entity->id, value_member_ptr,
-                                                                        std::move(new_value),
-                                                                        raw_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-template<typename Entity, typename T, typename Fill>
-inline bool InputTextAutoComplete(const char* label, const Entity* entity,
-                                  T Entity::*value_member_ptr,
-                                  we::edits::stack<we::world::edit_context>* edit_stack,
-                                  we::world::edit_context* context,
-                                  Fill fill_entries_callback) noexcept
-   requires std::is_invocable_r_v<std::array<std::string_view, 6>, Fill>
-{
-   const T& raw_value = entity->*value_member_ptr;
-
-   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
-
-   const bool value_changed = ImGui::InputTextAutoComplete(
-      label, &buffer,
-      [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
-      static_cast<void*>(&fill_entries_callback));
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      T new_value{new_value_view};
-
-      edit_stack->apply(std::make_unique<we::edits::ui_edit<Entity, T>>(entity->id, value_member_ptr,
-                                                                        std::move(new_value),
-                                                                        raw_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-template<typename Entity>
-inline bool LayerPick(const char* label, const Entity* entity,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context) noexcept
-{
-   return EditWithUndo(entity, &Entity::layer, edit_stack, context, [=](we::int16* layer) {
-      bool value_changed = false;
-
-      if (ImGui::BeginCombo(label, [&] {
-             if (entity->layer >= context->world.layer_descriptions.size())
-                return "";
-
-             return context->world.layer_descriptions[entity->layer].name.c_str();
-          }())) {
-
-         for (we::int16 i = 0; i < std::ssize(context->world.layer_descriptions); ++i) {
-            if (ImGui::Selectable(context->world.layer_descriptions[i].name.c_str())) {
-               *layer = i;
-               value_changed = true;
-            }
-         }
-
-         ImGui::EndCombo();
-      }
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = value_changed};
-   });
-}
-
-template<typename Entity, typename Enum>
-inline bool EnumSelect(const char* label, const Entity* entity,
-                       Enum Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context,
+template<typename Enum>
+inline bool EnumSelect(const char* label, Enum* value,
+                       we::edits::stack<we::world::edit_context>& edit_stack,
+                       we::world::edit_context& context,
                        std::initializer_list<we::enum_select_option<Enum>> values) noexcept
 {
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=, &values](Enum* value) {
-      bool value_changed = false;
+   IM_ASSERT(value);
+   IM_ASSERT(context.is_memory_valid(value));
 
-      if (ImGui::BeginCombo(label, [&] {
-             for (auto& option : values) {
-                if (option.value == *value) return option.label;
-             }
+   bool changed = false;
 
-             return "";
-          }())) {
+   if (BeginCombo(label, [&] {
+          for (auto& option : values) {
+             if (option.value == *value) return option.label;
+          }
 
-         for (auto option : values) {
-            if (ImGui::Selectable(option.label)) {
-               *value = option.value;
-               value_changed = true;
-            }
-         }
-
-         ImGui::EndCombo();
-      }
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = value_changed};
-   });
-}
-
-template<typename Entity, typename Flags>
-inline bool EditFlags(const char* label, const Entity* entity,
-                      Flags Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context,
-                      std::initializer_list<we::edit_flag<Flags>> flags) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=, &flags](Flags* value) {
-      unsigned int uint_value = std::to_underlying(*value);
-
-      std::array<ImGui::ExtEditFlag, 32> uint_flags;
-
-      for (std::size_t i = 0; i < (flags.size() > 32 ? 32 : flags.size()); ++i) {
-         auto& flag = flags.begin()[i];
-
-         uint_flags[i] = {flag.label, static_cast<unsigned int>(flag.bit)};
-      }
-
-      bool value_changed =
-         ImGui::EditFlags(label, &uint_value, {uint_flags.data(), flags.size()});
-
-      if (value_changed) {
-         *value = static_cast<Flags>(uint_value);
-      }
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = value_changed};
-   });
-}
-
-inline bool DragBarrierRotation(const char* label, we::world::barrier* barrier,
-                                we::edits::stack<we::world::edit_context>* edit_stack,
-                                we::world::edit_context* context,
-                                float v_speed = 1.0f, float v_min = 0.0f,
-                                float v_max = 0.0f, const char* format = "%.3f",
-                                ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(barrier, &we::world::barrier::rotation_angle, edit_stack,
-                       context, [=](float* value) {
-                          float degrees = *value * 180.0f / std::numbers::pi_v<float>;
-
-                          const bool value_changed =
-                             ImGui::DragFloat(label, &degrees, v_speed, v_min,
-                                              v_max, format, flags);
-
-                          if (value_changed) {
-                             *value = degrees / 180.0f * std::numbers::pi_v<float>;
-                          }
-
-                          return we::edit_widget_result{.value_changed = value_changed,
-                                                        .item_deactivated =
-                                                           ImGui::IsItemDeactivated()};
-                       });
-}
-
-// Entity Vector/Array Property Editors
-
-template<typename Entity, we::edits::imgui::input_key_value_type T>
-inline bool InputKeyValue(const Entity* entity, std::vector<T> Entity::*value_member_ptr,
-                          const std::size_t item_index,
-                          we::edits::stack<we::world::edit_context>* edit_stack,
-                          we::world::edit_context* context,
-                          ImGuiInputTextFlags flags = 0,
-                          ImGuiInputTextCallback callback = nullptr,
-                          void* user_data = nullptr) noexcept
-{
-   const T& key_value = (entity->*value_member_ptr)[item_index];
-
-   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
-                                         key_value.value.end()};
-
-   const bool value_changed =
-      ImGui::InputText(key_value.key.c_str(), &buffer, flags, callback, user_data);
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      T new_key_value{key_value.key, std::string{new_value_view}};
-
-      edit_stack->apply(std::make_unique<we::edits::ui_edit_indexed<Entity, T>>(
-                           entity->id, value_member_ptr, item_index,
-                           std::move(new_key_value), key_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-template<typename Entity, we::edits::imgui::input_key_value_type T, typename Fill>
-inline bool InputKeyValueAutoComplete(const Entity* entity,
-                                      std::vector<T> Entity::*value_member_ptr,
-                                      const std::size_t item_index,
-                                      we::edits::stack<we::world::edit_context>* edit_stack,
-                                      we::world::edit_context* context,
-                                      Fill fill_entries_callback) noexcept
-{
-   const T& key_value = (entity->*value_member_ptr)[item_index];
-
-   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
-                                         key_value.value.end()};
-
-   const bool value_changed = ImGui::InputTextAutoComplete(
-      key_value.key.c_str(), &buffer,
-      [](void* user_data) -> std::array<std::string_view, 6> {
-         return (*static_cast<Fill*>(user_data))();
-      },
-      static_cast<void*>(&fill_entries_callback));
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      T new_key_value{key_value.key, std::string{new_value_view}};
-
-      edit_stack->apply(std::make_unique<we::edits::ui_edit_indexed<Entity, T>>(
-                           entity->id, value_member_ptr, item_index,
-                           std::move(new_key_value), key_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-template<typename Entity, we::edits::imgui::input_key_value_type T>
-inline bool InputKeyValueWithDelete(
-   const Entity* entity, std::vector<T> Entity::*value_member_ptr,
-   const std::size_t item_index, bool* delete_property,
-   we::edits::stack<we::world::edit_context>* edit_stack,
-   we::world::edit_context* context, ImGuiInputTextFlags flags = 0,
-   ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr) noexcept
-{
-   assert(delete_property);
-
-   const T& key_value = (entity->*value_member_ptr)[item_index];
-
-   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
-                                         key_value.value.end()};
-
-   const bool value_changed =
-      ImGui::InputTextWithClose(key_value.key.c_str(), &buffer, delete_property,
-                                flags, callback, user_data);
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      T new_key_value{key_value.key, std::string{new_value_view}};
-
-      edit_stack->apply(std::make_unique<we::edits::ui_edit_indexed<Entity, T>>(
-                           entity->id, value_member_ptr, item_index,
-                           std::move(new_key_value), key_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-// Path Node Property Editors
-
-template<typename T>
-inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
-                         T we::world::path::node::*value_member_ptr,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context,
-                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_edit_path_node<T>;
-   using value_type = T;
-
-   value_type value = path->nodes[node_index].*value_member_ptr;
-   value_type original_value = value;
-
-   auto [valued_changed, item_deactivated] = editor(&value);
-
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(path->id, node_index, value_member_ptr,
-                                                    value, original_value),
-                        *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return valued_changed;
-}
-
-inline bool DragFloat3(const char* label, we::world::path* entity,
-                       const std::size_t node_index,
-                       we::float3 we::world::path::node::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context, float v_speed = 1.0f,
-                       float v_min = 0.0f, float v_max = 0.0f,
-                       const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, node_index, value_member_ptr, edit_stack,
-                       context, [=](we::float3* value) {
-                          bool value_changed =
-                             ImGui::DragFloat3(label, &value->x, v_speed, v_min,
-                                               v_max, format, flags);
-
-                          return we::edit_widget_result{.value_changed = value_changed,
-                                                        .item_deactivated =
-                                                           ImGui::IsItemDeactivated()};
-                       });
-}
-
-inline bool DragQuat(const char* label, we::world::path* entity,
-                     const std::size_t node_index,
-                     we::quaternion we::world::path::node::*value_member_ptr,
-                     we::edits::stack<we::world::edit_context>* edit_stack,
-                     we::world::edit_context* context, float v_speed = 0.01f,
-                     const char* format = "%.4f", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, node_index, value_member_ptr, edit_stack,
-                       context, [=](we::quaternion* value) {
-                          bool value_changed =
-                             ImGui::DragFloat4(label, &(*value).w, v_speed,
-                                               0.0f, 0.0f, format, flags);
-
-                          if (value_changed) {
-                             *value = normalize(*value);
-                          }
-
-                          return we::edit_widget_result{.value_changed = value_changed,
-                                                        .item_deactivated =
-                                                           ImGui::IsItemDeactivated()};
-                       });
-}
-
-// Sector Editors
-
-inline bool DragSectorPoint(const char* label, const we::world::sector* sector,
-                            std::size_t point_index,
-                            we::edits::stack<we::world::edit_context>* edit_stack,
-                            we::world::edit_context* context,
-                            float v_speed = 1.0f, float v_min = 0.0f,
-                            float v_max = 0.0f, ImGuiSliderFlags flags = 0) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_edit_indexed<world::sector, float2>;
-
-   float2 value = sector->points[point_index];
-   float2 original_value = value;
-
-   const bool value_changed =
-      ImGui::DragFloat2XZ(label, &value, v_speed, v_min, v_max, flags);
-
-   if (value_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(sector->id, &world::sector::points,
-                                                    point_index, value, original_value),
-                        *context);
-   }
-
-   if (ImGui::IsItemDeactivated()) edit_stack->close_last();
-
-   return value_changed;
-}
-
-// Path Node Vector/Array Property Editors
-
-template<typename T>
-inline bool EditWithUndo(we::world::path* path, const std::size_t node_index,
-                         std::vector<T> we::world::path::node::*value_member_ptr,
-                         const std::size_t item_index,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context,
-                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_edit_path_node_indexed<T>;
-   using value_type = T;
-
-   value_type value = (path->nodes[node_index].*value_member_ptr)[item_index];
-   value_type original_value = value;
-
-   auto [valued_changed, item_deactivated] = editor(&value);
-
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(path->id, node_index,
-                                                    value_member_ptr, item_index,
-                                                    value, original_value),
-                        *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return valued_changed;
-}
-
-inline bool InputKeyValueWithDelete(
-   we::world::path* entity, const std::size_t node_index, const std::size_t item_index,
-   bool* delete_property, we::edits::stack<we::world::edit_context>* edit_stack,
-   we::world::edit_context* context, ImGuiInputTextFlags flags = 0,
-   ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr) noexcept
-{
-   assert(delete_property);
-
-   using namespace we::world;
-
-   const path::property& key_value = entity->nodes[node_index].properties[item_index];
-
-   absl::InlinedVector<char, 256> buffer{key_value.value.begin(),
-                                         key_value.value.end()};
-
-   const bool value_changed =
-      ImGui::InputTextWithClose(key_value.key.c_str(), &buffer, delete_property,
-                                flags, callback, user_data);
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      we::world::path::property new_key_value{key_value.key,
-                                              std::string{new_value_view}};
-
-      edit_stack->apply(std::make_unique<we::edits::ui_edit_path_node_indexed<path::property>>(
-                           entity->id, node_index, &path::node::properties,
-                           item_index, std::move(new_key_value), key_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-// Entity Creation Editors
-
-inline bool LayerPick(const char* label, we::int16* layer, we::world::world* world) noexcept
-{
-   bool value_changed = false;
-
-   if (ImGui::BeginCombo(label, [&] {
-          if (*layer >= world->layer_descriptions.size()) return "";
-
-          return world->layer_descriptions[*layer].name.c_str();
+          return "";
        }())) {
 
-      for (we::int16 i = 0; i < std::ssize(world->layer_descriptions); ++i) {
-         if (ImGui::Selectable(world->layer_descriptions[i].name.c_str())) {
-            *layer = i;
-            value_changed = true;
+      for (auto option : values) {
+         if (Selectable(option.label)) {
+            edit_stack.apply(we::edits::make_set_value(value, option.value),
+                             context, {.closed = true});
+            changed = true;
          }
       }
 
-      ImGui::EndCombo();
+      EndCombo();
    }
 
-   return value_changed;
+   return changed;
+}
+
+template<typename Flags, int count>
+inline bool EditFlags(const char* label, Flags* value,
+                      we::edits::stack<we::world::edit_context>& edit_stack,
+                      we::world::edit_context& context,
+                      const we::edit_flag<Flags> (&flags)[count]) noexcept
+{
+   IM_ASSERT(value);
+   IM_ASSERT(context.is_memory_valid(value));
+
+   static_assert(sizeof(Flags) <= sizeof(unsigned int),
+                 "Flags size is too large.");
+
+   unsigned int uint_value = static_cast<unsigned int>(*value);
+
+   ExtEditFlag uint_flags[count] = {};
+
+   for (int i = 0; i < count; ++i) {
+      uint_flags[i] = {flags[i].label, static_cast<unsigned int>(flags[i].bit)};
+   }
+
+   bool changed = EditFlags(label, &uint_value, {&uint_flags[0], count});
+
+   if (changed) {
+      edit_stack.apply(we::edits::make_set_value(value, static_cast<Flags>(uint_value)),
+                       context, {.closed = true});
+   }
+
+   return changed;
 }
 
 template<typename Enum>
 inline bool EnumSelect(const char* label, Enum* value,
                        std::initializer_list<we::enum_select_option<Enum>> values) noexcept
 {
-   bool value_changed = false;
+   bool changed = false;
 
    if (ImGui::BeginCombo(label, [&] {
           for (auto& option : values) {
@@ -757,557 +241,14 @@ inline bool EnumSelect(const char* label, Enum* value,
       for (auto option : values) {
          if (ImGui::Selectable(option.label)) {
             *value = option.value;
-            value_changed = true;
+            changed = true;
          }
       }
 
       ImGui::EndCombo();
    }
 
-   return value_changed;
-}
-
-// Creation Entity Editors
-
-template<typename Entity, typename T>
-inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_member_ptr,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context,
-                         we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_creation_edit<Entity, T>;
-   using value_type = T;
-
-   value_type value = entity->get<Entity>().*value_member_ptr;
-   value_type original_value = value;
-
-   auto [valued_changed, item_deactivated] = editor(&value);
-
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value, original_value),
-                        *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return valued_changed;
-}
-
-template<typename Entity, typename T, typename U>
-inline bool EditWithUndo(we::world::creation_entity* entity, T Entity::*value_member_ptr,
-                         U we::world::edit_context::*meta_value_member_ptr,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context,
-                         we::edits::imgui::edit_widget_double_callback<T, U> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_creation_edit_with_meta<Entity, T, U>;
-   using value_type = T;
-   using meta_value_type = U;
-
-   value_type value = entity->get<Entity>().*value_member_ptr;
-   value_type original_value = value;
-   meta_value_type meta_value = context->*meta_value_member_ptr;
-   meta_value_type meta_original_value = meta_value;
-
-   auto [valued_changed, item_deactivated] = editor(&value, &meta_value);
-
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value,
-                                                    original_value, meta_value_member_ptr,
-                                                    meta_value, meta_original_value),
-                        *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return valued_changed;
-}
-
-template<typename Entity, typename T>
-inline bool InputText(const char* label, we::world::creation_entity* entity,
-                      T Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context,
-                      std::invocable<T*> auto edit_filter) noexcept
-{
-   const T& raw_value = entity->get<Entity>().*value_member_ptr;
-
-   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
-
-   const bool value_changed = ImGui::InputText(label, &buffer);
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      T new_value{new_value_view};
-
-      edit_filter(&new_value);
-
-      edit_stack->apply(std::make_unique<we::edits::ui_creation_edit<Entity, T>>(
-                           value_member_ptr, std::move(new_value), raw_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-template<typename Entity, typename T, typename Fill>
-inline bool InputTextAutoComplete(const char* label, we::world::creation_entity* entity,
-                                  T Entity::*value_member_ptr,
-                                  we::edits::stack<we::world::edit_context>* edit_stack,
-                                  we::world::edit_context* context,
-                                  Fill fill_entries_callback) noexcept
-   requires std::is_invocable_r_v<std::array<std::string_view, 6>, Fill>
-{
-   const T& raw_value = entity->get<Entity>().*value_member_ptr;
-
-   absl::InlinedVector<char, 256> buffer{raw_value.begin(), raw_value.end()};
-
-   const bool value_changed = ImGui::InputTextAutoComplete(
-      label, &buffer,
-      [](void* user_data) { return (*static_cast<Fill*>(user_data))(); },
-      static_cast<void*>(&fill_entries_callback));
-   const bool deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      T new_value{new_value_view};
-
-      edit_stack->apply(std::make_unique<we::edits::ui_creation_edit<Entity, T>>(
-                           value_member_ptr, std::move(new_value), raw_value),
-                        *context);
-   }
-
-   if (deactivated) edit_stack->close_last();
-
-   return value_changed;
-}
-
-template<typename Entity>
-inline bool LayerPick(const char* label, we::world::creation_entity* entity,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context) noexcept
-{
-   return EditWithUndo(entity, &Entity::layer, edit_stack, context, [=](we::int16* layer) {
-      bool value_changed = false;
-
-      if (ImGui::BeginCombo(label, [&] {
-             if (*layer >= context->world.layer_descriptions.size()) return "";
-
-             return context->world.layer_descriptions[*layer].name.c_str();
-          }())) {
-
-         for (we::int16 i = 0; i < std::ssize(context->world.layer_descriptions); ++i) {
-            if (ImGui::Selectable(context->world.layer_descriptions[i].name.c_str())) {
-               *layer = i;
-               value_changed = true;
-            }
-         }
-
-         ImGui::EndCombo();
-      }
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = value_changed};
-   });
-}
-
-template<typename Entity>
-inline bool DragRotationEuler(const char* label, we::world::creation_entity* entity,
-                              we::quaternion Entity::*value_member_ptr,
-                              we::float3 we::world::edit_context::*meta_value_member_ptr,
-                              we::edits::stack<we::world::edit_context>* edit_stack,
-                              we::world::edit_context* context)
-{
-   return EditWithUndo(entity, value_member_ptr, meta_value_member_ptr,
-                       edit_stack, context,
-                       [=](we::quaternion* rotation, we::float3* rotation_euler) {
-                          bool value_changed =
-                             ImGui::DragFloat3(label, rotation_euler);
-
-                          if (value_changed) {
-                             *rotation = make_quat_from_euler(
-                                *rotation_euler * std::numbers::pi_v<float> / 180.0f);
-                          }
-
-                          return we::edit_widget_result{.value_changed = value_changed,
-                                                        .item_deactivated =
-                                                           ImGui::IsItemDeactivated()};
-                       });
-}
-
-template<typename Entity>
-inline bool DragFloat(const char* label, we::world::creation_entity* entity,
-                      float Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context, float v_speed = 1.0f,
-                      float v_min = 0.0f, float v_max = 0.0f,
-                      const char* format = "%.3f", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](float* value) {
-      return we::edit_widget_result{.value_changed =
-                                       ImGui::DragFloat(label, value, v_speed, v_min,
-                                                        v_max, format, flags),
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool DragFloat2(const char* label, we::world::creation_entity* entity,
-                       we::float2 Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context, float v_speed = 1.0f,
-                       float v_min = 0.0f, float v_max = 0.0f,
-                       ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float2* value) {
-      return we::edit_widget_result{.value_changed =
-                                       ImGui::DragFloat2(label, value, v_speed,
-                                                         v_min, v_max, flags),
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool DragFloat3(const char* label, we::world::creation_entity* entity,
-                       we::float3 Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context)
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float3* value) {
-      return we::edit_widget_result{.value_changed = ImGui::DragFloat3(label, value),
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool DragFloat2XZ(const char* label, we::world::creation_entity* entity,
-                         we::float2 Entity::*value_member_ptr,
-                         we::edits::stack<we::world::edit_context>* edit_stack,
-                         we::world::edit_context* context, float v_speed = 1.0f,
-                         float v_min = 0.0f, float v_max = 0.0f,
-                         ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float2* value) {
-      return we::edit_widget_result{.value_changed =
-                                       ImGui::DragFloat2XZ(label, value, v_speed,
-                                                           v_min, v_max, flags),
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool DragQuat(const char* label, we::world::creation_entity* entity,
-                     we::quaternion Entity::*value_member_ptr,
-                     we::edits::stack<we::world::edit_context>* edit_stack,
-                     we::world::edit_context* context)
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::quaternion* rotation) {
-      return we::edit_widget_result{.value_changed = ImGui::DragQuat(label, rotation),
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool SliderInt(const char* label, we::world::creation_entity* entity,
-                      int Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context, int v_min = 0, int v_max = 0,
-                      const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](int* value) {
-      bool value_changed = ImGui::SliderInt(label, value, v_min, v_max, format, flags);
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool SliderInt(const char* label, we::world::creation_entity* entity,
-                      we::int8 Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context, int v_min = 0, int v_max = 0,
-                      const char* format = "%d", ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::int8* value) {
-      int int_value = *value;
-
-      bool value_changed =
-         ImGui::SliderInt(label, &int_value, v_min, v_max, format, flags);
-
-      if (value_changed) *value = static_cast<we::int8>(int_value);
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool ColorEdit3(const char* label, we::world::creation_entity* entity,
-                       we::float3 Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context,
-                       ImGuiColorEditFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](we::float3* value) {
-      return we::edit_widget_result{.value_changed =
-                                       ImGui::ColorEdit3(label, &value->x, flags),
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity>
-inline bool Checkbox(const char* label, we::world::creation_entity* entity,
-                     bool Entity::*value_member_ptr,
-                     we::edits::stack<we::world::edit_context>* edit_stack,
-                     we::world::edit_context* context)
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=](bool* value) {
-      return we::edit_widget_result{.value_changed = ImGui::Checkbox(label, value),
-                                    .item_deactivated = ImGui::IsItemDeactivated()};
-   });
-}
-
-template<typename Entity, typename Enum>
-inline bool EnumSelect(const char* label, we::world::creation_entity* entity,
-                       Enum Entity::*value_member_ptr,
-                       we::edits::stack<we::world::edit_context>* edit_stack,
-                       we::world::edit_context* context,
-                       std::initializer_list<we::enum_select_option<Enum>> values) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=, &values](Enum* value) {
-      bool value_changed = false;
-
-      if (ImGui::BeginCombo(label, [&] {
-             for (auto& option : values) {
-                if (option.value == *value) return option.label;
-             }
-
-             return "";
-          }())) {
-
-         for (auto option : values) {
-            if (ImGui::Selectable(option.label)) {
-               *value = option.value;
-               value_changed = true;
-            }
-         }
-
-         ImGui::EndCombo();
-      }
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = value_changed};
-   });
-}
-
-template<typename Entity, typename Flags>
-inline bool EditFlags(const char* label, we::world::creation_entity* entity,
-                      Flags Entity::*value_member_ptr,
-                      we::edits::stack<we::world::edit_context>* edit_stack,
-                      we::world::edit_context* context,
-                      std::initializer_list<we::edit_flag<Flags>> flags) noexcept
-{
-   return EditWithUndo(entity, value_member_ptr, edit_stack, context, [=, &flags](Flags* value) {
-      unsigned int uint_value = std::to_underlying(*value);
-
-      std::array<ImGui::ExtEditFlag, 32> uint_flags;
-
-      for (std::size_t i = 0; i < (flags.size() > 32 ? 32 : flags.size()); ++i) {
-         auto& flag = flags.begin()[i];
-
-         uint_flags[i] = {flag.label, static_cast<unsigned int>(flag.bit)};
-      }
-
-      bool value_changed =
-         ImGui::EditFlags(label, &uint_value, {uint_flags.data(), flags.size()});
-
-      if (value_changed) {
-         *value = static_cast<Flags>(uint_value);
-      }
-
-      return we::edit_widget_result{.value_changed = value_changed,
-                                    .item_deactivated = value_changed};
-   });
-}
-
-inline bool DragBarrierRotation(const char* label, we::world::creation_entity* entity,
-                                we::edits::stack<we::world::edit_context>* edit_stack,
-                                we::world::edit_context* context,
-                                float v_speed = 1.0f, float v_min = 0.0f,
-                                float v_max = 0.0f, const char* format = "%.3f",
-                                ImGuiSliderFlags flags = 0) noexcept
-{
-   return EditWithUndo(entity, &we::world::barrier::rotation_angle, edit_stack,
-                       context, [=](float* value) {
-                          float degrees = *value * 180.0f / std::numbers::pi_v<float>;
-
-                          const bool value_changed =
-                             ImGui::DragFloat(label, &degrees, v_speed, v_min,
-                                              v_max, format, flags);
-
-                          if (value_changed) {
-                             *value = degrees / 180.0f * std::numbers::pi_v<float>;
-                          }
-
-                          return we::edit_widget_result{.value_changed = value_changed,
-                                                        .item_deactivated =
-                                                           ImGui::IsItemDeactivated()};
-                       });
-}
-
-// Creation Entity Path Node Editors
-
-template<typename T>
-inline bool EditWithUndoPathNode(we::world::creation_entity* entity,
-                                 T we::world::path::node ::*value_member_ptr,
-                                 we::edits::stack<we::world::edit_context>* edit_stack,
-                                 we::world::edit_context* context,
-                                 we::edits::imgui::edit_widget_callback<T> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_creation_path_node_edit<T>;
-   using value_type = T;
-
-   value_type value = entity->get<we::world::path>().nodes[0].*value_member_ptr;
-   value_type original_value = value;
-
-   auto [valued_changed, item_deactivated] = editor(&value);
-
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value, original_value),
-                        *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return valued_changed;
-}
-
-inline bool EditWithUndoPathNode(
-   we::world::creation_entity* entity,
-   we::quaternion we::world::path::node::*value_member_ptr,
-   we::float3 we::world::edit_context::*meta_value_member_ptr,
-   we::edits::stack<we::world::edit_context>* edit_stack,
-   we::world::edit_context* context,
-   we::edits::imgui::edit_widget_double_callback<we::quaternion, we::float3> auto editor) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_creation_path_node_edit_with_meta<quaternion, float3>;
-   using value_type = quaternion;
-   using meta_value_type = float3;
-
-   value_type value = entity->get<we::world::path>().nodes[0].*value_member_ptr;
-   value_type original_value = value;
-   meta_value_type meta_value = context->*meta_value_member_ptr;
-   meta_value_type meta_original_value = meta_value;
-
-   auto [valued_changed, item_deactivated] = editor(&value, &meta_value);
-
-   if (valued_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(value_member_ptr, value,
-                                                    original_value, meta_value_member_ptr,
-                                                    meta_value, meta_original_value),
-                        *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return valued_changed;
-}
-
-inline bool DragRotationEulerPathNode(const char* label,
-                                      we::world::creation_entity* entity,
-                                      we::float3 we::world::edit_context::*meta_value_member_ptr,
-                                      we::edits::stack<we::world::edit_context>* edit_stack,
-                                      we::world::edit_context* context)
-{
-   return EditWithUndoPathNode(
-      entity, &we::world::path::node::rotation, meta_value_member_ptr, edit_stack,
-      context, [=](we::quaternion* rotation, we::float3* rotation_euler) {
-         bool value_changed = ImGui::DragFloat3(label, rotation_euler);
-
-         if (value_changed) {
-            *rotation = make_quat_from_euler(*rotation_euler *
-                                             std::numbers::pi_v<float> / 180.0f);
-         }
-
-         return we::edit_widget_result{.value_changed = value_changed,
-                                       .item_deactivated = ImGui::IsItemDeactivated()};
-      });
-}
-
-inline bool DragQuatPathNode(const char* label, we::world::creation_entity* entity,
-                             we::edits::stack<we::world::edit_context>* edit_stack,
-                             we::world::edit_context* context)
-{
-   return EditWithUndoPathNode(entity, &we::world::path::node::rotation,
-                               edit_stack, context, [=](we::quaternion* rotation) {
-                                  return we::edit_widget_result{
-                                     .value_changed = ImGui::DragQuat(label, rotation),
-                                     .item_deactivated = ImGui::IsItemDeactivated()};
-                               });
-}
-
-inline bool DragFloat3PathNode(const char* label, we::world::creation_entity* entity,
-                               we::edits::stack<we::world::edit_context>* edit_stack,
-                               we::world::edit_context* context)
-{
-   return EditWithUndoPathNode(entity, &we::world::path::node::position,
-                               edit_stack, context, [=](we::float3* value) {
-                                  return we::edit_widget_result{
-                                     .value_changed = ImGui::DragFloat3(label, value),
-                                     .item_deactivated = ImGui::IsItemDeactivated()};
-                               });
-}
-
-// Sector Point Editors
-
-inline bool DragSectorPoint(const char* label, we::world::creation_entity* entity,
-                            we::edits::stack<we::world::edit_context>* edit_stack,
-                            we::world::edit_context* context,
-                            float v_speed = 1.0f, float v_min = 0.0f,
-                            float v_max = 0.0f, ImGuiSliderFlags flags = 0) noexcept
-{
-   using namespace we;
-   using namespace we::edits;
-   using namespace we::edits::imgui;
-
-   using edit_type = ui_creation_sector_point_edit;
-
-   float2 value = entity->get<we::world::sector>().points[0];
-   float2 original_value = value;
-
-   const bool value_changed =
-      ImGui::DragFloat2XZ(label, &value, v_speed, v_min, v_max, flags);
-   const bool item_deactivated = ImGui::IsItemDeactivated();
-
-   if (value_changed) {
-      edit_stack->apply(std::make_unique<edit_type>(value, original_value), *context);
-   }
-
-   if (item_deactivated) edit_stack->close_last();
-
-   return value_changed;
+   return changed;
 }
 
 }

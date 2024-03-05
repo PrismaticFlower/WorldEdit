@@ -243,6 +243,7 @@
     <ClCompile Include="src\edits\delete_world_req_list.cpp" />
     <ClCompile Include="src\edits\game_mode_link_layer.cpp" />
     <ClCompile Include="src\edits\game_mode_unlink_layer.cpp" />
+    <ClCompile Include="src\edits\imgui_ext.cpp" />
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
     <ClCompile Include="src\edits\insert_point.cpp" />
@@ -491,7 +492,6 @@
     <ClInclude Include="src\edits\set_terrain_area.hpp" />
     <ClInclude Include="src\edits\set_value.hpp" />
     <ClInclude Include="src\edits\stack.hpp" />
-    <ClInclude Include="src\edits\ui_action.hpp" />
     <ClInclude Include="src\edits\add_world_req_entry.hpp" />
     <ClInclude Include="src\edits\delete_world_req_entry.hpp" />
     <ClInclude Include="src\gizmo.hpp" />

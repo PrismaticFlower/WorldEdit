@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "utility/function_ptr.hpp"
 
 #include "imgui.h"
 
@@ -46,7 +47,6 @@ bool InputTextWithClose(const char* label, absl::InlinedVector<char, 256>* buffe
 
 bool InputTextAutoComplete(
    const char* label, absl::InlinedVector<char, 256>* buffer,
-   const std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback,
-   void* fill_entries_callback_user_data);
+   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback);
 
 }

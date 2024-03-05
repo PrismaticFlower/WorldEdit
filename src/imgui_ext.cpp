@@ -21,8 +21,7 @@ namespace {
 struct text_callback_autofill_data {
    std::optional<std::array<std::string_view, 6>>& autocomplete_entries;
    int autocomplete_index = 0;
-   std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback;
-   void* fill_entries_callback_user_data;
+   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback;
 };
 
 struct item_widths {
@@ -341,10 +340,8 @@ bool InputTextWithClose(const char* label, absl::InlinedVector<char, 256>* buffe
    return value_changed;
 }
 
-bool InputTextAutoComplete(
-   const char* label, absl::InlinedVector<char, 256>* buffer,
-   const std::add_pointer_t<std::array<std::string_view, 6>(void*)> fill_entries_callback,
-   void* fill_entries_callback_user_data)
+bool InputTextAutoComplete(const char* label, absl::InlinedVector<char, 256>* buffer,
+                           we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback)
 {
 
    ImGui::PushID(label);
@@ -358,8 +355,7 @@ bool InputTextAutoComplete(
    std::optional<std::array<std::string_view, 6>> autocomplete_entries;
 
    text_callback_autofill_data callback_user_data{autocomplete_entries, selected_index,
-                                                  fill_entries_callback,
-                                                  fill_entries_callback_user_data};
+                                                  fill_entries_callback};
 
    bool value_changed = ImGui::InputText(
       label, buffer, ImGuiInputTextFlags_CallbackCompletion,
@@ -368,8 +364,7 @@ bool InputTextAutoComplete(
             text_callback_autofill_data& user_data =
                *static_cast<decltype(callback_user_data)*>(data->UserData);
 
-            user_data.autocomplete_entries = user_data.fill_entries_callback(
-               user_data.fill_entries_callback_user_data);
+            user_data.autocomplete_entries = user_data.fill_entries_callback();
 
             std::string_view autofill =
                (*user_data.autocomplete_entries)[user_data.autocomplete_index];
@@ -396,8 +391,7 @@ bool InputTextAutoComplete(
 
       if (ImGui::IsKeyPressed(ImGuiKey_Enter)) {
          if (not autocomplete_entries) {
-            autocomplete_entries =
-               fill_entries_callback(fill_entries_callback_user_data);
+            autocomplete_entries = fill_entries_callback();
          }
 
          buffer->assign((*autocomplete_entries)[selected_index].begin(),
@@ -427,8 +421,7 @@ bool InputTextAutoComplete(
          ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
 
          if (not autocomplete_entries) {
-            autocomplete_entries =
-               fill_entries_callback(fill_entries_callback_user_data);
+            autocomplete_entries = fill_entries_callback();
          }
 
          if ((*autocomplete_entries)[0].empty()) {
