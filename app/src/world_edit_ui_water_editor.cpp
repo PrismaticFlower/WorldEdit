@@ -52,6 +52,14 @@ void world_edit::ui_show_water_editor() noexcept
          ImGui::SeparatorText("Tools");
 
          ImGui::Selectable("Flood Fill", &_water_editor_context.flood_fill_active);
+
+         if (ImGui::Selectable("Clear World")) {
+            _edit_stack_world.apply(edits::make_set_terrain_area_water_map(
+                                       0, 0,
+                                       container::dynamic_array_2d<bool>{water_map_length,
+                                                                         water_map_length}),
+                                    _edit_context);
+         }
       }
 
       if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
