@@ -224,7 +224,7 @@ inline bool operator==(const dynamic_array_2d<Type>& l,
       }
    }
 
-   return false;
+   return true;
 }
 
 }
