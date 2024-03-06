@@ -592,6 +592,7 @@ private:
       bool flood_fill_active = false;
       bool brush_held = false;
       bool brush_active = false;
+      bool flooded = false;
    } _water_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

@@ -292,8 +292,20 @@ void world_edit::ui_show_water_editor() noexcept
    const int32 water_x = static_cast<int32>(water_point.x);
    const int32 water_y = static_cast<int32>(water_point.y);
 
+   if (_water_editor_context.brush_held != _water_editor_context.brush_active) {
+      _water_editor_context.brush_active = _water_editor_context.brush_held;
+
+      if (_water_editor_context.flooded) {
+         _water_editor_context.flood_fill_active = false;
+      }
+
+      _water_editor_context.flooded = false;
+
+      _edit_stack_world.close_last();
+   }
+
    if (_water_editor_context.flood_fill_active) {
-      if (_water_editor_context.brush_held) {
+      if (_water_editor_context.brush_active and not _water_editor_context.flooded) {
          if (water_x < 0 or water_x >= water_map_length) return;
          if (water_y < 0 or water_y >= water_map_length) return;
 
@@ -392,22 +404,19 @@ void world_edit::ui_show_water_editor() noexcept
                                                                         std::move(filled)),
                                  _edit_context);
 
-         _water_editor_context.flood_fill_active = false;
+         _water_editor_context.flooded = true;
       }
 
-      _tool_visualizers.add_line_overlay(cursor_positionWS,
-                                         cursor_positionWS +
-                                            float3{0.0f, water_grid_scale, 0.0f},
-                                         0xff'ff'ff'ffu);
+      if (not _water_editor_context.flooded) {
+         _tool_visualizers.add_line_overlay(cursor_positionWS,
+                                            cursor_positionWS +
+                                               float3{0.0f, water_grid_scale, 0.0f},
+                                            0xff'ff'ff'ffu);
+      }
    }
    else {
       const int32 brush_size_x = _water_editor_config.brush_size_x;
       const int32 brush_size_y = _water_editor_config.brush_size_y;
-
-      if (_water_editor_context.brush_held != _water_editor_context.brush_active) {
-         _water_editor_context.brush_active = _water_editor_context.brush_held;
-         _edit_stack_world.close_last();
-      }
 
       if (_water_editor_context.brush_active) {
          int32 left = std::clamp(water_x - brush_size_x, 0, water_map_length - 1);
