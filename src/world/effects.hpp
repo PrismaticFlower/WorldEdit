@@ -202,7 +202,7 @@ struct water {
 
    PLATFORMED_VAR(bool, ocean_enable, false);
 
-   PLATFORMED_VAR(bool, oscillation_enable, false);
+   PLATFORMED_VAR(bool, oscillation_enable, true);
 
    PLATFORMED_VAR(bool, disable_low_res, false);
 
