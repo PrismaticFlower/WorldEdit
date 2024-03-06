@@ -67,6 +67,19 @@ bool DragQuat(const char* label, we::quaternion* value,
               we::world::edit_context& context, float v_speed = 0.001f,
               ImGuiSliderFlags flags = 0) noexcept;
 
+bool DragInt2(const char* label, std::array<we::int32, 2>* value,
+              we::edits::stack<we::world::edit_context>& edit_stack,
+              we::world::edit_context& context, float v_speed = 1.0f,
+              int v_min = 0, int v_max = 0, const char* format = "%d",
+              ImGuiSliderFlags flags = 0) noexcept;
+
+bool DragFloatRange2(const char* label, float* value_current_min,
+                     float* value_current_max,
+                     we::edits::stack<we::world::edit_context>& edit_stack,
+                     we::world::edit_context& context, float v_speed = 1.0f,
+                     float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f",
+                     const char* format_max = NULL, ImGuiSliderFlags flags = 0);
+
 bool SliderInt(const char* label, int* value,
                we::edits::stack<we::world::edit_context>& edit_stack,
                we::world::edit_context& context, int v_min = 0, int v_max = 0,
@@ -79,6 +92,10 @@ bool SliderInt(const char* label, we::int8* value,
                ImGuiSliderFlags flags = 0) noexcept;
 
 bool ColorEdit3(const char* label, we::float3* value,
+                we::edits::stack<we::world::edit_context>& edit_stack,
+                we::world::edit_context& context, ImGuiColorEditFlags flags = 0) noexcept;
+
+bool ColorEdit4(const char* label, we::float4* value,
                 we::edits::stack<we::world::edit_context>& edit_stack,
                 we::world::edit_context& context, ImGuiColorEditFlags flags = 0) noexcept;
 

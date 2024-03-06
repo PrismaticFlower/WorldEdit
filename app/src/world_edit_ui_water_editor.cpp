@@ -1,7 +1,9 @@
 #include "world_edit.hpp"
 
+#include "edits/imgui_ext.hpp"
 #include "edits/set_terrain_area.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/string_icompare.hpp"
 
 #include <imgui.h>
 
@@ -18,37 +20,226 @@ void world_edit::ui_show_water_editor() noexcept
                                         620.0f * _display_scale});
 
    if (ImGui::Begin("Water Editor", &_water_editor_open)) {
-      ImGui::SeparatorText("Brush Mode");
+      if (ImGui::CollapsingHeader("Edit", ImGuiTreeNodeFlags_DefaultOpen)) {
+         ImGui::SeparatorText("Brush Mode");
 
-      if (ImGui::Selectable("Paint", _water_editor_config.brush_mode ==
-                                        water_brush_mode::paint)) {
-         _water_editor_config.brush_mode = water_brush_mode::paint;
+         if (ImGui::Selectable("Paint", _water_editor_config.brush_mode ==
+                                           water_brush_mode::paint)) {
+            _water_editor_config.brush_mode = water_brush_mode::paint;
+         }
+
+         if (ImGui::Selectable("Erase", _water_editor_config.brush_mode ==
+                                           water_brush_mode::erase)) {
+            _water_editor_config.brush_mode = water_brush_mode::erase;
+         }
+
+         ImGui::SeparatorText("Brush Settings");
+
+         if (int32 size = std::max(_water_editor_config.brush_size_x,
+                                   _water_editor_config.brush_size_y);
+             ImGui::SliderInt("Size", &size, 0, water_map_length / 2, "%d",
+                              ImGuiSliderFlags_AlwaysClamp)) {
+            _water_editor_config.brush_size_x = size;
+            _water_editor_config.brush_size_y = size;
+         }
+
+         ImGui::SliderInt("Size (X)", &_water_editor_config.brush_size_x, 0,
+                          water_map_length / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::SliderInt("Size (Y)", &_water_editor_config.brush_size_y, 0,
+                          water_map_length / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::SeparatorText("Tools");
+
+         ImGui::Selectable("Flood Fill", &_water_editor_context.flood_fill_active);
       }
 
-      if (ImGui::Selectable("Erase", _water_editor_config.brush_mode ==
-                                        water_brush_mode::erase)) {
-         _water_editor_config.brush_mode = water_brush_mode::erase;
+      if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+         ImGui::DragFloat("Height", &_world.terrain.water_settings.height,
+                          _edit_stack_world, _edit_context, 0.125f);
+
+         world::water& water = _world.effects.water;
+
+         ImGui::SeparatorText("Mesh");
+
+         ImGui::SetItemTooltip("Settings affecting the water mesh.");
+
+         ImGui::DragInt2("Patch Divisions", &water.patch_divisions_pc,
+                         _edit_stack_world, _edit_context, 1.0f, 1, 256, "%d",
+                         ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::SliderInt("LOD Decimation", &water.lod_decimation_pc,
+                          _edit_stack_world, _edit_context, 1, 16, "%d",
+                          ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::BeginDisabled(water.ocean_enable_pc);
+
+         ImGui::Checkbox("Oscillation Enable", &water.oscillation_enable_pc,
+                         _edit_stack_world, _edit_context);
+
+         ImGui::EndDisabled();
+
+         ImGui::Checkbox("Disable LowRes", &water.disable_low_res_pc,
+                         _edit_stack_world, _edit_context);
+
+         ImGui::DragFloat("Far Scene Range", &water.far_scene_range_pc,
+                          _edit_stack_world, _edit_context, 1.0f, 0.0f, 1e10f,
+                          water.far_scene_range_pc == 0.0f ? "Infinite" : "%.1f");
+
+         ImGui::SeparatorText("Colors");
+
+         ImGui::ColorEdit4("Refraction Color", &water.refraction_color_pc,
+                           _edit_stack_world, _edit_context);
+
+         ImGui::ColorEdit4("Reflection Color", &water.reflection_color_pc,
+                           _edit_stack_world, _edit_context);
+
+         ImGui::ColorEdit4("Underwater Color", &water.underwater_color_pc,
+                           _edit_stack_world, _edit_context);
+
+         ImGui::ColorEdit4("Water Ring Color", &water.water_ring_color_pc,
+                           _edit_stack_world, _edit_context);
+
+         ImGui::ColorEdit4("Water Wake Color", &water.water_wake_color_pc,
+                           _edit_stack_world, _edit_context);
+
+         ImGui::ColorEdit4("Water Splash Color", &water.water_splash_color_pc,
+                           _edit_stack_world, _edit_context);
+
+         ImGui::SeparatorText("Textures");
+
+         ImGui::DragFloat2("Tile", &water.tile_pc, _edit_stack_world,
+                           _edit_context, 0.25f);
+
+         ImGui::DragFloat2("Velocity", &water.velocity_pc, _edit_stack_world,
+                           _edit_context, 0.0125f);
+
+         ImGui::InputTextAutoComplete(
+            "Main Texture", &water.main_texture_pc, _edit_stack_world,
+            _edit_context, [&]() noexcept {
+               std::array<std::string_view, 6> entries;
+               std::size_t matching_count = 0;
+
+               _asset_libraries.textures.view_existing(
+                  [&](const std::span<const assets::stable_string> assets) noexcept {
+                     for (const std::string_view asset : assets) {
+                        if (matching_count == entries.size()) break;
+                        if (not string::icontains(asset, water.main_texture_pc)) {
+                           continue;
+                        }
+
+                        entries[matching_count] = asset;
+
+                        ++matching_count;
+                     }
+                  });
+
+               return entries;
+            });
+
+         ImGui::BeginDisabled(water.ocean_enable_pc);
+
+         ImGui::InputText("Normal Map Textures Prefix",
+                          &water.normal_map_textures_pc.prefix,
+                          _edit_stack_world, _edit_context);
+
+         ImGui::SliderInt("Normal Map Textures Count",
+                          &water.normal_map_textures_pc.count, _edit_stack_world,
+                          _edit_context, 1, 50, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::DragFloat("Normal Map Textures Framerate",
+                          &water.normal_map_textures_pc.framerate,
+                          _edit_stack_world, _edit_context, 0.25f, 1.0f, 250.0f);
+
+         ImGui::InputText("Bump Map Textures Prefix",
+                          &water.bump_map_textures_pc.prefix, _edit_stack_world,
+                          _edit_context);
+
+         ImGui::SliderInt("Bump Map Textures Count",
+                          &water.bump_map_textures_pc.count, _edit_stack_world,
+                          _edit_context, 1, 50, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::DragFloat("Bump Map Textures Framerate",
+                          &water.bump_map_textures_pc.framerate,
+                          _edit_stack_world, _edit_context, 0.25f, 1.0f, 250.0f);
+
+         ImGui::InputText("Specular Mask Textures Prefix",
+                          &water.specular_mask_textures_pc.prefix,
+                          _edit_stack_world, _edit_context);
+
+         ImGui::SliderInt("Specular Mask Textures Count",
+                          &water.specular_mask_textures_pc.count, _edit_stack_world,
+                          _edit_context, 1, 50, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::DragFloat("Specular Mask Textures Framerate",
+                          &water.specular_mask_textures_pc.framerate,
+                          _edit_stack_world, _edit_context, 0.25f, 1.0f, 250.0f);
+
+         ImGui::DragFloat2("Specular Mask Tile", &water.specular_mask_tile_pc,
+                           _edit_stack_world, _edit_context, 0.25f);
+
+         ImGui::DragFloat2("Specular Mask Scroll Speed",
+                           &water.specular_mask_scroll_speed_pc,
+                           _edit_stack_world, _edit_context, 0.0125f);
+
+         ImGui::EndDisabled();
+
+         ImGui::SeparatorText("Reflections");
+
+         ImGui::BeginDisabled(water.ocean_enable_pc);
+
+         ImGui::DragFloatRange2("Fresnel Min-Max", &water.fresnel_min_max_pc.x,
+                                &water.fresnel_min_max_pc.y, _edit_stack_world,
+                                _edit_context, 0.025f, 0.0f, 1.0f, "Min: %.3f",
+                                "Max: %.3f", ImGuiSliderFlags_AlwaysClamp);
+
+         ImGui::EndDisabled();
+
+         ImGui::SeparatorText("Ocean");
+
+         ImGui::Checkbox("Ocean Enable", &water.ocean_enable_pc,
+                         _edit_stack_world, _edit_context);
+
+         ImGui::BeginDisabled(not water.ocean_enable_pc);
+
+         ImGui::DragFloat2("Wind Direction", &water.wind_direction_pc,
+                           _edit_stack_world, _edit_context, 0.0125f);
+
+         ImGui::DragFloat("Wind Speed", &water.wind_speed_pc, _edit_stack_world,
+                          _edit_context, 0.5f);
+
+         ImGui::DragFloat("Phillips Constant", &water.phillips_constant_pc,
+                          _edit_stack_world, _edit_context, 0.000001f, 0.0f,
+                          0.0f, "%.6f");
+
+         ImGui::InputTextAutoComplete(
+            "Foam Texture", &water.foam_texture_pc, _edit_stack_world,
+            _edit_context, [&]() noexcept {
+               std::array<std::string_view, 6> entries;
+               std::size_t matching_count = 0;
+
+               _asset_libraries.textures.view_existing(
+                  [&](const std::span<const assets::stable_string> assets) noexcept {
+                     for (const std::string_view asset : assets) {
+                        if (matching_count == entries.size()) break;
+                        if (not string::icontains(asset, water.foam_texture_pc)) {
+                           continue;
+                        }
+
+                        entries[matching_count] = asset;
+
+                        ++matching_count;
+                     }
+                  });
+
+               return entries;
+            });
+
+         ImGui::DragFloat2("Foam Tile", &water.foam_tile_pc, _edit_stack_world,
+                           _edit_context, 0.25f);
+
+         ImGui::EndDisabled();
       }
-
-      ImGui::SeparatorText("Brush Settings");
-
-      if (int32 size = std::max(_water_editor_config.brush_size_x,
-                                _water_editor_config.brush_size_y);
-          ImGui::SliderInt("Size", &size, 0, water_map_length / 2, "%d",
-                           ImGuiSliderFlags_AlwaysClamp)) {
-         _water_editor_config.brush_size_x = size;
-         _water_editor_config.brush_size_y = size;
-      }
-
-      ImGui::SliderInt("Size (X)", &_water_editor_config.brush_size_x, 0,
-                       water_map_length / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-      ImGui::SliderInt("Size (Y)", &_water_editor_config.brush_size_y, 0,
-                       water_map_length / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-      ImGui::SeparatorText("Tools");
-
-      ImGui::Selectable("Flood Fill", &_water_editor_context.flood_fill_active);
    }
 
    ImGui::End();

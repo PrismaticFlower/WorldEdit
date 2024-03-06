@@ -148,6 +148,67 @@ bool DragQuat(const char* label, quaternion* value,
    return changed;
 }
 
+bool DragInt2(const char* label, std::array<we::int32, 2>* value,
+              we::edits::stack<we::world::edit_context>& edit_stack,
+              we::world::edit_context& context, float v_speed, int v_min,
+              int v_max, const char* format, ImGuiSliderFlags flags) noexcept
+{
+   IM_ASSERT(value);
+   IM_ASSERT(context.is_memory_valid(value));
+
+   std::array<we::int32, 2> edit_value = *value;
+
+   const bool changed =
+      DragInt2(label, edit_value.data(), v_speed, v_min, v_max, format, flags);
+
+   if (changed) {
+      edit_stack.apply(edits::make_set_value(value, edit_value), context);
+   }
+
+   if (IsItemDeactivated()) {
+      edit_stack.close_last();
+   }
+
+   return changed;
+}
+
+bool DragFloatRange2(const char* label, float* value_current_min,
+                     float* value_current_max,
+                     we::edits::stack<we::world::edit_context>& edit_stack,
+                     we::world::edit_context& context, float v_speed,
+                     float v_min, float v_max, const char* format,
+                     const char* format_max, ImGuiSliderFlags flags)
+{
+   IM_ASSERT(value_current_min);
+   IM_ASSERT(context.is_memory_valid(value_current_min));
+   IM_ASSERT(value_current_max);
+   IM_ASSERT(context.is_memory_valid(value_current_max));
+
+   float edit_value_current_min = *value_current_min;
+   float edit_value_current_max = *value_current_max;
+
+   const bool changed =
+      DragFloatRange2(label, &edit_value_current_min, &edit_value_current_max,
+                      v_speed, v_min, v_max, format, format_max, flags);
+
+   if (changed) {
+      if (edit_value_current_min != *value_current_min) {
+         edit_stack.apply(edits::make_set_value(value_current_min, edit_value_current_min),
+                          context);
+      }
+      else if (edit_value_current_max != *value_current_max) {
+         edit_stack.apply(edits::make_set_value(value_current_max, edit_value_current_max),
+                          context);
+      }
+   }
+
+   if (IsItemDeactivated()) {
+      edit_stack.close_last();
+   }
+
+   return changed;
+}
+
 bool SliderInt(const char* label, int* value,
                we::edits::stack<we::world::edit_context>& edit_stack,
                we::world::edit_context& context, int v_min, int v_max,
@@ -205,6 +266,28 @@ bool ColorEdit3(const char* label, we::float3* value,
    float3 edit_value = *value;
 
    const bool changed = ColorEdit3(label, &edit_value.x, flags);
+
+   if (changed) {
+      edit_stack.apply(edits::make_set_value(value, edit_value), context);
+   }
+
+   if (IsItemDeactivated()) {
+      edit_stack.close_last();
+   }
+
+   return changed;
+}
+
+bool ColorEdit4(const char* label, we::float4* value,
+                we::edits::stack<we::world::edit_context>& edit_stack,
+                we::world::edit_context& context, ImGuiColorEditFlags flags) noexcept
+{
+   IM_ASSERT(value);
+   IM_ASSERT(context.is_memory_valid(value));
+
+   float4 edit_value = *value;
+
+   const bool changed = ColorEdit4(label, &edit_value.x, flags);
 
    if (changed) {
       edit_stack.apply(edits::make_set_value(value, edit_value), context);
