@@ -347,11 +347,10 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
 
       for (int y = foliage_map_length - 1; y >= 0; --y) {
          for (int x = 0; x < foliage_map_length; x += 2) {
-
             const uint8 packed_foliage = reader.read<uint8>();
 
-            foliage_map[{x, y}] = packed_foliage & 0xfu;
-            foliage_map[{x + 1, y}] = (packed_foliage >> 4u) & 0xfu;
+            foliage_map[{x, y}] = (packed_foliage >> 4u) & 0xfu;
+            foliage_map[{x + 1, y}] = packed_foliage & 0xfu;
          }
       }
 
@@ -548,14 +547,14 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain,
 
          uint8 packed_foliage = 0;
 
-         packed_foliage |= foliage_0.layer0 << 0;
-         packed_foliage |= foliage_0.layer1 << 1;
-         packed_foliage |= foliage_0.layer2 << 2;
-         packed_foliage |= foliage_0.layer3 << 3;
-         packed_foliage |= foliage_1.layer0 << 4;
-         packed_foliage |= foliage_1.layer1 << 5;
-         packed_foliage |= foliage_1.layer2 << 6;
-         packed_foliage |= foliage_1.layer3 << 7;
+         packed_foliage |= foliage_1.layer0 << 0;
+         packed_foliage |= foliage_1.layer1 << 1;
+         packed_foliage |= foliage_1.layer2 << 2;
+         packed_foliage |= foliage_1.layer3 << 3;
+         packed_foliage |= foliage_0.layer0 << 4;
+         packed_foliage |= foliage_0.layer1 << 5;
+         packed_foliage |= foliage_0.layer2 << 6;
+         packed_foliage |= foliage_0.layer3 << 7;
 
          file.write_object(packed_foliage);
       }
