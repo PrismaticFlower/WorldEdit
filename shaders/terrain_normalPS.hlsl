@@ -42,5 +42,16 @@ float4 main(input_vertex input) : SV_Target0
 
    const float3 lighting = calculate_lighting(lighting_inputs);
 
+   int2 foliage_coords = 
+      int2(((input.positionWS.xz + terrain_constants.half_world_size)  + float2(0, terrain_constants.grid_size)) / terrain_constants.grid_size) / 2;
+
+   foliage_coords.y -= 1;
+
+   uint foliage_mask = foliage_map[int2(foliage_coords.x, foliage_coords.y)].r;
+
+   float vis = countbits(foliage_mask) * (1.0 / 4.0); // foliage_mask != 0 ? 1.0 : 0.5;
+
+   (void)vis;
+
    return float4(lighting, 1.0);
 }

@@ -61,6 +61,7 @@ struct renderer_init {
 struct draw_frame_options {
    bool draw_terrain_grid = false;
    bool draw_overlay_grid = false;
+   bool draw_foliage_map_overlay = false;
    float overlay_grid_height = 0.0f;
    float overlay_grid_size = 4.0f;
 };

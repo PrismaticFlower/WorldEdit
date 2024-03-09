@@ -26,6 +26,7 @@ terrain_basicPS
 terrain_lightingPS
 terrain_normalPS
 terrain_gridPS
+terrain_foliage_mapPS
 
 terrain_cut_mesh_clearVS
 

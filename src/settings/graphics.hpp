@@ -47,6 +47,16 @@ struct graphics {
 
    float3 terrain_grid_color = {0.0f, 0.0f, 0.0f};
 
+   float3 foliage_overlay_layer0_color = {0.0f, 0.8f, 0.0f};
+
+   float foliage_overlay_transparency = 0.25f;
+
+   float3 foliage_overlay_layer1_color = {0.3f, 0.8f, 0.3f};
+
+   float3 foliage_overlay_layer2_color = {0.15f, 0.5f, 0.5f};
+
+   float3 foliage_overlay_layer3_color = {0.0f, 0.5f, 0.3f};
+
    float terrain_grid_line_width = 0.025f;
 
    float barrier_height = 32.0f;

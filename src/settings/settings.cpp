@@ -147,11 +147,26 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
 
             ImGui::ColorEdit3("Overlay Grid Color", &graphics.overlay_grid_color.x);
 
-            ImGui::DragFloat("Light Volume Transparency",
-                             &graphics.light_volume_alpha, 0.01f, 0.0f, 1.0f,
-                             "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderFloat("Light Volume Transparency", &graphics.light_volume_alpha,
+                               0.0f, 1.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
             ImGui::ColorEdit3("Terrain Cutter", &graphics.terrain_cutter_color.x);
+
+            ImGui::ColorEdit3("Foliage Overlay Layer 0 Color",
+                              &graphics.foliage_overlay_layer0_color.x);
+
+            ImGui::ColorEdit3("Foliage Overlay Layer 1 Color",
+                              &graphics.foliage_overlay_layer1_color.x);
+
+            ImGui::ColorEdit3("Foliage Overlay Layer 2 Color",
+                              &graphics.foliage_overlay_layer2_color.x);
+
+            ImGui::ColorEdit3("Foliage Overlay Layer 3 Color",
+                              &graphics.foliage_overlay_layer3_color.x);
+
+            ImGui::SliderFloat("Foliage Overlay Transparency",
+                               &graphics.foliage_overlay_transparency, 0.0f,
+                               1.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
             ImGui::SeparatorText("Visualizer Sizes");
 

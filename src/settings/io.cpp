@@ -104,6 +104,11 @@ auto load(const std::string_view path) -> settings
             setting_entry(creation_color);
             setting_entry(terrain_grid_color);
             setting_entry(terrain_grid_line_width);
+            setting_entry(foliage_overlay_layer0_color);
+            setting_entry(foliage_overlay_transparency);
+            setting_entry(foliage_overlay_layer1_color);
+            setting_entry(foliage_overlay_layer2_color);
+            setting_entry(foliage_overlay_layer3_color);
             setting_entry(barrier_height);
             setting_entry(boundary_height);
             setting_entry(planning_hub_height);
@@ -198,6 +203,11 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(creation_color));
       write(file, name_value(terrain_grid_color));
       write(file, name_value(terrain_grid_line_width));
+      write(file, name_value(foliage_overlay_layer0_color));
+      write(file, name_value(foliage_overlay_transparency));
+      write(file, name_value(foliage_overlay_layer1_color));
+      write(file, name_value(foliage_overlay_layer2_color));
+      write(file, name_value(foliage_overlay_layer3_color));
       write(file, name_value(barrier_height));
       write(file, name_value(boundary_height));
       write(file, name_value(planning_hub_height));

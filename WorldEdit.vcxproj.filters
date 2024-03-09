@@ -198,6 +198,7 @@
     <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\container\pinned_vector.cpp" />
     <ClCompile Include="src\edits\imgui_ext.cpp" />
+    <ClCompile Include="src\graphics\shaders\terrain_foliage_mapPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

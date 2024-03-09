@@ -484,6 +484,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .debug_name = "terrain_grid"sv}),
                    device.direct_queue};
 
+   terrain_foliage_map = {device.create_graphics_pipeline(
+                             {.root_signature = root_signature_library.terrain.get(),
+
+                              .vs_bytecode = shader_library["terrain_patchVS"sv],
+                              .ps_bytecode = shader_library["terrain_foliage_mapPS"sv],
+
+                              .blend_state = blend_alpha,
+                              .rasterizer_state = rasterizer_cull_backfacing,
+                              .depth_stencil_state = depth_stencil_readonly_equal,
+
+                              .render_target_count = 1,
+                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+                              .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+
+                              .debug_name = "terrain_foliage_map"sv}),
+                          device.direct_queue};
+
    water = {device.create_graphics_pipeline(
                {.root_signature = root_signature_library.water.get(),
 

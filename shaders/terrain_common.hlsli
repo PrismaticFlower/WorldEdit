@@ -17,6 +17,7 @@ struct terrain_constants_ {
    uint height_map_index;
    uint texture_weight_maps_index;
    uint color_map_index;
+   uint foliage_map_index;
 
    float inv_grid_size;
    float grid_line_width;
@@ -27,7 +28,14 @@ struct terrain_constants_ {
    uint diffuse_maps_index[TERRAIN_MAX_TEXTURES];
 
    float3 texture_transform_x[TERRAIN_MAX_TEXTURES];
-   float3 texture_transform_y[TERRAIN_MAX_TEXTURES];
+   float3 texture_transform_y[TERRAIN_MAX_TEXTURES];   
+   
+   
+   float3 foliage_color_0;
+   float foliage_transparency;
+   float3 foliage_color_1;
+   float3 foliage_color_2;
+   float3 foliage_color_3;
 };
 
 struct patch_info {
@@ -52,6 +60,7 @@ StructuredBuffer<patch_info> patch_constants : register(TERRAIN_PATCH_DATA_REGIS
 static Texture2D height_map = Texture2DHeap[terrain_constants.height_map_index];
 static Texture2DArray texture_weight_maps = Texture2DArrayHeap[terrain_constants.texture_weight_maps_index];
 static Texture2D color_map = Texture2DHeap[terrain_constants.color_map_index];
+static Texture2D<uint4> foliage_map = Texture2D_uint_Heap[terrain_constants.foliage_map_index];
 
 const static uint patch_point_count = 17;
 const static uint terrain_max_textures = TERRAIN_MAX_TEXTURES;

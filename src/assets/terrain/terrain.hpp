@@ -113,6 +113,7 @@ struct terrain {
    std::array<dirty_rect_tracker, texture_count> texture_weight_maps_dirty;
    dirty_rect_tracker color_map_dirty;
    dirty_rect_tracker water_map_dirty;
+   dirty_rect_tracker foliage_map_dirty;
 
    void untracked_fill_dirty_rects() noexcept;
 
