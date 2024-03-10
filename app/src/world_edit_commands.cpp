@@ -139,6 +139,10 @@ void world_edit::initialize_commands() noexcept
       _water_editor_open = true;
       _water_editor_context = {};
    });
+   _commands.add("show.foliage_editor"s, [this] {
+      _foliage_editor_open = true;
+      _foliage_editor_context = {};
+   });
 
    _commands.add("show.overlay_grid"s, _draw_overlay_grid);
    _commands.add("show.terrain_grid"s, _draw_terrain_grid);
@@ -531,6 +535,44 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("water.close_editor"s, [this] { _water_editor_open = false; });
    _commands.add("water.toggle_flood_fill"s, _water_editor_context.flood_fill_active);
+
+   _commands.add("foliage.toggle_brush_paint"s, _foliage_editor_context.brush_held);
+   _commands.add("foliage.increase_brush_size"s, [this] {
+      _foliage_editor_config.brush_size_x =
+         std::clamp(_foliage_editor_config.brush_size_x + 1, 0,
+                    _world.terrain.length / 2 / 2);
+      _foliage_editor_config.brush_size_y =
+         std::clamp(_foliage_editor_config.brush_size_y + 1, 0,
+                    _world.terrain.length / 2 / 2);
+   });
+   _commands.add("foliage.decrease_brush_size"s, [this] {
+      _foliage_editor_config.brush_size_x =
+         std::clamp(_foliage_editor_config.brush_size_x - 1, 0,
+                    _world.terrain.length / 4 / 2);
+      _foliage_editor_config.brush_size_y =
+         std::clamp(_foliage_editor_config.brush_size_y - 1, 0,
+                    _world.terrain.length / 4 / 2);
+   });
+   _commands.add("foliage.cycle_brush_mode"s, [this] {
+      switch (foliage_brush_mode& mode = _foliage_editor_config.brush_mode; mode) {
+      case foliage_brush_mode::paint:
+         mode = foliage_brush_mode::erase;
+         return;
+      case foliage_brush_mode::erase:
+         mode = foliage_brush_mode::paint;
+         return;
+      }
+   });
+   _commands.add("foliage.set_layer0"s,
+                 [this] { _foliage_editor_config.layer = 0; });
+   _commands.add("foliage.set_layer1"s,
+                 [this] { _foliage_editor_config.layer = 1; });
+   _commands.add("foliage.set_layer2"s,
+                 [this] { _foliage_editor_config.layer = 2; });
+   _commands.add("foliage.set_layer3"s,
+                 [this] { _foliage_editor_config.layer = 3; });
+   _commands.add("foliage.close_editor"s,
+                 [this] { _foliage_editor_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -641,6 +683,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Water Editor",
            "show.water_editor",
            {.key = key::f4, .modifiers = {.ctrl = true}}},
+          {"Show Foliage Editor",
+           "show.foliage_editor",
+           {.key = key::f5, .modifiers = {.ctrl = true}}},
 
           {"Show Floor Grid",
            "show.overlay_grid",
@@ -957,6 +1002,24 @@ void world_edit::initialize_hotkeys() noexcept
             {"Cycle Brush Mode", "water.cycle_brush_mode", {.key = key::z}},
             {"Close Editor", "water.close_editor", {.key = key::escape}},
             {"Flood Fill", "water.toggle_flood_fill", {.key = key::x}},
+         },
+   });
+
+   _hotkeys.add_set({
+      .name = "Foliage Editing",
+      .description = "Active while the foliage editor is open."s,
+      .activated = [this] { return _foliage_editor_open; },
+      .default_hotkeys =
+         {
+            {"Paint", "foliage.toggle_brush_paint", {.key = key::mouse1}, {.toggle = true}},
+            {"Increase Brush Size", "foliage.increase_brush_size", {.key = key::mouse_wheel_forward}},
+            {"Decrease Brush Size", "foliage.decrease_brush_size", {.key = key::mouse_wheel_back}},
+            {"Cycle Brush Mode", "foliage.cycle_brush_mode", {.key = key::z}},
+            {"Set Layer 1", "foliage.set_layer0", {.key = key::_1}},
+            {"Set Layer 2", "foliage.set_layer1", {.key = key::_2}},
+            {"Set Layer 3", "foliage.set_layer2", {.key = key::_3}},
+            {"Set Layer 4", "foliage.set_layer3", {.key = key::_4}},
+            {"Close Editor", "foliage.close_editor", {.key = key::escape}},
          },
    });
 

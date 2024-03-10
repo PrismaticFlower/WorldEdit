@@ -92,6 +92,26 @@ struct access_water_map {
    }
 };
 
+struct access_foliage_map {
+   access_foliage_map() = default;
+
+   auto target_map(world::terrain& terrain)
+      -> container::dynamic_array_2d<world::foliage_patch>&
+   {
+      return terrain.foliage_map;
+   }
+
+   void mark_dirty(world::terrain& terrain, dirty_rect rect)
+   {
+      terrain.foliage_map_dirty.add(rect);
+   }
+
+   bool can_coalesce(const access_foliage_map&) const noexcept
+   {
+      return true;
+   }
+};
+
 template<typename T>
 struct area {
    dirty_rect rect;
@@ -351,6 +371,21 @@ auto make_set_terrain_area_water_map(const uint32 rect_start_x, const uint32 rec
                .right = static_cast<uint32>(rect_start_x + rect_water_map.width()),
                .bottom = static_cast<uint32>(rect_start_y + rect_water_map.height())},
       .map = std::move(rect_water_map)});
+}
+
+auto make_set_terrain_area_foliage_map(
+   const uint32 rect_start_x, const uint32 rect_start_y,
+   container::dynamic_array_2d<world::foliage_patch> rect_foliage_map)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_terrain_area<world::foliage_patch, access_foliage_map>>(
+      area<world::foliage_patch>{.rect = {.left = rect_start_x,
+                                          .top = rect_start_y,
+                                          .right = static_cast<uint32>(
+                                             rect_start_x + rect_foliage_map.width()),
+                                          .bottom = static_cast<uint32>(
+                                             rect_start_y + rect_foliage_map.height())},
+                                 .map = std::move(rect_foliage_map)});
 }
 
 }

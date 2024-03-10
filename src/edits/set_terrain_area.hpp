@@ -25,4 +25,9 @@ auto make_set_terrain_area_water_map(const uint32 rect_start_x, const uint32 rec
                                      container::dynamic_array_2d<bool> rect_water_map)
    -> std::unique_ptr<edit<world::edit_context>>;
 
+auto make_set_terrain_area_foliage_map(
+   const uint32 rect_start_x, const uint32 rect_start_y,
+   container::dynamic_array_2d<world::foliage_patch> rect_foliage_map)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 }

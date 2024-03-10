@@ -93,6 +93,8 @@ enum class terrain_brush_rotation : uint8 { r0, r90, r180, r270 };
 
 enum class water_brush_mode : uint8 { paint, erase };
 
+enum class foliage_brush_mode : uint8 { paint, erase };
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -189,6 +191,8 @@ private:
    void ui_show_terrain_extend() noexcept;
 
    void ui_show_water_editor() noexcept;
+
+   void ui_show_foliage_editor() noexcept;
 
    void ui_show_about_window() noexcept;
 
@@ -363,6 +367,7 @@ private:
    bool _terrain_crop_open = false;
    bool _terrain_extend_open = false;
    bool _water_editor_open = false;
+   bool _foliage_editor_open = false;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;
@@ -594,6 +599,18 @@ private:
       bool brush_active = false;
       bool flooded = false;
    } _water_editor_context;
+
+   struct foliage_editor_config {
+      foliage_brush_mode brush_mode = foliage_brush_mode::paint;
+      int32 brush_size_x = 1;
+      int32 brush_size_y = 1;
+      int32 layer = 0;
+   } _foliage_editor_config;
+
+   struct foliage_editor_context {
+      bool brush_held = false;
+      bool brush_active = false;
+   } _foliage_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

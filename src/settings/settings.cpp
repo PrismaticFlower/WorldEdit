@@ -152,16 +152,16 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
 
             ImGui::ColorEdit3("Terrain Cutter", &graphics.terrain_cutter_color.x);
 
-            ImGui::ColorEdit3("Foliage Overlay Layer 0 Color",
+            ImGui::ColorEdit3("Foliage Overlay Layer 1 Color",
                               &graphics.foliage_overlay_layer0_color.x);
 
-            ImGui::ColorEdit3("Foliage Overlay Layer 1 Color",
+            ImGui::ColorEdit3("Foliage Overlay Layer 2 Color",
                               &graphics.foliage_overlay_layer1_color.x);
 
-            ImGui::ColorEdit3("Foliage Overlay Layer 2 Color",
+            ImGui::ColorEdit3("Foliage Overlay Layer 3 Color",
                               &graphics.foliage_overlay_layer2_color.x);
 
-            ImGui::ColorEdit3("Foliage Overlay Layer 3 Color",
+            ImGui::ColorEdit3("Foliage Overlay Layer 4 Color",
                               &graphics.foliage_overlay_layer3_color.x);
 
             ImGui::SliderFloat("Foliage Overlay Transparency",

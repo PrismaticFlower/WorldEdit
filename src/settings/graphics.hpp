@@ -49,7 +49,7 @@ struct graphics {
 
    float3 foliage_overlay_layer0_color = {0.0f, 0.8f, 0.0f};
 
-   float foliage_overlay_transparency = 0.25f;
+   float foliage_overlay_transparency = 0.5f;
 
    float3 foliage_overlay_layer1_color = {0.3f, 0.8f, 0.3f};
 

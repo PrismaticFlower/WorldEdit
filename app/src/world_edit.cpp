@@ -176,6 +176,7 @@ void world_edit::update()
                             {
                                .draw_terrain_grid = _draw_terrain_grid,
                                .draw_overlay_grid = _draw_overlay_grid,
+                               .draw_foliage_map_overlay = _foliage_editor_open,
                                .overlay_grid_height = _editor_floor_height,
                                .overlay_grid_size = _editor_grid_size,
                             },

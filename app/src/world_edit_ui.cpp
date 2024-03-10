@@ -130,6 +130,10 @@ void world_edit::update_ui() noexcept
       ui_show_water_editor();
    }
 
+   if (_foliage_editor_open) {
+      ui_show_foliage_editor();
+   }
+
    if (_render_env_map_open) {
       ui_show_render_env_map();
    }

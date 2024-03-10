@@ -254,6 +254,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _water_editor_context = {};
          }
 
+         if (ImGui::MenuItem("Foliage Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Foliage Editor")))) {
+            _foliage_editor_open = true;
+            _foliage_editor_context = {};
+         }
+
          ImGui::EndMenu();
       }
 
