@@ -259,7 +259,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
 
       for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
          volatile uint8* out_row =
-            reinterpret_cast<uint8*>(upload_ptr + (y * row_pitch));
+            reinterpret_cast<uint8*>(upload_ptr + (y * row_pitch) + dirty.left);
 
          for (uint32 x = dirty.left; x < dirty.right; ++x) {
             world::foliage_patch x0 = terrain.foliage_map[{x, y}];
