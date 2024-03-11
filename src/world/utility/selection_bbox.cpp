@@ -242,13 +242,12 @@ auto selection_bbox_for_camera(const world& world,
             find_entity(world.boundaries, std::get<boundary_id>(selected));
 
          if (boundary) {
-            const float2 boundary_min = boundary->position - boundary->size;
-            const float2 boundary_max = boundary->position + boundary->size;
-
-            const math::bounding_box bbox{.min = {boundary_min.x, 0.0f,
-                                                  boundary_min.y},
-                                          .max = {boundary_max.x, 0.0f,
-                                                  boundary_max.y}};
+            const math::bounding_box bbox{.min = boundary->position -
+                                                 float3{boundary->size.x, 0.0f,
+                                                        boundary->size.y},
+                                          .max = boundary->position +
+                                                 float3{boundary->size.x, 0.0f,
+                                                        boundary->size.y}};
 
             selection_bbox = math::combine(bbox, selection_bbox);
          }
@@ -461,13 +460,12 @@ auto selection_bbox_for_move(const world& world,
             find_entity(world.boundaries, std::get<boundary_id>(selected));
 
          if (boundary) {
-            const float2 boundary_min = boundary->position - boundary->size;
-            const float2 boundary_max = boundary->position + boundary->size;
-
-            const math::bounding_box bbox{.min = {boundary_min.x, 0.0f,
-                                                  boundary_min.y},
-                                          .max = {boundary_max.x, 0.0f,
-                                                  boundary_max.y}};
+            const math::bounding_box bbox{.min = boundary->position -
+                                                 float3{boundary->size.x, 0.0f,
+                                                        boundary->size.y},
+                                          .max = boundary->position +
+                                                 float3{boundary->size.x, 0.0f,
+                                                        boundary->size.y}};
 
             selection_bbox = math::combine(bbox, selection_bbox);
          }

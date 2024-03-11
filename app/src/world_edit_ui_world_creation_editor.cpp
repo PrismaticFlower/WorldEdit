@@ -2724,20 +2724,22 @@ void world_edit::ui_show_world_creation_editor() noexcept
                              world::create_unique_name(_world.boundaries, *edited_value);
                        });
 
-      if (const float2 old_position = boundary.position;
-          ImGui::DragFloat2XZ("Position", &boundary.position, _edit_stack_world,
-                              _edit_context, 0.25f)) {
+      if (const float3 old_position = boundary.position;
+          ImGui::DragFloat3("Position", &boundary.position, _edit_stack_world,
+                            _edit_context, 0.25f)) {
          _entity_creation_context.lock_x_axis |=
             old_position.x != boundary.position.x;
-         _entity_creation_context.lock_z_axis |=
+         _entity_creation_context.lock_y_axis |=
             old_position.y != boundary.position.y;
+         _entity_creation_context.lock_z_axis |=
+            old_position.z != boundary.position.z;
       }
 
       if (using_cursor_placement and not _entity_creation_context.using_point_at) {
-         float2 new_position = boundary.position;
+         float3 new_position = boundary.position;
 
          if (using_cursor_placement) {
-            new_position = float2{_cursor_positionWS.x, _cursor_positionWS.z};
+            new_position = _cursor_positionWS;
 
             if (_entity_creation_config.placement_alignment ==
                 placement_alignment::grid) {
@@ -2746,23 +2748,21 @@ void world_edit::ui_show_world_creation_editor() noexcept
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
                const std::optional<float3> snapped_position =
-                  world::get_snapped_position({new_position.x,
-                                               _cursor_positionWS.y,
-                                               new_position.y},
-                                              _world.objects,
+                  world::get_snapped_position(new_position, _world.objects,
                                               _entity_creation_config.snap_distance,
                                               _object_classes);
 
-               if (snapped_position) {
-                  new_position = {snapped_position->x, snapped_position->z};
-               }
+               if (snapped_position) new_position = *snapped_position;
             }
 
             if (_entity_creation_context.lock_x_axis) {
                new_position.x = boundary.position.x;
             }
+            if (_entity_creation_context.lock_y_axis) {
+               new_position.y = boundary.position.y;
+            }
             if (_entity_creation_context.lock_z_axis) {
-               new_position.y = boundary.position.y; // NB: Usage of Y under lock Z.
+               new_position.z = boundary.position.z;
             }
          }
 

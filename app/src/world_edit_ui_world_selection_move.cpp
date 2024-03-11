@@ -384,8 +384,7 @@ void world_edit::ui_show_world_selection_move() noexcept
                if (boundary) {
                   bundled_edits.push_back(
                      edits::make_set_value(&boundary->position,
-                                           boundary->position +
-                                              float2{move_delta.x, move_delta.z}));
+                                           boundary->position + move_delta));
                }
             }
             else if (std::holds_alternative<world::measurement_id>(selected)) {

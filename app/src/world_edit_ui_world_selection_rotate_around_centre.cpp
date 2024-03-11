@@ -207,14 +207,10 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                                      std::get<world::boundary_id>(selected));
 
                if (boundary) {
-                  const float3 position =
-                     (rotation *
-                      (float3{boundary->position.x, 0.0f, boundary->position.y} - centre)) +
-                     centre;
-
                   bundled_edits.push_back(
                      edits::make_set_value(&boundary->position,
-                                           float2{position.x, position.z}));
+                                           (rotation * (boundary->position - centre)) +
+                                              centre));
                }
             }
             else if (std::holds_alternative<world::measurement_id>(selected)) {

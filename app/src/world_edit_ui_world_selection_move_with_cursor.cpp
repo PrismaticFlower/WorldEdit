@@ -322,12 +322,10 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                world::find_entity(_world.boundaries,
                                   std::get<world::boundary_id>(selected));
 
-            float2 new_position = boundary->position -
-                                  float2{selection_centre.x, selection_centre.z} +
-                                  float2{cursor_positionWS.x, cursor_positionWS.z};
+            float3 new_position =
+               boundary->position - selection_centre + cursor_positionWS;
 
             if (boundary) {
-
                bundled_edits.push_back(
                   edits::make_set_value(&boundary->position, new_position));
             }

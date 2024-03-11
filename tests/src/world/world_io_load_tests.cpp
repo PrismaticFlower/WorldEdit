@@ -470,7 +470,7 @@ TEST_CASE("world loading", "[World][IO]")
       REQUIRE(world.boundaries.size() == 1);
       CHECK(world.boundaries[0].name == "boundary"sv);
       CHECK(world.boundaries[0].size == float2{384.000000f, 384.000000f});
-      CHECK(world.boundaries[0].position == float2{-0.442565918f, 4.79779053f});
+      CHECK(world.boundaries[0].position == float3{-0.442565918f, 1.0f, 4.79779053f});
       CHECK(is_unique_id(0, world.boundaries));
    }
 

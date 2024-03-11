@@ -1714,16 +1714,16 @@ void renderer_impl::draw_world_meta_objects(
       const auto add_boundary = [&](const world::boundary& boundary) {
          if (boundary.hidden) return;
 
-         const std::array<float2, 12> nodes = world::get_boundary_nodes(boundary);
+         const std::array<float3, 12> nodes = world::get_boundary_nodes(boundary);
 
          for (std::size_t i = 0; i < nodes.size(); ++i) {
-            const float2 a = nodes[i];
-            const float2 b = nodes[(i + 1) % nodes.size()];
+            const float3 a = nodes[i];
+            const float3 b = nodes[(i + 1) % nodes.size()];
 
-            const std::array quad = {float3{a.x, -boundary_height, a.y},
-                                     float3{b.x, -boundary_height, b.y},
-                                     float3{a.x, boundary_height, a.y},
-                                     float3{b.x, boundary_height, b.y}};
+            const std::array quad = {float3{a.x, a.y - boundary_height, a.z},
+                                     float3{b.x, b.y - boundary_height, b.z},
+                                     float3{a.x, a.y + boundary_height, a.z},
+                                     float3{b.x, b.y + boundary_height, b.z}};
 
             _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], boundary_color);
             _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], boundary_color);
@@ -2474,16 +2474,16 @@ void renderer_impl::draw_interaction_targets(
 
          const uint32 packed_color = utility::pack_srgb_bgra({color, 1.0f});
 
-         const std::array<float2, 12> nodes = world::get_boundary_nodes(boundary);
+         const std::array<float3, 12> nodes = world::get_boundary_nodes(boundary);
 
          for (std::size_t i = 0; i < nodes.size(); ++i) {
-            const float2 a = nodes[i];
-            const float2 b = nodes[(i + 1) % nodes.size()];
+            const float3 a = nodes[i];
+            const float3 b = nodes[(i + 1) % nodes.size()];
 
-            const std::array quad = {float3{a.x, -boundary_height, a.y},
-                                     float3{a.x, boundary_height, a.y},
-                                     float3{b.x, boundary_height, b.y},
-                                     float3{b.x, -boundary_height, b.y}};
+            const std::array quad = {float3{a.x, a.y - boundary_height, a.z},
+                                     float3{a.x, a.y + boundary_height, a.z},
+                                     float3{b.x, b.y + boundary_height, b.z},
+                                     float3{b.x, b.y - boundary_height, b.z}};
 
             _meta_draw_batcher.add_line_solid(quad[0], quad[1], packed_color);
             _meta_draw_batcher.add_line_solid(quad[1], quad[2], packed_color);

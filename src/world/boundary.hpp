@@ -11,7 +11,7 @@ struct boundary {
 
    bool hidden = false;
 
-   float2 position = {0.0f, 0.0f};
+   float3 position = {0.0f, 0.0f, 0.0f};
    float2 size = {8.0f, 8.0f};
 
    id<boundary> id{};

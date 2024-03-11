@@ -336,7 +336,7 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
       file.write_ln("\t{");
       file.write_ln("\t}\n");
 
-      const std::array<float2, 12> nodes = get_boundary_nodes(boundary);
+      const std::array<float3, 12> nodes = get_boundary_nodes(boundary);
 
       file.write_ln("\tNodes({})", nodes.size());
       file.write_ln("\t{");
@@ -345,7 +345,8 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
          file.write_ln("\t\tNode()");
          file.write_ln("\t\t{");
 
-         file.write_ln("\t\t\tPosition({:f}, 0.000000, {:f});", node.x, -node.y);
+         file.write_ln("\t\t\tPosition({:f}, {:f}, {:f});", node.x, node.y,
+                       -node.z);
          file.write_ln("\t\t\tKnot(0.000000);");
          file.write_ln("\t\t\tData(0);");
          file.write_ln("\t\t\tTime(1.000000);");

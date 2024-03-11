@@ -1710,8 +1710,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                              *edited_value);
                              });
 
-            ImGui::DragFloat2XZ("Position", &boundary->position,
-                                _edit_stack_world, _edit_context, 0.25f);
+            ImGui::DragFloat3("Position", &boundary->position,
+                              _edit_stack_world, _edit_context, 0.25f);
 
             ImGui::DragFloat2XZ("Size", &boundary->size, _edit_stack_world,
                                 _edit_context, 1.0f, 0.0f, 1e10f);
