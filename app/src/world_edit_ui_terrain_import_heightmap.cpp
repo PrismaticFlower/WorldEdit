@@ -51,8 +51,7 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
                      std::get<container::dynamic_array_2d<uint8>>(loaded_heightmap));
                   _terrain_import_heightmap_context.heightmap_peak_height = 25.5f;
                   _terrain_import_heightmap_context.heightmap_terrain_world_size =
-                     _terrain_import_heightmap_context.loaded_heightmap_u8.width() *
-                     8.0f;
+                     _terrain_import_heightmap_context.loaded_heightmap_u8.width() * 8.0f;
                }
                else if (std::holds_alternative<container::dynamic_array_2d<uint16>>(
                            loaded_heightmap)) {
@@ -60,8 +59,7 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
                      std::get<container::dynamic_array_2d<uint16>>(loaded_heightmap));
                   _terrain_import_heightmap_context.heightmap_peak_height = 655.35f;
                   _terrain_import_heightmap_context.heightmap_terrain_world_size =
-                     _terrain_import_heightmap_context.loaded_heightmap_u16.width() *
-                     8.0f;
+                     _terrain_import_heightmap_context.loaded_heightmap_u16.width() * 8.0f;
                }
 
                terrain_needs_update = true;
@@ -93,7 +91,7 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          terrain_needs_update = true;
       }
 
-      if (ImGui::DragFloat("Heightmap World Size",
+      if (ImGui::DragFloat("Heightmap World Length",
                            &_terrain_import_heightmap_context.heightmap_terrain_world_size,
                            1.0f, 1.0f, 1e10f)) {
          _terrain_import_heightmap_context.heightmap_terrain_world_size =
