@@ -1390,8 +1390,8 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
    RECT rect{};
    GetClientRect(window, &rect);
 
-   const uint32 width = static_cast<uint32>(rect.right - rect.left);
-   const uint32 height = static_cast<uint32>(rect.bottom - rect.top);
+   const uint32 width = std::max(static_cast<uint32>(rect.right - rect.left), 1u);
+   const uint32 height = std::max(static_cast<uint32>(rect.bottom - rect.top), 1u);
 
    uint32 flags = 0;
 
@@ -1519,8 +1519,8 @@ void swap_chain::resize(uint32 new_width, uint32 new_height)
 
    state->device->wait_for_idle();
 
-   state->width = new_width;
-   state->height = new_height;
+   state->width = std::max(new_width, 1u);
+   state->height = std::max(new_height, 1u);
 
    for (auto& buffer : state->buffers) buffer = nullptr;
 
@@ -1528,8 +1528,8 @@ void swap_chain::resize(uint32 new_width, uint32 new_height)
 
    IDXGISwapChain4& swap_chain = *state->swap_chain;
 
-   throw_if_fail(swap_chain.ResizeBuffers(desc.buffer_count, new_width,
-                                          new_height, desc.format, state->flags));
+   throw_if_fail(swap_chain.ResizeBuffers(desc.buffer_count, state->width,
+                                          state->height, desc.format, state->flags));
 
    for (uint32 i = 0; i < desc.buffer_count; ++i) {
       terminate_if_fail(
