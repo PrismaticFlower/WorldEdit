@@ -381,10 +381,19 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       _pre_render_command_list.reset();
 
       update_textures(_pre_render_command_list);
-      build_world_mesh_list(_pre_render_command_list, world, active_layers, world_classes,
-                            interaction_targets.creation_entity.is<world::object>()
-                               ? &interaction_targets.creation_entity.get<world::object>()
-                               : nullptr);
+
+      if (active_entity_types.objects) {
+         build_world_mesh_list(_pre_render_command_list, world, active_layers,
+                               world_classes,
+                               interaction_targets.creation_entity.is<world::object>()
+                                  ? &interaction_targets.creation_entity.get<world::object>()
+                                  : nullptr);
+      }
+      else {
+         _world_mesh_list.clear();
+         _terrain_cut_list.clear();
+      }
+
       update_frame_constant_buffer(camera, viewport, true, settings.line_width,
                                    _pre_render_command_list);
       clear_depth_minmax(_pre_render_command_list);
