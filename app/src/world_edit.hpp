@@ -230,7 +230,7 @@ private:
 
    void delete_selected() noexcept;
 
-   void align_selection() noexcept;
+   void align_selection(const float alignment) noexcept;
 
    void hide_selection() noexcept;
 

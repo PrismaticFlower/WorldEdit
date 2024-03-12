@@ -1963,14 +1963,12 @@ void world_edit::delete_selected() noexcept
    }
 }
 
-void world_edit::align_selection() noexcept
+void world_edit::align_selection(const float alignment) noexcept
 {
    if (_interaction_targets.selection.empty()) return;
 
    edits::bundle_vector bundle;
    bundle.reserve(_interaction_targets.selection.size());
-
-   const float alignment = _world.terrain.grid_scale;
 
    const auto align_position = [=](const float3 position) {
       return float3{std::round(position.x / alignment) * alignment, position.y,

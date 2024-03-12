@@ -1775,9 +1775,13 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                       _interaction_targets.selection);
       }
 
+      if (ImGui::Button("Align Selection", {ImGui::CalcItemWidth(), 0.0f})) {
+         align_selection(_editor_grid_size);
+      }
+
       if (ImGui::Button("Align Selection (Terrain Grid)",
                         {ImGui::CalcItemWidth(), 0.0f})) {
-         align_selection();
+         align_selection(_world.terrain.grid_scale);
       }
 
       if (ImGui::Button("Ground Selection", {ImGui::CalcItemWidth(), 0.0f})) {
@@ -1819,6 +1823,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing",
                                 "Rotate Selection Around Centre")));
+
+      ImGui::Text("Align Selection");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing", "Align Selection")));
 
       ImGui::Text("Align Selection (Terrain Grid)");
       ImGui::BulletText(get_display_string(
