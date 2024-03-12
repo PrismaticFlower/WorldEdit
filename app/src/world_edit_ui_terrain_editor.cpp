@@ -653,13 +653,9 @@ void world_edit::ui_show_terrain_editor() noexcept
       if (ImGui::CollapsingHeader("Terrain Settings")) {
          if (bool active = _world.terrain.active_flags.terrain;
              ImGui::Checkbox("Terrain Enabled", &active)) {
-            world::active_flags flags = _world.terrain.active_flags;
-
-            flags.terrain = active;
-
-            _edit_stack_world.apply(edits::make_set_memory_value(&_world.terrain.active_flags,
-                                                                 flags),
-                                    _edit_context, {.closed = true});
+            _edit_stack_world
+               .apply(edits::make_set_value(&_world.terrain.active_flags.terrain, active),
+                      _edit_context, {.closed = true});
          }
 
          if (absl::InlinedVector<char, 256> detail_texture =

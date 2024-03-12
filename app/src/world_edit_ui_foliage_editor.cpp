@@ -1,5 +1,6 @@
 #include "world_edit.hpp"
 
+#include "edits/imgui_ext.hpp"
 #include "edits/set_terrain_area.hpp"
 #include "math/vector_funcs.hpp"
 #include "world/utility/raycast_terrain.hpp"
@@ -126,6 +127,11 @@ void world_edit::ui_show_foliage_editor() noexcept
                                        0, 0, std::move(new_foliage_map)),
                                     _edit_context, {.closed = true});
          }
+      }
+
+      if (ImGui::CollapsingHeader("Settings")) {
+         ImGui::Checkbox("Enabled", &_world.terrain.active_flags.foliage,
+                         _edit_stack_world, _edit_context);
       }
    }
 

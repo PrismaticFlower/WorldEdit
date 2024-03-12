@@ -63,6 +63,9 @@ void world_edit::ui_show_water_editor() noexcept
       }
 
       if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+         ImGui::Checkbox("Enabled", &_world.terrain.active_flags.water,
+                         _edit_stack_world, _edit_context);
+
          ImGui::DragFloat("Height", &_world.terrain.water_settings.height,
                           _edit_stack_world, _edit_context, 0.125f);
 
