@@ -183,10 +183,16 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
          }
       }
 
-      const float3 cursor_positionWS =
-         cursor_distance != std::numeric_limits<float>::max()
-            ? ray.origin + ray.direction * cursor_distance
-            : float3{0.0f, 0.0f, 0.0f};
+      float3 cursor_positionWS = cursor_distance != std::numeric_limits<float>::max()
+                                    ? ray.origin + ray.direction * cursor_distance
+                                    : float3{0.0f, 0.0f, 0.0f};
+
+      if (_selection_cursor_move_align_cursor) {
+         cursor_positionWS.x =
+            std::round(cursor_positionWS.x / _editor_grid_size) * _editor_grid_size;
+         cursor_positionWS.z =
+            std::round(cursor_positionWS.z / _editor_grid_size) * _editor_grid_size;
+      }
 
       edits::bundle_vector bundled_edits;
 
@@ -361,6 +367,8 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
 
       ImGui::Checkbox("Ground with Selection BBOX",
                       &_selection_cursor_move_ground_with_bbox);
+
+      ImGui::Checkbox("Align Cursor to Grid", &_selection_cursor_move_align_cursor);
 
       ImGui::SeparatorText("Cursor Collision");
 
