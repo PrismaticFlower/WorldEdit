@@ -1620,51 +1620,35 @@ void world_edit::ui_show_world_selection_editor() noexcept
             }
 
             if (ImGui::CollapsingHeader("Forward Branch Weights")) {
-               world::planning_branch_weights weights = connection->forward_weights;
-
-               bool changed = false;
+               world::planning_branch_weights& weights = connection->forward_weights;
 
                ImGui::PushID("Forward Branch Weights");
 
                // clang-format off
-               changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Soldier", &weights.soldier, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Hover", &weights.hover, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Small", &weights.small, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Medium", &weights.medium, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Huge", &weights.huge, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
                // clang-format on
 
                ImGui::PopID();
-
-               if (changed) {
-                  _edit_stack_world.apply(edits::make_set_value(&connection->forward_weights,
-                                                                weights),
-                                          _edit_context);
-               }
             }
 
             if (ImGui::CollapsingHeader("Backward Branch Weights")) {
-               world::planning_branch_weights weights = connection->backward_weights;
+               world::planning_branch_weights& weights = connection->backward_weights;
 
                ImGui::PushID("Backward Branch Weights");
 
-               bool changed = false;
-
                // clang-format off
-               changed |= ImGui::DragFloat("Soldier", &weights.soldier, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Hover", &weights.hover, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Small", &weights.small, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Medium", &weights.medium, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-               changed |= ImGui::DragFloat("Huge", &weights.huge, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Soldier", &weights.soldier, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Hover", &weights.hover, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Small", &weights.small, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Medium", &weights.medium, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+               ImGui::DragFloat("Huge", &weights.huge, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
                // clang-format on
 
                ImGui::PopID();
-
-               if (changed) {
-                  _edit_stack_world.apply(edits::make_set_value(&connection->backward_weights,
-                                                                weights),
-                                          _edit_context);
-               }
             }
          }
          else if (std::holds_alternative<world::boundary_id>(selected)) {
