@@ -40,6 +40,7 @@ struct placement_traits {
    bool has_from_line = false;
    bool has_draw_barrier = false;
    bool has_cycle_ai_planning = false;
+   bool has_place_at_camera = true;
 };
 
 auto surface_rotation(const float3 surface_normal,
@@ -2517,7 +2518,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_resize_to = true,
                 .has_from_bbox = true,
                 .has_from_line = true,
-                .has_draw_barrier = true};
+                .has_draw_barrier = true,
+                .has_place_at_camera = false};
    }
    else if (creation_entity.is<world::planning_hub>()) {
       world::planning_hub& hub = creation_entity.get<world::planning_hub>();
@@ -2598,6 +2600,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          .has_point_at = false,
          .has_placement_ground = false,
          .has_cycle_ai_planning = true,
+         .has_place_at_camera = false,
       };
    }
    else if (creation_entity.is<world::planning_connection>()) {
@@ -2697,7 +2700,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_lock_axis = false,
                 .has_placement_alignment = false,
                 .has_placement_ground = false,
-                .has_cycle_ai_planning = true};
+                .has_cycle_ai_planning = true,
+                .has_place_at_camera = false};
    }
    else if (creation_entity.is<world::boundary>()) {
       world::boundary& boundary = creation_entity.get<world::boundary>();
@@ -2761,7 +2765,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       traits = {.has_placement_rotation = false,
                 .has_point_at = false,
-                .has_placement_ground = false};
+                .has_placement_ground = false,
+                .has_place_at_camera = false};
    }
    else if (creation_entity.is<world::measurement>()) {
       world::measurement& measurement = creation_entity.get<world::measurement>();
@@ -2821,6 +2826,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          .has_point_at = false,
          .has_placement_mode = false,
          .has_placement_ground = false,
+         .has_place_at_camera = false,
       };
    }
 
@@ -3145,6 +3151,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation (AI Planning)",
                                    "Toggle AI Planning Entity Type")));
+      }
+
+      if (traits.has_place_at_camera) {
+         ImGui::Text("Place Entity at Camera");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "Place Entity at Camera")));
       }
 
       ImGui::End();

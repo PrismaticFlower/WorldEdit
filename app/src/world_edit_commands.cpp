@@ -301,6 +301,8 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.rotate_back"s, _entity_creation_context.rotate_back);
 
    _commands.add("entity_creation.place"s, [this] { place_creation_entity(); });
+   _commands.add("entity_creation.place_at_camera"s,
+                 [this] { place_creation_entity_at_camera(); });
    _commands.add("entity_creation.cancel"s, [this] {
       if (not _interaction_targets.creation_entity.holds_entity()) return;
 
@@ -776,6 +778,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Rotate Entity Back", "entity_creation.rotate_back", {.key = key::mouse_wheel_back}},
 
           {"Place Entity", "entity_creation.place", {.key = key::mouse1}},
+          {"Place Entity at Camera", "entity_creation.place_at_camera", {.key = key::e}},
           {"Cancel", "entity_creation.cancel", {.key = key::escape}},
 
           {"Finish Path", "entity_creation.finish_path", {.key = key::g}},

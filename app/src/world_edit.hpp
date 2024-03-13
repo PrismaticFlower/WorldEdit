@@ -222,6 +222,8 @@ private:
 
    void place_creation_entity() noexcept;
 
+   void place_creation_entity_at_camera() noexcept;
+
    void command_post_auto_place_meta_entities(world::object& object) noexcept;
 
    void add_object_to_sectors(const world::object& object) noexcept;

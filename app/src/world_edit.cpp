@@ -1726,6 +1726,97 @@ void world_edit::place_creation_entity() noexcept
    _entity_creation_config.placement_mode = placement_mode::cursor;
 }
 
+void world_edit::place_creation_entity_at_camera() noexcept
+{
+   if (not _interaction_targets.creation_entity.holds_entity()) return;
+
+   const quaternion rotation = make_quat_from_matrix(_camera.world_matrix()) *
+                               quaternion{0.0f, 0.0f, 1.0f, 0.0f};
+
+   if (_interaction_targets.creation_entity.is<world::object>()) {
+      world::object& object =
+         _interaction_targets.creation_entity.get<world::object>();
+
+      _edit_stack_world.apply(edits::make_set_multi_value(&object.rotation,
+                                                          rotation, &object.position,
+                                                          _camera.position()),
+                              _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::light>()) {
+      world::light& light = _interaction_targets.creation_entity.get<world::light>();
+
+      _edit_stack_world.apply(edits::make_set_multi_value(&light.rotation,
+                                                          rotation, &light.position,
+                                                          _camera.position()),
+                              _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::path>()) {
+      world::path& path = _interaction_targets.creation_entity.get<world::path>();
+
+      if (path.nodes.empty()) std::terminate();
+
+      _edit_stack_world.apply(edits::make_set_creation_path_node_location(
+                                 rotation, _camera.position(), _edit_context.euler_rotation),
+                              _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::region>()) {
+      world::region& region =
+         _interaction_targets.creation_entity.get<world::region>();
+
+      _edit_stack_world.apply(edits::make_set_multi_value(&region.rotation,
+                                                          rotation, &region.position,
+                                                          _camera.position()),
+                              _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::sector>()) {
+      world::sector& sector =
+         _interaction_targets.creation_entity.get<world::sector>();
+
+      if (sector.points.empty()) std::terminate();
+
+      _edit_stack_world
+         .apply(edits::make_set_vector_value(&sector.points, 0,
+                                             float2{_camera.position().x,
+                                                    _camera.position().z}),
+                _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::portal>()) {
+      world::portal& portal =
+         _interaction_targets.creation_entity.get<world::portal>();
+
+      _edit_stack_world.apply(edits::make_set_multi_value(&portal.rotation,
+                                                          rotation, &portal.position,
+                                                          _camera.position()),
+                              _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::hintnode>()) {
+      world::hintnode& hintnode =
+         _interaction_targets.creation_entity.get<world::hintnode>();
+
+      _edit_stack_world.apply(edits::make_set_multi_value(&hintnode.rotation,
+                                                          rotation, &hintnode.position,
+                                                          _camera.position()),
+                              _edit_context, {.transparent = true});
+   }
+   else if (_interaction_targets.creation_entity.is<world::barrier>()) {
+      return;
+   }
+   else if (_interaction_targets.creation_entity.is<world::planning_hub>()) {
+      return;
+   }
+   else if (_interaction_targets.creation_entity.is<world::planning_connection>()) {
+      return;
+   }
+   else if (_interaction_targets.creation_entity.is<world::boundary>()) {
+      return;
+   }
+   else if (_interaction_targets.creation_entity.is<world::measurement>()) {
+      return;
+   }
+
+   place_creation_entity();
+}
+
 void world_edit::command_post_auto_place_meta_entities(world::object& object) noexcept
 {
    world::command_post_linked_entities command_post_linked_entities =
