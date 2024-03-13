@@ -636,7 +636,7 @@ bool DragPathNodeRotationEuler(const char* label, we::world::creation_entity* en
    IM_ASSERT(entity);
    IM_ASSERT(context.is_memory_valid(entity));
    IM_ASSERT(entity->is<world::path>());
-   IM_ASSERT(entity->get<world::path>().nodes.size() > 1);
+   IM_ASSERT(entity->get<world::path>().nodes.size() >= 1);
 
    float3 edit_value = context.euler_rotation;
 
