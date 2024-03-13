@@ -111,7 +111,13 @@ public:
 
    void unfocused();
 
+   void mouse_enter();
+
+   void mouse_leave();
+
    bool idling() const noexcept;
+
+   bool mouse_over() const noexcept;
 
    bool can_close() const noexcept;
 
@@ -284,6 +290,7 @@ private:
    std::shared_ptr<async::thread_pool> _thread_pool = async::thread_pool::make();
 
    bool _focused = true;
+   bool _mouse_over = false;
    bool _window_unsaved_star = false;
    float _applied_user_display_scale = 1.0f;
    int _current_dpi = 96;

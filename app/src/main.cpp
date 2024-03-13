@@ -86,6 +86,8 @@ void run_application(command_line command_line)
 
    we::world_edit app{window_handle.get(), command_line};
 
+   // const DWORD my_thread_id = GetCurrentThreadId();
+
    window_procedure =
       [&, self_window = window_handle.get()](HWND window, UINT message, WPARAM wparam,
                                              LPARAM lparam) noexcept -> LRESULT {
@@ -113,13 +115,29 @@ void run_application(command_line command_line)
          app.resized(lparam & 0xffff, (lparam >> 16) & 0xffff);
 
          return 0;
-      case WM_ACTIVATEAPP:
-         if (wparam == TRUE) {
-            app.focused();
+      case WM_SETFOCUS:
+         app.focused();
+
+         return 0;
+      case WM_KILLFOCUS:
+         app.unfocused();
+
+         return 0;
+      case WM_MOUSEMOVE:
+         if (not app.mouse_over()) {
+            TRACKMOUSEEVENT event{.cbSize = sizeof(TRACKMOUSEEVENT),
+                                  .dwFlags = TME_LEAVE,
+                                  .hwndTrack = window,
+                                  .dwHoverTime = HOVER_DEFAULT};
+
+            TrackMouseEvent(&event);
+
+            app.mouse_enter();
          }
-         else if (wparam == FALSE) {
-            app.unfocused();
-         }
+
+         return DefWindowProcW(window, message, wparam, lparam);
+      case WM_MOUSELEAVE:
+         app.mouse_leave();
 
          return 0;
       case WM_DPICHANGED: {

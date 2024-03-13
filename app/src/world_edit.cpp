@@ -125,7 +125,7 @@ void world_edit::update()
          std::exchange(_last_update, std::chrono::steady_clock::now()))
          .count();
 
-   if (not _focused) return;
+   if (idling()) return;
 
    wait_for_swap_chain_ready();
 
@@ -2916,7 +2916,22 @@ void world_edit::unfocused()
 
 bool world_edit::idling() const noexcept
 {
-   return not _focused;
+   return not _focused and not _mouse_over;
+}
+
+bool world_edit::mouse_over() const noexcept
+{
+   return _mouse_over;
+}
+
+void world_edit::mouse_enter()
+{
+   _mouse_over = true;
+}
+
+void world_edit::mouse_leave()
+{
+   _mouse_over = false;
 }
 
 bool world_edit::can_close() const noexcept
