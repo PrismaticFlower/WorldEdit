@@ -73,22 +73,29 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                                               centre));
                }
             }
-            else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-               const auto [id, node_index] =
-                  std::get<world::path_id_node_pair>(selected);
+            else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+               const auto& [id, node_mask] =
+                  std::get<world::path_id_node_mask>(selected);
 
                world::path* path = world::find_entity(_world.paths, id);
 
                if (path) {
-                  const world::path::node& node = path->nodes[node_index];
+                  const std::size_t node_count =
+                     std::min(path->nodes.size(), world::max_path_nodes);
 
-                  bundled_edits.push_back(
-                     edits::make_set_vector_value(&path->nodes, node_index,
-                                                  &world::path::node::rotation,
-                                                  rotation * node.rotation));
-                  bundled_edits.push_back(edits::make_set_vector_value(
-                     &path->nodes, node_index, &world::path::node::position,
-                     (rotation * (node.position - centre)) + centre));
+                  for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+                     if (not node_mask[node_index]) continue;
+
+                     const world::path::node& node = path->nodes[node_index];
+
+                     bundled_edits.push_back(
+                        edits::make_set_vector_value(&path->nodes, node_index,
+                                                     &world::path::node::rotation,
+                                                     rotation * node.rotation));
+                     bundled_edits.push_back(edits::make_set_vector_value(
+                        &path->nodes, node_index, &world::path::node::position,
+                        (rotation * (node.position - centre)) + centre));
+                  }
                }
             }
             else if (std::holds_alternative<world::region_id>(selected)) {

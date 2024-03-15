@@ -478,17 +478,14 @@ auto make_delete_entity(world::light_id light_id, const world::world& world)
    return std::make_unique<delete_entity<world::light>>(light, light_index);
 }
 
-auto make_delete_entity(world::path_id_node_pair path_id_node, const world::world& world)
+auto make_delete_entity(world::path_id path_id, uint32 node, const world::world& world)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   const uint32 path_index = get_entity_index(world.paths, path_id_node.id);
+   const uint32 path_index = get_entity_index(world.paths, path_id);
    const world::path& path = world.paths[path_index];
 
    if (path.nodes.size() > 1) {
-      return std::make_unique<delete_path_node>(path.nodes[path_id_node.node_index],
-                                                path_index,
-                                                static_cast<uint32>(
-                                                   path_id_node.node_index));
+      return std::make_unique<delete_path_node>(path.nodes[node], path_index, node);
    }
 
    uint32 unlinked_object_property_count = 0;

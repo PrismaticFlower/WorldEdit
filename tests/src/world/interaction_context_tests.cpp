@@ -38,6 +38,18 @@ const we::world::world test_world = {
                             }}},
 };
 
+auto make_test_node_mask(bool v0, bool v1, bool v2, bool v3) -> path_id_node_mask::node_mask
+{
+   path_id_node_mask::node_mask result;
+
+   if (v0) result.set(0);
+   if (v1) result.set(1);
+   if (v2) result.set(2);
+   if (v3) result.set(3);
+
+   return result;
+}
+
 }
 
 TEST_CASE("world creation_entity", "[World]")
@@ -87,10 +99,67 @@ TEST_CASE("world interaction_context is_valid", "[World][ID]")
    CHECK(is_valid(object_id{0}, test_world));
    CHECK(not is_valid(object_id{1}, test_world));
 
-   CHECK(is_valid(path_id_node_pair{path_id{3}, 0}, test_world));
-   CHECK(is_valid(path_id_node_pair{path_id{3}, 1}, test_world));
-   CHECK(not is_valid(path_id_node_pair{path_id{3}, 2}, test_world));
-   CHECK(not is_valid(path_id_node_pair{path_id{0}, 0}, test_world));
+   CHECK(is_valid(make_path_id_node_mask(path_id{3}, 0), test_world));
+   CHECK(is_valid(make_path_id_node_mask(path_id{3}, 1), test_world));
+   CHECK(not is_valid(make_path_id_node_mask(path_id{3}, 2), test_world));
+   CHECK(not is_valid(make_path_id_node_mask(path_id{0}, 0), test_world));
+}
+
+TEST_CASE("world interaction_context is_selected", "[World][ID]")
+{
+   selection selection;
+
+   selection.add(object_id{0});
+   selection.add(region_id{0});
+
+   CHECK(is_selected(object_id{0}, selection));
+   CHECK(not is_selected(object_id{1}, selection));
+}
+
+TEST_CASE("world interaction_context is_selected path", "[World][ID]")
+{
+   selection selection;
+
+   selection.add(make_path_id_node_mask(path_id{0}, 0));
+
+   CHECK(is_selected(path_id{0}, selection));
+   CHECK(not is_selected(path_id{1}, selection));
+}
+
+TEST_CASE("world interaction_context is_selected path mask", "[World][ID]")
+{
+   selection selection;
+
+   selection.add(make_path_id_node_mask(path_id{0}, 1));
+   selection.add(make_path_id_node_mask(path_id{0}, 2));
+
+   path_id_node_mask id_node_mask{.id = path_id{0},
+                                  .nodes = make_test_node_mask(false, true, true, false)};
+
+   id_node_mask.nodes.set(1);
+   id_node_mask.nodes.set(2);
+
+   CHECK(is_selected(id_node_mask, selection));
+
+   id_node_mask = {.id = path_id{0},
+                   .nodes = make_test_node_mask(true, true, false, false)};
+
+   CHECK(not is_selected(id_node_mask, selection));
+
+   id_node_mask = {.id = path_id{2},
+                   .nodes = make_test_node_mask(false, true, false, false)};
+
+   CHECK(not is_selected(id_node_mask, selection));
+}
+
+TEST_CASE("world make_path_id_node_mask", "[World][ID]")
+{
+   path_id_node_mask id_node_mask{.id = path_id{2}};
+
+   id_node_mask.nodes.set(2);
+
+   CHECK(make_path_id_node_mask(path_id{2}, 2).id == id_node_mask.id);
+   CHECK(make_path_id_node_mask(path_id{2}, 2).nodes == id_node_mask.nodes);
 }
 
 TEST_CASE("world selection", "[World][ID]")
@@ -129,23 +198,25 @@ TEST_CASE("world selection", "[World][ID]")
    CHECK(not selection.empty());
    CHECK(selection.size() == 20);
 
-   selection.add(path_id_node_pair{path_id{0}, 0});
-   selection.add(path_id_node_pair{path_id{0}, 0});
-   selection.add(path_id_node_pair{path_id{0}, 1});
-   selection.add(path_id_node_pair{path_id{1}, 0});
-   selection.add(path_id_node_pair{path_id{1}, 0});
-   selection.add(path_id_node_pair{path_id{1}, 1});
+   selection.add(make_path_id_node_mask(path_id{0}, 0));
+   selection.add(make_path_id_node_mask(path_id{0}, 0));
+   selection.add(make_path_id_node_mask(path_id{0}, 1));
+   selection.add(make_path_id_node_mask(path_id{1}, 0));
+   selection.add(make_path_id_node_mask(path_id{1}, 0));
+   selection.add(make_path_id_node_mask(path_id{1}, 1));
 
-   CHECK(selection.size() == 24);
+   CHECK(selection.size() == 22);
 
    CHECK(std::ranges::contains(selection.view(),
-                               selected_entity{path_id_node_pair{path_id{0}, 0}}));
+                               selected_entity{
+                                  path_id_node_mask{path_id{0},
+                                                    make_test_node_mask(true, true, false,
+                                                                        false)}}));
    CHECK(std::ranges::contains(selection.view(),
-                               selected_entity{path_id_node_pair{path_id{0}, 1}}));
-   CHECK(std::ranges::contains(selection.view(),
-                               selected_entity{path_id_node_pair{path_id{1}, 0}}));
-   CHECK(std::ranges::contains(selection.view(),
-                               selected_entity{path_id_node_pair{path_id{1}, 1}}));
+                               selected_entity{
+                                  path_id_node_mask{path_id{1},
+                                                    make_test_node_mask(true, true, false,
+                                                                        false)}}));
 
    CHECK(not selection.empty());
 
@@ -153,4 +224,87 @@ TEST_CASE("world selection", "[World][ID]")
 
    CHECK(selection.empty());
 }
+
+TEST_CASE("world selection remove path partial", "[World][ID]")
+{
+   selection selection;
+
+   selection.add(path_id_node_mask{path_id{0},
+                                   make_test_node_mask(true, true, true, true)});
+
+   selection.remove(make_path_id_node_mask(path_id{0}, 1));
+
+   REQUIRE(selection.size() == 1);
+   CHECK(std::get<path_id_node_mask>(selection[0]) ==
+         path_id_node_mask{path_id{0}, make_test_node_mask(true, false, true, true)});
+
+   selection.remove(make_path_id_node_mask(path_id{0}, 2));
+
+   REQUIRE(selection.size() == 1);
+   CHECK(std::get<path_id_node_mask>(selection[0]) ==
+         path_id_node_mask{path_id{0}, make_test_node_mask(true, false, false, true)});
+
+   selection.remove(make_path_id_node_mask(path_id{0}, 0));
+
+   REQUIRE(selection.size() == 1);
+   CHECK(std::get<path_id_node_mask>(selection[0]) ==
+         path_id_node_mask{path_id{0}, make_test_node_mask(false, false, false, true)});
+
+   selection.remove(make_path_id_node_mask(path_id{0}, 3));
+
+   CHECK(selection.empty());
+}
+
+TEST_CASE("world path_id_node_mask node_mask core", "[World][ID]")
+{
+   path_id_node_mask::node_mask mask;
+
+   mask.set(127);
+   mask.set(0);
+
+   CHECK(mask[0]);
+   CHECK(mask[127]);
+
+   for (uint32 i = 1; i < 127; ++i) CHECK(not mask[i]);
+   for (uint32 i = 128; i < mask.size(); ++i) CHECK(not mask[i]);
+}
+
+TEST_CASE("world path_id_node_mask node_mask reset", "[World][ID]")
+{
+   path_id_node_mask::node_mask mask;
+
+   mask.set(64);
+
+   CHECK(mask[64]);
+
+   mask.reset(64);
+
+   CHECK(not mask[64]);
+}
+
+TEST_CASE("world path_id_node_mask node_mask out of bounds", "[World][ID]")
+{
+   path_id_node_mask::node_mask mask;
+
+   mask.set(1000000);
+   mask.reset(1000000);
+   CHECK(not mask[1000000]);
+}
+
+TEST_CASE("world path_id_node_mask node_mask operator|", "[World][ID]")
+{
+   const auto mask = make_test_node_mask(true, false, false, false) |
+                     make_test_node_mask(false, false, false, true);
+
+   CHECK(mask == make_test_node_mask(true, false, false, true));
+}
+
+TEST_CASE("world path_id_node_mask node_mask operator&", "[World][ID]")
+{
+   const auto mask = make_test_node_mask(true, true, false, false) &
+                     make_test_node_mask(false, true, false, true);
+
+   CHECK(mask == make_test_node_mask(false, true, false, false));
+}
+
 }

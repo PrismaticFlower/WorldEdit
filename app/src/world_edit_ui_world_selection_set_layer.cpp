@@ -44,9 +44,9 @@ void world_edit::ui_show_world_selection_set_layer() noexcept
                      edits::make_set_value(&object->layer, _selection_set_layer));
                }
             }
-            else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-               const auto [id, node_index] =
-                  std::get<world::path_id_node_pair>(selected);
+            else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+               const auto& [id, node_mask] =
+                  std::get<world::path_id_node_mask>(selected);
 
                world::path* path = world::find_entity(_world.paths, id);
 

@@ -367,12 +367,12 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                  _edit_stack_world, _edit_context);
             }
          }
-         else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-            auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+         else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+            const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
 
             world::path* path = world::find_entity(_world.paths, id);
 
-            if (not path or node_index >= path->nodes.size()) {
+            if (not path) {
                ImGui::PopID();
 
                continue;
@@ -390,7 +390,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                }
                else if (not keep_selected) {
                   _interaction_targets.selection.remove(
-                     world::path_id_node_pair{id, node_index});
+                     world::path_id_node_mask{id, node_mask});
 
                   selected_index -= 1;
                   id_offset += 1;
@@ -460,49 +460,60 @@ void world_edit::ui_show_world_selection_editor() noexcept
             }
 
             ImGui::Separator();
-            ImGui::Text("Node %i", static_cast<int>(node_index));
 
-            ImGui::DragPathNodeRotation("Rotation", &path->nodes, node_index,
-                                        _edit_stack_world, _edit_context);
-            ImGui::DragPathNodePosition("Position", &path->nodes, node_index,
-                                        _edit_stack_world, _edit_context);
+            const std::size_t node_count =
+               std::min(path->nodes.size(), world::max_path_nodes);
 
-            ImGui::PushID("Node");
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               if (not node_mask[node_index]) continue;
 
-            for (uint32 prop_index = 0;
-                 prop_index < path->nodes[node_index].properties.size(); ++prop_index) {
-               ImGui::PushID(static_cast<int>(prop_index));
+               ImGui::PushID("Node");
+               ImGui::PushID(static_cast<int>(node_index));
 
-               bool delete_property = false;
+               ImGui::Text("Node %u", node_index);
 
-               ImGui::InputKeyValueWithDelete(&path->nodes, node_index,
-                                              prop_index, &delete_property,
-                                              _edit_stack_world, _edit_context);
+               ImGui::DragPathNodeRotation("Rotation", &path->nodes, node_index,
+                                           _edit_stack_world, _edit_context);
+               ImGui::DragPathNodePosition("Position", &path->nodes, node_index,
+                                           _edit_stack_world, _edit_context);
 
-               if (delete_property) {
-                  _edit_stack_world.apply(edits::make_delete_path_node_property(
-                                             path->id, node_index, prop_index, _world),
-                                          _edit_context);
+               for (uint32 prop_index = 0;
+                    prop_index < path->nodes[node_index].properties.size();
+                    ++prop_index) {
+                  ImGui::PushID(static_cast<int>(prop_index));
+
+                  bool delete_property = false;
+
+                  ImGui::InputKeyValueWithDelete(&path->nodes, node_index,
+                                                 prop_index, &delete_property,
+                                                 _edit_stack_world, _edit_context);
+
+                  if (delete_property) {
+                     _edit_stack_world.apply(edits::make_delete_path_node_property(
+                                                path->id, node_index, prop_index, _world),
+                                             _edit_context);
+                  }
+
+                  ImGui::PopID();
+               }
+
+               if (ImGui::BeginCombo("Add Property##node",
+                                     "<select property>")) {
+                  for (const char* prop : world::get_path_node_properties(path->type)) {
+                     if (ImGui::Selectable(prop)) {
+                        _edit_stack_world.apply(edits::make_add_property(path->id, node_index,
+                                                                         prop),
+                                                _edit_context);
+                     }
+                  }
+
+                  ImGui::EndCombo();
                }
 
                ImGui::PopID();
+               ImGui::PopID();
+               ImGui::Separator();
             }
-
-            ImGui::PopID();
-
-            if (ImGui::BeginCombo("Add Property##node", "<select property>")) {
-               for (const char* prop : world::get_path_node_properties(path->type)) {
-                  if (ImGui::Selectable(prop)) {
-                     _edit_stack_world.apply(edits::make_add_property(path->id, node_index,
-                                                                      prop),
-                                             _edit_context);
-                  }
-               }
-
-               ImGui::EndCombo();
-            }
-
-            ImGui::Separator();
 
             if (ImGui::Button("Add Nodes", {ImGui::CalcItemWidth(), 0.0f})) {
                _edit_stack_world.apply(edits::make_creation_entity_set(

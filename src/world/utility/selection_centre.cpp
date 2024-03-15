@@ -22,16 +22,23 @@ auto selection_centre_for_rotate_around(const world& world,
             selection_axis_count += {1.0f, 1.0f, 1.0f};
          }
       }
-      else if (std::holds_alternative<path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<path_id_node_pair>(selected);
+      else if (std::holds_alternative<path_id_node_mask>(selected)) {
+         const auto& [id, node_mask] = std::get<path_id_node_mask>(selected);
 
          const path* path = find_entity(world.paths, id);
 
          if (path) {
-            const path::node& node = path->nodes[node_index];
+            const std::size_t node_count =
+               std::min(path->nodes.size(), max_path_nodes);
 
-            selection_centre += node.position;
-            selection_axis_count += {1.0f, 1.0f, 1.0f};
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               if (not node_mask[node_index]) continue;
+
+               const path::node& node = path->nodes[node_index];
+
+               selection_centre += node.position;
+               selection_axis_count += {1.0f, 1.0f, 1.0f};
+            }
          }
       }
       else if (std::holds_alternative<light_id>(selected)) {
@@ -148,16 +155,23 @@ auto selection_centre_for_env_map(const world& world,
             selection_axis_count += {1.0f, 1.0f, 1.0f};
          }
       }
-      else if (std::holds_alternative<path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<path_id_node_pair>(selected);
+      else if (std::holds_alternative<path_id_node_mask>(selected)) {
+         const auto& [id, node_mask] = std::get<path_id_node_mask>(selected);
 
          const path* path = find_entity(world.paths, id);
 
          if (path) {
-            const path::node& node = path->nodes[node_index];
+            const std::size_t node_count =
+               std::min(path->nodes.size(), max_path_nodes);
 
-            selection_centre += node.position;
-            selection_axis_count += {1.0f, 1.0f, 1.0f};
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               if (not node_mask[i]) continue;
+
+               const path::node& node = path->nodes[node_index];
+
+               selection_centre += node.position;
+               selection_axis_count += {1.0f, 1.0f, 1.0f};
+            }
          }
       }
       else if (std::holds_alternative<light_id>(selected)) {

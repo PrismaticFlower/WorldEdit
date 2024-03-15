@@ -440,6 +440,15 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
 
                path_node.properties = read_path_properties(node.at("Properties"sv));
             }
+
+            if (path.nodes.size() >= max_path_nodes) {
+               throw load_failure{fmt::format("Path '{}' has too many nodes "
+                                              "for WorldEdit to handle.\n"
+                                              "   Path Node Count: {}\n",
+                                              "   Max Supported Count: {}\n",
+                                              path.name, path.nodes.size(),
+                                              max_path_nodes)};
+            }
          }
 
          if (verbose_output) {

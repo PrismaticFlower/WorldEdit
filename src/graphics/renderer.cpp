@@ -2520,17 +2520,22 @@ void renderer_impl::draw_interaction_targets(
 
                        if (light) draw_entity(*light, color);
                     },
-                    [&](world::path_id_node_pair id_node) {
-                       auto [id, node_index] = id_node;
+                    [&](world::path_id_node_mask id_node_mask) {
+                       const auto& [id, node_mask] = id_node_mask;
 
                        const world::path* path = find_entity(world.paths, id);
 
                        if (not path) return;
 
-                       if (node_index >= path->nodes.size()) return;
-
                        if (path) {
-                          draw_entity(path->nodes[node_index], color);
+                          const std::size_t node_count =
+                             std::min(path->nodes.size(), world::max_path_nodes);
+
+                          for (uint32 i = 0; i < node_count; ++i) {
+                             if (not node_mask[i]) continue;
+
+                             draw_entity(path->nodes[i], color);
+                          }
                        }
                     },
                     [&](world::region_id id) {

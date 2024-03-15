@@ -44,17 +44,24 @@ void world_edit::ui_show_world_selection_move() noexcept
                gizmo_rotation = object->rotation;
             }
          }
-         else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-            const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+         else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+            const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
 
             const world::path* path = world::find_entity(_world.paths, id);
 
             if (path) {
-               const world::path::node& node = path->nodes[node_index];
+               const std::size_t node_count =
+                  std::min(path->nodes.size(), world::max_path_nodes);
 
-               selection_centre += node.position;
-               selection_axis_count += {1.0f, 1.0f, 1.0f};
-               gizmo_rotation = node.rotation;
+               for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+                  if (not node_mask[node_index]) continue;
+
+                  const world::path::node& node = path->nodes[node_index];
+
+                  selection_centre += node.position;
+                  selection_axis_count += {1.0f, 1.0f, 1.0f};
+                  gizmo_rotation = node.rotation;
+               }
             }
          }
          else if (std::holds_alternative<world::light_id>(selected)) {
@@ -203,31 +210,39 @@ void world_edit::ui_show_world_selection_move() noexcept
                      edits::make_set_value(&object->position, new_position));
                }
             }
-            else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-               const auto [id, node_index] =
-                  std::get<world::path_id_node_pair>(selected);
+            else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+               const auto& [id, node_mask] =
+                  std::get<world::path_id_node_mask>(selected);
 
                world::path* path = world::find_entity(_world.paths, id);
 
                if (path) {
-                  const world::path::node& node = path->nodes[node_index];
+                  const std::size_t node_count =
+                     std::min(path->nodes.size(), world::max_path_nodes);
 
-                  float3 new_position;
+                  for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+                     if (not node_mask[node_index]) continue;
 
-                  if (_selection_move_space == selection_move_space::world) {
-                     new_position = node.position + move_delta;
+                     const world::path::node& node = path->nodes[node_index];
+
+                     float3 new_position;
+
+                     if (_selection_move_space == selection_move_space::world) {
+                        new_position = node.position + move_delta;
+                     }
+                     else if (_selection_move_space == selection_move_space::local) {
+                        const quaternion rotation = normalize(node.rotation);
+
+                        new_position =
+                           rotation *
+                           ((conjugate(rotation) * node.position) + move_delta);
+                     }
+
+                     bundled_edits.push_back(
+                        edits::make_set_vector_value(&path->nodes, node_index,
+                                                     &world::path::node::position,
+                                                     new_position));
                   }
-                  else if (_selection_move_space == selection_move_space::local) {
-                     const quaternion rotation = normalize(node.rotation);
-
-                     new_position =
-                        rotation * ((conjugate(rotation) * node.position) + move_delta);
-                  }
-
-                  bundled_edits.push_back(
-                     edits::make_set_vector_value(&path->nodes, node_index,
-                                                  &world::path::node::position,
-                                                  new_position));
                }
             }
             else if (std::holds_alternative<world::light_id>(selected)) {

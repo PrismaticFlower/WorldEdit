@@ -30,18 +30,25 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<path_id_node_pair>(selected);
+      else if (std::holds_alternative<path_id_node_mask>(selected)) {
+         const auto& [id, node_mask] = std::get<path_id_node_mask>(selected);
 
          const path* path = find_entity(world.paths, id);
 
          if (path) {
-            const path::node& node = path->nodes[node_index];
+            const std::size_t node_count =
+               std::min(path->nodes.size(), max_path_nodes);
 
-            const math::bounding_box bbox{.min = node.position - path_node_size,
-                                          .max = node.position + path_node_size};
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               if (not node_mask[node_index]) continue;
 
-            selection_bbox = math::combine(bbox, selection_bbox);
+               const path::node& node = path->nodes[node_index];
+
+               const math::bounding_box bbox{.min = node.position - path_node_size,
+                                             .max = node.position + path_node_size};
+
+               selection_bbox = math::combine(bbox, selection_bbox);
+            }
          }
       }
       else if (std::holds_alternative<light_id>(selected)) {
@@ -287,14 +294,21 @@ auto selection_bbox_for_move(const world& world,
             selection_bbox = math::combine(selection_bbox, bbox);
          }
       }
-      else if (std::holds_alternative<path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<path_id_node_pair>(selected);
+      else if (std::holds_alternative<path_id_node_mask>(selected)) {
+         const auto& [id, node_mask] = std::get<path_id_node_mask>(selected);
 
          const path* path = find_entity(world.paths, id);
 
          if (path) {
-            selection_bbox =
-               math::integrate(selection_bbox, path->nodes[node_index].position);
+            const std::size_t node_count =
+               std::min(path->nodes.size(), max_path_nodes);
+
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               if (not node_mask[node_index]) continue;
+
+               selection_bbox =
+                  math::integrate(selection_bbox, path->nodes[node_index].position);
+            }
          }
       }
       else if (std::holds_alternative<light_id>(selected)) {

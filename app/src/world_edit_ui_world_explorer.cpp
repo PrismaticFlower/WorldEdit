@@ -216,8 +216,7 @@ void world_edit::ui_show_world_explorer() noexcept
                for (int i = 0; i < (show_all_nodes ? path.nodes.size() : 1); ++i) {
                   const bool is_selected =
                      show_all_nodes
-                        ? world::is_selected(world::path_id_node_pair{path.id,
-                                                                      static_cast<uint32>(i)},
+                        ? world::is_selected(path.id, static_cast<uint32>(i),
                                              _interaction_targets.selection)
                         : world::is_selected(path.id, _interaction_targets.selection);
 
@@ -245,8 +244,8 @@ void world_edit::ui_show_world_explorer() noexcept
                      if (select and path.nodes.size() != 0) {
                         if (is_ctrl_down) {
                            _interaction_targets.selection.remove(
-                              world::path_id_node_pair{path.id,
-                                                       static_cast<uint32>(i)});
+                              world::make_path_id_node_mask(path.id,
+                                                            static_cast<uint32>(i)));
                         }
                         else {
                            if (not is_shift_down) {
@@ -254,8 +253,8 @@ void world_edit::ui_show_world_explorer() noexcept
                            }
 
                            _interaction_targets.selection.add(
-                              world::path_id_node_pair{path.id,
-                                                       static_cast<uint32>(i)});
+                              world::make_path_id_node_mask(path.id,
+                                                            static_cast<uint32>(i)));
                         }
                      }
                   }
@@ -268,11 +267,13 @@ void world_edit::ui_show_world_explorer() noexcept
                         for (uint32 node = 0; node < path.nodes.size(); ++node) {
                            if (is_ctrl_down) {
                               _interaction_targets.selection.remove(
-                                 world::path_id_node_pair{path.id, node});
+                                 world::make_path_id_node_mask(path.id,
+                                                               static_cast<uint32>(i)));
                            }
                            else {
                               _interaction_targets.selection.add(
-                                 world::path_id_node_pair{path.id, node});
+                                 world::make_path_id_node_mask(path.id,
+                                                               static_cast<uint32>(i)));
                            }
                         }
                      }
@@ -280,7 +281,7 @@ void world_edit::ui_show_world_explorer() noexcept
 
                   if (hover and path.nodes.size() != 0) {
                      _interaction_targets.hovered_entity =
-                        world::path_id_node_pair{path.id, static_cast<uint32>(i)};
+                        world::make_path_id_node_mask(path.id, static_cast<uint32>(i));
                   }
 
                   ImGui::PopID();

@@ -28,17 +28,48 @@ enum class active_entity {
 
 }
 
-/// @brief A reference to a path node.
-struct path_id_node_pair {
+/// @brief A reference to a path and a set of it's nodes.
+struct path_id_node_mask {
+   struct node_mask {
+      static auto size() noexcept -> std::size_t
+      {
+         return max_path_nodes;
+      }
+
+      bool operator[](const std::size_t i) const noexcept
+      {
+         if (i >= max_path_nodes) return false;
+
+         const std::size_t word = i / 32;
+         const std::size_t bit = i % 32;
+
+         return words[word] & (1 << bit);
+      }
+
+      void set(const std::size_t i) noexcept;
+
+      void reset(const std::size_t i) noexcept;
+
+      bool operator==(const node_mask&) const noexcept = default;
+
+      friend auto operator|(const node_mask& l, const node_mask& r) noexcept -> node_mask;
+
+      friend auto operator&(const node_mask& l, const node_mask& r) noexcept -> node_mask;
+
+   private:
+      uint32 words[max_path_nodes / 32] = {};
+   };
+
+   constexpr static bool b = std::is_trivial_v<node_mask>;
+
    path_id id;
-   uint32 node_index;
+   node_mask nodes;
 
-   bool operator==(const path_id_node_pair&) const noexcept = default;
+   bool operator==(const path_id_node_mask&) const noexcept = default;
 };
-
 /// @brief Represents an entity being interacted with (hovered or selected).
 using interaction_target =
-   std::variant<object_id, light_id, path_id_node_pair, region_id, sector_id, portal_id, hintnode_id,
+   std::variant<object_id, light_id, path_id_node_mask, region_id, sector_id, portal_id, hintnode_id,
                 barrier_id, planning_hub_id, planning_connection_id, boundary_id, measurement_id>;
 
 /// @brief Represents an entity being hovered over.
@@ -304,7 +335,12 @@ struct edit_context {
    }
 };
 
+auto make_path_id_node_mask(path_id id, uint32 node_index) noexcept -> path_id_node_mask;
+
 bool is_selected(const path_id path, const selection& selection) noexcept;
+
+bool is_selected(const path_id path, const uint32 node_index,
+                 const selection& selection) noexcept;
 
 bool is_selected(const interaction_target entity, const selection& selection) noexcept;
 

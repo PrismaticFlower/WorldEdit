@@ -137,8 +137,26 @@ auto selection::operator[](const std::size_t i) const noexcept -> selected_entit
 
 void selection::add(const selected_entity entity) noexcept
 {
-   for (const selected_entity& selected : _selection) {
-      if (selected == entity) return;
+   if (std::holds_alternative<path_id_node_mask>(entity)) {
+      for (selected_entity& selected : _selection) {
+         if (not std::holds_alternative<path_id_node_mask>(selected)) continue;
+
+         const path_id_node_mask& entity_path = std::get<path_id_node_mask>(entity);
+         path_id_node_mask& selected_path = std::get<path_id_node_mask>(selected);
+
+         if (entity_path.id != selected_path.id) continue;
+
+         selected_path.nodes = selected_path.nodes | entity_path.nodes;
+
+         return;
+      }
+   }
+   else {
+      for (selected_entity& selected : _selection) {
+         if (selected == entity) {
+            return;
+         }
+      }
    }
 
    _selection.push_back(entity);
@@ -146,10 +164,37 @@ void selection::add(const selected_entity entity) noexcept
 
 void selection::remove(const selected_entity entity) noexcept
 {
-   for (auto it = _selection.begin(); it != _selection.end(); ++it) {
-      if (*it == entity) {
-         _selection.erase(it);
+   if (std::holds_alternative<path_id_node_mask>(entity)) {
+      for (auto it = _selection.begin(); it != _selection.end(); ++it) {
+         if (not std::holds_alternative<path_id_node_mask>(*it)) continue;
+
+         const path_id_node_mask& entity_path = std::get<path_id_node_mask>(entity);
+         path_id_node_mask& selected_path = std::get<path_id_node_mask>(*it);
+
+         if (entity_path.id != selected_path.id) continue;
+
+         bool remaining_nodes = false;
+
+         for (std::size_t i = 0; i < entity_path.nodes.size(); ++i) {
+            if (entity_path.nodes[i]) {
+               selected_path.nodes.reset(i);
+            }
+            else if (selected_path.nodes[i]) {
+               remaining_nodes = true;
+            }
+         }
+
+         if (not remaining_nodes) _selection.erase(it);
+
          return;
+      }
+   }
+   else {
+      for (auto it = _selection.begin(); it != _selection.end(); ++it) {
+         if (*it == entity) {
+            _selection.erase(it);
+            return;
+         }
       }
    }
 }
@@ -206,10 +251,36 @@ bool edit_context::is_memory_valid(const void* ptr, std::size_t size) const noex
    return false;
 }
 
+auto make_path_id_node_mask(path_id id, uint32 node_index) noexcept -> path_id_node_mask
+{
+   assert(node_index < max_path_nodes);
+
+   path_id_node_mask node_id_mask{id};
+
+   if (node_index < max_path_nodes) node_id_mask.nodes.set(node_index);
+
+   return node_id_mask;
+}
+
 bool is_selected(const selected_entity entity, const selection& selection) noexcept
 {
    for (const auto& selected : selection) {
-      if (selected == entity) return true;
+      if (std::holds_alternative<path_id_node_mask>(entity) and
+          std::holds_alternative<path_id_node_mask>(selected)) {
+         const path_id_node_mask& entity_path = std::get<path_id_node_mask>(entity);
+         const path_id_node_mask& selected_path =
+            std::get<path_id_node_mask>(selected);
+
+         if (entity_path.id != selected_path.id) continue;
+
+         const path_id_node_mask::node_mask combined_nodes =
+            entity_path.nodes & selected_path.nodes;
+
+         if (combined_nodes == entity_path.nodes) return true;
+      }
+      else if (selected == entity) {
+         return true;
+      }
    }
 
    return false;
@@ -218,9 +289,25 @@ bool is_selected(const selected_entity entity, const selection& selection) noexc
 bool is_selected(const path_id entity, const selection& selection) noexcept
 {
    for (const auto& selected : selection) {
-      if (not std::holds_alternative<path_id_node_pair>(selected)) continue;
+      if (not std::holds_alternative<path_id_node_mask>(selected)) continue;
 
-      if (std::get<path_id_node_pair>(selected).id == entity) return true;
+      if (std::get<path_id_node_mask>(selected).id == entity) return true;
+   }
+
+   return false;
+}
+
+bool is_selected(const path_id path, const uint32 node_index,
+                 const selection& selection) noexcept
+{
+   if (node_index >= max_path_nodes) return false;
+
+   for (const auto& selected : selection) {
+      if (not std::holds_alternative<path_id_node_mask>(selected)) continue;
+
+      const auto& [id, nodes_mask] = std::get<path_id_node_mask>(selected);
+
+      if (id == path) return nodes_mask[node_index];
    }
 
    return false;
@@ -234,14 +321,19 @@ bool is_valid(const interaction_target entity, const world& world) noexcept
    if (std::holds_alternative<light_id>(entity)) {
       return find_entity(world.lights, std::get<light_id>(entity)) != nullptr;
    }
-   if (std::holds_alternative<path_id_node_pair>(entity)) {
-      auto [id, node_index] = std::get<path_id_node_pair>(entity);
+   if (std::holds_alternative<path_id_node_mask>(entity)) {
+      const auto& [id, nodes_mask] = std::get<path_id_node_mask>(entity);
 
       const path* path = find_entity(world.paths, id);
 
       if (not path) return false;
 
-      return path->nodes.size() > node_index;
+      for (std::ptrdiff_t i = std::ssize(nodes_mask) - 1;
+           i >= std::ssize(path->nodes); --i) {
+         if (nodes_mask[i]) return false;
+      }
+
+      return true;
    }
    if (std::holds_alternative<region_id>(entity)) {
       return find_entity(world.regions, std::get<region_id>(entity)) != nullptr;
@@ -274,6 +366,52 @@ bool is_valid(const interaction_target entity, const world& world) noexcept
    }
 
    return false;
+}
+
+void path_id_node_mask::node_mask::set(const std::size_t i) noexcept
+{
+   if (i >= max_path_nodes) return;
+
+   const std::size_t word = i / 32;
+   const std::size_t bit = i % 32;
+
+   words[word] |= (1 << bit);
+}
+
+void path_id_node_mask::node_mask::reset(const std::size_t i) noexcept
+{
+   if (i >= max_path_nodes) return;
+
+   const std::size_t word = i / 32;
+   const std::size_t bit = i % 32;
+
+   words[word] &= ~(1 << bit);
+}
+
+auto operator|(const path_id_node_mask::node_mask& l,
+               const path_id_node_mask::node_mask& r) noexcept
+   -> path_id_node_mask::node_mask
+{
+   path_id_node_mask::node_mask result;
+
+   for (std::size_t i = 0; i < std::size(result.words); ++i) {
+      result.words[i] = l.words[i] | r.words[i];
+   }
+
+   return result;
+}
+
+auto operator&(const path_id_node_mask::node_mask& l,
+               const path_id_node_mask::node_mask& r) noexcept
+   -> path_id_node_mask::node_mask
+{
+   path_id_node_mask::node_mask result;
+
+   for (std::size_t i = 0; i < std::size(result.words); ++i) {
+      result.words[i] = l.words[i] & r.words[i];
+   }
+
+   return result;
 }
 
 }

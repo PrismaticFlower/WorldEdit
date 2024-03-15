@@ -65,7 +65,7 @@ TEST_CASE("edits delete_entity path", "[Edits]")
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
-   auto delete_node_0 = make_delete_entity({world.paths[0].id, 0}, world);
+   auto delete_node_0 = make_delete_entity(world.paths[0].id, 0, world);
 
    delete_node_0->apply(edit_context);
 
@@ -75,7 +75,7 @@ TEST_CASE("edits delete_entity path", "[Edits]")
 
    REQUIRE(world.objects[0].instance_properties.size() == 9);
 
-   auto delete_node_1 = make_delete_entity({world.paths[0].id, 1}, world);
+   auto delete_node_1 = make_delete_entity(world.paths[0].id, 1, world);
 
    delete_node_1->apply(edit_context);
 

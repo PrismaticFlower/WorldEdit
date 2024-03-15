@@ -8,6 +8,8 @@
 
 namespace we::world {
 
+constexpr std::size_t max_path_nodes = 192;
+
 enum class path_type : int8 { none, entity_follow, formation, patrol };
 
 enum class path_spline_type : int8 { none, linear, hermite, catmull_rom };

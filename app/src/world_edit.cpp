@@ -308,7 +308,7 @@ void world_edit::update_hovered_entity() noexcept
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity =
-               world::path_id_node_pair{hit->id, hit->node_index};
+               world::make_path_id_node_mask(hit->id, hit->node_index);
             hovered_entity_distance = hit->distance;
          }
       }
@@ -779,7 +779,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                if (intersects(frustum, path.nodes[i].position,
                               0.707f * (_settings.graphics.path_node_size / 0.5f))) {
                   _interaction_targets.selection.add(
-                     world::path_id_node_pair{path.id, i});
+                     world::make_path_id_node_mask(path.id, i));
                }
             }
          }
@@ -1067,7 +1067,7 @@ void world_edit::finish_entity_deselect() noexcept
                if (intersects(frustum, path.nodes[i].position,
                               0.707f * (_settings.graphics.path_node_size / 0.5f))) {
                   _interaction_targets.selection.remove(
-                     world::path_id_node_pair{path.id, i});
+                     world::make_path_id_node_mask(path.id, i));
                }
             }
          }
@@ -1359,6 +1359,12 @@ void world_edit::place_creation_entity() noexcept
              world::find_entity(_world.paths, path.name);
           existing_path) {
          if (path.nodes.empty()) std::terminate();
+
+         if (existing_path->nodes.size() == world::max_path_nodes) {
+            report_limit_reached("Max Path Nodes ({}) Reached", world::max_path_nodes);
+
+            return;
+         }
 
          if (_entity_creation_config.placement_node_insert ==
              placement_node_insert::nearest) {
@@ -2018,35 +2024,29 @@ void world_edit::delete_selected() noexcept
 
       if (not is_valid(generic_selected, _world)) continue;
 
-      if (std::holds_alternative<world::path_id_node_pair>(generic_selected)) {
-         // This fixes up path node indices in the rest of the selection.
-
-         const world::path_id_node_pair dying_id_node =
-            std::get<world::path_id_node_pair>(generic_selected);
-
-         for (auto& other_generic_selected :
-              _interaction_targets.selection.view_updatable()) {
-            if (not std::holds_alternative<world::path_id_node_pair>(other_generic_selected) or
-                other_generic_selected == generic_selected) {
-               continue;
-            }
-
-            world::path_id_node_pair& path_id_node =
-               std::get<world::path_id_node_pair>(other_generic_selected);
-
-            if (dying_id_node.id == path_id_node.id and
-                path_id_node.node_index > dying_id_node.node_index) {
-               path_id_node.node_index -= 1;
-            }
-         }
-      }
-
       std::visit(
-         [&](const auto& selected) {
-            _edit_stack_world.apply(edits::make_delete_entity(selected, _world),
-                                    _edit_context,
-                                    {.transparent =
-                                        not std::exchange(first_delete, false)});
+         [&]<typename T>(const T& selected) {
+            if constexpr (std::is_same_v<T, world::path_id_node_mask>) {
+               world::path* path = world::find_entity(_world.paths, selected.id);
+
+               const int32 node_count = static_cast<int32>(
+                  std::min(path->nodes.size(), world::max_path_nodes));
+
+               for (int32 i = node_count - 1; i >= 0; --i) {
+                  if (not selected.nodes[i]) continue;
+
+                  _edit_stack_world.apply(
+                     edits::make_delete_entity(path->id, static_cast<uint32>(i), _world),
+                     _edit_context,
+                     {.transparent = not std::exchange(first_delete, false)});
+               }
+            }
+            else {
+               _edit_stack_world.apply(edits::make_delete_entity(selected, _world),
+                                       _edit_context,
+                                       {.transparent =
+                                           not std::exchange(first_delete, false)});
+            }
          },
          generic_selected);
 
@@ -2076,17 +2076,25 @@ void world_edit::align_selection(const float alignment) noexcept
                                                    align_position(object->position)));
          }
       }
-      else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+      else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+         const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
 
          world::path* path = world::find_entity(_world.paths, id);
 
          if (path) {
-            const float3 position = path->nodes[node_index].position;
+            const std::size_t node_count =
+               std::min(path->nodes.size(), world::max_path_nodes);
 
-            bundle.push_back(edits::make_set_vector_value(&path->nodes, node_index,
-                                                          &world::path::node::position,
-                                                          align_position(position)));
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               if (not node_mask[node_index]) continue;
+
+               const float3 position = path->nodes[node_index].position;
+
+               bundle.push_back(
+                  edits::make_set_vector_value(&path->nodes, node_index,
+                                               &world::path::node::position,
+                                               align_position(position)));
+            }
          }
       }
       else if (std::holds_alternative<world::light_id>(selected)) {
@@ -2220,8 +2228,8 @@ void world_edit::hide_selection() noexcept
             bundle.push_back(edits::make_set_value(&light->hidden, true));
          }
       }
-      else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+      else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+         const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
 
          world::path* path = world::find_entity(_world.paths, id);
 
@@ -2352,19 +2360,27 @@ void world_edit::ground_selection() noexcept
             }
          }
       }
-      else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-         const auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+      else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+         const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
 
          world::path* path = world::find_entity(_world.paths, id);
 
-         if (path and node_index < path->nodes.size()) {
-            if (const std::optional<float3> grounded_position =
-                   world::ground_point(path->nodes[node_index].position, _world,
-                                       _object_classes, _world_layers_hit_mask);
-                grounded_position) {
-               bundle.push_back(edits::make_set_vector_value(&path->nodes, node_index,
-                                                             &world::path::node::position,
-                                                             *grounded_position));
+         if (path) {
+            const std::size_t node_count =
+               std::min(path->nodes.size(), world::max_path_nodes);
+
+            for (uint32 node_index = 0; node_index < node_count; ++node_index) {
+               if (not node_mask[node_index]) continue;
+
+               if (const std::optional<float3> grounded_position =
+                      world::ground_point(path->nodes[node_index].position, _world,
+                                          _object_classes, _world_layers_hit_mask);
+                   grounded_position) {
+                  bundle.push_back(
+                     edits::make_set_vector_value(&path->nodes, node_index,
+                                                  &world::path::node::position,
+                                                  *grounded_position));
+               }
             }
          }
       }
@@ -2501,8 +2517,8 @@ void world_edit::new_entity_from_selection() noexcept
                               _edit_context);
       _world_draw_mask.lights = true;
    }
-   else if (std::holds_alternative<world::path_id_node_pair>(selected)) {
-      auto [id, node_index] = std::get<world::path_id_node_pair>(selected);
+   else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+      const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
 
       world::path* path = world::find_entity(_world.paths, id);
 
