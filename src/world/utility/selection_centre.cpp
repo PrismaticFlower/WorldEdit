@@ -165,7 +165,7 @@ auto selection_centre_for_env_map(const world& world,
                std::min(path->nodes.size(), max_path_nodes);
 
             for (uint32 node_index = 0; node_index < node_count; ++node_index) {
-               if (not node_mask[i]) continue;
+               if (not node_mask[node_index]) continue;
 
                const path::node& node = path->nodes[node_index];
 
