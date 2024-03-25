@@ -293,7 +293,7 @@ public:
    /// @brief Executes a function over a range of indices.
    /// @tparam Fn The function to invoke for each index. Must be nothrow invocable.
    /// @param priority The return type of the task.
-   /// @param size The size of the range, exlucsive. Used as if for (std::size_t i = 0; i < size; ++i) { ... }.
+   /// @param size The size of the range, exclusive. Used as if for (std::size_t i = 0; i < size; ++i) { ... }.
    /// @param func The function processes the index.
    template<std::invocable<std::size_t> Fn>
    void for_each_n(const task_priority priority, const std::size_t size,
