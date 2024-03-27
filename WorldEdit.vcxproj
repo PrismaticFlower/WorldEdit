@@ -602,6 +602,7 @@
     <ClInclude Include="src\utility\stopwatch.hpp" />
     <ClInclude Include="src\world\active_elements.hpp" />
     <ClInclude Include="src\world\ai_path_flags.hpp" />
+    <ClInclude Include="src\world\animation.hpp" />
     <ClInclude Include="src\world\barrier.hpp" />
     <ClInclude Include="src\world\boundary.hpp" />
     <ClInclude Include="src\world\effects.hpp" />

@@ -463,6 +463,7 @@
     <ClInclude Include="src\world\io\load_effects.hpp" />
     <ClInclude Include="src\world\io\save_effects.hpp" />
     <ClInclude Include="src\container\pinned_vector.hpp" />
+    <ClInclude Include="src\world\animation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
