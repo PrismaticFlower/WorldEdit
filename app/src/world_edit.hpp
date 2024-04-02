@@ -392,6 +392,7 @@ private:
    std::string _world_explorer_class_filter;
 
    bool _world_explorer_path_show_all_nodes = false;
+   world::active_layers _world_explorer_layers_mask{true};
 
    POINT _rotate_camera_cursor_position = {0, 0};
 

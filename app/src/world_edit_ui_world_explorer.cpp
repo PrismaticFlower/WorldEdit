@@ -9,6 +9,23 @@
 
 namespace we {
 
+namespace {
+
+void layer_filter(world::active_layers& mask, const world::world& world)
+{
+   if (ImGui::BeginCombo("Layer Filter", "Layer Filter")) {
+      for (int i = 0; i < world.layer_descriptions.size(); ++i) {
+         if (ImGui::Selectable(world.layer_descriptions[i].name.c_str(), mask[i])) {
+            mask[i] = not mask[i];
+         }
+      }
+
+      ImGui::EndCombo();
+   }
+}
+
+}
+
 void world_edit::ui_show_world_explorer() noexcept
 {
    ImGui::SetNextWindowPos({0.0f, ImGui::GetIO().DisplaySize.y}, ImGuiCond_Once,
@@ -28,6 +45,8 @@ void world_edit::ui_show_world_explorer() noexcept
          ImGui::SameLine();
          ImGui::InputTextWithHint("Class Name Filter", "e.g. com_bldg_controlzone",
                                   &_world_explorer_class_filter);
+         ImGui::SameLine();
+         layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
          if (ImGui::BeginTable("Objects", 5,
@@ -47,6 +66,9 @@ void world_edit::ui_show_world_explorer() noexcept
                if (not _world_explorer_class_filter.empty() and
                    not string::icontains(object.class_name,
                                          _world_explorer_class_filter)) {
+                  continue;
+               }
+               if (not _world_explorer_layers_mask[object.layer]) {
                   continue;
                }
 
@@ -104,6 +126,8 @@ void world_edit::ui_show_world_explorer() noexcept
       if (ImGui::BeginTabItem("Lights")) {
          ImGui::PushItemWidth(std::floor((ImGui::GetContentRegionAvail().x) / 4.0f));
          ImGui::InputTextWithHint("Name Filter", "e.g. sun", &_world_explorer_filter);
+         ImGui::SameLine();
+         layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
          if (ImGui::BeginTable("Lights", 5,
@@ -118,6 +142,9 @@ void world_edit::ui_show_world_explorer() noexcept
             for (const world::light& light : _world.lights) {
                if (not _world_explorer_filter.empty() and
                    not string::icontains(light.name, _world_explorer_filter)) {
+                  continue;
+               }
+               if (not _world_explorer_layers_mask[light.layer]) {
                   continue;
                }
 
@@ -192,6 +219,8 @@ void world_edit::ui_show_world_explorer() noexcept
          ImGui::InputTextWithHint("Name Filter", "e.g. spawn", &_world_explorer_filter);
          ImGui::SameLine();
          ImGui::Checkbox("Show All Nodes", &_world_explorer_path_show_all_nodes);
+         ImGui::SameLine();
+         layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
          const bool show_all_nodes = _world_explorer_path_show_all_nodes;
@@ -208,6 +237,9 @@ void world_edit::ui_show_world_explorer() noexcept
             for (const world::path& path : _world.paths) {
                if (not _world_explorer_filter.empty() and
                    not string::icontains(path.name, _world_explorer_filter)) {
+                  continue;
+               }
+               if (not _world_explorer_layers_mask[path.layer]) {
                   continue;
                }
 
@@ -299,6 +331,8 @@ void world_edit::ui_show_world_explorer() noexcept
       if (ImGui::BeginTabItem("Regions")) {
          ImGui::PushItemWidth(std::floor((ImGui::GetContentRegionAvail().x) / 4.0f));
          ImGui::InputTextWithHint("Name Filter", "e.g. shadow", &_world_explorer_filter);
+         ImGui::SameLine();
+         layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
          if (ImGui::BeginTable("Regions", 5,
@@ -313,6 +347,9 @@ void world_edit::ui_show_world_explorer() noexcept
             for (const world::region& region : _world.regions) {
                if (not _world_explorer_filter.empty() and
                    not string::icontains(region.name, _world_explorer_filter)) {
+                  continue;
+               }
+               if (not _world_explorer_layers_mask[region.layer]) {
                   continue;
                }
 
@@ -503,6 +540,8 @@ void world_edit::ui_show_world_explorer() noexcept
       if (ImGui::BeginTabItem("Hintnodes")) {
          ImGui::PushItemWidth(std::floor((ImGui::GetContentRegionAvail().x) / 4.0f));
          ImGui::InputTextWithHint("Name Filter", "e.g. snipe", &_world_explorer_filter);
+         ImGui::SameLine();
+         layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
          if (ImGui::BeginTable("Hintnodes", 4,
@@ -516,6 +555,9 @@ void world_edit::ui_show_world_explorer() noexcept
             for (const world::hintnode& hintnode : _world.hintnodes) {
                if (not _world_explorer_filter.empty() and
                    not string::icontains(hintnode.name, _world_explorer_filter)) {
+                  continue;
+               }
+               if (not _world_explorer_layers_mask[hintnode.layer]) {
                   continue;
                }
 
