@@ -1,5 +1,6 @@
 #pragma once
 
+#include "animation.hpp"
 #include "barrier.hpp"
 #include "boundary.hpp"
 #include "effects.hpp"
@@ -30,6 +31,10 @@ constexpr std::size_t reserved_entities = 2048;
 constexpr pinned_vector_init entities_init{.max_size = max_entities,
                                            .initial_capacity = reserved_entities};
 
+constexpr std::size_t max_animations = 16'384;
+constexpr std::size_t max_animation_groups = 16'384;
+constexpr std::size_t max_animation_hierarchies = 16'384;
+
 struct world {
    std::string name;
 
@@ -53,6 +58,12 @@ struct world {
    pinned_vector<planning_connection> planning_connections = entities_init;
    pinned_vector<boundary> boundaries = entities_init;
    pinned_vector<measurement> measurements = entities_init;
+
+   pinned_vector<animation> animations = pinned_vector_init{max_animations, 256};
+   pinned_vector<animation_group> animation_groups =
+      pinned_vector_init{max_animation_groups, 256};
+   pinned_vector<animation_hierarchy> animation_hierarchies =
+      pinned_vector_init{max_animation_hierarchies, 256};
 
    effects effects;
 

@@ -7,7 +7,7 @@
 
 namespace we::world {
 
-enum class animation_transition { pop, linear, spline };
+enum class animation_transition { pop = 0, linear = 1, spline = 2 };
 
 struct position_key {
    float time;
@@ -25,7 +25,7 @@ struct rotation_key {
    float3 tangent_next = {};
 };
 
-// Animation("{name}", {time}, {loop}, {local_translation})
+// Animation("{name}", {runtime}, {loop}, {local_translation})
 struct animation {
    std::string name;
 
@@ -54,7 +54,7 @@ struct animation_group {
 };
 
 struct animation_hierarchy {
-   std::string root_name;
+   std::string root_object;
 
    std::vector<std::string> objects;
 };

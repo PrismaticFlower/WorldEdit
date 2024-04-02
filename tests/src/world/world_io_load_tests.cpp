@@ -482,5 +482,115 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(world.measurements[0].end == float3{2.0f, 0.0f, -1.0f});
       CHECK(is_unique_id(0, world.measurements));
    }
+
+   // animation checks
+   {
+      REQUIRE(world.animations.size() == 1);
+
+      const animation& animation = world.animations[0];
+
+      CHECK(animation.name == "Anim"sv);
+      CHECK(animation.runtime == 10.0f);
+      CHECK(not animation.loop);
+      CHECK(animation.local_translation);
+
+      REQUIRE(animation.position_keys.size() == 3);
+
+      // position key 0
+      {
+         const position_key& key = animation.position_keys[0];
+
+         CHECK(key.time == 0.0f);
+         CHECK(key.position == float3{10.0f, 0.0f, 0.0f});
+         CHECK(key.transition == animation_transition::pop);
+         CHECK(key.tangent == float3{0.0f, 0.0f, 0.0f});
+         CHECK(key.tangent_next == float3{0.0f, 0.0f, 0.0f});
+      }
+
+      // position key 1
+      {
+         const position_key& key = animation.position_keys[1];
+
+         CHECK(key.time == 5.0f);
+         CHECK(key.position == float3{50.0f, 30.0f, 78.0f});
+         CHECK(key.transition == animation_transition::linear);
+         CHECK(key.tangent == float3{0.0f, 0.0f, 0.0f});
+         CHECK(key.tangent_next == float3{0.0f, 0.0f, 0.0f});
+      }
+
+      // position key 2
+      {
+         const position_key& key = animation.position_keys[2];
+
+         CHECK(key.time == 10.0f);
+         CHECK(key.position == float3{60.0f, 30.0f, 78.0f});
+         CHECK(key.transition == animation_transition::spline);
+         CHECK(key.tangent == float3{-10.0f, 0.0f, 0.0f});
+         CHECK(key.tangent_next == float3{0.0f, 0.0f, 10.0f});
+      }
+
+      REQUIRE(animation.rotation_keys.size() == 3);
+
+      // rotation key 0
+      {
+         const rotation_key& key = animation.rotation_keys[0];
+
+         CHECK(key.time == 0.0f);
+         CHECK(key.rotation == float3{0.0f, 0.0f, 0.0f});
+         CHECK(key.transition == animation_transition::linear);
+         CHECK(key.tangent == float3{0.0f, 0.0f, 0.0f});
+         CHECK(key.tangent_next == float3{0.0f, 0.0f, 0.0f});
+      }
+
+      // rotation key 1
+      {
+         const rotation_key& key = animation.rotation_keys[1];
+
+         CHECK(key.time == 5.0f);
+         CHECK(key.rotation == float3{0.0f, -45.0f, 0.0f});
+         CHECK(key.transition == animation_transition::spline);
+         CHECK(key.tangent == float3{35.0f, 0.0f, 0.0f});
+         CHECK(key.tangent_next == float3{0.0f, 0.0f, -35.0f});
+      }
+
+      // rotation key 2
+      {
+         const rotation_key& key = animation.rotation_keys[2];
+
+         CHECK(key.time == 7.5f);
+         CHECK(key.rotation == float3{0.0f, -90.0f, 0.0f});
+         CHECK(key.transition == animation_transition::pop);
+         CHECK(key.tangent == float3{0.0f, 0.0f, 0.0f});
+         CHECK(key.tangent_next == float3{0.0f, 0.0f, 0.0f});
+      }
+   }
+
+   // animation group checks
+   {
+      REQUIRE(world.animation_groups.size() == 1);
+
+      const animation_group& group = world.animation_groups[0];
+
+      CHECK(group.name == "group"sv);
+      CHECK(group.play_when_level_begins);
+      CHECK(not group.stops_when_object_is_controlled);
+      CHECK(group.disable_hierarchies);
+
+      REQUIRE(group.entries.size() == 1);
+      CHECK(group.entries[0].animation == "Anim"sv);
+      CHECK(group.entries[0].object == "com_inv_col_8"sv);
+   }
+
+   // animation hierarchy checks
+   {
+      REQUIRE(world.animation_hierarchies.size() == 1);
+
+      const animation_hierarchy& hierarchy = world.animation_hierarchies[0];
+
+      CHECK(hierarchy.root_object == "com_inv_col_8"sv);
+
+      REQUIRE(hierarchy.objects.size() == 1);
+      CHECK(hierarchy.objects[0] == "com_item_healthrecharge"sv);
+   }
 }
 }

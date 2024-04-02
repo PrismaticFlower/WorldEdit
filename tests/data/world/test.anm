@@ -1,0 +1,20 @@
+Animation("Anim", 10.00, 0, 1)
+{
+	AddPositionKey(0.00, 10.00, 0.00, 0.00, 0, -0.00, 0.00, 0.00, -0.00, 0.00, 0.00);
+	AddPositionKey(5.00, 50.00, 30.00, 78.00, 1, -0.00, 0.00, 0.00, -0.00, 0.00, 0.00);
+	AddPositionKey(10.00, 60.00, 30.00, 78.00, 2, -10.00, 0.00, 0.00, -0.00, 0.00, 10.00);
+	AddRotationKey(0.00, 0.00, -0.00, -0.00, 1, 0.00, -0.00, -0.00, 0.00, -0.00, -0.00);
+	AddRotationKey(5.00, 0.00, -45.00, -0.00, 2, 35.00, -0.00, -0.00, 0.00, -0.00, -35.00);
+	AddRotationKey(7.50, 0.00, -90.00, -0.00, 0, 0.00, -0.00, -0.00, 0.00, -0.00, -0.00);
+}
+
+AnimationGroup("group", 1, 0)
+{
+	DisableHierarchies();
+	Animation("Anim", "com_inv_col_8");
+}
+
+Hierarchy("com_inv_col_8")
+{
+	Obj("com_item_healthrecharge");
+}

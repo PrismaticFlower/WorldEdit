@@ -117,6 +117,20 @@ auto read_path_properties(const assets::config::node& node)
    return properties;
 }
 
+auto read_animation_transition(const int transition, std::string_view name,
+                               output_stream& output) -> animation_transition
+{
+   if (transition == 0) return animation_transition::pop;
+   if (transition == 1) return animation_transition::linear;
+   if (transition == 2) return animation_transition::spline;
+
+   output.write("Warning! Animation '{}' has a key with invalid transition! "
+                "Defaulting to linear.\n",
+                name);
+
+   return animation_transition::linear;
+}
+
 auto load_layer_index(const std::filesystem::path& path, output_stream& output,
                       world& world_out) -> layer_remap
 {
@@ -922,6 +936,129 @@ void load_hintnodes(const std::filesystem::path& filepath,
                 load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
 }
 
+void load_animations(const std::filesystem::path& filepath,
+                     output_stream& output, world& world_out)
+{
+   using namespace assets;
+
+   utility::stopwatch load_timer;
+
+   try {
+      for (auto& key_node : config::read_config(io::read_file_to_string(filepath))) {
+         if (key_node.key == "Animation"sv) {
+            check_space("animations", world_out.animations);
+
+            auto& animation = world_out.animations.emplace_back();
+
+            animation.name = key_node.values.get<std::string>(0);
+            animation.runtime = key_node.values.get<float>(1);
+            animation.loop = key_node.values.get<int>(2) != 0;
+            animation.local_translation = key_node.values.get<int>(3) != 0;
+
+            for (auto& child_key_node : key_node) {
+               if (child_key_node.key == "AddPositionKey"sv) {
+                  animation.position_keys.push_back({
+                     .time = child_key_node.values.get<float>(0),
+
+                     .position = {child_key_node.values.get<float>(1),
+                                  child_key_node.values.get<float>(2),
+                                  child_key_node.values.get<float>(3)},
+
+                     .transition =
+                        read_animation_transition(child_key_node.values.get<int>(4),
+                                                  animation.name, output),
+
+                     .tangent = {child_key_node.values.get<float>(5),
+                                 child_key_node.values.get<float>(6),
+                                 child_key_node.values.get<float>(7)},
+
+                     .tangent_next = {child_key_node.values.get<float>(8),
+                                      child_key_node.values.get<float>(9),
+                                      child_key_node.values.get<float>(10)},
+                  });
+               }
+               else if (child_key_node.key == "AddRotationKey"sv) {
+                  animation.rotation_keys.push_back({
+                     .time = child_key_node.values.get<float>(0),
+
+                     .rotation = {child_key_node.values.get<float>(1),
+                                  child_key_node.values.get<float>(2),
+                                  child_key_node.values.get<float>(3)},
+
+                     .transition =
+                        read_animation_transition(child_key_node.values.get<int>(4),
+                                                  animation.name, output),
+
+                     .tangent = {child_key_node.values.get<float>(5),
+                                 child_key_node.values.get<float>(6),
+                                 child_key_node.values.get<float>(7)},
+
+                     .tangent_next = {child_key_node.values.get<float>(8),
+                                      child_key_node.values.get<float>(9),
+                                      child_key_node.values.get<float>(10)},
+                  });
+               }
+            }
+
+            if (verbose_output) {
+               output.write("Loaded animation '{}'\n", animation.name);
+            }
+         }
+         else if (key_node.key == "AnimationGroup"sv) {
+            check_space("animation groups", world_out.animation_groups);
+
+            auto& group = world_out.animation_groups.emplace_back();
+
+            group.name = key_node.values.get<std::string>(0);
+            group.play_when_level_begins = key_node.values.get<int>(1) != 0;
+            group.stops_when_object_is_controlled = key_node.values.get<int>(2) != 0;
+
+            for (auto& child_key_node : key_node) {
+               if (child_key_node.key == "DisableHierarchies"sv) {
+                  group.disable_hierarchies = true;
+               }
+               else if (child_key_node.key == "Animation"sv) {
+                  group.entries.push_back({
+                     .animation = child_key_node.values.get<std::string>(0),
+                     .object = child_key_node.values.get<std::string>(1),
+                  });
+               }
+            }
+
+            if (verbose_output) {
+               output.write("Loaded animation group '{}'\n", group.name);
+            }
+         }
+         else if (key_node.key == "Hierarchy"sv) {
+            check_space("animation hierarchies", world_out.animation_hierarchies);
+
+            auto& hierarchy = world_out.animation_hierarchies.emplace_back();
+
+            hierarchy.root_object = key_node.values.get<std::string>(0);
+
+            for (auto& child_key_node : key_node) {
+               if (child_key_node.key == "Obj"sv) {
+                  hierarchy.objects.push_back(
+                     child_key_node.values.get<std::string>(0));
+               }
+            }
+
+            if (verbose_output) {
+               output
+                  .write("Loaded animation hierarchy with root object '{}'\n",
+                         hierarchy.root_object);
+            }
+         }
+      }
+   }
+   catch (std::exception& e) {
+      throw_layer_load_failure("measurements", filepath.string(), e);
+   }
+
+   output.write("Loaded world measurements (time taken {:f}ms)\n",
+                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+}
+
 void load_measurements(const std::filesystem::path& filepath,
                        output_stream& output, world& world_out)
 {
@@ -1016,6 +1153,11 @@ void load_layer(const std::filesystem::path& world_dir, const std::string_view l
       if (const auto bnd_path = world_dir / layer_name += ".bnd"sv;
           std::filesystem::exists(bnd_path)) {
          load_boundaries(bnd_path, output, world_out);
+      }
+
+      if (const auto anm_path = world_dir / layer_name += ".anm"sv;
+          std::filesystem::exists(anm_path)) {
+         load_animations(anm_path, output, world_out);
       }
 
       if (const auto msr_path = world_dir / layer_name += ".msr"sv;
