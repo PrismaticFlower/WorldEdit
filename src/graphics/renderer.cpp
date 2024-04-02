@@ -1300,8 +1300,8 @@ void renderer_impl::draw_world_meta_objects(
             bbox.max = max(bbox.max, corners[i]);
          }
 
-         bbox.min.y = -barrier_height;
-         bbox.max.y = barrier_height;
+         bbox.min.y -= barrier_height;
+         bbox.max.y += barrier_height;
 
          if (not intersects(view_frustum, bbox)) return;
 
