@@ -244,19 +244,21 @@ bool EditFlags(const char* label, unsigned int* value, std::span<const ExtEditFl
 
    const float item_width = CalcItemWidth();
 
-   ImGui::BeginGroup();
+   BeginGroup();
+   PushID(label);
 
-   ImGui::SeparatorText(label);
+   SeparatorText(label);
 
    for (const auto& flag : flags) {
-      if (ImGui::Selectable(flag.label, *value & flag.bit, 0, {item_width, 0.0f})) {
+      if (Selectable(flag.label, *value & flag.bit, 0, {item_width, 0.0f})) {
          *value ^= flag.bit;
 
          value_changed |= true;
       }
    }
 
-   ImGui::EndGroup();
+   PopID();
+   EndGroup();
 
    return value_changed;
 }
