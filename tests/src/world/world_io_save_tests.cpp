@@ -671,6 +671,29 @@ Measurement("")
 
 )"sv;
 
+constexpr auto expected_anm = R"(Animation("Anim", 10.00, 0, 1)
+{
+	AddPositionKey(0.00, 10.00, 0.00, 0.00, 0, -0.00, 0.00, 0.00, -0.00, 0.00, 0.00);
+	AddPositionKey(5.00, 50.00, 30.00, 78.00, 1, -0.00, 0.00, 0.00, -0.00, 0.00, 0.00);
+	AddPositionKey(10.00, 60.00, 30.00, 78.00, 2, -10.00, 0.00, 0.00, -0.00, 0.00, 10.00);
+	AddRotationKey(0.00, 0.00, -0.00, -0.00, 1, 0.00, -0.00, -0.00, 0.00, -0.00, -0.00);
+	AddRotationKey(5.00, 0.00, -45.00, -0.00, 2, 35.00, -0.00, -0.00, 0.00, -0.00, -35.00);
+	AddRotationKey(7.50, 0.00, -90.00, -0.00, 0, 0.00, -0.00, -0.00, 0.00, -0.00, -0.00);
+}
+
+AnimationGroup("group", 1, 0)
+{
+	DisableHierarchies();
+	Animation("Anim", "com_inv_col_8");
+}
+
+Hierarchy("com_inv_col_8")
+{
+	Obj("com_item_healthrecharge");
+}
+
+)"sv;
+
 constexpr auto expected_ldx = R"(Version(1);
 NextID(2);
 
@@ -1006,6 +1029,68 @@ TEST_CASE("world saving", "[World][IO]")
                measurement{.start = {1.0f, 0.0f, 5.5f}, .end = {-1.0f, 0.0f, -0.0f}, .name = ""},
             },
          },
+
+      .animations =
+         {
+            pinned_vector_init{max_animations, max_animations},
+            std::initializer_list{
+               animation{
+                  .name = "Anim",
+                  .runtime = 10.0f,
+                  .loop = false,
+                  .local_translation = true,
+
+                  .position_keys =
+                     {
+                        position_key{
+                           .time = 0.0f,
+                           .position = float3{10.0f, 0.0f, 0.0f},
+                           .transition = animation_transition::pop,
+                           .tangent = float3{-0.0f, 0.0f, 0.0f},
+                           .tangent_next = float3{-0.0f, 0.0f, 0.0f},
+                        },
+                        position_key{
+                           .time = 5.0f,
+                           .position = float3{50.0f, 30.0f, 78.0f},
+                           .transition = animation_transition::linear,
+                           .tangent = float3{-0.0f, 0.0f, 0.0f},
+                           .tangent_next = float3{-0.0f, 0.0f, 0.0f},
+                        },
+                        position_key{
+                           .time = 10.0f,
+                           .position = float3{60.0f, 30.0f, 78.0f},
+                           .transition = animation_transition::spline,
+                           .tangent = float3{-10.0f, 0.0f, 0.0f},
+                           .tangent_next = float3{-0.0f, 0.0f, 10.0f},
+                        },
+                     },
+               },
+            },
+         },
+
+      .animation_groups = {pinned_vector_init{max_animation_groups, max_animation_groups},
+                           std::initializer_list{
+                              animation_group{
+                                 .name = "group",
+                                 .play_when_level_begins = true,
+                                 .stops_when_object_is_controlled = false,
+                                 .disable_hierarchies = true,
+                                 .entries =
+                                    {
+                                       animation_group::entry{"Anim",
+                                                              "com_inv_col_8"},
+                                    },
+                              },
+                           }},
+
+      .animation_hierarchies = {pinned_vector_init{max_animation_hierarchies,
+                                                   max_animation_hierarchies},
+                                std::initializer_list{
+                                   animation_hierarchy{
+                                      .root_object = "com_inv_col_8",
+                                      .objects = {"com_item_healthrecharge"},
+                                   },
+                                }},
    };
 
    save_world(L"temp/world/test.wld", world, {});

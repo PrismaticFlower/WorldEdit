@@ -714,6 +714,65 @@ void save_measurements(const std::filesystem::path& path, const world& world)
    }
 }
 
+void save_animations(const std::filesystem::path& path, const world& world)
+{
+   io::output_file file{path};
+
+   for (auto& animation : world.animations) {
+      file.write_ln("Animation(\"{}\", {:.2f}, {}, {})", animation.name,
+                    animation.runtime, animation.loop, animation.local_translation);
+      file.write_ln("{");
+
+      for (auto& key : animation.position_keys) {
+         file.write_ln("\tAddPositionKey({:.2f}, {:.2f}, {:.2f}, {:.2f}, {}, "
+                       "{:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f});",
+                       key.time, key.position.x, key.position.y, key.position.z,
+                       static_cast<int>(key.transition), key.tangent.x,
+                       key.tangent.y, key.tangent.z, key.tangent_next.x,
+                       key.tangent_next.y, key.tangent_next.z);
+      }
+
+      for (auto& key : animation.rotation_keys) {
+         file.write_ln("\tAddRotationKey({:.2f}, {:.2f}, {:.2f}, {:.2f}, {}, "
+                       "{:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f});",
+                       key.time, key.rotation.x, key.rotation.y, key.rotation.z,
+                       static_cast<int>(key.transition), key.tangent.x,
+                       key.tangent.y, key.tangent.z, key.tangent_next.x,
+                       key.tangent_next.y, key.tangent_next.z);
+      }
+
+      file.write_ln("}\n");
+   }
+
+   for (auto& group : world.animation_groups) {
+      file.write_ln("AnimationGroup(\"{}\", {}, {})", group.name,
+                    group.play_when_level_begins,
+                    group.stops_when_object_is_controlled);
+      file.write_ln("{");
+
+      if (group.disable_hierarchies) {
+         file.write_ln("\tDisableHierarchies();");
+      }
+
+      for (auto& entry : group.entries) {
+         file.write_ln("\tAnimation(\"{}\", \"{}\");", entry.animation, entry.object);
+      }
+
+      file.write_ln("}\n");
+   }
+
+   for (auto& hierarchy : world.animation_hierarchies) {
+      file.write_ln("Hierarchy(\"{}\")", hierarchy.root_object);
+      file.write_ln("{");
+
+      for (auto& object : hierarchy.objects) {
+         file.write_ln("\tObj(\"{}\");", object);
+      }
+
+      file.write_ln("}\n");
+   }
+}
+
 /// @brief Saves a world layer.
 /// @param world_dir The directory to save the layer into.
 /// @param layer_name The name of the layer ie `test` or `test_conquest`.
