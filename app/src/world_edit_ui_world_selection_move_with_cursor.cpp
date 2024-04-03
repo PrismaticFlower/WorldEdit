@@ -198,18 +198,28 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
 
       edits::bundle_vector bundled_edits;
 
+      const bool lock_x = _selection_cursor_move_lock_x_axis;
+      const bool lock_y = _selection_cursor_move_lock_y_axis;
+      const bool lock_z = _selection_cursor_move_lock_z_axis;
+
+      const auto update_position = [&](float3* position) {
+         assert(position);
+
+         float3 new_position = *position - selection_centre + cursor_positionWS;
+
+         if (lock_x) new_position.x = position->x;
+         if (lock_y) new_position.y = position->y;
+         if (lock_z) new_position.z = position->z;
+
+         bundled_edits.push_back(edits::make_set_value(position, new_position));
+      };
+
       for (const auto& selected : _interaction_targets.selection) {
          if (std::holds_alternative<world::object_id>(selected)) {
             world::object* object =
                world::find_entity(_world.objects, std::get<world::object_id>(selected));
 
-            if (object) {
-               float3 new_position =
-                  object->position - selection_centre + cursor_positionWS;
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&object->position, new_position));
-            }
+            if (object) update_position(&object->position);
          }
          else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
             const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
@@ -228,6 +238,14 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                   float3 new_position =
                      node.position - selection_centre + cursor_positionWS;
 
+                  // clang-format off
+
+                  if (lock_x) new_position.x = path->nodes[node_index].position.x;
+                  if (lock_y) new_position.y = path->nodes[node_index].position.y;
+                  if (lock_z) new_position.z = path->nodes[node_index].position.z;
+
+                  // clang-format on
+
                   bundled_edits.push_back(
                      edits::make_set_vector_value(&path->nodes, node_index,
                                                   &world::path::node::position,
@@ -239,26 +257,13 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
             world::light* light =
                world::find_entity(_world.lights, std::get<world::light_id>(selected));
 
-            if (light) {
-               float3 new_position =
-                  light->position - selection_centre + cursor_positionWS;
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&light->position, new_position));
-            }
+            if (light) update_position(&light->position);
          }
          else if (std::holds_alternative<world::region_id>(selected)) {
             world::region* region =
                world::find_entity(_world.regions, std::get<world::region_id>(selected));
 
-            if (region) {
-               float3 new_position;
-
-               new_position = region->position - selection_centre + cursor_positionWS;
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&region->position, new_position));
-            }
+            if (region) update_position(&region->position);
          }
          else if (std::holds_alternative<world::sector_id>(selected)) {
             world::sector* sector =
@@ -267,83 +272,58 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
             if (sector) {
                std::vector<float2> new_points = sector->points;
 
-               for (auto& point : new_points) {
-                  point -= float2{selection_centre.x, selection_centre.z};
-                  point += float2{cursor_positionWS.x, cursor_positionWS.z};
+               for (std::size_t i = 0; i < new_points.size(); ++i) {
+                  new_points[i] -= float2{selection_centre.x, selection_centre.z};
+                  new_points[i] += float2{cursor_positionWS.x, cursor_positionWS.z};
+
+                  if (lock_x) new_points[i].x = sector->points[i].x;
+                  if (lock_z) new_points[i].y = sector->points[i].y;
                }
 
                bundled_edits.push_back(
                   edits::make_set_value(&sector->points, std::move(new_points)));
-               bundled_edits.push_back(
-                  edits::make_set_value(&sector->base,
-                                        (sector->base - selection_centre.y) +
-                                           cursor_positionWS.y));
+
+               if (not lock_y) {
+                  bundled_edits.push_back(
+                     edits::make_set_value(&sector->base,
+                                           (sector->base - selection_centre.y) +
+                                              cursor_positionWS.y));
+               }
             }
          }
          else if (std::holds_alternative<world::portal_id>(selected)) {
             world::portal* portal =
                world::find_entity(_world.portals, std::get<world::portal_id>(selected));
 
-            if (portal) {
-               float3 new_position =
-                  portal->position - selection_centre + cursor_positionWS;
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&portal->position, new_position));
-            }
+            if (portal) update_position(&portal->position);
          }
          else if (std::holds_alternative<world::hintnode_id>(selected)) {
             world::hintnode* hintnode =
                world::find_entity(_world.hintnodes,
                                   std::get<world::hintnode_id>(selected));
 
-            if (hintnode) {
-               float3 new_position =
-                  hintnode->position - selection_centre + cursor_positionWS;
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&hintnode->position, new_position));
-            }
+            if (hintnode) update_position(&hintnode->position);
          }
          else if (std::holds_alternative<world::barrier_id>(selected)) {
             world::barrier* barrier =
                world::find_entity(_world.barriers,
                                   std::get<world::barrier_id>(selected));
 
-            if (barrier) {
-               float3 new_position =
-                  barrier->position - selection_centre + cursor_positionWS;
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&barrier->position, new_position));
-            }
+            if (barrier) update_position(&barrier->position);
          }
          else if (std::holds_alternative<world::planning_hub_id>(selected)) {
             world::planning_hub* planning_hub =
                world::find_entity(_world.planning_hubs,
                                   std::get<world::planning_hub_id>(selected));
 
-            float3 new_position =
-               planning_hub->position - selection_centre + cursor_positionWS;
-
-            if (planning_hub) {
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&planning_hub->position, new_position));
-            }
+            if (planning_hub) update_position(&planning_hub->position);
          }
          else if (std::holds_alternative<world::boundary_id>(selected)) {
             world::boundary* boundary =
                world::find_entity(_world.boundaries,
                                   std::get<world::boundary_id>(selected));
 
-            float3 new_position =
-               boundary->position - selection_centre + cursor_positionWS;
-
-            if (boundary) {
-               bundled_edits.push_back(
-                  edits::make_set_value(&boundary->position, new_position));
-            }
+            if (boundary) update_position(&boundary->position);
          }
          else if (std::holds_alternative<world::measurement_id>(selected)) {
             world::measurement* measurement =
@@ -351,13 +331,8 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                                   std::get<world::measurement_id>(selected));
 
             if (measurement) {
-               float3 new_start =
-                  measurement->start - selection_centre + cursor_positionWS;
-               float3 new_end = measurement->end - selection_centre + cursor_positionWS;
-
-               bundled_edits.push_back(
-                  edits::make_set_value(&measurement->start, new_start));
-               bundled_edits.push_back(edits::make_set_value(&measurement->end, new_end));
+               update_position(&measurement->start);
+               update_position(&measurement->end);
             }
          }
       }
@@ -428,6 +403,22 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
          cursor_mask.terrain = hit;
       }
 
+      ImGui::SeparatorText("Locked Position");
+
+      if (ImGui::BeginTable("Locked Position", 3,
+                            ImGuiTableFlags_NoSavedSettings |
+                               ImGuiTableFlags_SizingStretchSame)) {
+
+         ImGui::TableNextColumn();
+         ImGui::Selectable("X", &_selection_cursor_move_lock_x_axis);
+         ImGui::TableNextColumn();
+         ImGui::Selectable("Y", &_selection_cursor_move_lock_y_axis);
+         ImGui::TableNextColumn();
+         ImGui::Selectable("Z", &_selection_cursor_move_lock_z_axis);
+
+         ImGui::EndTable();
+      }
+
       ImGui::Separator();
 
       ImGui::Text("Click in world to end move.");
@@ -439,5 +430,28 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
    }
 
    ImGui::End();
+
+   if (open and _hotkeys_view_show) {
+      ImGui::Begin("Hotkeys");
+
+      ImGui::SeparatorText("Move Selection with Cursor");
+
+      ImGui::Text("Lock X Axis");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing (Move Selection with Cursor)",
+                                "Lock X Axis")));
+
+      ImGui::Text("Lock Y Axis");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing (Move Selection with Cursor)",
+                                "Lock Y Axis")));
+
+      ImGui::Text("Lock Z Axis");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing (Move Selection with Cursor)",
+                                "Lock Z Axis")));
+
+      ImGui::End();
+   }
 }
 }

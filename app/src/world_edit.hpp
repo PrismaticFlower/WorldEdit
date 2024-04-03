@@ -637,6 +637,9 @@ private:
    int16 _selection_set_layer = 0;
    bool _selection_cursor_move_ground_with_bbox = true;
    bool _selection_cursor_move_align_cursor = false;
+   bool _selection_cursor_move_lock_x_axis = false;
+   bool _selection_cursor_move_lock_y_axis = false;
+   bool _selection_cursor_move_lock_z_axis = false;
    world::active_entity_types _selection_cursor_move_hit_mask;
 
    float2 _select_start_position;
