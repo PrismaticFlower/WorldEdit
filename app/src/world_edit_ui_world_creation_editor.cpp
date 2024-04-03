@@ -626,12 +626,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
                             enum_select_option{"Formation", world::path_type::formation},
                             enum_select_option{"Patrol", world::path_type::patrol}});
 
-         ImGui::EnumSelect(
-            "Spline Type", &existing_path->spline_type, _edit_stack_world, _edit_context,
-            {enum_select_option{"None", world::path_spline_type::none},
-             enum_select_option{"Linear", world::path_spline_type::linear},
-             enum_select_option{"Hermite", world::path_spline_type::hermite},
-             enum_select_option{"Catmull-Rom", world::path_spline_type::catmull_rom}});
+         if (existing_path->type == world::path_type::patrol) {
+            ImGui::EnumSelect(
+               "Spline Type", &existing_path->spline_type, _edit_stack_world,
+               _edit_context,
+               {enum_select_option{"None", world::path_spline_type::none},
+                enum_select_option{"Linear", world::path_spline_type::linear},
+                enum_select_option{"Hermite", world::path_spline_type::hermite},
+                enum_select_option{"Catmull-Rom", world::path_spline_type::catmull_rom}});
+         }
 
          ImGui::Separator();
 
@@ -684,12 +687,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
                             enum_select_option{"Formation", world::path_type::formation},
                             enum_select_option{"Patrol", world::path_type::patrol}});
 
-         ImGui::EnumSelect(
-            "Spline Type", &path.spline_type, _edit_stack_world, _edit_context,
-            {enum_select_option{"None", world::path_spline_type::none},
-             enum_select_option{"Linear", world::path_spline_type::linear},
-             enum_select_option{"Hermite", world::path_spline_type::hermite},
-             enum_select_option{"Catmull-Rom", world::path_spline_type::catmull_rom}});
+         if (path.type == world::path_type::patrol) {
+            ImGui::EnumSelect(
+               "Spline Type", &path.spline_type, _edit_stack_world, _edit_context,
+               {enum_select_option{"None", world::path_spline_type::none},
+                enum_select_option{"Linear", world::path_spline_type::linear},
+                enum_select_option{"Hermite", world::path_spline_type::hermite},
+                enum_select_option{"Catmull-Rom", world::path_spline_type::catmull_rom}});
+         }
       }
 
       ImGui::Separator();
