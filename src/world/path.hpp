@@ -36,7 +36,7 @@ struct path {
    };
 
    path_type type = path_type::none;
-   path_spline_type spline_type = path_spline_type::hermite;
+   path_spline_type spline_type = path_spline_type::catmull_rom;
    std::vector<property> properties;
    std::vector<node> nodes;
 
