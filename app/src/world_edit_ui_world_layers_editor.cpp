@@ -13,8 +13,11 @@ void world_edit::ui_show_world_layers_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
-   ImGui::SetNextWindowSizeConstraints({400.0f * _display_scale, 256.0f * _display_scale},
-                                       {400.0f * _display_scale, 768.0f * _display_scale});
+   ImGui::SetNextWindowSize({400.0f * _display_scale, 256.0f * _display_scale},
+                            ImGuiCond_FirstUseEver);
+   ImGui::SetNextWindowSizeConstraints({400.0f * _display_scale, 0.0f},
+                                       {std::numeric_limits<float>::max(),
+                                        std::numeric_limits<float>::max()});
 
    if (ImGui::Begin("Layers Editor", &_world_layers_editor_open)) {
       ImGui::SeparatorText("Create New Layer");

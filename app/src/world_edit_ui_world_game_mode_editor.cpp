@@ -15,9 +15,11 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
-   ImGui::SetNextWindowSizeConstraints({400.0f * _display_scale, 256.0f * _display_scale},
-                                       {512.0f * _display_scale,
-                                        1024.0f * _display_scale});
+   ImGui::SetNextWindowSize({400.0f * _display_scale, 256.0f * _display_scale},
+                            ImGuiCond_FirstUseEver);
+   ImGui::SetNextWindowSizeConstraints({400.0f * _display_scale, 0.0f},
+                                       {std::numeric_limits<float>::max(),
+                                        std::numeric_limits<float>::max()});
 
    if (ImGui::Begin("Game Mode Editor", &_world_game_mode_editor_open)) {
       ImGui::SeparatorText("Create New Game Mode");

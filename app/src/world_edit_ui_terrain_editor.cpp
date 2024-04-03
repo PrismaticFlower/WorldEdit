@@ -183,9 +183,11 @@ void world_edit::ui_show_terrain_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
-   ImGui::SetNextWindowSizeConstraints({520.0f * _display_scale, 620.0f * _display_scale},
+   ImGui::SetNextWindowSize({520.0f * _display_scale, 620.0f * _display_scale},
+                            ImGuiCond_FirstUseEver);
+   ImGui::SetNextWindowSizeConstraints({520.0f * _display_scale, 0.0f},
                                        {std::numeric_limits<float>::max(),
-                                        620.0f * _display_scale});
+                                        std::numeric_limits<float>::max()});
 
    bool open = _terrain_edit_tool == terrain_edit_tool::editor;
 
