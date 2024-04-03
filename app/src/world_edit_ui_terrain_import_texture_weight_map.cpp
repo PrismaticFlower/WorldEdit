@@ -76,15 +76,13 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
              .must_exist = true});
 
          if (path) {
-            _terrain_import_texture_weight_map_context.loaded_weight_map = {};
             _terrain_import_texture_weight_map_context.error_message.clear();
 
             try {
-               _terrain_import_texture_weight_map_context.loaded_weight_map =
+               container::dynamic_array_2d<uint8> loaded_weight_map =
                   world::load_texture_weight_map(*path);
 
-               const std::ptrdiff_t imported_length =
-                  _terrain_import_texture_weight_map_context.loaded_weight_map.s_width();
+               const std::ptrdiff_t imported_length = loaded_weight_map.s_width();
 
                if (imported_length != _world.terrain.length) {
                   throw world::terrain_map_load_error{fmt::format(
@@ -99,15 +97,13 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
                }
 
                _edit_stack_world.apply(edits::make_set_terrain_area(0, 0, weight_map_index,
-                                                                    _terrain_import_texture_weight_map_context
-                                                                       .loaded_weight_map),
+                                                                    std::move(loaded_weight_map)),
                                        _edit_context, {.closed = true});
 
                open = false;
             }
             catch (world::terrain_map_load_error& e) {
                _terrain_import_texture_weight_map_context.error_message = e.what();
-               _terrain_import_texture_weight_map_context.loaded_weight_map = {};
             }
          }
       }

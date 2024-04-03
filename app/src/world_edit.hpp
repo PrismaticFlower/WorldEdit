@@ -581,7 +581,6 @@ private:
    } _terrain_import_heightmap_context;
 
    struct terrain_import_texture_weight_map_context {
-      container::dynamic_array_2d<uint8> loaded_weight_map;
       std::string error_message;
 
       int weight_map_index = -1;
