@@ -166,31 +166,34 @@ void world_edit::ui_show_terrain_crop() noexcept
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
 
+   bool open = _terrain_edit_tool == terrain_edit_tool::crop;
+
    if (not std::has_single_bit(static_cast<uint32>(_world.terrain.length))) {
-      ImGui::Begin("Crop Terrain Error", &_terrain_crop_open,
-                   ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::Begin("Crop Terrain Error", &open, ImGuiWindowFlags_AlwaysAutoResize);
 
       ImGui::Text("Can not crop non power of 2 terrain.");
 
       ImGui::End();
 
+      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+
       return;
    }
 
    if (_world.terrain.length == 32) {
-      ImGui::Begin("Crop Terrain Error", &_terrain_crop_open,
-                   ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::Begin("Crop Terrain Error", &open, ImGuiWindowFlags_AlwaysAutoResize);
 
       ImGui::Text(
          "Terrain is already at the smallest size WorldEdit will allow.");
 
       ImGui::End();
 
+      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
+
       return;
    }
 
-   if (ImGui::Begin("Crop Terrain", &_terrain_crop_open,
-                    ImGuiWindowFlags_AlwaysAutoResize)) {
+   if (ImGui::Begin("Crop Terrain", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
       if (_terrain_crop_context.new_length == 0) {
          _terrain_crop_context.new_length = _world.terrain.length;
       }
@@ -217,11 +220,13 @@ void world_edit::ui_show_terrain_crop() noexcept
                                                  *_thread_pool)),
                                  _edit_context, {.closed = true});
 
-         _terrain_crop_open = false;
+         open = false;
       }
 
       ImGui::EndDisabled();
    }
+
+   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
 
    ImGui::End();
 }

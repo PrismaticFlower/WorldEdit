@@ -16,7 +16,9 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
 
-   if (ImGui::Begin("Import Texture Weight Map", &_terrain_import_texture_weight_map_open,
+   bool open = _terrain_edit_tool == terrain_edit_tool::import_texture_weight_map;
+
+   if (ImGui::Begin("Import Texture Weight Map", &open,
                     ImGuiWindowFlags_AlwaysAutoResize)) {
       ImGui::SeparatorText("Texture");
 
@@ -101,7 +103,7 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
                                                                        .loaded_weight_map),
                                        _edit_context, {.closed = true});
 
-               _terrain_import_texture_weight_map_open = false;
+               open = false;
             }
             catch (world::terrain_map_load_error& e) {
                _terrain_import_texture_weight_map_context.error_message = e.what();
@@ -119,6 +121,8 @@ void world_edit::ui_show_terrain_import_texture_weight_map() noexcept
             _terrain_import_texture_weight_map_context.error_message.c_str());
       }
    }
+
+   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
 
    ImGui::End();
 }

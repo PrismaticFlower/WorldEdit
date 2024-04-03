@@ -187,8 +187,9 @@ void world_edit::ui_show_terrain_editor() noexcept
                                        {std::numeric_limits<float>::max(),
                                         620.0f * _display_scale});
 
-   if (ImGui::Begin("Terrain Editor", &_terrain_editor_open,
-                    ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
+   bool open = _terrain_edit_tool == terrain_edit_tool::editor;
+
+   if (ImGui::Begin("Terrain Editor", &open, ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
       ImGui::SeparatorText("Edit Target");
 
       if (ImGui::BeginTable("Edit Target", 3,
@@ -745,7 +746,11 @@ void world_edit::ui_show_terrain_editor() noexcept
 
    ImGui::End();
 
-   if (not _terrain_editor_open) return;
+   if (not open) {
+      _terrain_edit_tool = terrain_edit_tool::none;
+
+      return;
+   }
 
    if (_hotkeys_view_show) {
       ImGui::Begin("Hotkeys");

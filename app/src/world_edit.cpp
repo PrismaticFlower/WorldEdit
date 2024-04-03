@@ -176,7 +176,8 @@ void world_edit::update()
                             {
                                .draw_terrain_grid = _draw_terrain_grid,
                                .draw_overlay_grid = _draw_overlay_grid,
-                               .draw_foliage_map_overlay = _foliage_editor_open,
+                               .draw_foliage_map_overlay =
+                                  _terrain_edit_tool == terrain_edit_tool::foliage_editor,
                                .overlay_grid_height = _editor_floor_height,
                                .overlay_grid_size = _editor_grid_size,
                             },
@@ -256,7 +257,7 @@ void world_edit::update_hovered_entity() noexcept
 
    if (ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse()) return;
    if (_rotate_camera or _pan_camera) return;
-   if (_terrain_editor_open) return;
+   if (_terrain_edit_tool != terrain_edit_tool::none) return;
 
    world::active_entity_types raycast_mask = _world_hit_mask;
 

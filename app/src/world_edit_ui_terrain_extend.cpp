@@ -230,11 +230,14 @@ void world_edit::ui_show_terrain_extend() noexcept
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
 
+   bool open = _terrain_edit_tool == terrain_edit_tool::extend;
+
    if (not std::has_single_bit(static_cast<uint32>(_world.terrain.length))) {
-      ImGui::Begin("Extend Terrain Error", &_terrain_extend_open,
-                   ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::Begin("Extend Terrain Error", &open, ImGuiWindowFlags_AlwaysAutoResize);
 
       ImGui::Text("Can not extend non power of 2 terrain.");
+
+      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
 
       ImGui::End();
 
@@ -242,18 +245,18 @@ void world_edit::ui_show_terrain_extend() noexcept
    }
 
    if (_world.terrain.length == 1024) {
-      ImGui::Begin("Extend Terrain Error", &_terrain_extend_open,
-                   ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::Begin("Extend Terrain Error", &open, ImGuiWindowFlags_AlwaysAutoResize);
 
       ImGui::Text("Terrain is already at the max size.");
+
+      if (not open) _terrain_edit_tool = terrain_edit_tool::none;
 
       ImGui::End();
 
       return;
    }
 
-   if (ImGui::Begin("Extend Terrain", &_terrain_extend_open,
-                    ImGuiWindowFlags_AlwaysAutoResize)) {
+   if (ImGui::Begin("Extend Terrain", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
       if (_terrain_extend_context.new_length == 0) {
          _terrain_extend_context.new_length = _world.terrain.length;
       }
@@ -286,11 +289,13 @@ void world_edit::ui_show_terrain_extend() noexcept
                                                    *_thread_pool)),
                                  _edit_context, {.closed = true});
 
-         _terrain_extend_open = false;
+         open = false;
       }
 
       ImGui::EndDisabled();
    }
+
+   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
 
    ImGui::End();
 }

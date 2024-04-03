@@ -19,7 +19,9 @@ void world_edit::ui_show_water_editor() noexcept
                                        {std::numeric_limits<float>::max(),
                                         620.0f * _display_scale});
 
-   if (ImGui::Begin("Water Editor", &_water_editor_open)) {
+   bool open = _terrain_edit_tool == terrain_edit_tool::water_editor;
+
+   if (ImGui::Begin("Water Editor", &open)) {
       if (ImGui::CollapsingHeader("Edit", ImGuiTreeNodeFlags_DefaultOpen)) {
          ImGui::SeparatorText("Brush Mode");
 
@@ -255,7 +257,11 @@ void world_edit::ui_show_water_editor() noexcept
 
    ImGui::End();
 
-   if (not _water_editor_open) return;
+   if (not open) {
+      _terrain_edit_tool = terrain_edit_tool::none;
+
+      return;
+   }
 
    if (_hotkeys_view_show) {
       ImGui::Begin("Hotkeys");

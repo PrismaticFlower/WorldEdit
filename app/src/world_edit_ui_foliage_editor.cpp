@@ -19,7 +19,9 @@ void world_edit::ui_show_foliage_editor() noexcept
                                        {std::numeric_limits<float>::max(),
                                         620.0f * _display_scale});
 
-   if (ImGui::Begin("Foliage Editor", &_foliage_editor_open)) {
+   bool open = _terrain_edit_tool == terrain_edit_tool::foliage_editor;
+
+   if (ImGui::Begin("Foliage Editor", &open)) {
       if (ImGui::CollapsingHeader("Edit", ImGuiTreeNodeFlags_DefaultOpen)) {
          ImGui::SeparatorText("Layer");
 
@@ -137,7 +139,11 @@ void world_edit::ui_show_foliage_editor() noexcept
 
    ImGui::End();
 
-   if (not _foliage_editor_open) return;
+   if (not open) {
+      _terrain_edit_tool = terrain_edit_tool::none;
+
+      return;
+   }
 
    if (_hotkeys_view_show) {
       ImGui::Begin("Hotkeys");

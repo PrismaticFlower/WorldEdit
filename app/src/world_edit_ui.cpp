@@ -102,35 +102,28 @@ void world_edit::update_ui() noexcept
       ui_show_world_selection_set_layer();
    }
 
-   if (_terrain_editor_open) {
+   if (_terrain_edit_tool == terrain_edit_tool::editor) {
       ui_show_terrain_editor();
    }
-
-   if (_terrain_import_heightmap_open) {
+   else if (_terrain_edit_tool == terrain_edit_tool::import_heightmap) {
       ui_show_terrain_import_height_map();
    }
-
-   if (_terrain_import_texture_weight_map_open) {
+   else if (_terrain_edit_tool == terrain_edit_tool::import_texture_weight_map) {
       ui_show_terrain_import_texture_weight_map();
    }
-
-   if (_terrain_resize_open) {
+   else if (_terrain_edit_tool == terrain_edit_tool::resize) {
       ui_show_terrain_resize();
    }
-
-   if (_terrain_crop_open) {
+   else if (_terrain_edit_tool == terrain_edit_tool::crop) {
       ui_show_terrain_crop();
    }
-
-   if (_terrain_extend_open) {
+   else if (_terrain_edit_tool == terrain_edit_tool::extend) {
       ui_show_terrain_extend();
    }
-
-   if (_water_editor_open) {
+   else if (_terrain_edit_tool == terrain_edit_tool::water_editor) {
       ui_show_water_editor();
    }
-
-   if (_foliage_editor_open) {
+   else if (_terrain_edit_tool == terrain_edit_tool::foliage_editor) {
       ui_show_foliage_editor();
    }
 

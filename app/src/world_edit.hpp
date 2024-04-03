@@ -66,6 +66,18 @@ enum class selection_move_space : uint8 { world, local };
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
+enum class terrain_edit_tool : uint8 {
+   none,
+   editor,
+   import_heightmap,
+   import_texture_weight_map,
+   resize,
+   crop,
+   extend,
+   water_editor,
+   foliage_editor
+};
+
 enum class terrain_edit_target : uint8 { height, texture, color };
 
 enum class terrain_brush_mode : uint8 {
@@ -369,14 +381,7 @@ private:
    bool _about_window_open = false;
    bool _render_env_map_open = false;
    bool _measurement_tool_open = false;
-   bool _terrain_editor_open = false;
-   bool _terrain_import_heightmap_open = false;
-   bool _terrain_import_texture_weight_map_open = false;
-   bool _terrain_resize_open = false;
-   bool _terrain_crop_open = false;
-   bool _terrain_extend_open = false;
-   bool _water_editor_open = false;
-   bool _foliage_editor_open = false;
+   terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;

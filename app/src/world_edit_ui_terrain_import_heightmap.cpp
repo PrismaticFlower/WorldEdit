@@ -16,7 +16,9 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
 
-   if (ImGui::Begin("Import Heightmap", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+   bool open = _terrain_edit_tool == terrain_edit_tool::import_heightmap;
+
+   if (ImGui::Begin("Import Heightmap", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
       bool terrain_needs_update = false;
 
       if (ImGui::Button("Import Heightmap", {ImGui::CalcItemWidth(), 0.0f})) {
@@ -135,7 +137,7 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
       ImGui::Separator();
 
       if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
-         _terrain_import_heightmap_open = false;
+         open = false;
          _terrain_import_heightmap_context = {};
          _edit_stack_world.close_last();
       }
@@ -231,6 +233,8 @@ void world_edit::ui_show_terrain_import_height_map() noexcept
          _edit_stack_world.apply(edits::make_bundle(std::move(bundle)), _edit_context);
       }
    }
+
+   if (not open) _terrain_edit_tool = terrain_edit_tool::none;
 
    ImGui::End();
 }
