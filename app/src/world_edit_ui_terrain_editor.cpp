@@ -648,6 +648,27 @@ void world_edit::ui_show_terrain_editor() noexcept
          }
 
          ImGui::SetItemTooltip("Also called 'Tilerange' in Zero Editor.");
+
+         const bool fill =
+            ImGui::Button("Fill Terrain", {ImGui::CalcItemWidth(), 0.0f});
+         const bool clear =
+            ImGui::Button("Clear Terrain", {ImGui::CalcItemWidth(), 0.0f});
+
+         if (fill or clear) {
+            container::dynamic_array_2d<uint8> weight_map{_world.terrain.length,
+                                                          _world.terrain.length};
+
+            if (fill) {
+               for (uint8& v : weight_map) v = 0xff;
+            }
+            else if (clear) {
+               for (uint8& v : weight_map) v = 0x0;
+            }
+
+            _edit_stack_world.apply(edits::make_set_terrain_area(0, 0, texture,
+                                                                 std::move(weight_map)),
+                                    _edit_context);
+         }
       }
 
       if (ImGui::CollapsingHeader("Terrain Settings")) {
