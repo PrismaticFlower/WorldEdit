@@ -71,6 +71,7 @@ enum class terrain_edit_tool : uint8 {
    editor,
    import_heightmap,
    import_texture_weight_map,
+   import_color_map,
    resize,
    crop,
    extend,
@@ -201,6 +202,8 @@ private:
    void ui_show_terrain_import_height_map() noexcept;
 
    void ui_show_terrain_import_texture_weight_map() noexcept;
+
+   void ui_show_terrain_import_color_map() noexcept;
 
    void ui_show_terrain_resize() noexcept;
 
@@ -585,6 +588,12 @@ private:
 
       int weight_map_index = -1;
    } _terrain_import_texture_weight_map_context;
+
+   struct terrain_import_color_map_context {
+      std::string error_message;
+
+      bool as_light_map = false;
+   } _terrain_import_color_map_context;
 
    struct terrain_resize_context {
       int32 new_length = 0;

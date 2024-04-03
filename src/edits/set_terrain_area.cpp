@@ -73,6 +73,25 @@ struct access_color_map {
    }
 };
 
+struct access_light_map {
+   access_light_map() = default;
+
+   auto target_map(world::terrain& terrain) -> container::dynamic_array_2d<uint32>&
+   {
+      return terrain.light_map;
+   }
+
+   void mark_dirty(world::terrain& terrain, dirty_rect rect)
+   {
+      terrain.light_map_dirty.add(rect);
+   }
+
+   bool can_coalesce(const access_light_map&) const noexcept
+   {
+      return true;
+   }
+};
+
 struct access_water_map {
    access_water_map() = default;
 
@@ -359,6 +378,20 @@ auto make_set_terrain_area_color_map(const uint32 rect_start_x, const uint32 rec
                             .bottom = static_cast<uint32>(
                                rect_start_y + rect_color_map.height())},
                    .map = std::move(rect_color_map)});
+}
+
+auto make_set_terrain_area_light_map(const uint32 rect_start_x, const uint32 rect_start_y,
+                                     container::dynamic_array_2d<uint32> rect_light_map)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_terrain_area<uint32, access_light_map>>(
+      area<uint32>{.rect = {.left = rect_start_x,
+                            .top = rect_start_y,
+                            .right = static_cast<uint32>(rect_start_x +
+                                                         rect_light_map.width()),
+                            .bottom = static_cast<uint32>(
+                               rect_start_y + rect_light_map.height())},
+                   .map = std::move(rect_light_map)});
 }
 
 auto make_set_terrain_area_water_map(const uint32 rect_start_x, const uint32 rect_start_y,

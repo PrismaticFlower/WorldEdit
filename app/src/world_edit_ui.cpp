@@ -111,6 +111,9 @@ void world_edit::update_ui() noexcept
    else if (_terrain_edit_tool == terrain_edit_tool::import_texture_weight_map) {
       ui_show_terrain_import_texture_weight_map();
    }
+   else if (_terrain_edit_tool == terrain_edit_tool::import_color_map) {
+      ui_show_terrain_import_color_map();
+   }
    else if (_terrain_edit_tool == terrain_edit_tool::resize) {
       ui_show_terrain_resize();
    }

@@ -15,6 +15,8 @@ void terrain::untracked_fill_dirty_rects() noexcept
 
    color_map_dirty.add({0, 0, length_u32, length_u32});
 
+   light_map_dirty.add({0, 0, length_u32, length_u32});
+
    water_map_dirty.add({0, 0, length_u32 / 4u, length_u32 / 4u});
 
    foliage_map_dirty.add({0, 0, length_u32 / 2u, length_u32 / 2u});
@@ -29,6 +31,8 @@ void terrain::untracked_clear_dirty_rects() noexcept
    }
 
    color_map_dirty.clear();
+
+   light_map_dirty.clear();
 
    water_map_dirty.clear();
 

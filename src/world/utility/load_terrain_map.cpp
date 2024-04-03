@@ -279,4 +279,139 @@ auto load_texture_weight_map(const std::filesystem::path& file_path)
    return weight_map;
 }
 
+auto load_color_map(const std::filesystem::path& file_path)
+   -> container::dynamic_array_2d<uint32>
+{
+   container::dynamic_array_2d<uint32> color_map;
+
+   if (string::iequals(file_path.extension().string(), ".tga")) {
+      DirectX::ScratchImage image;
+
+      if (FAILED(DirectX::LoadFromTGAFile(file_path.c_str(), nullptr, image))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      if (image.GetMetadata().width != image.GetMetadata().height) {
+         throw terrain_map_load_error{
+            "Image must be a square (Width and Height must be equal)."};
+      }
+
+      if (not std::has_single_bit(image.GetMetadata().width)) {
+         throw terrain_map_load_error{
+            "Image width and height must be a power of 2."};
+      }
+
+      if (image.GetMetadata().width > 1024) {
+         throw terrain_map_load_error{
+            "Image width and height are too large. The "
+            "max terrain length is 1024."};
+      }
+
+      if (image.GetMetadata().format != DXGI_FORMAT_B8G8R8A8_UNORM or
+          image.GetMetadata().format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB) {
+         DirectX::ScratchImage converted_image;
+
+         if (FAILED(DirectX::Convert(*image.GetImage(0, 0, 0), DXGI_FORMAT_B8G8R8A8_UNORM,
+                                     DirectX::TEX_FILTER_FORCE_NON_WIC, 1.0f,
+                                     converted_image))) {
+            throw terrain_map_load_error{"Failed to convert image format."};
+         }
+
+         std::swap(converted_image, image);
+      }
+
+      color_map = container::dynamic_array_2d<uint32>{image.GetMetadata().width,
+                                                      image.GetMetadata().width};
+
+      for (std::size_t y = 0; y < image.GetMetadata().height; ++y) {
+         std::memcpy(&color_map[{0, static_cast<std::ptrdiff_t>(y)}],
+                     image.GetImage(0, 0, 0)->pixels +
+                        (image.GetImage(0, 0, 0)->rowPitch * y),
+                     image.GetMetadata().width * sizeof(uint32));
+      }
+   }
+   else if (string::iequals(file_path.extension().string(), ".png")) {
+      if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      const auto cleanup = wil::scope_exit([] { CoUninitialize(); });
+
+      utility::com_ptr<IWICImagingFactory> factory;
+
+      if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                                  IID_PPV_ARGS(factory.clear_and_assign())))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      utility::com_ptr<IWICBitmapDecoder> decoder;
+
+      if (FAILED(factory->CreateDecoderFromFilename(file_path.c_str(), nullptr, GENERIC_READ,
+                                                    WICDecodeMetadataCacheOnDemand,
+                                                    decoder.clear_and_assign()))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      utility::com_ptr<IWICBitmapFrameDecode> frame_decode;
+
+      if (FAILED(decoder->GetFrame(0, frame_decode.clear_and_assign()))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      WICPixelFormatGUID loaded_format{};
+
+      if (FAILED(frame_decode->GetPixelFormat(&loaded_format))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      utility::com_ptr<IWICFormatConverter> format_converter;
+
+      if (FAILED(factory->CreateFormatConverter(format_converter.clear_and_assign()))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      if (FAILED(format_converter->Initialize(frame_decode.get(), GUID_WICPixelFormat32bppBGRA,
+                                              WICBitmapDitherTypeNone, nullptr,
+                                              0.0f, WICBitmapPaletteTypeCustom))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      uint32 width = 0;
+      uint32 height = 0;
+
+      if (FAILED(format_converter->GetSize(&width, &height))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+
+      if (width != height) {
+         throw terrain_map_load_error{
+            "Image must be a square (Width and Height must be equal)."};
+      }
+
+      if (not std::has_single_bit(width)) {
+         throw terrain_map_load_error{
+            "Image width and height must be a power of 2."};
+      }
+
+      if (width > 1024) {
+         throw terrain_map_load_error{
+            "Image width and height are too large. The "
+            "max terrain length is 1024."};
+      }
+
+      color_map = container::dynamic_array_2d<uint32>{width, width};
+
+      if (FAILED(format_converter->CopyPixels(nullptr, width * sizeof(uint32),
+                                              width * width * sizeof(uint32),
+                                              reinterpret_cast<BYTE*>(color_map.data())))) {
+         throw terrain_map_load_error{"Failed to load image."};
+      }
+   }
+   else {
+      throw terrain_map_load_error{"Unsupported file type."};
+   }
+
+   return color_map;
+}
+
 }

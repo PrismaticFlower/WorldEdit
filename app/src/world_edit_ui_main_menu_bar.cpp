@@ -220,6 +220,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _edit_stack_world.close_last();
          }
 
+         if (ImGui::MenuItem("Import Terrain Color Map")) {
+            _terrain_edit_tool = terrain_edit_tool::import_color_map;
+            _terrain_import_color_map_context = {};
+            _edit_stack_world.close_last();
+         }
+
          if (ImGui::MenuItem("Resize Terrain")) {
             _terrain_edit_tool = terrain_edit_tool::resize;
             _terrain_resize_context = {};

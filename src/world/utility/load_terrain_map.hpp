@@ -19,4 +19,7 @@ auto load_heightmap(const std::filesystem::path& file_path)
 auto load_texture_weight_map(const std::filesystem::path& file_path)
    -> container::dynamic_array_2d<uint8>;
 
+auto load_color_map(const std::filesystem::path& file_path)
+   -> container::dynamic_array_2d<uint32>;
+
 }
