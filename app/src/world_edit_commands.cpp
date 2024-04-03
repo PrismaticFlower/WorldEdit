@@ -509,6 +509,11 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("terrain.clear_edit_tool"s,
                  [this] { _terrain_edit_tool = terrain_edit_tool::none; });
+   _commands.add("terrain.finish_import_heightmap"s, [this] {
+      _terrain_edit_tool = terrain_edit_tool::none;
+      _terrain_import_heightmap_context = {};
+      _edit_stack_world.close_last();
+   });
 
    _commands.add("measurement_tool.close"s,
                  [this] { _measurement_tool_open = false; });
@@ -983,42 +988,6 @@ void world_edit::initialize_hotkeys() noexcept
    });
 
    _hotkeys.add_set({
-      .name = "Terrain Editing (Resize)",
-      .activated =
-         [this] { return _terrain_edit_tool == terrain_edit_tool::resize; },
-      .default_hotkeys =
-         {
-            {"Cancel", "terrain.clear_edit_tool", {.key = key::escape}},
-         },
-
-      .hidden = true,
-   });
-
-   _hotkeys.add_set({
-      .name = "Terrain Editing (Crop)",
-      .activated =
-         [this] { return _terrain_edit_tool == terrain_edit_tool::crop; },
-      .default_hotkeys =
-         {
-            {"Cancel", "terrain.clear_edit_tool", {.key = key::escape}},
-         },
-
-      .hidden = true,
-   });
-
-   _hotkeys.add_set({
-      .name = "Terrain Editing (Extend)",
-      .activated =
-         [this] { return _terrain_edit_tool == terrain_edit_tool::extend; },
-      .default_hotkeys =
-         {
-            {"Cancel", "terrain.clear_edit_tool", {.key = key::escape}},
-         },
-
-      .hidden = true,
-   });
-
-   _hotkeys.add_set({
       .name = "Water Editing",
       .description = "Active while the water editor is open."s,
       .activated =
@@ -1029,7 +998,6 @@ void world_edit::initialize_hotkeys() noexcept
             {"Increase Brush Size", "water.increase_brush_size", {.key = key::mouse_wheel_forward}},
             {"Decrease Brush Size", "water.decrease_brush_size", {.key = key::mouse_wheel_back}},
             {"Cycle Brush Mode", "water.cycle_brush_mode", {.key = key::z}},
-            {"Close Editor", "terrain.clear_edit_tool", {.key = key::escape}},
             {"Flood Fill", "water.toggle_flood_fill", {.key = key::x}},
          },
    });
@@ -1051,8 +1019,33 @@ void world_edit::initialize_hotkeys() noexcept
             {"Set Layer 2", "foliage.set_layer1", {.key = key::_2}},
             {"Set Layer 3", "foliage.set_layer2", {.key = key::_3}},
             {"Set Layer 4", "foliage.set_layer3", {.key = key::_4}},
-            {"Close Editor", "terrain.clear_edit_tool", {.key = key::escape}},
          },
+   });
+
+   _hotkeys.add_set({
+      .name = "Terrain Edit Tool Clear",
+      .activated =
+         [this] { return _terrain_edit_tool != terrain_edit_tool::none; },
+      .default_hotkeys =
+         {
+            {"Clear", "terrain.clear_edit_tool", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Terrain Editing (Import Heightmap)",
+      .activated =
+         [this] {
+            return _terrain_edit_tool == terrain_edit_tool::import_heightmap;
+         },
+      .default_hotkeys =
+         {
+            {"Finish", "terrain.finish_import_heightmap", {.key = key::escape}},
+         },
+
+      .hidden = true,
    });
 
    _hotkeys.add_set({
