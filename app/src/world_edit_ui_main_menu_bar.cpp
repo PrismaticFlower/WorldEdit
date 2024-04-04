@@ -247,7 +247,7 @@ void world_edit::ui_show_main_menu_bar() noexcept
             _terrain_extend_context = {};
          }
 
-         ImGui::SetItemTooltip("Extent the terrain, increasing it's size while "
+         ImGui::SetItemTooltip("Extend the terrain, increasing it's size while "
                                "keeping the current terrain area the same.");
 
          ImGui::Separator();
