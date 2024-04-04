@@ -141,7 +141,7 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
 
             ImGui::ColorEdit4("Hintnode", &graphics.hintnode_color.x);
 
-            ImGui::ColorEdit4("Bundary", &graphics.boundary_color.x);
+            ImGui::ColorEdit4("Boundary", &graphics.boundary_color.x);
 
             ImGui::ColorEdit3("Terrain Grid Color", &graphics.terrain_grid_color.x);
 
