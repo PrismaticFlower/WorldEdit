@@ -77,6 +77,13 @@ void world_edit::initialize_commands() noexcept
 
       if (_orbit_camera_active) setup_orbit_camera();
    });
+   _commands.add("camera.reset"s, [this] {
+      _orbit_camera_active = false;
+      _camera.position(float3{});
+      _camera.pitch(0.0f);
+      _camera.yaw(0.0f);
+      _camera.zoom(1.0f);
+   });
 
    _commands.add("show_create_entity"s,
                  [this] { ImGui::OpenPopup("Create Entity"); });
@@ -704,6 +711,8 @@ void world_edit::initialize_hotkeys() noexcept
            {.key = key::t, .modifiers = {.ctrl = true, .shift = true}}},
 
           {"Render Environment Map", "show.env_map_renderer", {.key = key::backslash}},
+
+          {"Reset Camera", "camera.reset", {.key = key::home}},
 
           {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
        }});
