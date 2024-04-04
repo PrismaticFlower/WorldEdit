@@ -215,6 +215,33 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                graphics.line_width = std::round(graphics.line_width * 4.0f) / 4.0f;
             }
 
+            ImGui::SeparatorText("Path Tessellation");
+
+            ImGui::SliderFloat("Catmull-Rom Spline Target Tessellation",
+                               &graphics.path_node_cr_spline_target_tessellation,
+                               1.0f, 128.0f, "%.0f", ImGuiSliderFlags_AlwaysClamp);
+
+            ImGui::SetItemTooltip(
+               "The tessellation when rendering paths with "
+               "Catmull-Rom splines. Lower values produce more jagged "
+               "visualizers while higher values produce more accurate "
+               "visualizers but are slower to draw.");
+
+            if (ImGui::SliderFloat("Catmull-Rom Spline Max Tessellation",
+                                   &graphics.path_node_cr_spline_max_tessellation, 1.0f,
+                                   512.0f, "%.0f", ImGuiSliderFlags_AlwaysClamp)) {
+               graphics.path_node_cr_spline_max_tessellation =
+                  std::floor(graphics.path_node_cr_spline_max_tessellation);
+            }
+
+            ImGui::SetItemTooltip(
+               "The max tessellation when rendering paths with "
+               "Catmull-Rom splines. This clamps how many lines can be used to "
+               "approximate the Catmull-Rom spline.\n\nLowering it further "
+               "clamp "
+               "the maximum cost of drawing the paths at the cost of a "
+               "potentially more jagged visualizer.");
+
             ImGui::SeparatorText("Optional Visualizers");
 
             ImGui::Checkbox("Visualize Terrain Cutters",

@@ -85,6 +85,8 @@ auto load(const std::string_view path) -> settings
             setting_entry(path_node_color);
             setting_entry(path_node_outline_color);
             setting_entry(path_node_connection_color);
+            setting_entry(path_node_cr_spline_target_tessellation);
+            setting_entry(path_node_cr_spline_max_tessellation);
             setting_entry(path_node_orientation_color);
             setting_entry(region_color);
             setting_entry(barrier_outline_color);
@@ -184,6 +186,8 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(path_node_color));
       write(file, name_value(path_node_outline_color));
       write(file, name_value(path_node_connection_color));
+      write(file, name_value(path_node_cr_spline_target_tessellation));
+      write(file, name_value(path_node_cr_spline_max_tessellation));
       write(file, name_value(path_node_orientation_color));
       write(file, name_value(region_color));
       write(file, name_value(barrier_outline_color));

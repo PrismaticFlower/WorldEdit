@@ -1165,11 +1165,81 @@ void renderer_impl::draw_world_meta_objects(
             const uint32 path_node_connection_color = utility::pack_srgb_bgra(
                float4{settings.path_node_connection_color, 1.0f});
 
-            for (std::size_t i = 0; i < (path.nodes.size() - 1); ++i) {
-               const float3 a = path.nodes[i].position;
-               const float3 b = path.nodes[i + 1].position;
+            bool draw_linear_spline = true;
 
-               _meta_draw_batcher.add_line_solid(a, b, path_node_connection_color);
+            if (path.type == world::path_type::patrol) {
+               draw_linear_spline =
+                  path.spline_type != world::path_spline_type::catmull_rom;
+            }
+            else if (path.type == world::path_type::entity_follow) {
+               draw_linear_spline = false;
+            }
+
+            if (draw_linear_spline) {
+               for (std::size_t i = 0; i < (path.nodes.size() - 1); ++i) {
+                  const float3 a = path.nodes[i].position;
+                  const float3 b = path.nodes[i + 1].position;
+
+                  const math::bounding_box bbox{.min = min(a, b), .max = max(a, b)};
+
+                  if (not intersects(view_frustum, bbox)) continue;
+
+                  _meta_draw_batcher.add_line_solid(a, b, path_node_connection_color);
+               }
+            }
+            else {
+               const std::ptrdiff_t min_node = 0;
+               const std::ptrdiff_t max_node = std::ssize(path.nodes) - 1;
+
+               for (std::ptrdiff_t i = 0; i < max_node; ++i) {
+                  const float3 a =
+                     path.nodes[std::clamp(i - 1, min_node, max_node)].position;
+                  const float3 b =
+                     path.nodes[std::clamp(i, min_node, max_node)].position;
+                  const float3 c =
+                     path.nodes[std::clamp(i + 1, min_node, max_node)].position;
+                  const float3 d =
+                     path.nodes[std::clamp(i + 2, min_node, max_node)].position;
+
+                  auto catmull_rom = [](const float3 a, const float3 b, const float3 c,
+                                        const float3 d, const float t) -> float3 {
+                     const float t2 = t * t;
+                     const float t3 = t * t * t;
+
+                     return 0.5f * ((2.0f * b) + (-a + c) * t +
+                                    (2.0f * a - 5.0f * b + 4.0f * c - d) * t2 +
+                                    (-a + 3.0f * b - 3.0f * c + d) * t3);
+                  };
+
+                  const float3 midpoint = catmull_rom(a, b, c, d, 0.5f);
+
+                  const math::bounding_box bbox{.min = min(b, min(c, midpoint)),
+                                                .max = max(b, max(c, midpoint))};
+
+                  if (not intersects(view_frustum, bbox)) continue;
+
+                  const float segment_length = distance(b, c);
+                  const float camera_scale = distance(camera.position(), midpoint) *
+                                             camera.projection_matrix()[0].x;
+
+                  const float steps_target =
+                     settings.path_node_cr_spline_target_tessellation;
+                  const float max_steps = settings.path_node_cr_spline_max_tessellation;
+
+                  float steps = std::floor(
+                     ((1.0f / camera_scale) * steps_target) * segment_length);
+
+                  steps = std::clamp(steps, 1.0f, max_steps);
+
+                  const float inv_steps = 1.0f / steps;
+
+                  for (float v = 0.0f; v < steps; ++v) {
+                     _meta_draw_batcher
+                        .add_line_solid(catmull_rom(a, b, c, d, v * inv_steps),
+                                        catmull_rom(a, b, c, d, (v + 1.0f) * inv_steps),
+                                        path_node_connection_color);
+                  }
+               }
             }
          }
       };
