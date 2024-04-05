@@ -30,7 +30,6 @@ auto get_region_type(const std::string_view description) noexcept -> region_type
       string::split_first_of_exclusive(description, " ")[0];
 
    // clang-format off
-   if (string::istarts_with(type, "deathregion")) return region_type::deathregion;
    if (string::iequals(type, "soundstream")) return region_type::soundstream;
    if (string::iequals(type, "soundstatic")) return region_type::soundstatic;
    if (string::iequals(type, "soundspace")) return region_type::soundspace;
@@ -56,7 +55,6 @@ auto to_string(const region_type type) noexcept -> std::string
    switch (type) {
    default:
    case region_type::typeless: return "";
-   case region_type::deathregion: return "deathregion";
    case region_type::soundstream: return "soundstream";
    case region_type::soundstatic: return "soundstatic";
    case region_type::soundspace: return "soundspace";

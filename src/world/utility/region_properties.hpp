@@ -9,7 +9,6 @@ namespace we::world {
 
 enum class region_type {
    typeless,
-   deathregion,
    soundstream,
    soundstatic,
    soundspace,

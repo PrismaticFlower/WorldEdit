@@ -8,7 +8,6 @@ TEST_CASE("world utilities get_region_type tests", "[World][Utility]")
 {
    CHECK(get_region_type("cp1") == region_type::typeless);
    CHECK(get_region_type("") == region_type::typeless);
-   CHECK(get_region_type("deathregion1") == region_type::deathregion);
    CHECK(get_region_type("soundstream say_hello 1.00000") == region_type::soundstream);
    CHECK(get_region_type("soundstatic say_hello 1.00000") == region_type::soundstatic);
    CHECK(get_region_type("soundspace wow_space") == region_type::soundspace);

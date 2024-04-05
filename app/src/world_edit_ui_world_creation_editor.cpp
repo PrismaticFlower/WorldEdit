@@ -881,7 +881,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
              "Type", &region_type,
              {
                 enum_select_option{"Typeless", world::region_type::typeless},
-                enum_select_option{"Death Region", world::region_type::deathregion},
                 enum_select_option{"Sound Stream", world::region_type::soundstream},
                 enum_select_option{"Sound Static", world::region_type::soundstatic},
                 enum_select_option{"Sound Space", world::region_type::soundspace},
