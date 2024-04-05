@@ -221,23 +221,23 @@ private:
    gpu::unique_resource_handle _depth_stencil_texture =
       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                .flags = {.allow_depth_stencil = true},
-                               .format = DXGI_FORMAT_R24G8_TYPELESS,
+                               .format = DXGI_FORMAT_R32G8X24_TYPELESS,
                                .width = _swap_chain.width(),
                                .height = _swap_chain.height(),
                                .optimized_clear_value =
-                                  {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                  {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                    .depth_stencil = {.depth = 0.0f, .stencil = 0x0}}},
                               gpu::barrier_layout::direct_queue_shader_resource,
                               gpu::legacy_resource_state::all_shader_resource),
        _device.direct_queue};
    gpu::unique_dsv_handle _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
-                                         {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                         {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                           .dimension = gpu::dsv_dimension::texture2d}),
        _device.direct_queue};
    gpu::unique_resource_view _depth_stencil_srv =
       {_device.create_shader_resource_view(_depth_stencil_texture.get(),
-                                           {.format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS}),
+                                           {.format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS}),
        _device.direct_queue};
    gpu::unique_resource_handle _depth_minmax_buffer =
       {_device.create_buffer({.size = sizeof(float4),
@@ -653,11 +653,11 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
    gpu::unique_resource_handle env_map_depth_stencil_texture =
       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                .flags = {.allow_depth_stencil = true},
-                               .format = DXGI_FORMAT_R24G8_TYPELESS,
+                               .format = DXGI_FORMAT_R32G8X24_TYPELESS,
                                .width = super_sample_length,
                                .height = super_sample_length,
                                .optimized_clear_value =
-                                  {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                  {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                    .depth_stencil = {.depth = 0.0f, .stencil = 0x0}},
                                .debug_name = "Env Map Depth Stencil Target"},
                               gpu::barrier_layout::depth_stencil_write,
@@ -665,7 +665,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
        _device.direct_queue};
    gpu::unique_dsv_handle env_map_depth_stencil_view =
       {_device.create_depth_stencil_view(env_map_depth_stencil_texture.get(),
-                                         {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                         {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                           .dimension = gpu::dsv_dimension::texture2d}),
        _device.direct_queue};
 
@@ -926,24 +926,24 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
    _depth_stencil_texture =
       {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                .flags = {.allow_depth_stencil = true},
-                               .format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                               .format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                .width = _swap_chain.width(),
                                .height = _swap_chain.height(),
                                .optimized_clear_value =
-                                  {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                  {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                    .depth_stencil = {.depth = 0.0f, .stencil = 0x0}}},
                               gpu::barrier_layout::direct_queue_shader_resource,
                               gpu::legacy_resource_state::all_shader_resource),
        _device.direct_queue};
    _depth_stencil_view =
       {_device.create_depth_stencil_view(_depth_stencil_texture.get(),
-                                         {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                         {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                           .dimension = gpu::dsv_dimension::texture2d}),
        _device.direct_queue};
-   _depth_stencil_srv =
-      {_device.create_shader_resource_view(_depth_stencil_texture.get(),
-                                           {.format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS}),
-       _device.direct_queue};
+   _depth_stencil_srv = {_device.create_shader_resource_view(
+                            _depth_stencil_texture.get(),
+                            {.format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS}),
+                         _device.direct_queue};
 
    _light_clusters.update_render_resolution(width, height);
 }

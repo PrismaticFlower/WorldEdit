@@ -149,7 +149,7 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
 
                           .render_target_count = 1,
                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                          .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                          .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                           .debug_name = pipeline_name}),
                       device.direct_queue};
@@ -194,7 +194,7 @@ auto create_depth_prepass_pipelines(gpu::device& device, const std::string_view 
                     ? std::span<const gpu::input_element_desc>{mesh_input_layout}
                     : std::span<const gpu::input_element_desc>{mesh_input_layout_position_only},
 
-              .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+              .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
               .debug_name = pipeline_name}),
           device.direct_queue};
@@ -321,7 +321,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                      .render_target_count = 1,
                      .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                     .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                     .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                      .debug_name = "mesh_basic"sv}),
                  device.direct_queue};
@@ -339,7 +339,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                               .render_target_count = 1,
                               .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                              .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                              .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                               .debug_name = "mesh_basic_lighting"sv}),
                           device.direct_queue};
@@ -378,7 +378,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "mesh_wireframe"sv}),
        device.direct_queue};
@@ -402,7 +402,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "mesh_wireframe_doublesided"sv}),
        device.direct_queue};
@@ -415,7 +415,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                                 .rasterizer_state = rasterizer_cull_backfacing,
                                 .depth_stencil_state = depth_stencil_enabled,
 
-                                .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                 .debug_name = "terrain_depth_prepass"sv}),
                             device.direct_queue};
@@ -431,7 +431,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                         .render_target_count = 1,
                         .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                        .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                        .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                         .debug_name = "terrain_basic"sv}),
                     device.direct_queue};
@@ -447,7 +447,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                            .render_target_count = 1,
                            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                            .debug_name = "terrain_lighting"sv}),
                        device.direct_queue};
@@ -463,7 +463,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                          .render_target_count = 1,
                          .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                         .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                         .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                          .debug_name = "terrain_normal"sv}),
                      device.direct_queue};
@@ -480,7 +480,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                        .render_target_count = 1,
                        .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                       .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                       .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                        .debug_name = "terrain_grid"sv}),
                    device.direct_queue};
@@ -497,7 +497,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                               .render_target_count = 1,
                               .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                              .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                              .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                               .debug_name = "terrain_foliage_map"sv}),
                           device.direct_queue};
@@ -514,7 +514,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                 .render_target_count = 1,
                 .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                 .debug_name = "water"sv}),
             device.direct_queue};
@@ -532,7 +532,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                    .render_target_count = 1,
                    .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                   .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                   .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                    .debug_name = "sky_mesh"sv}),
                device.direct_queue};
@@ -550,7 +550,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                        .render_target_count = 1,
                        .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                       .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                       .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                        .debug_name = "grid_overlay"sv}),
                    device.direct_queue};
@@ -573,7 +573,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
               },
            .input_layout = std::span<const gpu::input_element_desc>{mesh_input_layout_position_only},
 
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "terrain_cut_mesh_mark"sv}),
        device.direct_queue};
@@ -598,7 +598,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
               },
            .input_layout = std::span<const gpu::input_element_desc>{mesh_input_layout_position_only},
 
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "terrain_cut_mesh_clear"sv}),
        device.direct_queue};
@@ -616,7 +616,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                           .render_target_count = 1,
                           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                          .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                          .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                           .debug_name = "meta_draw_shape"sv}),
                       device.direct_queue};
@@ -640,7 +640,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_shape_outlined"sv}),
        device.direct_queue};
@@ -664,7 +664,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_shape_wireframe"sv}),
        device.direct_queue};
@@ -682,7 +682,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                            .render_target_count = 1,
                            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                            .debug_name = "meta_draw_sphere"sv}),
                        device.direct_queue};
@@ -706,7 +706,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_sphere_wireframe"sv}),
        device.direct_queue};
@@ -725,7 +725,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_line_solid"sv}),
        device.direct_queue};
@@ -744,7 +744,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                                  .render_target_count = 1,
                                  .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                                 .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                                 .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                                  .debug_name = "meta_draw_line_overlay"sv}),
                              device.direct_queue};
@@ -762,7 +762,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                              .render_target_count = 1,
                              .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                             .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+                             .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                              .debug_name = "meta_draw_triangle"sv}),
                          device.direct_queue};
@@ -786,7 +786,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "meta_draw_triangle_wireframe"sv}),
        device.direct_queue};
@@ -809,7 +809,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
               },
            .input_layout = meta_draw_input_layout,
 
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "ai_overlay_shape"sv}),
        device.direct_queue};
@@ -832,7 +832,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-           .dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+           .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
            .debug_name = "ai_overlay_apply"sv}),
        device.direct_queue};
