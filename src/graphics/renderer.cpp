@@ -226,7 +226,7 @@ private:
                                .height = _swap_chain.height(),
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                   .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
+                                   .depth_stencil = {.depth = 0.0f, .stencil = 0x0}}},
                               gpu::barrier_layout::direct_queue_shader_resource,
                               gpu::legacy_resource_state::all_shader_resource),
        _device.direct_queue};
@@ -474,7 +474,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                          float4{0.0f, 0.0f, 0.0f, 1.0f});
    command_list.clear_depth_stencil_view(_depth_stencil_view.get(),
                                          {.clear_depth = true, .clear_stencil = true},
-                                         1.0f, 0x0);
+                                         0.0f, 0x0);
 
    command_list.rs_set_viewports(viewport);
    command_list.rs_set_scissor_rects(
@@ -658,7 +658,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                .height = super_sample_length,
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                   .depth_stencil = {.depth = 1.0f, .stencil = 0x0}},
+                                   .depth_stencil = {.depth = 0.0f, .stencil = 0x0}},
                                .debug_name = "Env Map Depth Stencil Target"},
                               gpu::barrier_layout::depth_stencil_write,
                               gpu::legacy_resource_state::depth_write),
@@ -753,7 +753,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                             float4{0.0f, 0.0f, 0.0f, 1.0f});
       command_list.clear_depth_stencil_view(env_map_depth_stencil_view.get(),
                                             {.clear_depth = true, .clear_stencil = true},
-                                            1.0f, 0x0);
+                                            0.0f, 0x0);
 
       command_list.rs_set_viewports(viewport);
       command_list.rs_set_scissor_rects(
@@ -931,7 +931,7 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
                                .height = _swap_chain.height(),
                                .optimized_clear_value =
                                   {.format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-                                   .depth_stencil = {.depth = 1.0f, .stencil = 0x0}}},
+                                   .depth_stencil = {.depth = 0.0f, .stencil = 0x0}}},
                               gpu::barrier_layout::direct_queue_shader_resource,
                               gpu::legacy_resource_state::all_shader_resource),
        _device.direct_queue};

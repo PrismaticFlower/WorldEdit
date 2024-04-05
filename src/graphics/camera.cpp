@@ -221,8 +221,8 @@ void camera::update() noexcept
       _projection_matrix[0].x = 1.0f / std::tan(fov * 0.5f);
       _projection_matrix[1].y = _projection_matrix[0].x * _aspect_ratio;
 
-      _projection_matrix[2].z = far_clip / (near_clip - far_clip);
-      _projection_matrix[3].z = near_clip * _projection_matrix[2].z;
+      _projection_matrix[2].z = near_clip / (far_clip - near_clip);
+      _projection_matrix[3].z = far_clip * near_clip / (far_clip - near_clip);
       _projection_matrix[2].w = -1.0f;
    }
    else {
@@ -236,12 +236,12 @@ void camera::update() noexcept
 
       const float view_width = _view_width / _zoom;
       const float view_height = view_width / _aspect_ratio;
-      const float z_range = 1.0f / (near_clip - far_clip);
+      const float z_range = 1.0f / (far_clip - near_clip);
 
       _projection_matrix[0].x = 2.0f / view_width;
       _projection_matrix[1].y = 2.0f / view_height;
       _projection_matrix[2].z = z_range;
-      _projection_matrix[3].z = z_range * near_clip;
+      _projection_matrix[3].z = far_clip * z_range;
    }
 
    _view_projection_matrix = _projection_matrix * _view_matrix;
@@ -257,7 +257,7 @@ auto make_camera_ray(const camera& camera, const float2 cursor_position,
 
    if (camera.projection() == camera_projection::perspective) {
 
-      float4 corner = float4{ndc_pos.x, ndc_pos.y, 1.0f, 1.0f};
+      float4 corner = float4{ndc_pos.x, ndc_pos.y, 0.0f, 1.0f};
 
       corner = camera.inv_view_projection_matrix() * corner;
       corner /= corner.w;
@@ -269,7 +269,7 @@ auto make_camera_ray(const camera& camera, const float2 cursor_position,
    }
    else {
       const float4 origin = camera.inv_view_projection_matrix() *
-                            float4{ndc_pos.x, ndc_pos.y, 0.0f, 1.0f};
+                            float4{ndc_pos.x, ndc_pos.y, 1.0f, 1.0f};
 
       return {.origin = float3{origin.x, origin.y, origin.z},
               .direction = transpose(camera.view_matrix()) * float3{0.0f, 0.0f, -1.0f}};

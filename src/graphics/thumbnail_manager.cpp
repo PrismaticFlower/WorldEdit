@@ -68,12 +68,12 @@ auto make_camera_info(const model& model) -> camera_info
 
    const float view_width = bounding_sphere_radius * 2.0f;
    const float view_height = bounding_sphere_radius * 2.0f;
-   const float z_range = 1.0f / (near_clip - far_clip);
+   const float z_range = 1.0f / (far_clip - near_clip);
 
    projection_matrix[0].x = 2.0f / view_width;
    projection_matrix[1].y = 2.0f / view_height;
    projection_matrix[2].z = z_range;
-   projection_matrix[3].z = z_range * near_clip;
+   projection_matrix[3].z = z_range * far_clip;
 
    const float4x4 view_projection_matrix = projection_matrix * view_matrix;
 
@@ -934,7 +934,7 @@ private:
       command_list.clear_render_target_view(_render_rtv.get(),
                                             float4{0.0f, 0.0f, 0.0f, 0.0f});
       command_list.clear_depth_stencil_view(_depth_dsv.get(),
-                                            {.clear_depth = true}, 1.0f, 0x0);
+                                            {.clear_depth = true}, 0.0f, 0x0);
 
       command_list.rs_set_viewports(
          gpu::viewport{.width = static_cast<float>(_thumbnail_length * aa_factor),
@@ -1278,7 +1278,7 @@ private:
                             .width = _thumbnail_length * aa_factor,
                             .height = _thumbnail_length * aa_factor,
                             .optimized_clear_value = {.format = DXGI_FORMAT_D16_UNORM,
-                                                      .depth_stencil = {.depth = 1.0f}},
+                                                      .depth_stencil = {.depth = 0.0f}},
                             .debug_name = "Thumbnails Depth Buffer"},
                            gpu::barrier_layout::depth_stencil_write,
                            gpu::legacy_resource_state::depth_write),

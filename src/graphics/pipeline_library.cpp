@@ -49,7 +49,7 @@ constexpr gpu::rasterizer_state_desc rasterizer_line_antialiased = {
 
 constexpr gpu::depth_stencil_state_desc depth_stencil_enabled = {
    .depth_test_enabled = true,
-   .depth_test_func = gpu::comparison_func::less_equal,
+   .depth_test_func = gpu::comparison_func::greater_equal,
 };
 
 constexpr gpu::depth_stencil_state_desc depth_stencil_readonly_equal = {
@@ -143,7 +143,7 @@ auto create_material_pipelines(gpu::device& device, const std::string_view name_
 
                           .blend_state = transparent ? blend_premult_alpha : blend_disabled,
                           .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
-                          .depth_stencil_state = transparent ? depth_stencil_readonly_less_equal
+                          .depth_stencil_state = transparent ? depth_stencil_readonly_greater_equal
                                                              : depth_stencil_readonly_equal,
                           .input_layout = mesh_input_layout,
 
@@ -233,7 +233,8 @@ auto create_shadow_pipelines(gpu::device& device, const std::string_view name_ba
                                           : std::span<const std::byte>{},
 
               .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
-              .depth_stencil_state = depth_stencil_enabled,
+              .depth_stencil_state = {.depth_test_enabled = true,
+                                      .depth_test_func = gpu::comparison_func::less_equal},
               .input_layout =
                  alpha_cutout
                     ? std::span<const gpu::input_element_desc>{mesh_input_layout}
@@ -280,7 +281,7 @@ auto create_thumbnail_mesh_pipelines(gpu::device& device,
 
               .blend_state = transparent ? blend_premult_alpha : blend_disabled,
               .rasterizer_state = doublesided ? rasterizer_cull_none : rasterizer_cull_backfacing,
-              .depth_stencil_state = transparent ? depth_stencil_readonly_less_equal
+              .depth_stencil_state = transparent ? depth_stencil_readonly_greater_equal
                                                  : depth_stencil_enabled,
               .input_layout = mesh_input_layout,
 
@@ -372,7 +373,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_backfacing,
-           .depth_stencil_state = depth_stencil_readonly_less_equal,
+           .depth_stencil_state = depth_stencil_readonly_greater_equal,
            .input_layout = mesh_input_layout_position_only,
 
            .render_target_count = 1,
@@ -396,7 +397,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_none,
-           .depth_stencil_state = depth_stencil_readonly_less_equal,
+           .depth_stencil_state = depth_stencil_readonly_greater_equal,
            .input_layout = mesh_input_layout_position_only,
 
            .render_target_count = 1,
@@ -509,7 +510,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                 .blend_state = blend_alpha,
                 .rasterizer_state = rasterizer_cull_none,
-                .depth_stencil_state = depth_stencil_readonly_less_equal,
+                .depth_stencil_state = depth_stencil_readonly_greater_equal,
 
                 .render_target_count = 1,
                 .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
@@ -526,7 +527,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                    .blend_state = blend_premult_alpha,
                    .rasterizer_state = rasterizer_cull_backfacing,
-                   .depth_stencil_state = depth_stencil_readonly_less_equal,
+                   .depth_stencil_state = depth_stencil_readonly_greater_equal,
                    .input_layout = mesh_input_layout,
 
                    .render_target_count = 1,
@@ -544,8 +545,8 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                        .blend_state = blend_premult_alpha,
                        .rasterizer_state = {.cull_mode = gpu::cull_mode::none,
-                                            .depth_bias = -200},
-                       .depth_stencil_state = depth_stencil_readonly_less_equal,
+                                            .depth_bias = 200},
+                       .depth_stencil_state = depth_stencil_readonly_greater_equal,
 
                        .render_target_count = 1,
                        .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
@@ -564,7 +565,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .depth_stencil_state =
               {
                  .depth_test_enabled = true,
-                 .depth_test_func = gpu::comparison_func::less_equal,
+                 .depth_test_func = gpu::comparison_func::greater_equal,
                  .write_depth = false,
                  .stencil_enabled = true,
                  .stencil_front_face = {.depth_fail_op = gpu::stencil_op::decr},
@@ -610,7 +611,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                           .blend_state = blend_additive,
                           .rasterizer_state = rasterizer_cull_backfacing,
-                          .depth_stencil_state = depth_stencil_readonly_less_equal,
+                          .depth_stencil_state = depth_stencil_readonly_greater_equal,
                           .input_layout = meta_draw_input_layout,
 
                           .render_target_count = 1,
@@ -658,7 +659,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_backfacing,
-           .depth_stencil_state = depth_stencil_readonly_less_equal,
+           .depth_stencil_state = depth_stencil_readonly_greater_equal,
            .input_layout = meta_draw_input_layout,
 
            .render_target_count = 1,
@@ -676,7 +677,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                            .blend_state = blend_additive,
                            .rasterizer_state = rasterizer_cull_backfacing,
-                           .depth_stencil_state = depth_stencil_readonly_less_equal,
+                           .depth_stencil_state = depth_stencil_readonly_greater_equal,
                            .input_layout = meta_draw_input_layout,
 
                            .render_target_count = 1,
@@ -700,7 +701,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_backfacing,
-           .depth_stencil_state = depth_stencil_readonly_less_equal,
+           .depth_stencil_state = depth_stencil_readonly_greater_equal,
            .input_layout = meta_draw_input_layout,
 
            .render_target_count = 1,
@@ -718,8 +719,8 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .ps_bytecode = shader_library["meta_draw_linePS"sv],
 
            .blend_state = blend_alpha,
-           .rasterizer_state = {.cull_mode = gpu::cull_mode::none, .depth_bias = -500},
-           .depth_stencil_state = depth_stencil_readonly_less_equal,
+           .rasterizer_state = {.cull_mode = gpu::cull_mode::none, .depth_bias = 500},
+           .depth_stencil_state = depth_stencil_readonly_greater_equal,
            .primitive_type = gpu::primitive_type::triangle,
 
            .render_target_count = 1,
@@ -756,7 +757,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                              .blend_state = blend_additive,
                              .rasterizer_state = rasterizer_cull_backfacing,
-                             .depth_stencil_state = depth_stencil_readonly_less_equal,
+                             .depth_stencil_state = depth_stencil_readonly_greater_equal,
                              .input_layout = meta_draw_primitive_input_layout,
 
                              .render_target_count = 1,
@@ -780,7 +781,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
            .blend_state = blend_alpha,
            .rasterizer_state = rasterizer_cull_backfacing,
-           .depth_stencil_state = depth_stencil_readonly_less_equal,
+           .depth_stencil_state = depth_stencil_readonly_greater_equal,
            .input_layout = meta_draw_primitive_input_layout,
 
            .render_target_count = 1,
@@ -800,7 +801,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .depth_stencil_state =
               {
                  .depth_test_enabled = true,
-                 .depth_test_func = gpu::comparison_func::less_equal,
+                 .depth_test_func = gpu::comparison_func::greater_equal,
                  .write_depth = false,
                  .stencil_enabled = true,
                  .stencil_front_face = {.depth_fail_op = gpu::stencil_op::decr},

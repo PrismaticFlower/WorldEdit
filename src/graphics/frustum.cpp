@@ -36,17 +36,17 @@ frustum::frustum(const float4x4& inv_view_projection_matrix,
 {
    const container::enum_array<float4, frustum_corner> corners_proj =
       container::make_enum_array<float4, frustum_corner>(
-         {{frustum_corner::bottom_left_near, {ndc_min.x, ndc_min.y, ndc_min.z, 1.0f}},
-          {frustum_corner::bottom_right_near, {ndc_max.x, ndc_min.y, ndc_min.z, 1.0f}},
+         {{frustum_corner::bottom_left_near, {ndc_min.x, ndc_min.y, ndc_max.z, 1.0f}},
+          {frustum_corner::bottom_right_near, {ndc_max.x, ndc_min.y, ndc_max.z, 1.0f}},
 
-          {frustum_corner::top_left_near, {ndc_min.x, ndc_max.y, ndc_min.z, 1.0f}},
-          {frustum_corner::top_right_near, {ndc_max.x, ndc_max.y, ndc_min.z, 1.0f}},
+          {frustum_corner::top_left_near, {ndc_min.x, ndc_max.y, ndc_max.z, 1.0f}},
+          {frustum_corner::top_right_near, {ndc_max.x, ndc_max.y, ndc_max.z, 1.0f}},
 
-          {frustum_corner::bottom_left_far, {ndc_min.x, ndc_min.y, ndc_max.z, 1.0f}},
-          {frustum_corner::bottom_right_far, {ndc_max.x, ndc_min.y, ndc_max.z, 1.0f}},
+          {frustum_corner::bottom_left_far, {ndc_min.x, ndc_min.y, ndc_min.z, 1.0f}},
+          {frustum_corner::bottom_right_far, {ndc_max.x, ndc_min.y, ndc_min.z, 1.0f}},
 
-          {frustum_corner::top_left_far, {ndc_min.x, ndc_max.y, ndc_max.z, 1.0f}},
-          {frustum_corner::top_right_far, {ndc_max.x, ndc_max.y, ndc_max.z, 1.0f}}});
+          {frustum_corner::top_left_far, {ndc_min.x, ndc_max.y, ndc_min.z, 1.0f}},
+          {frustum_corner::top_right_far, {ndc_max.x, ndc_max.y, ndc_min.z, 1.0f}}});
 
    for (std::size_t i = 0; i < corners.size(); ++i) {
       const float4 position = inv_view_projection_matrix * corners_proj[i];

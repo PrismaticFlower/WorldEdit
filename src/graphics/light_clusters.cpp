@@ -737,7 +737,7 @@ void light_clusters::draw_shadow_maps(
    for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
       auto& shadow_camera = _sun_shadow_cascades[cascade_index];
 
-      frustum shadow_frustum{shadow_camera.inv_view_projection_matrix()};
+      frustum shadow_frustum{shadow_camera.inv_view_projection_matrix(), 1.0f, 0.0f};
 
       cull_objects_shadow_cascade_avx2(shadow_frustum, meshes.bbox.min.x,
                                        meshes.bbox.min.y, meshes.bbox.min.z,

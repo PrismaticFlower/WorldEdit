@@ -11,7 +11,7 @@ static Texture2D depth_texture = Texture2DHeap[input.depth_srv];
 
 RWByteAddressBuffer output : register(u0);
 
-const static float clear_depth = 1.0f;
+const static float clear_depth = 0.0f;
 
 groupshared uint shared_min_depth;
 groupshared uint shared_max_depth;
@@ -22,7 +22,7 @@ groupshared uint shared_max_depth;
 void main(uint2 DTid : SV_DispatchThreadID, uint group_index : SV_GroupIndex) { // clang-format on
    if (group_index == 0) {
       shared_min_depth = asuint(1.0);
-      shared_max_depth = 0.0;
+      shared_max_depth = asuint(0.0);
    }
 
    GroupMemoryBarrierWithGroupSync();
