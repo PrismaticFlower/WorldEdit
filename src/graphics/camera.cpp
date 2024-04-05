@@ -249,6 +249,14 @@ void camera::update() noexcept
    _inv_view_projection_matrix = inverse(_view_projection_matrix);
 }
 
+auto unproject_depth_value(const camera& camera, const float depth) noexcept -> float
+{
+   const float near_clip = camera.near_clip();
+   const float far_clip = camera.far_clip();
+
+   return -((far_clip * near_clip) / (depth * (far_clip * near_clip) + near_clip));
+}
+
 auto make_camera_ray(const camera& camera, const float2 cursor_position,
                      const float2 window_size) noexcept -> camera_ray
 {

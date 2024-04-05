@@ -101,6 +101,8 @@ private:
    camera_projection _projection = camera_projection::perspective;
 };
 
+auto unproject_depth_value(const camera& camera, const float depth) noexcept -> float;
+
 auto make_camera_ray(const camera& camera, const float2 cursor_position,
                      const float2 window_size) noexcept -> camera_ray;
 

@@ -10,6 +10,8 @@
 
 #include <cmath>
 
+#include <imgui.h>
+
 namespace we::graphics {
 
 namespace {
@@ -147,17 +149,17 @@ constexpr std::array<uint16, 144> sphere_proxy_indices{
    9,  11, 19, 13, 8,  9,  7, 16, 9,  6,  8,  13, 22, 5,  6,  4,  17, 6,
    3,  5,  22, 21, 2,  3,  1, 18, 3,  0,  2,  21, 19, 11, 0,  10, 25, 0};
 
-auto make_shadow_cascade_splits(const camera& camera)
+auto make_shadow_cascade_splits(const float near_clip, const float far_clip)
    -> std::array<float, cascade_count + 1>
 {
-   const float clip_ratio = camera.far_clip() / camera.near_clip();
-   const float clip_range = camera.far_clip() - camera.near_clip();
+   const float clip_ratio = far_clip / near_clip;
+   const float clip_range = far_clip - near_clip;
 
    std::array<float, 5> cascade_splits{};
 
    for (int i = 0; i < cascade_splits.size(); ++i) {
-      const float split = (camera.near_clip() * std::pow(clip_ratio, i / 4.0f));
-      const float split_normalized = (split - camera.near_clip()) / clip_range;
+      const float split = (near_clip * std::pow(clip_ratio, i / 4.0f));
+      const float split_normalized = (split - near_clip) / clip_range;
 
       cascade_splits[i] = split_normalized;
    }
@@ -232,7 +234,10 @@ auto make_shadow_cascades(const quaternion light_rotation, const camera& camera,
    const float3 light_direction =
       normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
 
-   const std::array cascade_splits = make_shadow_cascade_splits(camera);
+   const std::array cascade_splits =
+      make_shadow_cascade_splits(-unproject_depth_value(camera, scene_depth_min_max[1]),
+                                 -unproject_depth_value(camera,
+                                                        scene_depth_min_max[0]));
 
    std::array<shadow_ortho_camera, cascade_count> cameras;
 
