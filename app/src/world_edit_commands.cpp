@@ -650,6 +650,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Set Perspective Camera", "camera.set_perspective", {.key = key::p}},
           {"Set Orthographic Camera", "camera.set_orthographic", {.key = key::o}},
           {"Toggle Orbit Camera", "camera.toggle_orbit", {.key = key::y}},
+          {"Reset Camera", "camera.reset", {.key = key::home}},
 
           {"Show Create Entity Menu", "show_create_entity", {.key = key::space}},
 
@@ -711,8 +712,6 @@ void world_edit::initialize_hotkeys() noexcept
            {.key = key::t, .modifiers = {.ctrl = true, .shift = true}}},
 
           {"Render Environment Map", "show.env_map_renderer", {.key = key::backslash}},
-
-          {"Reset Camera", "camera.reset", {.key = key::home}},
 
           {"Save", "save", {.key = key::s, .modifiers = {.ctrl = true}}, {.ignore_imgui_focus = true}},
        }});

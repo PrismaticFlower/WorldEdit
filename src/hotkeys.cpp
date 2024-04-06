@@ -5,9 +5,7 @@
 #include "utility/overload.hpp"
 #include "utility/string_ops.hpp"
 
-#include <algorithm>
 #include <span>
-#include <variant>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
@@ -313,9 +311,9 @@ private:
    struct hotkey_set {
       std::string name;
       std::move_only_function<bool()> activated_predicate;
-      absl::flat_hash_map<hotkey_bind, hotkey> bindings;
+      absl::flat_hash_map<hotkey_bind, int32> bindings;
       absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
-      std::vector<hotkey> unbound_hotkeys;
+      std::vector<hotkey> hotkeys;
 
       std::string description;
       bool hidden = false;
@@ -341,37 +339,33 @@ private:
    absl::flat_hash_set<active_toggle> _active_toggles;
 
    bool _user_inputting_new_binding = false;
+   bool _new_binding_popup_open = false;
+   bool _swap_binding_popup_open = false;
    std::optional<key_event> _user_editing_last_key_event;
    std::ptrdiff_t _user_editing_bind_set = 0;
    std::optional<hotkey_bind> _user_editing_bind;
-   hotkey _user_editing_hotkey;
+   int32 _user_editing_hotkey_index = 0;
    key _user_swapping_key = key::void_key;
 
    container::enum_array<key_state, key> _keys{};
 
-   using sorted_hotkey_variant =
-      std::variant<const std::pair<const hotkey_bind, hotkey>*, const hotkey*>;
-
-   std::vector<sorted_hotkey_variant> _sorted_hotkey_set;
-
    absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>> _saved_bindings;
    const absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> _saved_used_bindings;
-
-   static void fill_sorted_info(const hotkey_set& set,
-                                std::vector<sorted_hotkey_variant>& sorted_hotkey_set);
 };
 
 void hotkeys::impl::add_set(hotkey_set_desc desc)
 {
    absl::flat_hash_set<std::string> hotkey_set;
-   absl::flat_hash_map<hotkey_bind, hotkey> bindings;
+   absl::flat_hash_map<hotkey_bind, int32> bindings;
    absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
-   std::vector<hotkey> unbound_hotkeys;
+   std::vector<hotkey> hotkeys;
 
    hotkey_set.reserve(desc.default_hotkeys.size());
    bindings.reserve(desc.default_hotkeys.size());
    query_bindings.reserve(desc.default_hotkeys.size());
-   unbound_hotkeys.reserve(desc.default_hotkeys.size());
+   hotkeys.reserve(desc.default_hotkeys.size());
+
+   int32 hotkey_index = 0;
 
    for (auto& default_hotkey : desc.default_hotkeys) {
       validate_command(default_hotkey.command);
@@ -393,25 +387,20 @@ void hotkeys::impl::add_set(hotkey_set_desc desc)
          not _saved_used_bindings.at(desc.name).contains(binding);
 
       if (has_saved_binding or binding_free_for_use) {
-         bindings[binding] =
-            hotkey{.command = std::string{default_hotkey.command},
-                   .toggle = default_hotkey.bind_config.toggle,
-                   .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
-                   .name = std::string{default_hotkey.name}};
+         bindings[binding] = hotkey_index;
          query_bindings[default_hotkey.name] = binding;
       }
-      else {
-         unbound_hotkeys.push_back(
-            hotkey{.command = std::string{default_hotkey.command},
-                   .toggle = default_hotkey.bind_config.toggle,
-                   .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
-                   .name = std::string{default_hotkey.name}});
-      }
+
+      hotkeys.push_back(hotkey{.command = std::string{default_hotkey.command},
+                               .toggle = default_hotkey.bind_config.toggle,
+                               .ignore_imgui_focus = default_hotkey.bind_config.ignore_imgui_focus,
+                               .name = std::string{default_hotkey.name}});
+
+      hotkey_index += 1;
    }
 
-   _hotkey_sets.emplace_back(desc.name, std::move(desc.activated),
-                             std::move(bindings), std::move(query_bindings),
-                             std::move(unbound_hotkeys),
+   _hotkey_sets.emplace_back(desc.name, std::move(desc.activated), std::move(bindings),
+                             std::move(query_bindings), std::move(hotkeys),
                              std::move(desc.description), desc.hidden);
 }
 
@@ -504,7 +493,7 @@ void hotkeys::impl::process_new_key_state(const key key, const key_state new_sta
          }
       };
 
-      absl::flat_hash_map<hotkey_bind, hotkey>& bindings = set.bindings;
+      absl::flat_hash_map<hotkey_bind, int32>& bindings = set.bindings;
 
       auto bind_hotkey =
          bindings.find({.key = key,
@@ -514,7 +503,7 @@ void hotkeys::impl::process_new_key_state(const key key, const key_state new_sta
 
       if (bind_hotkey == bindings.end()) continue;
 
-      handle_hotkey(bind_hotkey->first, bind_hotkey->second);
+      handle_hotkey(bind_hotkey->first, set.hotkeys[bind_hotkey->second]);
       break;
    }
 }
@@ -531,7 +520,8 @@ void hotkeys::impl::validate_command(const std::string_view command)
 void hotkeys::impl::release_all_toggles() noexcept
 {
    for (auto& active : _active_toggles) {
-      hotkey& hotkey = _hotkey_sets[active.set_index].bindings[active.bind];
+      hotkey_set& set = _hotkey_sets[active.set_index];
+      hotkey& hotkey = set.hotkeys[set.bindings[active.bind]];
 
       if (std::exchange(hotkey.toggle_active, false)) {
          _commands.execute(hotkey.command);
@@ -548,7 +538,7 @@ void hotkeys::impl::release_stale_toggles(const bool imgui_has_mouse,
       auto active = it++;
 
       hotkey_set& set = _hotkey_sets[active->set_index];
-      hotkey& hotkey = set.bindings[active->bind];
+      hotkey& hotkey = set.hotkeys[set.bindings[active->bind]];
 
       bool release_toggle = false;
 
@@ -589,8 +579,8 @@ void hotkeys::impl::release_toggles_using(const key key) noexcept
 
       if (not release) continue;
 
-      hotkey& hotkey =
-         _hotkey_sets[active_toggle->set_index].bindings[active_toggle->bind];
+      hotkey_set& set = _hotkey_sets[active_toggle->set_index];
+      hotkey& hotkey = set.hotkeys[set.bindings[active_toggle->bind]];
 
       if (std::exchange(hotkey.toggle_active, false)) {
          _commands.execute(hotkey.command);
@@ -618,16 +608,17 @@ void hotkeys::impl::try_execute_command(const std::string_view command) const no
 
 void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_scale) noexcept
 {
-   ImGui::SetNextWindowSize({960.0f * display_scale, 540.0f * display_scale},
+   ImGui::SetNextWindowSize({960.0f * display_scale, 720.0f * display_scale},
                             ImGuiCond_Once);
    const ImVec2 imgui_center = ImGui::GetMainViewport()->GetCenter();
    ImGui::SetNextWindowPos(imgui_center, ImGuiCond_FirstUseEver, {0.5f, 0.5f});
 
    if (ImGui::Begin("Hotkeys Editor", &window_open)) {
+      bool open_swap_bindings_popup = false;
+      bool open_new_binding_popup = false;
+
       if (ImGui::CollapsingHeader("Keys Overview", ImGuiTreeNodeFlags_DefaultOpen)) {
          ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-
-         bool open_swap_bindings_popup = false;
 
          ImGui::SeparatorText("Keyboard");
 
@@ -725,10 +716,10 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
                         for (const hotkey_modifiers& modifiers : modifier_variations) {
                            if (auto it = set.bindings.find(hotkey_bind{key, modifiers});
                                it != set.bindings.end()) {
-                              const auto& [bind, hotkey] = *it;
+                              const auto& [bind, hotkey_index] = *it;
 
                               ImGui::Text("%s: %s", set.name.c_str(),
-                                          hotkey.name.c_str());
+                                          set.hotkeys[hotkey_index].name.c_str());
                               ImGui::BulletText(get_display_string(bind));
                            }
                         }
@@ -796,10 +787,10 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
                         for (const hotkey_modifiers& modifiers : modifier_variations) {
                            if (auto it = set.bindings.find(hotkey_bind{key, modifiers});
                                it != set.bindings.end()) {
-                              const auto& [bind, hotkey] = *it;
+                              const auto& [bind, hotkey_index] = *it;
 
                               ImGui::Text("%s: %s", set.name.c_str(),
-                                          hotkey.name.c_str());
+                                          set.hotkeys[hotkey_index].name.c_str());
                               ImGui::BulletText(get_display_string(bind));
                            }
                         }
@@ -819,28 +810,37 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
 
          ImGui::Text("You can swap the bindings of two keys by clicking one.");
 
-         if (open_swap_bindings_popup) {
-            _user_inputting_new_binding = true;
-
-            ImGui::OpenPopup("Swap Bindings");
-         }
-
          ImGui::PopStyleVar();
       }
 
-      bool open_new_binding_popup = false;
+      if (ImGui::BeginChild("Set List", {200.0f * display_scale, 0.0f},
+                            ImGuiChildFlags_ResizeX)) {
+         ImGui::SeparatorText("Sets");
 
-      for (int set_index = 0; set_index < std::ssize(_hotkey_sets); ++set_index) {
-         hotkey_set& set = _hotkey_sets[set_index];
+         for (int set_index = 0; set_index < std::ssize(_hotkey_sets); ++set_index) {
+            hotkey_set& set = _hotkey_sets[set_index];
 
-         if (set.hidden) continue;
+            if (set.hidden) continue;
 
-         ImGui::PushID(set_index);
+            if (ImGui::Selectable(set.name.c_str(), _user_editing_bind_set == set_index)) {
+               _user_editing_bind_set = set_index;
+            }
 
-         if (not ImGui::CollapsingHeader(set.name.c_str())) {
-            ImGui::PopID();
-            continue;
+            if (ImGui::BeginItemTooltip()) {
+               ImGui::TextUnformatted(set.description.data(),
+                                      set.description.data() + set.description.size());
+
+               ImGui::EndTooltip();
+            }
          }
+      }
+
+      ImGui::EndChild();
+
+      ImGui::SameLine();
+
+      if (ImGui::BeginChild("Set View")) {
+         hotkey_set& set = _hotkey_sets[_user_editing_bind_set];
 
          ImGui::SeparatorText("Description");
 
@@ -851,56 +851,52 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
 
          ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0.0f, 0.0f});
 
-         fill_sorted_info(set, _sorted_hotkey_set);
+         for (int hotkey_index = 0; hotkey_index < std::ssize(set.hotkeys);
+              ++hotkey_index) {
+            ImGui::PushID(hotkey_index);
 
-         for (int bind_index = 0; bind_index < std::ssize(_sorted_hotkey_set);
-              ++bind_index) {
-            ImGui::PushID(bind_index);
+            hotkey& hotkey = set.hotkeys[hotkey_index];
 
-            std::visit(overload{[&](const std::pair<const hotkey_bind, hotkey>* hotkey_bind_hotkey) {
-                                   const auto& [hotkey_bind, hotkey] =
-                                      *hotkey_bind_hotkey;
+            ImGui::LabelText("", hotkey.name.c_str());
+            ImGui::SameLine();
 
-                                   ImGui::LabelText("", hotkey.name.c_str());
-                                   ImGui::SameLine();
+            if (auto it = set.query_bindings.find(hotkey.name);
+                it != set.query_bindings.end()) {
+               const auto& [hotkey_command, hotkey_bind] = *it;
 
-                                   if (ImGui::Selectable(get_display_string(hotkey_bind))) {
-                                      open_new_binding_popup = true;
-                                      _user_editing_bind_set = set_index;
-                                      _user_editing_bind = hotkey_bind;
-                                      _user_editing_hotkey = hotkey;
-                                   }
-                                },
-                                [&](const hotkey* hotkey) {
-                                   ImGui::LabelText("", hotkey->name.c_str());
-                                   ImGui::SameLine();
-
-                                   if (ImGui::Selectable("<unbound>")) {
-                                      open_new_binding_popup = true;
-                                      _user_editing_bind_set = set_index;
-                                      _user_editing_bind = std::nullopt;
-                                      _user_editing_hotkey = *hotkey;
-                                   }
-                                }},
-                       _sorted_hotkey_set[bind_index]);
+               if (ImGui::Selectable(get_display_string(hotkey_bind))) {
+                  open_new_binding_popup = true;
+                  _user_editing_bind = hotkey_bind;
+                  _user_editing_hotkey_index = hotkey_index;
+               }
+            }
+            else {
+               if (ImGui::Selectable("<unbound>")) {
+                  open_new_binding_popup = true;
+                  _user_editing_bind = std::nullopt;
+                  _user_editing_hotkey_index = hotkey_index;
+               }
+            }
 
             ImGui::PopID();
          }
 
          ImGui::PopStyleVar();
-         ImGui::PopID();
       }
 
+      ImGui::EndChild();
+
       if (open_new_binding_popup) {
-         _user_inputting_new_binding = true;
+         _new_binding_popup_open = true;
 
          ImGui::OpenPopup("Press New Binding");
       }
 
       ImGui::SetNextWindowPos(imgui_center, ImGuiCond_Appearing, {0.5f, 0.5f});
 
-      if (ImGui::BeginPopupModal("Press New Binding", &_user_inputting_new_binding,
+      if (ImGui::BeginPopupModal("Press New Binding", &_new_binding_popup_open,
                                  ImGuiWindowFlags_AlwaysAutoResize)) {
+
          ImGui::Text("Press Escape to cancel and go back.");
 
          const std::optional<key_event> last_key_event =
@@ -909,7 +905,7 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
          if (last_key_event) {
             if (last_key_event->key == key::escape and
                 last_key_event->new_state == key_state::up) {
-               _user_inputting_new_binding = false;
+               _new_binding_popup_open = false;
 
                ImGui::CloseCurrentPopup();
             }
@@ -929,24 +925,24 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
                                                         .alt = is_key_down(key::alt)}};
 
                if (set.bindings.contains(new_bind)) {
-                  set.unbound_hotkeys.push_back(set.bindings.at(new_bind));
-                  set.query_bindings.erase(set.unbound_hotkeys.back().name);
+                  const std::string_view name_to_remove =
+                     set.hotkeys[set.bindings.at(new_bind)].name;
 
-                  _saved_bindings[set.name].erase(set.unbound_hotkeys.back().name);
+                  set.query_bindings.erase(name_to_remove);
+
+                  _saved_bindings[set.name].erase(name_to_remove);
                }
 
-               set.bindings[new_bind] = _user_editing_hotkey;
-               set.query_bindings[_user_editing_hotkey.name] = new_bind;
+               hotkey& hotkey = set.hotkeys[_user_editing_hotkey_index];
 
-               std::erase_if(set.unbound_hotkeys, [&](const hotkey& hotkey) {
-                  return hotkey == _user_editing_hotkey;
-               });
+               set.bindings[new_bind] = _user_editing_hotkey_index;
+               set.query_bindings[hotkey.name] = new_bind;
 
-               _user_inputting_new_binding = false;
+               _new_binding_popup_open = false;
 
                ImGui::CloseCurrentPopup();
 
-               _saved_bindings[set.name][_user_editing_hotkey.name] = new_bind;
+               _saved_bindings[set.name][hotkey.name] = new_bind;
 
                save_bindings(save_path, _saved_bindings);
             }
@@ -955,9 +951,15 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
          ImGui::EndPopup();
       }
 
+      if (open_swap_bindings_popup) {
+         _swap_binding_popup_open = true;
+
+         ImGui::OpenPopup("Swap Bindings");
+      }
+
       ImGui::SetNextWindowPos(imgui_center, ImGuiCond_Appearing, {0.5f, 0.5f});
 
-      if (ImGui::BeginPopupModal("Swap Bindings", &_user_inputting_new_binding,
+      if (ImGui::BeginPopupModal("Swap Bindings", &_swap_binding_popup_open,
                                  ImGuiWindowFlags_AlwaysAutoResize)) {
          ImGui::Text("Press Escape to cancel and go back.");
 
@@ -967,7 +969,7 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
          if (last_key_event) {
             if (last_key_event->key == key::escape and
                 last_key_event->new_state == key_state::up) {
-               _user_inputting_new_binding = false;
+               _swap_binding_popup_open = false;
 
                ImGui::CloseCurrentPopup();
             }
@@ -975,7 +977,7 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
                      last_key_event->key != key::ctrl and
                      last_key_event->key != key::shift and
                      last_key_event->key != key::alt) {
-               absl::flat_hash_map<hotkey_bind, hotkey> bindings;
+               absl::flat_hash_map<hotkey_bind, int32> bindings;
                bindings.reserve(32);
 
                const key new_key = last_key_event->key;
@@ -986,7 +988,8 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
 
                   for (auto it = set.bindings.begin(); it != set.bindings.end();) {
                      auto binding_it = it++;
-                     auto& [bind, hotkey] = *binding_it;
+                     auto& [bind, hotkey_index] = *binding_it;
+                     hotkey& hotkey = set.hotkeys[hotkey_index];
 
                      if (bind.key == new_key or bind.key == old_key) {
                         set.query_bindings.erase(hotkey.name);
@@ -994,25 +997,24 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
 
                         bindings.emplace(hotkey_bind{.key = bind.key == new_key ? old_key : new_key,
                                                      .modifiers = bind.modifiers},
-                                         std::move(hotkey));
+                                         hotkey_index);
                         set.bindings.erase(binding_it);
                      }
                   }
 
-                  for (const auto& [bind, hotkey] : bindings) {
-                     if (set.bindings.try_emplace(bind, hotkey).second) {
+                  for (const auto& [bind, hotkey_index] : bindings) {
+                     hotkey& hotkey = set.hotkeys[hotkey_index];
+
+                     if (set.bindings.try_emplace(bind, hotkey_index).second) {
                         set.query_bindings[hotkey.name] = bind;
                         _saved_bindings[set.name][hotkey.name] = bind;
-                     }
-                     else {
-                        set.unbound_hotkeys.push_back(hotkey);
                      }
                   }
                }
 
                save_bindings(save_path, _saved_bindings);
 
-               _user_inputting_new_binding = false;
+               _swap_binding_popup_open = false;
 
                ImGui::CloseCurrentPopup();
             }
@@ -1020,6 +1022,8 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
 
          ImGui::EndPopup();
       }
+
+      _user_inputting_new_binding = _new_binding_popup_open or _swap_binding_popup_open;
    }
 
    ImGui::End();
@@ -1027,37 +1031,6 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
    if (not window_open) {
       _user_inputting_new_binding = false;
    }
-}
-
-void hotkeys::impl::fill_sorted_info(const hotkey_set& set,
-                                     std::vector<sorted_hotkey_variant>& sorted_hotkey_set)
-{
-   sorted_hotkey_set.clear();
-   sorted_hotkey_set.reserve(set.bindings.size());
-
-   for (const auto& bind_hotkey : set.bindings) {
-      sorted_hotkey_set.emplace_back(&bind_hotkey);
-   }
-
-   for (const auto& unbound : set.unbound_hotkeys) {
-      sorted_hotkey_set.emplace_back(&unbound);
-   }
-
-   std::sort(sorted_hotkey_set.begin(), sorted_hotkey_set.end(),
-             [](const sorted_hotkey_variant& left, const sorted_hotkey_variant& right) {
-                const std::string& left_name =
-                   std::holds_alternative<const std::pair<const hotkey_bind, hotkey>*>(left)
-                      ? std::get<const std::pair<const hotkey_bind, hotkey>*>(left)
-                           ->second.name
-                      : std::get<const hotkey*>(left)->name;
-                const std::string& right_name =
-                   std::holds_alternative<const std::pair<const hotkey_bind, hotkey>*>(right)
-                      ? std::get<const std::pair<const hotkey_bind, hotkey>*>(right)
-                           ->second.name
-                      : std::get<const hotkey*>(right)->name;
-
-                return left_name < right_name;
-             });
 }
 
 auto get_display_string(const std::optional<hotkey_bind> binding) -> const char*
@@ -1110,5 +1083,4 @@ void hotkeys::show_imgui(bool& window_open, const scale_factor display_scale) no
 {
    return _impl->show_imgui(window_open, display_scale);
 }
-
 }
