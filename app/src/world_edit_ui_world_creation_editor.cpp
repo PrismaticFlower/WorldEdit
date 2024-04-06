@@ -9,6 +9,7 @@
 #include "math/vector_funcs.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/hintnode_traits.hpp"
+#include "world/utility/object_properties.hpp"
 #include "world/utility/path_properties.hpp"
 #include "world/utility/region_properties.hpp"
 #include "world/utility/snapping.hpp"
@@ -232,9 +233,26 @@ void world_edit::ui_show_world_creation_editor() noexcept
             return entries;
          });
 
+      if (ImGui::IsItemDeactivatedAfterEdit()) {
+         std::vector<world::instance_property> new_instance_properties =
+            world::make_object_instance_properties(*_object_classes[object.class_name]
+                                                       .definition,
+                                                   object.instance_properties);
+
+         if (new_instance_properties != object.instance_properties) {
+            _edit_stack_world.apply(edits::make_set_value(&object.instance_properties,
+                                                          std::move(new_instance_properties)),
+                                    _edit_context, {.transparent = true});
+         }
+      }
+
       if (ImGui::BeginPopupContextItem("Class Name")) {
          if (ImGui::MenuItem("Open .odf in Text Editor")) {
             open_odf_in_text_editor(object.class_name);
+         }
+
+         if (ImGui::MenuItem("Show .odf in Explorer")) {
+            show_odf_in_explorer(object.class_name);
          }
 
          ImGui::EndPopup();
@@ -385,6 +403,67 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::SliderInt("Team", &object.team, _edit_stack_world, _edit_context,
                        0, 15, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+      if (not object.instance_properties.empty() and
+          ImGui::CollapsingHeader("Instance Properties")) {
+
+         ImGui::Separator();
+
+         for (uint32 i = 0; i < object.instance_properties.size(); ++i) {
+            world::instance_property& prop = object.instance_properties[i];
+
+            if (prop.key.contains("Path")) {
+               ImGui::InputKeyValueAutoComplete(
+                  &object.instance_properties, i, _edit_stack_world,
+                  _edit_context, [&]() noexcept {
+                     std::array<std::string_view, 6> entries;
+
+                     std::size_t matching_count = 0;
+
+                     for (auto& path : _world.paths) {
+                        if (not path.name.contains(prop.value)) {
+                           continue;
+                        }
+
+                        entries[matching_count] = path.name;
+
+                        ++matching_count;
+
+                        if (matching_count == entries.size()) break;
+                     }
+
+                     return entries;
+                  });
+            }
+            else if (prop.key.contains("Region")) {
+               ImGui::InputKeyValueAutoComplete(
+                  &object.instance_properties, i, _edit_stack_world,
+                  _edit_context, [&]() noexcept {
+                     std::array<std::string_view, 6> entries;
+
+                     std::size_t matching_count = 0;
+
+                     for (auto& region : _world.regions) {
+                        if (not region.description.contains(prop.value)) {
+                           continue;
+                        }
+
+                        entries[matching_count] = region.description;
+
+                        ++matching_count;
+
+                        if (matching_count == entries.size()) break;
+                     }
+
+                     return entries;
+                  });
+            }
+            else {
+               ImGui::InputKeyValue(&object.instance_properties, i,
+                                    _edit_stack_world, _edit_context);
+            }
+         }
+      }
 
       traits = {.has_cycle_object_class = true};
    }

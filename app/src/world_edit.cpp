@@ -1275,8 +1275,6 @@ void world_edit::place_creation_entity() noexcept
       world::object new_object = object;
 
       new_object.name = world::create_unique_name(_world.objects, new_object.name);
-      new_object.instance_properties = world::make_object_instance_properties(
-         *_object_classes[object.class_name].definition, new_object.instance_properties);
       new_object.id = _world.next_id.objects.aquire();
 
       _last_created_entities.last_object = new_object.id;
@@ -1919,11 +1917,20 @@ void world_edit::cycle_creation_entity_object_class() noexcept
          [(_entity_creation_config.cycle_object_class_index++) %
           _last_created_entities.last_used_object_classes.size()];
 
-   _edit_stack_world
-      .apply(edits::make_set_value(
-                &_interaction_targets.creation_entity.get<world::object>().class_name,
-                class_name),
-             _edit_context, {.closed = true});
+   world::object& object = _interaction_targets.creation_entity.get<world::object>();
+
+   _edit_stack_world.apply(edits::make_set_value(&object.class_name, class_name),
+                           _edit_context, {.closed = true});
+
+   std::vector<world::instance_property> new_instance_properties =
+      world::make_object_instance_properties(*_object_classes[class_name].definition,
+                                             object.instance_properties);
+
+   if (new_instance_properties != object.instance_properties) {
+      _edit_stack_world.apply(edits::make_set_value(&object.instance_properties,
+                                                    std::move(new_instance_properties)),
+                              _edit_context, {.transparent = true});
+   }
 }
 
 void world_edit::toggle_planning_entity_type() noexcept
