@@ -115,6 +115,8 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
 world_edit::~world_edit()
 {
    if (not _project_dir.empty()) close_project();
+
+   ImGui_ImplWin32_Shutdown();
 }
 
 void world_edit::update()
