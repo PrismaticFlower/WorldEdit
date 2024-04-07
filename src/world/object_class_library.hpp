@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lowercase_string.hpp"
+#include "object.hpp"
 #include "utility/implementation_storage.hpp"
 
 #include <span>
@@ -13,7 +14,6 @@ struct libraries_manager;
 
 namespace we::world {
 
-struct object;
 struct object_class;
 
 struct object_class_library {
@@ -29,7 +29,13 @@ struct object_class_library {
 
    void clear() noexcept;
 
-   auto operator[](const lowercase_string& name) const noexcept -> const object_class&;
+   [[nodiscard]] auto acquire(const lowercase_string& name) noexcept
+      -> object_class_handle;
+
+   void free(const object_class_handle handle) noexcept;
+
+   auto operator[](const object_class_handle handle) const noexcept
+      -> const object_class&;
 
 private:
    struct impl;

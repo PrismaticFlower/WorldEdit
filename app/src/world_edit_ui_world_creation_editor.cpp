@@ -264,7 +264,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::LayerPick("Layer", &object.layer, _edit_stack_world, _edit_context);
 
-      if (string::iequals(_object_classes[object.class_name].definition->header.class_label,
+      if (string::iequals(_object_classes[object.class_handle]
+                             .definition->header.class_label,
                           "commandpost")) {
          ImGui::SeparatorText("Command Post");
 
@@ -329,7 +330,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
             if (_entity_creation_config.placement_ground == placement_ground::bbox) {
 
                const math::bounding_box bbox =
-                  object.rotation * _object_classes[object.class_name].model->bounding_box;
+                  object.rotation *
+                  _object_classes[object.class_handle].model->bounding_box;
 
                new_position.y -= bbox.min.y;
             }
@@ -2130,7 +2132,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (object) {
             math::bounding_box bbox =
-               _object_classes[object->class_name].model->bounding_box;
+               _object_classes[object->class_handle].model->bounding_box;
 
             const float3 size = abs(bbox.max - bbox.min) / 2.0f;
             const float3 position =
@@ -2581,7 +2583,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (object) {
             std::array<float3, 8> corners = math::to_corners(
-               _object_classes[object->class_name].model->bounding_box);
+               _object_classes[object->class_handle].model->bounding_box);
 
             for (auto& corner : corners) {
                corner = object->rotation * corner + object->position;
@@ -2995,7 +2997,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (ImGui::BeginCombo("Command Post", hintnode.command_post.c_str())) {
             for (const auto& object : _world.objects) {
                const assets::odf::definition& definition =
-                  *_object_classes[object.class_name].definition;
+                  *_object_classes[object.class_handle].definition;
 
                if (string::iequals(definition.header.class_label,
                                    "commandpost")) {
@@ -3260,7 +3262,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (object) {
             math::bounding_box bbox =
-               _object_classes[object->class_name].model->bounding_box;
+               _object_classes[object->class_handle].model->bounding_box;
 
             const float3 size = abs(bbox.max - bbox.min) / 2.0f;
             const float3 position =

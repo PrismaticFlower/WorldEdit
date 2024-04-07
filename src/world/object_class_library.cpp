@@ -79,11 +79,11 @@ struct object_class_library::impl {
       _object_classes.clear();
    }
 
-   auto operator[](const lowercase_string& name) const noexcept -> const object_class&
+   auto operator[](const object_class_handle handle) const noexcept -> const object_class&
    {
-      auto it = _object_classes.find(name);
+      (void)handle;
 
-      return it != _object_classes.end() ? it->second : _default_object_class;
+      return _default_object_class;
    }
 
 private:
@@ -170,10 +170,10 @@ void object_class_library::clear() noexcept
    _impl->clear();
 }
 
-auto object_class_library::operator[](const lowercase_string& name) const noexcept
+auto object_class_library::operator[](const object_class_handle handle) const noexcept
    -> const object_class&
 {
-   return _impl.get()[name];
+   return _impl.get()[handle];
 }
 
 }

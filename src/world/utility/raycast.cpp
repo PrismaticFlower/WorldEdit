@@ -33,7 +33,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       float3 obj_ray_origin = inverse_rotation * ray_origin + inverse_position;
       float3 obj_ray_direction = normalize(inverse_rotation * ray_direction);
 
-      const msh::flat_model& model = *object_classes[object.class_name].model;
+      const msh::flat_model& model = *object_classes[object.class_handle].model;
 
       float3 box_centre = (model.bounding_box.min + model.bounding_box.max) * 0.5f;
       float3 box_size = (model.bounding_box.max - model.bounding_box.min) * 0.5f;

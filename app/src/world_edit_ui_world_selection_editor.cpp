@@ -121,7 +121,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
             if (ImGui::IsItemDeactivatedAfterEdit()) {
                std::vector<world::instance_property> new_instance_properties =
                   world::make_object_instance_properties(
-                     *_object_classes[object->class_name].definition,
+                     *_object_classes[object->class_handle].definition,
                      object->instance_properties);
 
                if (new_instance_properties != object->instance_properties) {
@@ -1502,7 +1502,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                if (ImGui::BeginCombo("Command Post", hintnode->command_post.c_str())) {
                   for (const auto& object : _world.objects) {
                      const assets::odf::definition& definition =
-                        *_object_classes[object.class_name].definition;
+                        *_object_classes[object.class_handle].definition;
 
                      if (string::iequals(definition.header.class_label,
                                          "commandpost")) {

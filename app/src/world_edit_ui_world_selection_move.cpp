@@ -38,7 +38,7 @@ void world_edit::ui_show_world_selection_move() noexcept
                }
                else {
                   math::bounding_box bbox =
-                     _object_classes[object->class_name].model->bounding_box;
+                     _object_classes[object->class_handle].model->bounding_box;
 
                   bbox = object->rotation * bbox + object->position;
 

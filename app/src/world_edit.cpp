@@ -636,7 +636,7 @@ void world_edit::setup_orbit_camera() noexcept
          if (not _world_layers_draw_mask[object.layer]) continue;
 
          math::bounding_box bbox =
-            _object_classes[object.class_name].model->bounding_box;
+            _object_classes[object.class_handle].model->bounding_box;
 
          bbox = object.rotation * bbox + object.position;
 
@@ -741,7 +741,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             const frustum frustumOS =
                transform(frustumWS, inverse_rotation, inverse_position);
 
-            if (_object_classes[object.class_name].model->bvh.intersects(frustumOS)) {
+            if (_object_classes[object.class_handle].model->bvh.intersects(frustumOS)) {
                _interaction_targets.selection.add(object.id);
             }
          }
@@ -1031,7 +1031,7 @@ void world_edit::finish_entity_deselect() noexcept
             const frustum frustumOS =
                transform(frustumWS, inverse_rotation, inverse_position);
 
-            if (_object_classes[object.class_name].model->bvh.intersects(frustumOS)) {
+            if (_object_classes[object.class_handle].model->bvh.intersects(frustumOS)) {
                _interaction_targets.selection.remove(object.id);
             }
          }
@@ -1314,7 +1314,8 @@ void world_edit::place_creation_entity() noexcept
 
       new_object.name = world::create_unique_name(_world.objects, new_object.name);
       new_object.instance_properties = world::make_object_instance_properties(
-         *_object_classes[object.class_name].definition, new_object.instance_properties);
+         *_object_classes[object.class_handle].definition,
+         new_object.instance_properties);
       new_object.id = _world.next_id.objects.aquire();
 
       _last_created_entities.last_object = new_object.id;
@@ -1338,7 +1339,8 @@ void world_edit::place_creation_entity() noexcept
       }
 
       if (_entity_creation_config.command_post_auto_place_meta_entities and
-          string::iequals(_object_classes[object.class_name].definition->header.class_label,
+          string::iequals(_object_classes[object.class_handle]
+                             .definition->header.class_label,
                           "commandpost")) {
          command_post_auto_place_meta_entities(_world.objects.back());
       }

@@ -189,7 +189,7 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text(object.class_name.c_str());
                ImGui::TableNextColumn();
                const std::string_view class_label =
-                  _object_classes[object.class_name].definition->header.class_label;
+                  _object_classes[object.class_handle].definition->header.class_label;
 
                ImGui::TextUnformatted(class_label.data(),
                                       class_label.data() + class_label.size());
