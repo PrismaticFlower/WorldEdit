@@ -3,7 +3,6 @@
 #include "edits/creation_entity_set.hpp"
 #include "edits/set_value.hpp"
 #include "utility/string_icompare.hpp"
-#include "world/utility/object_properties.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -69,29 +68,15 @@ void world_edit::ui_show_object_class_browser() noexcept
                      _edit_stack_world.apply(edits::make_set_value(&object.class_name,
                                                                    lowercase_string{asset}),
                                              _edit_context);
-
-                     std::vector<world::instance_property> new_instance_properties =
-                        world::make_object_instance_properties(
-                           *_object_classes[object.class_name].definition,
-                           object.instance_properties);
-
-                     if (new_instance_properties != object.instance_properties) {
-                        _edit_stack_world
-                           .apply(edits::make_set_value(&object.instance_properties,
-                                                        std::move(new_instance_properties)),
-                                  _edit_context, {.transparent = true});
-                     }
                   }
                   else {
-                     _edit_stack_world.apply(
-                        edits::make_creation_entity_set(world::object{
-                           .name = "",
-                           .layer = _last_created_entities.last_layer,
-                           .class_name = lowercase_string{asset},
-                           .instance_properties = world::make_object_instance_properties(
-                              *_object_classes[lowercase_string{asset}].definition, {}),
-                           .id = world::max_id}),
-                        _edit_context);
+                     _edit_stack_world
+                        .apply(edits::make_creation_entity_set(
+                                  world::object{.name = "",
+                                                .layer = _last_created_entities.last_layer,
+                                                .class_name = lowercase_string{asset},
+                                                .id = world::max_id}),
+                               _edit_context);
                      _entity_creation_context = {};
                   }
                }
