@@ -43,6 +43,10 @@ struct object_class_library {
    /// @param handle The handle to free.
    void free(const object_class_handle handle) noexcept;
 
+   /// @brief Gets the number of references to a class. For testing and debugging.
+   /// @return The ref count.
+   auto debug_ref_count(const lowercase_string& name) const noexcept -> uint32;
+
 private:
    struct impl;
 

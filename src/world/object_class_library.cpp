@@ -85,6 +85,8 @@ struct object_class_library::impl {
 
    [[nodiscard]] auto acquire(const lowercase_string& name) noexcept -> object_class_handle
    {
+      if (name.empty()) return pack_handle(0);
+
       if (auto it = _class_index.find(name); it != _class_index.end()) {
          const auto [_, index] = *it;
 
@@ -154,6 +156,17 @@ struct object_class_library::impl {
       else if (entry.ref_count == UINT32_MAX) {
          std::terminate(); // Double free 🙁
       }
+   }
+
+   auto debug_ref_count(const lowercase_string& name) const noexcept -> uint32
+   {
+      if (auto it = _class_index.find(name); it != _class_index.end()) {
+         const auto [_, index] = *it;
+
+         return _class_pool[index].ref_count;
+      }
+
+      return 0;
    }
 
 private:
@@ -261,6 +274,12 @@ auto object_class_library::acquire(const lowercase_string& name) noexcept -> obj
 void object_class_library::free(const object_class_handle handle) noexcept
 {
    return _impl->free(handle);
+}
+
+auto object_class_library::debug_ref_count(const lowercase_string& name) const noexcept
+   -> uint32
+{
+   return _impl->debug_ref_count(name);
 }
 
 }
