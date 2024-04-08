@@ -90,6 +90,21 @@ TEST_CASE("world object_class_library acquire-clear", "[World]")
    CHECK(library.debug_ref_count(class1) == 0);
 }
 
+TEST_CASE("world object_class_library free default handle", "[World]")
+{
+   null_output_stream output;
+   std::shared_ptr<async::thread_pool> thread_pool =
+      async::thread_pool::make({.thread_count = 1, .low_priority_thread_count = 1});
+   assets::libraries_manager assets_libraries{output, thread_pool};
+
+   object_class_library library{assets_libraries};
+
+   library.free(object_class_handle{});
+   library.free(object_class_handle{0});
+
+   CHECK(library.debug_ref_count(lowercase_string{""sv}) == 0);
+}
+
 #ifdef OBJECT_CLASS_LIBRARY_SLOW_TESTS
 
 TEST_CASE("world object_class_library acquire-free max_ref clamp", "[World]")
