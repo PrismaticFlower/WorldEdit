@@ -518,14 +518,16 @@ void world_edit::update_hovered_entity() noexcept
 
 void world_edit::update_object_classes() noexcept
 {
+   _object_classes.update();
+
+   // TODO: Update object instance properties.
+
    std::array<std::span<const world::object>, 2> object_spans{_world.objects};
 
    if (_interaction_targets.creation_entity.is<world::object>()) {
       object_spans[1] =
          std::span{&_interaction_targets.creation_entity.get<world::object>(), 1};
    }
-
-   _object_classes.update(object_spans);
 }
 
 void world_edit::update_camera(const float delta_time)
@@ -2881,6 +2883,10 @@ void world_edit::load_world(std::filesystem::path path) noexcept
    try {
       _world = world::load_world(path, *_stream);
       _world_path = path;
+
+      for (world::object& object : _world.objects) {
+         object.class_handle = _object_classes.acquire(object.class_name);
+      }
 
       _camera.position({0.0f, 0.0f, 0.0f});
       _camera.pitch(0.0f);
