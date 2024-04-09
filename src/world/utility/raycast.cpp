@@ -27,13 +27,11 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (object.hidden) continue;
       if (filter and not filter(object)) continue;
 
-      quaternion inverse_object_rotation = conjugate(object.rotation);
+      quaternion inverse_rotation = conjugate(object.rotation);
+      float3 inverse_position = inverse_rotation * -object.position;
 
-      float4x4 world_to_obj = to_matrix(inverse_object_rotation);
-      world_to_obj[3] = {inverse_object_rotation * -object.position, 1.0f};
-
-      float3 obj_ray_origin = world_to_obj * ray_origin;
-      float3 obj_ray_direction = normalize(float3x3{world_to_obj} * ray_direction);
+      float3 obj_ray_origin = inverse_rotation * ray_origin + inverse_position;
+      float3 obj_ray_direction = normalize(inverse_rotation * ray_direction);
 
       const msh::flat_model& model = *object_classes[object.class_name].model;
 
@@ -53,8 +51,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (model_hit->distance < min_distance) {
          hit = object.id;
          min_distance = model_hit->distance;
-         surface_normalWS =
-            normalize(float3x3{transpose(world_to_obj)} * model_hit->normal);
+         surface_normalWS = normalize(object.rotation * model_hit->normal);
       }
    }
 
@@ -122,13 +119,11 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          }
       }
       else if (light.light_type == light_type::directional_region_box) {
-         quaternion inverse_light_region_rotation = conjugate(light.region_rotation);
+         quaternion inverse_rotation = conjugate(light.region_rotation);
+         float3 inverse_position = inverse_rotation * -light.position;
 
-         float4x4 world_to_box = to_matrix(inverse_light_region_rotation);
-         world_to_box[3] = {inverse_light_region_rotation * -light.position, 1.0f};
-
-         float3 box_ray_origin = world_to_box * ray_origin;
-         float3 box_ray_direction = normalize(float3x3{world_to_box} * ray_direction);
+         float3 box_ray_origin = inverse_rotation * ray_origin + inverse_position;
+         float3 box_ray_direction = normalize(inverse_rotation * ray_direction);
 
          const float intersection =
             boxIntersection(box_ray_origin, box_ray_direction, light.region_size);
@@ -231,13 +226,11 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (filter and not filter(region)) continue;
 
       if (region.shape == region_shape::box) {
-         quaternion inverse_light_region_rotation = conjugate(region.rotation);
+         quaternion inverse_rotation = conjugate(region.rotation);
+         float3 inverse_position = inverse_rotation * -region.position;
 
-         float4x4 world_to_box = to_matrix(inverse_light_region_rotation);
-         world_to_box[3] = {inverse_light_region_rotation * -region.position, 1.0f};
-
-         float3 box_ray_origin = world_to_box * ray_origin;
-         float3 box_ray_direction = normalize(float3x3{world_to_box} * ray_direction);
+         float3 box_ray_origin = inverse_rotation * ray_origin + inverse_position;
+         float3 box_ray_direction = normalize(inverse_rotation * ray_direction);
 
          const float intersection =
             boxIntersection(box_ray_origin, box_ray_direction, region.size);
@@ -403,14 +396,11 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       constexpr static std::array<std::array<uint16, 3>, 6> hexahedron_indices{
          {{0, 3, 1}, {1, 3, 2}, {2, 3, 0}, {4, 7, 5}, {5, 7, 6}, {6, 7, 4}}};
 
-      quaternion inverse_node_rotation = conjugate(hintnode.rotation);
+      quaternion inverse_rotation = conjugate(hintnode.rotation);
+      float3 inverse_position = inverse_rotation * -hintnode.position;
 
-      float4x4 world_to_node = to_matrix(inverse_node_rotation);
-      world_to_node[3] = {inverse_node_rotation * -hintnode.position, 1.0f};
-
-      const float3 node_ray_origin = world_to_node * ray_origin;
-      const float3 node_ray_direction =
-         normalize(float3x3{world_to_node} * ray_direction);
+      const float3 node_ray_origin = inverse_rotation * ray_origin + inverse_position;
+      const float3 node_ray_direction = normalize(inverse_rotation * ray_direction);
 
       for (const auto& [i0, i1, i2] : hexahedron_indices) {
          const float intersection =
