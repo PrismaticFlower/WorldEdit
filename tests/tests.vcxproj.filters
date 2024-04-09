@@ -115,6 +115,7 @@
     <ClCompile Include="src\edits\add_animation_hierarchy_child_tests.cpp" />
     <ClCompile Include="src\edits\delete_branch_weight_tests.cpp" />
     <ClCompile Include="src\edits\add_branch_weight_tests.cpp" />
+    <ClCompile Include="src\world\object_class_library_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

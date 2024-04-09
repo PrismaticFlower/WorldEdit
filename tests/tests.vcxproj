@@ -293,6 +293,7 @@
     <ClCompile Include="src\world\interaction_context_tests.cpp" />
     <ClCompile Include="src\world\io\load_effects_tests.cpp" />
     <ClCompile Include="src\world\io\save_effects_tests.cpp" />
+    <ClCompile Include="src\world\object_class_library_tests.cpp" />
     <ClCompile Include="src\world\utility\region_properties_tests.cpp" />
     <ClCompile Include="src\world\world_io_load_tests.cpp" />
     <ClCompile Include="src\world\world_io_save_tests.cpp" />
