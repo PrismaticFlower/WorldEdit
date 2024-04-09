@@ -15,7 +15,8 @@ void layer_filter(world::active_layers& mask, const world::world& world)
 {
    if (ImGui::BeginCombo("Layer Filter", "Layer Filter")) {
       for (int i = 0; i < world.layer_descriptions.size(); ++i) {
-         if (ImGui::Selectable(world.layer_descriptions[i].name.c_str(), mask[i])) {
+         if (ImGui::Selectable(world.layer_descriptions[i].name.c_str(),
+                               mask[i], ImGuiSelectableFlags_DontClosePopups)) {
             mask[i] = not mask[i];
          }
       }
