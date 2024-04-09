@@ -75,7 +75,8 @@ void world_edit::ui_show_object_class_browser() noexcept
                                   world::object{.name = "",
                                                 .layer = _last_created_entities.last_layer,
                                                 .class_name = lowercase_string{asset},
-                                                .id = world::max_id}),
+                                                .id = world::max_id},
+                                  _object_classes),
                                _edit_context);
                      _entity_creation_context = {};
                   }

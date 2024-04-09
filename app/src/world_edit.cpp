@@ -1679,8 +1679,8 @@ void world_edit::place_creation_entity() noexcept
                                           _edit_context, {.transparent = true});
                }
                else {
-                  _edit_stack_world.apply(edits::make_creation_entity_set(
-                                             world::creation_entity_none),
+                  _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none,
+                                                                          _object_classes),
                                           _edit_context);
                }
 
@@ -1997,7 +1997,8 @@ void world_edit::toggle_planning_entity_type() noexcept
                                                      .id = world::max_id};
       }
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_connection)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_connection),
+                                                              _object_classes),
                               _edit_context);
       _entity_creation_context = {};
    }
@@ -2020,7 +2021,8 @@ void world_edit::toggle_planning_entity_type() noexcept
          new_hub = world::planning_hub{.name = "Hub0", .id = world::max_id};
       }
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hub)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hub),
+                                                              _object_classes),
                               _edit_context);
       _entity_creation_context = {};
    }
@@ -2061,7 +2063,8 @@ void world_edit::redo() noexcept
 void world_edit::delete_selected() noexcept
 {
    if (_interaction_targets.creation_entity.holds_entity()) {
-      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none),
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none,
+                                                              _object_classes),
                               _edit_context);
 
       return;
@@ -2550,7 +2553,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_object.name = world::create_unique_name(_world.objects, new_object.name);
       new_object.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_object)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_object),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.objects = true;
    }
@@ -2565,7 +2569,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_light.name = world::create_unique_name(_world.lights, new_light.name);
       new_light.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_light)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_light),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.lights = true;
    }
@@ -2582,7 +2587,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_path.nodes = {world::path::node{}};
       new_path.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_path)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_path),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.paths = true;
    }
@@ -2598,7 +2604,8 @@ void world_edit::new_entity_from_selection() noexcept
          world::create_unique_name(_world.regions, _world.lights, new_region.name);
       new_region.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_region)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_region),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.regions = true;
    }
@@ -2614,7 +2621,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_sector.points = {{0.0f, 0.0f}};
       new_sector.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_sector)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_sector),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.sectors = true;
    }
@@ -2629,7 +2637,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
       new_portal.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_portal)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_portal),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.portals = true;
    }
@@ -2645,7 +2654,8 @@ void world_edit::new_entity_from_selection() noexcept
          world::create_unique_name(_world.hintnodes, new_hintnode.name);
       new_hintnode.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hintnode)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hintnode),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.hintnodes = true;
    }
@@ -2660,7 +2670,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_barrier.name = world::create_unique_name(_world.barriers, new_barrier.name);
       new_barrier.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_barrier)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_barrier),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.barriers = true;
    }
@@ -2676,7 +2687,8 @@ void world_edit::new_entity_from_selection() noexcept
       new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
       new_hub.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hub)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_hub),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.planning_hubs = true;
       _world_draw_mask.planning_connections = true;
@@ -2694,7 +2706,8 @@ void world_edit::new_entity_from_selection() noexcept
          world::create_unique_name(_world.planning_connections, new_connection.name);
       new_connection.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_connection)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_connection),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.planning_hubs = true;
       _world_draw_mask.planning_connections = true;
@@ -2711,13 +2724,15 @@ void world_edit::new_entity_from_selection() noexcept
          world::create_unique_name(_world.boundaries, new_boundary.name);
       new_boundary.id = world::max_id;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_boundary)),
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_boundary),
+                                                              _object_classes),
                               _edit_context);
       _world_draw_mask.boundaries = true;
    }
    else if (std::holds_alternative<world::measurement_id>(selected)) {
       _measurement_tool_open = true;
-      _edit_stack_world.apply(edits::make_creation_entity_set(world::measurement{}),
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::measurement{},
+                                                              _object_classes),
                               _edit_context);
    }
 

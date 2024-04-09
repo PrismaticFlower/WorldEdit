@@ -332,7 +332,8 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.cancel"s, [this] {
       if (not _interaction_targets.creation_entity.holds_entity()) return;
 
-      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none),
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none,
+                                                              _object_classes),
                               _edit_context);
    });
 

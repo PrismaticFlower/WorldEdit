@@ -4162,7 +4162,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
    }
 
    if (not continue_creation) {
-      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none),
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none,
+                                                              _object_classes),
                               _edit_context);
    }
 
