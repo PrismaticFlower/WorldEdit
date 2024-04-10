@@ -49,10 +49,6 @@ struct texture_subresource_view {
 
    [[nodiscard]] auto dxgi_format() const noexcept -> DXGI_FORMAT;
 
-   [[nodiscard]] auto load(const texture_index index) const noexcept -> float4;
-
-   void store(const texture_index index, const float4 value) noexcept;
-
 private:
    std::span<std::byte> _data_span;
    std::size_t _offset = 0;
@@ -115,12 +111,6 @@ struct texture {
    [[nodiscard]] auto dxgi_format() const noexcept -> DXGI_FORMAT;
 
    [[nodiscard]] auto flags() const noexcept -> texture_flags;
-
-   [[nodiscard]] auto load(const subresource_index subresource,
-                           const texture_index index) const -> float4;
-
-   void store(const subresource_index subresource, const texture_index index,
-              const float4 value);
 
 private:
    auto flatten_subresource_index(const subresource_index index) const -> std::size_t;

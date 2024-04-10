@@ -673,7 +673,6 @@
     <ClCompile Include="src\assets\option_file.cpp" />
     <ClCompile Include="src\assets\terrain\terrain_io.cpp" />
     <ClCompile Include="src\assets\texture\texture.cpp" />
-    <ClCompile Include="src\assets\texture\texture_format.cpp" />
     <ClCompile Include="src\assets\texture\texture_io.cpp" />
     <ClCompile Include="src\assets\texture\texture_transforms.cpp" />
     <ClCompile Include="src\graphics\camera.cpp" />

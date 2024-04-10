@@ -51,12 +51,4 @@ constexpr auto to_dxgi_format(const texture_format format) -> DXGI_FORMAT
    std::terminate();
 }
 
-auto load_texel(const texture_format format, const uint32 x, const uint32 y,
-                const std::span<const std::byte> data, const uint32 width,
-                const uint32 height, const uint32 row_pitch) -> float4;
-
-void store_texel(const float4 value, const texture_format format,
-                 const uint32 x, const uint32 y, const std::span<std::byte> data,
-                 const uint32 width, const uint32 height, const uint32 row_pitch);
-
 }

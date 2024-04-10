@@ -1,9 +1,7 @@
 
 #include "pch.h"
 
-#include "approx_test_helpers.hpp"
 #include "assets/texture/texture_io.hpp"
-#include "utility/srgb_conversion.hpp"
 
 #include <string_view>
 
@@ -12,40 +10,40 @@ using namespace Catch::literals;
 
 namespace we::assets::texture::tests {
 
+namespace {
+
+bool test_texel(texture_subresource_view& view, uint32 x, uint32 y, uint32 expected)
+{
+   if (x >= view.width()) return false;
+   if (y >= view.height()) return false;
+
+   const uint32 texel =
+      reinterpret_cast<uint32*>(view.data() + y * view.row_pitch())[x];
+
+   return texel == expected;
+}
+
+}
+
 TEST_CASE(".tga texture loading", "[Assets][Texture]")
 {
    auto texture = load_texture("data/noise.tga");
 
-   constexpr float epsilon = 0.001f;
+   REQUIRE(texture.width() == 4);
+   REQUIRE(texture.height() == 4);
+   REQUIRE(texture.mip_levels() == 3);
 
-   CHECK(approx_equals(texture.load({.mip_level = 0}, {0, 0}),
-                       utility::decompress_srgb({0.835f, 0.49f, 0.812f, 1.0f}),
-                       epsilon));
-   CHECK(approx_equals(texture.load({.mip_level = 0}, {3, 0}),
-                       utility::decompress_srgb({0.937f, 0.298f, 0.824f, 1.0f}),
-                       epsilon));
-   CHECK(approx_equals(texture.load({.mip_level = 0}, {0, 3}),
-                       utility::decompress_srgb({0.486f, 0.8f, 0.529f, 1.0f}), epsilon));
-   CHECK(approx_equals(texture.load({.mip_level = 0}, {3, 3}),
-                       utility::decompress_srgb({0.808f, 0.922f, 0.227f, 1.0f}),
-                       epsilon));
+   CHECK(test_texel(texture.subresource({.mip_level = 0}), 0, 0, 0xffcf7dd5));
+   CHECK(test_texel(texture.subresource({.mip_level = 0}), 3, 0, 0xffd24cef));
+   CHECK(test_texel(texture.subresource({.mip_level = 0}), 0, 3, 0xff87cc7c));
+   CHECK(test_texel(texture.subresource({.mip_level = 0}), 3, 3, 0xff3aebce));
 
-   CHECK(approx_equals(texture.load({.mip_level = 1}, {0, 0}),
-                       utility::decompress_srgb({0.718f, 0.663f, 0.718f, 1.0f}),
-                       epsilon));
-   CHECK(approx_equals(texture.load({.mip_level = 1}, {1, 0}),
-                       utility::decompress_srgb({0.616f, 0.439f, 0.78f, 1.0f}),
-                       epsilon));
-   CHECK(approx_equals(texture.load({.mip_level = 1}, {0, 1}),
-                       utility::decompress_srgb({0.518f, 0.624f, 0.325f, 1.0f}),
-                       epsilon));
-   CHECK(approx_equals(texture.load({.mip_level = 1}, {1, 1}),
-                       utility::decompress_srgb({0.62f, 0.533f, 0.588f, 1.0f}),
-                       epsilon));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 0, 0, 0xffb7a9b7));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 1, 0, 0xffc7709d));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 0, 1, 0xff539f84));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 1, 1, 0xff96889e));
 
-   CHECK(approx_equals(texture.load({.mip_level = 2}, {0, 0}),
-                       utility::decompress_srgb({0.624f, 0.573f, 0.635f, 1.0f}),
-                       epsilon));
+   CHECK(test_texel(texture.subresource({.mip_level = 2}), 0, 0, 0xffa2929f));
 }
 
 }

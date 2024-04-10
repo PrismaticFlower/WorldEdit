@@ -63,11 +63,11 @@ struct texture_manager::impl {
    {
       using assets::texture::texture_format;
 
-      const auto null_texture_init = [&](const float4 v, const texture_format format) {
+      const auto null_texture_init = [&](const uint32 v, const texture_format format) {
          assets::texture::texture cpu_null_texture{
             {.width = 1, .height = 1, .format = format}};
 
-         cpu_null_texture.store({.mip_level = 0}, {0, 0}, v);
+         std::memcpy(cpu_null_texture.data(), &v, sizeof(v));
 
          gpu::unique_resource_handle texture =
             {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
@@ -89,19 +89,19 @@ struct texture_manager::impl {
          return result;
       };
 
-      _null_diffuse_map = null_texture_init(float4{0.75f, 0.75f, 0.75f, 1.0f},
-                                            texture_format::r8g8b8a8_unorm_srgb);
+      _null_diffuse_map =
+         null_texture_init(0xff'e2'e2'e2u, texture_format::r8g8b8a8_unorm_srgb);
 
-      _null_normal_map = null_texture_init(float4{0.5f, 0.5f, 1.0f, 1.0f},
-                                           texture_format::r8g8b8a8_unorm);
+      _null_normal_map =
+         null_texture_init(0xff'ff'80'80u, texture_format::r8g8b8a8_unorm);
 
-      _null_detail_map = null_texture_init(float4{0.5f, 0.5f, 0.5f, 1.0f},
-                                           texture_format::r8g8b8a8_unorm);
+      _null_detail_map =
+         null_texture_init(0xff'80'80'80u, texture_format::r8g8b8a8_unorm);
 
-      _null_color_map = null_texture_init(float4{1.0f, 1.0f, 1.0f, 1.0f},
-                                          texture_format::r8g8b8a8_unorm_srgb);
+      _null_color_map =
+         null_texture_init(0xff'ff'ff'ffu, texture_format::r8g8b8a8_unorm_srgb);
 
-      const auto null_cube_texture_init = [&](const float4 v,
+      const auto null_cube_texture_init = [&](const uint32 v,
                                               const texture_format format) {
          assets::texture::texture cpu_null_texture{{.width = 1,
                                                     .height = 1,
@@ -110,7 +110,7 @@ struct texture_manager::impl {
                                                     .flags = {.cube_map = true}}};
 
          for (uint32 i = 0; i < 6; ++i) {
-            cpu_null_texture.store({.array_index = i}, {0, 0}, v);
+            std::memcpy(cpu_null_texture.subresource(i).data(), &v, sizeof(v));
          }
 
          gpu::unique_resource_handle texture =
@@ -134,8 +134,8 @@ struct texture_manager::impl {
          return result;
       };
 
-      _null_cube_map = null_cube_texture_init({0.0f, 0.0f, 0.0f, 1.0f},
-                                              texture_format::r8g8b8a8_unorm_srgb);
+      _null_cube_map =
+         null_cube_texture_init(0xff'00'00'00u, texture_format::r8g8b8a8_unorm_srgb);
    }
 
    auto at_or(const lowercase_string& name,
