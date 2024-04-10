@@ -123,8 +123,6 @@ auto get_texture_format(const DXGI_FORMAT dxgi_format) -> texture_format
       return texture_format::b8g8r8a8_unorm;
    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
       return texture_format::b8g8r8a8_unorm_srgb;
-   case DXGI_FORMAT_R16G16B16A16_UNORM:
-      return texture_format::r16g16b16a16_unorm;
    }
 
    throw std::runtime_error{"Texture has unsupported format!"};
