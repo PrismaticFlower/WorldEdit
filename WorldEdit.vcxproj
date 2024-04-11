@@ -137,7 +137,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING;_SILENCE_CXX23_DENORM_DEPRECATION_WARNING;NOMINMAX;WIN32_LEAN_AND_MEAN;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\stb_image_resize2;$(SolutionDir)third_party\imgui;$(SolutionDir)third_party\dxc\inc;$(SolutionDir)third_party\Fast-BVH\include;src\;resource\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DiagnosticsFormat>Caret</DiagnosticsFormat>
@@ -373,6 +373,7 @@
     <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
     <ClCompile Include="third_party\imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="third_party\imgui\misc\freetype\imgui_freetype.cpp" />
+    <ClCompile Include="third_party\stb_image_resize2\stb_image_resize2.c" />
     <ClInclude Include="include\assets\config\io.hpp" />
     <ClInclude Include="include\assets\config\key_node.hpp" />
     <ClInclude Include="include\assets\config\values.hpp" />
@@ -659,6 +660,7 @@
     <ClInclude Include="third_party\imgui\imstb_truetype.h" />
     <ClInclude Include="third_party\imgui\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="third_party\imgui\misc\freetype\imgui_freetype.h" />
+    <ClInclude Include="third_party\stb_image_resize2\stb_image_resize2.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\assets\asset_libraries.cpp" />

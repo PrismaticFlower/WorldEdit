@@ -5,11 +5,12 @@
 #include "texture_transforms.hpp"
 #include "utility/string_icompare.hpp"
 
-#include <algorithm>
+#include <bit>
 #include <cassert>
 #include <stdexcept>
 
 #include <DirectXTex.h>
+#include <stb_image_resize2.h>
 
 using namespace std::literals;
 
@@ -22,6 +23,11 @@ struct texture_options {
    bool generate_normal_map = false;
    bool cube_map = false;
    float normal_map_scale = 1.0f;
+};
+
+struct cube_offsets {
+   uint32 x = 0;
+   uint32 y = 0;
 };
 
 auto load_options(std::filesystem::path path) -> texture_options
@@ -64,52 +70,21 @@ auto load_options(std::filesystem::path path) -> texture_options
 
 auto get_mip_count(const std::size_t length) noexcept -> uint16
 {
-   return static_cast<uint16>(std::log2(length) + 1);
+   return static_cast<uint16>(std::bit_width(length));
 }
 
-auto fold_cube_map(DirectX::ScratchImage image) -> DirectX::ScratchImage
+auto get_stbir_pixel_layout(const texture_format format) -> stbir_pixel_layout
 {
-   if ((image.GetMetadata().width % 4) != 0 or (image.GetMetadata().height % 3) != 0) {
-      throw std::runtime_error{"Invalid cube map dimensions!"};
+   switch (format) {
+   case texture_format::r8g8b8a8_unorm:
+   case texture_format::r8g8b8a8_unorm_srgb:
+      return STBIR_RGBA_NO_AW;
+   case texture_format::b8g8r8a8_unorm:
+   case texture_format::b8g8r8a8_unorm_srgb:
+      return STBIR_BGRA_NO_AW;
    }
 
-   const auto width = (image.GetMetadata().width / 4);
-   const auto height = (image.GetMetadata().height / 3);
-
-   DirectX::ScratchImage cube_map;
-   cube_map.InitializeCube(image.GetMetadata().format, width, height, 1, 1);
-
-   // +X
-   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width * 2, height, width, height},
-                          *cube_map.GetImage(0, 0, 0),
-                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
-
-   // -X
-   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {0, height, width, height},
-                          *cube_map.GetImage(0, 1, 0),
-                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
-
-   // +Y
-   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width, 0, width, height},
-                          *cube_map.GetImage(0, 2, 0),
-                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
-
-   // -Y
-   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width, height * 2, width, height},
-                          *cube_map.GetImage(0, 3, 0),
-                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
-
-   // +Z
-   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width, height, width, height},
-                          *cube_map.GetImage(0, 4, 0),
-                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
-
-   // +Z
-   DirectX::CopyRectangle(*image.GetImage(0, 0, 0), {width * 3, height, width, height},
-                          *cube_map.GetImage(0, 5, 0),
-                          DirectX::TEX_FILTER_FORCE_NON_WIC, 0, 0);
-
-   return cube_map;
+   std::terminate();
 }
 
 auto get_texture_format(const DXGI_FORMAT dxgi_format) -> texture_format
@@ -128,14 +103,89 @@ auto get_texture_format(const DXGI_FORMAT dxgi_format) -> texture_format
    throw std::runtime_error{"Texture has unsupported format!"};
 }
 
-bool is_1x1x1(const DirectX::ScratchImage& image) noexcept
+void init_texture_data(texture& texture, DirectX::Image image)
 {
-   return image.GetMetadata().width == 1 and image.GetMetadata().height == 1 and
-          image.GetMetadata().depth == 1;
+   assert(texture.dxgi_format() == image.format);
+
+   if (texture.flags().cube_map) {
+      assert(texture.width() == image.width / 4);
+      assert(texture.height() == image.height / 3);
+
+      const cube_offsets offsets[6] = {
+         {texture.width() * 2, texture.height() * 1}, // +X
+         {texture.width() * 0, texture.height() * 1}, // -X
+         {texture.width() * 1, texture.height() * 0}, // +Y
+         {texture.width() * 1, texture.height() * 2}, // -Y
+         {texture.width() * 1, texture.height() * 1}, // +Z
+         {texture.width() * 3, texture.height() * 1},
+      };
+
+      for (uint32 i = 0; i < 6; ++i) {
+         texture_subresource_view& texture_view =
+            texture.subresource({.mip_level = 0, .array_index = i});
+
+         const std::size_t src_row_pitch = image.rowPitch;
+         const std::size_t dst_row_pitch = texture_view.row_pitch();
+
+         const uint8* src_texels = image.pixels;
+         std::byte* dst_texels = texture_view.data();
+
+         for (uint32 y = 0; y < texture_view.height(); ++y) {
+            std::memcpy(dst_texels + dst_row_pitch * y,
+                        src_texels + src_row_pitch * (y + offsets[i].y) +
+                           (offsets[i].x * sizeof(uint32)),
+                        texture_view.width() * sizeof(uint32));
+         }
+      }
+   }
+   else {
+      assert(texture.width() == image.width);
+      assert(texture.height() == image.height);
+
+      const std::size_t src_row_pitch = image.rowPitch;
+      const std::size_t dst_row_pitch = texture.subresource(0).row_pitch();
+
+      const uint8* src_texels = image.pixels;
+      std::byte* dst_texels = texture.subresource(0).data();
+
+      for (std::size_t y = 0; y < image.height; ++y) {
+         std::memcpy(dst_texels + dst_row_pitch * y,
+                     src_texels + src_row_pitch * y, image.width * sizeof(uint32));
+      }
+   }
 }
 
-auto generate_mipmaps(DirectX::ScratchImage scratch_image) -> DirectX::ScratchImage
+void generate_mipmaps(texture& texture)
 {
+   const stbir_pixel_layout pixel_layout = get_stbir_pixel_layout(texture.format());
+
+   for (uint32 array_index = 0; array_index < texture.array_size(); ++array_index) {
+      for (uint32 mip = 1; mip < texture.mip_levels(); ++mip) {
+         const texture_subresource_view input =
+            texture.subresource({.mip_level = mip - 1, .array_index = array_index});
+         texture_subresource_view output =
+            texture.subresource({.mip_level = mip, .array_index = array_index});
+
+         if (is_srgb(texture.format())) {
+            stbir_resize_uint8_srgb(reinterpret_cast<const unsigned char*>(input.data()),
+                                    input.width(), input.height(), input.row_pitch(),
+                                    reinterpret_cast<unsigned char*>(output.data()),
+                                    output.width(), output.height(),
+                                    output.row_pitch(), pixel_layout);
+         }
+         else {
+            stbir_resize_uint8_linear(reinterpret_cast<const unsigned char*>(
+                                         input.data()),
+                                      input.width(), input.height(),
+                                      input.row_pitch(),
+                                      reinterpret_cast<unsigned char*>(output.data()),
+                                      output.width(), output.height(),
+                                      output.row_pitch(), pixel_layout);
+         }
+      }
+   }
+
+#if 0
    DirectX::ScratchImage mipped_image;
 
    if (FAILED(DirectX::GenerateMipMaps(scratch_image.GetImages(),
@@ -147,22 +197,7 @@ auto generate_mipmaps(DirectX::ScratchImage scratch_image) -> DirectX::ScratchIm
    }
 
    return mipped_image;
-}
-
-void init_texture_data(texture_subresource_view texture, DirectX::Image image)
-{
-   assert(texture.dxgi_format() == image.format);
-   assert(texture.width() == image.width);
-   assert(texture.height() == image.height);
-
-   const std::size_t row_pitch =
-      std::min(std::size_t{texture.row_pitch()}, image.rowPitch);
-   const std::byte* src_pixels = reinterpret_cast<const std::byte*>(image.pixels);
-
-   for (std::size_t y = 0; y < image.height; ++y) {
-      std::copy_n(src_pixels + (y * image.rowPitch), row_pitch,
-                  texture.data() + (y * texture.row_pitch()));
-   }
+#endif
 }
 
 }
@@ -181,30 +216,26 @@ auto load_texture(const std::filesystem::path& path) -> texture
       scratch_image.OverrideFormat(DirectX::MakeSRGB(scratch_image.GetMetadata().format));
    }
 
-   if (options.cube_map) {
-      scratch_image = fold_cube_map(std::move(scratch_image));
-   }
-
-   if (not is_1x1x1(scratch_image)) {
-      scratch_image = generate_mipmaps(std::move(scratch_image));
-   }
-
    auto metadata = scratch_image.GetMetadata();
 
+   const uint32 width =
+      static_cast<uint32>(options.cube_map ? metadata.width / 4 : metadata.width);
+   const uint32 height =
+      static_cast<uint32>(options.cube_map ? metadata.height / 3 : metadata.height);
+   const uint16 mip_count = get_mip_count(std::max(width, height));
+   const uint16 array_size = options.cube_map ? 6 : 1;
+
    texture texture =
-      texture::init_params{.width = static_cast<uint32>(metadata.width),
-                           .height = static_cast<uint32>(metadata.height),
-                           .mip_levels = static_cast<uint16>(metadata.mipLevels),
-                           .array_size = static_cast<uint16>(metadata.arraySize),
+      texture::init_params{.width = width,
+                           .height = height,
+                           .mip_levels = mip_count,
+                           .array_size = array_size,
                            .format = get_texture_format(metadata.format),
                            .flags = {.cube_map = options.cube_map}};
 
-   for (uint32 item = 0; item < texture.array_size(); ++item) {
-      for (uint32 mip = 0; mip < texture.mip_levels(); ++mip) {
-         init_texture_data(texture.subresource({.mip_level = mip, .array_index = item}),
-                           *scratch_image.GetImage(mip, item, 0));
-      }
-   }
+   init_texture_data(texture, *scratch_image.GetImage(0, 0, 0));
+
+   generate_mipmaps(texture);
 
    if (options.generate_normal_map and not options.cube_map) {
       texture = generate_normal_maps(texture, options.normal_map_scale);
