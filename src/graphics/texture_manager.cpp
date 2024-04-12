@@ -48,6 +48,78 @@ auto strip_srgb_format(const DXGI_FORMAT format) noexcept -> DXGI_FORMAT
 using updated_textures_map =
    absl::flat_hash_map<lowercase_string, std::shared_ptr<const world_texture>>;
 
+struct null_texture_desc {
+   std::shared_ptr<world_texture>& output;
+   uint32 color;
+   DXGI_FORMAT format;
+   world_texture_dimension dimension = world_texture_dimension::_2d;
+};
+
+void init_null_textures(std::span<null_texture_desc> null_textures, gpu::device& device,
+                        copy_command_list_pool& copy_command_list_pool)
+{
+   pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
+
+   gpu::unique_resource_handle upload_buffer{
+      device.create_buffer({.size = null_textures.size() * gpu::texture_data_placement_alignment,
+                            .debug_name = "Texture Manager Upload Buffer"},
+                           gpu::heap_type::upload),
+      device.background_copy_queue};
+
+   // Fill upload buffer.
+   {
+      std::byte* const upload_buffer_ptr =
+         static_cast<std::byte*>(device.map(upload_buffer.get(), 0, {}));
+
+      for (uint32 i = 0; i < null_textures.size(); ++i) {
+         std::memcpy(upload_buffer_ptr + i * gpu::texture_data_placement_alignment,
+                     &null_textures[i].color, sizeof(null_textures[i].color));
+      }
+
+      device.unmap(upload_buffer.get(), 0,
+                   {0, null_textures.size() * gpu::texture_data_placement_alignment});
+   }
+
+   for (uint32 texture_index = 0; texture_index < null_textures.size(); ++texture_index) {
+      const uint64 buffer_offset = texture_index * gpu::texture_data_placement_alignment;
+      const uint32 array_size =
+         null_textures[texture_index].dimension == world_texture_dimension::cube ? 6 : 1;
+
+      gpu::unique_resource_handle texture =
+         {device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+                                 .format = null_textures[texture_index].format,
+                                 .width = 1,
+                                 .height = 1,
+                                 .mip_levels = 1,
+                                 .array_size = array_size},
+                                gpu::barrier_layout::common,
+                                gpu::legacy_resource_state::common),
+          device.direct_queue};
+
+      for (uint32 array_index = 0; array_index < array_size; ++array_index) {
+         command_list->copy_buffer_to_texture(texture.get(), array_index, 0, 0,
+                                              0, upload_buffer.get(),
+                                              {.offset = buffer_offset,
+                                               .format =
+                                                  null_textures[texture_index].format,
+                                               .width = 1,
+                                               .height = 1,
+                                               .depth = 1,
+                                               .row_pitch =
+                                                  gpu::texture_data_pitch_alignment});
+      }
+
+      null_textures[texture_index].output =
+         std::make_shared<world_texture>(device, std::move(texture),
+                                         null_textures[texture_index].format,
+                                         null_textures[texture_index].dimension);
+   }
+
+   command_list->close();
+
+   device.background_copy_queue.execute_command_lists(command_list.get());
+}
+
 }
 
 struct texture_manager::impl {
@@ -61,81 +133,17 @@ struct texture_manager::impl {
         _thread_pool{thread_pool},
         _error_output{error_output}
    {
-      using assets::texture::texture_format;
+      std::array<null_texture_desc, 5> null_textures = {{
+         // clang-format off
+         {_null_diffuse_map, 0xff'e2'e2'e2u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+         {_null_normal_map, 0xff'ff'80'80u, DXGI_FORMAT_R8G8B8A8_UNORM},
+         {_null_detail_map, 0xff'80'80'80u, DXGI_FORMAT_R8G8B8A8_UNORM},
+         {_null_color_map, 0xff'ff'ff'ffu, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB},
+         {_null_cube_map, 0xff'00'00'00u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, world_texture_dimension::cube},
+         // clang-format on
+      }};
 
-      const auto null_texture_init = [&](const uint32 v, const texture_format format) {
-         assets::texture::texture cpu_null_texture{
-            {.width = 1, .height = 1, .format = format}};
-
-         std::memcpy(cpu_null_texture.data(), &v, sizeof(v));
-
-         gpu::unique_resource_handle texture =
-            {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
-                                     .format = cpu_null_texture.dxgi_format(),
-                                     .width = cpu_null_texture.width(),
-                                     .height = cpu_null_texture.height(),
-                                     .mip_levels = cpu_null_texture.mip_levels()},
-                                    gpu::barrier_layout::common,
-                                    gpu::legacy_resource_state::common),
-             _device.direct_queue};
-
-         init_texture(texture.get(), cpu_null_texture);
-
-         auto result =
-            std::make_shared<world_texture>(_device, std::move(texture),
-                                            cpu_null_texture.dxgi_format(),
-                                            world_texture_dimension::_2d);
-
-         return result;
-      };
-
-      _null_diffuse_map =
-         null_texture_init(0xff'e2'e2'e2u, texture_format::r8g8b8a8_unorm_srgb);
-
-      _null_normal_map =
-         null_texture_init(0xff'ff'80'80u, texture_format::r8g8b8a8_unorm);
-
-      _null_detail_map =
-         null_texture_init(0xff'80'80'80u, texture_format::r8g8b8a8_unorm);
-
-      _null_color_map =
-         null_texture_init(0xff'ff'ff'ffu, texture_format::r8g8b8a8_unorm_srgb);
-
-      const auto null_cube_texture_init = [&](const uint32 v,
-                                              const texture_format format) {
-         assets::texture::texture cpu_null_texture{{.width = 1,
-                                                    .height = 1,
-                                                    .array_size = 6,
-                                                    .format = format,
-                                                    .flags = {.cube_map = true}}};
-
-         for (uint32 i = 0; i < 6; ++i) {
-            std::memcpy(cpu_null_texture.subresource(i).data(), &v, sizeof(v));
-         }
-
-         gpu::unique_resource_handle texture =
-            {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
-                                     .format = cpu_null_texture.dxgi_format(),
-                                     .width = cpu_null_texture.width(),
-                                     .height = cpu_null_texture.height(),
-                                     .mip_levels = cpu_null_texture.mip_levels(),
-                                     .array_size = cpu_null_texture.array_size()},
-                                    gpu::barrier_layout::common,
-                                    gpu::legacy_resource_state::common),
-             _device.direct_queue};
-
-         init_texture(texture.get(), cpu_null_texture);
-
-         auto result =
-            std::make_shared<world_texture>(_device, std::move(texture),
-                                            cpu_null_texture.dxgi_format(),
-                                            world_texture_dimension::cube);
-
-         return result;
-      };
-
-      _null_cube_map =
-         null_cube_texture_init(0xff'00'00'00u, texture_format::r8g8b8a8_unorm_srgb);
+      init_null_textures(null_textures, device, copy_command_list_pool);
    }
 
    auto at_or(const lowercase_string& name,
