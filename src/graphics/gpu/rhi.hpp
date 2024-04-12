@@ -1179,6 +1179,9 @@ struct device_desc {
 
    /// @brief Force the device to report SM 6.6 as unsupported.
    bool force_no_shader_model_6_6 = false;
+
+   /// @brief Force the device to report open existing heap as unsupported.
+   bool force_no_open_existing_heap = false;
 };
 
 /// Device Definitions ///
@@ -1238,6 +1241,9 @@ public:
                                      const legacy_resource_state legacy_initial_resource_state)
       -> resource_handle;
 
+   [[nodiscard]] auto open_existing_buffer(const void* address, const buffer_desc& desc)
+      -> resource_handle;
+
    [[nodiscard]] auto get_gpu_virtual_address(resource_handle resource)
       -> gpu_virtual_address;
 
@@ -1282,6 +1288,8 @@ public:
    [[nodiscard]] bool supports_conservative_rasterization() const noexcept;
 
    [[nodiscard]] bool supports_shader_model_6_6() const noexcept;
+
+   [[nodiscard]] bool supports_open_existing_heap() const noexcept;
 
    /// Constructors/Destructor ///
 

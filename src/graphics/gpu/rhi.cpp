@@ -270,6 +270,18 @@ bool check_shader_model_6_6_support(ID3D12Device& device) noexcept
 
    return true;
 }
+
+bool check_open_existing_heap_support(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_EXISTING_HEAPS existing_heaps_support{};
+
+   if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_EXISTING_HEAPS, &existing_heaps_support,
+                                         sizeof(existing_heaps_support)))) {
+      return false;
+   }
+
+   return existing_heaps_support.Supported;
+}
 }
 
 struct command_queue_init {
@@ -287,7 +299,10 @@ struct device_state {
                                       : check_enhanced_barriers_support(*device)},
         supports_shader_model_6_6{desc.force_no_shader_model_6_6
                                      ? false
-                                     : check_shader_model_6_6_support(*device)}
+                                     : check_shader_model_6_6_support(*device)},
+        supports_open_existing_heap{desc.force_no_open_existing_heap
+                                       ? false
+                                       : check_open_existing_heap_support(*device)}
    {
    }
 
@@ -319,6 +334,7 @@ struct device_state {
    const bool supports_conservative_rasterization : 1 =
       check_conservative_rasterization_support(*device);
    const bool supports_shader_model_6_6 : 1;
+   const bool supports_open_existing_heap : 1;
 };
 
 struct swap_chain_state {
@@ -1067,6 +1083,42 @@ auto device::create_texture(const texture_desc& desc,
    return pack_resource_handle(resource.release());
 }
 
+auto device::open_existing_buffer(const void* address, const buffer_desc& desc)
+   -> resource_handle
+{
+   com_ptr<ID3D12Heap> heap;
+
+   throw_if_fail(
+      state->device->OpenExistingHeapFromAddress(address,
+                                                 IID_PPV_ARGS(heap.clear_and_assign())));
+
+   D3D12_RESOURCE_DESC1 d3d12_desc{.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+                                   .Alignment = 0,
+                                   .Width = desc.size,
+                                   .Height = 1,
+                                   .DepthOrArraySize = 1,
+                                   .MipLevels = 1,
+                                   .Format = DXGI_FORMAT_UNKNOWN,
+                                   .SampleDesc = {1, 0},
+                                   .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+                                   .Flags = D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER |
+                                            (desc.flags.allow_unordered_access
+                                                ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+                                                : D3D12_RESOURCE_FLAG_NONE)};
+
+   com_ptr<ID3D12Resource2> resource;
+
+   throw_if_fail(
+      state->device->CreatePlacedResource2(heap.get(), 0, &d3d12_desc,
+                                           D3D12_BARRIER_LAYOUT_UNDEFINED,
+                                           nullptr, 0, nullptr,
+                                           IID_PPV_ARGS(resource.clear_and_assign())));
+
+   set_debug_name(*resource, desc.debug_name);
+
+   return pack_resource_handle(resource.release());
+}
+
 auto device::get_gpu_virtual_address(resource_handle resource) -> gpu_virtual_address
 {
    return unpack_resource_handle(resource)->GetGPUVirtualAddress();
@@ -1481,6 +1533,11 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
 [[msvc::forceinline]] bool device::supports_shader_model_6_6() const noexcept
 {
    return state->supports_shader_model_6_6;
+}
+
+[[msvc::forceinline]] bool device::supports_open_existing_heap() const noexcept
+{
+   return state->supports_open_existing_heap;
 }
 
 swap_chain::swap_chain() = default;

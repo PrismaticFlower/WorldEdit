@@ -116,8 +116,11 @@ struct texture {
 private:
    auto flatten_subresource_index(const subresource_index index) const -> std::size_t;
 
+   static void free_texture_data(std::byte* memory) noexcept;
+
    std::vector<texture_subresource_view> _subresources;
-   std::unique_ptr<std::byte[]> _texture_data;
+   std::unique_ptr<std::byte, decltype(&free_texture_data)> _texture_data = {nullptr,
+                                                                             &free_texture_data};
 
    uint32 _width = 0;
    uint32 _height = 0;

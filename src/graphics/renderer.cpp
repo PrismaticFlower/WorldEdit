@@ -305,8 +305,9 @@ renderer_impl::renderer_impl(const renderer_init& init)
      _device{gpu::device_desc{.enable_debug_layer = init.use_debug_layer,
                               .enable_gpu_based_validation = init.use_debug_layer,
                               .force_legacy_barriers = init.use_legacy_barriers,
-                              .force_no_shader_model_6_6 =
-                                 init.never_use_shader_model_6_6}},
+                              .force_no_shader_model_6_6 = init.never_use_shader_model_6_6,
+                              .force_no_open_existing_heap =
+                                 init.never_use_open_existing_heap}},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
      _texture_manager{_device, _copy_command_list_pool, init.thread_pool,
                       init.asset_libraries.textures, init.error_output},

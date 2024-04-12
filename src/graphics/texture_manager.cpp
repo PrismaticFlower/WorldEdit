@@ -341,18 +341,40 @@ private:
       pooled_copy_command_list command_list =
          _copy_command_list_pool.aquire_and_reset();
 
-      gpu::unique_resource_handle upload_buffer{
-         _device.create_buffer({.size = cpu_texture.size(),
-                                .debug_name = "Texture Manager Upload Buffer"},
-                               gpu::heap_type::upload),
-         _device.background_copy_queue};
+      gpu::unique_resource_handle upload_buffer;
 
-      std::byte* const upload_buffer_ptr =
-         static_cast<std::byte*>(_device.map(upload_buffer.get(), 0, {}));
+      [[likely]] if (_device.supports_open_existing_heap()) {
+         upload_buffer = {_device.open_existing_buffer(
+                             cpu_texture.data(),
+                             {.size = cpu_texture.size(),
+                              .debug_name = "Texture Manager Upload Buffer"}),
+                          _device.background_copy_queue};
 
-      std::memcpy(upload_buffer_ptr, cpu_texture.data(), cpu_texture.size());
+         for (uint32 i = 0; i < cpu_texture.subresource_count(); ++i) {
+            const auto& cpu_subresource = cpu_texture.subresource(i);
 
-      _device.unmap(upload_buffer.get(), 0, {0, cpu_texture.size()});
+            command_list
+               ->copy_buffer_to_texture(texture, i, 0, 0, 0, upload_buffer.get(),
+                                        {.offset = cpu_subresource.offset(),
+                                         .format = cpu_subresource.dxgi_format(),
+                                         .width = cpu_subresource.width(),
+                                         .height = cpu_subresource.height(),
+                                         .depth = 1,
+                                         .row_pitch = cpu_subresource.row_pitch()});
+         }
+      }
+      else {
+         upload_buffer = {_device.create_buffer({.size = cpu_texture.size(), .debug_name = "Texture Manager Upload Buffer"},
+                                                gpu::heap_type::upload),
+                          _device.background_copy_queue};
+
+         std::byte* const upload_buffer_ptr =
+            static_cast<std::byte*>(_device.map(upload_buffer.get(), 0, {}));
+
+         std::memcpy(upload_buffer_ptr, cpu_texture.data(), cpu_texture.size());
+
+         _device.unmap(upload_buffer.get(), 0, {0, cpu_texture.size()});
+      }
 
       for (uint32 i = 0; i < cpu_texture.subresource_count(); ++i) {
          const auto& cpu_subresource = cpu_texture.subresource(i);

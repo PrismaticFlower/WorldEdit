@@ -5,6 +5,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <Windows.h>
+
 namespace we::assets::texture {
 
 namespace {
@@ -117,7 +119,12 @@ texture::texture(const init_params init_params)
 
       return size;
    }();
-   _texture_data = std::make_unique_for_overwrite<std::byte[]>(_size);
+   _texture_data = {static_cast<std::byte*>(VirtualAlloc(nullptr, _size,
+                                                         MEM_RESERVE | MEM_COMMIT,
+                                                         PAGE_READWRITE)),
+                    &free_texture_data};
+
+   if (not _texture_data) std::terminate();
 
    _subresources.reserve(init_params.array_size * init_params.mip_levels);
 
@@ -142,6 +149,11 @@ texture::texture(const init_params init_params)
             math::align_up(subresource_offset, subresource_alignment);
       }
    }
+}
+
+void texture::free_texture_data(std::byte* memory) noexcept
+{
+   if (memory) VirtualFree(memory, 0, MEM_RELEASE);
 }
 
 auto texture::subresource(const subresource_index index) -> texture_subresource_view&

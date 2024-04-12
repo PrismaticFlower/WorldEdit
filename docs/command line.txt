@@ -12,3 +12,6 @@
 
 -gpu_no_shader_model_6_6
   Never use Shader Model 6.6 shaders, even if supported by the GPU.
+
+-gpu_no_open_existing_heap
+  Never make use of ID3D12Device3::OpenExistingHeapFromAddress. Even if it is supported by the GPU.
