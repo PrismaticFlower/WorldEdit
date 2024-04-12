@@ -18,7 +18,8 @@
  *  3. This notice may not be removed or altered from any source distribution.
  */
 
-// Important! This file has been edited for WorldEdit to include mimalloc-override.h. This is the only change.
+// Important! //
+// This file has been edited for WorldEdit to include mimalloc-override.h and to use native sqrt instructions.
 
 #include <assert.h>
 #include <float.h>
@@ -29,8 +30,8 @@
 
 #include "mikktspace.h"
 
-// WorldEdit change here.
-#include <mimalloc-override.h>
+#include <immintrin.h>         // WorldEdit change
+#include <mimalloc-override.h> // WorldEdit change
 
 #define TFALSE 0
 #define TTRUE 1
@@ -84,6 +85,20 @@ static SVec3 vscale(const float fS, const SVec3 v)
    return vRes;
 }
 
+static float Sqrt(float v) // WorldEdit change
+{
+   _mm_store_ss(&v, _mm_sqrt_ss(_mm_load_ss(&v)));
+
+   return v;
+}
+
+static float RSqrt(float v) // WorldEdit change
+{
+   _mm_store_ss(&v, _mm_rsqrt_ss(_mm_load_ss(&v)));
+
+   return v;
+}
+
 static float LengthSquared(const SVec3 v)
 {
    return v.x * v.x + v.y * v.y + v.z * v.z;
@@ -91,12 +106,12 @@ static float LengthSquared(const SVec3 v)
 
 static float Length(const SVec3 v)
 {
-   return sqrtf(LengthSquared(v));
+   return Sqrt(LengthSquared(v)); // WorldEdit change
 }
 
 static SVec3 Normalize(const SVec3 v)
 {
-   return vscale(1 / Length(v), v);
+   return vscale(RSqrt(LengthSquared(v)), v); // WorldEdit change
 }
 
 static float vdot(const SVec3 v1, const SVec3 v2)
@@ -272,8 +287,8 @@ tbool genTangSpace(const SMikkTSpaceContext* pContext, const float fAngularThres
    iNrTSPaces = GenerateInitialVerticesIndexList(pTriInfos, piTriListIn,
                                                  pContext, iNrTrianglesIn);
 
-   // make a welded index list of identical positions and attributes (pos, norm, texc)
-   // printf("gen welded index list begin\n");
+   // make a welded index list of identical positions and attributes (pos, norm,
+   // texc) printf("gen welded index list begin\n");
    GenerateSharedVerticesIndexList(piTriListIn, pContext, iNrTrianglesIn);
    // printf("gen welded index list end\n");
 
