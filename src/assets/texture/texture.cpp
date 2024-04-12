@@ -105,8 +105,7 @@ texture::texture(const init_params init_params)
    _array_size = init_params.array_size;
    _format = init_params.format;
    _flags = init_params.flags;
-
-   _texture_data.resize([&] {
+   _size = [&] {
       std::size_t size = 0;
 
       for (uint32 array_index = 0; array_index < init_params.array_size; ++array_index) {
@@ -117,7 +116,8 @@ texture::texture(const init_params init_params)
       }
 
       return size;
-   }());
+   }();
+   _texture_data = std::make_unique_for_overwrite<std::byte[]>(_size);
 
    _subresources.reserve(init_params.array_size * init_params.mip_levels);
 
@@ -129,7 +129,7 @@ texture::texture(const init_params init_params)
             get_mip_level_desc(_width, _height, mip_level, _format);
 
          _subresources.emplace_back(
-            texture_subresource_view::init_params{.data = {_texture_data.data() + subresource_offset,
+            texture_subresource_view::init_params{.data = {_texture_data.get() + subresource_offset,
                                                            mip_level_desc.size},
                                                   .offset = subresource_offset,
                                                   .row_pitch = mip_level_desc.row_pitch,
@@ -183,17 +183,17 @@ auto texture::subresource_count() const noexcept -> std::size_t
 
 auto texture::data() noexcept -> std::byte*
 {
-   return _texture_data.data();
+   return _texture_data.get();
 }
 
 auto texture::data() const noexcept -> const std::byte*
 {
-   return _texture_data.data();
+   return _texture_data.get();
 }
 
 auto texture::size() const noexcept -> std::size_t
 {
-   return _texture_data.size();
+   return _size;
 }
 
 auto texture::width() const noexcept -> uint32

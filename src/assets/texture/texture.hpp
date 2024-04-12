@@ -4,6 +4,7 @@
 #include "types.hpp"
 
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <span>
 #include <vector>
@@ -116,7 +117,7 @@ private:
    auto flatten_subresource_index(const subresource_index index) const -> std::size_t;
 
    std::vector<texture_subresource_view> _subresources;
-   std::vector<std::byte> _texture_data;
+   std::unique_ptr<std::byte[]> _texture_data;
 
    uint32 _width = 0;
    uint32 _height = 0;
@@ -124,6 +125,7 @@ private:
    uint16 _array_size = 0;
    texture_format _format = texture_format::r8g8b8a8_unorm;
    texture_flags _flags = {};
+   uint64 _size = 0;
 };
 
 }
