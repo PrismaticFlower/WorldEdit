@@ -1279,6 +1279,22 @@ public:
 
    [[nodiscard]] auto create_swap_chain(const swap_chain_desc& desc) -> swap_chain;
 
+   /// Unsynced Immediate Release Functions ///
+
+   void release_root_signature(root_signature_handle root_signature);
+
+   void release_pipeline(pipeline_handle pipeline);
+
+   void release_resource(resource_handle resource);
+
+   void release_resource_view(resource_view resource_view);
+
+   void release_render_target_view(rtv_handle render_target_view);
+
+   void release_depth_stencil_view(dsv_handle depth_stencil_view);
+
+   void release_query_heap(query_heap_handle query_heap);
+
    /// Feature Test Functions ///
 
    [[nodiscard]] bool supports_enhanced_barriers() const noexcept;

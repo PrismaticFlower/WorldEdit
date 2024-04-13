@@ -45,9 +45,32 @@ There is no restriction on what kind of Handle Objects a queue can release. i.e 
    void release_render_target_view(rtv_handle render_target_view);
 
    void release_depth_stencil_view(dsv_handle depth_stencil_view);
+
+   void release_query_heap(query_heap_handle query_heap);
 ```
 
 Included in `gpu/resource.hpp` is `gpu::unique_handle`. This provides a smart pointer like interface around a handle and manages it's lifetime using the provided queue at construction time. Managing the lifetime of a `gpu::resource_view` is also supported. In most cases this is what you'll want to use over manually managing object lifetime.
+
+#### Unsynced Lifetime Management
+During optimizing the background texture creation it became apparent that the ability to release a resource immediately could speed things up for cases where you have a natural sync point (Like the `wait_for_idle` at the end of a texture upload.). With that in mind `gpu::device` now has functions to directly release GPU resources and objects. These perform no synchronization and as such must be treated with more care than the queued release functions.
+
+```c++
+   // Release functions from gpu::device
+
+   void release_root_signature(root_signature_handle root_signature);
+
+   void release_pipeline(pipeline_handle pipeline);
+
+   void release_resource(resource_handle resource);
+
+   void release_resource_view(resource_view resource_view);
+
+   void release_render_target_view(rtv_handle render_target_view);
+
+   void release_depth_stencil_view(dsv_handle depth_stencil_view);
+
+   void release_query_heap(query_heap_handle query_heap);
+```
 
 ```c++
 // List of gpu::unique_handle instantiations

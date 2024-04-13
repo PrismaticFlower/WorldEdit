@@ -393,6 +393,8 @@ private:
       command_list->close();
 
       _device.background_copy_queue.execute_command_lists(command_list.get());
+      _device.background_copy_queue.wait_for_idle();
+      _device.release_resource(upload_buffer.release());
    }
 
    /// @brief Creates a texture asynchronously. _shared_mutex must be held before calling this.
@@ -418,8 +420,6 @@ private:
                     _device.direct_queue};
 
                 init_texture(texture.get(), *data);
-
-                _device.background_copy_queue.wait_for_idle();
 
                 return std::make_shared<world_texture>(_device, std::move(texture),
                                                        data->dxgi_format(),

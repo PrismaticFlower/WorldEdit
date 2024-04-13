@@ -1515,6 +1515,43 @@ auto device::create_swap_chain(const swap_chain_desc& desc) -> swap_chain
    return swap_chain;
 }
 
+void device::release_root_signature(root_signature_handle root_signature)
+{
+   unpack_root_signature_handle(root_signature)->Release();
+}
+
+void device::release_pipeline(pipeline_handle pipeline)
+{
+   unpack_pipeline_handle(pipeline)->Release();
+}
+
+void device::release_resource(resource_handle resource)
+{
+   unpack_resource_handle(resource)->Release();
+}
+
+void device::release_resource_view(resource_view resource_view)
+{
+   state->srv_uav_descriptor_heap.allocator.free(resource_view.index);
+}
+
+void device::release_render_target_view(rtv_handle render_target_view)
+{
+   state->rtv_descriptor_heap.allocator.free(
+      state->rtv_descriptor_heap.to_index(unpack_rtv_handle(render_target_view)));
+}
+
+void device::release_depth_stencil_view(dsv_handle depth_stencil_view)
+{
+   state->dsv_descriptor_heap.allocator.free(
+      state->dsv_descriptor_heap.to_index(unpack_dsv_handle(depth_stencil_view)));
+}
+
+void device::release_query_heap(query_heap_handle query_heap)
+{
+   unpack_query_heap_handle(query_heap)->Release();
+}
+
 [[msvc::forceinline]] bool device::supports_enhanced_barriers() const noexcept
 {
    return state->supports_enhanced_barriers;
