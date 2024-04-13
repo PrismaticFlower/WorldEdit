@@ -77,7 +77,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
          {.window = window,
           .thread_pool = _thread_pool,
           .asset_libraries = _asset_libraries,
-          .error_output = _stream,
+          .error_output = *_stream,
           .display_scale = _display_scale.value,
           .use_debug_layer = _renderer_use_debug_layer,
           .use_legacy_barriers = _renderer_use_legacy_barriers,
@@ -2828,7 +2828,7 @@ void world_edit::load_world(std::filesystem::path path) noexcept
    close_world();
 
    try {
-      _world = world::load_world(path, _stream);
+      _world = world::load_world(path, *_stream);
       _world_path = path;
 
       _camera.position({0.0f, 0.0f, 0.0f});
@@ -2841,9 +2841,9 @@ void world_edit::load_world(std::filesystem::path path) noexcept
       _window_unsaved_star = false;
    }
    catch (std::exception& e) {
-      _stream.write(fmt::format("Failed to load world '{}'!\n   Reason: \n{}",
-                                path.filename().string(),
-                                string::indent(2, e.what())));
+      _stream->write(fmt::format("Failed to load world '{}'!\n   Reason: \n{}",
+                                 path.filename().string(),
+                                 string::indent(2, e.what())));
    }
 }
 
@@ -2887,7 +2887,7 @@ void world_edit::save_world(std::filesystem::path path) noexcept
                      "   Incomplete save data maybe present on disk.\n",
                      string::indent(2, e.what()));
 
-      _stream.write(message);
+      _stream->write(message);
 
       MessageBoxA(_window, message.data(), "Failed to save world!", MB_OK);
    }
@@ -3153,7 +3153,7 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
             {.window = _window,
              .thread_pool = _thread_pool,
              .asset_libraries = _asset_libraries,
-             .error_output = _stream,
+             .error_output = *_stream,
              .display_scale = _display_scale.value,
              .use_debug_layer = _renderer_use_debug_layer,
              .use_legacy_barriers = _renderer_use_legacy_barriers,
@@ -3162,7 +3162,7 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
 
          _renderer->recreate_imgui_font_atlas();
 
-         _stream.write("GPU Device was removed and has been recreated.\n");
+         _stream->write("GPU Device was removed and has been recreated.\n");
 
          _world.terrain.untracked_fill_dirty_rects();
       }

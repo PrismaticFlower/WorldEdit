@@ -301,7 +301,7 @@ private:
 
    void handle_gpu_error(graphics::gpu::exception& e) noexcept;
 
-   standard_output_stream _stream;
+   std::unique_ptr<output_stream> _stream = make_async_output_stream_stdout();
    HWND _window{};
    settings::settings _settings;
    std::shared_ptr<async::thread_pool> _thread_pool = async::thread_pool::make();
@@ -332,7 +332,7 @@ private:
 
    std::vector<std::filesystem::path> _project_world_paths;
 
-   assets::libraries_manager _asset_libraries{_stream, _thread_pool};
+   assets::libraries_manager _asset_libraries{*_stream, _thread_pool};
    world::object_class_library _object_classes{_asset_libraries};
    world::world _world;
    world::interaction_targets _interaction_targets;
@@ -666,7 +666,7 @@ private:
 
    gizmo _gizmo;
    commands _commands;
-   hotkeys _hotkeys{_commands, _stream};
+   hotkeys _hotkeys{_commands, *_stream};
 
    settings::saver _settings_saver{".settings", _settings};
 };

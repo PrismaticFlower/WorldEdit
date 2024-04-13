@@ -1,6 +1,8 @@
 #pragma once
 
-#include <string_view>
+#include <cstdio>
+#include <memory>
+#include <string>
 
 #include <fmt/core.h>
 
@@ -10,23 +12,24 @@ class output_stream {
 public:
    virtual ~output_stream() = default;
 
-   virtual void write(const std::string_view string) noexcept = 0;
+   virtual void write(std::string string) noexcept = 0;
+
+   void vwrite(fmt::string_view fmt, fmt::format_args args) noexcept;
 
    template<typename... Args>
    void write(fmt::format_string<Args...> fmt, Args&&... args) noexcept
    {
-      write(fmt::vformat(fmt, fmt::make_format_args(args...)));
+      vwrite(fmt, fmt::make_format_args(args...));
    }
 };
 
-class standard_output_stream final : public output_stream {
-public:
-   void write(const std::string_view string) noexcept override;
-};
+auto make_async_output_stream_stdout() -> std::unique_ptr<output_stream>;
 
 class null_output_stream final : public output_stream {
 public:
-   void write(const std::string_view) noexcept override{};
+   using output_stream::write;
+
+   void write(std::string string) noexcept override;
 };
 
 }
