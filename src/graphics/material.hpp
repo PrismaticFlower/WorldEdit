@@ -17,7 +17,8 @@ enum class material_status {
 
 struct material {
    material(const assets::msh::material& material, const bool static_lighting,
-            gpu::device& device, copy_command_list_pool& copy_command_list_pool,
+            std::span<std::byte> constant_buffer_upload_memory,
+            gpu_virtual_address constant_buffer_view,
             texture_manager& texture_manager);
 
    /// @brief Process updated material textures.
@@ -25,7 +26,7 @@ struct material {
    /// @param updated The updated textures.
    /// @param device The GPU device.
    void process_updated_textures(gpu::copy_command_list& command_list,
-                                 const updated_textures& updated, gpu::device& device);
+                                 const updated_textures& updated);
 
    /// @brief Query the status of the material's textures.
    /// @param texture_manager The texture manager.
@@ -35,6 +36,9 @@ struct material {
    /// @brief Get the pipeline flags for using this material with the thumbnail mesh renderer.
    /// @return The flags.
    auto thumbnail_mesh_flags() const noexcept -> thumbnail_mesh_pipeline_flags;
+
+   /// @brief The size of the material constant buffer.
+   const static std::size_t constant_buffer_size;
 
    depth_prepass_pipeline_flags depth_prepass_flags =
       depth_prepass_pipeline_flags::none;
@@ -62,7 +66,7 @@ struct material {
       std::shared_ptr<const world_texture_load_token> env_map;
    };
 
-   gpu::unique_resource_handle constant_buffer;
+   gpu::resource_handle constant_buffer;
 
    textures textures;
    texture_names texture_names;
@@ -74,9 +78,9 @@ private:
 
    void init_flags(const assets::msh::material& material);
 
-   void init_resources(const assets::msh::material& material,
-                       const bool static_lighting, gpu::device& device,
-                       copy_command_list_pool& copy_command_list_pool);
+   void init_constant_buffer(const assets::msh::material& material,
+                             const bool static_lighting,
+                             std::span<std::byte> constant_buffer_upload_memory);
 };
 
 }

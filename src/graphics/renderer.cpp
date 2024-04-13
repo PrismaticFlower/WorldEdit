@@ -2946,7 +2946,7 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
    _texture_manager.eval_updated_textures([&](const updated_textures& updated) noexcept {
       _model_manager.for_each([&](model& model) noexcept {
          for (auto& part : model.parts) {
-            part.material.process_updated_textures(command_list, updated, _device);
+            part.material.process_updated_textures(command_list, updated);
          }
       });
 

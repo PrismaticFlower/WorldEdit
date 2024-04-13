@@ -75,11 +75,9 @@ struct model {
    std::vector<mesh_terrain_cut> terrain_cuts;
 
 private:
-   void init_gpu_buffer_async(gpu::device& device,
-                              copy_command_list_pool& copy_command_list_pool,
-                              std::span<const std::byte> buffer,
-                              std::span<std::array<uint16, 3>> indices,
-                              mesh_vertices vertices);
+   void init_gpu_buffer(gpu::device& device,
+                        copy_command_list_pool& copy_command_list_pool,
+                        std::span<const std::byte> buffer);
 };
 
 }

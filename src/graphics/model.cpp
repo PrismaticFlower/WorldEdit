@@ -101,6 +101,11 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
    const uint64 attributes_data_size =
       vertex_count * sizeof(decltype(mesh_vertices::attributes)::value_type);
 
+   const uint64 aligned_single_material_data_size =
+      math::align_up(material::constant_buffer_size,
+                     gpu::constant_buffer_data_placement_alignment);
+   const uint64 aligned_material_data_size =
+      aligned_single_material_data_size * model.meshes.size();
    const uint64 aligned_indices_size =
       math::align_up(indices_data_size, gpu::raw_uav_srv_byte_alignment);
    const uint64 aligned_positions_size =
@@ -108,16 +113,27 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
    const uint64 aligned_attributes_size =
       math::align_up(attributes_data_size, gpu::raw_uav_srv_byte_alignment);
 
-   const uint64 indices_data_offset = 0;
-   const uint64 positions_data_offset = aligned_indices_size;
+   // Material data goes first as it has the greatest alignment requirement.
+   const uint64 material_data_offset = 0;
+   const uint64 indices_data_offset = aligned_material_data_size;
+   const uint64 positions_data_offset = indices_data_offset + aligned_indices_size;
    const uint64 attributes_data_offset = positions_data_offset + aligned_positions_size;
 
-   const uint64 buffer_size =
-      aligned_indices_size + aligned_positions_size + aligned_attributes_size;
+   const uint64 buffer_size = aligned_material_data_size + aligned_indices_size +
+                              aligned_positions_size + aligned_attributes_size;
 
    if (buffer_size > std::numeric_limits<uint32>::max()) {
       throw std::runtime_error{"Model is over size limits."};
    }
+
+   gpu_buffer = {
+      .buffer = {device.create_buffer({.size = static_cast<uint32>(buffer_size),
+                                       .debug_name = "Mesh Data Buffer"},
+                                      gpu::heap_type::default_),
+                 device.direct_queue}};
+
+   const gpu_virtual_address gpu_virtual_address =
+      device.get_gpu_virtual_address(gpu_buffer.buffer.get());
 
    std::vector<std::byte> buffer{buffer_size};
 
@@ -138,25 +154,31 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
 
    parts.reserve(model.meshes.size());
 
-   for (const auto& mesh : model.meshes) {
-      parts.push_back({.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
-                       .start_index = triangle_offset * 3,
-                       .start_vertex = vertex_offset,
-                       .material = {mesh.material, mesh.colors_are_lighting, device,
-                                    copy_command_list_pool, texture_manager}});
+   for (uint32 mesh_index = 0; mesh_index < model.meshes.size(); ++mesh_index) {
+      const auto& mesh = model.meshes[mesh_index];
+
+      parts.push_back(
+         {.index_count = static_cast<uint32>(mesh.triangles.size() * 3),
+          .start_index = triangle_offset * 3,
+          .start_vertex = vertex_offset,
+          .material = {mesh.material, mesh.colors_are_lighting,
+                       std::span{buffer}.subspan(material_data_offset + mesh_index * aligned_single_material_data_size,
+                                                 material::constant_buffer_size),
+                       gpu_virtual_address + mesh_index * aligned_single_material_data_size,
+                       texture_manager}});
 
       std::uninitialized_copy_n(mesh.triangles.cbegin(), mesh.triangles.size(),
                                 indices.begin() + triangle_offset);
       std::uninitialized_copy_n(mesh.positions.cbegin(), mesh.positions.size(),
                                 vertices.positions.begin() + vertex_offset);
 
-      for (std::size_t i = 0; i < mesh.positions.size(); ++i) {
-         vertices.attributes[i + vertex_offset] =
-            mesh_attributes{.normals = pack_snorm(mesh.normals[i]),
-                            .tangents = pack_snorm(mesh.tangents[i]),
-                            .bitangents = pack_snorm(mesh.bitangents[i]),
-                            .texcoords = mesh.texcoords[i],
-                            .color = mesh.colors[i]};
+      for (std::size_t vertex = 0; vertex < mesh.positions.size(); ++vertex) {
+         vertices.attributes[vertex + vertex_offset] =
+            mesh_attributes{.normals = pack_snorm(mesh.normals[vertex]),
+                            .tangents = pack_snorm(mesh.tangents[vertex]),
+                            .bitangents = pack_snorm(mesh.bitangents[vertex]),
+                            .texcoords = mesh.texcoords[vertex],
+                            .color = mesh.colors[vertex]};
       }
 
       triangle_offset += static_cast<uint32>(mesh.triangles.size());
@@ -190,14 +212,25 @@ model::model(const assets::msh::flat_model& model, gpu::device& device,
    bbox = model.bounding_box;
    terrain_cuts_bbox = model.terrain_cuts_bounding_box;
 
-   init_gpu_buffer_async(device, copy_command_list_pool, buffer, indices, vertices);
+   init_gpu_buffer(device, copy_command_list_pool, buffer);
+
+   gpu_buffer.index_buffer_view = {.buffer_location =
+                                      gpu_virtual_address + data_offsets.indices,
+                                   .size_in_bytes =
+                                      static_cast<uint32>(indices.size_bytes())};
+   gpu_buffer.position_vertex_buffer_view =
+      {.buffer_location = gpu_virtual_address + data_offsets.positions,
+       .size_in_bytes = static_cast<uint32>(vertices.positions.size_bytes()),
+       .stride_in_bytes = sizeof(decltype(mesh_vertices::positions)::value_type)};
+   gpu_buffer.attributes_vertex_buffer_view =
+      {.buffer_location = gpu_virtual_address + data_offsets.attributes,
+       .size_in_bytes = static_cast<uint32>(vertices.attributes.size_bytes()),
+       .stride_in_bytes = sizeof(decltype(mesh_vertices::attributes)::value_type)};
 }
 
-void model::init_gpu_buffer_async(gpu::device& device,
-                                  copy_command_list_pool& copy_command_list_pool,
-                                  std::span<const std::byte> buffer,
-                                  std::span<std::array<uint16, 3>> indices,
-                                  mesh_vertices vertices)
+void model::init_gpu_buffer(gpu::device& device,
+                            copy_command_list_pool& copy_command_list_pool,
+                            std::span<const std::byte> buffer)
 {
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
@@ -212,29 +245,6 @@ void model::init_gpu_buffer_async(gpu::device& device,
    std::memcpy(upload_buffer_ptr, buffer.data(), buffer.size());
 
    device.unmap(upload_buffer.get(), 0, {0, buffer.size()});
-
-   gpu_buffer = {
-      .buffer = {device.create_buffer({.size = static_cast<uint32>(buffer.size()),
-                                       .debug_name =
-                                          "Mesh Index & Vertex Buffer"},
-                                      gpu::heap_type::default_),
-                 device.direct_queue}};
-
-   const auto gpu_virtual_address =
-      device.get_gpu_virtual_address(gpu_buffer.buffer.get());
-
-   gpu_buffer.index_buffer_view = {.buffer_location =
-                                      gpu_virtual_address + data_offsets.indices,
-                                   .size_in_bytes =
-                                      static_cast<uint32>(indices.size_bytes())};
-   gpu_buffer.position_vertex_buffer_view =
-      {.buffer_location = gpu_virtual_address + data_offsets.positions,
-       .size_in_bytes = static_cast<uint32>(vertices.positions.size_bytes()),
-       .stride_in_bytes = sizeof(decltype(mesh_vertices::positions)::value_type)};
-   gpu_buffer.attributes_vertex_buffer_view =
-      {.buffer_location = gpu_virtual_address + data_offsets.attributes,
-       .size_in_bytes = static_cast<uint32>(vertices.attributes.size_bytes()),
-       .stride_in_bytes = sizeof(decltype(mesh_vertices::attributes)::value_type)};
 
    command_list->copy_resource(gpu_buffer.buffer.get(), upload_buffer.get());
 

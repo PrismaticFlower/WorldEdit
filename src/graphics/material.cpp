@@ -127,14 +127,22 @@ struct alignas(16) normal_material_constants {
 
 }
 
-material::material(const assets::msh::material& material,
-                   const bool static_lighting, gpu::device& device,
-                   copy_command_list_pool& copy_command_list_pool,
+constexpr const std::size_t material::constant_buffer_size =
+   sizeof(normal_material_constants);
+
+material::material(const assets::msh::material& material, const bool static_lighting,
+                   std::span<std::byte> constant_buffer_upload_memory,
+                   gpu_virtual_address constant_buffer_view,
                    texture_manager& texture_manager)
+   : constant_buffer_view{constant_buffer_view}
 {
+   if (constant_buffer_upload_memory.size() != sizeof(normal_material_constants)) {
+      std::terminate();
+   }
+
    init_textures(material, texture_manager);
    init_flags(material);
-   init_resources(material, static_lighting, device, copy_command_list_pool);
+   init_constant_buffer(material, static_lighting, constant_buffer_upload_memory);
 }
 
 void material::init_textures(const assets::msh::material& material,
@@ -227,9 +235,9 @@ void material::init_flags(const assets::msh::material& material)
    }
 }
 
-void material::init_resources(const assets::msh::material& material,
-                              const bool static_lighting, gpu::device& device,
-                              copy_command_list_pool& copy_command_list_pool)
+void material::init_constant_buffer(const assets::msh::material& material,
+                                    const bool static_lighting,
+                                    std::span<std::byte> constant_buffer_upload_memory)
 {
    const bool has_specular =
       are_flags_set(material.flags, assets::msh::material_flags::specular) or
@@ -247,15 +255,6 @@ void material::init_resources(const assets::msh::material& material,
                    : float2{material.data0 > 0 ? material.data0 * 1.0f : 1.0f,
                             material.data1 > 0 ? material.data1 * 1.0f : 1.0f};
 
-   pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
-
-   constant_buffer = {device.create_buffer({.size = sizeof(normal_material_constants),
-                                            .debug_name =
-                                               "Material Constant Buffer"},
-                                           gpu::heap_type::default_),
-                      device.direct_queue};
-   constant_buffer_view = device.get_gpu_virtual_address(constant_buffer.get());
-
    normal_material_constants constants{
       .flags = make_shader_flags(flags, material, texture_names.normal_map.empty(),
                                  static_lighting),
@@ -268,39 +267,22 @@ void material::init_resources(const assets::msh::material& material,
       .detail_scale = detail_scale,
       .env_color = material.specular_color};
 
-   gpu::unique_resource_handle upload_buffer =
-      {device.create_buffer({.size = sizeof(normal_material_constants),
-                             .debug_name = "Material Constant Upload Buffer"},
-                            gpu::heap_type::upload),
-       device.background_copy_queue};
+   if (constant_buffer_upload_memory.size() != sizeof(normal_material_constants)) {
+      std::terminate();
+   }
 
-   std::byte* const upload_buffer_ptr =
-      static_cast<std::byte*>(device.map(upload_buffer.get(), 0, {}));
-
-   std::memcpy(upload_buffer_ptr, &constants, sizeof(constants));
-
-   device.unmap(upload_buffer.get(), 0, {0, sizeof(constants)});
-
-   command_list->copy_resource(constant_buffer.get(), upload_buffer.get());
-
-   command_list->close();
-
-   device.background_copy_queue.execute_command_lists(command_list.get());
+   std::memcpy(constant_buffer_upload_memory.data(), &constants, sizeof(constants));
 }
 
 void material::process_updated_textures(gpu::copy_command_list& command_list,
-                                        const updated_textures& updated,
-                                        gpu::device& device)
+                                        const updated_textures& updated)
 {
-   const gpu_virtual_address constant_buffer_address =
-      device.get_gpu_virtual_address(constant_buffer.get());
-
    if (auto new_texture = updated.check(texture_names.diffuse_map);
        new_texture and new_texture->dimension == world_texture_dimension::_2d) {
       textures.diffuse_map = std::move(new_texture);
       texture_load_tokens.diffuse_map = nullptr;
 
-      command_list.write_buffer_immediate(constant_buffer_address +
+      command_list.write_buffer_immediate(constant_buffer_view +
                                              offsetof(normal_material_constants,
                                                       diffuse_map),
                                           textures.diffuse_map->srv_srgb.index);
@@ -311,7 +293,7 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
       textures.normal_map = std::move(new_texture);
       texture_load_tokens.normal_map = nullptr;
 
-      command_list.write_buffer_immediate(constant_buffer_address +
+      command_list.write_buffer_immediate(constant_buffer_view +
                                              offsetof(normal_material_constants, normal_map),
                                           textures.normal_map->srv.index);
    }
@@ -321,7 +303,7 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
       textures.detail_map = std::move(new_texture);
       texture_load_tokens.detail_map = nullptr;
 
-      command_list.write_buffer_immediate(constant_buffer_address +
+      command_list.write_buffer_immediate(constant_buffer_view +
                                              offsetof(normal_material_constants, detail_map),
                                           textures.detail_map->srv.index);
    }
@@ -331,7 +313,7 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
       textures.env_map = std::move(new_texture);
       texture_load_tokens.env_map = nullptr;
 
-      command_list.write_buffer_immediate(constant_buffer_address +
+      command_list.write_buffer_immediate(constant_buffer_view +
                                              offsetof(normal_material_constants, env_map),
                                           textures.env_map->srv_srgb.index);
    }
