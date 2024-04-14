@@ -18,12 +18,11 @@ void world_edit::update_ui() noexcept
 
    if (_hotkeys_view_show) ui_show_hotkeys_view();
 
-   if (not _interaction_targets.selection.empty()) {
-      ui_show_world_selection_editor();
-   }
-
    if (_interaction_targets.creation_entity.holds_entity()) {
       ui_show_world_creation_editor();
+   }
+   else if (not _interaction_targets.selection.empty()) {
+      ui_show_world_selection_editor();
    }
 
    if (_world_global_lights_editor_open) {
