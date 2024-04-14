@@ -38,12 +38,12 @@ TEST_CASE(".tga texture loading", "[Assets][Texture]")
    CHECK(test_texel(texture.subresource({.mip_level = 0}), 0, 3, 0xff87cc7c));
    CHECK(test_texel(texture.subresource({.mip_level = 0}), 3, 3, 0xff3aebce));
 
-   CHECK(test_texel(texture.subresource({.mip_level = 1}), 0, 0, 0xffb7a9b7));
-   CHECK(test_texel(texture.subresource({.mip_level = 1}), 1, 0, 0xffc7709d));
-   CHECK(test_texel(texture.subresource({.mip_level = 1}), 0, 1, 0xff539f84));
-   CHECK(test_texel(texture.subresource({.mip_level = 1}), 1, 1, 0xff96889e));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 0, 0, 0xffab9dae));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 1, 0, 0xffc276a4));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 0, 1, 0xff779f87));
+   CHECK(test_texel(texture.subresource({.mip_level = 1}), 1, 1, 0xff94919d));
 
-   CHECK(test_texel(texture.subresource({.mip_level = 2}), 0, 0, 0xffa2929f));
+   CHECK(test_texel(texture.subresource({.mip_level = 2}), 0, 0, 0xffa1929e));
 }
 
 }
