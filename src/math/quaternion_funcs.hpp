@@ -1,6 +1,7 @@
 #pragma once
 
 #include "matrix_funcs.hpp"
+#include "scalar_funcs.hpp"
 #include "types.hpp"
 #include "vector_funcs.hpp"
 
@@ -41,7 +42,7 @@ inline auto make_quat_from_matrix(const float3x3& matrix) noexcept -> quaternion
 {
    quaternion quat;
 
-   quat.w = std::sqrt(1.0f + matrix[0].x + matrix[1].y + matrix[2].z) / 2.0f;
+   quat.w = sqrt(1.0f + matrix[0].x + matrix[1].y + matrix[2].z) / 2.0f;
    quat.x = (matrix[1].z - matrix[2].y) / (4.0f * quat.w);
    quat.y = (matrix[2].x - matrix[0].z) / (4.0f * quat.w);
    quat.z = (matrix[0].y - matrix[1].x) / (4.0f * quat.w);

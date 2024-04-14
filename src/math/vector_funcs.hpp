@@ -1,5 +1,6 @@
 #pragma once
 
+#include "scalar_funcs.hpp"
 #include "types.hpp"
 
 #include <cassert>
@@ -700,17 +701,17 @@ constexpr auto dot(const float4& a, const float4& b) noexcept -> float
 
 inline auto length(const float2& v) noexcept -> float
 {
-   return std::sqrt(dot(v, v));
+   return sqrt(dot(v, v));
 }
 
 inline auto length(const float3& v) noexcept -> float
 {
-   return std::sqrt(dot(v, v));
+   return sqrt(dot(v, v));
 }
 
 inline auto length(const float4& v) noexcept -> float
 {
-   return std::sqrt(dot(v, v));
+   return sqrt(dot(v, v));
 }
 
 inline auto distance(const float2& a, const float2& b) noexcept -> float

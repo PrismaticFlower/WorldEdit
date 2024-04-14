@@ -199,6 +199,7 @@
     <ClCompile Include="src\edits\imgui_ext.cpp" />
     <ClCompile Include="src\graphics\shaders\terrain_foliage_mapPS.cpp" />
     <ClCompile Include="third_party\stb_image_resize2\stb_image_resize2.c" />
+    <ClCompile Include="src\math\scalar_funcs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -465,6 +466,7 @@
     <ClInclude Include="src\container\pinned_vector.hpp" />
     <ClInclude Include="src\world\animation.hpp" />
     <ClInclude Include="third_party\stb_image_resize2\stb_image_resize2.h" />
+    <ClInclude Include="src\math\scalar_funcs.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
