@@ -12,6 +12,24 @@ namespace we::string {
 /// @return If the strings are equal.
 bool iequals(const std::string_view left, const std::string_view right) noexcept;
 
+/// @brief Compare two strings, ignoring simple casing.
+/// @param left The left string to compare.
+/// @param right The right string to compare.
+/// @return Same as std::string_view::compare. Less than 0 if left appears before right in lexicographical order, 0 if the strings are equal, greater than 0 if left appears after right lexicographical order.
+int icompare(const std::string_view left, const std::string_view right) noexcept;
+
+/// @brief Compare if left is less than right, ignoring simple casing.
+/// @param left The left string to compare.
+/// @param right The right string to compare.
+/// @return true if left < right.
+bool iless_than(const std::string_view left, const std::string_view right) noexcept;
+
+/// @brief Compare if left is greater than right, ignoring simple casing.
+/// @param left The left string to compare.
+/// @param right The right string to compare.
+/// @return true if left > right.
+bool igreater_than(const std::string_view left, const std::string_view right) noexcept;
+
 /// @brief Check if left starts with right, ignoring simple casing.
 /// @param left The left string to check.
 /// @param right The right string to check.
