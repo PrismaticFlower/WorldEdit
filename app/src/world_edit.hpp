@@ -399,6 +399,7 @@ private:
 
    std::string _world_explorer_filter;
    std::string _world_explorer_class_filter;
+   std::vector<uint32> _world_explorer_sort_map;
 
    bool _world_explorer_path_show_all_nodes = false;
    world::active_layers _world_explorer_layers_mask{true};
