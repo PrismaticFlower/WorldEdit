@@ -1106,7 +1106,7 @@ private:
 
    auto operator=(command_queue&& other) noexcept -> command_queue& = delete;
 
-   implementation_storage<command_queue_state, 136> state;
+   implementation_storage<command_queue_state, 152> state;
 };
 
 /// Swapchain Definitions ///
