@@ -24,26 +24,23 @@ bool is_unique_layer_name(std::string_view name, const world::world& world) noex
 
 int imgui_layer_letter_filter(ImGuiInputTextCallbackData* data) noexcept
 {
-   static_assert(L'A' == 65 and L'Z' == 90);
-   static_assert(L'a' == 97 and L'z' == 122);
-   static_assert(L'0' == 48 and L'9' == 57);
-
    const wchar_t c = data->EventChar;
 
-   if (c >= L'A' and c <= L'Z') {
-      return 0;
-   }
-   else if (c >= L'a' and c <= L'z') {
-      return 0;
-   }
-   else if (c >= L'0' and c <= L'9') {
-      return 0;
-   }
-   else if (c == '_') {
-      return 0;
-   }
+   // Reject non-printable chars.
+   if (c < L' ') return 1;
 
-   return 1;
+   // Reject common filesystem reserved chars.
+   if (c == L'<') return 1;
+   if (c == L'>') return 1;
+   if (c == L':') return 1;
+   if (c == L'"') return 1;
+   if (c == L'/') return 1;
+   if (c == L'\\') return 1;
+   if (c == L'|') return 1;
+   if (c == L'?') return 1;
+   if (c == L'*') return 1;
+
+   return 0;
 }
 
 }
