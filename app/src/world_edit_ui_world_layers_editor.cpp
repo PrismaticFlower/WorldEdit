@@ -2,12 +2,51 @@
 
 #include "edits/add_layer.hpp"
 #include "edits/delete_layer.hpp"
+#include "edits/rename_layer.hpp"
+#include "imgui_ext.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
 namespace we {
+
+namespace {
+
+bool is_unique_layer_name(std::string_view name, const world::world& world) noexcept
+{
+   for (const auto& desc : world.layer_descriptions) {
+      if (string::iequals(name, desc.name)) return false;
+   }
+
+   return true;
+};
+
+int imgui_layer_letter_filter(ImGuiInputTextCallbackData* data) noexcept
+{
+   static_assert(L'A' == 65 and L'Z' == 90);
+   static_assert(L'a' == 97 and L'z' == 122);
+   static_assert(L'0' == 48 and L'9' == 57);
+
+   const wchar_t c = data->EventChar;
+
+   if (c >= L'A' and c <= L'Z') {
+      return 0;
+   }
+   else if (c >= L'a' and c <= L'z') {
+      return 0;
+   }
+   else if (c >= L'0' and c <= L'9') {
+      return 0;
+   }
+   else if (c == '_') {
+      return 0;
+   }
+
+   return 1;
+}
+
+}
 
 void world_edit::ui_show_world_layers_editor() noexcept
 {
@@ -23,19 +62,18 @@ void world_edit::ui_show_world_layers_editor() noexcept
       ImGui::SeparatorText("Create New Layer");
 
       ImGui::InputTextWithHint("##create", "New Layer Name", &_layer_editor_new_name,
-                               ImGuiInputTextFlags_CharsNoBlank);
+                               ImGuiInputTextFlags_CallbackCharFilter,
+                               imgui_layer_letter_filter);
       ImGui::SameLine();
 
-      const bool is_unique_layer_name = [&] {
-         for (const auto& desc : _world.layer_descriptions) {
-            if (string::iequals(desc.name, _layer_editor_new_name))
-               return false;
-         }
+      const bool new_layer_name_is_unique =
+         is_unique_layer_name(_layer_editor_new_name, _world);
+      const bool has_new_layer_name = not _layer_editor_new_name.empty();
+      const bool space_for_layer = _world.layer_descriptions.size() != world::max_layers;
+      const bool can_create_layer =
+         new_layer_name_is_unique and has_new_layer_name and space_for_layer;
 
-         return true;
-      }();
-
-      if (not is_unique_layer_name) ImGui::BeginDisabled();
+      if (not can_create_layer) ImGui::BeginDisabled();
 
       if (ImGui::Button("Create")) {
          _edit_stack_world.apply(edits::make_add_layer(std::move(_layer_editor_new_name),
@@ -45,47 +83,67 @@ void world_edit::ui_show_world_layers_editor() noexcept
          _layer_editor_new_name = "";
       }
 
-      if (not is_unique_layer_name) ImGui::EndDisabled();
+      if (not can_create_layer) ImGui::EndDisabled();
 
-      if (not is_unique_layer_name and
-          ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-         ImGui::SetTooltip("Layer name must be unique.");
+      if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+         if (not new_layer_name_is_unique) {
+            ImGui::SetTooltip("Layer name must be unique.");
+         }
+         else if (not has_new_layer_name) {
+            ImGui::SetTooltip("Layer must have a name.");
+         }
+         else if (not space_for_layer) {
+            ImGui::SetTooltip("WorldEdit only supports up to 64 layers.");
+         }
       }
 
       ImGui::SeparatorText("Existing Layers");
 
-      if (ImGui::BeginTable("Layers", 2,
-                            ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerH |
-                               ImGuiTableFlags_ScrollY)) {
-         for (int i = 0; i < _world.layer_descriptions.size(); ++i) {
-            ImGui::TableNextRow();
+      for (int i = 0; i < _world.layer_descriptions.size(); ++i) {
+         ImGui::PushID(i);
 
-            ImGui::TableNextColumn();
-            ImGui::LabelText("##layer", _world.layer_descriptions[i].name.c_str());
-            ImGui::TableNextColumn();
+         const bool base_layer = i == 0;
 
-            ImGui::PushID(i);
+         if (base_layer) ImGui::BeginDisabled();
 
-            const bool base_layer = i == 0;
-
-            if (base_layer) ImGui::BeginDisabled();
-
-            if (ImGui::Button("Delete")) {
-               _edit_stack_world.apply(edits::make_delete_layer(i, _world),
-                                       _edit_context);
+         if (absl::InlinedVector<char, 256>
+                name{_world.layer_descriptions[i].name.begin(),
+                     _world.layer_descriptions[i].name.end()};
+             ImGui::InputText("##layer", &name, ImGuiInputTextFlags_CallbackCharFilter,
+                              imgui_layer_letter_filter)) {
+            if (not name.empty() and
+                is_unique_layer_name({name.data(), name.size()}, _world)) {
+               _edit_stack_world
+                  .apply(edits::make_rename_layer(i, {name.data(), name.size()}, _world),
+                         _edit_context);
             }
-
-            if (base_layer) ImGui::EndDisabled();
-
-            if (base_layer and
-                ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-               ImGui::SetTooltip("The base layer can not be deleted.");
-            }
-
-            ImGui::PopID();
          }
 
-         ImGui::EndTable();
+         if (ImGui::IsItemDeactivatedAfterEdit()) {
+            _edit_stack_world.close_last();
+         }
+
+         if (base_layer) ImGui::EndDisabled();
+
+         if (base_layer and ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            ImGui::SetTooltip("The base layer can not be renamed.");
+         }
+
+         ImGui::SameLine();
+
+         if (base_layer) ImGui::BeginDisabled();
+
+         if (ImGui::Button("Delete")) {
+            _edit_stack_world.apply(edits::make_delete_layer(i, _world), _edit_context);
+         }
+
+         if (base_layer) ImGui::EndDisabled();
+
+         if (base_layer and ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+            ImGui::SetTooltip("The base layer can not be deleted.");
+         }
+
+         ImGui::PopID();
       }
    }
 

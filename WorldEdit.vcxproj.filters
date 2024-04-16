@@ -200,6 +200,7 @@
     <ClCompile Include="src\graphics\shaders\terrain_foliage_mapPS.cpp" />
     <ClCompile Include="third_party\stb_image_resize2\stb_image_resize2.c" />
     <ClCompile Include="src\math\scalar_funcs.cpp" />
+    <ClCompile Include="src\edits\rename_layer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -467,6 +468,7 @@
     <ClInclude Include="src\world\animation.hpp" />
     <ClInclude Include="third_party\stb_image_resize2\stb_image_resize2.h" />
     <ClInclude Include="src\math\scalar_funcs.hpp" />
+    <ClInclude Include="src\edits\rename_layer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
