@@ -4,6 +4,8 @@
 #include "edits/add_world_req_list.hpp"
 #include "edits/delete_world_req_entry.hpp"
 #include "edits/delete_world_req_list.hpp"
+#include "edits/set_world_req_entry.hpp"
+#include "imgui_ext.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -50,16 +52,30 @@ void world_edit::ui_show_world_requirements_editor() noexcept
 
             ImGui::SeparatorText("Required Files");
 
-            for (int i = 0; i < list.entries.size(); ++i) {
-               ImGui::LabelText("##file", list.entries[i].c_str());
+            for (int entry_index = 0; entry_index < list.entries.size(); ++entry_index) {
+               ImGui::PushID(entry_index);
+
+               if (absl::InlinedVector<char, 256>
+                      entry{list.entries[entry_index].begin(),
+                            list.entries[entry_index].end()};
+                   ImGui::InputText("##file", &entry)) {
+                  if (not entry.empty()) {
+                     _edit_stack_world.apply(edits::make_set_world_req_entry(
+                                                list_index, entry_index,
+                                                {entry.data(), entry.size()}),
+                                             _edit_context);
+                  }
+               }
+
+               if (ImGui::IsItemDeactivatedAfterEdit()) {
+                  _edit_stack_world.close_last();
+               }
 
                ImGui::SameLine();
 
-               ImGui::PushID(i);
-
                if (ImGui::Button("Delete")) {
-                  _edit_stack_world.apply(edits::make_delete_world_req_entry(list_index,
-                                                                             i, _world),
+                  _edit_stack_world.apply(edits::make_delete_world_req_entry(list_index, entry_index,
+                                                                             _world),
                                           _edit_context);
                }
 

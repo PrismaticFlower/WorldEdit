@@ -202,6 +202,7 @@
     <ClCompile Include="src\math\scalar_funcs.cpp" />
     <ClCompile Include="src\edits\rename_layer.cpp" />
     <ClCompile Include="src\edits\rename_game_mode.cpp" />
+    <ClCompile Include="src\edits\set_world_req_entry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -471,6 +472,7 @@
     <ClInclude Include="src\math\scalar_funcs.hpp" />
     <ClInclude Include="src\edits\rename_layer.hpp" />
     <ClInclude Include="src\edits\rename_game_mode.hpp" />
+    <ClInclude Include="src\edits\set_world_req_entry.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
