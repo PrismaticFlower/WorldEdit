@@ -68,9 +68,12 @@ void world_edit::ui_show_world_requirements_editor() noexcept
 
             ImGui::SeparatorText("Add File");
 
-            ImGui::InputTextWithHint("##add", "i.e test_map", &_req_editor_add_entry,
-                                     ImGuiInputTextFlags_CharsNoBlank);
+            ImGui::InputTextWithHint("##add", "i.e test_map", &_req_editor_add_entry);
             ImGui::SameLine();
+
+            const bool can_add_file = not _req_editor_add_entry.empty();
+
+            if (not can_add_file) ImGui::BeginDisabled();
 
             if (ImGui::Button("Add")) {
                _edit_stack_world.apply(edits::make_add_world_req_entry(list_index,
@@ -79,6 +82,8 @@ void world_edit::ui_show_world_requirements_editor() noexcept
 
                _req_editor_add_entry = "";
             }
+
+            if (not can_add_file) ImGui::EndDisabled();
 
             ImGui::SeparatorText("Delete Section");
 
@@ -95,9 +100,12 @@ void world_edit::ui_show_world_requirements_editor() noexcept
 
       ImGui::SeparatorText("Add New File Type");
 
-      ImGui::InputTextWithHint("##create", "i.e model", &_req_editor_new_name,
-                               ImGuiInputTextFlags_CharsNoBlank);
+      ImGui::InputTextWithHint("##create", "i.e model", &_req_editor_new_name);
       ImGui::SameLine();
+
+      const bool can_add_type = not _req_editor_new_name.empty();
+
+      if (not can_add_type) ImGui::BeginDisabled();
 
       if (ImGui::Button("Add")) {
          _edit_stack_world.apply(edits::make_add_world_req_list(
@@ -106,6 +114,8 @@ void world_edit::ui_show_world_requirements_editor() noexcept
 
          _req_editor_new_name = "";
       }
+
+      if (not can_add_type) ImGui::EndDisabled();
    }
 
    ImGui::End();
