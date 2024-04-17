@@ -66,16 +66,16 @@ struct rename_game_mode final : edit<world::edit_context> {
 
       if (not other) return false;
 
+      if (this->index != other->index or
+          this->req_entry.has_value() != other->req_entry.has_value()) {
+         return false;
+      }
+
       if (this->req_entry and other->req_entry) {
          if (this->req_entry->list_index != other->req_entry->list_index or
              this->req_entry->entry_index != other->req_entry->entry_index) {
             return false;
          }
-      }
-
-      if (this->req_entry->list_index != other->req_entry->list_index or
-          this->req_entry->entry_index != other->req_entry->entry_index) {
-         return false;
       }
 
       return true;
