@@ -143,9 +143,11 @@ struct rename_layer final : edit<world::edit_context> {
          return false;
       }
 
-      if (this->req_entry->list_index != other->req_entry->list_index or
-          this->req_entry->entry_index != other->req_entry->entry_index) {
-         return false;
+      if (this->req_entry and other->req_entry) {
+         if (this->req_entry->list_index != other->req_entry->list_index or
+             this->req_entry->entry_index != other->req_entry->entry_index) {
+            return false;
+         }
       }
 
       for (std::size_t i = 0; i < game_mode_req_entries.size(); ++i) {
