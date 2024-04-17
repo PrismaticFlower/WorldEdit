@@ -213,6 +213,10 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
                                              _edit_context);
                   }
                }
+
+               if (ImGui::IsItemDeactivatedAfterEdit()) {
+                  _edit_stack_world.close_last();
+               }
             }
 
             ImGui::TreePop();
