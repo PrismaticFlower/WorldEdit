@@ -247,6 +247,7 @@
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
     <ClCompile Include="src\edits\insert_point.cpp" />
+    <ClCompile Include="src\edits\rename_game_mode.cpp" />
     <ClCompile Include="src\edits\rename_layer.cpp" />
     <ClCompile Include="src\edits\set_terrain.cpp" />
     <ClCompile Include="src\edits\set_terrain_area.cpp" />
@@ -492,6 +493,7 @@
     <ClInclude Include="src\edits\insert_node.hpp" />
     <ClInclude Include="src\edits\insert_point.hpp" />
     <ClInclude Include="src\edits\add_property.hpp" />
+    <ClInclude Include="src\edits\rename_game_mode.hpp" />
     <ClInclude Include="src\edits\rename_layer.hpp" />
     <ClInclude Include="src\edits\set_terrain.hpp" />
     <ClInclude Include="src\edits\set_terrain_area.hpp" />

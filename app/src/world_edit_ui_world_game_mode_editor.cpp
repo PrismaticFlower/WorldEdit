@@ -4,12 +4,53 @@
 #include "edits/delete_game_mode.hpp"
 #include "edits/game_mode_link_layer.hpp"
 #include "edits/game_mode_unlink_layer.hpp"
+#include "edits/rename_game_mode.hpp"
+#include "imgui_ext.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
 namespace we {
+
+namespace {
+
+bool is_unique_game_mode_name(std::string_view name, const world::world& world) noexcept
+{
+   for (const auto& desc : world.game_modes) {
+      if (string::iequals(name, desc.name)) return false;
+   }
+
+   return true;
+};
+
+int imgui_layer_letter_filter(ImGuiInputTextCallbackData* data) noexcept
+{
+   const wchar_t c = data->EventChar;
+
+   // Reject non-printable chars.
+   if (c < L' ') return 1;
+
+   // Reject common filesystem reserved chars.
+   if (c == L'<') return 1;
+   if (c == L'>') return 1;
+   if (c == L':') return 1;
+   if (c == L'"') return 1;
+   if (c == L'/') return 1;
+   if (c == L'\\') return 1;
+   if (c == L'|') return 1;
+   if (c == L'?') return 1;
+   if (c == L'*') return 1;
+
+   return 0;
+}
+
+auto make_game_mode_imgui_id(const uint32 index) noexcept -> const void*
+{
+   return reinterpret_cast<const void*>(static_cast<std::intptr_t>(index));
+}
+
+}
 
 void world_edit::ui_show_world_game_mode_editor() noexcept
 {
@@ -29,16 +70,10 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
                                ImGuiInputTextFlags_CharsNoBlank);
       ImGui::SameLine();
 
-      const bool is_unique_game_mode_name = [&] {
-         for (const auto& desc : _world.game_modes) {
-            if (string::iequals(desc.name, _game_mode_editor_new_name))
-               return false;
-         }
+      const bool new_game_mode_name_is_unique =
+         is_unique_game_mode_name(_game_mode_editor_new_name, _world);
 
-         return true;
-      }();
-
-      if (not is_unique_game_mode_name) ImGui::BeginDisabled();
+      if (not new_game_mode_name_is_unique) ImGui::BeginDisabled();
 
       if (ImGui::Button("Create")) {
          _edit_stack_world.apply(edits::make_add_game_mode(_game_mode_editor_new_name,
@@ -48,9 +83,9 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
          _game_mode_editor_new_name = "";
       }
 
-      if (not is_unique_game_mode_name) ImGui::EndDisabled();
+      if (not new_game_mode_name_is_unique) ImGui::EndDisabled();
 
-      if (not is_unique_game_mode_name and
+      if (not new_game_mode_name_is_unique and
           ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
          ImGui::SetTooltip("Game mode name must be unique.");
       }
@@ -62,7 +97,8 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
          const world::game_mode_description& game_mode =
             _world.game_modes[game_mode_index];
 
-         if (ImGui::TreeNode(game_mode.name.c_str())) {
+         if (ImGui::TreeNode(make_game_mode_imgui_id(game_mode_index),
+                             game_mode.name.c_str())) {
             ImGui::SeparatorText("Included Layers");
 
             const bool is_common_game_mode = game_mode_index == 0;
@@ -153,6 +189,21 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
                   _edit_stack_world.apply(edits::make_delete_game_mode(game_mode_index,
                                                                        _world),
                                           _edit_context);
+               }
+
+               ImGui::SeparatorText("Rename Game Mode");
+
+               if (absl::InlinedVector<char, 256> name{game_mode.name.begin(),
+                                                       game_mode.name.end()};
+                   ImGui::InputText("Name", &name, ImGuiInputTextFlags_CallbackCharFilter,
+                                    imgui_layer_letter_filter)) {
+                  if (not name.empty() and
+                      is_unique_game_mode_name({name.data(), name.size()}, _world)) {
+                     _edit_stack_world.apply(edits::make_rename_game_mode(
+                                                game_mode_index,
+                                                {name.data(), name.size()}, _world),
+                                             _edit_context);
+                  }
                }
             }
 
