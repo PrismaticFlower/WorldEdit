@@ -53,7 +53,8 @@ struct library<T>::impl {
    {
    }
 
-   void add(const std::filesystem::path& unpreferred_asset_path) noexcept
+   void add(const std::filesystem::path& unpreferred_asset_path,
+            uint64 last_write_time) noexcept
    {
       std::filesystem::path asset_path =
          unpreferred_asset_path; // makes for prettier output messages
@@ -62,7 +63,7 @@ struct library<T>::impl {
 
       const lowercase_string name{asset_path.stem().string()};
 
-      auto new_state = make_asset_state(name, asset_path);
+      auto new_state = make_asset_state(name, asset_path, last_write_time);
 
       auto [state_pair, inserted] = [&] {
          std::scoped_lock lock{_assets_mutex};
@@ -84,8 +85,7 @@ struct library<T>::impl {
          state->load_failure = false;
          state->path = asset_path;
          state->start_load = [this, name] { enqueue_create_asset(name, false); };
-         state->last_write_time.store(try_get_last_write_time(asset_path),
-                                      std::memory_order_relaxed);
+         state->last_write_time.store(last_write_time, std::memory_order_relaxed);
       }
       else {
          std::scoped_lock lock{_existing_assets_mutex};
@@ -281,13 +281,12 @@ struct library<T>::impl {
 
 private:
    auto make_asset_state(const lowercase_string& name,
-                         const std::filesystem::path& asset_path)
-      -> std::shared_ptr<asset_state<T>>
+                         const std::filesystem::path& asset_path,
+                         uint64 last_write_time) -> std::shared_ptr<asset_state<T>>
    {
       return std::make_shared<asset_state<T>>(
          std::weak_ptr<T>{}, not asset_path.empty(), asset_path,
-         [this, name = name] { enqueue_create_asset(name, false); },
-         try_get_last_write_time(asset_path));
+         [this, name = name] { enqueue_create_asset(name, false); }, last_write_time);
    }
 
    auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
@@ -388,9 +387,9 @@ library<T>::library(output_stream& stream, std::shared_ptr<async::thread_pool> t
 }
 
 template<typename T>
-void library<T>::add(const std::filesystem::path& asset_path) noexcept
+void library<T>::add(const std::filesystem::path& asset_path, uint64 last_write_time) noexcept
 {
-   self->add(asset_path);
+   self->add(asset_path, last_write_time);
 }
 
 template<typename T>
@@ -495,7 +494,7 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
          continue;
       }
 
-      register_asset(path);
+      register_asset(path, entry->last_write_time().time_since_epoch().count());
    }
 
    _file_watcher = std::make_unique<utility::file_watcher>(source_directory);
@@ -518,7 +517,7 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
             }
          }
 
-         register_asset(path);
+         register_asset(path, try_get_last_write_time(path));
       });
    _file_removed_event =
       _file_watcher->listen_file_removed([this](const std::filesystem::path& path) {
@@ -547,20 +546,21 @@ void libraries_manager::clear() noexcept
    skies.clear();
 }
 
-void libraries_manager::register_asset(const std::filesystem::path& path) noexcept
+void libraries_manager::register_asset(const std::filesystem::path& path,
+                                       uint64 last_write_time) noexcept
 {
    if (const auto extension = path.extension();
        string::iequals(extension.native(), L".odf"sv)) {
-      odfs.add(path);
+      odfs.add(path, last_write_time);
    }
    else if (string::iequals(extension.native(), L".msh"sv)) {
-      models.add(path);
+      models.add(path, last_write_time);
    }
    else if (string::iequals(extension.native(), L".tga"sv)) {
-      textures.add(path);
+      textures.add(path, last_write_time);
    }
    else if (string::iequals(extension.native(), L".sky"sv)) {
-      skies.add(path);
+      skies.add(path, last_write_time);
    }
 }
 

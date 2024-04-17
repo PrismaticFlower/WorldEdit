@@ -53,7 +53,7 @@ struct library {
 
    /// @brief Adds an asset to the library.
    /// @param asset_path The path to the asset.
-   void add(const std::filesystem::path& asset_path) noexcept;
+   void add(const std::filesystem::path& asset_path, uint64 last_write_time) noexcept;
 
    /// @brief Removes an asset from the library.
    /// @param asset_path The path to the asset.
@@ -135,7 +135,7 @@ struct libraries_manager {
 private:
    void clear() noexcept;
 
-   void register_asset(const std::filesystem::path& path) noexcept;
+   void register_asset(const std::filesystem::path& path, uint64 last_write_time) noexcept;
 
    void forget_asset(const std::filesystem::path& path) noexcept;
 
