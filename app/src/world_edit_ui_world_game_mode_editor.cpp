@@ -24,7 +24,7 @@ bool is_unique_game_mode_name(std::string_view name, const world::world& world) 
    return true;
 };
 
-int imgui_layer_letter_filter(ImGuiInputTextCallbackData* data) noexcept
+int imgui_game_mode_letter_filter(ImGuiInputTextCallbackData* data) noexcept
 {
    const wchar_t c = data->EventChar;
 
@@ -67,13 +67,17 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
 
       ImGui::InputTextWithHint("##create", "New Game Mode Name",
                                &_game_mode_editor_new_name,
-                               ImGuiInputTextFlags_CharsNoBlank);
+                               ImGuiInputTextFlags_CallbackCharFilter,
+                               imgui_game_mode_letter_filter);
       ImGui::SameLine();
 
       const bool new_game_mode_name_is_unique =
          is_unique_game_mode_name(_game_mode_editor_new_name, _world);
+      const bool has_game_mode_name_name = not _game_mode_editor_new_name.empty();
+      const bool can_create_game_mode =
+         new_game_mode_name_is_unique and has_game_mode_name_name;
 
-      if (not new_game_mode_name_is_unique) ImGui::BeginDisabled();
+      if (not can_create_game_mode) ImGui::BeginDisabled();
 
       if (ImGui::Button("Create")) {
          _edit_stack_world.apply(edits::make_add_game_mode(_game_mode_editor_new_name,
@@ -83,11 +87,15 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
          _game_mode_editor_new_name = "";
       }
 
-      if (not new_game_mode_name_is_unique) ImGui::EndDisabled();
+      if (not can_create_game_mode) ImGui::EndDisabled();
 
-      if (not new_game_mode_name_is_unique and
-          ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-         ImGui::SetTooltip("Game mode name must be unique.");
+      if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+         if (not new_game_mode_name_is_unique) {
+            ImGui::SetTooltip("Game mode name must be unique.");
+         }
+         else if (not has_game_mode_name_name) {
+            ImGui::SetTooltip("Game mode must have a name.");
+         }
       }
 
       ImGui::SeparatorText("Existing Game Modes");
@@ -196,7 +204,7 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
                if (absl::InlinedVector<char, 256> name{game_mode.name.begin(),
                                                        game_mode.name.end()};
                    ImGui::InputText("Name", &name, ImGuiInputTextFlags_CallbackCharFilter,
-                                    imgui_layer_letter_filter)) {
+                                    imgui_game_mode_letter_filter)) {
                   if (not name.empty() and
                       is_unique_game_mode_name({name.data(), name.size()}, _world)) {
                      _edit_stack_world.apply(edits::make_rename_game_mode(
