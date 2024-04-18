@@ -1,5 +1,6 @@
 
 #include "world_utilities.hpp"
+#include "math/distance_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/string_ops.hpp"
 
@@ -240,35 +241,38 @@ auto find_closest_node(const float3& point, const path& path) noexcept -> closte
 
    return {closest_index, true};
 }
-
-auto find_closest_point(const float2& point, const sector& sector) noexcept -> clostest_node_result
+auto find_closest_edge(const float2& point, const sector& sector) noexcept -> std::size_t
 {
-   if (sector.points.size() <= 1) return {0, not sector.points.empty()};
+   if (sector.points.size() <= 1) return 0;
 
-   std::size_t closest_index = 0;
-   float closest_distance = FLT_MAX;
+   const auto line_distance_sdf = [](float2 p, float2 a, float2 b) {
+      float2 pa = p - a, ba = b - a;
+
+      float h = std::clamp(dot(pa, ba) / dot(ba, ba), 0.0f, 1.0f);
+
+      return length(pa - ba * h);
+   };
+
+   std::size_t nearest = 0;
+   float nearest_distance = FLT_MAX;
 
    for (std::size_t i = 0; i < sector.points.size(); ++i) {
-      const float point_distance = distance(sector.points[i], point);
+      float2 a = sector.points[i];
+      float2 b = sector.points[(i + 1) % sector.points.size()];
 
-      if (point_distance < closest_distance) {
-         closest_distance = point_distance;
-         closest_index = i;
+      float distance = line_distance_lnorm(point, a, b);
+
+      const float2 edge_normal =
+         normalize(float2{a.y, a.x} - float2{b.y, b.x}) * float2{-1.0f, 1.0f};
+      const float2 insert_normal = normalize(((a + b) * 0.5f) - point);
+
+      if (distance < nearest_distance) {
+         nearest = i;
+         nearest_distance = distance;
       }
    }
 
-   if (closest_index > 0 and (closest_index + 1) < sector.points.size()) {
-
-      const float2 back_position = sector.points[closest_index - 1];
-      const float2 forward_position = sector.points[closest_index + 1];
-
-      const float back_distance = distance(point, back_position);
-      const float forward_distance = distance(point, forward_position);
-
-      return {closest_index, forward_distance <= back_distance};
-   }
-
-   return {closest_index, true};
+   return nearest;
 }
 
 }

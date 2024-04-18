@@ -1448,11 +1448,15 @@ void world_edit::place_creation_entity() noexcept
       if (world::sector* existing_sector =
              world::find_entity(_world.sectors, sector.name);
           existing_sector and sector.points.size() == 1) {
-         _edit_stack_world
-            .apply(edits::make_insert_point(existing_sector->id,
-                                            existing_sector->points.size(),
-                                            sector.points[0]),
-                   _edit_context);
+
+         const std::size_t insert_index =
+            _entity_creation_config.placement_node_insert == placement_node_insert::nearest
+               ? world::find_closest_edge(sector.points[0], *existing_sector) + 1
+               : existing_sector->points.size();
+
+         _edit_stack_world.apply(edits::make_insert_point(existing_sector->id, insert_index,
+                                                          sector.points[0]),
+                                 _edit_context);
 
          if (_entity_creation_config.auto_fill_sector) {
             _edit_stack_world

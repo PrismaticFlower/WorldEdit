@@ -555,6 +555,7 @@
     <ClInclude Include="src\lowercase_string.hpp" />
     <ClInclude Include="src\math\align.hpp" />
     <ClInclude Include="src\math\bounding_box.hpp" />
+    <ClInclude Include="src\math\distance_funcs.hpp" />
     <ClInclude Include="src\math\intersectors.hpp" />
     <ClInclude Include="src\math\matrix_funcs.hpp" />
     <ClInclude Include="src\math\quaternion_funcs.hpp" />

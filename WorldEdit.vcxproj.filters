@@ -473,6 +473,7 @@
     <ClInclude Include="src\edits\rename_layer.hpp" />
     <ClInclude Include="src\edits\rename_game_mode.hpp" />
     <ClInclude Include="src\edits\set_world_req_entry.hpp" />
+    <ClInclude Include="src\math\distance_funcs.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

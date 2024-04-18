@@ -1643,9 +1643,20 @@ void world_edit::ui_show_world_creation_editor() noexcept
              world::find_entity(_world.sectors, sector.name);
           existing_sector and not existing_sector->points.empty() and
           not using_from_object_bbox) {
-         const float2 start_point = existing_sector->points.back();
+         float2 start_point = existing_sector->points.back();
          const float2 mid_point = sector.points[0];
-         const float2 end_point = existing_sector->points[0];
+         float2 end_point = existing_sector->points[0];
+
+         if (_entity_creation_config.placement_node_insert ==
+             placement_node_insert::nearest) {
+            const std::size_t nearest_edge =
+               find_closest_edge(sector.points[0], *existing_sector);
+
+            start_point = existing_sector->points[nearest_edge];
+            end_point =
+               existing_sector
+                  ->points[(nearest_edge + 1) % +existing_sector->points.size()];
+         }
 
          const float3 line_bottom_start = {start_point.x, existing_sector->base,
                                            start_point.y};
@@ -1697,6 +1708,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {.has_placement_rotation = false,
                 .has_point_at = false,
                 .has_placement_ground = false,
+                .has_node_placement_insert = true,
                 .has_from_bbox = true};
    }
    else if (creation_entity.is<world::portal>()) {

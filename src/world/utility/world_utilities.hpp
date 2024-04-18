@@ -163,11 +163,11 @@ struct clostest_node_result {
 auto find_closest_node(const float3& point, const path& path) noexcept
    -> clostest_node_result;
 
-/// @brief Find the index of the node closest to the point in the sector.
+/// @brief Find the index of the edge closest to the point in the sector.
 /// @param point The point to find the node closest to.
 /// @param sector The sector to search through.
-/// @return The closest node's index or zero if the sector is empty.
-auto find_closest_point(const float2& point, const sector& sector) noexcept
-   -> clostest_node_result;
+/// @return The closest edge's index or zero if the sector has no edges.
+auto find_closest_edge(const float2& point, const sector& sector) noexcept
+   -> std::size_t;
 
 }
