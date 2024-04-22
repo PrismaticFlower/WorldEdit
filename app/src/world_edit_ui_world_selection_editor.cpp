@@ -1790,6 +1790,11 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                       _interaction_targets.selection);
       }
 
+      if (ImGui::Button("Match Transform", {ImGui::CalcItemWidth(), 0.0f})) {
+         _selection_edit_tool = selection_edit_tool::match_transform;
+         _selection_match_transform_context = {};
+      }
+
       if (ImGui::Button("Align Selection", {ImGui::CalcItemWidth(), 0.0f})) {
          align_selection(_editor_grid_size);
       }
@@ -1838,6 +1843,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
       ImGui::BulletText(get_display_string(
          _hotkeys.query_binding("Entity Editing",
                                 "Rotate Selection Around Centre")));
+
+      ImGui::Text("Match Transform");
+      ImGui::BulletText(get_display_string(
+         _hotkeys.query_binding("Entity Editing", "Match Transform")));
 
       ImGui::Text("Align Selection");
       ImGui::BulletText(get_display_string(

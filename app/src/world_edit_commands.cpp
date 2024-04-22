@@ -174,6 +174,10 @@ void world_edit::initialize_commands() noexcept
       _rotate_selection_centre =
          world::selection_centre_for_rotate_around(_world, _interaction_targets.selection);
    });
+   _commands.add("entity_edit.match_transform"s, [this] {
+      _selection_edit_tool = selection_edit_tool::match_transform;
+      _selection_match_transform_context = {};
+   });
    _commands.add("entity_edit.clear_selection_edit_tool"s,
                  [this] { _selection_edit_tool = selection_edit_tool::none; });
    _commands.add("entity_edit.align_selection"s,
@@ -206,6 +210,8 @@ void world_edit::initialize_commands() noexcept
                  _selection_cursor_move_lock_y_axis);
    _commands.add("entity_edit.cursor_move_lock_z_axis"s,
                  _selection_cursor_move_lock_z_axis);
+   _commands.add("entity_edit.finish_match_transform"s,
+                 [this] { _selection_match_transform_context.clicked = true; });
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_config.placement_rotation) {
@@ -729,6 +735,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Rotate Selection Around Centre",
            "entity_edit.rotate_selection_around_centre",
            {.key = key::c}},
+          {"Match Transform",
+           "entity_edit.match_transform",
+           {.key = key::x, .modifiers = {.shift = true}}},
           {"Align Selection",
            "entity_edit.align_selection",
            {.key = key::a, .modifiers = {.shift = true}}},
@@ -961,6 +970,21 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Finish", "entity_edit.clear_selection_edit_tool", {.key = key::mouse1}},
+            {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Editing (Match Transform) Finish",
+      .activated =
+         [this] {
+            return _selection_edit_tool == selection_edit_tool::match_transform;
+         },
+      .default_hotkeys =
+         {
+            {"Finish", "entity_edit.finish_match_transform", {.key = key::mouse1}},
             {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
          },
 

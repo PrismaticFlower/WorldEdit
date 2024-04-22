@@ -59,7 +59,8 @@ enum class selection_edit_tool : uint8 {
    move_sector_point,
    rotate,
    rotate_around_centre,
-   set_layer
+   set_layer,
+   match_transform
 };
 
 enum class selection_move_space : uint8 { world, local };
@@ -196,6 +197,8 @@ private:
    void ui_show_world_selection_rotate_around_centre() noexcept;
 
    void ui_show_world_selection_set_layer() noexcept;
+
+   void ui_show_world_selection_match_transform() noexcept;
 
    void ui_show_terrain_editor() noexcept;
 
@@ -503,6 +506,15 @@ private:
 
       world::sector_id sector_to_add_object_to = world::max_id;
    } _selection_edit_context;
+
+   struct selection_match_transform_config {
+      bool match_rotation = true;
+      bool match_position = true;
+   } _selection_match_transform_config;
+
+   struct selection_match_transform_context {
+      bool clicked = false;
+   } _selection_match_transform_context;
 
    struct terrain_editor_config {
       terrain_edit_target edit_target = terrain_edit_target::height;

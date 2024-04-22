@@ -101,6 +101,10 @@ void world_edit::update_ui() noexcept
       ui_show_world_selection_set_layer();
    }
 
+   if (_selection_edit_tool == selection_edit_tool::match_transform) {
+      ui_show_world_selection_match_transform();
+   }
+
    if (_terrain_edit_tool == terrain_edit_tool::editor) {
       ui_show_terrain_editor();
    }
