@@ -76,36 +76,28 @@ void world_edit::update_ui() noexcept
    if (_selection_edit_tool == selection_edit_tool::move) {
       ui_show_world_selection_move();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::move_with_cursor) {
+   else if (_selection_edit_tool == selection_edit_tool::move_with_cursor) {
       ui_show_world_selection_move_with_cursor();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::move_path) {
+   else if (_selection_edit_tool == selection_edit_tool::move_path) {
       ui_show_world_selection_move_path();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::move_sector_point) {
+   else if (_selection_edit_tool == selection_edit_tool::move_sector_point) {
       ui_show_world_selection_move_sector_point();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::rotate) {
+   else if (_selection_edit_tool == selection_edit_tool::rotate) {
       ui_show_world_selection_rotate();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::rotate_around_centre) {
+   else if (_selection_edit_tool == selection_edit_tool::rotate_around_centre) {
       ui_show_world_selection_rotate_around_centre();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::set_layer) {
+   else if (_selection_edit_tool == selection_edit_tool::set_layer) {
       ui_show_world_selection_set_layer();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::match_transform) {
+   else if (_selection_edit_tool == selection_edit_tool::match_transform) {
       ui_show_world_selection_match_transform();
    }
-
-   if (_selection_edit_tool == selection_edit_tool::pick_sector) {
+   else if (_selection_edit_tool == selection_edit_tool::pick_sector) {
       ui_show_world_selection_pick_sector();
    }
 
