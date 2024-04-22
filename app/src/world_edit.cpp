@@ -281,6 +281,10 @@ void world_edit::update_hovered_entity() noexcept
                                                    .terrain = false};
       }
    }
+   else if (_selection_edit_tool == selection_edit_tool::pick_sector) {
+      raycast_mask =
+         world::active_entity_types{.objects = false, .sectors = true, .terrain = false};
+   }
 
    if (raycast_mask.objects) {
       if (std::optional<world::raycast_result<world::object>> hit =

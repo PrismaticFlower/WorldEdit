@@ -60,10 +60,13 @@ enum class selection_edit_tool : uint8 {
    rotate,
    rotate_around_centre,
    set_layer,
-   match_transform
+   match_transform,
+   pick_sector
 };
 
 enum class selection_move_space : uint8 { world, local };
+
+enum class selection_pick_sector_index : uint8 { _1, _2 };
 
 enum class gizmo_object_placement : uint8 { position, bbox_centre };
 
@@ -199,6 +202,8 @@ private:
    void ui_show_world_selection_set_layer() noexcept;
 
    void ui_show_world_selection_match_transform() noexcept;
+
+   void ui_show_world_selection_pick_sector() noexcept;
 
    void ui_show_terrain_editor() noexcept;
 
@@ -515,6 +520,12 @@ private:
    struct selection_match_transform_context {
       bool clicked = false;
    } _selection_match_transform_context;
+
+   struct selection_pick_sector_context {
+      bool clicked = false;
+      selection_pick_sector_index index = selection_pick_sector_index::_1;
+      world::portal_id id = {};
+   } _selection_pick_sector_context;
 
    struct terrain_editor_config {
       terrain_edit_target edit_target = terrain_edit_target::height;

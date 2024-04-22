@@ -1297,6 +1297,12 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                             return entries;
                                          });
 
+            if (ImGui::Button("Pick Linked Sector 1", {ImGui::CalcItemWidth(), 0.0f})) {
+               _selection_edit_tool = selection_edit_tool::pick_sector;
+               _selection_pick_sector_context = {.index = selection_pick_sector_index::_1,
+                                                 .id = portal->id};
+            }
+
             ImGui::InputTextAutoComplete("Linked Sector 2", &portal->sector2,
                                          _edit_stack_world, _edit_context, [&]() noexcept {
                                             std::array<std::string_view, 6> entries;
@@ -1316,6 +1322,12 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
                                             return entries;
                                          });
+
+            if (ImGui::Button("Pick Linked Sector 2", {ImGui::CalcItemWidth(), 0.0f})) {
+               _selection_edit_tool = selection_edit_tool::pick_sector;
+               _selection_pick_sector_context = {.index = selection_pick_sector_index::_2,
+                                                 .id = portal->id};
+            }
 
             ImGui::DragQuat("Rotation", &portal->rotation, _edit_stack_world,
                             _edit_context);

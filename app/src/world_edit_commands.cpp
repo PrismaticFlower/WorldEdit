@@ -212,6 +212,8 @@ void world_edit::initialize_commands() noexcept
                  _selection_cursor_move_lock_z_axis);
    _commands.add("entity_edit.finish_match_transform"s,
                  [this] { _selection_match_transform_context.clicked = true; });
+   _commands.add("entity_edit.finish_pick_sector"s,
+                 [this] { _selection_pick_sector_context.clicked = true; });
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_config.placement_rotation) {
@@ -985,6 +987,21 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Finish", "entity_edit.finish_match_transform", {.key = key::mouse1}},
+            {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Editing (Pick Sector) Finish",
+      .activated =
+         [this] {
+            return _selection_edit_tool == selection_edit_tool::pick_sector;
+         },
+      .default_hotkeys =
+         {
+            {"Finish", "entity_edit.finish_pick_sector", {.key = key::mouse1}},
             {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
          },
 

@@ -40,6 +40,7 @@
     <ClCompile Include="src\world_edit_ui_foliage_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_terrain_import_color_map.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_match_transform.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_pick_sector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />
