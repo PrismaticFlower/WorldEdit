@@ -669,6 +669,15 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                          {.format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                                           .dimension = gpu::dsv_dimension::texture2d}),
        _device.direct_queue};
+   gpu::unique_resource_view env_map_depth_stencil_srv =
+      {_device.create_shader_resource_view(env_map_depth_stencil_texture.get(),
+                                           {.format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS}),
+       _device.direct_queue};
+
+   gpu::unique_resource_handle env_map_depth_min_max_readback_buffer =
+      {_device.create_buffer({.size = sizeof(float4) * 6, .debug_name = "Env Map Depth Min-Max Readback Buffer"},
+                             gpu::heap_type::readback),
+       _device.direct_queue};
 
    const uint32 readback_row_pitch =
       math::align_up<uint32>(params.length * sizeof(uint32),
@@ -699,6 +708,154 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
    }
 
    for (uint32 i = 0; i < 6; ++i) {
+      camera camera;
+
+      camera.position(params.positionWS);
+      camera.fov(half_pi);
+      camera.yaw(camera_angles[i].x);
+      camera.pitch(camera_angles[i].y);
+
+      const frustum view_frustum{camera.inv_view_projection_matrix()};
+      const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
+                                   .height = static_cast<float>(super_sample_length)};
+
+      build_object_render_list(view_frustum);
+
+      command_list.reset();
+
+      clear_depth_minmax(command_list);
+
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         command_list.deferred_barrier(
+            gpu::buffer_barrier{.sync_before = gpu::barrier_sync::copy,
+                                .sync_after = gpu::barrier_sync::compute_shading,
+                                .access_before = gpu::barrier_access::copy_dest,
+                                .access_after = gpu::barrier_access::unordered_access,
+                                .resource = _depth_minmax_buffer.get(),
+                                .offset = 0,
+                                .size = sizeof(float4)});
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = _depth_minmax_buffer.get(),
+            .state_before = gpu::legacy_resource_state::copy_dest,
+            .state_after = gpu::legacy_resource_state::unordered_access});
+      }
+
+      command_list.flush_barriers();
+
+      command_list.clear_depth_stencil_view(env_map_depth_stencil_view.get(),
+                                            {.clear_depth = true, .clear_stencil = true},
+                                            0.0f, 0x0);
+
+      command_list.rs_set_viewports(viewport);
+      command_list.rs_set_scissor_rects(
+         {.right = super_sample_length, .bottom = super_sample_length});
+      command_list.om_set_render_targets(env_map_super_sample_rtv.get(),
+                                         env_map_depth_stencil_view.get());
+
+      _terrain.draw(terrain_draw::depth_prepass, view_frustum,
+                    _terrain_cut_list, _camera_constant_buffer_view,
+                    _light_clusters.lights_constant_buffer_view(), command_list,
+                    _root_signatures, _pipelines, _dynamic_buffer_allocator);
+
+      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
+
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         command_list.deferred_barrier(
+            gpu::texture_barrier{.sync_before = gpu::barrier_sync::depth_stencil,
+                                 .sync_after = gpu::barrier_sync::compute_shading,
+                                 .access_before = gpu::barrier_access::depth_stencil_write,
+                                 .access_after = gpu::barrier_access::shader_resource,
+                                 .layout_before = gpu::barrier_layout::depth_stencil_write,
+                                 .layout_after = gpu::barrier_layout::direct_queue_shader_resource,
+                                 .resource = env_map_depth_stencil_texture.get()});
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = env_map_depth_stencil_texture.get(),
+            .state_before = gpu::legacy_resource_state::depth_write,
+            .state_after = gpu::legacy_resource_state::all_shader_resource});
+      }
+      command_list.flush_barriers();
+
+      const gpu_virtual_address depth_minmax_buffer =
+         _device.get_gpu_virtual_address(_depth_minmax_buffer.get());
+
+      std::array reduce_depth_inputs{_depth_stencil_srv.get().index,
+                                     super_sample_length, super_sample_length};
+
+      command_list.set_compute_root_signature(
+         _root_signatures.depth_reduce_minmax.get());
+      command_list.set_compute_32bit_constants(rs::depth_reduce_minmax::input_constants,
+                                               std::as_bytes(std::span{reduce_depth_inputs}),
+                                               0);
+      command_list.set_compute_uav(rs::depth_reduce_minmax::output_uav,
+                                   depth_minmax_buffer);
+
+      command_list.set_pipeline_state(_pipelines.depth_reduce_minmax.get());
+
+      command_list.dispatch(math::align_up(super_sample_length / 8, 8),
+                            math::align_up(super_sample_length / 8, 8), 1);
+
+      [[likely]] if (_device.supports_enhanced_barriers()) {
+         command_list.deferred_barrier(
+            gpu::buffer_barrier{.sync_before = gpu::barrier_sync::compute_shading,
+                                .sync_after = gpu::barrier_sync::copy,
+                                .access_before = gpu::barrier_access::unordered_access,
+                                .access_after = gpu::barrier_access::copy_source,
+                                .resource = _depth_minmax_buffer.get()});
+
+         command_list.deferred_barrier(
+            gpu::texture_barrier{.sync_before = gpu::barrier_sync::compute_shading,
+                                 .sync_after = gpu::barrier_sync::none,
+                                 .access_before = gpu::barrier_access::shader_resource,
+                                 .access_after = gpu::barrier_access::no_access,
+                                 .layout_before = gpu::barrier_layout::direct_queue_shader_resource,
+                                 .layout_after = gpu::barrier_layout::depth_stencil_write,
+                                 .resource = env_map_depth_stencil_texture.get()});
+      }
+      else {
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = _depth_minmax_buffer.get(),
+            .state_before = gpu::legacy_resource_state::unordered_access,
+            .state_after = gpu::legacy_resource_state::copy_source});
+
+         command_list.deferred_barrier(gpu::legacy_resource_transition_barrier{
+            .resource = env_map_depth_stencil_texture.get(),
+            .state_before = gpu::legacy_resource_state::all_shader_resource,
+            .state_after = gpu::legacy_resource_state::depth_write});
+      }
+      command_list.flush_barriers();
+
+      command_list.copy_buffer_region(env_map_depth_min_max_readback_buffer.get(),
+                                      sizeof(float4) * i,
+                                      _depth_minmax_buffer.get(), 0, sizeof(float4));
+
+      command_list.close();
+
+      _device.direct_queue.execute_command_lists(command_list);
+   }
+
+   _device.direct_queue.wait_for_idle();
+
+   float shadow_min_depth = 1.0f;
+   float shadow_max_depth = 0.0f;
+
+   {
+      const float4* min_maxes = static_cast<const float4*>(
+         _device.map(env_map_depth_min_max_readback_buffer.get(), 0,
+                     {0, sizeof(float4) * 6}));
+
+      for (uint32 i = 0; i < 6; ++i) {
+         shadow_min_depth = std::min(min_maxes[i].x, shadow_min_depth);
+         shadow_max_depth = std::max(min_maxes[i].y, shadow_max_depth);
+      }
+
+      _device.unmap(env_map_depth_min_max_readback_buffer.get(), 0, {0, 0});
+   }
+
+   for (uint32 i = 0; i < 6; ++i) {
       gpu::unique_rtv_handle env_map_rtv =
          {_device.create_render_target_view(env_map_render_texture.get(),
                                             {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
@@ -725,7 +882,8 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                                       pre_render_command_list);
 
          _light_clusters.prepare_lights(camera, view_frustum, world, nullptr,
-                                        {0.0f, 1.0f}, pre_render_command_list,
+                                        {shadow_min_depth, shadow_max_depth},
+                                        pre_render_command_list,
                                         _dynamic_buffer_allocator);
 
          pre_render_command_list.close();
