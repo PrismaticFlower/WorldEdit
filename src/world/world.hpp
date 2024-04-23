@@ -86,6 +86,9 @@ struct world {
       id_generator<planning_connection> planning_connections;
       id_generator<boundary> boundaries;
       id_generator<measurement> measurements;
+      id_generator<animation> animations;
+      id_generator<animation_group> animation_groups;
+      id_generator<animation_hierarchy> animation_hierarchies;
    } next_id;
 };
 

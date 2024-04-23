@@ -954,6 +954,7 @@ void load_animations(const std::filesystem::path& filepath,
             animation.runtime = key_node.values.get<float>(1);
             animation.loop = key_node.values.get<int>(2) != 0;
             animation.local_translation = key_node.values.get<int>(3) != 0;
+            animation.id = world_out.next_id.animations.aquire();
 
             for (auto& child_key_node : key_node) {
                if (child_key_node.key == "AddPositionKey"sv) {
@@ -1012,6 +1013,7 @@ void load_animations(const std::filesystem::path& filepath,
             group.name = key_node.values.get<std::string>(0);
             group.play_when_level_begins = key_node.values.get<int>(1) != 0;
             group.stops_when_object_is_controlled = key_node.values.get<int>(2) != 0;
+            group.id = world_out.next_id.animation_groups.aquire();
 
             for (auto& child_key_node : key_node) {
                if (child_key_node.key == "DisableHierarchies"sv) {
@@ -1035,6 +1037,7 @@ void load_animations(const std::filesystem::path& filepath,
             auto& hierarchy = world_out.animation_hierarchies.emplace_back();
 
             hierarchy.root_object = key_node.values.get<std::string>(0);
+            hierarchy.id = world_out.next_id.animation_hierarchies.aquire();
 
             for (auto& child_key_node : key_node) {
                if (child_key_node.key == "Obj"sv) {

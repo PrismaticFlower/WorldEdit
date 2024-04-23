@@ -563,6 +563,8 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(key.tangent == float3{0.0f, 0.0f, 0.0f});
          CHECK(key.tangent_next == float3{0.0f, 0.0f, 0.0f});
       }
+
+      CHECK(is_unique_id(0, world.animations));
    }
 
    // animation group checks
@@ -579,6 +581,8 @@ TEST_CASE("world loading", "[World][IO]")
       REQUIRE(group.entries.size() == 1);
       CHECK(group.entries[0].animation == "Anim"sv);
       CHECK(group.entries[0].object == "com_inv_col_8"sv);
+
+      CHECK(is_unique_id(0, world.animation_groups));
    }
 
    // animation hierarchy checks
@@ -591,6 +595,8 @@ TEST_CASE("world loading", "[World][IO]")
 
       REQUIRE(hierarchy.objects.size() == 1);
       CHECK(hierarchy.objects[0] == "com_item_healthrecharge"sv);
+
+      CHECK(is_unique_id(0, world.animation_hierarchies));
    }
 }
 }

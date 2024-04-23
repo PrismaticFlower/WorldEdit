@@ -1,5 +1,6 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 
 #include <string>
@@ -35,6 +36,8 @@ struct animation {
 
    std::vector<position_key> position_keys;
    std::vector<rotation_key> rotation_keys;
+
+   id<animation> id = {};
 };
 
 // AnimationGroup("{name}", {play_when_level_begins}, {stops_when_object_is_controlled})
@@ -51,12 +54,20 @@ struct animation_group {
    bool disable_hierarchies = false;
 
    std::vector<entry> entries;
+
+   id<animation_group> id = {};
 };
 
 struct animation_hierarchy {
    std::string root_object;
 
    std::vector<std::string> objects;
+
+   id<animation_hierarchy> id = {};
 };
+
+using animation_id = id<animation>;
+using animation_group_id = id<animation_group>;
+using animation_hierarchy_id = id<animation_hierarchy>;
 
 }
