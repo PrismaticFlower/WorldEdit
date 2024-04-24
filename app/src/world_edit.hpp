@@ -112,6 +112,8 @@ enum class water_brush_mode : uint8 { paint, erase };
 
 enum class foliage_brush_mode : uint8 { paint, erase };
 
+enum class animation_key_type : uint8 { position, rotation };
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -230,6 +232,8 @@ private:
    void ui_show_render_env_map() noexcept;
 
    void ui_show_measurement_tool() noexcept;
+
+   void ui_show_animation_editor() noexcept;
 
    void ui_draw_select_box() noexcept;
 
@@ -393,6 +397,7 @@ private:
    bool _about_window_open = false;
    bool _render_env_map_open = false;
    bool _measurement_tool_open = false;
+   bool _animation_editor_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
@@ -659,6 +664,18 @@ private:
       bool brush_held = false;
       bool brush_active = false;
    } _foliage_editor_context;
+
+   struct animation_editor_config {
+      bool match_tangents = true;
+   } _animation_editor_config;
+
+   struct animation_editor_context {
+      struct selected {
+         world::animation_id id = world::max_id;
+         int32 key = 0;
+         animation_key_type key_type = animation_key_type::position;
+      } selected;
+   } _animation_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

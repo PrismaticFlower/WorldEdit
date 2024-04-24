@@ -129,6 +129,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.object_class_browser"s, _object_class_browser_open);
    _commands.add("show.env_map_renderer"s, _render_env_map_open);
    _commands.add("show.measurement_tool"s, _measurement_tool_open);
+   _commands.add("show.animation_editor"s, _animation_editor_open);
 
    _commands.add("show.terrain_height_editor"s, [this] {
       _terrain_edit_tool = terrain_edit_tool::editor;
@@ -693,6 +694,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
           {"Show World Stats", "show.world_stats", {.key = key::f9}},
           {"Show Object Class Browser", "show.object_class_browser", {.key = key::f10}},
+          {"Show Animation Editor", "show.animation_editor", {.key = key::f11}},
 
           {"Show Measurement Tool", "show.measurement_tool", {.key = key::m}},
 

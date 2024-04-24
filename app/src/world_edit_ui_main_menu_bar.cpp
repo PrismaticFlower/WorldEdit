@@ -173,6 +173,14 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::Separator();
 
+         ImGui::MenuItem("Animation Editor",
+                         get_display_string(
+                            _hotkeys.query_binding("Global",
+                                                   "Show Animation Editor")),
+                         &_animation_editor_open);
+
+         ImGui::Separator();
+
          ImGui::MenuItem("Measurement Tool",
                          get_display_string(
                             _hotkeys.query_binding("Global",
