@@ -388,4 +388,83 @@ TEST_CASE("edits delete_entity measurement", "[Edits]")
    REQUIRE(world.measurements[0] == test_world.measurements[0]);
 }
 
+TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
+{
+   const we::world::world multi_ref_test_world =
+      {
+         .objects =
+            {
+               world::entities_init,
+               std::initializer_list{
+                  world::object{.name = "test_object"s, .id = world::object_id{1}},
+                  world::object{.name = "other_object"s, .id = world::object_id{1}},
+               },
+            },
+
+         .paths =
+            {
+               world::entities_init,
+               std::initializer_list{
+                  world::path{
+                     .name = "test_path"s,
+
+                     .properties = {{.key = "Key"s, .value = "Value"s},
+                                    {.key = "EnableObject"s, .value = "test_object"s},
+                                    {.key = "EnableObject"s, .value = "test_object"s},
+                                    {.key = "Key"s, .value = "Value"s}},
+                     .nodes =
+                        {
+                           {
+                              .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                              .position = {0.0f, 0.0f, 0.0f},
+                           }},
+                  },
+               },
+            },
+
+         .sectors =
+            {
+               world::entities_init,
+               std::initializer_list{
+                  world::sector{
+                     .name = "test_sector"s,
+
+                     .base = 0.0f,
+                     .height = 0.0f,
+                     .points = {{0.0f, 0.0f}, {0.0f, 10.0f}, {10.0f, 10.0f}, {10.0f, 0.0f}},
+                     .objects = {"other_object"s, "test_object"s, "test_object"s},
+                  },
+               },
+            },
+      };
+
+   world::world world = multi_ref_test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_entity(world.objects[0].id, world);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.objects.size() == 1);
+   REQUIRE(world.objects[0].name == "other_object");
+
+   REQUIRE(world.paths[0].properties.size() == 2);
+   REQUIRE(world.paths[0].properties[0] ==
+           multi_ref_test_world.paths[0].properties[0]);
+   REQUIRE(world.paths[0].properties[0] ==
+           multi_ref_test_world.paths[0].properties[3]);
+
+   REQUIRE(world.sectors[0].objects.size() == 1);
+   REQUIRE(world.sectors[0].objects[0] == multi_ref_test_world.sectors[0].objects[0]);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.objects.size() == 2);
+   REQUIRE(world.objects[0] == multi_ref_test_world.objects[0]);
+   REQUIRE(world.objects[1] == multi_ref_test_world.objects[1]);
+
+   REQUIRE(world.paths[0].properties == multi_ref_test_world.paths[0].properties);
+   REQUIRE(world.sectors[0].objects == multi_ref_test_world.sectors[0].objects);
+}
 }

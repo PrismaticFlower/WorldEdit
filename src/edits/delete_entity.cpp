@@ -434,12 +434,16 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
    for (uint32 path_index = 0; path_index < world.paths.size(); ++path_index) {
       const world::path& path = world.paths[path_index];
 
+      uint32 delete_offset = 0;
+
       for (uint32 property_index = 0; property_index < path.properties.size();
            ++property_index) {
          const auto& [key, value] = path.properties[property_index];
 
          if (key == "EnableObject" and value == object.name) {
-            path_property_refs.emplace_back(path_index, property_index);
+            path_property_refs.emplace_back(path_index, property_index - delete_offset);
+
+            delete_offset += 1;
          }
       }
    }
@@ -447,9 +451,13 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
    for (uint32 sector_index = 0; sector_index < world.sectors.size(); ++sector_index) {
       const world::sector& sector = world.sectors[sector_index];
 
+      uint32 delete_offset = 0;
+
       for (uint32 entry_index = 0; entry_index < sector.objects.size(); ++entry_index) {
          if (sector.objects[entry_index] == object.name) {
-            sector_entry_refs.emplace_back(sector_index, entry_index);
+            sector_entry_refs.emplace_back(sector_index, entry_index - delete_offset);
+
+            delete_offset += 1;
          }
       }
    }
