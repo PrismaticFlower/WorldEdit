@@ -1,9 +1,15 @@
 #include "edits/bundle.hpp"
 #include "edits/imgui_ext.hpp"
+#include "math/matrix_funcs.hpp"
+#include "math/vector_funcs.hpp"
+#include "utility/string_icompare.hpp"
+#include "world/utility/animation.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world_edit.hpp"
 
 #include <imgui.h>
+
+#include "math/quaternion_funcs.hpp"
 
 namespace we {
 
@@ -276,6 +282,25 @@ void world_edit::ui_show_animation_editor() noexcept
                      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
                                              _edit_context);
                   }
+                  else if (_animation_editor_config.match_tangents and
+                           selected_animation->loop and
+                           selected_animation->position_keys.size() > 1 and
+                           selected_key == 0) {
+                     edits::bundle_vector bundle;
+
+                     bundle.push_back(
+                        edits::make_set_vector_value(&selected_animation->position_keys,
+                                                     0, &world::position_key::tangent,
+                                                     tangent));
+
+                     bundle.push_back(edits::make_set_vector_value(
+                        &selected_animation->position_keys,
+                        static_cast<int>(selected_animation->position_keys.size()) - 1,
+                        &world::position_key::tangent_next, tangent));
+
+                     _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                                             _edit_context);
+                  }
                   else {
                      _edit_stack_world.apply(edits::make_set_vector_value(
                                                 &selected_animation->position_keys,
@@ -303,6 +328,27 @@ void world_edit::ui_show_animation_editor() noexcept
                         edits::make_set_vector_value(&selected_animation->position_keys,
                                                      selected_key + 1,
                                                      &world::position_key::tangent,
+                                                     tangent_next));
+
+                     _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                                             _edit_context);
+                  }
+                  else if (_animation_editor_config.match_tangents and
+                           selected_animation->loop and
+                           selected_animation->position_keys.size() > 1 and
+                           (selected_key + 1) ==
+                              selected_animation->position_keys.size()) {
+                     edits::bundle_vector bundle;
+
+                     bundle.push_back(
+                        edits::make_set_vector_value(&selected_animation->position_keys,
+                                                     selected_key,
+                                                     &world::position_key::tangent_next,
+                                                     tangent_next));
+
+                     bundle.push_back(
+                        edits::make_set_vector_value(&selected_animation->position_keys,
+                                                     0, &world::position_key::tangent,
                                                      tangent_next));
 
                      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
@@ -417,6 +463,25 @@ void world_edit::ui_show_animation_editor() noexcept
                      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
                                              _edit_context);
                   }
+                  else if (_animation_editor_config.match_tangents and
+                           selected_animation->loop and
+                           selected_animation->rotation_keys.size() > 1 and
+                           selected_key == 0) {
+                     edits::bundle_vector bundle;
+
+                     bundle.push_back(
+                        edits::make_set_vector_value(&selected_animation->rotation_keys,
+                                                     0, &world::rotation_key::tangent,
+                                                     tangent));
+
+                     bundle.push_back(edits::make_set_vector_value(
+                        &selected_animation->rotation_keys,
+                        static_cast<int>(selected_animation->rotation_keys.size()) - 1,
+                        &world::rotation_key::tangent_next, tangent));
+
+                     _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                                             _edit_context);
+                  }
                   else {
                      _edit_stack_world.apply(edits::make_set_vector_value(
                                                 &selected_animation->rotation_keys,
@@ -449,6 +514,27 @@ void world_edit::ui_show_animation_editor() noexcept
                      _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
                                              _edit_context);
                   }
+                  else if (_animation_editor_config.match_tangents and
+                           selected_animation->loop and
+                           selected_animation->rotation_keys.size() > 1 and
+                           (selected_key + 1) ==
+                              selected_animation->rotation_keys.size()) {
+                     edits::bundle_vector bundle;
+
+                     bundle.push_back(
+                        edits::make_set_vector_value(&selected_animation->rotation_keys,
+                                                     selected_key,
+                                                     &world::rotation_key::tangent_next,
+                                                     tangent_next));
+
+                     bundle.push_back(
+                        edits::make_set_vector_value(&selected_animation->rotation_keys,
+                                                     0, &world::rotation_key::tangent,
+                                                     tangent_next));
+
+                     _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
+                                             _edit_context);
+                  }
                   else {
                      _edit_stack_world.apply(edits::make_set_vector_value(
                                                 &selected_animation->rotation_keys,
@@ -475,6 +561,118 @@ void world_edit::ui_show_animation_editor() noexcept
    }
 
    ImGui::End();
+
+   if (not _animation_editor_open) return;
+
+   world::animation* selected_animation =
+      world::find_entity(_world.animations, _animation_editor_context.selected.id);
+
+   if (selected_animation) {
+      quaternion base_rotation = {1.0f, 0.0f, 0.0f, 0.0f};
+      float3 base_position = {0.0f, 0.0f, 0.0f};
+
+      for (const world::animation_group& group : _world.animation_groups) {
+         for (const world::animation_group::entry& entry : group.entries) {
+            if (string::iequals(entry.animation, selected_animation->name)) {
+               for (const world::object& object : _world.objects) {
+                  if (string::iequals(entry.object, object.name)) {
+                     base_rotation = object.rotation;
+                     base_position = object.position;
+
+                     break;
+                  }
+               }
+            }
+         }
+      }
+
+      for (auto& key : selected_animation->position_keys) {
+         float4x4 transform{};
+         transform[3] = {key.position + base_position, 1.0f};
+
+         _tool_visualizers.add_octahedron(transform, float4{0.0f, 0.125f, 0.5f, 0.5f});
+      }
+
+      for (auto& key : selected_animation->rotation_keys) {
+         float4x4 transform =
+            world::evaluate_animation(*selected_animation, base_rotation,
+                                      base_position, key.time);
+
+         _tool_visualizers.add_arrow_wireframe(transform,
+                                               float4{0.0f, 0.25f, 0.0625f, 1.0f});
+      }
+
+      const uint32 spline_color = 0xff'7f'00'00u;
+
+      for (std::size_t i = 1; i < selected_animation->position_keys.size(); ++i) {
+         if (selected_animation->position_keys[i - 1].transition ==
+             world::animation_transition::linear) {
+            _tool_visualizers.add_line(
+               base_position + selected_animation->position_keys[i - 1].position,
+               base_position + selected_animation->position_keys[i].position,
+               spline_color);
+         }
+         else if (selected_animation->position_keys[i - 1].transition ==
+                  world::animation_transition::spline) {
+            const float time_start = selected_animation->position_keys[i - 1].time;
+            const float time_distance = selected_animation->position_keys[i].time -
+                                        selected_animation->position_keys[i - 1].time;
+
+            for (float t = 0.0f; t < 64.0f; ++t) {
+               float4x4 transform0 =
+                  world::evaluate_animation(*selected_animation, base_rotation,
+                                            base_position,
+                                            time_start + ((t / 64.0f) * time_distance));
+               float4x4 transform1 =
+                  world::evaluate_animation(*selected_animation, base_rotation,
+                                            base_position,
+                                            time_start +
+                                               (((t + 1) / 64.0f) * time_distance));
+
+               _tool_visualizers.add_line(float3{transform0[3].x, transform0[3].y,
+                                                 transform0[3].z},
+                                          float3{transform1[3].x, transform1[3].y,
+                                                 transform1[3].z},
+                                          spline_color);
+            }
+         }
+      }
+
+      if (selected_animation->loop) {
+         const world::position_key& last_key =
+            selected_animation->position_keys.back();
+
+         if (last_key.transition == world::animation_transition::linear) {
+            _tool_visualizers.add_line(base_position + last_key.position,
+                                       base_position +
+                                          selected_animation->position_keys[0].position,
+                                       spline_color);
+         }
+         else if (selected_animation->position_keys.back().transition ==
+                  world::animation_transition::spline) {
+            const float time_start = last_key.time;
+            const float time_distance = selected_animation->runtime - last_key.time;
+
+            for (float t = 0.0f; t < 64.0f; ++t) {
+               float4x4 transform0 =
+                  world::evaluate_animation(*selected_animation, base_rotation,
+                                            base_position,
+                                            time_start + ((t / 64.0f) * time_distance));
+               float4x4 transform1 =
+                  world::evaluate_animation(*selected_animation, base_rotation,
+                                            base_position,
+                                            time_start +
+                                               (((t + 1) / 64.0f) * time_distance));
+
+               _tool_visualizers.add_line(float3{transform0[3].x, transform0[3].y,
+                                                 transform0[3].z},
+                                          float3{transform1[3].x, transform1[3].y,
+                                                 transform1[3].z},
+                                          spline_color);
+            }
+         }
+      }
+   }
 }
 
 }

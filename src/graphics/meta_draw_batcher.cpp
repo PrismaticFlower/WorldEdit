@@ -152,6 +152,12 @@ void meta_draw_batcher::add_line_solid(const float3& a, const float3& b, const u
    _lines_solid.emplace_back(a, color, b, color);
 }
 
+void meta_draw_batcher::add_line_solid(const float3& a, const uint32 color_a,
+                                       const float3& b, const uint32 color_b)
+{
+   _lines_solid.emplace_back(a, color_a, b, color_b);
+}
+
 void meta_draw_batcher::add_arrow_outline_solid(const float4x4& transform,
                                                 const float arrow_offset,
                                                 const uint32 color)

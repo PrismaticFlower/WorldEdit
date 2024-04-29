@@ -77,6 +77,9 @@ struct meta_draw_batcher {
 
    void add_line_solid(const float3& a, const float3& b, const uint32 color);
 
+   void add_line_solid(const float3& a, const uint32 color_a, const float3& b,
+                       const uint32 color_b);
+
    void add_arrow_outline_solid(const float4x4& transform,
                                 const float arrow_offset, const uint32 color);
 

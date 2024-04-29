@@ -2040,6 +2040,19 @@ void renderer_impl::draw_world_meta_objects(
    for (const auto& line : tool_visualizers.lines_overlay()) {
       _meta_draw_batcher.add_line_overlay(line.v0, line.v0_color, line.v1, line.v1_color);
    }
+
+   for (const auto& line : tool_visualizers.lines()) {
+      _meta_draw_batcher.add_line_solid(line.v0, line.v0_color, line.v1, line.v1_color);
+   }
+
+   for (const auto& octahedron : tool_visualizers.octahedrons()) {
+      _meta_draw_batcher.add_octahedron(octahedron.transform, octahedron.color);
+   }
+
+   for (const auto& arrow : tool_visualizers.arrows_wireframe()) {
+      _meta_draw_batcher.add_arrow_outline_solid(arrow.transform, 0.0f,
+                                                 utility::pack_srgb_bgra(arrow.color));
+   }
 }
 
 void renderer_impl::draw_terrain_cut_visualizers(const frustum& view_frustum,
