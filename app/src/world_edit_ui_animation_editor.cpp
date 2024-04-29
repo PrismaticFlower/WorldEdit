@@ -58,7 +58,7 @@ void world_edit::ui_show_animation_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
-   ImGui::SetNextWindowSize({640.0f * _display_scale, 540.0f * _display_scale},
+   ImGui::SetNextWindowSize({640.0f * _display_scale, 550.0f * _display_scale},
                             ImGuiCond_FirstUseEver);
    ImGui::SetNextWindowSizeConstraints({640.0f * _display_scale, 0.0f},
                                        {std::numeric_limits<float>::max(),
@@ -89,7 +89,7 @@ void world_edit::ui_show_animation_editor() noexcept
       if (ImGui::BeginChild("##selected") and selected_animation) {
          ImGui::SeparatorText(selected_animation->name.c_str());
 
-         if (ImGui::BeginChild("##properties", {0.0f, 80.0f * _display_scale},
+         if (ImGui::BeginChild("##properties", {0.0f, 100.0f * _display_scale},
                                ImGuiChildFlags_ResizeY)) {
 
             ImGui::InputText("Name", &selected_animation->name, _edit_stack_world,
@@ -107,6 +107,13 @@ void world_edit::ui_show_animation_editor() noexcept
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
             ImGui::Checkbox("Local Translation", &selected_animation->local_translation,
                             _edit_stack_world, _edit_context);
+
+            if (selected_animation->local_translation) {
+               ImGui::Separator();
+               ImGui::TextWrapped(
+                  "Local Translation animations do not have accurate "
+                  "previews in WorldEdit.");
+            }
          }
 
          ImGui::EndChild();
