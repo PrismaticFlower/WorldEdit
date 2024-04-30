@@ -168,6 +168,15 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                                &graphics.foliage_overlay_transparency, 0.0f,
                                1.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
+            ImGui::ColorEdit4("Animation Position Key Color",
+                              &graphics.animation_position_key_color.x);
+
+            ImGui::ColorEdit3("Animation Rotation Key Color",
+                              &graphics.animation_rotation_key_color.x);
+
+            ImGui::ColorEdit3("Animation Spline Color",
+                              &graphics.animation_spline_color.x);
+
             ImGui::SeparatorText("Visualizer Sizes");
 
             ImGui::DragFloat("Barrier Height", &graphics.barrier_height, 0.5f, 0.0f,

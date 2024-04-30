@@ -2,6 +2,7 @@
 #include "edits/imgui_ext.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/animation.hpp"
 #include "world/utility/world_utilities.hpp"
@@ -661,7 +662,8 @@ void world_edit::ui_show_animation_editor() noexcept
          float4x4 transform{};
          transform[3] = {key.position + base_position, 1.0f};
 
-         _tool_visualizers.add_octahedron(transform, float4{0.0f, 0.125f, 0.5f, 0.5f});
+         _tool_visualizers.add_octahedron(transform,
+                                          _settings.graphics.animation_position_key_color);
       }
 
       for (auto& key : selected_animation->rotation_keys) {
@@ -670,10 +672,12 @@ void world_edit::ui_show_animation_editor() noexcept
                                       base_position, key.time);
 
          _tool_visualizers.add_arrow_wireframe(transform,
-                                               float4{0.0f, 0.25f, 0.0625f, 1.0f});
+                                               float4{_settings.graphics.animation_rotation_key_color,
+                                                      1.0f});
       }
 
-      const uint32 spline_color = 0xff'7f'00'00u;
+      const uint32 spline_color =
+         utility::pack_srgb_bgra({_settings.graphics.animation_spline_color, 1.0f});
 
       for (std::size_t i = 1; i < selected_animation->position_keys.size(); ++i) {
          if (selected_animation->position_keys[i - 1].transition ==

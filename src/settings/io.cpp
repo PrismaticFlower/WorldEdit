@@ -111,6 +111,9 @@ auto load(const std::string_view path) -> settings
             setting_entry(foliage_overlay_layer1_color);
             setting_entry(foliage_overlay_layer2_color);
             setting_entry(foliage_overlay_layer3_color);
+            setting_entry(animation_position_key_color);
+            setting_entry(animation_rotation_key_color);
+            setting_entry(animation_spline_color);
             setting_entry(barrier_height);
             setting_entry(boundary_height);
             setting_entry(planning_hub_height);
@@ -212,6 +215,9 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(foliage_overlay_layer1_color));
       write(file, name_value(foliage_overlay_layer2_color));
       write(file, name_value(foliage_overlay_layer3_color));
+      write(file, name_value(animation_position_key_color));
+      write(file, name_value(animation_rotation_key_color));
+      write(file, name_value(animation_spline_color));
       write(file, name_value(barrier_height));
       write(file, name_value(boundary_height));
       write(file, name_value(planning_hub_height));
