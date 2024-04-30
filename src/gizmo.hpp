@@ -22,6 +22,8 @@ struct gizmo {
 
    bool show_rotate(const float3 gizmo_position, float3& rotation) noexcept;
 
+   bool can_close_last_edit() const noexcept;
+
    void deactivate() noexcept;
 
 private:
@@ -66,6 +68,9 @@ private:
       bool mouse_down_over_gizmo = false;
       bool rotating = false;
    } _rotate;
+
+   bool _translating_last_frame = false;
+   bool _rotating_last_frame = false;
 
    float _translate_gizmo_length = 4.0f;
    float _translate_gizmo_hit_pad = 0.25f;

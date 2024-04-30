@@ -7,9 +7,9 @@
 #include "world/utility/world_utilities.hpp"
 #include "world_edit.hpp"
 
-#include <imgui.h>
+#include <numbers>
 
-#include "math/quaternion_funcs.hpp"
+#include <imgui.h>
 
 namespace we {
 
@@ -142,6 +142,8 @@ void world_edit::ui_show_animation_editor() noexcept
                         _animation_editor_context.selected.key = i;
                         _animation_editor_context.selected.key_type =
                            animation_key_type::position;
+                        _animation_editor_context.selected.key_movement = {0.0f, 0.0f,
+                                                                           0.0f};
                      }
 
                      ImGui::SetCursorPos(cursor);
@@ -176,6 +178,8 @@ void world_edit::ui_show_animation_editor() noexcept
                         _animation_editor_context.selected.key = i;
                         _animation_editor_context.selected.key_type =
                            animation_key_type::rotation;
+                        _animation_editor_context.selected
+                           .key_rotation_movement = {0.0f, 0.0f, 0.0f};
                      }
 
                      ImGui::SetCursorPos(cursor);
@@ -591,6 +595,66 @@ void world_edit::ui_show_animation_editor() noexcept
                }
             }
          }
+      }
+
+      const int32 selected_key = _animation_editor_context.selected.key;
+
+      if (_animation_editor_context.selected.key_type == animation_key_type::position and
+          selected_key < std::ssize(selected_animation->position_keys)) {
+         const world::position_key& key =
+            selected_animation->position_keys[selected_key];
+
+         const float3 last_move_amount = _animation_editor_context.selected.key_movement;
+
+         if (_gizmo.show_translate(key.position + base_position,
+                                   quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+                                   _animation_editor_context.selected.key_movement)) {
+            const float3 move_delta =
+               (_animation_editor_context.selected.key_movement - last_move_amount);
+
+            _edit_stack_world
+               .apply(edits::make_set_vector_value(&selected_animation->position_keys,
+                                                   selected_key,
+                                                   &world::position_key::position,
+                                                   key.position + move_delta),
+                      _edit_context);
+         }
+
+         if (_gizmo.can_close_last_edit()) _edit_stack_world.close_last();
+      }
+      else if (_animation_editor_context.selected.key_type == animation_key_type::rotation and
+               selected_key < std::ssize(selected_animation->rotation_keys)) {
+         const world::rotation_key& key =
+            selected_animation->rotation_keys[selected_key];
+
+         const float4x4 key_transform =
+            world::evaluate_animation(*selected_animation, base_rotation,
+                                      base_position, key.time);
+
+         const float3 key_position = {key_transform[3].x, key_transform[3].y,
+                                      key_transform[3].z};
+
+         const float3 last_rotation_amount =
+            _animation_editor_context.selected.key_rotation_movement;
+
+         if (_gizmo.show_rotate(key_position,
+                                _animation_editor_context.selected.key_rotation_movement)) {
+            constexpr float radians_to_degrees = 180.0f / std ::numbers::pi_v<float>;
+
+            const float3 rotate_delta =
+               (_animation_editor_context.selected.key_rotation_movement -
+                last_rotation_amount) *
+               radians_to_degrees;
+
+            _edit_stack_world
+               .apply(edits::make_set_vector_value(&selected_animation->rotation_keys,
+                                                   selected_key,
+                                                   &world::rotation_key::rotation,
+                                                   key.rotation + rotate_delta),
+                      _edit_context);
+         }
+
+         if (_gizmo.can_close_last_edit()) _edit_stack_world.close_last();
       }
 
       for (auto& key : selected_animation->position_keys) {

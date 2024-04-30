@@ -89,6 +89,9 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
       _mode = mode::inactive;
    }
 
+   _translating_last_frame = _translate.translating;
+   _rotating_last_frame = _rotate.rotating;
+
    switch (_mode) {
    case mode::inactive: {
       _translate = {};
@@ -161,6 +164,7 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
       }
    } break;
    case mode::rotate: {
+
       if (not _rotate.rotating) {
          const float nohit_radius = _rotate_gizmo_radius - _rotate_gizmo_hit_pad;
          const float hit_radius = _rotate_gizmo_radius + _rotate_gizmo_hit_pad;
@@ -419,6 +423,14 @@ bool gizmo::show_rotate(const float3 gizmo_position, float3& rotation) noexcept
    }
 
    return start_rotation != rotation;
+}
+
+bool gizmo::can_close_last_edit() const noexcept
+{
+   if (_translating_last_frame and not _translate.translating) return true;
+   if (_rotating_last_frame and not _rotate.rotating) return true;
+
+   return false;
 }
 
 void gizmo::deactivate() noexcept
