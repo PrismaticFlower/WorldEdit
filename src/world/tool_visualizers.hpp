@@ -32,6 +32,8 @@ struct tool_visualizers {
 
    void add_octahedron(float4x4 transform, float4 color);
 
+   void add_octahedron_wireframe(float4x4 transform, float3 color);
+
    void add_arrow_wireframe(float4x4 transform, float4 color);
 
    void clear() noexcept;
@@ -42,12 +44,16 @@ struct tool_visualizers {
 
    auto octahedrons() const noexcept -> std::span<const tool_visualizers_shape>;
 
+   auto octahedrons_wireframe() const noexcept
+      -> std::span<const tool_visualizers_shape>;
+
    auto arrows_wireframe() const noexcept -> std::span<const tool_visualizers_shape>;
 
 private:
    std::vector<tool_visualizers_line> _lines_overlay;
    std::vector<tool_visualizers_line> _lines;
    std::vector<tool_visualizers_shape> _octahedrons;
+   std::vector<tool_visualizers_shape> _octahedrons_wireframe;
    std::vector<tool_visualizers_shape> _arrows_wireframe;
 };
 

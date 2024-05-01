@@ -2049,6 +2049,13 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_octahedron(octahedron.transform, octahedron.color);
    }
 
+   for (const auto& octahedron : tool_visualizers.octahedrons_wireframe()) {
+      _meta_draw_batcher.add_octahedron_wireframe(octahedron.transform,
+                                                  float3{octahedron.color.x,
+                                                         octahedron.color.y,
+                                                         octahedron.color.z});
+   }
+
    for (const auto& arrow : tool_visualizers.arrows_wireframe()) {
       _meta_draw_batcher.add_arrow_outline_solid(arrow.transform, 0.0f,
                                                  utility::pack_srgb_bgra(arrow.color));

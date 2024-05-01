@@ -65,6 +65,9 @@ void world_edit::ui_show_animation_editor() noexcept
                                        {std::numeric_limits<float>::max(),
                                         std::numeric_limits<float>::max()});
 
+   std::optional<int32> hovered_position_key;
+   std::optional<int32> hovered_rotation_key;
+
    if (ImGui::Begin("Animation Editor", &_animation_editor_open)) {
       if (ImGui::BeginChild("Animations", {160.0f * _display_scale, 0.0f},
                             ImGuiChildFlags_ResizeX)) {
@@ -147,6 +150,8 @@ void world_edit::ui_show_animation_editor() noexcept
                                                                            0.0f};
                      }
 
+                     if (ImGui::IsItemHovered()) hovered_position_key = i;
+
                      ImGui::SetCursorPos(cursor);
 
                      ImGui::Text("%.2f", selected_animation->position_keys[i].time);
@@ -182,6 +187,8 @@ void world_edit::ui_show_animation_editor() noexcept
                         _animation_editor_context.selected
                            .key_rotation_movement = {0.0f, 0.0f, 0.0f};
                      }
+
+                     if (ImGui::IsItemHovered()) hovered_rotation_key = i;
 
                      ImGui::SetCursorPos(cursor);
 
@@ -746,6 +753,32 @@ void world_edit::ui_show_animation_editor() noexcept
                                           spline_color);
             }
          }
+      }
+
+      if (hovered_position_key and
+          *hovered_position_key < std::ssize(selected_animation->position_keys)) {
+         const world::position_key& hovered_key =
+            selected_animation->position_keys[*hovered_position_key];
+
+         float4x4 transform{};
+         transform[3] = {hovered_key.position + base_position, 1.0f};
+
+         _tool_visualizers.add_octahedron_wireframe(transform,
+                                                    _settings.graphics.hover_color);
+      }
+
+      if (hovered_rotation_key and
+          *hovered_rotation_key < std::ssize(selected_animation->rotation_keys)) {
+         const world::rotation_key& hovered_key =
+            selected_animation->rotation_keys[*hovered_rotation_key];
+
+         float4x4 transform =
+            world::evaluate_animation(*selected_animation, base_rotation,
+                                      base_position, hovered_key.time);
+
+         _tool_visualizers.add_arrow_wireframe(transform,
+                                               float4{_settings.graphics.hover_color,
+                                                      1.0f});
       }
    }
 }
