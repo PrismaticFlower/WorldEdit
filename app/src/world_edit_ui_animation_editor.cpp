@@ -606,23 +606,52 @@ void world_edit::ui_show_animation_editor() noexcept
          }
       }
 
-      const graphics::camera_ray cursor_ray =
-         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
-                         {ImGui::GetMainViewport()->Size.x,
-                          ImGui::GetMainViewport()->Size.y});
+      if (not _gizmo.want_capture_mouse()) {
+         const graphics::camera_ray cursor_ray =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
 
-      if (std::optional<int32> hit =
-             world::raycast_position_keys(cursor_ray.origin, cursor_ray.direction,
-                                          *selected_animation, base_rotation,
-                                          base_position, 1.0f)) {
-         hovered_position_key = *hit;
+         if (std::optional<int32> hit =
+                world::raycast_position_keys(cursor_ray.origin, cursor_ray.direction,
+                                             *selected_animation, base_rotation,
+                                             base_position, 1.0f)) {
+            hovered_position_key = *hit;
+         }
+
+         if (std::optional<int32> hit =
+                world::raycast_rotation_keys(cursor_ray.origin, cursor_ray.direction,
+                                             *selected_animation, base_rotation,
+                                             base_position, 1.0f)) {
+            hovered_rotation_key = *hit;
+         }
       }
 
-      if (std::optional<int32> hit =
-             world::raycast_rotation_keys(cursor_ray.origin, cursor_ray.direction,
-                                          *selected_animation, base_rotation,
-                                          base_position, 1.0f)) {
-         hovered_rotation_key = *hit;
+      if (_animation_editor_context.select) {
+         if (hovered_position_key) {
+            _animation_editor_context.selected.key = *hovered_position_key;
+            _animation_editor_context.selected.key_type = animation_key_type::position;
+         }
+         else if (hovered_rotation_key) {
+            _animation_editor_context.selected.key = *hovered_rotation_key;
+            _animation_editor_context.selected.key_type = animation_key_type::rotation;
+         }
+
+         _animation_editor_context.select = false;
+      }
+
+      if (_animation_editor_context.select_behind) {
+         if (hovered_rotation_key) {
+            _animation_editor_context.selected.key = *hovered_rotation_key;
+            _animation_editor_context.selected.key_type = animation_key_type::rotation;
+         }
+         else if (hovered_position_key) {
+            _animation_editor_context.selected.key = *hovered_position_key;
+            _animation_editor_context.selected.key_type = animation_key_type::position;
+         }
+
+         _animation_editor_context.select_behind = false;
       }
 
       const int32 selected_key = _animation_editor_context.selected.key;
@@ -799,6 +828,22 @@ void world_edit::ui_show_animation_editor() noexcept
          _tool_visualizers.add_arrow_wireframe(transform,
                                                float4{_settings.graphics.hover_color,
                                                       1.0f});
+      }
+
+      if (_hotkeys_view_show) {
+         ImGui::Begin("Hotkeys");
+
+         ImGui::SeparatorText("Animation Editing");
+
+         ImGui::Text("Select");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Animation Editing", "Select")));
+
+         ImGui::Text("Select (Behind)");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Animation Editing", "Select (Behind)")));
+
+         ImGui::End();
       }
    }
 }

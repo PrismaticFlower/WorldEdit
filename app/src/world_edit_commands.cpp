@@ -598,6 +598,12 @@ void world_edit::initialize_commands() noexcept
                  [this] { _foliage_editor_config.layer = 2; });
    _commands.add("foliage.set_layer3"s,
                  [this] { _foliage_editor_config.layer = 3; });
+
+   _commands.add("animation.select"s,
+                 [this] { _animation_editor_context.select = true; });
+
+   _commands.add("animation.select_behind"s,
+                 [this] { _animation_editor_context.select_behind = true; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1108,6 +1114,19 @@ void world_edit::initialize_hotkeys() noexcept
          },
 
       .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Animation Editing",
+      .description = "Active while the animation editor is open."s,
+      .activated = [this] { return _animation_editor_open; },
+      .default_hotkeys =
+         {
+            {"Select", "animation.select", {.key = key::mouse1}},
+            {"Select (Behind)",
+             "animation.select_behind",
+             {.key = key::mouse1, .modifiers = {.ctrl = true}}},
+         },
    });
 }
 
