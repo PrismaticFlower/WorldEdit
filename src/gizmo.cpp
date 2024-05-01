@@ -132,13 +132,20 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
          }
 
          if (_translate.active_axis == axis::none and is_mouse_down) {
-            _translate.mouse_down_over_gizmo = false;
+            _translate.mouse_down_outside_gizmo = true;
          }
-         else if (is_mouse_down and not _translate.mouse_down_over_gizmo) {
+         else if (is_mouse_down and not _translate.mouse_down_outside_gizmo) {
             _translate.start_position = _gizmo_position;
             _translate.start_cursor_position =
                get_translate_position(cursor_ray, camera.position(), _gizmo_position);
             _translate.translating = true;
+         }
+         else if (not is_mouse_down) {
+            _translate.mouse_down_outside_gizmo = false;
+         }
+
+         if (_translate.mouse_down_outside_gizmo) {
+            _translate.active_axis = axis::none;
          }
       }
 
@@ -197,9 +204,9 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
          }
 
          if (_rotate.active_axis == axis::none and is_mouse_down) {
-            _rotate.mouse_down_over_gizmo = false;
+            _rotate.mouse_down_outside_gizmo = true;
          }
-         else if (is_mouse_down and not _rotate.mouse_down_over_gizmo) {
+         else if (is_mouse_down and not _rotate.mouse_down_outside_gizmo) {
             const float3 unclamped_cursor_position =
                get_rotate_position(cursor_ray, _rotate.current_cursor_position);
             const float3 cursor_direction =
@@ -208,6 +215,13 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
             _rotate.current_cursor_position =
                _gizmo_position + cursor_direction * _rotate_gizmo_radius;
             _rotate.rotating = true;
+         }
+         else if (not is_mouse_down) {
+            _rotate.mouse_down_outside_gizmo = false;
+         }
+
+         if (_rotate.mouse_down_outside_gizmo) {
+            _rotate.active_axis = axis::none;
          }
       }
 

@@ -54,7 +54,7 @@ private:
       std::optional<float> movement_z;
 
       axis active_axis = axis::none;
-      bool mouse_down_over_gizmo = false;
+      bool mouse_down_outside_gizmo = false;
       bool translating = false;
    } _translate;
 
@@ -65,7 +65,7 @@ private:
       std::optional<float> angle_z;
 
       axis active_axis = axis::none;
-      bool mouse_down_over_gizmo = false;
+      bool mouse_down_outside_gizmo = false;
       bool rotating = false;
    } _rotate;
 
