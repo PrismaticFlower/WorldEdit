@@ -5,6 +5,7 @@
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "world/utility/animation.hpp"
+#include "world/utility/raycast_animation.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world_edit.hpp"
 
@@ -603,6 +604,25 @@ void world_edit::ui_show_animation_editor() noexcept
                }
             }
          }
+      }
+
+      const graphics::camera_ray cursor_ray =
+         make_camera_ray(_camera, {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                         {ImGui::GetMainViewport()->Size.x,
+                          ImGui::GetMainViewport()->Size.y});
+
+      if (std::optional<int32> hit =
+             world::raycast_position_keys(cursor_ray.origin, cursor_ray.direction,
+                                          *selected_animation, base_rotation,
+                                          base_position, 1.0f)) {
+         hovered_position_key = *hit;
+      }
+
+      if (std::optional<int32> hit =
+             world::raycast_rotation_keys(cursor_ray.origin, cursor_ray.direction,
+                                          *selected_animation, base_rotation,
+                                          base_position, 1.0f)) {
+         hovered_rotation_key = *hit;
       }
 
       const int32 selected_key = _animation_editor_context.selected.key;

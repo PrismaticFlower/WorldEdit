@@ -204,6 +204,7 @@
     <ClCompile Include="src\edits\rename_game_mode.cpp" />
     <ClCompile Include="src\edits\set_world_req_entry.cpp" />
     <ClCompile Include="src\world\utility\animation.cpp" />
+    <ClCompile Include="src\world\utility\raycast_animation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -476,6 +477,7 @@
     <ClInclude Include="src\edits\set_world_req_entry.hpp" />
     <ClInclude Include="src\math\distance_funcs.hpp" />
     <ClInclude Include="src\world\utility\animation.hpp" />
+    <ClInclude Include="src\world\utility\raycast_animation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
