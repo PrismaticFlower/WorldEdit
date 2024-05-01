@@ -713,7 +713,7 @@ void world_edit::ui_show_animation_editor() noexcept
          }
       }
 
-      if (selected_animation->loop) {
+      if (selected_animation->loop and not selected_animation->position_keys.empty()) {
          const world::position_key& last_key =
             selected_animation->position_keys.back();
 
