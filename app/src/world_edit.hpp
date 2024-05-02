@@ -667,6 +667,8 @@ private:
 
    struct animation_editor_config {
       bool match_tangents = true;
+      bool auto_tangents = false;
+      float auto_tangent_smoothness = 0.5f;
    } _animation_editor_config;
 
    struct animation_editor_context {

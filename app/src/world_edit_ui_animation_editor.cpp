@@ -25,7 +25,7 @@ auto get_name(const world::animation_transition transition) -> const char*
    case world::animation_transition::linear:
       return "Linear";
    case world::animation_transition::spline:
-      return "Spline";
+      return "Hermite Spline";
    default:
       return "<unknown>";
    }
@@ -54,13 +54,111 @@ auto get_next_key_time(const std::vector<T>& keys, const int32 index,
    return keys[next_index].time;
 }
 
+void convert_to_smooth_spline(world::animation& animation, float smoothness,
+                              edits::stack<world::edit_context>& edit_stack,
+                              world::edit_context& edit_context) noexcept
+{
+   edits::bundle_vector edit_bundle;
+
+   edit_bundle.reserve(animation.position_keys.size() * 3);
+
+   const int32 max_key = static_cast<int32>(std::ssize(animation.position_keys) - 1);
+
+   for (int32 i = 0; i < std::ssize(animation.position_keys); ++i) {
+      const world::position_key& key_back =
+         animation.position_keys[std::clamp(i - 1, 0, max_key)];
+      const world::position_key& key =
+         animation.position_keys[std::clamp(i, 0, max_key)];
+      const world::position_key& key_forward =
+         animation.position_keys[std::clamp(i + 1, 0, max_key)];
+      const world::position_key& key_forward_forward =
+         animation.position_keys[std::clamp(i + 2, 0, max_key)];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, i,
+                                      &world::position_key::transition,
+                                      world::animation_transition::spline));
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, i,
+                                      &world::position_key::tangent,
+                                      smoothness * (key_forward.position -
+                                                    key_back.position)));
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, i,
+                                      &world::position_key::tangent_next,
+                                      smoothness * (key_forward_forward.position -
+                                                    key.position)));
+   }
+
+   edit_stack.apply(edits::make_bundle(std::move(edit_bundle)), edit_context);
+}
+
+void update_position_auto_tangents(world::animation& animation, int32 key_index,
+                                   float3 key_new_position, float smoothness,
+                                   edits::stack<world::edit_context>& edit_stack,
+                                   world::edit_context& edit_context) noexcept
+{
+   edits::bundle_vector edit_bundle;
+
+   edit_bundle.reserve(5);
+
+   const int32 max_key = static_cast<int32>(std::ssize(animation.position_keys) - 1);
+
+   {
+      const world::position_key& key_forward_forward =
+         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index,
+                                      &world::position_key::position, key_new_position));
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index,
+                                      &world::position_key::tangent_next,
+                                      smoothness * (key_forward_forward.position -
+                                                    key_new_position)));
+   }
+
+   if (key_index - 2 >= 0) {
+      const world::position_key& key = animation.position_keys[key_index - 2];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index - 2,
+                                      &world::position_key::tangent_next,
+                                      smoothness * (key_new_position - key.position)));
+   }
+
+   if (key_index - 1 >= 0) {
+      const world::position_key& key_back =
+         animation.position_keys[std::clamp(key_index - 2, 0, max_key)];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index - 1,
+                                      &world::position_key::tangent,
+                                      smoothness *
+                                         (key_new_position - key_back.position)));
+   }
+
+   if (key_index + 1 < std::ssize(animation.position_keys)) {
+      const world::position_key& key_forward =
+         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index + 1,
+                                      &world::position_key::tangent,
+                                      smoothness * (key_forward.position -
+                                                    key_new_position)));
+   }
+
+   edit_stack.apply(edits::make_bundle(std::move(edit_bundle)), edit_context);
+}
+
 }
 
 void world_edit::ui_show_animation_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
-   ImGui::SetNextWindowSize({640.0f * _display_scale, 580.0f * _display_scale},
+   ImGui::SetNextWindowSize({640.0f * _display_scale, 610.0f * _display_scale},
                             ImGuiCond_FirstUseEver);
    ImGui::SetNextWindowSizeConstraints({640.0f * _display_scale, 0.0f},
                                        {std::numeric_limits<float>::max(),
@@ -94,7 +192,7 @@ void world_edit::ui_show_animation_editor() noexcept
       if (ImGui::BeginChild("##selected") and selected_animation) {
          ImGui::SeparatorText(selected_animation->name.c_str());
 
-         if (ImGui::BeginChild("##properties", {0.0f, 130.0f * _display_scale},
+         if (ImGui::BeginChild("##properties", {0.0f, 160.0f * _display_scale},
                                ImGuiChildFlags_ResizeY)) {
 
             ImGui::InputText("Name", &selected_animation->name, _edit_stack_world,
@@ -125,8 +223,41 @@ void world_edit::ui_show_animation_editor() noexcept
             ImGui::Checkbox("Match Tangents", &_animation_editor_config.match_tangents);
 
             ImGui::SetItemTooltip(
-               "When editing tangent values of key match the Tangent and "
+               "When editing tangent values of keys to match the Tangent and "
                "Tangent Next values of neighbouring keys as needed.");
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+            ImGui::Checkbox("Auto Tangents", &_animation_editor_config.auto_tangents);
+
+            ImGui::SetItemTooltip(
+               "When editing position keys set the values of key tangents "
+               "as needed to automatically to create a Catmull-Rom or Cardinal "
+               "spline.");
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+            if (ImGui::Button("Convert to Smooth Spline")) {
+               _animation_editor_config.auto_tangents = true;
+
+               convert_to_smooth_spline(*selected_animation,
+                                        _animation_editor_config.auto_tangent_smoothness,
+                                        _edit_stack_world, _edit_context);
+            }
+
+            ImGui::SetItemTooltip(
+               "Change the transition type of all position keys to Hermite "
+               "Spline and auto-fill "
+               "the tangents to create a Catmull-Rom or Cardinal spline.");
+
+            if (float tension = 1.0f - _animation_editor_config.auto_tangent_smoothness;
+                ImGui::SliderFloat("Auto Tangent Tension", &tension, 0.0f, 1.0f,
+                                   "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
+               _animation_editor_config.auto_tangent_smoothness = 1.0f - tension;
+            }
+
+            ImGui::SetItemTooltip("The tension value used for auto tangents. A "
+                                  "value of 0.5 gives a Catmull-Rom Spline.");
          }
 
          ImGui::EndChild();
@@ -243,10 +374,19 @@ void world_edit::ui_show_animation_editor() noexcept
 
                if (float3 position = key.position;
                    ImGui::DragFloat3("Position", &position)) {
-                  _edit_stack_world.apply(edits::make_set_vector_value(
-                                             &selected_animation->position_keys, selected_key,
-                                             &world::position_key::position, position),
-                                          _edit_context);
+                  if (_animation_editor_config.auto_tangents) {
+                     update_position_auto_tangents(*selected_animation,
+                                                   selected_key, position,
+                                                   _animation_editor_config.auto_tangent_smoothness,
+                                                   _edit_stack_world, _edit_context);
+                  }
+                  else {
+                     _edit_stack_world.apply(edits::make_set_vector_value(
+                                                &selected_animation->position_keys,
+                                                selected_key,
+                                                &world::position_key::position, position),
+                                             _edit_context);
+                  }
                }
 
                if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
@@ -273,7 +413,7 @@ void world_edit::ui_show_animation_editor() noexcept
                                              _edit_context, {.closed = true});
                   }
 
-                  if (ImGui::Selectable("Spline",
+                  if (ImGui::Selectable("Hermite Spline",
                                         key.transition ==
                                            world::animation_transition::spline)) {
                      _edit_stack_world.apply(edits::make_set_vector_value(
@@ -454,7 +594,7 @@ void world_edit::ui_show_animation_editor() noexcept
                                              _edit_context, {.closed = true});
                   }
 
-                  if (ImGui::Selectable("Spline",
+                  if (ImGui::Selectable("Hermite Spline",
                                         key.transition ==
                                            world::animation_transition::spline)) {
                      _edit_stack_world.apply(edits::make_set_vector_value(
@@ -677,12 +817,20 @@ void world_edit::ui_show_animation_editor() noexcept
             const float3 move_delta =
                (_animation_editor_context.selected.key_movement - last_move_amount);
 
-            _edit_stack_world
-               .apply(edits::make_set_vector_value(&selected_animation->position_keys,
-                                                   selected_key,
-                                                   &world::position_key::position,
-                                                   key.position + move_delta),
-                      _edit_context);
+            if (_animation_editor_config.auto_tangents) {
+               update_position_auto_tangents(*selected_animation, selected_key,
+                                             key.position + move_delta,
+                                             _animation_editor_config.auto_tangent_smoothness,
+                                             _edit_stack_world, _edit_context);
+            }
+            else {
+               _edit_stack_world
+                  .apply(edits::make_set_vector_value(&selected_animation->position_keys,
+                                                      selected_key,
+                                                      &world::position_key::position,
+                                                      key.position + move_delta),
+                         _edit_context);
+            }
          }
 
          if (_gizmo.can_close_last_edit()) _edit_stack_world.close_last();
