@@ -223,8 +223,8 @@ void world_edit::ui_show_animation_editor() noexcept
             ImGui::Checkbox("Match Tangents", &_animation_editor_config.match_tangents);
 
             ImGui::SetItemTooltip(
-               "When editing tangent values of keys to match the Tangent and "
-               "Tangent Next values of neighbouring keys as needed.");
+               "When editing the tangent values of a key match the Tangent "
+               "and Tangent Next values of neighbouring keys as needed.");
 
             ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
