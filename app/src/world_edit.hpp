@@ -684,6 +684,9 @@ private:
 
       bool select = false;
       bool select_behind = false;
+
+      float new_position_key_time = 0.0f;
+      float new_rotation_key_time = 0.0f;
    } _animation_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};

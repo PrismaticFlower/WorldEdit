@@ -244,6 +244,7 @@
     <ClCompile Include="src\edits\game_mode_link_layer.cpp" />
     <ClCompile Include="src\edits\game_mode_unlink_layer.cpp" />
     <ClCompile Include="src\edits\imgui_ext.cpp" />
+    <ClCompile Include="src\edits\insert_animation_key.cpp" />
     <ClCompile Include="src\edits\insert_entity.cpp" />
     <ClCompile Include="src\edits\insert_node.cpp" />
     <ClCompile Include="src\edits\insert_point.cpp" />
@@ -492,6 +493,7 @@
     <ClInclude Include="src\edits\game_mode_link_layer.hpp" />
     <ClInclude Include="src\edits\game_mode_unlink_layer.hpp" />
     <ClInclude Include="src\edits\imgui_ext.hpp" />
+    <ClInclude Include="src\edits\insert_animation_key.hpp" />
     <ClInclude Include="src\edits\insert_entity.hpp" />
     <ClInclude Include="src\edits\insert_node.hpp" />
     <ClInclude Include="src\edits\insert_point.hpp" />

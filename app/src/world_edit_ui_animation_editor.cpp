@@ -1,5 +1,6 @@
 #include "edits/bundle.hpp"
 #include "edits/imgui_ext.hpp"
+#include "edits/insert_animation_key.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/srgb_conversion.hpp"
@@ -52,6 +53,16 @@ auto get_next_key_time(const std::vector<T>& keys, const int32 index,
    if (next_index >= std::ssize(keys)) return max_time;
 
    return keys[next_index].time;
+}
+
+template<typename T>
+bool is_unique_key_time(const std::vector<T>& keys, const float time) noexcept
+{
+   for (const T& key : keys) {
+      if (key.time == time) return false;
+   }
+
+   return true;
 }
 
 void convert_to_smooth_spline(world::animation& animation, float smoothness,
@@ -150,6 +161,82 @@ void update_position_auto_tangents(world::animation& animation, int32 key_index,
    }
 
    edit_stack.apply(edits::make_bundle(std::move(edit_bundle)), edit_context);
+}
+
+void update_auto_tangents(world::animation& animation, int32 key_index, float smoothness,
+                          edits::stack<world::edit_context>& edit_stack,
+                          world::edit_context& edit_context, bool transparent) noexcept
+{
+   edits::bundle_vector edit_bundle;
+
+   edit_bundle.reserve(6);
+
+   const int32 max_key = static_cast<int32>(std::ssize(animation.position_keys) - 1);
+
+   const float3 key_new_position = animation.position_keys[key_index].position;
+
+   {
+      const world::position_key& key_back =
+         animation.position_keys[std::clamp(key_index - 1, 0, max_key)];
+      const world::position_key& key_forward =
+         animation.position_keys[std::clamp(key_index + 1, 0, max_key)];
+      const world::position_key& key_forward_forward =
+         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index,
+                                      &world::position_key::tangent,
+                                      smoothness * (key_forward.position -
+                                                    key_back.position)));
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index,
+                                      &world::position_key::tangent_next,
+                                      smoothness * (key_forward_forward.position -
+                                                    key_new_position)));
+   }
+
+   if (key_index - 2 >= 0) {
+      const world::position_key& key = animation.position_keys[key_index - 2];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index - 2,
+                                      &world::position_key::tangent_next,
+                                      smoothness * (key_new_position - key.position)));
+   }
+
+   if (key_index - 1 >= 0) {
+      const world::position_key& key_back =
+         animation.position_keys[std::clamp(key_index - 2, 0, max_key)];
+      const world::position_key& key =
+         animation.position_keys[std::clamp(key_index - 1, 0, max_key)];
+      const world::position_key& key_forward_forward =
+         animation.position_keys[std::clamp(key_index + 1, 0, max_key)];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index - 1,
+                                      &world::position_key::tangent,
+                                      smoothness *
+                                         (key_new_position - key_back.position)));
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index - 1,
+                                      &world::position_key::tangent_next,
+                                      smoothness * (key_forward_forward.position -
+                                                    key.position)));
+   }
+
+   if (key_index + 1 < std::ssize(animation.position_keys)) {
+      const world::position_key& key_forward =
+         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index + 1,
+                                      &world::position_key::tangent,
+                                      smoothness * (key_forward.position -
+                                                    key_new_position)));
+   }
+
+   edit_stack.apply(edits::make_bundle(std::move(edit_bundle)), edit_context,
+                    {.transparent = transparent});
 }
 
 }
@@ -272,7 +359,9 @@ void world_edit::ui_show_animation_editor() noexcept
                                   ImGuiChildFlags_ResizeX)) {
                ImGui::SeparatorText("Position Keys");
 
-               if (ImGui::BeginChild("##scroll_region")) {
+               if (ImGui::BeginChild("##scroll_region",
+                                     {0.0f, ImGui::GetContentRegionAvail().y -
+                                               84.0f * _display_scale})) {
                   for (int32 i = 0;
                        i < std::ssize(selected_animation->position_keys); ++i) {
                      ImGui::PushID(i);
@@ -301,6 +390,68 @@ void world_edit::ui_show_animation_editor() noexcept
                }
 
                ImGui::EndChild();
+
+               ImGui::SeparatorText("New Key");
+
+               ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+               ImGui::SliderFloat("##new_key_time",
+                                  &_animation_editor_context.new_position_key_time,
+                                  0.0f, selected_animation->runtime,
+                                  "Time: %.2f", ImGuiSliderFlags_AlwaysClamp);
+
+               ImGui::BeginDisabled(
+                  not is_unique_key_time(selected_animation->position_keys,
+                                         _animation_editor_context.new_position_key_time));
+
+               const float button_width = (ImGui::GetContentRegionAvail().x -
+                                           ImGui::GetStyle().ItemInnerSpacing.x) *
+                                          0.5f;
+
+               if (ImGui::Button("Add", {button_width, 0.0f})) {
+                  std::optional<int32> previous_key_index;
+
+                  for (int32 i = 0;
+                       i < std::ssize(selected_animation->position_keys); ++i) {
+                     if (_animation_editor_context.new_position_key_time >=
+                         selected_animation->position_keys[i].time) {
+                        previous_key_index = i;
+                     }
+                     else {
+                        break;
+                     }
+                  }
+
+                  const int32 insert_before_index =
+                     previous_key_index ? *previous_key_index + 1 : 0;
+                  const world::position_key new_key =
+                     world::make_position_key_for_time(*selected_animation,
+                                                       _animation_editor_context.new_position_key_time);
+
+                  _edit_stack_world.apply(edits::make_insert_animation_key(
+                                             &selected_animation->position_keys,
+                                             insert_before_index, new_key),
+                                          _edit_context);
+
+                  if (_animation_editor_config.auto_tangents) {
+                     update_auto_tangents(*selected_animation,
+                                          insert_before_index, 0.5f,
+                                          _edit_stack_world, _edit_context, true);
+                  }
+
+                  _animation_editor_context.selected.key_type =
+                     animation_key_type::position;
+                  _animation_editor_context.selected.key = insert_before_index;
+               }
+
+               ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+               ImGui::Button("Place", {button_width, 0.0f});
+
+               ImGui::SetItemTooltip(
+                  "Add a new key and place it with the cursor.");
+
+               ImGui::EndDisabled();
             }
 
             ImGui::EndChild();
@@ -310,7 +461,9 @@ void world_edit::ui_show_animation_editor() noexcept
             if (ImGui::BeginChild("##rotation_keys")) {
                ImGui::SeparatorText("Rotation Keys");
 
-               if (ImGui::BeginChild("##scroll_region")) {
+               if (ImGui::BeginChild("##scroll_region",
+                                     {0.0f, ImGui::GetContentRegionAvail().y -
+                                               84.0f * _display_scale})) {
                   for (int32 i = 0;
                        i < std::ssize(selected_animation->rotation_keys); ++i) {
                      ImGui::PushID(i);
@@ -339,6 +492,51 @@ void world_edit::ui_show_animation_editor() noexcept
                }
 
                ImGui::EndChild();
+
+               ImGui::SeparatorText("New Key");
+
+               ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+               ImGui::SliderFloat("##new_key_time",
+                                  &_animation_editor_context.new_rotation_key_time,
+                                  0.0f, selected_animation->runtime,
+                                  "Time: %.2f", ImGuiSliderFlags_AlwaysClamp);
+
+               ImGui::BeginDisabled(
+                  not is_unique_key_time(selected_animation->rotation_keys,
+                                         _animation_editor_context.new_rotation_key_time));
+
+               if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
+                  std::optional<int32> previous_key_index;
+
+                  for (int32 i = 0;
+                       i < std::ssize(selected_animation->rotation_keys); ++i) {
+                     if (_animation_editor_context.new_rotation_key_time >=
+                         selected_animation->rotation_keys[i].time) {
+                        previous_key_index = i;
+                     }
+                     else {
+                        break;
+                     }
+                  }
+
+                  const int32 insert_before_index =
+                     previous_key_index ? *previous_key_index + 1 : 0;
+                  const world::rotation_key new_key =
+                     world::make_rotation_key_for_time(*selected_animation,
+                                                       _animation_editor_context.new_rotation_key_time);
+
+                  _edit_stack_world.apply(edits::make_insert_animation_key(
+                                             &selected_animation->rotation_keys,
+                                             insert_before_index, new_key),
+                                          _edit_context);
+
+                  _animation_editor_context.selected.key_type =
+                     animation_key_type::rotation;
+                  _animation_editor_context.selected.key = insert_before_index;
+               }
+
+               ImGui::EndDisabled();
             }
 
             ImGui::EndChild();

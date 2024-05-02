@@ -243,6 +243,7 @@
     <ClCompile Include="src\edits\delete_world_req_list_tests.cpp" />
     <ClCompile Include="src\edits\game_mode_link_layer_tests.cpp" />
     <ClCompile Include="src\edits\game_mode_unlink_layer_tests.cpp" />
+    <ClCompile Include="src\edits\insert_animation_key_tests.cpp" />
     <ClCompile Include="src\edits\insert_entity_tests.cpp" />
     <ClCompile Include="src\edits\insert_node_tests.cpp" />
     <ClCompile Include="src\edits\insert_point_tests.cpp" />
