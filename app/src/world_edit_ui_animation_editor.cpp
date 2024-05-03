@@ -65,6 +65,21 @@ bool is_unique_key_time(const std::vector<T>& keys, const float time) noexcept
    return true;
 }
 
+auto clamp_position(int32 index, const world::animation& animation) noexcept -> int32
+{
+   if (animation.loop) {
+      const int32 count = static_cast<int32>(std::ssize(animation.position_keys));
+
+      return (index + count) % count;
+   }
+   else {
+      const int32 max_key =
+         static_cast<int32>(std::ssize(animation.position_keys) - 1);
+
+      return std::clamp(index, 0, max_key);
+   }
+}
+
 void convert_to_smooth_spline(world::animation& animation, float smoothness,
                               edits::stack<world::edit_context>& edit_stack,
                               world::edit_context& edit_context) noexcept
@@ -73,17 +88,15 @@ void convert_to_smooth_spline(world::animation& animation, float smoothness,
 
    edit_bundle.reserve(animation.position_keys.size() * 3);
 
-   const int32 max_key = static_cast<int32>(std::ssize(animation.position_keys) - 1);
-
    for (int32 i = 0; i < std::ssize(animation.position_keys); ++i) {
       const world::position_key& key_back =
-         animation.position_keys[std::clamp(i - 1, 0, max_key)];
+         animation.position_keys[clamp_position(i - 1, animation)];
       const world::position_key& key =
-         animation.position_keys[std::clamp(i, 0, max_key)];
+         animation.position_keys[clamp_position(i, animation)];
       const world::position_key& key_forward =
-         animation.position_keys[std::clamp(i + 1, 0, max_key)];
+         animation.position_keys[clamp_position(i + 1, animation)];
       const world::position_key& key_forward_forward =
-         animation.position_keys[std::clamp(i + 2, 0, max_key)];
+         animation.position_keys[clamp_position(i + 2, animation)];
 
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.position_keys, i,
@@ -113,11 +126,9 @@ void update_position_auto_tangents(world::animation& animation, int32 key_index,
 
    edit_bundle.reserve(5);
 
-   const int32 max_key = static_cast<int32>(std::ssize(animation.position_keys) - 1);
-
    {
       const world::position_key& key_forward_forward =
-         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+         animation.position_keys[clamp_position(key_index + 2, animation)];
 
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.position_keys, key_index,
@@ -129,32 +140,36 @@ void update_position_auto_tangents(world::animation& animation, int32 key_index,
                                                     key_new_position)));
    }
 
-   if (key_index - 2 >= 0) {
-      const world::position_key& key = animation.position_keys[key_index - 2];
+   if (key_index - 2 >= 0 or animation.loop) {
+      const world::position_key& key =
+         animation.position_keys[clamp_position(key_index - 2, animation)];
 
       edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index - 2,
+         edits::make_set_vector_value(&animation.position_keys,
+                                      clamp_position(key_index - 2, animation),
                                       &world::position_key::tangent_next,
                                       smoothness * (key_new_position - key.position)));
    }
 
-   if (key_index - 1 >= 0) {
+   if (key_index - 1 >= 0 or animation.loop) {
       const world::position_key& key_back =
-         animation.position_keys[std::clamp(key_index - 2, 0, max_key)];
+         animation.position_keys[clamp_position(key_index - 2, animation)];
 
       edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index - 1,
+         edits::make_set_vector_value(&animation.position_keys,
+                                      clamp_position(key_index - 1, animation),
                                       &world::position_key::tangent,
                                       smoothness *
                                          (key_new_position - key_back.position)));
    }
 
-   if (key_index + 1 < std::ssize(animation.position_keys)) {
+   if (key_index + 1 < std::ssize(animation.position_keys) or animation.loop) {
       const world::position_key& key_forward =
-         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+         animation.position_keys[clamp_position(key_index + 2, animation)];
 
       edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index + 1,
+         edits::make_set_vector_value(&animation.position_keys,
+                                      clamp_position(key_index + 1, animation),
                                       &world::position_key::tangent,
                                       smoothness * (key_forward.position -
                                                     key_new_position)));
@@ -171,17 +186,15 @@ void update_auto_tangents(world::animation& animation, int32 key_index, float sm
 
    edit_bundle.reserve(6);
 
-   const int32 max_key = static_cast<int32>(std::ssize(animation.position_keys) - 1);
-
    const float3 key_new_position = animation.position_keys[key_index].position;
 
    {
       const world::position_key& key_back =
-         animation.position_keys[std::clamp(key_index - 1, 0, max_key)];
+         animation.position_keys[clamp_position(key_index - 1, animation)];
       const world::position_key& key_forward =
-         animation.position_keys[std::clamp(key_index + 1, 0, max_key)];
+         animation.position_keys[clamp_position(key_index + 1, animation)];
       const world::position_key& key_forward_forward =
-         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+         animation.position_keys[clamp_position(key_index + 2, animation)];
 
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.position_keys, key_index,
@@ -195,41 +208,46 @@ void update_auto_tangents(world::animation& animation, int32 key_index, float sm
                                                     key_new_position)));
    }
 
-   if (key_index - 2 >= 0) {
-      const world::position_key& key = animation.position_keys[key_index - 2];
+   if (key_index - 2 >= 0 or animation.loop) {
+      const world::position_key& key =
+         animation.position_keys[clamp_position(key_index - 2, animation)];
 
       edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index - 2,
+         edits::make_set_vector_value(&animation.position_keys,
+                                      clamp_position(key_index - 2, animation),
                                       &world::position_key::tangent_next,
                                       smoothness * (key_new_position - key.position)));
    }
 
-   if (key_index - 1 >= 0) {
+   if (key_index - 1 >= 0 or animation.loop) {
       const world::position_key& key_back =
-         animation.position_keys[std::clamp(key_index - 2, 0, max_key)];
+         animation.position_keys[clamp_position(key_index - 2, animation)];
       const world::position_key& key =
-         animation.position_keys[std::clamp(key_index - 1, 0, max_key)];
+         animation.position_keys[clamp_position(key_index - 1, animation)];
       const world::position_key& key_forward_forward =
-         animation.position_keys[std::clamp(key_index + 1, 0, max_key)];
+         animation.position_keys[clamp_position(key_index + 1, animation)];
 
       edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index - 1,
+         edits::make_set_vector_value(&animation.position_keys,
+                                      clamp_position(key_index - 1, animation),
                                       &world::position_key::tangent,
                                       smoothness *
                                          (key_new_position - key_back.position)));
       edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index - 1,
+         edits::make_set_vector_value(&animation.position_keys,
+                                      clamp_position(key_index - 1, animation),
                                       &world::position_key::tangent_next,
                                       smoothness * (key_forward_forward.position -
                                                     key.position)));
    }
 
-   if (key_index + 1 < std::ssize(animation.position_keys)) {
+   if (key_index + 1 < std::ssize(animation.position_keys) or animation.loop) {
       const world::position_key& key_forward =
-         animation.position_keys[std::clamp(key_index + 2, 0, max_key)];
+         animation.position_keys[clamp_position(key_index + 2, animation)];
 
       edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index + 1,
+         edits::make_set_vector_value(&animation.position_keys,
+                                      clamp_position(key_index + 1, animation),
                                       &world::position_key::tangent,
                                       smoothness * (key_forward.position -
                                                     key_new_position)));
@@ -765,11 +783,14 @@ void world_edit::ui_show_animation_editor() noexcept
                         std::ssize(selected_animation->position_keys) - 1);
 
                      const world::position_key& key_back =
-                        selected_animation->position_keys[std::clamp(selected_key - 1, 0, max_key)];
+                        selected_animation
+                           ->position_keys[clamp_position(selected_key - 1, *selected_animation)];
                      const world::position_key& key_forward =
-                        selected_animation->position_keys[std::clamp(selected_key + 1, 0, max_key)];
+                        selected_animation
+                           ->position_keys[clamp_position(selected_key + 1, *selected_animation)];
                      const world::position_key& key_forward_forward =
-                        selected_animation->position_keys[std::clamp(selected_key + 2, 0, max_key)];
+                        selected_animation
+                           ->position_keys[clamp_position(selected_key + 2, *selected_animation)];
 
                      _edit_stack_world
                         .apply(edits::make_set_vector_value(
