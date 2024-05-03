@@ -245,7 +245,7 @@ void world_edit::ui_show_animation_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
-   ImGui::SetNextWindowSize({640.0f * _display_scale, 610.0f * _display_scale},
+   ImGui::SetNextWindowSize({640.0f * _display_scale, 630.0f * _display_scale},
                             ImGuiCond_FirstUseEver);
    ImGui::SetNextWindowSizeConstraints({640.0f * _display_scale, 0.0f},
                                        {std::numeric_limits<float>::max(),
@@ -753,6 +753,47 @@ void world_edit::ui_show_animation_editor() noexcept
                }
 
                if (ImGui::IsItemDeactivated()) _edit_stack_world.close_last();
+
+               if (ImGui::Button("Auto-Fill Tangents", {ImGui::CalcItemWidth(), 0.0f})) {
+                  if (_animation_editor_config.match_tangents) {
+                     update_auto_tangents(*selected_animation, selected_key,
+                                          _animation_editor_config.auto_tangent_smoothness,
+                                          _edit_stack_world, _edit_context, true);
+                  }
+                  else {
+                     const int32 max_key = static_cast<int32>(
+                        std::ssize(selected_animation->position_keys) - 1);
+
+                     const world::position_key& key_back =
+                        selected_animation->position_keys[std::clamp(selected_key - 1, 0, max_key)];
+                     const world::position_key& key_forward =
+                        selected_animation->position_keys[std::clamp(selected_key + 1, 0, max_key)];
+                     const world::position_key& key_forward_forward =
+                        selected_animation->position_keys[std::clamp(selected_key + 2, 0, max_key)];
+
+                     _edit_stack_world
+                        .apply(edits::make_set_vector_value(
+                                  &selected_animation->position_keys,
+                                  selected_key, &world::position_key::tangent,
+                                  _animation_editor_config.auto_tangent_smoothness *
+                                     (key_forward.position - key_back.position)),
+                               _edit_context, {.transparent = true});
+                     _edit_stack_world
+                        .apply(edits::make_set_vector_value(
+                                  &selected_animation->position_keys,
+                                  selected_key, &world::position_key::tangent_next,
+                                  _animation_editor_config.auto_tangent_smoothness *
+                                     (key_forward_forward.position - key.position)),
+                               _edit_context, {.transparent = true});
+                  }
+               }
+
+               ImGui::SetItemTooltip(
+                  "Auto-fill tangents for this key the same way as Convert to "
+                  "Smooth Spline would.\n\nIf Match Tangents is enabled then "
+                  "neighbouring keys that would use this key's position for "
+                  "their tangents will have their tangents auto-filled as "
+                  "well.");
 
                ImGui::EndDisabled();
             }
