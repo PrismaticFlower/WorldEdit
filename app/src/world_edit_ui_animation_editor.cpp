@@ -253,6 +253,8 @@ void world_edit::ui_show_animation_editor() noexcept
 
    std::optional<int32> hovered_position_key;
    std::optional<int32> hovered_rotation_key;
+   std::optional<float> hovered_position_time;
+   std::optional<float> hovered_rotation_time;
 
    if (ImGui::Begin("Animation Editor", &_animation_editor_open)) {
       if (ImGui::BeginChild("Animations", {160.0f * _display_scale, 0.0f},
@@ -393,6 +395,8 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SeparatorText("New Key");
 
+               ImGui::BeginGroup();
+
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
                ImGui::SliderFloat("##new_key_time",
@@ -452,6 +456,13 @@ void world_edit::ui_show_animation_editor() noexcept
                   "Add a new key and place it with the cursor.");
 
                ImGui::EndDisabled();
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemHovered()) {
+                  hovered_position_time =
+                     _animation_editor_context.new_position_key_time;
+               }
             }
 
             ImGui::EndChild();
@@ -495,6 +506,8 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SeparatorText("New Key");
 
+               ImGui::BeginGroup();
+
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
                ImGui::SliderFloat("##new_key_time",
@@ -537,6 +550,13 @@ void world_edit::ui_show_animation_editor() noexcept
                }
 
                ImGui::EndDisabled();
+
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemHovered()) {
+                  hovered_rotation_time =
+                     _animation_editor_context.new_rotation_key_time;
+               }
             }
 
             ImGui::EndChild();
@@ -1178,6 +1198,28 @@ void world_edit::ui_show_animation_editor() noexcept
          float4x4 transform =
             world::evaluate_animation(*selected_animation, base_rotation,
                                       base_position, hovered_key.time);
+
+         _tool_visualizers.add_arrow_wireframe(transform,
+                                               float4{_settings.graphics.hover_color,
+                                                      1.0f});
+      }
+
+      if (hovered_position_time) {
+         float4x4 key_transform =
+            world::evaluate_animation(*selected_animation, base_rotation,
+                                      base_position, *hovered_position_time);
+
+         float4x4 transform{};
+         transform[3] = key_transform[3];
+
+         _tool_visualizers.add_octahedron_wireframe(transform,
+                                                    _settings.graphics.hover_color);
+      }
+
+      if (hovered_rotation_time) {
+         float4x4 transform =
+            world::evaluate_animation(*selected_animation, base_rotation,
+                                      base_position, *hovered_rotation_time);
 
          _tool_visualizers.add_arrow_wireframe(transform,
                                                float4{_settings.graphics.hover_color,
