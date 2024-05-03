@@ -450,7 +450,9 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
-               ImGui::Button("Place", {button_width, 0.0f});
+               if (ImGui::Button("Place", {button_width, 0.0f})) {
+                  _animation_editor_context.place = {.active = true};
+               }
 
                ImGui::SetItemTooltip(
                   "Add a new key and place it with the cursor.");
@@ -1224,6 +1226,70 @@ void world_edit::ui_show_animation_editor() noexcept
          _tool_visualizers.add_arrow_wireframe(transform,
                                                float4{_settings.graphics.hover_color,
                                                       1.0f});
+      }
+
+      if (_animation_editor_context.place.active) {
+         std::optional<int32> previous_key_index;
+
+         for (int32 i = 0; i < std::ssize(selected_animation->position_keys); ++i) {
+            if (_animation_editor_context.new_position_key_time >=
+                selected_animation->position_keys[i].time) {
+               previous_key_index = i;
+            }
+            else {
+               break;
+            }
+         }
+
+         if (previous_key_index) {
+            if (*previous_key_index < std::ssize(selected_animation->position_keys)) {
+
+               _tool_visualizers.add_line(
+                  base_position +
+                     selected_animation->position_keys[*previous_key_index].position,
+                  _cursor_positionWS, 0xff'ff'ff'ffu);
+            }
+
+            if (*previous_key_index + 1 < std::ssize(selected_animation->position_keys)) {
+               _tool_visualizers.add_line(
+                  base_position +
+                     selected_animation->position_keys[*previous_key_index + 1].position,
+                  _cursor_positionWS, 0xff'ff'ff'ffu);
+            }
+         }
+
+         float4x4 visualizer_transform;
+         visualizer_transform[3] = {_cursor_positionWS, 1.0f};
+
+         _tool_visualizers.add_octahedron_wireframe(visualizer_transform,
+                                                    _settings.graphics.creation_color);
+
+         if (_animation_editor_context.place.finish) {
+            const int32 insert_before_index =
+               previous_key_index ? *previous_key_index + 1 : 0;
+            world::position_key new_key = {.time = _animation_editor_context.new_position_key_time,
+                                           .position = _cursor_positionWS - base_position};
+
+            if (previous_key_index) {
+               new_key.transition =
+                  selected_animation->position_keys[*previous_key_index].transition;
+            }
+
+            _edit_stack_world
+               .apply(edits::make_insert_animation_key(&selected_animation->position_keys,
+                                                       insert_before_index, new_key),
+                      _edit_context);
+
+            if (_animation_editor_config.auto_tangents) {
+               update_auto_tangents(*selected_animation, insert_before_index,
+                                    0.5f, _edit_stack_world, _edit_context, true);
+            }
+
+            _animation_editor_context.selected.key_type = animation_key_type::position;
+            _animation_editor_context.selected.key = insert_before_index;
+
+            _animation_editor_context.place = {};
+         }
       }
 
       if (_hotkeys_view_show) {

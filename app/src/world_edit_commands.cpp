@@ -604,6 +604,11 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("animation.select_behind"s,
                  [this] { _animation_editor_context.select_behind = true; });
+
+   _commands.add("animation.finish_place_key"s,
+                 [this] { _animation_editor_context.place.finish = true; });
+   _commands.add("animation.cancel_place_key"s,
+                 [this] { _animation_editor_context.place = {}; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1127,6 +1132,21 @@ void world_edit::initialize_hotkeys() noexcept
              "animation.select_behind",
              {.key = key::mouse1, .modifiers = {.ctrl = true}}},
          },
+   });
+
+   _hotkeys.add_set({
+      .name = "Animation Editing (Key Placement)",
+      .description = "Active while the animation editor is open."s,
+      .activated =
+         [this] {
+            return _animation_editor_open and _animation_editor_context.place.active;
+         },
+      .default_hotkeys =
+         {
+            {"Finish", "animation.finish_place_key", {.key = key::mouse1}},
+            {"Cancel", "animation.cancel_place_key", {.key = key::escape}},
+         },
+      .hidden = true,
    });
 }
 

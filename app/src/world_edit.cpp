@@ -484,6 +484,10 @@ void world_edit::update_hovered_entity() noexcept
          _interaction_targets.hovered_entity = std::nullopt;
       }
    }
+
+   if (_animation_editor_open) {
+      _interaction_targets.hovered_entity = std::nullopt;
+   }
 }
 
 void world_edit::update_object_classes() noexcept

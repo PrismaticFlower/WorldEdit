@@ -687,6 +687,11 @@ private:
 
       float new_position_key_time = 0.0f;
       float new_rotation_key_time = 0.0f;
+
+      struct place {
+         bool active = false;
+         bool finish = false;
+      } place;
    } _animation_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
