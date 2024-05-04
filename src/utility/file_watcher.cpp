@@ -41,15 +41,16 @@ auto get_long_path_name(const std::filesystem::path& path)
 file_watcher::file_watcher(const std::filesystem::path& path) : _path{path}
 {
    _directory = wil::unique_hfile{
-      CreateFileW(path.c_str(), GENERIC_READ,
-                  FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+      CreateFileW(path.c_str(), FILE_LIST_DIRECTORY,
+                  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                  nullptr, OPEN_EXISTING,
                   FILE_FLAG_OVERLAPPED | FILE_FLAG_BACKUP_SEMANTICS, nullptr)};
 
    if (not _directory) {
       const int error = GetLastError();
 
       throw std::system_error{std::error_code{error, std::system_category()},
-                              fmt::format("(Unable to open directory '{}'",
+                              fmt::format("Unable to open directory '{}'",
                                           path.string())};
    }
 
@@ -68,11 +69,10 @@ void file_watcher::query_loop(std::stop_token stop_token) noexcept
       std::array<std::byte, 65536> buffer;
       OVERLAPPED overlapped{.hEvent = io_event.get()};
 
-      if (not ReadDirectoryChangesExW(_directory.get(), buffer.data(),
-                                      static_cast<DWORD>(buffer.size()), true,
-                                      FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
-                                      nullptr, &overlapped, nullptr,
-                                      ReadDirectoryNotifyExtendedInformation)) {
+      if (not ReadDirectoryChangesW(_directory.get(), buffer.data(),
+                                    static_cast<DWORD>(buffer.size()), true,
+                                    FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
+                                    nullptr, &overlapped, nullptr)) {
          return;
       }
 
@@ -103,12 +103,10 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
 {
    std::size_t head = 0;
 
-   constexpr auto notify_base_size =
-      sizeof(FILE_NOTIFY_EXTENDED_INFORMATION) - sizeof(wchar_t);
+   constexpr auto notify_base_size = sizeof(FILE_NOTIFY_INFORMATION) - sizeof(wchar_t);
 
    for (bool process = true; process;) {
-      auto& info =
-         *reinterpret_cast<FILE_NOTIFY_EXTENDED_INFORMATION*>(&buffer[head]);
+      auto& info = *reinterpret_cast<FILE_NOTIFY_INFORMATION*>(&buffer[head]);
 
       if ((head + notify_base_size + info.FileNameLength) > buffer.size() or
           (head + info.NextEntryOffset) > buffer.size()) {
