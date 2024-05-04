@@ -779,9 +779,6 @@ void world_edit::ui_show_animation_editor() noexcept
                                           _edit_stack_world, _edit_context, true);
                   }
                   else {
-                     const int32 max_key = static_cast<int32>(
-                        std::ssize(selected_animation->position_keys) - 1);
-
                      const world::position_key& key_back =
                         selected_animation
                            ->position_keys[clamp_position(selected_key - 1, *selected_animation)];
