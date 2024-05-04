@@ -70,17 +70,9 @@ bool gizmo::want_capture_mouse() const noexcept
    std::unreachable();
 }
 
-void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_down,
-                   const graphics::camera& camera, const float gizmo_scale) noexcept
+void gizmo::update(const graphics::camera_ray cursor_ray,
+                   const bool is_mouse_down, const graphics::camera& camera) noexcept
 {
-   const float camera_scale = distance(camera.position(), _gizmo_position) *
-                              camera.projection_matrix()[0].x;
-
-   _translate_gizmo_length = translate_gizmo_length * camera_scale * gizmo_scale;
-   _translate_gizmo_hit_pad = translate_gizmo_hit_pad * camera_scale * gizmo_scale;
-   _rotate_gizmo_radius = rotate_gizmo_radius * camera_scale * gizmo_scale;
-   _rotate_gizmo_hit_pad = rotate_gizmo_hit_pad * camera_scale * gizmo_scale;
-
    const float3 ray_origin = cursor_ray.origin;
    const float3 offset_ray_origin = ray_origin - _gizmo_position;
    const float3 ray_direction = cursor_ray.direction;
@@ -273,6 +265,17 @@ void gizmo::update(const graphics::camera_ray cursor_ray, const bool is_mouse_do
       }
    } break;
    }
+}
+
+void gizmo::update_scale(const graphics::camera& camera, const float gizmo_scale) noexcept
+{
+   const float camera_scale = distance(camera.position(), _gizmo_position) *
+                              camera.projection_matrix()[0].x;
+
+   _translate_gizmo_length = translate_gizmo_length * camera_scale * gizmo_scale;
+   _translate_gizmo_hit_pad = translate_gizmo_hit_pad * camera_scale * gizmo_scale;
+   _rotate_gizmo_radius = rotate_gizmo_radius * camera_scale * gizmo_scale;
+   _rotate_gizmo_hit_pad = rotate_gizmo_hit_pad * camera_scale * gizmo_scale;
 }
 
 void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
