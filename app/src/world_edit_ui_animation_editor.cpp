@@ -1033,6 +1033,9 @@ void world_edit::ui_show_animation_editor() noexcept
          }
       }
 
+      std::optional<int32> hovered_background_position_key;
+      std::optional<int32> hovered_background_rotation_key;
+
       if (not _gizmo.want_capture_mouse()) {
          const graphics::camera_ray cursor_ray =
             make_camera_ray(_camera,
@@ -1040,18 +1043,22 @@ void world_edit::ui_show_animation_editor() noexcept
                             {ImGui::GetMainViewport()->Size.x,
                              ImGui::GetMainViewport()->Size.y});
 
-         if (std::optional<int32> hit =
+         if (world::raycast_result_keys result =
                 world::raycast_position_keys(cursor_ray.origin, cursor_ray.direction,
                                              *selected_animation, base_rotation,
-                                             base_position, 1.0f)) {
-            hovered_position_key = *hit;
+                                             base_position, 1.0f);
+             result.hit) {
+            hovered_position_key = result.hit;
+            hovered_background_position_key = result.background_hit;
          }
 
-         if (std::optional<int32> hit =
+         if (world::raycast_result_keys result =
                 world::raycast_rotation_keys(cursor_ray.origin, cursor_ray.direction,
                                              *selected_animation, base_rotation,
-                                             base_position, 1.0f)) {
-            hovered_rotation_key = *hit;
+                                             base_position, 1.0f);
+             result.hit) {
+            hovered_rotation_key = result.hit;
+            hovered_background_rotation_key = result.background_hit;
          }
       }
 
@@ -1069,7 +1076,15 @@ void world_edit::ui_show_animation_editor() noexcept
       }
 
       if (_animation_editor_context.select_behind) {
-         if (hovered_rotation_key) {
+         if (hovered_background_position_key) {
+            _animation_editor_context.selected.key = *hovered_background_position_key;
+            _animation_editor_context.selected.key_type = animation_key_type::position;
+         }
+         else if (hovered_background_rotation_key) {
+            _animation_editor_context.selected.key = *hovered_background_rotation_key;
+            _animation_editor_context.selected.key_type = animation_key_type::rotation;
+         }
+         else if (hovered_rotation_key) {
             _animation_editor_context.selected.key = *hovered_rotation_key;
             _animation_editor_context.selected.key_type = animation_key_type::rotation;
          }
