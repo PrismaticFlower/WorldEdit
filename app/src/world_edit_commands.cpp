@@ -609,6 +609,10 @@ void world_edit::initialize_commands() noexcept
                  [this] { _animation_editor_context.place.finish = true; });
    _commands.add("animation.cancel_place_key"s,
                  [this] { _animation_editor_context.place = {}; });
+   _commands.add("animation.toggle_match_tangents"s,
+                 _animation_editor_config.match_tangents);
+   _commands.add("animation.toggle_auto_tangents"s,
+                 _animation_editor_config.auto_tangents);
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1131,6 +1135,8 @@ void world_edit::initialize_hotkeys() noexcept
             {"Select (Behind)",
              "animation.select_behind",
              {.key = key::mouse1, .modifiers = {.ctrl = true}}},
+            {"Toggle Match Tangents", "animation.toggle_match_tangents", {.key = key::z}},
+            {"Toggle Auto-Tangents", "animation.toggle_auto_tangents", {.key = key::x}},
          },
    });
 

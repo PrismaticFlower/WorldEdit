@@ -1379,6 +1379,16 @@ void world_edit::ui_show_animation_editor() noexcept
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Animation Editing", "Select (Behind)")));
 
+         ImGui::Text("Toggle Match Tangents");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Animation Editing",
+                                   "Toggle Match Tangents")));
+
+         ImGui::Text("Toggle Auto-Tangents");
+         ImGui::BulletText(
+            get_display_string(_hotkeys.query_binding("Animation Editing",
+                                                      "Toggle Auto-Tangents")));
+
          ImGui::End();
       }
    }
