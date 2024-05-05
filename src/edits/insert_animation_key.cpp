@@ -22,7 +22,7 @@ struct insert_animation_key final : edit<world::edit_context> {
    void revert(world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(keys));
-      assert(insert_before_index <= keys->size());
+      assert(insert_before_index < keys->size());
 
       keys->erase(keys->begin() + insert_before_index);
    }

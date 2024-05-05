@@ -233,6 +233,7 @@
     <ClCompile Include="src\edits\add_world_req_list.cpp" />
     <ClCompile Include="src\edits\bundle.cpp" />
     <ClCompile Include="src\edits\creation_entity_set.cpp" />
+    <ClCompile Include="src\edits\delete_animation_key.cpp" />
     <ClCompile Include="src\edits\delete_entity.cpp" />
     <ClCompile Include="src\edits\delete_game_mode.cpp" />
     <ClCompile Include="src\edits\delete_layer.cpp" />
@@ -482,6 +483,7 @@
     <ClInclude Include="src\edits\add_world_req_list.hpp" />
     <ClInclude Include="src\edits\bundle.hpp" />
     <ClInclude Include="src\edits\creation_entity_set.hpp" />
+    <ClInclude Include="src\edits\delete_animation_key.hpp" />
     <ClInclude Include="src\edits\delete_entity.hpp" />
     <ClInclude Include="src\edits\delete_game_mode.hpp" />
     <ClInclude Include="src\edits\delete_layer.hpp" />

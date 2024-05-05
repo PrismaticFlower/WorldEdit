@@ -102,6 +102,7 @@
     <ClCompile Include="src\edits\rename_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\set_world_req_entry_tests.cpp" />
     <ClCompile Include="src\edits\insert_animation_key_tests.cpp" />
+    <ClCompile Include="src\edits\delete_animation_key_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

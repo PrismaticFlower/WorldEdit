@@ -680,6 +680,8 @@ private:
 
          float3 key_movement = {0.0f, 0.0f, 0.0f};
          float3 key_rotation_movement = {0.0f, 0.0f, 0.0f};
+
+         bool delete_key = false;
       } selected;
 
       bool select = false;

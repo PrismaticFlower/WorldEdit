@@ -1,4 +1,5 @@
 #include "edits/bundle.hpp"
+#include "edits/delete_animation_key.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/insert_animation_key.hpp"
 #include "math/matrix_funcs.hpp"
@@ -1366,6 +1367,49 @@ void world_edit::ui_show_animation_editor() noexcept
          }
       }
 
+      if (_animation_editor_context.selected.delete_key) {
+         if (_animation_editor_context.selected.key_type == animation_key_type::position and
+             selected_key < std::ssize(selected_animation->position_keys)) {
+            _edit_stack_world
+               .apply(edits::make_delete_animation_key(&selected_animation->position_keys,
+                                                       selected_key),
+                      _edit_context);
+
+            if (_animation_editor_config.match_tangents and
+                _animation_editor_config.auto_tangents) {
+               if (selected_key < std::ssize(selected_animation->position_keys)) {
+                  update_auto_tangents(*selected_animation, selected_key,
+                                       _animation_editor_config.auto_tangent_smoothness,
+                                       _edit_stack_world, _edit_context, true);
+               }
+
+               if (selected_key - 1 >= 0) {
+                  update_auto_tangents(*selected_animation, selected_key - 1,
+                                       _animation_editor_config.auto_tangent_smoothness,
+                                       _edit_stack_world, _edit_context, true);
+               }
+            }
+
+            if (selected_key == std::ssize(selected_animation->position_keys)) {
+               _animation_editor_context.selected.key -= 1;
+            }
+         }
+         else if (_animation_editor_context.selected.key_type ==
+                     animation_key_type::rotation and
+                  selected_key < std::ssize(selected_animation->rotation_keys)) {
+            _edit_stack_world
+               .apply(edits::make_delete_animation_key(&selected_animation->rotation_keys,
+                                                       selected_key),
+                      _edit_context);
+
+            if (selected_key == std::ssize(selected_animation->rotation_keys)) {
+               _animation_editor_context.selected.key -= 1;
+            }
+         }
+
+         _animation_editor_context.selected.delete_key = false;
+      }
+
       if (_hotkeys_view_show) {
          ImGui::Begin("Hotkeys");
 
@@ -1388,6 +1432,11 @@ void world_edit::ui_show_animation_editor() noexcept
          ImGui::BulletText(
             get_display_string(_hotkeys.query_binding("Animation Editing",
                                                       "Toggle Auto-Tangents")));
+
+         ImGui::Text("Delete Selected Key");
+         ImGui::BulletText(
+            get_display_string(_hotkeys.query_binding("Animation Editing",
+                                                      "Delete Selected Key")));
 
          ImGui::End();
       }
