@@ -264,7 +264,7 @@ void world_edit::ui_show_animation_editor() noexcept
 {
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
-   ImGui::SetNextWindowSize({640.0f * _display_scale, 630.0f * _display_scale},
+   ImGui::SetNextWindowSize({640.0f * _display_scale, 698.0f * _display_scale},
                             ImGuiCond_FirstUseEver);
    ImGui::SetNextWindowSizeConstraints({640.0f * _display_scale, 0.0f},
                                        {std::numeric_limits<float>::max(),
@@ -300,7 +300,7 @@ void world_edit::ui_show_animation_editor() noexcept
       if (ImGui::BeginChild("##selected") and selected_animation) {
          ImGui::SeparatorText(selected_animation->name.c_str());
 
-         if (ImGui::BeginChild("##properties", {0.0f, 160.0f * _display_scale},
+         if (ImGui::BeginChild("##properties", {0.0f, 232.0f * _display_scale},
                                ImGuiChildFlags_ResizeY)) {
 
             ImGui::InputText("Name", &selected_animation->name, _edit_stack_world,
@@ -366,11 +366,57 @@ void world_edit::ui_show_animation_editor() noexcept
 
             ImGui::SetItemTooltip("The tension value used for auto tangents. A "
                                   "value of 0.5 gives a Catmull-Rom Spline.");
+
+            ImGui::SeparatorText("Playback Preview");
+
+            if (ImGui::SliderFloat("Playback Time",
+                                   &_animation_editor_context.selected.playback_time,
+                                   0.0f, selected_animation->runtime, "%.2f")) {
+               _animation_editor_context.selected.playback_state =
+                  animation_playback_state::paused;
+            }
+
+            const float button_width =
+               (ImGui::CalcItemWidth() - ImGui::GetStyle().ItemInnerSpacing.x) * 0.5f;
+
+            if (_animation_editor_context.selected.playback_state ==
+                animation_playback_state::stopped) {
+               if (ImGui::Button("Play", {button_width, 0.0f})) {
+                  _animation_editor_context.selected.playback_state =
+                     animation_playback_state::play;
+                  _animation_editor_context.selected.playback_tick_start =
+                     std::chrono::steady_clock::now();
+               }
+            }
+            else if (_animation_editor_context.selected.playback_state ==
+                     animation_playback_state::paused) {
+               if (ImGui::Button("Resume", {button_width, 0.0f})) {
+                  _animation_editor_context.selected.playback_state =
+                     animation_playback_state::play;
+                  _animation_editor_context.selected.playback_tick_start =
+                     std::chrono::steady_clock::now();
+               }
+            }
+            else if (_animation_editor_context.selected.playback_state ==
+                     animation_playback_state::play) {
+               if (ImGui::Button("Pause", {button_width, 0.0f})) {
+                  _animation_editor_context.selected.playback_state =
+                     animation_playback_state::paused;
+               }
+            }
+
+            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+            if (ImGui::Button("Stop", {button_width, 0.0f})) {
+               _animation_editor_context.selected.playback_state =
+                  animation_playback_state::stopped;
+               _animation_editor_context.selected.playback_time = 0.0f;
+            }
          }
 
          ImGui::EndChild();
 
-         if (ImGui::BeginChild("##keys", {0.0f, 220.0 * _display_scale},
+         if (ImGui::BeginChild("##keys", {0.0f, 216.0 * _display_scale},
                                ImGuiChildFlags_ResizeY)) {
             if (ImGui::BeginChild("##position_keys",
                                   {(ImGui::GetWindowWidth() -
@@ -1018,6 +1064,7 @@ void world_edit::ui_show_animation_editor() noexcept
    if (selected_animation) {
       quaternion base_rotation = {1.0f, 0.0f, 0.0f, 0.0f};
       float3 base_position = {0.0f, 0.0f, 0.0f};
+      world::object_id animated_object_id = world::max_id;
 
       for (const world::animation_group& group : _world.animation_groups) {
          for (const world::animation_group::entry& entry : group.entries) {
@@ -1026,6 +1073,7 @@ void world_edit::ui_show_animation_editor() noexcept
                   if (string::iequals(entry.object, object.name)) {
                      base_rotation = object.rotation;
                      base_position = object.position;
+                     animated_object_id = object.id;
 
                      break;
                   }
@@ -1303,6 +1351,77 @@ void world_edit::ui_show_animation_editor() noexcept
                                                       1.0f});
       }
 
+      if (_animation_editor_context.selected.toggle_playback) {
+         if (_animation_editor_context.selected.playback_state ==
+             animation_playback_state::play) {
+            _animation_editor_context.selected.playback_state =
+               animation_playback_state::paused;
+         }
+         else {
+            _animation_editor_context.selected.playback_state =
+               animation_playback_state::play;
+            _animation_editor_context.selected.playback_tick_start =
+               std::chrono::steady_clock::now();
+         }
+
+         _animation_editor_context.selected.toggle_playback = false;
+      }
+
+      if (_animation_editor_context.selected.stop_playback) {
+         _animation_editor_context.selected.playback_state =
+            animation_playback_state::stopped;
+         _animation_editor_context.selected.playback_time = 0.0f;
+
+         _animation_editor_context.selected.stop_playback = false;
+      }
+
+      if (_animation_editor_context.selected.playback_state !=
+          animation_playback_state::stopped) {
+         if (_animation_editor_context.selected.playback_state ==
+             animation_playback_state::play) {
+            std::chrono::steady_clock::time_point playback_tick_last =
+               _animation_editor_context.selected.playback_tick_start;
+
+            _animation_editor_context.selected.playback_tick_start =
+               std::chrono::steady_clock::now();
+
+            _animation_editor_context.selected.playback_time +=
+               std::chrono::duration_cast<std::chrono::duration<float>>(
+                  _animation_editor_context.selected.playback_tick_start - playback_tick_last)
+                  .count();
+
+            if (_animation_editor_context.selected.playback_time >
+                selected_animation->runtime) {
+               if (selected_animation->loop) {
+                  _animation_editor_context.selected.playback_time -=
+                     selected_animation->runtime;
+               }
+               else {
+                  _animation_editor_context.selected.playback_state =
+                     animation_playback_state::stopped;
+                  _animation_editor_context.selected.playback_time = 0.0f;
+               }
+            }
+         }
+
+         if (animated_object_id != world::object_id{world::max_id}) {
+            _tool_visualizers.add_ghost_object(
+               world::evaluate_animation(*selected_animation, base_rotation, base_position,
+                                         _animation_editor_context.selected.playback_time),
+               animated_object_id);
+         }
+         else {
+            _tool_visualizers.add_arrow_wireframe(
+               world::evaluate_animation(*selected_animation, base_rotation, base_position,
+                                         _animation_editor_context.selected.playback_time) *
+                  float4x4{{8.0f, 0.0f, 0.0f, 0.0f},
+                           {0.0f, 8.0f, 0.0f, 0.0f},
+                           {0.0f, 0.0f, 8.0f, 0.0f},
+                           {0.0f, 0.0f, 0.0f, 1.0f}},
+               {_settings.graphics.creation_color, 1.0f});
+         }
+      }
+
       if (_animation_editor_context.place.active) {
          std::optional<int32> previous_key_index;
 
@@ -1437,6 +1556,14 @@ void world_edit::ui_show_animation_editor() noexcept
          ImGui::BulletText(
             get_display_string(_hotkeys.query_binding("Animation Editing",
                                                       "Delete Selected Key")));
+
+         ImGui::Text("Play / Pause");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Animation Editing", "Play / Pause")));
+
+         ImGui::Text("Stop");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Animation Editing", "Stop")));
 
          ImGui::End();
       }

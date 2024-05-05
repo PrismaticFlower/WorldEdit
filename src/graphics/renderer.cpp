@@ -186,7 +186,8 @@ private:
                               const world::world& world,
                               const world::active_layers active_layers,
                               const world::object_class_library& world_classes,
-                              const world::object* const creation_object);
+                              const world::object* const creation_object,
+                              std::span<const world::tool_visualizers_ghost> ghost_objects);
 
    void build_object_render_list(const frustum& view_frustum);
 
@@ -388,7 +389,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                world_classes,
                                interaction_targets.creation_entity.is<world::object>()
                                   ? &interaction_targets.creation_entity.get<world::object>()
-                                  : nullptr);
+                                  : nullptr,
+                               tool_visualizers.ghost_objects());
       }
       else {
          _world_mesh_list.clear();
@@ -700,7 +702,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       pre_render_command_list.reset();
 
       build_world_mesh_list(pre_render_command_list, world, active_layers,
-                            world_classes, nullptr);
+                            world_classes, nullptr, {});
 
       pre_render_command_list.close();
 
@@ -2908,11 +2910,12 @@ void renderer_impl::draw_interaction_targets(
    }
 }
 
-void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
-                                          const world::world& world,
-                                          const world::active_layers active_layers,
-                                          const world::object_class_library& world_classes,
-                                          const world::object* const creation_object)
+void renderer_impl::build_world_mesh_list(
+   gpu::copy_command_list& command_list, const world::world& world,
+   const world::active_layers active_layers,
+   const world::object_class_library& world_classes,
+   const world::object* const creation_object,
+   std::span<const world::tool_visualizers_ghost> ghost_objects)
 {
    _world_mesh_list.clear();
    _world_mesh_list.reserve(1024 * 16);
@@ -3021,6 +3024,54 @@ void renderer_impl::build_world_mesh_list(gpu::copy_command_list& command_list,
              .index_count = cut.index_count,
              .start_index = cut.start_index,
              .start_vertex = cut.start_vertex});
+      }
+   }
+
+   const std::size_t max_drawn_ghost_objects =
+      (world.objects.size() + 1) <= max_drawn_objects
+         ? max_drawn_objects - (world.objects.size() + 1)
+         : 0;
+
+   for (std::size_t i = 0;
+        i < std::min(ghost_objects.size(), max_drawn_ghost_objects); ++i) {
+      const world::object* object =
+         world::find_entity(world.objects, ghost_objects[i].object_id);
+
+      if (not object) continue;
+
+      auto& model = _model_manager[world_classes[object->class_name].model_name];
+
+      const float3 object_position = {ghost_objects[i].transform[3].x,
+                                      ghost_objects[i].transform[3].y,
+                                      ghost_objects[i].transform[3].z};
+
+      const auto object_bbox =
+         make_quat_from_matrix(ghost_objects[i].transform) * model.bbox + object_position;
+
+      const std::size_t object_constants_offset = constants_data_size;
+      const gpu_virtual_address object_constants_address =
+         constants_upload_gpu_address + object_constants_offset;
+
+      world_mesh_constants constants;
+
+      constants.object_to_world = ghost_objects[i].transform;
+
+      std::memcpy(constants_upload_data + object_constants_offset,
+                  &constants.object_to_world, sizeof(world_mesh_constants));
+
+      constants_data_size += sizeof(world_mesh_constants);
+
+      for (auto& mesh : model.parts) {
+         _world_mesh_list.push_back(
+            object_bbox, object_constants_address, object_position,
+            mesh.material.depth_prepass_flags, mesh.material.flags,
+            mesh.material.constant_buffer_view,
+            world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                       .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                               model.gpu_buffer.attributes_vertex_buffer_view},
+                       .index_count = mesh.index_count,
+                       .start_index = mesh.start_index,
+                       .start_vertex = mesh.start_vertex});
       }
    }
 

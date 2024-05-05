@@ -9,6 +9,7 @@ tool_visualizers::tool_visualizers() noexcept
    _octahedrons.reserve(64);
    _octahedrons_wireframe.reserve(64);
    _arrows_wireframe.reserve(64);
+   _ghost_objects.reserve(64);
 }
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
@@ -47,6 +48,11 @@ void tool_visualizers::add_arrow_wireframe(float4x4 transform, float4 color)
    _arrows_wireframe.emplace_back(transform, color);
 }
 
+void tool_visualizers::add_ghost_object(float4x4 transform, id<object> object_id)
+{
+   _ghost_objects.emplace_back(object_id, transform);
+}
+
 void tool_visualizers::clear() noexcept
 {
    _lines_overlay.clear();
@@ -54,6 +60,7 @@ void tool_visualizers::clear() noexcept
    _octahedrons.clear();
    _octahedrons_wireframe.clear();
    _arrows_wireframe.clear();
+   _ghost_objects.clear();
 }
 
 auto tool_visualizers::lines_overlay() const noexcept
@@ -83,6 +90,12 @@ auto tool_visualizers::arrows_wireframe() const noexcept
    -> std::span<const tool_visualizers_shape>
 {
    return _arrows_wireframe;
+}
+
+auto tool_visualizers::ghost_objects() const noexcept
+   -> std::span<const tool_visualizers_ghost>
+{
+   return _ghost_objects;
 }
 
 }

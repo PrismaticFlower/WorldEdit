@@ -615,6 +615,12 @@ void world_edit::initialize_commands() noexcept
                  _animation_editor_config.auto_tangents);
    _commands.add("animation.delete_key"s,
                  [this] { _animation_editor_context.selected.delete_key = true; });
+   _commands.add("animation.toggle_playback"s, [this] {
+      _animation_editor_context.selected.toggle_playback = true;
+   });
+   _commands.add("animation.stop_playback"s, [this] {
+      _animation_editor_context.selected.stop_playback = true;
+   });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1139,6 +1145,8 @@ void world_edit::initialize_hotkeys() noexcept
              {.key = key::mouse1, .modifiers = {.ctrl = true}}},
             {"Toggle Match Tangents", "animation.toggle_match_tangents", {.key = key::z}},
             {"Toggle Auto-Tangents", "animation.toggle_auto_tangents", {.key = key::x}},
+            {"Play / Pause", "animation.toggle_playback", {.key = key::space}},
+            {"Stop", "animation.stop_playback", {.key = key::end}},
             {"Delete Selected Key", "animation.delete_key", {.key = key::del}},
          },
    });

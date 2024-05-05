@@ -114,6 +114,8 @@ enum class foliage_brush_mode : uint8 { paint, erase };
 
 enum class animation_key_type : uint8 { position, rotation };
 
+enum class animation_playback_state : uint8 { stopped, paused, play };
+
 constexpr float tool_window_start_x = 264.0f;
 
 class world_edit {
@@ -682,6 +684,13 @@ private:
          float3 key_rotation_movement = {0.0f, 0.0f, 0.0f};
 
          bool delete_key = false;
+         bool toggle_playback = false;
+         bool stop_playback = false;
+
+         animation_playback_state playback_state = animation_playback_state::stopped;
+         float playback_time = 0.0f;
+
+         std::chrono::steady_clock::time_point playback_tick_start;
       } selected;
 
       bool select = false;

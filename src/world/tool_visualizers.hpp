@@ -1,11 +1,14 @@
 #pragma once
 
+#include "id.hpp"
 #include "types.hpp"
 
 #include <span>
 #include <vector>
 
 namespace we::world {
+
+struct object;
 
 struct tool_visualizers_line {
    float3 v0;
@@ -17,6 +20,11 @@ struct tool_visualizers_line {
 struct tool_visualizers_shape {
    float4x4 transform;
    float4 color;
+};
+
+struct tool_visualizers_ghost {
+   id<object> object_id;
+   float4x4 transform;
 };
 
 struct tool_visualizers {
@@ -36,6 +44,8 @@ struct tool_visualizers {
 
    void add_arrow_wireframe(float4x4 transform, float4 color);
 
+   void add_ghost_object(float4x4 transform, id<object> object_id);
+
    void clear() noexcept;
 
    auto lines_overlay() const noexcept -> std::span<const tool_visualizers_line>;
@@ -49,12 +59,15 @@ struct tool_visualizers {
 
    auto arrows_wireframe() const noexcept -> std::span<const tool_visualizers_shape>;
 
+   auto ghost_objects() const noexcept -> std::span<const tool_visualizers_ghost>;
+
 private:
    std::vector<tool_visualizers_line> _lines_overlay;
    std::vector<tool_visualizers_line> _lines;
    std::vector<tool_visualizers_shape> _octahedrons;
    std::vector<tool_visualizers_shape> _octahedrons_wireframe;
    std::vector<tool_visualizers_shape> _arrows_wireframe;
+   std::vector<tool_visualizers_ghost> _ghost_objects;
 };
 
 }
