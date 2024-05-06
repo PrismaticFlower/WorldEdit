@@ -285,12 +285,17 @@ void world_edit::ui_show_animation_editor() noexcept
          if (ImGui::BeginChild("##scroll_region",
                                {0.0f, ImGui::GetContentRegionAvail().y -
                                          110.0f * _display_scale})) {
-            for (auto& animation : _world.animations) {
-               if (ImGui::Selectable(animation.name.c_str(),
+            for (int32 i = 0; i < std::ssize(_world.animations); ++i) {
+               ImGui::PushID(i);
+
+               if (ImGui::Selectable(_world.animations[i].name.c_str(),
                                      _animation_editor_context.selected.id ==
-                                        animation.id)) {
-                  _animation_editor_context.selected = {.id = animation.id};
+                                        _world.animations[i].id)) {
+                  _animation_editor_context.selected = {
+                     .id = _world.animations[i].id};
                }
+
+               ImGui::PopID();
             }
          }
 
