@@ -738,6 +738,10 @@ void world_edit::initialize_hotkeys() noexcept
            "show.foliage_editor",
            {.key = key::f5, .modifiers = {.ctrl = true}}},
 
+          {"Show Animation Editor",
+           "show.animation_editor",
+           {.key = key::f1, .modifiers = {.shift = true}}},
+
           {"Show Floor Grid",
            "show.overlay_grid",
            {.key = key::g, .modifiers = {.ctrl = true, .shift = true}}},
