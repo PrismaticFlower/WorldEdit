@@ -718,7 +718,6 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show World Explorer", "show.world_explorer", {.key = key::f8}},
           {"Show World Stats", "show.world_stats", {.key = key::f9}},
           {"Show Object Class Browser", "show.object_class_browser", {.key = key::f10}},
-          {"Show Animation Editor", "show.animation_editor", {.key = key::f11}},
 
           {"Show Measurement Tool", "show.measurement_tool", {.key = key::m}},
 
