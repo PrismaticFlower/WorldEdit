@@ -621,6 +621,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("animation.stop_playback"s, [this] {
       _animation_editor_context.selected.stop_playback = true;
    });
+   _commands.add("animation.close"s, [this] { _animation_editor_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -1148,6 +1149,7 @@ void world_edit::initialize_hotkeys() noexcept
             {"Play / Pause", "animation.toggle_playback", {.key = key::space}},
             {"Stop", "animation.stop_playback", {.key = key::end}},
             {"Delete Selected Key", "animation.delete_key", {.key = key::del}},
+            {"Close Editor", "animation.close", {.key = key::escape}},
          },
    });
 
