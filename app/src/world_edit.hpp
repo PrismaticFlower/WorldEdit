@@ -671,6 +671,8 @@ private:
       bool match_tangents = true;
       bool auto_tangents = false;
       float auto_tangent_smoothness = 0.5f;
+
+      std::string new_animation_name;
    } _animation_editor_config;
 
    struct animation_editor_context {

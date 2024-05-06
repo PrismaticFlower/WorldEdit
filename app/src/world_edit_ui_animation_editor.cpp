@@ -1,4 +1,5 @@
 #include "edits/bundle.hpp"
+#include "edits/delete_animation.hpp"
 #include "edits/delete_animation_key.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/insert_animation_key.hpp"
@@ -14,6 +15,7 @@
 #include <numbers>
 
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 namespace we {
 
@@ -280,13 +282,54 @@ void world_edit::ui_show_animation_editor() noexcept
                             ImGuiChildFlags_ResizeX)) {
          ImGui::SeparatorText("Animations");
 
-         for (auto& animation : _world.animations) {
-            if (ImGui::Selectable(animation.name.c_str(),
-                                  _animation_editor_context.selected.id ==
-                                     animation.id)) {
-               _animation_editor_context.selected = {.id = animation.id};
+         if (ImGui::BeginChild("##scroll_region",
+                               {0.0f, ImGui::GetContentRegionAvail().y -
+                                         110.0f * _display_scale})) {
+            for (auto& animation : _world.animations) {
+               if (ImGui::Selectable(animation.name.c_str(),
+                                     _animation_editor_context.selected.id ==
+                                        animation.id)) {
+                  _animation_editor_context.selected = {.id = animation.id};
+               }
             }
          }
+
+         ImGui::EndChild();
+
+         ImGui::BeginDisabled(_animation_editor_context.selected.id ==
+                              world::animation_id{world::max_id});
+
+         if (ImGui::Button("Delete", {ImGui::GetContentRegionAvail().x, 0.0f})) {
+            world::animation* selected_animation =
+               world::find_entity(_world.animations,
+                                  _animation_editor_context.selected.id);
+
+            if (selected_animation) {
+               _edit_stack_world
+                  .apply(edits::make_delete_animation(static_cast<uint32>(
+                                                         selected_animation -
+                                                         _world.animations.data()),
+                                                      _world),
+                         _edit_context);
+            }
+
+            _animation_editor_context.selected = {};
+         }
+
+         ImGui::EndDisabled();
+
+         ImGui::SeparatorText("New Animation");
+
+         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+         ImGui::InputTextWithHint("##new_name", "i.e door_close",
+                                  &_animation_editor_config.new_animation_name);
+
+         ImGui::BeginDisabled(_animation_editor_config.new_animation_name.empty());
+
+         ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f});
+
+         ImGui::EndDisabled();
       }
 
       ImGui::EndChild();
