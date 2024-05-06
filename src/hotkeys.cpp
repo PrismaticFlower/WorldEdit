@@ -683,10 +683,8 @@ void hotkeys::impl::show_imgui(bool& window_open, const scale_factor display_sca
                         for (const hotkey_modifiers& modifiers : modifier_variations) {
                            if (set.hidden) continue;
 
-                           if (set.bindings.size() > modifier_variations.size()) {
-                              if (set.bindings.contains(hotkey_bind{key, modifiers})) {
-                                 return true;
-                              }
+                           if (set.bindings.contains(hotkey_bind{key, modifiers})) {
+                              return true;
                            }
                         }
                      }
