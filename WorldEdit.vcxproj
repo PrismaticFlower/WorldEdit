@@ -225,6 +225,7 @@
     <ClCompile Include="src\async\thread_pool.cpp" />
     <ClCompile Include="src\commands.cpp" />
     <ClCompile Include="src\container\pinned_vector.cpp" />
+    <ClCompile Include="src\edits\add_animation.cpp" />
     <ClCompile Include="src\edits\add_game_mode.cpp" />
     <ClCompile Include="src\edits\add_layer.cpp" />
     <ClCompile Include="src\edits\add_property.cpp" />
@@ -478,6 +479,7 @@
     <ClInclude Include="src\container\ring_set.hpp" />
     <ClInclude Include="src\container\slim_bitset.hpp" />
     <ClInclude Include="src\container\paged_stack.hpp" />
+    <ClInclude Include="src\edits\add_animation.hpp" />
     <ClInclude Include="src\edits\add_game_mode.hpp" />
     <ClInclude Include="src\edits\add_layer.hpp" />
     <ClInclude Include="src\edits\add_sector_object.hpp" />

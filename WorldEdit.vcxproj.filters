@@ -208,6 +208,7 @@
     <ClCompile Include="src\edits\insert_animation_key.cpp" />
     <ClCompile Include="src\edits\delete_animation_key.cpp" />
     <ClCompile Include="src\edits\delete_animation.cpp" />
+    <ClCompile Include="src\edits\add_animation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -484,6 +485,7 @@
     <ClInclude Include="src\edits\insert_animation_key.hpp" />
     <ClInclude Include="src\edits\delete_animation_key.hpp" />
     <ClInclude Include="src\edits\delete_animation.hpp" />
+    <ClInclude Include="src\edits\add_animation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

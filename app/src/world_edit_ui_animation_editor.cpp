@@ -1,3 +1,4 @@
+#include "edits/add_animation.hpp"
 #include "edits/bundle.hpp"
 #include "edits/delete_animation.hpp"
 #include "edits/delete_animation_key.hpp"
@@ -332,7 +333,17 @@ void world_edit::ui_show_animation_editor() noexcept
 
          ImGui::BeginDisabled(_animation_editor_config.new_animation_name.empty());
 
-         ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f});
+         if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
+            _edit_stack_world.apply(
+               edits::make_add_animation(world::animation{
+                  .name = world::create_unique_name(_world.animations,
+                                                    _animation_editor_config.new_animation_name),
+                  .id = _world.next_id.animations.aquire()}),
+               _edit_context);
+
+            _animation_editor_config.new_animation_name.clear();
+            _animation_editor_context.selected = {.id = _world.animations.back().id};
+         }
 
          ImGui::EndDisabled();
       }

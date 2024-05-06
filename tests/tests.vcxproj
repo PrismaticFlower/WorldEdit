@@ -226,6 +226,7 @@
     <ClCompile Include="src\container\pinned_vector_tests.cpp" />
     <ClCompile Include="src\container\ring_set_tests.cpp" />
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
+    <ClCompile Include="src\edits\add_animation_tests.cpp" />
     <ClCompile Include="src\edits\add_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
     <ClCompile Include="src\edits\add_sector_object_tests.cpp" />
