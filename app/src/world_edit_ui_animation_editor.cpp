@@ -347,10 +347,9 @@ void world_edit::ui_show_animation_editor() noexcept
                                ImGuiChildFlags_ResizeY)) {
 
             ImGui::InputText("Name", &selected_animation->name, _edit_stack_world,
-                             _edit_context, [](std::string* new_name) noexcept {
-                                (void)new_name;
-
-                                // TODO: Ensure name is unique!
+                             _edit_context, [this](std::string* new_name) noexcept {
+                                *new_name = world::create_unique_name(_world.animations,
+                                                                      *new_name);
                              });
 
             ImGui::DragFloat("Runtime", &selected_animation->runtime,

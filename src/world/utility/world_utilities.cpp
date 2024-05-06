@@ -28,6 +28,7 @@ auto missing_name_base() -> std::string_view
    if constexpr (std::is_same_v<T, planning_hub>) return "Hub";
    if constexpr (std::is_same_v<T, planning_connection>) return "Connection";
    if constexpr (std::is_same_v<T, boundary>) return "Boundary";
+   if constexpr (std::is_same_v<T, animation>) return "Animation";
 }
 
 template<typename T>
@@ -151,6 +152,12 @@ auto create_unique_name(const std::span<const planning_connection> entities,
 }
 
 auto create_unique_name(const std::span<const boundary> entities,
+                        const std::string_view reference_name) -> std::string
+{
+   return create_unique_name_impl(entities, reference_name);
+}
+
+auto create_unique_name(const std::span<const animation> entities,
                         const std::string_view reference_name) -> std::string
 {
    return create_unique_name_impl(entities, reference_name);

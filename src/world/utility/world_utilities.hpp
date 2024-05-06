@@ -134,6 +134,9 @@ auto create_unique_name(const std::span<const planning_connection> entities,
 auto create_unique_name(const std::span<const boundary> entities,
                         const std::string_view reference_name) -> std::string;
 
+auto create_unique_name(const std::span<const animation> entities,
+                        const std::string_view reference_name) -> std::string;
+
 auto create_unique_light_region_name(const std::span<const light> lights,
                                      const std::span<const region> regions,
                                      const std::string_view reference_name)
