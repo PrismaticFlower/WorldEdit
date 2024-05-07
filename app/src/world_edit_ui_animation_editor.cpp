@@ -334,15 +334,25 @@ void world_edit::ui_show_animation_editor() noexcept
          ImGui::BeginDisabled(_animation_editor_config.new_animation_name.empty());
 
          if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
-            _edit_stack_world.apply(
-               edits::make_add_animation(world::animation{
-                  .name = world::create_unique_name(_world.animations,
-                                                    _animation_editor_config.new_animation_name),
-                  .id = _world.next_id.animations.aquire()}),
-               _edit_context);
+            if (_world.animations.size() < _world.animations.max_size()) {
+               _edit_stack_world.apply(
+                  edits::make_add_animation(world::animation{
+                     .name = world::create_unique_name(_world.animations,
+                                                       _animation_editor_config.new_animation_name),
+                     .id = _world.next_id.animations.aquire()}),
+                  _edit_context);
 
-            _animation_editor_config.new_animation_name.clear();
-            _animation_editor_context.selected = {.id = _world.animations.back().id};
+               _animation_editor_config.new_animation_name.clear();
+               _animation_editor_context.selected = {
+                  .id = _world.animations.back().id};
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Animations ({}) Reached",
+                                       _world.animations.max_size())
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+            }
          }
 
          ImGui::EndDisabled();

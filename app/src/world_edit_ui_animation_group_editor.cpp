@@ -80,15 +80,24 @@ void world_edit::ui_show_animation_group_editor() noexcept
          ImGui::BeginDisabled(_animation_group_editor_config.new_group_name.empty());
 
          if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
-            const world::animation_group_id id =
-               _world.next_id.animation_groups.aquire();
+            if (_world.animation_groups.size() < _world.animation_groups.max_size()) {
+               const world::animation_group_id id =
+                  _world.next_id.animation_groups.aquire();
 
-            _edit_stack_world.apply(edits::make_add_animation_group(
-                                       {.name = world::create_unique_name(
-                                           _world.animation_groups,
-                                           _animation_group_editor_config.new_group_name),
-                                        .id = id}),
-                                    _edit_context);
+               _edit_stack_world.apply(edits::make_add_animation_group(
+                                          {.name = world::create_unique_name(
+                                              _world.animation_groups,
+                                              _animation_group_editor_config.new_group_name),
+                                           .id = id}),
+                                       _edit_context);
+            }
+            else {
+               MessageBoxA(_window,
+                           fmt::format("Max Animation Groups ({}) Reached",
+                                       _world.animation_groups.max_size())
+                              .c_str(),
+                           "Limit Reached", MB_OK);
+            }
          }
 
          ImGui::EndDisabled();
