@@ -44,7 +44,7 @@ TEST_CASE("edits delete_animation_key", "[Edits]")
 
    REQUIRE(world.animations[0].position_keys.size() == 2);
    CHECK(world.animations[0].position_keys[0].time == 0.0f);
-   CHECK(world.animations[0].position_keys[2].time == 7.0f);
+   CHECK(world.animations[0].position_keys[1].time == 7.0f);
 
    edit->revert(edit_context);
 
