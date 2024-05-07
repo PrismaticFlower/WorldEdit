@@ -234,6 +234,8 @@
     <ClCompile Include="src\edits\add_world_req_list_tests.cpp" />
     <ClCompile Include="src\edits\bundle_tests.cpp" />
     <ClCompile Include="src\edits\creation_entity_set_tests.cpp" />
+    <ClCompile Include="src\edits\delete_animation_group_entry_tests.cpp" />
+    <ClCompile Include="src\edits\delete_animation_group_tests.cpp" />
     <ClCompile Include="src\edits\delete_animation_key_tests.cpp" />
     <ClCompile Include="src\edits\delete_animation_tests.cpp" />
     <ClCompile Include="src\edits\delete_entity_tests.cpp" />

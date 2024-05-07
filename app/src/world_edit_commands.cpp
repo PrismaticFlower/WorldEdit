@@ -130,6 +130,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.env_map_renderer"s, _render_env_map_open);
    _commands.add("show.measurement_tool"s, _measurement_tool_open);
    _commands.add("show.animation_editor"s, _animation_editor_open);
+   _commands.add("show.animation_group_editor"s, _animation_group_editor_open);
 
    _commands.add("show.terrain_height_editor"s, [this] {
       _terrain_edit_tool = terrain_edit_tool::editor;
@@ -622,6 +623,9 @@ void world_edit::initialize_commands() noexcept
       _animation_editor_context.selected.stop_playback = true;
    });
    _commands.add("animation.close"s, [this] { _animation_editor_open = false; });
+
+   _commands.add("animation_group.close"s,
+                 [this] { _animation_group_editor_open = false; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -740,6 +744,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Animation Editor",
            "show.animation_editor",
            {.key = key::f1, .modifiers = {.shift = true}}},
+          {"Show Animation Group Editor",
+           "show.animation_group_editor",
+           {.key = key::f2, .modifiers = {.shift = true}}},
 
           {"Show Floor Grid",
            "show.overlay_grid",
@@ -1170,6 +1177,17 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .hidden = true,
    });
+
+   _hotkeys.add_set(
+      {.name = "Animation Group Editing",
+       .description = "Active while the animation group editor is open."s,
+       .activated = [this] { return _animation_group_editor_open; },
+       .default_hotkeys =
+          {
+             {"Close Editor", "animation_group.close", {.key = key::escape}},
+          },
+
+       .hidden = true});
 }
 
 }

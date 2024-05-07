@@ -133,6 +133,10 @@ void world_edit::update_ui() noexcept
       ui_show_animation_editor();
    }
 
+   if (_animation_group_editor_open) {
+      ui_show_animation_group_editor();
+   }
+
    if (_render_env_map_open) {
       ui_show_render_env_map();
    }

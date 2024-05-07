@@ -237,6 +237,8 @@ private:
 
    void ui_show_animation_editor() noexcept;
 
+   void ui_show_animation_group_editor() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    void setup_orbit_camera() noexcept;
@@ -400,6 +402,7 @@ private:
    bool _render_env_map_open = false;
    bool _measurement_tool_open = false;
    bool _animation_editor_open = false;
+   bool _animation_group_editor_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
@@ -706,6 +709,21 @@ private:
          bool finish = false;
       } place;
    } _animation_editor_context;
+
+   struct animation_group_editor_config {
+      std::string new_group_name;
+   } _animation_group_editor_config;
+
+   struct animation_group_editor_context {
+      struct selected {
+         world::animation_group_id id = world::max_id;
+
+         animation_playback_state playback_state = animation_playback_state::stopped;
+         float playback_time = 0.0f;
+
+         std::chrono::steady_clock::time_point playback_tick_start;
+      } selected;
+   } _animation_group_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
