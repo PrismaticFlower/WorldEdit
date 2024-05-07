@@ -1,10 +1,5 @@
-#pragma once
-
-#include "edit.hpp"
+#include "delete_animation.hpp"
 #include "utility/string_icompare.hpp"
-#include "world/interaction_context.hpp"
-
-#include <memory>
 
 namespace we::edits {
 

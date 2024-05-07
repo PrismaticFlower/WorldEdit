@@ -1,7 +1,4 @@
-#include "edit.hpp"
-#include "world/interaction_context.hpp"
-
-#include <memory>
+#include "add_animation.hpp"
 
 namespace we::edits {
 
