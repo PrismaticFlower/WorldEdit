@@ -712,6 +712,9 @@ private:
 
    struct animation_group_editor_config {
       std::string new_group_name;
+
+      std::string new_entry_animation_name;
+      std::string new_entry_object_name;
    } _animation_group_editor_config;
 
    struct animation_group_editor_context {
@@ -723,6 +726,11 @@ private:
 
          std::chrono::steady_clock::time_point playback_tick_start;
       } selected;
+
+      struct pick_object {
+         bool active = false;
+         bool finish = false;
+      } pick_object;
    } _animation_group_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
