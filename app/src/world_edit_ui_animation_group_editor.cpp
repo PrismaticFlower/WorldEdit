@@ -1,3 +1,4 @@
+#include "edits/add_animation_group.hpp"
 #include "edits/delete_animation_group.hpp"
 #include "edits/delete_animation_group_entry.hpp"
 #include "edits/imgui_ext.hpp"
@@ -79,7 +80,15 @@ void world_edit::ui_show_animation_group_editor() noexcept
          ImGui::BeginDisabled(_animation_group_editor_config.new_group_name.empty());
 
          if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
-            // TODO: Add group.
+            const world::animation_group_id id =
+               _world.next_id.animation_groups.aquire();
+
+            _edit_stack_world.apply(edits::make_add_animation_group(
+                                       {.name = world::create_unique_name(
+                                           _world.animation_groups,
+                                           _animation_group_editor_config.new_group_name),
+                                        .id = id}),
+                                    _edit_context);
          }
 
          ImGui::EndDisabled();
