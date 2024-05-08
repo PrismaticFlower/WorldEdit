@@ -436,8 +436,6 @@ void world_edit::ui_show_animation_group_editor() noexcept
 
                if (string::iequals(animation.name, entry.animation)) {
                   playback_animations[i] = &animation;
-
-                  break;
                }
             }
          }
