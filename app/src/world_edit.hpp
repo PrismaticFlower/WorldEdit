@@ -725,6 +725,9 @@ private:
          float playback_time = 0.0f;
 
          std::chrono::steady_clock::time_point playback_tick_start;
+
+         std::vector<const world::animation*> playback_animations;
+         std::vector<const world::object*> playback_objects;
       } selected;
 
       struct pick_object {

@@ -416,6 +416,105 @@ void world_edit::ui_show_animation_group_editor() noexcept
                          _animation_group_editor_context.selected.id);
 
    if (selected_group) {
+      if (_animation_group_editor_context.selected.playback_state !=
+          animation_playback_state::stopped) {
+         std::vector<const world::animation*>& playback_animations =
+            _animation_group_editor_context.selected.playback_animations;
+         std::vector<const world::object*>& playback_objects =
+            _animation_group_editor_context.selected.playback_objects;
+
+         playback_animations.clear();
+         playback_animations.resize(selected_group->entries.size());
+
+         playback_objects.clear();
+         playback_objects.resize(selected_group->entries.size());
+
+         for (const world::animation& animation : _world.animations) {
+            for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
+               const world::animation_group::entry& entry =
+                  selected_group->entries[i];
+
+               if (string::iequals(animation.name, entry.animation)) {
+                  playback_animations[i] = &animation;
+
+                  break;
+               }
+            }
+         }
+
+         for (const world::object& object : _world.objects) {
+            for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
+               const world::animation_group::entry& entry =
+                  selected_group->entries[i];
+
+               if (string::iequals(object.name, entry.object)) {
+                  playback_objects[i] = &object;
+
+                  break;
+               }
+            }
+         }
+
+         bool loop = false;
+         float runtime = 0.0f;
+
+         for (const world::animation* animation : playback_animations) {
+            if (not animation) continue;
+
+            loop |= animation->loop;
+            runtime = std::max(animation->runtime, runtime);
+         }
+
+         if (_animation_group_editor_context.selected.playback_state ==
+             animation_playback_state::play) {
+            std::chrono::steady_clock::time_point playback_tick_last =
+               _animation_group_editor_context.selected.playback_tick_start;
+
+            _animation_group_editor_context.selected.playback_tick_start =
+               std::chrono::steady_clock::now();
+
+            _animation_group_editor_context.selected.playback_time +=
+               std::chrono::duration_cast<std::chrono::duration<float>>(
+                  _animation_group_editor_context.selected.playback_tick_start -
+                  playback_tick_last)
+                  .count();
+
+            if (_animation_group_editor_context.selected.playback_time > runtime) {
+               if (loop) {
+                  _animation_group_editor_context.selected.playback_time -= runtime;
+               }
+               else {
+                  _animation_group_editor_context.selected.playback_state =
+                     animation_playback_state::stopped;
+                  _animation_group_editor_context.selected.playback_time = 0.0f;
+               }
+            }
+         }
+
+         for (uint32 i = 0; i < playback_animations.size(); ++i) {
+            if (not playback_animations[i]) continue;
+
+            if (playback_objects[i]) {
+               _tool_visualizers.add_ghost_object(
+                  world::evaluate_animation(
+                     *playback_animations[i], playback_objects[i]->rotation,
+                     playback_objects[i]->position,
+                     _animation_group_editor_context.selected.playback_time),
+                  playback_objects[i]->id);
+            }
+            else {
+               _tool_visualizers.add_arrow_wireframe(
+                  world::evaluate_animation(
+                     *playback_animations[i], quaternion{}, float3{},
+                     _animation_group_editor_context.selected.playback_time) *
+                     float4x4{{8.0f, 0.0f, 0.0f, 0.0f},
+                              {0.0f, 8.0f, 0.0f, 0.0f},
+                              {0.0f, 0.0f, 8.0f, 0.0f},
+                              {0.0f, 0.0f, 0.0f, 1.0f}},
+                  {_settings.graphics.creation_color, 1.0f});
+            }
+         }
+      }
    }
 
    if (_animation_group_editor_context.pick_object.finish) {
