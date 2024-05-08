@@ -477,15 +477,11 @@ void world_edit::ui_show_animation_group_editor() noexcept
                   playback_tick_last)
                   .count();
 
-            if (_animation_group_editor_context.selected.playback_time > runtime) {
-               if (loop) {
-                  _animation_group_editor_context.selected.playback_time -= runtime;
-               }
-               else {
-                  _animation_group_editor_context.selected.playback_state =
-                     animation_playback_state::stopped;
-                  _animation_group_editor_context.selected.playback_time = 0.0f;
-               }
+            if (_animation_group_editor_context.selected.playback_time > runtime and
+                not loop) {
+               _animation_group_editor_context.selected.playback_state =
+                  animation_playback_state::stopped;
+               _animation_group_editor_context.selected.playback_time = 0.0f;
             }
          }
 

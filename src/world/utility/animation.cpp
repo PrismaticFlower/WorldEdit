@@ -30,6 +30,10 @@ auto hermite_interpolate(const float3& p0, const float3& m0, const float3& p1,
 auto evaluate_animation(const animation& animation, const quaternion& base_rotation,
                         const float3& base_position, float t) noexcept -> float4x4
 {
+   if (animation.loop and t > animation.runtime) {
+      t = std::fmod(t, animation.runtime);
+   }
+
    quaternion rotation = base_rotation;
 
    std::ptrdiff_t rotation_index = -1;
