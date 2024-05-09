@@ -171,7 +171,7 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
 
          if (ImGui::BeginChild("##children",
                                {0.0f, ImGui::GetContentRegionAvail().y -
-                                         106.0f * _display_scale})) {
+                                         104.0f * _display_scale})) {
             for (int32 i = 0; i < std::ssize(selected_hierarchy->objects); ++i) {
                ImGui::PushID(i);
 
