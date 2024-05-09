@@ -487,10 +487,13 @@ void world_edit::update_hovered_entity() noexcept
       }
    }
 
-   if (_animation_editor_open or _animation_group_editor_open) {
+   if (_animation_editor_open or _animation_group_editor_open or
+       _animation_hierarchy_editor_open) {
       const bool pick_object_wants_hover =
-         _animation_group_editor_open and
-         _animation_group_editor_context.pick_object.active;
+         (_animation_group_editor_open and
+          _animation_group_editor_context.pick_object.active) or
+         (_animation_hierarchy_editor_open and
+          _animation_hierarchy_editor_context.pick_object.active);
 
       if (not pick_object_wants_hover) {
          _interaction_targets.hovered_entity = std::nullopt;

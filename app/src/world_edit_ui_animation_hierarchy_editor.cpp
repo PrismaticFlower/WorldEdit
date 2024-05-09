@@ -152,6 +152,9 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
          ImGui::EndDisabled();
 
          if (ImGui::Button("Pick Object", {ImGui::GetContentRegionAvail().x, 0.0f})) {
+            _animation_hierarchy_editor_context.pick_object =
+               {.target = animation_hierarchy_editor_context::pick_object::target::root,
+                .active = true};
          }
       }
 
@@ -305,14 +308,58 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
 
    if (not _animation_hierarchy_editor_open) return;
 
-   world::animation_hierarchy* selected_hierarchy =
-      world::find_entity(_world.animation_hierarchies,
-                         _animation_hierarchy_editor_context.selected.id);
-
-   if (selected_hierarchy) {
-   }
-
    if (_animation_hierarchy_editor_context.pick_object.finish) {
+      if (_interaction_targets.hovered_entity and
+          std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity)) {
+         const world::object* object =
+            world::find_entity(_world.objects,
+                               std::get<world::object_id>(
+                                  *_interaction_targets.hovered_entity));
+         if (object and not object->name.empty()) {
+            if (_animation_hierarchy_editor_context.pick_object.target ==
+                animation_hierarchy_editor_context::pick_object::target::root) {
+               if (_world.animation_hierarchies.size() <
+                   _world.animation_hierarchies.max_size()) {
+                  world::animation_hierarchy_id id =
+                     _world.next_id.animation_hierarchies.aquire();
+
+                  _edit_stack_world.apply(edits::make_add_animation_hierarchy(
+                                             {.root_object = object->name, .id = id}),
+                                          _edit_context);
+
+                  _animation_hierarchy_editor_context.selected.id = id;
+               }
+               else {
+                  MessageBoxA(
+                     _window,
+                     fmt::format("Max Animation Hierarchies ({}) Reached",
+                                 _world.animation_hierarchies.max_size())
+                        .c_str(),
+                     "Limit Reached", MB_OK);
+               }
+
+               _animation_hierarchy_editor_config.new_root_object_name.clear();
+            }
+            else if (_animation_hierarchy_editor_context.pick_object.target ==
+                     animation_hierarchy_editor_context::pick_object::target::child) {
+               world::animation_hierarchy* selected_hierarchy =
+                  world::find_entity(_world.animation_hierarchies,
+                                     _animation_hierarchy_editor_context
+                                        .selected.id);
+
+               if (selected_hierarchy and
+                   not has_child(*selected_hierarchy, object->name)) {
+                  _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
+                                             &selected_hierarchy->objects,
+                                             object->name),
+                                          _edit_context);
+               }
+
+               _animation_hierarchy_editor_config.new_child_object_name.clear();
+            }
+         }
+      }
+
       _animation_hierarchy_editor_context.pick_object = {};
    }
 }
