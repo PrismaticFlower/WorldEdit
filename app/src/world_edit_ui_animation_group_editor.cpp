@@ -369,8 +369,8 @@ void world_edit::ui_show_animation_group_editor() noexcept
                ImGui::Text("Animation-Object");
 
                ImGui::BeginDisabled(
-                  not _animation_group_editor_config.new_entry_animation_name.empty() and
-                  not _animation_group_editor_config.new_entry_object_name.empty() and
+                  _animation_group_editor_config.new_entry_animation_name.empty() or
+                  _animation_group_editor_config.new_entry_object_name.empty() or
                   not is_unique_entry(*selected_group,
                                       _animation_group_editor_config.new_entry_animation_name,
                                       _animation_group_editor_config.new_entry_object_name));
