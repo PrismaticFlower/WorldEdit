@@ -228,6 +228,7 @@
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_group_entry_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_group_tests.cpp" />
+    <ClCompile Include="src\edits\add_animation_hierarchy_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_tests.cpp" />
     <ClCompile Include="src\edits\add_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
@@ -240,6 +241,7 @@
     <ClCompile Include="src\edits\delete_animation_group_tests.cpp" />
     <ClCompile Include="src\edits\delete_animation_key_tests.cpp" />
     <ClCompile Include="src\edits\delete_animation_tests.cpp" />
+    <ClCompile Include="src\edits\delete_animation_hierarchy_tests.cpp" />
     <ClCompile Include="src\edits\delete_entity_tests.cpp" />
     <ClCompile Include="src\edits\delete_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\delete_layer_tests.cpp" />

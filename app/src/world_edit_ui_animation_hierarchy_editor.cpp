@@ -1,5 +1,7 @@
 #include "world_edit.hpp"
 
+#include "edits/add_animation_hierarchy.hpp"
+#include "edits/delete_animation_hierarchy.hpp"
 #include "edits/set_value.hpp"
 #include "imgui_ext.hpp"
 #include "utility/string_icompare.hpp"
@@ -73,6 +75,16 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                               world::animation_hierarchy_id{world::max_id});
 
          if (ImGui::Button("Delete", {ImGui::GetContentRegionAvail().x, 0.0f})) {
+            world::animation_hierarchy* hierarchy =
+               world::find_entity(_world.animation_hierarchies,
+                                  _animation_hierarchy_editor_context.selected.id);
+
+            if (hierarchy) {
+               _edit_stack_world
+                  .apply(edits::make_delete_animation_hierarchy(static_cast<uint32>(
+                            hierarchy - _world.animation_hierarchies.data())),
+                         _edit_context);
+            }
 
             _animation_hierarchy_editor_context.selected = {};
          }
@@ -83,8 +95,29 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
 
          ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-         ImGui::InputTextWithHint("##new_name", "i.e door_close",
-                                  &_animation_hierarchy_editor_config.new_root_object_name);
+         if (absl::InlinedVector<char, 256> buffer{
+                _animation_hierarchy_editor_config.new_root_object_name.begin(),
+                _animation_hierarchy_editor_config.new_root_object_name.end()};
+             ImGui::InputTextAutoComplete("##new_name", &buffer, [&]() noexcept {
+                std::array<std::string_view, 6> entries;
+                std::size_t matching_count = 0;
+
+                for (const world::object& object : _world.objects) {
+                   if (matching_count == entries.size()) break;
+
+                   if (string::icontains(object.name,
+                                         _animation_hierarchy_editor_config.new_root_object_name)) {
+                      entries[matching_count] = object.name;
+
+                      ++matching_count;
+                   }
+                }
+
+                return entries;
+             })) {
+            _animation_hierarchy_editor_config.new_root_object_name = {buffer.data(),
+                                                                       buffer.size()};
+         }
 
          ImGui::BeginDisabled(
             _animation_hierarchy_editor_config.new_root_object_name.empty());
@@ -92,6 +125,16 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
          if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
             if (_world.animation_hierarchies.size() <
                 _world.animation_hierarchies.max_size()) {
+               world::animation_hierarchy_id id =
+                  _world.next_id.animation_hierarchies.aquire();
+
+               _edit_stack_world.apply(edits::make_add_animation_hierarchy(
+                                          {.root_object =
+                                              _animation_hierarchy_editor_config.new_root_object_name,
+                                           .id = id}),
+                                       _edit_context);
+
+               _animation_hierarchy_editor_context.selected.id = id;
             }
             else {
                MessageBoxA(_window,
@@ -100,6 +143,8 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                               .c_str(),
                            "Limit Reached", MB_OK);
             }
+
+            _animation_hierarchy_editor_config.new_root_object_name.clear();
          }
 
          ImGui::EndDisabled();
