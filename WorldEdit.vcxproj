@@ -241,6 +241,7 @@
     <ClCompile Include="src\edits\delete_animation_group.cpp" />
     <ClCompile Include="src\edits\delete_animation_group_entry.cpp" />
     <ClCompile Include="src\edits\delete_animation_hierarchy.cpp" />
+    <ClCompile Include="src\edits\delete_animation_hierarchy_child.cpp" />
     <ClCompile Include="src\edits\delete_animation_key.cpp" />
     <ClCompile Include="src\edits\delete_entity.cpp" />
     <ClCompile Include="src\edits\delete_game_mode.cpp" />
@@ -499,6 +500,7 @@
     <ClInclude Include="src\edits\delete_animation_group.hpp" />
     <ClInclude Include="src\edits\delete_animation_group_entry.hpp" />
     <ClInclude Include="src\edits\delete_animation_hierarchy.hpp" />
+    <ClInclude Include="src\edits\delete_animation_hierarchy_child.hpp" />
     <ClInclude Include="src\edits\delete_animation_key.hpp" />
     <ClInclude Include="src\edits\delete_entity.hpp" />
     <ClInclude Include="src\edits\delete_game_mode.hpp" />

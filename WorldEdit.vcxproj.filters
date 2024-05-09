@@ -215,6 +215,7 @@
     <ClCompile Include="src\edits\add_animation_group_entry.cpp" />
     <ClCompile Include="src\edits\delete_animation_hierarchy.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy.cpp" />
+    <ClCompile Include="src\edits\delete_animation_hierarchy_child.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -498,6 +499,7 @@
     <ClInclude Include="src\edits\add_animation_group_entry.hpp" />
     <ClInclude Include="src\edits\delete_animation_hierarchy.hpp" />
     <ClInclude Include="src\edits\add_animation_hierarchy.hpp" />
+    <ClInclude Include="src\edits\delete_animation_hierarchy_child.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

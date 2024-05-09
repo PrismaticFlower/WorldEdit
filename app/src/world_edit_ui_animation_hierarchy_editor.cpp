@@ -2,6 +2,7 @@
 
 #include "edits/add_animation_hierarchy.hpp"
 #include "edits/delete_animation_hierarchy.hpp"
+#include "edits/delete_animation_hierarchy_child.hpp"
 #include "edits/set_value.hpp"
 #include "imgui_ext.hpp"
 #include "utility/string_icompare.hpp"
@@ -221,7 +222,9 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
                if (ImGui::Button("X", {close_width, 0.0f})) {
-                  // TODO: Delete
+                  _edit_stack_world.apply(edits::make_delete_animation_hierarchy_child(
+                                             &selected_hierarchy->objects, i),
+                                          _edit_context);
                }
 
                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);

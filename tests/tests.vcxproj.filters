@@ -111,6 +111,7 @@
     <ClCompile Include="src\edits\add_animation_group_entry_tests.cpp" />
     <ClCompile Include="src\edits\delete_animation_hierarchy_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy_tests.cpp" />
+    <ClCompile Include="src\edits\delete_animation_hierarchy_child_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
