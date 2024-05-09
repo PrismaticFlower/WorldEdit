@@ -1,6 +1,7 @@
 #include "world_edit.hpp"
 
 #include "edits/add_animation_hierarchy.hpp"
+#include "edits/add_animation_hierarchy_child.hpp"
 #include "edits/delete_animation_hierarchy.hpp"
 #include "edits/delete_animation_hierarchy_child.hpp"
 #include "edits/set_value.hpp"
@@ -265,14 +266,19 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
             }
 
             ImGui::BeginDisabled(
-               not _animation_hierarchy_editor_config.new_child_object_name.empty() and
-               not has_child(*selected_hierarchy,
-                             _animation_hierarchy_editor_config.new_child_object_name));
+               _animation_hierarchy_editor_config.new_child_object_name.empty() or
+               has_child(*selected_hierarchy,
+                         _animation_hierarchy_editor_config.new_child_object_name));
 
             const float button_width =
                (ImGui::CalcItemWidth() - ImGui::GetStyle().ItemInnerSpacing.x) * 0.5f;
 
             if (ImGui::Button("Add Entry", {button_width, 0.0f})) {
+               _edit_stack_world.apply(edits::make_add_animation_hierarchy_child(
+                                          &selected_hierarchy->objects,
+                                          _animation_hierarchy_editor_config.new_child_object_name),
+                                       _edit_context);
+
                _animation_hierarchy_editor_config.new_child_object_name.clear();
             }
 

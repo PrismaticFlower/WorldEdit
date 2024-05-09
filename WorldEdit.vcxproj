@@ -229,6 +229,7 @@
     <ClCompile Include="src\edits\add_animation_group.cpp" />
     <ClCompile Include="src\edits\add_animation_group_entry.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy.cpp" />
+    <ClCompile Include="src\edits\add_animation_hierarchy_child.cpp" />
     <ClCompile Include="src\edits\add_game_mode.cpp" />
     <ClCompile Include="src\edits\add_layer.cpp" />
     <ClCompile Include="src\edits\add_property.cpp" />
@@ -490,6 +491,7 @@
     <ClInclude Include="src\edits\add_animation_group.hpp" />
     <ClInclude Include="src\edits\add_animation_group_entry.hpp" />
     <ClInclude Include="src\edits\add_animation_hierarchy.hpp" />
+    <ClInclude Include="src\edits\add_animation_hierarchy_child.hpp" />
     <ClInclude Include="src\edits\add_game_mode.hpp" />
     <ClInclude Include="src\edits\add_layer.hpp" />
     <ClInclude Include="src\edits\add_sector_object.hpp" />

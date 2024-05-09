@@ -228,6 +228,7 @@
     <ClCompile Include="src\container\slim_bitset_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_group_entry_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_group_tests.cpp" />
+    <ClCompile Include="src\edits\add_animation_hierarchy_child_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_tests.cpp" />
     <ClCompile Include="src\edits\add_game_mode_tests.cpp" />
