@@ -131,6 +131,7 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.measurement_tool"s, _measurement_tool_open);
    _commands.add("show.animation_editor"s, _animation_editor_open);
    _commands.add("show.animation_group_editor"s, _animation_group_editor_open);
+   _commands.add("show.animation_hierarchy_editor"s, _animation_hierarchy_editor_open);
 
    _commands.add("show.terrain_height_editor"s, [this] {
       _terrain_edit_tool = terrain_edit_tool::editor;
@@ -631,6 +632,14 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("animation_group.cancel_pick_object"s,
                  [this] { _animation_group_editor_context.pick_object = {}; });
+
+   _commands.add("animation_hierarchy.close"s,
+                 [this] { _animation_hierarchy_editor_open = false; });
+   _commands.add("animation_hierarchy.finish_pick_object"s, [this] {
+      _animation_hierarchy_editor_context.pick_object.finish = true;
+   });
+   _commands.add("animation_hierarchy.cancel_pick_object"s,
+                 [this] { _animation_hierarchy_editor_context.pick_object = {}; });
 }
 
 void world_edit::initialize_hotkeys() noexcept
@@ -752,6 +761,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Animation Group Editor",
            "show.animation_group_editor",
            {.key = key::f2, .modifiers = {.shift = true}}},
+          {"Show Animation Hierarchy Editor",
+           "show.animation_hierarchy_editor",
+           {.key = key::f3, .modifiers = {.shift = true}}},
 
           {"Show Floor Grid",
            "show.overlay_grid",
@@ -1206,6 +1218,33 @@ void world_edit::initialize_hotkeys() noexcept
           {
              {"Finish", "animation_group.finish_pick_object", {.key = key::mouse1}},
              {"Cancel", "animation_group.cancel_pick_object", {.key = key::escape}},
+          },
+
+       .hidden = true});
+
+   _hotkeys.add_set(
+      {.name = "Animation Hierarchy Editing",
+       .description = "Active while the animation hierarchy editor is open."s,
+       .activated = [this] { return _animation_hierarchy_editor_open; },
+       .default_hotkeys =
+          {
+             {"Close Editor", "animation_hierarchy.close", {.key = key::escape}},
+          },
+
+       .hidden = true});
+
+   _hotkeys.add_set(
+      {.name = "Animation Hierarchy Editing (Pick Object)",
+       .description = "Active while the animation hierarchy editor is open."s,
+       .activated =
+          [this] {
+             return _animation_hierarchy_editor_open and
+                    _animation_hierarchy_editor_context.pick_object.active;
+          },
+       .default_hotkeys =
+          {
+             {"Finish", "animation_hierarchy.finish_pick_object", {.key = key::mouse1}},
+             {"Cancel", "animation_hierarchy.cancel_pick_object", {.key = key::escape}},
           },
 
        .hidden = true});

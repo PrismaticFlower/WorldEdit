@@ -184,6 +184,11 @@ void world_edit::ui_show_main_menu_bar() noexcept
                             "Global", "Show Animation Group Editor")),
                          &_animation_group_editor_open);
 
+         ImGui::MenuItem("Animation Hierarchy Editor",
+                         get_display_string(_hotkeys.query_binding(
+                            "Global", "Show Animation Hierarchy Editor")),
+                         &_animation_hierarchy_editor_open);
+
          ImGui::Separator();
 
          ImGui::MenuItem("Measurement Tool",

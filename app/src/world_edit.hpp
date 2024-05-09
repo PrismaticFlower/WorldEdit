@@ -239,6 +239,8 @@ private:
 
    void ui_show_animation_group_editor() noexcept;
 
+   void ui_show_animation_hierarchy_editor() noexcept;
+
    void ui_draw_select_box() noexcept;
 
    void setup_orbit_camera() noexcept;
@@ -403,6 +405,7 @@ private:
    bool _measurement_tool_open = false;
    bool _animation_editor_open = false;
    bool _animation_group_editor_open = false;
+   bool _animation_hierarchy_editor_open = false;
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
@@ -735,6 +738,25 @@ private:
          bool finish = false;
       } pick_object;
    } _animation_group_editor_context;
+
+   struct animation_hierarchy_editor_config {
+      std::string new_root_object_name;
+      std::string new_child_object_name;
+   } _animation_hierarchy_editor_config;
+
+   struct animation_hierarchy_editor_context {
+      struct selected {
+         world::animation_hierarchy_id id = world::max_id;
+      } selected;
+
+      struct pick_object {
+         enum class target : uint8 { root, child };
+
+         target target = target::root;
+         bool active = false;
+         bool finish = false;
+      } pick_object;
+   } _animation_hierarchy_editor_context;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;

@@ -43,6 +43,7 @@
     <ClCompile Include="src\world_edit_ui_world_selection_pick_sector.cpp" />
     <ClCompile Include="src\world_edit_ui_animation_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_animation_group_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_animation_hierarchy_editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />
