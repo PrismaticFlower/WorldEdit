@@ -10,7 +10,7 @@ struct delete_animation_hierarchy_child final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) noexcept override
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(children));
       assert(index < children->size());
@@ -20,7 +20,7 @@ struct delete_animation_hierarchy_child final : edit<world::edit_context> {
       children->erase(children->begin() + index);
    }
 
-   void revert(world::edit_context& context) noexcept override
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(children));
       assert(index <= children->size());

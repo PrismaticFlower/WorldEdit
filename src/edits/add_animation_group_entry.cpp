@@ -11,14 +11,14 @@ struct add_animation_group_entry final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) noexcept override
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(entries));
 
       entries->push_back(std::move(new_entry));
    }
 
-   void revert(world::edit_context& context) noexcept override
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(entries));
 

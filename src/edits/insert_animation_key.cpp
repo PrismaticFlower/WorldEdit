@@ -11,7 +11,7 @@ struct insert_animation_key final : edit<world::edit_context> {
    {
    }
 
-   void apply(world::edit_context& context) noexcept override
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(keys));
       assert(insert_before_index <= keys->size());
@@ -19,7 +19,7 @@ struct insert_animation_key final : edit<world::edit_context> {
       keys->insert(keys->begin() + insert_before_index, key);
    }
 
-   void revert(world::edit_context& context) noexcept override
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(keys));
       assert(insert_before_index < keys->size());

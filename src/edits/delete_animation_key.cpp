@@ -12,7 +12,7 @@ struct delete_animation_key final : edit<world::edit_context> {
       assert(index < keys->size());
    }
 
-   void apply(world::edit_context& context) noexcept override
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(keys));
       assert(index < keys->size());
@@ -20,7 +20,7 @@ struct delete_animation_key final : edit<world::edit_context> {
       keys->erase(keys->begin() + index);
    }
 
-   void revert(world::edit_context& context) noexcept override
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
    {
       assert(context.is_memory_valid(keys));
       assert(index <= keys->size());
