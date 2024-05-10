@@ -173,21 +173,26 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::Separator();
 
-         ImGui::MenuItem("Animation Editor",
-                         get_display_string(
-                            _hotkeys.query_binding("Global",
-                                                   "Show Animation Editor")),
-                         &_animation_editor_open);
+         if (ImGui::MenuItem("Animation Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Editor")),
+                             _animation_editor_open)) {
+            _animation_editor_open = not _animation_editor_open;
+            _animation_editor_context = {};
+         }
 
-         ImGui::MenuItem("Animation Group Editor",
-                         get_display_string(_hotkeys.query_binding(
-                            "Global", "Show Animation Group Editor")),
-                         &_animation_group_editor_open);
+         if (ImGui::MenuItem("Animation Group Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Group Editor")),
+                             _animation_group_editor_open)) {
+            _animation_group_editor_open = not _animation_group_editor_open;
+            _animation_group_editor_context = {};
+         }
 
-         ImGui::MenuItem("Animation Hierarchy Editor",
-                         get_display_string(_hotkeys.query_binding(
-                            "Global", "Show Animation Hierarchy Editor")),
-                         &_animation_hierarchy_editor_open);
+         if (ImGui::MenuItem("Animation Hierarchy Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Hierarchy Editor")),
+                             _animation_hierarchy_editor_open)) {
+            _animation_hierarchy_editor_open = not _animation_hierarchy_editor_open;
+            _animation_hierarchy_editor_context = {};
+         }
 
          ImGui::Separator();
 

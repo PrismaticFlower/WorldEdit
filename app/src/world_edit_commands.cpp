@@ -129,9 +129,18 @@ void world_edit::initialize_commands() noexcept
    _commands.add("show.object_class_browser"s, _object_class_browser_open);
    _commands.add("show.env_map_renderer"s, _render_env_map_open);
    _commands.add("show.measurement_tool"s, _measurement_tool_open);
-   _commands.add("show.animation_editor"s, _animation_editor_open);
-   _commands.add("show.animation_group_editor"s, _animation_group_editor_open);
-   _commands.add("show.animation_hierarchy_editor"s, _animation_hierarchy_editor_open);
+   _commands.add("show.animation_editor"s, [this] {
+      _animation_editor_open = not _animation_editor_open;
+      _animation_editor_context = {};
+   });
+   _commands.add("show.animation_group_editor"s, [this] {
+      _animation_group_editor_open = not _animation_group_editor_open;
+      _animation_group_editor_context = {};
+   });
+   _commands.add("show.animation_hierarchy_editor"s, [this] {
+      _animation_hierarchy_editor_open = not _animation_hierarchy_editor_open;
+      _animation_hierarchy_editor_context = {};
+   });
 
    _commands.add("show.terrain_height_editor"s, [this] {
       _terrain_edit_tool = terrain_edit_tool::editor;
