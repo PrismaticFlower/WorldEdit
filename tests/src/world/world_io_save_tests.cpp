@@ -1064,6 +1064,32 @@ TEST_CASE("world saving", "[World][IO]")
                            .tangent_next = float3{-0.0f, 0.0f, 10.0f},
                         },
                      },
+
+                  .rotation_keys =
+                     {
+                        rotation_key{
+                           .time = 0.0f,
+                           .rotation = float3{0.00f, -0.00f, -0.00f},
+                           .transition = animation_transition::linear,
+                           .tangent = float3{0.00f, -0.00f, -0.00f},
+                           .tangent_next = float3{0.00f, -0.00f, -0.00f},
+                        },
+                        rotation_key{
+                           .time = 5.0f,
+                           .rotation = float3{0.00f, -45.00f, -0.00f},
+                           .transition = animation_transition::spline,
+                           .tangent = float3{35.00f, -0.00f, -0.00f},
+                           .tangent_next = float3{0.00f, -0.00f, -35.00f},
+                        },
+                        rotation_key{
+                           .time = 7.5f,
+                           .rotation = float3{0.00, -90.00, -0.00},
+                           .transition = animation_transition::pop,
+                           .tangent = float3{0.00f, -0.00f, -0.00f},
+                           .tangent_next = float3{0.00f, -0.00f, -0.00f},
+                        },
+
+                     },
                },
             },
          },
@@ -1134,6 +1160,10 @@ TEST_CASE("world saving", "[World][IO]")
    const auto written_msr = io::read_file_to_string(L"temp/world/test.msr");
 
    CHECK(written_msr == expected_msr);
+
+   const auto written_anm = io::read_file_to_string(L"temp/world/test.anm");
+
+   CHECK(written_anm == expected_anm);
 
    const auto written_ldx = io::read_file_to_string(L"temp/world/test.ldx");
 

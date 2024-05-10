@@ -720,7 +720,8 @@ void save_animations(const std::filesystem::path& path, const world& world)
 
    for (auto& animation : world.animations) {
       file.write_ln("Animation(\"{}\", {:.2f}, {}, {})", animation.name,
-                    animation.runtime, animation.loop, animation.local_translation);
+                    animation.runtime, animation.loop ? "1" : "0",
+                    animation.local_translation ? "1" : "0");
       file.write_ln("{");
 
       for (auto& key : animation.position_keys) {
@@ -746,8 +747,8 @@ void save_animations(const std::filesystem::path& path, const world& world)
 
    for (auto& group : world.animation_groups) {
       file.write_ln("AnimationGroup(\"{}\", {}, {})", group.name,
-                    group.play_when_level_begins,
-                    group.stops_when_object_is_controlled);
+                    group.play_when_level_begins ? "1" : "0",
+                    group.stops_when_object_is_controlled ? "1" : "0");
       file.write_ln("{");
 
       if (group.disable_hierarchies) {
@@ -796,6 +797,7 @@ void save_layer(const std::filesystem::path& world_dir,
       save_planning(world_dir / layer_name += L".pln"sv, world);
       save_portals_sectors(world_dir / layer_name += L".pvs"sv, world);
       save_measurements(world_dir / layer_name += L".msr"sv, world);
+      save_animations(world_dir / layer_name += L".anm"sv, world);
    }
 }
 
