@@ -26,6 +26,7 @@ auto read_file_impl(const std::filesystem::path& path) -> Out
          std::system_category().default_error_condition(system_error).message())};
    }
 
+   // TODO: Use GetFileSizeEx
    const std::size_t file_size = std::filesystem::file_size(path.c_str());
 
    [[unlikely]] if (file_size > std::numeric_limits<DWORD>::max()) {
@@ -66,15 +67,6 @@ auto read_file_to_chars(const std::filesystem::path& path) -> std::vector<char>
 auto read_file_to_string(const std::filesystem::path& path) -> std::string
 {
    return read_file_impl<std::string>(path);
-}
-
-bool is_readable(const std::filesystem::path& path) noexcept
-{
-   wil::unique_hfile file{CreateFileW(path.c_str(), GENERIC_READ,
-                                      FILE_SHARE_READ, nullptr, OPEN_EXISTING,
-                                      FILE_ATTRIBUTE_NORMAL, nullptr)};
-
-   return file ? true : false;
 }
 
 }
