@@ -26,6 +26,13 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
                }
             }
          }
+
+         if (ImGui::Selectable("<clear>")) {
+            _edit_stack_world.apply(edits::make_set_memory_value(global_light,
+                                                                 std::string{""}),
+                                    _edit_context, {.closed = true});
+         }
+
          ImGui::EndCombo();
       }
    };
