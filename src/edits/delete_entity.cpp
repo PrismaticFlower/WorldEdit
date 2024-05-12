@@ -25,6 +25,7 @@ auto get_entity_index(const pinned_vector<Type>& entities,
 struct unlinked_object_property {
    uint32 object_index = 0;
    uint32 property_index = 0;
+   std::string value;
 };
 
 struct delete_object final : edit<world::edit_context> {
@@ -196,10 +197,11 @@ struct delete_path final : edit<world::edit_context> {
    {
       context.world.paths.erase(context.world.paths.begin() + _path_index);
 
-      for (const auto& unlinked : _unlinked_object_properties) {
-         context.world.objects[unlinked.object_index]
-            .instance_properties[unlinked.property_index]
-            .value = "";
+      for (unlinked_object_property& unlinked : _unlinked_object_properties) {
+         std::swap(context.world.objects[unlinked.object_index]
+                      .instance_properties[unlinked.property_index]
+                      .value,
+                   unlinked.value);
       }
    }
 
@@ -207,10 +209,11 @@ struct delete_path final : edit<world::edit_context> {
    {
       context.world.paths.insert(context.world.paths.begin() + _path_index, _path);
 
-      for (const auto& unlinked : _unlinked_object_properties) {
-         context.world.objects[unlinked.object_index]
-            .instance_properties[unlinked.property_index]
-            .value = _path.name;
+      for (unlinked_object_property& unlinked : _unlinked_object_properties) {
+         std::swap(context.world.objects[unlinked.object_index]
+                      .instance_properties[unlinked.property_index]
+                      .value,
+                   unlinked.value);
       }
    }
 
@@ -224,7 +227,7 @@ struct delete_path final : edit<world::edit_context> {
 private:
    const world::path _path;
    const uint32 _path_index;
-   const std::vector<unlinked_object_property> _unlinked_object_properties;
+   std::vector<unlinked_object_property> _unlinked_object_properties;
 };
 
 struct delete_region final : edit<world::edit_context> {
@@ -240,10 +243,11 @@ struct delete_region final : edit<world::edit_context> {
    {
       context.world.regions.erase(context.world.regions.begin() + _region_index);
 
-      for (const auto& unlinked : _unlinked_object_properties) {
-         context.world.objects[unlinked.object_index]
-            .instance_properties[unlinked.property_index]
-            .value = "";
+      for (unlinked_object_property& unlinked : _unlinked_object_properties) {
+         std::swap(context.world.objects[unlinked.object_index]
+                      .instance_properties[unlinked.property_index]
+                      .value,
+                   unlinked.value);
       }
    }
 
@@ -252,10 +256,11 @@ struct delete_region final : edit<world::edit_context> {
       context.world.regions.insert(context.world.regions.begin() + _region_index,
                                    _region);
 
-      for (const auto& unlinked : _unlinked_object_properties) {
-         context.world.objects[unlinked.object_index]
-            .instance_properties[unlinked.property_index]
-            .value = _region.description;
+      for (unlinked_object_property& unlinked : _unlinked_object_properties) {
+         std::swap(context.world.objects[unlinked.object_index]
+                      .instance_properties[unlinked.property_index]
+                      .value,
+                   unlinked.value);
       }
    }
 
@@ -269,7 +274,7 @@ struct delete_region final : edit<world::edit_context> {
 private:
    const world::region _region;
    const uint32 _region_index;
-   const std::vector<unlinked_object_property> _unlinked_object_properties;
+   std::vector<unlinked_object_property> _unlinked_object_properties;
 };
 
 struct delete_sector final : edit<world::edit_context> {
