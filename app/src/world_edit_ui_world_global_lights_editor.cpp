@@ -1,3 +1,4 @@
+#include "world/utility/world_utilities.hpp"
 #include "world_edit.hpp"
 
 #include "edits/set_value.hpp"
@@ -34,6 +35,17 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
          }
 
          ImGui::EndCombo();
+      }
+
+      if (ImGui::IsItemHovered() and
+          ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+         const world::light* light = world::find_entity(_world.lights, *global_light);
+
+         if (light) {
+            _interaction_targets.selection.add(light->id);
+
+            ImGui::SetWindowFocus("Selection");
+         }
       }
    };
 
