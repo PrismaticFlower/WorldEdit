@@ -29,30 +29,32 @@ struct unlinked_object_property {
 };
 
 struct delete_object final : edit<world::edit_context> {
-   struct path_property_ref {
+   struct unlinked_path_property {
       uint32 path_index = 0;
       uint32 property_index = 0;
-      constexpr static std::string_view property_name = "EnableObject";
+      world::path::property value;
    };
 
-   struct sector_entry_ref {
+   struct unlinked_sector_entry {
       uint32 sector_index = 0;
       uint32 entry_index = 0;
+      std::string entry;
    };
 
-   struct hintnode_ref {
+   struct unlinked_hintnode {
       uint32 hintnode_index = 0;
+      std::string value;
    };
 
    delete_object(world::object object, uint32 object_index,
-                 std::vector<path_property_ref> path_property_refs,
-                 std::vector<sector_entry_ref> sector_entry_refs,
-                 std::vector<hintnode_ref> hintnode_refs)
+                 std::vector<unlinked_path_property> unlinked_path_properties,
+                 std::vector<unlinked_sector_entry> unlinked_sector_entries,
+                 std::vector<unlinked_hintnode> unlinked_hintnodes)
       : _object{std::move(object)},
         _object_index{object_index},
-        _path_property_refs{std::move(path_property_refs)},
-        _sector_entry_refs{std::move(sector_entry_refs)},
-        _hintnode_refs{std::move(hintnode_refs)}
+        _unlinked_path_properties{std::move(unlinked_path_properties)},
+        _unlinked_sector_entries{std::move(unlinked_sector_entries)},
+        _unlinked_hintnodes{std::move(unlinked_hintnodes)}
    {
    }
 
@@ -60,21 +62,27 @@ struct delete_object final : edit<world::edit_context> {
    {
       context.world.objects.erase(context.world.objects.begin() + _object_index);
 
-      for (const auto& [path_index, property_index] : _path_property_refs) {
+      for (unlinked_path_property& unlinked : _unlinked_path_properties) {
          std::vector<world::path::property>& properties =
-            context.world.paths[path_index].properties;
+            context.world.paths[unlinked.path_index].properties;
 
-         properties.erase(properties.begin() + property_index);
+         std::swap(properties[unlinked.property_index], unlinked.value);
+
+         properties.erase(properties.begin() + unlinked.property_index);
       }
 
-      for (const auto& [sector_index, entry_index] : _sector_entry_refs) {
-         std::vector<std::string>& objects = context.world.sectors[sector_index].objects;
+      for (unlinked_sector_entry& unlinked : _unlinked_sector_entries) {
+         std::vector<std::string>& objects =
+            context.world.sectors[unlinked.sector_index].objects;
 
-         objects.erase(objects.begin() + entry_index);
+         std::swap(objects[unlinked.entry_index], unlinked.entry);
+
+         objects.erase(objects.begin() + unlinked.entry_index);
       }
 
-      for (const auto& [hintnode_index] : _hintnode_refs) {
-         context.world.hintnodes[hintnode_index].command_post = "";
+      for (unlinked_hintnode& unlinked : _unlinked_hintnodes) {
+         std::swap(context.world.hintnodes[unlinked.hintnode_index].command_post,
+                   unlinked.value);
       }
    }
 
@@ -83,23 +91,25 @@ struct delete_object final : edit<world::edit_context> {
       context.world.objects.insert(context.world.objects.begin() + _object_index,
                                    _object);
 
-      for (const auto& [path_index, property_index] : _path_property_refs) {
+      for (unlinked_path_property& unlinked : _unlinked_path_properties) {
          std::vector<world::path::property>& properties =
-            context.world.paths[path_index].properties;
+            context.world.paths[unlinked.path_index].properties;
 
-         properties.emplace(properties.begin() + property_index,
-                            std::string{path_property_ref::property_name},
-                            _object.name);
+         properties.emplace(properties.begin() + unlinked.property_index,
+                            std::move(unlinked.value));
       }
 
-      for (const auto& [sector_index, entry_index] : _sector_entry_refs) {
-         std::vector<std::string>& objects = context.world.sectors[sector_index].objects;
+      for (unlinked_sector_entry& unlinked : _unlinked_sector_entries) {
+         std::vector<std::string>& objects =
+            context.world.sectors[unlinked.sector_index].objects;
 
-         objects.insert(objects.begin() + entry_index, _object.name);
+         objects.insert(objects.begin() + unlinked.entry_index,
+                        std::move(unlinked.entry));
       }
 
-      for (const auto& [hintnode_index] : _hintnode_refs) {
-         context.world.hintnodes[hintnode_index].command_post = _object.name;
+      for (unlinked_hintnode& unlinked : _unlinked_hintnodes) {
+         std::swap(context.world.hintnodes[unlinked.hintnode_index].command_post,
+                   unlinked.value);
       }
    }
 
@@ -113,9 +123,9 @@ struct delete_object final : edit<world::edit_context> {
 private:
    const world::object _object;
    const uint32 _object_index;
-   const std::vector<path_property_ref> _path_property_refs;
-   const std::vector<sector_entry_ref> _sector_entry_refs;
-   const std::vector<hintnode_ref> _hintnode_refs;
+   std::vector<unlinked_path_property> _unlinked_path_properties;
+   std::vector<unlinked_sector_entry> _unlinked_sector_entries;
+   std::vector<unlinked_hintnode> _unlinked_hintnodes;
 };
 
 template<typename T>
@@ -430,9 +440,9 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
       if (iequals(hintnode.command_post, object.name)) hintnode_count += 1;
    }
 
-   std::vector<delete_object::path_property_ref> path_property_refs;
-   std::vector<delete_object::sector_entry_ref> sector_entry_refs;
-   std::vector<delete_object::hintnode_ref> hintnode_refs;
+   std::vector<delete_object::unlinked_path_property> path_property_refs;
+   std::vector<delete_object::unlinked_sector_entry> sector_entry_refs;
+   std::vector<delete_object::unlinked_hintnode> hintnode_refs;
 
    path_property_refs.reserve(path_property_count);
    sector_entry_refs.reserve(sector_entry_count);
