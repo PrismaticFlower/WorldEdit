@@ -5,6 +5,8 @@
 
 #include <vector>
 
+using we::string::iequals;
+
 namespace we::edits {
 
 namespace {
@@ -407,7 +409,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
 
    for (const auto& path : world.paths) {
       for (const auto& [key, value] : path.properties) {
-         if (key == "EnableObject" and value == object.name) {
+         if (iequals(key, "EnableObject") and iequals(value, object.name)) {
             path_property_count += 1;
          }
       }
@@ -415,12 +417,12 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
 
    for (const auto& sector : world.sectors) {
       for (const auto& entry : sector.objects) {
-         if (entry == object.name) sector_entry_count += 1;
+         if (iequals(entry, object.name)) sector_entry_count += 1;
       }
    }
 
    for (const auto& hintnode : world.hintnodes) {
-      if (hintnode.command_post == object.name) hintnode_count += 1;
+      if (iequals(hintnode.command_post, object.name)) hintnode_count += 1;
    }
 
    std::vector<delete_object::path_property_ref> path_property_refs;
@@ -440,7 +442,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
            ++property_index) {
          const auto& [key, value] = path.properties[property_index];
 
-         if (key == "EnableObject" and value == object.name) {
+         if (iequals(key, "EnableObject") and iequals(value, object.name)) {
             path_property_refs.emplace_back(path_index, property_index - delete_offset);
 
             delete_offset += 1;
@@ -454,7 +456,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
       uint32 delete_offset = 0;
 
       for (uint32 entry_index = 0; entry_index < sector.objects.size(); ++entry_index) {
-         if (sector.objects[entry_index] == object.name) {
+         if (iequals(sector.objects[entry_index], object.name)) {
             sector_entry_refs.emplace_back(sector_index, entry_index - delete_offset);
 
             delete_offset += 1;
@@ -466,7 +468,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
         ++hintnode_index) {
       const world::hintnode& hintnode = world.hintnodes[hintnode_index];
 
-      if (hintnode.command_post == object.name) {
+      if (iequals(hintnode.command_post, object.name)) {
          hintnode_refs.emplace_back(hintnode_index);
       }
    }
@@ -500,9 +502,9 @@ auto make_delete_entity(world::path_id path_id, uint32 node, const world::world&
 
    for (const auto& object : world.objects) {
       for (const auto& [key, value] : object.instance_properties) {
-         if (string::iequals(key, "SpawnPath") or string::iequals(key, "AllyPath") or
-             string::iequals(key, "TurretPath")) {
-            if (value == path.name) {
+         if (iequals(key, "SpawnPath") or iequals(key, "AllyPath") or
+             iequals(key, "TurretPath")) {
+            if (iequals(value, path.name)) {
                unlinked_object_property_count += 1;
             }
          }
@@ -520,9 +522,9 @@ auto make_delete_entity(world::path_id path_id, uint32 node, const world::world&
            property_index < object.instance_properties.size(); ++property_index) {
          const auto& [key, value] = object.instance_properties[property_index];
 
-         if (string::iequals(key, "SpawnPath") or string::iequals(key, "AllyPath") or
-             string::iequals(key, "TurretPath")) {
-            if (value == path.name) {
+         if (iequals(key, "SpawnPath") or iequals(key, "AllyPath") or
+             iequals(key, "TurretPath")) {
+            if (iequals(value, path.name)) {
                unlinked_object_properties.emplace_back(object_index, property_index);
             }
          }
@@ -543,12 +545,10 @@ auto make_delete_entity(world::region_id region_id, const world::world& world)
 
    for (const auto& object : world.objects) {
       for (const auto& [key, value] : object.instance_properties) {
-         if (string::iequals(key, "CaptureRegion") or
-             string::iequals(key, "ControlRegion") or
-             string::iequals(key, "EffectRegion") or
-             string::iequals(key, "KillRegion") or
-             string::iequals(key, "SpawnRegion")) {
-            if (value == region.description) {
+         if (iequals(key, "CaptureRegion") or iequals(key, "ControlRegion") or
+             iequals(key, "EffectRegion") or iequals(key, "KillRegion") or
+             iequals(key, "SpawnRegion")) {
+            if (iequals(value, region.description)) {
                unlinked_object_property_count += 1;
             }
          }
@@ -566,12 +566,10 @@ auto make_delete_entity(world::region_id region_id, const world::world& world)
            property_index < object.instance_properties.size(); ++property_index) {
          const auto& [key, value] = object.instance_properties[property_index];
 
-         if (string::iequals(key, "CaptureRegion") or
-             string::iequals(key, "ControlRegion") or
-             string::iequals(key, "EffectRegion") or
-             string::iequals(key, "KillRegion") or
-             string::iequals(key, "SpawnRegion")) {
-            if (value == region.name) {
+         if (iequals(key, "CaptureRegion") or iequals(key, "ControlRegion") or
+             iequals(key, "EffectRegion") or iequals(key, "KillRegion") or
+             iequals(key, "SpawnRegion")) {
+            if (iequals(value, region.name)) {
                unlinked_object_properties.emplace_back(object_index, property_index);
             }
          }
@@ -591,7 +589,7 @@ auto make_delete_entity(world::sector_id sector_id, const world::world& world)
    uint32 unlinked_portal_count = 0;
 
    for (const auto& portal : world.portals) {
-      if (portal.sector1 == sector.name or portal.sector2 == sector.name) {
+      if (iequals(portal.sector1, sector.name) or iequals(portal.sector2, sector.name)) {
          unlinked_portal_count += 1;
       }
    }
@@ -603,9 +601,10 @@ auto make_delete_entity(world::sector_id sector_id, const world::world& world)
    for (uint32 portal_index = 0; portal_index < world.portals.size(); ++portal_index) {
       const world::portal& portal = world.portals[portal_index];
 
-      if (portal.sector1 == sector.name or portal.sector2 == sector.name) {
-         unlinked_portals.emplace_back(portal_index, portal.sector1 == sector.name,
-                                       portal.sector2 == sector.name);
+      if (iequals(portal.sector1, sector.name) or iequals(portal.sector2, sector.name)) {
+         unlinked_portals.emplace_back(portal_index,
+                                       iequals(portal.sector1, sector.name),
+                                       iequals(portal.sector2, sector.name));
       }
    }
 
