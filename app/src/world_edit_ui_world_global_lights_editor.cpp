@@ -1,3 +1,4 @@
+#include "utility/string_icompare.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world_edit.hpp"
 
@@ -16,15 +17,21 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
    ImGui::Begin("Global Lights", &_world_global_lights_editor_open,
                 ImGuiWindowFlags_AlwaysAutoResize);
 
-   const auto global_light_editor = [&](const char* label, std::string* global_light) {
+   const auto global_light_editor = [&](const char* label, std::string* global_light,
+                                        std::string_view ignored_light) {
       if (ImGui::BeginCombo(label, global_light->c_str())) {
          for (const auto& light : _world.lights) {
             if (light.light_type == world::light_type::directional) {
-               if (ImGui::Selectable(light.name.c_str())) {
+               ImGui::BeginDisabled(string::iequals(light.name, ignored_light));
+
+               if (ImGui::Selectable(light.name.c_str(),
+                                     string::iequals(*global_light, light.name))) {
                   _edit_stack_world.apply(edits::make_set_memory_value(global_light,
                                                                        light.name),
                                           _edit_context, {.closed = true});
                }
+
+               ImGui::EndDisabled();
             }
          }
 
@@ -49,8 +56,10 @@ void world_edit::ui_show_world_global_lights_editor() noexcept
       }
    };
 
-   global_light_editor("Global Light 1", &_world.global_lights.global_light_1);
-   global_light_editor("Global Light 2", &_world.global_lights.global_light_2);
+   global_light_editor("Global Light 1", &_world.global_lights.global_light_1,
+                       _world.global_lights.global_light_2);
+   global_light_editor("Global Light 2", &_world.global_lights.global_light_2,
+                       _world.global_lights.global_light_1);
 
    const auto ambient_editor = [&](const char* label, float3* ambient_color) {
       if (float3 color = *ambient_color; ImGui::ColorEdit3(label, &color.x)) {
