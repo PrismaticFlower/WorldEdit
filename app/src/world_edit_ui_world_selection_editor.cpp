@@ -365,8 +365,63 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 });
                ImGui::DragQuat("Region Rotation", &light->region_rotation,
                                _edit_stack_world, _edit_context);
-               ImGui::DragFloat3("Region Size", &light->region_size,
-                                 _edit_stack_world, _edit_context);
+
+               switch (light->light_type) {
+               case world::light_type::directional_region_box: {
+                  ImGui::DragFloat3("Region Size", &light->region_size, _edit_stack_world,
+                                    _edit_context, 1.0f, 0.0f, 1e10f);
+               } break;
+               case world::light_type::directional_region_sphere: {
+                  float radius = length(light->region_size);
+
+                  if (ImGui::DragFloat("Region Radius", &radius, 0.1f)) {
+
+                     const float radius_sq = radius * radius;
+                     const float size = std::sqrt(radius_sq / 3.0f);
+
+                     _edit_stack_world.apply(edits::make_set_value(&light->region_size,
+                                                                   {size, size, size}),
+                                             _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+
+               } break;
+               case world::light_type::directional_region_cylinder: {
+
+                  if (float height = light->region_size.y * 2.0f;
+                      ImGui::DragFloat("Region Height", &height, 0.1f, 0.0f, 1e10f)) {
+                     _edit_stack_world
+                        .apply(edits::make_set_value(&light->region_size,
+                                                     float3{light->region_size.x,
+                                                            height / 2.0f,
+                                                            light->region_size.z}),
+                               _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+
+                  if (float radius =
+                         length(float2{light->region_size.x, light->region_size.z});
+                      ImGui::DragFloat("Region Radius", &radius, 0.1f, 0.0f, 1e10f)) {
+                     const float radius_sq = radius * radius;
+                     const float size = std::sqrt(radius_sq / 2.0f);
+
+                     _edit_stack_world.apply(
+                        edits::make_set_value(&light->region_size,
+                                              float3{size, light->region_size.y, size}),
+                        _edit_context);
+                  }
+
+                  if (ImGui::IsItemDeactivated()) {
+                     _edit_stack_world.close_last();
+                  }
+               } break;
+               }
             }
          }
          else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
