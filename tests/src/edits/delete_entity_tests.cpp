@@ -390,55 +390,69 @@ TEST_CASE("edits delete_entity measurement", "[Edits]")
 
 TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
 {
-   const we::world::world multi_ref_test_world =
-      {
-         .objects =
-            {
-               world::entities_init,
-               std::initializer_list{
-                  world::object{.name = "test_object"s, .id = world::object_id{1}},
-                  world::object{.name = "other_object"s, .id = world::object_id{1}},
+   world::world world = {
+      .name = "Test"s,
+
+      .requirements = {{.file_type = "world", .entries = {"Test"}}},
+
+      .layer_descriptions = {{.name = "[Base]"s}},
+      .game_modes = {{.name = "Common"s, .layers = {0}}},
+
+      .terrain = {},
+      .global_lights = {.env_map_texture = "sky"},
+
+      .objects =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::object{
+                  .name = "test_object"s,
+
+                  .id = world::object_id{0},
+               },
+               world::object{
+                  .name = "other_object"s,
+
+                  .id = world::object_id{1},
                },
             },
+         },
 
-         .paths =
-            {
-               world::entities_init,
-               std::initializer_list{
-                  world::path{
-                     .name = "test_path"s,
+      .paths =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::path{
+                  .name = "test_path"s,
 
-                     .properties = {{.key = "Key"s, .value = "Value"s},
-                                    {.key = "EnableObject"s, .value = "test_object"s},
-                                    {.key = "EnableObject"s, .value = "test_object"s},
-                                    {.key = "Key"s, .value = "Value"s}},
-                     .nodes =
-                        {
-                           {
-                              .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
-                              .position = {0.0f, 0.0f, 0.0f},
-                           }},
-                  },
+                  .properties =
+                     {
+                        {.key = "Key"s, .value = "Value"s},
+                        {.key = "EnableObject"s, .value = "test_object"s},
+                        {.key = "Key"s, .value = "Value"s},
+                        {.key = "EnableObject"s, .value = "test_object"s},
+                        {.key = "EnableObject"s, .value = "test_object"s},
+                     },
                },
             },
+         },
 
-         .sectors =
-            {
-               world::entities_init,
-               std::initializer_list{
-                  world::sector{
-                     .name = "test_sector"s,
+      .sectors =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::sector{
+                  .name = "test_sector"s,
 
-                     .base = 0.0f,
-                     .height = 0.0f,
-                     .points = {{0.0f, 0.0f}, {0.0f, 10.0f}, {10.0f, 10.0f}, {10.0f, 0.0f}},
-                     .objects = {"other_object"s, "test_object"s, "test_object"s},
-                  },
+                  .base = 0.0f,
+                  .height = 0.0f,
+                  .points = {{0.0f, 0.0f}, {0.0f, 10.0f}, {10.0f, 10.0f}, {10.0f, 0.0f}},
+                  .objects = {"other_object"s, "test_object"s, "other_object"s, "test_object"s},
                },
             },
-      };
+         },
+   };
 
-   world::world world = multi_ref_test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
 
@@ -446,25 +460,35 @@ TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
 
    edit->apply(edit_context);
 
-   REQUIRE(world.objects.size() == 1);
-   REQUIRE(world.objects[0].name == "other_object");
-
    REQUIRE(world.paths[0].properties.size() == 2);
-   REQUIRE(world.paths[0].properties[0] ==
-           multi_ref_test_world.paths[0].properties[0]);
-   REQUIRE(world.paths[0].properties[0] ==
-           multi_ref_test_world.paths[0].properties[3]);
+   CHECK(world.paths[0].properties[0] ==
+         world::path::property{.key = "Key"s, .value = "Value"s});
+   CHECK(world.paths[0].properties[1] ==
+         world::path::property{.key = "Key"s, .value = "Value"s});
 
-   REQUIRE(world.sectors[0].objects.size() == 1);
-   REQUIRE(world.sectors[0].objects[0] == multi_ref_test_world.sectors[0].objects[0]);
+   REQUIRE(world.sectors[0].objects.size() == 2);
+   CHECK(world.sectors[0].objects[0] == "other_object");
+   CHECK(world.sectors[0].objects[1] == "other_object");
 
    edit->revert(edit_context);
 
-   REQUIRE(world.objects.size() == 2);
-   REQUIRE(world.objects[0] == multi_ref_test_world.objects[0]);
-   REQUIRE(world.objects[1] == multi_ref_test_world.objects[1]);
+   REQUIRE(world.paths[0].properties.size() == 5);
+   CHECK(world.paths[0].properties[0] ==
+         world::path::property{.key = "Key"s, .value = "Value"s});
+   CHECK(world.paths[0].properties[1] ==
+         world::path::property{.key = "EnableObject"s, .value = "test_object"s});
+   CHECK(world.paths[0].properties[2] ==
+         world::path::property{.key = "Key"s, .value = "Value"s});
+   CHECK(world.paths[0].properties[3] ==
+         world::path::property{.key = "EnableObject"s, .value = "test_object"s});
+   CHECK(world.paths[0].properties[4] ==
+         world::path::property{.key = "EnableObject"s, .value = "test_object"s});
 
-   REQUIRE(world.paths[0].properties == multi_ref_test_world.paths[0].properties);
-   REQUIRE(world.sectors[0].objects == multi_ref_test_world.sectors[0].objects);
+   REQUIRE(world.sectors[0].objects.size() == 4);
+   CHECK(world.sectors[0].objects[0] == "other_object");
+   CHECK(world.sectors[0].objects[1] == "test_object");
+   CHECK(world.sectors[0].objects[2] == "other_object");
+   CHECK(world.sectors[0].objects[3] == "test_object");
 }
+
 }

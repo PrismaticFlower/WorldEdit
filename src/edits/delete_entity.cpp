@@ -91,7 +91,10 @@ struct delete_object final : edit<world::edit_context> {
       context.world.objects.insert(context.world.objects.begin() + _object_index,
                                    _object);
 
-      for (unlinked_path_property& unlinked : _unlinked_path_properties) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_path_properties) - 1);
+           i >= 0; --i) {
+         unlinked_path_property& unlinked = _unlinked_path_properties[i];
+
          std::vector<world::path::property>& properties =
             context.world.paths[unlinked.path_index].properties;
 
@@ -99,7 +102,9 @@ struct delete_object final : edit<world::edit_context> {
                             std::move(unlinked.value));
       }
 
-      for (unlinked_sector_entry& unlinked : _unlinked_sector_entries) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_sector_entries) - 1); i >= 0; --i) {
+         unlinked_sector_entry& unlinked = _unlinked_sector_entries[i];
+
          std::vector<std::string>& objects =
             context.world.sectors[unlinked.sector_index].objects;
 
@@ -107,7 +112,9 @@ struct delete_object final : edit<world::edit_context> {
                         std::move(unlinked.entry));
       }
 
-      for (unlinked_hintnode& unlinked : _unlinked_hintnodes) {
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_hintnodes) - 1); i >= 0; --i) {
+         unlinked_hintnode& unlinked = _unlinked_hintnodes[i];
+
          std::swap(context.world.hintnodes[unlinked.hintnode_index].command_post,
                    unlinked.value);
       }
