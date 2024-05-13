@@ -147,9 +147,9 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       if (D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
           SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
                                                 &options3, sizeof(options3)))) {
-         if (not options3.WriteBufferImmediateSupportFlags &
-             (D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT | D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE |
-              D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY)) {
+         if (not(options3.WriteBufferImmediateSupportFlags &
+                 (D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT | D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE |
+                  D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY))) {
             debug_ouput.write_ln("GPU doesn't support needed Write Buffer "
                                  "Immediate Support Flags");
 
