@@ -366,6 +366,12 @@ void world_edit::ui_show_world_selection_editor() noexcept
                ImGui::DragQuat("Region Rotation", &light->region_rotation,
                                _edit_stack_world, _edit_context);
 
+               if (ImGui::Button("Rotate Region", {ImGui::CalcItemWidth(), 0.0f})) {
+                  _selection_edit_tool = selection_edit_tool::rotate_light_region;
+                  _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
+                  _rotate_light_region_id = light->id;
+               }
+
                switch (light->light_type) {
                case world::light_type::directional_region_box: {
                   ImGui::DragFloat3("Region Size", &light->region_size, _edit_stack_world,

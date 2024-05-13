@@ -59,6 +59,7 @@ enum class selection_edit_tool : uint8 {
    move_sector_point,
    rotate,
    rotate_around_centre,
+   rotate_light_region,
    set_layer,
    match_transform,
    pick_sector
@@ -202,6 +203,8 @@ private:
    void ui_show_world_selection_rotate() noexcept;
 
    void ui_show_world_selection_rotate_around_centre() noexcept;
+
+   void ui_show_world_selection_rotate_light_region() noexcept;
 
    void ui_show_world_selection_set_layer() noexcept;
 
@@ -770,6 +773,7 @@ private:
    world::path_id _move_entire_path_id = {};
    world::sector_id _move_sector_point_id = {};
    uint32 _move_sector_point_index = 0;
+   world::light_id _rotate_light_region_id = {};
    int16 _selection_set_layer = 0;
    bool _selection_cursor_move_ground_with_bbox = true;
    bool _selection_cursor_move_align_cursor = false;
