@@ -71,6 +71,12 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
                      edits::make_set_value(&light->position,
                                            (rotation * (light->position - centre)) +
                                               centre));
+
+                  if (world::is_region_light(*light)) {
+                     bundled_edits.push_back(
+                        edits::make_set_value(&light->region_rotation,
+                                              rotation * light->region_rotation));
+                  }
                }
             }
             else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
