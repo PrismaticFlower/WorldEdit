@@ -498,7 +498,7 @@ void flat_model::apply_ambient_lighting(const options& options) noexcept
          float3 color = {((bgra >> 16) & 0xff) / 255.0f,
                          ((bgra >> 8) & 0xff) / 255.0f, (bgra & 0xff) / 255.0f};
 
-         color += *options.ambient_lighting;
+         color = clamp(*options.ambient_lighting + color, 0.0f, 1.0f);
 
          bgra &= 0xff'00'00'00u;
          bgra |= static_cast<uint32>(color.z * 255.0f + 0.5f);
