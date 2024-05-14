@@ -164,11 +164,9 @@ void patch_materials_with_options(std::vector<mesh>& meshes, const options& opts
          }
       }
 
-      if (opts.additive_emissive) {
-         mesh.material.flags |=
-            are_flags_set(mesh.material.flags, material_flags::additive)
-               ? material_flags::unlit
-               : material_flags::none;
+      if (opts.additive_emissive and
+          are_flags_set(mesh.material.flags, material_flags::unlit)) {
+         mesh.material.flags |= material_flags::additive;
       }
    }
 }
