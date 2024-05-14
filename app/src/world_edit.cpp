@@ -2353,6 +2353,8 @@ void world_edit::hide_selection() noexcept
       _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
                               _edit_context, {.closed = true});
    }
+
+   _interaction_targets.selection.clear();
 }
 
 void world_edit::ground_selection() noexcept
