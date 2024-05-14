@@ -80,9 +80,14 @@ output_file::output_file(const std::filesystem::path& path, output_open_mode out
    if (_file.get() == INVALID_HANDLE_VALUE) {
       const DWORD system_error = GetLastError();
 
-      throw open_error{fmt::format(
-         "Failed to open file '{}'.\n   Reason: {}", path.string(),
-         std::system_category().default_error_condition(system_error).message())};
+      throw open_error{fmt::format("Failed to open file '{}'.\n   Reason: {}",
+                                   path.string(),
+                                   std::system_category()
+                                      .default_error_condition(system_error)
+                                      .message()),
+                       system_error == ERROR_SHARING_VIOLATION
+                          ? open_error_code::sharing_violation
+                          : open_error_code::generic};
    }
 
    _buffer = std::make_unique<std::byte[]>(buffer_max_size);

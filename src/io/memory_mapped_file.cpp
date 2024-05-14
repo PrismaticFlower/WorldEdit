@@ -49,10 +49,14 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
    if (not file) {
       const DWORD system_error = GetLastError();
 
-      throw open_error{fmt::format(
-         "Failed to open file '{}'.\n   Reason: {}",
-         std::filesystem::path{params.path}.string(),
-         std::system_category().default_error_condition(system_error).message())};
+      throw open_error{fmt::format("Failed to open file '{}'.\n   Reason: {}",
+                                   std::filesystem::path{params.path}.string(),
+                                   std::system_category()
+                                      .default_error_condition(system_error)
+                                      .message()),
+                       system_error == ERROR_SHARING_VIOLATION
+                          ? open_error_code::sharing_violation
+                          : open_error_code::generic};
    }
 
    const LARGE_INTEGER file_size{.QuadPart = static_cast<LONGLONG>(params.size)};
@@ -64,10 +68,12 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
    if (not file_mapping) {
       const DWORD system_error = GetLastError();
 
-      throw open_error{fmt::format(
-         "Failed to create file mapping for '{}'.\n   Reason: {}",
-         std::filesystem::path{params.path}.string(),
-         std::system_category().default_error_condition(system_error).message())};
+      throw open_error{
+         fmt::format(
+            "Failed to create file mapping for '{}'.\n   Reason: {}",
+            std::filesystem::path{params.path}.string(),
+            std::system_category().default_error_condition(system_error).message()),
+         open_error_code::generic};
    }
 
    wil::unique_mapview_ptr<void> mapped_view{
@@ -77,10 +83,12 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
    if (not mapped_view) {
       const DWORD system_error = GetLastError();
 
-      throw open_error{fmt::format(
-         "Failed to map file '{}' into memory.\n   Reason: {}",
-         std::filesystem::path{params.path}.string(),
-         std::system_category().default_error_condition(system_error).message())};
+      throw open_error{
+         fmt::format(
+            "Failed to map file '{}' into memory.\n   Reason: {}",
+            std::filesystem::path{params.path}.string(),
+            std::system_category().default_error_condition(system_error).message()),
+         open_error_code::generic};
    }
 
    _bytes = static_cast<std::byte*>(mapped_view.release());

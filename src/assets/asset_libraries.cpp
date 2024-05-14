@@ -3,6 +3,7 @@
 #include "asset_state.hpp"
 #include "asset_traits.hpp"
 #include "async/thread_pool.hpp"
+#include "io/error.hpp"
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
 #include "output_stream.hpp"
@@ -25,6 +26,10 @@
 using namespace std::literals;
 
 namespace we::assets {
+
+/// @brief How many times to try reloading an asset that failed loading because of a sharing violation.
+constexpr int max_asset_load_attempts = 20;
+constexpr std::chrono::milliseconds asset_retry_load_delay = 50ms;
 
 namespace {
 
@@ -333,18 +338,33 @@ private:
          async::task_priority::low,
          [this, asset_path = std::move(asset_path), asset, name]() -> asset_data<T> {
             try {
-               utility::stopwatch<std::chrono::high_resolution_clock> load_timer;
+               for (int load_attempt = 0;; ++load_attempt) {
+                  try {
+                     utility::stopwatch<std::chrono::high_resolution_clock> load_timer;
 
-               auto asset_data =
-                  std::make_shared<const T>(asset_traits<T>::load(asset_path));
+                     auto asset_data =
+                        std::make_shared<const T>(asset_traits<T>::load(asset_path));
 
-               _output_stream.write("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
-                                    asset_path.string(),
-                                    load_timer
-                                       .elapsed<std::chrono::duration<double, std::milli>>()
-                                       .count());
+                     _output_stream
+                        .write("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
+                               asset_path.string(),
+                               load_timer
+                                  .elapsed<std::chrono::duration<double, std::milli>>()
+                                  .count());
 
-               return asset_data;
+                     return asset_data;
+                  }
+                  catch (io::open_error& e) {
+                     if (e.code() == io::open_error_code::sharing_violation) {
+                        if (load_attempt >= max_asset_load_attempts) throw;
+
+                        std::this_thread::sleep_for(asset_retry_load_delay);
+                     }
+                     else {
+                        throw;
+                     }
+                  }
+               }
             }
             catch (std::exception& e) {
                _output_stream.write("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,

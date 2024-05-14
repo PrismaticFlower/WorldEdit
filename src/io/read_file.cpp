@@ -21,9 +21,14 @@ auto read_file_impl(const std::filesystem::path& path) -> Out
    if (not file) {
       const DWORD system_error = GetLastError();
 
-      throw open_error{fmt::format(
-         "Failed to open file '{}'.\n   Reason: {}", path.string(),
-         std::system_category().default_error_condition(system_error).message())};
+      throw open_error{fmt::format("Failed to open file '{}'.\n   Reason: {}",
+                                   path.string(),
+                                   std::system_category()
+                                      .default_error_condition(system_error)
+                                      .message()),
+                       system_error == ERROR_SHARING_VIOLATION
+                          ? open_error_code::sharing_violation
+                          : open_error_code::generic};
    }
 
    // TODO: Use GetFileSizeEx
@@ -43,7 +48,7 @@ auto read_file_impl(const std::filesystem::path& path) -> Out
                     &read_bytes, nullptr)) {
       const DWORD system_error = GetLastError();
 
-      throw open_error{fmt::format(
+      throw read_error{fmt::format(
          "Failed to read file '{}'.\n   Reason: {}\n   Bytes Read: {}/{}", path.string(),
          std::system_category().default_error_condition(system_error).message(),
          read_bytes, file_size)};

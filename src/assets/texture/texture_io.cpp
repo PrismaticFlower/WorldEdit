@@ -1,6 +1,7 @@
 
 #include "texture_io.hpp"
 #include "../option_file.hpp"
+#include "io/error.hpp"
 #include "io/read_file.hpp"
 #include "texture_transforms.hpp"
 #include "utility/string_icompare.hpp"
@@ -206,8 +207,12 @@ auto load_texture(const std::filesystem::path& path) -> texture
 {
    DirectX::ScratchImage scratch_image;
 
-   if (FAILED(DirectX::LoadFromTGAFile(path.c_str(), nullptr, scratch_image))) {
-      throw std::runtime_error{"Failed to load .TGA file."};
+   if (const HRESULT hr = DirectX::LoadFromTGAFile(path.c_str(), nullptr, scratch_image);
+       FAILED(hr)) {
+      throw io::open_error{"Failed to load .TGA file.",
+                           hr == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION)
+                              ? io::open_error_code::sharing_violation
+                              : io::open_error_code::generic};
    }
 
    const auto options = load_options(path);
