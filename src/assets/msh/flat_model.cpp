@@ -213,6 +213,7 @@ flat_model::flat_model(const scene& scene)
 
    generate_tangents_for_meshes();
    patch_materials_with_options(meshes, scene.options);
+   apply_ambient_lighting(scene.options);
    regenerate_bounding_boxes();
 
    bvh.build(meshes);
@@ -481,6 +482,29 @@ void flat_model::generate_tangents_for_meshes()
       mesh.colors = std::move(mesh_with_tangents.colors);
       mesh.texcoords = std::move(mesh_with_tangents.texcoords);
       mesh.triangles = std::move(mesh_with_tangents.triangles);
+   }
+}
+
+void flat_model::apply_ambient_lighting(const options& options) noexcept
+{
+   if (not options.ambient_lighting) return;
+
+   const float3 ambient_lighting = *options.ambient_lighting;
+
+   for (auto& mesh : meshes) {
+      if (not mesh.colors_are_lighting) continue;
+
+      for (uint32& bgra : mesh.colors) {
+         float3 color = {((bgra >> 16) & 0xff) / 255.0f,
+                         ((bgra >> 8) & 0xff) / 255.0f, (bgra & 0xff) / 255.0f};
+
+         color += *options.ambient_lighting;
+
+         bgra &= 0xff'00'00'00u;
+         bgra |= static_cast<uint32>(color.z * 255.0f + 0.5f);
+         bgra |= static_cast<uint32>(color.y * 255.0f + 0.5f) << 8u;
+         bgra |= static_cast<uint32>(color.x * 255.0f + 0.5f) << 16u;
+      }
    }
 }
 

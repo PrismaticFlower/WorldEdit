@@ -157,4 +157,15 @@ TEST_CASE(".msh reading scale option", "[Assets][MSH]")
    REQUIRE(scene.nodes.size() == 3);
 }
 
+TEST_CASE(".msh reading ambientlighting option", "[Assets][MSH]")
+{
+   auto scene = read_scene("data/sand_test_ambientlighting.msh");
+
+   CHECK(scene.options.ambient_lighting == float3{-1.0f, 0.5f, 1.0f});
+
+   // Sanity Checks (this is just a copy of sand_test.msh with an .option file added, so there is no point in checking it in depth).
+   REQUIRE(scene.materials.size() == 1);
+   REQUIRE(scene.nodes.size() == 3);
+}
+
 }

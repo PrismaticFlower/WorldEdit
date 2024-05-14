@@ -801,6 +801,73 @@ TEST_CASE(".msh flat model creation root transform skip", "[Assets][MSH]")
    }
 }
 
+TEST_CASE(".msh flat model creation with ambient lighting", "[Assets][MSH]")
+{
+   const scene input_scene{
+      .materials = {{
+         .name = "snow"s,
+         .specular_color = {0.75f, 0.75f, 0.75f},
+         .flags = material_flags::specular,
+         .rendertype = rendertype::normalmap,
+         .textures = {"snow"s, "snow_normalmap"s},
+      }},
+
+      .nodes =
+         {
+            {.name = "root"s,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::null},
+
+            {.name = "geometry"s,
+             .parent = "root"s,
+             .transform =
+                {
+                   .translation = {0.0f, 0.0f, 0.0f},
+                   .rotation = {1.0f, 0.0f, 0.0f, 0.0f},
+                },
+             .type = node_type::static_mesh,
+             .segments = {{
+                .material_index = 0,
+                .positions = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+                .normals = std::vector<float3>{{0.0f, 1.0f, 0.0f},
+                                               {0.0f, 1.0f, 1.0f},
+                                               {0.0f, 1.0f, 0.0f}},
+                .colors = std::vector<uint32>{0xff'ff'ff'ffu, 0xff'ff'ff'ffu, 0xff'ff'ff'ffu},
+                .texcoords = std::vector<float2>{{0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f}},
+                .triangles = {{0, 1, 2}},
+             }}},
+         },
+
+      .options = {.vertex_lighting = true,
+                  .ambient_lighting = float3{-0.25f, -0.5f, -1.0f}},
+   };
+
+   flat_model model{input_scene};
+
+   // mesh checks
+   {
+      REQUIRE(model.meshes.size() == 1);
+
+      const auto& mesh = model.meshes[0];
+      const auto& segment = input_scene.nodes[1].segments[0];
+
+      REQUIRE(mesh.material == input_scene.materials[segment.material_index]);
+      REQUIRE(mesh.positions.size() == segment.positions.size());
+      REQUIRE(mesh.normals.size() == segment.normals->size());
+      REQUIRE(mesh.colors.size() == segment.colors->size());
+      REQUIRE(mesh.texcoords.size() == segment.texcoords->size());
+      REQUIRE(mesh.triangles.size() == 1);
+
+      CHECK(mesh.colors[0] == 0xff'bf'80'00u);
+      CHECK(mesh.colors[1] == 0xff'bf'80'00u);
+      CHECK(mesh.colors[2] == 0xff'bf'80'00u);
+   }
+}
+
 TEST_CASE(".msh flat excessive vertices test", "[Assets][MSH]")
 {
    scene input_scene{

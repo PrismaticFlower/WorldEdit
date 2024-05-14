@@ -393,6 +393,37 @@ auto read_scene_options(const std::filesystem::path& path) -> options
       else if (string::iequals(opt.name, "-vertexlighting"sv)) {
          results.vertex_lighting = true;
       }
+      else if (string::iequals(opt.name, "-ambientlighting"sv) and
+               not opt.arguments.empty()) {
+         float3 ambient_lighting = {};
+
+         const std::string_view red = string::split_first_of_exclusive(
+            string::split_first_of_exclusive(opt.arguments[0], "r=")[1], " ")[0];
+         const std::string_view green = string::split_first_of_exclusive(
+            string::split_first_of_exclusive(opt.arguments[0], "g=")[1], " ")[0];
+         const std::string_view blue = string::split_first_of_exclusive(
+            string::split_first_of_exclusive(opt.arguments[0], "b=")[1], " ")[0];
+
+         if (std::from_chars(red.data(), red.data() + red.size(),
+                             ambient_lighting.x)
+                .ec != std::error_code{}) {
+            ambient_lighting.x = 0.0f;
+         }
+
+         if (std::from_chars(green.data(), green.data() + green.size(),
+                             ambient_lighting.y)
+                .ec != std::error_code{}) {
+            ambient_lighting.y = 0.0f;
+         }
+
+         if (std::from_chars(blue.data(), blue.data() + blue.size(),
+                             ambient_lighting.z)
+                .ec != std::error_code{}) {
+            ambient_lighting.z = 0.0f;
+         }
+
+         results.ambient_lighting = ambient_lighting;
+      }
       else if (string::iequals(opt.name, "-scale"sv) and not opt.arguments.empty()) {
          if (std::from_chars(opt.arguments[0].data(),
                              opt.arguments[0].data() + opt.arguments[0].size(),

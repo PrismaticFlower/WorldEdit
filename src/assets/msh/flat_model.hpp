@@ -109,6 +109,8 @@ private:
                                 const options& options) -> mesh&;
 
    void generate_tangents_for_meshes();
+
+   void apply_ambient_lighting(const options& options) noexcept;
 };
 
 }
