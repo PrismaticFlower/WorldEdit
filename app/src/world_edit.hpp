@@ -51,6 +51,8 @@ enum class placement_node_insert : uint8 { nearest, append };
 
 enum class placement_resize_mode : uint8 { off, extend, shrink };
 
+enum class draw_boundary_step : uint8 { start, end_x, radius_z };
+
 enum class selection_edit_tool : uint8 {
    none,
    move,
@@ -462,6 +464,7 @@ private:
       bool activate_from_object_bbox = false;
       bool activate_from_line = false;
       bool activate_draw_barrier = false;
+      bool activate_draw_boundary = false;
       bool activate_pick_sector = false;
 
       bool using_point_at = false;
@@ -470,6 +473,7 @@ private:
       bool using_from_object_bbox = false;
       bool using_from_line = false;
       bool using_draw_barrier = false;
+      bool using_draw_boundary = false;
       bool using_pick_sector = false;
 
       bool finish_current_path = false;
@@ -478,11 +482,14 @@ private:
 
       bool from_line_click = false;
       bool draw_barrier_click = false;
+      bool draw_boundary_click = false;
 
       bool hub_sizing_started = false;
       bool connection_link_started = false;
 
       bool measurement_started = false;
+
+      draw_boundary_step draw_boundary_step = draw_boundary_step::start;
 
       int pick_sector_index = 0;
 
@@ -497,6 +504,9 @@ private:
 
       std::optional<float3> draw_barrier_start;
       std::optional<float3> draw_barrier_mid;
+
+      float3 draw_boundary_start;
+      float draw_boundary_end_x;
    } _entity_creation_context;
 
    struct entity_creation_config {

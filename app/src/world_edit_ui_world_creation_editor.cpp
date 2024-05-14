@@ -39,6 +39,7 @@ struct placement_traits {
    bool has_from_bbox = false;
    bool has_from_line = false;
    bool has_draw_barrier = false;
+   bool has_draw_boundary = false;
    bool has_cycle_ai_planning = false;
    bool has_place_at_camera = true;
 };
@@ -162,6 +163,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
       _entity_creation_context.using_draw_barrier = true;
       _entity_creation_context.draw_barrier_start = std::nullopt;
       _entity_creation_context.draw_barrier_mid = std::nullopt;
+   }
+
+   if (std::exchange(_entity_creation_context.activate_draw_boundary, false)) {
+      _edit_stack_world.close_last();
+
+      _entity_creation_context.using_draw_boundary = true;
+      _entity_creation_context.draw_boundary_step = draw_boundary_step::start;
+      _entity_creation_context.draw_boundary_start = {};
+      _entity_creation_context.draw_boundary_end_x = {};
    }
 
    if (std::exchange(_entity_creation_context.activate_pick_sector, false)) {
@@ -2832,9 +2842,95 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::DragFloat2XZ("Size", &boundary.size, _edit_stack_world,
                           _edit_context, 1.0f, 0.0f, 1e10f);
 
+      if (ImGui::Button("Draw Boundary", {ImGui::CalcItemWidth(), 0.0f})) {
+         _entity_creation_context.activate_draw_boundary = true;
+      }
+
+      if (_entity_creation_context.using_draw_boundary) {
+         _entity_creation_config.placement_mode = placement_mode::manual;
+
+         const bool draw_boundary_click =
+            std::exchange(_entity_creation_context.draw_boundary_click, false);
+
+         switch (_entity_creation_context.draw_boundary_step) {
+         case draw_boundary_step::start: {
+            if (draw_boundary_click) {
+               _entity_creation_context.draw_boundary_start = _cursor_positionWS;
+               _entity_creation_context.draw_boundary_step = draw_boundary_step::end_x;
+            }
+
+            _tool_visualizers.add_line_overlay(_cursor_positionWS,
+                                               _cursor_positionWS +
+                                                  float3{0.0f,
+                                                         _settings.graphics.boundary_height,
+                                                         0.0f},
+                                               0xff'ff'ff'ffu);
+         } break;
+         case draw_boundary_step::end_x: {
+            if (draw_boundary_click) {
+               _entity_creation_context.draw_boundary_end_x = _cursor_positionWS.x;
+               _entity_creation_context.draw_boundary_step =
+                  draw_boundary_step::radius_z;
+            }
+
+            _tool_visualizers
+               .add_line_overlay(_entity_creation_context.draw_boundary_start,
+                                 {_cursor_positionWS.x,
+                                  _entity_creation_context.draw_boundary_start.y,
+                                  _entity_creation_context.draw_boundary_start.z},
+                                 0xff'ff'ff'ffu);
+         } break;
+         case draw_boundary_step::radius_z: {
+            const float3 new_position =
+               {(_entity_creation_context.draw_boundary_start.x +
+                 _entity_creation_context.draw_boundary_end_x) *
+                   0.5f,
+                _entity_creation_context.draw_boundary_start.y,
+                _entity_creation_context.draw_boundary_start.z};
+            const float2 new_size =
+               {std::abs(_entity_creation_context.draw_boundary_end_x -
+                         _entity_creation_context.draw_boundary_start.x) *
+                   0.5f,
+                std::abs(_cursor_positionWS.z -
+                         _entity_creation_context.draw_boundary_start.z)};
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&boundary.position,
+                                                                new_position,
+                                                                &boundary.size, new_size),
+                                    _edit_context);
+
+            if (draw_boundary_click) {
+               place_creation_entity();
+
+               _entity_creation_context.draw_boundary_step = draw_boundary_step::start;
+            }
+
+            _tool_visualizers
+               .add_line_overlay(_entity_creation_context.draw_boundary_start,
+                                 {_entity_creation_context.draw_boundary_end_x,
+                                  _entity_creation_context.draw_boundary_start.y,
+                                  _entity_creation_context.draw_boundary_start.z},
+                                 0xff'ff'ff'ffu);
+
+            const float x_mid_point =
+               (_entity_creation_context.draw_boundary_start.x +
+                _entity_creation_context.draw_boundary_end_x) *
+               0.5f;
+
+            _tool_visualizers.add_line_overlay(
+               {x_mid_point, _entity_creation_context.draw_boundary_start.y,
+                _entity_creation_context.draw_boundary_start.z},
+               {x_mid_point, _entity_creation_context.draw_boundary_start.y,
+                _cursor_positionWS.z},
+               0xff'ff'ff'ffu);
+         } break;
+         }
+      }
+
       traits = {.has_placement_rotation = false,
                 .has_point_at = false,
                 .has_placement_ground = false,
+                .has_draw_boundary = true,
                 .has_place_at_camera = false};
    }
    else if (creation_entity.is<world::measurement>()) {
@@ -3213,6 +3309,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::Text("Draw Barrier");
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation", "Start Draw Barrier")));
+      }
+
+      if (traits.has_draw_boundary) {
+         ImGui::Text("Draw Boundary");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation (Boundary)",
+                                   "Start Draw Boundary")));
       }
 
       if (traits.has_cycle_ai_planning) {
