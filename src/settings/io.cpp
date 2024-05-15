@@ -153,6 +153,7 @@ auto load(const std::string_view path) -> settings
          for (auto& prop : node) {
             setting_entry(extra_scaling);
             setting_entry(gizmo_scale);
+            setting_entry(hide_planning_branch_weights);
          }
 #undef setting_entry
       }
@@ -257,6 +258,7 @@ void save(const std::string_view path, const settings& settings) noexcept
 
       write(file, name_value(extra_scaling));
       write(file, name_value(gizmo_scale));
+      write(file, name_value(hide_planning_branch_weights));
 
 #undef name_value
 
