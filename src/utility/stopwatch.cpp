@@ -4,17 +4,6 @@
 
 namespace we::utility {
 
-#if 0
-template<typename R = clock_type::duration>
-auto elapsed() const noexcept -> R
-{
-   const clock_type::time_point now = clock_type::now();
-   const clock_type::duration elapsed = now - _start;
-
-   return std::chrono::duration_cast<R>(elapsed);
-}
-#endif
-
 namespace {
 
 template<typename R>
