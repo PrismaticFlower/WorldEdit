@@ -669,6 +669,21 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (not _settings.ui.hide_extra_light_properties) {
+         if (light.light_type == world::light_type::spot or
+             world::is_directional_light(light)) {
+            ImGui::EnumSelect("PS2 Blend Mode", &light.ps2_blend_mode,
+                              _edit_stack_world, _edit_context,
+                              {enum_select_option{"Add", world::ps2_blend_mode::add},
+                               enum_select_option{"Multiply", world::ps2_blend_mode::multiply},
+                               enum_select_option{"Blend", world::ps2_blend_mode::blend}});
+         }
+
+         if (light.light_type == world::light_type::spot) {
+            ImGui::Checkbox("Bidirectional", &light.bidirectional);
+         }
+      }
+
       traits = {.has_placement_ground = false};
    }
    else if (creation_entity.is<world::path>()) {

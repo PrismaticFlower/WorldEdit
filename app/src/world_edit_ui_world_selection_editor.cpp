@@ -351,9 +351,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                  _edit_stack_world, _edit_context, 0.01f);
             }
 
-            ImGui::Separator();
-
             if (is_region_light(*light)) {
+               ImGui::Separator();
+
                ImGui::InputText("Region Name", &light->region_name,
                                 _edit_stack_world, _edit_context,
                                 [&](std::string* edited_value) noexcept {
@@ -427,6 +427,22 @@ void world_edit::ui_show_world_selection_editor() noexcept
                      _edit_stack_world.close_last();
                   }
                } break;
+               }
+            }
+
+            if (not _settings.ui.hide_extra_light_properties) {
+               if (light->light_type == world::light_type::spot or
+                   world::is_directional_light(*light)) {
+                  ImGui::EnumSelect(
+                     "PS2 Blend Mode", &light->ps2_blend_mode,
+                     _edit_stack_world, _edit_context,
+                     {enum_select_option{"Add", world::ps2_blend_mode::add},
+                      enum_select_option{"Multiply", world::ps2_blend_mode::multiply},
+                      enum_select_option{"Blend", world::ps2_blend_mode::blend}});
+               }
+
+               if (light->light_type == world::light_type::spot) {
+                  ImGui::Checkbox("Bidirectional", &light->bidirectional);
                }
             }
          }

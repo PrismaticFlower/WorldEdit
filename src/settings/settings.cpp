@@ -93,6 +93,12 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
             ImGui::SetItemTooltip(
                "Hides the editors for the unused AI planning branch weights.");
 
+            ImGui::Checkbox("Hide Extra Light Properties",
+                            &ui.hide_extra_light_properties);
+
+            ImGui::SetItemTooltip("Hides the editors for the PS2 Blend Mode "
+                                  "and Bidirectional light properties.");
+
             ImGui::SeparatorText("Reset");
 
             if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {
