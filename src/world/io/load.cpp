@@ -357,6 +357,11 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
                light.outer_cone_angle = cone->values.get<float>(1);
             }
 
+            if (auto bidirectional = key_node.find("Bidirectional"sv);
+                bidirectional != key_node.cend()) {
+               light.bidirectional = bidirectional->values.get<int>(0) != 0;
+            }
+
             if (verbose_output) {
                output.write("Loaded world light '{}'\n", light.name);
             }

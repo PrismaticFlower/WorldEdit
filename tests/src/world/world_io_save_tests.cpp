@@ -48,7 +48,21 @@ constexpr auto expected_lgt = R"(Light("sun", 0)
 	OffsetUV(0.000000, 0.000000);
 }
 
-Light("Region Light", 1)
+Light("Light 3", 1)
+{
+	Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+	Position(-149.102463, 0.469788, 22.194153);
+	Type(3);
+	Color(1.000000, 1.000000, 1.000000);
+	CastShadow();
+	Static();
+	Range(5.000000);
+	Cone(0.785398, 0.872665);
+	PS2BlendMode(0);
+	Bidirectional(1);
+}
+
+Light("Region Light", 2)
 {
 	Rotation(0.581487, 0.314004, 0.435918, -0.610941);
 	Position(-216.604019, 2.231649, -18.720726);
@@ -832,6 +846,22 @@ TEST_CASE("world saving", "[World][IO]")
                        .light_type = light_type::directional,
                        .texture_addressing = texture_addressing::clamp,
                        .texture = "sun_shadow",
+                    },
+
+                    light{
+                       .name = "Light 3",
+
+                       .rotation = {0.0f, -0.0f, 1.0f, -0.0f},
+                       .position = {-149.102463f, 0.469788f, -22.194153f},
+                       .color = {1.0f, 1.0f, 1.0f},
+                       .static_ = true,
+                       .shadow_caster = true,
+                       .specular_caster = false,
+                       .light_type = light_type::spot,
+                       .bidirectional = true,
+                       .range = 5.0f,
+                       .inner_cone_angle = 0.785398f,
+                       .outer_cone_angle = 0.872665f,
                     },
 
                     light{

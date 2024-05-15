@@ -188,6 +188,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.lights[2].inner_cone_angle == 0.785398_a);
          CHECK(world.lights[2].outer_cone_angle == 0.872665_a);
          CHECK(world.lights[2].texture.empty());
+         CHECK(world.lights[2].bidirectional);
          CHECK(is_unique_id(2, world.lights));
       }
 

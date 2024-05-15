@@ -35,7 +35,7 @@ Light("Light 3", 3551084123)
 	Range(5.000000);
 	Cone(0.785398, 0.872665);
 	PS2BlendMode(0);
-	Bidirectional(0);
+	Bidirectional(1);
 }
 
 Light("Light 1", 4266109616)

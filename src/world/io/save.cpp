@@ -489,7 +489,7 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
          file.write_ln("\tCone({:f}, {:f});", light.inner_cone_angle,
                        light.outer_cone_angle);
          file.write_ln("\tPS2BlendMode(0);");
-         file.write_ln("\tBidirectional(0);");
+         file.write_ln("\tBidirectional({});", light.bidirectional ? 1 : 0);
       }
 
       file.write_ln("}\n");

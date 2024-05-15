@@ -32,6 +32,7 @@ struct light {
    bool specular_caster = false;
    light_type light_type = light_type::point;
    texture_addressing texture_addressing = texture_addressing::clamp;
+   bool bidirectional = false;
 
    float range = 8.0f;
    float inner_cone_angle = 0.785398f;
