@@ -217,6 +217,7 @@
     <ClCompile Include="src\edits\add_animation_hierarchy.cpp" />
     <ClCompile Include="src\edits\delete_animation_hierarchy_child.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy_child.cpp" />
+    <ClCompile Include="src\utility\stopwatch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

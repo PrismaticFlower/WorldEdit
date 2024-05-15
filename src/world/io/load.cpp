@@ -260,7 +260,7 @@ void load_objects(const std::filesystem::path& path, const std::string_view laye
    }
 
    output.write("Loaded layer '{}' objects (time taken {:f}ms)\n", layer_name,
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_lights(const std::filesystem::path& path, const std::string_view layer_name,
@@ -409,7 +409,7 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
    }
 
    output.write("Loaded layer '{}' lights (time taken {:f}ms)\n", layer_name,
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_paths(const std::filesystem::path& filepath, const std::string_view layer_name,
@@ -497,7 +497,7 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
    }
 
    output.write("Loaded layer '{}' paths (time taken {:f}ms)\n", layer_name,
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_regions(const std::filesystem::path& filepath,
@@ -551,7 +551,7 @@ void load_regions(const std::filesystem::path& filepath,
    }
 
    output.write("Loaded layer '{}' regions (time taken {:f}ms)\n", layer_name,
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_portals_sectors(const std::filesystem::path& filepath,
@@ -622,7 +622,7 @@ void load_portals_sectors(const std::filesystem::path& filepath,
    }
 
    output.write("Loaded world portals and sectors (time taken {:f}ms)\n",
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_barriers(const std::filesystem::path& filepath, output_stream& output,
@@ -685,7 +685,7 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
    }
 
    output.write("Loaded world barriers (time taken {:f}ms)\n",
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_planning(const std::filesystem::path& filepath, output_stream& output,
@@ -863,7 +863,7 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
    }
 
    output.write("Loaded world AI planning (time taken {:f}ms)\n",
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_boundaries(const std::filesystem::path& filepath,
@@ -898,7 +898,7 @@ void load_boundaries(const std::filesystem::path& filepath,
    }
 
    output.write("Loaded world boundaries (time taken {:f}ms)\n",
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_hintnodes(const std::filesystem::path& filepath,
@@ -954,8 +954,8 @@ void load_hintnodes(const std::filesystem::path& filepath,
       throw_layer_load_failure("hint nodes", filepath.string(), e);
    }
 
-   output.write("Loaded layer '{}' hint nodes (time taken {:f}ms)\n", layer_name,
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+   output.write("Loaded layer '{}' hint nodes (time taken {:f}ms)\n",
+                layer_name, load_timer.elapsed_ms());
 }
 
 void load_animations(const std::filesystem::path& filepath,
@@ -1081,7 +1081,7 @@ void load_animations(const std::filesystem::path& filepath,
    }
 
    output.write("Loaded world measurements (time taken {:f}ms)\n",
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_measurements(const std::filesystem::path& filepath,
@@ -1129,7 +1129,7 @@ void load_measurements(const std::filesystem::path& filepath,
    }
 
    output.write("Loaded world measurements (time taken {:f}ms)\n",
-                load_timer.elapsed<std::chrono::duration<double, std::milli>>().count());
+                load_timer.elapsed_ms());
 }
 
 void load_layer(const std::filesystem::path& world_dir, const std::string_view layer_name,
@@ -1204,9 +1204,7 @@ void load_requirements_files(const std::filesystem::path& world_dir,
             assets::req::read(io::read_file_to_string(req_path));
 
          output.write("Loaded {}.req (time taken {:f}ms)\n", world_out.name,
-                      load_timer
-                         .elapsed<std::chrono::duration<double, std::milli>>()
-                         .count());
+                      load_timer.elapsed_ms());
       }
       catch (std::exception& e) {
          auto message =
@@ -1232,9 +1230,7 @@ void load_requirements_files(const std::filesystem::path& world_dir,
                assets::req::read(io::read_file_to_string(mrq_path));
 
             output.write("Loaded {} (time taken {:f}ms)\n", file_name,
-                         load_timer
-                            .elapsed<std::chrono::duration<double, std::milli>>()
-                            .count());
+                         load_timer.elapsed_ms());
          }
          catch (std::exception& e) {
             auto message =
@@ -1376,9 +1372,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
             read_terrain(io::read_file_to_bytes(world_dir / world.name += ".ter"sv));
 
          output.write("Loaded world terrain (time taken {:f}ms)\n",
-                      load_timer
-                         .elapsed<std::chrono::duration<double, std::milli>>()
-                         .count());
+                      load_timer.elapsed_ms());
       }
       catch (std::exception& e) {
          auto message =
@@ -1400,9 +1394,7 @@ auto load_world(const std::filesystem::path& path, output_stream& output) -> wor
             world.effects = load_effects(io::read_file_to_string(fx_path), output);
 
             output.write("Loaded {}.fx (time taken {:f}ms)\n", world.name,
-                         load_timer
-                            .elapsed<std::chrono::duration<double, std::milli>>()
-                            .count());
+                         load_timer.elapsed_ms());
          }
          catch (std::exception& e) {
             auto message =

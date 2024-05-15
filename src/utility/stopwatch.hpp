@@ -1,25 +1,26 @@
 #pragma once
 
-#include <chrono>
+#include "types.hpp"
 
 namespace we::utility {
 
-template<typename T = std::chrono::high_resolution_clock>
-class stopwatch {
-public:
-   using clock_type = T;
+struct stopwatch {
+   /// @brief Time elapsed on the stopwatch in seconds.
+   /// @return The time in seconds.
+   auto elapsed() const noexcept -> float;
 
-   template<typename R = clock_type::duration>
-   auto elapsed() const noexcept -> R
-   {
-      const clock_type::time_point now = clock_type::now();
-      const clock_type::duration elapsed = now - _start;
+   /// @brief Time elapsed on the stopwatch in milliseconds.
+   /// @return  The time in milliseconds.
+   auto elapsed_ms() const noexcept -> float;
 
-      return std::chrono::duration_cast<R>(elapsed);
-   }
+   /// @brief Time elapsed on the stopwatch in seconds.
+   /// @return The time in seconds.
+   auto elapsed_f64() const noexcept -> double;
 
 private:
-   clock_type::time_point _start = clock_type::now();
+   static auto init_timepoint() -> uint64;
+
+   uint64 _timepoint = init_timepoint();
 };
 
 }

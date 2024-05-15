@@ -291,7 +291,7 @@ private:
 
    imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
 
-   utility::stopwatch<std::chrono::steady_clock> _texture_scroll_timer;
+   utility::stopwatch _texture_scroll_timer;
 
    profiler _profiler{_device, 256};
 
@@ -1121,8 +1121,7 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
       .view_positionWS = camera.position(),
       .texture_scroll_duration =
          scroll_textures
-            ? static_cast<float>(std::fmod(
-                 _texture_scroll_timer.elapsed<std::chrono::duration<double>>().count(), 255.0))
+            ? static_cast<float>(std::fmod(_texture_scroll_timer.elapsed_f64(), 255.0))
             : 0.0f,
 
       .viewport_size = {viewport.width, viewport.height},

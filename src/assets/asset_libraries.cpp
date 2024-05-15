@@ -340,17 +340,14 @@ private:
             try {
                for (int load_attempt = 0;; ++load_attempt) {
                   try {
-                     utility::stopwatch<std::chrono::high_resolution_clock> load_timer;
+                     utility::stopwatch load_timer;
 
                      auto asset_data =
                         std::make_shared<const T>(asset_traits<T>::load(asset_path));
 
-                     _output_stream
-                        .write("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
-                               asset_path.string(),
-                               load_timer
-                                  .elapsed<std::chrono::duration<double, std::milli>>()
-                                  .count());
+                     _output_stream.write("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
+                                          asset_path.string(),
+                                          load_timer.elapsed_ms());
 
                      return asset_data;
                   }
