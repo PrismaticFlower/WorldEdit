@@ -57,7 +57,7 @@ Light("Light 4", 3)
 	Color(1.000000, 0.501961, 0.501961);
 	Static();
 	Region("lightregion1");
-	PS2BlendMode(0);
+	PS2BlendMode(2);
 	TileUV(1.000000, 1.000000);
 	OffsetUV(0.000000, 0.000000);
 }

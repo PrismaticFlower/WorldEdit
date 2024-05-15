@@ -362,6 +362,23 @@ void load_lights(const std::filesystem::path& path, const std::string_view layer
                light.bidirectional = bidirectional->values.get<int>(0) != 0;
             }
 
+            if (auto blend_mode = key_node.find("PS2BlendMode"sv);
+                blend_mode != key_node.cend()) {
+               switch (int mode = blend_mode->values.get<int>(0); mode) {
+               case 0:
+               case 1:
+               case 2:
+                  light.ps2_blend_mode = static_cast<ps2_blend_mode>(mode);
+                  break;
+               default:
+                  output.write(
+                     "Warning! World light '{}' has invalid PS2 Blend Mode! "
+                     "Defaulting to add.\n",
+                     light.name);
+                  light.ps2_blend_mode = ps2_blend_mode::add;
+               }
+            }
+
             if (verbose_output) {
                output.write("Loaded world light '{}'\n", light.name);
             }

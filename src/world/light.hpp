@@ -16,7 +16,10 @@ enum class light_type : int8 {
    directional_region_sphere = 1 | 0b100,
    directional_region_cylinder = 2 | 0b100
 };
+
 enum class texture_addressing : int8 { wrap = 0, clamp = 1 };
+
+enum class ps2_blend_mode : int8 { add = 0, multiply = 1, blend = 2 };
 
 struct light {
    std::string name;
@@ -33,6 +36,7 @@ struct light {
    light_type light_type = light_type::point;
    texture_addressing texture_addressing = texture_addressing::clamp;
    bool bidirectional = false;
+   ps2_blend_mode ps2_blend_mode = ps2_blend_mode::add;
 
    float range = 8.0f;
    float inner_cone_angle = 0.785398f;

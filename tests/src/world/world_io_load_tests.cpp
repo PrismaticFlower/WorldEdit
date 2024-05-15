@@ -227,6 +227,7 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(approx_equals(world.lights[4].directional_texture_tiling, {1.0f, 1.0f}));
          CHECK(approx_equals(world.lights[4].directional_texture_offset, {0.0f, 0.0f}));
          CHECK(world.lights[4].region_name == "lightregion1");
+         CHECK(world.lights[4].ps2_blend_mode == ps2_blend_mode::blend);
          CHECK(approx_equals(world.lights[4].region_rotation,
                              {0.000f, 0.000f, 1.000f, 0.000f}));
          CHECK(approx_equals(world.lights[4].region_size,

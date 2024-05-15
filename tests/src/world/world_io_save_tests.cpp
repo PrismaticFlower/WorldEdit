@@ -43,7 +43,7 @@ constexpr auto expected_lgt = R"(Light("sun", 0)
 	Static();
 	Texture("sun_shadow", 1);
 	CastSpecular(1);
-	PS2BlendMode(0);
+	PS2BlendMode(2);
 	TileUV(1.000000, 1.000000);
 	OffsetUV(0.000000, 0.000000);
 }
@@ -845,6 +845,7 @@ TEST_CASE("world saving", "[World][IO]")
                        .specular_caster = true,
                        .light_type = light_type::directional,
                        .texture_addressing = texture_addressing::clamp,
+                       .ps2_blend_mode = ps2_blend_mode::blend,
                        .texture = "sun_shadow",
                     },
 

@@ -474,7 +474,7 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
             file.write_ln("\tRegion(\"{}\");", light.region_name);
          }
 
-         file.write_ln("\tPS2BlendMode(0);");
+         file.write_ln("\tPS2BlendMode({});", static_cast<int>(light.ps2_blend_mode));
          file.write_ln("\tTileUV({:f}, {:f});", light.directional_texture_tiling.x,
                        light.directional_texture_tiling.y);
          file.write_ln("\tOffsetUV({:f}, {:f});",
@@ -488,7 +488,7 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
          file.write_ln("\tRange({:f});", light.range);
          file.write_ln("\tCone({:f}, {:f});", light.inner_cone_angle,
                        light.outer_cone_angle);
-         file.write_ln("\tPS2BlendMode(0);");
+         file.write_ln("\tPS2BlendMode({});", static_cast<int>(light.ps2_blend_mode));
          file.write_ln("\tBidirectional({});", light.bidirectional ? 1 : 0);
       }
 
