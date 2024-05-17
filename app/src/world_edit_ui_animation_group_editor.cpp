@@ -489,18 +489,23 @@ void world_edit::ui_show_animation_group_editor() noexcept
             if (not playback_animations[i]) continue;
 
             if (playback_objects[i]) {
+               _animation_solver.init(*playback_animations[i],
+                                      playback_objects[i]->rotation,
+                                      playback_objects[i]->position);
+
                _tool_visualizers.add_ghost_object(
-                  world::evaluate_animation(
-                     *playback_animations[i], playback_objects[i]->rotation,
-                     playback_objects[i]->position,
-                     _animation_group_editor_context.selected.playback_time),
+                  _animation_solver.evaluate(*playback_animations[i],
+                                             _animation_group_editor_context
+                                                .selected.playback_time),
                   playback_objects[i]->id);
             }
             else {
+               _animation_solver.init(*playback_animations[i], quaternion{}, float3{});
+
                _tool_visualizers.add_arrow_wireframe(
-                  world::evaluate_animation(
-                     *playback_animations[i], quaternion{}, float3{},
-                     _animation_group_editor_context.selected.playback_time) *
+                  _animation_solver.evaluate(*playback_animations[i],
+                                             _animation_group_editor_context
+                                                .selected.playback_time) *
                      float4x4{{8.0f, 0.0f, 0.0f, 0.0f},
                               {0.0f, 8.0f, 0.0f, 0.0f},
                               {0.0f, 0.0f, 8.0f, 0.0f},

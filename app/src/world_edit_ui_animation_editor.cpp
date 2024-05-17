@@ -5,10 +5,10 @@
 #include "edits/imgui_ext.hpp"
 #include "edits/insert_animation_key.hpp"
 #include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
-#include "world/utility/animation.hpp"
 #include "world/utility/raycast_animation.hpp"
 #include "world/utility/world_utilities.hpp"
 #include "world_edit.hpp"
@@ -387,13 +387,6 @@ void world_edit::ui_show_animation_editor() noexcept
             ImGui::Checkbox("Local Translation", &selected_animation->local_translation,
                             _edit_stack_world, _edit_context);
 
-            if (selected_animation->local_translation) {
-               ImGui::Separator();
-               ImGui::TextWrapped(
-                  "Local Translation animations do not have accurate "
-                  "previews in WorldEdit.");
-            }
-
             ImGui::SeparatorText("Edit Options");
 
             ImGui::Checkbox("Match Tangents", &_animation_editor_config.match_tangents);
@@ -583,12 +576,19 @@ void world_edit::ui_show_animation_editor() noexcept
 
                ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
+               ImGui::BeginDisabled(selected_animation->local_translation);
+
                if (ImGui::Button("Place", {button_width, 0.0f})) {
                   _animation_editor_context.place = {.active = true};
                }
 
+               ImGui::EndDisabled();
+
                ImGui::SetItemTooltip(
-                  "Add a new key and place it with the cursor.");
+                  not selected_animation->local_translation
+                     ? "Add a new key and place it with the cursor."
+                     : "Place can not be used with Local Translation "
+                       "animations.");
 
                ImGui::EndDisabled();
 
@@ -1150,6 +1150,8 @@ void world_edit::ui_show_animation_editor() noexcept
          }
       }
 
+      _animation_solver.init(*selected_animation, base_rotation, base_position);
+
       std::optional<int32> hovered_background_position_key;
       std::optional<int32> hovered_background_rotation_key;
 
@@ -1162,8 +1164,8 @@ void world_edit::ui_show_animation_editor() noexcept
 
          if (world::raycast_result_keys result =
                 world::raycast_position_keys(cursor_ray.origin, cursor_ray.direction,
-                                             *selected_animation, base_rotation,
-                                             base_position, 1.0f);
+                                             *selected_animation,
+                                             _animation_solver, 1.0f);
              result.hit) {
             hovered_position_key = result.hit;
             hovered_background_position_key = result.background_hit;
@@ -1171,8 +1173,8 @@ void world_edit::ui_show_animation_editor() noexcept
 
          if (world::raycast_result_keys result =
                 world::raycast_rotation_keys(cursor_ray.origin, cursor_ray.direction,
-                                             *selected_animation, base_rotation,
-                                             base_position, 1.0f);
+                                             *selected_animation,
+                                             _animation_solver, 1.0f);
              result.hit) {
             hovered_rotation_key = result.hit;
             hovered_background_rotation_key = result.background_hit;
@@ -1222,8 +1224,18 @@ void world_edit::ui_show_animation_editor() noexcept
 
          const float3 last_move_amount = _animation_editor_context.selected.key_movement;
 
-         if (_gizmo.show_translate(key.position + base_position,
-                                   quaternion{1.0f, 0.0f, 0.0f, 0.0f},
+         float3 gizmo_position = key.position + base_position;
+         quaternion gizmo_rotation{1.0f, 0.0f, 0.0f, 0.0f};
+
+         if (selected_animation->local_translation) {
+            const float4x4 transform =
+               _animation_solver.evaluate(*selected_animation, key.time);
+
+            gizmo_rotation = make_quat_from_matrix(transform);
+            gizmo_position = {transform[3].x, transform[3].y, transform[3].z};
+         }
+
+         if (_gizmo.show_translate(gizmo_position, gizmo_rotation,
                                    _animation_editor_context.selected.key_movement)) {
             const float3 move_delta =
                (_animation_editor_context.selected.key_movement - last_move_amount);
@@ -1252,8 +1264,7 @@ void world_edit::ui_show_animation_editor() noexcept
             selected_animation->rotation_keys[selected_key];
 
          const float4x4 key_transform =
-            world::evaluate_animation(*selected_animation, base_rotation,
-                                      base_position, key.time);
+            _animation_solver.evaluate(*selected_animation, key.time);
 
          const float3 key_position = {key_transform[3].x, key_transform[3].y,
                                       key_transform[3].z};
@@ -1282,8 +1293,8 @@ void world_edit::ui_show_animation_editor() noexcept
       }
 
       for (auto& key : selected_animation->position_keys) {
-         float4x4 transform{};
-         transform[3] = {key.position + base_position, 1.0f};
+         float4x4 transform = {};
+         transform[3] = _animation_solver.evaluate(*selected_animation, key.time)[3];
 
          _tool_visualizers.add_octahedron(transform,
                                           _settings.graphics.animation_position_key_color);
@@ -1291,8 +1302,7 @@ void world_edit::ui_show_animation_editor() noexcept
 
       for (auto& key : selected_animation->rotation_keys) {
          float4x4 transform =
-            world::evaluate_animation(*selected_animation, base_rotation,
-                                      base_position, key.time);
+            _animation_solver.evaluate(*selected_animation, key.time);
 
          _tool_visualizers.add_arrow_wireframe(transform,
                                                float4{_settings.graphics.animation_rotation_key_color,
@@ -1301,31 +1311,35 @@ void world_edit::ui_show_animation_editor() noexcept
 
       const uint32 spline_color =
          utility::pack_srgb_bgra({_settings.graphics.animation_spline_color, 1.0f});
+      const float max_spline_tessellation = 64.0f;
 
-      for (std::size_t i = 1; i < selected_animation->position_keys.size(); ++i) {
-         if (selected_animation->position_keys[i - 1].transition ==
-             world::animation_transition::linear) {
-            _tool_visualizers.add_line(
-               base_position + selected_animation->position_keys[i - 1].position,
-               base_position + selected_animation->position_keys[i].position,
-               spline_color);
-         }
-         else if (selected_animation->position_keys[i - 1].transition ==
-                  world::animation_transition::spline) {
-            const float time_start = selected_animation->position_keys[i - 1].time;
-            const float time_distance = selected_animation->position_keys[i].time -
-                                        selected_animation->position_keys[i - 1].time;
+      if (selected_animation->local_translation) {
+         for (std::size_t i = 1; i < selected_animation->rotation_keys.size(); ++i) {
+            const world::animation_transition transition =
+               selected_animation->rotation_keys[i - 1].transition;
 
-            for (float t = 0.0f; t < 64.0f; ++t) {
+            if (transition == world::animation_transition::pop) continue;
+
+            const float time_start = selected_animation->rotation_keys[i - 1].time;
+            const float time_distance = selected_animation->rotation_keys[i].time -
+                                        selected_animation->rotation_keys[i - 1].time;
+
+            const float rotation_distance =
+               distance(selected_animation->rotation_keys[i].rotation,
+                        selected_animation->rotation_keys[i - 1].rotation);
+            const float local_tessellation =
+               std::min(std::max(std::round(rotation_distance), 1.0f),
+                        max_spline_tessellation);
+
+            for (float t = 0.0f; t < local_tessellation; ++t) {
                float4x4 transform0 =
-                  world::evaluate_animation(*selected_animation, base_rotation,
-                                            base_position,
-                                            time_start + ((t / 64.0f) * time_distance));
+                  _animation_solver.evaluate(*selected_animation,
+                                             time_start + ((t / local_tessellation) *
+                                                           time_distance));
                float4x4 transform1 =
-                  world::evaluate_animation(*selected_animation, base_rotation,
-                                            base_position,
-                                            time_start +
-                                               (((t + 1) / 64.0f) * time_distance));
+                  _animation_solver.evaluate(*selected_animation,
+                                             time_start + (((t + 1) / local_tessellation) *
+                                                           time_distance));
 
                _tool_visualizers.add_line(float3{transform0[3].x, transform0[3].y,
                                                  transform0[3].z},
@@ -1334,39 +1348,101 @@ void world_edit::ui_show_animation_editor() noexcept
                                           spline_color);
             }
          }
-      }
 
-      if (selected_animation->loop and not selected_animation->position_keys.empty()) {
-         const world::position_key& last_key =
-            selected_animation->position_keys.back();
+         if (selected_animation->loop and
+             not selected_animation->rotation_keys.empty()) {
+            const world::rotation_key& last_key =
+               selected_animation->rotation_keys.back();
 
-         if (last_key.transition == world::animation_transition::linear) {
-            _tool_visualizers.add_line(base_position + last_key.position,
-                                       base_position +
-                                          selected_animation->position_keys[0].position,
-                                       spline_color);
+            if (last_key.transition != world::animation_transition::pop) {
+               const float time_start = last_key.time;
+               const float time_distance =
+                  selected_animation->runtime - last_key.time;
+
+               for (float t = 0.0f; t < max_spline_tessellation; ++t) {
+                  float4x4 transform0 =
+                     _animation_solver.evaluate(*selected_animation,
+                                                time_start + ((t / max_spline_tessellation) *
+                                                              time_distance));
+                  float4x4 transform1 =
+                     _animation_solver.evaluate(*selected_animation,
+                                                time_start + (((t + 1) / max_spline_tessellation) *
+                                                              time_distance));
+
+                  _tool_visualizers.add_line(
+                     float3{transform0[3].x, transform0[3].y, transform0[3].z},
+                     float3{transform1[3].x, transform1[3].y, transform1[3].z},
+                     spline_color);
+               }
+            }
          }
-         else if (selected_animation->position_keys.back().transition ==
-                  world::animation_transition::spline) {
-            const float time_start = last_key.time;
-            const float time_distance = selected_animation->runtime - last_key.time;
+      }
+      else {
+         for (std::size_t i = 1; i < selected_animation->position_keys.size(); ++i) {
+            const world::animation_transition transition =
+               selected_animation->position_keys[i - 1].transition;
 
-            for (float t = 0.0f; t < 64.0f; ++t) {
-               float4x4 transform0 =
-                  world::evaluate_animation(*selected_animation, base_rotation,
-                                            base_position,
-                                            time_start + ((t / 64.0f) * time_distance));
-               float4x4 transform1 =
-                  world::evaluate_animation(*selected_animation, base_rotation,
-                                            base_position,
-                                            time_start +
-                                               (((t + 1) / 64.0f) * time_distance));
+            if (transition == world::animation_transition::linear) {
+               _tool_visualizers.add_line(
+                  base_position + selected_animation->position_keys[i - 1].position,
+                  base_position + selected_animation->position_keys[i].position,
+                  spline_color);
+            }
+            else if (transition == world::animation_transition::spline) {
+               const float time_start = selected_animation->position_keys[i - 1].time;
+               const float time_distance =
+                  selected_animation->position_keys[i].time -
+                  selected_animation->position_keys[i - 1].time;
 
-               _tool_visualizers.add_line(float3{transform0[3].x, transform0[3].y,
-                                                 transform0[3].z},
-                                          float3{transform1[3].x, transform1[3].y,
-                                                 transform1[3].z},
-                                          spline_color);
+               for (float t = 0.0f; t < max_spline_tessellation; ++t) {
+                  float4x4 transform0 =
+                     _animation_solver.evaluate(*selected_animation,
+                                                time_start + ((t / max_spline_tessellation) *
+                                                              time_distance));
+                  float4x4 transform1 =
+                     _animation_solver.evaluate(*selected_animation,
+                                                time_start + (((t + 1) / max_spline_tessellation) *
+                                                              time_distance));
+
+                  _tool_visualizers.add_line(
+                     float3{transform0[3].x, transform0[3].y, transform0[3].z},
+                     float3{transform1[3].x, transform1[3].y, transform1[3].z},
+                     spline_color);
+               }
+            }
+         }
+
+         if (selected_animation->loop and
+             not selected_animation->position_keys.empty()) {
+            const world::position_key& last_key =
+               selected_animation->position_keys.back();
+
+            if (last_key.transition == world::animation_transition::linear) {
+               _tool_visualizers
+                  .add_line(base_position + last_key.position,
+                            base_position + selected_animation->position_keys[0].position,
+                            spline_color);
+            }
+            else if (last_key.transition == world::animation_transition::spline) {
+               const float time_start = last_key.time;
+               const float time_distance =
+                  selected_animation->runtime - last_key.time;
+
+               for (float t = 0.0f; t < max_spline_tessellation; ++t) {
+                  float4x4 transform0 =
+                     _animation_solver.evaluate(*selected_animation,
+                                                time_start + ((t / max_spline_tessellation) *
+                                                              time_distance));
+                  float4x4 transform1 =
+                     _animation_solver.evaluate(*selected_animation,
+                                                time_start + (((t + 1) / max_spline_tessellation) *
+                                                              time_distance));
+
+                  _tool_visualizers.add_line(
+                     float3{transform0[3].x, transform0[3].y, transform0[3].z},
+                     float3{transform1[3].x, transform1[3].y, transform1[3].z},
+                     spline_color);
+               }
             }
          }
       }
@@ -1379,6 +1455,11 @@ void world_edit::ui_show_animation_editor() noexcept
          float4x4 transform{};
          transform[3] = {hovered_key.position + base_position, 1.0f};
 
+         if (selected_animation->local_translation) {
+            transform[3] = _animation_solver.evaluate(*selected_animation,
+                                                      hovered_key.time)[3];
+         }
+
          _tool_visualizers.add_octahedron_wireframe(transform,
                                                     _settings.graphics.hover_color);
       }
@@ -1389,8 +1470,7 @@ void world_edit::ui_show_animation_editor() noexcept
             selected_animation->rotation_keys[*hovered_rotation_key];
 
          float4x4 transform =
-            world::evaluate_animation(*selected_animation, base_rotation,
-                                      base_position, hovered_key.time);
+            _animation_solver.evaluate(*selected_animation, hovered_key.time);
 
          _tool_visualizers.add_arrow_wireframe(transform,
                                                float4{_settings.graphics.hover_color,
@@ -1399,8 +1479,7 @@ void world_edit::ui_show_animation_editor() noexcept
 
       if (hovered_position_time) {
          float4x4 key_transform =
-            world::evaluate_animation(*selected_animation, base_rotation,
-                                      base_position, *hovered_position_time);
+            _animation_solver.evaluate(*selected_animation, *hovered_position_time);
 
          float4x4 transform{};
          transform[3] = key_transform[3];
@@ -1411,8 +1490,7 @@ void world_edit::ui_show_animation_editor() noexcept
 
       if (hovered_rotation_time) {
          float4x4 transform =
-            world::evaluate_animation(*selected_animation, base_rotation,
-                                      base_position, *hovered_rotation_time);
+            _animation_solver.evaluate(*selected_animation, *hovered_rotation_time);
 
          _tool_visualizers.add_arrow_wireframe(transform,
                                                float4{_settings.graphics.hover_color,
@@ -1474,14 +1552,14 @@ void world_edit::ui_show_animation_editor() noexcept
 
          if (animated_object_id != world::object_id{world::max_id}) {
             _tool_visualizers.add_ghost_object(
-               world::evaluate_animation(*selected_animation, base_rotation, base_position,
-                                         _animation_editor_context.selected.playback_time),
+               _animation_solver.evaluate(*selected_animation,
+                                          _animation_editor_context.selected.playback_time),
                animated_object_id);
          }
          else {
             _tool_visualizers.add_arrow_wireframe(
-               world::evaluate_animation(*selected_animation, base_rotation, base_position,
-                                         _animation_editor_context.selected.playback_time) *
+               _animation_solver.evaluate(*selected_animation,
+                                          _animation_editor_context.selected.playback_time) *
                   float4x4{{8.0f, 0.0f, 0.0f, 0.0f},
                            {0.0f, 8.0f, 0.0f, 0.0f},
                            {0.0f, 0.0f, 8.0f, 0.0f},

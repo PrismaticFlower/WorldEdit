@@ -5,8 +5,8 @@
 namespace we::world {
 
 auto raycast_position_keys(const float3 ray_origin, const float3 ray_direction,
-                           const animation& animation, const quaternion& base_rotation,
-                           const float3& base_position,
+                           const animation& animation,
+                           const animation_solver& animation_solver,
                            const float visualizer_scale) noexcept -> raycast_result_keys
 {
    std::optional<int32> hit;
@@ -15,8 +15,8 @@ auto raycast_position_keys(const float3 ray_origin, const float3 ray_direction,
    float background_min_distance = std::numeric_limits<float>::max();
 
    for (int32 i = 0; i < std::ssize(animation.position_keys); ++i) {
-      float4x4 transform = evaluate_animation(animation, base_rotation, base_position,
-                                              animation.position_keys[i].time);
+      float4x4 transform =
+         animation_solver.evaluate(animation, animation.position_keys[i].time);
 
       const float intersection =
          sphIntersect(ray_origin, ray_direction,
@@ -44,8 +44,8 @@ auto raycast_position_keys(const float3 ray_origin, const float3 ray_direction,
 }
 
 auto raycast_rotation_keys(const float3 ray_origin, const float3 ray_direction,
-                           const animation& animation, const quaternion& base_rotation,
-                           const float3& base_position,
+                           const animation& animation,
+                           const animation_solver& animation_solver,
                            const float visualizer_scale) noexcept -> raycast_result_keys
 {
    std::optional<int32> hit;
@@ -54,8 +54,8 @@ auto raycast_rotation_keys(const float3 ray_origin, const float3 ray_direction,
    float background_min_distance = std::numeric_limits<float>::max();
 
    for (int32 i = 0; i < std::ssize(animation.rotation_keys); ++i) {
-      float4x4 transform = evaluate_animation(animation, base_rotation, base_position,
-                                              animation.rotation_keys[i].time);
+      float4x4 transform =
+         animation_solver.evaluate(animation, animation.rotation_keys[i].time);
 
       const float intersection =
          sphIntersect(ray_origin, ray_direction,

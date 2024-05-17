@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../world.hpp"
+#include "animation.hpp"
 
 #include <optional>
 
@@ -12,13 +13,13 @@ struct raycast_result_keys {
 };
 
 auto raycast_position_keys(const float3 ray_origin, const float3 ray_direction,
-                           const animation& animation, const quaternion& base_rotation,
-                           const float3& base_position,
+                           const animation& animation,
+                           const animation_solver& animation_solver,
                            const float visualizer_scale) noexcept -> raycast_result_keys;
 
 auto raycast_rotation_keys(const float3 ray_origin, const float3 ray_direction,
-                           const animation& animation, const quaternion& base_rotation,
-                           const float3& base_position,
+                           const animation& animation,
+                           const animation_solver& animation_solver,
                            const float visualizer_scale) noexcept -> raycast_result_keys;
 
 }

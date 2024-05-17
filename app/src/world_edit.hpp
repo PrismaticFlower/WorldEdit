@@ -18,6 +18,7 @@
 #include "world/object_class.hpp"
 #include "world/object_class_library.hpp"
 #include "world/tool_visualizers.hpp"
+#include "world/utility/animation.hpp"
 #include "world/world.hpp"
 
 #include <chrono>
@@ -770,6 +771,8 @@ private:
          bool finish = false;
       } pick_object;
    } _animation_hierarchy_editor_context;
+
+   world::animation_solver _animation_solver;
 
    float3 _cursor_positionWS = {0.0f, 0.0f, 0.0f};
    std::optional<float3> _cursor_surface_normalWS;
