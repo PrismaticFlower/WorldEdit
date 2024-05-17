@@ -416,7 +416,7 @@ bool gizmo::show_translate(const float3 gizmo_position,
 
 bool gizmo::show_rotate(const float3 gizmo_position, float3& rotation) noexcept
 {
-   _gizmo_position = gizmo_position;
+   if (not _rotate.rotating) _gizmo_position = gizmo_position;
    _gizmo_rotation = {};
    _used_last_tick = true;
 
