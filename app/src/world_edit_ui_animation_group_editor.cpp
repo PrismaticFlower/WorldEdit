@@ -5,6 +5,7 @@
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
 #include "math/matrix_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
@@ -197,6 +198,7 @@ void world_edit::ui_show_animation_group_editor() noexcept
                _animation_group_editor_context.selected.playback_state =
                   animation_playback_state::stopped;
                _animation_group_editor_context.selected.playback_time = 0.0f;
+               _animation_group_editor_context.selected.playback_cache.clear();
             }
          }
 
@@ -418,37 +420,126 @@ void world_edit::ui_show_animation_group_editor() noexcept
    if (selected_group) {
       if (_animation_group_editor_context.selected.playback_state !=
           animation_playback_state::stopped) {
-         std::vector<const world::animation*>& playback_animations =
-            _animation_group_editor_context.selected.playback_animations;
-         std::vector<const world::object*>& playback_objects =
-            _animation_group_editor_context.selected.playback_objects;
+         using playback_cache_entry =
+            animation_group_editor_context::selected::playback_cache_entry;
 
-         playback_animations.clear();
-         playback_animations.resize(selected_group->entries.size());
+         std::vector<playback_cache_entry>& playback_cache =
+            _animation_group_editor_context.selected.playback_cache;
 
-         playback_objects.clear();
-         playback_objects.resize(selected_group->entries.size());
+         bool playback_cache_dirty = false;
 
-         for (const world::animation& animation : _world.animations) {
-            for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
+         if (playback_cache.size() != selected_group->entries.size()) {
+            playback_cache_dirty = true;
+         }
+
+         if (playback_cache.size() == selected_group->entries.size()) {
+            for (uint32 i = 0; i < playback_cache.size(); ++i) {
+               const playback_cache_entry& cache_entry = playback_cache[i];
                const world::animation_group::entry& entry =
                   selected_group->entries[i];
 
-               if (string::iequals(animation.name, entry.animation)) {
-                  playback_animations[i] = &animation;
+               if (cache_entry.animation_name != entry.animation or
+                   cache_entry.object_name != entry.object) {
+                  playback_cache_dirty = true;
+               }
+
+               if (cache_entry.animation_hierarchy !=
+                   world::animation_hierarchy_id{world::max_id}) {
+                  const world::animation_hierarchy* hierarchy =
+                     world::find_entity(_world.animation_hierarchies,
+                                        cache_entry.animation_hierarchy);
+
+                  if (hierarchy) {
+                     if (not string::iequals(cache_entry.object_name,
+                                             hierarchy->root_object)) {
+                        playback_cache_dirty = true;
+                     }
+
+                     if (hierarchy->objects.size() != cache_entry.children.size()) {
+                        playback_cache_dirty = true;
+                     }
+
+                     if (hierarchy->objects.size() == cache_entry.children.size()) {
+                        for (uint32 child_index = 0;
+                             child_index < hierarchy->objects.size(); ++child_index) {
+                           if (hierarchy->objects[child_index] !=
+                               cache_entry.children[child_index].name) {
+                              playback_cache_dirty = true;
+                           }
+                        }
+                     }
+                  }
                }
             }
          }
 
-         for (const world::object& object : _world.objects) {
-            for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
-               const world::animation_group::entry& entry =
-                  selected_group->entries[i];
+         if (playback_cache_dirty) {
+            playback_cache.clear();
+            playback_cache.resize(selected_group->entries.size());
 
-               if (string::iequals(object.name, entry.object)) {
-                  playback_objects[i] = &object;
+            for (const world::object& object : _world.objects) {
+               for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
+                  const world::animation_group::entry& entry =
+                     selected_group->entries[i];
 
-                  break;
+                  if (string::iequals(object.name, entry.object)) {
+                     playback_cache[i].object_name = entry.object;
+                     playback_cache[i].object = object.id;
+                     playback_cache[i].base_position = object.position;
+                     playback_cache[i].base_rotation = object.rotation;
+
+                     const quaternion inverse_rotation = conjugate(object.rotation);
+
+                     playback_cache[i].inverse_base_rotation = inverse_rotation;
+                     playback_cache[i].inverse_base_position =
+                        inverse_rotation * -object.position;
+
+                     break;
+                  }
+               }
+            }
+
+            for (const world::animation& animation : _world.animations) {
+               for (uint32 i = 0; i < selected_group->entries.size(); ++i) {
+                  const world::animation_group::entry& entry =
+                     selected_group->entries[i];
+
+                  if (string::iequals(animation.name, entry.animation)) {
+                     playback_cache[i].animation_name = entry.animation;
+                     playback_cache[i].animation = animation.id;
+                     playback_cache[i].animation_runtime = animation.runtime;
+                     playback_cache[i].animation_loops = animation.loop;
+                  }
+               }
+            }
+
+            for (const world::animation_hierarchy& hierarchy :
+                 _world.animation_hierarchies) {
+               for (playback_cache_entry& entry : playback_cache) {
+                  if (string::iequals(hierarchy.root_object, entry.object_name)) {
+                     entry.children.reserve(hierarchy.objects.size());
+
+                     for (const auto& child_name : hierarchy.objects) {
+                        for (const world::object& object : _world.objects) {
+                           if (not string::iequals(child_name, object.name)) {
+                              continue;
+                           }
+
+                           float4x4 transform =
+                              to_matrix(object.rotation * entry.inverse_base_rotation);
+                           transform[3] = {entry.inverse_base_rotation * object.position +
+                                              entry.inverse_base_position,
+                                           1.0f};
+
+                           entry.children.emplace_back(child_name, transform,
+                                                       object.id);
+                        }
+                     }
+
+                     entry.animation_hierarchy = hierarchy.id;
+
+                     break;
+                  }
                }
             }
          }
@@ -456,11 +547,11 @@ void world_edit::ui_show_animation_group_editor() noexcept
          bool loop = false;
          float runtime = 0.0f;
 
-         for (const world::animation* animation : playback_animations) {
-            if (not animation) continue;
+         for (const playback_cache_entry& entry : playback_cache) {
+            if (entry.animation == world::animation_id{world::max_id}) continue;
 
-            loop |= animation->loop;
-            runtime = std::max(animation->runtime, runtime);
+            loop |= entry.animation_loops;
+            runtime = std::max(entry.animation_runtime, runtime);
          }
 
          if (_animation_group_editor_context.selected.playback_state ==
@@ -482,34 +573,46 @@ void world_edit::ui_show_animation_group_editor() noexcept
                _animation_group_editor_context.selected.playback_state =
                   animation_playback_state::stopped;
                _animation_group_editor_context.selected.playback_time = 0.0f;
+               _animation_group_editor_context.selected.playback_cache.clear();
             }
          }
 
-         for (uint32 i = 0; i < playback_animations.size(); ++i) {
-            if (not playback_animations[i]) continue;
+         for (const playback_cache_entry& entry : playback_cache) {
+            if (entry.animation == world::animation_id{world::max_id}) continue;
 
-            if (playback_objects[i]) {
-               _animation_solver.init(*playback_animations[i],
-                                      playback_objects[i]->rotation,
-                                      playback_objects[i]->position);
+            const world::animation* animation =
+               world::find_entity(_world.animations, entry.animation);
 
-               _tool_visualizers.add_ghost_object(
-                  _animation_solver.evaluate(*playback_animations[i],
-                                             _animation_group_editor_context
-                                                .selected.playback_time),
-                  playback_objects[i]->id);
+            if (not animation) continue;
+
+            const world::object* object =
+               entry.object != world::object_id{world::max_id}
+                  ? world::find_entity(_world.objects, entry.object)
+                  : nullptr;
+
+            _animation_solver.init(*animation, entry.base_rotation, entry.base_position);
+
+            const float4x4 transform =
+               _animation_solver.evaluate(*animation, _animation_group_editor_context
+                                                         .selected.playback_time);
+
+            if (object) {
+               _tool_visualizers.add_ghost_object(transform, entry.object);
+
+               if (not selected_group->disable_hierarchies) {
+                  for (const auto& [child_name, child_transform, child_id] :
+                       entry.children) {
+                     _tool_visualizers.add_ghost_object(transform * child_transform,
+                                                        child_id);
+                  }
+               }
             }
             else {
-               _animation_solver.init(*playback_animations[i], quaternion{}, float3{});
-
                _tool_visualizers.add_arrow_wireframe(
-                  _animation_solver.evaluate(*playback_animations[i],
-                                             _animation_group_editor_context
-                                                .selected.playback_time) *
-                     float4x4{{8.0f, 0.0f, 0.0f, 0.0f},
-                              {0.0f, 8.0f, 0.0f, 0.0f},
-                              {0.0f, 0.0f, 8.0f, 0.0f},
-                              {0.0f, 0.0f, 0.0f, 1.0f}},
+                  transform * float4x4{{8.0f, 0.0f, 0.0f, 0.0f},
+                                       {0.0f, 8.0f, 0.0f, 0.0f},
+                                       {0.0f, 0.0f, 8.0f, 0.0f},
+                                       {0.0f, 0.0f, 0.0f, 1.0f}},
                   {_settings.graphics.creation_color, 1.0f});
             }
          }

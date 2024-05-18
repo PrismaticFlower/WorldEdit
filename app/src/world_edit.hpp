@@ -743,8 +743,32 @@ private:
 
          std::chrono::steady_clock::time_point playback_tick_start;
 
-         std::vector<const world::animation*> playback_animations;
-         std::vector<const world::object*> playback_objects;
+         struct playback_cache_entry {
+            std::string animation_name;
+            std::string object_name;
+
+            world::animation_id animation = world::max_id;
+            world::animation_hierarchy_id animation_hierarchy = world::max_id;
+            world::object_id object = world::max_id;
+
+            quaternion base_rotation;
+            float3 base_position;
+            quaternion inverse_base_rotation;
+            float3 inverse_base_position;
+
+            float animation_runtime = 0.0f;
+            bool animation_loops = false;
+
+            struct child {
+               std::string name;
+               float4x4 transform;
+               world::object_id id;
+            };
+
+            std::vector<child> children;
+         };
+
+         std::vector<playback_cache_entry> playback_cache;
       } selected;
 
       struct pick_object {
