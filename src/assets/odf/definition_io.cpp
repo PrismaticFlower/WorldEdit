@@ -60,9 +60,7 @@ auto read_property(string::line line) -> property
       value = string::split_first_of_exclusive(value, "\""sv).front();
    }
    else {
-      value = string::split_first_of_exclusive_if(value, [](char c) {
-                 return std::isspace(c);
-              }).front();
+      value = string::split_first_of_exclusive_whitespace(value).front();
    }
 
    return {.key = key, .value = value};

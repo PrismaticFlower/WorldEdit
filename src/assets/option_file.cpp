@@ -24,7 +24,7 @@ auto parse_arguments(std::string_view str)
          str = (*quoted_arg)[1];
       }
       else {
-         auto [argument, rest] = split_first_of_exclusive_if(str, std::isspace);
+         auto [argument, rest] = split_first_of_exclusive_whitespace(str);
          arguments.emplace_back(argument);
          str = rest;
       }
@@ -39,7 +39,7 @@ auto parse_option(std::string_view str) -> std::pair<std::string_view, option>
 {
    str = trim_leading_whitespace(str);
 
-   auto [name, arguments_rest] = split_first_of_exclusive_if(str, std::isspace);
+   auto [name, arguments_rest] = split_first_of_exclusive_whitespace(str);
    auto [rest, arguments] = parse_arguments(arguments_rest);
 
    return {rest, option{.name = std::string{name}, .arguments = std::move(arguments)}};

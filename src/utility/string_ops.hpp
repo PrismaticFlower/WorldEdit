@@ -1,9 +1,7 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <initializer_list>
-#include <iterator>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -29,12 +27,10 @@ auto split_first_of_exclusive(std::string_view str, std::string_view delimiter) 
 auto split_first_of_exclusive(std::string&& str, std::string_view delimiter) noexcept
    -> std::array<std::string_view, 2> = delete;
 
-template<typename Predicate>
-auto split_first_of_exclusive_if(std::string_view str, Predicate&& predicate) noexcept
+auto split_first_of_exclusive_whitespace(std::string_view str) noexcept
    -> std::array<std::string_view, 2>;
 
-template<typename Predicate>
-auto split_first_of_exclusive_if(std::string&& str, Predicate predicate) noexcept
+auto split_first_of_exclusive_whitespace(std::string&& str) noexcept
    -> std::array<std::string_view, 2> = delete;
 
 auto split_first_of_right_inclusive_any(std::string_view str,
@@ -154,23 +150,5 @@ private:
    bool _next_is_end = false;
    bool _is_end = false;
 };
-
-// Inline Implementations
-
-template<typename Predicate>
-inline auto split_first_of_exclusive_if(std::string_view str, Predicate&& predicate) noexcept
-   -> std::array<std::string_view, 2>
-{
-   using namespace std::literals;
-
-   const auto iter =
-      std::find_if(str.begin(), str.end(), std::forward<Predicate>(predicate));
-
-   if (iter == str.end()) return {str, ""sv};
-
-   const auto offset = std::distance(str.begin(), iter);
-
-   return {str.substr(0, offset), str.substr(offset + 1)};
-}
 
 }

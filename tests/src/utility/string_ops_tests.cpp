@@ -46,15 +46,14 @@ TEST_CASE("string split first of exclusive", "[Utility][StringOp]")
    REQUIRE(split_first_of_exclusive(input, ","sv) == std::array{input, ""sv});
 }
 
-TEST_CASE("string split first of exclusive if", "[Utility][StringOp]")
+TEST_CASE("string split first of exclusive whitespace", "[Utility][StringOp]")
 {
    const auto input = "Foo Bar Baz"sv;
 
-   REQUIRE(split_first_of_exclusive_if(input, [](char c) {
-              return std::isspace(c);
-           }) == std::array{"Foo"sv, "Bar Baz"sv});
-   REQUIRE(split_first_of_exclusive_if(input, [](char) { return false; }) ==
-           std::array{input, ""sv});
+   REQUIRE(split_first_of_exclusive_whitespace(input) ==
+           std::array{"Foo"sv, "Bar Baz"sv});
+   REQUIRE(split_first_of_exclusive_whitespace("FooBarBaz"sv) ==
+           std::array{"FooBarBaz"sv, ""sv});
 }
 
 TEST_CASE("string split first of right inclusive any", "[Utility][StringOp]")

@@ -1,7 +1,9 @@
 
 #include "string_ops.hpp"
 
+#include <algorithm>
 #include <cctype>
+#include <iterator>
 
 using namespace std::literals;
 
@@ -32,6 +34,32 @@ auto split_first_of_exclusive(std::string_view str, std::string_view delimiter) 
 
    return {str.substr(0, offset),
            str.substr(offset + delimiter.size(), str.size() - offset)};
+}
+
+auto split_first_of_exclusive_whitespace(std::string_view str) noexcept
+   -> std::array<std::string_view, 2>
+{
+   using namespace std::literals;
+
+   const auto iter = std::find_if(str.begin(), str.end(), [](const char c) {
+      switch (c) {
+      case '\t':
+      case '\n':
+      case '\v':
+      case '\f':
+      case '\r':
+      case ' ':
+         return true;
+      default:
+         return false;
+      }
+   });
+
+   if (iter == str.end()) return {str, ""sv};
+
+   const auto offset = std::distance(str.begin(), iter);
+
+   return {str.substr(0, offset), str.substr(offset + 1)};
 }
 
 auto split_first_of_right_inclusive_any(std::string_view str,
