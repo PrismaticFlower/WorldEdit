@@ -655,7 +655,9 @@ void world_edit::ui_show_animation_group_editor() noexcept
                                std::get<world::object_id>(
                                   *_interaction_targets.hovered_entity));
 
-         _animation_group_editor_config.new_entry_object_name = object->name;
+         if (object) {
+            _animation_group_editor_config.new_entry_object_name = object->name;
+         }
       }
 
       _animation_group_editor_context.pick_object = {};
