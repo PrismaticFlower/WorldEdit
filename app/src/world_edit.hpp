@@ -725,6 +725,14 @@ private:
          bool active = false;
          bool finish = false;
       } place;
+
+      struct pick_object {
+         bool active = false;
+         bool finish = false;
+      } pick_object;
+
+      std::string add_new_group = "";
+      std::string add_new_object = "";
    } _animation_editor_context;
 
    struct animation_group_editor_config {

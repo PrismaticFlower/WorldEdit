@@ -99,6 +99,9 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
             ImGui::SetItemTooltip("Hides the editors for the PS2 Blend Mode "
                                   "and Bidirectional light properties.");
 
+            ImGui::Checkbox("Don't Ask to Add New Animations to Groups",
+                            &preferences.dont_ask_to_add_animation_to_group);
+
             ImGui::SeparatorText("Reset");
 
             if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {

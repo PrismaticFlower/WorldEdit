@@ -642,6 +642,10 @@ void world_edit::initialize_commands() noexcept
       _animation_editor_context.selected.stop_playback = true;
    });
    _commands.add("animation.close"s, [this] { _animation_editor_open = false; });
+   _commands.add("animation.finish_pick_object"s,
+                 [this] { _animation_editor_context.pick_object.finish = true; });
+   _commands.add("animation.cancel_pick_object"s,
+                 [this] { _animation_editor_context.pick_object = {}; });
 
    _commands.add("animation_group.close"s,
                  [this] { _animation_group_editor_open = false; });
@@ -1246,6 +1250,22 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .hidden = true,
    });
+
+   _hotkeys.add_set(
+      {.name = "Animation Editing (Pick Object)",
+       .description = "Active while the animation group editor is open."s,
+       .activated =
+          [this] {
+             return _animation_editor_open and
+                    _animation_editor_context.pick_object.active;
+          },
+       .default_hotkeys =
+          {
+             {"Finish", "animation.finish_pick_object", {.key = key::mouse1}},
+             {"Cancel", "animation.cancel_pick_object", {.key = key::escape}},
+          },
+
+       .hidden = true});
 
    _hotkeys.add_set(
       {.name = "Animation Group Editing",

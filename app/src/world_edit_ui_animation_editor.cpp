@@ -1,4 +1,6 @@
 #include "edits/add_animation.hpp"
+#include "edits/add_animation_group.hpp"
+#include "edits/add_animation_group_entry.hpp"
 #include "edits/bundle.hpp"
 #include "edits/delete_animation.hpp"
 #include "edits/delete_animation_key.hpp"
@@ -277,6 +279,7 @@ void world_edit::ui_show_animation_editor() noexcept
    std::optional<int32> hovered_rotation_key;
    std::optional<float> hovered_position_time;
    std::optional<float> hovered_rotation_time;
+   bool add_last_animation_to_group = false;
 
    if (ImGui::Begin("Animation Editor", &_animation_editor_open)) {
       if (ImGui::BeginChild("Animations", {160.0f * _display_scale, 0.0f},
@@ -345,6 +348,10 @@ void world_edit::ui_show_animation_editor() noexcept
                _animation_editor_config.new_animation_name.clear();
                _animation_editor_context.selected = {
                   .id = _world.animations.back().id};
+
+               if (not _settings.preferences.dont_ask_to_add_animation_to_group) {
+                  ImGui::OpenPopup("Add to Group");
+               }
             }
             else {
                MessageBoxA(_window,
@@ -356,6 +363,97 @@ void world_edit::ui_show_animation_editor() noexcept
          }
 
          ImGui::EndDisabled();
+
+         if (ImGui::BeginPopup("Add to Group")) {
+            ImGui::SeparatorText("Add new animation to group?");
+
+            if (ImGui::BeginCombo("Group",
+                                  _animation_editor_context.add_new_group.empty()
+                                     ? "<create new group>"
+                                     : _animation_editor_context.add_new_group.c_str())) {
+               if (ImGui::Selectable("<create new group>")) {
+                  _animation_editor_context.add_new_group.clear();
+               }
+
+               for (const world::animation_group& group : _world.animation_groups) {
+                  if (ImGui::Selectable(group.name.c_str())) {
+                     _animation_editor_context.add_new_group = group.name;
+                  }
+               }
+
+               ImGui::EndCombo();
+            }
+
+            if (absl::InlinedVector<char, 256>
+                   buffer{_animation_editor_context.add_new_object.begin(),
+                          _animation_editor_context.add_new_object.end()};
+                ImGui::InputTextAutoComplete("Object", &buffer, [&]() noexcept {
+                   std::array<std::string_view, 6> entries;
+                   std::size_t matching_count = 0;
+
+                   for (const world::object& object : _world.objects) {
+                      if (matching_count == entries.size()) break;
+
+                      if (string::icontains(object.name,
+                                            _animation_editor_context.add_new_object)) {
+                         entries[matching_count] = object.name;
+
+                         ++matching_count;
+                      }
+                   }
+
+                   return entries;
+                })) {
+               _animation_editor_context.add_new_object = {buffer.data(),
+                                                           buffer.size()};
+            }
+
+            ImGui::BeginDisabled(_animation_editor_context.add_new_object.empty());
+
+            if (ImGui::Button("Add", {ImGui::CalcItemWidth(), 0.0f})) {
+               add_last_animation_to_group = true;
+
+               ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SetItemTooltip("Add the animation to the selected group.");
+
+            ImGui::EndDisabled();
+
+            if (ImGui::Button("Pick Object", {ImGui::CalcItemWidth(), 0.0f})) {
+               _animation_editor_context.pick_object = {.active = true};
+
+               ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SetItemTooltip(
+               "Pick an object with the cursor then add that object and the "
+               "new animation to the selected group. The popup will close to "
+               "allow you to pick an object.");
+
+            ImGui::Checkbox("Don't ask next time",
+                            &_settings.preferences.dont_ask_to_add_animation_to_group);
+
+            ImGui::SetItemTooltip(
+               "Don't prompt to add new animations to groups. This can also be "
+               "changed in Settings.");
+
+            ImGui::Separator();
+
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::CalcItemWidth());
+
+            ImGui::Text(
+               "Animations need a group and (normally) an object to be useful. "
+               "\n\nYou can use this popup to select a Group for the animation "
+               "to "
+               "be a part of and "
+               "also an object to pair the animation with in that group here. "
+               "\n\nOr you can close it if you'd rather do this later.");
+
+            ImGui::PopTextWrapPos();
+
+            ImGui::EndPopup();
+         }
       }
 
       ImGui::EndChild();
@@ -1712,6 +1810,62 @@ void world_edit::ui_show_animation_editor() noexcept
             _hotkeys.query_binding("Animation Editing", "Stop")));
 
          ImGui::End();
+      }
+   }
+
+   if (_animation_editor_context.pick_object.finish) {
+      if (_interaction_targets.hovered_entity and
+          std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity)) {
+         const world::object* object =
+            world::find_entity(_world.objects,
+                               std::get<world::object_id>(
+                                  *_interaction_targets.hovered_entity));
+
+         if (object and not object->name.empty()) {
+            _animation_editor_context.add_new_object = object->name;
+            add_last_animation_to_group = true;
+         }
+      }
+
+      _animation_editor_context.pick_object = {};
+   }
+
+   if (add_last_animation_to_group and not _world.animations.empty()) {
+      if (_animation_editor_context.add_new_group.empty()) {
+         if (_world.animation_groups.size() < _world.animation_groups.max_size()) {
+            const world::animation_group_id id =
+               _world.next_id.animation_groups.aquire();
+
+            _edit_stack_world.apply(
+               edits::make_add_animation_group(
+                  {.name = world::create_unique_name(_world.animation_groups,
+                                                     _world.animations.back().name),
+                   .entries = {world::animation_group::entry{
+                      .animation = _world.animations.back().name,
+                      .object = _animation_editor_context.add_new_object}},
+                   .id = id}),
+               _edit_context);
+         }
+         else {
+            MessageBoxA(_window,
+                        fmt::format("Max Animation Groups ({}) Reached",
+                                    _world.animation_groups.max_size())
+                           .c_str(),
+                        "Limit Reached", MB_OK);
+         }
+      }
+      else {
+         world::animation_group* group =
+            world::find_entity(_world.animation_groups,
+                               _animation_editor_context.add_new_group);
+
+         if (group) {
+            _edit_stack_world.apply(edits::make_add_animation_group_entry(
+                                       &group->entries,
+                                       {.animation = _world.animations.back().name,
+                                        .object = _animation_editor_context.add_new_object}),
+                                    _edit_context);
+         }
       }
    }
 }
