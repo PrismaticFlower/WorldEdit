@@ -716,7 +716,7 @@ void world_edit::ui_show_animation_editor() noexcept
                                       get_next_key_time(selected_animation->position_keys,
                                                         selected_key,
                                                         selected_animation->runtime),
-                                      "%.2f")) {
+                                      "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
                   _edit_stack_world.apply(edits::make_set_vector_value(
                                              &selected_animation->position_keys, selected_key,
                                              &world::position_key::time, time),
@@ -947,7 +947,7 @@ void world_edit::ui_show_animation_editor() noexcept
                                       get_next_key_time(selected_animation->rotation_keys,
                                                         selected_key,
                                                         selected_animation->runtime),
-                                      "%.2f")) {
+                                      "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
                   _edit_stack_world.apply(edits::make_set_vector_value(
                                              &selected_animation->rotation_keys, selected_key,
                                              &world::rotation_key::time, time),
