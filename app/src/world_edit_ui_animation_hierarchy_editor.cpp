@@ -57,13 +57,17 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                }
 
                if (ImGui::IsItemHovered()) {
-                  for (const auto& object : _world.objects) {
-                     if (string::iequals(object.name,
-                                         _world.animation_hierarchies[i].root_object)) {
-                        _interaction_targets.hovered_entity = object.id;
+                  const world::object* object =
+                     world::find_entity(_world.objects,
+                                        _world.animation_hierarchies[i].root_object);
 
-                        break;
-                     }
+                  if (object) _interaction_targets.hovered_entity = object->id;
+
+                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft) and
+                      object) {
+                     _interaction_targets.selection.add(object->id);
+
+                     ImGui::SetWindowFocus("Selection");
                   }
                }
 
@@ -214,12 +218,17 @@ void world_edit::ui_show_animation_hierarchy_editor() noexcept
                }
 
                if (ImGui::IsItemHovered()) {
-                  for (const auto& object : _world.objects) {
-                     if (string::iequals(object.name, selected_hierarchy->objects[i])) {
-                        _interaction_targets.hovered_entity = object.id;
+                  const world::object* object =
+                     world::find_entity(_world.objects,
+                                        selected_hierarchy->objects[i]);
 
-                        break;
-                     }
+                  if (object) _interaction_targets.hovered_entity = object->id;
+
+                  if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft) and
+                      object) {
+                     _interaction_targets.selection.add(object->id);
+
+                     ImGui::SetWindowFocus("Selection");
                   }
                }
 

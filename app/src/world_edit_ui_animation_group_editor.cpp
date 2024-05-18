@@ -255,6 +255,21 @@ void world_edit::ui_show_animation_group_editor() noexcept
                      _edit_stack_world.close_last();
                   }
 
+                  if (ImGui::IsItemHovered() and
+                      ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                     const world::animation* animation =
+                        world::find_entity(_world.animations,
+                                           selected_group->entries[i].animation);
+
+                     if (animation) {
+                        _animation_editor_open = true;
+                        _animation_editor_context = {
+                           .selected = {.id = animation->id}};
+
+                        ImGui::SetWindowFocus("Animation Editor");
+                     }
+                  }
+
                   ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
                   ImGui::SetNextItemWidth(input_width);
@@ -286,6 +301,19 @@ void world_edit::ui_show_animation_group_editor() noexcept
 
                   if (ImGui::IsItemDeactivatedAfterEdit()) {
                      _edit_stack_world.close_last();
+                  }
+
+                  if (ImGui::IsItemHovered() and
+                      ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_MouseLeft)) {
+                     const world::object* object =
+                        world::find_entity(_world.objects,
+                                           selected_group->entries[i].object);
+
+                     if (object) {
+                        _interaction_targets.selection.add(object->id);
+
+                        ImGui::SetWindowFocus("Selection");
+                     }
                   }
 
                   ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);

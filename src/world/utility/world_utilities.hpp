@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../world.hpp"
+#include "utility/string_icompare.hpp"
 
 #include <span>
 #include <string>
@@ -66,7 +67,7 @@ inline auto find_entity(const pinned_vector<Type>& entities,
                         const std::string_view name) -> const Type*
 {
    for (auto& entity : entities) {
-      if (entity.name == name) return &entity;
+      if (string::iequals(entity.name, name)) return &entity;
    }
 
    return nullptr;
@@ -77,7 +78,7 @@ inline auto find_entity(pinned_vector<Type>& entities, const std::string_view na
    -> Type*
 {
    for (auto& entity : entities) {
-      if (entity.name == name) return &entity;
+      if (string::iequals(entity.name, name)) return &entity;
    }
 
    return nullptr;
