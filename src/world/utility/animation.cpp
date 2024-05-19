@@ -428,12 +428,119 @@ void build_local_translation_transforms(const animation& animation,
       }
    }
 
+   if (animation.loop and not animation.rotation_keys.empty()) {
+      const rotation_key& start = animation.rotation_keys.back();
+      rotation_key end = animation.rotation_keys.front();
+
+      end.time = animation.runtime;
+
+      const float3 start_end_delta = abs(start.rotation - end.rotation);
+      const float delta_max =
+         std::max(std::max(start_end_delta.x, start_end_delta.y),
+                  start_end_delta.z);
+
+      const uint32 steps = static_cast<uint32>(delta_max * 4.0f + 0.5f);
+      const float inv_steps = 1.0f / static_cast<float>(steps);
+
+      for (uint32 step_index = 0; step_index < steps; ++step_index) {
+         const float step_norm = step_index * inv_steps;
+         const float t = (1.0f - step_norm) * start.time + step_norm * end.time;
+
+         float3 rotation = last_rotation;
+
+         switch (start.transition) {
+         case world::animation_transition::pop: {
+            rotation = start.rotation;
+         } break;
+         case world::animation_transition::linear: {
+            rotation = (1.0f - step_norm) * start.rotation + step_norm * end.rotation;
+         } break;
+         case world::animation_transition::spline: {
+            rotation = hermite_interpolate(start.rotation, start.tangent, end.rotation,
+                                           start.tangent_next, step_norm);
+         } break;
+         }
+
+         float3 position = last_position;
+
+         std::ptrdiff_t position_index = -1;
+
+         for (std::ptrdiff_t i = 0; i < std::ssize(animation.position_keys); ++i) {
+            if (t >= animation.position_keys[i].time) position_index = i;
+         }
+
+         if (position_index >= 0) {
+            if ((position_index + 1) < std::ssize(animation.position_keys)) {
+               const position_key& a = animation.position_keys[position_index];
+               const position_key& b = animation.position_keys[position_index + 1];
+
+               const float local_t = (t - a.time) / (b.time - a.time);
+
+               switch (a.transition) {
+               case world::animation_transition::pop: {
+                  position = a.position;
+               } break;
+               case world::animation_transition::linear: {
+                  position = (1.0f - local_t) * a.position + local_t * b.position;
+               } break;
+               case world::animation_transition::spline: {
+                  position = hermite_interpolate(a.position, a.tangent, b.position,
+                                                 a.tangent_next, local_t);
+               } break;
+               }
+            }
+            else if ((position_index + 1) == std::ssize(animation.position_keys) and
+                     animation.loop) {
+               const position_key& a = animation.position_keys[position_index];
+               position_key b = animation.position_keys[0];
+
+               b.time = animation.runtime;
+
+               const float local_t = (t - a.time) / (b.time - a.time);
+
+               switch (a.transition) {
+               case world::animation_transition::pop: {
+                  position = a.position;
+               } break;
+               case world::animation_transition::linear: {
+                  position = (1.0f - local_t) * a.position + local_t * b.position;
+               } break;
+               case world::animation_transition::spline: {
+                  position = hermite_interpolate(a.position, a.tangent, b.position,
+                                                 a.tangent_next, local_t);
+               } break;
+               }
+            }
+            else {
+               position = animation.position_keys[position_index].position;
+            }
+         }
+
+         float3 delta_rotation = rotation - last_rotation;
+         float3 delta_position = position - last_position;
+
+         constexpr float degrees_to_radians = std::numbers::pi_v<float> / 180.0f;
+
+         float4x4 delta_transform =
+            make_rotation_matrix_from_euler(delta_rotation * degrees_to_radians);
+
+         delta_transform[3] = float4{delta_position, 1.0f};
+
+         transform = transform * delta_transform;
+
+         last_rotation = rotation;
+         last_position = position;
+
+         timepoints.emplace_back(t);
+         subkeys.emplace_back(last_rotation, last_position, transform);
+      }
+   }
+
    if (timepoints.empty()) {
       timepoints.emplace_back(0.0f);
       subkeys.emplace_back(float3{}, float3{}, transform);
    }
 }
-
 }
 
 void animation_solver::init(const animation& animation, const quaternion& base_rotation,
