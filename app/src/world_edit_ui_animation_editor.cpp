@@ -1731,6 +1731,28 @@ void world_edit::ui_show_animation_editor() noexcept
                }
             }
          }
+         else if (not selected_animation->loop and
+                  not selected_animation->rotation_keys.empty()) {
+            const world::rotation_key& key = selected_animation->rotation_keys.back();
+
+            const float time_distance = selected_animation->runtime - key.time;
+
+            if (key.transition != world::animation_transition::pop and
+                time_distance > 0.0001f) {
+
+               float4x4 transform0 =
+                  _animation_solver.evaluate(*selected_animation, key.time);
+               float4x4 transform1 =
+                  _animation_solver.evaluate(*selected_animation,
+                                             selected_animation->runtime);
+
+               _tool_visualizers.add_line(float3{transform0[3].x, transform0[3].y,
+                                                 transform0[3].z},
+                                          float3{transform1[3].x, transform1[3].y,
+                                                 transform1[3].z},
+                                          spline_color);
+            }
+         }
       }
       else {
          for (std::size_t i = 1; i < selected_animation->position_keys.size(); ++i) {
