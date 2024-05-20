@@ -210,6 +210,29 @@ void check_geometry_segment_non_empty(const scene& scene)
    }
 }
 
+void check_geometry_segment_no_nans(const scene& scene)
+{
+   for (const auto& node : scene.nodes) {
+      for (std::size_t segment_index = 0; segment_index < node.segments.size();
+           ++segment_index) {
+         const auto& segment = node.segments[segment_index];
+
+         for (std::size_t vertex_index = 0;
+              vertex_index < segment.positions.size(); ++vertex_index) {
+            const float3 position = segment.positions[vertex_index];
+
+            if (position.x != position.x or position.y != position.y or
+                position.z != position.z) {
+               throw std::runtime_error{fmt::format(
+                  ".msh file validation failure! Geometry segment #{} in node "
+                  "'{}' has a NaN (Not a Number) at vertex #{}.",
+                  segment_index, node.name, vertex_index)};
+            }
+         }
+      }
+   }
+}
+
 void check_collision_primitive_shape_validity(const scene& scene)
 {
    for (const auto& node : scene.nodes) {
@@ -244,6 +267,7 @@ void validate_scene(const scene& scene)
                                           check_geometry_segment_vertex_count_limit,
                                           check_geometry_segment_triangles_index_validity,
                                           check_geometry_segment_non_empty,
+                                          check_geometry_segment_no_nans,
                                           check_collision_primitive_shape_validity};
 
    for (auto check : validation_checks) {
