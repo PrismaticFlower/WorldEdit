@@ -42,10 +42,40 @@ inline auto make_quat_from_matrix(const float3x3& matrix) noexcept -> quaternion
 {
    quaternion quat;
 
-   quat.w = sqrt(1.0f + matrix[0].x + matrix[1].y + matrix[2].z) / 2.0f;
-   quat.x = (matrix[1].z - matrix[2].y) / (4.0f * quat.w);
-   quat.y = (matrix[2].x - matrix[0].z) / (4.0f * quat.w);
-   quat.z = (matrix[0].y - matrix[1].x) / (4.0f * quat.w);
+   const float tr = matrix[0].x + matrix[1].y + matrix[2].z;
+
+   if (tr > 0.0f) {
+      const float s = sqrt(tr + 1.0f) * 2.0f;
+
+      quat.w = 0.25f * s;
+      quat.x = (matrix[1].z - matrix[2].y) / s;
+      quat.y = (matrix[2].x - matrix[0].z) / s;
+      quat.z = (matrix[0].y - matrix[1].x) / s;
+   }
+   else if ((matrix[0].x > matrix[1].y) and (matrix[0].x > matrix[2].z)) {
+      const float s = sqrt(1.0f + matrix[0].x - matrix[1].y - matrix[2].z) * 2.0f;
+
+      quat.w = (matrix[1].z - matrix[2].y) / s;
+      quat.x = 0.25f * s;
+      quat.y = (matrix[0].y + matrix[1].x) / s;
+      quat.z = (matrix[0].z + matrix[2].x) / s;
+   }
+   else if (matrix[0].y > matrix[2].z) {
+      const float s = sqrt(1.0f + matrix[1].y - matrix[0].x - matrix[2].z) * 2.0f;
+
+      quat.w = (matrix[2].x - matrix[0].z) / s;
+      quat.x = (matrix[0].y + matrix[1].x) / s;
+      quat.y = 0.25f * s;
+      quat.z = (matrix[1].z + matrix[2].y) / s;
+   }
+   else {
+      const float s = sqrt(1.0f + matrix[2].z - matrix[0].x - matrix[1].y) * 2.0f;
+
+      quat.w = (matrix[0].y - matrix[0].x) / s;
+      quat.x = (matrix[0].z + matrix[2].x) / s;
+      quat.y = (matrix[1].z + matrix[2].y) / s;
+      quat.z = 0.25f * s;
+   }
 
    return quat;
 }

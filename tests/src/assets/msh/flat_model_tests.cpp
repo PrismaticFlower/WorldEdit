@@ -359,7 +359,9 @@ TEST_CASE(".msh flat model creation", "[Assets][MSH]")
 
          const auto rotation = input_scene.nodes[0].transform.rotation *
                                input_scene.nodes[1].transform.rotation *
+                               input_scene.nodes[2].transform.rotation *
                                input_scene.nodes[3].transform.rotation;
+
          const auto position = input_scene.nodes[0].transform.rotation *
                                   (input_scene.nodes[1].transform.rotation *
                                       input_scene.nodes[3].transform.translation +
