@@ -36,6 +36,15 @@ auto get_long_path_name(const std::filesystem::path& path)
    return std::filesystem::path{std::move(buffer)};
 }
 
+bool is_file(const std::filesystem::path& path) noexcept
+{
+   DWORD attributes = GetFileAttributesW(path.c_str());
+
+   if (attributes == INVALID_FILE_ATTRIBUTES) return false;
+
+   return (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
 }
 
 file_watcher::file_watcher(const std::filesystem::path& path) : _path{path}
@@ -117,6 +126,7 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
       process = info.NextEntryOffset != 0;
 
       const std::wstring_view str{&info.FileName[0], info.FileNameLength / 2};
+
       std::filesystem::path path = _path / str;
 
       path.make_preferred();
@@ -128,7 +138,7 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
 
       switch (info.Action) {
       case FILE_ACTION_ADDED: {
-         if (std::filesystem::is_regular_file(path)) {
+         if (is_file(path)) {
             _file_changed_event.broadcast(path);
          }
       } break;
@@ -136,7 +146,7 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
          _file_removed_event.broadcast(path);
       } break;
       case FILE_ACTION_MODIFIED: {
-         if (std::filesystem::is_regular_file(path)) {
+         if (is_file(path)) {
             _file_changed_event.broadcast(path);
          }
       } break;
@@ -144,7 +154,7 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
          _file_removed_event.broadcast(path);
       } break;
       case FILE_ACTION_RENAMED_NEW_NAME: {
-         if (std::filesystem::is_regular_file(path)) {
+         if (is_file(path)) {
             _file_changed_event.broadcast(path);
          }
       } break;
