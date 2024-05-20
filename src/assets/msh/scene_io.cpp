@@ -3,7 +3,6 @@
 #include "../option_file.hpp"
 #include "io/read_file.hpp"
 #include "ucfb/reader.hpp"
-#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
 #include "validate_scene.hpp"
 
