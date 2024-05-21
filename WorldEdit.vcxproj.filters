@@ -508,8 +508,8 @@
     <CustomBuild Include="shaders\WorldEdit.shaders" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="third_party\imgui\misc\debuggers\imgui.natstepfilter" />
     <None Include="third_party\licenses\vcpkg.json" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
