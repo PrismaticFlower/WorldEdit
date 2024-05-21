@@ -48,6 +48,15 @@ auto try_get_last_write_time(const std::filesystem::path& asset_path) noexcept -
    }
 }
 
+bool is_parent_path_ignored(const std::filesystem::path& asset_path) noexcept
+{
+   for (const auto& part : asset_path) {
+      if (ignored_folders.contains(part.native())) return true;
+   }
+
+   return false;
+}
+
 }
 
 template<typename T>
@@ -516,13 +525,13 @@ void libraries_manager::source_directory(const std::filesystem::path& source_dir
    _file_watcher = std::make_unique<utility::file_watcher>(source_directory);
    _file_changed_event =
       _file_watcher->listen_file_changed([this](const std::filesystem::path& path) {
-         // TODO: Skip path if parent path is ignored.
+         if (is_parent_path_ignored(path)) return;
 
          register_asset(path, try_get_last_write_time(path));
       });
    _file_removed_event =
       _file_watcher->listen_file_removed([this](const std::filesystem::path& path) {
-         // TODO: Skip path if parent path is ignored.
+         if (is_parent_path_ignored(path)) return;
 
          forget_asset(path);
       });
