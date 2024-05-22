@@ -228,23 +228,7 @@ struct hotkeys::impl {
    impl(commands& commands, output_stream& error_output_stream) noexcept
       : _commands{commands},
         _error_output_stream{error_output_stream},
-        _saved_bindings{load_bindings(save_path)},
-        _saved_used_bindings{[this] {
-           absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> saved_used_bindings;
-           saved_used_bindings.reserve(_saved_bindings.size());
-
-           for (const auto& [set_name, saved] : _saved_bindings) {
-              absl::flat_hash_set<hotkey_bind>& used = saved_used_bindings[set_name];
-
-              used.reserve(saved.size());
-
-              for (const auto& [name, binding] : saved) {
-                 used.insert(binding);
-              }
-           }
-
-           return saved_used_bindings;
-        }()}
+        _saved_bindings{load_bindings(save_path)}
    {
       _hotkey_sets.reserve(16);
       _key_events.reserve(256);
@@ -350,7 +334,6 @@ private:
    container::enum_array<key_state, key> _keys{};
 
    absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>> _saved_bindings;
-   const absl::flat_hash_map<std::string, absl::flat_hash_set<hotkey_bind>> _saved_used_bindings;
 };
 
 void hotkeys::impl::add_set(hotkey_set_desc desc)
@@ -358,12 +341,28 @@ void hotkeys::impl::add_set(hotkey_set_desc desc)
    absl::flat_hash_set<std::string> hotkey_set;
    absl::flat_hash_map<hotkey_bind, int32> bindings;
    absl::flat_hash_map<std::string, hotkey_bind> query_bindings;
+   absl::flat_hash_set<hotkey_bind> saved_used_bindings;
    std::vector<hotkey> hotkeys;
 
    hotkey_set.reserve(desc.default_hotkeys.size());
    bindings.reserve(desc.default_hotkeys.size());
    query_bindings.reserve(desc.default_hotkeys.size());
    hotkeys.reserve(desc.default_hotkeys.size());
+
+   if (auto saved_bindings_it = _saved_bindings.find(desc.name);
+       saved_bindings_it != _saved_bindings.end()) {
+      const auto& [set_name, saved] = *saved_bindings_it;
+
+      saved_used_bindings.reserve(saved.size());
+
+      for (const auto& default_hotkey : desc.default_hotkeys) {
+         if (auto it = saved.find(default_hotkey.name); it != saved.end()) {
+            const auto& [name, binding] = *it;
+
+            saved_used_bindings.insert(binding);
+         }
+      }
+   }
 
    int32 hotkey_index = 0;
 
@@ -376,15 +375,12 @@ void hotkeys::impl::add_set(hotkey_set_desc desc)
 
       const bool has_saved_binding =
          _saved_bindings[desc.name].contains(default_hotkey.name);
-      const bool has_saved_used_set = _saved_used_bindings.contains(desc.name);
 
       const hotkey_bind binding =
          has_saved_binding ? _saved_bindings[desc.name].at(default_hotkey.name)
                            : default_hotkey.binding;
 
-      const bool binding_free_for_use =
-         not has_saved_used_set or
-         not _saved_used_bindings.at(desc.name).contains(binding);
+      const bool binding_free_for_use = not saved_used_bindings.contains(binding);
 
       if (has_saved_binding or binding_free_for_use) {
          bindings[binding] = hotkey_index;

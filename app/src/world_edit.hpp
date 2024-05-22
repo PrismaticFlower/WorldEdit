@@ -464,8 +464,7 @@ private:
       bool activate_shrink_to = false;
       bool activate_from_object_bbox = false;
       bool activate_from_line = false;
-      bool activate_draw_barrier = false;
-      bool activate_draw_boundary = false;
+      bool activate_draw = false;
       bool activate_pick_sector = false;
 
       bool using_point_at = false;
@@ -473,8 +472,7 @@ private:
       bool using_shrink_to = false;
       bool using_from_object_bbox = false;
       bool using_from_line = false;
-      bool using_draw_barrier = false;
-      bool using_draw_boundary = false;
+      bool using_draw = false;
       bool using_pick_sector = false;
 
       bool finish_current_path = false;
@@ -482,8 +480,7 @@ private:
       bool finish_from_object_bbox = false;
 
       bool from_line_click = false;
-      bool draw_barrier_click = false;
-      bool draw_boundary_click = false;
+      bool draw_click = false;
 
       bool hub_sizing_started = false;
       bool connection_link_started = false;

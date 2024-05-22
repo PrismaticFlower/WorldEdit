@@ -309,27 +309,17 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.from_line_click"s,
                  _entity_creation_context.from_line_click);
 
-   _commands.add("entity_creation.activate_draw_barrier"s,
-                 _entity_creation_context.activate_draw_barrier);
-   _commands.add("entity_creation.deactivate_draw_barrier"s, [this] {
-      _entity_creation_context.using_draw_barrier = false;
-      _entity_creation_context.draw_barrier_click = false;
+   _commands.add("entity_creation.activate_draw"s,
+                 _entity_creation_context.activate_draw);
+   _commands.add("entity_creation.deactivate_draw"s, [this] {
+      _entity_creation_context.using_draw = false;
+      _entity_creation_context.draw_click = false;
    });
 
    _commands.add("entity_creation.deactivate_pick_sector"s,
                  [this] { _entity_creation_context.using_pick_sector = false; });
 
-   _commands.add("entity_creation.draw_barrier_click"s,
-                 _entity_creation_context.draw_barrier_click);
-
-   _commands.add("entity_creation.activate_draw_boundary"s,
-                 _entity_creation_context.activate_draw_boundary);
-   _commands.add("entity_creation.deactivate_draw_boundary"s, [this] {
-      _entity_creation_context.using_draw_boundary = false;
-      _entity_creation_context.draw_boundary_click = false;
-   });
-   _commands.add("entity_creation.draw_boundary_click"s,
-                 _entity_creation_context.draw_boundary_click);
+   _commands.add("entity_creation.draw_click"s, _entity_creation_context.draw_click);
 
    _commands.add("entity_creation.lock_x_axis"s, _entity_creation_context.lock_x_axis);
    _commands.add("entity_creation.lock_y_axis"s, _entity_creation_context.lock_y_axis);
@@ -864,8 +854,8 @@ void world_edit::initialize_hotkeys() noexcept
           {"Start From Line",
            "entity_creation.activate_from_line",
            {.key = key::f, .modifiers = {.ctrl = true}}},
-          {"Start Draw Barrier",
-           "entity_creation.activate_draw_barrier",
+          {"Start Draw",
+           "entity_creation.activate_draw",
            {.key = key::d, .modifiers = {.ctrl = true}}},
 
           {"Lock X Axis", "entity_creation.lock_x_axis", {.key = key::z}},
@@ -896,22 +886,6 @@ void world_edit::initialize_hotkeys() noexcept
             {"Toggle AI Planning Entity Type",
              "entity_creation.toggle_planning_entity",
              {.key = key::q}},
-         },
-   });
-
-   _hotkeys.add_set({
-      .name = "Entity Creation (Boundary)",
-      .description = "Hotkeys for while you are creating a boundary."s,
-      .activated =
-         [this] {
-            return _interaction_targets.creation_entity.holds_entity() and
-                   _interaction_targets.creation_entity.is<world::boundary>();
-         },
-      .default_hotkeys =
-         {
-            {"Start Draw Boundary",
-             "entity_creation.activate_draw_boundary",
-             {.key = key::d, .modifiers = {.ctrl = true}}},
          },
    });
 
@@ -989,34 +963,16 @@ void world_edit::initialize_hotkeys() noexcept
    });
 
    _hotkeys.add_set({
-      .name = "Entity Creation (Draw Barrier)",
+      .name = "Entity Creation (Draw)",
       .activated =
          [this] {
             return _interaction_targets.creation_entity.holds_entity() and
-                   _entity_creation_context.using_draw_barrier;
+                   _entity_creation_context.using_draw;
          },
       .default_hotkeys =
          {
-            {"Draw Barrier", "entity_creation.draw_barrier_click", {.key = key::mouse1}},
-            {"Stop Draw Barrier", "entity_creation.deactivate_draw_barrier", {.key = key::escape}},
-         },
-
-      .hidden = true,
-   });
-
-   _hotkeys.add_set({
-      .name = "Entity Creation (Draw Boundary)",
-      .activated =
-         [this] {
-            return _interaction_targets.creation_entity.holds_entity() and
-                   _entity_creation_context.using_draw_boundary;
-         },
-      .default_hotkeys =
-         {
-            {"Draw Boundary", "entity_creation.draw_boundary_click", {.key = key::mouse1}},
-            {"Stop Draw Boundary",
-             "entity_creation.deactivate_draw_boundary",
-             {.key = key::escape}},
+            {"Draw", "entity_creation.draw_click", {.key = key::mouse1}},
+            {"Stop Draw", "entity_creation.deactivate_draw", {.key = key::escape}},
          },
 
       .hidden = true,

@@ -157,18 +157,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
       _entity_creation_context.from_line_start = std::nullopt;
    }
 
-   if (std::exchange(_entity_creation_context.activate_draw_barrier, false)) {
+   if (std::exchange(_entity_creation_context.activate_draw, false)) {
       _edit_stack_world.close_last();
 
-      _entity_creation_context.using_draw_barrier = true;
+      _entity_creation_context.using_draw = true;
       _entity_creation_context.draw_barrier_start = std::nullopt;
       _entity_creation_context.draw_barrier_mid = std::nullopt;
-   }
-
-   if (std::exchange(_entity_creation_context.activate_draw_boundary, false)) {
-      _edit_stack_world.close_last();
-
-      _entity_creation_context.using_draw_boundary = true;
       _entity_creation_context.draw_boundary_step = draw_boundary_step::start;
       _entity_creation_context.draw_boundary_start = {};
       _entity_creation_context.draw_boundary_end_x = {};
@@ -2497,18 +2491,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (ImGui::Button("Draw Barrier", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_draw_barrier = true;
+         _entity_creation_context.activate_draw = true;
       }
 
       if (ImGui::IsItemHovered()) {
          ImGui::SetTooltip("Draw lines to create a barrier.");
       }
 
-      if (_entity_creation_context.using_draw_barrier) {
+      if (_entity_creation_context.using_draw) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
-         const bool click =
-            std::exchange(_entity_creation_context.draw_barrier_click, false);
+         const bool click = std::exchange(_entity_creation_context.draw_click, false);
 
          if (click and not _entity_creation_context.draw_barrier_start) {
             _entity_creation_context.draw_barrier_start = _cursor_positionWS;
@@ -2860,14 +2853,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
                           _edit_context, 1.0f, 0.0f, 1e10f);
 
       if (ImGui::Button("Draw Boundary", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_draw_boundary = true;
+         _entity_creation_context.activate_draw = true;
       }
 
-      if (_entity_creation_context.using_draw_boundary) {
+      if (_entity_creation_context.using_draw) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          const bool draw_boundary_click =
-            std::exchange(_entity_creation_context.draw_boundary_click, false);
+            std::exchange(_entity_creation_context.draw_click, false);
 
          switch (_entity_creation_context.draw_boundary_step) {
          case draw_boundary_step::start: {
@@ -3325,14 +3318,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
       if (traits.has_draw_barrier) {
          ImGui::Text("Draw Barrier");
          ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation", "Start Draw Barrier")));
+            _hotkeys.query_binding("Entity Creation", "Start Draw")));
       }
 
       if (traits.has_draw_boundary) {
          ImGui::Text("Draw Boundary");
          ImGui::BulletText(get_display_string(
-            _hotkeys.query_binding("Entity Creation (Boundary)",
-                                   "Start Draw Boundary")));
+            _hotkeys.query_binding("Entity Creation", "Start Draw")));
       }
 
       if (traits.has_cycle_ai_planning) {
