@@ -544,8 +544,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                        .ps_bytecode = shader_library["grid_overlayPS"sv],
 
                        .blend_state = blend_premult_alpha,
-                       .rasterizer_state = {.cull_mode = gpu::cull_mode::none,
-                                            .depth_bias = 200},
+                       .rasterizer_state = {.cull_mode = gpu::cull_mode::none},
                        .depth_stencil_state = depth_stencil_readonly_greater_equal,
 
                        .render_target_count = 1,

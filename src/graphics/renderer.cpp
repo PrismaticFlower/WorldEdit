@@ -506,7 +506,10 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
    }
 
    if (frame_options.draw_overlay_grid) {
-      draw_grid_overlay(frame_options.overlay_grid_height,
+      const float grid_height_bias =
+         camera.position().y >= frame_options.overlay_grid_height ? 0.001f : -0.001f;
+
+      draw_grid_overlay(frame_options.overlay_grid_height + grid_height_bias,
                         std::min(camera.far_clip(), 4096.0f),
                         frame_options.overlay_grid_size, settings, command_list);
    }
