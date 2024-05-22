@@ -169,7 +169,8 @@ private:
                                      gpu::graphics_command_list& command_list);
 
    void draw_grid_overlay(const float height, const float length,
-                          const float grid_scale, const settings::graphics& settings,
+                          const float grid_scale, float3 camera_positionWS,
+                          const settings::graphics& settings,
                           gpu::graphics_command_list& command_list);
 
    void draw_ai_overlay(gpu::rtv_handle back_buffer_rtv,
@@ -511,7 +512,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
       draw_grid_overlay(frame_options.overlay_grid_height + grid_height_bias,
                         std::min(camera.far_clip(), 4096.0f),
-                        frame_options.overlay_grid_size, settings, command_list);
+                        frame_options.overlay_grid_size, camera.position(),
+                        settings, command_list);
    }
 
    if (settings.visualize_terrain_cutters) {
@@ -2095,13 +2097,15 @@ void renderer_impl::draw_terrain_cut_visualizers(const frustum& view_frustum,
 }
 
 void renderer_impl::draw_grid_overlay(const float height, const float length,
-                                      const float grid_scale,
+                                      const float grid_scale, float3 camera_positionWS,
                                       const settings::graphics& settings,
                                       gpu::graphics_command_list& command_list)
 {
    struct grid_constants {
       float3 grid_color;
       float length;
+      float grid_offsetWS_x;
+      float grid_offsetWS_z;
       float height;
       float inv_grid_scale;
       float line_width;
@@ -2111,10 +2115,16 @@ void renderer_impl::draw_grid_overlay(const float height, const float length,
 
    const float line_width = settings.overlay_grid_line_width;
    const float major_grid_scale = grid_scale * settings.overlay_grid_major_grid_spacing;
+   const float grid_wrap_scale = major_grid_scale;
+
+   const float3 grid_offsetWS =
+      round(camera_positionWS / grid_wrap_scale) * grid_wrap_scale;
 
    grid_constants grid_constants{
       .grid_color = settings.overlay_grid_color,
       .length = length,
+      .grid_offsetWS_x = grid_offsetWS.x,
+      .grid_offsetWS_z = grid_offsetWS.z,
       .height = height,
       .inv_grid_scale = 1.0f / grid_scale,
       .line_width = line_width * (4.0f / grid_scale),

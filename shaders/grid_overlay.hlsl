@@ -10,6 +10,8 @@ struct output_vertex
 struct grid_constants {
    float3 grid_color;
    float length;
+   float grid_offsetWS_x;
+   float grid_offsetWS_z;
    float height;
    float inv_grid_scale;
    float line_width;
@@ -48,12 +50,14 @@ output_vertex mainVS(uint vertex_index : SV_VertexID)
          break;
    }
    
-   positionWS.xz += cb_frame.view_positionWS.xz;
-   
    output_vertex output;
    
    output.positionWS_x = positionWS.x;
    output.positionWS_z = positionWS.z;
+
+   positionWS.x += cb_grid.grid_offsetWS_x;
+   positionWS.z += cb_grid.grid_offsetWS_z;
+
    output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
    
    return output;

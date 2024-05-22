@@ -193,7 +193,7 @@ const gpu::root_signature_desc grid_overlay_desc{
       {
          gpu::root_parameter{.type = gpu::root_parameter_type::_32bit_constants,
                              .shader_register = grid_overlay_cb_register,
-                             .values_count = 9},
+                             .values_count = 11},
          frame_constant_buffer,
       },
 
