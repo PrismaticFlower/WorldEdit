@@ -85,6 +85,7 @@ bool is_mesh_node(const node& node) noexcept
    if (node.name.starts_with("sv_"sv)) return false;
    if (node.name.starts_with("shadowvolume"sv)) return false;
    if (node.name.starts_with("p_"sv)) return false;
+   if (node.name.starts_with("hp_"sv)) return false;
    if (string::istarts_with(node.name, "collision"sv)) return false;
    if (string::istarts_with(node.name, "terraincutter"sv)) return false;
 
