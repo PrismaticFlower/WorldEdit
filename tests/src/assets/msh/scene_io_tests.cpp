@@ -168,4 +168,96 @@ TEST_CASE(".msh reading ambientlighting option", "[Assets][MSH]")
    REQUIRE(scene.nodes.size() == 3);
 }
 
+TEST_CASE(".msh reading CLRB", "[Assets][MSH]")
+{
+   auto scene = read_scene("data/sand_test_clrb.msh");
+
+   // Node Checks
+   {
+      REQUIRE(scene.nodes.size() == 3);
+
+      // Node 0
+      {
+         const node& node = scene.nodes[0];
+
+         REQUIRE(node.name == "root"sv);
+         REQUIRE(node.parent == std::nullopt);
+         REQUIRE(node.type == node_type::null);
+         REQUIRE(node.hidden);
+
+         CHECK(approx_equals(node.transform.translation, {0.0f, 0.0f, 0.0f}));
+         CHECK(node.transform.rotation.w == -1.0_a);
+         CHECK(node.transform.rotation.x == 0.0_a);
+         CHECK(node.transform.rotation.y == 0.0_a);
+         CHECK(node.transform.rotation.z == 0.0_a);
+
+         REQUIRE(node.collision_primitive == std::nullopt);
+      }
+
+      // Node 1
+      {
+         const node& node = scene.nodes[1];
+
+         REQUIRE(node.name == "sand"sv);
+         REQUIRE(node.parent.value() == "root"sv);
+         REQUIRE(node.type == node_type::static_mesh);
+         REQUIRE(not node.hidden);
+
+         CHECK(approx_equals(node.transform.translation, {-2.0f, 1.0f, 3.0f}));
+         CHECK(node.transform.rotation.w == -0.878902792930603_a);
+         CHECK(node.transform.rotation.x == 0.0112990252673626_a);
+         CHECK(node.transform.rotation.y == -0.116856157779694_a);
+         CHECK(node.transform.rotation.z == -0.462327867746353_a);
+
+         REQUIRE(node.segments.size() == 1);
+
+         // Segment 0
+         {
+            const geometry_segment& segment = node.segments[0];
+
+            REQUIRE(segment.material_index == 0);
+            REQUIRE(segment.normals != std::nullopt);
+            REQUIRE(segment.texcoords != std::nullopt);
+            REQUIRE(segment.colors != std::nullopt);
+
+            REQUIRE(segment.positions.size() == 4);
+            REQUIRE(segment.normals->size() == 4);
+            REQUIRE(segment.texcoords->size() == 4);
+            REQUIRE(segment.colors->size() == 4);
+            REQUIRE(segment.triangles.size() == 2);
+
+            CHECK(approx_equals(segment.positions[0], {1.0f, 0.0f, -1.0f}));
+            CHECK(approx_equals(segment.positions[1], {-1.0f, 0.0f, -1.0f}));
+            CHECK(approx_equals(segment.positions[2], {-1.0f, 0.0f, 1.0f}));
+            CHECK(approx_equals(segment.positions[3], {1.0f, 0.0f, 1.0f}));
+
+            auto& normals = *segment.normals;
+            CHECK(approx_equals(normals[0], {0.0f, 1.0f, 0.0f}));
+            CHECK(approx_equals(normals[1], {0.0f, 1.0f, 0.0f}));
+            CHECK(approx_equals(normals[2], {0.0f, 1.0f, 0.0f}));
+            CHECK(approx_equals(normals[3], {0.0f, 1.0f, 0.0f}));
+
+            auto& texcoords = *segment.texcoords;
+            CHECK(approx_equals(texcoords[0], {0.0f, 1.0f}));
+            CHECK(approx_equals(texcoords[1], {1.0f, 1.0f}));
+            CHECK(approx_equals(texcoords[2], {1.0f, 0.0f}));
+            CHECK(approx_equals(texcoords[3], {0.0f, 0.0f}));
+
+            auto& colors = *segment.colors;
+            CHECK(colors[0] == 0x7f7f7f7f);
+            CHECK(colors[1] == 0x7f7f7f7f);
+            CHECK(colors[2] == 0x7f7f7f7f);
+            CHECK(colors[3] == 0x7f7f7f7f);
+
+            REQUIRE(segment.triangles.size() == 2);
+
+            CHECK(segment.triangles[0] == std::array<uint16, 3>{0, 1, 2});
+            CHECK(segment.triangles[1] == std::array<uint16, 3>{0, 2, 3});
+         }
+
+         REQUIRE(node.collision_primitive == std::nullopt);
+      }
+   }
+}
+
 }

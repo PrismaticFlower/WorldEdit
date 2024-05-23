@@ -149,6 +149,7 @@ auto read_vertex_atrb(ucfb::reader reader) -> std::vector<Type>
 auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
 {
    geometry_segment segment;
+   std::optional<uint32> segment_color;
 
    while (segm) {
       auto child = segm.read_child();
@@ -169,10 +170,17 @@ auto read_segm(ucfb::reader_strict<"SEGM"_id> segm) -> geometry_segment
       case "CLRL"_id:
          segment.colors = read_vertex_atrb<uint32>(child);
          continue;
+      case "CLRB"_id:
+         segment_color = child.read<uint32>();
+         continue;
       case "STRP"_id:
          segment.triangles = read_strp(ucfb::reader_strict<"STRP"_id>{child});
          continue;
       }
+   }
+
+   if (segment_color and not segment.colors) {
+      segment.colors.emplace(segment.positions.size(), *segment_color);
    }
 
    return segment;
