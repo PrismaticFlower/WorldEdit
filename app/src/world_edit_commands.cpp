@@ -282,23 +282,14 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.activate_point_at"s, [this] {
       _entity_creation_context.tool = entity_creation_tool::point_at;
    });
-   _commands.add("entity_creation.deactivate_point_at"s, [this] {
-      _entity_creation_context.tool = entity_creation_tool::none;
-   });
    _commands.add("entity_creation.activate_extend_to"s, [this] {
       _entity_creation_context.tool = entity_creation_tool::extend_to;
    });
    _commands.add("entity_creation.activate_shrink_to"s, [this] {
       _entity_creation_context.tool = entity_creation_tool::shrink_to;
    });
-   _commands.add("entity_creation.deactivate_resize_to"s, [this] {
-      _entity_creation_context.tool = entity_creation_tool::none;
-   });
    _commands.add("entity_creation.activate_from_object_bbox"s, [this] {
       _entity_creation_context.tool = entity_creation_tool::from_object_bbox;
-   });
-   _commands.add("entity_creation.deactivate_from_object_bbox"s, [this] {
-      _entity_creation_context.tool = entity_creation_tool::none;
    });
    _commands.add("entity_creation.finish_from_object_bbox"s, [this] {
       _entity_creation_context.finish_from_object_bbox = true;
@@ -307,20 +298,14 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.activate_from_line"s, [this] {
       _entity_creation_context.tool = entity_creation_tool::from_line;
    });
-   _commands.add("entity_creation.deactivate_from_line"s, [this] {
-      _entity_creation_context.tool = entity_creation_tool::none;
-   });
    _commands.add("entity_creation.from_line_click"s,
                  _entity_creation_context.from_line_click);
 
    _commands.add("entity_creation.activate_draw"s, [this] {
       _entity_creation_context.tool = entity_creation_tool::draw;
    });
-   _commands.add("entity_creation.deactivate_draw"s, [this] {
-      _entity_creation_context.tool = entity_creation_tool::none;
-   });
 
-   _commands.add("entity_creation.deactivate_pick_sector"s, [this] {
+   _commands.add("entity_creation.deactivate_tool"s, [this] {
       _entity_creation_context.tool = entity_creation_tool::none;
    });
 
@@ -903,8 +888,8 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .default_hotkeys =
          {
-            {"Stop Point At", "entity_creation.deactivate_point_at", {.key = key::mouse1}},
-            {"Stop Point At (Escape)", "entity_creation.deactivate_point_at", {.key = key::escape}},
+            {"Stop Point At", "entity_creation.deactivate_tool", {.key = key::mouse1}},
+            {"Stop Point At (Escape)", "entity_creation.deactivate_tool", {.key = key::escape}},
          },
 
       .hidden = true,
@@ -920,10 +905,8 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .default_hotkeys =
          {
-            {"Stop Resize To", "entity_creation.deactivate_resize_to", {.key = key::mouse1}},
-            {"Stop Resize To (Escape)",
-             "entity_creation.deactivate_resize_to",
-             {.key = key::escape}},
+            {"Stop Resize To", "entity_creation.deactivate_tool", {.key = key::mouse1}},
+            {"Stop Resize To (Escape)", "entity_creation.deactivate_tool", {.key = key::escape}},
          },
 
       .hidden = true,
@@ -942,7 +925,7 @@ void world_edit::initialize_hotkeys() noexcept
              "entity_creation.finish_from_object_bbox",
              {.key = key::mouse1}},
             {"Complete From Object BBOX (Escape)",
-             "entity_creation.deactivate_from_object_bbox",
+             "entity_creation.deactivate_tool",
              {.key = key::escape}},
          },
 
@@ -959,9 +942,7 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Stop From Line", "entity_creation.from_line_click", {.key = key::mouse1}},
-            {"Stop From Line (Escape)",
-             "entity_creation.deactivate_from_line",
-             {.key = key::escape}},
+            {"Stop From Line (Escape)", "entity_creation.deactivate_tool", {.key = key::escape}},
          },
 
       .hidden = true,
@@ -977,7 +958,7 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Draw", "entity_creation.draw_click", {.key = key::mouse1}},
-            {"Stop Draw", "entity_creation.deactivate_draw", {.key = key::escape}},
+            {"Stop Draw", "entity_creation.deactivate_tool", {.key = key::escape}},
          },
 
       .hidden = true,
@@ -992,10 +973,8 @@ void world_edit::initialize_hotkeys() noexcept
          },
       .default_hotkeys =
          {
-            {"Stop Pick Sector", "entity_creation.deactivate_pick_sector", {.key = key::mouse1}},
-            {"Stop Pick Sector (Escape)",
-             "entity_creation.deactivate_pick_sector",
-             {.key = key::escape}},
+            {"Stop Pick Sector", "entity_creation.deactivate_tool", {.key = key::mouse1}},
+            {"Stop Pick Sector (Escape)", "entity_creation.deactivate_tool", {.key = key::escape}},
          },
 
       .hidden = true,
