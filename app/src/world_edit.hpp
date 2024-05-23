@@ -52,6 +52,17 @@ enum class placement_node_insert : uint8 { nearest, append };
 
 enum class placement_resize_mode : uint8 { off, extend, shrink };
 
+enum class entity_creation_tool : uint8 {
+   none,
+   point_at,
+   extend_to,
+   shrink_to,
+   from_object_bbox,
+   from_line,
+   draw,
+   pick_sector
+};
+
 enum class draw_boundary_step : uint8 { start, end_x, radius_z };
 
 enum class selection_edit_tool : uint8 {
@@ -459,21 +470,8 @@ private:
       bool rotate_forward = false;
       bool rotate_back = false;
 
-      bool activate_point_at = false;
-      bool activate_extend_to = false;
-      bool activate_shrink_to = false;
-      bool activate_from_object_bbox = false;
-      bool activate_from_line = false;
-      bool activate_draw = false;
-      bool activate_pick_sector = false;
-
-      bool using_point_at = false;
-      bool using_extend_to = false;
-      bool using_shrink_to = false;
-      bool using_from_object_bbox = false;
-      bool using_from_line = false;
-      bool using_draw = false;
-      bool using_pick_sector = false;
+      entity_creation_tool activate_tool = entity_creation_tool::none;
+      entity_creation_tool tool = entity_creation_tool::none;
 
       bool finish_current_path = false;
       bool finish_current_sector = false;

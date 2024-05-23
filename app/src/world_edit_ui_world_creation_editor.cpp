@@ -121,61 +121,61 @@ auto align_position_to_grid(const float3 position, const float alignment) -> flo
 
 void world_edit::ui_show_world_creation_editor() noexcept
 {
-   if (std::exchange(_entity_creation_context.activate_point_at, false)) {
+   switch (std::exchange(_entity_creation_context.activate_tool,
+                         entity_creation_tool::none)) {
+   case entity_creation_tool::none: {
+   } break;
+   case entity_creation_tool::point_at: {
       _entity_creation_config.placement_rotation = placement_rotation::manual_quaternion;
       _entity_creation_config.placement_mode = placement_mode::manual;
 
       _edit_stack_world.close_last(); // Make sure we don't coalesce with a previous point at.
-      _entity_creation_context.using_point_at = true;
-   }
 
-   if (std::exchange(_entity_creation_context.activate_extend_to, false)) {
+      _entity_creation_context.tool = entity_creation_tool::point_at;
+   } break;
+   case entity_creation_tool::extend_to: {
       _edit_stack_world.close_last();
 
-      _entity_creation_context.using_extend_to = true;
-      _entity_creation_context.using_shrink_to = false;
-   }
-
-   if (std::exchange(_entity_creation_context.activate_shrink_to, false)) {
+      _entity_creation_context.tool = entity_creation_tool::extend_to;
+   } break;
+   case entity_creation_tool::shrink_to: {
       _edit_stack_world.close_last();
 
-      _entity_creation_context.using_extend_to = false;
-      _entity_creation_context.using_shrink_to = true;
-   }
-
-   if (std::exchange(_entity_creation_context.activate_from_object_bbox, false)) {
+      _entity_creation_context.tool = entity_creation_tool::shrink_to;
+   } break;
+   case entity_creation_tool::from_object_bbox: {
       _edit_stack_world.close_last();
 
-      _entity_creation_context.using_from_object_bbox = true;
-   }
-
-   if (std::exchange(_entity_creation_context.activate_from_line, false)) {
+      _entity_creation_context.tool = entity_creation_tool::from_object_bbox;
+   } break;
+   case entity_creation_tool::from_line: {
       _edit_stack_world.close_last();
 
-      _entity_creation_context.using_from_line = true;
+      _entity_creation_context.tool = entity_creation_tool::from_line;
 
       _entity_creation_context.from_line_start = std::nullopt;
-   }
-
-   if (std::exchange(_entity_creation_context.activate_draw, false)) {
+      _entity_creation_context.from_line_click = false;
+   } break;
+   case entity_creation_tool::draw: {
       _edit_stack_world.close_last();
 
-      _entity_creation_context.using_draw = true;
+      _entity_creation_context.tool = entity_creation_tool::draw;
       _entity_creation_context.draw_barrier_start = std::nullopt;
       _entity_creation_context.draw_barrier_mid = std::nullopt;
       _entity_creation_context.draw_boundary_step = draw_boundary_step::start;
       _entity_creation_context.draw_boundary_start = {};
       _entity_creation_context.draw_boundary_end_x = {};
-   }
-
-   if (std::exchange(_entity_creation_context.activate_pick_sector, false)) {
+      _entity_creation_context.draw_click = false;
+   } break;
+   case entity_creation_tool::pick_sector: {
       _edit_stack_world.close_last();
 
-      _entity_creation_context.using_pick_sector = true;
+      _entity_creation_context.tool = entity_creation_tool::pick_sector;
+   } break;
    }
 
    if (std::exchange(_entity_creation_context.finish_from_object_bbox, false)) {
-      _entity_creation_context.using_from_object_bbox = false;
+      _entity_creation_context.tool = entity_creation_tool::none;
 
       place_creation_entity();
    }
@@ -204,6 +204,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
    const bool using_surface_rotation =
       _entity_creation_config.placement_rotation == placement_rotation::surface and
       not _cursor_placement_undo_lock;
+   const bool using_point_at =
+      _entity_creation_context.tool == entity_creation_tool::point_at;
 
    if (creation_entity.is<world::object>()) {
       world::object& object = creation_entity.get<world::object>();
@@ -294,7 +296,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if ((using_surface_rotation or using_cursor_placement or
            rotate_entity_forward or rotate_entity_back) and
-          not _entity_creation_context.using_point_at) {
+          not using_point_at) {
          quaternion new_rotation = object.rotation;
          float3 new_position = object.position;
          float3 new_euler_rotation = _edit_context.euler_rotation;
@@ -372,7 +374,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_context.using_point_at) {
+      if (using_point_at) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS, object.position,
                                             0xffffffffu);
 
@@ -427,7 +429,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if ((using_surface_rotation or using_cursor_placement or
            rotate_entity_forward or rotate_entity_back) and
-          not _entity_creation_context.using_point_at) {
+          not using_point_at) {
          quaternion new_rotation = light.rotation;
          float3 new_position = light.position;
          float3 new_euler_rotation = _edit_context.euler_rotation;
@@ -496,7 +498,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_context.using_point_at) {
+      if (using_point_at) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS, light.position,
                                             0xffffffffu);
 
@@ -797,7 +799,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if ((using_surface_rotation or using_cursor_placement or
            rotate_entity_forward or rotate_entity_back) and
-          not _entity_creation_context.using_point_at) {
+          not using_point_at) {
          quaternion new_rotation = path.nodes[0].rotation;
          float3 new_position = path.nodes[0].position;
          float3 new_euler_rotation = _edit_context.euler_rotation;
@@ -866,7 +868,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_context.using_point_at) {
+      if (using_point_at) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS,
                                             path.nodes[0].position, 0xffffffffu);
 
@@ -1326,7 +1328,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if ((using_surface_rotation or using_cursor_placement or
            rotate_entity_forward or rotate_entity_back) and
-          not _entity_creation_context.using_point_at) {
+          not using_point_at) {
          quaternion new_rotation = region.rotation;
          float3 new_position = region.position;
          float3 new_euler_rotation = _edit_context.euler_rotation;
@@ -1440,7 +1442,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_context.using_point_at) {
+      if (using_point_at) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS, region.position,
                                             0xffffffffu);
 
@@ -1510,14 +1512,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_extend_to = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::extend_to;
       }
       if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_shrink_to = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::shrink_to;
       }
 
-      if (_entity_creation_context.using_extend_to or
-          _entity_creation_context.using_shrink_to) {
+      if (_entity_creation_context.tool == entity_creation_tool::extend_to or
+          _entity_creation_context.tool == entity_creation_tool::shrink_to) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          if (not _entity_creation_context.resize_start_size) {
@@ -1536,7 +1538,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float3 cursorRS =
                inverse_region_rotation * (_cursor_positionWS - region.position);
 
-            if (_entity_creation_context.using_extend_to) {
+            if (_entity_creation_context.tool == entity_creation_tool::extend_to) {
                region_size = max(abs(cursorRS), region_start_size);
             }
             else {
@@ -1547,9 +1549,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float start_radius = length(region_start_size);
             const float new_radius = distance(region.position, _cursor_positionWS);
 
-            const float radius = _entity_creation_context.using_extend_to
-                                    ? std::max(start_radius, new_radius)
-                                    : std::min(start_radius, new_radius);
+            const float radius =
+               _entity_creation_context.tool == entity_creation_tool::extend_to
+                  ? std::max(start_radius, new_radius)
+                  : std::min(start_radius, new_radius);
             const float radius_sq = radius * radius;
             const float size = std::sqrt(radius_sq / 3.0f);
 
@@ -1587,10 +1590,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
       if (ImGui::Button("From Object Bounds", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_from_object_bbox = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::from_object_bbox;
       }
 
-      if (_entity_creation_context.using_from_object_bbox and
+      if (_entity_creation_context.tool == entity_creation_tool::from_object_bbox and
           _interaction_targets.hovered_entity and
           std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity)) {
          _entity_creation_config.placement_rotation =
@@ -1631,7 +1634,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                        });
 
       const bool using_from_object_bbox =
-         _entity_creation_context.using_from_object_bbox;
+         _entity_creation_context.tool == entity_creation_tool::from_object_bbox;
 
       if (using_from_object_bbox) ImGui::BeginDisabled();
 
@@ -1708,7 +1711,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
       if (ImGui::Button("From Object Bounds", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_from_object_bbox = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::from_object_bbox;
       }
 
       if (const world::sector* existing_sector =
@@ -1817,7 +1820,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                    });
 
       if (ImGui::Button("Pick Linked Sector 1", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_pick_sector = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::pick_sector;
          _entity_creation_context.pick_sector_index = 1;
       }
 
@@ -1841,11 +1844,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                    });
 
       if (ImGui::Button("Pick Linked Sector 2", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_pick_sector = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::pick_sector;
          _entity_creation_context.pick_sector_index = 2;
       }
 
-      if (_entity_creation_context.using_pick_sector and
+      if (_entity_creation_context.tool == entity_creation_tool::pick_sector and
           _interaction_targets.hovered_entity and
           std::holds_alternative<world::sector_id>(*_interaction_targets.hovered_entity)) {
          const world::sector* sector =
@@ -1888,8 +1891,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if ((using_surface_rotation or using_cursor_placement or
            rotate_entity_forward or rotate_entity_back) and
-          not _entity_creation_context.using_point_at and
-          not _entity_creation_context.using_pick_sector) {
+          not using_point_at and
+          _entity_creation_context.tool != entity_creation_tool::pick_sector) {
          quaternion new_rotation = portal.rotation;
          float3 new_position = portal.position;
          float3 new_euler_rotation = _edit_context.euler_rotation;
@@ -1950,7 +1953,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_context.using_point_at) {
+      if (using_point_at) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS, portal.position,
                                             0xffffffffu);
 
@@ -1964,14 +1967,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_extend_to = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::extend_to;
       }
       if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_shrink_to = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::shrink_to;
       }
 
-      if (_entity_creation_context.using_extend_to or
-          _entity_creation_context.using_shrink_to) {
+      if (_entity_creation_context.tool == entity_creation_tool::extend_to or
+          _entity_creation_context.tool == entity_creation_tool::shrink_to) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          if (not _entity_creation_context.resize_portal_start_width) {
@@ -1992,13 +1995,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
          const float3 size = abs(positionPS - cursor_positionPS);
 
          const float width =
-            _entity_creation_context.using_extend_to
+            _entity_creation_context.tool == entity_creation_tool::extend_to
                ? std::max(*_entity_creation_context.resize_portal_start_width,
                           size.x * 2.0f)
                : std::min(*_entity_creation_context.resize_portal_start_width,
                           size.x * 2.0f);
          const float height =
-            _entity_creation_context.using_extend_to
+            _entity_creation_context.tool == entity_creation_tool::extend_to
                ? std::max(*_entity_creation_context.resize_portal_start_height,
                           size.y * 2.0f)
                : std::min(*_entity_creation_context.resize_portal_start_height,
@@ -2053,7 +2056,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if ((using_surface_rotation or using_cursor_placement or
            rotate_entity_forward or rotate_entity_back) and
-          not _entity_creation_context.using_point_at) {
+          not using_point_at) {
          quaternion new_rotation = hintnode.rotation;
          float3 new_position = hintnode.position;
          float3 new_euler_rotation = _edit_context.euler_rotation;
@@ -2124,7 +2127,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_context.using_point_at) {
+      if (using_point_at) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS,
                                             hintnode.position, 0xffffffffu);
 
@@ -2231,7 +2234,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if ((using_cursor_placement or rotate_entity_forward or rotate_entity_back) and
-          not _entity_creation_context.using_point_at) {
+          not using_point_at) {
          float3 new_position = barrier.position;
          float new_rotation = barrier.rotation_angle;
 
@@ -2281,7 +2284,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (_entity_creation_context.using_point_at) {
+      if (using_point_at) {
          _tool_visualizers.add_line_overlay(_cursor_positionWS,
                                             barrier.position, 0xffffffffu);
 
@@ -2304,14 +2307,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
                           _edit_context, 1.0f, 0.0f, 1e10f);
 
       if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_extend_to = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::extend_to;
       }
       if (ImGui::Button("Shrink To", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_shrink_to = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::shrink_to;
       }
 
-      if (_entity_creation_context.using_extend_to or
-          _entity_creation_context.using_shrink_to) {
+      if (_entity_creation_context.tool == entity_creation_tool::extend_to or
+          _entity_creation_context.tool == entity_creation_tool::shrink_to) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          if (not _entity_creation_context.resize_barrier_start_position) {
@@ -2374,7 +2377,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                        float2{cornersOS[0].x, cornersOS[0].z}) /
                                    2.0f;
 
-         if (_entity_creation_context.using_extend_to) {
+         if (_entity_creation_context.tool == entity_creation_tool::extend_to) {
             barrier_new_size = max(barrier_new_size, barrier_start_size);
          }
          else {
@@ -2408,10 +2411,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::Separator();
       if (ImGui::Button("From Object Bounds", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_from_object_bbox = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::from_object_bbox;
       }
 
-      if (_entity_creation_context.using_from_object_bbox and
+      if (_entity_creation_context.tool == entity_creation_tool::from_object_bbox and
           _interaction_targets.hovered_entity and
           std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity)) {
          _entity_creation_config.placement_mode = placement_mode::manual;
@@ -2449,7 +2452,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (ImGui::Button("From Line", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_from_line = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::from_line;
       }
 
       if (ImGui::IsItemHovered()) {
@@ -2457,7 +2460,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                            "reposition the barrier around that line.");
       }
 
-      if (_entity_creation_context.using_from_line) {
+      if (_entity_creation_context.tool == entity_creation_tool::from_line) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          if (_entity_creation_context.from_line_start) {
@@ -2482,7 +2485,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             if (std::exchange(_entity_creation_context.from_line_click, false)) {
                place_creation_entity();
 
-               _entity_creation_context.using_from_line = false;
+               _entity_creation_context.tool = entity_creation_tool::none;
             }
          }
          else if (std::exchange(_entity_creation_context.from_line_click, false)) {
@@ -2491,14 +2494,14 @@ void world_edit::ui_show_world_creation_editor() noexcept
       }
 
       if (ImGui::Button("Draw Barrier", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_draw = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::draw;
       }
 
       if (ImGui::IsItemHovered()) {
          ImGui::SetTooltip("Draw lines to create a barrier.");
       }
 
-      if (_entity_creation_context.using_draw) {
+      if (_entity_creation_context.tool == entity_creation_tool::draw) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          const bool click = std::exchange(_entity_creation_context.draw_click, false);
@@ -2812,7 +2815,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             old_position.z != boundary.position.z;
       }
 
-      if (using_cursor_placement and not _entity_creation_context.using_point_at) {
+      if (using_cursor_placement and not using_point_at) {
          float3 new_position = boundary.position;
 
          if (using_cursor_placement) {
@@ -2853,10 +2856,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
                           _edit_context, 1.0f, 0.0f, 1e10f);
 
       if (ImGui::Button("Draw Boundary", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_draw = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::draw;
       }
 
-      if (_entity_creation_context.using_draw) {
+      if (_entity_creation_context.tool == entity_creation_tool::draw) {
          _entity_creation_config.placement_mode = placement_mode::manual;
 
          const bool draw_boundary_click =
@@ -3091,7 +3094,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::Separator();
 
       if (ImGui::Button("Point At", {ImGui::CalcItemWidth(), 0.0f})) {
-         _entity_creation_context.activate_point_at = true;
+         _entity_creation_context.activate_tool = entity_creation_tool::point_at;
       }
    }
 

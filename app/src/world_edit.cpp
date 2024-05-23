@@ -269,7 +269,7 @@ void world_edit::update_hovered_entity() noexcept
    world::active_entity_types raycast_mask = _world_hit_mask;
 
    if (_interaction_targets.creation_entity.holds_entity()) {
-      if (_entity_creation_context.using_from_object_bbox) {
+      if (_entity_creation_context.tool == entity_creation_tool::from_object_bbox) {
          raycast_mask = world::active_entity_types{.objects = true, .terrain = false};
       }
       else if (_interaction_targets.creation_entity.is<world::planning_connection>()) {
@@ -277,7 +277,7 @@ void world_edit::update_hovered_entity() noexcept
                                                    .planning_hubs = true,
                                                    .terrain = false};
       }
-      else if (_entity_creation_context.using_pick_sector) {
+      else if (_entity_creation_context.tool == entity_creation_tool::pick_sector) {
          raycast_mask = world::active_entity_types{.objects = false,
                                                    .sectors = true,
                                                    .terrain = false};
@@ -463,7 +463,7 @@ void world_edit::update_hovered_entity() noexcept
    if (_interaction_targets.creation_entity.holds_entity() and
        _interaction_targets.hovered_entity) {
       const bool from_bbox_wants_hover =
-         (_entity_creation_context.using_from_object_bbox and
+         (_entity_creation_context.tool == entity_creation_tool::from_object_bbox and
           std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity));
 
       const bool connection_placement_wants_hover =
@@ -471,7 +471,8 @@ void world_edit::update_hovered_entity() noexcept
          std::holds_alternative<world::planning_hub_id>(
             *_interaction_targets.hovered_entity);
 
-      const bool pick_sector_wants_hover = _entity_creation_context.using_pick_sector;
+      const bool pick_sector_wants_hover =
+         _entity_creation_context.tool == entity_creation_tool::pick_sector;
 
       const bool pick_sector_object_wants_hover =
          (_selection_edit_context.using_add_object_to_sector or

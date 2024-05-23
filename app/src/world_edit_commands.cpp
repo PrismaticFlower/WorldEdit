@@ -279,45 +279,50 @@ void world_edit::initialize_commands() noexcept
    _commands.add("entity_creation.toggle_planning_entity"s,
                  [this] { toggle_planning_entity_type(); });
 
-   _commands.add("entity_creation.activate_point_at"s,
-                 _entity_creation_context.activate_point_at);
-   _commands.add("entity_creation.deactivate_point_at"s,
-                 [this] { _entity_creation_context.using_point_at = false; });
-   _commands.add("entity_creation.activate_extend_to"s,
-                 _entity_creation_context.activate_extend_to);
-   _commands.add("entity_creation.activate_shrink_to"s,
-                 _entity_creation_context.activate_shrink_to);
-   _commands.add("entity_creation.deactivate_resize_to"s, [this] {
-      _entity_creation_context.using_shrink_to = false;
-      _entity_creation_context.using_extend_to = false;
+   _commands.add("entity_creation.activate_point_at"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::point_at;
    });
-   _commands.add("entity_creation.activate_from_object_bbox"s,
-                 _entity_creation_context.activate_from_object_bbox);
+   _commands.add("entity_creation.deactivate_point_at"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::none;
+   });
+   _commands.add("entity_creation.activate_extend_to"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::extend_to;
+   });
+   _commands.add("entity_creation.activate_shrink_to"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::shrink_to;
+   });
+   _commands.add("entity_creation.deactivate_resize_to"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::none;
+   });
+   _commands.add("entity_creation.activate_from_object_bbox"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::from_object_bbox;
+   });
    _commands.add("entity_creation.deactivate_from_object_bbox"s, [this] {
-      _entity_creation_context.using_from_object_bbox = false;
+      _entity_creation_context.tool = entity_creation_tool::none;
    });
    _commands.add("entity_creation.finish_from_object_bbox"s, [this] {
       _entity_creation_context.finish_from_object_bbox = true;
    });
 
-   _commands.add("entity_creation.activate_from_line"s,
-                 _entity_creation_context.activate_from_line);
+   _commands.add("entity_creation.activate_from_line"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::from_line;
+   });
    _commands.add("entity_creation.deactivate_from_line"s, [this] {
-      _entity_creation_context.using_from_line = false;
-      _entity_creation_context.from_line_click = false;
+      _entity_creation_context.tool = entity_creation_tool::none;
    });
    _commands.add("entity_creation.from_line_click"s,
                  _entity_creation_context.from_line_click);
 
-   _commands.add("entity_creation.activate_draw"s,
-                 _entity_creation_context.activate_draw);
+   _commands.add("entity_creation.activate_draw"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::draw;
+   });
    _commands.add("entity_creation.deactivate_draw"s, [this] {
-      _entity_creation_context.using_draw = false;
-      _entity_creation_context.draw_click = false;
+      _entity_creation_context.tool = entity_creation_tool::none;
    });
 
-   _commands.add("entity_creation.deactivate_pick_sector"s,
-                 [this] { _entity_creation_context.using_pick_sector = false; });
+   _commands.add("entity_creation.deactivate_pick_sector"s, [this] {
+      _entity_creation_context.tool = entity_creation_tool::none;
+   });
 
    _commands.add("entity_creation.draw_click"s, _entity_creation_context.draw_click);
 
@@ -894,7 +899,7 @@ void world_edit::initialize_hotkeys() noexcept
       .activated =
          [this] {
             return _interaction_targets.creation_entity.holds_entity() and
-                   _entity_creation_context.using_point_at;
+                   _entity_creation_context.tool == entity_creation_tool::point_at;
          },
       .default_hotkeys =
          {
@@ -910,8 +915,8 @@ void world_edit::initialize_hotkeys() noexcept
       .activated =
          [this] {
             return _interaction_targets.creation_entity.holds_entity() and
-                   (_entity_creation_context.using_extend_to or
-                    _entity_creation_context.using_shrink_to);
+                   (_entity_creation_context.tool == entity_creation_tool::extend_to or
+                    _entity_creation_context.tool == entity_creation_tool::shrink_to);
          },
       .default_hotkeys =
          {
@@ -929,7 +934,7 @@ void world_edit::initialize_hotkeys() noexcept
       .activated =
          [this] {
             return _interaction_targets.creation_entity.holds_entity() and
-                   _entity_creation_context.using_from_object_bbox;
+                   _entity_creation_context.tool == entity_creation_tool::from_object_bbox;
          },
       .default_hotkeys =
          {
@@ -949,7 +954,7 @@ void world_edit::initialize_hotkeys() noexcept
       .activated =
          [this] {
             return _interaction_targets.creation_entity.holds_entity() and
-                   _entity_creation_context.using_from_line;
+                   _entity_creation_context.tool == entity_creation_tool::from_line;
          },
       .default_hotkeys =
          {
@@ -967,7 +972,7 @@ void world_edit::initialize_hotkeys() noexcept
       .activated =
          [this] {
             return _interaction_targets.creation_entity.holds_entity() and
-                   _entity_creation_context.using_draw;
+                   _entity_creation_context.tool == entity_creation_tool::draw;
          },
       .default_hotkeys =
          {
@@ -983,7 +988,7 @@ void world_edit::initialize_hotkeys() noexcept
       .activated =
          [this] {
             return _interaction_targets.creation_entity.holds_entity() and
-                   _entity_creation_context.using_pick_sector;
+                   _entity_creation_context.tool == entity_creation_tool::pick_sector;
          },
       .default_hotkeys =
          {
