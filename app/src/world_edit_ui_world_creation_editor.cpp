@@ -2299,13 +2299,30 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _entity_creation_context.resize_portal_start_height = portal.height;
          }
 
+         const float4 portal_plane =
+            make_plane_from_point(portal.position,
+                                  portal.rotation * float3{0.0f, 0.0f, -1.0f});
+
+         graphics::camera_ray ray =
+            make_camera_ray(_camera,
+                            {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                            {ImGui::GetMainViewport()->Size.x,
+                             ImGui::GetMainViewport()->Size.y});
+
+         float3 cursor_position = _cursor_positionWS;
+
+         if (float hit = intersect_plane(ray.origin, ray.direction, portal_plane);
+             hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
+            cursor_position = ray.origin + hit * ray.direction;
+         }
+
          _tool_visualizers.add_line_overlay(_cursor_positionWS, portal.position,
                                             0xffffffffu);
 
          const quaternion inverse_rotation = conjugate(portal.rotation);
 
          const float3 positionPS = inverse_rotation * portal.position;
-         const float3 cursor_positionPS = inverse_rotation * _cursor_positionWS;
+         const float3 cursor_positionPS = inverse_rotation * cursor_position;
          const float3 size = abs(positionPS - cursor_positionPS);
 
          const float width =
