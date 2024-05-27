@@ -63,7 +63,15 @@ enum class entity_creation_tool : uint8 {
    pick_sector
 };
 
-enum class draw_region_step : uint8 { start, depth, width, height };
+enum class draw_region_step : uint8 {
+   start,
+   box_depth,
+   box_width,
+   box_height,
+   sphere_radius,
+   cylinder_radius,
+   cylinder_height
+};
 
 enum class draw_boundary_step : uint8 { start, end_x, radius_z };
 

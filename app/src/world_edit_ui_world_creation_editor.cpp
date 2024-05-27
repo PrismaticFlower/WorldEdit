@@ -173,6 +173,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       _entity_creation_context.draw_boundary_start = {};
       _entity_creation_context.draw_boundary_end_x = {};
       _entity_creation_context.draw_click = false;
+
    } break;
    case entity_creation_tool::pick_sector: {
       _edit_stack_world.close_last();
@@ -1646,19 +1647,34 @@ void world_edit::ui_show_world_creation_editor() noexcept
          case draw_region_step::start: {
             if (click) {
                _entity_creation_context.draw_region_start = _cursor_positionWS;
-               _entity_creation_context.draw_region_step = draw_region_step::depth;
+
+               switch (region.shape) {
+               default:
+               case world::region_shape::box: {
+                  _entity_creation_context.draw_region_step =
+                     draw_region_step::box_depth;
+               } break;
+               case world::region_shape::sphere: {
+                  _entity_creation_context.draw_region_step =
+                     draw_region_step::sphere_radius;
+               } break;
+               case world::region_shape::cylinder: {
+                  _entity_creation_context.draw_region_step =
+                     draw_region_step::cylinder_radius;
+               } break;
+               }
             }
          } break;
-         case draw_region_step::depth: {
+         case draw_region_step::box_depth: {
             _tool_visualizers.add_line_overlay(_entity_creation_context.draw_region_start,
                                                _cursor_positionWS, 0xffffffffu);
             if (click) {
                _entity_creation_context.draw_region_depth = _cursor_positionWS;
-               _entity_creation_context.draw_region_step = draw_region_step::width;
+               _entity_creation_context.draw_region_step = draw_region_step::box_width;
             }
 
          } break;
-         case draw_region_step::width: {
+         case draw_region_step::box_width: {
             const float3 draw_region_start = _entity_creation_context.draw_region_start;
             const float3 draw_region_depth = _entity_creation_context.draw_region_depth;
 
@@ -1723,10 +1739,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             if (click) {
                _entity_creation_context.draw_region_width = draw_region_width;
                _entity_creation_context.draw_region_rotation_angle = rotation_angle;
-               _entity_creation_context.draw_region_step = draw_region_step::height;
+               _entity_creation_context.draw_region_step = draw_region_step::box_height;
             }
          } break;
-         case draw_region_step::height: {
+         case draw_region_step::box_height: {
             const float3 draw_region_start = _entity_creation_context.draw_region_start;
             const float3 draw_region_depth = _entity_creation_context.draw_region_depth;
             const float3 draw_region_width = _entity_creation_context.draw_region_width;
@@ -1791,6 +1807,105 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                                std::numbers::pi_v<float>,
                                             0.0f}),
                _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_region_start = {};
+               _entity_creation_context.draw_region_depth = {};
+               _entity_creation_context.draw_region_width = {};
+               _entity_creation_context.draw_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_region_step = draw_region_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_region_step::sphere_radius: {
+            _tool_visualizers.add_line_overlay(_entity_creation_context.draw_region_start,
+                                               _cursor_positionWS, 0xffffffffu);
+
+            const float radius = distance(_entity_creation_context.draw_region_start,
+                                          _cursor_positionWS);
+            const float radius_sq = radius * radius;
+            const float size = std::sqrt(radius_sq / 3.0f);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(
+                                       &region.position,
+                                       _entity_creation_context.draw_region_start,
+                                       &region.size, float3{size, size, size}),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_region_start = {};
+               _entity_creation_context.draw_region_depth = {};
+               _entity_creation_context.draw_region_width = {};
+               _entity_creation_context.draw_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_region_step = draw_region_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_region_step::cylinder_radius: {
+            _tool_visualizers.add_line_overlay(_entity_creation_context.draw_region_start,
+                                               _cursor_positionWS, 0xffffffffu);
+
+            const float radius = distance(_entity_creation_context.draw_region_start,
+                                          _cursor_positionWS);
+            const float radius_sq = radius * radius;
+            const float size = std::sqrt(radius_sq * 0.5f);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(
+                                       &region.position,
+                                       _entity_creation_context.draw_region_start,
+                                       &region.size, float3{size, 0.0f, size}),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_region_depth = _cursor_positionWS;
+               _entity_creation_context.draw_region_step =
+                  draw_region_step::cylinder_height;
+            }
+         } break;
+         case draw_region_step::cylinder_height: {
+            const float3 draw_region_start = _entity_creation_context.draw_region_start;
+            const float3 draw_region_radius = _entity_creation_context.draw_region_depth;
+
+            _tool_visualizers.add_line_overlay(draw_region_start,
+                                               draw_region_radius, 0xffffffffu);
+
+            const float4 height_plane =
+               make_plane_from_point(draw_region_start,
+                                     normalize(draw_region_start - _camera.position()));
+
+            float3 cursor_position = _cursor_positionWS;
+
+            graphics::camera_ray ray =
+               make_camera_ray(_camera,
+                               {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                               {ImGui::GetMainViewport()->Size.x,
+                                ImGui::GetMainViewport()->Size.y});
+
+            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
+                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
+               cursor_position = ray.origin + hit * ray.direction;
+            }
+
+            const float height = (cursor_position - draw_region_start).y;
+
+            _tool_visualizers.add_line_overlay(draw_region_start,
+                                               draw_region_start +
+                                                  float3{0.0f, height, 0.0f},
+                                               0xffffffffu);
+
+            const float radius = distance(draw_region_start, draw_region_radius);
+            const float radius_sq = radius * radius;
+            const float xz_size = std::sqrt(radius_sq * 0.5f);
+
+            const float3 position =
+               draw_region_start + float3{0.0f, height * 0.5f, 0.0f};
+
+            _edit_stack_world.apply(edits::make_set_multi_value(
+                                       &region.position, position, &region.size,
+                                       float3{xz_size, height * 0.5f, xz_size}),
+                                    _edit_context);
 
             if (click) {
                _entity_creation_context.draw_region_start = {};
