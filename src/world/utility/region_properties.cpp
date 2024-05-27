@@ -83,6 +83,8 @@ auto get_region_allowed_shapes(const region_type type) noexcept -> region_allowe
       return region_allowed_shapes::sphere;
    case region_type::reflection:
       return region_allowed_shapes::box_cylinder;
+   case region_type::danger:
+      return region_allowed_shapes::box;
    }
 }
 

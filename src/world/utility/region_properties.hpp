@@ -27,7 +27,7 @@ enum class region_type {
    count
 };
 
-enum class region_allowed_shapes { all, sphere, box_cylinder };
+enum class region_allowed_shapes { all, box, sphere, box_cylinder };
 
 struct sound_region_properties {
    std::string sound_name;

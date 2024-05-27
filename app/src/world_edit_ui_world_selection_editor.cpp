@@ -690,8 +690,15 @@ void world_edit::ui_show_world_selection_editor() noexcept
                   const world::region_allowed_shapes allowed_shapes =
                      world::get_region_allowed_shapes(region_type);
 
-                  if (allowed_shapes == world::region_allowed_shapes::sphere and
-                      region->shape != world::region_shape::sphere) {
+                  if (allowed_shapes == world::region_allowed_shapes::box and
+                      region->shape != world::region_shape::box) {
+                     _edit_stack_world.apply(edits::make_set_value(&region->shape,
+                                                                   world::region_shape::box),
+                                             _edit_context,
+                                             {.closed = true, .transparent = true});
+                  }
+                  else if (allowed_shapes == world::region_allowed_shapes::sphere and
+                           region->shape != world::region_shape::sphere) {
                      _edit_stack_world.apply(edits::make_set_value(&region->shape,
                                                                    world::region_shape::sphere),
                                              _edit_context,
@@ -1096,8 +1103,16 @@ void world_edit::ui_show_world_selection_editor() noexcept
                    enum_select_option{"Sphere", world::region_shape::sphere},
                    enum_select_option{"Cylinder", world::region_shape::cylinder}});
             } break;
+            case world::region_allowed_shapes::box: {
+               ImGui::EnumSelect("Shape", &region->shape, _edit_stack_world,
+                                 _edit_context,
+                                 {enum_select_option{"Box", world::region_shape::box}});
+            } break;
             case world::region_allowed_shapes::sphere: {
-               ImGui::LabelText("Shape", "Sphere");
+               ImGui::EnumSelect("Shape", &region->shape, _edit_stack_world,
+                                 _edit_context,
+                                 {enum_select_option{"Sphere",
+                                                     world::region_shape::sphere}});
             } break;
             case world::region_allowed_shapes::box_cylinder: {
                ImGui::EnumSelect("Shape", &region->shape, _edit_stack_world,
