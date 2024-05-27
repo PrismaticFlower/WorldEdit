@@ -48,6 +48,9 @@ public:
                dynamic_buffer_allocator& dynamic_buffer_allocator,
                texture_manager& texture_manager, const settings::graphics& settings);
 
+   void predraw_cull(const frustum& view_frustum,
+                     dynamic_buffer_allocator& dynamic_buffer_allocator);
+
    void draw(const terrain_draw draw, const frustum& view_frustum,
              std::span<const terrain_cut> terrain_cuts,
              gpu_virtual_address camera_constant_buffer_view,

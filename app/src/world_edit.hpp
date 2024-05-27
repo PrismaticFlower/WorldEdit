@@ -63,6 +63,8 @@ enum class entity_creation_tool : uint8 {
    pick_sector
 };
 
+enum class draw_region_step : uint8 { start, depth, width, height };
+
 enum class draw_boundary_step : uint8 { start, end_x, radius_z };
 
 enum class selection_edit_tool : uint8 {
@@ -485,6 +487,7 @@ private:
 
       bool measurement_started = false;
 
+      draw_region_step draw_region_step = draw_region_step::start;
       draw_boundary_step draw_boundary_step = draw_boundary_step::start;
 
       int pick_sector_index = 0;
@@ -500,6 +503,11 @@ private:
 
       std::optional<float3> draw_barrier_start;
       std::optional<float3> draw_barrier_mid;
+
+      float3 draw_region_start;
+      float3 draw_region_depth;
+      float3 draw_region_width;
+      float draw_region_rotation_angle = 0.0f;
 
       float3 draw_boundary_start;
       float draw_boundary_end_x;

@@ -503,6 +503,7 @@
     <ClInclude Include="src\edits\add_animation_hierarchy.hpp" />
     <ClInclude Include="src\edits\delete_animation_hierarchy_child.hpp" />
     <ClInclude Include="src\edits\add_animation_hierarchy_child.hpp" />
+    <ClInclude Include="src\math\plane_funcs.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

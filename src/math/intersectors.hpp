@@ -241,11 +241,6 @@ inline float3 triIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2
    return float3(t, u, v);
 }
 
-inline float plaIntersect(float3 ro, float3 rd, float4 p)
-{
-   return -(dot(ro, float3{p.x, p.y, p.z}) + p.w) / dot(rd, float3{p.x, p.y, p.z});
-}
-
 inline float diskIntersect(float3 ro, float3 rd, float3 c, float3 n, float r)
 {
    float3 o = ro - c;

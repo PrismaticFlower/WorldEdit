@@ -1,6 +1,7 @@
 
 #include "gizmo.hpp"
 #include "math/intersectors.hpp"
+#include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -22,13 +23,6 @@ constexpr uint32 y_color_hover = 0xff'80'a0'ff;
 constexpr uint32 z_color_hover = 0xff'90'ff'90;
 
 constexpr uint32 circle_divisions = 64;
-
-auto make_plane(float3 position, float3 normal) noexcept -> float4
-{
-   const float w = -dot(position, normal);
-
-   return float4{normal, w};
-}
 
 auto make_circle_point(const float angle, const float radius) -> float2
 {
@@ -485,9 +479,10 @@ auto gizmo::get_translate_position(graphics::camera_ray world_ray,
    const float3 plane_normal = cross(axis, plane_tangent);
 
    const float4 plane =
-      make_plane(conjugate(_gizmo_rotation) * _translate.start_position, plane_normal);
+      make_plane_from_point(conjugate(_gizmo_rotation) * _translate.start_position,
+                            plane_normal);
 
-   if (const float hit = plaIntersect(ray.origin, ray.direction, plane); hit > 0.0f) {
+   if (const float hit = intersect_plane(ray.origin, ray.direction, plane); hit > 0.0f) {
       return ray.origin + ray.direction * hit;
    }
 
@@ -497,26 +492,29 @@ auto gizmo::get_translate_position(graphics::camera_ray world_ray,
 auto gizmo::get_rotate_position(const graphics::camera_ray ray,
                                 const float3 fallback) const noexcept -> float3
 {
-   const float4 x_plane = make_plane(_gizmo_position, float3{1.0f, 0.0f, 0.0f});
-   const float4 y_plane = make_plane(_gizmo_position, float3{0.0f, 1.0f, 0.0f});
-   const float4 z_plane = make_plane(_gizmo_position, float3{0.0f, 0.0f, 1.0f});
+   const float4 x_plane =
+      make_plane_from_point(_gizmo_position, float3{1.0f, 0.0f, 0.0f});
+   const float4 y_plane =
+      make_plane_from_point(_gizmo_position, float3{0.0f, 1.0f, 0.0f});
+   const float4 z_plane =
+      make_plane_from_point(_gizmo_position, float3{0.0f, 0.0f, 1.0f});
 
    float distance = std::numeric_limits<float>::max();
 
    if (_rotate.active_axis == axis::x) {
-      if (const float x_plane_hit = plaIntersect(ray.origin, ray.direction, x_plane);
+      if (const float x_plane_hit = intersect_plane(ray.origin, ray.direction, x_plane);
           x_plane_hit > 0.0f) {
          distance = std::min(x_plane_hit, distance);
       }
    }
    else if (_rotate.active_axis == axis::y) {
-      if (const float y_plane_hit = plaIntersect(ray.origin, ray.direction, y_plane);
+      if (const float y_plane_hit = intersect_plane(ray.origin, ray.direction, y_plane);
           y_plane_hit > 0.0f) {
          distance = std::min(y_plane_hit, distance);
       }
    }
    else {
-      if (const float z_plane_hit = plaIntersect(ray.origin, ray.direction, z_plane);
+      if (const float z_plane_hit = intersect_plane(ray.origin, ray.direction, z_plane);
           z_plane_hit > 0.0f) {
          distance = std::min(z_plane_hit, distance);
       }

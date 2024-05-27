@@ -508,6 +508,8 @@ void terrain::draw(const terrain_draw draw, const frustum& view_frustum,
       }
    }
 
+   if (visible_patch_count == 0) return;
+
    command_list.set_pipeline_state(select_pipeline(draw, pipelines));
 
    command_list.set_graphics_root_signature(root_signatures.terrain.get());

@@ -2,6 +2,7 @@
 #include "flat_model.hpp"
 #include "generate_tangents.hpp"
 #include "math/matrix_funcs.hpp"
+#include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/enum_bitflags.hpp"
@@ -170,15 +171,6 @@ void patch_materials_with_options(std::vector<mesh>& meshes, const options& opts
          mesh.material.flags |= material_flags::additive;
       }
    }
-}
-
-auto get_plane(float3 v0, float3 v1, float3 v2) noexcept -> float4
-{
-   const float3 edge0 = v1 - v0;
-   const float3 edge1 = v2 - v0;
-   const float3 normal = normalize(cross(edge0, edge1));
-
-   return float4{normal, -dot(normal, v0)};
 }
 
 }
@@ -360,8 +352,8 @@ void flat_model::flatten_segments_to_terrain_cut(
 
    for (const auto& tri : cut.triangles) {
       const float4 tri_plane =
-         get_plane(cut.positions[tri[0]], cut.positions[tri[1]],
-                   cut.positions[tri[2]]);
+         make_plane(cut.positions[tri[0]], cut.positions[tri[1]],
+                    cut.positions[tri[2]]);
 
       for (const float4& plane : cut.planes) {
          const float eps = 0.001f;

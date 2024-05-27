@@ -5,6 +5,7 @@
 #include "edits/delete_path_property.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
+#include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/string_icompare.hpp"
@@ -38,6 +39,7 @@ struct placement_traits {
    bool has_resize_to = false;
    bool has_from_bbox = false;
    bool has_from_line = false;
+   bool has_draw_region = false;
    bool has_draw_barrier = false;
    bool has_draw_boundary = false;
    bool has_cycle_ai_planning = false;
@@ -162,6 +164,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
       _entity_creation_context.tool = entity_creation_tool::draw;
       _entity_creation_context.draw_barrier_start = std::nullopt;
       _entity_creation_context.draw_barrier_mid = std::nullopt;
+      _entity_creation_context.draw_region_step = draw_region_step::start;
+      _entity_creation_context.draw_region_start = {};
+      _entity_creation_context.draw_region_depth = {};
+      _entity_creation_context.draw_region_width = {};
+      _entity_creation_context.draw_region_rotation_angle = 0.0f;
       _entity_creation_context.draw_boundary_step = draw_boundary_step::start;
       _entity_creation_context.draw_boundary_start = {};
       _entity_creation_context.draw_boundary_end_x = {};
@@ -1622,7 +1629,187 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      traits = {.has_resize_to = true, .has_from_bbox = true};
+      if (ImGui::Button("Draw Region", {ImGui::CalcItemWidth(), 0.0f})) {
+         _entity_creation_context.activate_tool = entity_creation_tool::draw;
+      }
+
+      if (ImGui::IsItemHovered()) {
+         ImGui::SetTooltip("Draw lines to create a region.");
+      }
+
+      if (_entity_creation_context.tool == entity_creation_tool::draw) {
+         _entity_creation_config.placement_mode = placement_mode::manual;
+
+         const bool click = std::exchange(_entity_creation_context.draw_click, false);
+
+         switch (_entity_creation_context.draw_region_step) {
+         case draw_region_step::start: {
+            if (click) {
+               _entity_creation_context.draw_region_start = _cursor_positionWS;
+               _entity_creation_context.draw_region_step = draw_region_step::depth;
+            }
+         } break;
+         case draw_region_step::depth: {
+            _tool_visualizers.add_line_overlay(_entity_creation_context.draw_region_start,
+                                               _cursor_positionWS, 0xffffffffu);
+            if (click) {
+               _entity_creation_context.draw_region_depth = _cursor_positionWS;
+               _entity_creation_context.draw_region_step = draw_region_step::width;
+            }
+
+         } break;
+         case draw_region_step::width: {
+            const float3 draw_region_start = _entity_creation_context.draw_region_start;
+            const float3 draw_region_depth = _entity_creation_context.draw_region_depth;
+
+            const float3 cursor_direction =
+               normalize(_cursor_positionWS - draw_region_depth);
+
+            const float3 extend_normal =
+               normalize(float3{draw_region_depth.z, 0.0f, draw_region_depth.x} -
+                         float3{draw_region_start.z, 0.0f, draw_region_start.x}) *
+               float3{-1.0, 0.0f, 1.0};
+
+            const float normal_sign =
+               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+            const float cursor_distance =
+               distance(draw_region_depth, _cursor_positionWS);
+
+            const float3 draw_region_width =
+               draw_region_depth + extend_normal * cursor_distance * normal_sign;
+
+            _tool_visualizers.add_line_overlay(draw_region_start,
+                                               draw_region_depth, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_region_depth,
+                                               draw_region_width, 0xffffffffu);
+
+            const float3 position = (draw_region_start + draw_region_width) / 2.0f;
+
+            float rotation_angle =
+               std::atan2(draw_region_start.x - draw_region_depth.x,
+                          draw_region_start.z - draw_region_depth.z);
+
+            if (draw_region_start.z - draw_region_depth.z < 0.0f) {
+               rotation_angle += std::numbers::pi_v<float>;
+            }
+
+            const quaternion rotation =
+               make_quat_from_euler({0.0f, rotation_angle, 0.0f});
+            const quaternion inv_rotation = conjugate(rotation);
+
+            const std::array<float3, 3> cornersWS{draw_region_start, draw_region_depth,
+                                                  draw_region_width};
+            std::array<float3, 3> cornersOS{};
+
+            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+               cornersOS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 region_max =
+               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
+            const float3 region_min =
+               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
+
+            const float3 size = abs(region_max - region_min) / 2.0f;
+
+            _edit_stack_world.apply(
+               edits::make_set_multi_value(
+                  &region.rotation, rotation, &region.position, position,
+                  &region.size, size, &_edit_context.euler_rotation,
+                  {0.0f, rotation_angle * 180.0f / std::numbers::pi_v<float>, 0.0f}),
+               _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_region_width = draw_region_width;
+               _entity_creation_context.draw_region_rotation_angle = rotation_angle;
+               _entity_creation_context.draw_region_step = draw_region_step::height;
+            }
+         } break;
+         case draw_region_step::height: {
+            const float3 draw_region_start = _entity_creation_context.draw_region_start;
+            const float3 draw_region_depth = _entity_creation_context.draw_region_depth;
+            const float3 draw_region_width = _entity_creation_context.draw_region_width;
+            const float draw_region_rotation_angle =
+               _entity_creation_context.draw_region_rotation_angle;
+
+            const float4 height_plane =
+               make_plane_from_point(draw_region_width,
+                                     normalize(draw_region_width - _camera.position()));
+
+            graphics::camera_ray ray =
+               make_camera_ray(_camera,
+                               {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                               {ImGui::GetMainViewport()->Size.x,
+                                ImGui::GetMainViewport()->Size.y});
+
+            float3 cursor_position = _cursor_positionWS;
+
+            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
+                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
+               cursor_position = ray.origin + hit * ray.direction;
+            }
+
+            const float3 draw_region_height =
+               draw_region_width +
+               float3{0.0f, (cursor_position - draw_region_width).y, 0.0f};
+
+            _tool_visualizers.add_line_overlay(draw_region_start,
+                                               draw_region_depth, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_region_depth,
+                                               draw_region_width, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_region_width,
+                                               draw_region_height, 0xffffffffu);
+
+            const float3 position = (draw_region_start + draw_region_height) / 2.0f;
+
+            const quaternion rotation =
+               make_quat_from_euler({0.0f, draw_region_rotation_angle, 0.0f});
+            const quaternion inv_rotation = conjugate(rotation);
+
+            const std::array<float3, 3> cornersWS{draw_region_start, draw_region_width,
+                                                  draw_region_height};
+            std::array<float3, 3> cornersOS{};
+
+            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+               cornersOS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 region_max =
+               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
+            const float3 region_min =
+               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
+
+            const float3 size = abs(region_max - region_min) / 2.0f;
+
+            _edit_stack_world.apply(
+               edits::make_set_multi_value(&region.rotation, rotation,
+                                           &region.position, position, &region.size,
+                                           size, &_edit_context.euler_rotation,
+                                           {0.0f,
+                                            draw_region_rotation_angle * 180.0f /
+                                               std::numbers::pi_v<float>,
+                                            0.0f}),
+               _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_region_start = {};
+               _entity_creation_context.draw_region_depth = {};
+               _entity_creation_context.draw_region_width = {};
+               _entity_creation_context.draw_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_region_step = draw_region_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         }
+      }
+
+      traits = {
+         .has_resize_to = true,
+         .has_from_bbox = true,
+         .has_draw_region = true,
+      };
    }
    else if (creation_entity.is<world::sector>()) {
       world::sector& sector = creation_entity.get<world::sector>();
@@ -3316,6 +3503,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::Text("From Line");
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation", "Start From Line")));
+      }
+
+      if (traits.has_draw_region) {
+         ImGui::Text("Draw Region");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation", "Start Draw")));
       }
 
       if (traits.has_draw_barrier) {

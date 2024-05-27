@@ -1,6 +1,7 @@
 
 #include "frustum.hpp"
 #include "math/matrix_funcs.hpp"
+#include "math/plane_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 #include <array>
@@ -10,14 +11,6 @@
 namespace we::graphics {
 
 namespace {
-
-auto get_plane(std::array<float3, 3> points) noexcept -> float4
-{
-   const std::array edges{points[1] - points[0], points[2] - points[0]};
-   const float3 normal = normalize(cross(edges[0], edges[1]));
-
-   return float4{normal, -dot(normal, points[0])};
-}
 
 bool outside_plane(const float4& plane, const float3& point) noexcept
 {
@@ -55,33 +48,34 @@ frustum::frustum(const float4x4& inv_view_projection_matrix,
    }
 
    planes[frustum_planes::near_] =
-      get_plane({corners[frustum_corner::top_left_near],
+      make_plane(corners[frustum_corner::top_left_near],
                  corners[frustum_corner::top_right_near],
-                 corners[frustum_corner::bottom_left_near]});
+                 corners[frustum_corner::bottom_left_near]);
 
    planes[frustum_planes::far_] =
-      get_plane({corners[frustum_corner::top_left_far],
+      make_plane(corners[frustum_corner::top_left_far],
                  corners[frustum_corner::bottom_left_far],
-                 corners[frustum_corner::top_right_far]});
+                 corners[frustum_corner::top_right_far]);
 
    planes[frustum_planes::bottom] =
-      get_plane({corners[frustum_corner::bottom_left_near],
+      make_plane(corners[frustum_corner::bottom_left_near],
                  corners[frustum_corner::bottom_right_far],
-                 corners[frustum_corner::bottom_left_far]});
+                 corners[frustum_corner::bottom_left_far]);
 
-   planes[frustum_planes::top] = get_plane(
-      {corners[frustum_corner::top_left_near], corners[frustum_corner::top_left_far],
-       corners[frustum_corner::top_right_far]});
+   planes[frustum_planes::top] =
+      make_plane(corners[frustum_corner::top_left_near],
+                 corners[frustum_corner::top_left_far],
+                 corners[frustum_corner::top_right_far]);
 
    planes[frustum_planes::left] =
-      get_plane({corners[frustum_corner::top_left_near],
+      make_plane(corners[frustum_corner::top_left_near],
                  corners[frustum_corner::bottom_left_far],
-                 corners[frustum_corner::top_left_far]});
+                 corners[frustum_corner::top_left_far]);
 
    planes[frustum_planes::right] =
-      get_plane({corners[frustum_corner::top_right_near],
+      make_plane(corners[frustum_corner::top_right_near],
                  corners[frustum_corner::top_right_far],
-                 corners[frustum_corner::bottom_right_far]});
+                 corners[frustum_corner::bottom_right_far]);
 }
 
 frustum::frustum(const float4x4& inv_view_projection_matrix, const float z_min,
