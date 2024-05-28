@@ -565,8 +565,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                              ImGuiSliderFlags_AlwaysClamp);
             ImGui::DragFloat("Outer Cone Angle", &light.outer_cone_angle,
                              _edit_stack_world, _edit_context, 0.01f,
-                             light.inner_cone_angle, 1.570f, "%.3f",
-                             ImGuiSliderFlags_AlwaysClamp);
+                             light.inner_cone_angle, std::numbers::pi_v<float>,
+                             "%.3f", ImGuiSliderFlags_AlwaysClamp);
          }
 
          ImGui::Separator();
