@@ -1077,10 +1077,10 @@ void load_animations(const std::filesystem::path& filepath,
       }
    }
    catch (std::exception& e) {
-      throw_layer_load_failure("measurements", filepath.string(), e);
+      throw_layer_load_failure("animations", filepath.string(), e);
    }
 
-   output.write("Loaded world measurements (time taken {:f}ms)\n",
+   output.write("Loaded world animations (time taken {:f}ms)\n",
                 load_timer.elapsed_ms());
 }
 
