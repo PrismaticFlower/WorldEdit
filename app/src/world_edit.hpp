@@ -63,6 +63,23 @@ enum class entity_creation_tool : uint8 {
    pick_sector
 };
 
+enum class draw_light_step : uint8 {
+   start,
+   direction,
+   point_radius,
+   cone_length,
+   cone_radius,
+   region_box_depth,
+   region_box_width,
+   region_box_height,
+   region_box_direction,
+   region_sphere_radius,
+   region_sphere_direction,
+   region_cylinder_radius,
+   region_cylinder_height,
+   region_cylinder_direction
+};
+
 enum class draw_region_step : uint8 {
    start,
    box_depth,
@@ -495,6 +512,7 @@ private:
 
       bool measurement_started = false;
 
+      draw_light_step draw_light_step = draw_light_step::start;
       draw_region_step draw_region_step = draw_region_step::start;
       draw_boundary_step draw_boundary_step = draw_boundary_step::start;
 
@@ -511,6 +529,13 @@ private:
 
       std::optional<float3> draw_barrier_start;
       std::optional<float3> draw_barrier_mid;
+
+      float3 draw_light_start;
+      float3 draw_light_depth;
+      float3 draw_light_width;
+      float draw_light_region_rotation_angle = 0.0f;
+      float3 draw_light_region_position;
+      float3 draw_light_region_size;
 
       float3 draw_region_start;
       float3 draw_region_depth;

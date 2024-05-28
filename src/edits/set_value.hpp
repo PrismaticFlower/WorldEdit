@@ -350,6 +350,85 @@ private:
    T4 value4;
 };
 
+template<typename T1, typename T2, typename T3, typename T4, typename T5>
+struct set_multi_value5 final : edit<world::edit_context> {
+   set_multi_value5(T1* value1_address, T1 new_value1, //
+                    T2* value2_address, T2 new_value2, //
+                    T3* value3_address, T3 new_value3, //
+                    T4* value4_address, T4 new_value4, //
+                    T5* value5_address, T5 new_value5)
+      : value1_ptr{value1_address},
+        value2_ptr{value2_address},
+        value3_ptr{value3_address},
+        value4_ptr{value4_address},
+        value5_ptr{value5_address},
+        value1{std::move(new_value1)},
+        value2{std::move(new_value2)},
+        value3{std::move(new_value3)},
+        value4{std::move(new_value4)},
+        value5{std::move(new_value5)}
+   {
+   }
+
+   void apply([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      assert(context.is_memory_valid(value1_ptr));
+      assert(context.is_memory_valid(value2_ptr));
+      assert(context.is_memory_valid(value3_ptr));
+      assert(context.is_memory_valid(value4_ptr));
+      assert(context.is_memory_valid(value5_ptr));
+
+      std::swap(*value1_ptr, value1);
+      std::swap(*value2_ptr, value2);
+      std::swap(*value3_ptr, value3);
+      std::swap(*value4_ptr, value4);
+      std::swap(*value5_ptr, value5);
+   }
+
+   void revert([[maybe_unused]] world::edit_context& context) noexcept override
+   {
+      apply(context);
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_multi_value5* other =
+         dynamic_cast<const set_multi_value5*>(&other_unknown);
+
+      if (not other) return false;
+
+      return this->value1_ptr == other->value1_ptr and
+             this->value2_ptr == other->value2_ptr and
+             this->value3_ptr == other->value3_ptr and
+             this->value4_ptr == other->value4_ptr and
+             this->value5_ptr == other->value5_ptr;
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_multi_value5& other = dynamic_cast<set_multi_value5&>(other_unknown);
+
+      value1 = std::move(other.value1);
+      value2 = std::move(other.value2);
+      value3 = std::move(other.value3);
+      value4 = std::move(other.value4);
+      value5 = std::move(other.value5);
+   }
+
+private:
+   T1* value1_ptr = nullptr;
+   T2* value2_ptr = nullptr;
+   T3* value3_ptr = nullptr;
+   T4* value4_ptr = nullptr;
+   T5* value5_ptr = nullptr;
+
+   T1 value1;
+   T2 value2;
+   T3 value3;
+   T4 value4;
+   T5 value5;
+};
+
 template<typename T1, typename T2>
 inline auto make_set_multi_value(T1* value1_address, T1 new_value1,
                                  T2* value2_address, T2 new_value2)
@@ -391,6 +470,23 @@ inline auto make_set_multi_value(T1* value1_address, T1 new_value1, //
    return std::make_unique<set_multi_value4<T1, T2, T3, T4>>(
       value1_address, std::move(new_value1), value2_address, std::move(new_value2),
       value3_address, std::move(new_value3), value4_address, std::move(new_value4));
+}
+
+template<typename T1, typename T2, typename T3, typename T4, typename T5>
+inline auto make_set_multi_value(T1* value1_address, T1 new_value1, //
+                                 T2* value2_address, T2 new_value2, //
+                                 T3* value3_address, T3 new_value3, //
+                                 T4* value4_address, T4 new_value4, //
+                                 T5* value5_address, T5 new_value5)
+   -> std::unique_ptr<set_multi_value5<T1, T2, T3, T4, T5>>
+{
+   assert(value1_address and value2_address and value3_address and
+          value4_address and value5_address);
+
+   return std::make_unique<set_multi_value5<T1, T2, T3, T4, T5>>(
+      value1_address, std::move(new_value1), value2_address,
+      std::move(new_value2), value3_address, std::move(new_value3), value4_address,
+      std::move(new_value4), value5_address, std::move(new_value5));
 }
 
 auto make_set_path_node_property_value(std::vector<world::path::node>* nodes,

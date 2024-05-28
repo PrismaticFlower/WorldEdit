@@ -39,6 +39,7 @@ struct placement_traits {
    bool has_resize_to = false;
    bool has_from_bbox = false;
    bool has_from_line = false;
+   bool has_draw_light = false;
    bool has_draw_region = false;
    bool has_draw_barrier = false;
    bool has_draw_boundary = false;
@@ -164,6 +165,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
       _entity_creation_context.tool = entity_creation_tool::draw;
       _entity_creation_context.draw_barrier_start = std::nullopt;
       _entity_creation_context.draw_barrier_mid = std::nullopt;
+      _entity_creation_context.draw_light_start = {};
+      _entity_creation_context.draw_light_depth = {};
+      _entity_creation_context.draw_light_width = {};
+      _entity_creation_context.draw_light_region_position = {};
+      _entity_creation_context.draw_light_region_size = {};
+      _entity_creation_context.draw_light_region_rotation_angle = 0.0f;
+      _entity_creation_context.draw_light_step = draw_light_step::start;
       _entity_creation_context.draw_region_step = draw_region_step::start;
       _entity_creation_context.draw_region_start = {};
       _entity_creation_context.draw_region_depth = {};
@@ -687,8 +695,502 @@ void world_edit::ui_show_world_creation_editor() noexcept
             ImGui::Checkbox("Bidirectional", &light.bidirectional);
          }
       }
+      if (ImGui::Button("Draw Light", {ImGui::CalcItemWidth(), 0.0f})) {
+         _entity_creation_context.activate_tool = entity_creation_tool::draw;
+      }
 
-      traits = {.has_placement_ground = false};
+      if (ImGui::IsItemHovered()) {
+         ImGui::SetTooltip("Draw lines to create a light.");
+      }
+
+      if (_entity_creation_context.tool == entity_creation_tool::draw) {
+         _entity_creation_config.placement_mode = placement_mode::manual;
+         _entity_creation_config.placement_rotation =
+            placement_rotation::manual_quaternion;
+
+         const bool click = std::exchange(_entity_creation_context.draw_click, false);
+
+         switch (_entity_creation_context.draw_light_step) {
+         case draw_light_step::start: {
+            if (click) {
+               _entity_creation_context.draw_light_start = _cursor_positionWS;
+
+               switch (light.light_type) {
+               default:
+               case world::light_type::directional: {
+                  _entity_creation_context.draw_light_step = draw_light_step::direction;
+               } break;
+               case world::light_type::point: {
+                  _entity_creation_context.draw_light_step =
+                     draw_light_step::point_radius;
+               } break;
+               case world::light_type::spot: {
+                  _entity_creation_context.draw_light_step =
+                     draw_light_step::cone_length;
+               } break;
+               case world::light_type::directional_region_box: {
+                  _entity_creation_context.draw_light_step =
+                     draw_light_step::region_box_depth;
+               } break;
+               case world::light_type::directional_region_sphere: {
+                  _entity_creation_context.draw_light_step =
+                     draw_light_step::region_sphere_radius;
+               } break;
+               case world::light_type::directional_region_cylinder: {
+                  _entity_creation_context.draw_light_step =
+                     draw_light_step::region_cylinder_radius;
+               } break;
+               }
+            }
+         } break;
+         case draw_light_step::direction: {
+            const float3 position = _entity_creation_context.draw_light_start;
+            const quaternion rotation = look_at_quat(_cursor_positionWS, position);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&light.position, position,
+                                                                &light.rotation, rotation),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_start = {};
+               _entity_creation_context.draw_light_depth = {};
+               _entity_creation_context.draw_light_width = {};
+               _entity_creation_context.draw_light_region_position = {};
+               _entity_creation_context.draw_light_region_size = {};
+               _entity_creation_context.draw_light_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_light_step = draw_light_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_light_step::point_radius: {
+            const float3 position = _entity_creation_context.draw_light_start;
+
+            _tool_visualizers.add_line_overlay(position, _cursor_positionWS, 0xffffffffu);
+
+            const float radius = distance(position, _cursor_positionWS);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&light.position, position,
+                                                                &light.range, radius),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_start = {};
+               _entity_creation_context.draw_light_depth = {};
+               _entity_creation_context.draw_light_width = {};
+               _entity_creation_context.draw_light_region_position = {};
+               _entity_creation_context.draw_light_region_size = {};
+               _entity_creation_context.draw_light_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_light_step = draw_light_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_light_step::cone_length: {
+            const float3 position = _entity_creation_context.draw_light_start;
+
+            _tool_visualizers.add_line_overlay(position, _cursor_positionWS, 0xffffffffu);
+
+            if (click) {
+               _entity_creation_context.draw_light_depth = _cursor_positionWS;
+               _entity_creation_context.draw_light_step = draw_light_step::cone_radius;
+            }
+         } break;
+         case draw_light_step::cone_radius: {
+            const float3 position = _entity_creation_context.draw_light_start;
+            const float3 end_position = _entity_creation_context.draw_light_depth;
+
+            const float range = distance(position, end_position);
+
+            const float4 cone_plane =
+               make_plane_from_point(end_position, normalize(end_position - position));
+
+            graphics::camera_ray ray =
+               make_camera_ray(_camera,
+                               {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                               {ImGui::GetMainViewport()->Size.x,
+                                ImGui::GetMainViewport()->Size.y});
+
+            float3 cursor_position = end_position;
+
+            if (float hit = intersect_plane(ray.origin, ray.direction, cone_plane);
+                hit > 0.0f) {
+               cursor_position = ray.origin + hit * ray.direction;
+            }
+
+            _tool_visualizers.add_line_overlay(position, end_position, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(end_position, cursor_position,
+                                               0xffffffffu);
+
+            const float cone_radius = distance(cursor_position, end_position);
+
+            const float outer_cone_angle =
+               std::clamp(std::atan(cone_radius / range) * 2.0f, 0.0f,
+                          std::numbers::pi_v<float>);
+            const float inner_cone_angle = outer_cone_angle * 0.75f;
+
+            _edit_stack_world.apply(edits::make_set_multi_value(
+                                       &light.rotation,
+                                       look_at_quat(end_position, position),
+                                       &light.position, position, &light.range, range,
+                                       &light.outer_cone_angle, outer_cone_angle,
+                                       &light.inner_cone_angle, inner_cone_angle),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_start = {};
+               _entity_creation_context.draw_light_depth = {};
+               _entity_creation_context.draw_light_width = {};
+               _entity_creation_context.draw_light_region_position = {};
+               _entity_creation_context.draw_light_region_size = {};
+               _entity_creation_context.draw_light_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_light_step = draw_light_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_light_step::region_box_depth: {
+            _tool_visualizers.add_line_overlay(_entity_creation_context.draw_light_start,
+                                               _cursor_positionWS, 0xffffffffu);
+            if (click) {
+               _entity_creation_context.draw_light_depth = _cursor_positionWS;
+               _entity_creation_context.draw_light_step =
+                  draw_light_step::region_box_width;
+            }
+
+         } break;
+         case draw_light_step::region_box_width: {
+            const float3 draw_light_start = _entity_creation_context.draw_light_start;
+            const float3 draw_light_depth = _entity_creation_context.draw_light_depth;
+
+            const float3 cursor_direction =
+               normalize(_cursor_positionWS - draw_light_depth);
+
+            const float3 extend_normal =
+               normalize(float3{draw_light_depth.z, 0.0f, draw_light_depth.x} -
+                         float3{draw_light_start.z, 0.0f, draw_light_start.x}) *
+               float3{-1.0, 0.0f, 1.0};
+
+            const float normal_sign =
+               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+            const float cursor_distance =
+               distance(draw_light_depth, _cursor_positionWS);
+
+            const float3 draw_light_width =
+               draw_light_depth + extend_normal * cursor_distance * normal_sign;
+
+            _tool_visualizers.add_line_overlay(draw_light_start,
+                                               draw_light_depth, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_light_depth,
+                                               draw_light_width, 0xffffffffu);
+
+            const float3 position = (draw_light_start + draw_light_width) / 2.0f;
+
+            float rotation_angle =
+               std::atan2(draw_light_start.x - draw_light_depth.x,
+                          draw_light_start.z - draw_light_depth.z);
+
+            if (draw_light_start.z - draw_light_depth.z < 0.0f) {
+               rotation_angle += std::numbers::pi_v<float>;
+            }
+
+            const quaternion rotation =
+               make_quat_from_euler({0.0f, rotation_angle, 0.0f});
+            const quaternion inv_rotation = conjugate(rotation);
+
+            const std::array<float3, 3> cornersWS{draw_light_start, draw_light_depth,
+                                                  draw_light_width};
+            std::array<float3, 3> cornersOS{};
+
+            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+               cornersOS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 light_max =
+               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
+            const float3 light_min =
+               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
+
+            const float3 size = abs(light_max - light_min) / 2.0f;
+
+            _edit_stack_world.apply(
+               edits::make_set_multi_value(
+                  &light.rotation, light.rotation, &light.position, position,
+                  &light.region_size, size, &light.region_rotation, rotation,
+                  &_edit_context.euler_rotation,
+                  {0.0f, rotation_angle * 180.0f / std::numbers::pi_v<float>, 0.0f}),
+               _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_width = draw_light_width;
+               _entity_creation_context.draw_light_region_rotation_angle =
+                  rotation_angle;
+               _entity_creation_context.draw_light_step =
+                  draw_light_step::region_box_height;
+            }
+         } break;
+         case draw_light_step::region_box_height: {
+            const float3 draw_light_start = _entity_creation_context.draw_light_start;
+            const float3 draw_light_depth = _entity_creation_context.draw_light_depth;
+            const float3 draw_light_width = _entity_creation_context.draw_light_width;
+            const float draw_light_rotation_angle =
+               _entity_creation_context.draw_light_region_rotation_angle;
+
+            const float4 height_plane =
+               make_plane_from_point(draw_light_width,
+                                     normalize(draw_light_width - _camera.position()));
+
+            graphics::camera_ray ray =
+               make_camera_ray(_camera,
+                               {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                               {ImGui::GetMainViewport()->Size.x,
+                                ImGui::GetMainViewport()->Size.y});
+
+            float3 cursor_position = _cursor_positionWS;
+
+            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
+                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
+               cursor_position = ray.origin + hit * ray.direction;
+            }
+
+            const float3 draw_light_height =
+               draw_light_width +
+               float3{0.0f, (cursor_position - draw_light_width).y, 0.0f};
+
+            _tool_visualizers.add_line_overlay(draw_light_start,
+                                               draw_light_depth, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_light_depth,
+                                               draw_light_width, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_light_width,
+                                               draw_light_height, 0xffffffffu);
+
+            const float3 position = (draw_light_start + draw_light_height) / 2.0f;
+
+            const quaternion rotation =
+               make_quat_from_euler({0.0f, draw_light_rotation_angle, 0.0f});
+            const quaternion inv_rotation = conjugate(rotation);
+
+            const std::array<float3, 3> cornersWS{draw_light_start, draw_light_width,
+                                                  draw_light_height};
+            std::array<float3, 3> cornersOS{};
+
+            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+               cornersOS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 light_max =
+               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
+            const float3 light_min =
+               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
+
+            const float3 size = abs(light_max - light_min) / 2.0f;
+
+            _edit_stack_world
+               .apply(edits::make_set_multi_value(&light.rotation, light.rotation,
+                                                  &light.position, position,
+                                                  &light.region_size, size,
+                                                  &light.region_rotation, rotation,
+                                                  &_edit_context.euler_rotation,
+                                                  {0.0f,
+                                                   draw_light_rotation_angle * 180.0f /
+                                                      std::numbers::pi_v<float>,
+                                                   0.0f}),
+                      _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_region_position = position;
+               _entity_creation_context.draw_light_region_size = size;
+               _entity_creation_context.draw_light_step =
+                  draw_light_step::region_box_direction;
+            }
+         } break;
+         case draw_light_step::region_box_direction: {
+            const float draw_light_rotation_angle =
+               _entity_creation_context.draw_light_region_rotation_angle;
+
+            const quaternion region_rotation =
+               make_quat_from_euler({0.0f, draw_light_rotation_angle, 0.0f});
+            const float3 position = _entity_creation_context.draw_light_region_position;
+            const float3 size = _entity_creation_context.draw_light_region_size;
+            const quaternion rotation = look_at_quat(_cursor_positionWS, position);
+
+            _tool_visualizers.add_line_overlay(position, _cursor_positionWS, 0xffffffffu);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(
+                                       &light.rotation, rotation, &light.position,
+                                       position, &light.region_size, size,
+                                       &light.region_rotation, region_rotation,
+                                       &_edit_context.euler_rotation,
+                                       {0.0f,
+                                        draw_light_rotation_angle * 180.0f /
+                                           std::numbers::pi_v<float>,
+                                        0.0f}),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_start = {};
+               _entity_creation_context.draw_light_depth = {};
+               _entity_creation_context.draw_light_width = {};
+               _entity_creation_context.draw_light_region_position = {};
+               _entity_creation_context.draw_light_region_size = {};
+               _entity_creation_context.draw_light_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_light_step = draw_light_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_light_step::region_sphere_radius: {
+            const float3 position = _entity_creation_context.draw_light_start;
+
+            _tool_visualizers.add_line_overlay(position, _cursor_positionWS, 0xffffffffu);
+
+            const float radius = distance(position, _cursor_positionWS);
+            const float radius_sq = radius * radius;
+            const float size = std::sqrt(radius_sq / 3.0f);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&light.rotation,
+                                                                light.rotation,
+                                                                &light.position, position,
+                                                                &light.region_size,
+                                                                float3{size, size, size}),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_region_position = position;
+               _entity_creation_context.draw_light_region_size =
+                  float3{size, size, size};
+               _entity_creation_context.draw_light_step =
+                  draw_light_step::region_sphere_direction;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_light_step::region_sphere_direction: {
+            const float3 position = _entity_creation_context.draw_light_region_position;
+            const float3 size = _entity_creation_context.draw_light_region_size;
+            const quaternion rotation = look_at_quat(_cursor_positionWS, position);
+
+            _tool_visualizers.add_line_overlay(position, _cursor_positionWS, 0xffffffffu);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&light.rotation, rotation,
+                                                                &light.position, position,
+                                                                &light.region_size, size),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_start = {};
+               _entity_creation_context.draw_light_depth = {};
+               _entity_creation_context.draw_light_width = {};
+               _entity_creation_context.draw_light_region_position = {};
+               _entity_creation_context.draw_light_region_size = {};
+               _entity_creation_context.draw_light_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_light_step = draw_light_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         case draw_light_step::region_cylinder_radius: {
+            _tool_visualizers.add_line_overlay(_entity_creation_context.draw_light_start,
+                                               _cursor_positionWS, 0xffffffffu);
+
+            const float radius = distance(_entity_creation_context.draw_light_start,
+                                          _cursor_positionWS);
+            const float radius_sq = radius * radius;
+            const float size = std::sqrt(radius_sq * 0.5f);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(
+                                       &light.rotation, light.rotation, &light.position,
+                                       _entity_creation_context.draw_light_start,
+                                       &light.region_size, float3{size, 0.0f, size}),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_depth = _cursor_positionWS;
+               _entity_creation_context.draw_light_step =
+                  draw_light_step::region_cylinder_height;
+            }
+         } break;
+         case draw_light_step::region_cylinder_height: {
+            const float3 draw_light_start = _entity_creation_context.draw_light_start;
+            const float3 draw_light_radius = _entity_creation_context.draw_light_depth;
+
+            _tool_visualizers.add_line_overlay(draw_light_start,
+                                               draw_light_radius, 0xffffffffu);
+
+            const float4 height_plane =
+               make_plane_from_point(draw_light_start,
+                                     normalize(draw_light_start - _camera.position()));
+
+            float3 cursor_position = _cursor_positionWS;
+
+            graphics::camera_ray ray =
+               make_camera_ray(_camera,
+                               {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                               {ImGui::GetMainViewport()->Size.x,
+                                ImGui::GetMainViewport()->Size.y});
+
+            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
+                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
+               cursor_position = ray.origin + hit * ray.direction;
+            }
+
+            const float height = (cursor_position - draw_light_start).y;
+
+            _tool_visualizers.add_line_overlay(draw_light_start,
+                                               draw_light_start +
+                                                  float3{0.0f, height, 0.0f},
+                                               0xffffffffu);
+
+            const float radius = distance(draw_light_start, draw_light_radius);
+            const float radius_sq = radius * radius;
+            const float xz_size = std::sqrt(radius_sq * 0.5f);
+
+            const float3 position =
+               draw_light_start + float3{0.0f, height * 0.5f, 0.0f};
+            const float3 size = float3{xz_size, height * 0.5f, xz_size};
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&light.rotation,
+                                                                light.rotation,
+                                                                &light.position, position,
+                                                                &light.region_size, size),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_region_position = position;
+               _entity_creation_context.draw_light_region_size = size;
+               _entity_creation_context.draw_light_step =
+                  draw_light_step::region_cylinder_direction;
+            }
+         } break;
+         case draw_light_step::region_cylinder_direction: {
+            const float3 position = _entity_creation_context.draw_light_region_position;
+            const float3 size = _entity_creation_context.draw_light_region_size;
+            const quaternion rotation = look_at_quat(_cursor_positionWS, position);
+
+            _tool_visualizers.add_line_overlay(position, _cursor_positionWS, 0xffffffffu);
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&light.rotation, rotation,
+                                                                &light.position, position,
+                                                                &light.region_size, size),
+                                    _edit_context);
+
+            if (click) {
+               _entity_creation_context.draw_light_start = {};
+               _entity_creation_context.draw_light_depth = {};
+               _entity_creation_context.draw_light_width = {};
+               _entity_creation_context.draw_light_region_position = {};
+               _entity_creation_context.draw_light_region_size = {};
+               _entity_creation_context.draw_light_region_rotation_angle = 0.0f;
+               _entity_creation_context.draw_light_step = draw_light_step::start;
+
+               place_creation_entity();
+            }
+         } break;
+         }
+      }
+
+      traits = {.has_placement_ground = false, .has_draw_light = true};
    }
    else if (creation_entity.is<world::path>()) {
       world::path& path = creation_entity.get<world::path>();
@@ -3647,6 +4149,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::Text("From Line");
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation", "Start From Line")));
+      }
+
+      if (traits.has_draw_light) {
+         ImGui::Text("Draw Light");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation", "Start Draw")));
       }
 
       if (traits.has_draw_region) {

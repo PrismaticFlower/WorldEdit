@@ -146,6 +146,41 @@ TEST_CASE("edits set_multi_value4", "[Edits]")
    REQUIRE(barrier.flags == world::ai_path_flags::medium);
 }
 
+TEST_CASE("edits set_multi_value5", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity =
+      world::barrier{.size = {0.0f, 0.0f}, .flags = world::ai_path_flags::medium};
+
+   world::barrier& barrier =
+      interaction_targets.creation_entity.get<world::barrier>();
+
+   auto edit =
+      make_set_multi_value(&barrier.rotation_angle, 2.0f, &barrier.position,
+                           float3{1.0f, 1.0f, 1.0f}, &barrier.size,
+                           float2{2.0f, 2.0f}, &barrier.flags,
+                           world::ai_path_flags::small, &barrier.hidden, true);
+
+   edit->apply(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 2.0f);
+   REQUIRE(barrier.position == float3{1.0f, 1.0f, 1.0f});
+   REQUIRE(barrier.size == float2{2.0f, 2.0f});
+   REQUIRE(barrier.flags == world::ai_path_flags::small);
+   REQUIRE(barrier.hidden);
+
+   edit->revert(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 0.0f);
+   REQUIRE(barrier.position == float3{0.0f, 0.0f, 0.0f});
+   REQUIRE(barrier.size == float2{0.0f, 0.0f});
+   REQUIRE(barrier.flags == world::ai_path_flags::medium);
+   REQUIRE(not barrier.hidden);
+}
+
 TEST_CASE("edits make_set_path_node_property_value", "[Edits]")
 {
    world::world world = test_world;
@@ -371,6 +406,49 @@ TEST_CASE("edits set_multi_value4 coalesce", "[Edits]")
    REQUIRE(barrier.flags == world::ai_path_flags::medium);
 }
 
+TEST_CASE("edits set_multi_value5 coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity =
+      world::barrier{.size = {0.0f, 0.0f}, .flags = world::ai_path_flags::medium};
+
+   world::barrier& barrier =
+      interaction_targets.creation_entity.get<world::barrier>();
+
+   auto edit =
+      make_set_multi_value(&barrier.rotation_angle, 1.0f, &barrier.position,
+                           float3{1.0f, 1.0f, 1.0f}, &barrier.size,
+                           float2{2.0f, 2.0f}, &barrier.flags,
+                           world::ai_path_flags::small, &barrier.hidden, false);
+   auto other_edit =
+      make_set_multi_value(&barrier.rotation_angle, 2.0f, &barrier.position,
+                           float3{2.0f, 2.0f, 2.0f}, &barrier.size,
+                           float2{4.0f, 4.0f}, &barrier.flags,
+                           world::ai_path_flags::huge, &barrier.hidden, true);
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 2.0f);
+   REQUIRE(barrier.position == float3{2.0f, 2.0f, 2.0f});
+   REQUIRE(barrier.size == float2{4.0f, 4.0f});
+   REQUIRE(barrier.flags == world::ai_path_flags::huge);
+   REQUIRE(barrier.hidden);
+
+   edit->revert(edit_context);
+
+   REQUIRE(barrier.rotation_angle == 0.0f);
+   REQUIRE(barrier.position == float3{0.0f, 0.0f, 0.0f});
+   REQUIRE(barrier.size == float2{0.0f, 0.0f});
+   REQUIRE(barrier.flags == world::ai_path_flags::medium);
+   REQUIRE(not barrier.hidden);
+}
 TEST_CASE("edits make_set_path_node_property_value coalesce", "[Edits]")
 {
    world::world world = test_world;
@@ -533,6 +611,30 @@ TEST_CASE("edits set_multi_value4 no coalesce", "[Edits]")
                                           &world.planning_hubs[0].position,
                                           float3{2.0f, 2.0f, 2.0f}, &barrier.size,
                                           float2{4.0f, 4.0f}, &barrier.hidden, true);
+
+   REQUIRE(not edit->is_coalescable(*other_edit));
+}
+
+TEST_CASE("edits set_multi_value5 no coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   interaction_targets.creation_entity = world::barrier{.size = {0.0f, 0.0f}};
+
+   world::barrier& barrier =
+      interaction_targets.creation_entity.get<world::barrier>();
+
+   auto edit = make_set_multi_value(&barrier.rotation_angle, 1.0f, &barrier.position,
+                                    float3{1.0f, 1.0f, 1.0f}, &barrier.size,
+                                    float2{2.0f, 2.0f}, &barrier.hidden, true,
+                                    &barrier.flags, world::ai_path_flags::small);
+   auto other_edit =
+      make_set_multi_value(&barrier.rotation_angle, 2.0f,
+                           &world.planning_hubs[0].position, float3{2.0f, 2.0f, 2.0f},
+                           &barrier.size, float2{4.0f, 4.0f}, &barrier.hidden,
+                           true, &barrier.flags, world::ai_path_flags::huge);
 
    REQUIRE(not edit->is_coalescable(*other_edit));
 }
