@@ -508,7 +508,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    if (frame_options.draw_overlay_grid) {
       const float grid_height_bias =
-         camera.position().y >= frame_options.overlay_grid_height ? 0.001f : -0.001f;
+         camera.position().y >= frame_options.overlay_grid_height ? 0.002f : -0.002f;
 
       draw_grid_overlay(frame_options.overlay_grid_height + grid_height_bias,
                         16384.0f, frame_options.overlay_grid_size,
