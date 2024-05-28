@@ -1587,11 +1587,11 @@ void renderer_impl::draw_world_meta_objects(
             _meta_draw_batcher.add_sphere(light.position, light.range, color);
          } break;
          case world::light_type::spot: {
-            const float half_range = light.range / 2.0f;
             const float outer_cone_radius =
-               half_range * std::tan(light.outer_cone_angle);
+               light.range * std::tan(light.outer_cone_angle * 0.5f);
             const float inner_cone_radius =
-               half_range * std::tan(light.inner_cone_angle);
+               light.range * std::tan(light.inner_cone_angle * 0.5f);
+            const float half_range = light.range * 0.5f;
 
             const float3 light_direction =
                normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
@@ -2380,14 +2380,15 @@ void renderer_impl::draw_interaction_targets(
             _meta_draw_batcher.add_sphere_wireframe(light.position, light.range, color);
          }
          else if (light.light_type == world::light_type::spot) {
-            const float half_range = light.range / 2.0f;
             const float outer_cone_radius =
-               half_range * std::tan(light.outer_cone_angle);
+               light.range * std::tan(light.outer_cone_angle * 0.5f);
             const float inner_cone_radius =
-               half_range * std::tan(light.inner_cone_angle);
+               light.range * std::tan(light.inner_cone_angle * 0.5f);
 
             const float4x4 rotation = to_matrix(
                light.rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
+
+            const float half_range = light.range * 0.5f;
 
             float4x4 outer_transform =
                rotation * float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},

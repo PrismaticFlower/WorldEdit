@@ -444,8 +444,9 @@ void light_clusters::prepare_lights(const camera& view_camera,
          const float3 light_direction =
             normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
 
-         const float half_range = light.range / 2.0f;
-         const float cone_radius = half_range * std::tan(light.outer_cone_angle);
+         const float cone_radius =
+            light.range * std::tan(light.outer_cone_angle * 0.5f);
+         const float half_range = light.range * 0.5f;
 
          const float light_bounds_radius = std::max(cone_radius, half_range);
          const float3 light_centre =

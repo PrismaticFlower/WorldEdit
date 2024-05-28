@@ -748,11 +748,10 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                case world::light_type::point:
                   return intersects(frustum, light.position, light.range);
                case world::light_type::spot: {
-                  const float half_range = light.range / 2.0f;
                   const float outer_cone_radius =
-                     half_range * std::tan(light.outer_cone_angle);
+                     light.range * std::tan(light.outer_cone_angle * 0.5f);
                   const float inner_cone_radius =
-                     half_range * std::tan(light.inner_cone_angle);
+                     light.range * std::tan(light.inner_cone_angle * 0.5f);
                   const float radius = std::min(outer_cone_radius, inner_cone_radius);
 
                   math::bounding_box bbox{.min = {-radius, -radius, 0.0f},
@@ -1036,11 +1035,10 @@ void world_edit::finish_entity_deselect() noexcept
                case world::light_type::point:
                   return intersects(frustum, light.position, light.range);
                case world::light_type::spot: {
-                  const float half_range = light.range / 2.0f;
                   const float outer_cone_radius =
-                     half_range * std::tan(light.outer_cone_angle);
+                     light.range * std::tan(light.outer_cone_angle * 0.5f);
                   const float inner_cone_radius =
-                     half_range * std::tan(light.inner_cone_angle);
+                     light.range * std::tan(light.inner_cone_angle * 0.5f);
                   const float radius = std::min(outer_cone_radius, inner_cone_radius);
 
                   math::bounding_box bbox{.min = {-radius, -radius, 0.0f},

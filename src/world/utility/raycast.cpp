@@ -101,7 +101,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
          const float3 light_direction =
             normalize(light.rotation * float3{0.0f, 0.0f, 1.0f});
          const float cone_radius =
-            (light.range / 2.0f) * std::tan(light.outer_cone_angle);
+            light.range * std::tan(light.outer_cone_angle * 0.5f);
 
          const float3 cone_end_position =
             light.position + light_direction * light.range;
