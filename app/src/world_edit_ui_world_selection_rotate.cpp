@@ -136,7 +136,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
       selection_centre /= selection_axis_count;
 
       const float3 last_rotation_amount = _rotate_selection_amount;
-      const bool local_space = _selection_rotate_space == selection_transform_space::local;
+      const bool local_space =
+         _selection_rotate_space == selection_transform_space::local;
 
       float3 rotate_selection_amount_degrees =
          _rotate_selection_amount * 180.0f / std::numbers::pi_v<float>;
@@ -149,10 +150,12 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             rotate_selection_amount_degrees * std::numbers::pi_v<float> / 180.0f;
       }
 
-      const bool gizmo_edited =
-         _gizmo.show_rotate(selection_centre,
-                            local_space ? gizmo_rotation : quaternion{},
-                            _rotate_selection_amount);
+      if (not local_space or selection_axis_count.x > 1.0f) {
+         gizmo_rotation = quaternion{};
+      }
+
+      const bool gizmo_edited = _gizmo.show_rotate(selection_centre, gizmo_rotation,
+                                                   _rotate_selection_amount);
 
       if (imgui_edited or gizmo_edited) {
          const float3 rotate_delta = (_rotate_selection_amount - last_rotation_amount);
