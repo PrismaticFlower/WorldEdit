@@ -53,8 +53,7 @@ private:
 
    struct translate_state {
       float3 start_position = {0.0f, 0.0f, 0.0f};
-      float3 start_cursor_position = {0.0f, 0.0f, 0.0f};
-      std::optional<float3> start_movement = std::nullopt;
+      float3 current_cursor_position = {0.0f, 0.0f, 0.0f};
       std::optional<float> movement_x;
       std::optional<float> movement_y;
       std::optional<float> movement_z;

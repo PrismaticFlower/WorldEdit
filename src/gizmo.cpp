@@ -124,7 +124,7 @@ void gizmo::update(const graphics::camera_ray cursor_ray,
          }
          else if (is_mouse_down and not _translate.mouse_down_outside_gizmo) {
             _translate.start_position = _gizmo_position;
-            _translate.start_cursor_position =
+            _translate.current_cursor_position =
                get_translate_position(cursor_ray, camera.position(), _gizmo_position);
             _translate.translating = true;
          }
@@ -141,8 +141,8 @@ void gizmo::update(const graphics::camera_ray cursor_ray,
           _translate.active_axis != axis::none) {
          const float3 position =
             get_translate_position(cursor_ray, camera.position(),
-                                   _translate.start_cursor_position);
-         const float3 movement = position - _translate.start_cursor_position;
+                                   _translate.current_cursor_position);
+         const float3 movement = position - _translate.current_cursor_position;
 
          if (_translate.active_axis == axis::x) {
             _translate.movement_x = movement.x;
@@ -153,6 +153,8 @@ void gizmo::update(const graphics::camera_ray cursor_ray,
          else if (_translate.active_axis == axis::z) {
             _translate.movement_z = movement.z;
          }
+
+         _translate.current_cursor_position = position;
       }
       else if (_translate.translating) {
          _translate = {};
@@ -378,8 +380,6 @@ bool gizmo::show_translate(const float3 gizmo_position,
    _gizmo_rotation = normalize(gizmo_rotation);
    _used_last_tick = true;
 
-   if (not _translate.start_movement) _translate.start_movement = movement;
-
    if (std::exchange(_mode, mode::translate) != mode::translate) {
       return false;
    }
@@ -389,17 +389,17 @@ bool gizmo::show_translate(const float3 gizmo_position,
    if (std::optional<float> movement_x =
           std::exchange(_translate.movement_x, std::nullopt);
        movement_x) {
-      movement.x = (*movement_x + _translate.start_movement->x);
+      movement.x += *movement_x;
    }
    if (std::optional<float> movement_y =
           std::exchange(_translate.movement_y, std::nullopt);
        movement_y) {
-      movement.y = (*movement_y + _translate.start_movement->y);
+      movement.y += *movement_y;
    }
    if (std::optional<float> movement_z =
           std::exchange(_translate.movement_z, std::nullopt);
        movement_z) {
-      movement.z = (*movement_z + _translate.start_movement->z);
+      movement.z += *movement_z;
    }
 
    return start_movement != movement;
