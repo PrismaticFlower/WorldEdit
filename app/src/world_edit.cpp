@@ -143,8 +143,6 @@ void world_edit::update()
 
    _tool_visualizers.clear();
 
-   _gizmo.update_scale(_camera, _settings.ui.gizmo_scale);
-
    if (not _rotate_camera and not _pan_camera) {
       _gizmo.update(make_camera_ray(_camera,
                                     {ImGui::GetMousePos().x,
@@ -168,6 +166,8 @@ void world_edit::update()
    update_object_classes();
 
    _asset_libraries.update_loaded();
+
+   _gizmo.update_scale(_camera, _settings.ui.gizmo_scale);
 
    // Render!
    update_camera(delta_time);
