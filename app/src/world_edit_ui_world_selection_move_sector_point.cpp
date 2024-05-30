@@ -25,10 +25,13 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
 
          const bool imgui_edited =
             ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+         const bool imgui_deactivated = ImGui::IsItemDeactivated();
+
          const bool gizmo_edited =
             _gizmo.show_translate(float3{point.x, sector->base + (sector->height / 2.0f),
                                          point.y},
                                   quaternion{}, _move_selection_amount);
+         const bool gizmo_close_edit = _gizmo.can_close_last_edit();
 
          if (imgui_edited or gizmo_edited) {
             const float3 move_delta = (_move_selection_amount - last_move_amount);
@@ -37,6 +40,10 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
                                        &sector->points, _move_sector_point_index,
                                        point + float2{move_delta.x, move_delta.z}),
                                     _edit_context);
+         }
+
+         if (imgui_deactivated or gizmo_close_edit) {
+            _edit_stack_world.close_last();
          }
       }
       else {

@@ -144,6 +144,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
 
       const bool imgui_edited =
          ImGui::DragFloat3("Amount", &rotate_selection_amount_degrees, 1.0f);
+      const bool imgui_deactivated = ImGui::IsItemDeactivated();
 
       if (imgui_edited) {
          _rotate_selection_amount =
@@ -156,6 +157,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
 
       const bool gizmo_edited = _gizmo.show_rotate(selection_centre, gizmo_rotation,
                                                    _rotate_selection_amount);
+      const bool gizmo_close_edit = _gizmo.can_close_last_edit();
 
       if (imgui_edited or gizmo_edited) {
          const float3 rotate_delta = (_rotate_selection_amount - last_rotation_amount);
@@ -319,6 +321,10 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             _edit_stack_world.apply(edits::make_bundle(std::move(bundled_edits)),
                                     _edit_context);
          }
+      }
+
+      if (imgui_deactivated or gizmo_close_edit) {
+         _edit_stack_world.close_last();
       }
 
       if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {

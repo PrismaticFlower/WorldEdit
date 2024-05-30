@@ -37,8 +37,11 @@ void world_edit::ui_show_world_selection_move_path() noexcept
 
       const bool imgui_edited =
          ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+      const bool imgui_deactivated = ImGui::IsItemDeactivated();
+
       const bool gizmo_edited =
          _gizmo.show_translate(path_centre, quaternion{}, _move_selection_amount);
+      const bool gizmo_close_edit = _gizmo.can_close_last_edit();
 
       if (imgui_edited or gizmo_edited) {
          const float3 move_delta = (_move_selection_amount - last_move_amount);
@@ -65,6 +68,10 @@ void world_edit::ui_show_world_selection_move_path() noexcept
          else {
             open = false;
          }
+      }
+
+      if (imgui_deactivated or gizmo_close_edit) {
+         _edit_stack_world.close_last();
       }
 
       if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
