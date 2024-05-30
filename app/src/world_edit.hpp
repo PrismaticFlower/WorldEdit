@@ -106,7 +106,7 @@ enum class selection_edit_tool : uint8 {
    pick_sector
 };
 
-enum class selection_move_space : uint8 { world, local };
+enum class selection_transform_space : uint8 { world, local };
 
 enum class selection_pick_sector_index : uint8 { _1, _2 };
 
@@ -453,8 +453,8 @@ private:
    terrain_edit_tool _terrain_edit_tool = terrain_edit_tool::none;
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
-   selection_move_space _selection_move_space = selection_move_space::world;
-   selection_move_space _selection_rotate_space = selection_move_space::world;
+   selection_transform_space _selection_move_space = selection_transform_space::world;
+   selection_transform_space _selection_rotate_space = selection_transform_space::world;
 
    bool _env_map_render_requested = false;
 

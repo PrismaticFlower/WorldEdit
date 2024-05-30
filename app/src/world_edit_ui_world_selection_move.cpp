@@ -171,8 +171,10 @@ void world_edit::ui_show_world_selection_move() noexcept
       selection_centre /= selection_axis_count;
 
       const float3 last_move_amount = _move_selection_amount;
+      const bool local_space =
+         _selection_move_space == selection_transform_space::local;
 
-      if (_selection_move_space != selection_move_space::local) {
+      if (local_space) {
          gizmo_rotation = quaternion{};
       }
 
@@ -195,10 +197,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                if (object) {
                   float3 new_position;
 
-                  if (_selection_move_space == selection_move_space::world) {
+                  if (not local_space) {
                      new_position = object->position + move_delta;
                   }
-                  else if (_selection_move_space == selection_move_space::local) {
+                  else {
                      const quaternion rotation = normalize(object->rotation);
 
                      new_position =
@@ -227,10 +229,10 @@ void world_edit::ui_show_world_selection_move() noexcept
 
                      float3 new_position;
 
-                     if (_selection_move_space == selection_move_space::world) {
+                     if (not local_space) {
                         new_position = node.position + move_delta;
                      }
-                     else if (_selection_move_space == selection_move_space::local) {
+                     else {
                         const quaternion rotation = normalize(node.rotation);
 
                         new_position =
@@ -253,10 +255,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                if (light) {
                   float3 new_position;
 
-                  if (_selection_move_space == selection_move_space::world) {
+                  if (not local_space) {
                      new_position = light->position + move_delta;
                   }
-                  else if (_selection_move_space == selection_move_space::local) {
+                  else {
                      const quaternion rotation = normalize(light->rotation);
 
                      new_position =
@@ -276,10 +278,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                if (region) {
                   float3 new_position;
 
-                  if (_selection_move_space == selection_move_space::world) {
+                  if (not local_space) {
                      new_position = region->position + move_delta;
                   }
-                  else if (_selection_move_space == selection_move_space::local) {
+                  else {
                      const quaternion rotation = normalize(region->rotation);
 
                      new_position =
@@ -318,10 +320,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                if (portal) {
                   float3 new_position;
 
-                  if (_selection_move_space == selection_move_space::world) {
+                  if (not local_space) {
                      new_position = portal->position + move_delta;
                   }
-                  else if (_selection_move_space == selection_move_space::local) {
+                  else {
                      const quaternion rotation = normalize(portal->rotation);
 
                      new_position =
@@ -341,10 +343,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                if (hintnode) {
                   float3 new_position;
 
-                  if (_selection_move_space == selection_move_space::world) {
+                  if (not local_space) {
                      new_position = hintnode->position + move_delta;
                   }
-                  else if (_selection_move_space == selection_move_space::local) {
+                  else {
                      const quaternion rotation = normalize(hintnode->rotation);
 
                      new_position =
@@ -364,10 +366,10 @@ void world_edit::ui_show_world_selection_move() noexcept
                if (barrier) {
                   float3 new_position;
 
-                  if (_selection_move_space == selection_move_space::world) {
+                  if (not local_space) {
                      new_position = barrier->position + move_delta;
                   }
-                  else if (_selection_move_space == selection_move_space::local) {
+                  else {
                      const quaternion rotation =
                         make_quat_from_euler({0.0f, barrier->rotation_angle, 0.0f});
 
@@ -438,8 +440,8 @@ void world_edit::ui_show_world_selection_move() noexcept
                                ImGuiTableFlags_SizingStretchSame)) {
          ImGui::TableNextColumn();
          if (ImGui::Selectable("Local", _selection_move_space ==
-                                           selection_move_space::local)) {
-            _selection_move_space = selection_move_space::local;
+                                           selection_transform_space::local)) {
+            _selection_move_space = selection_transform_space::local;
             _move_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
             _gizmo.deactivate();
@@ -447,8 +449,8 @@ void world_edit::ui_show_world_selection_move() noexcept
 
          ImGui::TableNextColumn();
          if (ImGui::Selectable("World", _selection_move_space ==
-                                           selection_move_space::world)) {
-            _selection_move_space = selection_move_space::world;
+                                           selection_transform_space::world)) {
+            _selection_move_space = selection_transform_space::world;
             _move_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
             _gizmo.deactivate();

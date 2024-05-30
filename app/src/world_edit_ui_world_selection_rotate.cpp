@@ -136,7 +136,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
       selection_centre /= selection_axis_count;
 
       const float3 last_rotation_amount = _rotate_selection_amount;
-      const bool local_space = _selection_rotate_space == selection_move_space::local;
+      const bool local_space = _selection_rotate_space == selection_transform_space::local;
 
       float3 rotate_selection_amount_degrees =
          _rotate_selection_amount * 180.0f / std::numbers::pi_v<float>;
@@ -329,8 +329,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                                ImGuiTableFlags_SizingStretchSame)) {
          ImGui::TableNextColumn();
          if (ImGui::Selectable("Local", _selection_rotate_space ==
-                                           selection_move_space::local)) {
-            _selection_rotate_space = selection_move_space::local;
+                                           selection_transform_space::local)) {
+            _selection_rotate_space = selection_transform_space::local;
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
             _gizmo.deactivate();
@@ -338,8 +338,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
 
          ImGui::TableNextColumn();
          if (ImGui::Selectable("World", _selection_rotate_space ==
-                                           selection_move_space::world)) {
-            _selection_rotate_space = selection_move_space::world;
+                                           selection_transform_space::world)) {
+            _selection_rotate_space = selection_transform_space::world;
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
             _gizmo.deactivate();
