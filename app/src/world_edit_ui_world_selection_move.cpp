@@ -174,7 +174,7 @@ void world_edit::ui_show_world_selection_move() noexcept
       const bool local_space =
          _selection_move_space == selection_transform_space::local;
 
-      if (local_space) {
+      if (not local_space) {
          gizmo_rotation = quaternion{};
       }
 
