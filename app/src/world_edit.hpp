@@ -454,6 +454,7 @@ private:
    selection_edit_tool _selection_edit_tool = selection_edit_tool::none;
    gizmo_object_placement _gizmo_object_placement = gizmo_object_placement::position;
    selection_move_space _selection_move_space = selection_move_space::world;
+   selection_move_space _selection_rotate_space = selection_move_space::world;
 
    bool _env_map_render_requested = false;
 

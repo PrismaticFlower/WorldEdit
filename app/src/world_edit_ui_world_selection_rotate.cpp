@@ -21,6 +21,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
    if (ImGui::Begin("Rotate Selection", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
       float3 selection_centre = {0.0f, 0.0f, 0.0f};
       float3 selection_axis_count = {0.0f, 0.0f, 0.0f};
+      quaternion gizmo_rotation;
 
       for (const auto& selected : _interaction_targets.selection) {
          if (std::holds_alternative<world::object_id>(selected)) {
@@ -30,6 +31,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             if (object) {
                selection_centre += object->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+               gizmo_rotation = object->rotation;
             }
          }
          else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
@@ -48,6 +50,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
 
                   selection_centre += node.position;
                   selection_axis_count += {1.0f, 1.0f, 1.0f};
+                  gizmo_rotation = node.rotation;
                }
             }
          }
@@ -58,6 +61,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             if (light) {
                selection_centre += light->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+               gizmo_rotation = light->rotation;
             }
          }
          else if (std::holds_alternative<world::region_id>(selected)) {
@@ -67,6 +71,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             if (region) {
                selection_centre += region->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+               gizmo_rotation = region->rotation;
             }
          }
          else if (std::holds_alternative<world::sector_id>(selected)) {
@@ -87,6 +92,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             if (portal) {
                selection_centre += portal->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+               gizmo_rotation = portal->rotation;
             }
          }
          else if (std::holds_alternative<world::hintnode_id>(selected)) {
@@ -97,6 +103,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             if (hintnode) {
                selection_centre += hintnode->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+               gizmo_rotation = hintnode->rotation;
             }
          }
          else if (std::holds_alternative<world::barrier_id>(selected)) {
@@ -107,6 +114,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             if (barrier) {
                selection_centre += barrier->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+               gizmo_rotation =
+                  make_quat_from_euler({0.0f, barrier->rotation_angle, 0.0f});
             }
          }
          else if (std::holds_alternative<world::measurement_id>(selected)) {
@@ -127,6 +136,7 @@ void world_edit::ui_show_world_selection_rotate() noexcept
       selection_centre /= selection_axis_count;
 
       const float3 last_rotation_amount = _rotate_selection_amount;
+      const bool local_space = _selection_rotate_space == selection_move_space::local;
 
       float3 rotate_selection_amount_degrees =
          _rotate_selection_amount * 180.0f / std::numbers::pi_v<float>;
@@ -140,7 +150,9 @@ void world_edit::ui_show_world_selection_rotate() noexcept
       }
 
       const bool gizmo_edited =
-         _gizmo.show_rotate(selection_centre, _rotate_selection_amount);
+         _gizmo.show_rotate(selection_centre,
+                            local_space ? gizmo_rotation : quaternion{},
+                            _rotate_selection_amount);
 
       if (imgui_edited or gizmo_edited) {
          const float3 rotate_delta = (_rotate_selection_amount - last_rotation_amount);
@@ -157,7 +169,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                if (object) {
                   bundled_edits.push_back(
                      edits::make_set_value(&object->rotation,
-                                           rotation * object->rotation));
+                                           local_space ? object->rotation * rotation
+                                                       : rotation * object->rotation));
                }
             }
             else if (std::holds_alternative<world::light_id>(selected)) {
@@ -167,7 +180,9 @@ void world_edit::ui_show_world_selection_rotate() noexcept
 
                if (light) {
                   bundled_edits.push_back(
-                     edits::make_set_value(&light->rotation, rotation * light->rotation));
+                     edits::make_set_value(&light->rotation,
+                                           local_space ? light->rotation * rotation
+                                                       : rotation * light->rotation));
                }
             }
             else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
@@ -188,7 +203,9 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                      bundled_edits.push_back(
                         edits::make_set_vector_value(&path->nodes, node_index,
                                                      &world::path::node::rotation,
-                                                     rotation * node.rotation));
+                                                     local_space
+                                                        ? node.rotation * rotation
+                                                        : rotation * node.rotation));
                   }
                }
             }
@@ -200,7 +217,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                if (region) {
                   bundled_edits.push_back(
                      edits::make_set_value(&region->rotation,
-                                           rotation * region->rotation));
+                                           local_space ? region->rotation * rotation
+                                                       : rotation * region->rotation));
                }
             }
             else if (std::holds_alternative<world::sector_id>(selected)) {
@@ -242,7 +260,8 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                if (portal) {
                   bundled_edits.push_back(
                      edits::make_set_value(&portal->rotation,
-                                           rotation * portal->rotation));
+                                           local_space ? portal->rotation * rotation
+                                                       : rotation * portal->rotation));
                }
             }
             else if (std::holds_alternative<world::hintnode_id>(selected)) {
@@ -253,7 +272,9 @@ void world_edit::ui_show_world_selection_rotate() noexcept
                if (hintnode) {
                   bundled_edits.push_back(
                      edits::make_set_value(&hintnode->rotation,
-                                           rotation * hintnode->rotation));
+                                           local_space
+                                              ? hintnode->rotation * rotation
+                                              : rotation * hintnode->rotation));
                }
             }
             else if (std::holds_alternative<world::barrier_id>(selected)) {
@@ -299,6 +320,32 @@ void world_edit::ui_show_world_selection_rotate() noexcept
 
       if (ImGui::Button("Done", {ImGui::CalcItemWidth(), 0.0f})) {
          open = false;
+      }
+
+      ImGui::SeparatorText("Rotate Space");
+
+      if (ImGui::BeginTable("Rotate Space", 2,
+                            ImGuiTableFlags_NoSavedSettings |
+                               ImGuiTableFlags_SizingStretchSame)) {
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("Local", _selection_rotate_space ==
+                                           selection_move_space::local)) {
+            _selection_rotate_space = selection_move_space::local;
+            _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
+            _edit_stack_world.close_last();
+            _gizmo.deactivate();
+         }
+
+         ImGui::TableNextColumn();
+         if (ImGui::Selectable("World", _selection_rotate_space ==
+                                           selection_move_space::world)) {
+            _selection_rotate_space = selection_move_space::world;
+            _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
+            _edit_stack_world.close_last();
+            _gizmo.deactivate();
+         }
+
+         ImGui::EndTable();
       }
    }
 

@@ -34,7 +34,8 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
       }
 
       const bool gizmo_edited =
-         _gizmo.show_rotate(_rotate_selection_centre, _rotate_selection_amount);
+         _gizmo.show_rotate(_rotate_selection_centre, quaternion{},
+                            _rotate_selection_amount);
 
       if (imgui_edited or gizmo_edited) {
          const float3 rotate_delta = (_rotate_selection_amount - last_rotation_amount);

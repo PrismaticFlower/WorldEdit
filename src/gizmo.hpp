@@ -22,19 +22,20 @@ struct gizmo {
    bool show_translate(const float3 gizmo_position,
                        const quaternion gizmo_rotation, float3& movement) noexcept;
 
-   bool show_rotate(const float3 gizmo_position, float3& rotation) noexcept;
+   bool show_rotate(const float3 gizmo_position,
+                    const quaternion gizmo_rotation, float3& rotation) noexcept;
 
    bool can_close_last_edit() const noexcept;
 
    void deactivate() noexcept;
 
 private:
-   auto get_translate_position(const graphics::camera_ray ray,
+   auto get_translate_position(const graphics::camera_ray world_ray,
                                const float3 camera_position,
                                const float3 fallback) const noexcept -> float3;
 
-   auto get_rotate_position(const graphics::camera_ray ray,
-                            const float3 fallback) const noexcept -> float3;
+   auto get_rotate_position(const graphics::camera_ray rayGS,
+                            const float3 fallbackGS) const noexcept -> float3;
 
    enum class mode : uint8 { inactive, translate, rotate };
    enum class axis : uint8 { none, x, y, z };
@@ -46,6 +47,9 @@ private:
 
    float3 _gizmo_position;
    quaternion _gizmo_rotation;
+
+   float4x4 _gizmo_to_world;
+   float4x4 _world_to_gizmo;
 
    struct translate_state {
       float3 start_position = {0.0f, 0.0f, 0.0f};
@@ -61,7 +65,7 @@ private:
    } _translate;
 
    struct rotate_state {
-      float3 current_cursor_position = {0.0f, 0.0f, 0.0f};
+      float3 current_cursor_positionGS = {0.0f, 0.0f, 0.0f};
       std::optional<float> angle_x;
       std::optional<float> angle_y;
       std::optional<float> angle_z;

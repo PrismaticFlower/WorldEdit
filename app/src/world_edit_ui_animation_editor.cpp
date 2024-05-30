@@ -1620,7 +1620,7 @@ void world_edit::ui_show_animation_editor() noexcept
          const float3 last_rotation_amount =
             _animation_editor_context.selected.key_rotation_movement;
 
-         if (_gizmo.show_rotate(key_position,
+         if (_gizmo.show_rotate(key_position, quaternion{},
                                 _animation_editor_context.selected.key_rotation_movement)) {
             constexpr float radians_to_degrees = 180.0f / std ::numbers::pi_v<float>;
 
