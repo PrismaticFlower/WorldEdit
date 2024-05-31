@@ -1604,7 +1604,10 @@ void world_edit::ui_show_animation_editor() noexcept
             }
          }
 
-         if (_gizmo.can_close_last_edit()) _edit_stack_world.close_last();
+         if (_gizmo.can_close_last_edit()) {
+            _animation_editor_context.selected.key_movement = {};
+            _edit_stack_world.close_last();
+         }
       }
       else if (_animation_editor_context.selected.key_type == animation_key_type::rotation and
                selected_key < std::ssize(selected_animation->rotation_keys)) {
@@ -1644,7 +1647,10 @@ void world_edit::ui_show_animation_editor() noexcept
             }
          }
 
-         if (_gizmo.can_close_last_edit()) _edit_stack_world.close_last();
+         if (_gizmo.can_close_last_edit()) {
+            _animation_editor_context.selected.key_rotation_movement = {};
+            _edit_stack_world.close_last();
+         }
       }
 
       for (auto& key : selected_animation->position_keys) {
