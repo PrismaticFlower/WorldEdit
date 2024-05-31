@@ -21,6 +21,11 @@ void world_edit::ui_show_world_selection_move() noexcept
       float3 selection_axis_count = {0.0f, 0.0f, 0.0f};
       quaternion gizmo_rotation;
 
+      const bool local_space =
+         _selection_move_space == selection_transform_space::local;
+      const bool draw_axis_lines =
+         local_space and _interaction_targets.selection.size() > 1;
+
       for (const auto& selected : _interaction_targets.selection) {
          if (std::holds_alternative<world::object_id>(selected)) {
             const world::object* object =
@@ -42,6 +47,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                }
 
                gizmo_rotation = object->rotation;
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(object->rotation, object->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
@@ -61,6 +71,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                   selection_centre += node.position;
                   selection_axis_count += {1.0f, 1.0f, 1.0f};
                   gizmo_rotation = node.rotation;
+
+                  if (draw_axis_lines) {
+                     _gizmo.draw_active_axis_line(node.rotation, node.position,
+                                                  _tool_visualizers);
+                  }
                }
             }
          }
@@ -72,6 +87,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += light->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = light->rotation;
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(light->rotation, light->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::region_id>(selected)) {
@@ -82,6 +102,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += region->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = region->rotation;
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(region->rotation, region->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::sector_id>(selected)) {
@@ -89,14 +114,27 @@ void world_edit::ui_show_world_selection_move() noexcept
                world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
 
             if (sector) {
+               float3 sector_centre = {};
+               float3 sector_axis_count = {};
+
                for (auto& point : sector->points) {
-                  selection_centre += {point.x, 0.0f, point.y};
-                  selection_axis_count += {1.0f, 0.0f, 1.0f};
+                  sector_centre += {point.x, 0.0f, point.y};
+                  sector_axis_count += {1.0f, 0.0f, 1.0f};
                }
 
-               selection_centre +=
-                  {0.0f, sector->base + (sector->height / 2.0f), 0.0f};
-               selection_axis_count += {0.0f, 1.0f, 0.0f};
+               sector_centre += {0.0f, sector->base + (sector->height / 2.0f), 0.0f};
+               sector_axis_count += {0.0f, 1.0f, 0.0f};
+
+               selection_centre += sector_centre;
+               selection_axis_count += sector_axis_count;
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(quaternion{},
+                                               sector_centre /
+                                                  max(sector_axis_count,
+                                                      float3{1.0f, 1.0f, 1.0f}),
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::portal_id>(selected)) {
@@ -107,6 +145,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += portal->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = portal->rotation;
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(portal->rotation, portal->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::hintnode_id>(selected)) {
@@ -118,6 +161,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += hintnode->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = hintnode->rotation;
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(hintnode->rotation, hintnode->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::barrier_id>(selected)) {
@@ -130,6 +178,11 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation =
                   make_quat_from_euler({0.0f, barrier->rotation_angle, 0.0f});
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(gizmo_rotation, barrier->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::planning_hub_id>(selected)) {
@@ -140,6 +193,11 @@ void world_edit::ui_show_world_selection_move() noexcept
             if (planning_hub) {
                selection_centre += planning_hub->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(quaternion{}, planning_hub->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::boundary_id>(selected)) {
@@ -150,6 +208,11 @@ void world_edit::ui_show_world_selection_move() noexcept
             if (boundary) {
                selection_centre += boundary->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(quaternion{}, boundary->position,
+                                               _tool_visualizers);
+               }
             }
          }
          else if (std::holds_alternative<world::measurement_id>(selected)) {
@@ -161,6 +224,12 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += measurement->start;
                selection_centre += measurement->end;
                selection_axis_count += {2.0f, 2.0f, 2.0f};
+
+               if (draw_axis_lines) {
+                  _gizmo.draw_active_axis_line(quaternion{},
+                                               (measurement->start + measurement->end) * 0.5f,
+                                               _tool_visualizers);
+               }
             }
          }
       }
@@ -170,8 +239,6 @@ void world_edit::ui_show_world_selection_move() noexcept
       selection_centre /= selection_axis_count;
 
       const float3 last_move_amount = _move_selection_amount;
-      const bool local_space =
-         _selection_move_space == selection_transform_space::local;
 
       if (not local_space or selection_axis_count.x > 1.0f) {
          gizmo_rotation = quaternion{};

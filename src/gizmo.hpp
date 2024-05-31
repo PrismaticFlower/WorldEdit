@@ -19,6 +19,9 @@ struct gizmo {
 
    void draw(world::tool_visualizers& tool_visualizers) noexcept;
 
+   void draw_active_axis_line(const quaternion rotation, const float3 positionWS,
+                              world::tool_visualizers& tool_visualizers);
+
    bool show_translate(const float3 gizmo_position,
                        const quaternion gizmo_rotation, float3& movement) noexcept;
 

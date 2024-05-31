@@ -373,6 +373,36 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
    }
 }
 
+void gizmo::draw_active_axis_line(const quaternion rotation, const float3 positionWS,
+                                  world::tool_visualizers& tool_visualizers)
+{
+   if (_translate.translating) {
+      switch (_translate.active_axis) {
+      case axis::x: {
+         const float3 x_axis = rotation * float3{1.0f, 0.0f, 0.0f};
+
+         tool_visualizers.add_line(positionWS - x_axis * 1024.0f,
+                                   positionWS + x_axis * 1024.0f,
+                                   x_color & 0x60'ff'ff'ffu);
+      } break;
+      case axis::y: {
+         const float3 y_axis = rotation * float3{0.0f, 1.0f, 0.0f};
+
+         tool_visualizers.add_line(positionWS - y_axis * 1024.0f,
+                                   positionWS + y_axis * 1024.0f,
+                                   y_color & 0x60'ff'ff'ffu);
+      } break;
+      case axis::z: {
+         const float3 z_axis = rotation * float3{0.0f, 0.0f, 1.0f};
+
+         tool_visualizers.add_line(positionWS - z_axis * 1024.0f,
+                                   positionWS + z_axis * 1024.0f,
+                                   z_color & 0x60'ff'ff'ffu);
+      } break;
+      }
+   }
+}
+
 bool gizmo::show_translate(const float3 gizmo_position,
                            const quaternion gizmo_rotation, float3& movement) noexcept
 {
