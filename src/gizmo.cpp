@@ -270,6 +270,7 @@ void gizmo::update_scale(const graphics::camera& camera, const float gizmo_scale
    _translate_gizmo_hit_pad = translate_gizmo_hit_pad * camera_scale * gizmo_scale;
    _rotate_gizmo_radius = rotate_gizmo_radius * camera_scale * gizmo_scale;
    _rotate_gizmo_hit_pad = rotate_gizmo_hit_pad * camera_scale * gizmo_scale;
+   _axis_line_length = camera.far_clip();
 }
 
 void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
@@ -288,18 +289,18 @@ void gizmo::draw(world::tool_visualizers& tool_visualizers) noexcept
       if (_translate.translating) {
          switch (_translate.active_axis) {
          case axis::x: {
-            tool_visualizers.add_line_overlay(_gizmo_position - x_axis * 1024.0f,
-                                              _gizmo_position + x_axis * 1024.0f,
+            tool_visualizers.add_line_overlay(_gizmo_position - x_axis * _axis_line_length,
+                                              _gizmo_position + x_axis * _axis_line_length,
                                               x_color);
          } break;
          case axis::y: {
-            tool_visualizers.add_line_overlay(_gizmo_position - y_axis * 1024.0f,
-                                              _gizmo_position + y_axis * 1024.0f,
+            tool_visualizers.add_line_overlay(_gizmo_position - y_axis * _axis_line_length,
+                                              _gizmo_position + y_axis * _axis_line_length,
                                               y_color);
          } break;
          case axis::z: {
-            tool_visualizers.add_line_overlay(_gizmo_position - z_axis * 1024.0f,
-                                              _gizmo_position + z_axis * 1024.0f,
+            tool_visualizers.add_line_overlay(_gizmo_position - z_axis * _axis_line_length,
+                                              _gizmo_position + z_axis * _axis_line_length,
                                               z_color);
          } break;
          }
@@ -381,22 +382,22 @@ void gizmo::draw_active_axis_line(const quaternion rotation, const float3 positi
       case axis::x: {
          const float3 x_axis = rotation * float3{1.0f, 0.0f, 0.0f};
 
-         tool_visualizers.add_line(positionWS - x_axis * 1024.0f,
-                                   positionWS + x_axis * 1024.0f,
+         tool_visualizers.add_line(positionWS - x_axis * _axis_line_length,
+                                   positionWS + x_axis * _axis_line_length,
                                    x_color & 0x60'ff'ff'ffu);
       } break;
       case axis::y: {
          const float3 y_axis = rotation * float3{0.0f, 1.0f, 0.0f};
 
-         tool_visualizers.add_line(positionWS - y_axis * 1024.0f,
-                                   positionWS + y_axis * 1024.0f,
+         tool_visualizers.add_line(positionWS - y_axis * _axis_line_length,
+                                   positionWS + y_axis * _axis_line_length,
                                    y_color & 0x60'ff'ff'ffu);
       } break;
       case axis::z: {
          const float3 z_axis = rotation * float3{0.0f, 0.0f, 1.0f};
 
-         tool_visualizers.add_line(positionWS - z_axis * 1024.0f,
-                                   positionWS + z_axis * 1024.0f,
+         tool_visualizers.add_line(positionWS - z_axis * _axis_line_length,
+                                   positionWS + z_axis * _axis_line_length,
                                    z_color & 0x60'ff'ff'ffu);
       } break;
       }
