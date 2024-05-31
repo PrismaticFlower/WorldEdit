@@ -148,9 +148,8 @@ void world_edit::ui_show_world_selection_move() noexcept
                                   std::get<world::boundary_id>(selected));
 
             if (boundary) {
-               selection_centre +=
-                  {boundary->position.x, 0.0f, boundary->position.y};
-               selection_axis_count += {1.0f, 0.0f, 1.0f};
+               selection_centre += boundary->position;
+               selection_axis_count += {1.0f, 1.0f, 1.0f};
             }
          }
          else if (std::holds_alternative<world::measurement_id>(selected)) {
