@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <span>
-#include <string_view>
 
 namespace we::graphics {
 
@@ -17,7 +16,7 @@ enum class shader_type {
 };
 
 struct shader_def {
-   std::string_view name;
+   const char* name;
    const wchar_t* entrypoint;
    const wchar_t* target_6_1;
    const wchar_t* target_6_6;
