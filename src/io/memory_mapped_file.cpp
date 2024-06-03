@@ -61,6 +61,34 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
 
    const LARGE_INTEGER file_size{.QuadPart = static_cast<LONGLONG>(params.size)};
 
+   if (LARGE_INTEGER current_file_size{};
+       params.truncate_to_size and GetFileSizeEx(file.get(), &current_file_size) and
+       current_file_size.QuadPart > file_size.QuadPart) {
+      if (not SetFilePointerEx(file.get(), file_size, nullptr, FILE_BEGIN)) {
+         const DWORD system_error = GetLastError();
+
+         throw open_error{
+            fmt::format("Failed to truncate file '{}'.\n   Reason: {}",
+                        std::filesystem::path{params.path}.string(),
+                        std::system_category()
+                           .default_error_condition(system_error)
+                           .message()),
+            open_error_code::generic};
+      }
+
+      if (not SetEndOfFile(file.get())) {
+         const DWORD system_error = GetLastError();
+
+         throw open_error{
+            fmt::format("Failed to truncate file '{}'.\n   Reason: {}",
+                        std::filesystem::path{params.path}.string(),
+                        std::system_category()
+                           .default_error_condition(system_error)
+                           .message()),
+            open_error_code::generic};
+      }
+   }
+
    wil::unique_handle file_mapping{
       CreateFileMappingW(file.get(), nullptr, page_protection(params.map_mode),
                          file_size.HighPart, file_size.LowPart, nullptr)};

@@ -42,7 +42,8 @@ void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
       io::memory_mapped_file_params{.path = path.c_str(),
                                     .size = sizeof(tga_header) +
                                             (env_map.length * env_map.length *
-                                             sizeof(dest_texel) * 4 * 3)}};
+                                             sizeof(dest_texel) * 4 * 3),
+                                    .truncate_to_size = true}};
 
    const uint32 image_width = env_map.length * 4;
    const uint32 image_height = env_map.length * 3;

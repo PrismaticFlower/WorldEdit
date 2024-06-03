@@ -19,6 +19,8 @@ struct memory_mapped_file_params {
    const map_mode map_mode = map_mode::read_write;
    /// @brief Size to map in, if the file is smaller than this it will be extended.
    const std::size_t size = 0;
+   /// @brief Truncate the file to size if it is bigger than size.
+   bool truncate_to_size = false;
 };
 
 /// @brief A simple struct memory mapping a file.
