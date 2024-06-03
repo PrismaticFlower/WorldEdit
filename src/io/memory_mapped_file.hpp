@@ -35,9 +35,9 @@ struct memory_mapped_file {
    memory_mapped_file(const memory_mapped_file&) = delete;
    auto operator=(const memory_mapped_file&) -> memory_mapped_file& = delete;
 
-   memory_mapped_file(memory_mapped_file&& other);
+   memory_mapped_file(memory_mapped_file&& other) noexcept;
 
-   auto operator=(memory_mapped_file&& other) -> memory_mapped_file&;
+   auto operator=(memory_mapped_file&& other) noexcept -> memory_mapped_file&;
 
    ~memory_mapped_file();
 

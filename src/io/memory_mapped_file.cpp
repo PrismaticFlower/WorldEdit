@@ -131,7 +131,7 @@ memory_mapped_file::~memory_mapped_file()
    reset();
 }
 
-memory_mapped_file::memory_mapped_file(memory_mapped_file&& other)
+memory_mapped_file::memory_mapped_file(memory_mapped_file&& other) noexcept
 {
    memory_mapped_file discard;
 
@@ -139,7 +139,8 @@ memory_mapped_file::memory_mapped_file(memory_mapped_file&& other)
    discard.swap(*this);
 }
 
-auto memory_mapped_file::operator=(memory_mapped_file&& other) -> memory_mapped_file&
+auto memory_mapped_file::operator=(memory_mapped_file&& other) noexcept
+   -> memory_mapped_file&
 {
    memory_mapped_file discard;
 
