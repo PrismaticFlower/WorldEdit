@@ -533,7 +533,7 @@ void save_hintnodes(const std::filesystem::path& path, const int layer_index,
       const auto position = flip_position(hint.position);
 
       // the quotes around the integer are not a mistake, this is how the type is saved by ZE.
-      file.write_ln("Hint(\"{}\", \"{}\")", hint.name, static_cast<int>(hint.type));
+      file.write_ln("\nHint(\"{}\", \"{}\")", hint.name, static_cast<int>(hint.type));
       file.write_ln("{");
 
       file.write_ln("\tPosition({:f}, {:f}, {:f});", position.x, position.y,
