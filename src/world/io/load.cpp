@@ -87,6 +87,26 @@ auto read_location(const assets::config::node& node, const std::string_view rota
             -node.at(position_key).values.get<float>(2)}};
 }
 
+auto read_rotation(const assets::config::node& node) -> quaternion
+{
+   quaternion rotation{node.values.get<float>(0), node.values.get<float>(1),
+                       node.values.get<float>(2), node.values.get<float>(3)};
+
+   rotation.x = -rotation.x;
+   rotation.z = -rotation.z;
+
+   std::swap(rotation.x, rotation.z);
+   std::swap(rotation.y, rotation.w);
+
+   return rotation;
+}
+
+auto read_position(const assets::config::node& node) -> float3
+{
+   return {node.values.get<float>(0), node.values.get<float>(1),
+           -node.values.get<float>(2)};
+}
+
 auto read_path_properties(const assets::config::node& node)
    -> std::vector<path::property>
 {
@@ -428,8 +448,6 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
          auto& path = world_out.paths.emplace_back();
 
          path.name = key_node.values.get<std::string>(0);
-         path.layer = read_layer_index(key_node, layer_remap);
-         path.properties = read_path_properties(key_node.at("Properties"sv));
          path.id = world_out.next_id.paths.aquire();
 
          if (path.name.starts_with("type_")) {
@@ -448,42 +466,56 @@ void load_paths(const std::filesystem::path& filepath, const std::string_view la
             path.name = string::split_first_of_exclusive(path.name, " ")[1];
          }
 
-         if (const auto spline =
-                key_node["SplineType"sv].values.get<std::string_view>(0);
-             string::iequals(spline, "None"sv)) {
-            path.spline_type = path_spline_type::none;
-         }
-         else if (string::iequals(spline, "Linear"sv)) {
-            path.spline_type = path_spline_type::linear;
-         }
-         else if (string::iequals(spline, "Hermite"sv)) {
-            path.spline_type = path_spline_type::hermite;
-         }
-         else if (string::iequals(spline, "Catmull-Rom"sv)) {
-            path.spline_type = path_spline_type::catmull_rom;
-         }
-
-         // path nodes
-         {
-            auto& path_nodes = key_node.at("Nodes"sv);
-            path.nodes.reserve(path_nodes.values.get<std::size_t>(0));
-
-            for (auto& node : path_nodes) {
-               auto& path_node = path.nodes.emplace_back();
-
-               std::tie(path_node.rotation, path_node.position) =
-                  read_location(node, "Rotation"sv, "Position"sv);
-
-               path_node.properties = read_path_properties(node.at("Properties"sv));
+         for (auto& child_key_node : key_node) {
+            if (child_key_node.key == "Layer"sv) {
+               path.layer = layer_remap[child_key_node.values.get<int>(0)];
             }
+            else if (child_key_node.key == "Properties"sv) {
+               path.properties = read_path_properties(child_key_node);
+            }
+            else if (child_key_node.key == "SplineType"sv) {
+               if (const auto spline = child_key_node.values.get<std::string_view>(0);
+                   string::iequals(spline, "None"sv)) {
+                  path.spline_type = path_spline_type::none;
+               }
+               else if (string::iequals(spline, "Linear"sv)) {
+                  path.spline_type = path_spline_type::linear;
+               }
+               else if (string::iequals(spline, "Hermite"sv)) {
+                  path.spline_type = path_spline_type::hermite;
+               }
+               else if (string::iequals(spline, "Catmull-Rom"sv)) {
+                  path.spline_type = path_spline_type::catmull_rom;
+               }
+            }
+            else if (child_key_node.key == "Nodes"sv) {
+               auto& path_nodes = key_node.at("Nodes"sv);
+               path.nodes.reserve(path_nodes.values.get<std::size_t>(0));
 
-            if (path.nodes.size() >= max_path_nodes) {
-               throw load_failure{fmt::format("Path '{}' has too many nodes "
-                                              "for WorldEdit to handle.\n"
-                                              "   Path Node Count: {}\n",
-                                              "   Max Supported Count: {}\n",
-                                              path.name, path.nodes.size(),
-                                              max_path_nodes)};
+               for (auto& node : path_nodes) {
+                  auto& path_node = path.nodes.emplace_back();
+
+                  for (auto& node_child : node) {
+                     if (node_child.key == "Rotation"sv) {
+                        path_node.rotation = read_rotation(node_child);
+                     }
+                     else if (node_child.key == "Position"sv) {
+                        path_node.position = read_position(node_child);
+                     }
+                     else if (node_child.key == "Properties"sv) {
+                        path_node.properties = read_path_properties(node_child);
+                     }
+                  }
+               }
+
+               if (path.nodes.size() >= max_path_nodes) {
+                  throw load_failure{fmt::format("Path '{}' has too many nodes "
+                                                 "for WorldEdit to handle.\n"
+                                                 "   Path Node Count: {}\n",
+                                                 "   Max Supported Count: {}\n",
+                                                 path.name, path.nodes.size(),
+                                                 max_path_nodes)};
+               }
             }
          }
 
