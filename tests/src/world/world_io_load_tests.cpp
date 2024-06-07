@@ -421,21 +421,33 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(world.planning_hubs[0].name == "Hub0"sv);
       CHECK(world.planning_hubs[0].position == float3{-63.822487f, 0.0f, -9.202278f});
       CHECK(world.planning_hubs[0].radius == 8.0f);
+      CHECK(world.planning_hubs[0].weights.empty());
       CHECK(is_unique_id(0, world.planning_hubs));
 
       CHECK(world.planning_hubs[1].name == "Hub1"sv);
       CHECK(world.planning_hubs[1].position == float3{-121.883095f, 1.0f, -30.046543f});
       CHECK(world.planning_hubs[1].radius == 7.586431f);
+      REQUIRE(world.planning_hubs[1].weights.size() == 1);
+      CHECK(world.planning_hubs[1].weights[0].connection_index == 0);
+      CHECK(world.planning_hubs[1].weights[0].hub_index == 3);
+      CHECK(world.planning_hubs[1].weights[0].soldier == 20.0f);
+      CHECK(world.planning_hubs[1].weights[0].hover == 15.0f);
+      CHECK(world.planning_hubs[1].weights[0].small == 7.5f);
+      CHECK(world.planning_hubs[1].weights[0].medium == 25.0f);
+      CHECK(world.planning_hubs[1].weights[0].huge == 75.0f);
+      CHECK(world.planning_hubs[1].weights[0].flyer == 100.0f);
       CHECK(is_unique_id(1, world.planning_hubs));
 
       CHECK(world.planning_hubs[2].name == "Hub2"sv);
       CHECK(world.planning_hubs[2].position == float3{-54.011314f, 2.0f, -194.037018f});
       CHECK(world.planning_hubs[2].radius == 13.120973f);
+      CHECK(world.planning_hubs[2].weights.empty());
       CHECK(is_unique_id(2, world.planning_hubs));
 
       CHECK(world.planning_hubs[3].name == "Hub3"sv);
       CHECK(world.planning_hubs[3].position == float3{-163.852570f, 3.0f, -169.116760f});
       CHECK(world.planning_hubs[3].radius == 12.046540f);
+      CHECK(world.planning_hubs[3].weights.empty());
       CHECK(is_unique_id(3, world.planning_hubs));
    }
 
@@ -449,13 +461,6 @@ TEST_CASE("world loading", "[World][IO]")
       CHECK(world.planning_connections[0].flags ==
             (ai_path_flags::soldier | ai_path_flags::hover | ai_path_flags::small |
              ai_path_flags::medium | ai_path_flags::huge | ai_path_flags::flyer));
-
-      CHECK(world.planning_connections[0].backward_weights.soldier == 20.0f);
-      CHECK(world.planning_connections[0].backward_weights.hover == 15.0f);
-      CHECK(world.planning_connections[0].backward_weights.small == 7.5f);
-      CHECK(world.planning_connections[0].backward_weights.medium == 25.0f);
-      CHECK(world.planning_connections[0].backward_weights.huge == 75.0f);
-      CHECK(world.planning_connections[0].backward_weights.flyer == 100.0f);
 
       CHECK(is_unique_id(0, world.planning_connections));
 

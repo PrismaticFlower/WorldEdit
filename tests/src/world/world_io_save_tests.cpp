@@ -592,7 +592,8 @@ Portal("Portal")
 }
 )"sv;
 
-constexpr auto expected_hnt = R"(Hint("HintNode0", "5")
+constexpr auto expected_hnt = R"(
+Hint("HintNode0", "5")
 {
 	Position(-70.045296, 1.000582, -19.298828);
 	Rotation(0.303753, 0.399004, -0.569245, -0.651529);
@@ -626,12 +627,12 @@ Hub("Hub1")
 {
 	Pos(-121.883095, 1.000000, 30.046543);
 	Radius(7.586431);
-	BranchWeight("Hub0",100.000000,"Connection0",32);
-	BranchWeight("Hub0",75.000000,"Connection0",16);
-	BranchWeight("Hub0",25.000000,"Connection0",8);
-	BranchWeight("Hub0",7.500000,"Connection0",4);
-	BranchWeight("Hub0",15.000000,"Connection0",2);
-	BranchWeight("Hub0",20.000000,"Connection0",1);
+	BranchWeight("Hub3",100.000000,"Connection0",32);
+	BranchWeight("Hub3",75.000000,"Connection0",16);
+	BranchWeight("Hub3",25.000000,"Connection0",8);
+	BranchWeight("Hub3",7.500000,"Connection0",4);
+	BranchWeight("Hub3",15.000000,"Connection0",2);
+	BranchWeight("Hub3",20.000000,"Connection0",1);
 }
 
 Hub("Hub2")
@@ -1001,9 +1002,24 @@ TEST_CASE("world saving", "[World][IO]")
                             .position = float3{-63.822487f, 0.0f, -9.202278f},
                             .radius = 8.0f},
 
-               planning_hub{.name = "Hub1",
-                            .position = float3{-121.883095f, 1.0f, -30.046543f},
-                            .radius = 7.586431f},
+               planning_hub{
+                  .name = "Hub1",
+                  .position = float3{-121.883095f, 1.0f, -30.046543f},
+                  .radius = 7.586431f,
+                  .weights =
+                     {
+                        {
+                           .hub_index = 3,
+                           .connection_index = 0,
+                           .soldier = 20.0f,
+                           .hover = 15.0f,
+                           .small = 7.5f,
+                           .medium = 25.0f,
+                           .huge = 75.0f,
+                           .flyer = 100.0f,
+                        },
+                     },
+               },
 
                planning_hub{.name = "Hub2",
                             .position = float3{-54.011314f, 2.0f, -194.037018f},
@@ -1022,14 +1038,7 @@ TEST_CASE("world saving", "[World][IO]")
                                  .end_hub_index = 1,
                                  .flags = (ai_path_flags::soldier | ai_path_flags::hover |
                                            ai_path_flags::small | ai_path_flags::medium |
-                                           ai_path_flags::huge | ai_path_flags::flyer),
-
-                                 .backward_weights = {.soldier = 20.0f,
-                                                      .hover = 15.0f,
-                                                      .small = 7.5f,
-                                                      .medium = 25.0f,
-                                                      .huge = 75.0f,
-                                                      .flyer = 100.0f}},
+                                           ai_path_flags::huge | ai_path_flags::flyer)},
 
              planning_connection{.name = "Connection1",
                                  .start_hub_index = 3,

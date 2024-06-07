@@ -28,6 +28,12 @@ struct unlinked_object_property {
    std::string value;
 };
 
+struct broken_planning_weights {
+   uint32 hub_index;
+   uint32 weight_index;
+   world::planning_branch_weights weights;
+};
+
 struct delete_object final : edit<world::edit_context> {
    struct unlinked_path_property {
       uint32 path_index = 0;
@@ -349,21 +355,50 @@ private:
 
 struct delete_planning_hub final : edit<world::edit_context> {
    struct broken_connection {
-      int index;
+      uint32 index;
       world::planning_connection connection;
    };
 
-   delete_planning_hub(world::planning_hub hub, uint32 hub_index,
-                       std::vector<broken_connection> broken_connections)
-      : _hub{std::move(hub)},
-        _hub_index{hub_index},
-        _broken_connections{std::move(broken_connections)}
+   delete_planning_hub(uint32 hub_index,
+                       std::vector<broken_connection> broken_connections,
+                       std::vector<broken_planning_weights> broken_weights)
+      : _hub_index{hub_index},
+        _broken_connections{std::move(broken_connections)},
+        _broken_weights{std::move(broken_weights)}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
-      context.world.planning_hubs.erase(context.world.planning_hubs.begin() + _hub_index);
+      for (broken_planning_weights& broken : _broken_weights) {
+         context.world.planning_hubs[broken.hub_index].weights.erase(
+            context.world.planning_hubs[broken.hub_index].weights.begin() +
+            broken.weight_index);
+      }
+
+      for (broken_connection& broken : _broken_connections) {
+         broken.connection =
+            std::move(context.world.planning_connections[broken.index]);
+
+         context.world.planning_connections.erase(
+            context.world.planning_connections.begin() + broken.index);
+
+         for (auto& hub : context.world.planning_hubs) {
+            for (world::planning_branch_weights& weights : hub.weights) {
+               if (weights.connection_index > broken.index) {
+                  weights.connection_index -= 1;
+               }
+            }
+         }
+      }
+
+      for (auto& hub : context.world.planning_hubs) {
+         for (world::planning_branch_weights& weights : hub.weights) {
+            if (weights.hub_index > _hub_index) {
+               weights.hub_index -= 1;
+            }
+         }
+      }
 
       for (auto& connection : context.world.planning_connections) {
          if (connection.start_hub_index > _hub_index) {
@@ -375,16 +410,15 @@ struct delete_planning_hub final : edit<world::edit_context> {
          }
       }
 
-      for (const auto& broken : _broken_connections) {
-         context.world.planning_connections.erase(
-            context.world.planning_connections.begin() + broken.index);
-      }
+      _hub = std::move(context.world.planning_hubs[_hub_index]);
+
+      context.world.planning_hubs.erase(context.world.planning_hubs.begin() + _hub_index);
    }
 
    void revert(world::edit_context& context) noexcept override
    {
       context.world.planning_hubs.insert(context.world.planning_hubs.begin() + _hub_index,
-                                         _hub);
+                                         std::move(_hub));
 
       for (auto& connection : context.world.planning_connections) {
          if (connection.start_hub_index >= _hub_index) {
@@ -396,11 +430,37 @@ struct delete_planning_hub final : edit<world::edit_context> {
          }
       }
 
+      for (auto& hub : context.world.planning_hubs) {
+         for (world::planning_branch_weights& weights : hub.weights) {
+            if (weights.hub_index >= _hub_index) {
+               weights.hub_index += 1;
+            }
+         }
+      }
+
       for (std::ptrdiff_t i = std::ssize(_broken_connections) - 1; i >= 0; --i) {
-         const auto& broken = _broken_connections[i];
+         broken_connection& broken = _broken_connections[i];
+
          context.world.planning_connections
             .insert(context.world.planning_connections.begin() + broken.index,
-                    broken.connection);
+                    std::move(broken.connection));
+
+         for (auto& hub : context.world.planning_hubs) {
+            for (world::planning_branch_weights& weights : hub.weights) {
+               if (weights.connection_index >= broken.index) {
+                  weights.connection_index += 1;
+               }
+            }
+         }
+      }
+
+      for (std::ptrdiff_t i = std::ssize(_broken_weights) - 1; i >= 0; --i) {
+         broken_planning_weights& broken = _broken_weights[i];
+
+         context.world.planning_hubs[broken.hub_index].weights.insert(
+            context.world.planning_hubs[broken.hub_index].weights.begin() +
+               broken.weight_index,
+            broken.weights);
       }
    }
 
@@ -412,9 +472,77 @@ struct delete_planning_hub final : edit<world::edit_context> {
    void coalesce([[maybe_unused]] edit& other) noexcept override {}
 
 private:
-   const world::planning_hub _hub;
-   const uint32 _hub_index;
-   const std::vector<broken_connection> _broken_connections;
+   uint32 _hub_index;
+   world::planning_hub _hub;
+   std::vector<broken_connection> _broken_connections;
+   std::vector<broken_planning_weights> _broken_weights;
+};
+
+struct delete_planning_connection final : edit<world::edit_context> {
+   delete_planning_connection(uint32 connection_index,
+                              std::vector<broken_planning_weights> broken_weights)
+      : _connection_index{connection_index},
+        _broken_weights{std::move(broken_weights)}
+   {
+   }
+
+   void apply(world::edit_context& context) noexcept override
+   {
+      for (broken_planning_weights& broken : _broken_weights) {
+         context.world.planning_hubs[broken.hub_index].weights.erase(
+            context.world.planning_hubs[broken.hub_index].weights.begin() +
+            broken.weight_index);
+      }
+
+      for (auto& hub : context.world.planning_hubs) {
+         for (world::planning_branch_weights& weights : hub.weights) {
+            if (weights.connection_index > _connection_index) {
+               weights.connection_index -= 1;
+            }
+         }
+      }
+
+      _connection = std::move(context.world.planning_connections[_connection_index]);
+
+      context.world.planning_connections.erase(
+         context.world.planning_connections.begin() + _connection_index);
+   }
+
+   void revert(world::edit_context& context) noexcept override
+   {
+      context.world.planning_connections
+         .insert(context.world.planning_connections.begin() + _connection_index,
+                 std::move(_connection));
+
+      for (auto& hub : context.world.planning_hubs) {
+         for (world::planning_branch_weights& weights : hub.weights) {
+            if (weights.connection_index >= _connection_index) {
+               weights.connection_index += 1;
+            }
+         }
+      }
+
+      for (std::ptrdiff_t i = std::ssize(_broken_weights) - 1; i >= 0; --i) {
+         broken_planning_weights& broken = _broken_weights[i];
+
+         context.world.planning_hubs[broken.hub_index].weights.insert(
+            context.world.planning_hubs[broken.hub_index].weights.begin() +
+               broken.weight_index,
+            broken.weights);
+      }
+   }
+
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
+private:
+   uint32 _connection_index;
+   world::planning_connection _connection;
+   std::vector<broken_planning_weights> _broken_weights;
 };
 
 }
@@ -666,7 +794,6 @@ auto make_delete_entity(world::planning_hub_id planning_hub_id, const world::wor
 {
    const uint32 planning_hub_index =
       get_entity_index(world.planning_hubs, planning_hub_id);
-   const world::planning_hub& planning_hub = world.planning_hubs[planning_hub_index];
 
    uint32 broken_connection_count = 0;
 
@@ -678,23 +805,82 @@ auto make_delete_entity(world::planning_hub_id planning_hub_id, const world::wor
    }
 
    std::vector<delete_planning_hub::broken_connection> broken_connections;
+   std::vector<uint32> broken_connections_indices;
 
    broken_connections.reserve(broken_connection_count);
+   broken_connections_indices.reserve(broken_connection_count);
 
-   int delete_offset = 0;
+   uint32 connection_delete_offset = 0;
 
-   for (int i = 0; i < world.planning_connections.size(); ++i) {
+   for (uint32 i = 0; i < world.planning_connections.size(); ++i) {
       const world::planning_connection& connection = world.planning_connections[i];
 
       if (connection.start_hub_index == planning_hub_index or
           connection.end_hub_index == planning_hub_index) {
-         broken_connections.emplace_back(i - delete_offset, connection);
-         delete_offset += 1;
+         broken_connections.emplace_back(i - connection_delete_offset);
+         broken_connections_indices.emplace_back(i);
+
+         connection_delete_offset += 1;
       }
    }
 
-   return std::make_unique<delete_planning_hub>(planning_hub, planning_hub_index,
-                                                std::move(broken_connections));
+   uint32 broken_weights_count = 0;
+
+   for (const auto& hub : world.planning_hubs) {
+      for (const world::planning_branch_weights& weights : hub.weights) {
+         if (weights.hub_index == planning_hub_index) {
+            broken_weights_count += 1;
+         }
+         else {
+            for (const uint32 broken_connection : broken_connections_indices) {
+               if (weights.connection_index == broken_connection) {
+                  broken_weights_count += 1;
+
+                  break;
+               }
+            }
+         }
+      }
+   }
+
+   std::vector<broken_planning_weights> broken_weights;
+
+   broken_weights.reserve(broken_weights_count);
+
+   for (uint32 hub_index = 0; hub_index < world.planning_hubs.size(); ++hub_index) {
+      const auto& hub = world.planning_hubs[hub_index];
+
+      uint32 weight_delete_offset = 0;
+
+      for (uint32 weight_index = 0; weight_index < hub.weights.size(); ++weight_index) {
+         const world::planning_branch_weights& weights = hub.weights[weight_index];
+
+         if (weights.hub_index == planning_hub_index) {
+            broken_weights.push_back({.hub_index = hub_index,
+                                      .weight_index = weight_index - weight_delete_offset,
+                                      .weights = weights});
+
+            weight_delete_offset += 1;
+         }
+         else {
+            for (const uint32 broken_connection : broken_connections_indices) {
+               if (weights.connection_index == broken_connection) {
+                  broken_weights.push_back({.hub_index = hub_index,
+                                            .weight_index = weight_index - weight_delete_offset,
+                                            .weights = weights});
+
+                  weight_delete_offset += 1;
+
+                  break;
+               }
+            }
+         }
+      }
+   }
+
+   return std::make_unique<delete_planning_hub>(planning_hub_index,
+                                                std::move(broken_connections),
+                                                std::move(broken_weights));
 }
 
 auto make_delete_entity(world::planning_connection_id planning_connection_id,
@@ -703,11 +889,41 @@ auto make_delete_entity(world::planning_connection_id planning_connection_id,
 {
    const uint32 planning_connection_index =
       get_entity_index(world.planning_connections, planning_connection_id);
-   const world::planning_connection& planning_connection =
-      world.planning_connections[planning_connection_index];
 
-   return std::make_unique<delete_entity<world::planning_connection>>(planning_connection,
-                                                                      planning_connection_index);
+   uint32 broken_weights_count = 0;
+
+   for (const auto& hub : world.planning_hubs) {
+      for (const world::planning_branch_weights& weights : hub.weights) {
+         if (weights.connection_index == planning_connection_index) {
+            broken_weights_count += 1;
+         }
+      }
+   }
+
+   std::vector<broken_planning_weights> broken_weights;
+
+   broken_weights.reserve(broken_weights_count);
+
+   for (uint32 hub_index = 0; hub_index < world.planning_hubs.size(); ++hub_index) {
+      const auto& hub = world.planning_hubs[hub_index];
+
+      uint32 weight_delete_offset = 0;
+
+      for (uint32 weight_index = 0; weight_index < hub.weights.size(); ++weight_index) {
+         const world::planning_branch_weights& weights = hub.weights[weight_index];
+
+         if (weights.connection_index == planning_connection_index) {
+            broken_weights.push_back({.hub_index = hub_index,
+                                      .weight_index = weight_index - weight_delete_offset,
+                                      .weights = weights});
+
+            weight_delete_offset += 1;
+         }
+      }
+   }
+
+   return std::make_unique<delete_planning_connection>(planning_connection_index,
+                                                       std::move(broken_weights));
 }
 
 auto make_delete_entity(world::boundary_id boundary_id, const world::world& world)

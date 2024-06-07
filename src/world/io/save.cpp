@@ -10,9 +10,6 @@
 #include <cstddef>
 #include <numeric>
 
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/inlined_vector.h>
-
 #include "assets/terrain/terrain_io.hpp"
 #include "io/output_file.hpp"
 
@@ -124,43 +121,6 @@ struct sequence_numbers {
    int objects = 0;
    int lights = 0;
 };
-
-auto get_hub_branch_weight_refs(const world& world)
-   -> absl::flat_hash_map<uint32, absl::InlinedVector<hub_branch_weight_ref, 12>>
-{
-   absl::flat_hash_map<uint32, absl::InlinedVector<hub_branch_weight_ref, 12>> refs;
-   refs.reserve(64);
-
-   for (auto& connection : world.planning_connections) {
-      const auto process_direction = [&](const planning_branch_weights& weights,
-                                         const uint32 start_hub_index,
-                                         const uint32 end_hub_index) {
-         const auto process_weight = [&](const float weight, const ai_path_flags flag) {
-            if (weight != 0.0f) {
-               refs[start_hub_index].push_back(
-                  {.end_hub = world.planning_hubs[end_hub_index].name,
-                   .weight = weight,
-                   .connection = connection.name,
-                   .flag = flag});
-            }
-         };
-
-         process_weight(weights.flyer, ai_path_flags::flyer);
-         process_weight(weights.huge, ai_path_flags::huge);
-         process_weight(weights.medium, ai_path_flags::medium);
-         process_weight(weights.small, ai_path_flags::small);
-         process_weight(weights.hover, ai_path_flags::hover);
-         process_weight(weights.soldier, ai_path_flags::soldier);
-      };
-
-      process_direction(connection.forward_weights, connection.start_hub_index,
-                        connection.end_hub_index);
-      process_direction(connection.backward_weights, connection.end_hub_index,
-                        connection.start_hub_index);
-   }
-
-   return refs;
-}
 
 void save_objects(const std::filesystem::path& path,
                   const std::string_view layer_name, const int layer_index,
@@ -628,9 +588,6 @@ void save_barriers(const std::filesystem::path& path, const world& world)
 
 void save_planning(const std::filesystem::path& path, const world& world)
 {
-   const absl::flat_hash_map<uint32, absl::InlinedVector<hub_branch_weight_ref, 12>> hub_branch_weights =
-      get_hub_branch_weight_refs(world);
-
    io::output_file file{path};
 
    for (uint32 i = 0; i < world.planning_hubs.size(); ++i) {
@@ -645,13 +602,46 @@ void save_planning(const std::filesystem::path& path, const world& world)
 
       file.write_ln("\tRadius({:f});", hub.radius);
 
-      if (auto branch_weights_it = hub_branch_weights.find(i);
-          branch_weights_it != hub_branch_weights.end()) {
-         for (const auto& branch_weight : branch_weights_it->second) {
-            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});",
-                          branch_weight.end_hub, branch_weight.weight,
-                          branch_weight.connection,
-                          static_cast<int>(branch_weight.flag));
+      for (auto& weights : hub.weights) {
+         const std::string_view target_hub =
+            world.planning_hubs[weights.hub_index].name;
+         const std::string_view connection_name =
+            world.planning_connections[weights.connection_index].name;
+
+         if (weights.flyer > 0.0f) {
+            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});", target_hub,
+                          weights.flyer, connection_name,
+                          static_cast<int>(ai_path_flags::flyer));
+         }
+
+         if (weights.huge > 0.0f) {
+            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});", target_hub,
+                          weights.huge, connection_name,
+                          static_cast<int>(ai_path_flags::huge));
+         }
+
+         if (weights.medium > 0.0f) {
+            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});", target_hub,
+                          weights.medium, connection_name,
+                          static_cast<int>(ai_path_flags::medium));
+         }
+
+         if (weights.small > 0.0f) {
+            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});", target_hub,
+                          weights.small, connection_name,
+                          static_cast<int>(ai_path_flags::small));
+         }
+
+         if (weights.hover > 0.0f) {
+            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});", target_hub,
+                          weights.hover, connection_name,
+                          static_cast<int>(ai_path_flags::hover));
+         }
+
+         if (weights.soldier > 0.0f) {
+            file.write_ln("\tBranchWeight(\"{}\",{:f},\"{}\",{});", target_hub,
+                          weights.soldier, connection_name,
+                          static_cast<int>(ai_path_flags::soldier));
          }
       }
 

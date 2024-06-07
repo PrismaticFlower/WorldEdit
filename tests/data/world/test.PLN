@@ -9,12 +9,12 @@ Hub("Hub1")
 {
 	Pos(-121.883095, 1.000000, 30.046543);
 	Radius(7.586431);
-	BranchWeight("Hub0",100.000000,"Connection0",32);
-	BranchWeight("Hub0",75.000000,"Connection0",16);
-	BranchWeight("Hub0",25.000000,"Connection0",8);
-	BranchWeight("Hub0",7.500000,"Connection0",4);
-	BranchWeight("Hub0",15.000000,"Connection0",2);
-	BranchWeight("Hub0",20.000000,"Connection0",1);
+	BranchWeight("Hub3",100.000000,"Connection0",32);
+	BranchWeight("Hub3",75.000000,"Connection0",16);
+	BranchWeight("Hub3",25.000000,"Connection0",8);
+	BranchWeight("Hub3",7.500000,"Connection0",4);
+	BranchWeight("Hub3",15.000000,"Connection0",2);
+	BranchWeight("Hub3",20.000000,"Connection0",1);
 }
 
 Hub("Hub2")

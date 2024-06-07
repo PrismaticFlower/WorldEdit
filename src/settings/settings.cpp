@@ -87,9 +87,6 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                ImGui::EndCombo();
             }
 
-            ImGui::Checkbox("Hide AI Planning Branch Weights",
-                            &ui.hide_planning_branch_weights);
-
             ImGui::SetItemTooltip(
                "Hides the editors for the unused AI planning branch weights.");
 

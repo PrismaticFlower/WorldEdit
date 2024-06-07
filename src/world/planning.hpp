@@ -11,6 +11,9 @@
 namespace we::world {
 
 struct planning_branch_weights {
+   uint32 hub_index = 0;
+   uint32 connection_index = 0;
+
    float soldier = 0.0f;
    float hover = 0.0f;
    float small = 0.0f;
@@ -28,6 +31,8 @@ struct planning_hub {
 
    float3 position;
    float radius = 1.0f;
+
+   std::vector<planning_branch_weights> weights;
 
    id<planning_hub> id{};
 
@@ -52,9 +57,6 @@ struct planning_connection {
    bool jet_jump = false;
    bool one_way = false;
    int8 dynamic_group = 0;
-
-   planning_branch_weights forward_weights;
-   planning_branch_weights backward_weights;
 
    id<planning_connection> id{};
 

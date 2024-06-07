@@ -847,21 +847,68 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
          }
       }
 
-      absl::flat_hash_map<std::string_view, planning_connection*> connection_map;
+      absl::flat_hash_map<std::string_view, uint32> connection_map;
       connection_map.reserve(world_out.planning_connections.size());
 
-      for (auto& connection : world_out.planning_connections) {
-         connection_map.emplace(connection.name, &connection);
+      for (uint32 i = 0; i < world_out.planning_connections.size(); ++i) {
+         const planning_connection& connection = world_out.planning_connections[i];
+
+         connection_map.emplace(connection.name, i);
       }
 
       for (auto& branch_weight : branch_weights) {
-         planning_connection& connection =
-            *connection_map.at(branch_weight.connection);
+         const uint32 start_hub_index = hub_map[branch_weight.start_hub];
+
+         const auto end_hub_iter = hub_map.find(branch_weight.end_hub);
+
+         if (end_hub_iter == hub_map.end()) {
+            output.write("BranchWeight for hub '{}' is invalid. Can "
+                         "not find referenced hub '{}'.\n",
+                         branch_weight.start_hub, branch_weight.end_hub);
+
+            continue;
+         }
+
+         const auto connection_iter = connection_map.find(branch_weight.connection);
+
+         if (connection_iter == connection_map.end()) {
+            output.write("BranchWeight for hub '{}' is invalid. Can "
+                         "not find referenced connection '{}'.\n",
+                         branch_weight.start_hub, branch_weight.connection);
+
+            continue;
+         }
+
+         const uint32 end_hub_index = end_hub_iter->second;
+         const uint32 connection_index = connection_iter->second;
+
+         const planning_connection& connection =
+            world_out.planning_connections[connection_index];
+         planning_hub& hub = world_out.planning_hubs[start_hub_index];
+
+         if (connection.start_hub_index != start_hub_index and
+             connection.end_hub_index != start_hub_index) {
+            output.write("BranchWeight for hub '{}' is invalid. Referenced "
+                         "connection '{}' is not joined to the hub.\n",
+                         hub.name, connection.name);
+
+            continue;
+         }
+
          planning_branch_weights& weights =
-            world_out.planning_hubs[connection.start_hub_index].name ==
-                  branch_weight.start_hub
-               ? connection.forward_weights
-               : connection.backward_weights;
+            [&hub, end_hub_index,
+             connection_index]() noexcept -> planning_branch_weights& {
+            for (planning_branch_weights& weights : hub.weights) {
+               if (weights.hub_index == end_hub_index and
+                   weights.connection_index == connection_index) {
+                  return weights;
+               }
+            }
+
+            return hub.weights.emplace_back(
+               planning_branch_weights{.hub_index = end_hub_index,
+                                       .connection_index = connection_index});
+         }();
 
          switch (branch_weight.flag) {
          case ai_path_flags::soldier:
@@ -883,10 +930,11 @@ void load_planning(const std::filesystem::path& filepath, output_stream& output,
             weights.flyer = branch_weight.weight;
             break;
          default:
-            output.write("Branch Weight for Hub '{}' has multiple (or no) "
-                         "flags set. This "
-                         "is invalid, ignoring weight.\n",
-                         branch_weight.start_hub);
+            output.write("BranchWeight for Hub '{}' (targetting hub '{}' "
+                         "through connection '{}') is invalid. It must have "
+                         "one and only one "
+                         "path flag set.\n",
+                         hub.name, branch_weight.end_hub, branch_weight.connection);
          }
       }
    }

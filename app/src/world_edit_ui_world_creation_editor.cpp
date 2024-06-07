@@ -3585,40 +3585,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
                           ImGuiSliderFlags_AlwaysClamp);
       }
 
-      if (not _settings.ui.hide_planning_branch_weights) {
-         if (ImGui::CollapsingHeader("Forward Branch Weights")) {
-            world::planning_branch_weights& weights = connection.forward_weights;
-
-            ImGui::PushID("Forward Branch Weights");
-
-            // clang-format off
-            ImGui::DragFloat("Soldier", &weights.soldier, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Hover", &weights.hover, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Small", &weights.small, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Medium", &weights.medium, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Huge", &weights.huge, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            // clang-format on
-
-            ImGui::PopID();
-         }
-
-         if (ImGui::CollapsingHeader("Backward Branch Weights")) {
-            world::planning_branch_weights& weights = connection.backward_weights;
-
-            ImGui::PushID("Backward Branch Weights");
-
-            // clang-format off
-            ImGui::DragFloat("Soldier", &weights.soldier, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Hover", &weights.hover, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Small", &weights.small, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Medium", &weights.medium, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::DragFloat("Huge", &weights.huge, _edit_stack_world, _edit_context, 0.5f, 0.0f, 100.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-            // clang-format on
-
-            ImGui::PopID();
-         }
-      }
-
       traits = {.has_placement_rotation = false,
                 .has_point_at = false,
                 .has_placement_mode = false,
