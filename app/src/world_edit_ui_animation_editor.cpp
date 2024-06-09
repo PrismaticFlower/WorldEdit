@@ -1840,7 +1840,7 @@ void world_edit::ui_show_animation_editor() noexcept
             selected_animation->position_keys[*hovered_position_key];
 
          float4x4 transform{};
-         transform[3] = {hovered_key.position + base_position, 1.0f};
+         transform[3] = {base_position + base_rotation * hovered_key.position, 1.0f};
 
          if (selected_animation->local_translation) {
             transform[3] = _animation_solver.evaluate(*selected_animation,
