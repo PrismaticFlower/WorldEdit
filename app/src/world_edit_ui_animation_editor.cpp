@@ -1572,8 +1572,8 @@ void world_edit::ui_show_animation_editor() noexcept
 
          const float3 last_move_amount = _animation_editor_context.selected.key_movement;
 
-         float3 gizmo_position = key.position + base_position;
-         quaternion gizmo_rotation{1.0f, 0.0f, 0.0f, 0.0f};
+         float3 gizmo_position = base_position + base_rotation * key.position;
+         quaternion gizmo_rotation = base_rotation;
 
          if (selected_animation->local_translation) {
             const float4x4 transform =
@@ -1623,7 +1623,7 @@ void world_edit::ui_show_animation_editor() noexcept
          const float3 last_rotation_amount =
             _animation_editor_context.selected.key_rotation_movement;
 
-         if (_gizmo.show_rotate(key_position, quaternion{},
+         if (_gizmo.show_rotate(key_position, base_rotation,
                                 _animation_editor_context.selected.key_rotation_movement)) {
             constexpr float radians_to_degrees = 180.0f / std ::numbers::pi_v<float>;
 
