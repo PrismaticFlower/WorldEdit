@@ -106,6 +106,8 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
    }
 
    if (position_index >= 0) {
+      float3 local_position;
+
       if ((position_index + 1) < std::ssize(animation.position_keys)) {
          const position_key& a = animation.position_keys[position_index];
          const position_key& b = animation.position_keys[position_index + 1];
@@ -114,14 +116,14 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
 
          switch (a.transition) {
          case world::animation_transition::pop: {
-            position += a.position;
+            local_position = a.position;
          } break;
          case world::animation_transition::linear: {
-            position += (1.0f - local_t) * a.position + local_t * b.position;
+            local_position = (1.0f - local_t) * a.position + local_t * b.position;
          } break;
          case world::animation_transition::spline: {
-            position += hermite_interpolate(a.position, a.tangent, b.position,
-                                            a.tangent_next, local_t);
+            local_position = hermite_interpolate(a.position, a.tangent, b.position,
+                                                 a.tangent_next, local_t);
          } break;
          }
       }
@@ -136,20 +138,22 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
 
          switch (a.transition) {
          case world::animation_transition::pop: {
-            position += a.position;
+            local_position = a.position;
          } break;
          case world::animation_transition::linear: {
-            position += (1.0f - local_t) * a.position + local_t * b.position;
+            local_position = (1.0f - local_t) * a.position + local_t * b.position;
          } break;
          case world::animation_transition::spline: {
-            position += hermite_interpolate(a.position, a.tangent, b.position,
-                                            a.tangent_next, local_t);
+            local_position = hermite_interpolate(a.position, a.tangent, b.position,
+                                                 a.tangent_next, local_t);
          } break;
          }
       }
       else {
-         position += animation.position_keys[position_index].position;
+         local_position = animation.position_keys[position_index].position;
       }
+
+      position += base_rotation * local_position;
    }
 
    float4x4 transform = to_matrix(rotation);

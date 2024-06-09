@@ -1767,8 +1767,10 @@ void world_edit::ui_show_animation_editor() noexcept
 
             if (transition == world::animation_transition::linear) {
                _tool_visualizers.add_line(
-                  base_position + selected_animation->position_keys[i - 1].position,
-                  base_position + selected_animation->position_keys[i].position,
+                  base_position +
+                     base_rotation * selected_animation->position_keys[i - 1].position,
+                  base_position +
+                     base_rotation * selected_animation->position_keys[i].position,
                   spline_color);
             }
             else if (transition == world::animation_transition::spline) {
@@ -1802,8 +1804,10 @@ void world_edit::ui_show_animation_editor() noexcept
 
             if (last_key.transition == world::animation_transition::linear) {
                _tool_visualizers
-                  .add_line(base_position + last_key.position,
-                            base_position + selected_animation->position_keys[0].position,
+                  .add_line(base_position + base_rotation * last_key.position,
+                            base_position +
+                               base_rotation *
+                                  selected_animation->position_keys[0].position,
                             spline_color);
             }
             else if (last_key.transition == world::animation_transition::spline) {
