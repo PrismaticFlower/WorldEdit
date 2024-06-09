@@ -92,9 +92,7 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
 
       euler_rotation *= degrees_to_radians;
 
-      rotation = rotation * make_quat_from_euler({euler_rotation.x, 0.0f, 0.0f});
-      rotation = rotation * make_quat_from_euler({0.0f, euler_rotation.y, 0.0f});
-      rotation = rotation * make_quat_from_euler({0.0f, 0.0f, euler_rotation.z});
+      rotation = base_rotation * make_quat_from_euler(euler_rotation);
    }
 
    float3 position = base_position;
