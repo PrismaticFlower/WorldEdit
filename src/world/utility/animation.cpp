@@ -11,18 +11,28 @@ namespace we::world {
 
 namespace {
 
-auto hermite_interpolate(const float3& p0, const float3& m0, const float3& p1,
-                         const float3& m1, float t) noexcept -> float3
+auto linear_interpolate(const float3& a, const float a_time, const float3& b,
+                        const float b_time, const float global_t) noexcept -> float3
 {
+   const float local_t = (global_t - a_time) / (b_time - a_time);
+
+   return (1.0f - local_t) * a + local_t * b;
+}
+
+auto hermite_interpolate(const float3& p0, const float3& m0, float gloabl_t0,
+                         const float3& p1, const float3& m1, float global_t1,
+                         float global_t) noexcept -> float3
+{
+   const float t_delta = global_t1 - gloabl_t0;
+   const float t = (global_t - gloabl_t0) / t_delta;
    const float t2 = t * t;
-   const float t3 = t * t * t;
 
-   const float3 h0 = (2.0f * t3 - 3.0f * t2 + 1.0f) * p0;
-   const float3 h1 = (t3 - 2.0f * t2 + t) * m0;
-   const float3 h2 = (-2.0f * t3 + 3.0f * t2) * p1;
-   const float3 h3 = (t3 - t2) * m1;
+   const float h00 = (1.0f + 2.0f * t) * ((1.0f - t) * (1.0f - t));
+   const float h10 = t * ((1.0f - t) * (1.0f - t));
+   const float h01 = t2 * (3.0f - 2.0f * t);
+   const float h11 = t2 * (t - 1.0f);
 
-   return h0 + h1 + h2 + h3;
+   return h00 * p0 + h10 * t_delta * m0 + h01 * p1 + h11 * t_delta * m1;
 }
 
 auto evaluate_animation(const animation& animation, const quaternion& base_rotation,
@@ -47,18 +57,18 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
          const rotation_key& a = animation.rotation_keys[rotation_index];
          const rotation_key& b = animation.rotation_keys[rotation_index + 1];
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             euler_rotation = a.rotation;
          } break;
          case world::animation_transition::linear: {
-            euler_rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
+            euler_rotation =
+               linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            euler_rotation = hermite_interpolate(a.rotation, a.tangent, b.rotation,
-                                                 a.tangent_next, local_t);
+            euler_rotation =
+               hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
+                                   a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -69,18 +79,18 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
 
          b.time = animation.runtime;
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             euler_rotation = a.rotation;
          } break;
          case world::animation_transition::linear: {
-            euler_rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
+            euler_rotation =
+               linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            euler_rotation = hermite_interpolate(a.rotation, a.tangent, b.rotation,
-                                                 a.tangent_next, local_t);
+            euler_rotation =
+               hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
+                                   a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -110,18 +120,18 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
          const position_key& a = animation.position_keys[position_index];
          const position_key& b = animation.position_keys[position_index + 1];
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             local_position = a.position;
          } break;
          case world::animation_transition::linear: {
-            local_position = (1.0f - local_t) * a.position + local_t * b.position;
+            local_position =
+               linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            local_position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                 a.tangent_next, local_t);
+            local_position =
+               hermite_interpolate(a.position, a.tangent, a.time, b.position,
+                                   a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -132,18 +142,18 @@ auto evaluate_animation(const animation& animation, const quaternion& base_rotat
 
          b.time = animation.runtime;
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             local_position = a.position;
          } break;
          case world::animation_transition::linear: {
-            local_position = (1.0f - local_t) * a.position + local_t * b.position;
+            local_position =
+               linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            local_position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                 a.tangent_next, local_t);
+            local_position =
+               hermite_interpolate(a.position, a.tangent, a.time, b.position,
+                                   a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -197,18 +207,16 @@ auto evaluate_animation_local_translation(
          const rotation_key& a = animation.rotation_keys[rotation_index];
          const rotation_key& b = animation.rotation_keys[rotation_index + 1];
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             rotation = a.rotation;
          } break;
          case world::animation_transition::linear: {
-            rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
+            rotation = linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            rotation = hermite_interpolate(a.rotation, a.tangent, b.rotation,
-                                           a.tangent_next, local_t);
+            rotation = hermite_interpolate(a.rotation, a.tangent, a.time,
+                                           b.rotation, a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -219,18 +227,16 @@ auto evaluate_animation_local_translation(
 
          b.time = animation.runtime;
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             rotation = a.rotation;
          } break;
          case world::animation_transition::linear: {
-            rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
+            rotation = linear_interpolate(a.rotation, a.time, b.rotation, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            rotation = hermite_interpolate(a.rotation, a.tangent, b.rotation,
-                                           a.tangent_next, local_t);
+            rotation = hermite_interpolate(a.rotation, a.tangent, a.time,
+                                           b.rotation, a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -252,18 +258,16 @@ auto evaluate_animation_local_translation(
          const position_key& a = animation.position_keys[position_index];
          const position_key& b = animation.position_keys[position_index + 1];
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             position = a.position;
          } break;
          case world::animation_transition::linear: {
-            position = (1.0f - local_t) * a.position + local_t * b.position;
+            position = linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            position = hermite_interpolate(a.position, a.tangent, b.position,
-                                           a.tangent_next, local_t);
+            position = hermite_interpolate(a.position, a.tangent, a.time,
+                                           b.position, a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -274,18 +278,16 @@ auto evaluate_animation_local_translation(
 
          b.time = animation.runtime;
 
-         const float local_t = (t - a.time) / (b.time - a.time);
-
          switch (a.transition) {
          case world::animation_transition::pop: {
             position = a.position;
          } break;
          case world::animation_transition::linear: {
-            position = (1.0f - local_t) * a.position + local_t * b.position;
+            position = linear_interpolate(a.position, a.time, b.position, b.time, t);
          } break;
          case world::animation_transition::spline: {
-            position = hermite_interpolate(a.position, a.tangent, b.position,
-                                           a.tangent_next, local_t);
+            position = hermite_interpolate(a.position, a.tangent, a.time,
+                                           b.position, a.tangent_next, b.time, t);
          } break;
          }
       }
@@ -350,8 +352,9 @@ void build_local_translation_transforms(const animation& animation,
             rotation = (1.0f - step_norm) * start.rotation + step_norm * end.rotation;
          } break;
          case world::animation_transition::spline: {
-            rotation = hermite_interpolate(start.rotation, start.tangent, end.rotation,
-                                           start.tangent_next, step_norm);
+            rotation = hermite_interpolate(start.rotation, start.tangent,
+                                           start.time, end.rotation,
+                                           start.tangent_next, end.time, t);
          } break;
          }
 
@@ -368,18 +371,18 @@ void build_local_translation_transforms(const animation& animation,
                const position_key& a = animation.position_keys[position_index];
                const position_key& b = animation.position_keys[position_index + 1];
 
-               const float local_t = (t - a.time) / (b.time - a.time);
-
                switch (a.transition) {
                case world::animation_transition::pop: {
                   position = a.position;
                } break;
                case world::animation_transition::linear: {
-                  position = (1.0f - local_t) * a.position + local_t * b.position;
+                  position =
+                     linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
                case world::animation_transition::spline: {
-                  position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                 a.tangent_next, local_t);
+                  position =
+                     hermite_interpolate(a.position, a.tangent, a.time,
+                                         b.position, a.tangent_next, b.time, t);
                } break;
                }
             }
@@ -390,18 +393,18 @@ void build_local_translation_transforms(const animation& animation,
 
                b.time = animation.runtime;
 
-               const float local_t = (t - a.time) / (b.time - a.time);
-
                switch (a.transition) {
                case world::animation_transition::pop: {
                   position = a.position;
                } break;
                case world::animation_transition::linear: {
-                  position = (1.0f - local_t) * a.position + local_t * b.position;
+                  position =
+                     linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
                case world::animation_transition::spline: {
-                  position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                 a.tangent_next, local_t);
+                  position =
+                     hermite_interpolate(a.position, a.tangent, a.time,
+                                         b.position, a.tangent_next, b.time, t);
                } break;
                }
             }
@@ -458,8 +461,9 @@ void build_local_translation_transforms(const animation& animation,
             rotation = (1.0f - step_norm) * start.rotation + step_norm * end.rotation;
          } break;
          case world::animation_transition::spline: {
-            rotation = hermite_interpolate(start.rotation, start.tangent, end.rotation,
-                                           start.tangent_next, step_norm);
+            rotation = hermite_interpolate(start.rotation, start.tangent,
+                                           start.time, end.rotation,
+                                           start.tangent_next, end.time, t);
          } break;
          }
 
@@ -476,18 +480,18 @@ void build_local_translation_transforms(const animation& animation,
                const position_key& a = animation.position_keys[position_index];
                const position_key& b = animation.position_keys[position_index + 1];
 
-               const float local_t = (t - a.time) / (b.time - a.time);
-
                switch (a.transition) {
                case world::animation_transition::pop: {
                   position = a.position;
                } break;
                case world::animation_transition::linear: {
-                  position = (1.0f - local_t) * a.position + local_t * b.position;
+                  position =
+                     linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
                case world::animation_transition::spline: {
-                  position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                 a.tangent_next, local_t);
+                  position =
+                     hermite_interpolate(a.position, a.tangent, a.time,
+                                         b.position, a.tangent_next, b.time, t);
                } break;
                }
             }
@@ -498,18 +502,18 @@ void build_local_translation_transforms(const animation& animation,
 
                b.time = animation.runtime;
 
-               const float local_t = (t - a.time) / (b.time - a.time);
-
                switch (a.transition) {
                case world::animation_transition::pop: {
                   position = a.position;
                } break;
                case world::animation_transition::linear: {
-                  position = (1.0f - local_t) * a.position + local_t * b.position;
+                  position =
+                     linear_interpolate(a.position, a.time, b.position, b.time, t);
                } break;
                case world::animation_transition::spline: {
-                  position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                 a.tangent_next, local_t);
+                  position =
+                     hermite_interpolate(a.position, a.tangent, a.time,
+                                         b.position, a.tangent_next, b.time, t);
                } break;
                }
             }
@@ -592,8 +596,9 @@ auto make_position_key_for_time(const animation& animation, float t) noexcept ->
             new_key.position = (1.0f - local_t) * a.position + local_t * b.position;
          } break;
          case world::animation_transition::spline: {
-            new_key.position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                   a.tangent_next, local_t);
+            new_key.position =
+               hermite_interpolate(a.position, a.tangent, a.time, b.position,
+                                   a.tangent_next, b.time, t);
          } break;
          }
 
@@ -616,8 +621,9 @@ auto make_position_key_for_time(const animation& animation, float t) noexcept ->
             new_key.position = (1.0f - local_t) * a.position + local_t * b.position;
          } break;
          case world::animation_transition::spline: {
-            new_key.position = hermite_interpolate(a.position, a.tangent, b.position,
-                                                   a.tangent_next, local_t);
+            new_key.position =
+               hermite_interpolate(a.position, a.tangent, a.time, b.position,
+                                   a.tangent_next, b.time, t);
          } break;
          }
 
@@ -668,8 +674,9 @@ auto make_rotation_key_for_time(const animation& animation, float t) noexcept ->
             new_key.rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
          } break;
          case world::animation_transition::spline: {
-            new_key.rotation = hermite_interpolate(a.rotation, a.tangent, b.rotation,
-                                                   a.tangent_next, local_t);
+            new_key.rotation =
+               hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
+                                   a.tangent_next, b.time, t);
          } break;
          }
 
@@ -692,8 +699,9 @@ auto make_rotation_key_for_time(const animation& animation, float t) noexcept ->
             new_key.rotation = (1.0f - local_t) * a.rotation + local_t * b.rotation;
          } break;
          case world::animation_transition::spline: {
-            new_key.rotation = hermite_interpolate(a.rotation, a.tangent, b.rotation,
-                                                   a.tangent_next, local_t);
+            new_key.rotation =
+               hermite_interpolate(a.rotation, a.tangent, a.time, b.rotation,
+                                   a.tangent_next, b.time, t);
          } break;
          }
 
