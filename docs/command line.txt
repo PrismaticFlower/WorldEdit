@@ -15,3 +15,6 @@
 
 -gpu_no_open_existing_heap
   Never make use of ID3D12Device3::OpenExistingHeapFromAddress. Even if it is supported by the GPU.
+
+-gpu_no_write_buffer_immediate
+  Never make use of WriteBufferImmediate. Even if it is supported by the GPU.

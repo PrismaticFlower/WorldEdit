@@ -1183,6 +1183,9 @@ struct device_desc {
 
    /// @brief Force the device to report open existing heap as unsupported.
    bool force_no_open_existing_heap = false;
+
+   /// @brief Force the device to report write buffer immediate as unsupported.
+   bool force_no_write_buffer_immediate = false;
 };
 
 /// Device Definitions ///
@@ -1307,6 +1310,8 @@ public:
    [[nodiscard]] bool supports_shader_model_6_6() const noexcept;
 
    [[nodiscard]] bool supports_open_existing_heap() const noexcept;
+
+   [[nodiscard]] bool supports_write_buffer_immediate() const noexcept;
 
    /// Constructors/Destructor ///
 

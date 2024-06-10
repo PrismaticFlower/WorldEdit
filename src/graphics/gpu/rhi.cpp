@@ -147,15 +147,6 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       if (D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
           SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
                                                 &options3, sizeof(options3)))) {
-         if (not(options3.WriteBufferImmediateSupportFlags &
-                 (D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT | D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE |
-                  D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY))) {
-            debug_ouput.write_ln("GPU doesn't support needed Write Buffer "
-                                 "Immediate Support Flags");
-
-            unsupported = true;
-         }
-
          if (not options3.CastingFullyTypedFormatSupported) {
             debug_ouput.write_ln("GPU doesn't support casting fully typed "
                                  "formats. (Treating UNORM "
@@ -282,6 +273,23 @@ bool check_open_existing_heap_support(ID3D12Device& device) noexcept
 
    return existing_heaps_support.Supported;
 }
+
+bool check_write_buffer_immediate_support(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
+
+   if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
+                                         &options3, sizeof(options3)))) {
+      return false;
+   }
+
+   const D3D12_COMMAND_LIST_SUPPORT_FLAGS desired_flags =
+      D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT |
+      D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE | D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY;
+
+   return (options3.WriteBufferImmediateSupportFlags & desired_flags) == desired_flags;
+}
+
 }
 
 struct command_queue_init {
@@ -302,7 +310,10 @@ struct device_state {
                                      : check_shader_model_6_6_support(*device)},
         supports_open_existing_heap{desc.force_no_open_existing_heap
                                        ? false
-                                       : check_open_existing_heap_support(*device)}
+                                       : check_open_existing_heap_support(*device)},
+        supports_write_buffer_immediate{desc.force_no_write_buffer_immediate
+                                           ? false
+                                           : check_write_buffer_immediate_support(*device)}
    {
    }
 
@@ -335,6 +346,7 @@ struct device_state {
       check_conservative_rasterization_support(*device);
    const bool supports_shader_model_6_6 : 1;
    const bool supports_open_existing_heap : 1;
+   const bool supports_write_buffer_immediate : 1;
 };
 
 struct swap_chain_state {
@@ -1575,6 +1587,11 @@ void device::release_query_heap(query_heap_handle query_heap)
 [[msvc::forceinline]] bool device::supports_open_existing_heap() const noexcept
 {
    return state->supports_open_existing_heap;
+}
+
+[[msvc::forceinline]] bool device::supports_write_buffer_immediate() const noexcept
+{
+   return state->supports_write_buffer_immediate;
 }
 
 swap_chain::swap_chain() = default;

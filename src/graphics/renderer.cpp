@@ -308,8 +308,9 @@ renderer_impl::renderer_impl(const renderer_init& init)
                               .enable_gpu_based_validation = init.use_debug_layer,
                               .force_legacy_barriers = init.use_legacy_barriers,
                               .force_no_shader_model_6_6 = init.never_use_shader_model_6_6,
-                              .force_no_open_existing_heap =
-                                 init.never_use_open_existing_heap}},
+                              .force_no_open_existing_heap = init.never_use_open_existing_heap,
+                              .force_no_write_buffer_immediate =
+                                 init.never_use_write_buffer_immediate}},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
      _texture_manager{_device, _copy_command_list_pool, init.thread_pool,
                       init.asset_libraries.textures, init.error_output},
@@ -3112,13 +3113,24 @@ void renderer_impl::build_object_render_list(const frustum& view_frustum)
 
 void renderer_impl::clear_depth_minmax(gpu::copy_command_list& command_list)
 {
-   const gpu_virtual_address depth_minmax_buffer =
-      _device.get_gpu_virtual_address(_depth_minmax_buffer.get());
+   constexpr std::array minmax = {1.0f, 0.0f};
 
-   command_list.write_buffer_immediate(depth_minmax_buffer,
-                                       std::bit_cast<uint32>(1.0f));
-   command_list.write_buffer_immediate(depth_minmax_buffer + sizeof(float),
-                                       std::bit_cast<uint32>(0.0f));
+   [[likely]] if (_device.supports_write_buffer_immediate()) {
+      const gpu_virtual_address depth_minmax_buffer =
+         _device.get_gpu_virtual_address(_depth_minmax_buffer.get());
+
+      command_list.write_buffer_immediate(depth_minmax_buffer,
+                                          std::bit_cast<uint32>(minmax[0]));
+      command_list.write_buffer_immediate(depth_minmax_buffer + sizeof(float),
+                                          std::bit_cast<uint32>(minmax[1]));
+   }
+   else {
+      auto allocation = _dynamic_buffer_allocator.allocate_and_copy(minmax);
+
+      command_list.copy_buffer_region(_depth_minmax_buffer.get(), 0,
+                                      _dynamic_buffer_allocator.resource(),
+                                      allocation.offset, sizeof(minmax));
+   }
 }
 
 void renderer_impl::reduce_depth_minmax(gpu::graphics_command_list& command_list)
@@ -3187,7 +3199,15 @@ void renderer_impl::update_textures(gpu::copy_command_list& command_list)
    _texture_manager.eval_updated_textures([&](const updated_textures& updated) noexcept {
       _model_manager.for_each([&](model& model) noexcept {
          for (auto& part : model.parts) {
-            part.material.process_updated_textures(command_list, updated);
+            [[likely]] if (_device.supports_write_buffer_immediate()) {
+               part.material.process_updated_textures(command_list, updated);
+            }
+            else {
+               part.material
+                  .process_updated_textures_copy(_device, _dynamic_buffer_allocator,
+                                                 model.gpu_buffer.buffer.get(),
+                                                 command_list, updated);
+            }
          }
       });
 

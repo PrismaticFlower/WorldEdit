@@ -9,6 +9,8 @@
 
 namespace we::graphics {
 
+struct dynamic_buffer_allocator;
+
 enum class material_status {
    ready,
    ready_textures_missing,
@@ -27,6 +29,18 @@ struct material {
    /// @param device The GPU device.
    void process_updated_textures(gpu::copy_command_list& command_list,
                                  const updated_textures& updated);
+
+   /// @brief Process updated material textures using copy_buffer_region instead of write_buffer_immediate.
+   /// @param device The GPU device.
+   /// @param allocator The dynamic buffer allocator.
+   /// @param mesh_buffer The handle to the mesh buffer containing the material.
+   /// @param command_list The copy command list to use to update the constant buffer.
+   /// @param updated The updated textures.
+   void process_updated_textures_copy(gpu::device& device,
+                                      dynamic_buffer_allocator& allocator,
+                                      gpu::resource_handle mesh_buffer,
+                                      gpu::copy_command_list& command_list,
+                                      const updated_textures& updated);
 
    /// @brief Query the status of the material's textures.
    /// @param texture_manager The texture manager.
@@ -65,8 +79,6 @@ struct material {
       std::shared_ptr<const world_texture_load_token> detail_map;
       std::shared_ptr<const world_texture_load_token> env_map;
    };
-
-   gpu::resource_handle constant_buffer;
 
    textures textures;
    texture_names texture_names;

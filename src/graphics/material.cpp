@@ -1,4 +1,5 @@
 #include "material.hpp"
+#include "dynamic_buffer_allocator.hpp"
 
 using namespace std::literals;
 
@@ -316,6 +317,60 @@ void material::process_updated_textures(gpu::copy_command_list& command_list,
       command_list.write_buffer_immediate(constant_buffer_view +
                                              offsetof(normal_material_constants, env_map),
                                           textures.env_map->srv_srgb.index);
+   }
+}
+
+void material::process_updated_textures_copy(gpu::device& device,
+                                             dynamic_buffer_allocator& allocator,
+                                             gpu::resource_handle mesh_buffer,
+                                             gpu::copy_command_list& command_list,
+                                             const updated_textures& updated)
+{
+   const auto copy_srv_index = [&](std::size_t offset, uint32 srv_index) noexcept {
+      auto allocation = allocator.allocate_and_copy(srv_index);
+
+      command_list.copy_buffer_region(mesh_buffer,
+                                      (constant_buffer_view -
+                                       device.get_gpu_virtual_address(mesh_buffer)) +
+                                         offset,
+                                      allocator.resource(), allocation.offset,
+                                      sizeof(uint32));
+   };
+
+   if (auto new_texture = updated.check(texture_names.diffuse_map);
+       new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+      textures.diffuse_map = std::move(new_texture);
+      texture_load_tokens.diffuse_map = nullptr;
+
+      copy_srv_index(offsetof(normal_material_constants, diffuse_map),
+                     textures.diffuse_map->srv_srgb.index);
+   }
+
+   if (auto new_texture = updated.check(texture_names.normal_map);
+       new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+      textures.normal_map = std::move(new_texture);
+      texture_load_tokens.normal_map = nullptr;
+
+      copy_srv_index(offsetof(normal_material_constants, normal_map),
+                     textures.normal_map->srv.index);
+   }
+
+   if (auto new_texture = updated.check(texture_names.detail_map);
+       new_texture and new_texture->dimension == world_texture_dimension::_2d) {
+      textures.detail_map = std::move(new_texture);
+      texture_load_tokens.detail_map = nullptr;
+
+      copy_srv_index(offsetof(normal_material_constants, detail_map),
+                     textures.detail_map->srv.index);
+   }
+
+   if (auto new_texture = updated.check(texture_names.env_map);
+       new_texture and new_texture->dimension == world_texture_dimension::cube) {
+      textures.env_map = std::move(new_texture);
+      texture_load_tokens.env_map = nullptr;
+
+      copy_srv_index(offsetof(normal_material_constants, env_map),
+                     textures.env_map->srv_srgb.index);
    }
 }
 
