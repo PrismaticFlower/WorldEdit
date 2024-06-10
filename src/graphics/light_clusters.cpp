@@ -677,7 +677,7 @@ void light_clusters::tile_lights(root_signature_library& root_signatures,
    command_list.om_set_render_targets(std::span<const gpu::rtv_handle>{});
 
    // draw sphere lights
-   {
+   if (_light_proxy_count > 0) {
       command_list.set_graphics_srv(rs::tile_lights::instance_data_srv,
                                     _sphere_light_proxies_srv);
 
