@@ -117,15 +117,6 @@ void convert_to_smooth_spline(world::animation& animation, float smoothness,
                        animation.rotation_keys.size() * 3);
 
    for (int32 i = 0; i < std::ssize(animation.position_keys); ++i) {
-      const world::position_key& key_back =
-         animation.position_keys[clamp_position(i - 1, animation)];
-      const world::position_key& key =
-         animation.position_keys[clamp_position(i, animation)];
-      const world::position_key& key_forward =
-         animation.position_keys[clamp_position(i + 1, animation)];
-      const world::position_key& key_forward_forward =
-         animation.position_keys[clamp_position(i + 2, animation)];
-
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.position_keys, i,
                                       &world::position_key::transition,
@@ -133,25 +124,16 @@ void convert_to_smooth_spline(world::animation& animation, float smoothness,
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.position_keys, i,
                                       &world::position_key::tangent,
-                                      smoothness * (key_forward.position -
-                                                    key_back.position)));
+                                      world::make_position_tangent(animation, i,
+                                                                   smoothness)));
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.position_keys, i,
                                       &world::position_key::tangent_next,
-                                      smoothness * (key_forward_forward.position -
-                                                    key.position)));
+                                      world::make_position_tangent(animation, i + 1,
+                                                                   smoothness)));
    }
 
    for (int32 i = 0; i < std::ssize(animation.rotation_keys); ++i) {
-      const world::rotation_key& key_back =
-         animation.rotation_keys[clamp_rotation(i - 1, animation)];
-      const world::rotation_key& key =
-         animation.rotation_keys[clamp_rotation(i, animation)];
-      const world::rotation_key& key_forward =
-         animation.rotation_keys[clamp_rotation(i + 1, animation)];
-      const world::rotation_key& key_forward_forward =
-         animation.rotation_keys[clamp_rotation(i + 2, animation)];
-
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.rotation_keys, i,
                                       &world::rotation_key::transition,
@@ -159,13 +141,13 @@ void convert_to_smooth_spline(world::animation& animation, float smoothness,
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.rotation_keys, i,
                                       &world::rotation_key::tangent,
-                                      smoothness * (key_forward.rotation -
-                                                    key_back.rotation)));
+                                      world::make_rotation_tangent(animation, i,
+                                                                   smoothness)));
       edit_bundle.push_back(
          edits::make_set_vector_value(&animation.rotation_keys, i,
                                       &world::rotation_key::tangent_next,
-                                      smoothness * (key_forward_forward.rotation -
-                                                    key.rotation)));
+                                      world::make_rotation_tangent(animation, i + 1,
+                                                                   smoothness)));
    }
 
    edit_stack.apply(edits::make_bundle(std::move(edit_bundle)), edit_context);
@@ -180,53 +162,35 @@ void update_position_auto_tangents(world::animation& animation, int32 key_index,
 
    edit_bundle.reserve(5);
 
-   {
-      const world::position_key& key_forward_forward =
-         animation.position_keys[clamp_position(key_index + 2, animation)];
+   const world::key_override override = {.index = key_index,
+                                         .position = key_new_position};
 
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index,
-                                      &world::position_key::position, key_new_position));
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys, key_index,
-                                      &world::position_key::tangent_next,
-                                      smoothness * (key_forward_forward.position -
-                                                    key_new_position)));
-   }
+   edit_bundle.push_back(
+      edits::make_set_vector_value(&animation.position_keys, key_index,
+                                   &world::position_key::position, key_new_position));
+   edit_bundle.push_back(edits::make_set_vector_value(
+      &animation.position_keys, key_index, &world::position_key::tangent_next,
+      world::make_position_tangent(animation, key_index + 1, smoothness, override)));
 
    if (key_index - 2 >= 0 or animation.loop) {
-      const world::position_key& key =
-         animation.position_keys[clamp_position(key_index - 2, animation)];
-
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys,
-                                      clamp_position(key_index - 2, animation),
-                                      &world::position_key::tangent_next,
-                                      smoothness * (key_new_position - key.position)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.position_keys, clamp_position(key_index - 2, animation),
+         &world::position_key::tangent_next,
+         world::make_position_tangent(animation, key_index - 1, smoothness, override)));
    }
 
    if (key_index - 1 >= 0 or animation.loop) {
-      const world::position_key& key_back =
-         animation.position_keys[clamp_position(key_index - 2, animation)];
-
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys,
-                                      clamp_position(key_index - 1, animation),
-                                      &world::position_key::tangent,
-                                      smoothness *
-                                         (key_new_position - key_back.position)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.position_keys, clamp_position(key_index - 1, animation),
+         &world::position_key::tangent,
+         world::make_position_tangent(animation, key_index - 1, smoothness, override)));
    }
 
    if (key_index + 1 < std::ssize(animation.position_keys) or animation.loop) {
-      const world::position_key& key_forward =
-         animation.position_keys[clamp_position(key_index + 2, animation)];
-
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.position_keys,
-                                      clamp_position(key_index + 1, animation),
-                                      &world::position_key::tangent,
-                                      smoothness * (key_forward.position -
-                                                    key_new_position)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.position_keys, clamp_position(key_index + 1, animation),
+         &world::position_key::tangent,
+         world::make_position_tangent(animation, key_index + 1, smoothness, override)));
    }
 
    edit_stack.apply(edits::make_bundle(std::move(edit_bundle)), edit_context);
@@ -241,53 +205,35 @@ void update_rotation_auto_tangents(world::animation& animation, int32 key_index,
 
    edit_bundle.reserve(5);
 
-   {
-      const world::rotation_key& key_forward_forward =
-         animation.rotation_keys[clamp_rotation(key_index + 2, animation)];
+   const world::key_override override = {.index = key_index,
+                                         .rotation = key_new_rotation};
 
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.rotation_keys, key_index,
-                                      &world::rotation_key::rotation, key_new_rotation));
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.rotation_keys, key_index,
-                                      &world::rotation_key::tangent_next,
-                                      smoothness * (key_forward_forward.rotation -
-                                                    key_new_rotation)));
-   }
+   edit_bundle.push_back(
+      edits::make_set_vector_value(&animation.rotation_keys, key_index,
+                                   &world::rotation_key::rotation, key_new_rotation));
+   edit_bundle.push_back(edits::make_set_vector_value(
+      &animation.rotation_keys, key_index, &world::rotation_key::tangent_next,
+      world::make_rotation_tangent(animation, key_index + 1, smoothness, override)));
 
    if (key_index - 2 >= 0 or animation.loop) {
-      const world::rotation_key& key =
-         animation.rotation_keys[clamp_rotation(key_index - 2, animation)];
-
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.rotation_keys,
-                                      clamp_rotation(key_index - 2, animation),
-                                      &world::rotation_key::tangent_next,
-                                      smoothness * (key_new_rotation - key.rotation)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.rotation_keys, clamp_rotation(key_index - 2, animation),
+         &world::rotation_key::tangent_next,
+         world::make_rotation_tangent(animation, key_index - 1, smoothness, override)));
    }
 
    if (key_index - 1 >= 0 or animation.loop) {
-      const world::rotation_key& key_back =
-         animation.rotation_keys[clamp_rotation(key_index - 2, animation)];
-
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.rotation_keys,
-                                      clamp_rotation(key_index - 1, animation),
-                                      &world::rotation_key::tangent,
-                                      smoothness *
-                                         (key_new_rotation - key_back.rotation)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.rotation_keys, clamp_rotation(key_index - 1, animation),
+         &world::rotation_key::tangent,
+         world::make_rotation_tangent(animation, key_index - 1, smoothness, override)));
    }
 
    if (key_index + 1 < std::ssize(animation.rotation_keys) or animation.loop) {
-      const world::rotation_key& key_forward =
-         animation.rotation_keys[clamp_rotation(key_index + 2, animation)];
-
-      edit_bundle.push_back(
-         edits::make_set_vector_value(&animation.rotation_keys,
-                                      clamp_rotation(key_index + 1, animation),
-                                      &world::rotation_key::tangent,
-                                      smoothness * (key_forward.rotation -
-                                                    key_new_rotation)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.rotation_keys, clamp_rotation(key_index + 1, animation),
+         &world::rotation_key::tangent,
+         world::make_rotation_tangent(animation, key_index + 1, smoothness, override)));
    }
 
    edit_stack.apply(edits::make_bundle(std::move(edit_bundle)), edit_context);
@@ -310,138 +256,78 @@ void update_auto_tangents(world::animation& animation, int32 key_index,
    if (flags.position_keys) {
       const float3 key_new_position = animation.position_keys[key_index].position;
 
-      {
-         const world::position_key& key_back =
-            animation.position_keys[clamp_position(key_index - 1, animation)];
-         const world::position_key& key_forward =
-            animation.position_keys[clamp_position(key_index + 1, animation)];
-         const world::position_key& key_forward_forward =
-            animation.position_keys[clamp_position(key_index + 2, animation)];
-
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.position_keys, key_index,
-                                         &world::position_key::tangent,
-                                         smoothness * (key_forward.position -
-                                                       key_back.position)));
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.position_keys, key_index,
-                                         &world::position_key::tangent_next,
-                                         smoothness * (key_forward_forward.position -
-                                                       key_new_position)));
-      }
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.position_keys, key_index,
+                                      &world::position_key::tangent,
+                                      world::make_position_tangent(animation, key_index,
+                                                                   smoothness)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.position_keys, key_index, &world::position_key::tangent_next,
+         world::make_position_tangent(animation, key_index + 1, smoothness)));
 
       if (key_index - 2 >= 0 or animation.loop) {
-         const world::position_key& key =
-            animation.position_keys[clamp_position(key_index - 2, animation)];
-
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.position_keys,
-                                         clamp_position(key_index - 2, animation),
-                                         &world::position_key::tangent_next,
-                                         smoothness * (key_new_position - key.position)));
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.position_keys, clamp_position(key_index - 2, animation),
+            &world::position_key::tangent_next,
+            world::make_position_tangent(animation, key_index - 1, smoothness)));
       }
 
       if (key_index - 1 >= 0 or animation.loop) {
-         const world::position_key& key_back =
-            animation.position_keys[clamp_position(key_index - 2, animation)];
-         const world::position_key& key =
-            animation.position_keys[clamp_position(key_index - 1, animation)];
-         const world::position_key& key_forward_forward =
-            animation.position_keys[clamp_position(key_index + 1, animation)];
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.position_keys, clamp_position(key_index - 1, animation),
+            &world::position_key::tangent,
+            world::make_position_tangent(animation, key_index - 1, smoothness)));
 
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.position_keys,
-                                         clamp_position(key_index - 1, animation),
-                                         &world::position_key::tangent,
-                                         smoothness * (key_new_position -
-                                                       key_back.position)));
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.position_keys,
-                                         clamp_position(key_index - 1, animation),
-                                         &world::position_key::tangent_next,
-                                         smoothness * (key_forward_forward.position -
-                                                       key.position)));
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.position_keys, clamp_position(key_index - 1, animation),
+            &world::position_key::tangent_next,
+            world::make_position_tangent(animation, key_index, smoothness)));
       }
 
       if (key_index + 1 < std::ssize(animation.position_keys) or animation.loop) {
-         const world::position_key& key_forward =
-            animation.position_keys[clamp_position(key_index + 2, animation)];
-
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.position_keys,
-                                         clamp_position(key_index + 1, animation),
-                                         &world::position_key::tangent,
-                                         smoothness * (key_forward.position -
-                                                       key_new_position)));
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.position_keys, clamp_position(key_index + 1, animation),
+            &world::position_key::tangent,
+            world::make_position_tangent(animation, key_index + 1, smoothness)));
       }
    }
 
    if (flags.rotation_keys) {
       const float3 key_new_rotation = animation.rotation_keys[key_index].rotation;
 
-      {
-         const world::rotation_key& key_back =
-            animation.rotation_keys[clamp_rotation(key_index - 1, animation)];
-         const world::rotation_key& key_forward =
-            animation.rotation_keys[clamp_rotation(key_index + 1, animation)];
-         const world::rotation_key& key_forward_forward =
-            animation.rotation_keys[clamp_rotation(key_index + 2, animation)];
+      edit_bundle.push_back(
+         edits::make_set_vector_value(&animation.rotation_keys, key_index,
+                                      &world::rotation_key::tangent,
+                                      world::make_rotation_tangent(animation, key_index,
+                                                                   smoothness)));
+      edit_bundle.push_back(edits::make_set_vector_value(
+         &animation.rotation_keys, key_index, &world::rotation_key::tangent_next,
 
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.rotation_keys, key_index,
-                                         &world::rotation_key::tangent,
-                                         smoothness * (key_forward.rotation -
-                                                       key_back.rotation)));
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.rotation_keys, key_index,
-                                         &world::rotation_key::tangent_next,
-                                         smoothness * (key_forward_forward.rotation -
-                                                       key_new_rotation)));
-      }
+         world::make_rotation_tangent(animation, key_index + 1, smoothness)));
 
       if (key_index - 2 >= 0 or animation.loop) {
-         const world::rotation_key& key =
-            animation.rotation_keys[clamp_rotation(key_index - 2, animation)];
-
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.rotation_keys,
-                                         clamp_rotation(key_index - 2, animation),
-                                         &world::rotation_key::tangent_next,
-                                         smoothness * (key_new_rotation - key.rotation)));
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.rotation_keys, clamp_rotation(key_index - 2, animation),
+            &world::rotation_key::tangent_next,
+            world::make_rotation_tangent(animation, key_index - 1, smoothness)));
       }
 
       if (key_index - 1 >= 0 or animation.loop) {
-         const world::rotation_key& key_back =
-            animation.rotation_keys[clamp_rotation(key_index - 2, animation)];
-         const world::rotation_key& key =
-            animation.rotation_keys[clamp_rotation(key_index - 1, animation)];
-         const world::rotation_key& key_forward_forward =
-            animation.rotation_keys[clamp_rotation(key_index + 1, animation)];
-
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.rotation_keys,
-                                         clamp_rotation(key_index - 1, animation),
-                                         &world::rotation_key::tangent,
-                                         smoothness * (key_new_rotation -
-                                                       key_back.rotation)));
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.rotation_keys,
-                                         clamp_rotation(key_index - 1, animation),
-                                         &world::rotation_key::tangent_next,
-                                         smoothness * (key_forward_forward.rotation -
-                                                       key.rotation)));
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.rotation_keys, clamp_rotation(key_index - 1, animation),
+            &world::rotation_key::tangent,
+            world::make_rotation_tangent(animation, key_index - 1, smoothness)));
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.rotation_keys, clamp_rotation(key_index - 1, animation),
+            &world::rotation_key::tangent_next,
+            world::make_rotation_tangent(animation, key_index, smoothness)));
       }
 
       if (key_index + 1 < std::ssize(animation.rotation_keys) or animation.loop) {
-         const world::rotation_key& key_forward =
-            animation.rotation_keys[clamp_rotation(key_index + 2, animation)];
-
-         edit_bundle.push_back(
-            edits::make_set_vector_value(&animation.rotation_keys,
-                                         clamp_rotation(key_index + 1, animation),
-                                         &world::rotation_key::tangent,
-                                         smoothness * (key_forward.rotation -
-                                                       key_new_rotation)));
+         edit_bundle.push_back(edits::make_set_vector_value(
+            &animation.rotation_keys, clamp_rotation(key_index + 1, animation),
+            &world::rotation_key::tangent,
+            world::make_rotation_tangent(animation, key_index + 1, smoothness)));
       }
    }
 
@@ -709,8 +595,7 @@ void world_edit::ui_show_animation_editor() noexcept
                _animation_editor_config.auto_tangent_smoothness = 1.0f - tension;
             }
 
-            ImGui::SetItemTooltip("The tension value used for auto tangents. A "
-                                  "value of 0.5 gives a Catmull-Rom Spline.");
+            ImGui::SetItemTooltip("The tension value used for auto tangents.");
 
             ImGui::SeparatorText("Playback Preview");
 
@@ -1190,30 +1075,21 @@ void world_edit::ui_show_animation_editor() noexcept
                                           _edit_stack_world, _edit_context);
                   }
                   else {
-                     const world::position_key& key_back =
-                        selected_animation
-                           ->position_keys[clamp_position(selected_key - 1, *selected_animation)];
-                     const world::position_key& key_forward =
-                        selected_animation
-                           ->position_keys[clamp_position(selected_key + 1, *selected_animation)];
-                     const world::position_key& key_forward_forward =
-                        selected_animation
-                           ->position_keys[clamp_position(selected_key + 2, *selected_animation)];
-
-                     _edit_stack_world
-                        .apply(edits::make_set_vector_value(
-                                  &selected_animation->position_keys,
-                                  selected_key, &world::position_key::tangent,
-                                  _animation_editor_config.auto_tangent_smoothness *
-                                     (key_forward.position - key_back.position)),
-                               _edit_context);
-                     _edit_stack_world
-                        .apply(edits::make_set_vector_value(
-                                  &selected_animation->position_keys,
-                                  selected_key, &world::position_key::tangent_next,
-                                  _animation_editor_config.auto_tangent_smoothness *
-                                     (key_forward_forward.position - key.position)),
-                               _edit_context, {.transparent = true});
+                     _edit_stack_world.apply(
+                        edits::make_set_vector_value(
+                           &selected_animation->position_keys, selected_key,
+                           &world::position_key::tangent,
+                           world::make_position_tangent(*selected_animation, selected_key,
+                                                        _animation_editor_config.auto_tangent_smoothness)),
+                        _edit_context);
+                     _edit_stack_world.apply(
+                        edits::make_set_vector_value(
+                           &selected_animation->position_keys, selected_key,
+                           &world::position_key::tangent_next,
+                           world::make_position_tangent(*selected_animation,
+                                                        selected_key + 1,
+                                                        _animation_editor_config.auto_tangent_smoothness)),
+                        _edit_context, {.transparent = true});
                   }
                }
 
@@ -1423,30 +1299,21 @@ void world_edit::ui_show_animation_editor() noexcept
                                           _edit_stack_world, _edit_context);
                   }
                   else {
-                     const world::rotation_key& key_back =
-                        selected_animation
-                           ->rotation_keys[clamp_rotation(selected_key - 1, *selected_animation)];
-                     const world::rotation_key& key_forward =
-                        selected_animation
-                           ->rotation_keys[clamp_rotation(selected_key + 1, *selected_animation)];
-                     const world::rotation_key& key_forward_forward =
-                        selected_animation
-                           ->rotation_keys[clamp_rotation(selected_key + 2, *selected_animation)];
-
-                     _edit_stack_world
-                        .apply(edits::make_set_vector_value(
-                                  &selected_animation->rotation_keys,
-                                  selected_key, &world::rotation_key::tangent,
-                                  _animation_editor_config.auto_tangent_smoothness *
-                                     (key_forward.rotation - key_back.rotation)),
-                               _edit_context);
-                     _edit_stack_world
-                        .apply(edits::make_set_vector_value(
-                                  &selected_animation->rotation_keys,
-                                  selected_key, &world::rotation_key::tangent_next,
-                                  _animation_editor_config.auto_tangent_smoothness *
-                                     (key_forward_forward.rotation - key.rotation)),
-                               _edit_context, {.transparent = true});
+                     _edit_stack_world.apply(
+                        edits::make_set_vector_value(
+                           &selected_animation->rotation_keys, selected_key,
+                           &world::rotation_key::tangent,
+                           world::make_rotation_tangent(*selected_animation, selected_key,
+                                                        _animation_editor_config.auto_tangent_smoothness)),
+                        _edit_context);
+                     _edit_stack_world.apply(
+                        edits::make_set_vector_value(
+                           &selected_animation->rotation_keys, selected_key,
+                           &world::rotation_key::tangent_next,
+                           world::make_rotation_tangent(*selected_animation,
+                                                        selected_key + 1,
+                                                        _animation_editor_config.auto_tangent_smoothness)),
+                        _edit_context, {.transparent = true});
                   }
                }
 

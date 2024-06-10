@@ -38,4 +38,21 @@ auto make_position_key_for_time(const animation& animation, float t) noexcept
 auto make_rotation_key_for_time(const animation& animation, float t) noexcept
    -> rotation_key;
 
+/// @brief Allows overriding the value used for a key when creating tangents.
+struct key_override {
+   /// @brief Index of the key to override.
+   int32 index = -1;
+
+   union {
+      float3 position;
+      float3 rotation;
+   };
+};
+
+auto make_rotation_tangent(const animation& animation, int32 index, float smoothness,
+                           const key_override override = {}) noexcept -> float3;
+
+auto make_position_tangent(const animation& animation, int32 index, float smoothness,
+                           const key_override override = {}) noexcept -> float3;
+
 }

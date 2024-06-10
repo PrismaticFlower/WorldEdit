@@ -736,4 +736,84 @@ auto make_rotation_key_for_time(const animation& animation, float t) noexcept ->
    return new_key;
 }
 
+auto make_rotation_tangent(const animation& animation, int32 index, float smoothness,
+                           const key_override override) noexcept -> float3
+{
+   const std::ptrdiff_t key_count = std::ssize(animation.rotation_keys);
+
+   if (not animation.loop) {
+      if (index - 1 < 0) return {};
+      if (index + 1 >= key_count) return {};
+   }
+
+   std::ptrdiff_t back_index = index - 1;
+
+   if (back_index < 0 or back_index >= key_count) {
+      back_index = (back_index + key_count) % key_count;
+   }
+
+   std::ptrdiff_t forward_index = index + 1;
+
+   if (forward_index < 0 or forward_index >= key_count) {
+      forward_index = (forward_index + key_count) % key_count;
+   }
+
+   const world::rotation_key& key_back = animation.rotation_keys[back_index];
+   const world::rotation_key& key_forward = animation.rotation_keys[forward_index];
+
+   const float3 rotation_back =
+      back_index == override.index ? override.rotation : key_back.rotation;
+   const float3 rotation_forward =
+      forward_index == override.index ? override.rotation : key_forward.rotation;
+
+   const float time_back =
+      index - 1 < 0 ? key_back.time - animation.runtime : key_back.time;
+   const float time_forward = index + 1 >= key_count
+                                 ? key_forward.time + animation.runtime
+                                 : key_forward.time;
+
+   return smoothness *
+          ((rotation_forward - rotation_back) / (time_forward - time_back));
+}
+
+auto make_position_tangent(const animation& animation, int32 index, float smoothness,
+                           const key_override override) noexcept -> float3
+{
+   const std::ptrdiff_t key_count = std::ssize(animation.position_keys);
+
+   if (not animation.loop) {
+      if (index - 1 < 0) return {};
+      if (index + 1 >= key_count) return {};
+   }
+
+   std::ptrdiff_t back_index = index - 1;
+
+   if (back_index < 0 or back_index >= key_count) {
+      back_index = (back_index + key_count) % key_count;
+   }
+
+   std::ptrdiff_t forward_index = index + 1;
+
+   if (forward_index < 0 or forward_index >= key_count) {
+      forward_index = (forward_index + key_count) % key_count;
+   }
+
+   const world::position_key& key_back = animation.position_keys[back_index];
+   const world::position_key& key_forward = animation.position_keys[forward_index];
+
+   const float3 position_back =
+      back_index == override.index ? override.position : key_back.position;
+   const float3 position_forward =
+      forward_index == override.index ? override.position : key_forward.position;
+
+   const float time_back =
+      index - 1 < 0 ? key_back.time - animation.runtime : key_back.time;
+   const float time_forward = index + 1 >= key_count
+                                 ? key_forward.time + animation.runtime
+                                 : key_forward.time;
+
+   return smoothness *
+          ((position_forward - position_back) / (time_forward - time_back));
+}
+
 }
