@@ -331,9 +331,16 @@ void build_local_translation_transforms(const animation& animation,
       const rotation_key& end = animation.rotation_keys[end_index];
 
       const float3 start_end_delta = abs(start.rotation - end.rotation);
-      const float delta_max =
-         std::max(std::max(start_end_delta.x, start_end_delta.y),
-                  start_end_delta.z);
+      float delta_max = std::max(std::max(start_end_delta.x, start_end_delta.y),
+                                 start_end_delta.z);
+
+      if (start.transition == animation_transition::spline) {
+         const float3 tangent_delta = abs(start.tangent - start.tangent_next);
+         const float tangent_delta_max =
+            std::max(std::max(tangent_delta.x, tangent_delta.y), tangent_delta.z);
+
+         delta_max = std::max(delta_max, tangent_delta_max);
+      }
 
       const uint32 steps = static_cast<uint32>(delta_max * 4.0f + 0.5f);
       const float inv_steps = 1.0f / static_cast<float>(steps);
