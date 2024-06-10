@@ -269,6 +269,7 @@
     <ClCompile Include="src\graphics\ai_overlay_batches.cpp" />
     <ClCompile Include="src\graphics\copy_command_list_pool.cpp" />
     <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp" />
+    <ClCompile Include="src\graphics\gpu\detail\format_helpers.cpp" />
     <ClCompile Include="src\graphics\gpu\rhi.cpp" />
     <ClCompile Include="src\graphics\imgui_renderer.cpp" />
     <ClCompile Include="src\graphics\meta_draw_batcher.cpp" />
@@ -540,6 +541,7 @@
     <ClInclude Include="src\graphics\gpu\detail\descriptor_allocator.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\descriptor_heap.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\error.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\format_helpers.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\handle_packing.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\release_queue.hpp" />
     <ClInclude Include="src\graphics\gpu\exception.hpp" />

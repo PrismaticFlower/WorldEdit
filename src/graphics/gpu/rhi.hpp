@@ -1186,6 +1186,9 @@ struct device_desc {
 
    /// @brief Force the device to report write buffer immediate as unsupported.
    bool force_no_write_buffer_immediate = false;
+
+   /// @brief Force the device to not make use of Casting Fully Typed Format.
+   bool force_no_casting_fully_typed_format = false;
 };
 
 /// Device Definitions ///

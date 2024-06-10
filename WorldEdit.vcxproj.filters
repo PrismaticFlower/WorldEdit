@@ -218,6 +218,7 @@
     <ClCompile Include="src\edits\delete_animation_hierarchy_child.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy_child.cpp" />
     <ClCompile Include="src\utility\stopwatch.cpp" />
+    <ClCompile Include="src\graphics\gpu\detail\format_helpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -504,6 +505,7 @@
     <ClInclude Include="src\edits\delete_animation_hierarchy_child.hpp" />
     <ClInclude Include="src\edits\add_animation_hierarchy_child.hpp" />
     <ClInclude Include="src\math\plane_funcs.hpp" />
+    <ClInclude Include="src\graphics\gpu\detail\format_helpers.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

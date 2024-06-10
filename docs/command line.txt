@@ -18,3 +18,6 @@
 
 -gpu_no_write_buffer_immediate
   Never make use of WriteBufferImmediate. Even if it is supported by the GPU.
+
+-gpu_no_relaxed_format_casting
+  Never make use of Relaxed Format Casting. Even if it is supported by the GPU.

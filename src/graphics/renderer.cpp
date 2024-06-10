@@ -310,7 +310,9 @@ renderer_impl::renderer_impl(const renderer_init& init)
                               .force_no_shader_model_6_6 = init.never_use_shader_model_6_6,
                               .force_no_open_existing_heap = init.never_use_open_existing_heap,
                               .force_no_write_buffer_immediate =
-                                 init.never_use_write_buffer_immediate}},
+                                 init.never_use_write_buffer_immediate,
+                              .force_no_casting_fully_typed_format =
+                                 init.never_use_relaxed_format_casting}},
      _swap_chain{_device.create_swap_chain({.window = init.window})},
      _texture_manager{_device, _copy_command_list_pool, init.thread_pool,
                       init.asset_libraries.textures, init.error_output},

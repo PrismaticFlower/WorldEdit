@@ -2,6 +2,7 @@
 #include "detail/command_allocator_pool.hpp"
 #include "detail/descriptor_heap.hpp"
 #include "detail/error.hpp"
+#include "detail/format_helpers.hpp"
 #include "detail/handle_packing.hpp"
 #include "detail/release_queue.hpp"
 #include "io/output_file.hpp"
@@ -144,23 +145,6 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
          unsupported = true;
       }
 
-      if (D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
-          SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
-                                                &options3, sizeof(options3)))) {
-         if (not options3.CastingFullyTypedFormatSupported) {
-            debug_ouput.write_ln("GPU doesn't support casting fully typed "
-                                 "formats. (Treating UNORM "
-                                 "as UNORM_SRGB and vice-versa.)");
-
-            unsupported = true;
-         }
-      }
-      else {
-         debug_ouput.write_ln("Failed to query D3D12_FEATURE_D3D12_OPTIONS3");
-
-         unsupported = true;
-      }
-
       if (D3D12_FEATURE_DATA_SHADER_MODEL shader_model_support{
              .HighestShaderModel = D3D_SHADER_MODEL_6_1};
           SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shader_model_support,
@@ -290,6 +274,18 @@ bool check_write_buffer_immediate_support(ID3D12Device& device) noexcept
    return (options3.WriteBufferImmediateSupportFlags & desired_flags) == desired_flags;
 }
 
+bool check_casting_fully_typed_format_supported(ID3D12Device& device) noexcept
+{
+   D3D12_FEATURE_DATA_D3D12_OPTIONS3 options3{};
+
+   if (FAILED(device.CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3,
+                                         &options3, sizeof(options3)))) {
+      return false;
+   }
+
+   return options3.CastingFullyTypedFormatSupported;
+}
+
 }
 
 struct command_queue_init {
@@ -311,9 +307,14 @@ struct device_state {
         supports_open_existing_heap{desc.force_no_open_existing_heap
                                        ? false
                                        : check_open_existing_heap_support(*device)},
-        supports_write_buffer_immediate{desc.force_no_write_buffer_immediate
-                                           ? false
-                                           : check_write_buffer_immediate_support(*device)}
+        supports_write_buffer_immediate{
+           desc.force_no_write_buffer_immediate
+              ? false
+              : check_write_buffer_immediate_support(*device)},
+        supports_casting_fully_typed_format{
+           desc.force_no_casting_fully_typed_format
+              ? false
+              : check_casting_fully_typed_format_supported(*device)}
    {
    }
 
@@ -347,6 +348,7 @@ struct device_state {
    const bool supports_shader_model_6_6 : 1;
    const bool supports_open_existing_heap : 1;
    const bool supports_write_buffer_immediate : 1;
+   const bool supports_casting_fully_typed_format : 1;
 };
 
 struct swap_chain_state {
@@ -1039,6 +1041,10 @@ auto device::create_texture(const texture_desc& desc,
    if (desc.flags.deny_shader_resource)   flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
    // clang-format on
 
+   const DXGI_FORMAT format = state->supports_casting_fully_typed_format
+                                 ? desc.format
+                                 : detail::to_typeless(desc.format);
+
    D3D12_HEAP_PROPERTIES heap_properties{.Type = D3D12_HEAP_TYPE_DEFAULT};
    D3D12_RESOURCE_DESC1 d3d12_desc{
       .Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(desc.dimension),
@@ -1047,7 +1053,7 @@ auto device::create_texture(const texture_desc& desc,
       .DepthOrArraySize = static_cast<uint16>(
          desc.dimension == texture_dimension::t_3d ? desc.depth : desc.array_size),
       .MipLevels = static_cast<uint16>(desc.mip_levels),
-      .Format = desc.format,
+      .Format = format,
       .SampleDesc = {desc.sample_count, desc.sample_count > 1 ? DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN
                                                               : 0},
       .Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,

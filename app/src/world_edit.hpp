@@ -414,6 +414,7 @@ private:
    bool _renderer_never_use_shader_model_6_6 = false;
    bool _renderer_never_use_open_existing_heap = false;
    bool _renderer_never_use_write_buffer_immediate = false;
+   bool _renderer_never_use_relaxed_format_casting = false;
 
    std::unique_ptr<graphics::renderer> _renderer;
    graphics::camera _camera;

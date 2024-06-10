@@ -58,6 +58,7 @@ struct renderer_init {
    bool never_use_shader_model_6_6 = false;
    bool never_use_open_existing_heap = false;
    bool never_use_write_buffer_immediate = false;
+   bool never_use_relaxed_format_casting = false;
 };
 
 struct draw_frame_options {
