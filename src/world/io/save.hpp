@@ -8,7 +8,13 @@
 
 namespace we::world {
 
+struct save_flags {
+   /// @brief Controls saving the GameMode section in the layer index and the saving of .mrq files.
+   bool save_gamemodes : 1 = true;
+};
+
 void save_world(const std::filesystem::path& path, const world& world,
-                const std::span<const terrain_cut> terrain_cuts);
+                const std::span<const terrain_cut> terrain_cuts,
+                const save_flags flags);
 
 }

@@ -791,7 +791,8 @@ void save_layer(const std::filesystem::path& world_dir,
    }
 }
 
-void save_layer_index(const std::filesystem::path& path, const world& world)
+void save_layer_index(const std::filesystem::path& path, const world& world,
+                      const save_flags flags)
 {
    io::output_file file{path};
 
@@ -808,25 +809,28 @@ void save_layer_index(const std::filesystem::path& path, const world& world)
       file.write_ln("}\n");
    }
 
-   if (not world.game_modes.empty()) { // for possible BF1 support
-      for (auto& game_mode : world.game_modes) {
-         file.write_ln("GameMode(\"{}\")", game_mode.name);
-         file.write_ln("{");
-         for (auto& layer : game_mode.layers) {
-            file.write_ln("\tLayer({});", layer);
-         }
-         file.write_ln("}\n");
+   if (not flags.save_gamemodes) return;
+
+   for (auto& game_mode : world.game_modes) {
+      file.write_ln("GameMode(\"{}\")", game_mode.name);
+      file.write_ln("{");
+      for (auto& layer : game_mode.layers) {
+         file.write_ln("\tLayer({});", layer);
       }
+      file.write_ln("}\n");
    }
 }
 
 void save_requirements(const std::filesystem::path& world_dir,
-                       const std::string_view world_name, const world& world)
+                       const std::string_view world_name, const world& world,
+                       const save_flags flags)
 {
    if (not world.requirements.empty()) {
       assets::req::save(world_dir / fmt::format("{}.req", world_name),
                         world.requirements);
    }
+
+   if (not flags.save_gamemodes) return;
 
    for (std::size_t i = 1; i < world.game_modes.size(); ++i) {
       if (world.game_modes[i].requirements.empty()) continue;
@@ -874,7 +878,7 @@ void garbage_collect_files(const std::filesystem::path& world_dir,
 }
 
 void save_world(const std::filesystem::path& path, const world& world,
-                const std::span<const terrain_cut> terrain_cuts)
+                const std::span<const terrain_cut> terrain_cuts, const save_flags flags)
 {
    const auto world_dir = path.parent_path();
    const auto world_name = path.stem().string();
@@ -883,7 +887,8 @@ void save_world(const std::filesystem::path& path, const world& world,
 
    garbage_collect_files(world_dir, world_name, world);
 
-   save_layer_index(std::filesystem::path{path}.replace_extension(L".ldx"sv), world);
+   save_layer_index(std::filesystem::path{path}.replace_extension(L".ldx"sv),
+                    world, flags);
 
    save_layer(world_dir, world_name, 0, world, sequence_numbers);
 
@@ -896,7 +901,7 @@ void save_world(const std::filesystem::path& path, const world& world,
 
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv),
                 world.terrain, terrain_cuts);
-   save_requirements(world_dir, world_name, world);
+   save_requirements(world_dir, world_name, world, flags);
    save_effects(std::filesystem::path{path}.replace_extension(L".fx"sv), world.effects);
 }
 }

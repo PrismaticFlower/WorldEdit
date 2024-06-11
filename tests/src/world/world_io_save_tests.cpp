@@ -734,6 +734,21 @@ GameMode("conquest")
 
 )"sv;
 
+constexpr auto expected_ldx_no_gamemodes = R"(Version(1);
+NextID(2);
+
+Layer("[Base]", 0, 0)
+{
+	Description("");
+}
+
+Layer("conquest", 1, 0)
+{
+	Description("");
+}
+
+)"sv;
+
 constexpr auto expected_req = R"(ucft
 {
 	REQN
@@ -1159,7 +1174,7 @@ TEST_CASE("world saving", "[World][IO]")
                                 }},
    };
 
-   save_world(L"temp/world/test.wld", world, {});
+   save_world(L"temp/world/test.wld", world, {}, save_flags{});
 
    const auto written_wld = io::read_file_to_string(L"temp/world/test.wld");
 
@@ -1246,7 +1261,7 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
       // NB: Test that test_ctf.mrq already being gone causes no issues.
    }
 
-   save_world(L"temp/world_gc/test.wld", world, {});
+   save_world(L"temp/world_gc/test.wld", world, {}, save_flags{});
 
    for (const auto& layer : world.deleted_layers) {
       for (const auto& file : layer_files) {
@@ -1261,4 +1276,50 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
    }
 }
 
+TEST_CASE("world saving no gamemodes", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/world");
+
+   const world world{
+      .name = "test_no_gamemodes",
+
+      .requirements =
+         {
+            {.file_type = "path", .entries = {"test"}},
+            {.file_type = "congraph", .entries = {"test"}},
+            {.file_type = "envfx", .entries = {"test"}},
+            {.file_type = "world", .entries = {"test"}},
+            {.file_type = "prop", .entries = {"test"}},
+            {.file_type = "povs", .entries = {"test"}},
+            {.file_type = "lvl", .entries = {"test_conquest"}},
+         },
+
+      .layer_descriptions = {{.name = "[Base]"}, {.name = "conquest"}},
+
+      .game_modes = {{.name = "Common", .layers = {0}},
+
+                     {.name = "conquest",
+                      .layers = {1},
+                      .requirements =
+                         {
+                            {.file_type = "world", .entries = {"test_conquest"}},
+                         }}},
+   };
+
+   save_world(L"temp/world/test_no_gamemodes.wld", world, {},
+              {.save_gamemodes = false});
+
+   const auto written_ldx =
+      io::read_file_to_string(L"temp/world/test_no_gamemodes.ldx");
+
+   CHECK(written_ldx == expected_ldx_no_gamemodes);
+
+   const auto written_req =
+      io::read_file_to_string(L"temp/world/test_no_gamemodes.req");
+
+   CHECK(written_req == expected_req);
+
+   CHECK(not std::filesystem::exists(
+      L"temp/world/test_no_gamemodes_conquest.mrq"));
+}
 }

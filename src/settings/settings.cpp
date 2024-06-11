@@ -99,6 +99,16 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
             ImGui::Checkbox("Don't Ask to Add New Animations to Groups",
                             &preferences.dont_ask_to_add_animation_to_group);
 
+            ImGui::SeparatorText("World Save Options");
+
+            ImGui::Checkbox("Don't Save World Game Modes",
+                            &preferences.dont_save_world_gamemodes);
+
+            ImGui::SetItemTooltip(
+               "Don't save world game modes when saving the world. This works "
+               "around a crash when trying to load worlds using BF1's Zero "
+               "Editor.");
+
             ImGui::SeparatorText("Reset");
 
             if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {
