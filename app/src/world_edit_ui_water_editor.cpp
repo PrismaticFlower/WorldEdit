@@ -67,8 +67,17 @@ void world_edit::ui_show_water_editor() noexcept
       }
 
       if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+         ImGui::BeginDisabled(_world.terrain.version != world::version::swbf2);
+
          ImGui::Checkbox("Enabled", &_world.terrain.active_flags.water,
                          _edit_stack_world, _edit_context);
+
+         ImGui::EndDisabled();
+
+         if (_world.terrain.version != world::version::swbf2) {
+            ImGui::SetItemTooltip(
+               "Change the terrain version to SWBF2 (v22) to edit this.");
+         }
 
          ImGui::DragFloat("Height", &_world.terrain.water_settings.height,
                           _edit_stack_world, _edit_context, 0.125f);

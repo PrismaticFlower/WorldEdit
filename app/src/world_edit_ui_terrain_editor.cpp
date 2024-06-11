@@ -675,11 +675,20 @@ void world_edit::ui_show_terrain_editor() noexcept
       }
 
       if (ImGui::CollapsingHeader("Terrain Settings")) {
+         ImGui::BeginDisabled(_world.terrain.version != world::version::swbf2);
+
          if (bool active = _world.terrain.active_flags.terrain;
              ImGui::Checkbox("Terrain Enabled", &active)) {
             _edit_stack_world
                .apply(edits::make_set_value(&_world.terrain.active_flags.terrain, active),
                       _edit_context, {.closed = true});
+         }
+
+         ImGui::EndDisabled();
+
+         if (_world.terrain.version != world::version::swbf2) {
+            ImGui::SetItemTooltip(
+               "Change the terrain version to SWBF2 (v22) to edit this.");
          }
 
          if (absl::InlinedVector<char, 256> detail_texture =
@@ -743,6 +752,33 @@ void world_edit::ui_show_terrain_editor() noexcept
 
          if (ImGui::IsItemDeactivatedAfterEdit())
             _edit_stack_world.close_last();
+
+         if (ImGui::BeginCombo("Terrain Version",
+                               _world.terrain.version == world::version::swbf2
+                                  ? "SWBF2 (v22)"
+                                  : "SWBF1 (v21)")) {
+            if (ImGui::Selectable("SWBF1 (v21)", _world.terrain.version ==
+                                                    world::version::swbf)) {
+               _edit_stack_world
+                  .apply(edits::make_set_multi_value(&_world.terrain.version,
+                                                     world::version::swbf,
+                                                     &_world.terrain.active_flags,
+                                                     world::active_flags{}),
+                         _edit_context);
+            }
+
+            if (ImGui::Selectable("SWBF2 (v22)", _world.terrain.version ==
+                                                    world::version::swbf2)) {
+               _edit_stack_world.apply(edits::make_set_value(&_world.terrain.version,
+                                                             world::version::swbf2),
+                                       _edit_context);
+            }
+
+            ImGui::EndCombo();
+         }
+
+         ImGui::SetItemTooltip(
+            "Sets the .TER file version to save the terrain as.");
       }
    }
 

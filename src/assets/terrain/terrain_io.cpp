@@ -509,7 +509,9 @@ void save_terrain(const std::filesystem::path& path, const terrain& terrain,
    write_map(terrain.height_map);
    write_map(terrain.color_map);
    write_map(terrain.light_map);
-   if (not terrain.light_map_extra.empty()) write_map(terrain.light_map_extra);
+   if (terrain.version == version::swbf2 and not terrain.light_map_extra.empty()) {
+      write_map(terrain.light_map_extra);
+   }
 
    // interleave texture weights
    for (int y = int{terrain.length} - 1; y >= 0; --y) {

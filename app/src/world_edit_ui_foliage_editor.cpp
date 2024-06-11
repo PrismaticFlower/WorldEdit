@@ -134,8 +134,17 @@ void world_edit::ui_show_foliage_editor() noexcept
       }
 
       if (ImGui::CollapsingHeader("Settings")) {
+         ImGui::BeginDisabled(_world.terrain.version != world::version::swbf2);
+
          ImGui::Checkbox("Enabled", &_world.terrain.active_flags.foliage,
                          _edit_stack_world, _edit_context);
+
+         ImGui::EndDisabled();
+
+         if (_world.terrain.version != world::version::swbf2) {
+            ImGui::SetItemTooltip(
+               "Change the terrain version to SWBF2 (v22) to edit this.");
+         }
       }
    }
 
