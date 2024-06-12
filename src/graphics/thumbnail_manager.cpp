@@ -7,6 +7,7 @@
 #include "io/error.hpp"
 #include "io/memory_mapped_file.hpp"
 #include "io/read_file.hpp"
+#include "math/align.hpp"
 #include "math/matrix_funcs.hpp"
 #include "model_manager.hpp"
 #include "pipeline_library.hpp"

@@ -127,10 +127,13 @@ terrain::terrain(gpu::device& device, copy_command_list_pool& copy_command_list_
 
    pooled_copy_command_list command_list = copy_command_list_pool.aquire_and_reset();
 
-   command_list->copy_buffer_region(
-      _index_buffer.get(), 0, dynamic_buffer_allocator.resource(),
-      dynamic_buffer_allocator.allocate_and_copy(terrain_patch_indices).offset,
-      sizeof(terrain_patch_indices));
+   auto terrain_patch_indices_allocation =
+      dynamic_buffer_allocator.allocate_and_copy(terrain_patch_indices);
+
+   command_list->copy_buffer_region(_index_buffer.get(), 0,
+                                    terrain_patch_indices_allocation.resource,
+                                    terrain_patch_indices_allocation.offset,
+                                    sizeof(terrain_patch_indices));
 
    command_list->close();
 
@@ -379,11 +382,11 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       }
    }
 
-   command_list
-      .copy_buffer_region(_terrain_constants_buffer.get(), 0,
-                          dynamic_buffer_allocator.resource(),
-                          dynamic_buffer_allocator.allocate_and_copy(constants).offset,
-                          sizeof(constants));
+   auto constants_allocation = dynamic_buffer_allocator.allocate_and_copy(constants);
+
+   command_list.copy_buffer_region(_terrain_constants_buffer.get(), 0,
+                                   constants_allocation.resource,
+                                   constants_allocation.offset, sizeof(constants));
 
    const float terrain_half_world_size = (_terrain_length / 2.0f) * terrain.grid_scale;
 

@@ -82,11 +82,11 @@ void water::update(const world::world& world, gpu::copy_command_list& command_li
                              .color_map_index = _color_map->srv_srgb.index,
                              .color = world.effects.water.refraction_color_pc};
 
-   command_list
-      .copy_buffer_region(_water_constants_buffer.get(), 0,
-                          dynamic_buffer_allocator.resource(),
-                          dynamic_buffer_allocator.allocate_and_copy(constants).offset,
-                          sizeof(constants));
+   auto constants_allocation = dynamic_buffer_allocator.allocate_and_copy(constants);
+
+   command_list.copy_buffer_region(_water_constants_buffer.get(), 0,
+                                   constants_allocation.resource,
+                                   constants_allocation.offset, sizeof(constants));
 }
 
 void water::draw(const frustum& view_frustum,

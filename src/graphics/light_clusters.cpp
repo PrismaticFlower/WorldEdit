@@ -583,8 +583,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
 
       std::memcpy(upload_buffer.cpu_address, &tiling_inputs, sizeof(tiling_inputs));
 
-      command_list.copy_buffer_region(_tiling_inputs.get(), 0,
-                                      dynamic_buffer_allocator.resource(),
+      command_list.copy_buffer_region(_tiling_inputs.get(), 0, upload_buffer.resource,
                                       upload_buffer.offset, sizeof(tiling_inputs));
    }
 
@@ -594,8 +593,8 @@ void light_clusters::prepare_lights(const camera& view_camera,
       std::memcpy(upload_buffer.cpu_address, &light_constants, sizeof(light_constants));
 
       command_list.copy_buffer_region(_lights_constants.get(), 0,
-                                      dynamic_buffer_allocator.resource(),
-                                      upload_buffer.offset, sizeof(light_constants));
+                                      upload_buffer.resource, upload_buffer.offset,
+                                      sizeof(light_constants));
    }
 
    {
@@ -606,8 +605,7 @@ void light_clusters::prepare_lights(const camera& view_camera,
                   sizeof(region_lights_descriptions));
 
       command_list.copy_buffer_region(_lights_region_list.get(), 0,
-                                      dynamic_buffer_allocator.resource(),
-                                      upload_buffer.offset,
+                                      upload_buffer.resource, upload_buffer.offset,
                                       sizeof(region_lights_descriptions));
    }
 

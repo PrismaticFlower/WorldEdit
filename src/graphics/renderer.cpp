@@ -11,6 +11,7 @@
 #include "gpu/rhi.hpp"
 #include "imgui_renderer.hpp"
 #include "light_clusters.hpp"
+#include "math/align.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -1139,8 +1140,8 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
    auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 
    command_list.copy_buffer_region(_camera_constant_buffer.get(), 0,
-                                   _dynamic_buffer_allocator.resource(),
-                                   allocation.offset, sizeof(frame_constant_buffer));
+                                   allocation.resource, allocation.offset,
+                                   sizeof(frame_constant_buffer));
 }
 
 void renderer_impl::draw_world(const frustum& view_frustum,
@@ -3129,8 +3130,7 @@ void renderer_impl::clear_depth_minmax(gpu::copy_command_list& command_list)
    else {
       auto allocation = _dynamic_buffer_allocator.allocate_and_copy(minmax);
 
-      command_list.copy_buffer_region(_depth_minmax_buffer.get(), 0,
-                                      _dynamic_buffer_allocator.resource(),
+      command_list.copy_buffer_region(_depth_minmax_buffer.get(), 0, allocation.resource,
                                       allocation.offset, sizeof(minmax));
    }
 }

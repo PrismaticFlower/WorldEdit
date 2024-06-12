@@ -333,7 +333,7 @@ void material::process_updated_textures_copy(gpu::device& device,
                                       (constant_buffer_view -
                                        device.get_gpu_virtual_address(mesh_buffer)) +
                                          offset,
-                                      allocator.resource(), allocation.offset,
+                                      allocation.resource, allocation.offset,
                                       sizeof(uint32));
    };
 
