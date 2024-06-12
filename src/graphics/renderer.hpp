@@ -53,6 +53,7 @@ struct renderer_init {
 
    float display_scale = 1.0f;
 
+   bool prefer_high_performance_gpu = false;
    bool use_debug_layer = false;
    bool use_legacy_barriers = false;
    bool never_use_shader_model_6_6 = false;

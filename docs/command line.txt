@@ -4,6 +4,9 @@
 -world <path>
    Sets a world to be automatically loaded.
 
+-gpu_prefer_high_performance
+  Prefer high performance GPUs (as judged by the OS) when selecting a GPU to use. The default is no preference.
+
 -gpu_debug_layer
    Enables the D3D12 Debug Layer + GPU Based Validation
 

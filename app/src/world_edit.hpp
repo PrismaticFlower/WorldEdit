@@ -411,6 +411,7 @@ private:
                                      .creation_entity =
                                         _interaction_targets.creation_entity};
 
+   bool _renderer_prefer_high_performance_gpu = false;
    bool _renderer_use_debug_layer = false;
    bool _renderer_use_legacy_barriers = false;
    bool _renderer_never_use_shader_model_6_6 = false;

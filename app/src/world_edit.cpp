@@ -49,6 +49,8 @@ namespace we {
 world_edit::world_edit(const HWND window, utility::command_line command_line)
    : _imgui_context{ImGui::CreateContext(), &ImGui::DestroyContext},
      _window{window},
+     _renderer_prefer_high_performance_gpu{
+        command_line.get_flag("-gpu_prefer_high_performance")},
      _renderer_use_debug_layer{command_line.get_flag("-gpu_debug_layer")},
      _renderer_use_legacy_barriers{
         command_line.get_flag("-gpu_legacy_barriers")},
@@ -3229,6 +3231,7 @@ auto world_edit::get_renderer_init_params() noexcept -> graphics::renderer_init
            .asset_libraries = _asset_libraries,
            .error_output = *_stream,
            .display_scale = _display_scale.value,
+           .prefer_high_performance_gpu = _renderer_prefer_high_performance_gpu,
            .use_debug_layer = _renderer_use_debug_layer,
            .use_legacy_barriers = _renderer_use_legacy_barriers,
            .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
