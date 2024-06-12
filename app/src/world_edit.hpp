@@ -363,6 +363,8 @@ private:
 
    void handle_gpu_error(graphics::gpu::exception& e) noexcept;
 
+   auto get_renderer_init_params() noexcept -> graphics::renderer_init;
+
    std::unique_ptr<output_stream> _stream = make_async_output_stream_stdout();
    HWND _window{};
    settings::settings _settings;

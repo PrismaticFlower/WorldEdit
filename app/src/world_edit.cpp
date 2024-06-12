@@ -77,18 +77,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    _applied_user_display_scale = _settings.ui.extra_scaling;
 
    try {
-      _renderer = graphics::make_renderer(
-         {.window = window,
-          .thread_pool = _thread_pool,
-          .asset_libraries = _asset_libraries,
-          .error_output = *_stream,
-          .display_scale = _display_scale.value,
-          .use_debug_layer = _renderer_use_debug_layer,
-          .use_legacy_barriers = _renderer_use_legacy_barriers,
-          .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
-          .never_use_open_existing_heap = _renderer_never_use_open_existing_heap,
-          .never_use_write_buffer_immediate = _renderer_never_use_write_buffer_immediate,
-          .never_use_relaxed_format_casting = _renderer_never_use_relaxed_format_casting});
+      _renderer = graphics::make_renderer(get_renderer_init_params());
    }
    catch (graphics::gpu::exception& e) {
       handle_gpu_error(e);
@@ -3184,19 +3173,7 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
       _renderer = nullptr;
 
       try {
-         _renderer = graphics::make_renderer(
-            {.window = _window,
-             .thread_pool = _thread_pool,
-             .asset_libraries = _asset_libraries,
-             .error_output = *_stream,
-             .display_scale = _display_scale.value,
-             .use_debug_layer = _renderer_use_debug_layer,
-             .use_legacy_barriers = _renderer_use_legacy_barriers,
-             .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
-             .never_use_open_existing_heap = _renderer_never_use_open_existing_heap,
-             .never_use_write_buffer_immediate = _renderer_never_use_write_buffer_immediate,
-             .never_use_relaxed_format_casting =
-                _renderer_never_use_relaxed_format_casting});
+         _renderer = graphics::make_renderer(get_renderer_init_params());
 
          _renderer->recreate_imgui_font_atlas();
 
@@ -3243,5 +3220,21 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
       }
    } break;
    }
+}
+
+auto world_edit::get_renderer_init_params() noexcept -> graphics::renderer_init
+{
+   return {.window = _window,
+           .thread_pool = _thread_pool,
+           .asset_libraries = _asset_libraries,
+           .error_output = *_stream,
+           .display_scale = _display_scale.value,
+           .use_debug_layer = _renderer_use_debug_layer,
+           .use_legacy_barriers = _renderer_use_legacy_barriers,
+           .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
+           .never_use_open_existing_heap = _renderer_never_use_open_existing_heap,
+           .never_use_write_buffer_immediate = _renderer_never_use_write_buffer_immediate,
+           .never_use_relaxed_format_casting =
+              _renderer_never_use_relaxed_format_casting};
 }
 }
