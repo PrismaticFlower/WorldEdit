@@ -665,7 +665,7 @@ void save_planning(const std::filesystem::path& path, const world& world)
 
       if (connection.jump) file.write_ln("\tJump();");
       if (connection.jet_jump) file.write_ln("\tJetJump();");
-      if (connection.one_way) file.write_ln("\tJOneWay();");
+      if (connection.one_way) file.write_ln("\tOneWay();");
 
       file.write_ln("}");
    }

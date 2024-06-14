@@ -659,6 +659,10 @@ Connection("Connection1")
 	Start("Hub3");
 	End("Hub2");
 	Flag(2);
+	Dynamic(1);
+	Jump();
+	JetJump();
+	OneWay();
 }
 )"sv;
 
@@ -1055,10 +1059,16 @@ TEST_CASE("world saving", "[World][IO]")
                                            ai_path_flags::small | ai_path_flags::medium |
                                            ai_path_flags::huge | ai_path_flags::flyer)},
 
-             planning_connection{.name = "Connection1",
-                                 .start_hub_index = 3,
-                                 .end_hub_index = 2,
-                                 .flags = ai_path_flags::hover},
+             planning_connection{
+                .name = "Connection1",
+                .start_hub_index = 3,
+                .end_hub_index = 2,
+                .flags = ai_path_flags::hover,
+                .jump = true,
+                .jet_jump = true,
+                .one_way = true,
+                .dynamic_group = 1,
+             },
           }},
 
       .boundaries =
