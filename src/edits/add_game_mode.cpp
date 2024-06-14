@@ -72,7 +72,6 @@ struct add_game_mode final : edit<world::edit_context> {
       world.game_modes.push_back({.name = _name,
                                   .requirements = {{
                                      .file_type = "world",
-                                     .entries = {req_entry_name},
                                   }}});
 
       if (_req_edit_type == req_edit_type::append) {
