@@ -53,6 +53,9 @@ constexpr std::array<std::array<float3, 2>, 18> arrow_outline = [] {
 
    return arrow;
 }();
+
+constexpr std::size_t line_max_batch_size = 16384;
+
 }
 
 meta_draw_batcher::meta_draw_batcher()
@@ -260,18 +263,44 @@ void meta_draw_batcher::draw(gpu::graphics_command_list& command_list,
 
    const auto draw_lines = [&](const std::vector<meta_draw_line>& lines,
                                gpu::pipeline_handle pipeline) {
-      auto points_allocation =
-         dynamic_buffer_allocator.allocate(sizeof(meta_draw_line) * lines.size());
+      const std::size_t batches = lines.size() / line_max_batch_size;
 
-      std::memcpy(points_allocation.cpu_address, lines.data(),
-                  sizeof(meta_draw_line) * lines.size());
+      for (std::size_t i = 0; i < batches; ++i) {
+         auto points_allocation = dynamic_buffer_allocator.allocate(
+            sizeof(meta_draw_line) * line_max_batch_size);
+
+         std::memcpy(points_allocation.cpu_address,
+                     lines.data() + i * line_max_batch_size,
+                     sizeof(meta_draw_line) * line_max_batch_size);
+
+         command_list.set_pipeline_state(pipeline);
+
+         command_list.set_graphics_srv(rs::meta_draw::instance_data_srv,
+                                       points_allocation.gpu_address);
+
+         command_list.draw_instanced(static_cast<uint32>(line_max_batch_size) * 6,
+                                     1, 0, 0);
+      }
+
+      const std::size_t remainder_batch_size =
+         lines.size() - batches * line_max_batch_size;
+
+      if (remainder_batch_size == 0) return;
+
+      auto points_allocation = dynamic_buffer_allocator.allocate(
+         sizeof(meta_draw_line) * remainder_batch_size);
+
+      std::memcpy(points_allocation.cpu_address,
+                  lines.data() + batches * line_max_batch_size,
+                  sizeof(meta_draw_line) * remainder_batch_size);
 
       command_list.set_pipeline_state(pipeline);
 
       command_list.set_graphics_srv(rs::meta_draw::instance_data_srv,
                                     points_allocation.gpu_address);
 
-      command_list.draw_instanced(static_cast<uint32>(lines.size()) * 6, 1, 0, 0);
+      command_list.draw_instanced(static_cast<uint32>(remainder_batch_size) * 6,
+                                  1, 0, 0);
    };
 
    const auto draw_vertices = [&](const std::vector<meta_draw_vertex>& vertices,
