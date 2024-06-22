@@ -1,6 +1,6 @@
 
 #include "gizmo.hpp"
-#include "math/intersectors.hpp"
+#include "math/iq_intersectors.hpp"
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"

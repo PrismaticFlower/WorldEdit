@@ -1,16 +1,19 @@
 #pragma once
 
+#include "math/bounding_box.hpp"
 #include "types.hpp"
 
-#include <memory>
 #include <optional>
 #include <span>
+#include <vector>
+
+namespace we {
+
+struct bvh;
+
+}
 
 namespace we::assets::msh {
-
-namespace detail {
-class flat_model_bvh_impl;
-}
 
 struct mesh;
 
@@ -23,21 +26,23 @@ class flat_model_bvh {
 public:
    flat_model_bvh() noexcept;
 
+   explicit flat_model_bvh(std::span<mesh> meshes) noexcept;
+
    flat_model_bvh(flat_model_bvh&&) noexcept;
+   auto operator=(flat_model_bvh&&) noexcept -> flat_model_bvh&;
 
    ~flat_model_bvh();
 
    flat_model_bvh(const flat_model_bvh&) = delete;
    auto operator=(const flat_model_bvh&) -> flat_model_bvh& = delete;
-   auto operator=(flat_model_bvh&&) -> flat_model_bvh&;
-
-   void build(std::span<mesh> meshes) noexcept;
 
    [[nodiscard]] auto query(const float3 ray_origin, const float3 ray_direction) const noexcept
       -> std::optional<ray_hit>;
 
-private:
-   std::unique_ptr<detail::flat_model_bvh_impl> _impl;
-};
+   [[nodiscard]] auto get_debug_boxes() const noexcept
+      -> std::vector<std::vector<math::bounding_box>>;
 
+private:
+   std::vector<bvh> _bvhs;
+};
 }

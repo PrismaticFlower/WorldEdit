@@ -1,5 +1,5 @@
 #include "raycast_terrain.hpp"
-#include "math/intersectors.hpp"
+#include "math/iq_intersectors.hpp"
 #include "math/vector_funcs.hpp"
 
 #include <algorithm>

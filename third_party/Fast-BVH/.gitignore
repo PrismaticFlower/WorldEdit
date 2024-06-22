@@ -1,8 +1,0 @@
-build
-render.ppm
-*.o
-*.obj
-*.exe
-doxygen/html
-examples/CubeOfSpheres
-examples/ObjFile

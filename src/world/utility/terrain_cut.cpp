@@ -1,7 +1,7 @@
 #include "terrain_cut.hpp"
 #include "../object_class.hpp"
 #include "assets/msh/flat_model.hpp"
-#include "math/intersectors.hpp"
+#include "math/iq_intersectors.hpp"
 #include "math/quaternion_funcs.hpp"
 
 namespace we::world {

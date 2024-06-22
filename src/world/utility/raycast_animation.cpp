@@ -1,6 +1,6 @@
 #include "raycast_animation.hpp"
 #include "animation.hpp"
-#include "math/intersectors.hpp"
+#include "math/iq_intersectors.hpp"
 
 namespace we::world {
 

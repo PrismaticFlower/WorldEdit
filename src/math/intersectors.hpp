@@ -1,252 +1,72 @@
-#pragma once
+#include "bounding_box.hpp"
+#include "vector_funcs.hpp"
 
-#include "math/vector_funcs.hpp"
-#include "types.hpp"
+#include <float.h> // FLT_EPSILON
+
+#include <utility> // std::min, std::max (could replace)
 
 namespace we {
 
-// The MIT License
-// Copyright © Inigo Quilez
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-// of the Software, and to permit persons to whom the Software is furnished to
-// do so, subject to the following conditions: The above copyright notice and this
-// permission notice shall be included in all copies or substantial portions of
-// the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-inline auto min(const float a, const float b) noexcept -> float
+inline bool intersect_tri(const float3 ray_origin, const float3& ray_direction,
+                          const float3& v0, const float3& v1, const float3& v2,
+                          float& distance) noexcept
 {
-   return a < b ? a : b;
-}
+   const float3 edge1 = v1 - v0;
+   const float3 edge2 = v2 - v0;
 
-inline auto max(const float a, const float b) noexcept -> float
-{
-   return a > b ? a : b;
-}
+   const float3 rd_cross_edge2 = cross(ray_direction, edge2);
+   const float det = dot(edge1, rd_cross_edge2);
 
-inline float cross2d(float2 a, float2 b)
-{
-   return a.x * b.y - a.y * b.x;
-}
+   const float epsilon = FLT_EPSILON;
 
-inline float dot2(float3 v)
-{
-   return dot(v, v);
-}
+   if (det > -epsilon and det < epsilon) return false;
 
-inline float sphIntersect(float3 ro, float3 rd, float3 sph, float radius)
-{
-   float3 oc = ro - sph;
-   float b = dot(oc, rd);
-   float c = dot(oc, oc) - radius * radius;
-   float h = b * b - c;
-   if (h < 0.0f) return -1.0f;
-   return -b - sqrt(h);
-}
+   const float inv_det = 1.0f / det;
 
-inline float boxIntersection(float3 ro, float3 rd, float3 boxSize)
-{
-   float3 m = 1.0f / rd; // can precompute if traversing a set of aligned boxes
-   float3 n = m * ro;    // can precompute if traversing a set of aligned boxes
+   const float3 s = ray_origin - v0;
+   const float u = inv_det * dot(s, rd_cross_edge2);
 
-   float3 k = abs(m) * boxSize;
-   float3 t1 = -n - k;
-   float3 t2 = -n + k;
+   if (u < 0.0f or u > 1.0f) return false;
 
-   float tN = max(max(t1.x, t1.y), t1.z);
-   float tF = min(min(t2.x, t2.y), t2.z);
+   const float3 s_cross_e1 = cross(s, edge1);
+   const float v = inv_det * dot(ray_direction, s_cross_e1);
 
-   if (tN > tF || tF < 0.0) return -1.0f; // no intersection
+   if (v < 0.0f or u + v > 1.0f) return false;
 
-   return (tN > 0.0f) ? tN : tF;
-}
+   const float t = inv_det * dot(edge2, s_cross_e1);
 
-inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
-                            float3 v2, float3 v3)
-{
-   const int lut[4] = {1, 2, 0, 1};
+   const bool hit = t > 0.0f;
 
-   // lets make v0 the origin
-   float3 a = v1 - v0;
-   float3 b = v3 - v0;
-   float3 c = v2 - v0;
-   float3 p = ro - v0;
+   if (hit) {
+      distance = t;
 
-   // intersect plane
-   float3 nor = cross(a, b);
-   float t = -dot(p, nor) / dot(rd, nor);
-   if (t < 0.0) return float3(-1.0f, -1.0f, -1.0f);
-
-   // intersection point
-   float3 pos = p + t * rd;
-
-   // see here: https://www.shadertoy.com/view/lsBSDm
-
-   // select projection plane
-   float3 mor = abs(nor);
-   int id = (mor.x > mor.y && mor.x > mor.z) ? 0 : (mor.y > mor.z) ? 1 : 2;
-
-   int idu = lut[id];
-   int idv = lut[id + 1];
-
-   // project to 2D
-   float2 kp = float2(index(pos, idu), index(pos, idv));
-   float2 ka = float2(index(a, idu), index(a, idv));
-   float2 kb = float2(index(b, idu), index(b, idv));
-   float2 kc = float2(index(c, idu), index(c, idv));
-
-   // find barycentric coords of the quadrilateral
-   float2 kg = kc - kb - ka;
-
-   float k0 = cross2d(kp, kb);
-   float k2 = cross2d(kc - kb, ka); // float k2 = cross2d( kg, ka );
-   float k1 = cross2d(kp, kg) -
-              index(nor, id); // float k1 = cross2d( kb, ka ) + cross2d( kp, kg );
-
-   // if edges are parallel, this is a linear equation
-   float u, v;
-   if (std::abs(k2) < 0.00001) {
-      v = -k0 / k1;
-      u = cross2d(kp, ka) / k1;
-   }
-   else {
-      // otherwise, it's a quadratic
-      float w = k1 * k1 - 4.0f * k0 * k2;
-      if (w < 0.0f) return float3(-1.0f, -1.0f, -1.0f);
-      w = std::sqrt(w);
-
-      float ik2 = 1.0f / (2.0f * k2);
-
-      v = (-k1 - w) * ik2;
-      if (v < 0.0f || v > 1.0f) v = (-k1 + w) * ik2;
-
-      u = (kp.x - ka.x * v) / (kb.x + kg.x * v);
+      return true;
    }
 
-   if (u < 0.0f || u > 1.0f || v < 0.0f || v > 1.0f)
-      return float3(-1.0f, -1.0f, -1.0f);
-
-   return float3(t, u, v);
+   return false;
 }
 
-inline float4 iCappedCone(float3 ro, float3 rd, float3 pa, float3 pb, float ra, float rb)
+inline bool intersect_aabb(const float3& ray_origin, const float3& inv_ray_direction,
+                           const math::bounding_box& bbox, const float t_limit,
+                           float& t) noexcept
 {
-   float3 ba = pb - pa;
-   float3 oa = ro - pa;
-   float3 ob = ro - pb;
+   const float3 ts0 = (bbox.min - ray_origin) * inv_ray_direction;
+   const float3 ts1 = (bbox.max - ray_origin) * inv_ray_direction;
 
-   float m0 = dot(ba, ba);
-   float m1 = dot(oa, ba);
-   float m2 = dot(ob, ba);
-   float m3 = dot(rd, ba);
+   const float3 ts_min = min(ts0, ts1);
+   const float3 ts_max = max(ts0, ts1);
 
-   // caps
-   if (m1 < 0.0f) {
-      if (dot2(oa * m3 - rd * m1) < (ra * ra * m3 * m3)) {
-         float3 v = -ba * (1.0f / std::sqrt(m0));
+   const float t_min = std::max(ts_min.x, std::max(ts_min.y, ts_min.z));
+   const float t_max =
+      std::min(std::min(ts_max.x, std::min(ts_max.y, ts_max.z)), t_limit);
 
-         return float4(-m1 / m3, v.x, v.y, v.z);
-      }
-   }
-   else if (m2 > 0.0f) {
-      if (dot2(ob * m3 - rd * m2) < (rb * rb * m3 * m3)) {
-         float3 v = ba * (1.0f / std::sqrt(m0));
+   if (t_min <= t_max) {
+      t = t_min;
 
-         return float4(-m2 / m3, v.x, v.y, v.z);
-      }
+      return true;
    }
 
-   // body
-   float m4 = dot(rd, oa);
-   float m5 = dot(oa, oa);
-   float rr = ra - rb;
-   float hy = m0 + rr * rr;
-
-   float k2 = m0 * m0 - m3 * m3 * hy;
-   float k1 = m0 * m0 * m4 - m1 * m3 * hy + m0 * ra * (rr * m3 * 1.0f);
-   float k0 = m0 * m0 * m5 - m1 * m1 * hy + m0 * ra * (rr * m1 * 2.0f - m0 * ra);
-
-   float h = k1 * k1 - k2 * k0;
-   if (h < 0.0f) return float4(-1.0f, -1.0f, -1.0f, -1.0f);
-
-   float t = (-k1 - sqrt(h)) / k2;
-
-   float y = m1 + t * m3;
-   if (y > 0.0 && y < m0) {
-      float3 v = normalize(m0 * (m0 * (oa + t * rd) + rr * ba * ra) - ba * hy * y);
-
-      return float4(t, v.x, v.y, v.z);
-   }
-
-   return float4(-1.0f, -1.0f, -1.0f, -1.0f);
-}
-
-inline float4 iCylinder(float3 ro, float3 rd, float3 pa, float3 pb,
-                        float ra) // extreme a, extreme b, radius
-{
-   float3 ba = pb - pa;
-
-   float3 oc = ro - pa;
-
-   float baba = dot(ba, ba);
-   float bard = dot(ba, rd);
-   float baoc = dot(ba, oc);
-
-   float k2 = baba - bard * bard;
-   float k1 = baba * dot(oc, rd) - baoc * bard;
-   float k0 = baba * dot(oc, oc) - baoc * baoc - ra * ra * baba;
-
-   float h = k1 * k1 - k2 * k0;
-   if (h < 0.0f) return float4(-1.0f, -1.0f, -1.0f, -1.0f);
-   h = sqrt(h);
-   float t = (-k1 - h) / k2;
-
-   // body
-   float y = baoc + t * bard;
-   if (y > 0.0 && y < baba) {
-      float3 v = (oc + t * rd - ba * y / baba) / ra;
-
-      return float4(t, v.x, v.y, v.z);
-   }
-
-   // caps
-   t = (((y < 0.0f) ? 0.0f : baba) - baoc) / bard;
-   if (std::abs(k1 + k2 * t) < h) {
-      float3 v = ba * (y < 0.0f ? -1.0f : 1.0f) / baba;
-
-      return float4(t, v.x, v.y, v.z);
-   }
-
-   return float4(-1.0f, -1.0f, -1.0f, -1.0f);
-}
-
-inline float3 triIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2)
-{
-   float3 v1v0 = v1 - v0;
-   float3 v2v0 = v2 - v0;
-   float3 rov0 = ro - v0;
-   float3 n = cross(v1v0, v2v0);
-   float3 q = cross(rov0, rd);
-   float d = 1.0f / dot(rd, n);
-   float u = d * dot(-q, v2v0);
-   float v = d * dot(q, v1v0);
-   float t = d * dot(-n, rov0);
-   if (u < 0.0f || v < 0.0f || (u + v) > 1.0f) t = -1.0f;
-   return float3(t, u, v);
-}
-
-inline float diskIntersect(float3 ro, float3 rd, float3 c, float3 n, float r)
-{
-   float3 o = ro - c;
-   float t = -dot(n, o) / dot(rd, n);
-   float3 q = o + rd * t;
-   return (dot(q, q) < r * r) ? t : -1.0f;
+   return false;
 }
 
 }

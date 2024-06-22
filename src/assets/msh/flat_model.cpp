@@ -209,8 +209,8 @@ flat_model::flat_model(const scene& scene)
    apply_ambient_lighting(scene.options);
    regenerate_bounding_boxes();
 
-   bvh.build(meshes);
-   terrain_cut_bvh.build(terrain_cuts);
+   bvh = flat_model_bvh{meshes};
+   terrain_cut_bvh = flat_model_terrain_cut_bvh{terrain_cuts};
 }
 
 void flat_model::regenerate_bounding_boxes() noexcept
