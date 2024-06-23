@@ -44,10 +44,15 @@ struct frustum {
    container::enum_array<float4, frustum_planes> planes;
 };
 
-bool intersects(const frustum& frustum, const math::bounding_box& bbox);
+bool intersects(const frustum& frustum, const math::bounding_box& bbox) noexcept;
 
-bool intersects_shadow_cascade(const frustum& frustum, const math::bounding_box& bbox);
+bool intersects_shadow_cascade(const frustum& frustum,
+                               const math::bounding_box& bbox) noexcept;
 
-bool intersects(const frustum& frustum, const float3& position, const float radius);
+bool intersects(const frustum& frustum, const float3& position,
+                const float radius) noexcept;
+
+auto transform(const frustum& world_frustum, const quaternion& rotation,
+               const float3& position) noexcept -> frustum;
 
 }

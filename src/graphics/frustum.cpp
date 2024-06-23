@@ -2,6 +2,7 @@
 #include "frustum.hpp"
 #include "math/matrix_funcs.hpp"
 #include "math/plane_funcs.hpp"
+#include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
 #include <array>
@@ -89,7 +90,7 @@ frustum::frustum(const float4x4& inv_view_projection_matrix) noexcept
 {
 }
 
-bool intersects(const frustum& frustum, const math::bounding_box& bbox)
+bool intersects(const frustum& frustum, const math::bounding_box& bbox) noexcept
 {
    for (const auto& plane : frustum.planes) {
       if (outside_plane(plane, {bbox.min.x, bbox.min.y, bbox.min.z}) &
@@ -125,7 +126,7 @@ bool intersects(const frustum& frustum, const math::bounding_box& bbox)
    return true;
 }
 
-bool intersects_shadow_cascade(const frustum& frustum, const math::bounding_box& bbox)
+bool intersects_shadow_cascade(const frustum& frustum, const math::bounding_box& bbox) noexcept
 {
    for (std::size_t i = 0; i < (frustum.planes.size() - 1); ++i) {
       const float4 plane = frustum.planes[i];
@@ -145,7 +146,7 @@ bool intersects_shadow_cascade(const frustum& frustum, const math::bounding_box&
    return true;
 }
 
-bool intersects(const frustum& frustum, const float3& position, const float radius)
+bool intersects(const frustum& frustum, const float3& position, const float radius) noexcept
 {
    for (const auto& plane : frustum.planes) {
       if (outside_plane(plane, position, radius)) {
@@ -155,4 +156,47 @@ bool intersects(const frustum& frustum, const float3& position, const float radi
 
    return true;
 }
+
+auto transform(const frustum& world_frustum, const quaternion& rotation,
+               const float3& position) noexcept -> frustum
+{
+   frustum frustum = world_frustum;
+
+   for (float3& point : frustum.corners) {
+      point = rotation * point + position;
+   }
+
+   frustum.planes[frustum_planes::near_] =
+      make_plane(frustum.corners[frustum_corner::top_left_near],
+                 frustum.corners[frustum_corner::top_right_near],
+                 frustum.corners[frustum_corner::bottom_left_near]);
+
+   frustum.planes[frustum_planes::far_] =
+      make_plane(frustum.corners[frustum_corner::top_left_far],
+                 frustum.corners[frustum_corner::bottom_left_far],
+                 frustum.corners[frustum_corner::top_right_far]);
+
+   frustum.planes[frustum_planes::bottom] =
+      make_plane(frustum.corners[frustum_corner::bottom_left_near],
+                 frustum.corners[frustum_corner::bottom_right_far],
+                 frustum.corners[frustum_corner::bottom_left_far]);
+
+   frustum.planes[frustum_planes::top] =
+      make_plane(frustum.corners[frustum_corner::top_left_near],
+                 frustum.corners[frustum_corner::top_left_far],
+                 frustum.corners[frustum_corner::top_right_far]);
+
+   frustum.planes[frustum_planes::left] =
+      make_plane(frustum.corners[frustum_corner::top_left_near],
+                 frustum.corners[frustum_corner::bottom_left_far],
+                 frustum.corners[frustum_corner::top_left_far]);
+
+   frustum.planes[frustum_planes::right] =
+      make_plane(frustum.corners[frustum_corner::top_right_near],
+                 frustum.corners[frustum_corner::top_right_far],
+                 frustum.corners[frustum_corner::bottom_right_far]);
+
+   return frustum;
+}
+
 }
