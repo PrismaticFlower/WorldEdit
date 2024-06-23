@@ -184,7 +184,6 @@
     <ClCompile Include="src\assets\texture\texture_io.cpp" />
     <ClCompile Include="src\assets\texture\texture_transforms.cpp" />
     <ClCompile Include="src\graphics\camera.cpp" />
-    <ClCompile Include="src\graphics\frustum.cpp" />
     <ClCompile Include="src\graphics\geometric_shapes.cpp" />
     <ClCompile Include="src\graphics\light_clusters.cpp" />
     <ClCompile Include="src\graphics\material.cpp" />
@@ -220,6 +219,7 @@
     <ClCompile Include="src\utility\stopwatch.cpp" />
     <ClCompile Include="src\graphics\gpu\detail\format_helpers.cpp" />
     <ClCompile Include="src\math\bvh.cpp" />
+    <ClCompile Include="src\math\frustum.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -344,7 +344,6 @@
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp" />
     <ClInclude Include="src\graphics\fallback_imgui_texture.hpp" />
-    <ClInclude Include="src\graphics\frustum.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\command_allocator_pool.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\descriptor_allocator.hpp" />
     <ClInclude Include="src\graphics\gpu\detail\descriptor_heap.hpp" />
@@ -509,6 +508,7 @@
     <ClInclude Include="src\math\bvh.hpp" />
     <ClInclude Include="src\math\iq_intersectors.hpp" />
     <ClInclude Include="src\math\intersectors.hpp" />
+    <ClInclude Include="src\math\frustum.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

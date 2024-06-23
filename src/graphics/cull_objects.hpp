@@ -1,7 +1,7 @@
 #pragma once
 
-#include "frustum.hpp"
 #include "math/bounding_box.hpp"
+#include "math/frustum.hpp"
 #include "world_mesh_list.hpp"
 
 #include <span>

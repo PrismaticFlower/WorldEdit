@@ -1,9 +1,9 @@
 #pragma once
 
 #include "dynamic_buffer_allocator.hpp"
-#include "frustum.hpp"
 #include "gpu/resource.hpp"
 #include "gpu/rhi.hpp"
+#include "math/frustum.hpp"
 #include "pipeline_library.hpp"
 #include "root_signature_library.hpp"
 #include "texture_manager.hpp"
