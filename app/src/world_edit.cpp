@@ -11,7 +11,8 @@
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
 #include "edits/set_value.hpp"
-#include "graphics/frustum.hpp"
+#include "math/frustum.hpp"
+#include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "resource.h"
@@ -712,9 +713,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          _interaction_targets.selection.clear();
       }
 
-      frustum frustum{_camera.inv_view_projection_matrix(),
-                      {min_ndc_pos.x, min_ndc_pos.y, 0.0f},
-                      {max_ndc_pos.x, max_ndc_pos.y, 1.0f}};
+      frustum frustumWS{_camera.inv_view_projection_matrix(),
+                        {min_ndc_pos.x, min_ndc_pos.y, 0.0f},
+                        {max_ndc_pos.x, max_ndc_pos.y, 1.0f}};
 
       if (_world_hit_mask.objects) {
          for (auto& object : _world.objects) {
@@ -726,7 +727,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                _object_classes[object.class_name].model->bounding_box;
             bbox = object.rotation * bbox + object.position;
 
-            if (intersects(frustum, bbox)) {
+            if (intersects(frustumWS, bbox)) {
                _interaction_targets.selection.add(object.id);
             }
          }
@@ -741,9 +742,9 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             const bool inside = [&] {
                switch (light.light_type) {
                case world::light_type::directional:
-                  return intersects(frustum, light.position, 2.8284f);
+                  return intersects(frustumWS, light.position, 2.8284f);
                case world::light_type::point:
-                  return intersects(frustum, light.position, light.range);
+                  return intersects(frustumWS, light.position, light.range);
                case world::light_type::spot: {
                   const float outer_cone_radius =
                      light.range * std::tan(light.outer_cone_angle * 0.5f);
@@ -756,7 +757,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
                   bbox = light.rotation * bbox + light.position;
 
-                  return intersects(frustum, bbox);
+                  return intersects(frustumWS, bbox);
                }
                case world::light_type::directional_region_box: {
                   math::bounding_box bbox{.min = {-light.region_size},
@@ -764,10 +765,11 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
                   bbox = light.region_rotation * bbox + light.position;
 
-                  return intersects(frustum, bbox);
+                  return intersects(frustumWS, bbox);
                }
                case world::light_type::directional_region_sphere:
-                  return intersects(frustum, light.position, length(light.region_size));
+                  return intersects(frustumWS, light.position,
+                                    length(light.region_size));
                case world::light_type::directional_region_cylinder: {
                   const float cylinder_length =
                      length(float2{light.region_size.x, light.region_size.z});
@@ -779,7 +781,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
                   bbox = light.region_rotation * bbox + light.position;
 
-                  return intersects(frustum, bbox);
+                  return intersects(frustumWS, bbox);
                }
                default:
                   return false;
@@ -799,7 +801,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }
 
             for (uint32 i = 0; i < path.nodes.size(); ++i) {
-               if (intersects(frustum, path.nodes[i].position,
+               if (intersects(frustumWS, path.nodes[i].position,
                               0.707f * (_settings.graphics.path_node_size / 0.5f))) {
                   _interaction_targets.selection.add(
                      world::make_path_id_node_mask(path.id, i));
@@ -821,10 +823,10 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
                   bbox = region.rotation * bbox + region.position;
 
-                  return intersects(frustum, bbox);
+                  return intersects(frustumWS, bbox);
                }
                case world::region_shape::sphere:
-                  return intersects(frustum, region.position, length(region.size));
+                  return intersects(frustumWS, region.position, length(region.size));
                case world::region_shape::cylinder: {
                   const float cylinder_length =
                      length(float2{region.size.x, region.size.z});
@@ -836,7 +838,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
                   bbox = region.rotation * bbox + region.position;
 
-                  return intersects(frustum, bbox);
+                  return intersects(frustumWS, bbox);
                }
                default:
                   return false;
@@ -865,7 +867,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                     {point_max.x, sector.base + sector.height,
                                      point_max.y}};
 
-            if (intersects(frustum, bbox)) {
+            if (intersects(frustumWS, bbox)) {
                _interaction_targets.selection.add(sector.id);
             }
          }
@@ -875,7 +877,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          for (auto& portal : _world.portals) {
             if (portal.hidden) continue;
 
-            if (intersects(frustum, portal.position,
+            if (intersects(frustumWS, portal.position,
                            std::max(portal.height, portal.width))) {
                _interaction_targets.selection.add(portal.id);
             }
@@ -888,7 +890,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                continue;
             }
 
-            if (intersects(frustum, hintnode.position, 2.0f)) {
+            if (intersects(frustumWS, hintnode.position, 2.0f)) {
                _interaction_targets.selection.add(hintnode.id);
             }
          }
@@ -905,7 +907,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             bbox = make_quat_from_euler({0.0f, barrier.rotation_angle, 0.0f}) * bbox +
                    barrier.position;
 
-            if (intersects(frustum, bbox)) {
+            if (intersects(frustumWS, bbox)) {
                _interaction_targets.selection.add(barrier.id);
             }
          }
@@ -921,7 +923,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                      hub.radius}};
             bbox = bbox + hub.position;
 
-            if (intersects(frustum, bbox)) {
+            if (intersects(frustumWS, bbox)) {
                _interaction_targets.selection.add(hub.id);
             }
          }
@@ -940,7 +942,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                      _settings.graphics.boundary_height,
                                      boundary.size.y + boundary.position.y}};
 
-            if (intersects(frustum, bbox)) {
+            if (intersects(frustumWS, bbox)) {
                _interaction_targets.selection.add(boundary.id);
             }
          }
@@ -953,7 +955,7 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             math::bounding_box bbox{min(measurement.start, measurement.end),
                                     max(measurement.start, measurement.end)};
 
-            if (intersects(frustum, bbox)) {
+            if (intersects(frustumWS, bbox)) {
                _interaction_targets.selection.add(measurement.id);
             }
          }

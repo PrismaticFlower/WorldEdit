@@ -1,10 +1,10 @@
 #pragma once
 
+#include "bounding_box.hpp"
 #include "container/enum_array.hpp"
-#include "math/bounding_box.hpp"
 #include "types.hpp"
 
-namespace we::graphics {
+namespace we {
 
 enum class frustum_corner {
    bottom_left_near,

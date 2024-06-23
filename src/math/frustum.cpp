@@ -1,15 +1,15 @@
 
 #include "frustum.hpp"
-#include "math/matrix_funcs.hpp"
-#include "math/plane_funcs.hpp"
-#include "math/quaternion_funcs.hpp"
-#include "math/vector_funcs.hpp"
+#include "matrix_funcs.hpp"
+#include "plane_funcs.hpp"
+#include "quaternion_funcs.hpp"
+#include "vector_funcs.hpp"
 
 #include <array>
 
 #include <functional>
 
-namespace we::graphics {
+namespace we {
 
 namespace {
 
