@@ -707,8 +707,6 @@ void world_edit::finish_entity_select(const select_method method) noexcept
       const float2 min_ndc_pos = min(start_ndc_pos, end_ndc_pos);
       const float2 max_ndc_pos = max(start_ndc_pos, end_ndc_pos);
 
-      using namespace graphics;
-
       if (method == select_method::replace) {
          _interaction_targets.selection.clear();
       }
