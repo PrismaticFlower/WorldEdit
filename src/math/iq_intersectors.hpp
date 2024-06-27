@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/scalar_funcs.hpp"
 #include "math/vector_funcs.hpp"
 #include "types.hpp"
 
@@ -70,8 +71,6 @@ inline float boxIntersection(float3 ro, float3 rd, float3 boxSize)
 inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
                             float3 v2, float3 v3)
 {
-   const int lut[4] = {1, 2, 0, 1};
-
    // lets make v0 the origin
    float3 a = v1 - v0;
    float3 b = v3 - v0;
@@ -90,16 +89,32 @@ inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
 
    // select projection plane
    float3 mor = abs(nor);
-   int id = (mor.x > mor.y && mor.x > mor.z) ? 0 : (mor.y > mor.z) ? 1 : 2;
 
-   int idu = lut[id];
-   int idv = lut[id + 1];
+   float float3::*id_nor = nullptr;
+   float float3::*idu = nullptr;
+   float float3::*idv = nullptr;
+
+   if (mor.x > mor.y && mor.x > mor.z) {
+      id_nor = &float3::x;
+      idu = &float3::y;
+      idv = &float3::z;
+   }
+   else if (mor.y > mor.z) {
+      id_nor = &float3::y;
+      idu = &float3::z;
+      idv = &float3::x;
+   }
+   else {
+      id_nor = &float3::z;
+      idu = &float3::x;
+      idv = &float3::y;
+   }
 
    // project to 2D
-   float2 kp = float2(index(pos, idu), index(pos, idv));
-   float2 ka = float2(index(a, idu), index(a, idv));
-   float2 kb = float2(index(b, idu), index(b, idv));
-   float2 kc = float2(index(c, idu), index(c, idv));
+   float2 kp = float2(pos.*idu, pos.*idv);
+   float2 ka = float2(a.*idu, a.*idv);
+   float2 kb = float2(b.*idu, b.*idv);
+   float2 kc = float2(c.*idu, c.*idv);
 
    // find barycentric coords of the quadrilateral
    float2 kg = kc - kb - ka;
@@ -107,7 +122,7 @@ inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
    float k0 = cross2d(kp, kb);
    float k2 = cross2d(kc - kb, ka); // float k2 = cross2d( kg, ka );
    float k1 = cross2d(kp, kg) -
-              index(nor, id); // float k1 = cross2d( kb, ka ) + cross2d( kp, kg );
+              nor.*id_nor; // float k1 = cross2d( kb, ka ) + cross2d( kp, kg );
 
    // if edges are parallel, this is a linear equation
    float u, v;
@@ -119,7 +134,7 @@ inline float3 quadIntersect(float3 ro, float3 rd, float3 v0, float3 v1,
       // otherwise, it's a quadratic
       float w = k1 * k1 - 4.0f * k0 * k2;
       if (w < 0.0f) return float3(-1.0f, -1.0f, -1.0f);
-      w = std::sqrt(w);
+      w = sqrt(w);
 
       float ik2 = 1.0f / (2.0f * k2);
 
@@ -149,14 +164,14 @@ inline float4 iCappedCone(float3 ro, float3 rd, float3 pa, float3 pb, float ra, 
    // caps
    if (m1 < 0.0f) {
       if (dot2(oa * m3 - rd * m1) < (ra * ra * m3 * m3)) {
-         float3 v = -ba * (1.0f / std::sqrt(m0));
+         float3 v = -ba * (1.0f / sqrt(m0));
 
          return float4(-m1 / m3, v.x, v.y, v.z);
       }
    }
    else if (m2 > 0.0f) {
       if (dot2(ob * m3 - rd * m2) < (rb * rb * m3 * m3)) {
-         float3 v = ba * (1.0f / std::sqrt(m0));
+         float3 v = ba * (1.0f / sqrt(m0));
 
          return float4(-m2 / m3, v.x, v.y, v.z);
       }
@@ -248,5 +263,4 @@ inline float diskIntersect(float3 ro, float3 rd, float3 c, float3 n, float r)
    float3 q = o + rd * t;
    return (dot(q, q) < r * r) ? t : -1.0f;
 }
-
 }
