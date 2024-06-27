@@ -105,23 +105,23 @@ bool intersects(const frustum& frustum, const math::bounding_box& bbox) noexcept
       }
    }
 
-   const auto outside_corner = [&](const std::size_t i, auto comparator,
+   const auto outside_corner = [&](const float float3::*axis, auto comparator,
                                    const float corner) {
       bool outside = true;
 
       for (const auto& frustum_corner : frustum.corners) {
-         outside &= comparator(index(frustum_corner, i), corner);
+         outside &= comparator(frustum_corner.*axis, corner);
       }
 
       return outside;
    };
 
-   if (outside_corner(0, std::greater<>{}, bbox.max.x)) return false;
-   if (outside_corner(0, std::less<>{}, bbox.min.x)) return false;
-   if (outside_corner(1, std::greater<>{}, bbox.max.y)) return false;
-   if (outside_corner(1, std::less<>{}, bbox.min.y)) return false;
-   if (outside_corner(2, std::greater<>{}, bbox.max.z)) return false;
-   if (outside_corner(2, std::less<>{}, bbox.min.z)) return false;
+   if (outside_corner(&float3::x, std::greater<>{}, bbox.max.x)) return false;
+   if (outside_corner(&float3::x, std::less<>{}, bbox.min.x)) return false;
+   if (outside_corner(&float3::y, std::greater<>{}, bbox.max.y)) return false;
+   if (outside_corner(&float3::y, std::less<>{}, bbox.min.y)) return false;
+   if (outside_corner(&float3::z, std::greater<>{}, bbox.max.z)) return false;
+   if (outside_corner(&float3::z, std::less<>{}, bbox.min.z)) return false;
 
    return true;
 }
