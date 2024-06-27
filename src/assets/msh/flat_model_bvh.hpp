@@ -10,6 +10,7 @@
 namespace we {
 
 struct bvh;
+struct frustum;
 
 }
 
@@ -38,6 +39,8 @@ public:
 
    [[nodiscard]] auto query(const float3 ray_origin, const float3 ray_direction) const noexcept
       -> std::optional<ray_hit>;
+
+   [[nodiscard]] bool intersects(const frustum& frustum) const noexcept;
 
    [[nodiscard]] auto get_debug_boxes() const noexcept
       -> std::vector<std::vector<math::bounding_box>>;

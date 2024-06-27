@@ -1,6 +1,7 @@
 #include "bvh.hpp"
 #include "intersectors.hpp"
 #include "math/bounding_box.hpp"
+#include "math/frustum.hpp"
 #include "vector_funcs.hpp"
 
 #include <cassert>
@@ -169,6 +170,155 @@ struct detail::bvh_impl {
       return closest_hit < max_distance
                 ? std::optional{bvh::ray_hit{.distance = closest_hit, .normal = hit_normal}}
                 : std::nullopt;
+   }
+
+   [[nodiscard]] bool intersects(const frustum& frustum) const noexcept
+   {
+      std::array<int32, 64> stack = {
+         _root_node_index,
+      };
+      int32 stack_ptr = 0;
+
+      while (stack_ptr >= 0) {
+         const node* node = &_nodes[stack[stack_ptr]];
+
+         stack_ptr -= 1;
+
+         if (node->is_leaf()) {
+            const int32 last_tri = node->left_child_or_first_tri + node->tri_count;
+
+            for (int32 i = node->left_child_or_first_tri; i < last_tri; ++i) {
+               const std::array<uint16, 3>& tri_indices = _indices[_triangles[i]];
+
+               // This probably ain't the "proper" way to to test if a triangle intersects a frustum. But after getting
+               // to the point where a speaker at a talk about the Seperating Axis Theorem said it took them "a few months"
+               // to truly understand these concepts I decided I didn't have that long to implement this feature (precise
+               // selection) and took a step back to look at it afresh instead.
+               //
+               // So what I realised (and hope is correct) is that in our special case (a single tri against a frustum)
+               // there are three possible cases.
+               //
+               // 1. One of the triangle's vertices is inside the frustum.
+               // 2. One of the triangle's edges intersects a face of the frustum.
+               // 3. All of the triangle's vertices are outside the frustum and none of the edges intersects a face of the frustum.
+               //
+               // So for 1. we just perform an inside frustum test for each vertex. If any of these return true then we return
+               // true.
+               //
+               // For 2. we build the build the edge vectors starting from each vertex going around in (I hope) winding order.
+               // We then take the length the edge vectors and then divide them by the length to get the normalized edge
+               // directions. (We need the length either way and this way saves us calculating it twice from calling normalize
+               // explicitly).
+               //
+               // After that we use a ray-triangle intersection test against the frustum's faces using the vertex as the
+               // ray origin and the edge direction as the ray direction. If there is a hit and if it'd distance is
+               // less-than or equal the edge length we know the triangle intersects the frustum and we return true.
+               //
+               // The ray-triangle test is used instead of ray-quad as it appears to suffer from less precision issues when used
+               // with the huge frustum faces.
+               //
+               // For case 3. we just return false at the end of the function.
+
+               const float3& v0 = _positions[tri_indices[0]];
+               const float3& v1 = _positions[tri_indices[1]];
+               const float3& v2 = _positions[tri_indices[2]];
+
+               if (we::intersects(frustum, v0, 0.0f) or
+                   we::intersects(frustum, v1, 0.0f) or
+                   we::intersects(frustum, v2, 0.0f)) {
+                  return true;
+               }
+
+               const std::array<float3, 3> edge_vectors = {
+                  v1 - v0, // origin 0
+                  v2 - v1, // origin 1
+                  v0 - v2, // origin 2
+               };
+
+               const std::array<float, 3> edge_lengths = {
+                  length(edge_vectors[0]), // origin 0
+                  length(edge_vectors[1]), // origin 1
+                  length(edge_vectors[2]), // origin 2
+               };
+
+               const std::array<float3, 3> edge_directions = {
+                  edge_vectors[0] / edge_lengths[0], // origin 0
+                  edge_vectors[1] / edge_lengths[1], // origin 1
+                  edge_vectors[2] / edge_lengths[2], // origin 2
+               };
+
+               // These don't all face out. But it doesn't matter for our use.
+               constexpr static std::array<std::array<frustum_corner, 4>, 6> frustum_faces = {{
+                  // Near Face
+                  {frustum_corner::bottom_left_near, frustum_corner::top_left_near,
+                   frustum_corner::top_right_near, frustum_corner::bottom_right_near},
+
+                  // Far Face
+                  {frustum_corner::bottom_left_far, frustum_corner::top_left_far,
+                   frustum_corner::top_right_far, frustum_corner::bottom_right_far},
+
+                  // Left Face
+                  {frustum_corner::bottom_left_near, frustum_corner::top_left_near,
+                   frustum_corner::top_left_far, frustum_corner::bottom_left_far},
+
+                  // Right Face
+                  {frustum_corner::bottom_right_near, frustum_corner::top_right_near,
+                   frustum_corner::top_right_far, frustum_corner::bottom_right_far},
+
+                  // Top Face
+                  {frustum_corner::top_left_near, frustum_corner::top_left_far,
+                   frustum_corner::top_right_far, frustum_corner::top_right_near},
+
+                  // Bottom Face
+                  {frustum_corner::bottom_left_near, frustum_corner::bottom_left_far,
+                   frustum_corner::bottom_right_far, frustum_corner::bottom_right_near},
+               }};
+
+               const std::array<float3, 3> tri = {v0, v1, v2};
+
+               for (int32 edge_index = 0; edge_index < 3; ++edge_index) {
+                  for (const auto& [i0, i1, i2, i3] : frustum_faces) {
+
+                     if (float distance = FLT_MAX;
+                         intersect_tri(tri[edge_index], edge_directions[edge_index],
+                                       frustum.corners[i0], frustum.corners[i1],
+                                       frustum.corners[i2], distance) and
+                         distance <= edge_lengths[edge_index]) {
+                        return true;
+                     }
+
+                     if (float distance = FLT_MAX;
+                         intersect_tri(tri[edge_index], edge_directions[edge_index],
+                                       frustum.corners[i2], frustum.corners[i3],
+                                       frustum.corners[i0], distance) and
+                         distance <= edge_lengths[edge_index]) {
+                        return true;
+                     }
+                  }
+               }
+
+               return false;
+            }
+         }
+         else {
+            const int32 child_index0 = node->left_child_or_first_tri;
+            const int32 child_index1 = node->left_child_or_first_tri + 1;
+
+            if (we::intersects(frustum, _nodes[child_index0].bbox)) {
+               stack_ptr += 1;
+
+               stack[stack_ptr] = child_index0;
+            }
+
+            if (we::intersects(frustum, _nodes[child_index1].bbox)) {
+               stack_ptr += 1;
+
+               stack[stack_ptr] = child_index1;
+            }
+         }
+      }
+
+      return false;
    }
 
    [[nodiscard]] auto get_debug_boxes() const noexcept -> std::vector<math::bounding_box>
@@ -408,10 +558,13 @@ auto bvh::raycast(const float3& ray_origin, const float3& ray_direction,
 {
    return _impl ? _impl->raycast(ray_origin, ray_direction, max_distance) : std::nullopt;
 }
+bool bvh::intersects(const frustum& frustum) const noexcept
+{
+   return _impl ? _impl->intersects(frustum) : false;
+}
 
 auto bvh::get_debug_boxes() const noexcept -> std::vector<math::bounding_box>
 {
    return _impl ? _impl->get_debug_boxes() : std::vector<math::bounding_box>{};
 }
-
 }

@@ -10,6 +10,8 @@
 
 namespace we {
 
+struct frustum;
+
 namespace detail {
 struct bvh_impl;
 }
@@ -40,6 +42,8 @@ struct bvh {
    [[nodiscard]] auto raycast(const float3& ray_origin, const float3& ray_direction,
                               const float max_distance) const noexcept
       -> std::optional<ray_hit>;
+
+   [[nodiscard]] bool intersects(const frustum& frustum) const noexcept;
 
    [[nodiscard]] auto get_debug_boxes() const noexcept
       -> std::vector<math::bounding_box>;

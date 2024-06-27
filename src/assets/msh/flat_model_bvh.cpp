@@ -34,6 +34,15 @@ auto flat_model_bvh::query(const float3 ray_origin, const float3 ray_direction) 
    return closest_hit;
 }
 
+bool flat_model_bvh::intersects(const frustum& frustum) const noexcept
+{
+   for (const bvh& bvh : _bvhs) {
+      if (bvh.intersects(frustum)) return true;
+   }
+
+   return false;
+}
+
 auto flat_model_bvh::get_debug_boxes() const noexcept
    -> std::vector<std::vector<math::bounding_box>>
 {

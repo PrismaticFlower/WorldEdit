@@ -721,11 +721,13 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                continue;
             }
 
-            math::bounding_box bbox =
-               _object_classes[object.class_name].model->bounding_box;
-            bbox = object.rotation * bbox + object.position;
+            const quaternion inverse_rotation = conjugate(object.rotation);
+            const float3 inverse_position = inverse_rotation * -object.position;
 
-            if (intersects(frustumWS, bbox)) {
+            const frustum frustumOS =
+               transform(frustumWS, inverse_rotation, inverse_position);
+
+            if (_object_classes[object.class_name].model->bvh.intersects(frustumOS)) {
                _interaction_targets.selection.add(object.id);
             }
          }
