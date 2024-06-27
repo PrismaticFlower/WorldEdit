@@ -36,7 +36,7 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       const msh::flat_model& model = *object_classes[object.class_name].model;
 
       float3 box_centre = (model.bounding_box.min + model.bounding_box.max) * 0.5f;
-      float3 box_size = model.bounding_box.max - model.bounding_box.min;
+      float3 box_size = (model.bounding_box.max - model.bounding_box.min) * 0.5f;
 
       const float box_intersection =
          boxIntersection(obj_ray_origin - box_centre, obj_ray_direction, box_size);
