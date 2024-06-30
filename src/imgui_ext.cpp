@@ -1,4 +1,5 @@
 #include "imgui_ext.hpp"
+#include "imgui_internal.h"
 
 #include "math/quaternion_funcs.hpp"
 #include "utility/string_ops.hpp"
@@ -13,7 +14,6 @@ struct ImGuiWindow;
 namespace ImGui {
 
 // From imgui_internal.h, see forward declaration of ImGuiWindow.
-ImGuiWindow* GetCurrentWindow();
 IMGUI_API void BringWindowToDisplayFront(ImGuiWindow* window);
 
 namespace {
