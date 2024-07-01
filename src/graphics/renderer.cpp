@@ -2308,7 +2308,7 @@ void renderer_impl::draw_interaction_targets(
 
    const auto draw_entity = overload{
       [&](const world::object& object, const float3 color) {
-         model& model = _model_manager[world_classes[object.class_name].model_name];
+         model& model = _model_manager[world_classes[object.class_handle].model_name];
 
          if (not intersects(view_frustum,
                             object.rotation * model.bbox + object.position)) {
@@ -2341,8 +2341,6 @@ void renderer_impl::draw_interaction_targets(
 
             return allocation.gpu_address;
          }();
-
-         model& model = _model_manager[world_classes[object.class_handle].model_name];
 
          command_list.set_graphics_root_signature(
             _root_signatures.mesh_wireframe.get());
@@ -3073,7 +3071,7 @@ void renderer_impl::build_world_mesh_list(
 
       if (not object) continue;
 
-      auto& model = _model_manager[world_classes[object->class_name].model_name];
+      auto& model = _model_manager[world_classes[object->class_handle].model_name];
 
       const float3 object_position = {ghost_objects[i].transform[3].x,
                                       ghost_objects[i].transform[3].y,

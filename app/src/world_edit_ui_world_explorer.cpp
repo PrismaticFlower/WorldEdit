@@ -134,9 +134,9 @@ void world_edit::ui_show_world_explorer() noexcept
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
                                 [&](const uint32 left, const uint32 right) {
                                    return string::iless_than(
-                                      _object_classes[_world.objects[left].class_name]
+                                      _object_classes[_world.objects[left].class_handle]
                                          .definition->header.class_label,
-                                      _object_classes[_world.objects[right].class_name]
+                                      _object_classes[_world.objects[right].class_handle]
                                          .definition->header.class_label);
                                 });
                }
