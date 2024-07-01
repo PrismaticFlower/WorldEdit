@@ -32,6 +32,25 @@ struct ImGuiContext;
 
 namespace we {
 
+enum class mouse_cursor {
+   none,
+   arrow,
+   ibeam,
+   wait,
+   cross,
+   size_nwse,
+   size_nesw,
+   size_we,
+   size_ns,
+   size_all,
+   no,
+   hand,
+   app_starting,
+   pen,
+
+   count
+};
+
 enum class select_method : uint8 { replace, add };
 
 enum class placement_mode : uint8 { manual, cursor };
@@ -191,6 +210,8 @@ public:
    void key_up(const key key) noexcept;
 
    void mouse_movement(const int32 x_movement, const int32 y_movement) noexcept;
+
+   auto get_mouse_cursor() const noexcept -> mouse_cursor;
 
 private:
    void wait_for_swap_chain_ready() noexcept;

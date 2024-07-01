@@ -90,6 +90,7 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    initialize_hotkeys();
 
    ImGui_ImplWin32_Init(window);
+   ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
 
    initialize_imgui_font();
    initialize_imgui_style();
@@ -575,7 +576,6 @@ void world_edit::update_camera(const float delta_time)
    }
 
    if (_rotate_camera or _pan_camera) {
-      SetCursor(nullptr);
       SetCursorPos(_rotate_camera_cursor_position.x,
                    _rotate_camera_cursor_position.y);
    }
@@ -3109,6 +3109,104 @@ void world_edit::mouse_movement(const int32 x_movement, const int32 y_movement) 
 {
    _queued_mouse_movement_x += x_movement;
    _queued_mouse_movement_y += y_movement;
+}
+
+auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
+{
+   if (_rotate_camera or _pan_camera) return mouse_cursor::none;
+
+   if (ImGui::GetIO().WantCaptureMouse) {
+      switch (ImGui::GetMouseCursor()) {
+      case ImGuiMouseCursor_Arrow:
+         return mouse_cursor::arrow;
+      case ImGuiMouseCursor_TextInput:
+         return mouse_cursor::ibeam;
+      case ImGuiMouseCursor_ResizeAll:
+         return mouse_cursor::size_all;
+      case ImGuiMouseCursor_ResizeNS:
+         return mouse_cursor::size_ns;
+      case ImGuiMouseCursor_ResizeEW:
+         return mouse_cursor::size_we;
+      case ImGuiMouseCursor_ResizeNESW:
+         return mouse_cursor::size_nesw;
+      case ImGuiMouseCursor_ResizeNWSE:
+         return mouse_cursor::size_nwse;
+      case ImGuiMouseCursor_Hand:
+         return mouse_cursor::hand;
+      case ImGuiMouseCursor_NotAllowed:
+         return mouse_cursor::no;
+      }
+   }
+
+   if (_interaction_targets.creation_entity.holds_entity()) {
+      if (_interaction_targets.creation_entity.is<world::planning_hub>()) {
+         return mouse_cursor::pen;
+      }
+      else if (_interaction_targets.creation_entity.is<world::planning_connection>()) {
+         return mouse_cursor::cross;
+      }
+
+      switch (_entity_creation_context.tool) {
+      case entity_creation_tool::none:
+         return mouse_cursor::arrow;
+      case entity_creation_tool::point_at:
+         return mouse_cursor::arrow;
+      case entity_creation_tool::extend_to:
+      case entity_creation_tool::shrink_to:
+         return mouse_cursor::size_all;
+      case entity_creation_tool::from_object_bbox:
+         return mouse_cursor::cross;
+      case entity_creation_tool::from_line:
+      case entity_creation_tool::draw:
+         return mouse_cursor::pen;
+      case entity_creation_tool::pick_sector:
+         return mouse_cursor::cross;
+      }
+   }
+
+   if (not _interaction_targets.selection.empty()) {
+      if (_selection_edit_context.using_add_object_to_sector) {
+         return mouse_cursor::cross;
+      }
+
+      switch (_selection_edit_tool) {
+      case selection_edit_tool::none:
+      case selection_edit_tool::move:
+         return mouse_cursor::arrow;
+      case selection_edit_tool::move_with_cursor:
+         return mouse_cursor::size_all;
+      case selection_edit_tool::move_path:
+      case selection_edit_tool::move_sector_point:
+      case selection_edit_tool::rotate:
+      case selection_edit_tool::rotate_around_centre:
+      case selection_edit_tool::rotate_light_region:
+      case selection_edit_tool::set_layer:
+         return mouse_cursor::arrow;
+      case selection_edit_tool::match_transform:
+      case selection_edit_tool::pick_sector:
+         return mouse_cursor::cross;
+      }
+   }
+
+   if (_animation_editor_open) {
+      if (_animation_editor_context.pick_object.active) {
+         return mouse_cursor::cross;
+      }
+   }
+
+   if (_animation_group_editor_open) {
+      if (_animation_group_editor_context.pick_object.active) {
+         return mouse_cursor::cross;
+      }
+   }
+
+   if (_animation_hierarchy_editor_open) {
+      if (_animation_hierarchy_editor_context.pick_object.active) {
+         return mouse_cursor::cross;
+      }
+   }
+
+   return mouse_cursor::arrow;
 }
 
 void world_edit::dpi_changed(const int new_dpi) noexcept

@@ -1,4 +1,5 @@
 
+#include "container/enum_array.hpp"
 #include "utility/command_line.hpp"
 #include "world_edit.hpp"
 
@@ -20,6 +21,29 @@ using we::utility::command_line;
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg,
                                               WPARAM wParam, LPARAM lParam);
+
+// This is a documented cursor but has no IDC_ define.
+#define WE_IDC_PEN MAKEINTRESOURCE(32631)
+
+const static we::container::enum_array<HCURSOR, we::mouse_cursor> mouse_cursors = {
+   nullptr,
+   LoadCursorW(nullptr, IDC_ARROW),
+   LoadCursorW(nullptr, IDC_IBEAM),
+   LoadCursorW(nullptr, IDC_WAIT),
+   LoadCursorW(nullptr, IDC_CROSS),
+   LoadCursorW(nullptr, IDC_SIZENWSE),
+   LoadCursorW(nullptr, IDC_SIZENESW),
+   LoadCursorW(nullptr, IDC_SIZEWE),
+   LoadCursorW(nullptr, IDC_SIZENS),
+   LoadCursorW(nullptr, IDC_SIZEALL),
+   LoadCursorW(nullptr, IDC_NO),
+   LoadCursorW(nullptr, IDC_HAND),
+   LoadCursorW(nullptr, IDC_APPSTARTING),
+   [] { // Incase Wine or something similar doesn't have the pen cursor.
+      HCURSOR cursor = LoadCursorW(nullptr, WE_IDC_PEN);
+      return cursor ? cursor : LoadCursorW(nullptr, IDC_ARROW);
+   }(),
+};
 
 void run_application(command_line command_line)
 {
@@ -85,6 +109,7 @@ void run_application(command_line command_line)
    ShowWindowAsync(window_handle.get(), SW_SHOWMAXIMIZED);
 
    we::world_edit app{window_handle.get(), command_line};
+   we::mouse_cursor app_cursor = app.get_mouse_cursor();
 
    // const DWORD my_thread_id = GetCurrentThreadId();
 
@@ -140,6 +165,17 @@ void run_application(command_line command_line)
          app.mouse_leave();
 
          return 0;
+      case WM_SETCURSOR: {
+         if (LOWORD(lparam) == HTCLIENT) {
+            app_cursor = app.get_mouse_cursor();
+
+            SetCursor(mouse_cursors[app_cursor]);
+
+            return 1;
+         }
+
+         return DefWindowProcW(window, message, wparam, lparam);
+      }
       case WM_DPICHANGED: {
          auto& rect = *reinterpret_cast<const RECT*>(lparam);
 
@@ -286,6 +322,16 @@ void run_application(command_line command_line)
       if (app.idling()) WaitMessage();
 
       app.update();
+
+      if (app.mouse_over()) {
+         const we::mouse_cursor old_app_cursor = app_cursor;
+
+         app_cursor = app.get_mouse_cursor();
+
+         if (app_cursor != old_app_cursor) {
+            SetCursor(mouse_cursors[app_cursor]);
+         }
+      }
    } while (true);
 }
 
