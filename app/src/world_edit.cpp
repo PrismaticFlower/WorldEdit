@@ -2712,6 +2712,12 @@ void world_edit::focus_on_selection() noexcept
 {
    if (_interaction_targets.selection.empty()) return;
 
+   if (_orbit_camera_active) {
+      setup_orbit_camera();
+
+      return;
+   }
+
    const math::bounding_box selection_bbox =
       world::selection_bbox_for_camera(_world, _interaction_targets.selection,
                                        _object_classes,
