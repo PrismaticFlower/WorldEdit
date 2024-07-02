@@ -446,8 +446,8 @@ void world_edit::ui_show_create_menu_items() noexcept
       if (base_region) {
          new_region = *base_region;
 
-         new_region.name =
-            world::create_unique_name(_world.regions, base_region->name);
+         new_region.name = world::create_unique_name(_world.regions, _world.lights,
+                                                     base_region->name);
          new_region.layer = creation_layer;
          new_region.id = world::max_id;
       }

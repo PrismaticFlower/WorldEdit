@@ -1438,7 +1438,8 @@ void world_edit::place_creation_entity() noexcept
          _interaction_targets.creation_entity.get<world::region>();
       world::region new_region = region;
 
-      new_region.name = world::create_unique_name(_world.regions, new_region.name);
+      new_region.name =
+         world::create_unique_name(_world.regions, _world.lights, new_region.name);
       new_region.id = _world.next_id.regions.aquire();
 
       _last_created_entities.last_region = new_region.id;
@@ -1455,6 +1456,7 @@ void world_edit::place_creation_entity() noexcept
       _edit_stack_world
          .apply(edits::make_set_value(&region.name,
                                       world::create_unique_name(_world.regions,
+                                                                _world.lights,
                                                                 region.name)),
                 _edit_context, {.transparent = true});
 
@@ -1865,8 +1867,7 @@ void world_edit::command_post_auto_place_meta_entities(world::object& object) no
           .control_radius = _entity_creation_config.command_post_control_radius,
           .control_height = _entity_creation_config.command_post_control_height,
           .spawn_radius = _entity_creation_config.command_post_spawn_radius},
-         _world.objects, _world.paths, _world.regions, _object_classes,
-         _world.terrain);
+         _world, _object_classes);
 
    for (uint32 i = 0; i < object.instance_properties.size(); ++i) {
       const std::string_view key = object.instance_properties[i].key;
@@ -2575,7 +2576,8 @@ void world_edit::new_entity_from_selection() noexcept
 
       world::region new_region = *region;
 
-      new_region.name = world::create_unique_name(_world.regions, new_region.name);
+      new_region.name =
+         world::create_unique_name(_world.regions, _world.lights, new_region.name);
       new_region.id = world::max_id;
 
       _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_region)),

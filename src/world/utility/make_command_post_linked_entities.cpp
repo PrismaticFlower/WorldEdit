@@ -58,11 +58,10 @@ auto make_spawn_path_nodes(const make_command_post_linked_entities_inputs inputs
 
 }
 
-auto make_command_post_linked_entities(
-   const make_command_post_linked_entities_inputs inputs,
-   const std::span<const object> objects, const std::span<const path> paths,
-   const std::span<const region> regions, const object_class_library& object_classes,
-   const terrain& terrain) noexcept -> command_post_linked_entities
+auto make_command_post_linked_entities(const make_command_post_linked_entities_inputs inputs,
+                                       const world& world,
+                                       const object_class_library& object_classes) noexcept
+   -> command_post_linked_entities
 {
    command_post_linked_entities linked;
 
@@ -70,7 +69,8 @@ auto make_command_post_linked_entities(
    const float capture_size = std::sqrt(capture_radius_sq / 3.0f);
 
    const std::string capture_region_name =
-      create_unique_name(regions, fmt::format("{}_capture", inputs.name));
+      create_unique_name(world.regions, world.lights,
+                         fmt::format("{}_capture", inputs.name));
 
    linked.capture_region = {.name = capture_region_name,
                             .layer = inputs.layer,
@@ -80,7 +80,8 @@ auto make_command_post_linked_entities(
                             .description = capture_region_name};
 
    const std::string control_region_name =
-      create_unique_name(regions, fmt::format("{}_control", inputs.name));
+      create_unique_name(world.regions, world.lights,
+                         fmt::format("{}_control", inputs.name));
 
    const float control_radius_sq = inputs.control_radius * inputs.control_radius;
    const float control_size = std::sqrt(control_radius_sq / 2.0f);
@@ -92,10 +93,12 @@ auto make_command_post_linked_entities(
                             .shape = region_shape::cylinder,
                             .description = control_region_name};
 
-   linked.spawn_path =
-      {.name = create_unique_name(paths, fmt::format("{}_spawn", inputs.name)),
-       .layer = inputs.layer,
-       .nodes = make_spawn_path_nodes(inputs, objects, object_classes, terrain)};
+   linked.spawn_path = {.name =
+                           create_unique_name(world.paths,
+                                              fmt::format("{}_spawn", inputs.name)),
+                        .layer = inputs.layer,
+                        .nodes = make_spawn_path_nodes(inputs, world.objects,
+                                                       object_classes, world.terrain)};
 
    return linked;
 }

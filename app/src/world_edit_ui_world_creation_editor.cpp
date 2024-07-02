@@ -1450,7 +1450,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::InputText("Name", &region.name, _edit_stack_world, _edit_context,
                        [&](std::string* edited_value) noexcept {
                           *edited_value =
-                             world::create_unique_name(_world.regions, *edited_value);
+                             world::create_unique_name(_world.regions, _world.lights,
+                                                       *edited_value);
                        });
 
       ImGui::LayerPick("Layer", &region.layer, _edit_stack_world, _edit_context);

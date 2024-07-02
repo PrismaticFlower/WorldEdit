@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../object.hpp"
 #include "../object_class_library.hpp"
 #include "../path.hpp"
 #include "../region.hpp"
-#include "../terrain.hpp"
 
 namespace we::world {
+
+struct world;
 
 struct command_post_linked_entities {
    region capture_region;
@@ -24,10 +24,9 @@ struct make_command_post_linked_entities_inputs {
    float spawn_radius = 0.0f;
 };
 
-auto make_command_post_linked_entities(
-   const make_command_post_linked_entities_inputs inputs,
-   const std::span<const object> objects, const std::span<const path> paths,
-   const std::span<const region> regions, const object_class_library& object_classes,
-   const terrain& terrain) noexcept -> command_post_linked_entities;
+auto make_command_post_linked_entities(const make_command_post_linked_entities_inputs inputs,
+                                       const world& world,
+                                       const object_class_library& object_classes) noexcept
+   -> command_post_linked_entities;
 
 }

@@ -57,6 +57,18 @@ bool is_name_unique(const std::span<const T> entities,
    return true;
 }
 
+bool is_light_region_name_unique(const std::span<const light> lights,
+                                 const std::string_view reference_name) noexcept
+{
+   for (auto& light : lights) {
+      if (not is_region_light(light)) continue;
+
+      if (light.region_name == reference_name) return false;
+   }
+
+   return true;
+}
+
 template<typename T>
 auto create_unique_name_impl(const std::span<const T> entities,
                              const std::string_view reference_name) -> std::string
@@ -105,12 +117,6 @@ auto create_unique_name(const std::span<const light> entities,
 }
 
 auto create_unique_name(const std::span<const path> entities,
-                        const std::string_view reference_name) -> std::string
-{
-   return create_unique_name_impl(entities, reference_name);
-}
-
-auto create_unique_name(const std::span<const region> entities,
                         const std::string_view reference_name) -> std::string
 {
    return create_unique_name_impl(entities, reference_name);
@@ -168,6 +174,37 @@ auto create_unique_name(const std::span<const animation_group> entities,
                         const std::string_view reference_name) -> std::string
 {
    return create_unique_name_impl(entities, reference_name);
+}
+
+auto create_unique_name(const std::span<const region> regions,
+                        const std::span<const light> lights,
+                        const std::string_view reference_name) -> std::string
+{
+   if (reference_name.empty()) return "";
+
+   if (is_name_unique(regions, reference_name) and
+       is_light_region_name_unique(lights, reference_name)) {
+      return std::string{reference_name};
+   }
+
+   absl::flat_hash_set<std::string_view> used_names;
+
+   used_names.reserve(regions.size() + lights.size());
+
+   for (const auto& region : regions) used_names.emplace(region.name);
+   for (const auto& light : lights) {
+      if (is_region_light(light)) used_names.emplace(light.region_name);
+   }
+
+   const std::string_view base_name = create_base_name<region>(reference_name);
+
+   uint32 index = 0;
+
+   while (true) {
+      std::string candidate_name = fmt::format("{}{}", base_name, index++);
+
+      if (not used_names.contains(candidate_name)) return candidate_name;
+   }
 }
 
 auto create_unique_light_region_name(const std::span<const light> lights,
