@@ -117,7 +117,7 @@ enum class key : uint8 {
    void_key,
 
    // size marker
-   count
+   COUNT
 };
 
 /// @brief Translate a windows virtual key to a world edit key.

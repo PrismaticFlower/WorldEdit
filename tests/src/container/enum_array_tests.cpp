@@ -11,7 +11,7 @@ enum class test_enum {
    b,
    c,
 
-   count
+   COUNT
 };
 
 }

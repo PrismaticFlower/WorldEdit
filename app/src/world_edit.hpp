@@ -48,7 +48,7 @@ enum class mouse_cursor {
    app_starting,
    pen,
 
-   count
+   COUNT
 };
 
 enum class select_method : uint8 { replace, add };

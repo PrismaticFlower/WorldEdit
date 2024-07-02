@@ -12,13 +12,13 @@ namespace we::container {
 
 template<typename T>
 concept enum_array_index = std::is_enum_v<T> and requires {
-   { T::count };
+   { T::COUNT };
 };
 
 // clang-format on
 
 template<typename T, enum_array_index Enum>
-using enum_array_base = std::array<T, static_cast<std::size_t>(Enum::count)>;
+using enum_array_base = std::array<T, static_cast<std::size_t>(Enum::COUNT)>;
 
 template<typename T, enum_array_index Enum>
 struct enum_array : enum_array_base<T, Enum> {
@@ -30,7 +30,7 @@ struct enum_array : enum_array_base<T, Enum> {
 
    constexpr auto operator[](const Enum index) noexcept -> reference
    {
-      assert(index != Enum::count);
+      assert(index < Enum::COUNT);
 
       return static_cast<enum_array_base<T, Enum>&>(
          *this)[static_cast<std::ptrdiff_t>(index)];
@@ -38,7 +38,7 @@ struct enum_array : enum_array_base<T, Enum> {
 
    constexpr auto operator[](const Enum index) const noexcept -> const_reference
    {
-      assert(index != Enum::count);
+      assert(index < Enum::COUNT);
 
       return static_cast<const enum_array_base<T, Enum>&>(
          *this)[static_cast<std::ptrdiff_t>(index)];
@@ -46,7 +46,7 @@ struct enum_array : enum_array_base<T, Enum> {
 
    constexpr auto at(const Enum index) noexcept -> reference
    {
-      assert(index != Enum::count);
+      assert(index < Enum::COUNT);
 
       return static_cast<enum_array_base<T, Enum>&>(*this).at(
          static_cast<std::ptrdiff_t>(index));
@@ -54,7 +54,7 @@ struct enum_array : enum_array_base<T, Enum> {
 
    constexpr auto at(const Enum index) const noexcept -> const_reference
    {
-      assert(index != Enum::count);
+      assert(index < Enum::COUNT);
 
       return static_cast<const enum_array_base<T, Enum>&>(*this).at(
          static_cast<std::ptrdiff_t>(index));

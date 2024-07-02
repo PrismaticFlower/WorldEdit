@@ -1219,7 +1219,7 @@ void renderer_impl::draw_world_render_list(const std::vector<uint16>& list,
                                  _light_clusters.lights_constant_buffer_view());
    command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-   material_pipeline_flags pipeline_flags = material_pipeline_flags::count; // Initialize to count to the loop below sets the pipeline on the first iteration.
+   material_pipeline_flags pipeline_flags = material_pipeline_flags::COUNT; // Initialize to count to the loop below sets the pipeline on the first iteration.
 
    auto& meshes = _world_mesh_list;
 
@@ -1251,7 +1251,7 @@ void renderer_impl::draw_world_render_list_depth_prepass(
                                  _camera_constant_buffer_view);
    command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
 
-   depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::count; // Initialize to count to the loop below sets the pipeline on the first iteration.
+   depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::COUNT; // Initialize to count to the loop below sets the pipeline on the first iteration.
 
    auto& meshes = _world_mesh_list;
 

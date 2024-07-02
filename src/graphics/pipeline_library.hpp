@@ -20,7 +20,7 @@ enum class depth_prepass_pipeline_flags : uint8 {
    alpha_cutout = 0b1,
    doublesided = 0b10,
 
-   count = 0b100
+   COUNT = 0b100
 };
 
 constexpr bool marked_as_enum_bitflag(depth_prepass_pipeline_flags)
@@ -32,7 +32,7 @@ enum class material_pipeline_flags : uint8 {
    doublesided = 0b1,
    transparent = 0b10,
 
-   count = 0b100
+   COUNT = 0b100
 };
 
 constexpr bool marked_as_enum_bitflag(material_pipeline_flags)
@@ -46,7 +46,7 @@ enum class thumbnail_mesh_pipeline_flags : uint8 {
    transparent = 0b10,
    alpha_cutout = 0b100,
 
-   count = 0b1000
+   COUNT = 0b1000
 };
 
 constexpr bool marked_as_enum_bitflag(thumbnail_mesh_pipeline_flags)

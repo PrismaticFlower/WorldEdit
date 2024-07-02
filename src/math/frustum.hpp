@@ -17,7 +17,7 @@ enum class frustum_corner {
    top_left_far,
    top_right_far,
 
-   count
+   COUNT
 };
 
 enum class frustum_planes {
@@ -28,7 +28,7 @@ enum class frustum_planes {
    left,
    right,
 
-   count
+   COUNT
 };
 
 struct frustum {

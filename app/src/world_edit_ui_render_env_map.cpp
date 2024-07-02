@@ -16,7 +16,7 @@ namespace we {
 
 namespace {
 
-enum class resolution { x128, x256, x512, x1024, x2048, x4096, count };
+enum class resolution { x128, x256, x512, x1024, x2048, x4096, COUNT };
 
 constexpr container::enum_array<uint32, resolution> resolution_values =
    container::make_enum_array<uint32, resolution>({{resolution::x128, 128},

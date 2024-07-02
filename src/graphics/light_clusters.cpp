@@ -767,7 +767,7 @@ void light_clusters::draw_shadow_maps(
 
       command_list.om_set_render_targets(depth_stencil_view);
 
-      depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::count; // Initialize to count to the loop below sets the pipeline on the first iteration.
+      depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::COUNT; // Initialize to count to the loop below sets the pipeline on the first iteration.
 
       for (const uint16 i : _shadow_render_list) {
          [[unlikely]] if (pipeline_flags != meshes.pipeline_flags[i].depth_prepass) {

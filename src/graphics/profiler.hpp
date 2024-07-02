@@ -10,7 +10,7 @@ enum class profiler_queue {
    direct,
    compute,
 
-   count
+   COUNT
 };
 
 struct profiler {

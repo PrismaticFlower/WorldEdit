@@ -1151,7 +1151,7 @@ bool parse_display_string(std::string_view string, key& out_key, bool& out_ctrl,
    string = string::trim_whitespace(string);
 
    constexpr std::underlying_type_t<key> first = std::to_underlying(key::tab);
-   constexpr std::underlying_type_t<key> count = std::to_underlying(key::count);
+   constexpr std::underlying_type_t<key> count = std::to_underlying(key::COUNT);
 
    if (string::istarts_with(string, "Ctrl + Shift + Alt")) {
       for (auto i = first; i < count; ++i) {
