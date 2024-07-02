@@ -69,6 +69,20 @@ bool is_light_region_name_unique(const std::span<const light> lights,
    return true;
 }
 
+bool is_light_name_and_region_name_unique(const std::span<const light> lights,
+                                          const std::string_view reference_name) noexcept
+{
+   for (auto& light : lights) {
+      if (light.name == reference_name) return false;
+
+      if (is_region_light(light) and light.region_name == reference_name) {
+         return false;
+      }
+   }
+
+   return true;
+}
+
 template<typename T>
 auto create_unique_name_impl(const std::span<const T> entities,
                              const std::string_view reference_name) -> std::string
@@ -211,7 +225,8 @@ auto create_unique_light_region_name(const std::span<const light> lights,
                                      const std::span<const region> regions,
                                      const std::string_view reference_name) -> std::string
 {
-   if (not reference_name.empty() and is_name_unique(lights, reference_name) and
+   if (not reference_name.empty() and
+       is_light_name_and_region_name_unique(lights, reference_name) and
        is_name_unique(regions, reference_name)) {
       return std::string{reference_name};
    }
