@@ -31,16 +31,37 @@ auto raycast_terrain_quad(const float3 ray_origin, const float3 ray_direction,
                              get_vertex(point + float2{1.0f, 1.0f}),
                              get_vertex(point + float2{0.0f, 1.0f})};
 
-   if (const float intersection = triIntersect(ray_origin, ray_direction,
-                                               vertices[0], vertices[1], vertices[2])
-                                     .x;
-       intersection >= 0.0f) {
-      return intersection;
-   }
+   const bool odd_quad_split =
+      (std::clamp(static_cast<int32>(point.y) + terrain_half_length - 1, 0,
+                  terrain.length - 1) &
+       1) != 0;
 
-   return triIntersect(ray_origin, ray_direction, vertices[0], vertices[2],
-                       vertices[3])
-      .x;
+   if (odd_quad_split) {
+      if (const float intersection =
+             triIntersect(ray_origin, ray_direction, vertices[0], vertices[3],
+                          vertices[1])
+                .x;
+          intersection >= 0.0f) {
+         return intersection;
+      }
+
+      return triIntersect(ray_origin, ray_direction, vertices[3], vertices[2],
+                          vertices[1])
+         .x;
+   }
+   else {
+      if (const float intersection =
+             triIntersect(ray_origin, ray_direction, vertices[0], vertices[1],
+                          vertices[2])
+                .x;
+          intersection >= 0.0f) {
+         return intersection;
+      }
+
+      return triIntersect(ray_origin, ray_direction, vertices[0], vertices[2],
+                          vertices[3])
+         .x;
+   }
 }
 
 auto make_ray_start(const float3 ray_origin, const float3 ray_direction,
@@ -67,7 +88,6 @@ auto make_ray_start(const float3 ray_origin, const float3 ray_direction,
 
    return ray_origin;
 }
-
 }
 
 auto raycast(const float3 ray_origin, const float3 ray_direction,

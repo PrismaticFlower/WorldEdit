@@ -76,10 +76,20 @@ constexpr auto generate_patch_indices()
             return y * patch_point_count + x;
          };
 
-         triangles[y * patch_grid_count + x][0] = {index(x, y), index(x + 1, y + 1),
-                                                   index(x + 1, y)};
-         triangles[y * patch_grid_count + x][1] = {index(x, y), index(x, y + 1),
-                                                   index(x + 1, y + 1)};
+         if (y & 1) {
+            triangles[y * patch_grid_count + x][0] = {index(x, y), index(x, y + 1),
+                                                      index(x + 1, y)};
+            triangles[y * patch_grid_count + x][1] = {index(x, y + 1),
+                                                      index(x + 1, y + 1),
+                                                      index(x + 1, y)};
+         }
+         else {
+            triangles[y * patch_grid_count + x][0] = {index(x, y),
+                                                      index(x + 1, y + 1),
+                                                      index(x + 1, y)};
+            triangles[y * patch_grid_count + x][1] = {index(x, y), index(x, y + 1),
+                                                      index(x + 1, y + 1)};
+         }
       }
    }
 
