@@ -42,6 +42,8 @@ public:
 
    [[nodiscard]] bool intersects(const frustum& frustum) const noexcept;
 
+   [[nodiscard]] auto get_child_bvhs() const noexcept -> std::span<const bvh>;
+
    [[nodiscard]] auto get_debug_boxes() const noexcept
       -> std::vector<std::vector<math::bounding_box>>;
 

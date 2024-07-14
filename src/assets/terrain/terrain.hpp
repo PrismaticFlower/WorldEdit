@@ -6,7 +6,6 @@
 #include "types.hpp"
 
 #include <array>
-#include <optional>
 #include <string>
 #include <vector>
 
