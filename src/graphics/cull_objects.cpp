@@ -41,16 +41,12 @@ constexpr int avx_width = 8;
 auto outside_plane(__m256 plane_x, __m256 plane_y, __m256 plane_z, __m256 plane_w,
                    __m256 point_x, __m256 point_y, __m256 point_z) noexcept -> __m256
 {
-   const float one = 1.0f;
-   const __m256 value_1 = _mm256_broadcast_ss(&one);
-
    const __m256 x = _mm256_mul_ps(plane_x, point_x);
    const __m256 y = _mm256_mul_ps(plane_y, point_y);
    const __m256 z = _mm256_mul_ps(plane_z, point_z);
-   const __m256 w = _mm256_mul_ps(plane_w, value_1);
 
    const __m256 xy_sum = _mm256_add_ps(x, y);
-   const __m256 zw_sum = _mm256_add_ps(z, w);
+   const __m256 zw_sum = _mm256_add_ps(z, plane_w);
 
    const __m256 plane_distance = _mm256_add_ps(xy_sum, zw_sum);
 
@@ -93,22 +89,25 @@ auto outside_plane(__m256 plane_x, __m256 plane_y, __m256 plane_z,
    return _mm256_and_ps(corner0123_outside, corner4567_outside);
 }
 
-auto outside_corners(std::array<__m256, 8> corners, __m256 bbox_corner_min,
-                     __m256 bbox_corner_max) noexcept -> __m256
+auto outside_corners(const frustum& frustum, const float float3::*axis,
+                     __m256 bbox_corner_min, __m256 bbox_corner_max) noexcept -> __m256
 {
-   const float one = 1.0f;
-   __m256 outside_mask = _mm256_broadcast_ss(&one);
+   const float true_mask = std::bit_cast<float>(0xff'ff'ff'ff);
 
-   for (const __m256 corner : corners) {
+   __m256 outside_min_mask = _mm256_broadcast_ss(&true_mask);
+   __m256 outside_max_mask = outside_min_mask;
+
+   for (const float3& frustum_corner : frustum.corners) {
+      const __m256 corner = _mm256_broadcast_ss(&(frustum_corner.*axis));
+
       const __m256 min_outside = _mm256_cmp_ps(corner, bbox_corner_min, _CMP_LT_OQ);
       const __m256 max_outside = _mm256_cmp_ps(corner, bbox_corner_max, _CMP_GT_OQ);
 
-      const __m256 min_max_outside = _mm256_or_ps(min_outside, max_outside);
-
-      outside_mask = _mm256_and_ps(outside_mask, min_max_outside);
+      outside_min_mask = _mm256_and_ps(outside_min_mask, min_outside);
+      outside_max_mask = _mm256_and_ps(outside_max_mask, max_outside);
    }
 
-   return outside_mask;
+   return _mm256_or_ps(outside_min_mask, outside_max_mask);
 }
 
 }
@@ -162,12 +161,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
       if (not inside_mask) continue;
 
       const __m256 outside_x =
-         outside_corners({_mm256_broadcast_ss(&frustum.corners[0].x),
-                          _mm256_broadcast_ss(&frustum.corners[1].x),
-                          _mm256_broadcast_ss(&frustum.corners[2].x),
-                          _mm256_broadcast_ss(&frustum.corners[3].x),
-                          _mm256_broadcast_ss(&frustum.corners[4].x),
-                          _mm256_broadcast_ss(&frustum.corners[5].x)},
+         outside_corners(frustum, &float3::x,
                          _mm256_load_ps(&bbox_min_x[i * avx_width]),
                          _mm256_load_ps(&bbox_max_x[i * avx_width]));
 
@@ -176,12 +170,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
       if (not inside_mask) continue;
 
       const __m256 outside_y =
-         outside_corners({_mm256_broadcast_ss(&frustum.corners[0].y),
-                          _mm256_broadcast_ss(&frustum.corners[1].y),
-                          _mm256_broadcast_ss(&frustum.corners[2].y),
-                          _mm256_broadcast_ss(&frustum.corners[3].y),
-                          _mm256_broadcast_ss(&frustum.corners[4].y),
-                          _mm256_broadcast_ss(&frustum.corners[5].y)},
+         outside_corners(frustum, &float3::y,
                          _mm256_load_ps(&bbox_min_y[i * avx_width]),
                          _mm256_load_ps(&bbox_max_y[i * avx_width]));
 
@@ -190,12 +179,7 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
       if (not inside_mask) continue;
 
       const __m256 outside_z =
-         outside_corners({_mm256_broadcast_ss(&frustum.corners[0].z),
-                          _mm256_broadcast_ss(&frustum.corners[1].z),
-                          _mm256_broadcast_ss(&frustum.corners[2].z),
-                          _mm256_broadcast_ss(&frustum.corners[3].z),
-                          _mm256_broadcast_ss(&frustum.corners[4].z),
-                          _mm256_broadcast_ss(&frustum.corners[5].z)},
+         outside_corners(frustum, &float3::z,
                          _mm256_load_ps(&bbox_min_z[i * avx_width]),
                          _mm256_load_ps(&bbox_max_z[i * avx_width]));
 
