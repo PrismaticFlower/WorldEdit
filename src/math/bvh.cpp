@@ -266,16 +266,17 @@ struct detail::bvh_impl {
          }
       }
       else {
-         _nodes.push_back({.bbox =
-                              {
-                                 .min_x = {root_node.bbox.min.x},
-                                 .min_y = {root_node.bbox.min.y},
-                                 .min_z = {root_node.bbox.min.z},
-                                 .max_x = {root_node.bbox.max.x},
-                                 .max_y = {root_node.bbox.max.y},
-                                 .max_z = {root_node.bbox.max.z},
-                              },
-                           .tri_count = {static_cast<int32>(indices.size()), 1, 1, 1}});
+         _nodes.push_back(
+            {.bbox =
+                {
+                   .min_x = {root_node.bbox.min.x},
+                   .min_y = {root_node.bbox.min.y},
+                   .min_z = {root_node.bbox.min.z},
+                   .max_x = {root_node.bbox.max.x},
+                   .max_y = {root_node.bbox.max.y},
+                   .max_z = {root_node.bbox.max.z},
+                },
+             .tri_count = {static_cast<int32>(indices.size()), -1, -1, -1}});
       }
 
       _nodes.shrink_to_fit();
@@ -1032,7 +1033,7 @@ struct detail::top_level_bvh_impl {
                    .max_y = {root_node.bbox.max.y},
                    .max_z = {root_node.bbox.max.z},
                 },
-             .instance_count = {static_cast<int32>(instances.size()), 1, 1, 1}});
+             .instance_count = {static_cast<int32>(instances.size()), -1, -1, -1}});
       }
 
       _nodes.shrink_to_fit();
