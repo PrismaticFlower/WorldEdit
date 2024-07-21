@@ -43,6 +43,9 @@
 #include <backends/imgui_impl_win32.h>
 #include <imgui.h>
 
+extern std::atomic_size_t used_lines;
+extern std::array<std::array<we::float3, 2>, 65536> lines;
+
 using namespace std::literals;
 
 namespace we {

@@ -273,6 +273,12 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::SetItemTooltip("Extend the terrain, increasing it's size while "
                                "keeping the current terrain area the same.");
 
+         if (ImGui::MenuItem("Terrain Lighting Baker")) {
+            _terrain_edit_tool = terrain_edit_tool::light_baker;
+         }
+
+         ImGui::SetItemTooltip("Also known as Burn Terrain in Zero Editor.");
+
          ImGui::Separator();
 
          if (ImGui::MenuItem("Water Editor",

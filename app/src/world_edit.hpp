@@ -19,6 +19,7 @@
 #include "world/object_class_library.hpp"
 #include "world/tool_visualizers.hpp"
 #include "world/utility/animation.hpp"
+#include "world/utility/terrain_light_map_baker.hpp"
 #include "world/world.hpp"
 
 #include <chrono>
@@ -140,6 +141,7 @@ enum class terrain_edit_tool : uint8 {
    resize,
    crop,
    extend,
+   light_baker,
    water_editor,
    foliage_editor
 };
@@ -291,6 +293,10 @@ private:
    void ui_show_water_editor() noexcept;
 
    void ui_show_foliage_editor() noexcept;
+
+   void ui_show_terrain_light_baker() noexcept;
+
+   void ui_show_terrain_light_bake_progress() noexcept;
 
    void ui_show_about_window() noexcept;
 
@@ -482,6 +488,7 @@ private:
    selection_transform_space _selection_move_space = selection_transform_space::world;
    selection_transform_space _selection_rotate_space = selection_transform_space::world;
 
+   bool _terrain_light_map_baking = false;
    bool _env_map_render_requested = false;
 
    std::string _layer_editor_new_name;
@@ -725,6 +732,8 @@ private:
       bool fill_from_edges = true;
    } _terrain_extend_context;
 
+   world::terrain_light_map_baker_config _terrain_light_baker_config;
+
    struct water_editor_config {
       water_brush_mode brush_mode = water_brush_mode::paint;
       int32 brush_size_x = 1;
@@ -892,6 +901,8 @@ private:
 
    float2 _select_start_position;
    float2 _cursor_placement_lock_position;
+
+   std::optional<world::terrain_light_map_baker> _terrain_light_map_baker;
 
    graphics::env_map_params _env_map_render_params;
    float3 _env_map_render_offset;

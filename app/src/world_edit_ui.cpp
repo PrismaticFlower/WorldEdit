@@ -125,11 +125,18 @@ void world_edit::update_ui() noexcept
    else if (_terrain_edit_tool == terrain_edit_tool::extend) {
       ui_show_terrain_extend();
    }
+   else if (_terrain_edit_tool == terrain_edit_tool::light_baker) {
+      ui_show_terrain_light_baker();
+   }
    else if (_terrain_edit_tool == terrain_edit_tool::water_editor) {
       ui_show_water_editor();
    }
    else if (_terrain_edit_tool == terrain_edit_tool::foliage_editor) {
       ui_show_foliage_editor();
+   }
+
+   if (_terrain_light_map_baking) {
+      ui_show_terrain_light_bake_progress();
    }
 
    if (_animation_editor_open) {

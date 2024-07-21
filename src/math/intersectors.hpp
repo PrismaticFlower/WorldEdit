@@ -7,7 +7,7 @@
 
 namespace we {
 
-inline bool intersect_tri(const float3 ray_origin, const float3& ray_direction,
+inline bool intersect_tri(const float3& ray_origin, const float3& ray_direction,
                           const float3& v0, const float3& v1, const float3& v2,
                           float& distance) noexcept
 {
