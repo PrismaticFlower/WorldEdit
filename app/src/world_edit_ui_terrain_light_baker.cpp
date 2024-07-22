@@ -84,7 +84,7 @@ void world_edit::ui_show_terrain_light_bake_progress() noexcept
          return;
       }
 
-      _edit_stack_world.apply(edits::make_set_terrain_area_color_map(0, 0, std::move(light_map)),
+      _edit_stack_world.apply(edits::make_set_terrain_area_light_map(0, 0, std::move(light_map)),
                               _edit_context, {.closed = true});
    }
 }
