@@ -33,6 +33,10 @@ void world_edit::ui_show_terrain_light_baker() noexcept
       ImGui::DragInt("Ambient Occlusion Samples", &config.ambient_occlusion_samples,
                      1.0f, 1, 1024, "%d", ImGuiSliderFlags_AlwaysClamp);
 
+      ImGui::SetItemTooltip(
+         "Lower this to get much, much faster Ambient Occlusion bakes "
+         "at the expense of quality.");
+
       ImGui::Checkbox("Supersample", &config.supersample);
 
       ImGui::SetItemTooltip(
