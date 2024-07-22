@@ -1,6 +1,7 @@
 #include "world_edit.hpp"
 
 #include "edits/set_terrain_area.hpp"
+#include "edits/set_value.hpp"
 
 #include "imgui.h"
 
@@ -43,6 +44,11 @@ void world_edit::ui_show_terrain_light_baker() noexcept
          "Sample the lighting multiple times for each terrain grid point. "
          "Increases quality and bake time.");
 
+      ImGui::Checkbox("Bake PS2 Light Map", &config.bake_ps2_light_map);
+
+      ImGui::SetItemTooltip(
+         "Bake the extra PS2 light map. Only needed when targetting the PS2.");
+
       ImGui::Separator();
 
       if (ImGui::Button("Bake!", {ImGui::CalcItemWidth(), 0.0f})) {
@@ -76,6 +82,8 @@ void world_edit::ui_show_terrain_light_bake_progress() noexcept
    if (_terrain_light_map_baker->ready()) {
       container::dynamic_array_2d<uint32> light_map =
          _terrain_light_map_baker->light_map();
+      container::dynamic_array_2d<uint32> light_map_dynamic_ps2 =
+         _terrain_light_map_baker->light_map_dynamic_ps2();
 
       _terrain_light_map_baking = false;
       _terrain_light_map_baker = std::nullopt;
@@ -86,6 +94,13 @@ void world_edit::ui_show_terrain_light_bake_progress() noexcept
 
       _edit_stack_world.apply(edits::make_set_terrain_area_light_map(0, 0, std::move(light_map)),
                               _edit_context, {.closed = true});
+
+      if (not light_map_dynamic_ps2.empty()) {
+         _edit_stack_world.apply(edits::make_set_value(&_world.terrain.light_map_extra,
+                                                       std::move(light_map_dynamic_ps2)),
+                                 _edit_context,
+                                 {.closed = true, .transparent = true});
+      }
    }
 }
 

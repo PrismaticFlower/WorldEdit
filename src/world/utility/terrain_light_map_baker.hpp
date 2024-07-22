@@ -26,6 +26,7 @@ struct terrain_light_map_baker_config {
    bool include_object_shadows = true;
    bool ambient_occlusion = true;
    bool supersample = true;
+   bool bake_ps2_light_map = false;
 
    int32 ambient_occlusion_samples = 128;
 };
@@ -46,6 +47,8 @@ struct terrain_light_map_baker {
    auto progress() const noexcept -> float;
 
    auto light_map() noexcept -> container::dynamic_array_2d<uint32>;
+
+   auto light_map_dynamic_ps2() noexcept -> container::dynamic_array_2d<uint32>;
 
 private:
    std::unique_ptr<detail::terrain_light_map_baker_impl> _impl;

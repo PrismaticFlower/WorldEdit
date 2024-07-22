@@ -526,6 +526,11 @@ struct detail::terrain_light_map_baker_impl {
       _normal_map = build_normal_map(world.terrain);
       _light_map = {_terrain_length, _terrain_length};
 
+      if (config.bake_ps2_light_map) {
+         _light_map_dynamic_ps2 = {_terrain_length, _terrain_length};
+         _total_points *= 2.0f;
+      }
+
       if (config.supersample) {
          _sample_offsets = super_sample_offsets;
       }
@@ -553,7 +558,9 @@ struct detail::terrain_light_map_baker_impl {
       }
 
       _task = thread_pool.exec(async::task_priority::low,
-                               [&] { start_bake(thread_pool); });
+                               [&, bake_ps2_light_map = config.bake_ps2_light_map] {
+                                  start_bake(thread_pool, bake_ps2_light_map);
+                               });
    }
 
    bool ready() const noexcept
@@ -569,6 +576,12 @@ struct detail::terrain_light_map_baker_impl {
    auto light_map() noexcept -> container::dynamic_array_2d<uint32>
    {
       return _task.ready() ? std::move(_light_map)
+                           : container::dynamic_array_2d<uint32>{};
+   }
+
+   auto light_map_dynamic_ps2() noexcept -> container::dynamic_array_2d<uint32>
+   {
+      return _task.ready() ? std::move(_light_map_dynamic_ps2)
                            : container::dynamic_array_2d<uint32>{};
    }
 
@@ -588,6 +601,7 @@ private:
    container::dynamic_array_2d<int16> _height_map;
    container::dynamic_array_2d<float3> _normal_map;
    container::dynamic_array_2d<uint32> _light_map;
+   container::dynamic_array_2d<uint32> _light_map_dynamic_ps2;
 
    std::span<const float2> _sample_offsets;
    float _inv_sample_count = 0.0f;
@@ -602,7 +616,7 @@ private:
 
    async::task<void> _task;
 
-   void start_bake(async::thread_pool& thread_pool)
+   void start_bake(async::thread_pool& thread_pool, bool bake_ps2_dynamic_light_map) noexcept
    {
       std::vector<async::task<void>> tasks;
       tasks.reserve(thread_pool.thread_count(async::task_priority::low) - 1);
@@ -625,9 +639,34 @@ private:
       while (true) {
          const int32 my_z = z.fetch_add(1, std::memory_order_relaxed);
 
-         if (my_z >= _terrain_length) return;
+         if (my_z >= _terrain_length) break;
 
          bake_row(my_z);
+      }
+
+      if (bake_ps2_dynamic_light_map) {
+         std::atomic_int32_t z_dynamic = 0;
+
+         for (std::size_t i = 0;
+              i < thread_pool.thread_count(async::task_priority::low) - 1; ++i) {
+            tasks.emplace_back(thread_pool.exec([&]() noexcept {
+               while (true) {
+                  const int32 my_z = z_dynamic.fetch_add(1, std::memory_order_relaxed);
+
+                  if (my_z >= _terrain_length) return;
+
+                  bake_row_dynamic(my_z);
+               }
+            }));
+         }
+
+         while (true) {
+            const int32 my_z = z_dynamic.fetch_add(1, std::memory_order_relaxed);
+
+            if (my_z >= _terrain_length) break;
+
+            bake_row_dynamic(my_z);
+         }
       }
 
       tasks.clear();
@@ -753,6 +792,102 @@ private:
          _points_baked.fetch_add(1, std::memory_order_relaxed);
       }
    }
+
+   void bake_row_dynamic(int32 zi) noexcept
+   {
+      for (int32 xi = 0; xi < _terrain_length; ++xi) {
+         float3 light_color = {};
+
+         for (int32 sample_index = 0;
+              sample_index < std::ssize(_sample_offsets); ++sample_index) {
+            const float2& sample = _sample_offsets[sample_index];
+
+            float x = static_cast<float>(xi) + sample.x * 0.5f;
+            float z = static_cast<float>(zi) + sample.y * 0.5f;
+
+            const float3 positionWS =
+               sample_terrain(_height_map, _terrain_max_index, _terrain_half_length,
+                              _terrain_grid_scale, _terrain_height_scale, x, z);
+            const float3 normalWS =
+               sample_terrain_normal(_normal_map, _terrain_max_index, x, z);
+
+            for (auto& light : _scene.dynamic_directional_lights()) {
+               const float NdotL = dot(normalWS, light.directionWS);
+
+               if (NdotL < 0.0f) continue;
+
+               if (_scene.raycast_shadow(positionWS + light.directionWS * 0.001f,
+                                         light.directionWS)) {
+                  continue;
+               }
+
+               light_color += std::clamp(NdotL, 0.0f, 1.0f) * light.color;
+            }
+
+            for (auto& light : _scene.dynamic_point_lights()) {
+               const float3 light_vectorWS = light.positionWS - positionWS;
+               const float light_distance_sq = dot(light_vectorWS, light_vectorWS);
+
+               if (light_distance_sq > light.range_sq) continue;
+
+               const float3 light_directionWS = normalize(light_vectorWS);
+
+               const float NdotL = dot(normalWS, light_directionWS);
+
+               if (NdotL < 0.0f) continue;
+
+               if (_scene.raycast(positionWS + light_directionWS * 0.001f,
+                                  light_directionWS, sqrt(light_distance_sq))) {
+                  continue;
+               }
+
+               const float attenuation =
+                  std::clamp(1.0f - light_distance_sq * light.inv_range_sq, 0.0f, 1.0f);
+
+               light_color +=
+                  std::clamp(NdotL, 0.0f, 1.0f) * attenuation * light.color;
+            }
+
+            for (auto& light : _scene.dynamic_spot_lights()) {
+               const float3 light_vectorWS = light.positionWS - positionWS;
+               const float light_distance_sq = dot(light_vectorWS, light_vectorWS);
+
+               if (light_distance_sq > light.range_sq) continue;
+
+               const float3 light_directionWS = normalize(light_vectorWS);
+
+               const float NdotL = dot(normalWS, light_directionWS);
+
+               if (NdotL < 0.0f) continue;
+
+               const float LdotL = dot(light_directionWS, light.directionWS);
+
+               if (LdotL < 0.0f) continue;
+
+               const float theta = std::clamp(LdotL, 0.0f, 1.0f);
+               const float cone_falloff =
+                  std::clamp((theta - light.outer_param) * light.inner_param,
+                             0.0f, 1.0f);
+
+               if (_scene.raycast(positionWS + light_directionWS * 0.001f,
+                                  light_directionWS, sqrt(light_distance_sq))) {
+                  continue;
+               }
+
+               const float attenuation =
+                  std::clamp(1.0f - light_distance_sq * light.inv_range_sq, 0.0f, 1.0f);
+
+               light_color += std::clamp(NdotL, 0.0f, 1.0f) * attenuation *
+                              cone_falloff * light.color;
+            }
+         }
+
+         _light_map_dynamic_ps2[{xi, zi}] =
+            utility::pack_srgb_bgra({light_color * _inv_sample_count, 1.0f});
+
+         _points_baked.fetch_add(1, std::memory_order_relaxed);
+      }
+   }
 };
 
 terrain_light_map_baker::terrain_light_map_baker(
@@ -781,5 +916,11 @@ auto terrain_light_map_baker::light_map() noexcept
    -> container::dynamic_array_2d<uint32>
 {
    return _impl->light_map();
+}
+
+auto terrain_light_map_baker::light_map_dynamic_ps2() noexcept
+   -> container::dynamic_array_2d<uint32>
+{
+   return _impl->light_map_dynamic_ps2();
 }
 }
