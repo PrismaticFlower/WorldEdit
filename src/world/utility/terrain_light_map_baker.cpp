@@ -14,6 +14,7 @@
 #include "math/sampling.hpp"
 #include "math/vector_funcs.hpp"
 #include "utility/srgb_conversion.hpp"
+#include "utility/string_icompare.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -23,17 +24,34 @@ namespace we::world {
 
 namespace {
 
+constexpr uint32 directional_light_patch_size = 8;
+
 struct terrain_mesh_chunk {
    std::vector<float3> positions;
    std::vector<std::array<uint16, 3>> triangles;
    bvh bvh;
 };
 
-struct point_light {
+struct directional_light {
+   float3 directionWS;
    float3 color;
+};
+
+struct point_light {
    float3 positionWS;
    float range_sq;
    float inv_range_sq;
+   float3 color;
+};
+
+struct spot_light {
+   float3 positionWS;
+   float range_sq;
+   float inv_range_sq;
+   float3 directionWS;
+   float outer_param;
+   float inner_param;
+   float3 color;
 };
 
 struct scene {
@@ -41,6 +59,7 @@ struct scene {
          const active_layers active_layers, const terrain_light_map_baker_config& config)
    {
       build_terrain_mesh(world.terrain);
+      gather_lights(world);
 
       _models.reserve(world.objects.size());
       _bvh_instances.reserve(world.objects.size() * 8 + _terrain_mesh.size());
@@ -79,20 +98,6 @@ struct scene {
       }
 
       _bvh = top_level_bvh{_bvh_instances};
-
-      _static_point_lights.reserve(world.lights.size());
-      _dynamic_point_lights.reserve(world.lights.size());
-
-      for (const light& light : world.lights) {
-         point_light& point_light = light.static_
-                                       ? _static_point_lights.emplace_back()
-                                       : _dynamic_point_lights.emplace_back();
-
-         point_light.color = light.color;
-         point_light.positionWS = light.position;
-         point_light.range_sq = light.range * light.range;
-         point_light.inv_range_sq = 1.0f / point_light.range_sq;
-      }
    }
 
    bool raycast_shadow(const float3& ray_directionWS, const float3& ray_originWS) const noexcept
@@ -109,6 +114,18 @@ struct scene {
       return _bvh.raycast(ray_directionWS, ray_originWS, max_distance);
    }
 
+   auto static_directional_lights() const noexcept -> std::span<const directional_light>
+   {
+      return std::span{_static_directional_lights.lights.data(),
+                       _static_directional_lights.count};
+   }
+
+   auto dynamic_directional_lights() const noexcept -> std::span<const directional_light>
+   {
+      return std::span{_dynamic_directional_lights.lights.data(),
+                       _dynamic_directional_lights.count};
+   }
+
    auto static_point_lights() const noexcept -> std::span<const point_light>
    {
       return _static_point_lights;
@@ -119,14 +136,35 @@ struct scene {
       return _dynamic_point_lights;
    }
 
+   auto static_spot_lights() const noexcept -> std::span<const spot_light>
+   {
+      return _static_spot_lights;
+   }
+
+   auto dynamic_spot_lights() const noexcept -> std::span<const spot_light>
+   {
+      return _dynamic_spot_lights;
+   }
+
 private:
+   struct directional_lights {
+      uint32 count = 0;
+      std::array<directional_light, 2> lights;
+   };
+
    std::vector<asset_data<assets::msh::flat_model>> _models;
    std::vector<top_level_bvh::instance> _bvh_instances;
    std::vector<terrain_mesh_chunk> _terrain_mesh;
    top_level_bvh _bvh;
 
+   directional_lights _static_directional_lights;
+   directional_lights _dynamic_directional_lights;
+
    std::vector<point_light> _static_point_lights;
    std::vector<point_light> _dynamic_point_lights;
+
+   std::vector<spot_light> _static_spot_lights;
+   std::vector<spot_light> _dynamic_spot_lights;
 
    void build_terrain_mesh(const terrain& terrain) noexcept
    {
@@ -186,6 +224,62 @@ private:
             }
 
             mesh.bvh = bvh{mesh.triangles, mesh.positions, {.backface_cull = false}};
+         }
+      }
+   }
+
+   void gather_lights(const world& world) noexcept
+   {
+      _static_point_lights.reserve(world.lights.size());
+      _dynamic_point_lights.reserve(world.lights.size());
+
+      _static_spot_lights.reserve(world.lights.size());
+      _dynamic_spot_lights.reserve(world.lights.size());
+
+      for (const light& light : world.lights) {
+         switch (light.light_type) {
+         case light_type::directional: {
+            directional_lights& out_lights = light.static_
+                                                ? _static_directional_lights
+                                                : _dynamic_directional_lights;
+
+            if (out_lights.count == 2) continue;
+
+            if (string::iequals(light.name, world.global_lights.global_light_1) or
+                string::iequals(light.name, world.global_lights.global_light_2)) {
+               out_lights.lights[out_lights.count] = {.directionWS = normalize(
+                                                         light.rotation *
+                                                         float3{0.0f, 0.0f, -1.0f}),
+                                                      .color = light.color};
+
+               out_lights.count += 1;
+            }
+         } break;
+         case light_type::point: {
+            point_light& point_light = light.static_
+                                          ? _static_point_lights.emplace_back()
+                                          : _dynamic_point_lights.emplace_back();
+
+            point_light.positionWS = light.position;
+            point_light.range_sq = light.range * light.range;
+            point_light.inv_range_sq = 1.0f / point_light.range_sq;
+            point_light.color = light.color;
+         } break;
+         case light_type::spot: {
+            spot_light& spot_light = light.static_
+                                        ? _static_spot_lights.emplace_back()
+                                        : _dynamic_spot_lights.emplace_back();
+
+            spot_light.positionWS = light.position;
+            spot_light.range_sq = light.range * light.range;
+            spot_light.inv_range_sq = 1.0f / spot_light.range_sq;
+            spot_light.directionWS =
+               normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+            spot_light.outer_param = std::cos(light.outer_cone_angle * 0.5f);
+            spot_light.inner_param =
+               1.0f / (std::cos(light.inner_cone_angle * 0.5f) - spot_light.outer_param);
+            spot_light.color = light.color;
+         } break;
          }
       }
    }
@@ -579,6 +673,19 @@ private:
                                                    _ambient_sky_color) *
                            ambient_visibility;
 
+            for (auto& light : _scene.static_directional_lights()) {
+               const float NdotL = dot(normalWS, light.directionWS);
+
+               if (NdotL < 0.0f) continue;
+
+               if (_scene.raycast_shadow(positionWS + light.directionWS * 0.001f,
+                                         light.directionWS)) {
+                  continue;
+               }
+
+               light_color += std::clamp(NdotL, 0.0f, 1.0f) * light.color;
+            }
+
             for (auto& light : _scene.static_point_lights()) {
                const float3 light_vectorWS = light.positionWS - positionWS;
                const float light_distance_sq = dot(light_vectorWS, light_vectorWS);
@@ -586,6 +693,10 @@ private:
                if (light_distance_sq > light.range_sq) continue;
 
                const float3 light_directionWS = normalize(light_vectorWS);
+
+               const float NdotL = dot(normalWS, light_directionWS);
+
+               if (NdotL < 0.0f) continue;
 
                if (_scene.raycast(positionWS + light_directionWS * 0.001f,
                                   light_directionWS, sqrt(light_distance_sq))) {
@@ -596,53 +707,41 @@ private:
                   std::clamp(1.0f - light_distance_sq * light.inv_range_sq, 0.0f, 1.0f);
 
                light_color +=
-                  std::clamp(dot(normalWS, light_directionWS), 0.0f, 1.0f) *
-                  attenuation * light.color;
+                  std::clamp(NdotL, 0.0f, 1.0f) * attenuation * light.color;
             }
 
-#if 0
-            for (auto& light : world.lights) {
-               if (not light.static_) continue;
+            for (auto& light : _scene.static_spot_lights()) {
+               const float3 light_vectorWS = light.positionWS - positionWS;
+               const float light_distance_sq = dot(light_vectorWS, light_vectorWS);
 
-               switch (light.light_type) {
-               case light_type::directional: {
-                  const float3 light_directionWS =
-                     normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+               if (light_distance_sq > light.range_sq) continue;
 
-                  if (scene.raycast_shadow(positionWS - light_directionWS * 0.00001f,
-                                           light_directionWS)) {
-                     continue;
-                  }
+               const float3 light_directionWS = normalize(light_vectorWS);
 
-                  light_color +=
-                     std::clamp(dot(normalWS, light_directionWS), 0.0f, 1.0f) *
-                     light.color;
-               } break;
-               case light_type::point: {
-                  const float3 light_directionWS =
-                     normalize(light.position - positionWS);
-                  const float light_distance = distance(light.position, positionWS);
+               const float NdotL = dot(normalWS, light_directionWS);
 
-                  if (light_distance > light.range) continue;
+               if (NdotL < 0.0f) continue;
 
-                  if (scene.raycast_shadow(positionWS - light_directionWS * 0.00001f,
-                                           light_directionWS)) {
-                     continue;
-                  }
+               const float LdotL = dot(light_directionWS, light.directionWS);
 
-                  const float attenuation =
-                     std::clamp(1.0f - ((light_distance * light_distance) /
-                                        (light.range * light.range)),
-                                0.0f, 1.0f);
+               if (LdotL < 0.0f) continue;
 
-                  light_color +=
-                     std::clamp(dot(normalWS, light_directionWS), 0.0f, 1.0f) *
-                     attenuation * light.color;
+               const float theta = std::clamp(LdotL, 0.0f, 1.0f);
+               const float cone_falloff =
+                  std::clamp((theta - light.outer_param) * light.inner_param,
+                             0.0f, 1.0f);
 
-               } break;
+               if (_scene.raycast(positionWS + light_directionWS * 0.001f,
+                                  light_directionWS, sqrt(light_distance_sq))) {
+                  continue;
                }
+
+               const float attenuation =
+                  std::clamp(1.0f - light_distance_sq * light.inv_range_sq, 0.0f, 1.0f);
+
+               light_color += std::clamp(NdotL, 0.0f, 1.0f) * attenuation *
+                              cone_falloff * light.color;
             }
-#endif
          }
 
          _light_map[{xi, zi}] =
@@ -680,5 +779,4 @@ auto terrain_light_map_baker::light_map() noexcept
 {
    return _impl->light_map();
 }
-
 }
