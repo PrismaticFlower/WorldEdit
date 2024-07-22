@@ -69,8 +69,11 @@ struct scene {
             if (not active_layers[object.layer]) continue;
             if (object.hidden) continue;
 
-            asset_data<assets::msh::flat_model> model =
-               object_class_library[object.class_name].model;
+            const object_class& object_class = object_class_library[object.class_name];
+
+            if (object_class.flags.hidden_ingame) continue;
+
+            asset_data<assets::msh::flat_model> model = object_class.model;
 
             quaternion inverse_rotation = conjugate(object.rotation);
             float3 inverse_position = inverse_rotation * -object.position;
