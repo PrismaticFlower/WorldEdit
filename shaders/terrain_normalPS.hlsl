@@ -35,12 +35,14 @@ float4 main(input_vertex input) : SV_Target0
    lighting_inputs.positionWS = positionWS;
    lighting_inputs.normalWS = normalWS;
    lighting_inputs.viewWS = viewWS;
-   lighting_inputs.diffuse_color = input.color * diffuse_color;
+   lighting_inputs.diffuse_color = diffuse_color;
    lighting_inputs.specular_color = 0.0;
    lighting_inputs.positionSS = input.positionSS.xy;
-   lighting_inputs.receive_static_light = true;
+   lighting_inputs.receive_static_light = false;
 
-   const float3 lighting = calculate_lighting(lighting_inputs);
+   float3 lighting = calculate_lighting(lighting_inputs);
+   lighting += input.static_light;
+   lighting *= diffuse_color;
 
    int2 foliage_coords = 
       int2(((input.positionWS.xz + terrain_constants.half_world_size)  + float2(0, terrain_constants.grid_size)) / terrain_constants.grid_size) / 2;

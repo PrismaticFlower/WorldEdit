@@ -14,12 +14,12 @@ float4 main(input_vertex input) : SV_Target0
    lighting_inputs.positionWS = input.positionWS;
    lighting_inputs.normalWS = normalWS;
    lighting_inputs.viewWS = normalize(cb_frame.view_positionWS - input.positionWS);
-   lighting_inputs.diffuse_color = surface_color * input.color;
+   lighting_inputs.diffuse_color = surface_color;
    lighting_inputs.specular_color = 0.0;
    lighting_inputs.positionSS = input.positionSS.xy;
-   lighting_inputs.receive_static_light = true;
+   lighting_inputs.receive_static_light = false;
 
-   const float3 lighting = calculate_lighting(lighting_inputs);
+   const float3 lighting = calculate_lighting(lighting_inputs) + input.static_light;
 
    return float4(lighting, 1.0f);
 }

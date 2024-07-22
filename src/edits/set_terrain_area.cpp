@@ -64,7 +64,7 @@ struct access_color_map {
 
    void mark_dirty(world::terrain& terrain, dirty_rect rect)
    {
-      terrain.color_map_dirty.add(rect);
+      terrain.color_or_light_map_dirty.add(rect);
    }
 
    bool can_coalesce(const access_color_map&) const noexcept
@@ -83,7 +83,7 @@ struct access_light_map {
 
    void mark_dirty(world::terrain& terrain, dirty_rect rect)
    {
-      terrain.light_map_dirty.add(rect);
+      terrain.color_or_light_map_dirty.add(rect);
    }
 
    bool can_coalesce(const access_light_map&) const noexcept
