@@ -20,7 +20,7 @@ struct mesh;
 
 struct ray_hit {
    float distance;
-   float3 normal;
+   float3 unnormalized_normal;
 };
 
 class flat_model_bvh {

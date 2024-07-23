@@ -26,7 +26,8 @@ auto flat_model_bvh::query(const float3 ray_origin, const float3 ray_direction) 
    for (const bvh& bvh : _bvhs) {
       if (auto hit = bvh.raycast(ray_origin, ray_direction, t);
           hit and hit->distance < t) {
-         closest_hit = ray_hit{.distance = hit->distance, .normal = hit->normal};
+         closest_hit = ray_hit{.distance = hit->distance,
+                               .unnormalized_normal = hit->unnormalized_normal};
          t = hit->distance;
       }
    }

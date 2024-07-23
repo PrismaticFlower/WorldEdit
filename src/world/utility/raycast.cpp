@@ -51,7 +51,8 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
       if (model_hit->distance < min_distance) {
          hit = object.id;
          min_distance = model_hit->distance;
-         surface_normalWS = normalize(object.rotation * model_hit->normal);
+         surface_normalWS =
+            normalize(object.rotation * model_hit->unnormalized_normal);
       }
    }
 

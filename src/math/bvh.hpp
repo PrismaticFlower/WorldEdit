@@ -29,7 +29,7 @@ struct bvh_ray_flags {
 struct bvh {
    struct ray_hit {
       float distance;
-      float3 normal;
+      float3 unnormalized_normal;
    };
 
    bvh() noexcept;

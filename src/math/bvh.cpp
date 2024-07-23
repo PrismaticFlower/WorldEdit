@@ -377,7 +377,8 @@ struct detail::bvh_impl {
 
                         if (flags.accept_first_hit) {
                            return std::optional{
-                              bvh::ray_hit{.distance = hit, .normal = hit_normal}};
+                              bvh::ray_hit{.distance = hit,
+                                           .unnormalized_normal = hit_normal}};
                         }
                      }
                   }
@@ -397,7 +398,7 @@ struct detail::bvh_impl {
 
       return closest_hit_scalar < max_distance
                 ? std::optional{bvh::ray_hit{.distance = closest_hit_scalar,
-                                             .normal = hit_normal}}
+                                             .unnormalized_normal = hit_normal}}
                 : std::nullopt;
    }
 
