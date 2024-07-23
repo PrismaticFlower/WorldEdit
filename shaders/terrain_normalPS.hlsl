@@ -20,9 +20,7 @@ float4 main(input_vertex input) : SV_Target0
    for (uint i = 1; i < terrain_max_textures; ++i) {
       [branch] if (!input.active_textures & (1u << i)) continue;
 
-      const float weight =
-         texture_weight_maps.Sample(sampler_bilinear_clamp, float3(input.terrain_coords, i)).r;
-
+      const float weight = input.texture_weights[i - 1];
       const float2 texcoords = get_terrain_texcoords(i, positionWS);
 
       Texture2D diffuse_map = Texture2DHeap[terrain_constants.diffuse_maps_index[i]];

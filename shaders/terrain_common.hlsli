@@ -48,6 +48,7 @@ struct patch_info {
 struct input_vertex {
    float3 positionWS : POSITIONWS;
    float2 terrain_coords : TERRAINCOORDS;
+   float  texture_weights[TERRAIN_MAX_TEXTURES - 1] : TEXTUREWEIGHTS;
    nointerpolation uint active_textures : ACTIVETEXTURES;
    float3 static_light : LIGHT;
 

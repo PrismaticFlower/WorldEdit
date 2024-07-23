@@ -4,19 +4,13 @@
 struct output_vertex {
    float3 positionWS : POSITIONWS;
    float2 terrain_coords : TERRAINCOORDS;
+   float  texture_weights[TERRAIN_MAX_TEXTURES - 1] : TEXTUREWEIGHTS;
    nointerpolation uint active_textures : ACTIVETEXTURES;
    float3 static_light : LIGHT;
 
    float4 positionPS : SV_Position;
 };
 
-uint get_height_map_length()
-{
-   uint2 height_map_size;
-   height_map.GetDimensions(height_map_size.x, height_map_size.y);
-
-   return height_map_size.x;
-}
 
 // clang-format off
 
@@ -36,15 +30,26 @@ output_vertex main(uint vertex_index : SV_VertexID, uint patch_index : SV_Instan
 
    const float3 positionWS = float3(patch_position.x - terrain_constants.half_world_size.x, height,
                                     patch_position.y - terrain_constants.half_world_size.y);
-   const float3 static_light = light_map[clamp(uint2(x, y), 0, get_height_map_length() - 1)].rgb;
+   const float3 static_light = light_map[clamp(uint2(x, y), 0, terrain_constants.terrain_max_index)].rgb;
 
    output_vertex output;
-
+   
    output.positionWS = positionWS;
    output.terrain_coords = (float2(x, y) + 0.5) * terrain_constants.inv_terrain_length;
    output.active_textures = patch.active_textures;
    output.static_light = static_light;
    output.positionPS = mul(cb_frame.view_projection_matrix, float4(positionWS, 1.0));
+
+   for (uint i = 1; i < terrain_max_textures; ++i) {
+      [branch] if (patch.active_textures & (1u << i)) {
+         const float weight = texture_weight_maps[uint3(clamp(uint2(x, y), 0, terrain_constants.terrain_max_index), i)];
+
+         output.texture_weights[i - 1] = weight;
+      }
+      else {
+         output.texture_weights[i - 1] = 0.0;
+      }
+   }
 
    return output;
 }
