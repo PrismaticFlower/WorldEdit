@@ -503,17 +503,17 @@ inline auto trunc(const float4& v) noexcept -> float4
 
 inline auto frac(const float2& v) -> float2
 {
-   return v - trunc(v);
+   return v - floor(v);
 }
 
 inline auto frac(const float3& v) -> float3
 {
-   return v - trunc(v);
+   return v - floor(v);
 }
 
 inline auto frac(const float4& v) -> float4
 {
-   return v - trunc(v);
+   return v - floor(v);
 }
 
 constexpr auto min(const float2& a, const float2& b) noexcept -> float2
