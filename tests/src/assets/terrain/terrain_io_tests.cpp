@@ -71,13 +71,8 @@ TEST_CASE("terrain io valid tests", "[Assets][Terrain]")
                        static_cast<uint32>(terrain.length)});
    }
 
-   REQUIRE(terrain.color_map_dirty.size() == 1);
-   CHECK(terrain.color_map_dirty[0] ==
-         dirty_rect{0, 0, static_cast<uint32>(terrain.length),
-                    static_cast<uint32>(terrain.length)});
-
-   REQUIRE(terrain.light_map_dirty.size() == 1);
-   CHECK(terrain.light_map_dirty[0] ==
+   REQUIRE(terrain.color_or_light_map_dirty.size() == 1);
+   CHECK(terrain.color_or_light_map_dirty[0] ==
          dirty_rect{0, 0, static_cast<uint32>(terrain.length),
                     static_cast<uint32>(terrain.length)});
 
