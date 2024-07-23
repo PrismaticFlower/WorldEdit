@@ -28,7 +28,7 @@ struct terrain_light_map_baker_config {
    bool supersample = true;
    bool bake_ps2_light_map = false;
 
-   int32 ambient_occlusion_samples = 128;
+   int32 ambient_occlusion_samples = 32;
 };
 
 struct terrain_light_map_baker {
