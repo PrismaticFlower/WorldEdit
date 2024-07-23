@@ -95,13 +95,13 @@ private:
    gpu::unique_resource_handle _terrain_constants_buffer;
    gpu::unique_resource_handle _height_map;
    gpu::unique_resource_handle _texture_weight_maps;
-   gpu::unique_resource_handle _color_map;
+   gpu::unique_resource_handle _light_map;
    gpu::unique_resource_handle _foliage_map;
 
    gpu_virtual_address _terrain_cbv;
    gpu::unique_resource_view _height_map_srv;
    gpu::unique_resource_view _texture_weight_maps_srv;
-   gpu::unique_resource_view _color_map_srv;
+   gpu::unique_resource_view _light_map_srv;
    gpu::unique_resource_view _foliage_map_srv;
 
    std::array<lowercase_string, texture_count> _diffuse_maps_names;
@@ -109,7 +109,7 @@ private:
 
    uint32 _height_map_upload_row_pitch = 0;
    uint32 _weight_map_upload_row_pitch = 0;
-   uint32 _color_map_upload_row_pitch = 0;
+   uint32 _light_map_upload_row_pitch = 0;
    uint32 _foliage_map_upload_row_pitch = 0;
 
    gpu::unique_resource_handle _upload_buffer;
@@ -117,8 +117,8 @@ private:
    std::array<uint32, gpu::frame_pipeline_length> _height_map_upload_offset;
    std::array<std::array<std::byte*, texture_count>, gpu::frame_pipeline_length> _weight_map_upload_ptr;
    std::array<std::array<uint32, texture_count>, gpu::frame_pipeline_length> _weight_map_upload_offset;
-   std::array<std::byte*, gpu::frame_pipeline_length> _color_map_upload_ptr;
-   std::array<uint32, gpu::frame_pipeline_length> _color_map_upload_offset;
+   std::array<std::byte*, gpu::frame_pipeline_length> _light_map_upload_ptr;
+   std::array<uint32, gpu::frame_pipeline_length> _light_map_upload_offset;
    std::array<std::byte*, gpu::frame_pipeline_length> _foliage_map_upload_ptr;
    std::array<uint32, gpu::frame_pipeline_length> _foliage_map_upload_offset;
 };

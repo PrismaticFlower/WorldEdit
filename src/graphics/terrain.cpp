@@ -1,5 +1,6 @@
 #include "terrain.hpp"
 #include "math/align.hpp"
+#include "math/vector_funcs.hpp"
 #include "settings/graphics.hpp"
 #include "utility/string_icompare.hpp"
 
@@ -23,7 +24,7 @@ struct alignas(16) terrain_constants {
 
    uint32 height_map;
    uint32 texture_weight_maps;
-   uint32 color_map;
+   uint32 light_map;
    uint32 foliage_map;
 
    float inv_grid_size;
@@ -228,15 +229,39 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
       }
    }
 
-   for (const world::dirty_rect& dirty : terrain.color_map_dirty) {
-      std::byte* const upload_ptr = _color_map_upload_ptr[_device.frame_index()];
-      const uint32 row_pitch = _color_map_upload_row_pitch;
-      const uint32 dirty_width = (dirty.right - dirty.left);
+   for (const world::dirty_rect& dirty : terrain.color_or_light_map_dirty) {
+      std::byte* const upload_ptr = _light_map_upload_ptr[_device.frame_index()];
+      const uint32 row_pitch = _light_map_upload_row_pitch;
 
       for (uint32 y = dirty.top; y < dirty.bottom; ++y) {
-         std::memcpy(upload_ptr + (y * row_pitch) + (dirty.left * sizeof(uint32)),
-                     &terrain.color_map[{dirty.left, y}],
-                     dirty_width * sizeof(uint32));
+         for (uint32 x = dirty.left; x < dirty.right; ++x) {
+            const uint32 u32_base_color = terrain.color_map[{x, y}];
+            const uint32 u32_light = terrain.light_map[{x, y}];
+
+            // We can just ignore BGR order here.
+
+            const float3 base_color = {
+               ((u32_base_color >> 0u) & 0xffu) * (1.0f / 255.0f),
+               ((u32_base_color >> 8u) & 0xffu) * (1.0f / 255.0f),
+               ((u32_base_color >> 16u) & 0xffu) * (1.0f / 255.0f),
+            };
+            const float3 light = {
+               ((u32_light >> 0u) & 0xffu) * (1.0f / 255.0f),
+               ((u32_light >> 8u) & 0xffu) * (1.0f / 255.0f),
+               ((u32_light >> 16u) & 0xffu) * (1.0f / 255.0f),
+            };
+
+            const float3 color = base_color * light;
+
+            uint32 u32_color = 0xff'00'00'00u;
+
+            u32_color |= static_cast<uint8>(color.x * 255.0f + 0.5f) << 0u;
+            u32_color |= static_cast<uint8>(color.y * 255.0f + 0.5f) << 8u;
+            u32_color |= static_cast<uint8>(color.z * 255.0f + 0.5f) << 16u;
+
+            std::memcpy(upload_ptr + (y * row_pitch) + (x * sizeof(uint32)),
+                        &u32_color, sizeof(uint32));
+         }
       }
 
       gpu::box src_box{.left = dirty.left,
@@ -247,13 +272,13 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
                        .back = 1};
 
       command_list.copy_buffer_to_texture(
-         _color_map.get(), 0, dirty.left, dirty.top, 0, _upload_buffer.get(),
-         {.offset = _color_map_upload_offset[_device.frame_index()],
+         _light_map.get(), 0, dirty.left, dirty.top, 0, _upload_buffer.get(),
+         {.offset = _light_map_upload_offset[_device.frame_index()],
           .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
           .width = _terrain_length,
           .height = _terrain_length,
           .depth = 1,
-          .row_pitch = _color_map_upload_row_pitch},
+          .row_pitch = _light_map_upload_row_pitch},
          &src_box);
    }
 
@@ -317,7 +342,7 @@ void terrain::update(const world::terrain& terrain, gpu::copy_command_list& comm
 
       .height_map = _height_map_srv.get().index,
       .texture_weight_maps = _texture_weight_maps_srv.get().index,
-      .color_map = _color_map_srv.get().index,
+      .light_map = _light_map_srv.get().index,
       .foliage_map = _foliage_map_srv.get().index,
 
       .inv_grid_size = 1.0f / _terrain_grid_size,
@@ -632,16 +657,16 @@ void terrain::create_gpu_textures()
                                            {.format = DXGI_FORMAT_R8_UNORM}),
        _device.direct_queue};
 
-   _color_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
+   _light_map = {_device.create_texture({.dimension = gpu::texture_dimension::t_2d,
                                          .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
                                          .width = _terrain_length,
                                          .height = _terrain_length,
-                                         .debug_name = "Terrain Color Map"},
+                                         .debug_name = "Terrain Light Map"},
                                         gpu::barrier_layout::common,
                                         gpu::legacy_resource_state::common),
                  _device.direct_queue};
 
-   _color_map_srv = {_device.create_shader_resource_view(_color_map.get(),
+   _light_map_srv = {_device.create_shader_resource_view(_light_map.get(),
                                                          {.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB}),
                      _device.direct_queue};
 
@@ -665,7 +690,7 @@ void terrain::create_gpu_textures()
    _weight_map_upload_row_pitch =
       math::align_up(_terrain_length, gpu::texture_data_pitch_alignment);
 
-   _color_map_upload_row_pitch =
+   _light_map_upload_row_pitch =
       math::align_up(_terrain_length * uint32{sizeof(uint32)},
                      gpu::texture_data_pitch_alignment);
 
@@ -678,8 +703,8 @@ void terrain::create_gpu_textures()
    const uint32 weight_map_upload_item_size =
       math::align_up(_terrain_length * _weight_map_upload_row_pitch,
                      gpu::texture_data_placement_alignment);
-   const uint32 color_map_upload_item_size =
-      math::align_up(_terrain_length * _color_map_upload_row_pitch,
+   const uint32 light_map_upload_item_size =
+      math::align_up(_terrain_length * _light_map_upload_row_pitch,
                      gpu::texture_data_placement_alignment);
    const uint32 foliage_map_upload_item_size =
       math::align_up((_terrain_length / 2) * _foliage_map_upload_row_pitch,
@@ -687,7 +712,7 @@ void terrain::create_gpu_textures()
 
    const uint32 upload_buffer_frame_size =
       height_map_upload_item_size + (weight_map_upload_item_size * texture_count) +
-      color_map_upload_item_size + foliage_map_upload_item_size;
+      light_map_upload_item_size + foliage_map_upload_item_size;
 
    _upload_buffer = {_device.create_buffer({.size = upload_buffer_frame_size * 2,
                                             .debug_name =
@@ -712,13 +737,13 @@ void terrain::create_gpu_textures()
             upload_buffer_ptr + _weight_map_upload_offset[i][texture];
       }
 
-      _color_map_upload_offset[i] = frame_offset + height_map_upload_item_size +
+      _light_map_upload_offset[i] = frame_offset + height_map_upload_item_size +
                                     (weight_map_upload_item_size * texture_count);
-      _color_map_upload_ptr[i] = upload_buffer_ptr + _color_map_upload_offset[i];
+      _light_map_upload_ptr[i] = upload_buffer_ptr + _light_map_upload_offset[i];
 
       _foliage_map_upload_offset[i] =
          frame_offset + height_map_upload_item_size +
-         (weight_map_upload_item_size * texture_count) + color_map_upload_item_size;
+         (weight_map_upload_item_size * texture_count) + light_map_upload_item_size;
       _foliage_map_upload_ptr[i] = upload_buffer_ptr + _foliage_map_upload_offset[i];
    }
 }

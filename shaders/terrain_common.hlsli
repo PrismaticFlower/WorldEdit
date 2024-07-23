@@ -16,7 +16,7 @@ struct terrain_constants_ {
 
    uint height_map_index;
    uint texture_weight_maps_index;
-   uint color_map_index;
+   uint light_map_index;
    uint foliage_map_index;
 
    float inv_grid_size;
@@ -49,7 +49,7 @@ struct input_vertex {
    float3 positionWS : POSITIONWS;
    float2 terrain_coords : TERRAINCOORDS;
    nointerpolation uint active_textures : ACTIVETEXTURES;
-   float3 color : COLOR;
+   float3 static_light : LIGHT;
 
    float4 positionSS : SV_Position;
 };
@@ -59,7 +59,7 @@ StructuredBuffer<patch_info> patch_constants : register(TERRAIN_PATCH_DATA_REGIS
 
 static Texture2D height_map = Texture2DHeap[terrain_constants.height_map_index];
 static Texture2DArray texture_weight_maps = Texture2DArrayHeap[terrain_constants.texture_weight_maps_index];
-static Texture2D color_map = Texture2DHeap[terrain_constants.color_map_index];
+static Texture2D light_map = Texture2DHeap[terrain_constants.light_map_index];
 static Texture2D<uint4> foliage_map = Texture2D_uint_Heap[terrain_constants.foliage_map_index];
 
 const static uint patch_point_count = 17;

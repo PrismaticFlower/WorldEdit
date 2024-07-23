@@ -43,6 +43,11 @@ bool flat_model_bvh::intersects(const frustum& frustum) const noexcept
    return false;
 }
 
+auto flat_model_bvh::get_child_bvhs() const noexcept -> std::span<const bvh>
+{
+   return _bvhs;
+}
+
 auto flat_model_bvh::get_debug_boxes() const noexcept
    -> std::vector<std::vector<math::bounding_box>>
 {

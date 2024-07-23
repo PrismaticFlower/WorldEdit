@@ -486,19 +486,34 @@ inline auto round(const float4& v) noexcept -> float4
    return {std::round(v.x), std::round(v.y), std::round(v.z), std::round(v.w)};
 }
 
+inline auto trunc(const float2& v) noexcept -> float2
+{
+   return {std::trunc(v.x), std::trunc(v.y)};
+}
+
+inline auto trunc(const float3& v) noexcept -> float3
+{
+   return {std::trunc(v.x), std::trunc(v.y), std::trunc(v.z)};
+}
+
+inline auto trunc(const float4& v) noexcept -> float4
+{
+   return {std::trunc(v.x), std::trunc(v.y), std::trunc(v.z), std::trunc(v.w)};
+}
+
 inline auto frac(const float2& v) -> float2
 {
-   return v - floor(v);
+   return v - trunc(v);
 }
 
 inline auto frac(const float3& v) -> float3
 {
-   return v - floor(v);
+   return v - trunc(v);
 }
 
 inline auto frac(const float4& v) -> float4
 {
-   return v - floor(v);
+   return v - trunc(v);
 }
 
 constexpr auto min(const float2& a, const float2& b) noexcept -> float2

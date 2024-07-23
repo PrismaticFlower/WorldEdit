@@ -51,6 +51,14 @@ void object_class::update_from_definition(assets::libraries_manager& assets_libr
    }
 
    if (not model) model = assets::msh::default_missing_scene();
+
+   flags = {.hidden_ingame = true};
+
+   for (const auto& prop : definition->properties) {
+      if (string::iequals(prop.key, "GeometryName")) {
+         flags.hidden_ingame = false;
+      }
+   }
 }
 
 }

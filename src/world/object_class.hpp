@@ -17,6 +17,10 @@ struct libraries_manager;
 
 namespace we::world {
 
+struct object_class_flags {
+   uint32 hidden_ingame : 1 = false;
+};
+
 struct object_class {
    object_class() = default;
 
@@ -29,6 +33,7 @@ struct object_class {
    asset_ref<assets::msh::flat_model> model_asset;
    asset_data<assets::msh::flat_model> model;
 
+   object_class_flags flags;
    lowercase_string model_name;
 
    std::vector<instance_property> instance_properties;

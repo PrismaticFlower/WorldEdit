@@ -45,6 +45,7 @@
     <ClCompile Include="src\world_edit_ui_animation_group_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_animation_hierarchy_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_rotate_light_region.cpp" />
+    <ClCompile Include="src\world_edit_ui_terrain_light_baker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\world_edit.hpp" />
