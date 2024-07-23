@@ -75,7 +75,6 @@ auto build_node_to_object_transforms(const scene& scene) -> std::vector<float4x4
 bool is_mesh_node(const node& node) noexcept
 {
    switch (node.type) {
-   case node_type::null:
    case node_type::cloth:
    case node_type::bone:
    case node_type::shadow_volume:

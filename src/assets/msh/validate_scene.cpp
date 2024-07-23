@@ -196,7 +196,8 @@ void check_geometry_segment_non_empty(const scene& scene)
    bool empty = true;
 
    for (const auto& node : scene.nodes | std::ranges::views::filter([](const auto& node) {
-                              return node.type == node_type::skinned_mesh or
+                              return node.type == node_type::null or
+                                     node.type == node_type::skinned_mesh or
                                      node.type == node_type::static_mesh;
                            })) {
       for (const auto& segment : node.segments) {
