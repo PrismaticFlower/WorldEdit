@@ -71,8 +71,8 @@ TEST_CASE("edits set_terrain", "[Edits]")
             world::dirty_rect{0, 0, test_terrain_length, test_terrain_length});
    }
 
-   REQUIRE(world.terrain.color_map_dirty.size() == 1);
-   CHECK(world.terrain.color_map_dirty[0] ==
+   REQUIRE(world.terrain.color_or_light_map_dirty.size() == 1);
+   CHECK(world.terrain.color_or_light_map_dirty[0] ==
          world::dirty_rect{0, 0, test_terrain_length, test_terrain_length});
 
    REQUIRE(world.terrain.water_map_dirty.size() == 1);
@@ -116,8 +116,8 @@ TEST_CASE("edits set_terrain", "[Edits]")
                                             test_world_terrain_length});
    }
 
-   REQUIRE(world.terrain.color_map_dirty.size() == 1);
-   CHECK(world.terrain.color_map_dirty[0] ==
+   REQUIRE(world.terrain.color_or_light_map_dirty.size() == 1);
+   CHECK(world.terrain.color_or_light_map_dirty[0] ==
          world::dirty_rect{0, 0, test_world_terrain_length, test_world_terrain_length});
 
    REQUIRE(world.terrain.water_map_dirty.size() == 1);
