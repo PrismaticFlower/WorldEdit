@@ -252,7 +252,9 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::SetItemTooltip("Extend the terrain, increasing it's size while "
                                "keeping the current terrain area the same.");
 
-         if (ImGui::MenuItem("Bake Terrain Lighting")) {
+         if (ImGui::MenuItem("Bake Terrain Lighting",
+                             get_display_string(_hotkeys.query_binding(
+                                "Global", "Show Bake Terrain Lighting")))) {
             _terrain_edit_tool = terrain_edit_tool::light_baker;
          }
 

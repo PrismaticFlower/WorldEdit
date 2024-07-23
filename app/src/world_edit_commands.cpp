@@ -162,6 +162,8 @@ void world_edit::initialize_commands() noexcept
       _terrain_edit_tool = terrain_edit_tool::foliage_editor;
       _foliage_editor_context = {};
    });
+   _commands.add("show.bake_terrain_lighting"s,
+                 [this] { _terrain_edit_tool = terrain_edit_tool::light_baker; });
 
    _commands.add("show.overlay_grid"s, _draw_overlay_grid);
    _commands.add("show.terrain_grid"s, _draw_terrain_grid);
@@ -756,6 +758,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Show Foliage Editor",
            "show.foliage_editor",
            {.key = key::f5, .modifiers = {.ctrl = true}}},
+          {"Show Bake Terrain Lighting",
+           "show.bake_terrain_lighting",
+           {.key = key::f8, .modifiers = {.ctrl = true}}},
 
           {"Show Animation Editor",
            "show.animation_editor",
