@@ -173,29 +173,6 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          ImGui::Separator();
 
-         if (ImGui::MenuItem("Animation Editor",
-                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Editor")),
-                             _animation_editor_open)) {
-            _animation_editor_open = not _animation_editor_open;
-            _animation_editor_context = {};
-         }
-
-         if (ImGui::MenuItem("Animation Group Editor",
-                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Group Editor")),
-                             _animation_group_editor_open)) {
-            _animation_group_editor_open = not _animation_group_editor_open;
-            _animation_group_editor_context = {};
-         }
-
-         if (ImGui::MenuItem("Animation Hierarchy Editor",
-                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Hierarchy Editor")),
-                             _animation_hierarchy_editor_open)) {
-            _animation_hierarchy_editor_open = not _animation_hierarchy_editor_open;
-            _animation_hierarchy_editor_context = {};
-         }
-
-         ImGui::Separator();
-
          ImGui::MenuItem("Measurement Tool",
                          get_display_string(
                             _hotkeys.query_binding("Global",
@@ -208,8 +185,10 @@ void world_edit::ui_show_main_menu_bar() noexcept
                                                    "Render Environment Map")),
                          &_render_env_map_open);
 
-         ImGui::Separator();
+         ImGui::EndMenu();
+      }
 
+      if (ImGui::BeginMenu("Terrain")) {
          if (ImGui::MenuItem("Terrain Height Editor",
                              get_display_string(_hotkeys.query_binding(
                                 "Global", "Show Terrain Height Editor")))) {
@@ -300,6 +279,31 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
       if (ImGui::BeginMenu("Create")) {
          ui_show_create_menu_items();
+
+         ImGui::EndMenu();
+      }
+
+      if (ImGui::BeginMenu("Animation")) {
+         if (ImGui::MenuItem("Animation Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Editor")),
+                             _animation_editor_open)) {
+            _animation_editor_open = not _animation_editor_open;
+            _animation_editor_context = {};
+         }
+
+         if (ImGui::MenuItem("Animation Group Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Group Editor")),
+                             _animation_group_editor_open)) {
+            _animation_group_editor_open = not _animation_group_editor_open;
+            _animation_group_editor_context = {};
+         }
+
+         if (ImGui::MenuItem("Animation Hierarchy Editor",
+                             get_display_string(_hotkeys.query_binding("Global", "Show Animation Hierarchy Editor")),
+                             _animation_hierarchy_editor_open)) {
+            _animation_hierarchy_editor_open = not _animation_hierarchy_editor_open;
+            _animation_hierarchy_editor_context = {};
+         }
 
          ImGui::EndMenu();
       }
