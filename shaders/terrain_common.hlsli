@@ -21,9 +21,9 @@ struct terrain_constants_ {
 
    float inv_grid_size;
    float grid_line_width;
-   uint padding0;
    
    float3 grid_line_color;
+   uint padding0;
    
    uint diffuse_maps_index[TERRAIN_MAX_TEXTURES];
 
