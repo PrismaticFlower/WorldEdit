@@ -170,7 +170,6 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
       </AdditionalLibraryDirectories>
     </Link>
     <Manifest>
-      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
       <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
     </Manifest>
     <PostBuildEvent>
