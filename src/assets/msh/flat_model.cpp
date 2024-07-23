@@ -141,7 +141,7 @@ auto generate_normals(std::span<const float3> positions,
 
    for (const auto [i0, i1, i2] : triangles) {
       const float3 normal =
-         cross(positions[i0] - positions[i1], positions[i2] - positions[i1]);
+         cross(positions[i1] - positions[i0], positions[i2] - positions[i0]);
 
       normals[i0] += normal;
       normals[i1] += normal;
