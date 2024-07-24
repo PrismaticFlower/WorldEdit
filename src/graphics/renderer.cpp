@@ -181,6 +181,7 @@ private:
    void draw_interaction_targets(const frustum& view_frustum, const world::world& world,
                                  const world::interaction_targets& interaction_targets,
                                  const world::object_class_library& world_classes,
+                                 const world::tool_visualizers& tool_visualizers,
                                  const settings::graphics& settings,
                                  gpu::graphics_command_list& command_list);
 
@@ -532,8 +533,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    draw_ai_overlay(back_buffer_rtv, settings, command_list);
 
-   draw_interaction_targets(view_frustum, world, interaction_targets,
-                            world_classes, settings, command_list);
+   draw_interaction_targets(view_frustum, world, interaction_targets, world_classes,
+                            tool_visualizers, settings, command_list);
 
    _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
                            _root_signatures, _pipelines, _geometric_shapes,
@@ -2288,6 +2289,7 @@ void renderer_impl::draw_interaction_targets(
    const frustum& view_frustum, const world::world& world,
    const world::interaction_targets& interaction_targets,
    const world::object_class_library& world_classes,
+   const world::tool_visualizers& tool_visualizers,
    const settings::graphics& settings, gpu::graphics_command_list& command_list)
 {
    const auto draw_path_node = [&](const world::path::node& node, const float3 color) {
@@ -2928,6 +2930,14 @@ void renderer_impl::draw_interaction_targets(
          draw_entity(interaction_targets.creation_entity.get<world::measurement>(),
                      settings.creation_color);
       }
+   }
+
+   for (const auto& [entity, color] : tool_visualizers.hub_highlights()) {
+      draw_target(entity, color);
+   }
+
+   for (const auto& [entity, color] : tool_visualizers.connection_highlights()) {
+      draw_target(entity, color);
    }
 }
 

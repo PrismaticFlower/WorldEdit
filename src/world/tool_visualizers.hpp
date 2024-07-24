@@ -9,6 +9,8 @@
 namespace we::world {
 
 struct object;
+struct planning_hub;
+struct planning_connection;
 
 struct tool_visualizers_line {
    float3 v0;
@@ -25,6 +27,16 @@ struct tool_visualizers_shape {
 struct tool_visualizers_ghost {
    id<object> object_id;
    float4x4 transform;
+};
+
+struct tool_visualizers_hub_highlight {
+   id<planning_hub> hub_id;
+   float3 color;
+};
+
+struct tool_visualizers_connection_highlight {
+   id<planning_connection> connection_id;
+   float3 color;
 };
 
 struct tool_visualizers {
@@ -46,6 +58,10 @@ struct tool_visualizers {
 
    void add_ghost_object(float4x4 transform, id<object> object_id);
 
+   void add_highlight(id<planning_hub> hub_id, float3 color);
+
+   void add_highlight(id<planning_connection> connection_id, float3 color);
+
    void clear() noexcept;
 
    auto lines_overlay() const noexcept -> std::span<const tool_visualizers_line>;
@@ -61,6 +77,12 @@ struct tool_visualizers {
 
    auto ghost_objects() const noexcept -> std::span<const tool_visualizers_ghost>;
 
+   auto hub_highlights() const noexcept
+      -> std::span<const tool_visualizers_hub_highlight>;
+
+   auto connection_highlights() const noexcept
+      -> std::span<const tool_visualizers_connection_highlight>;
+
 private:
    std::vector<tool_visualizers_line> _lines_overlay;
    std::vector<tool_visualizers_line> _lines;
@@ -68,6 +90,8 @@ private:
    std::vector<tool_visualizers_shape> _octahedrons_wireframe;
    std::vector<tool_visualizers_shape> _arrows_wireframe;
    std::vector<tool_visualizers_ghost> _ghost_objects;
+   std::vector<tool_visualizers_hub_highlight> _hub_highlights;
+   std::vector<tool_visualizers_connection_highlight> _connection_highlights;
 };
 
 }

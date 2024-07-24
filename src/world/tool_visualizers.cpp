@@ -10,6 +10,8 @@ tool_visualizers::tool_visualizers() noexcept
    _octahedrons_wireframe.reserve(64);
    _arrows_wireframe.reserve(64);
    _ghost_objects.reserve(64);
+   _hub_highlights.reserve(8);
+   _connection_highlights.reserve(8);
 }
 
 void tool_visualizers::add_line_overlay(float3 v0, float3 v1, uint32 color)
@@ -53,6 +55,16 @@ void tool_visualizers::add_ghost_object(float4x4 transform, id<object> object_id
    _ghost_objects.emplace_back(object_id, transform);
 }
 
+void tool_visualizers::add_highlight(id<planning_hub> hub_id, float3 color)
+{
+   _hub_highlights.emplace_back(hub_id, color);
+}
+
+void tool_visualizers::add_highlight(id<planning_connection> connection_id, float3 color)
+{
+   _connection_highlights.emplace_back(connection_id, color);
+}
+
 void tool_visualizers::clear() noexcept
 {
    _lines_overlay.clear();
@@ -61,6 +73,8 @@ void tool_visualizers::clear() noexcept
    _octahedrons_wireframe.clear();
    _arrows_wireframe.clear();
    _ghost_objects.clear();
+   _hub_highlights.clear();
+   _connection_highlights.clear();
 }
 
 auto tool_visualizers::lines_overlay() const noexcept
@@ -96,6 +110,18 @@ auto tool_visualizers::ghost_objects() const noexcept
    -> std::span<const tool_visualizers_ghost>
 {
    return _ghost_objects;
+}
+
+auto tool_visualizers::hub_highlights() const noexcept
+   -> std::span<const tool_visualizers_hub_highlight>
+{
+   return _hub_highlights;
+}
+
+auto tool_visualizers::connection_highlights() const noexcept
+   -> std::span<const tool_visualizers_connection_highlight>
+{
+   return _connection_highlights;
 }
 
 }

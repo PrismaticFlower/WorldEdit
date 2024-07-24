@@ -221,6 +221,7 @@
     <ClCompile Include="src\math\bvh.cpp" />
     <ClCompile Include="src\math\frustum.cpp" />
     <ClCompile Include="src\world\utility\terrain_light_map_baker.cpp" />
+    <ClCompile Include="src\edits\delete_branch_weight.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -512,6 +513,7 @@
     <ClInclude Include="src\math\frustum.hpp" />
     <ClInclude Include="src\world\utility\terrain_light_map_baker.hpp" />
     <ClInclude Include="src\math\sampling.hpp" />
+    <ClInclude Include="src\edits\delete_branch_weight.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

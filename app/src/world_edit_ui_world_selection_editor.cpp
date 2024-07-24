@@ -3,6 +3,7 @@
 #include "edits/add_property.hpp"
 #include "edits/add_sector_object.hpp"
 #include "edits/creation_entity_set.hpp"
+#include "edits/delete_branch_weight.hpp"
 #include "edits/delete_path_property.hpp"
 #include "edits/delete_sector_object.hpp"
 #include "edits/delete_sector_point.hpp"
@@ -1658,6 +1659,85 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
             ImGui::DragFloat("Radius", &hub->radius, _edit_stack_world,
                              _edit_context, 1.0f, 0.0f, 1e10f);
+
+            ImGui::SeparatorText("Branch Weights");
+
+            for (uint32 weights_index = 0; weights_index < hub->weights.size();
+                 ++weights_index) {
+               world::planning_branch_weights& weights = hub->weights[weights_index];
+               world::planning_hub& target_hub =
+                  _world.planning_hubs[weights.hub_index];
+               world::planning_connection& connection =
+                  _world.planning_connections[weights.connection_index];
+
+               ImGui::BeginGroup();
+               ImGui::PushID(static_cast<int32>(target_hub.id));
+               ImGui::PushID(static_cast<int32>(connection.id));
+
+               if (ImGui::TreeNode("BranchWeight", "%s - %s", target_hub.name.c_str(),
+                                   connection.name.c_str())) {
+                  const auto weight_slider =
+                     [&](const char* name,
+                         float world::planning_branch_weights::*member) {
+                        float value = weights.*member;
+
+                        if (ImGui::SliderFloat(name, &value, 0.0f, 100.0f, "%.1f",
+                                               ImGuiSliderFlags_AlwaysClamp)) {
+                           _edit_stack_world
+                              .apply(edits::make_set_vector_value(&hub->weights, weights_index,
+                                                                  member, value),
+                                     _edit_context);
+                        }
+
+                        if (ImGui::IsItemDeactivatedAfterEdit()) {
+                           _edit_stack_world.close_last();
+                        }
+                     };
+
+                  weight_slider("Soldier", &world::planning_branch_weights::soldier);
+                  weight_slider("Hover", &world::planning_branch_weights::hover);
+                  weight_slider("Small", &world::planning_branch_weights::small);
+                  weight_slider("Medium", &world::planning_branch_weights::medium);
+                  weight_slider("Huge", &world::planning_branch_weights::huge);
+                  weight_slider("Flyer", &world::planning_branch_weights::flyer);
+
+                  ImGui::Spacing();
+
+                  ImGui::Separator();
+
+                  if (ImGui::Button("Remove Branch Weight")) {
+                     _edit_stack_world.apply(edits::make_delete_branch_weight(&hub->weights,
+                                                                              weights_index),
+                                             _edit_context);
+
+                     weights_index -= 1; // Adjust loop index.
+                  }
+
+                  ImGui::TreePop();
+               }
+
+               if (ImGui::BeginItemTooltip()) {
+                  ImGui::Text("Soldier: %.1f", weights.soldier);
+                  ImGui::Text("Hover: %.1f", weights.hover);
+                  ImGui::Text("Small: %.1f", weights.small);
+                  ImGui::Text("Medium: %.1f", weights.medium);
+                  ImGui::Text("Huge: %.1f", weights.huge);
+                  ImGui::Text("Flyer: %.1f", weights.flyer);
+
+                  ImGui::EndTooltip();
+               }
+
+               ImGui::PopID();
+               ImGui::PopID();
+               ImGui::EndGroup();
+
+               if (ImGui::IsItemHovered()) {
+                  _tool_visualizers.add_highlight(target_hub.id,
+                                                  _settings.graphics.hover_color);
+                  _tool_visualizers.add_highlight(connection.id,
+                                                  _settings.graphics.hover_color);
+               }
+            }
          }
          else if (std::holds_alternative<world::planning_connection_id>(selected)) {
             world::planning_connection* connection =
