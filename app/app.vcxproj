@@ -259,6 +259,7 @@ xcopy /q /y "$(SolutionDir)\shaders\" "$(OutputPath)\shaders\"</Command>
     <ClCompile Include="src\world_edit_ui_world_global_lights_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_layers_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_requirements_editor.cpp" />
+    <ClCompile Include="src\world_edit_ui_world_selection_add_branch_weight.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_editor.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_match_transform.cpp" />
     <ClCompile Include="src\world_edit_ui_world_selection_move.cpp" />

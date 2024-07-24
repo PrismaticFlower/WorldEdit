@@ -286,6 +286,20 @@ void world_edit::update_hovered_entity() noexcept
       raycast_mask =
          world::active_entity_types{.objects = false, .sectors = true, .terrain = false};
    }
+   else if (_selection_edit_tool == selection_edit_tool::add_branch_weight) {
+      switch (_selection_add_branch_weight_context.step) {
+      case add_branch_weight_step::connection:
+         raycast_mask = world::active_entity_types{.objects = false,
+                                                   .planning_connections = true,
+                                                   .terrain = false};
+         break;
+      case add_branch_weight_step::target:
+         raycast_mask = world::active_entity_types{.objects = false,
+                                                   .planning_hubs = true,
+                                                   .terrain = false};
+         break;
+      }
+   }
 
    if (raycast_mask.objects) {
       if (std::optional<world::raycast_result<world::object>> hit =
@@ -3186,6 +3200,7 @@ auto world_edit::get_mouse_cursor() const noexcept -> mouse_cursor
          return mouse_cursor::arrow;
       case selection_edit_tool::match_transform:
       case selection_edit_tool::pick_sector:
+      case selection_edit_tool::add_branch_weight:
          return mouse_cursor::cross;
       }
    }

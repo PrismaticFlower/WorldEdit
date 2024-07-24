@@ -103,6 +103,9 @@ void world_edit::update_ui() noexcept
    else if (_selection_edit_tool == selection_edit_tool::pick_sector) {
       ui_show_world_selection_pick_sector();
    }
+   else if (_selection_edit_tool == selection_edit_tool::add_branch_weight) {
+      ui_show_world_selection_add_branch_weight();
+   }
 
    if (_terrain_edit_tool == terrain_edit_tool::editor) {
       ui_show_terrain_editor();

@@ -228,6 +228,8 @@ void world_edit::initialize_commands() noexcept
                  [this] { _selection_match_transform_context.clicked = true; });
    _commands.add("entity_edit.finish_pick_sector"s,
                  [this] { _selection_pick_sector_context.clicked = true; });
+   _commands.add("entity_edit.add_branch_weight_click"s,
+                 [this] { _selection_add_branch_weight_context.clicked = true; });
 
    _commands.add("entity_creation.cycle_rotation_mode"s, [this] {
       switch (_entity_creation_config.placement_rotation) {
@@ -1056,6 +1058,21 @@ void world_edit::initialize_hotkeys() noexcept
       .default_hotkeys =
          {
             {"Finish", "entity_edit.finish_pick_sector", {.key = key::mouse1}},
+            {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
+         },
+
+      .hidden = true,
+   });
+
+   _hotkeys.add_set({
+      .name = "Entity Editing (Add Branch Weight) Finish",
+      .activated =
+         [this] {
+            return _selection_edit_tool == selection_edit_tool::add_branch_weight;
+         },
+      .default_hotkeys =
+         {
+            {"Finish", "entity_edit.add_branch_weight_click", {.key = key::mouse1}},
             {"Finish (Escape)", "entity_edit.clear_selection_edit_tool", {.key = key::escape}},
          },
 

@@ -231,6 +231,7 @@
     <ClCompile Include="src\edits\add_animation_hierarchy_child_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_hierarchy_tests.cpp" />
     <ClCompile Include="src\edits\add_animation_tests.cpp" />
+    <ClCompile Include="src\edits\add_branch_weight_tests.cpp" />
     <ClCompile Include="src\edits\add_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\add_property_tests.cpp" />
     <ClCompile Include="src\edits\add_sector_object_tests.cpp" />

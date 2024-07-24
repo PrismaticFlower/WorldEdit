@@ -123,8 +123,11 @@ enum class selection_edit_tool : uint8 {
    rotate_light_region,
    set_layer,
    match_transform,
-   pick_sector
+   pick_sector,
+   add_branch_weight
 };
+
+enum class add_branch_weight_step : uint8 { connection, target };
 
 enum class selection_transform_space : uint8 { world, local };
 
@@ -275,6 +278,8 @@ private:
    void ui_show_world_selection_match_transform() noexcept;
 
    void ui_show_world_selection_pick_sector() noexcept;
+
+   void ui_show_world_selection_add_branch_weight() noexcept;
 
    void ui_show_terrain_editor() noexcept;
 
@@ -623,6 +628,13 @@ private:
       selection_pick_sector_index index = selection_pick_sector_index::_1;
       world::portal_id id = {};
    } _selection_pick_sector_context;
+
+   struct selection_add_branch_weight_context {
+      bool clicked = false;
+      add_branch_weight_step step = add_branch_weight_step::connection;
+      world::planning_hub_id from_hub_id = {};
+      world::planning_connection_id connection_id = {};
+   } _selection_add_branch_weight_context;
 
    struct terrain_editor_config {
       terrain_edit_target edit_target = terrain_edit_target::height;

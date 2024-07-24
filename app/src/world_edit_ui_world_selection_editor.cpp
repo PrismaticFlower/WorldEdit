@@ -1738,6 +1738,14 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                   _settings.graphics.hover_color);
                }
             }
+
+            if (ImGui::Button("New Branch Weight", {ImGui::CalcItemWidth(), 0.0f})) {
+               _world_draw_mask.planning_hubs = true;
+               _world_draw_mask.planning_connections = true;
+
+               _selection_edit_tool = selection_edit_tool::add_branch_weight;
+               _selection_add_branch_weight_context = {.from_hub_id = hub->id};
+            }
          }
          else if (std::holds_alternative<world::planning_connection_id>(selected)) {
             world::planning_connection* connection =
