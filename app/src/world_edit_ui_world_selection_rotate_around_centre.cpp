@@ -17,7 +17,7 @@ void world_edit::ui_show_world_selection_rotate_around_centre() noexcept
 
    bool open = _selection_edit_tool == selection_edit_tool::rotate_around_centre;
 
-   if (ImGui::Begin("Rotate Selection##centred", &open,
+   if (ImGui::Begin("Rotate Selection Around Centre", &open,
                     ImGuiWindowFlags_AlwaysAutoResize)) {
 
       const float3 last_rotation_amount = _rotate_selection_amount;
