@@ -1,4 +1,5 @@
 #include "insert_entity.hpp"
+#include "world/object_class_library.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <algorithm>
@@ -6,6 +7,43 @@
 namespace we::edits {
 
 namespace {
+
+struct add_object final : edit<world::edit_context> {
+   add_object(world::object object, world::object_class_library& object_class_library)
+      : object{std::move(object)}, object_class_library{object_class_library}
+   {
+   }
+
+   void apply(world::edit_context& context) noexcept override
+   {
+      auto& objects = context.world.objects;
+
+      objects.push_back(std::move(object));
+      objects.back().class_handle =
+         object_class_library.acquire(objects.back().class_name);
+   }
+
+   void revert(world::edit_context& context) noexcept override
+   {
+      auto& objects = context.world.objects;
+
+      object_class_library.free(objects.back().class_handle);
+
+      object = std::move(objects.back());
+      objects.pop_back();
+   }
+
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
+private:
+   world::object object;
+   world::object_class_library& object_class_library;
+};
 
 template<typename T>
 struct insert_entity final : edit<world::edit_context> {
@@ -41,10 +79,11 @@ private:
 
 }
 
-auto make_insert_entity(world::object object)
+auto make_insert_entity(world::object object,
+                        world::object_class_library& object_class_library)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<insert_entity<world::object>>(std::move(object));
+   return std::make_unique<add_object>(std::move(object), object_class_library);
 }
 
 auto make_insert_entity(world::light light)

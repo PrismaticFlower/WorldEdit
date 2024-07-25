@@ -1315,7 +1315,8 @@ void world_edit::place_creation_entity() noexcept
          return;
       }
 
-      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object)),
+      _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object),
+                                                        _object_classes),
                               _edit_context);
 
       if (not object.name.empty()) {
