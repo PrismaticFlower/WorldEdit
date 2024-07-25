@@ -4,6 +4,7 @@
 #include "object.hpp"
 #include "object_class.hpp"
 
+#include <bit>
 #include <shared_mutex>
 
 #include <absl/container/flat_hash_map.h>
@@ -14,16 +15,30 @@ namespace we::world {
 
 namespace {
 
-constexpr uint32 max_object_classes = 131'072;
+constexpr uint32 handle_index_bits = 15;
+constexpr uint32 handle_generation_bits = 32 - handle_index_bits;
 
-auto unpack_handle(const object_class_handle handle) noexcept -> uint32
+constexpr uint32 max_object_classes = 1 << handle_index_bits;
+constexpr uint32 max_handle_generations = 1 << handle_generation_bits;
+
+struct handle_unpacked {
+   uint32 index : handle_index_bits = 0;
+   uint32 generation : handle_generation_bits = 0;
+};
+
+bool operator==(handle_unpacked l, handle_unpacked r) noexcept
 {
-   return static_cast<uint32>(handle);
+   return std::bit_cast<uint32>(l) == std::bit_cast<uint32>(r);
 }
 
-auto pack_handle(const uint32 index) noexcept -> object_class_handle
+auto unpack_handle(const object_class_handle handle) noexcept -> handle_unpacked
 {
-   return object_class_handle{index};
+   return std::bit_cast<handle_unpacked>(handle);
+}
+
+constexpr auto pack_handle(const handle_unpacked handle) noexcept -> object_class_handle
+{
+   return std::bit_cast<object_class_handle>(handle);
 }
 
 }
@@ -33,7 +48,8 @@ struct object_class_library::impl {
       : _asset_libraries{asset_libraries}
    {
       _class_pool.push_back(
-         {.object_class = {_asset_libraries, asset_libraries.odfs[lowercase_string{""s}]},
+         {.handle = unpack_handle(null_handle),
+          .object_class = {_asset_libraries, asset_libraries.odfs[lowercase_string{""s}]},
           .ref_count = 0});
    }
 
@@ -72,12 +88,17 @@ struct object_class_library::impl {
       _class_free_list.clear();
    }
 
-   auto operator[](const object_class_handle handle) const noexcept -> const object_class&
+   auto operator[](const object_class_handle packed_handle) const noexcept
+      -> const object_class&
    {
-      const uint32 index = unpack_handle(handle);
+      const handle_unpacked handle = unpack_handle(packed_handle);
 
-      [[likely]] if (index < _class_pool.size()) {
-         return _class_pool[index].object_class;
+      [[likely]] if (handle.index < _class_pool.size()) {
+         const entry& entry = _class_pool[handle.index];
+
+         [[likely]] if (entry.handle == handle) {
+            return entry.object_class;
+         }
       }
 
       return _class_pool[0].object_class;
@@ -85,76 +106,85 @@ struct object_class_library::impl {
 
    [[nodiscard]] auto acquire(const lowercase_string& name) noexcept -> object_class_handle
    {
-      if (name.empty()) return pack_handle(0);
+      if (name.empty()) return null_handle;
 
       if (auto it = _class_index.find(name); it != _class_index.end()) {
          const auto [_, index] = *it;
 
          entry& entry = _class_pool[index];
 
-         // This ain't ever going to happen. But guard against it anyway. Returning a 0 handle is always safe.
-         if (entry.ref_count == UINT32_MAX) return pack_handle(0);
+         // This ain't ever going to happen. But guard against it anyway.
+         if (entry.ref_count == UINT32_MAX) return null_handle;
 
          entry.ref_count += 1;
 
-         return pack_handle(index);
+         return pack_handle(entry.handle);
       }
 
       if (not _class_free_list.empty()) {
-         const uint32 index = _class_free_list.back();
+         handle_unpacked handle = _class_free_list.back();
 
          _class_free_list.pop_back();
 
-         _class_pool[index] =
-            entry{.object_class = {_asset_libraries, _asset_libraries.odfs[name]},
-                  .ref_count = 1};
-         _class_index.emplace(name, index);
+         handle.generation += 1;
 
-         return pack_handle(index);
+         _class_pool[handle.index] =
+            entry{.handle = handle,
+                  .object_class = {_asset_libraries, _asset_libraries.odfs[name]},
+                  .ref_count = 1};
+         _class_index.emplace(name, uint32{handle.index});
+
+         return pack_handle(handle);
       }
 
       // Also ain't ever going to happen but still guard against it anyway.
-      if (_class_pool.size() == _class_pool.max_size()) {
-         return pack_handle(0);
-      }
+      if (_class_pool.size() == max_object_classes) return null_handle;
 
       const uint32 index = static_cast<uint32>(_class_pool.size());
+      const handle_unpacked handle = {.index = index, .generation = 0};
 
       _class_pool.push_back(
-         {.object_class = {_asset_libraries, _asset_libraries.odfs[name]},
+         {.handle = handle,
+          .object_class = {_asset_libraries, _asset_libraries.odfs[name]},
           .ref_count = 1});
       _class_index.emplace(name, index);
 
-      return pack_handle(index);
+      return pack_handle(handle);
    }
 
-   void free(const object_class_handle handle) noexcept
+   void free(const object_class_handle packed_handle) noexcept
    {
-      const uint32 index = unpack_handle(handle);
+      const handle_unpacked handle = unpack_handle(packed_handle);
 
       // Freeing index 0 is expected and fine. We just do nothing in response to it.
-      if (index == 0) return;
+      if (handle.index == 0) return;
 
-      // This indicates serious corruption from somewhere.
-      if (index >= _class_pool.size()) std::terminate();
+      // This indicates serious corruption from somewhere. We would never have returned this as a valid handle.
+      if (handle.index >= _class_pool.size()) std::terminate();
 
-      entry& entry = _class_pool[index];
+      entry& entry = _class_pool[handle.index];
+
+      // Only free a handle whose index and generation matches.
+      if (entry.handle != handle) return;
+
+      // Double frees are problematic but don't necessarily indicate data corruption so failing fast is overkill.
+      if (entry.ref_count == 0) return;
 
       entry.ref_count -= 1;
 
       if (entry.ref_count == 0) {
+         entry.handle = unpack_handle(null_handle);
          entry.object_class = {};
 
          for (auto it = _class_index.begin(); it != _class_index.end(); ++it) {
-            if (it->second == index) {
+            if (it->second == handle.index) {
                _class_index.erase(it);
 
                break;
             }
          }
-      }
-      else if (entry.ref_count == UINT32_MAX) {
-         std::terminate(); // Double free 🙁
+
+         _class_free_list.push_back(handle);
       }
    }
 
@@ -203,14 +233,17 @@ private:
    }
 
    struct entry {
+      handle_unpacked handle;
       object_class object_class;
       uint32 ref_count = 0;
    };
 
+   constexpr static object_class_handle null_handle = object_class_handle{0};
+
    pinned_vector<entry> _class_pool =
       pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
    absl::flat_hash_map<lowercase_string, uint32> _class_index;
-   std::vector<uint32> _class_free_list;
+   std::vector<handle_unpacked> _class_free_list;
 
    std::shared_mutex _definition_load_queue_mutex;
    std::vector<loaded_definition> _definition_load_queue;

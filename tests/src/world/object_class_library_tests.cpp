@@ -46,6 +46,27 @@ TEST_CASE("world object_class_library acquire-free", "[World]")
    CHECK(library.debug_ref_count(class0) == 0);
 }
 
+TEST_CASE("world object_class_library acquire-double free", "[World]")
+{
+   null_output_stream output;
+   std::shared_ptr<async::thread_pool> thread_pool =
+      async::thread_pool::make({.thread_count = 1, .low_priority_thread_count = 1});
+   assets::libraries_manager assets_libraries{output, thread_pool};
+
+   object_class_library library{assets_libraries};
+
+   const lowercase_string class0{"hello"sv};
+
+   object_class_handle handle0 = library.acquire(class0);
+
+   CHECK(library.debug_ref_count(class0) == 1);
+
+   library.free(handle0);
+   library.free(handle0); // Double frees should be silently dropped.
+
+   CHECK(library.debug_ref_count(class0) == 0);
+}
+
 TEST_CASE("world object_class_library acquire-free empty class name", "[World]")
 {
    null_output_stream output;
