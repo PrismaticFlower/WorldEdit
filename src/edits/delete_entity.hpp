@@ -5,9 +5,16 @@
 
 #include <memory>
 
+namespace we::world {
+
+struct object_class_library;
+
+}
+
 namespace we::edits {
 
-auto make_delete_entity(world::object_id object_id, const world::world& world)
+auto make_delete_entity(world::object_id object_id, const world::world& world,
+                        world::object_class_library& object_class_library)
    -> std::unique_ptr<edit<world::edit_context>>;
 
 auto make_delete_entity(world::light_id light_id, const world::world& world)

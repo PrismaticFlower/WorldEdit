@@ -2079,6 +2079,13 @@ void world_edit::delete_selected() noexcept
                      {.transparent = not std::exchange(first_delete, false)});
                }
             }
+            else if constexpr (std::is_same_v<T, world::object_id>) {
+               _edit_stack_world.apply(edits::make_delete_entity(selected, _world,
+                                                                 _object_classes),
+                                       _edit_context,
+                                       {.transparent =
+                                           not std::exchange(first_delete, false)});
+            }
             else {
                _edit_stack_world.apply(edits::make_delete_entity(selected, _world),
                                        _edit_context,
