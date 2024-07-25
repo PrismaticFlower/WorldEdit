@@ -227,8 +227,6 @@ private:
 
    void update_hovered_entity() noexcept;
 
-   void update_object_classes() noexcept;
-
    void update_camera(const float delta_time);
 
    void update_ui() noexcept;
