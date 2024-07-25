@@ -43,6 +43,10 @@ struct object_class_library {
    /// @param handle The handle to free.
    void free(const object_class_handle handle) noexcept;
 
+   /// @brief Returns the null handle. When passed to operator[] this will return the default class. Passing the null handle to free is a no-op.
+   /// @return The null handle.
+   static auto null_handle() noexcept -> object_class_handle;
+
    /// @brief Gets the number of references to a class. For testing and debugging.
    /// @return The ref count.
    auto debug_ref_count(const lowercase_string& name) const noexcept -> uint32;

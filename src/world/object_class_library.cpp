@@ -199,6 +199,8 @@ struct object_class_library::impl {
       return 0;
    }
 
+   constexpr static object_class_handle null_handle = object_class_handle{0};
+
 private:
    struct loaded_definition {
       lowercase_string name;
@@ -237,8 +239,6 @@ private:
       object_class object_class;
       uint32 ref_count = 0;
    };
-
-   constexpr static object_class_handle null_handle = object_class_handle{0};
 
    pinned_vector<entry> _class_pool =
       pinned_vector_init{.max_size = max_object_classes, .initial_capacity = 1024};
@@ -307,6 +307,11 @@ auto object_class_library::acquire(const lowercase_string& name) noexcept -> obj
 void object_class_library::free(const object_class_handle handle) noexcept
 {
    return _impl->free(handle);
+}
+
+auto object_class_library::null_handle() noexcept -> object_class_handle
+{
+   return impl::null_handle;
 }
 
 auto object_class_library::debug_ref_count(const lowercase_string& name) const noexcept

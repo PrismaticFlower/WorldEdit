@@ -1303,6 +1303,7 @@ void world_edit::place_creation_entity() noexcept
       new_object.instance_properties = world::make_object_instance_properties(
          *_object_classes[object.class_handle].definition,
          new_object.instance_properties);
+      new_object.class_handle = _object_classes.null_handle();
       new_object.id = _world.next_id.objects.aquire();
 
       _last_created_entities.last_object = new_object.id;
