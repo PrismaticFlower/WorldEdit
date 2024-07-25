@@ -260,6 +260,7 @@
     <ClCompile Include="src\edits\insert_entity_tests.cpp" />
     <ClCompile Include="src\edits\insert_node_tests.cpp" />
     <ClCompile Include="src\edits\insert_point_tests.cpp" />
+    <ClCompile Include="src\edits\null_asset_libraries.cpp" />
     <ClCompile Include="src\edits\rename_game_mode_tests.cpp" />
     <ClCompile Include="src\edits\rename_layer_tests.cpp" />
     <ClCompile Include="src\edits\set_world_req_entry_tests.cpp" />
@@ -299,6 +300,7 @@
     <ClCompile Include="src\world\world_io_save_tests.cpp" />
     <ClCompile Include="src\world\world_utilities_tests.cpp" />
     <ClInclude Include="src\approx_test_helpers.hpp" />
+    <ClInclude Include="src\edits\null_asset_libraries.hpp" />
     <ClInclude Include="src\edits\world_test_data.hpp" />
     <ClInclude Include="src\pch.h" />
     <ClCompile Include="src\ucfb\reader_tests.cpp">

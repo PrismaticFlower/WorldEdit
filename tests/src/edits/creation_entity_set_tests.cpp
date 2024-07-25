@@ -1,11 +1,10 @@
 #include "pch.h"
 
-#include "assets/asset_libraries.hpp"
-#include "async/thread_pool.hpp"
 #include "edits/creation_entity_set.hpp"
-#include "output_stream.hpp"
 #include "world/object_class_library.hpp"
 #include "world/world.hpp"
+
+#include "null_asset_libraries.hpp"
 
 using namespace std::literals;
 
@@ -16,12 +15,7 @@ TEST_CASE("edits creation_entity_set", "[Edits]")
    world::world world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   null_output_stream output;
-   std::shared_ptr<async::thread_pool> thread_pool =
-      async::thread_pool::make({.thread_count = 1, .low_priority_thread_count = 1});
-   assets::libraries_manager assets_libraries{output, thread_pool};
-   world::object_class_library library{assets_libraries};
+   world::object_class_library library{null_asset_libraries()};
 
    world::light light{.name = "Stars"};
 
@@ -44,12 +38,7 @@ TEST_CASE(
    world::world world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   null_output_stream output;
-   std::shared_ptr<async::thread_pool> thread_pool =
-      async::thread_pool::make({.thread_count = 1, .low_priority_thread_count = 1});
-   assets::libraries_manager assets_libraries{output, thread_pool};
-   world::object_class_library object_class_library{assets_libraries};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
    const lowercase_string map_prop_stars{"map_prop_stars"sv};
 
@@ -72,12 +61,7 @@ TEST_CASE(
    world::world world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   null_output_stream output;
-   std::shared_ptr<async::thread_pool> thread_pool =
-      async::thread_pool::make({.thread_count = 1, .low_priority_thread_count = 1});
-   assets::libraries_manager assets_libraries{output, thread_pool};
-   world::object_class_library object_class_library{assets_libraries};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
    const lowercase_string class_name_stars{"map_prop_stars"sv};
    const lowercase_string class_name_moon{"map_prop_moon"sv};
@@ -109,12 +93,7 @@ TEST_CASE(
    world::world world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   null_output_stream output;
-   std::shared_ptr<async::thread_pool> thread_pool =
-      async::thread_pool::make({.thread_count = 1, .low_priority_thread_count = 1});
-   assets::libraries_manager assets_libraries{output, thread_pool};
-   world::object_class_library object_class_library{assets_libraries};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
    const lowercase_string class_name_stars{"map_prop_stars"sv};
 
@@ -140,12 +119,7 @@ TEST_CASE(
    world::world world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
-
-   null_output_stream output;
-   std::shared_ptr<async::thread_pool> thread_pool =
-      async::thread_pool::make({.thread_count = 1, .low_priority_thread_count = 1});
-   assets::libraries_manager assets_libraries{output, thread_pool};
-   world::object_class_library object_class_library{assets_libraries};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
    const lowercase_string class_name_stars{"map_prop_stars"sv};
 
