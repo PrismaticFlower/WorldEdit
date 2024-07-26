@@ -1,7 +1,7 @@
 #include "world_edit.hpp"
 
 #include "edits/creation_entity_set.hpp"
-#include "edits/set_value.hpp"
+#include "edits/set_class_name.hpp"
 #include "utility/string_icompare.hpp"
 
 #include <imgui.h>
@@ -65,8 +65,9 @@ void world_edit::ui_show_object_class_browser() noexcept
                      world::object& object =
                         _interaction_targets.creation_entity.get<world::object>();
 
-                     _edit_stack_world.apply(edits::make_set_value(&object.class_name,
-                                                                   lowercase_string{asset}),
+                     _edit_stack_world.apply(edits::make_set_class_name(&object,
+                                                                        lowercase_string{asset},
+                                                                        _object_classes),
                                              _edit_context);
                   }
                   else {

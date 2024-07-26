@@ -117,6 +117,7 @@
     <ClCompile Include="src\edits\add_branch_weight_tests.cpp" />
     <ClCompile Include="src\world\object_class_library_tests.cpp" />
     <ClCompile Include="src\edits\null_asset_libraries.cpp" />
+    <ClCompile Include="src\edits\set_class_name_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

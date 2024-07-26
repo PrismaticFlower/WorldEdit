@@ -1,6 +1,7 @@
 #include "imgui_ext.hpp"
 #include "../imgui_ext.hpp"
 #include "math/quaternion_funcs.hpp"
+#include "set_class_name.hpp"
 #include "set_value.hpp"
 
 #include <cassert>
@@ -353,24 +354,27 @@ bool InputTextAutoComplete(
    return changed;
 }
 
-bool InputTextAutoComplete(
-   const char* label, we::lowercase_string* str,
-   we::edits::stack<we::world::edit_context>& edit_stack,
-   we::world::edit_context& context,
-   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept
+bool InputClassName(we::world::object* object,
+                    we::world::object_class_library& object_class_library,
+                    we::edits::stack<we::world::edit_context>& edit_stack,
+                    we::world::edit_context& context,
+                    we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept
 {
-   IM_ASSERT(str);
-   IM_ASSERT(context.is_memory_valid(str));
+   IM_ASSERT(object);
+   IM_ASSERT(context.is_memory_valid(object));
 
-   absl::InlinedVector<char, 256> buffer{str->begin(), str->end()};
+   absl::InlinedVector<char, 256> buffer{object->class_name.begin(),
+                                         object->class_name.end()};
 
-   const bool changed = InputTextAutoComplete(label, &buffer, fill_entries_callback);
+   const bool changed =
+      InputTextAutoComplete("Class Name", &buffer, fill_entries_callback);
    const bool deactivated = IsItemDeactivated();
 
    if (changed) {
       const std::string_view new_value_view{buffer.data(), buffer.size()};
 
-      edit_stack.apply(edits::make_set_value(str, we::lowercase_string{new_value_view}),
+      edit_stack.apply(edits::make_set_class_name(object, we::lowercase_string{new_value_view},
+                                                  object_class_library),
                        context);
    }
 

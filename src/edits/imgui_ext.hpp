@@ -30,6 +30,13 @@ struct edit_flag {
 namespace we {
 using we::edits::imgui::edit_flag;
 using we::edits::imgui::enum_select_option;
+
+namespace world {
+
+struct object_class_library;
+
+}
+
 }
 
 namespace ImGui {
@@ -110,8 +117,8 @@ bool InputTextAutoComplete(
    we::world::edit_context& context,
    we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept;
 
-bool InputTextAutoComplete(
-   const char* label, we::lowercase_string* str,
+bool InputClassName(
+   we::world::object* object, we::world::object_class_library& object_class_library,
    we::edits::stack<we::world::edit_context>& edit_stack,
    we::world::edit_context& context,
    we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept;

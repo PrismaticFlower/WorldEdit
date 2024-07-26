@@ -95,9 +95,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                    world::create_unique_name(_world.objects,
                                                              *edited_value);
                              });
-            ImGui::InputTextAutoComplete(
-               "Class Name", &object->class_name, _edit_stack_world,
-               _edit_context, [&]() noexcept {
+            ImGui::InputClassName(
+               object, _object_classes, _edit_stack_world, _edit_context, [&]() noexcept {
                   std::array<std::string_view, 6> entries;
                   std::size_t matching_count = 0;
 
