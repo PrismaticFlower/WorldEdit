@@ -131,7 +131,8 @@ void world_edit::ui_show_world_layers_editor() noexcept
          if (base_layer) ImGui::BeginDisabled();
 
          if (ImGui::Button("Delete")) {
-            _edit_stack_world.apply(edits::make_delete_layer(i, _world), _edit_context);
+            _edit_stack_world.apply(edits::make_delete_layer(i, _world, _object_classes),
+                                    _edit_context);
          }
 
          if (base_layer) ImGui::EndDisabled();

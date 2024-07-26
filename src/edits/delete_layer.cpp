@@ -1,5 +1,6 @@
 #include "delete_layer.hpp"
 #include "utility/string_icompare.hpp"
+#include "world/object_class_library.hpp"
 
 #include <vector>
 
@@ -296,6 +297,31 @@ void revert_delete_entries(pinned_vector<T>& entities,
    }
 }
 
+void apply_delete_entries(pinned_vector<world::object>& entities,
+                          std::span<const delete_entry<world::object>> entries,
+                          world::object_class_library& object_class_library)
+{
+   for (const auto& [index, entity] : entries) {
+      object_class_library.free(entities[index].class_handle);
+
+      entities.erase(entities.begin() + index);
+   }
+}
+
+void revert_delete_entries(pinned_vector<world::object>& entities,
+                           std::span<const delete_entry<world::object>> entries,
+                           world::object_class_library& object_class_library)
+{
+   for (std::ptrdiff_t i = (std::ssize(entries) - 1); i >= 0; --i) {
+      const auto& [index, entity] = entries[i];
+
+      entities.insert(entities.begin() + index, entity);
+
+      entities[index].class_handle =
+         object_class_library.acquire(entities[index].class_name);
+   }
+}
+
 void apply_delete_entries(std::vector<world::requirement_list>& requirements,
                           std::span<const delete_entry_req> entries)
 {
@@ -361,7 +387,10 @@ void revert_delete_entries(std::vector<world::game_mode_description>& game_modes
 }
 
 struct delete_layer final : edit<world::edit_context> {
-   delete_layer(delete_layer_data data) : _data{std::move(data)} {}
+   delete_layer(delete_layer_data data, world::object_class_library& object_class_library)
+      : _data{std::move(data)}, _object_class_library{object_class_library}
+   {
+   }
 
    void apply(world::edit_context& context) noexcept override
    {
@@ -377,7 +406,7 @@ struct delete_layer final : edit<world::edit_context> {
       apply_remap_entries(world.hintnodes, _data.remap_hintnodes);
       apply_remap_entries(world.game_modes, _data.remap_game_modes);
 
-      apply_delete_entries(world.objects, _data.delete_objects);
+      apply_delete_entries(world.objects, _data.delete_objects, _object_class_library);
       apply_delete_entries(world.lights, _data.delete_lights);
       apply_delete_entries(world.paths, _data.delete_paths);
       apply_delete_entries(world.regions, _data.delete_regions);
@@ -395,7 +424,7 @@ struct delete_layer final : edit<world::edit_context> {
                                       _data.layer);
       world.deleted_layers.pop_back();
 
-      revert_delete_entries(world.objects, _data.delete_objects);
+      revert_delete_entries(world.objects, _data.delete_objects, _object_class_library);
       revert_delete_entries(world.lights, _data.delete_lights);
       revert_delete_entries(world.paths, _data.delete_paths);
       revert_delete_entries(world.regions, _data.delete_regions);
@@ -422,38 +451,43 @@ struct delete_layer final : edit<world::edit_context> {
 
 private:
    const delete_layer_data _data;
+   world::object_class_library& _object_class_library;
 };
 
 }
 
-auto make_delete_layer(int layer_index, const world::world& world)
+auto make_delete_layer(int layer_index, const world::world& world,
+                       world::object_class_library& object_class_library)
    -> std::unique_ptr<edit<world::edit_context>>
 {
    const std::string file_name =
       fmt::format("{}_{}", world.name, world.layer_descriptions[layer_index].name);
 
-   return std::make_unique<delete_layer>(delete_layer_data{
-      .index = layer_index,
-      .layer = world.layer_descriptions[layer_index],
+   return std::make_unique<delete_layer>(
+      delete_layer_data{
+         .index = layer_index,
+         .layer = world.layer_descriptions[layer_index],
 
-      .remap_objects = make_remap_entries(layer_index, world.objects),
-      .remap_lights = make_remap_entries(layer_index, world.lights),
-      .remap_paths = make_remap_entries(layer_index, world.paths),
-      .remap_regions = make_remap_entries(layer_index, world.regions),
-      .remap_hintnodes = make_remap_entries(layer_index, world.hintnodes),
-      .remap_game_modes = make_game_mode_remap_entries(layer_index, world.game_modes),
+         .remap_objects = make_remap_entries(layer_index, world.objects),
+         .remap_lights = make_remap_entries(layer_index, world.lights),
+         .remap_paths = make_remap_entries(layer_index, world.paths),
+         .remap_regions = make_remap_entries(layer_index, world.regions),
+         .remap_hintnodes = make_remap_entries(layer_index, world.hintnodes),
+         .remap_game_modes = make_game_mode_remap_entries(layer_index, world.game_modes),
 
-      .delete_objects = make_delete_entries(layer_index, world.objects),
-      .delete_lights = make_delete_entries(layer_index, world.lights),
-      .delete_paths = make_delete_entries(layer_index, world.paths),
-      .delete_regions = make_delete_entries(layer_index, world.regions),
-      .delete_hintnodes = make_delete_entries(layer_index, world.hintnodes),
-      .delete_requirements = make_requirements_delete_entries(file_name, world.requirements),
-      .delete_game_mode_entries =
-         make_game_mode_delete_entries(layer_index, world.game_modes),
-      .delete_game_mode_requirements =
-         makee_game_mode_requirements_delete_entries(file_name, world.game_modes),
-   });
+         .delete_objects = make_delete_entries(layer_index, world.objects),
+         .delete_lights = make_delete_entries(layer_index, world.lights),
+         .delete_paths = make_delete_entries(layer_index, world.paths),
+         .delete_regions = make_delete_entries(layer_index, world.regions),
+         .delete_hintnodes = make_delete_entries(layer_index, world.hintnodes),
+         .delete_requirements =
+            make_requirements_delete_entries(file_name, world.requirements),
+         .delete_game_mode_entries =
+            make_game_mode_delete_entries(layer_index, world.game_modes),
+         .delete_game_mode_requirements =
+            makee_game_mode_requirements_delete_entries(file_name, world.game_modes),
+      },
+      object_class_library);
 }
 
 }
