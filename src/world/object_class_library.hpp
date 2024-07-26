@@ -4,8 +4,6 @@
 #include "object.hpp"
 #include "utility/implementation_storage.hpp"
 
-#include <span>
-
 namespace we::assets {
 
 struct libraries_manager;
