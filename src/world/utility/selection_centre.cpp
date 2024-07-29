@@ -147,7 +147,7 @@ auto selection_centre_for_env_map(const world& world,
 
          if (object) {
             math::bounding_box bbox =
-               object_classes[object->class_name].model->bounding_box;
+               object_classes[object->class_handle].model->bounding_box;
 
             bbox = object->rotation * bbox + object->position;
 

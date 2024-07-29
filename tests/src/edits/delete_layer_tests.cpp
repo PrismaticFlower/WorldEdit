@@ -1,7 +1,10 @@
 #include "pch.h"
 
 #include "edits/delete_layer.hpp"
+#include "world/object_class_library.hpp"
 #include "world/world.hpp"
+
+#include "null_asset_libraries.hpp"
 
 using namespace std::literals;
 
@@ -80,8 +83,9 @@ TEST_CASE("edits delete_layer", "[Edits]")
    world::world world = layer_delete_test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
-   auto action = make_delete_layer(1, world);
+   auto action = make_delete_layer(1, world, object_class_library);
 
    action->apply(edit_context);
 
@@ -150,6 +154,46 @@ TEST_CASE("edits delete_layer", "[Edits]")
    CHECK(world.regions == layer_delete_test_world.regions);
    CHECK(world.hintnodes == layer_delete_test_world.hintnodes);
    CHECK(world.deleted_layers == layer_delete_test_world.deleted_layers);
+}
+
+TEST_CASE("edits delete_layer object class handle liftime", "[Edits]")
+{
+   world::world world = layer_delete_test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   const std::array<lowercase_string, 5> object_class_names = {
+      lowercase_string{"test_bldg_object0"sv},
+      lowercase_string{"test_bldg_object1"sv},
+      lowercase_string{"test_bldg_object2"sv},
+      lowercase_string{"test_bldg_object3"sv},
+      lowercase_string{"test_bldg_object4"sv},
+   };
+
+   for (std::size_t i = 0; i < object_class_names.size(); ++i) {
+      world.objects[i].class_name = object_class_names[i];
+      world.objects[i].class_handle =
+         object_class_library.acquire(object_class_names[i]);
+   }
+
+   auto edit = make_delete_layer(1, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(object_class_names[0]) == 1);
+   CHECK(object_class_library.debug_ref_count(object_class_names[1]) == 0);
+   CHECK(object_class_library.debug_ref_count(object_class_names[2]) == 1);
+   CHECK(object_class_library.debug_ref_count(object_class_names[3]) == 0);
+   CHECK(object_class_library.debug_ref_count(object_class_names[4]) == 1);
+
+   edit->revert(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(object_class_names[0]) == 1);
+   CHECK(object_class_library.debug_ref_count(object_class_names[1]) == 1);
+   CHECK(object_class_library.debug_ref_count(object_class_names[2]) == 1);
+   CHECK(object_class_library.debug_ref_count(object_class_names[3]) == 1);
+   CHECK(object_class_library.debug_ref_count(object_class_names[4]) == 1);
 }
 
 }

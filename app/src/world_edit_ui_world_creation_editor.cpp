@@ -232,31 +232,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
                              world::create_unique_name(_world.objects, *edited_value);
                        });
 
-      ImGui::InputTextAutoComplete(
-         "Class Name", &object.class_name, _edit_stack_world, _edit_context, [&]() noexcept {
-            std::array<std::string_view, 6> entries;
-            std::size_t matching_count = 0;
-
-            _asset_libraries.odfs.view_existing(
-               [&](const std::span<const assets::stable_string> assets) noexcept {
-                  for (const std::string_view asset : assets) {
-                     if (matching_count == entries.size()) break;
-                     if (not asset.contains(object.class_name)) {
-                        continue;
-                     }
-
-                     entries[matching_count] = asset;
-
-                     ++matching_count;
-                  }
-               });
-
-            return entries;
-         });
+      ui_object_class_pick_widget(&object);
 
       if (ImGui::BeginPopupContextItem("Class Name")) {
          if (ImGui::MenuItem("Open .odf in Text Editor")) {
             open_odf_in_text_editor(object.class_name);
+         }
+
+         if (ImGui::MenuItem("Show .odf in Explorer")) {
+            show_odf_in_explorer(object.class_name);
          }
 
          ImGui::EndPopup();
@@ -264,7 +248,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::LayerPick("Layer", &object.layer, _edit_stack_world, _edit_context);
 
-      if (string::iequals(_object_classes[object.class_name].definition->header.class_label,
+      if (string::iequals(_object_classes[object.class_handle]
+                             .definition->header.class_label,
                           "commandpost")) {
          ImGui::SeparatorText("Command Post");
 
@@ -329,7 +314,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
             if (_entity_creation_config.placement_ground == placement_ground::bbox) {
 
                const math::bounding_box bbox =
-                  object.rotation * _object_classes[object.class_name].model->bounding_box;
+                  object.rotation *
+                  _object_classes[object.class_handle].model->bounding_box;
 
                new_position.y -= bbox.min.y;
             }
@@ -2130,7 +2116,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (object) {
             math::bounding_box bbox =
-               _object_classes[object->class_name].model->bounding_box;
+               _object_classes[object->class_handle].model->bounding_box;
 
             const float3 size = abs(bbox.max - bbox.min) / 2.0f;
             const float3 position =
@@ -2581,7 +2567,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (object) {
             std::array<float3, 8> corners = math::to_corners(
-               _object_classes[object->class_name].model->bounding_box);
+               _object_classes[object->class_handle].model->bounding_box);
 
             for (auto& corner : corners) {
                corner = object->rotation * corner + object->position;
@@ -2995,7 +2981,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (ImGui::BeginCombo("Command Post", hintnode.command_post.c_str())) {
             for (const auto& object : _world.objects) {
                const assets::odf::definition& definition =
-                  *_object_classes[object.class_name].definition;
+                  *_object_classes[object.class_handle].definition;
 
                if (string::iequals(definition.header.class_label,
                                    "commandpost")) {
@@ -3260,7 +3246,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (object) {
             math::bounding_box bbox =
-               _object_classes[object->class_name].model->bounding_box;
+               _object_classes[object->class_handle].model->bounding_box;
 
             const float3 size = abs(bbox.max - bbox.min) / 2.0f;
             const float3 position =
@@ -4160,7 +4146,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
    }
 
    if (not continue_creation) {
-      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none),
+      _edit_stack_world.apply(edits::make_creation_entity_set(world::creation_entity_none,
+                                                              _object_classes),
                               _edit_context);
    }
 

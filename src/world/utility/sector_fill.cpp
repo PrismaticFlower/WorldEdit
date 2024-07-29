@@ -111,7 +111,7 @@ auto sector_fill(const sector& sector, const std::span<const object> world_objec
       if (object.name.empty()) continue;
 
       const math::bounding_box model_bbox =
-         object_classes[object.class_name].model->bounding_box;
+         object_classes[object.class_handle].model->bounding_box;
       const math::bounding_box bbox = object.rotation * model_bbox + object.position;
 
       if (bbox.min.x > sector_max.x or bbox.max.x < sector_min.x or
@@ -150,7 +150,7 @@ bool inside_sector(const sector& sector, const object& object,
    sector_max.y = sector.base + sector.height;
 
    const math::bounding_box model_bbox =
-      object_classes[object.class_name].model->bounding_box;
+      object_classes[object.class_handle].model->bounding_box;
    const math::bounding_box bbox = object.rotation * model_bbox + object.position;
 
    if (bbox.min.x > sector_max.x or bbox.max.x < sector_min.x or

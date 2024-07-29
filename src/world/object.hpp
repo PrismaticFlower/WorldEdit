@@ -10,6 +10,8 @@
 
 namespace we::world {
 
+enum class object_class_handle : uint32 {};
+
 struct object {
    std::string name;
    int16 layer = 0;
@@ -17,6 +19,8 @@ struct object {
 
    quaternion rotation = {1.0f, 0.0f, 0.0f, 0.0f};
    float3 position{};
+
+   object_class_handle class_handle = object_class_handle{};
 
    int team = 0;
 

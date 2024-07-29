@@ -1,7 +1,10 @@
 #include "pch.h"
 
 #include "edits/delete_entity.hpp"
+#include "world/object_class_library.hpp"
 #include "world/world.hpp"
+
+#include "null_asset_libraries.hpp"
 #include "world_test_data.hpp"
 
 using namespace std::literals;
@@ -13,8 +16,9 @@ TEST_CASE("edits delete_entity object", "[Edits]")
    world::world world = test_world;
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
-   auto edit = make_delete_entity(world.objects[0].id, world);
+   auto edit = make_delete_entity(world.objects[0].id, world, object_class_library);
 
    edit->apply(edit_context);
 
@@ -29,7 +33,15 @@ TEST_CASE("edits delete_entity object", "[Edits]")
    edit->revert(edit_context);
 
    REQUIRE(world.objects.size() == 1);
-   REQUIRE(world.objects[0] == test_world.objects[0]);
+   CHECK(world.objects[0].name == test_world.objects[0].name);
+   CHECK(world.objects[0].layer == test_world.objects[0].layer);
+   CHECK(world.objects[0].hidden == test_world.objects[0].hidden);
+   CHECK(world.objects[0].rotation == test_world.objects[0].rotation);
+   CHECK(world.objects[0].position == test_world.objects[0].position);
+   CHECK(world.objects[0].team == test_world.objects[0].team);
+   CHECK(world.objects[0].class_name == test_world.objects[0].class_name);
+   CHECK(world.objects[0].instance_properties ==
+         test_world.objects[0].instance_properties);
 
    REQUIRE(world.paths[0].properties.size() == 2);
    REQUIRE(world.paths[0].properties[1].key == "EnableObject");
@@ -746,8 +758,9 @@ TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
 
    world::interaction_targets interaction_targets;
    world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
 
-   auto edit = make_delete_entity(world.objects[0].id, world);
+   auto edit = make_delete_entity(world.objects[0].id, world, object_class_library);
 
    edit->apply(edit_context);
 
@@ -780,6 +793,28 @@ TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
    CHECK(world.sectors[0].objects[1] == "test_object");
    CHECK(world.sectors[0].objects[2] == "other_object");
    CHECK(world.sectors[0].objects[3] == "test_object");
+}
+
+TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   const lowercase_string class_name = world.objects[0].class_name;
+
+   world.objects[0].class_handle = object_class_library.acquire(class_name);
+
+   auto edit = make_delete_entity(world.objects[0].id, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(class_name) == 0);
+
+   edit->revert(edit_context);
+
+   CHECK(object_class_library.debug_ref_count(class_name) == 1);
 }
 
 }

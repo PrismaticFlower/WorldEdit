@@ -23,7 +23,7 @@ auto selection_bbox_for_camera(const world& world,
 
          if (object) {
             math::bounding_box bbox =
-               object_classes[object->class_name].model->bounding_box;
+               object_classes[object->class_handle].model->bounding_box;
 
             bbox = object->rotation * bbox + object->position;
 
@@ -287,7 +287,7 @@ auto selection_bbox_for_move(const world& world,
 
          if (object) {
             math::bounding_box bbox =
-               object_classes[object->class_name].model->bounding_box;
+               object_classes[object->class_handle].model->bounding_box;
 
             bbox = object->rotation * bbox + object->position;
 

@@ -100,7 +100,8 @@ auto ground_object(const object& object, const world& world,
                    const active_layers active_layers) noexcept -> std::optional<float3>
 {
    return ground_bbox(object.position,
-                      object.rotation * object_classes[object.class_name].model->bounding_box +
+                      object.rotation *
+                            object_classes[object.class_handle].model->bounding_box +
                          object.position,
                       world, object_classes, active_layers);
 }

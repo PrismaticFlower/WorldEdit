@@ -1,6 +1,7 @@
 #include "delete_entity.hpp"
 #include "types.hpp"
 #include "utility/string_icompare.hpp"
+#include "world/object_class_library.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <vector>
@@ -55,17 +56,21 @@ struct delete_object final : edit<world::edit_context> {
    delete_object(world::object object, uint32 object_index,
                  std::vector<unlinked_path_property> unlinked_path_properties,
                  std::vector<unlinked_sector_entry> unlinked_sector_entries,
-                 std::vector<unlinked_hintnode> unlinked_hintnodes)
+                 std::vector<unlinked_hintnode> unlinked_hintnodes,
+                 world::object_class_library& object_class_library)
       : _object{std::move(object)},
         _object_index{object_index},
         _unlinked_path_properties{std::move(unlinked_path_properties)},
         _unlinked_sector_entries{std::move(unlinked_sector_entries)},
-        _unlinked_hintnodes{std::move(unlinked_hintnodes)}
+        _unlinked_hintnodes{std::move(unlinked_hintnodes)},
+        _object_class_library{object_class_library}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
+      _object_class_library.free(context.world.objects[_object_index].class_handle);
+
       context.world.objects.erase(context.world.objects.begin() + _object_index);
 
       for (unlinked_path_property& unlinked : _unlinked_path_properties) {
@@ -124,6 +129,9 @@ struct delete_object final : edit<world::edit_context> {
          std::swap(context.world.hintnodes[unlinked.hintnode_index].command_post,
                    unlinked.value);
       }
+
+      context.world.objects[_object_index].class_handle =
+         _object_class_library.acquire(context.world.objects[_object_index].class_name);
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
@@ -139,6 +147,7 @@ private:
    std::vector<unlinked_path_property> _unlinked_path_properties;
    std::vector<unlinked_sector_entry> _unlinked_sector_entries;
    std::vector<unlinked_hintnode> _unlinked_hintnodes;
+   world::object_class_library& _object_class_library;
 };
 
 template<typename T>
@@ -547,7 +556,8 @@ private:
 
 }
 
-auto make_delete_entity(world::object_id object_id, const world::world& world)
+auto make_delete_entity(world::object_id object_id, const world::world& world,
+                        world::object_class_library& object_class_library)
    -> std::unique_ptr<edit<world::edit_context>>
 {
    const uint32 object_index = get_entity_index(world.objects, object_id);
@@ -626,7 +636,8 @@ auto make_delete_entity(world::object_id object_id, const world::world& world)
    return std::make_unique<delete_object>(object, object_index,
                                           std::move(path_property_refs),
                                           std::move(sector_entry_refs),
-                                          std::move(hintnode_refs));
+                                          std::move(hintnode_refs),
+                                          object_class_library);
 }
 
 auto make_delete_entity(world::light_id light_id, const world::world& world)

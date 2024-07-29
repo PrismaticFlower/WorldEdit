@@ -1,6 +1,7 @@
 #include "imgui_ext.hpp"
 #include "../imgui_ext.hpp"
 #include "math/quaternion_funcs.hpp"
+#include "set_class_name.hpp"
 #include "set_value.hpp"
 
 #include <cassert>
@@ -346,32 +347,6 @@ bool InputTextAutoComplete(
       const std::string_view new_value_view{buffer.data(), buffer.size()};
 
       edit_stack.apply(edits::make_set_value(str, std::string{new_value_view}), context);
-   }
-
-   if (deactivated) edit_stack.close_last();
-
-   return changed;
-}
-
-bool InputTextAutoComplete(
-   const char* label, we::lowercase_string* str,
-   we::edits::stack<we::world::edit_context>& edit_stack,
-   we::world::edit_context& context,
-   we::function_ptr<std::array<std::string_view, 6>() noexcept> fill_entries_callback) noexcept
-{
-   IM_ASSERT(str);
-   IM_ASSERT(context.is_memory_valid(str));
-
-   absl::InlinedVector<char, 256> buffer{str->begin(), str->end()};
-
-   const bool changed = InputTextAutoComplete(label, &buffer, fill_entries_callback);
-   const bool deactivated = IsItemDeactivated();
-
-   if (changed) {
-      const std::string_view new_value_view{buffer.data(), buffer.size()};
-
-      edit_stack.apply(edits::make_set_value(str, we::lowercase_string{new_value_view}),
-                       context);
    }
 
    if (deactivated) edit_stack.close_last();

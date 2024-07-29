@@ -227,8 +227,6 @@ private:
 
    void update_hovered_entity() noexcept;
 
-   void update_object_classes() noexcept;
-
    void update_camera(const float delta_time);
 
    void update_ui() noexcept;
@@ -318,6 +316,8 @@ private:
    void ui_show_animation_hierarchy_editor() noexcept;
 
    void ui_draw_select_box() noexcept;
+
+   bool ui_object_class_pick_widget(world::object* object) noexcept;
 
    void setup_orbit_camera() noexcept;
 
@@ -504,6 +504,7 @@ private:
    std::string _world_explorer_filter;
    std::string _world_explorer_class_filter;
    std::vector<uint32> _world_explorer_sort_map;
+   std::string _object_class_pick_filter;
 
    bool _world_explorer_path_show_all_nodes = false;
    world::active_layers _world_explorer_layers_mask{true};

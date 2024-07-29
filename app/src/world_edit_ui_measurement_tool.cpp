@@ -34,7 +34,8 @@ void world_edit::ui_show_measurement_tool() noexcept
       ImGui::SeparatorText("Measurements");
 
       if (ImGui::Button("New Measurement", {ImGui::CalcItemWidth(), 0.0f})) {
-         _edit_stack_world.apply(edits::make_creation_entity_set(world::measurement{}),
+         _edit_stack_world.apply(edits::make_creation_entity_set(world::measurement{},
+                                                                 _object_classes),
                                  _edit_context);
          _entity_creation_context = {};
       }

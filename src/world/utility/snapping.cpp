@@ -90,7 +90,7 @@ auto get_snapped_position(const object& snapping_object, const float3 snapping_p
 {
    const std::array<float3, 18> snapping_corners =
       get_snapping_points(snapping_object, snapping_position,
-                          object_classes[snapping_object.class_name]);
+                          object_classes[snapping_object.class_handle]);
 
    float3 closest_corner;
    float closest_distance = FLT_MAX;
@@ -99,7 +99,7 @@ auto get_snapped_position(const object& snapping_object, const float3 snapping_p
    for (const auto& object : world_objects) {
       const std::array<float3, 18> object_corners =
          get_snapping_points(object, object.position,
-                             object_classes[object.class_name]);
+                             object_classes[object.class_handle]);
 
       for (const auto& corner : object_corners) {
          for (uint32 i = 0; i < snapping_corners.size(); ++i) {
@@ -133,7 +133,7 @@ auto get_snapped_position(const float3 snapping_position,
    for (const auto& object : world_objects) {
       const std::array<float3, 6> object_face_midpoints = get_face_midpoints(
          get_transformed_corners(object, object.position,
-                                 object_classes[object.class_name]));
+                                 object_classes[object.class_handle]));
 
       for (const auto& corner : object_face_midpoints) {
          const float corner_distance = distance(corner, snapping_position);

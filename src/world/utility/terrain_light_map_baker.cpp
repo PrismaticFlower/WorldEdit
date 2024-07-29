@@ -69,7 +69,8 @@ struct scene {
             if (not active_layers[object.layer]) continue;
             if (object.hidden) continue;
 
-            const object_class& object_class = object_class_library[object.class_name];
+            const object_class& object_class =
+               object_class_library[object.class_handle];
 
             if (object_class.flags.hidden_ingame) continue;
 

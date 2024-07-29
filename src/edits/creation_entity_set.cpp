@@ -1,24 +1,39 @@
 
 #include "creation_entity_set.hpp"
+#include "world/object_class_library.hpp"
 
 namespace we::edits {
 
 namespace {
 
 struct creation_entity_set final : edit<world::edit_context> {
-   creation_entity_set(world::creation_entity new_creation_entity)
-      : creation_entity{std::move(new_creation_entity)}
+   creation_entity_set(world::creation_entity new_creation_entity,
+                       world::object_class_library& object_class_library)
+      : creation_entity{std::move(new_creation_entity)},
+        object_class_library{object_class_library}
    {
    }
 
    void apply(world::edit_context& context) noexcept override
    {
+      if (context.creation_entity.is<world::object>()) {
+         world::object& object = context.creation_entity.get<world::object>();
+
+         object_class_library.free(object.class_handle);
+      }
+
       std::swap(context.creation_entity, creation_entity);
+
+      if (context.creation_entity.is<world::object>()) {
+         world::object& object = context.creation_entity.get<world::object>();
+
+         object.class_handle = object_class_library.acquire(object.class_name);
+      }
    }
 
    void revert(world::edit_context& context) noexcept override
    {
-      std::swap(context.creation_entity, creation_entity);
+      apply(context);
    }
 
    bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
@@ -30,14 +45,17 @@ struct creation_entity_set final : edit<world::edit_context> {
 
 private:
    world::creation_entity creation_entity;
+   world::object_class_library& object_class_library;
 };
 
 }
 
-auto make_creation_entity_set(world::creation_entity new_creation_entity)
+auto make_creation_entity_set(world::creation_entity new_creation_entity,
+                              world::object_class_library& object_class_library)
    -> std::unique_ptr<edit<world::edit_context>>
 {
-   return std::make_unique<creation_entity_set>(std::move(new_creation_entity));
+   return std::make_unique<creation_entity_set>(std::move(new_creation_entity),
+                                                object_class_library);
 }
 
 }

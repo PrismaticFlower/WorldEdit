@@ -4,6 +4,8 @@
 #include "../object_class_library.hpp"
 #include "../world.hpp"
 
+#include <span>
+
 namespace we::world {
 
 bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,

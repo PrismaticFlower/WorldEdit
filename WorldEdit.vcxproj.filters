@@ -223,6 +223,7 @@
     <ClCompile Include="src\world\utility\terrain_light_map_baker.cpp" />
     <ClCompile Include="src\edits\delete_branch_weight.cpp" />
     <ClCompile Include="src\edits\add_branch_weight.cpp" />
+    <ClCompile Include="src\edits\set_class_name.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -516,6 +517,7 @@
     <ClInclude Include="src\math\sampling.hpp" />
     <ClInclude Include="src\edits\delete_branch_weight.hpp" />
     <ClInclude Include="src\edits\add_branch_weight.hpp" />
+    <ClInclude Include="src\edits\set_class_name.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

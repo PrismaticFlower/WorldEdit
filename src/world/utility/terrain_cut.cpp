@@ -17,7 +17,7 @@ bool point_inside_terrain_cut(const float3 point, const float3 ray_direction,
       if (not active_layers[object.layer]) continue;
       if (object.hidden) continue;
 
-      const msh::flat_model& model = *object_classes[object.class_name].model;
+      const msh::flat_model& model = *object_classes[object.class_handle].model;
 
       if (model.terrain_cuts.empty()) continue;
 
@@ -57,7 +57,7 @@ auto gather_terrain_cuts(std::span<const object> objects,
    terrain_cuts.reserve(128);
 
    for (auto& object : objects) {
-      const msh::flat_model& model = *object_classes[object.class_name].model;
+      const msh::flat_model& model = *object_classes[object.class_handle].model;
 
       if (model.terrain_cuts.empty()) continue;
 

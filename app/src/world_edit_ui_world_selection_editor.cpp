@@ -95,33 +95,11 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                    world::create_unique_name(_world.objects,
                                                              *edited_value);
                              });
-            ImGui::InputTextAutoComplete(
-               "Class Name", &object->class_name, _edit_stack_world,
-               _edit_context, [&]() noexcept {
-                  std::array<std::string_view, 6> entries;
-                  std::size_t matching_count = 0;
 
-                  _asset_libraries.odfs.view_existing(
-                     [&](const std::span<const assets::stable_string> assets) noexcept {
-                        for (const std::string_view asset : assets) {
-                           if (matching_count == entries.size()) break;
-                           if (not asset.contains(object->class_name)) {
-                              continue;
-                           }
-
-                           entries[matching_count] = asset;
-
-                           ++matching_count;
-                        }
-                     });
-
-                  return entries;
-               });
-
-            if (ImGui::IsItemDeactivatedAfterEdit()) {
+            if (ui_object_class_pick_widget(object)) {
                std::vector<world::instance_property> new_instance_properties =
                   world::make_object_instance_properties(
-                     *_object_classes[object->class_name].definition,
+                     *_object_classes[object->class_handle].definition,
                      object->instance_properties);
 
                if (new_instance_properties != object->instance_properties) {
@@ -605,7 +583,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                           world::path{.name = path->name,
                                                       .layer = path->layer,
                                                       .nodes = {world::path::node{}},
-                                                      .id = world::max_id}),
+                                                      .id = world::max_id},
+                                          _object_classes),
                                        _edit_context);
                _entity_creation_context = {};
             }
@@ -1243,7 +1222,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                                         .base = sector->base,
                                                         .height = sector->height,
                                                         .points = {float2{0.0f, 0.0f}},
-                                                        .id = world::max_id}),
+                                                        .id = world::max_id},
+                                          _object_classes),
                                        _edit_context);
                _entity_creation_context = {};
             }
@@ -1502,7 +1482,7 @@ void world_edit::ui_show_world_selection_editor() noexcept
                if (ImGui::BeginCombo("Command Post", hintnode->command_post.c_str())) {
                   for (const auto& object : _world.objects) {
                      const assets::odf::definition& definition =
-                        *_object_classes[object.class_name].definition;
+                        *_object_classes[object.class_handle].definition;
 
                      if (string::iequals(definition.header.class_label,
                                          "commandpost")) {
