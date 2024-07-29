@@ -8,12 +8,12 @@ struct delete_branch_weight final : edit<world::edit_context> {
    delete_branch_weight(std::vector<world::planning_branch_weights>* weights, uint32 index)
       : weights{weights}, index{index}, weight{(*weights)[index]}
    {
-      assert(index < keys->size());
+      assert(index < weights->size());
    }
 
    void apply([[maybe_unused]] world::edit_context& context) noexcept override
    {
-      assert(context.is_memory_valid(keys));
+      assert(context.is_memory_valid(weights));
       assert(index < weights->size());
 
       weights->erase(weights->begin() + index);
