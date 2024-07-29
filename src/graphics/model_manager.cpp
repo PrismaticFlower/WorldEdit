@@ -129,7 +129,7 @@ struct model_manager::impl {
          auto elem_it = it++;
          auto& [name, model_state] = *elem_it;
 
-         if (std::exchange(model_state.unused, false)) {
+         if (std::exchange(model_state.unused, true)) {
             _model_asset_refs.erase(name);
             _models.erase(elem_it);
          }
