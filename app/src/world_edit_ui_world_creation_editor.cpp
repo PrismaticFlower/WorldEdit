@@ -232,28 +232,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                              world::create_unique_name(_world.objects, *edited_value);
                        });
 
-      ImGui::InputClassName(&object, _object_classes, _edit_stack_world,
-                            _edit_context, [&]() noexcept {
-                               std::array<std::string_view, 6> entries;
-                               std::size_t matching_count = 0;
-
-                               _asset_libraries.odfs.view_existing(
-                                  [&](const std::span<const assets::stable_string> assets) noexcept {
-                                     for (const std::string_view asset : assets) {
-                                        if (matching_count == entries.size())
-                                           break;
-                                        if (not asset.contains(object.class_name)) {
-                                           continue;
-                                        }
-
-                                        entries[matching_count] = asset;
-
-                                        ++matching_count;
-                                     }
-                                  });
-
-                               return entries;
-                            });
+      ui_object_class_pick_widget(&object);
 
       if (ImGui::BeginPopupContextItem("Class Name")) {
          if (ImGui::MenuItem("Open .odf in Text Editor")) {

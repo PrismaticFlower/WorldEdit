@@ -30,22 +30,12 @@ struct set_class_name final : edit<world::edit_context> {
       apply(context);
    }
 
-   bool is_coalescable(const edit& other_unknown) const noexcept override
+   bool is_coalescable([[maybe_unused]] const edit& other_unknown) const noexcept override
    {
-      const set_class_name* other =
-         dynamic_cast<const set_class_name*>(&other_unknown);
-
-      if (not other) return false;
-
-      return this->object == other->object;
+      return false;
    }
 
-   void coalesce(edit& other_unknown) noexcept override
-   {
-      set_class_name& other = dynamic_cast<set_class_name&>(other_unknown);
-
-      class_name = std::move(other.class_name);
-   }
+   void coalesce([[maybe_unused]] edit& other_unknown) noexcept override {}
 
 private:
    world::object* object = nullptr;
