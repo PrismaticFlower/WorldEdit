@@ -147,6 +147,7 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
                          ImGuiComboFlags_HeightLargest | ImGuiComboFlags_NoArrowButton)) {
       if (ImGui::IsWindowAppearing()) {
          _object_class_pick_filter = object->class_name;
+         _object_class_pick_keyboard_hover = -1;
 
          ImGui::SetKeyboardFocusHere();
       }
@@ -165,6 +166,20 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
          ImGui::CloseCurrentPopup();
       }
 
+      if (ImGui::IsItemFocused()) _object_class_pick_keyboard_hover = -1;
+
+      bool new_keyboard_input = false;
+
+      if (ImGui::IsKeyPressed(ImGuiKey_UpArrow)) {
+         _object_class_pick_keyboard_hover -= 1;
+         new_keyboard_input = true;
+      }
+
+      if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
+         _object_class_pick_keyboard_hover += 1;
+         new_keyboard_input = true;
+      }
+
       const float thumbnail_size = thumbnail_base_size * 0.5f * _display_scale;
       const float visible_classes = 8.0f;
       const ImVec2 text_offset = {thumbnail_size + ImGui::GetStyle().ItemSpacing.x,
@@ -176,10 +191,20 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
                                   visible_classes});
 
       _asset_libraries.odfs.view_existing([&](const std::span<const assets::stable_string> assets) noexcept {
+         int32 asset_index = 0;
+
          for (const std::string_view asset : assets) {
             if (not _object_class_pick_filter.empty() and
                 not string::icontains(asset, _object_class_pick_filter)) {
                continue;
+            }
+
+            const bool is_hovered_from_keyboard =
+               _object_class_pick_keyboard_hover == asset_index;
+
+            if (new_keyboard_input and is_hovered_from_keyboard) {
+               ImGui::SetScrollHereY();
+               ImGui::SetKeyboardFocusHere();
             }
 
             if (ImGui::IsRectVisible({thumbnail_size, thumbnail_size})) {
@@ -201,9 +226,17 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
 
                const ImVec2 image_cursor_pos = ImGui::GetCursorScreenPos();
 
-               if (ImGui::Selectable("##pick", string::iequals(asset, object->class_name),
-                                     ImGuiSelectableFlags_None,
-                                     {button_width, thumbnail_size})) {
+               const bool pick_with_keyboard =
+                  is_hovered_from_keyboard and ImGui::IsKeyPressed(ImGuiKey_Enter);
+
+               if (ImGui::Selectable("##pick",
+                                     is_hovered_from_keyboard or
+                                        string::iequals(asset, object->class_name),
+                                     is_hovered_from_keyboard
+                                        ? ImGuiSelectableFlags_Highlight
+                                        : ImGuiSelectableFlags_None,
+                                     {button_width, thumbnail_size}) or
+                   pick_with_keyboard) {
                   _edit_stack_world.apply(edits::make_set_class_name(object,
                                                                      lowercase_string{asset},
                                                                      _object_classes),
@@ -240,7 +273,12 @@ bool world_edit::ui_object_class_pick_widget(world::object* object) noexcept
             else {
                ImGui::Dummy({button_width, thumbnail_size});
             }
+
+            asset_index += 1;
          }
+
+         _object_class_pick_keyboard_hover =
+            std::clamp(_object_class_pick_keyboard_hover, -1, asset_index);
       });
 
       ImGui::EndChild();

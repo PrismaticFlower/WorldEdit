@@ -505,6 +505,7 @@ private:
    std::string _world_explorer_class_filter;
    std::vector<uint32> _world_explorer_sort_map;
    std::string _object_class_pick_filter;
+   int32 _object_class_pick_keyboard_hover = -1;
 
    bool _world_explorer_path_show_all_nodes = false;
    world::active_layers _world_explorer_layers_mask{true};
