@@ -23,11 +23,15 @@ struct object_class_library {
    auto operator=(const object_class_library&) noexcept
       -> object_class_library& = delete;
 
+   /// @brief Update classes with assets that have been loaded in the background.
    void update() noexcept;
 
    /// @brief Clear the library. All handles become invalid after this and there is no need to call `free` for them.
    void clear() noexcept;
 
+   /// @brief Gets the object_class a handle is associated with.
+   /// @param handle The handle.
+   /// @return A reference to the object_class or a reference to the default object_class.
    auto operator[](const object_class_handle handle) const noexcept
       -> const object_class&;
 
