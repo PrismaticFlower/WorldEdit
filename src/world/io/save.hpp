@@ -11,6 +11,9 @@ namespace we::world {
 struct save_flags {
    /// @brief Controls saving the GameMode section in the layer index and the saving of .mrq files.
    bool save_gamemodes : 1 = true;
+
+   /// @brief Controls saving the .fx file.
+   bool save_effects : 1 = true;
 };
 
 void save_world(const std::filesystem::path& path, const world& world,

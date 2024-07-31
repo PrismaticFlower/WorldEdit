@@ -2942,8 +2942,9 @@ void world_edit::save_world(std::filesystem::path path) noexcept
          std::filesystem::create_directories(path.parent_path());
       }
 
-      const world::save_flags flags = {
-         .save_gamemodes = not _settings.preferences.dont_save_world_gamemodes};
+      const world::save_flags flags =
+         {.save_gamemodes = not _settings.preferences.dont_save_world_gamemodes,
+          .save_effects = not _settings.preferences.dont_save_world_effects};
 
       world::save_world(path, _world,
                         world::gather_terrain_cuts(_world.objects, _object_classes),

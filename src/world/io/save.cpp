@@ -902,6 +902,10 @@ void save_world(const std::filesystem::path& path, const world& world,
    save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv),
                 world.terrain, terrain_cuts);
    save_requirements(world_dir, world_name, world, flags);
-   save_effects(std::filesystem::path{path}.replace_extension(L".fx"sv), world.effects);
+
+   if (flags.save_effects) {
+      save_effects(std::filesystem::path{path}.replace_extension(L".fx"sv),
+                   world.effects);
+   }
 }
 }

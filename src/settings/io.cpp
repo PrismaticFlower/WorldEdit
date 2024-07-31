@@ -168,6 +168,7 @@ auto load(const std::string_view path) -> settings
             setting_entry(terrain_height_brush_stickiness);
             setting_entry(text_editor);
             setting_entry(dont_save_world_gamemodes);
+            setting_entry(dont_save_world_effects);
             setting_entry(dont_ask_to_add_animation_to_group);
          }
 #undef setting_entry
@@ -275,6 +276,7 @@ void save(const std::string_view path, const settings& settings) noexcept
       write(file, name_value(terrain_height_brush_stickiness));
       write(file, name_value(text_editor));
       write(file, name_value(dont_save_world_gamemodes));
+      write(file, name_value(dont_save_world_effects));
       write(file, name_value(dont_ask_to_add_animation_to_group));
 
 #undef name_value

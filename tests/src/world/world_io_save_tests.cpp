@@ -1332,4 +1332,19 @@ TEST_CASE("world saving no gamemodes", "[World][IO]")
    CHECK(not std::filesystem::exists(
       L"temp/world/test_no_gamemodes_conquest.mrq"));
 }
+
+TEST_CASE("world saving no effects", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/world");
+
+   const world world{
+      .name = "test_no_effects",
+
+      .layer_descriptions = {{.name = "[Base]"}},
+   };
+
+   save_world(L"temp/world/test_no_effects.wld", world, {}, {.save_effects = false});
+
+   CHECK(not std::filesystem::exists(L"temp/world/test_no_effects.fx"));
+}
 }

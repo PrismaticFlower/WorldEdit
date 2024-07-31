@@ -109,6 +109,13 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
                "around a crash when trying to load worlds using BF1's Zero "
                "Editor.");
 
+            ImGui::Checkbox("Don't Save World Effects",
+                            &preferences.dont_save_world_effects);
+
+            ImGui::SetItemTooltip(
+               "Don't save the world .fx file. Note that this won't disable "
+               "edit controls for values from the .fx file.");
+
             ImGui::SeparatorText("Reset");
 
             if (ImGui::Button("Reset to Defaults", {ImGui::CalcItemWidth(), 0.0f})) {
