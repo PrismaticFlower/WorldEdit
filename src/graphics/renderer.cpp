@@ -151,11 +151,15 @@ private:
                    const world::active_entity_types active_entity_types,
                    gpu::graphics_command_list& command_list);
 
-   void draw_world_render_list_depth_prepass(const std::vector<uint16>& list,
-                                             gpu::graphics_command_list& command_list);
+   void setup_pre_draw_world_render_list_depth_prepass(gpu::graphics_command_list& command_list);
 
-   void draw_world_render_list(const std::vector<uint16>& list,
+   void setup_pre_draw_world_render_list(gpu::graphics_command_list& command_list);
+
+   void draw_world_render_list(mesh_opaque_flags list_index,
+                               gpu::pipeline_handle pipeline,
                                gpu::graphics_command_list& command_list);
+
+   void draw_world_render_list_transparent(gpu::graphics_command_list& command_list);
 
    void draw_world_meta_objects(const frustum& view_frustum,
                                 const camera& camera, const world::world& world,
@@ -192,7 +196,7 @@ private:
                               const world::object* const creation_object,
                               std::span<const world::tool_visualizers_ghost> ghost_objects);
 
-   void build_object_render_list(const frustum& view_frustum);
+   void build_world_mesh_render_list(const frustum& view_frustum);
 
    void clear_depth_minmax(gpu::copy_command_list& command_list);
 
@@ -284,8 +288,7 @@ private:
        _device.direct_queue};
 
    world_mesh_list _world_mesh_list;
-   std::vector<uint16> _opaque_object_render_list;
-   std::vector<uint16> _transparent_object_render_list;
+   world_mesh_render_list _world_mesh_render_list;
 
    std::vector<terrain_cut> _terrain_cut_list;
 
@@ -355,6 +358,16 @@ renderer_impl::renderer_impl(const renderer_init& init)
 
    // Sync with background uploads being done to initialize resources.
    _device.direct_queue.sync_with(_device.background_copy_queue);
+
+   // Reserve enough space in the mesh lists to fit most stock maps.
+   _world_mesh_list.opaque[mesh_opaque_flags::none].reserve(2048);
+   _world_mesh_list.opaque[mesh_opaque_flags::doublesided].reserve(256);
+   _world_mesh_list.opaque[mesh_opaque_flags::alpha_cutout].reserve(256);
+   _world_mesh_list
+      .opaque[mesh_opaque_flags::doublesided | mesh_opaque_flags::alpha_cutout]
+      .reserve(2048);
+
+   _world_mesh_list.transparent.reserve(256);
 }
 
 void renderer_impl::wait_for_swap_chain_ready()
@@ -435,7 +448,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
       _device.direct_queue.sync_with(_device.copy_queue);
    }
 
-   build_object_render_list(view_frustum);
+   build_world_mesh_render_list(view_frustum);
 
    auto& command_list = _world_command_list;
 
@@ -733,7 +746,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       const gpu::viewport viewport{.width = static_cast<float>(super_sample_length),
                                    .height = static_cast<float>(super_sample_length)};
 
-      build_object_render_list(view_frustum);
+      build_world_mesh_render_list(view_frustum);
 
       command_list.reset();
 
@@ -773,7 +786,31 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
                     _light_clusters.lights_constant_buffer_view(), command_list,
                     _root_signatures, _pipelines, _dynamic_buffer_allocator);
 
-      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
+      setup_pre_draw_world_render_list_depth_prepass(command_list);
+
+      draw_world_render_list(
+         mesh_opaque_flags::none,
+         _pipelines.mesh_depth_prepass[depth_prepass_pipeline_flags::none].get(),
+         command_list);
+
+      draw_world_render_list(mesh_opaque_flags::doublesided,
+                             _pipelines
+                                .mesh_depth_prepass[depth_prepass_pipeline_flags::doublesided]
+                                .get(),
+                             command_list);
+
+      draw_world_render_list(mesh_opaque_flags::alpha_cutout,
+                             _pipelines
+                                .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout]
+                                .get(),
+                             command_list);
+
+      draw_world_render_list(mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided,
+                             _pipelines
+                                .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout |
+                                                    depth_prepass_pipeline_flags::doublesided]
+                                .get(),
+                             command_list);
 
       [[likely]] if (_device.supports_enhanced_barriers()) {
          command_list.deferred_barrier(
@@ -907,7 +944,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
          _device.direct_queue.sync_with(_device.copy_queue);
       }
 
-      build_object_render_list(view_frustum);
+      build_world_mesh_render_list(view_frustum);
 
       command_list.reset();
 
@@ -1163,17 +1200,62 @@ void renderer_impl::draw_world(const frustum& view_frustum,
    }
 
    if (active_entity_types.objects) {
-      profile_section profile{"World - Draw Render List Depth Prepass",
-                              command_list, _profiler, profiler_queue::direct};
+      setup_pre_draw_world_render_list_depth_prepass(command_list);
 
-      draw_world_render_list_depth_prepass(_opaque_object_render_list, command_list);
-   }
+      {
+         profile_section profile{"World - Draw Render List Depth Prepass",
+                                 command_list, _profiler, profiler_queue::direct};
 
-   if (active_entity_types.objects) {
-      profile_section profile{"World - Draw Opaque", command_list, _profiler,
-                              profiler_queue::direct};
+         draw_world_render_list(
+            mesh_opaque_flags::none,
+            _pipelines.mesh_depth_prepass[depth_prepass_pipeline_flags::none].get(),
+            command_list);
 
-      draw_world_render_list(_opaque_object_render_list, command_list);
+         draw_world_render_list(mesh_opaque_flags::doublesided,
+                                _pipelines
+                                   .mesh_depth_prepass[depth_prepass_pipeline_flags::doublesided]
+                                   .get(),
+                                command_list);
+
+         draw_world_render_list(mesh_opaque_flags::alpha_cutout,
+                                _pipelines
+                                   .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout]
+                                   .get(),
+                                command_list);
+
+         draw_world_render_list(mesh_opaque_flags::alpha_cutout |
+                                   mesh_opaque_flags::doublesided,
+                                _pipelines
+                                   .mesh_depth_prepass[depth_prepass_pipeline_flags::alpha_cutout |
+                                                       depth_prepass_pipeline_flags::doublesided]
+                                   .get(),
+                                command_list);
+      }
+
+      setup_pre_draw_world_render_list(command_list);
+
+      {
+         profile_section profile{"World - Draw Opaque", command_list, _profiler,
+                                 profiler_queue::direct};
+
+         draw_world_render_list(
+            mesh_opaque_flags::none,
+            _pipelines.mesh_normal[material_pipeline_flags::none].get(), command_list);
+
+         draw_world_render_list(
+            mesh_opaque_flags::alpha_cutout,
+            _pipelines.mesh_normal[material_pipeline_flags::none].get(), command_list);
+
+         draw_world_render_list(
+            mesh_opaque_flags::doublesided,
+            _pipelines.mesh_normal[material_pipeline_flags::doublesided].get(),
+            command_list);
+
+         draw_world_render_list(
+            mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided,
+            _pipelines.mesh_normal[material_pipeline_flags::doublesided].get(),
+            command_list);
+      }
    }
 
    if (active_entity_types.terrain) {
@@ -1206,36 +1288,46 @@ void renderer_impl::draw_world(const frustum& view_frustum,
       profile_section profile{"World - Draw Transparent", command_list,
                               _profiler, profiler_queue::direct};
 
-      draw_world_render_list(_transparent_object_render_list, command_list);
+      setup_pre_draw_world_render_list(command_list);
+
+      draw_world_render_list_transparent(command_list);
    }
 }
 
-void renderer_impl::draw_world_render_list(const std::vector<uint16>& list,
-                                           gpu::graphics_command_list& command_list)
+void renderer_impl::setup_pre_draw_world_render_list_depth_prepass(
+   gpu::graphics_command_list& command_list)
 {
+   command_list.set_graphics_root_signature(_root_signatures.mesh_depth_prepass.get());
+   command_list.set_graphics_cbv(rs::mesh_depth_prepass::frame_cbv,
+                                 _camera_constant_buffer_view);
 
+   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+}
+
+void renderer_impl::setup_pre_draw_world_render_list(gpu::graphics_command_list& command_list)
+{
    command_list.set_graphics_root_signature(_root_signatures.mesh.get());
    command_list.set_graphics_cbv(rs::mesh::frame_cbv, _camera_constant_buffer_view);
    command_list.set_graphics_cbv(rs::mesh::lights_cbv,
                                  _light_clusters.lights_constant_buffer_view());
    command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+}
 
-   material_pipeline_flags pipeline_flags = material_pipeline_flags::COUNT; // Initialize to count to the loop below sets the pipeline on the first iteration.
+void renderer_impl::draw_world_render_list(mesh_opaque_flags list_index,
+                                           gpu::pipeline_handle pipeline,
+                                           gpu::graphics_command_list& command_list)
+{
+   const world_opaque_mesh_list& meshes = _world_mesh_list.opaque[list_index];
+   const std::vector<uint16>& render_list = _world_mesh_render_list.opaque[list_index];
 
-   auto& meshes = _world_mesh_list;
+   command_list.set_pipeline_state(pipeline);
 
-   for (auto& i : list) {
-      [[unlikely]] if (pipeline_flags != meshes.pipeline_flags[i].material) {
-         pipeline_flags = meshes.pipeline_flags[i].material;
-
-         command_list.set_pipeline_state(_pipelines.mesh_normal[pipeline_flags].get());
-      }
-
+   for (const uint16 i : render_list) {
       command_list.set_graphics_cbv(rs::mesh::object_cbv, meshes.gpu_constants[i]);
       command_list.set_graphics_cbv(rs::mesh::material_cbv,
                                     meshes.material_constant_buffer[i]);
 
-      auto& mesh = meshes.mesh[i];
+      const world_mesh& mesh = meshes.mesh[i];
 
       command_list.ia_set_index_buffer(mesh.index_buffer_view);
       command_list.ia_set_vertex_buffers(0, mesh.vertex_buffer_views);
@@ -1244,36 +1336,25 @@ void renderer_impl::draw_world_render_list(const std::vector<uint16>& list,
    }
 }
 
-void renderer_impl::draw_world_render_list_depth_prepass(
-   const std::vector<uint16>& list, gpu::graphics_command_list& command_list)
+void renderer_impl::draw_world_render_list_transparent(gpu::graphics_command_list& command_list)
 {
-   command_list.set_graphics_root_signature(_root_signatures.mesh_depth_prepass.get());
-   command_list.set_graphics_cbv(rs::mesh_depth_prepass::frame_cbv,
-                                 _camera_constant_buffer_view);
-   command_list.ia_set_primitive_topology(gpu::primitive_topology::trianglelist);
+   const world_transparent_mesh_list& meshes = _world_mesh_list.transparent;
+   const std::vector<uint16>& render_list = _world_mesh_render_list.transparent;
 
-   depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::COUNT; // Initialize to count to the loop below sets the pipeline on the first iteration.
+   material_pipeline_flags pipeline_flags = material_pipeline_flags::COUNT;
 
-   auto& meshes = _world_mesh_list;
+   for (const uint16 i : render_list) {
+      if (pipeline_flags != meshes.pipeline_flags[i]) {
+         pipeline_flags = meshes.pipeline_flags[i];
 
-   for (auto& i : list) {
-      [[unlikely]] if (pipeline_flags != meshes.pipeline_flags[i].depth_prepass) {
-         pipeline_flags = meshes.pipeline_flags[i].depth_prepass;
-
-         command_list.set_pipeline_state(
-            _pipelines.mesh_depth_prepass[pipeline_flags].get());
+         command_list.set_pipeline_state(_pipelines.mesh_normal[pipeline_flags].get());
       }
 
-      command_list.set_graphics_cbv(rs::mesh_depth_prepass::object_cbv,
-                                    meshes.gpu_constants[i]);
+      command_list.set_graphics_cbv(rs::mesh::object_cbv, meshes.gpu_constants[i]);
+      command_list.set_graphics_cbv(rs::mesh::material_cbv,
+                                    meshes.material_constant_buffer[i]);
 
-      [[unlikely]] if (are_flags_set(pipeline_flags,
-                                     depth_prepass_pipeline_flags::alpha_cutout)) {
-         command_list.set_graphics_cbv(rs::mesh_depth_prepass::material_cbv,
-                                       meshes.material_constant_buffer[i]);
-      }
-
-      auto& mesh = meshes.mesh[i];
+      const world_mesh& mesh = meshes.mesh[i];
 
       command_list.ia_set_index_buffer(mesh.index_buffer_view);
       command_list.ia_set_vertex_buffers(0, mesh.vertex_buffer_views);
@@ -2950,7 +3031,6 @@ void renderer_impl::build_world_mesh_list(
    std::span<const world::tool_visualizers_ghost> ghost_objects)
 {
    _world_mesh_list.clear();
-   _world_mesh_list.reserve(1024 * 16);
    _terrain_cut_list.clear();
    _terrain_cut_list.reserve(256);
 
@@ -2985,16 +3065,27 @@ void renderer_impl::build_world_mesh_list(
       constants_data_size += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
-         _world_mesh_list.push_back(
-            object_bbox, object_constants_address, object.position,
-            mesh.material.depth_prepass_flags, mesh.material.flags,
-            mesh.material.constant_buffer_view,
-            world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                       .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                               model.gpu_buffer.attributes_vertex_buffer_view},
-                       .index_count = mesh.index_count,
-                       .start_index = mesh.start_index,
-                       .start_vertex = mesh.start_vertex});
+         if (not mesh.material.is_transparent) {
+            _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
+               object_bbox, object_constants_address, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
+         else {
+            _world_mesh_list.transparent.push_back(
+               object_bbox, object_constants_address, object.position,
+               mesh.material.flags, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
       }
 
       for (auto& cut : model.terrain_cuts) {
@@ -3033,16 +3124,27 @@ void renderer_impl::build_world_mesh_list(
       constants_data_size += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
-         _world_mesh_list.push_back(
-            object_bbox, object_constants_address, creation_object->position,
-            mesh.material.depth_prepass_flags, mesh.material.flags,
-            mesh.material.constant_buffer_view,
-            world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                       .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                               model.gpu_buffer.attributes_vertex_buffer_view},
-                       .index_count = mesh.index_count,
-                       .start_index = mesh.start_index,
-                       .start_vertex = mesh.start_vertex});
+         if (not mesh.material.is_transparent) {
+            _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
+               object_bbox, object_constants_address, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
+         else {
+            _world_mesh_list.transparent.push_back(
+               object_bbox, object_constants_address, creation_object->position,
+               mesh.material.flags, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
       }
 
       for (auto& cut : model.terrain_cuts) {
@@ -3094,16 +3196,27 @@ void renderer_impl::build_world_mesh_list(
       constants_data_size += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
-         _world_mesh_list.push_back(
-            object_bbox, object_constants_address, object_position,
-            mesh.material.depth_prepass_flags, mesh.material.flags,
-            mesh.material.constant_buffer_view,
-            world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                       .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                               model.gpu_buffer.attributes_vertex_buffer_view},
-                       .index_count = mesh.index_count,
-                       .start_index = mesh.start_index,
-                       .start_vertex = mesh.start_vertex});
+         if (not mesh.material.is_transparent) {
+            _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
+               object_bbox, object_constants_address, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
+         else {
+            _world_mesh_list.transparent.push_back(
+               object_bbox, object_constants_address, object->position,
+               mesh.material.flags, mesh.material.constant_buffer_view,
+               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                  model.gpu_buffer.attributes_vertex_buffer_view},
+                          .index_count = mesh.index_count,
+                          .start_index = mesh.start_index,
+                          .start_vertex = mesh.start_vertex});
+         }
       }
    }
 
@@ -3111,22 +3224,31 @@ void renderer_impl::build_world_mesh_list(
                                    upload_buffer.get(), 0, constants_data_size);
 }
 
-void renderer_impl::build_object_render_list(const frustum& view_frustum)
+void renderer_impl::build_world_mesh_render_list(const frustum& view_frustum)
 {
-   auto& meshes = _world_mesh_list;
+   for (std::size_t i = 0; i < _world_mesh_render_list.opaque.size(); ++i) {
+      const world_opaque_mesh_list& meshes = _world_mesh_list.opaque[i];
 
-   cull_objects_avx2(view_frustum, meshes.bbox.min.x, meshes.bbox.min.y,
-                     meshes.bbox.min.z, meshes.bbox.max.x, meshes.bbox.max.y,
-                     meshes.bbox.max.z, meshes.pipeline_flags,
-                     _opaque_object_render_list, _transparent_object_render_list);
+      cull_objects_avx2(view_frustum, meshes.bbox.min.x, meshes.bbox.min.y,
+                        meshes.bbox.min.z, meshes.bbox.max.x, meshes.bbox.max.y,
+                        meshes.bbox.max.z, _world_mesh_render_list.opaque[i]);
+   }
 
-   std::sort(_transparent_object_render_list.begin(),
-             _transparent_object_render_list.end(),
+   cull_objects_avx2(view_frustum, _world_mesh_list.transparent.bbox.min.x,
+                     _world_mesh_list.transparent.bbox.min.y,
+                     _world_mesh_list.transparent.bbox.min.z,
+                     _world_mesh_list.transparent.bbox.max.x,
+                     _world_mesh_list.transparent.bbox.max.y,
+                     _world_mesh_list.transparent.bbox.max.z,
+                     _world_mesh_render_list.transparent);
+
+   std::sort(_world_mesh_render_list.transparent.begin(),
+             _world_mesh_render_list.transparent.end(),
              [&](const uint16 l, const uint16 r) {
                 return dot(view_frustum.planes[frustum_planes::near_],
-                           float4{meshes.position[l], 1.0f}) >
+                           float4{_world_mesh_list.transparent.position[l], 1.0f}) >
                        dot(view_frustum.planes[frustum_planes::near_],
-                           float4{meshes.position[r], 1.0f});
+                           float4{_world_mesh_list.transparent.position[r], 1.0f});
              });
 }
 

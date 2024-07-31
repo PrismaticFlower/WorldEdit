@@ -234,6 +234,8 @@ void material::init_flags(const assets::msh::material& material)
    if (are_flags_set(material.flags, material_flags::additive)) {
       flags |= material_pipeline_flags::transparent;
    }
+
+   is_transparent = are_flags_set(flags, material_pipeline_flags::transparent);
 }
 
 void material::init_constant_buffer(const assets::msh::material& material,

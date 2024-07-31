@@ -741,14 +741,6 @@ void light_clusters::draw_shadow_maps(
    for (int cascade_index = 0; cascade_index < cascade_count; ++cascade_index) {
       auto& shadow_camera = _sun_shadow_cascades[cascade_index];
 
-      frustum shadow_frustum{shadow_camera.inv_view_projection_matrix(), 1.0f, 0.0f};
-
-      cull_objects_shadow_cascade_avx2(shadow_frustum, meshes.bbox.min.x,
-                                       meshes.bbox.min.y, meshes.bbox.min.z,
-                                       meshes.bbox.max.x, meshes.bbox.max.y,
-                                       meshes.bbox.max.z, meshes.pipeline_flags,
-                                       _shadow_render_list);
-
       gpu::dsv_handle depth_stencil_view = _shadow_map_dsv[cascade_index].get();
 
       command_list.clear_depth_stencil_view(depth_stencil_view, {}, 1.0f, 0x0);
@@ -767,32 +759,78 @@ void light_clusters::draw_shadow_maps(
 
       command_list.om_set_render_targets(depth_stencil_view);
 
-      depth_prepass_pipeline_flags pipeline_flags = depth_prepass_pipeline_flags::COUNT; // Initialize to count to the loop below sets the pipeline on the first iteration.
+      frustum shadow_frustum{shadow_camera.inv_view_projection_matrix(), 1.0f, 0.0f};
 
-      for (const uint16 i : _shadow_render_list) {
-         [[unlikely]] if (pipeline_flags != meshes.pipeline_flags[i].depth_prepass) {
-            pipeline_flags = meshes.pipeline_flags[i].depth_prepass;
+      cull_objects_shadow_cascade_avx2(
+         shadow_frustum, meshes.opaque[mesh_opaque_flags::none].bbox.min.x,
+         meshes.opaque[mesh_opaque_flags::none].bbox.min.y,
+         meshes.opaque[mesh_opaque_flags::none].bbox.min.z,
+         meshes.opaque[mesh_opaque_flags::none].bbox.max.x,
+         meshes.opaque[mesh_opaque_flags::none].bbox.max.y,
+         meshes.opaque[mesh_opaque_flags::none].bbox.max.z, _shadow_render_list);
 
-            command_list.set_pipeline_state(
-               pipelines.mesh_shadow[pipeline_flags].get());
-         }
+      draw_meshes_shadow_map(
+         meshes.opaque[mesh_opaque_flags::none], _shadow_render_list,
+         pipelines.mesh_shadow[depth_prepass_pipeline_flags::none].get(),
+         command_list);
 
-         command_list.set_graphics_cbv(rs::mesh_shadow::object_cbv,
-                                       meshes.gpu_constants[i]);
+      cull_objects_shadow_cascade_avx2(
+         shadow_frustum, meshes.opaque[mesh_opaque_flags::doublesided].bbox.min.x,
+         meshes.opaque[mesh_opaque_flags::doublesided].bbox.min.y,
+         meshes.opaque[mesh_opaque_flags::doublesided].bbox.min.z,
+         meshes.opaque[mesh_opaque_flags::doublesided].bbox.max.x,
+         meshes.opaque[mesh_opaque_flags::doublesided].bbox.max.y,
+         meshes.opaque[mesh_opaque_flags::doublesided].bbox.max.z,
+         _shadow_render_list);
 
-         if (are_flags_set(meshes.pipeline_flags[i].depth_prepass,
-                           depth_prepass_pipeline_flags::alpha_cutout)) {
-            command_list.set_graphics_cbv(rs::mesh_shadow::material_cbv,
-                                          meshes.material_constant_buffer[i]);
-         }
+      draw_meshes_shadow_map(
+         meshes.opaque[mesh_opaque_flags::doublesided], _shadow_render_list,
+         pipelines.mesh_shadow[depth_prepass_pipeline_flags::doublesided].get(),
+         command_list);
 
-         command_list.ia_set_index_buffer(meshes.mesh[i].index_buffer_view);
-         command_list.ia_set_vertex_buffers(0, meshes.mesh[i].vertex_buffer_views);
+      cull_objects_shadow_cascade_avx2(
+         shadow_frustum, meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.min.x,
+         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.min.y,
+         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.min.z,
+         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.max.x,
+         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.max.y,
+         meshes.opaque[mesh_opaque_flags::alpha_cutout].bbox.max.z,
+         _shadow_render_list);
 
-         command_list.draw_indexed_instanced(meshes.mesh[i].index_count, 1,
-                                             meshes.mesh[i].start_index,
-                                             meshes.mesh[i].start_vertex, 0);
-      }
+      draw_meshes_alpha_cutout_shadow_map(
+         meshes.opaque[mesh_opaque_flags::alpha_cutout], _shadow_render_list,
+         pipelines.mesh_shadow[depth_prepass_pipeline_flags::alpha_cutout].get(),
+         command_list);
+
+      cull_objects_shadow_cascade_avx2(
+         shadow_frustum,
+         meshes
+            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
+            .bbox.min.x,
+         meshes
+            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
+            .bbox.min.y,
+         meshes
+            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
+            .bbox.min.z,
+         meshes
+            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
+            .bbox.max.x,
+         meshes
+            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
+            .bbox.max.y,
+         meshes
+            .opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided]
+            .bbox.max.z,
+         _shadow_render_list);
+
+      draw_meshes_alpha_cutout_shadow_map(
+         meshes.opaque[mesh_opaque_flags::alpha_cutout | mesh_opaque_flags::doublesided],
+         _shadow_render_list,
+         pipelines
+            .mesh_shadow[depth_prepass_pipeline_flags::alpha_cutout | depth_prepass_pipeline_flags::doublesided]
+            .get(),
+         command_list);
    }
 
    [[likely]] if (_device.supports_enhanced_barriers()) {
@@ -868,4 +906,46 @@ void light_clusters::init_proxy_geometry(gpu::device& device,
 
    device.background_copy_queue.execute_command_lists(command_list.get());
 }
+
+void light_clusters::draw_meshes_shadow_map(const world_opaque_mesh_list& meshes,
+                                            const std::vector<uint16>& render_list,
+                                            gpu::pipeline_handle pipeline,
+                                            gpu::graphics_command_list& command_list) const
+{
+   command_list.set_pipeline_state(pipeline);
+
+   for (const uint16 i : render_list) {
+      command_list.set_graphics_cbv(rs::mesh_shadow::object_cbv,
+                                    meshes.gpu_constants[i]);
+
+      command_list.ia_set_index_buffer(meshes.mesh[i].index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, meshes.mesh[i].vertex_buffer_views);
+
+      command_list.draw_indexed_instanced(meshes.mesh[i].index_count, 1,
+                                          meshes.mesh[i].start_index,
+                                          meshes.mesh[i].start_vertex, 0);
+   }
+}
+
+void light_clusters::draw_meshes_alpha_cutout_shadow_map(
+   const world_opaque_mesh_list& meshes, const std::vector<uint16>& render_list,
+   gpu::pipeline_handle pipeline, gpu::graphics_command_list& command_list) const
+{
+   command_list.set_pipeline_state(pipeline);
+
+   for (const uint16 i : render_list) {
+      command_list.set_graphics_cbv(rs::mesh_shadow::object_cbv,
+                                    meshes.gpu_constants[i]);
+      command_list.set_graphics_cbv(rs::mesh_shadow::material_cbv,
+                                    meshes.material_constant_buffer[i]);
+
+      command_list.ia_set_index_buffer(meshes.mesh[i].index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, meshes.mesh[i].vertex_buffer_views);
+
+      command_list.draw_indexed_instanced(meshes.mesh[i].index_count, 1,
+                                          meshes.mesh[i].start_index,
+                                          meshes.mesh[i].start_vertex, 0);
+   }
+}
+
 }

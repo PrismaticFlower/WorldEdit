@@ -54,6 +54,7 @@ struct material {
    /// @brief The size of the material constant buffer.
    const static std::size_t constant_buffer_size;
 
+   bool is_transparent = false;
    depth_prepass_pipeline_flags depth_prepass_flags =
       depth_prepass_pipeline_flags::none;
    material_pipeline_flags flags = material_pipeline_flags::none;

@@ -11,26 +11,17 @@ using std::ranges::views::drop;
 
 void cull_objects_scalar(const frustum& frustum,
                          std::span<const math::bounding_box> bbox,
-                         std::span<const world_pipeline_flags> pipeline_flags,
-                         std::vector<uint16>& out_opaque_list,
-                         std::vector<uint16>& out_transparent_list) noexcept
+                         std::vector<uint16>& out_list) noexcept
 {
    assert(bbox.size() == pipeline_flags.size());
 
-   out_opaque_list.clear();
-   out_transparent_list.clear();
-   out_opaque_list.reserve(bbox.size());
-   out_transparent_list.reserve(bbox.size());
+   out_list.clear();
+   out_list.reserve(bbox.size());
 
    for (std::size_t i = 0; i < bbox.size(); ++i) {
       if (not intersects(frustum, bbox[i])) continue;
 
-      auto& render_list = are_flags_set(pipeline_flags[i].material,
-                                        material_pipeline_flags::transparent)
-                             ? out_transparent_list
-                             : out_opaque_list;
-
-      render_list.push_back(static_cast<uint16>(i));
+      out_list.push_back(static_cast<uint16>(i));
    }
 }
 
@@ -118,21 +109,16 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
                        std::span<const float> bbox_max_x,
                        std::span<const float> bbox_max_y,
                        std::span<const float> bbox_max_z,
-                       std::span<const world_pipeline_flags> pipeline_flags,
-                       std::vector<uint16>& out_opaque_list,
-                       std::vector<uint16>& out_transparent_list) noexcept
+                       std::vector<uint16>& out_list) noexcept
 {
    assert(bbox_min_x.size() == bbox_min_y.size());
    assert(bbox_min_x.size() == bbox_min_z.size());
    assert(bbox_min_x.size() == bbox_max_x.size());
    assert(bbox_min_x.size() == bbox_max_y.size());
    assert(bbox_min_x.size() == bbox_max_z.size());
-   assert(bbox_min_x.size() == pipeline_flags.size());
 
-   out_opaque_list.clear();
-   out_transparent_list.clear();
-   out_opaque_list.reserve(bbox_min_x.size());
-   out_transparent_list.reserve(bbox_min_x.size());
+   out_list.clear();
+   out_list.reserve(bbox_min_x.size());
 
    const std::size_t simd_iterations = bbox_min_x.size() / avx_width;
    const std::size_t scalar_iterations = bbox_min_x.size() % avx_width;
@@ -187,24 +173,18 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
 
       if (not inside_mask) continue;
 
-      const auto push_index = [&pipeline_flags, &out_opaque_list,
-                               &out_transparent_list](const std::size_t i) {
-         auto& render_list = are_flags_set(pipeline_flags[i].material,
-                                           material_pipeline_flags::transparent)
-                                ? out_transparent_list
-                                : out_opaque_list;
+      // clang-format off
 
-         render_list.push_back(static_cast<uint16>(i));
-      };
+      if (inside_mask & 0b1) out_list.push_back(static_cast<uint16>((i * avx_width) + 0));
+      if (inside_mask & 0b10) out_list.push_back(static_cast<uint16>((i * avx_width) + 1));
+      if (inside_mask & 0b100) out_list.push_back((static_cast<uint16>(i * avx_width) + 2));
+      if (inside_mask & 0b1000) out_list.push_back(static_cast<uint16>((i * avx_width) + 3));
+      if (inside_mask & 0b10000) out_list.push_back(static_cast<uint16>((i * avx_width) + 4));
+      if (inside_mask & 0b100000) out_list.push_back(static_cast<uint16>((i * avx_width) + 5));
+      if (inside_mask & 0b1000000) out_list.push_back(static_cast<uint16>((i * avx_width) + 6));
+      if (inside_mask & 0b10000000) out_list.push_back(static_cast<uint16>((i * avx_width) + 7));
 
-      if (inside_mask & 0b1) push_index((i * avx_width) + 0);
-      if (inside_mask & 0b10) push_index((i * avx_width) + 1);
-      if (inside_mask & 0b100) push_index((i * avx_width) + 2);
-      if (inside_mask & 0b1000) push_index((i * avx_width) + 3);
-      if (inside_mask & 0b10000) push_index((i * avx_width) + 4);
-      if (inside_mask & 0b100000) push_index((i * avx_width) + 5);
-      if (inside_mask & 0b1000000) push_index((i * avx_width) + 6);
-      if (inside_mask & 0b10000000) push_index((i * avx_width) + 7);
+      // clang-format on
    }
 
    for (std::size_t i = bbox_min_x.size() - scalar_iterations;
@@ -214,18 +194,12 @@ void cull_objects_avx2(const frustum& frustum, std::span<const float> bbox_min_x
          continue;
       }
 
-      auto& render_list = are_flags_set(pipeline_flags[i].material,
-                                        material_pipeline_flags::transparent)
-                             ? out_transparent_list
-                             : out_opaque_list;
-
-      render_list.push_back(static_cast<uint16>(i));
+      out_list.push_back(static_cast<uint16>(i));
    }
 }
 
 void cull_objects_shadow_cascade_scalar(const frustum& frustum,
                                         std::span<const math::bounding_box> bbox,
-                                        std::span<const world_pipeline_flags> pipeline_flags,
                                         std::vector<uint16>& out_list) noexcept
 {
    assert(bbox.size() == pipeline_flags.size());
@@ -236,10 +210,7 @@ void cull_objects_shadow_cascade_scalar(const frustum& frustum,
    for (std::size_t i = 0; i < bbox.size(); ++i) {
       if (not intersects_shadow_cascade(frustum, bbox[i])) continue;
 
-      if (not are_flags_set(pipeline_flags[i].material,
-                            material_pipeline_flags::transparent)) {
-         out_list.push_back(static_cast<uint16>(i));
-      }
+      out_list.push_back(static_cast<uint16>(i));
    }
 }
 
@@ -247,16 +218,13 @@ void cull_objects_shadow_cascade_avx2(
    const frustum& frustum, std::span<const float> bbox_min_x,
    std::span<const float> bbox_min_y, std::span<const float> bbox_min_z,
    std::span<const float> bbox_max_x, std::span<const float> bbox_max_y,
-   std::span<const float> bbox_max_z,
-   std::span<const world_pipeline_flags> pipeline_flags,
-   std::vector<uint16>& out_list) noexcept
+   std::span<const float> bbox_max_z, std::vector<uint16>& out_list) noexcept
 {
    assert(bbox_min_x.size() == bbox_min_y.size());
    assert(bbox_min_x.size() == bbox_min_z.size());
    assert(bbox_min_x.size() == bbox_max_x.size());
    assert(bbox_min_x.size() == bbox_max_y.size());
    assert(bbox_min_x.size() == bbox_max_z.size());
-   assert(bbox_min_x.size() == pipeline_flags.size());
 
    out_list.clear();
    out_list.reserve(bbox_min_x.size());
@@ -287,21 +255,18 @@ void cull_objects_shadow_cascade_avx2(
 
       if (not inside_mask) continue;
 
-      const auto push_index = [&pipeline_flags, &out_list](const std::size_t i) {
-         if (not are_flags_set(pipeline_flags[i].material,
-                               material_pipeline_flags::transparent)) {
-            out_list.push_back(static_cast<uint16>(i));
-         }
-      };
+      // clang-format off
 
-      if (inside_mask & 0b1) push_index((i * avx_width) + 0);
-      if (inside_mask & 0b10) push_index((i * avx_width) + 1);
-      if (inside_mask & 0b100) push_index((i * avx_width) + 2);
-      if (inside_mask & 0b1000) push_index((i * avx_width) + 3);
-      if (inside_mask & 0b10000) push_index((i * avx_width) + 4);
-      if (inside_mask & 0b100000) push_index((i * avx_width) + 5);
-      if (inside_mask & 0b1000000) push_index((i * avx_width) + 6);
-      if (inside_mask & 0b10000000) push_index((i * avx_width) + 7);
+      if (inside_mask & 0b1) out_list.push_back(static_cast<uint16>((i * avx_width) + 0));
+      if (inside_mask & 0b10) out_list.push_back(static_cast<uint16>((i * avx_width) + 1));
+      if (inside_mask & 0b100) out_list.push_back((static_cast<uint16>(i * avx_width) + 2));
+      if (inside_mask & 0b1000) out_list.push_back(static_cast<uint16>((i * avx_width) + 3));
+      if (inside_mask & 0b10000) out_list.push_back(static_cast<uint16>((i * avx_width) + 4));
+      if (inside_mask & 0b100000) out_list.push_back(static_cast<uint16>((i * avx_width) + 5));
+      if (inside_mask & 0b1000000) out_list.push_back(static_cast<uint16>((i * avx_width) + 6));
+      if (inside_mask & 0b10000000) out_list.push_back(static_cast<uint16>((i * avx_width) + 7));
+
+      // clang-format on
    }
 
    for (std::size_t i = bbox_min_x.size() - scalar_iterations;
@@ -311,10 +276,7 @@ void cull_objects_shadow_cascade_avx2(
          continue;
       }
 
-      if (not are_flags_set(pipeline_flags[i].material,
-                            material_pipeline_flags::transparent)) {
-         out_list.push_back(static_cast<uint16>(i));
-      }
+      out_list.push_back(static_cast<uint16>(i));
    }
 }
 

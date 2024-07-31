@@ -1,6 +1,7 @@
 #pragma once
 
 #include "allocators/aligned_allocator.hpp"
+#include "container/enum_array.hpp"
 #include "gpu/rhi.hpp"
 #include "model.hpp"
 #include "pipeline_library.hpp"
@@ -10,6 +11,9 @@
 #include <vector>
 
 namespace we::graphics {
+
+/// @brief The flags we want to use line up depth_prepass_pipeline_flags even though we won't use those directly
+using mesh_opaque_flags = depth_prepass_pipeline_flags;
 
 struct alignas(16) world_mesh_constants {
    float4x4 object_to_world;
@@ -44,24 +48,64 @@ struct world_bbox_soa {
    } max;
 };
 
-struct world_pipeline_flags {
-   depth_prepass_pipeline_flags depth_prepass : 4;
-   material_pipeline_flags material : 4;
+struct world_opaque_mesh_list {
+   world_bbox_soa bbox;
+   std::vector<gpu_virtual_address> gpu_constants;
+   std::vector<gpu_virtual_address> material_constant_buffer;
+   std::vector<world_mesh> mesh;
+
+   void push_back(math::bounding_box mesh_bbox, gpu_virtual_address mesh_gpu_constants,
+                  gpu_virtual_address mesh_material_constant_buffer,
+                  world_mesh world_mesh) noexcept
+   {
+      bbox.min.x.push_back(mesh_bbox.min.x);
+      bbox.min.y.push_back(mesh_bbox.min.y);
+      bbox.min.z.push_back(mesh_bbox.min.z);
+      bbox.max.x.push_back(mesh_bbox.max.x);
+      bbox.max.y.push_back(mesh_bbox.max.y);
+      bbox.max.z.push_back(mesh_bbox.max.z);
+      gpu_constants.push_back(mesh_gpu_constants);
+      material_constant_buffer.push_back(mesh_material_constant_buffer);
+      mesh.push_back(world_mesh);
+   }
+
+   void reserve(std::size_t size) noexcept
+   {
+      invoke_over_all([size](auto& container) { container.reserve(size); });
+   }
+
+   void clear() noexcept
+   {
+      invoke_over_all([](auto& container) { container.clear(); });
+   }
+
+   auto size() const noexcept -> std::size_t
+   {
+      return bbox.min.x.size();
+   }
+
+private:
+   void invoke_over_all(auto callback) noexcept
+   {
+      const auto invoke_all = [&](auto&... container) {
+         (callback(container), ...);
+      };
+
+      invoke_all(bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x, bbox.max.y,
+                 bbox.max.z, gpu_constants, material_constant_buffer, mesh);
+   }
 };
 
-static_assert(sizeof(world_pipeline_flags) == 1);
-
-struct world_mesh_list {
+struct world_transparent_mesh_list {
    world_bbox_soa bbox;
    std::vector<gpu_virtual_address> gpu_constants;
    std::vector<float3> position;
-   std::vector<world_pipeline_flags> pipeline_flags;
+   std::vector<material_pipeline_flags> pipeline_flags;
    std::vector<gpu_virtual_address> material_constant_buffer;
    std::vector<world_mesh> mesh;
 
    void push_back(math::bounding_box mesh_bbox,
                   gpu_virtual_address mesh_gpu_constants, float3 mesh_position,
-                  depth_prepass_pipeline_flags depth_prepass_pipeline_flags,
                   material_pipeline_flags material_pipeline_flags,
                   gpu_virtual_address mesh_material_constant_buffer,
                   world_mesh world_mesh) noexcept
@@ -74,9 +118,7 @@ struct world_mesh_list {
       bbox.max.z.push_back(mesh_bbox.max.z);
       gpu_constants.push_back(mesh_gpu_constants);
       position.push_back(mesh_position);
-      pipeline_flags.push_back(
-         world_pipeline_flags{.depth_prepass = depth_prepass_pipeline_flags,
-                              .material = material_pipeline_flags});
+      pipeline_flags.push_back(material_pipeline_flags);
       material_constant_buffer.push_back(mesh_material_constant_buffer);
       mesh.push_back(world_mesh);
    }
@@ -107,6 +149,23 @@ private:
                  bbox.max.z, gpu_constants, position, pipeline_flags,
                  material_constant_buffer, mesh);
    }
+};
+
+struct world_mesh_list {
+   container::enum_array<world_opaque_mesh_list, mesh_opaque_flags> opaque;
+   world_transparent_mesh_list transparent;
+
+   void clear() noexcept
+   {
+      for (world_opaque_mesh_list& list : opaque) list.clear();
+
+      transparent.clear();
+   }
+};
+
+struct world_mesh_render_list {
+   container::enum_array<std::vector<uint16>, mesh_opaque_flags> opaque;
+   std::vector<uint16> transparent;
 };
 
 }
