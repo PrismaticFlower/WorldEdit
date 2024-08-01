@@ -5,6 +5,7 @@
 #include "edits/delete_path_property.hpp"
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
+#include "math/intersectors.hpp"
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -857,22 +858,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
                          float3{draw_light_start.z, 0.0f, draw_light_start.x}) *
                float3{-1.0, 0.0f, 1.0};
 
-            const float normal_sign =
-               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
-
-            const float cursor_distance =
-               distance(draw_light_depth, _cursor_positionWS);
-
-            const float3 draw_light_width =
-               draw_light_depth + extend_normal * cursor_distance * normal_sign;
-
-            _tool_visualizers.add_line_overlay(draw_light_start,
-                                               draw_light_depth, 0xffffffffu);
-            _tool_visualizers.add_line_overlay(draw_light_depth,
-                                               draw_light_width, 0xffffffffu);
-
-            const float3 position = (draw_light_start + draw_light_width) / 2.0f;
-
             float rotation_angle =
                std::atan2(draw_light_start.x - draw_light_depth.x,
                           draw_light_start.z - draw_light_depth.z);
@@ -885,18 +870,32 @@ void world_edit::ui_show_world_creation_editor() noexcept
                make_quat_from_euler({0.0f, rotation_angle, 0.0f});
             const quaternion inv_rotation = conjugate(rotation);
 
-            const std::array<float3, 3> cornersWS{draw_light_start, draw_light_depth,
-                                                  draw_light_width};
-            std::array<float3, 3> cornersOS{};
+            const float normal_sign =
+               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+            const float cursor_distance =
+               std::fabs((inv_rotation * draw_light_depth).x -
+                         (inv_rotation * _cursor_positionWS).x);
+
+            const float3 draw_light_width =
+               draw_light_depth + extend_normal * cursor_distance * normal_sign;
+
+            _tool_visualizers.add_line_overlay(draw_light_start,
+                                               draw_light_depth, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_light_depth,
+                                               draw_light_width, 0xffffffffu);
+
+            const float3 position = (draw_light_start + draw_light_width) / 2.0f;
+
+            const std::array<float3, 2> cornersWS{draw_light_start, draw_light_width};
+            std::array<float3, 2> cornersOS{};
 
             for (std::size_t i = 0; i < cornersOS.size(); ++i) {
                cornersOS[i] = inv_rotation * cornersWS[i];
             }
 
-            const float3 light_max =
-               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
-            const float3 light_min =
-               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
+            const float3 light_max = max(cornersOS[0], cornersOS[1]);
+            const float3 light_min = min(cornersOS[0], cornersOS[1]);
 
             const float3 size = abs(light_max - light_min) / 2.0f;
 
@@ -923,9 +922,19 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float draw_light_rotation_angle =
                _entity_creation_context.draw_light_region_rotation_angle;
 
-            const float4 height_plane =
-               make_plane_from_point(draw_light_width,
-                                     normalize(draw_light_width - _camera.position()));
+            const quaternion rotation =
+               make_quat_from_euler({0.0f, draw_light_rotation_angle, 0.0f});
+            const quaternion inv_rotation = conjugate(rotation);
+
+            const std::array<float3, 2> cornersWS{draw_light_start, draw_light_width};
+            std::array<float3, 2> cornersOS{};
+
+            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+               cornersOS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 light_max = max(cornersOS[0], cornersOS[1]);
+            const float3 light_min = min(cornersOS[0], cornersOS[1]);
 
             graphics::camera_ray ray =
                make_camera_ray(_camera,
@@ -935,42 +944,28 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             float3 cursor_position = _cursor_positionWS;
 
-            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
-                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
+            if (float hit = 0.0f;
+                intersect_aabb(inv_rotation * ray.origin,
+                               1.0f / (inv_rotation * ray.direction),
+                               {.min = {light_min.x, draw_light_start.y,
+                                        light_min.z},
+                                .max = {light_max.x, FLT_MAX, light_max.z}},
+                               FLT_MAX, hit) and
+                hit < distance(_camera.position(), _cursor_positionWS)) {
                cursor_position = ray.origin + hit * ray.direction;
             }
 
-            const float3 draw_light_height =
-               draw_light_width +
-               float3{0.0f, (cursor_position - draw_light_width).y, 0.0f};
+            const float box_height =
+               std::max(cursor_position.y - draw_light_width.y, 0.0f);
 
-            _tool_visualizers.add_line_overlay(draw_light_start,
-                                               draw_light_depth, 0xffffffffu);
-            _tool_visualizers.add_line_overlay(draw_light_depth,
-                                               draw_light_width, 0xffffffffu);
-            _tool_visualizers.add_line_overlay(draw_light_width,
-                                               draw_light_height, 0xffffffffu);
+            const float3 draw_light_height =
+               draw_light_width + float3{0.0f, box_height, 0.0f};
 
             const float3 position = (draw_light_start + draw_light_height) / 2.0f;
 
-            const quaternion rotation =
-               make_quat_from_euler({0.0f, draw_light_rotation_angle, 0.0f});
-            const quaternion inv_rotation = conjugate(rotation);
-
-            const std::array<float3, 3> cornersWS{draw_light_start, draw_light_width,
-                                                  draw_light_height};
-            std::array<float3, 3> cornersOS{};
-
-            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-               cornersOS[i] = inv_rotation * cornersWS[i];
-            }
-
-            const float3 light_max =
-               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
-            const float3 light_min =
-               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
-
-            const float3 size = abs(light_max - light_min) / 2.0f;
+            const float3 size = float3{std::fabs(light_max.x - light_min.x), box_height,
+                                       std::fabs(light_max.z - light_min.z)} /
+                                2.0f;
 
             _edit_stack_world
                .apply(edits::make_set_multi_value(&light.rotation, light.rotation,
@@ -983,6 +978,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                                       std::numbers::pi_v<float>,
                                                    0.0f}),
                       _edit_context);
+
+            _tool_visualizers
+               .add_line_overlay(position - float3{0.0f, box_height * 0.5f, 0.0f},
+                                 position + float3{0.0f, box_height * 0.5f, 0.0f},
+                                 0xffffffffu);
 
             if (click) {
                _entity_creation_context.draw_light_region_position = position;
@@ -2187,22 +2187,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
                          float3{draw_region_start.z, 0.0f, draw_region_start.x}) *
                float3{-1.0, 0.0f, 1.0};
 
-            const float normal_sign =
-               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
-
-            const float cursor_distance =
-               distance(draw_region_depth, _cursor_positionWS);
-
-            const float3 draw_region_width =
-               draw_region_depth + extend_normal * cursor_distance * normal_sign;
-
-            _tool_visualizers.add_line_overlay(draw_region_start,
-                                               draw_region_depth, 0xffffffffu);
-            _tool_visualizers.add_line_overlay(draw_region_depth,
-                                               draw_region_width, 0xffffffffu);
-
-            const float3 position = (draw_region_start + draw_region_width) / 2.0f;
-
             float rotation_angle =
                std::atan2(draw_region_start.x - draw_region_depth.x,
                           draw_region_start.z - draw_region_depth.z);
@@ -2215,18 +2199,32 @@ void world_edit::ui_show_world_creation_editor() noexcept
                make_quat_from_euler({0.0f, rotation_angle, 0.0f});
             const quaternion inv_rotation = conjugate(rotation);
 
-            const std::array<float3, 3> cornersWS{draw_region_start, draw_region_depth,
-                                                  draw_region_width};
-            std::array<float3, 3> cornersOS{};
+            const float normal_sign =
+               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+            const float cursor_distance =
+               std::fabs((inv_rotation * draw_region_depth).x -
+                         (inv_rotation * _cursor_positionWS).x);
+
+            const float3 draw_region_width =
+               draw_region_depth + extend_normal * cursor_distance * normal_sign;
+
+            _tool_visualizers.add_line_overlay(draw_region_start,
+                                               draw_region_depth, 0xffffffffu);
+            _tool_visualizers.add_line_overlay(draw_region_depth,
+                                               draw_region_width, 0xffffffffu);
+
+            const float3 position = (draw_region_start + draw_region_width) / 2.0f;
+
+            const std::array<float3, 2> cornersWS{draw_region_start, draw_region_width};
+            std::array<float3, 2> cornersOS{};
 
             for (std::size_t i = 0; i < cornersOS.size(); ++i) {
                cornersOS[i] = inv_rotation * cornersWS[i];
             }
 
-            const float3 region_max =
-               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
-            const float3 region_min =
-               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
+            const float3 region_max = max(cornersOS[0], cornersOS[1]);
+            const float3 region_min = min(cornersOS[0], cornersOS[1]);
 
             const float3 size = abs(region_max - region_min) / 2.0f;
 
@@ -2250,6 +2248,20 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float draw_region_rotation_angle =
                _entity_creation_context.draw_region_rotation_angle;
 
+            const quaternion rotation =
+               make_quat_from_euler({0.0f, draw_region_rotation_angle, 0.0f});
+            const quaternion inv_rotation = conjugate(rotation);
+
+            const std::array<float3, 2> cornersWS{draw_region_start, draw_region_width};
+            std::array<float3, 2> cornersOS{};
+
+            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
+               cornersOS[i] = inv_rotation * cornersWS[i];
+            }
+
+            const float3 region_max = max(cornersOS[0], cornersOS[1]);
+            const float3 region_min = min(cornersOS[0], cornersOS[1]);
+
             const float4 height_plane =
                make_plane_from_point(draw_region_width,
                                      normalize(draw_region_width - _camera.position()));
@@ -2262,42 +2274,28 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             float3 cursor_position = _cursor_positionWS;
 
-            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
-                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
+            if (float hit = 0.0f;
+                intersect_aabb(inv_rotation * ray.origin,
+                               1.0f / (inv_rotation * ray.direction),
+                               {.min = {region_min.x, draw_region_start.y,
+                                        region_min.z},
+                                .max = {region_max.x, FLT_MAX, region_max.z}},
+                               FLT_MAX, hit) and
+                hit < distance(_camera.position(), _cursor_positionWS)) {
                cursor_position = ray.origin + hit * ray.direction;
             }
 
+            const float box_height =
+               std::max(cursor_position.y - draw_region_width.y, 0.0f);
             const float3 draw_region_height =
-               draw_region_width +
-               float3{0.0f, (cursor_position - draw_region_width).y, 0.0f};
-
-            _tool_visualizers.add_line_overlay(draw_region_start,
-                                               draw_region_depth, 0xffffffffu);
-            _tool_visualizers.add_line_overlay(draw_region_depth,
-                                               draw_region_width, 0xffffffffu);
-            _tool_visualizers.add_line_overlay(draw_region_width,
-                                               draw_region_height, 0xffffffffu);
+               draw_region_width + float3{0.0f, box_height, 0.0f};
 
             const float3 position = (draw_region_start + draw_region_height) / 2.0f;
 
-            const quaternion rotation =
-               make_quat_from_euler({0.0f, draw_region_rotation_angle, 0.0f});
-            const quaternion inv_rotation = conjugate(rotation);
-
-            const std::array<float3, 3> cornersWS{draw_region_start, draw_region_width,
-                                                  draw_region_height};
-            std::array<float3, 3> cornersOS{};
-
-            for (std::size_t i = 0; i < cornersOS.size(); ++i) {
-               cornersOS[i] = inv_rotation * cornersWS[i];
-            }
-
-            const float3 region_max =
-               max(max(cornersOS[0], cornersOS[1]), cornersOS[2]);
-            const float3 region_min =
-               min(min(cornersOS[0], cornersOS[1]), cornersOS[2]);
-
-            const float3 size = abs(region_max - region_min) / 2.0f;
+            const float3 size =
+               float3{std::fabs(region_max.x - region_min.x), box_height,
+                      std::fabs(region_max.z - region_min.z)} /
+               2.0f;
 
             _edit_stack_world.apply(
                edits::make_set_multi_value(&region.rotation, rotation,
@@ -2309,6 +2307,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                             0.0f}),
                _edit_context);
 
+            _tool_visualizers
+               .add_line_overlay(position - float3{0.0f, box_height * 0.5f, 0.0f},
+                                 position + float3{0.0f, box_height * 0.5f, 0.0f},
+                                 0xffffffffu);
             if (click) {
                _entity_creation_context.draw_region_start = {};
                _entity_creation_context.draw_region_depth = {};
