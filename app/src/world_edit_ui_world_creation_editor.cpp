@@ -6,6 +6,7 @@
 #include "edits/imgui_ext.hpp"
 #include "edits/set_value.hpp"
 #include "math/intersectors.hpp"
+#include "math/iq_intersectors.hpp"
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
@@ -1101,12 +1102,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float3 draw_light_start = _entity_creation_context.draw_light_start;
             const float3 draw_light_radius = _entity_creation_context.draw_light_depth;
 
-            _tool_visualizers.add_line_overlay(draw_light_start,
-                                               draw_light_radius, 0xffffffffu);
-
-            const float4 height_plane =
-               make_plane_from_point(draw_light_start,
-                                     normalize(draw_light_start - _camera.position()));
+            const float radius = distance(draw_light_start, draw_light_radius);
 
             float3 cursor_position = _cursor_positionWS;
 
@@ -1116,19 +1112,20 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                {ImGui::GetMainViewport()->Size.x,
                                 ImGui::GetMainViewport()->Size.y});
 
-            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
-                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
-               cursor_position = ray.origin + hit * ray.direction;
+            if (float2 hit = iCylinderInfinite(ray.origin, ray.direction, draw_light_start,
+                                               float3{0.0f, 1.0f, 0.0f}, radius);
+                hit.x > 0.0f and
+                hit.x < distance(_cursor_positionWS, _camera.position())) {
+               cursor_position = ray.origin + hit.x * ray.direction;
             }
 
-            const float height = (cursor_position - draw_light_start).y;
+            const float height = max((cursor_position - draw_light_start).y, 0.0f);
 
             _tool_visualizers.add_line_overlay(draw_light_start,
                                                draw_light_start +
                                                   float3{0.0f, height, 0.0f},
                                                0xffffffffu);
 
-            const float radius = distance(draw_light_start, draw_light_radius);
             const float radius_sq = radius * radius;
             const float xz_size = std::sqrt(radius_sq * 0.5f);
 
@@ -2371,12 +2368,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float3 draw_region_start = _entity_creation_context.draw_region_start;
             const float3 draw_region_radius = _entity_creation_context.draw_region_depth;
 
-            _tool_visualizers.add_line_overlay(draw_region_start,
-                                               draw_region_radius, 0xffffffffu);
-
-            const float4 height_plane =
-               make_plane_from_point(draw_region_start,
-                                     normalize(draw_region_start - _camera.position()));
+            const float radius = distance(draw_region_start, draw_region_radius);
 
             float3 cursor_position = _cursor_positionWS;
 
@@ -2386,19 +2378,20 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                {ImGui::GetMainViewport()->Size.x,
                                 ImGui::GetMainViewport()->Size.y});
 
-            if (float hit = intersect_plane(ray.origin, ray.direction, height_plane);
-                hit > 0.0f and hit < distance(_cursor_positionWS, _camera.position())) {
-               cursor_position = ray.origin + hit * ray.direction;
+            if (float2 hit = iCylinderInfinite(ray.origin, ray.direction, draw_region_start,
+                                               float3{0.0f, 1.0f, 0.0f}, radius);
+                hit.x > 0.0f and
+                hit.x < distance(_cursor_positionWS, _camera.position())) {
+               cursor_position = ray.origin + hit.x * ray.direction;
             }
 
-            const float height = (cursor_position - draw_region_start).y;
+            const float height = max((cursor_position - draw_region_start).y, 0.0f);
 
             _tool_visualizers.add_line_overlay(draw_region_start,
                                                draw_region_start +
                                                   float3{0.0f, height, 0.0f},
                                                0xffffffffu);
 
-            const float radius = distance(draw_region_start, draw_region_radius);
             const float radius_sq = radius * radius;
             const float xz_size = std::sqrt(radius_sq * 0.5f);
 

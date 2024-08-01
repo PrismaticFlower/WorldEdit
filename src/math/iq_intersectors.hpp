@@ -241,6 +241,20 @@ inline float4 iCylinder(float3 ro, float3 rd, float3 pa, float3 pb,
    return float4(-1.0f, -1.0f, -1.0f, -1.0f);
 }
 
+inline float2 iCylinderInfinite(float3 ro, float3 rd, float3 cb, float3 ca, float cr)
+{
+   float3 oc = ro - cb;
+   float card = dot(ca, rd);
+   float caoc = dot(ca, oc);
+   float a = 1.0f - card * card;
+   float b = dot(oc, rd) - caoc * card;
+   float c = dot(oc, oc) - caoc * caoc - cr * cr;
+   float h = b * b - a * c;
+   if (h < 0.0f) return float2(-1.0f, -1.0f); // no intersection
+   h = sqrt(h);
+   return float2(-b - h, -b + h) / a;
+}
+
 inline float3 triIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2)
 {
    float3 v1v0 = v1 - v0;
