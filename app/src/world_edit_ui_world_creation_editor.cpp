@@ -3330,7 +3330,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _entity_creation_context.draw_barrier_start = _cursor_positionWS;
          }
          else if (click and not _entity_creation_context.draw_barrier_mid) {
-            _entity_creation_context.draw_barrier_mid = _cursor_positionWS;
+            _entity_creation_context.draw_barrier_mid =
+               {_cursor_positionWS.x,
+                _entity_creation_context.draw_barrier_start->y,
+                _cursor_positionWS.z};
          }
          else if (click) {
             place_creation_entity();
@@ -3348,27 +3351,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float3 cursor_direction =
                normalize(_cursor_positionWS - draw_barrier_mid);
 
-            const float3 extend_normal =
-               normalize(float3{draw_barrier_mid.z, 0.0f, draw_barrier_mid.x} -
-                         float3{draw_barrier_start.z, 0.0f, draw_barrier_start.x}) *
-               float3{-1.0, 0.0f, 1.0};
-
-            const float normal_sign =
-               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
-
-            const float cursor_distance =
-               distance(draw_barrier_mid, _cursor_positionWS);
-
-            const float3 draw_barrier_end =
-               draw_barrier_mid + extend_normal * cursor_distance * normal_sign;
-
-            _tool_visualizers.add_line_overlay(draw_barrier_start,
-                                               draw_barrier_mid, 0xffffffffu);
-            _tool_visualizers.add_line_overlay(draw_barrier_mid,
-                                               draw_barrier_end, 0xffffffffu);
-
-            const float3 position = (draw_barrier_start + draw_barrier_end) / 2.0f;
-
             float rotation_angle =
                std::atan2(draw_barrier_start.x - draw_barrier_mid.x,
                           draw_barrier_start.z - draw_barrier_mid.z);
@@ -3380,8 +3362,33 @@ void world_edit::ui_show_world_creation_editor() noexcept
             const float inv_rotation_angle =
                (std::numbers::pi_v<float> * 2.0f) - rotation_angle;
 
-            const float rot_sin = std::sin(inv_rotation_angle);
-            const float rot_cos = -std::cos(inv_rotation_angle);
+            const float inv_rot_sin = std::sin(inv_rotation_angle);
+            const float inv_rot_cos = -std::cos(inv_rotation_angle);
+
+            const float3 extend_normal =
+               normalize(float3{draw_barrier_mid.z, 0.0f, draw_barrier_mid.x} -
+                         float3{draw_barrier_start.z, 0.0f, draw_barrier_start.x}) *
+               float3{-1.0, 0.0f, 1.0};
+
+            const float normal_sign =
+               dot(cursor_direction, extend_normal) < 0.0f ? -1.0f : 1.0f;
+
+            const float2 cursor_positionOS = {_cursor_positionWS.x * inv_rot_cos -
+                                                 _cursor_positionWS.z * inv_rot_sin,
+                                              _cursor_positionWS.x * inv_rot_sin +
+                                                 _cursor_positionWS.z * inv_rot_cos};
+            const float2 draw_barrier_midOS = {draw_barrier_mid.x * inv_rot_cos -
+                                                  draw_barrier_mid.z * inv_rot_sin,
+                                               draw_barrier_mid.x * inv_rot_sin +
+                                                  draw_barrier_mid.z * inv_rot_cos};
+
+            const float cursor_distance =
+               std::fabs(cursor_positionOS.x - draw_barrier_midOS.x);
+
+            const float3 draw_barrier_end =
+               draw_barrier_mid + extend_normal * cursor_distance * normal_sign;
+
+            const float3 position = (draw_barrier_start + draw_barrier_end) / 2.0f;
 
             const std::array<float2, 3> cornersWS{
                {{draw_barrier_start.x, draw_barrier_start.z},
@@ -3392,8 +3399,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
             for (std::size_t i = 0; i < cornersOS.size(); ++i) {
                const float2 cornerWS = cornersWS[i];
 
-               cornersOS[i] = float2{cornerWS.x * rot_cos - cornerWS.y * rot_sin,
-                                     cornerWS.x * rot_sin + cornerWS.y * rot_cos};
+               cornersOS[i] =
+                  float2{cornerWS.x * inv_rot_cos - cornerWS.y * inv_rot_sin,
+                         cornerWS.x * inv_rot_sin + cornerWS.y * inv_rot_cos};
             }
 
             const float2 barrier_max =
