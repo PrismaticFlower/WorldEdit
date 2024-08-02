@@ -543,17 +543,36 @@ auto raycast(const float3 ray_origin, const float3 ray_direction,
                                        points[2] - height_offset,
                                        points[3] - height_offset};
 
-      constexpr std::array<std::array<uint32, 4>, 6> quads = {{{0u, 1u, 2u, 3u},
-                                                               {4u, 5u, 6u, 7u},
-                                                               {0u, 2u, 4u, 6u},
-                                                               {1u, 3u, 5u, 7u},
-                                                               {0u, 1u, 4u, 5u},
-                                                               {2u, 3u, 6u, 7u}}};
+      constexpr std::array<std::array<uint32, 3>, 12> tris = {{
+         // Top
+         {3, 2, 0}, //
+         {3, 0, 1}, //
 
-      for (const auto& quad : quads) {
+         // Bottom
+         {4, 6, 7}, //
+         {5, 4, 7}, //
+
+         // Side 0
+         {0, 6, 4}, //
+         {0, 2, 6}, //
+
+         // Side 1
+         {1, 5, 7}, //
+         {7, 3, 1}, //
+
+         // Back
+         {4, 1, 0}, //
+         {5, 1, 4}, //
+
+         // Front
+         {2, 3, 6}, //
+         {6, 3, 7}  //
+      }};
+
+      for (const auto& tri : tris) {
          const float intersection =
-            quadIntersect(ray_origin, ray_direction, corners[quad[0]],
-                          corners[quad[1]], corners[quad[3]], corners[quad[2]])
+            triIntersect(ray_origin, ray_direction, corners[tri[0]],
+                         corners[tri[1]], corners[tri[2]])
                .x;
 
          if (intersection < 0.0f) continue;
