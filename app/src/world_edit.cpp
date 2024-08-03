@@ -10,6 +10,7 @@
 #include "edits/insert_entity.hpp"
 #include "edits/insert_node.hpp"
 #include "edits/insert_point.hpp"
+#include "edits/set_terrain_area.hpp"
 #include "edits/set_value.hpp"
 #include "math/frustum.hpp"
 #include "math/plane_funcs.hpp"
@@ -2803,6 +2804,22 @@ void world_edit::unhide_all() noexcept
       _edit_stack_world.apply(edits::make_bundle(std::move(bundle)),
                               _edit_context, {.closed = true});
    }
+}
+
+void world_edit::floor_terrain() noexcept
+{
+   container::dynamic_array_2d<int16> new_height_map = _world.terrain.height_map;
+
+   int16 min_height = INT16_MAX;
+
+   for (int16 v : new_height_map) {
+      if (v < min_height) min_height = v;
+   }
+
+   for (int16& v : new_height_map) v = INT16_MIN + (v - min_height);
+
+   _edit_stack_world.apply(edits::make_set_terrain_area(0, 0, std::move(new_height_map)),
+                           _edit_context, {.closed = true});
 }
 
 void world_edit::ask_to_save_world() noexcept

@@ -359,6 +359,8 @@ private:
 
    void unhide_all() noexcept;
 
+   void floor_terrain() noexcept;
+
    void ask_to_save_world() noexcept;
 
    void open_project(std::filesystem::path path) noexcept;
