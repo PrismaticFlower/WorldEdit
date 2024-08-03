@@ -13,8 +13,6 @@ void cull_objects_scalar(const frustum& frustum,
                          std::span<const math::bounding_box> bbox,
                          std::vector<uint16>& out_list) noexcept
 {
-   assert(bbox.size() == pipeline_flags.size());
-
    out_list.clear();
    out_list.reserve(bbox.size());
 
@@ -202,8 +200,6 @@ void cull_objects_shadow_cascade_scalar(const frustum& frustum,
                                         std::span<const math::bounding_box> bbox,
                                         std::vector<uint16>& out_list) noexcept
 {
-   assert(bbox.size() == pipeline_flags.size());
-
    out_list.clear();
    out_list.reserve(bbox.size());
 
