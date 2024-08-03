@@ -60,7 +60,6 @@ struct path_id_node_mask {
       uint32 words[max_path_nodes / 32] = {};
    };
 
-   constexpr static bool b = std::is_trivial_v<node_mask>;
 
    path_id id;
    node_mask nodes;
