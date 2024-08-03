@@ -67,6 +67,7 @@ struct path_id_node_mask {
 
    bool operator==(const path_id_node_mask&) const noexcept = default;
 };
+
 /// @brief Represents an entity being interacted with (hovered or selected).
 using interaction_target =
    std::variant<object_id, light_id, path_id_node_mask, region_id, sector_id, portal_id, hintnode_id,
