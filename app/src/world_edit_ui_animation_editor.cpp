@@ -1992,11 +1992,10 @@ void world_edit::ui_show_animation_editor() noexcept
 
    if (_animation_editor_context.pick_object.finish) {
       if (_interaction_targets.hovered_entity and
-          std::holds_alternative<world::object_id>(*_interaction_targets.hovered_entity)) {
+          _interaction_targets.hovered_entity->is<world::object_id>()) {
          const world::object* object =
             world::find_entity(_world.objects,
-                               std::get<world::object_id>(
-                                  *_interaction_targets.hovered_entity));
+                               _interaction_targets.hovered_entity->get<world::object_id>());
 
          if (object and not object->name.empty()) {
             _animation_editor_context.add_new_object = object->name;

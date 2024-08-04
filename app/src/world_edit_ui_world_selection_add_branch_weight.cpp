@@ -41,12 +41,11 @@ void world_edit::ui_show_world_selection_add_branch_weight() noexcept
          ImGui::TextWrapped("Pick a connection for the branch weight.");
 
          if (_interaction_targets.hovered_entity and
-             std::holds_alternative<world::planning_connection_id>(
-                *_interaction_targets.hovered_entity)) {
+             _interaction_targets.hovered_entity->is<world::planning_connection_id>()) {
             candidate_connection =
                world::find_entity(_world.planning_connections,
-                                  std::get<world::planning_connection_id>(
-                                     *_interaction_targets.hovered_entity));
+                                  _interaction_targets.hovered_entity
+                                     ->get<world::planning_connection_id>());
 
             if (candidate_connection and
                 _world.planning_hubs[candidate_connection->start_hub_index].id !=
@@ -77,11 +76,10 @@ void world_edit::ui_show_world_selection_add_branch_weight() noexcept
             "Pick a destination hub for the branch weight. Can not be %s.", hub_name);
 
          if (_interaction_targets.hovered_entity and
-             std::holds_alternative<world::planning_hub_id>(
-                *_interaction_targets.hovered_entity)) {
+             _interaction_targets.hovered_entity->is<world::planning_hub_id>()) {
             target_hub = world::find_entity(_world.planning_hubs,
-                                            std::get<world::planning_hub_id>(
-                                               *_interaction_targets.hovered_entity));
+                                            _interaction_targets.hovered_entity
+                                               ->get<world::planning_hub_id>());
 
             if (connection and target_hub and
                 (_world.planning_hubs[connection->start_hub_index].id ==

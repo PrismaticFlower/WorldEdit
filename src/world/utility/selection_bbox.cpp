@@ -17,9 +17,9 @@ auto selection_bbox_for_camera(const world& world,
                                      .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
 
    for (const auto& selected : selection) {
-      if (std::holds_alternative<object_id>(selected)) {
+      if (selected.is<object_id>()) {
          const object* object =
-            find_entity(world.objects, std::get<object_id>(selected));
+            find_entity(world.objects, selected.get<object_id>());
 
          if (object) {
             math::bounding_box bbox =
@@ -30,8 +30,8 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<path_id_node_mask>(selected)) {
-         const auto& [id, node_mask] = std::get<path_id_node_mask>(selected);
+      else if (selected.is<path_id_node_mask>()) {
+         const auto& [id, node_mask] = selected.get<path_id_node_mask>();
 
          const path* path = find_entity(world.paths, id);
 
@@ -51,8 +51,8 @@ auto selection_bbox_for_camera(const world& world,
             }
          }
       }
-      else if (std::holds_alternative<light_id>(selected)) {
-         const light* light = find_entity(world.lights, std::get<light_id>(selected));
+      else if (selected.is<light_id>()) {
+         const light* light = find_entity(world.lights, selected.get<light_id>());
 
          if (light) {
             switch (light->light_type) {
@@ -114,9 +114,9 @@ auto selection_bbox_for_camera(const world& world,
             }
          }
       }
-      else if (std::holds_alternative<region_id>(selected)) {
+      else if (selected.is<region_id>()) {
          const region* region =
-            find_entity(world.regions, std::get<region_id>(selected));
+            find_entity(world.regions, selected.get<region_id>());
 
          if (region) {
             switch (region->shape) {
@@ -151,9 +151,9 @@ auto selection_bbox_for_camera(const world& world,
             }
          }
       }
-      else if (std::holds_alternative<sector_id>(selected)) {
+      else if (selected.is<sector_id>()) {
          const sector* sector =
-            find_entity(world.sectors, std::get<sector_id>(selected));
+            find_entity(world.sectors, selected.get<sector_id>());
 
          if (sector) {
             math::bounding_box bbox{.min = {FLT_MAX, sector->base, FLT_MAX},
@@ -171,9 +171,9 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<portal_id>(selected)) {
+      else if (selected.is<portal_id>()) {
          const portal* portal =
-            find_entity(world.portals, std::get<portal_id>(selected));
+            find_entity(world.portals, selected.get<portal_id>());
 
          if (portal) {
             const float half_width = portal->width * 0.5f;
@@ -187,9 +187,9 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<hintnode_id>(selected)) {
+      else if (selected.is<hintnode_id>()) {
          const hintnode* hintnode =
-            find_entity(world.hintnodes, std::get<hintnode_id>(selected));
+            find_entity(world.hintnodes, selected.get<hintnode_id>());
 
          if (hintnode) {
             const math::bounding_box bbox{.min = hintnode->position - 3.0f,
@@ -198,9 +198,9 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<barrier_id>(selected)) {
+      else if (selected.is<barrier_id>()) {
          const barrier* barrier =
-            find_entity(world.barriers, std::get<barrier_id>(selected));
+            find_entity(world.barriers, selected.get<barrier_id>());
 
          if (barrier) {
             const float radius = std::max(barrier->size.x, barrier->size.y);
@@ -211,9 +211,9 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<planning_hub_id>(selected)) {
+      else if (selected.is<planning_hub_id>()) {
          const planning_hub* hub =
-            find_entity(world.planning_hubs, std::get<planning_hub_id>(selected));
+            find_entity(world.planning_hubs, selected.get<planning_hub_id>());
 
          if (hub) {
             const math::bounding_box bbox{.min = hub->position - hub->radius,
@@ -222,10 +222,10 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<planning_connection_id>(selected)) {
+      else if (selected.is<planning_connection_id>()) {
          const planning_connection* connection =
             find_entity(world.planning_connections,
-                        std::get<planning_connection_id>(selected));
+                        selected.get<planning_connection_id>());
 
          if (connection) {
             const planning_hub& start =
@@ -244,9 +244,9 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<boundary_id>(selected)) {
+      else if (selected.is<boundary_id>()) {
          const boundary* boundary =
-            find_entity(world.boundaries, std::get<boundary_id>(selected));
+            find_entity(world.boundaries, selected.get<boundary_id>());
 
          if (boundary) {
             const math::bounding_box bbox{.min = boundary->position -
@@ -259,9 +259,9 @@ auto selection_bbox_for_camera(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<measurement_id>(selected)) {
+      else if (selected.is<measurement_id>()) {
          const measurement* measurement =
-            find_entity(world.measurements, std::get<measurement_id>(selected));
+            find_entity(world.measurements, selected.get<measurement_id>());
 
          if (measurement) {
             selection_bbox = math::integrate(selection_bbox, measurement->start);
@@ -281,9 +281,9 @@ auto selection_bbox_for_move(const world& world,
                                      .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
 
    for (const auto& selected : selection) {
-      if (std::holds_alternative<object_id>(selected)) {
+      if (selected.is<object_id>()) {
          const object* object =
-            find_entity(world.objects, std::get<object_id>(selected));
+            find_entity(world.objects, selected.get<object_id>());
 
          if (object) {
             math::bounding_box bbox =
@@ -294,8 +294,8 @@ auto selection_bbox_for_move(const world& world,
             selection_bbox = math::combine(selection_bbox, bbox);
          }
       }
-      else if (std::holds_alternative<path_id_node_mask>(selected)) {
-         const auto& [id, node_mask] = std::get<path_id_node_mask>(selected);
+      else if (selected.is<path_id_node_mask>()) {
+         const auto& [id, node_mask] = selected.get<path_id_node_mask>();
 
          const path* path = find_entity(world.paths, id);
 
@@ -311,8 +311,8 @@ auto selection_bbox_for_move(const world& world,
             }
          }
       }
-      else if (std::holds_alternative<light_id>(selected)) {
-         const light* light = find_entity(world.lights, std::get<light_id>(selected));
+      else if (selected.is<light_id>()) {
+         const light* light = find_entity(world.lights, selected.get<light_id>());
 
          if (light) {
             switch (light->light_type) {
@@ -374,9 +374,9 @@ auto selection_bbox_for_move(const world& world,
             }
          }
       }
-      else if (std::holds_alternative<region_id>(selected)) {
+      else if (selected.is<region_id>()) {
          const region* region =
-            find_entity(world.regions, std::get<region_id>(selected));
+            find_entity(world.regions, selected.get<region_id>());
 
          if (region) {
             switch (region->shape) {
@@ -411,9 +411,9 @@ auto selection_bbox_for_move(const world& world,
             }
          }
       }
-      else if (std::holds_alternative<sector_id>(selected)) {
+      else if (selected.is<sector_id>()) {
          const sector* sector =
-            find_entity(world.sectors, std::get<sector_id>(selected));
+            find_entity(world.sectors, selected.get<sector_id>());
 
          if (sector) {
             for (auto& point : sector->points) {
@@ -429,9 +429,9 @@ auto selection_bbox_for_move(const world& world,
                std::max(selection_bbox.max.y, sector->base + sector->height);
          }
       }
-      else if (std::holds_alternative<portal_id>(selected)) {
+      else if (selected.is<portal_id>()) {
          const portal* portal =
-            find_entity(world.portals, std::get<portal_id>(selected));
+            find_entity(world.portals, selected.get<portal_id>());
 
          if (portal) {
             const float half_width = portal->width * 0.5f;
@@ -445,33 +445,33 @@ auto selection_bbox_for_move(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<hintnode_id>(selected)) {
+      else if (selected.is<hintnode_id>()) {
          const hintnode* hintnode =
-            find_entity(world.hintnodes, std::get<hintnode_id>(selected));
+            find_entity(world.hintnodes, selected.get<hintnode_id>());
 
          if (hintnode) {
             selection_bbox = math::integrate(selection_bbox, hintnode->position);
          }
       }
-      else if (std::holds_alternative<barrier_id>(selected)) {
+      else if (selected.is<barrier_id>()) {
          const barrier* barrier =
-            find_entity(world.barriers, std::get<barrier_id>(selected));
+            find_entity(world.barriers, selected.get<barrier_id>());
 
          if (barrier) {
             selection_bbox = math::integrate(selection_bbox, barrier->position);
          }
       }
-      else if (std::holds_alternative<planning_hub_id>(selected)) {
+      else if (selected.is<planning_hub_id>()) {
          const planning_hub* planning_hub =
-            find_entity(world.planning_hubs, std::get<planning_hub_id>(selected));
+            find_entity(world.planning_hubs, selected.get<planning_hub_id>());
 
          if (planning_hub) {
             selection_bbox = math::integrate(selection_bbox, planning_hub->position);
          }
       }
-      else if (std::holds_alternative<boundary_id>(selected)) {
+      else if (selected.is<boundary_id>()) {
          const boundary* boundary =
-            find_entity(world.boundaries, std::get<boundary_id>(selected));
+            find_entity(world.boundaries, selected.get<boundary_id>());
 
          if (boundary) {
             const math::bounding_box bbox{.min = boundary->position -
@@ -484,9 +484,9 @@ auto selection_bbox_for_move(const world& world,
             selection_bbox = math::combine(bbox, selection_bbox);
          }
       }
-      else if (std::holds_alternative<measurement_id>(selected)) {
+      else if (selected.is<measurement_id>()) {
          const measurement* measurement =
-            find_entity(world.measurements, std::get<measurement_id>(selected));
+            find_entity(world.measurements, selected.get<measurement_id>());
 
          if (measurement) {
             selection_bbox = math::integrate(selection_bbox, measurement->start);

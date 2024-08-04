@@ -70,9 +70,9 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       if (raycast_mask.paths) {
          const auto path_filter = [&](const world::path& path, uint32 node_index) noexcept {
             for (const auto& selected : _interaction_targets.selection) {
-               if (std::holds_alternative<world::path_id_node_mask>(selected)) {
+               if (selected.is<world::path_id_node_mask>()) {
                   const auto& [id, node_mask] =
-                     std::get<world::path_id_node_mask>(selected);
+                     selected.get<world::path_id_node_mask>();
 
                   if (id == path.id and node_mask[node_index]) return false;
                }
@@ -215,14 +215,14 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
       };
 
       for (const auto& selected : _interaction_targets.selection) {
-         if (std::holds_alternative<world::object_id>(selected)) {
+         if (selected.is<world::object_id>()) {
             world::object* object =
-               world::find_entity(_world.objects, std::get<world::object_id>(selected));
+               world::find_entity(_world.objects, selected.get<world::object_id>());
 
             if (object) update_position(&object->position);
          }
-         else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
-            const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
+         else if (selected.is<world::path_id_node_mask>()) {
+            const auto& [id, node_mask] = selected.get<world::path_id_node_mask>();
 
             world::path* path = world::find_entity(_world.paths, id);
 
@@ -253,21 +253,21 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                }
             }
          }
-         else if (std::holds_alternative<world::light_id>(selected)) {
+         else if (selected.is<world::light_id>()) {
             world::light* light =
-               world::find_entity(_world.lights, std::get<world::light_id>(selected));
+               world::find_entity(_world.lights, selected.get<world::light_id>());
 
             if (light) update_position(&light->position);
          }
-         else if (std::holds_alternative<world::region_id>(selected)) {
+         else if (selected.is<world::region_id>()) {
             world::region* region =
-               world::find_entity(_world.regions, std::get<world::region_id>(selected));
+               world::find_entity(_world.regions, selected.get<world::region_id>());
 
             if (region) update_position(&region->position);
          }
-         else if (std::holds_alternative<world::sector_id>(selected)) {
+         else if (selected.is<world::sector_id>()) {
             world::sector* sector =
-               world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
+               world::find_entity(_world.sectors, selected.get<world::sector_id>());
 
             if (sector) {
                std::vector<float2> new_points = sector->points;
@@ -291,44 +291,43 @@ void world_edit::ui_show_world_selection_move_with_cursor() noexcept
                }
             }
          }
-         else if (std::holds_alternative<world::portal_id>(selected)) {
+         else if (selected.is<world::portal_id>()) {
             world::portal* portal =
-               world::find_entity(_world.portals, std::get<world::portal_id>(selected));
+               world::find_entity(_world.portals, selected.get<world::portal_id>());
 
             if (portal) update_position(&portal->position);
          }
-         else if (std::holds_alternative<world::hintnode_id>(selected)) {
+         else if (selected.is<world::hintnode_id>()) {
             world::hintnode* hintnode =
                world::find_entity(_world.hintnodes,
-                                  std::get<world::hintnode_id>(selected));
+                                  selected.get<world::hintnode_id>());
 
             if (hintnode) update_position(&hintnode->position);
          }
-         else if (std::holds_alternative<world::barrier_id>(selected)) {
+         else if (selected.is<world::barrier_id>()) {
             world::barrier* barrier =
-               world::find_entity(_world.barriers,
-                                  std::get<world::barrier_id>(selected));
+               world::find_entity(_world.barriers, selected.get<world::barrier_id>());
 
             if (barrier) update_position(&barrier->position);
          }
-         else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+         else if (selected.is<world::planning_hub_id>()) {
             world::planning_hub* planning_hub =
                world::find_entity(_world.planning_hubs,
-                                  std::get<world::planning_hub_id>(selected));
+                                  selected.get<world::planning_hub_id>());
 
             if (planning_hub) update_position(&planning_hub->position);
          }
-         else if (std::holds_alternative<world::boundary_id>(selected)) {
+         else if (selected.is<world::boundary_id>()) {
             world::boundary* boundary =
                world::find_entity(_world.boundaries,
-                                  std::get<world::boundary_id>(selected));
+                                  selected.get<world::boundary_id>());
 
             if (boundary) update_position(&boundary->position);
          }
-         else if (std::holds_alternative<world::measurement_id>(selected)) {
+         else if (selected.is<world::measurement_id>()) {
             world::measurement* measurement =
                world::find_entity(_world.measurements,
-                                  std::get<world::measurement_id>(selected));
+                                  selected.get<world::measurement_id>());
 
             if (measurement) {
                update_position(&measurement->start);

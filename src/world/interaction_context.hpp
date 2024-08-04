@@ -3,7 +3,6 @@
 #include "world.hpp"
 
 #include <span>
-#include <variant>
 #include <vector>
 
 namespace we::world {
@@ -60,7 +59,6 @@ struct path_id_node_mask {
       uint32 words[max_path_nodes / 32] = {};
    };
 
-
    path_id id;
    node_mask nodes;
 
@@ -68,9 +66,141 @@ struct path_id_node_mask {
 };
 
 /// @brief Represents an entity being interacted with (hovered or selected).
-using interaction_target =
-   std::variant<object_id, light_id, path_id_node_mask, region_id, sector_id, portal_id, hintnode_id,
-                barrier_id, planning_hub_id, planning_connection_id, boundary_id, measurement_id>;
+struct interaction_target {
+   interaction_target() = default;
+
+   interaction_target(const interaction_target&) = default;
+
+   template<typename T>
+   interaction_target(const T& id) noexcept
+   {
+      if constexpr (std::is_same_v<std::remove_cvref_t<T>, object_id>) {
+         _storage.object = id;
+         _active = detail::active_entity::object;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, light_id>) {
+         _storage.light = id;
+         _active = detail::active_entity::light;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, path_id_node_mask>) {
+         _storage.path = id;
+         _active = detail::active_entity::path;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, region_id>) {
+         _storage.region = id;
+         _active = detail::active_entity::region;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, sector_id>) {
+         _storage.sector = id;
+         _active = detail::active_entity::sector;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, portal_id>) {
+         _storage.portal = id;
+         _active = detail::active_entity::portal;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, barrier_id>) {
+         _storage.barrier = id;
+         _active = detail::active_entity::barrier;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, hintnode_id>) {
+         _storage.hintnode = id;
+         _active = detail::active_entity::hintnode;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_hub_id>) {
+         _storage.planning_hub = id;
+         _active = detail::active_entity::planning_hub;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection_id>) {
+         _storage.planning_connection = id;
+         _active = detail::active_entity::planning_connection;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary_id>) {
+         _storage.boundary = id;
+         _active = detail::active_entity::boundary;
+      }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement_id>) {
+         _storage.measurement = id;
+         _active = detail::active_entity::measurement;
+      }
+      else {
+         static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>,
+                       "T is not an entity ID type");
+      }
+   }
+
+   template<typename T>
+   [[nodiscard]] bool is() const noexcept
+   {
+      // clang-format off
+
+      if constexpr (std::is_same_v<T, object_id>) return _active == detail::active_entity::object;
+      else if constexpr (std::is_same_v<T, light_id>) return _active == detail::active_entity::light;
+      else if constexpr (std::is_same_v<T, path_id_node_mask>) return _active == detail::active_entity::path;
+      else if constexpr (std::is_same_v<T, region_id>) return _active == detail::active_entity::region;
+      else if constexpr (std::is_same_v<T, sector_id>) return _active == detail::active_entity::sector;
+      else if constexpr (std::is_same_v<T, portal_id>) return _active == detail::active_entity::portal;
+      else if constexpr (std::is_same_v<T, barrier_id>) return _active == detail::active_entity::barrier;
+      else if constexpr (std::is_same_v<T, hintnode_id>) return _active == detail::active_entity::hintnode;
+      else if constexpr (std::is_same_v<T, planning_hub_id>) return _active == detail::active_entity::planning_hub;
+      else if constexpr (std::is_same_v<T, planning_connection_id>) return _active == detail::active_entity::planning_connection;
+      else if constexpr (std::is_same_v<T, boundary_id>) return _active == detail::active_entity::boundary;
+      else if constexpr (std::is_same_v<T, measurement_id>) return _active == detail::active_entity::measurement;
+      else static_assert(not std::is_same_v<T, T>, "T is not an entity ID type");
+
+      // clang-format on
+   }
+
+   [[nodiscard]] bool holds_entity_id() const noexcept
+   {
+      return _active != detail::active_entity::none;
+   }
+
+   template<typename T>
+   [[nodiscard]] auto get(this auto&& self) noexcept -> auto&
+   {
+      // clang-format off
+
+      if constexpr (std::is_same_v<std::remove_cvref_t<T>, object_id>) { if (self._active != detail::active_entity::object) std::terminate(); return self._storage.object; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, light_id>) { if (self._active != detail::active_entity::light) std::terminate(); return self._storage.light; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, path_id_node_mask>) { if (self._active != detail::active_entity::path) std::terminate(); return self._storage.path; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, region_id>) { if (self._active != detail::active_entity::region) std::terminate(); return self._storage.region; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, sector_id>) { if (self._active != detail::active_entity::sector) std::terminate(); return self._storage.sector; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, portal_id>) { if (self._active != detail::active_entity::portal) std::terminate(); return self._storage.portal; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, barrier_id>) { if (self._active != detail::active_entity::barrier) std::terminate(); return self._storage.barrier; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, hintnode_id>) { if (self._active != detail::active_entity::hintnode) std::terminate(); return self._storage.hintnode; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_hub_id>) { if (self._active != detail::active_entity::planning_hub) std::terminate(); return self._storage.planning_hub; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection_id>) { if (self._active != detail::active_entity::planning_connection) std::terminate(); return self._storage.planning_connection; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary_id>) { if (self._active != detail::active_entity::boundary) std::terminate(); return self._storage.boundary; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement_id>) { if (self._active != detail::active_entity::measurement) std::terminate(); return self._storage.measurement; }
+      else static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>, "T is not an entity ID type");
+
+      // clang-format on
+   }
+
+   friend bool operator==(const interaction_target& l,
+                          const interaction_target& r) noexcept;
+
+private:
+   detail::active_entity _active = detail::active_entity::none;
+
+   union storage {
+      void destroy(detail::active_entity active);
+
+      char none = '\0';
+      object_id object;
+      light_id light;
+      path_id_node_mask path;
+      region_id region;
+      sector_id sector;
+      portal_id portal;
+      barrier_id barrier;
+      hintnode_id hintnode;
+      planning_hub_id planning_hub;
+      planning_connection_id planning_connection;
+      boundary_id boundary;
+      measurement_id measurement;
+   } _storage;
+};
 
 /// @brief Represents an entity being hovered over.
 using hovered_entity = interaction_target;

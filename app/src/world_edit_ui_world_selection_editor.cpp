@@ -54,9 +54,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
          const world::selected_entity& selected =
             _interaction_targets.selection[selected_index];
 
-         if (std::holds_alternative<world::object_id>(selected)) {
+         if (selected.is<world::object_id>()) {
             world::object* object =
-               world::find_entity(_world.objects, std::get<world::object_id>(selected));
+               world::find_entity(_world.objects, selected.get<world::object_id>());
 
             if (not object) {
                ImGui::PopID();
@@ -206,9 +206,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                }
             }
          }
-         else if (std::holds_alternative<world::light_id>(selected)) {
+         else if (selected.is<world::light_id>()) {
             world::light* light =
-               world::find_entity(_world.lights, std::get<world::light_id>(selected));
+               world::find_entity(_world.lights, selected.get<world::light_id>());
 
             if (not light) {
                ImGui::PopID();
@@ -427,8 +427,8 @@ void world_edit::ui_show_world_selection_editor() noexcept
                }
             }
          }
-         else if (std::holds_alternative<world::path_id_node_mask>(selected)) {
-            const auto& [id, node_mask] = std::get<world::path_id_node_mask>(selected);
+         else if (selected.is<world::path_id_node_mask>()) {
+            const auto& [id, node_mask] = selected.get<world::path_id_node_mask>();
 
             world::path* path = world::find_entity(_world.paths, id);
 
@@ -595,9 +595,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                _move_entire_path_id = id;
             }
          }
-         else if (std::holds_alternative<world::region_id>(selected)) {
+         else if (selected.is<world::region_id>()) {
             world::region* region =
-               world::find_entity(_world.regions, std::get<world::region_id>(selected));
+               world::find_entity(_world.regions, selected.get<world::region_id>());
 
             if (not region) {
                ImGui::PopID();
@@ -1106,9 +1106,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
             } break;
             }
          }
-         else if (std::holds_alternative<world::sector_id>(selected)) {
+         else if (selected.is<world::sector_id>()) {
             world::sector* sector =
-               world::find_entity(_world.sectors, std::get<world::sector_id>(selected));
+               world::find_entity(_world.sectors, selected.get<world::sector_id>());
 
             if (not sector) {
                ImGui::PopID();
@@ -1283,12 +1283,11 @@ void world_edit::ui_show_world_selection_editor() noexcept
             if (_selection_edit_context.sector_to_add_object_to == sector->id and
                 std::exchange(_selection_edit_context.add_hovered_object, false) and
                 _interaction_targets.hovered_entity and
-                std::holds_alternative<world::object_id>(
-                   *_interaction_targets.hovered_entity)) {
+                _interaction_targets.hovered_entity->is<world::object_id>()) {
                if (world::object* object =
                       world::find_entity(_world.objects,
-                                         std::get<world::object_id>(
-                                            *_interaction_targets.hovered_entity));
+                                         _interaction_targets.hovered_entity
+                                            ->get<world::object_id>());
                    object) {
                   bool already_has_object = false;
 
@@ -1306,9 +1305,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                }
             }
          }
-         else if (std::holds_alternative<world::portal_id>(selected)) {
+         else if (selected.is<world::portal_id>()) {
             world::portal* portal =
-               world::find_entity(_world.portals, std::get<world::portal_id>(selected));
+               world::find_entity(_world.portals, selected.get<world::portal_id>());
 
             if (not portal) {
                ImGui::PopID();
@@ -1410,10 +1409,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
             ImGui::DragFloat3("Position", &portal->position, _edit_stack_world,
                               _edit_context);
          }
-         else if (std::holds_alternative<world::hintnode_id>(selected)) {
+         else if (selected.is<world::hintnode_id>()) {
             world::hintnode* hintnode =
                world::find_entity(_world.hintnodes,
-                                  std::get<world::hintnode_id>(selected));
+                                  selected.get<world::hintnode_id>());
 
             if (not hintnode) {
                ImGui::PopID();
@@ -1531,10 +1530,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 ImGuiSliderFlags_AlwaysClamp);
             }
          }
-         else if (std::holds_alternative<world::barrier_id>(selected)) {
+         else if (selected.is<world::barrier_id>()) {
             world::barrier* barrier =
-               world::find_entity(_world.barriers,
-                                  std::get<world::barrier_id>(selected));
+               world::find_entity(_world.barriers, selected.get<world::barrier_id>());
 
             if (not barrier) {
                ImGui::PopID();
@@ -1591,10 +1589,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                               {"Huge", world::ai_path_flags::huge},
                               {"Flyer", world::ai_path_flags::flyer}});
          }
-         else if (std::holds_alternative<world::planning_hub_id>(selected)) {
+         else if (selected.is<world::planning_hub_id>()) {
             world::planning_hub* hub =
                world::find_entity(_world.planning_hubs,
-                                  std::get<world::planning_hub_id>(selected));
+                                  selected.get<world::planning_hub_id>());
 
             if (not hub) {
                ImGui::PopID();
@@ -1727,10 +1725,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                _selection_add_branch_weight_context = {.from_hub_id = hub->id};
             }
          }
-         else if (std::holds_alternative<world::planning_connection_id>(selected)) {
+         else if (selected.is<world::planning_connection_id>()) {
             world::planning_connection* connection =
                world::find_entity(_world.planning_connections,
-                                  std::get<world::planning_connection_id>(selected));
+                                  selected.get<world::planning_connection_id>());
 
             if (not connection) {
                ImGui::PopID();
@@ -1809,10 +1807,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
                                 ImGuiSliderFlags_AlwaysClamp);
             }
          }
-         else if (std::holds_alternative<world::boundary_id>(selected)) {
+         else if (selected.is<world::boundary_id>()) {
             world::boundary* boundary =
                world::find_entity(_world.boundaries,
-                                  std::get<world::boundary_id>(selected));
+                                  selected.get<world::boundary_id>());
 
             if (not boundary) {
                ImGui::PopID();
@@ -1858,10 +1856,10 @@ void world_edit::ui_show_world_selection_editor() noexcept
             ImGui::DragFloat2XZ("Size", &boundary->size, _edit_stack_world,
                                 _edit_context, 1.0f, 0.0f, 1e10f);
          }
-         else if (std::holds_alternative<world::measurement_id>(selected)) {
+         else if (selected.is<world::measurement_id>()) {
             world::measurement* measurement =
                world::find_entity(_world.measurements,
-                                  std::get<world::measurement_id>(selected));
+                                  selected.get<world::measurement_id>());
 
             if (not measurement) {
                ImGui::PopID();

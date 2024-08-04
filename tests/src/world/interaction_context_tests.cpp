@@ -52,6 +52,46 @@ auto make_test_node_mask(bool v0, bool v1, bool v2, bool v3) -> path_id_node_mas
 
 }
 
+TEST_CASE("world interaction_target", "[World]")
+{
+   interaction_target target;
+
+   CHECK(not target.holds_entity_id());
+
+   auto check_type = [&]<typename T>(T value) {
+      target = value;
+
+      CHECK(target.holds_entity_id());
+      CHECK(target.is<T>());
+      CHECK(target.get<T>() == value);
+   };
+
+   check_type(object_id{1});
+   check_type(light_id{2});
+   check_type(path_id_node_mask{.id = path_id{3}});
+   check_type(region_id{4});
+   check_type(sector_id{5});
+   check_type(portal_id{6});
+   check_type(barrier_id{7});
+   check_type(hintnode_id{8});
+   check_type(planning_hub_id{9});
+   check_type(planning_connection_id{10});
+   check_type(boundary_id{11});
+   check_type(measurement_id{12});
+
+   interaction_target other_target;
+
+   CHECK(not other_target.holds_entity_id());
+
+   other_target = target;
+
+   CHECK(target.holds_entity_id());
+
+   CHECK(other_target.holds_entity_id());
+   CHECK(other_target.is<measurement_id>());
+   CHECK(other_target.get<measurement_id>() == measurement_id{12});
+}
+
 TEST_CASE("world creation_entity", "[World]")
 {
    creation_entity entity{barrier{.name = "Barrier"}};
@@ -235,19 +275,19 @@ TEST_CASE("world selection remove path partial", "[World][ID]")
    selection.remove(make_path_id_node_mask(path_id{0}, 1));
 
    REQUIRE(selection.size() == 1);
-   CHECK(std::get<path_id_node_mask>(selection[0]) ==
+   CHECK(selection[0].get<path_id_node_mask>() ==
          path_id_node_mask{path_id{0}, make_test_node_mask(true, false, true, true)});
 
    selection.remove(make_path_id_node_mask(path_id{0}, 2));
 
    REQUIRE(selection.size() == 1);
-   CHECK(std::get<path_id_node_mask>(selection[0]) ==
+   CHECK(selection[0].get<path_id_node_mask>() ==
          path_id_node_mask{path_id{0}, make_test_node_mask(true, false, false, true)});
 
    selection.remove(make_path_id_node_mask(path_id{0}, 0));
 
    REQUIRE(selection.size() == 1);
-   CHECK(std::get<path_id_node_mask>(selection[0]) ==
+   CHECK(selection[0].get<path_id_node_mask>() ==
          path_id_node_mask{path_id{0}, make_test_node_mask(false, false, false, true)});
 
    selection.remove(make_path_id_node_mask(path_id{0}, 3));

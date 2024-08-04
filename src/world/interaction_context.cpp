@@ -137,12 +137,12 @@ auto selection::operator[](const std::size_t i) const noexcept -> selected_entit
 
 void selection::add(const selected_entity entity) noexcept
 {
-   if (std::holds_alternative<path_id_node_mask>(entity)) {
+   if (entity.is<path_id_node_mask>()) {
       for (selected_entity& selected : _selection) {
-         if (not std::holds_alternative<path_id_node_mask>(selected)) continue;
+         if (not selected.is<path_id_node_mask>()) continue;
 
-         const path_id_node_mask& entity_path = std::get<path_id_node_mask>(entity);
-         path_id_node_mask& selected_path = std::get<path_id_node_mask>(selected);
+         const path_id_node_mask& entity_path = entity.get<path_id_node_mask>();
+         path_id_node_mask& selected_path = selected.get<path_id_node_mask>();
 
          if (entity_path.id != selected_path.id) continue;
 
@@ -164,12 +164,12 @@ void selection::add(const selected_entity entity) noexcept
 
 void selection::remove(const selected_entity entity) noexcept
 {
-   if (std::holds_alternative<path_id_node_mask>(entity)) {
+   if (entity.is<path_id_node_mask>()) {
       for (auto it = _selection.begin(); it != _selection.end(); ++it) {
-         if (not std::holds_alternative<path_id_node_mask>(*it)) continue;
+         if (not it->is<path_id_node_mask>()) continue;
 
-         const path_id_node_mask& entity_path = std::get<path_id_node_mask>(entity);
-         path_id_node_mask& selected_path = std::get<path_id_node_mask>(*it);
+         const path_id_node_mask& entity_path = entity.get<path_id_node_mask>();
+         path_id_node_mask& selected_path = it->get<path_id_node_mask>();
 
          if (entity_path.id != selected_path.id) continue;
 
@@ -269,11 +269,9 @@ auto make_path_id_node_mask(path_id id, uint32 node_index) noexcept -> path_id_n
 bool is_selected(const selected_entity entity, const selection& selection) noexcept
 {
    for (const auto& selected : selection) {
-      if (std::holds_alternative<path_id_node_mask>(entity) and
-          std::holds_alternative<path_id_node_mask>(selected)) {
-         const path_id_node_mask& entity_path = std::get<path_id_node_mask>(entity);
-         const path_id_node_mask& selected_path =
-            std::get<path_id_node_mask>(selected);
+      if (entity.is<path_id_node_mask>() and selected.is<path_id_node_mask>()) {
+         const path_id_node_mask& entity_path = entity.get<path_id_node_mask>();
+         const path_id_node_mask& selected_path = selected.get<path_id_node_mask>();
 
          if (entity_path.id != selected_path.id) continue;
 
@@ -293,9 +291,9 @@ bool is_selected(const selected_entity entity, const selection& selection) noexc
 bool is_selected(const path_id entity, const selection& selection) noexcept
 {
    for (const auto& selected : selection) {
-      if (not std::holds_alternative<path_id_node_mask>(selected)) continue;
+      if (not selected.is<path_id_node_mask>()) continue;
 
-      if (std::get<path_id_node_mask>(selected).id == entity) return true;
+      if (selected.get<path_id_node_mask>().id == entity) return true;
    }
 
    return false;
@@ -307,9 +305,9 @@ bool is_selected(const path_id path, const uint32 node_index,
    if (node_index >= max_path_nodes) return false;
 
    for (const auto& selected : selection) {
-      if (not std::holds_alternative<path_id_node_mask>(selected)) continue;
+      if (not selected.is<path_id_node_mask>()) continue;
 
-      const auto& [id, nodes_mask] = std::get<path_id_node_mask>(selected);
+      const auto& [id, nodes_mask] = selected.get<path_id_node_mask>();
 
       if (id == path) return nodes_mask[node_index];
    }
@@ -319,14 +317,14 @@ bool is_selected(const path_id path, const uint32 node_index,
 
 bool is_valid(const interaction_target entity, const world& world) noexcept
 {
-   if (std::holds_alternative<object_id>(entity)) {
-      return find_entity(world.objects, std::get<object_id>(entity)) != nullptr;
+   if (entity.is<object_id>()) {
+      return find_entity(world.objects, entity.get<object_id>()) != nullptr;
    }
-   if (std::holds_alternative<light_id>(entity)) {
-      return find_entity(world.lights, std::get<light_id>(entity)) != nullptr;
+   if (entity.is<light_id>()) {
+      return find_entity(world.lights, entity.get<light_id>()) != nullptr;
    }
-   if (std::holds_alternative<path_id_node_mask>(entity)) {
-      const auto& [id, nodes_mask] = std::get<path_id_node_mask>(entity);
+   if (entity.is<path_id_node_mask>()) {
+      const auto& [id, nodes_mask] = entity.get<path_id_node_mask>();
 
       const path* path = find_entity(world.paths, id);
 
@@ -339,34 +337,33 @@ bool is_valid(const interaction_target entity, const world& world) noexcept
 
       return true;
    }
-   if (std::holds_alternative<region_id>(entity)) {
-      return find_entity(world.regions, std::get<region_id>(entity)) != nullptr;
+   if (entity.is<region_id>()) {
+      return find_entity(world.regions, entity.get<region_id>()) != nullptr;
    }
-   if (std::holds_alternative<sector_id>(entity)) {
-      return find_entity(world.sectors, std::get<sector_id>(entity)) != nullptr;
+   if (entity.is<sector_id>()) {
+      return find_entity(world.sectors, entity.get<sector_id>()) != nullptr;
    }
-   if (std::holds_alternative<portal_id>(entity)) {
-      return find_entity(world.portals, std::get<portal_id>(entity)) != nullptr;
+   if (entity.is<portal_id>()) {
+      return find_entity(world.portals, entity.get<portal_id>()) != nullptr;
    }
-   if (std::holds_alternative<hintnode_id>(entity)) {
-      return find_entity(world.hintnodes, std::get<hintnode_id>(entity)) != nullptr;
+   if (entity.is<hintnode_id>()) {
+      return find_entity(world.hintnodes, entity.get<hintnode_id>()) != nullptr;
    }
-   if (std::holds_alternative<barrier_id>(entity)) {
-      return find_entity(world.barriers, std::get<barrier_id>(entity)) != nullptr;
+   if (entity.is<barrier_id>()) {
+      return find_entity(world.barriers, entity.get<barrier_id>()) != nullptr;
    }
-   if (std::holds_alternative<planning_hub_id>(entity)) {
-      return find_entity(world.planning_hubs, std::get<planning_hub_id>(entity)) !=
-             nullptr;
+   if (entity.is<planning_hub_id>()) {
+      return find_entity(world.planning_hubs, entity.get<planning_hub_id>()) != nullptr;
    }
-   if (std::holds_alternative<planning_connection_id>(entity)) {
+   if (entity.is<planning_connection_id>()) {
       return find_entity(world.planning_connections,
-                         std::get<planning_connection_id>(entity)) != nullptr;
+                         entity.get<planning_connection_id>()) != nullptr;
    }
-   if (std::holds_alternative<boundary_id>(entity)) {
-      return find_entity(world.boundaries, std::get<boundary_id>(entity)) != nullptr;
+   if (entity.is<boundary_id>()) {
+      return find_entity(world.boundaries, entity.get<boundary_id>()) != nullptr;
    }
-   if (std::holds_alternative<measurement_id>(entity)) {
-      return find_entity(world.measurements, std::get<measurement_id>(entity)) != nullptr;
+   if (entity.is<measurement_id>()) {
+      return find_entity(world.measurements, entity.get<measurement_id>()) != nullptr;
    }
 
    return false;
@@ -416,6 +413,18 @@ auto operator&(const path_id_node_mask::node_mask& l,
    }
 
    return result;
+}
+
+bool operator==(const interaction_target& l, const interaction_target& r) noexcept
+{
+   if (l._active != r._active) return false;
+
+   if (l._active == detail::active_entity::path) {
+      return l._storage.path == r._storage.path;
+   }
+   else {
+      return memcmp(&l._storage, &r._storage, sizeof(object_id)) == 0;
+   }
 }
 
 }
