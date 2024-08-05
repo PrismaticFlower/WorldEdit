@@ -1499,6 +1499,12 @@ void renderer_impl::draw_world_meta_objects(
       if (interaction_targets.creation_entity.is<world::path>()) {
          add_path(interaction_targets.creation_entity.get<world::path>());
       }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::path& path :
+              interaction_targets.creation_entity.get<world::entity_group>().paths) {
+            add_path(path);
+         }
+      }
    }
 
    // Adds a region to _meta_draw_batcher. Shared between light volume drawing and region drawing.
@@ -1577,6 +1583,13 @@ void renderer_impl::draw_world_meta_objects(
          add_region(region.rotation, region.position, region.size, region.shape,
                     region_color);
       }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::region& region :
+              interaction_targets.creation_entity.get<world::entity_group>().regions) {
+            add_region(region.rotation, region.position, region.size,
+                       region.shape, region_color);
+         }
+      }
    }
 
    if (active_entity_types.barriers) {
@@ -1637,6 +1650,12 @@ void renderer_impl::draw_world_meta_objects(
 
       if (interaction_targets.creation_entity.is<world::barrier>()) {
          add_barrier(interaction_targets.creation_entity.get<world::barrier>());
+      }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::barrier& barrier :
+              interaction_targets.creation_entity.get<world::entity_group>().barriers) {
+            add_barrier(barrier);
+         }
       }
    }
 
@@ -1748,6 +1767,12 @@ void renderer_impl::draw_world_meta_objects(
       if (interaction_targets.creation_entity.is<world::light>()) {
          add_light(interaction_targets.creation_entity.get<world::light>());
       }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::light& light :
+              interaction_targets.creation_entity.get<world::entity_group>().lights) {
+            add_light(light);
+         }
+      }
    }
 
    if (active_entity_types.sectors) {
@@ -1798,6 +1823,12 @@ void renderer_impl::draw_world_meta_objects(
       if (interaction_targets.creation_entity.is<world::sector>()) {
          add_sector(interaction_targets.creation_entity.get<world::sector>());
       }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::sector& sector :
+              interaction_targets.creation_entity.get<world::entity_group>().sectors) {
+            add_sector(sector);
+         }
+      }
    }
 
    if (active_entity_types.portals) {
@@ -1835,6 +1866,12 @@ void renderer_impl::draw_world_meta_objects(
       if (interaction_targets.creation_entity.is<world::portal>()) {
          add_portal(interaction_targets.creation_entity.get<world::portal>());
       }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::portal& portal :
+              interaction_targets.creation_entity.get<world::entity_group>().portals) {
+            add_portal(portal);
+         }
+      }
    }
 
    if (active_entity_types.hintnodes) {
@@ -1867,6 +1904,12 @@ void renderer_impl::draw_world_meta_objects(
 
       if (interaction_targets.creation_entity.is<world::hintnode>()) {
          add_hintnode(interaction_targets.creation_entity.get<world::hintnode>());
+      }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::hintnode& hintnode :
+              interaction_targets.creation_entity.get<world::entity_group>().hintnodes) {
+            add_hintnode(hintnode);
+         }
       }
    }
 
@@ -1941,6 +1984,12 @@ void renderer_impl::draw_world_meta_objects(
       if (interaction_targets.creation_entity.is<world::planning_hub>()) {
          add_hub(interaction_targets.creation_entity.get<world::planning_hub>());
       }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::planning_hub& hub :
+              interaction_targets.creation_entity.get<world::entity_group>().planning_hubs) {
+            add_hub(hub);
+         }
+      }
    }
 
    if (active_entity_types.planning_connections) {
@@ -1951,13 +2000,12 @@ void renderer_impl::draw_world_meta_objects(
           settings.planning_connection_outline_color.y,
           settings.planning_connection_outline_color.z, 1.0f});
 
-      const auto add_connection = [&](const world::planning_connection& connection) {
+      const auto add_connection = [&](const world::planning_connection& connection,
+                                      std::span<const world::planning_hub> hubs) {
          if (connection.hidden) return;
 
-         const world::planning_hub& start =
-            world.planning_hubs[connection.start_hub_index];
-         const world::planning_hub& end =
-            world.planning_hubs[connection.end_hub_index];
+         const world::planning_hub& start = hubs[connection.start_hub_index];
+         const world::planning_hub& end = hubs[connection.end_hub_index];
 
          const math::bounding_box start_bbox{
             .min = float3{-start.radius, -planning_connection_height, -start.radius} +
@@ -2027,12 +2075,20 @@ void renderer_impl::draw_world_meta_objects(
       };
 
       for (auto& connection : world.planning_connections) {
-         add_connection(connection);
+         add_connection(connection, world.planning_hubs);
       }
 
       if (interaction_targets.creation_entity.is<world::planning_connection>()) {
-         add_connection(
-            interaction_targets.creation_entity.get<world::planning_connection>());
+         add_connection(interaction_targets.creation_entity.get<world::planning_connection>(),
+                        world.planning_hubs);
+      }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::planning_connection& connection : group.planning_connections) {
+            add_connection(connection, group.planning_hubs);
+         }
       }
    }
 
@@ -2068,6 +2124,12 @@ void renderer_impl::draw_world_meta_objects(
 
       if (interaction_targets.creation_entity.is<world::boundary>()) {
          add_boundary(interaction_targets.creation_entity.get<world::boundary>());
+      }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::boundary& boundary :
+              interaction_targets.creation_entity.get<world::entity_group>().boundaries) {
+            add_boundary(boundary);
+         }
       }
    }
 
@@ -2125,6 +2187,12 @@ void renderer_impl::draw_world_meta_objects(
 
       if (interaction_targets.creation_entity.is<world::measurement>()) {
          add_measurement(interaction_targets.creation_entity.get<world::measurement>());
+      }
+      else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         for (const world::measurement& measurement :
+              interaction_targets.creation_entity.get<world::entity_group>().measurements) {
+            add_measurement(measurement);
+         }
       }
    }
 
