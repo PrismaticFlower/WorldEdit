@@ -3043,17 +3043,20 @@ void renderer_impl::build_world_mesh_list(
       _device.get_gpu_virtual_address(_object_constants_buffer.get());
    std::byte* const constants_upload_data =
       _object_constants_upload_cpu_ptrs[_device.frame_index()];
-   std::size_t constants_data_size = 0;
+   std::size_t constants_data_head = 0;
+   const std::size_t constants_data_end = objects_constants_buffer_size;
 
-   for (std::size_t i = 0; i < std::min(world.objects.size(), max_drawn_objects); ++i) {
-      const auto& object = world.objects[i];
+   for (const world::object& object : world.objects) {
+      if (constants_data_head == constants_data_end) break;
+
       auto& model = _model_manager[world_classes[object.class_handle].model_name];
 
       if (not active_layers[object.layer] or object.hidden) continue;
 
-      const auto object_bbox = object.rotation * model.bbox + object.position;
+      const math::bounding_box object_bbox =
+         object.rotation * model.bbox + object.position;
 
-      const std::size_t object_constants_offset = constants_data_size;
+      const std::size_t object_constants_offset = constants_data_head;
       const gpu_virtual_address object_constants_address =
          constants_upload_gpu_address + object_constants_offset;
 
@@ -3065,7 +3068,7 @@ void renderer_impl::build_world_mesh_list(
       std::memcpy(constants_upload_data + object_constants_offset,
                   &constants.object_to_world, sizeof(world_mesh_constants));
 
-      constants_data_size += sizeof(world_mesh_constants);
+      constants_data_head += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
          if (not mesh.material.is_transparent) {
@@ -3105,14 +3108,14 @@ void renderer_impl::build_world_mesh_list(
       }
    }
 
-   if (creation_object and world.objects.size() < max_drawn_objects) {
+   if (creation_object and constants_data_head != constants_data_end) {
       auto& model =
          _model_manager[world_classes[creation_object->class_handle].model_name];
 
-      const auto object_bbox =
+      const math::bounding_box object_bbox =
          creation_object->rotation * model.bbox + creation_object->position;
 
-      const std::size_t object_constants_offset = constants_data_size;
+      const std::size_t object_constants_offset = constants_data_head;
       const gpu_virtual_address object_constants_address =
          constants_upload_gpu_address + object_constants_offset;
 
@@ -3124,7 +3127,7 @@ void renderer_impl::build_world_mesh_list(
       std::memcpy(constants_upload_data + object_constants_offset,
                   &constants.object_to_world, sizeof(world_mesh_constants));
 
-      constants_data_size += sizeof(world_mesh_constants);
+      constants_data_head += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
          if (not mesh.material.is_transparent) {
@@ -3164,39 +3167,33 @@ void renderer_impl::build_world_mesh_list(
       }
    }
 
-   const std::size_t max_drawn_ghost_objects =
-      (world.objects.size() + 1) <= max_drawn_objects
-         ? max_drawn_objects - (world.objects.size() + 1)
-         : 0;
+   for (const world::tool_visualizers_ghost& ghost : ghost_objects) {
+      if (constants_data_head == constants_data_end) break;
 
-   for (std::size_t i = 0;
-        i < std::min(ghost_objects.size(), max_drawn_ghost_objects); ++i) {
-      const world::object* object =
-         world::find_entity(world.objects, ghost_objects[i].object_id);
+      const world::object* object = world::find_entity(world.objects, ghost.object_id);
 
       if (not object) continue;
 
       auto& model = _model_manager[world_classes[object->class_handle].model_name];
 
-      const float3 object_position = {ghost_objects[i].transform[3].x,
-                                      ghost_objects[i].transform[3].y,
-                                      ghost_objects[i].transform[3].z};
+      const float3 object_position = {ghost.transform[3].x, ghost.transform[3].y,
+                                      ghost.transform[3].z};
 
-      const auto object_bbox =
-         make_quat_from_matrix(ghost_objects[i].transform) * model.bbox + object_position;
+      const math::bounding_box object_bbox =
+         make_quat_from_matrix(ghost.transform) * model.bbox + object_position;
 
-      const std::size_t object_constants_offset = constants_data_size;
+      const std::size_t object_constants_offset = constants_data_head;
       const gpu_virtual_address object_constants_address =
          constants_upload_gpu_address + object_constants_offset;
 
       world_mesh_constants constants;
 
-      constants.object_to_world = ghost_objects[i].transform;
+      constants.object_to_world = ghost.transform;
 
       std::memcpy(constants_upload_data + object_constants_offset,
                   &constants.object_to_world, sizeof(world_mesh_constants));
 
-      constants_data_size += sizeof(world_mesh_constants);
+      constants_data_head += sizeof(world_mesh_constants);
 
       for (auto& mesh : model.parts) {
          if (not mesh.material.is_transparent) {
@@ -3224,7 +3221,7 @@ void renderer_impl::build_world_mesh_list(
    }
 
    command_list.copy_buffer_region(_object_constants_buffer.get(), 0,
-                                   upload_buffer.get(), 0, constants_data_size);
+                                   upload_buffer.get(), 0, constants_data_head);
 }
 
 void renderer_impl::build_world_mesh_render_list(const frustum& view_frustum)
