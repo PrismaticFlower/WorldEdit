@@ -1,5 +1,6 @@
 #pragma once
 
+#include "entity_group.hpp"
 #include "world.hpp"
 
 #include <span>
@@ -23,6 +24,7 @@ enum class active_entity {
    planning_connection,
    boundary,
    measurement,
+   entity_group,
 };
 
 }
@@ -269,6 +271,10 @@ struct creation_entity {
          new (&_storage.measurement) measurement{entity};
          _active = detail::active_entity::measurement;
       }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, entity_group>) {
+         new (&_storage.entity_group) entity_group{entity};
+         _active = detail::active_entity::entity_group;
+      }
       else {
          static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>,
                        "T is not an entity type");
@@ -329,6 +335,10 @@ struct creation_entity {
          new (&_storage.measurement) measurement{std::forward<T>(entity)};
          _active = detail::active_entity::measurement;
       }
+      else if constexpr (std::is_same_v<entity_type, entity_group>) {
+         new (&_storage.entity_group) entity_group{std::forward<T>(entity)};
+         _active = detail::active_entity::entity_group;
+      }
       else {
          static_assert(not std::is_same_v<entity_type, T>,
                        "T is not an entity type");
@@ -358,6 +368,7 @@ struct creation_entity {
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection>) return _active == detail::active_entity::planning_connection;
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary>) return _active == detail::active_entity::boundary;
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement>) return _active == detail::active_entity::measurement;
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, entity_group>) return _active == detail::active_entity::entity_group;
       else static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>, "T is not an entity type");
 
       // clang-format on
@@ -385,6 +396,7 @@ struct creation_entity {
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, planning_connection>) { if (self._active != detail::active_entity::planning_connection) std::terminate(); return self._storage.planning_connection; }
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, boundary>) { if (self._active != detail::active_entity::boundary) std::terminate(); return self._storage.boundary; }
       else if constexpr (std::is_same_v<std::remove_cvref_t<T>, measurement>) { if (self._active != detail::active_entity::measurement) std::terminate(); return self._storage.measurement; }
+      else if constexpr (std::is_same_v<std::remove_cvref_t<T>, entity_group>) { if (self._active != detail::active_entity::entity_group) std::terminate(); return self._storage.entity_group; }
       else static_assert(not std::is_same_v<std::remove_cvref_t<T>, T>, "T is not an entity type");
 
       // clang-format on
@@ -411,6 +423,7 @@ private:
       planning_connection planning_connection;
       boundary boundary;
       measurement measurement;
+      entity_group entity_group;
    } _storage;
 };
 
