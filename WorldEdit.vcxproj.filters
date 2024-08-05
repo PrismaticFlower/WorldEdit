@@ -518,6 +518,7 @@
     <ClInclude Include="src\edits\delete_branch_weight.hpp" />
     <ClInclude Include="src\edits\add_branch_weight.hpp" />
     <ClInclude Include="src\edits\set_class_name.hpp" />
+    <ClInclude Include="src\world\entity_group.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
