@@ -193,7 +193,7 @@ private:
                               const world::world& world,
                               const world::active_layers active_layers,
                               const world::object_class_library& world_classes,
-                              const world::object* const creation_object,
+                              const world::creation_entity* const creation_entity,
                               std::span<const world::tool_visualizers_ghost> ghost_objects);
 
    void build_world_mesh_render_list(const frustum& view_frustum);
@@ -408,10 +408,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
       if (active_entity_types.objects) {
          build_world_mesh_list(_pre_render_command_list, world, active_layers,
-                               world_classes,
-                               interaction_targets.creation_entity.is<world::object>()
-                                  ? &interaction_targets.creation_entity.get<world::object>()
-                                  : nullptr,
+                               world_classes, &interaction_targets.creation_entity,
                                tool_visualizers.ghost_objects());
       }
       else {
@@ -3030,7 +3027,7 @@ void renderer_impl::build_world_mesh_list(
    gpu::copy_command_list& command_list, const world::world& world,
    const world::active_layers active_layers,
    const world::object_class_library& world_classes,
-   const world::object* const creation_object,
+   const world::creation_entity* const creation_entity,
    std::span<const world::tool_visualizers_ghost> ghost_objects)
 {
    _world_mesh_list.clear();
@@ -3046,124 +3043,79 @@ void renderer_impl::build_world_mesh_list(
    std::size_t constants_data_head = 0;
    const std::size_t constants_data_end = objects_constants_buffer_size;
 
-   for (const world::object& object : world.objects) {
-      if (constants_data_head == constants_data_end) break;
+   std::array<std::span<const world::object>, 2> object_arrays = {world.objects};
 
-      auto& model = _model_manager[world_classes[object.class_handle].model_name];
-
-      if (not active_layers[object.layer] or object.hidden) continue;
-
-      const math::bounding_box object_bbox =
-         object.rotation * model.bbox + object.position;
-
-      const std::size_t object_constants_offset = constants_data_head;
-      const gpu_virtual_address object_constants_address =
-         constants_upload_gpu_address + object_constants_offset;
-
-      world_mesh_constants constants;
-
-      constants.object_to_world = to_matrix(object.rotation);
-      constants.object_to_world[3] = float4{object.position, 1.0f};
-
-      std::memcpy(constants_upload_data + object_constants_offset,
-                  &constants.object_to_world, sizeof(world_mesh_constants));
-
-      constants_data_head += sizeof(world_mesh_constants);
-
-      for (auto& mesh : model.parts) {
-         if (not mesh.material.is_transparent) {
-            _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
-               object_bbox, object_constants_address, mesh.material.constant_buffer_view,
-               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                                  model.gpu_buffer.attributes_vertex_buffer_view},
-                          .index_count = mesh.index_count,
-                          .start_index = mesh.start_index,
-                          .start_vertex = mesh.start_vertex});
-         }
-         else {
-            _world_mesh_list.transparent.push_back(
-               object_bbox, object_constants_address, object.position,
-               mesh.material.flags, mesh.material.constant_buffer_view,
-               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                                  model.gpu_buffer.attributes_vertex_buffer_view},
-                          .index_count = mesh.index_count,
-                          .start_index = mesh.start_index,
-                          .start_vertex = mesh.start_vertex});
-         }
+   if (creation_entity) {
+      if (creation_entity->is<world::object>()) {
+         object_arrays[1] = std::span{&creation_entity->get<world::object>(), 1};
       }
-
-      for (auto& cut : model.terrain_cuts) {
-         _terrain_cut_list.push_back(
-            {.bbox = object.rotation * cut.bbox + object.position,
-
-             .constant_buffer = object_constants_address,
-             .index_buffer_view = model.gpu_buffer.index_buffer_view,
-             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
-
-             .index_count = cut.index_count,
-             .start_index = cut.start_index,
-             .start_vertex = cut.start_vertex});
+      else if (creation_entity->is<world::entity_group>()) {
+         object_arrays[1] = creation_entity->get<world::entity_group>().objects;
       }
    }
 
-   if (creation_object and constants_data_head != constants_data_end) {
-      auto& model =
-         _model_manager[world_classes[creation_object->class_handle].model_name];
+   for (const std::span<const world::object>& objects : object_arrays) {
+      for (const world::object& object : objects) {
+         if (constants_data_head == constants_data_end) break;
 
-      const math::bounding_box object_bbox =
-         creation_object->rotation * model.bbox + creation_object->position;
+         auto& model = _model_manager[world_classes[object.class_handle].model_name];
 
-      const std::size_t object_constants_offset = constants_data_head;
-      const gpu_virtual_address object_constants_address =
-         constants_upload_gpu_address + object_constants_offset;
+         if (not active_layers[object.layer] or object.hidden) continue;
 
-      world_mesh_constants constants;
+         const math::bounding_box object_bbox =
+            object.rotation * model.bbox + object.position;
 
-      constants.object_to_world = to_matrix(creation_object->rotation);
-      constants.object_to_world[3] = float4{creation_object->position, 1.0f};
+         const std::size_t object_constants_offset = constants_data_head;
+         const gpu_virtual_address object_constants_address =
+            constants_upload_gpu_address + object_constants_offset;
 
-      std::memcpy(constants_upload_data + object_constants_offset,
-                  &constants.object_to_world, sizeof(world_mesh_constants));
+         world_mesh_constants constants;
 
-      constants_data_head += sizeof(world_mesh_constants);
+         constants.object_to_world = to_matrix(object.rotation);
+         constants.object_to_world[3] = float4{object.position, 1.0f};
 
-      for (auto& mesh : model.parts) {
-         if (not mesh.material.is_transparent) {
-            _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
-               object_bbox, object_constants_address, mesh.material.constant_buffer_view,
-               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                                  model.gpu_buffer.attributes_vertex_buffer_view},
-                          .index_count = mesh.index_count,
-                          .start_index = mesh.start_index,
-                          .start_vertex = mesh.start_vertex});
+         std::memcpy(constants_upload_data + object_constants_offset,
+                     &constants.object_to_world, sizeof(world_mesh_constants));
+
+         constants_data_head += sizeof(world_mesh_constants);
+
+         for (auto& mesh : model.parts) {
+            if (not mesh.material.is_transparent) {
+               _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
+                  object_bbox, object_constants_address,
+                  mesh.material.constant_buffer_view,
+                  world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                             .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                     model.gpu_buffer.attributes_vertex_buffer_view},
+                             .index_count = mesh.index_count,
+                             .start_index = mesh.start_index,
+                             .start_vertex = mesh.start_vertex});
+            }
+            else {
+               _world_mesh_list.transparent.push_back(
+                  object_bbox, object_constants_address, object.position,
+                  mesh.material.flags, mesh.material.constant_buffer_view,
+                  world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                             .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                     model.gpu_buffer.attributes_vertex_buffer_view},
+                             .index_count = mesh.index_count,
+                             .start_index = mesh.start_index,
+                             .start_vertex = mesh.start_vertex});
+            }
          }
-         else {
-            _world_mesh_list.transparent.push_back(
-               object_bbox, object_constants_address, creation_object->position,
-               mesh.material.flags, mesh.material.constant_buffer_view,
-               world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
-                          .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
-                                                  model.gpu_buffer.attributes_vertex_buffer_view},
-                          .index_count = mesh.index_count,
-                          .start_index = mesh.start_index,
-                          .start_vertex = mesh.start_vertex});
+
+         for (auto& cut : model.terrain_cuts) {
+            _terrain_cut_list.push_back(
+               {.bbox = object.rotation * cut.bbox + object.position,
+
+                .constant_buffer = object_constants_address,
+                .index_buffer_view = model.gpu_buffer.index_buffer_view,
+                .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
+
+                .index_count = cut.index_count,
+                .start_index = cut.start_index,
+                .start_vertex = cut.start_vertex});
          }
-      }
-
-      for (auto& cut : model.terrain_cuts) {
-         _terrain_cut_list.push_back(
-            {.bbox = creation_object->rotation * cut.bbox + creation_object->position,
-
-             .constant_buffer = object_constants_address,
-             .index_buffer_view = model.gpu_buffer.index_buffer_view,
-             .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
-
-             .index_count = cut.index_count,
-             .start_index = cut.start_index,
-             .start_vertex = cut.start_vertex});
       }
    }
 
