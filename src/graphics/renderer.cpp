@@ -1780,15 +1780,15 @@ void renderer_impl::draw_world_meta_objects(
             _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], sector_color);
          }
 
-         for (const auto point : sector.points) {
+         for (const float2& point : sector.points) {
             const std::array line = {float3{point.x, sector.base, point.y},
                                      float3{point.x, sector.base + sector.height,
                                             point.y}};
 
-            if (not intersects(view_frustum, line[0], 0.001f) and
-                not intersects(view_frustum, line[1], 0.001f)) {
-               continue;
-            }
+            const math::bounding_box bbox{.min = min(line[0], line[1]),
+                                          .max = max(line[0], line[1])};
+
+            if (not intersects(view_frustum, bbox)) continue;
 
             _meta_draw_batcher.add_line_solid(line[0], line[1], sector_color);
          }
