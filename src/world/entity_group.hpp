@@ -17,6 +17,10 @@
 namespace we::world {
 
 struct entity_group {
+   quaternion rotation;
+   float3 position;
+   float rotation_angle = 0.0f;
+
    std::vector<object> objects;
    std::vector<light> lights;
    std::vector<path> paths;
