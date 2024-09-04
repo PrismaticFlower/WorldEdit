@@ -1373,48 +1373,97 @@ void renderer_impl::draw_world_meta_objects(
 
       const float4 path_node_color = {settings.path_node_color, 1.0f};
       const float4 path_node_outline_color = {settings.path_node_outline_color, 1.0f};
+      const uint32 path_node_connection_color =
+         utility::pack_srgb_bgra(float4{settings.path_node_connection_color, 1.0f});
+      const float path_node_size = settings.path_node_size;
+
+      const auto draw_node = [&](const quaternion& node_rotation,
+                                 const float3& node_positionWS) {
+         if (not intersects(view_frustum, node_positionWS, path_node_size)) {
+            return;
+         }
+
+         const float4x4 rotation = to_matrix(node_rotation);
+         float4x4 transform =
+            rotation * float4x4{{path_node_size, 0.0f, 0.0f, 0.0f},
+                                {0.0f, path_node_size, 0.0f, 0.0f},
+                                {0.0f, 0.0f, path_node_size, 0.0f},
+                                {0.0f, 0.0f, 0.0f, 1.0f}};
+
+         transform[3] = {node_positionWS, 1.0f};
+
+         _meta_draw_batcher.add_octahedron_outlined(transform, path_node_color,
+                                                    path_node_outline_color);
+
+         if (draw_orientation) {
+            float4x4 orientation_transform =
+               rotation * float4x4{{path_node_size * 0.5f, 0.0f, 0.0f, 0.0f},
+                                   {0.0f, path_node_size * 0.5f, 0.0f, 0.0f},
+                                   {0.0f, 0.0f, path_node_size * 0.5f, 0.0f},
+                                   {0.0f, 0.0f, 0.0f, 1.0f}};
+            orientation_transform[3] = {node_positionWS, 1.0f};
+
+            _meta_draw_batcher.add_arrow_outline_solid(orientation_transform, 3.2f,
+                                                       utility::pack_srgb_bgra(
+                                                          float4{settings.path_node_orientation_color,
+                                                                 1.0f}));
+         }
+      };
+
+      const auto draw_linear_connection = [&](const float3& a, const float3& b) {
+         const math::bounding_box bbox{.min = min(a, b), .max = max(a, b)};
+
+         if (not intersects(view_frustum, bbox)) return;
+
+         _meta_draw_batcher.add_line_solid(a, b, path_node_connection_color);
+      };
+
+      const auto draw_catmull_rom_connection = [&](const float3& a, const float3& b,
+                                                   const float3& c, const float3& d) {
+         auto catmull_rom = [](const float3 a, const float3 b, const float3 c,
+                               const float3 d, const float t) -> float3 {
+            const float t2 = t * t;
+            const float t3 = t * t * t;
+
+            return 0.5f * ((2.0f * b) + (-a + c) * t +
+                           (2.0f * a - 5.0f * b + 4.0f * c - d) * t2 +
+                           (-a + 3.0f * b - 3.0f * c + d) * t3);
+         };
+
+         const float3 midpoint = catmull_rom(a, b, c, d, 0.5f);
+
+         const math::bounding_box bbox{.min = min(b, min(c, midpoint)),
+                                       .max = max(b, max(c, midpoint))};
+
+         if (not intersects(view_frustum, bbox)) return;
+
+         const float segment_length = distance(b, c);
+         const float camera_scale = distance(camera.position(), midpoint) *
+                                    camera.projection_matrix()[0].x;
+
+         const float steps_target = settings.path_node_cr_spline_target_tessellation;
+         const float max_steps = settings.path_node_cr_spline_max_tessellation;
+
+         float steps =
+            std::floor(((1.0f / camera_scale) * steps_target) * segment_length);
+
+         steps = std::clamp(steps, 1.0f, max_steps);
+
+         const float inv_steps = 1.0f / steps;
+
+         for (float v = 0.0f; v < steps; ++v) {
+            _meta_draw_batcher.add_line_solid(catmull_rom(a, b, c, d, v * inv_steps),
+                                              catmull_rom(a, b, c, d, (v + 1.0f) * inv_steps),
+                                              path_node_connection_color);
+         }
+      };
 
       const auto add_path = [&](const world::path& path) {
          if (not active_layers[path.layer] or path.hidden) return;
 
-         const float path_node_size = settings.path_node_size;
-
-         for (auto& node : path.nodes) {
-            if (not intersects(view_frustum, node.position, path_node_size)) {
-               continue;
-            }
-
-            const float4x4 rotation = to_matrix(node.rotation);
-            float4x4 transform =
-               rotation * float4x4{{path_node_size, 0.0f, 0.0f, 0.0f},
-                                   {0.0f, path_node_size, 0.0f, 0.0f},
-                                   {0.0f, 0.0f, path_node_size, 0.0f},
-                                   {0.0f, 0.0f, 0.0f, 1.0f}};
-
-            transform[3] = {node.position, 1.0f};
-
-            _meta_draw_batcher.add_octahedron_outlined(transform, path_node_color,
-                                                       path_node_outline_color);
-
-            if (draw_orientation) {
-               float4x4 orientation_transform =
-                  rotation * float4x4{{path_node_size * 0.5f, 0.0f, 0.0f, 0.0f},
-                                      {0.0f, path_node_size * 0.5f, 0.0f, 0.0f},
-                                      {0.0f, 0.0f, path_node_size * 0.5f, 0.0f},
-                                      {0.0f, 0.0f, 0.0f, 1.0f}};
-               orientation_transform[3] = {node.position, 1.0f};
-
-               _meta_draw_batcher.add_arrow_outline_solid(orientation_transform, 3.2f,
-                                                          utility::pack_srgb_bgra(
-                                                             float4{settings.path_node_orientation_color,
-                                                                    1.0f}));
-            }
-         }
+         for (auto& node : path.nodes) draw_node(node.rotation, node.position);
 
          if (not path.nodes.empty() and draw_connections) {
-            const uint32 path_node_connection_color = utility::pack_srgb_bgra(
-               float4{settings.path_node_connection_color, 1.0f});
-
             bool draw_linear_spline = true;
 
             if (path.type == world::path_type::patrol) {
@@ -1427,14 +1476,8 @@ void renderer_impl::draw_world_meta_objects(
 
             if (draw_linear_spline) {
                for (std::size_t i = 0; i < (path.nodes.size() - 1); ++i) {
-                  const float3 a = path.nodes[i].position;
-                  const float3 b = path.nodes[i + 1].position;
-
-                  const math::bounding_box bbox{.min = min(a, b), .max = max(a, b)};
-
-                  if (not intersects(view_frustum, bbox)) continue;
-
-                  _meta_draw_batcher.add_line_solid(a, b, path_node_connection_color);
+                  draw_linear_connection(path.nodes[i].position,
+                                         path.nodes[i + 1].position);
                }
             }
             else {
@@ -1442,53 +1485,11 @@ void renderer_impl::draw_world_meta_objects(
                const std::ptrdiff_t max_node = std::ssize(path.nodes) - 1;
 
                for (std::ptrdiff_t i = 0; i < max_node; ++i) {
-                  const float3 a =
-                     path.nodes[std::clamp(i - 1, min_node, max_node)].position;
-                  const float3 b =
-                     path.nodes[std::clamp(i, min_node, max_node)].position;
-                  const float3 c =
-                     path.nodes[std::clamp(i + 1, min_node, max_node)].position;
-                  const float3 d =
-                     path.nodes[std::clamp(i + 2, min_node, max_node)].position;
-
-                  auto catmull_rom = [](const float3 a, const float3 b, const float3 c,
-                                        const float3 d, const float t) -> float3 {
-                     const float t2 = t * t;
-                     const float t3 = t * t * t;
-
-                     return 0.5f * ((2.0f * b) + (-a + c) * t +
-                                    (2.0f * a - 5.0f * b + 4.0f * c - d) * t2 +
-                                    (-a + 3.0f * b - 3.0f * c + d) * t3);
-                  };
-
-                  const float3 midpoint = catmull_rom(a, b, c, d, 0.5f);
-
-                  const math::bounding_box bbox{.min = min(b, min(c, midpoint)),
-                                                .max = max(b, max(c, midpoint))};
-
-                  if (not intersects(view_frustum, bbox)) continue;
-
-                  const float segment_length = distance(b, c);
-                  const float camera_scale = distance(camera.position(), midpoint) *
-                                             camera.projection_matrix()[0].x;
-
-                  const float steps_target =
-                     settings.path_node_cr_spline_target_tessellation;
-                  const float max_steps = settings.path_node_cr_spline_max_tessellation;
-
-                  float steps = std::floor(
-                     ((1.0f / camera_scale) * steps_target) * segment_length);
-
-                  steps = std::clamp(steps, 1.0f, max_steps);
-
-                  const float inv_steps = 1.0f / steps;
-
-                  for (float v = 0.0f; v < steps; ++v) {
-                     _meta_draw_batcher
-                        .add_line_solid(catmull_rom(a, b, c, d, v * inv_steps),
-                                        catmull_rom(a, b, c, d, (v + 1.0f) * inv_steps),
-                                        path_node_connection_color);
-                  }
+                  draw_catmull_rom_connection(
+                     path.nodes[std::clamp(i - 1, min_node, max_node)].position,
+                     path.nodes[std::clamp(i, min_node, max_node)].position,
+                     path.nodes[std::clamp(i + 1, min_node, max_node)].position,
+                     path.nodes[std::clamp(i + 2, min_node, max_node)].position);
                }
             }
          }
@@ -1500,9 +1501,56 @@ void renderer_impl::draw_world_meta_objects(
          add_path(interaction_targets.creation_entity.get<world::path>());
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
          for (const world::path& path :
               interaction_targets.creation_entity.get<world::entity_group>().paths) {
-            add_path(path);
+            for (auto& node : path.nodes) {
+               draw_node(group.rotation * node.rotation,
+                         group.rotation * node.position + group.position);
+            }
+
+            if (not path.nodes.empty() and draw_connections) {
+               bool draw_linear_spline = true;
+
+               if (path.type == world::path_type::patrol) {
+                  draw_linear_spline =
+                     path.spline_type != world::path_spline_type::catmull_rom;
+               }
+               else if (path.type == world::path_type::entity_follow) {
+                  draw_linear_spline = false;
+               }
+
+               if (draw_linear_spline) {
+                  for (std::size_t i = 0; i < (path.nodes.size() - 1); ++i) {
+                     draw_linear_connection(group.rotation * path.nodes[i].position +
+                                               group.position,
+                                            group.rotation * path.nodes[i + 1].position +
+                                               group.position);
+                  }
+               }
+               else {
+                  const std::ptrdiff_t min_node = 0;
+                  const std::ptrdiff_t max_node = std::ssize(path.nodes) - 1;
+
+                  for (std::ptrdiff_t i = 0; i < max_node; ++i) {
+                     draw_catmull_rom_connection(
+                        group.rotation *
+                              path.nodes[std::clamp(i - 1, min_node, max_node)].position +
+                           group.position,
+                        group.rotation *
+                              path.nodes[std::clamp(i, min_node, max_node)].position +
+                           group.position,
+                        group.rotation *
+                              path.nodes[std::clamp(i + 1, min_node, max_node)].position +
+                           group.position,
+                        group.rotation *
+                              path.nodes[std::clamp(i + 2, min_node, max_node)].position +
+                           group.position);
+                  }
+               }
+            }
          }
       }
    }
@@ -1584,10 +1632,13 @@ void renderer_impl::draw_world_meta_objects(
                     region_color);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::region& region :
-              interaction_targets.creation_entity.get<world::entity_group>().regions) {
-            add_region(region.rotation, region.position, region.size,
-                       region.shape, region_color);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::region& region : group.regions) {
+            add_region(group.rotation * region.rotation,
+                       group.rotation * region.position + group.position,
+                       region.size, region.shape, region_color);
          }
       }
    }
@@ -1598,11 +1649,13 @@ void renderer_impl::draw_world_meta_objects(
          float4{settings.barrier_outline_color.x, settings.barrier_outline_color.y,
                 settings.barrier_outline_color.z, 1.0f});
 
-      const auto add_barrier = [&](const world::barrier& barrier) {
+      const auto add_barrier = [&](const world::barrier& barrier,
+                                   const float barrier_rotation_angle,
+                                   const float3& barrier_position) {
          if (barrier.hidden) return;
 
          const float4x4 rotation =
-            make_rotation_matrix_from_euler({0.0f, barrier.rotation_angle, 0.0f});
+            make_rotation_matrix_from_euler({0.0f, barrier_rotation_angle, 0.0f});
 
          float4x4 transform =
             rotation * float4x4{{barrier.size.x, 0.0f, 0.0f, 0.0f},
@@ -1610,7 +1663,7 @@ void renderer_impl::draw_world_meta_objects(
                                 {0.0f, 0.0f, barrier.size.y, 0.0f},
                                 {0.0f, 0.0f, 0.0f, 1.0f}};
 
-         transform[3] = {barrier.position, 1.0f};
+         transform[3] = {barrier_position, 1.0f};
 
          // TODO: Batch these better.
          std::array<float4, 4> corners_f4 = {
@@ -1646,15 +1699,23 @@ void renderer_impl::draw_world_meta_objects(
          _ai_overlay_batches.barriers.push_back(transform);
       };
 
-      for (auto& barrier : world.barriers) add_barrier(barrier);
+      for (const world::barrier& barrier : world.barriers) {
+         add_barrier(barrier, barrier.rotation_angle, barrier.position);
+      }
 
       if (interaction_targets.creation_entity.is<world::barrier>()) {
-         add_barrier(interaction_targets.creation_entity.get<world::barrier>());
+         const world::barrier& barrier =
+            interaction_targets.creation_entity.get<world::barrier>();
+
+         add_barrier(barrier, barrier.rotation_angle, barrier.position);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::barrier& barrier :
-              interaction_targets.creation_entity.get<world::entity_group>().barriers) {
-            add_barrier(barrier);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::barrier& barrier : group.barriers) {
+            add_barrier(barrier, barrier.rotation_angle + group.rotation_angle,
+                        group.rotation * barrier.position + group.position);
          }
       }
    }
@@ -1662,7 +1723,10 @@ void renderer_impl::draw_world_meta_objects(
    if (active_entity_types.lights) {
       const float volume_alpha = settings.light_volume_alpha;
 
-      const auto add_light = [&](const world::light& light) {
+      const auto add_light = [&](const world::light& light,
+                                 const quaternion& light_rotation,
+                                 const float3& light_positionWS,
+                                 const quaternion& light_region_rotation) {
          if (not active_layers[light.layer] or light.hidden) return;
 
          const float4 color{light.color, light.light_type == world::light_type::spot
@@ -1671,13 +1735,13 @@ void renderer_impl::draw_world_meta_objects(
 
          switch (light.light_type) {
          case world::light_type::directional: {
-            const float4x4 rotation = to_matrix(light.rotation);
+            const float4x4 rotation = to_matrix(light_rotation);
             float4x4 transform = rotation * float4x4{{2.0f, 0.0f, 0.0f, 0.0f},
                                                      {0.0f, 2.0f, 0.0f, 0.0f},
                                                      {0.0f, 0.0f, 2.0f, 0.0f},
                                                      {0.0f, 0.0f, 0.0f, 1.0f}};
 
-            transform[3] = {light.position, 1.0f};
+            transform[3] = {light_positionWS, 1.0f};
 
             _meta_draw_batcher.add_octahedron(transform, color);
             _meta_draw_batcher.add_arrow_outline_solid(transform, 2.2f,
@@ -1685,11 +1749,11 @@ void renderer_impl::draw_world_meta_objects(
                                                           float4{light.color, 1.0f}));
          } break;
          case world::light_type::point: {
-            if (not intersects(view_frustum, light.position, light.range)) {
+            if (not intersects(view_frustum, light_positionWS, light.range)) {
                return;
             }
 
-            _meta_draw_batcher.add_sphere(light.position, light.range, color);
+            _meta_draw_batcher.add_sphere(light_positionWS, light.range, color);
          } break;
          case world::light_type::spot: {
             const float outer_cone_radius =
@@ -1699,11 +1763,11 @@ void renderer_impl::draw_world_meta_objects(
             const float half_range = light.range * 0.5f;
 
             const float3 light_direction =
-               normalize(light.rotation * float3{0.0f, 0.0f, -1.0f});
+               normalize(light_rotation * float3{0.0f, 0.0f, -1.0f});
 
             const float light_bounds_radius = std::max(outer_cone_radius, half_range);
             const float3 light_centre =
-               light.position - (light_direction * (half_range));
+               light_positionWS - (light_direction * (half_range));
 
             // TODO: Better cone culling
             if (not intersects(view_frustum, light_centre, light_bounds_radius)) {
@@ -1711,7 +1775,7 @@ void renderer_impl::draw_world_meta_objects(
             }
 
             const float4x4 rotation = to_matrix(
-               light.rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
+               light_rotation * quaternion{0.707107f, -0.707107f, 0.0f, 0.0f});
 
             float4x4 outer_transform =
                rotation * float4x4{{outer_cone_radius, 0.0f, 0.0f, 0.0f},
@@ -1719,7 +1783,7 @@ void renderer_impl::draw_world_meta_objects(
                                    {0.0f, 0.0f, outer_cone_radius, 0.0f},
                                    {0.0f, -half_range, 0.0f, 1.0f}};
 
-            outer_transform[3] += float4{light.position, 0.0f};
+            outer_transform[3] += float4{light_positionWS, 0.0f};
 
             float4x4 inner_transform =
                rotation * float4x4{{inner_cone_radius, 0.0f, 0.0f, 0.0f},
@@ -1727,7 +1791,7 @@ void renderer_impl::draw_world_meta_objects(
                                    {0.0f, 0.0f, inner_cone_radius, 0.0f},
                                    {0.0f, -half_range, 0.0f, 1.0f}};
 
-            inner_transform[3] += float4{light.position, 0.0f};
+            inner_transform[3] += float4{light_positionWS, 0.0f};
 
             _meta_draw_batcher.add_cone(outer_transform, color);
             _meta_draw_batcher.add_cone(inner_transform, color);
@@ -1737,21 +1801,21 @@ void renderer_impl::draw_world_meta_objects(
          case world::light_type::directional_region_cylinder: {
             switch (light.light_type) {
             case world::light_type::directional_region_box: {
-               add_region(light.region_rotation, light.position,
+               add_region(light_region_rotation, light_positionWS,
                           light.region_size, world::region_shape::box, color);
             } break;
             case world::light_type::directional_region_sphere: {
-               add_region(light.region_rotation, light.position,
+               add_region(light_region_rotation, light_positionWS,
                           light.region_size, world::region_shape::sphere, color);
             } break;
             case world::light_type::directional_region_cylinder: {
-               add_region(light.region_rotation, light.position, light.region_size,
-                          world::region_shape::cylinder, color);
+               add_region(light_region_rotation, light_positionWS,
+                          light.region_size, world::region_shape::cylinder, color);
             } break;
             }
 
-            float4x4 transform = to_matrix(light.rotation);
-            transform[3] = {light.position, 1.0f};
+            float4x4 transform = to_matrix(light_rotation);
+            transform[3] = {light_positionWS, 1.0f};
 
             _meta_draw_batcher.add_arrow_outline_solid(transform, 0.0f,
                                                        utility::pack_srgb_bgra(
@@ -1761,16 +1825,23 @@ void renderer_impl::draw_world_meta_objects(
       };
 
       for (auto& light : world.lights) {
-         add_light(light);
+         add_light(light, light.rotation, light.position, light.region_rotation);
       }
 
       if (interaction_targets.creation_entity.is<world::light>()) {
-         add_light(interaction_targets.creation_entity.get<world::light>());
+         const world::light& light =
+            interaction_targets.creation_entity.get<world::light>();
+
+         add_light(light, light.rotation, light.position, light.region_rotation);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::light& light :
-              interaction_targets.creation_entity.get<world::entity_group>().lights) {
-            add_light(light);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::light& light : group.lights) {
+            add_light(light, group.rotation * light.rotation,
+                      group.rotation * light.position + group.position,
+                      group.rotation * light.region_rotation);
          }
       }
    }
@@ -1824,9 +1895,49 @@ void renderer_impl::draw_world_meta_objects(
          add_sector(interaction_targets.creation_entity.get<world::sector>());
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::sector& sector :
-              interaction_targets.creation_entity.get<world::entity_group>().sectors) {
-            add_sector(sector);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::sector& sector : group.sectors) {
+            for (std::size_t i = 0; i < sector.points.size(); ++i) {
+               const float2 a = sector.points[i];
+               const float2 b = sector.points[(i + 1) % sector.points.size()];
+
+               const std::array quad =
+                  {group.rotation * float3{a.x, sector.base, a.y} + group.position,
+                   group.rotation * float3{b.x, sector.base, b.y} + group.position,
+                   group.rotation * float3{a.x, sector.base + sector.height, a.y} +
+                      group.position,
+                   group.rotation * float3{b.x, sector.base + sector.height, b.y} +
+                      group.position};
+
+               math::bounding_box bbox{.min = quad[0], .max = quad[0]};
+
+               for (auto v : quad) bbox = integrate(bbox, v);
+
+               if (not intersects(view_frustum, bbox)) continue;
+
+               _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], sector_color);
+               _meta_draw_batcher.add_triangle(quad[2], quad[1], quad[3], sector_color);
+               _meta_draw_batcher.add_triangle(quad[0], quad[2], quad[1], sector_color);
+               _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], sector_color);
+            }
+
+            for (const float2& point : sector.points) {
+               const std::array line =
+                  {group.rotation * float3{point.x, sector.base, point.y} +
+                      group.position,
+                   group.rotation *
+                         float3{point.x, sector.base + sector.height, point.y} +
+                      group.position};
+
+               const math::bounding_box bbox{.min = min(line[0], line[1]),
+                                             .max = max(line[0], line[1])};
+
+               if (not intersects(view_frustum, bbox)) continue;
+
+               _meta_draw_batcher.add_line_solid(line[0], line[1], sector_color);
+            }
          }
       }
    }
@@ -1834,13 +1945,15 @@ void renderer_impl::draw_world_meta_objects(
    if (active_entity_types.portals) {
       const uint32 portal_color = utility::pack_srgb_bgra(settings.portal_color);
 
-      const auto add_portal = [&](const world::portal& portal) {
+      const auto add_portal = [&](const world::portal& portal,
+                                  const quaternion& portal_rotation,
+                                  const float3& portal_positionWS) {
          if (portal.hidden) return;
 
          const float half_width = portal.width * 0.5f;
          const float half_height = portal.height * 0.5f;
 
-         if (not intersects(view_frustum, portal.position,
+         if (not intersects(view_frustum, portal_positionWS,
                             std::max(half_width, half_height))) {
             return;
          }
@@ -1851,8 +1964,8 @@ void renderer_impl::draw_world_meta_objects(
                             float3{half_width, half_height, 0.0f}};
 
          for (auto& v : quad) {
-            v = portal.rotation * v;
-            v += portal.position;
+            v = portal_rotation * v;
+            v += portal_positionWS;
          }
 
          _meta_draw_batcher.add_triangle(quad[0], quad[1], quad[2], portal_color);
@@ -1861,15 +1974,23 @@ void renderer_impl::draw_world_meta_objects(
          _meta_draw_batcher.add_triangle(quad[2], quad[3], quad[1], portal_color);
       };
 
-      for (auto& portal : world.portals) add_portal(portal);
+      for (const world::portal& portal : world.portals) {
+         add_portal(portal, portal.rotation, portal.position);
+      }
 
       if (interaction_targets.creation_entity.is<world::portal>()) {
-         add_portal(interaction_targets.creation_entity.get<world::portal>());
+         const world::portal& portal =
+            interaction_targets.creation_entity.get<world::portal>();
+
+         add_portal(portal, portal.rotation, portal.position);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::portal& portal :
-              interaction_targets.creation_entity.get<world::entity_group>().portals) {
-            add_portal(portal);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::portal& portal : group.portals) {
+            add_portal(portal, group.rotation * portal.rotation,
+                       group.rotation * portal.position + group.position);
          }
       }
    }
@@ -1878,15 +1999,17 @@ void renderer_impl::draw_world_meta_objects(
       const float4 hintnode_color = settings.hintnode_color;
       const uint32 packed_hintnode_color = utility::pack_srgb_bgra(hintnode_color);
 
-      const auto add_hintnode = [&](const world::hintnode& hintnode) {
+      const auto add_hintnode = [&](const world::hintnode& hintnode,
+                                    const quaternion& hintnode_rotation,
+                                    const float3& hintnode_positionWS) {
          if (not active_layers[hintnode.layer] or hintnode.hidden) return;
 
-         if (not intersects(view_frustum, hintnode.position, 3.0f)) return;
+         if (not intersects(view_frustum, hintnode_positionWS, 3.0f)) return;
 
-         float4x4 rotation = to_matrix(hintnode.rotation);
+         float4x4 rotation = to_matrix(hintnode_rotation);
 
          float4x4 transform = rotation;
-         transform[3] = {hintnode.position, 1.0f};
+         transform[3] = {hintnode_positionWS, 1.0f};
 
          _meta_draw_batcher.add_hint_hexahedron(transform, hintnode_color);
 
@@ -1900,15 +2023,23 @@ void renderer_impl::draw_world_meta_objects(
                                                     packed_hintnode_color);
       };
 
-      for (auto& hintnode : world.hintnodes) add_hintnode(hintnode);
+      for (const world::hintnode& hintnode : world.hintnodes) {
+         add_hintnode(hintnode, hintnode.rotation, hintnode.position);
+      }
 
       if (interaction_targets.creation_entity.is<world::hintnode>()) {
-         add_hintnode(interaction_targets.creation_entity.get<world::hintnode>());
+         const world::hintnode& hintnode =
+            interaction_targets.creation_entity.get<world::hintnode>();
+
+         add_hintnode(hintnode, hintnode.rotation, hintnode.position);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::hintnode& hintnode :
-              interaction_targets.creation_entity.get<world::entity_group>().hintnodes) {
-            add_hintnode(hintnode);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::hintnode& hintnode : group.hintnodes) {
+            add_hintnode(hintnode, group.rotation * hintnode.rotation,
+                         group.rotation * hintnode.position + group.position);
          }
       }
    }
@@ -1920,17 +2051,21 @@ void renderer_impl::draw_world_meta_objects(
                                   settings.planning_hub_outline_color.y,
                                   settings.planning_hub_outline_color.z, 1.0f});
 
-      const auto add_hub = [&](const world::planning_hub& hub) {
+      const auto add_hub = [&](const world::planning_hub& hub,
+                               const float3& hub_positionWS) {
          if (hub.hidden) return;
 
-         const math::bounding_box bbox{
-            .min = float3{-hub.radius, -planning_hub_height, -hub.radius} + hub.position,
-            .max = float3{hub.radius, planning_hub_height, hub.radius} + hub.position};
+         const math::bounding_box bbox{.min = float3{-hub.radius, -planning_hub_height,
+                                                     -hub.radius} +
+                                              hub_positionWS,
+                                       .max = float3{hub.radius, planning_hub_height,
+                                                     hub.radius} +
+                                              hub_positionWS};
 
          if (not intersects(view_frustum, bbox)) return;
 
          const float3 scale = float3{hub.radius, 0.0f, hub.radius};
-         const float3 offset = hub.position;
+         const float3 offset = hub_positionWS;
 
          const std::array circle = {
             float3{0.0f, 0.0f, 1.0f} * scale + offset,
@@ -1976,18 +2111,25 @@ void renderer_impl::draw_world_meta_objects(
          _ai_overlay_batches.hubs.push_back({{hub.radius, 0.0f, 0.0f, 0.0f},
                                              {0.0f, planning_hub_height, 0.0f, 0.0f},
                                              {0.0f, 0.0f, hub.radius, 0.0f},
-                                             {hub.position, 1.0f}});
+                                             {hub_positionWS, 1.0f}});
       };
 
-      for (auto& hub : world.planning_hubs) add_hub(hub);
+      for (const world::planning_hub& hub : world.planning_hubs) {
+         add_hub(hub, hub.position);
+      }
 
       if (interaction_targets.creation_entity.is<world::planning_hub>()) {
-         add_hub(interaction_targets.creation_entity.get<world::planning_hub>());
+         const world::planning_hub& hub =
+            interaction_targets.creation_entity.get<world::planning_hub>();
+
+         add_hub(hub, hub.position);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::planning_hub& hub :
-              interaction_targets.creation_entity.get<world::entity_group>().planning_hubs) {
-            add_hub(hub);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::planning_hub& hub : group.planning_hubs) {
+            add_hub(hub, group.rotation * hub.position + group.position);
          }
       }
    }
@@ -2000,12 +2142,13 @@ void renderer_impl::draw_world_meta_objects(
           settings.planning_connection_outline_color.y,
           settings.planning_connection_outline_color.z, 1.0f});
 
-      const auto add_connection = [&](const world::planning_connection& connection,
-                                      std::span<const world::planning_hub> hubs) {
+      const auto add_connection = [&](const world::planning_connection& connection) {
          if (connection.hidden) return;
 
-         const world::planning_hub& start = hubs[connection.start_hub_index];
-         const world::planning_hub& end = hubs[connection.end_hub_index];
+         const world::planning_hub& start =
+            world.planning_hubs[connection.start_hub_index];
+         const world::planning_hub& end =
+            world.planning_hubs[connection.end_hub_index];
 
          const math::bounding_box start_bbox{
             .min = float3{-start.radius, -planning_connection_height, -start.radius} +
@@ -2075,19 +2218,94 @@ void renderer_impl::draw_world_meta_objects(
       };
 
       for (auto& connection : world.planning_connections) {
-         add_connection(connection, world.planning_hubs);
+         add_connection(connection);
       }
 
       if (interaction_targets.creation_entity.is<world::planning_connection>()) {
-         add_connection(interaction_targets.creation_entity.get<world::planning_connection>(),
-                        world.planning_hubs);
+         add_connection(
+            interaction_targets.creation_entity.get<world::planning_connection>());
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
          const world::entity_group& group =
             interaction_targets.creation_entity.get<world::entity_group>();
 
          for (const world::planning_connection& connection : group.planning_connections) {
-            add_connection(connection, group.planning_hubs);
+            if (connection.hidden) continue;
+
+            const world::planning_hub& start =
+               group.planning_hubs[connection.start_hub_index];
+            const world::planning_hub& end =
+               group.planning_hubs[connection.end_hub_index];
+
+            const float3 start_position =
+               group.rotation * start.position + group.position;
+            const float3 end_position = group.rotation * end.position + group.position;
+
+            const math::bounding_box start_bbox{
+               .min = float3{-start.radius, -planning_connection_height, -start.radius} +
+                      start_position,
+               .max = float3{start.radius, planning_connection_height, start.radius} +
+                      start_position};
+            const math::bounding_box end_bbox{
+               .min = float3{-end.radius, -planning_connection_height, -end.radius} +
+                      end_position,
+               .max = float3{end.radius, planning_connection_height, end.radius} +
+                      end_position};
+
+            const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
+
+            if (not intersects(view_frustum, bbox)) return;
+
+            const float3 normal =
+               normalize(float3{-(start_position.z - end_position.z), 0.0f,
+                                start_position.x - end_position.x});
+
+            std::array<float3, 4> quad{start_position + normal * start.radius,
+                                       start_position - normal * start.radius,
+                                       end_position + normal * end.radius,
+                                       end_position - normal * end.radius};
+
+            const float3 height_offset = {0.0f, planning_connection_height, 0.0f};
+
+            std::array<float3, 8> corners = {quad[0] + height_offset,
+                                             quad[1] + height_offset,
+                                             quad[2] + height_offset,
+                                             quad[3] + height_offset,
+                                             quad[0] - height_offset,
+                                             quad[1] - height_offset,
+                                             quad[2] - height_offset,
+                                             quad[3] - height_offset};
+
+            _ai_overlay_batches.connections.push_back({
+               // Top
+               corners[3], corners[2], corners[0], //
+               corners[3], corners[0], corners[1], //
+
+               // Bottom
+               corners[4], corners[6], corners[7], //
+               corners[5], corners[4], corners[7], //
+
+               // Side 0
+               corners[0], corners[6], corners[4], //
+               corners[0], corners[2], corners[6], //
+
+               // Side 1
+               corners[1], corners[5], corners[7], //
+               corners[7], corners[3], corners[1], //
+
+               // Back
+               corners[4], corners[1], corners[0], //
+               corners[5], corners[1], corners[4], //
+
+               // Front
+               corners[2], corners[3], corners[6], //
+               corners[6], corners[3], corners[7]  //
+            });
+
+            _meta_draw_batcher.add_line_overlay(quad[0], quad[1], packed_color);
+            _meta_draw_batcher.add_line_overlay(quad[1], quad[3], packed_color);
+            _meta_draw_batcher.add_line_overlay(quad[3], quad[2], packed_color);
+            _meta_draw_batcher.add_line_overlay(quad[2], quad[0], packed_color);
          }
       }
    }
@@ -2096,10 +2314,12 @@ void renderer_impl::draw_world_meta_objects(
       const float boundary_height = settings.boundary_height;
       const uint32 boundary_color = utility::pack_srgb_bgra(settings.boundary_color);
 
-      const auto add_boundary = [&](const world::boundary& boundary) {
+      const auto add_boundary = [&](const world::boundary& boundary,
+                                    const float3& boundary_positionWS) {
          if (boundary.hidden) return;
 
-         const std::array<float3, 12> nodes = world::get_boundary_nodes(boundary);
+         const std::array<float3, 12> nodes =
+            world::get_boundary_nodes(boundary_positionWS, boundary.size);
 
          for (std::size_t i = 0; i < nodes.size(); ++i) {
             const float3 a = nodes[i];
@@ -2120,15 +2340,22 @@ void renderer_impl::draw_world_meta_objects(
          }
       };
 
-      for (auto& boundary : world.boundaries) add_boundary(boundary);
+      for (const world::boundary& boundary : world.boundaries) {
+         add_boundary(boundary, boundary.position);
+      }
 
       if (interaction_targets.creation_entity.is<world::boundary>()) {
-         add_boundary(interaction_targets.creation_entity.get<world::boundary>());
+         const world::boundary& boundary =
+            interaction_targets.creation_entity.get<world::boundary>();
+
+         add_boundary(boundary, boundary.position);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
-         for (const world::boundary& boundary :
-              interaction_targets.creation_entity.get<world::entity_group>().boundaries) {
-            add_boundary(boundary);
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
+         for (const world::boundary& boundary : group.boundaries) {
+            add_boundary(boundary, group.rotation * boundary.position + group.position);
          }
       }
    }
@@ -2139,18 +2366,20 @@ void renderer_impl::draw_world_meta_objects(
       const float2 viewport_size = {static_cast<float>(_swap_chain.width()),
                                     static_cast<float>(_swap_chain.height())};
 
-      const auto add_measurement = [&](const world::measurement& measurement) {
+      const auto add_measurement = [&](const world::measurement& measurement,
+                                       const float3& measurement_startWS,
+                                       const float3& measurement_endWS) {
          if (measurement.hidden) return;
 
-         const math::bounding_box bbox{.min = min(measurement.start, measurement.end),
-                                       .max = max(measurement.start, measurement.end)};
+         const math::bounding_box bbox{.min = min(measurement_startWS, measurement_endWS),
+                                       .max = max(measurement_startWS, measurement_endWS)};
 
          if (not intersects(view_frustum, bbox)) return;
 
-         _meta_draw_batcher.add_line_solid(measurement.start, measurement.end,
-                                           measurement_color);
+         _meta_draw_batcher.add_line_solid(measurement_startWS,
+                                           measurement_endWS, measurement_color);
 
-         const float3 centreWS = (measurement.start + measurement.end) * 0.5f;
+         const float3 centreWS = (measurement_startWS + measurement_endWS) * 0.5f;
          const float4 centrePS =
             camera.view_projection_matrix() * float4{centreWS, 1.0f};
          const float2 centreNDC = {centrePS.x / centrePS.w,
@@ -2168,7 +2397,7 @@ void renderer_impl::draw_world_meta_objects(
 
          const char* const text_end =
             fmt::format_to_n(text.data(), text.size(), "{:.2f}m",
-                             distance(measurement.start, measurement.end))
+                             distance(measurement_startWS, measurement_endWS))
                .out;
 
          const ImVec2 text_size = ImGui::CalcTextSize(text.data(), text_end);
@@ -2183,15 +2412,25 @@ void renderer_impl::draw_world_meta_objects(
                                                  0xff'ff'ff'ff, text.data(), text_end);
       };
 
-      for (auto& measurement : world.measurements) add_measurement(measurement);
+      for (const world::measurement& measurement : world.measurements) {
+         add_measurement(measurement, measurement.start, measurement.end);
+      }
 
       if (interaction_targets.creation_entity.is<world::measurement>()) {
-         add_measurement(interaction_targets.creation_entity.get<world::measurement>());
+         const world::measurement& measurement =
+            interaction_targets.creation_entity.get<world::measurement>();
+
+         add_measurement(measurement, measurement.start, measurement.end);
       }
       else if (interaction_targets.creation_entity.is<world::entity_group>()) {
+         const world::entity_group& group =
+            interaction_targets.creation_entity.get<world::entity_group>();
+
          for (const world::measurement& measurement :
               interaction_targets.creation_entity.get<world::entity_group>().measurements) {
-            add_measurement(measurement);
+            add_measurement(measurement,
+                            group.rotation * measurement.start + group.position,
+                            group.rotation * measurement.end + group.position);
          }
       }
    }
@@ -3111,16 +3350,11 @@ void renderer_impl::build_world_mesh_list(
    std::size_t constants_data_head = 0;
    const std::size_t constants_data_end = objects_constants_buffer_size;
 
-   std::array<std::span<const world::object>, 2> object_arrays = {world.objects};
-
-   if (creation_entity) {
-      if (creation_entity->is<world::object>()) {
-         object_arrays[1] = std::span{&creation_entity->get<world::object>(), 1};
-      }
-      else if (creation_entity->is<world::entity_group>()) {
-         object_arrays[1] = creation_entity->get<world::entity_group>().objects;
-      }
-   }
+   std::array<std::span<const world::object>, 2> object_arrays =
+      {creation_entity->is<world::object>()
+          ? std::span{&creation_entity->get<world::object>(), 1}
+          : std::span<const world::object>{},
+       world.objects};
 
    for (const std::span<const world::object>& objects : object_arrays) {
       for (const world::object& object : objects) {
@@ -3141,6 +3375,77 @@ void renderer_impl::build_world_mesh_list(
 
          constants.object_to_world = to_matrix(object.rotation);
          constants.object_to_world[3] = float4{object.position, 1.0f};
+
+         std::memcpy(constants_upload_data + object_constants_offset,
+                     &constants.object_to_world, sizeof(world_mesh_constants));
+
+         constants_data_head += sizeof(world_mesh_constants);
+
+         for (auto& mesh : model.parts) {
+            if (not mesh.material.is_transparent) {
+               _world_mesh_list.opaque[mesh.material.depth_prepass_flags].push_back(
+                  object_bbox, object_constants_address,
+                  mesh.material.constant_buffer_view,
+                  world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                             .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                     model.gpu_buffer.attributes_vertex_buffer_view},
+                             .index_count = mesh.index_count,
+                             .start_index = mesh.start_index,
+                             .start_vertex = mesh.start_vertex});
+            }
+            else {
+               _world_mesh_list.transparent.push_back(
+                  object_bbox, object_constants_address, object.position,
+                  mesh.material.flags, mesh.material.constant_buffer_view,
+                  world_mesh{.index_buffer_view = model.gpu_buffer.index_buffer_view,
+                             .vertex_buffer_views = {model.gpu_buffer.position_vertex_buffer_view,
+                                                     model.gpu_buffer.attributes_vertex_buffer_view},
+                             .index_count = mesh.index_count,
+                             .start_index = mesh.start_index,
+                             .start_vertex = mesh.start_vertex});
+            }
+         }
+
+         for (auto& cut : model.terrain_cuts) {
+            _terrain_cut_list.push_back(
+               {.bbox = object.rotation * cut.bbox + object.position,
+
+                .constant_buffer = object_constants_address,
+                .index_buffer_view = model.gpu_buffer.index_buffer_view,
+                .position_vertex_buffer_view = model.gpu_buffer.position_vertex_buffer_view,
+
+                .index_count = cut.index_count,
+                .start_index = cut.start_index,
+                .start_vertex = cut.start_vertex});
+         }
+      }
+   }
+
+   if (creation_entity->is<world::entity_group>()) {
+      const world::entity_group& group = creation_entity->get<world::entity_group>();
+
+      for (const world::object& object : group.objects) {
+         if (constants_data_head == constants_data_end) break;
+
+         auto& model = _model_manager[world_classes[object.class_handle].model_name];
+
+         if (not active_layers[object.layer] or object.hidden) continue;
+
+         const quaternion object_rotation = group.rotation * object.rotation;
+         const float3 object_positionWS =
+            group.rotation * object.position + group.position;
+
+         const math::bounding_box object_bbox =
+            object_rotation * model.bbox + object_positionWS;
+
+         const std::size_t object_constants_offset = constants_data_head;
+         const gpu_virtual_address object_constants_address =
+            constants_upload_gpu_address + object_constants_offset;
+
+         world_mesh_constants constants;
+
+         constants.object_to_world = to_matrix(object_rotation);
+         constants.object_to_world[3] = float4{object_positionWS, 1.0f};
 
          std::memcpy(constants_upload_data + object_constants_offset,
                      &constants.object_to_world, sizeof(world_mesh_constants));

@@ -224,6 +224,7 @@
     <ClCompile Include="src\edits\delete_branch_weight.cpp" />
     <ClCompile Include="src\edits\add_branch_weight.cpp" />
     <ClCompile Include="src\edits\set_class_name.cpp" />
+    <ClCompile Include="src\world\utility\entity_group_utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -519,6 +520,8 @@
     <ClInclude Include="src\edits\add_branch_weight.hpp" />
     <ClInclude Include="src\edits\set_class_name.hpp" />
     <ClInclude Include="src\world\entity_group.hpp" />
+    <ClInclude Include="src\world\utility\entity_group_utilities.hpp" />
+
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />
