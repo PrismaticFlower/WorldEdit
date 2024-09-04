@@ -27,17 +27,17 @@ void main(uint2 DTid : SV_DispatchThreadID, uint group_index : SV_GroupIndex) { 
 
    GroupMemoryBarrierWithGroupSync();
 
-   if (DTid.x >= input.resolution.x || DTid.y >= input.resolution.y) return;
+   if (DTid.x < input.resolution.x && DTid.y < input.resolution.y) {
+      const float depth = depth_texture[DTid.xy].r;
 
-   const float depth = depth_texture[DTid.xy].r;
+      if (depth != clear_depth) {
+         const float wave_min_depth = WaveActiveMin(depth);
+         const float wave_max_depth = WaveActiveMax(depth);
 
-   if (depth != clear_depth) {
-      const float wave_min_depth = WaveActiveMin(depth);
-      const float wave_max_depth = WaveActiveMax(depth);
-
-      if (WaveIsFirstLane()) {
-         InterlockedMin(shared_min_depth, asuint(wave_min_depth));
-         InterlockedMax(shared_max_depth, asuint(wave_max_depth));
+         if (WaveIsFirstLane()) {
+            InterlockedMin(shared_min_depth, asuint(wave_min_depth));
+            InterlockedMax(shared_max_depth, asuint(wave_max_depth));
+         }
       }
    }
 
