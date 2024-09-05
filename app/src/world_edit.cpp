@@ -1766,6 +1766,299 @@ void world_edit::place_creation_entity() noexcept
          _entity_creation_context.measurement_started = true;
       }
    }
+   else if (_interaction_targets.creation_entity.is<world::entity_group>()) {
+      const world::entity_group& group =
+         _interaction_targets.creation_entity.get<world::entity_group>();
+
+      bool is_transparent_edit = false;
+
+      for (const world::object& object : group.objects) {
+         if (_world.objects.size() == _world.objects.max_size()) {
+            report_limit_reached("Max objects ({}) Reached",
+                                 _world.objects.max_size());
+
+            break;
+         }
+
+         world::object new_object = object;
+
+         new_object.rotation = group.rotation * new_object.rotation;
+         new_object.position = group.rotation * new_object.position + group.position;
+         new_object.name = world::create_unique_name(_world.objects, new_object.name);
+         new_object.id = _world.next_id.objects.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object),
+                                                           _object_classes),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::light& light : group.lights) {
+         if (_world.lights.size() == _world.lights.max_size()) {
+            report_limit_reached("Max lights ({}) Reached", _world.lights.max_size());
+
+            break;
+         }
+
+         world::light new_light = light;
+
+         new_light.rotation = group.rotation * new_light.rotation;
+         new_light.position = group.rotation * new_light.position + group.position;
+         new_light.region_rotation = group.rotation * new_light.region_rotation;
+         new_light.name = world::create_unique_name(_world.lights, new_light.name);
+         new_light.id = _world.next_id.lights.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::path& path : group.paths) {
+         if (_world.paths.size() == _world.paths.max_size()) {
+            report_limit_reached("Max paths ({}) Reached", _world.paths.max_size());
+
+            break;
+         }
+
+         world::path new_path = path;
+
+         for (world::path::node& node : new_path.nodes) {
+            node.rotation = group.rotation * node.rotation;
+            node.position = group.rotation * node.position + group.position;
+         }
+
+         new_path.name = world::create_unique_name(_world.paths, new_path.name);
+         new_path.id = _world.next_id.paths.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::region& region : group.regions) {
+         if (_world.regions.size() == _world.regions.max_size()) {
+            report_limit_reached("Max regions ({}) Reached",
+                                 _world.regions.max_size());
+
+            break;
+         }
+
+         world::region new_region = region;
+
+         new_region.rotation = group.rotation * new_region.rotation;
+         new_region.position = group.rotation * new_region.position + group.position;
+         new_region.name = world::create_unique_name(_world.regions, _world.lights,
+                                                     new_region.name);
+         new_region.id = _world.next_id.regions.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::sector& sector : group.sectors) {
+         if (_world.sectors.size() == _world.sectors.max_size()) {
+            report_limit_reached("Max sectors ({}) Reached",
+                                 _world.sectors.max_size());
+
+            break;
+         }
+
+         world::sector new_sector = sector;
+
+         float2 sector_centre = {0.0f, 0.0f};
+
+         for (const float2& point : new_sector.points) {
+            sector_centre += (point);
+         }
+
+         sector_centre /= static_cast<float>(new_sector.points.size());
+
+         const float3 rotated_sector_centre =
+            group.rotation * float3{sector_centre.x, 0.0f, sector_centre.y};
+
+         std::vector<float2> new_points = new_sector.points;
+
+         for (float2& point : new_sector.points) {
+            const float3 rotated_point =
+               group.rotation *
+               float3{point.x - sector_centre.x, 0.0f, point.y - sector_centre.y};
+
+            point = float2{rotated_point.x, rotated_point.z} +
+                    float2{rotated_sector_centre.x, rotated_sector_centre.z};
+         }
+
+         new_sector.base += group.position.y;
+         new_sector.name = world::create_unique_name(_world.sectors, new_sector.name);
+         new_sector.id = _world.next_id.sectors.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::portal& portal : group.portals) {
+         if (_world.portals.size() == _world.portals.max_size()) {
+            report_limit_reached("Max portals ({}) Reached",
+                                 _world.portals.max_size());
+
+            break;
+         }
+
+         world::portal new_portal = portal;
+
+         new_portal.rotation = group.rotation * new_portal.rotation;
+         new_portal.position = group.rotation * new_portal.position + group.position;
+         new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
+         new_portal.id = _world.next_id.portals.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::hintnode& hintnode : group.hintnodes) {
+         if (_world.hintnodes.size() == _world.hintnodes.max_size()) {
+            report_limit_reached("Max hintnodes ({}) Reached",
+                                 _world.hintnodes.max_size());
+
+            break;
+         }
+
+         world::hintnode new_hintnode = hintnode;
+
+         new_hintnode.rotation = group.rotation * new_hintnode.rotation;
+         new_hintnode.position = group.rotation * new_hintnode.position + group.position;
+         new_hintnode.name =
+            world::create_unique_name(_world.hintnodes, new_hintnode.name);
+         new_hintnode.id = _world.next_id.hintnodes.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::barrier& barrier : group.barriers) {
+         if (_world.barriers.size() == _world.barriers.max_size()) {
+            report_limit_reached("Max barriers ({}) Reached",
+                                 _world.barriers.max_size());
+
+            break;
+         }
+
+         world::barrier new_barrier = barrier;
+
+         new_barrier.rotation_angle = group.rotation_angle + new_barrier.rotation_angle;
+         new_barrier.position = group.rotation * new_barrier.position + group.position;
+         new_barrier.name =
+            world::create_unique_name(_world.barriers, new_barrier.name);
+         new_barrier.id = _world.next_id.barriers.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      if (_world.planning_hubs.size() + group.planning_hubs.size() >
+          _world.planning_hubs.max_size()) {
+         report_limit_reached("Max AI planning hubs ({}) Reached",
+                              _world.planning_hubs.max_size());
+      }
+      else if (_world.planning_connections.size() + group.planning_connections.size() >
+               _world.planning_connections.max_size()) {
+         report_limit_reached("Max AI planning connections ({}) Reached",
+                              _world.planning_connections.max_size());
+      }
+      else {
+         const uint32 planning_hub_base_index =
+            static_cast<uint32>(_world.planning_hubs.size());
+         const uint32 planning_connection_base_index =
+            static_cast<uint32>(_world.planning_connections.size());
+
+         for (const world::planning_hub& hub : group.planning_hubs) {
+            world::planning_hub new_hub = hub;
+
+            for (world::planning_branch_weights& weight : new_hub.weights) {
+               weight.hub_index += planning_hub_base_index;
+               weight.connection_index += planning_connection_base_index;
+            }
+
+            new_hub.position = group.rotation * new_hub.position + group.position;
+            new_hub.name =
+               world::create_unique_name(_world.planning_hubs, new_hub.name);
+            new_hub.id = _world.next_id.planning_hubs.aquire();
+
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
+                                    _edit_context,
+                                    {.transparent =
+                                        std::exchange(is_transparent_edit, true)});
+         }
+
+         for (const world::planning_connection& connection : group.planning_connections) {
+            world::planning_connection new_connection = connection;
+
+            new_connection.start_hub_index += planning_hub_base_index;
+            new_connection.end_hub_index += planning_hub_base_index;
+            new_connection.name = world::create_unique_name(_world.planning_connections,
+                                                            new_connection.name);
+            new_connection.id = _world.next_id.planning_connections.aquire();
+
+            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
+                                    _edit_context,
+                                    {.transparent =
+                                        std::exchange(is_transparent_edit, true)});
+         }
+      }
+
+      for (const world::boundary& boundary : group.boundaries) {
+         if (_world.boundaries.size() == _world.boundaries.max_size()) {
+            report_limit_reached("Max boundarys ({}) Reached",
+                                 _world.boundaries.max_size());
+
+            break;
+         }
+
+         world::boundary new_boundary = boundary;
+
+         new_boundary.position = group.rotation * new_boundary.position + group.position;
+         new_boundary.name =
+            world::create_unique_name(_world.boundaries, new_boundary.name);
+         new_boundary.id = _world.next_id.boundaries.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::measurement& measurement : group.measurements) {
+         if (_world.measurements.size() == _world.measurements.max_size()) {
+            report_limit_reached("Max measurements ({}) Reached",
+                                 _world.measurements.max_size());
+
+            break;
+         }
+
+         world::measurement new_measurement = measurement;
+
+         new_measurement.start = group.rotation * new_measurement.start + group.position;
+         new_measurement.end = group.rotation * new_measurement.end + group.position;
+         new_measurement.id = _world.next_id.measurements.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+   }
 
    _entity_creation_config.placement_mode = placement_mode::cursor;
 }
@@ -1855,6 +2148,9 @@ void world_edit::place_creation_entity_at_camera() noexcept
       return;
    }
    else if (_interaction_targets.creation_entity.is<world::measurement>()) {
+      return;
+   }
+   else if (_interaction_targets.creation_entity.is<world::entity_group>()) {
       return;
    }
 
