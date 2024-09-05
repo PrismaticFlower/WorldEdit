@@ -2,13 +2,13 @@
 #include "world_utilities.hpp"
 #include "math/distance_funcs.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
+#include <charconv>
 #include <cstring>
 
 #include <fmt/core.h>
-
-#include <absl/container/flat_hash_set.h>
 
 namespace we::world {
 
@@ -51,7 +51,7 @@ bool is_name_unique(const std::span<const T> entities,
                     const std::string_view reference_name) noexcept
 {
    for (auto& entity : entities) {
-      if (entity.name == reference_name) return false;
+      if (string::iequals(entity.name, reference_name)) return false;
    }
 
    return true;
@@ -63,7 +63,7 @@ bool is_light_region_name_unique(const std::span<const light> lights,
    for (auto& light : lights) {
       if (not is_region_light(light)) continue;
 
-      if (light.region_name == reference_name) return false;
+      if (string::iequals(light.region_name, reference_name)) return false;
    }
 
    return true;
@@ -73,9 +73,10 @@ bool is_light_name_and_region_name_unique(const std::span<const light> lights,
                                           const std::string_view reference_name) noexcept
 {
    for (auto& light : lights) {
-      if (light.name == reference_name) return false;
+      if (string::iequals(light.name, reference_name)) return false;
 
-      if (is_region_light(light) and light.region_name == reference_name) {
+      if (is_region_light(light) and
+          string::iequals(light.region_name, reference_name)) {
          return false;
       }
    }
@@ -93,21 +94,28 @@ auto create_unique_name_impl(const std::span<const T> entities,
       return std::string{reference_name};
    }
 
-   absl::flat_hash_set<std::string_view> used_names;
-
-   used_names.reserve(entities.size());
-
-   for (const auto& entity : entities) used_names.emplace(entity.name);
-
    const std::string_view base_name = create_base_name<T>(reference_name);
 
-   uint32 index = 0;
+   uint64 max_index = 0;
 
-   while (true) {
-      std::string candidate_name = fmt::format("{}{}", base_name, index++);
+   for (auto& entity : entities) {
+      if (string::istarts_with(entity.name, base_name)) {
+         const std::string_view name_index =
+            std::string_view{entity.name}.substr(base_name.size());
 
-      if (not used_names.contains(candidate_name)) return candidate_name;
-   };
+         uint64 index = 0;
+
+         if (std::from_chars_result result =
+                std::from_chars(name_index.data(),
+                                name_index.data() + name_index.size(), index);
+             result.ec == std::errc{} and
+             result.ptr == name_index.data() + name_index.size()) {
+            max_index = std::max(max_index, index);
+         }
+      }
+   }
+
+   return fmt::format("{}{}", base_name, max_index + 1);
 }
 
 }
@@ -201,24 +209,47 @@ auto create_unique_name(const std::span<const region> regions,
       return std::string{reference_name};
    }
 
-   absl::flat_hash_set<std::string_view> used_names;
-
-   used_names.reserve(regions.size() + lights.size());
-
-   for (const auto& region : regions) used_names.emplace(region.name);
-   for (const auto& light : lights) {
-      if (is_region_light(light)) used_names.emplace(light.region_name);
-   }
-
    const std::string_view base_name = create_base_name<region>(reference_name);
 
-   uint32 index = 0;
+   uint64 max_index = 0;
 
-   while (true) {
-      std::string candidate_name = fmt::format("{}{}", base_name, index++);
+   for (const region& region : regions) {
+      if (string::istarts_with(region.name, base_name)) {
+         const std::string_view name_index =
+            std::string_view{region.name}.substr(base_name.size());
 
-      if (not used_names.contains(candidate_name)) return candidate_name;
+         uint64 index = 0;
+
+         if (std::from_chars_result result =
+                std::from_chars(name_index.data(),
+                                name_index.data() + name_index.size(), index);
+             result.ec == std::errc{} and
+             result.ptr == name_index.data() + name_index.size()) {
+            max_index = std::max(max_index, index);
+         }
+      }
    }
+
+   for (const light& light : lights) {
+      if (not is_region_light(light)) continue;
+
+      if (string::istarts_with(light.region_name, base_name)) {
+         const std::string_view name_index =
+            std::string_view{light.region_name}.substr(base_name.size());
+
+         uint64 index = 0;
+
+         if (std::from_chars_result result =
+                std::from_chars(name_index.data(),
+                                name_index.data() + name_index.size(), index);
+             result.ec == std::errc{} and
+             result.ptr == name_index.data() + name_index.size()) {
+            max_index = std::max(max_index, index);
+         }
+      }
+   }
+
+   return fmt::format("{}{}", base_name, max_index + 1);
 }
 
 auto create_unique_light_region_name(const std::span<const light> lights,
@@ -231,26 +262,61 @@ auto create_unique_light_region_name(const std::span<const light> lights,
       return std::string{reference_name};
    }
 
-   absl::flat_hash_set<std::string_view> used_names;
-
-   used_names.reserve(lights.size());
-
-   for (const auto& light : lights) {
-      used_names.emplace(light.name);
-      if (is_region_light(light)) used_names.emplace(light.region_name);
-   }
-   for (const auto& region : regions) used_names.emplace(region.name);
-
+   uint64 max_index = 0;
    const std::string_view base_name =
       create_base_name<light>(reference_name, "LightRegion");
 
-   uint32 index = 0;
+   for (const light& light : lights) {
+      if (string::istarts_with(light.name, base_name)) {
+         const std::string_view name_index =
+            std::string_view{light.name}.substr(base_name.size());
 
-   while (true) {
-      std::string candidate_name = fmt::format("{}{}", base_name, index++);
+         uint64 index = 0;
 
-      if (not used_names.contains(candidate_name)) return candidate_name;
-   };
+         if (std::from_chars_result result =
+                std::from_chars(name_index.data(),
+                                name_index.data() + name_index.size(), index);
+             result.ec == std::errc{} and
+             result.ptr == name_index.data() + name_index.size()) {
+            max_index = std::max(max_index, index);
+         }
+      }
+
+      if (is_region_light(light) and
+          string::istarts_with(light.region_name, base_name)) {
+         const std::string_view name_index =
+            std::string_view{light.region_name}.substr(base_name.size());
+
+         uint64 index = 0;
+
+         if (std::from_chars_result result =
+                std::from_chars(name_index.data(),
+                                name_index.data() + name_index.size(), index);
+             result.ec == std::errc{} and
+             result.ptr == name_index.data() + name_index.size()) {
+            max_index = std::max(max_index, index);
+         }
+      }
+   }
+
+   for (const region& region : regions) {
+      if (string::istarts_with(region.name, base_name)) {
+         const std::string_view name_index =
+            std::string_view{region.name}.substr(base_name.size());
+
+         uint64 index = 0;
+
+         if (std::from_chars_result result =
+                std::from_chars(name_index.data(),
+                                name_index.data() + name_index.size(), index);
+             result.ec == std::errc{} and
+             result.ptr == name_index.data() + name_index.size()) {
+            max_index = std::max(max_index, index);
+         }
+      }
+   }
+
+   return fmt::format("{}{}", base_name, max_index + 1);
 }
 
 bool is_directional_light(const light& light) noexcept

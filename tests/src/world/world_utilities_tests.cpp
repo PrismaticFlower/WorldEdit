@@ -81,12 +81,12 @@ TEST_CASE("world utilities create_unique_name", "[World][Utilities]")
                                                  object{.name = "62"s}}}};
 
    REQUIRE(create_unique_name(world.objects, "Amazing Object 32") ==
-           "Amazing Object 0");
+           "Amazing Object 33");
    REQUIRE(create_unique_name(world.objects, "Amazing Object") ==
            "Amazing Object");
    REQUIRE(create_unique_name(world.objects, "Amazing Object 31") ==
            "Amazing Object 31");
-   REQUIRE(create_unique_name(world.objects, "62") == "Object0");
+   REQUIRE(create_unique_name(world.objects, "62") == "Object1");
    REQUIRE(create_unique_name(world.objects, "63") == "63");
    REQUIRE(create_unique_name(world.objects, "") == "");
 }
@@ -104,7 +104,7 @@ TEST_CASE("world utilities create_unique_light_region_name",
    REQUIRE(create_unique_light_region_name(world.lights, world.regions,
                                            "Region0") == "Region1");
    REQUIRE(create_unique_light_region_name(world.lights, world.regions, "") ==
-           "LightRegion0");
+           "LightRegion1");
    REQUIRE(create_unique_light_region_name(world.lights, world.regions,
                                            "Region1") == "Region1");
 }
