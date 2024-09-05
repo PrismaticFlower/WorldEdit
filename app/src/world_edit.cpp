@@ -1924,8 +1924,6 @@ void world_edit::place_creation_entity() noexcept
          const float3 rotated_sector_centre =
             group.rotation * float3{sector_centre.x, 0.0f, sector_centre.y};
 
-         std::vector<float2> new_points = new_sector.points;
-
          for (float2& point : new_sector.points) {
             const float3 rotated_point =
                group.rotation *
