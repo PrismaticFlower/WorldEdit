@@ -1930,7 +1930,8 @@ void world_edit::place_creation_entity() noexcept
                float3{point.x - sector_centre.x, 0.0f, point.y - sector_centre.y};
 
             point = float2{rotated_point.x, rotated_point.z} +
-                    float2{rotated_sector_centre.x, rotated_sector_centre.z};
+                    float2{rotated_sector_centre.x, rotated_sector_centre.z} +
+                    float2{group.position.x, group.position.z};
          }
 
          new_sector.base += group.position.y;
