@@ -1767,19 +1767,88 @@ void world_edit::place_creation_entity() noexcept
       }
    }
    else if (_interaction_targets.creation_entity.is<world::entity_group>()) {
+
       const world::entity_group& group =
          _interaction_targets.creation_entity.get<world::entity_group>();
+
+      if (_world.objects.size() + group.objects.size() > _world.objects.max_size()) {
+         report_limit_reached("Max objects ({}) Reached", _world.objects.max_size());
+
+         return;
+      }
+      else if (_world.lights.size() + group.lights.size() > _world.lights.max_size()) {
+         report_limit_reached("Max lights ({}) Reached", _world.lights.max_size());
+
+         return;
+      }
+      else if (_world.paths.size() + group.paths.size() > _world.paths.max_size()) {
+         report_limit_reached("Max paths ({}) Reached", _world.paths.max_size());
+
+         return;
+      }
+      else if (_world.regions.size() + group.regions.size() >
+               _world.regions.max_size()) {
+         report_limit_reached("Max regions ({}) Reached", _world.regions.max_size());
+
+         return;
+      }
+      else if (_world.sectors.size() + group.sectors.size() >
+               _world.sectors.max_size()) {
+         report_limit_reached("Max sectors ({}) Reached", _world.sectors.max_size());
+
+         return;
+      }
+      else if (_world.portals.size() + group.portals.size() >
+               _world.portals.max_size()) {
+         report_limit_reached("Max portals ({}) Reached", _world.portals.max_size());
+
+         return;
+      }
+      else if (_world.hintnodes.size() + group.hintnodes.size() >
+               _world.hintnodes.max_size()) {
+         report_limit_reached("Max hintnodes ({}) Reached",
+                              _world.hintnodes.max_size());
+
+         return;
+      }
+      else if (_world.barriers.size() + group.barriers.size() >
+               _world.barriers.max_size()) {
+         report_limit_reached("Max barriers ({}) Reached", _world.barriers.max_size());
+
+         return;
+      }
+      else if (_world.planning_hubs.size() + group.planning_hubs.size() >
+               _world.planning_hubs.max_size()) {
+         report_limit_reached("Max AI planning hubs ({}) Reached",
+                              _world.planning_hubs.max_size());
+
+         return;
+      }
+      else if (_world.planning_connections.size() + group.planning_connections.size() >
+               _world.planning_connections.max_size()) {
+         report_limit_reached("Max AI planning connections ({}) Reached",
+                              _world.planning_connections.max_size());
+
+         return;
+      }
+      else if (_world.boundaries.size() + group.boundaries.size() >
+               _world.boundaries.max_size()) {
+         report_limit_reached("Max boundarys ({}) Reached",
+                              _world.boundaries.max_size());
+
+         return;
+      }
+      else if (_world.measurements.size() + group.measurements.size() >
+               _world.measurements.max_size()) {
+         report_limit_reached("Max measurements ({}) Reached",
+                              _world.measurements.max_size());
+
+         return;
+      }
 
       bool is_transparent_edit = false;
 
       for (const world::object& object : group.objects) {
-         if (_world.objects.size() == _world.objects.max_size()) {
-            report_limit_reached("Max objects ({}) Reached",
-                                 _world.objects.max_size());
-
-            break;
-         }
-
          world::object new_object = object;
 
          new_object.rotation = group.rotation * new_object.rotation;
@@ -1795,12 +1864,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::light& light : group.lights) {
-         if (_world.lights.size() == _world.lights.max_size()) {
-            report_limit_reached("Max lights ({}) Reached", _world.lights.max_size());
-
-            break;
-         }
-
          world::light new_light = light;
 
          new_light.rotation = group.rotation * new_light.rotation;
@@ -1816,12 +1879,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::path& path : group.paths) {
-         if (_world.paths.size() == _world.paths.max_size()) {
-            report_limit_reached("Max paths ({}) Reached", _world.paths.max_size());
-
-            break;
-         }
-
          world::path new_path = path;
 
          for (world::path::node& node : new_path.nodes) {
@@ -1839,13 +1896,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::region& region : group.regions) {
-         if (_world.regions.size() == _world.regions.max_size()) {
-            report_limit_reached("Max regions ({}) Reached",
-                                 _world.regions.max_size());
-
-            break;
-         }
-
          world::region new_region = region;
 
          new_region.rotation = group.rotation * new_region.rotation;
@@ -1861,13 +1911,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::sector& sector : group.sectors) {
-         if (_world.sectors.size() == _world.sectors.max_size()) {
-            report_limit_reached("Max sectors ({}) Reached",
-                                 _world.sectors.max_size());
-
-            break;
-         }
-
          world::sector new_sector = sector;
 
          float2 sector_centre = {0.0f, 0.0f};
@@ -1903,13 +1946,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::portal& portal : group.portals) {
-         if (_world.portals.size() == _world.portals.max_size()) {
-            report_limit_reached("Max portals ({}) Reached",
-                                 _world.portals.max_size());
-
-            break;
-         }
-
          world::portal new_portal = portal;
 
          new_portal.rotation = group.rotation * new_portal.rotation;
@@ -1924,13 +1960,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::hintnode& hintnode : group.hintnodes) {
-         if (_world.hintnodes.size() == _world.hintnodes.max_size()) {
-            report_limit_reached("Max hintnodes ({}) Reached",
-                                 _world.hintnodes.max_size());
-
-            break;
-         }
-
          world::hintnode new_hintnode = hintnode;
 
          new_hintnode.rotation = group.rotation * new_hintnode.rotation;
@@ -1946,13 +1975,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::barrier& barrier : group.barriers) {
-         if (_world.barriers.size() == _world.barriers.max_size()) {
-            report_limit_reached("Max barriers ({}) Reached",
-                                 _world.barriers.max_size());
-
-            break;
-         }
-
          world::barrier new_barrier = barrier;
 
          new_barrier.rotation_angle = group.rotation_angle + new_barrier.rotation_angle;
@@ -1967,65 +1989,45 @@ void world_edit::place_creation_entity() noexcept
                                      std::exchange(is_transparent_edit, true)});
       }
 
-      if (_world.planning_hubs.size() + group.planning_hubs.size() >
-          _world.planning_hubs.max_size()) {
-         report_limit_reached("Max AI planning hubs ({}) Reached",
-                              _world.planning_hubs.max_size());
-      }
-      else if (_world.planning_connections.size() + group.planning_connections.size() >
-               _world.planning_connections.max_size()) {
-         report_limit_reached("Max AI planning connections ({}) Reached",
-                              _world.planning_connections.max_size());
-      }
-      else {
-         const uint32 planning_hub_base_index =
-            static_cast<uint32>(_world.planning_hubs.size());
-         const uint32 planning_connection_base_index =
-            static_cast<uint32>(_world.planning_connections.size());
+      const uint32 planning_hub_base_index =
+         static_cast<uint32>(_world.planning_hubs.size());
+      const uint32 planning_connection_base_index =
+         static_cast<uint32>(_world.planning_connections.size());
 
-         for (const world::planning_hub& hub : group.planning_hubs) {
-            world::planning_hub new_hub = hub;
+      for (const world::planning_hub& hub : group.planning_hubs) {
+         world::planning_hub new_hub = hub;
 
-            for (world::planning_branch_weights& weight : new_hub.weights) {
-               weight.hub_index += planning_hub_base_index;
-               weight.connection_index += planning_connection_base_index;
-            }
-
-            new_hub.position = group.rotation * new_hub.position + group.position;
-            new_hub.name =
-               world::create_unique_name(_world.planning_hubs, new_hub.name);
-            new_hub.id = _world.next_id.planning_hubs.aquire();
-
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
-                                    _edit_context,
-                                    {.transparent =
-                                        std::exchange(is_transparent_edit, true)});
+         for (world::planning_branch_weights& weight : new_hub.weights) {
+            weight.hub_index += planning_hub_base_index;
+            weight.connection_index += planning_connection_base_index;
          }
 
-         for (const world::planning_connection& connection : group.planning_connections) {
-            world::planning_connection new_connection = connection;
+         new_hub.position = group.rotation * new_hub.position + group.position;
+         new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
+         new_hub.id = _world.next_id.planning_hubs.aquire();
 
-            new_connection.start_hub_index += planning_hub_base_index;
-            new_connection.end_hub_index += planning_hub_base_index;
-            new_connection.name = world::create_unique_name(_world.planning_connections,
-                                                            new_connection.name);
-            new_connection.id = _world.next_id.planning_connections.aquire();
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
 
-            _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
-                                    _edit_context,
-                                    {.transparent =
-                                        std::exchange(is_transparent_edit, true)});
-         }
+      for (const world::planning_connection& connection : group.planning_connections) {
+         world::planning_connection new_connection = connection;
+
+         new_connection.start_hub_index += planning_hub_base_index;
+         new_connection.end_hub_index += planning_hub_base_index;
+         new_connection.name = world::create_unique_name(_world.planning_connections,
+                                                         new_connection.name);
+         new_connection.id = _world.next_id.planning_connections.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
       }
 
       for (const world::boundary& boundary : group.boundaries) {
-         if (_world.boundaries.size() == _world.boundaries.max_size()) {
-            report_limit_reached("Max boundarys ({}) Reached",
-                                 _world.boundaries.max_size());
-
-            break;
-         }
-
          world::boundary new_boundary = boundary;
 
          new_boundary.position = group.rotation * new_boundary.position + group.position;
@@ -2040,13 +2042,6 @@ void world_edit::place_creation_entity() noexcept
       }
 
       for (const world::measurement& measurement : group.measurements) {
-         if (_world.measurements.size() == _world.measurements.max_size()) {
-            report_limit_reached("Max measurements ({}) Reached",
-                                 _world.measurements.max_size());
-
-            break;
-         }
-
          world::measurement new_measurement = measurement;
 
          new_measurement.start = group.rotation * new_measurement.start + group.position;
