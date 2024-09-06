@@ -26,6 +26,7 @@
 #include "utility/string_ops.hpp"
 #include "world/io/load.hpp"
 #include "world/io/save.hpp"
+#include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
 #include "world/utility/mouse_pick_measurement.hpp"
@@ -1846,6 +1847,15 @@ void world_edit::place_creation_entity() noexcept
          return;
       }
 
+      const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
+      const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
+      const uint32 region_base_index = static_cast<uint32>(_world.regions.size());
+      const uint32 sector_base_index = static_cast<uint32>(_world.sectors.size());
+      const uint32 planning_hub_base_index =
+         static_cast<uint32>(_world.planning_hubs.size());
+      const uint32 planning_connection_base_index =
+         static_cast<uint32>(_world.planning_connections.size());
+
       bool is_transparent_edit = false;
 
       for (const world::object& object : group.objects) {
@@ -1934,6 +1944,11 @@ void world_edit::place_creation_entity() noexcept
                     float2{group.position.x, group.position.z};
          }
 
+         for (std::string& object : new_sector.objects) {
+            object = world::get_placed_entity_name(object, _world.objects,
+                                                   group, object_base_index);
+         }
+
          new_sector.base += group.position.y;
          new_sector.name = world::create_unique_name(_world.sectors, new_sector.name);
          new_sector.id = _world.next_id.sectors.aquire();
@@ -1946,6 +1961,18 @@ void world_edit::place_creation_entity() noexcept
 
       for (const world::portal& portal : group.portals) {
          world::portal new_portal = portal;
+
+         if (not new_portal.sector1.empty()) {
+            new_portal.sector1 =
+               world::get_placed_entity_name(new_portal.sector1, _world.sectors,
+                                             group, sector_base_index);
+         }
+
+         if (not new_portal.sector2.empty()) {
+            new_portal.sector2 =
+               world::get_placed_entity_name(new_portal.sector2, _world.sectors,
+                                             group, sector_base_index);
+         }
 
          new_portal.rotation = group.rotation * new_portal.rotation;
          new_portal.position = group.rotation * new_portal.position + group.position;
@@ -1960,6 +1987,12 @@ void world_edit::place_creation_entity() noexcept
 
       for (const world::hintnode& hintnode : group.hintnodes) {
          world::hintnode new_hintnode = hintnode;
+
+         if (not new_hintnode.command_post.empty()) {
+            new_hintnode.command_post =
+               world::get_placed_entity_name(new_hintnode.command_post, _world.objects,
+                                             group, object_base_index);
+         }
 
          new_hintnode.rotation = group.rotation * new_hintnode.rotation;
          new_hintnode.position = group.rotation * new_hintnode.position + group.position;
@@ -1987,11 +2020,6 @@ void world_edit::place_creation_entity() noexcept
                                  {.transparent =
                                      std::exchange(is_transparent_edit, true)});
       }
-
-      const uint32 planning_hub_base_index =
-         static_cast<uint32>(_world.planning_hubs.size());
-      const uint32 planning_connection_base_index =
-         static_cast<uint32>(_world.planning_connections.size());
 
       for (const world::planning_hub& hub : group.planning_hubs) {
          world::planning_hub new_hub = hub;
@@ -2051,6 +2079,55 @@ void world_edit::place_creation_entity() noexcept
                                  _edit_context,
                                  {.transparent =
                                      std::exchange(is_transparent_edit, true)});
+      }
+
+      for (uint32 object_index = object_base_index;
+           object_index < _world.objects.size(); ++object_index) {
+         world::object& object = _world.objects[object_index];
+
+         for (uint32 prop_index = 0;
+              prop_index < object.instance_properties.size(); ++prop_index) {
+            const world::instance_property& prop =
+               object.instance_properties[prop_index];
+
+            if (prop.value.empty()) continue;
+
+            std::string_view new_value;
+
+            if (string::iequals("ControlZone", prop.key)) {
+               new_value = world::get_placed_entity_name(prop.value, _world.objects,
+                                                         group, object_base_index);
+            }
+            else if (string::icontains(prop.key, "Path")) {
+               new_value = world::get_placed_entity_name(prop.value, _world.paths,
+                                                         group, path_base_index);
+            }
+            else if (string::icontains(prop.key, "Region")) {
+               for (uint32 i = 0; i < group.regions.size(); ++i) {
+                  if (not string::iequals(prop.value, group.regions[i].description)) {
+                     continue;
+                  }
+
+                  world::region& region = _world.regions[region_base_index + i];
+
+                  if (not string::iequals(region.name, region.description)) {
+                     _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                                   region.name),
+                                             _edit_context, {.transparent = true});
+                  }
+
+                  new_value = region.description;
+               }
+            }
+
+            if (not new_value.empty()) {
+               _edit_stack_world
+                  .apply(edits::make_set_vector_value(&object.instance_properties, prop_index,
+                                                      &world::instance_property::value,
+                                                      std::string{new_value}),
+                         _edit_context, {.transparent = true});
+            }
+         }
       }
    }
 
