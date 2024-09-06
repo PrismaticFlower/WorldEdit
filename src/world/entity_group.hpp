@@ -21,6 +21,8 @@ struct entity_group {
    float3 position;
    float rotation_angle = 0.0f;
 
+   int16 layer = 0;
+
    std::vector<object> objects;
    std::vector<light> lights;
    std::vector<path> paths;

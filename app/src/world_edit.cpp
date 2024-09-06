@@ -1861,6 +1861,7 @@ void world_edit::place_creation_entity() noexcept
       for (const world::object& object : group.objects) {
          world::object new_object = object;
 
+         new_object.layer = group.layer;
          new_object.rotation = group.rotation * new_object.rotation;
          new_object.position = group.rotation * new_object.position + group.position;
          new_object.name = world::create_unique_name(_world.objects, new_object.name);
@@ -1876,6 +1877,7 @@ void world_edit::place_creation_entity() noexcept
       for (const world::light& light : group.lights) {
          world::light new_light = light;
 
+         new_light.layer = group.layer;
          new_light.rotation = group.rotation * new_light.rotation;
          new_light.position = group.rotation * new_light.position + group.position;
          new_light.region_rotation = group.rotation * new_light.region_rotation;
@@ -1896,6 +1898,7 @@ void world_edit::place_creation_entity() noexcept
             node.position = group.rotation * node.position + group.position;
          }
 
+         new_path.layer = group.layer;
          new_path.name = world::create_unique_name(_world.paths, new_path.name);
          new_path.id = _world.next_id.paths.aquire();
 
@@ -1908,6 +1911,7 @@ void world_edit::place_creation_entity() noexcept
       for (const world::region& region : group.regions) {
          world::region new_region = region;
 
+         new_region.layer = group.layer;
          new_region.rotation = group.rotation * new_region.rotation;
          new_region.position = group.rotation * new_region.position + group.position;
          new_region.name = world::create_unique_name(_world.regions, _world.lights,
@@ -1994,6 +1998,7 @@ void world_edit::place_creation_entity() noexcept
                                              group, object_base_index);
          }
 
+         new_hintnode.layer = group.layer;
          new_hintnode.rotation = group.rotation * new_hintnode.rotation;
          new_hintnode.position = group.rotation * new_hintnode.position + group.position;
          new_hintnode.name =
@@ -2129,6 +2134,8 @@ void world_edit::place_creation_entity() noexcept
             }
          }
       }
+
+      _last_created_entities.last_layer = group.layer;
    }
 
    _entity_creation_config.placement_mode = placement_mode::cursor;
