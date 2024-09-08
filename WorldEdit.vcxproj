@@ -364,6 +364,7 @@
     <ClCompile Include="src\world\interaction_context.cpp" />
     <ClCompile Include="src\world\io\load.cpp" />
     <ClCompile Include="src\world\io\load_effects.cpp" />
+    <ClCompile Include="src\world\io\load_entity_group.cpp" />
     <ClCompile Include="src\world\io\save.cpp" />
     <ClCompile Include="src\world\io\save_effects.cpp" />
     <ClCompile Include="src\world\utility\animation.cpp" />
@@ -666,6 +667,7 @@
     <ClInclude Include="src\world\io\load.hpp" />
     <ClInclude Include="src\world\io\load_effects.hpp" />
     <ClInclude Include="src\world\io\load_failure.hpp" />
+    <ClInclude Include="src\world\io\load_entity_group.hpp" />
     <ClInclude Include="src\world\io\save.hpp" />
     <ClInclude Include="src\world\io\save_effects.hpp" />
     <ClInclude Include="src\world\layer_description.hpp" />
