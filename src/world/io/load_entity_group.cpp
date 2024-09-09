@@ -346,6 +346,36 @@ auto read_sector(const assets::config::node& node) -> sector
    return sector;
 }
 
+auto read_portal(const assets::config::node& node) -> portal
+{
+   portal portal;
+
+   portal.name = node.values.get<std::string>(0);
+
+   for (auto& portal_prop : node) {
+      if (string::iequals(portal_prop.key, "Position"sv)) {
+         portal.position = read_position(portal_prop);
+      }
+      else if (string::iequals(portal_prop.key, "Rotation"sv)) {
+         portal.rotation = read_rotation(portal_prop);
+      }
+      else if (string::iequals(portal_prop.key, "Width"sv)) {
+         portal.width = portal_prop.values.get<float>(0);
+      }
+      else if (string::iequals(portal_prop.key, "Height"sv)) {
+         portal.height = portal_prop.values.get<float>(0);
+      }
+      else if (string::iequals(portal_prop.key, "Sector1"sv)) {
+         portal.sector1 = portal_prop.values.get<std::string>(0);
+      }
+      else if (string::iequals(portal_prop.key, "Sector2"sv)) {
+         portal.sector2 = portal_prop.values.get<std::string>(0);
+      }
+   }
+
+   return portal;
+}
+
 }
 
 auto load_entity_group_from_string(const std::string_view entity_group_data,
@@ -370,6 +400,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          }
          else if (string::iequals(key_node.key, "Sector"sv)) {
             group.sectors.emplace_back(read_sector(key_node));
+         }
+         else if (string::iequals(key_node.key, "Portal"sv)) {
+            group.portals.emplace_back(read_portal(key_node));
          }
       }
 

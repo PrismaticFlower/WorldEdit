@@ -250,4 +250,21 @@ TEST_CASE("world entity group loading (sectors)", "[World][IO]")
    CHECK(group.sectors[1].objects[3] == "lod_test201"sv);
 }
 
+TEST_CASE("world entity group loading (portals)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_portals.eng", out);
+
+   REQUIRE(group.portals.size() == 1);
+
+   CHECK(group.portals[0].name == "Portal"sv);
+   CHECK(group.portals[0].position == float3{-193.661575f, 2.097009f, 31.728502f});
+   CHECK(group.portals[0].rotation == quaternion{0.000f, 0.000f, 1.000f, 0.000f});
+   CHECK(group.portals[0].width == 2.92f);
+   CHECK(group.portals[0].height == 4.12f);
+   CHECK(group.portals[0].sector1 == "sector"sv);
+   CHECK(group.portals[0].sector2 == "Sector-1"sv);
+}
+
 }
