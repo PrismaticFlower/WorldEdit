@@ -267,4 +267,42 @@ TEST_CASE("world entity group loading (portals)", "[World][IO]")
    CHECK(group.portals[0].sector2 == "Sector-1"sv);
 }
 
+TEST_CASE("world entity group loading (hintnodes)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_hintnodes.eng", out);
+
+   REQUIRE(group.hintnodes.size() == 2);
+
+   // HintNode0
+   {
+      CHECK(group.hintnodes[0].name == "HintNode0"sv);
+      CHECK(group.hintnodes[0].position == float3{-70.045296f, 1.000582f, 19.298828f});
+      CHECK(group.hintnodes[0].rotation ==
+            quaternion{-0.569245f, 0.651529f, 0.303753f, -0.399004f});
+      CHECK(group.hintnodes[0].radius == 7.692307f);
+      CHECK(group.hintnodes[0].type == hintnode_type::mine);
+      CHECK(group.hintnodes[0].mode == hintnode_mode::attack);
+      CHECK(group.hintnodes[0].primary_stance == stance_flags::none);
+      CHECK(group.hintnodes[0].secondary_stance == stance_flags::none);
+      CHECK(group.hintnodes[0].command_post == "cp1"sv);
+   }
+
+   // HintNode1
+   {
+      CHECK(group.hintnodes[1].name == "HintNode1"sv);
+      CHECK(group.hintnodes[1].position == float3{-136.048569f, 0.500000f, 25.761259f});
+      CHECK(group.hintnodes[1].rotation ==
+            quaternion{-0.995872f, 0.000000f, 0.090763f, 0.000000f});
+      CHECK(group.hintnodes[1].radius == 0.0f);
+      CHECK(group.hintnodes[1].type == hintnode_type::mine);
+      CHECK(group.hintnodes[1].mode == hintnode_mode::both);
+      CHECK(group.hintnodes[1].primary_stance ==
+            (stance_flags::stand | stance_flags::crouch | stance_flags::prone));
+      CHECK(group.hintnodes[1].secondary_stance == stance_flags::none);
+      CHECK(group.hintnodes[1].command_post == "cp2"sv);
+   }
+}
+
 }

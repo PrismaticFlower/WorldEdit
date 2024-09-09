@@ -8,6 +8,8 @@
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 
+#include <charconv>
+
 using namespace std::string_view_literals;
 
 namespace we::world {
@@ -62,6 +64,22 @@ auto read_path_properties(const assets::config::node& node)
    }
 
    return properties;
+}
+
+auto read_hintnode_type(const std::string_view value) -> hintnode_type
+{
+   if (value.empty()) return hintnode_type::snipe;
+
+   if (value[0] >= '0' or value[0] <= '8') {
+      return static_cast<hintnode_type>(value[0] - '0');
+   }
+
+   int int_value = 0;
+
+   // We don't mind failure here as we'll just return 0.
+   (void)std::from_chars(value.data(), value.data() + value.size(), int_value);
+
+   return static_cast<hintnode_type>(int_value);
 }
 
 auto read_object(const assets::config::node& node) -> object
@@ -376,6 +394,43 @@ auto read_portal(const assets::config::node& node) -> portal
    return portal;
 }
 
+auto read_hintnode(const assets::config::node& node) -> hintnode
+{
+   hintnode hintnode;
+
+   hintnode.name = node.values.get<std::string>(0);
+   hintnode.type = read_hintnode_type(node.values.get<std::string>(1));
+
+   for (auto& hintnode_prop : node) {
+      if (string::iequals(hintnode_prop.key, "Position"sv)) {
+         hintnode.position = read_position(hintnode_prop);
+      }
+      else if (string::iequals(hintnode_prop.key, "Rotation"sv)) {
+         hintnode.rotation = read_rotation(hintnode_prop);
+      }
+      else if (string::iequals(hintnode_prop.key, "Radius"sv)) {
+         hintnode.radius = hintnode_prop.values.get<float>(0);
+      }
+      else if (string::iequals(hintnode_prop.key, "PrimaryStance"sv)) {
+         hintnode.primary_stance =
+            static_cast<stance_flags>(hintnode_prop.values.get<int>(0));
+      }
+      else if (string::iequals(hintnode_prop.key, "SecondaryStance"sv)) {
+         hintnode.secondary_stance =
+            static_cast<stance_flags>(hintnode_prop.values.get<int>(0));
+      }
+      else if (string::iequals(hintnode_prop.key, "Mode"sv)) {
+         hintnode.mode =
+            static_cast<hintnode_mode>(hintnode_prop.values.get<int>(0));
+      }
+      else if (string::iequals(hintnode_prop.key, "CommandPost"sv)) {
+         hintnode.command_post = hintnode_prop.values.get<std::string>(0);
+      }
+   }
+
+   return hintnode;
+}
+
 }
 
 auto load_entity_group_from_string(const std::string_view entity_group_data,
@@ -403,6 +458,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          }
          else if (string::iequals(key_node.key, "Portal"sv)) {
             group.portals.emplace_back(read_portal(key_node));
+         }
+         else if (string::iequals(key_node.key, "Hint"sv)) {
+            group.hintnodes.emplace_back(read_hintnode(key_node));
          }
       }
 
