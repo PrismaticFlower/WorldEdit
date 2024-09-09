@@ -283,6 +283,44 @@ auto read_path(const assets::config::node& node) -> path
    return path;
 }
 
+auto read_region(const assets::config::node& node, output_stream& output) -> region
+{
+   region region;
+
+   region.description = node.values.get<std::string>(0);
+   switch (const int shape = node.values.get<int>(1); shape) {
+   case 0:
+   case 1:
+   case 2:
+      region.shape = static_cast<region_shape>(shape);
+      break;
+   default:
+      output.write("Warning! World region '{}' has invalid shape! "
+                   "Defaulting to box.\n",
+                   region.name);
+      region.shape = region_shape::box;
+   }
+
+   for (auto& region_prop : node) {
+      if (string::iequals(region_prop.key, "Position"sv)) {
+         region.position = read_position(region_prop);
+      }
+      else if (string::iequals(region_prop.key, "Rotation"sv)) {
+         region.rotation = read_rotation(region_prop);
+      }
+      else if (string::iequals(region_prop.key, "Size"sv)) {
+         region.size = {region_prop.values.get<float>(0),
+                        region_prop.values.get<float>(1),
+                        region_prop.values.get<float>(2)};
+      }
+      else if (string::iequals(region_prop.key, "Name"sv)) {
+         region.name = region_prop.values.get<std::string>(0);
+      }
+   }
+
+   return region;
+}
+
 }
 
 auto load_entity_group_from_string(const std::string_view entity_group_data,
@@ -301,6 +339,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          }
          else if (string::iequals(key_node.key, "Path"sv)) {
             group.paths.emplace_back(read_path(key_node));
+         }
+         else if (string::iequals(key_node.key, "Region"sv)) {
+            group.regions.emplace_back(read_region(key_node, output));
          }
       }
 

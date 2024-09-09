@@ -199,4 +199,20 @@ TEST_CASE("world entity group loading (paths)", "[World][IO]")
       CHECK(group.paths[1].nodes[0].rotation == quaternion{0.0f, 0.0f, 1.0f, 0.0f});
    }
 }
+
+TEST_CASE("world entity group loading (regions)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_regions.eng", out);
+
+   REQUIRE(group.regions.size() == 1);
+
+   CHECK(group.regions[0].name == "Region0"sv);
+   CHECK(group.regions[0].description == "foleyfx water"sv);
+   CHECK(group.regions[0].shape == region_shape::box);
+   CHECK(group.regions[0].position == float3{-32.000000f, 16.000000f, 32.000000f});
+   CHECK(group.regions[0].rotation == quaternion{0.000f, 0.000f, 1.000f, 0.000f});
+   CHECK(group.regions[0].size == float3{16.000000f, 16.000000f, 16.000000f});
+}
 }
