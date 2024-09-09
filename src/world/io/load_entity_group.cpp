@@ -321,6 +321,31 @@ auto read_region(const assets::config::node& node, output_stream& output) -> reg
    return region;
 }
 
+auto read_sector(const assets::config::node& node) -> sector
+{
+   sector sector;
+
+   sector.name = node.values.get<std::string>(0);
+
+   for (auto& sector_prop : node) {
+      if (string::iequals(sector_prop.key, "Base"sv)) {
+         sector.base = sector_prop.values.get<float>(0);
+      }
+      else if (string::iequals(sector_prop.key, "Height"sv)) {
+         sector.height = sector_prop.values.get<float>(0);
+      }
+      else if (string::iequals(sector_prop.key, "Point"sv)) {
+         sector.points.push_back({sector_prop.values.get<float>(0),
+                                  -sector_prop.values.get<float>(1)});
+      }
+      else if (string::iequals(sector_prop.key, "Object"sv)) {
+         sector.objects.emplace_back(sector_prop.values.get<std::string>(0));
+      }
+   }
+
+   return sector;
+}
+
 }
 
 auto load_entity_group_from_string(const std::string_view entity_group_data,
@@ -342,6 +367,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          }
          else if (string::iequals(key_node.key, "Region"sv)) {
             group.regions.emplace_back(read_region(key_node, output));
+         }
+         else if (string::iequals(key_node.key, "Sector"sv)) {
+            group.sectors.emplace_back(read_sector(key_node));
          }
       }
 

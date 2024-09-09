@@ -215,4 +215,39 @@ TEST_CASE("world entity group loading (regions)", "[World][IO]")
    CHECK(group.regions[0].rotation == quaternion{0.000f, 0.000f, 1.000f, 0.000f});
    CHECK(group.regions[0].size == float3{16.000000f, 16.000000f, 16.000000f});
 }
+
+TEST_CASE("world entity group loading (sectors)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_sectors.eng", out);
+
+   REQUIRE(group.sectors.size() == 2);
+
+   CHECK(group.sectors[0].name == "sector"sv);
+
+   REQUIRE(group.sectors[0].points.size() == 4);
+   CHECK(group.sectors[0].points[0] == float2{-157.581009f, -4.900336f});
+   CHECK(group.sectors[0].points[1] == float2{-227.199097f, -7.364827f});
+   CHECK(group.sectors[0].points[2] == float2{-228.642029f, 40.347687f});
+   CHECK(group.sectors[0].points[3] == float2{-159.451279f, 40.488800f});
+
+   REQUIRE(group.sectors[0].objects.size() == 1);
+   CHECK(group.sectors[0].objects[0] == "tat3_bldg_keeper"sv);
+
+   CHECK(group.sectors[1].name == "Sector-1"sv);
+
+   REQUIRE(group.sectors[1].points.size() == 4);
+   CHECK(group.sectors[1].points[0] == float2{-196.648041f, 125.908623f});
+   CHECK(group.sectors[1].points[1] == float2{-195.826218f, 49.666763f});
+   CHECK(group.sectors[1].points[2] == float2{-271.034851f, 48.864563f});
+   CHECK(group.sectors[1].points[3] == float2{-274.260132f, 128.690567f});
+
+   REQUIRE(group.sectors[1].objects.size() == 4);
+   CHECK(group.sectors[1].objects[0] == "lod_test120"sv);
+   CHECK(group.sectors[1].objects[1] == "lod_test2010"sv);
+   CHECK(group.sectors[1].objects[2] == "lod_test12"sv);
+   CHECK(group.sectors[1].objects[3] == "lod_test201"sv);
+}
+
 }
