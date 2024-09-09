@@ -142,4 +142,61 @@ TEST_CASE("world entity group loading (lights)", "[World][IO]")
       CHECK(group.lights[4].region_size == float3{4.591324f, 0.100000f, 1.277475f});
    }
 }
+
+TEST_CASE("world entity group loading (paths)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_paths.eng", out);
+
+   REQUIRE(group.paths.size() == 2);
+
+   // Path 0
+   {
+      CHECK(group.paths[0].name == "Path 0"sv);
+      CHECK(group.paths[0].type == path_type::none);
+      CHECK(group.paths[0].spline_type == path_spline_type::catmull_rom);
+      CHECK(group.paths[0].properties.size() == 2);
+      CHECK(group.paths[0].properties[0] ==
+            path::property{.key = "PropKey"s, .value = "PropValue"s});
+      CHECK(group.paths[0].properties[1] ==
+            path::property{.key = "PropEmpty"s, .value = ""s});
+
+      constexpr std::array<float3, 3> expected_positions{
+         {{-16.041691f, 0.000000f, 31.988783f},
+          {-31.982189f, 0.000000f, 48.033310f},
+          {-48.012756f, 0.000000f, 31.962399f}}};
+
+      REQUIRE(group.paths[0].nodes.size() == 3);
+
+      CHECK(group.paths[0].nodes[0].position == expected_positions[0]);
+      CHECK(group.paths[0].nodes[0].rotation == quaternion{0.0f, 0.0f, 1.0f, 0.0f});
+      REQUIRE(group.paths[0].nodes[0].properties.size() == 2);
+      CHECK(group.paths[0].nodes[0].properties[0] ==
+            path::property{.key = "PropKey"s, .value = "PropValue"s});
+      CHECK(group.paths[0].nodes[0].properties[1] ==
+            path::property{.key = "PropEmpty"s, .value = ""s});
+
+      CHECK(group.paths[0].nodes[1].position == expected_positions[1]);
+      CHECK(group.paths[0].nodes[1].rotation == quaternion{0.0f, 0.0f, 1.0f, 0.0f});
+      CHECK(group.paths[0].nodes[1].properties.empty());
+
+      CHECK(group.paths[0].nodes[2].position == expected_positions[2]);
+      CHECK(group.paths[0].nodes[2].rotation == quaternion{0.0f, 0.0f, 1.0f, 0.0f});
+      CHECK(group.paths[0].nodes[2].properties.empty());
+   }
+
+   // Path 1
+   {
+      CHECK(group.paths[1].name == "Path 1"sv);
+      CHECK(group.paths[1].type == path_type::entity_follow);
+      CHECK(group.paths[1].spline_type == path_spline_type::none);
+
+      REQUIRE(group.paths[1].nodes.size() == 1);
+
+      CHECK(group.paths[1].nodes[0].position ==
+            float3{-16.041691f, 0.000000f, 31.988783f});
+      CHECK(group.paths[1].nodes[0].rotation == quaternion{0.0f, 0.0f, 1.0f, 0.0f});
+   }
+}
 }

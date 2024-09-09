@@ -34,9 +34,39 @@ auto read_position(const assets::config::node& node) -> float3
            -node.values.get<float>(2)};
 }
 
-void read_object(const assets::config::node& node, entity_group& group_out)
+auto read_path_properties(const assets::config::node& node)
+   -> std::vector<path::property>
 {
-   object& object = group_out.objects.emplace_back();
+   std::vector<path::property> properties;
+
+   properties.reserve(node.values.get<std::size_t>(0));
+
+   for (auto& prop : node) {
+      if (prop.values.empty()) {
+         properties.push_back({.key = prop.key, .value = ""});
+      }
+      else {
+         properties.push_back(
+            {.key = prop.key,
+             .value = std::visit(
+                [](const auto& v) noexcept -> std::string {
+                   if constexpr (std::is_same_v<decltype(v), const std::string&>) {
+                      return v;
+                   }
+                   else {
+                      return std::to_string(v);
+                   }
+                },
+                prop.values.at(0))});
+      }
+   }
+
+   return properties;
+}
+
+auto read_object(const assets::config::node& node) -> object
+{
+   object object;
 
    object.name = node.values.get<std::string>(0);
    object.class_name = lowercase_string{node.values.get<std::string>(1)};
@@ -62,12 +92,13 @@ void read_object(const assets::config::node& node, entity_group& group_out)
             {.key = obj_prop.key, .value = obj_prop.values.get<std::string>(0)});
       }
    }
+
+   return object;
 }
 
-void read_light(const assets::config::node& node, entity_group& group_out,
-                output_stream& output)
+auto read_light(const assets::config::node& node, output_stream& output) -> light
 {
-   light& light = group_out.lights.emplace_back();
+   light light;
 
    light.name = node.values.get<std::string>(0);
 
@@ -177,6 +208,79 @@ void read_light(const assets::config::node& node, entity_group& group_out,
                               light_prop.values.get<float>(2)};
       }
    }
+
+   return light;
+}
+
+auto read_path(const assets::config::node& node) -> path
+{
+   path path;
+
+   path.name = node.values.get<std::string>(0);
+
+   if (string::istarts_with(path.name, "type_")) {
+      if (string::istarts_with(path.name, "type_entitypath")) {
+         path.type = path_type::entity_follow;
+      }
+      else if (string::istarts_with(path.name, "type_entityformation")) {
+         path.type = path_type::formation;
+      }
+      else if (string::istarts_with(path.name, "type_patrolpath")) {
+         path.type = path_type::patrol;
+      }
+
+      path.name = string::split_first_of_exclusive(path.name, " ")[1];
+   }
+
+   for (auto& path_prop : node) {
+      if (string::iequals(path_prop.key, "Properties"sv)) {
+         path.properties = read_path_properties(path_prop);
+      }
+      else if (string::iequals(path_prop.key, "SplineType"sv)) {
+         if (const auto spline = path_prop.values.get<std::string_view>(0);
+             string::iequals(spline, "None"sv)) {
+            path.spline_type = path_spline_type::none;
+         }
+         else if (string::iequals(spline, "Linear"sv)) {
+            path.spline_type = path_spline_type::linear;
+         }
+         else if (string::iequals(spline, "Hermite"sv)) {
+            path.spline_type = path_spline_type::hermite;
+         }
+         else if (string::iequals(spline, "Catmull-Rom"sv)) {
+            path.spline_type = path_spline_type::catmull_rom;
+         }
+      }
+      else if (string::iequals(path_prop.key, "Nodes"sv)) {
+         path.nodes.reserve(path_prop.values.get<std::size_t>(0));
+
+         for (auto& child_node_prop : path_prop) {
+            path::node& path_node = path.nodes.emplace_back();
+
+            for (auto& node_prop : child_node_prop) {
+               if (string::iequals(node_prop.key, "Rotation"sv)) {
+                  path_node.rotation = read_rotation(node_prop);
+               }
+               else if (string::iequals(node_prop.key, "Position"sv)) {
+                  path_node.position = read_position(node_prop);
+               }
+               else if (string::iequals(node_prop.key, "Properties"sv)) {
+                  path_node.properties = read_path_properties(node_prop);
+               }
+            }
+         }
+
+         if (path.nodes.size() >= max_path_nodes) {
+            throw load_failure{fmt::format("Path '{}' has too many nodes "
+                                           "for WorldEdit to handle.\n"
+                                           "   Path Node Count: {}\n",
+                                           "   Max Supported Count: {}\n", path.name,
+                                           path.nodes.size(), max_path_nodes)};
+         }
+      }
+   }
+
+   return path;
 }
 
 }
@@ -190,10 +294,13 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
 
       for (auto& key_node : assets::config::read_config(entity_group_data)) {
          if (string::iequals(key_node.key, "Object"sv)) {
-            read_object(key_node, group);
+            group.objects.emplace_back(read_object(key_node));
          }
          else if (string::iequals(key_node.key, "Light"sv)) {
-            read_light(key_node, group, output);
+            group.lights.emplace_back(read_light(key_node, output));
+         }
+         else if (string::iequals(key_node.key, "Path"sv)) {
+            group.paths.emplace_back(read_path(key_node));
          }
       }
 
