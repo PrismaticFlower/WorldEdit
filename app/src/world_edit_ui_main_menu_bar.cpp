@@ -1,6 +1,7 @@
 #include "world_edit.hpp"
 
 #include "edits/creation_entity_set.hpp"
+#include "world/io/load_entity_group.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <imgui.h>
@@ -656,6 +657,74 @@ void world_edit::ui_show_create_menu_items() noexcept
                               _edit_context);
       _entity_creation_context = {};
       _world_draw_mask.boundaries = true;
+   }
+
+   if (ImGui::BeginMenu("From Group")) {
+      ImGui::InputText("Filter", &_entity_group_filter);
+
+      if (_recent_entity_groups.size() > 0) {
+         ImGui::SeparatorText("Recent");
+      }
+
+      std::string_view group_to_create;
+
+      for (uint32 i = 0; i < _recent_entity_groups.size(); ++i) {
+         if (ImGui::Selectable(_recent_entity_groups[i].c_str())) {
+            group_to_create = _recent_entity_groups[i];
+         }
+      }
+
+      ImGui::SeparatorText("Groups");
+
+      ImGui::BeginChild("Groups",
+                        {0.0f, ImGui::GetTextLineHeightWithSpacing() * 16.0f});
+
+      _asset_libraries.entity_groups.view_existing(
+         [&](const std::span<const assets::stable_string> assets) noexcept {
+            for (std::string_view group : assets) {
+               if (not _entity_group_filter.empty() and
+                   not string::icontains(group, _entity_group_filter)) {
+                  continue;
+               }
+
+               ImGui::PushID(group.data(), group.data() + group.size());
+
+               const ImVec2 cursor = ImGui::GetCursorPos();
+
+               if (ImGui::Selectable("##group")) {
+                  group_to_create = group;
+
+                  ImGui::CloseCurrentPopup();
+               }
+
+               ImGui::SetCursorPos(cursor);
+
+               ImGui::TextUnformatted(group.data(), group.data() + group.size());
+
+               ImGui::PopID();
+            }
+         });
+
+      ImGui::EndChild();
+
+      ImGui::EndMenu();
+
+      if (not group_to_create.empty()) {
+         try {
+            _edit_stack_world.apply(
+               edits::make_creation_entity_set(
+                  world::load_entity_group(_asset_libraries.entity_groups.query_path(
+                                              lowercase_string{group_to_create}),
+                                           *_stream),
+                  _object_classes),
+               _edit_context);
+
+            _recent_entity_groups.insert(lowercase_string{group_to_create});
+         }
+         catch (std::exception& e) {
+            MessageBoxA(_window, e.what(), "Failed to load entity group!", MB_OK);
+         }
+      }
    }
 }
 

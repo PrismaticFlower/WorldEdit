@@ -498,6 +498,9 @@ private:
    bool _terrain_light_map_baking = false;
    bool _env_map_render_requested = false;
 
+   std::string _entity_group_filter;
+   container::ring_set<lowercase_string, 4> _recent_entity_groups;
+
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;
    std::string _req_editor_new_name;
