@@ -4,6 +4,7 @@
 #include "assets/config/io.hpp"
 #include "io/error.hpp"
 #include "io/read_file.hpp"
+#include "math/vector_funcs.hpp"
 #include "utility/stopwatch.hpp"
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
@@ -431,6 +432,35 @@ auto read_hintnode(const assets::config::node& node) -> hintnode
    return hintnode;
 }
 
+auto read_barrier(const assets::config::node& node) -> barrier
+{
+   barrier barrier;
+
+   barrier.name = node.values.get<std::string>(0);
+
+   std::array<float3, 4> corners;
+   uint32 corner_index = 0;
+
+   for (auto& barrier_prop : node) {
+      if (string::iequals(barrier_prop.key, "Flag"sv)) {
+         barrier.flags = ai_path_flags{barrier_prop.values.get<int>(0)};
+      }
+      else if (string::iequals(barrier_prop.key, "Corner"sv) and
+               corner_index < corners.size()) {
+         corners[corner_index] = read_position(barrier_prop);
+         corner_index += 1;
+      }
+   }
+
+   barrier.position = (corners[0] + corners[1] + corners[2] + corners[3]) / 4.0f;
+   barrier.size =
+      float2{distance(corners[0], corners[3]), distance(corners[0], corners[1])} / 2.0f;
+   barrier.rotation_angle =
+      std::atan2(corners[1].x - corners[0].x, corners[1].z - corners[0].z);
+
+   return barrier;
+}
+
 }
 
 auto load_entity_group_from_string(const std::string_view entity_group_data,
@@ -461,6 +491,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          }
          else if (string::iequals(key_node.key, "Hint"sv)) {
             group.hintnodes.emplace_back(read_hintnode(key_node));
+         }
+         else if (string::iequals(key_node.key, "Barrier"sv)) {
+            group.barriers.emplace_back(read_barrier(key_node));
          }
       }
 

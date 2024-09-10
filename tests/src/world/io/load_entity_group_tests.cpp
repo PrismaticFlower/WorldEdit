@@ -305,4 +305,17 @@ TEST_CASE("world entity group loading (hintnodes)", "[World][IO]")
    }
 }
 
+TEST_CASE("world entity group loading (barriers)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_barriers.eng", out);
+
+   REQUIRE(group.barriers.size() == 1);
+   CHECK(group.barriers[0].name == "Barrier0"sv);
+   CHECK(group.barriers[0].flags == ai_path_flags::flyer);
+   CHECK(group.barriers[0].position == float3{86.2013626f, 2.0f, 18.6642666f});
+   CHECK(group.barriers[0].size == float2{7.20497799f, 17.0095882f});
+   CHECK(group.barriers[0].rotation_angle == 2.71437049f);
+}
 }
