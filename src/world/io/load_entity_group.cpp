@@ -546,6 +546,38 @@ auto read_connection(const assets::config::node& node) -> unlinked_connection
    return connection;
 }
 
+auto read_boundary(const assets::config::node& node) -> boundary
+{
+   boundary boundary;
+
+   boundary.name = node.values.get<std::string>(0);
+
+   float3 min_node = {FLT_MAX, FLT_MAX, FLT_MAX};
+   float3 max_node = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
+
+   bool has_node = false;
+
+   for (auto& boundary_prop : node) {
+      if (string::iequals(boundary_prop.key, "Node"sv)) {
+         const float3 position = read_position(boundary_prop);
+
+         min_node = min(min_node, position);
+         max_node = max(max_node, position);
+
+         has_node = true;
+      }
+   }
+
+   if (has_node) {
+      const float3 size = abs(max_node - min_node) / 2.0f;
+
+      boundary.position = (min_node + max_node) / 2.0f;
+      boundary.size = {size.x, size.z};
+   }
+
+   return boundary;
+}
+
 auto link_connections(std::vector<unlinked_connection> unlinked_connections,
                       const std::vector<planning_hub>& hubs,
                       output_stream& output) -> std::vector<planning_connection>
@@ -750,6 +782,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          }
          else if (string::iequals(key_node.key, "Connection"sv)) {
             unlinked_connections.emplace_back(read_connection(key_node));
+         }
+         else if (string::iequals(key_node.key, "Boundary"sv)) {
+            group.boundaries.emplace_back(read_boundary(key_node));
          }
       }
 

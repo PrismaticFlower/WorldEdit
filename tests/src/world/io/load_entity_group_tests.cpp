@@ -370,4 +370,16 @@ TEST_CASE("world entity group loading (planning)", "[World][IO]")
    CHECK(group.planning_connections[1].flags == ai_path_flags::hover);
 }
 
+TEST_CASE("world entity group loading (boundaries)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_boundaries.eng", out);
+
+   REQUIRE(group.boundaries.size() == 1);
+   CHECK(group.boundaries[0].name == "boundary"sv);
+   CHECK(group.boundaries[0].size == float2{384.000000f, 384.000000f});
+   CHECK(group.boundaries[0].position == float3{-0.442565918f, 1.0f, 4.79779053f});
+}
+
 }
