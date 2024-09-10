@@ -10,7 +10,9 @@
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
+#include "utility/srgb_conversion.hpp"
 #include "utility/string_icompare.hpp"
+#include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/hintnode_traits.hpp"
 #include "world/utility/path_properties.hpp"
 #include "world/utility/region_properties.hpp"
@@ -3783,6 +3785,119 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                     _edit_context, {.transparent = true});
          }
       }
+
+      traits = {
+         .has_placement_rotation = false,
+         .has_point_at = false,
+         .has_placement_mode = false,
+         .has_placement_ground = false,
+         .has_place_at_camera = false,
+      };
+   }
+   else if (creation_entity.is<world::entity_group>()) {
+      world::entity_group& group = creation_entity.get<world::entity_group>();
+
+      float3 new_position = group.position;
+      float new_rotation_angle =
+         group.rotation_angle * 180.0f / std::numbers::pi_v<float>;
+
+      bool transform_modified = false;
+
+      if (ImGui::DragFloat3("Position", &new_position)) {
+         transform_modified = true;
+
+         _entity_creation_context.lock_x_axis |=
+            new_position.x != group.position.x;
+         _entity_creation_context.lock_y_axis |=
+            new_position.y != group.position.y;
+         _entity_creation_context.lock_z_axis |=
+            new_position.z != group.position.z;
+      }
+
+      transform_modified |= ImGui::DragFloat("Rotation", &new_rotation_angle,
+                                             1.0f, 0.0f, 0.0f, "%.1f");
+
+      ImGui::LayerPick("Layer", &group.layer, _edit_stack_world, _edit_context);
+
+      if (using_cursor_placement or rotate_entity_forward or rotate_entity_back) {
+         if (using_cursor_placement) {
+            if (not _entity_creation_context.lock_x_axis) {
+               new_position.x = _cursor_positionWS.x;
+            }
+
+            if (not _entity_creation_context.lock_y_axis) {
+               new_position.y = _cursor_positionWS.y;
+            }
+
+            if (not _entity_creation_context.lock_z_axis) {
+               new_position.z = _cursor_positionWS.z;
+            }
+
+            if (_entity_creation_config.placement_alignment ==
+                placement_alignment::grid) {
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
+            }
+            else if (_entity_creation_config.placement_alignment ==
+                     placement_alignment::snapping) {
+               const std::optional<float3> snapped_position =
+                  world::get_snapped_position(new_position, _world.objects,
+                                              _entity_creation_config.snap_distance,
+                                              _object_classes);
+
+               if (snapped_position) {
+                  new_position = *snapped_position;
+               }
+            }
+         }
+
+         if (rotate_entity_forward or rotate_entity_back) {
+            new_rotation_angle =
+               std::fmod(new_rotation_angle + (rotate_entity_forward ? 15.0f : -15.0f),
+                         360.0f);
+         }
+
+         transform_modified = true;
+      }
+
+      if (transform_modified) {
+         const float radians_rotation_angle =
+            new_rotation_angle / 180.0f * std::numbers::pi_v<float>;
+
+         _edit_stack_world.apply(
+            edits::make_set_multi_value(&group.rotation,
+                                        make_quat_from_euler(
+                                           {0.0f, radians_rotation_angle, 0.0f}),
+                                        &group.rotation_angle, radians_rotation_angle,
+                                        &group.position, new_position),
+            _edit_context, {.transparent = true});
+      }
+
+      const math::bounding_box bbox = world::entity_group_bbox(group, _object_classes);
+
+      std::array<float3, 8> bbox_corners = math::to_corners(bbox);
+
+      for (float3& v : bbox_corners) {
+         v = (group.rotation * v) + group.position;
+      }
+
+      const uint32 color = utility::pack_srgb_bgra(
+         {_settings.graphics.creation_color.x, _settings.graphics.creation_color.y,
+          _settings.graphics.creation_color.z, 1.0f});
+
+      _tool_visualizers.add_line(bbox_corners[0], bbox_corners[1], color);
+      _tool_visualizers.add_line(bbox_corners[1], bbox_corners[2], color);
+      _tool_visualizers.add_line(bbox_corners[2], bbox_corners[3], color);
+      _tool_visualizers.add_line(bbox_corners[3], bbox_corners[0], color);
+
+      _tool_visualizers.add_line(bbox_corners[0], bbox_corners[4], color);
+      _tool_visualizers.add_line(bbox_corners[1], bbox_corners[5], color);
+      _tool_visualizers.add_line(bbox_corners[2], bbox_corners[6], color);
+      _tool_visualizers.add_line(bbox_corners[3], bbox_corners[7], color);
+
+      _tool_visualizers.add_line(bbox_corners[4], bbox_corners[5], color);
+      _tool_visualizers.add_line(bbox_corners[5], bbox_corners[6], color);
+      _tool_visualizers.add_line(bbox_corners[6], bbox_corners[7], color);
+      _tool_visualizers.add_line(bbox_corners[7], bbox_corners[4], color);
 
       traits = {
          .has_placement_rotation = false,
