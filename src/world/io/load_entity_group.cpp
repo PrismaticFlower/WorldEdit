@@ -17,6 +17,30 @@ namespace we::world {
 
 namespace {
 
+struct unlinked_branch_weight {
+   std::string start_hub;
+   std::string end_hub;
+   float weight = 0.0f;
+   std::string connection;
+   ai_path_flags flag;
+};
+
+struct unlinked_connection {
+   std::string name;
+
+   std::string start_hub;
+   std::string end_hub;
+
+   ai_path_flags flags = ai_path_flags::soldier | ai_path_flags::hover |
+                         ai_path_flags::small | ai_path_flags::medium |
+                         ai_path_flags::huge | ai_path_flags::flyer;
+
+   bool jump = false;
+   bool jet_jump = false;
+   bool one_way = false;
+   int8 dynamic_group = 0;
+};
+
 auto read_rotation(const assets::config::node& node) -> quaternion
 {
    quaternion rotation{node.values.get<float>(0), node.values.get<float>(1),
@@ -461,6 +485,229 @@ auto read_barrier(const assets::config::node& node) -> barrier
    return barrier;
 }
 
+auto read_hub(const assets::config::node& node,
+              std::vector<unlinked_branch_weight>& out_branch_weights) -> planning_hub
+{
+   planning_hub hub;
+
+   hub.name = node.values.get<std::string>(0);
+
+   for (auto& hub_prop : node) {
+      if (string::iequals(hub_prop.key, "Pos"sv)) {
+         hub.position = read_position(hub_prop);
+      }
+      else if (string::iequals(hub_prop.key, "Radius"sv)) {
+         hub.radius = hub_prop.values.get<float>(0);
+      }
+      else if (string::iequals(hub_prop.key, "BranchWeight"sv)) {
+         out_branch_weights.push_back(
+            {.start_hub = hub.name,
+             .end_hub = hub_prop.values.get<std::string>(0),
+             .weight = hub_prop.values.get<float>(1),
+             .connection = hub_prop.values.get<std::string>(2),
+             .flag = static_cast<ai_path_flags>(hub_prop.values.get<int>(3))});
+      }
+   }
+
+   return hub;
+}
+
+auto read_connection(const assets::config::node& node) -> unlinked_connection
+{
+   unlinked_connection connection;
+
+   connection.name = node.values.get<std::string>(0);
+
+   for (auto& connection_prop : node) {
+      if (string::iequals(connection_prop.key, "Start"sv)) {
+         connection.start_hub = connection_prop.values.get<std::string>(0);
+      }
+      else if (string::iequals(connection_prop.key, "End"sv)) {
+         connection.end_hub = connection_prop.values.get<std::string>(0);
+      }
+      else if (string::iequals(connection_prop.key, "Flag"sv)) {
+         connection.flags =
+            static_cast<ai_path_flags>(connection_prop.values.get<int>(0));
+      }
+      else if (string::iequals(connection_prop.key, "Dynamic"sv)) {
+         connection.dynamic_group = connection_prop.values.get<int8>(0);
+      }
+      else if (string::iequals(connection_prop.key, "Jump"sv)) {
+         connection.jump = true;
+      }
+      else if (string::iequals(connection_prop.key, "JetJump"sv)) {
+         connection.jet_jump = true;
+      }
+      else if (string::iequals(connection_prop.key, "OneWay"sv)) {
+         connection.one_way = true;
+      }
+   }
+
+   return connection;
+}
+
+auto link_connections(std::vector<unlinked_connection> unlinked_connections,
+                      const std::vector<planning_hub>& hubs,
+                      output_stream& output) -> std::vector<planning_connection>
+{
+   std::vector<planning_connection> connections;
+   connections.reserve(unlinked_connections.size());
+
+   for (unlinked_connection& unlinked : unlinked_connections) {
+      uint32 start_hub_index = UINT32_MAX;
+      uint32 end_hub_index = UINT32_MAX;
+
+      for (uint32 i = 0; i < hubs.size(); ++i) {
+         if (string::iequals(hubs[i].name, unlinked.start_hub)) {
+            start_hub_index = i;
+
+            if (end_hub_index != UINT32_MAX) break;
+         }
+
+         if (string::iequals(hubs[i].name, unlinked.end_hub)) {
+            end_hub_index = i;
+
+            if (start_hub_index != UINT32_MAX) break;
+         }
+      }
+
+      if (start_hub_index == UINT32_MAX) {
+         output.write("Warning! Connection '{}' in entity group references "
+                      "nonexistent hub '{}'. Discarding connection.\n",
+                      unlinked.name, unlinked.start_hub);
+
+         continue;
+      }
+
+      if (end_hub_index == UINT32_MAX) {
+         output.write("Warning! Connection '{}' in entity group references "
+                      "nonexistent hub '{}'. Discarding connection.\n",
+                      unlinked.name, unlinked.end_hub);
+
+         continue;
+      }
+
+      connections.push_back({.name = std::move(unlinked.name),
+                             .start_hub_index = start_hub_index,
+                             .end_hub_index = end_hub_index,
+                             .flags = unlinked.flags,
+                             .jump = unlinked.jump,
+                             .jet_jump = unlinked.jet_jump,
+                             .one_way = unlinked.one_way,
+                             .dynamic_group = unlinked.dynamic_group});
+   }
+
+   return connections;
+}
+
+void add_branch_weights(const std::vector<unlinked_branch_weight>& unlinked_branch_weights,
+                        entity_group& group_out, output_stream& output)
+{
+   for (const unlinked_branch_weight& branch_weight : unlinked_branch_weights) {
+      uint32 start_hub_index = UINT32_MAX;
+      uint32 end_hub_index = UINT32_MAX;
+      uint32 connection_index = UINT32_MAX;
+
+      for (uint32 i = 0; i < group_out.planning_hubs.size(); ++i) {
+         if (string::iequals(group_out.planning_hubs[i].name, branch_weight.start_hub)) {
+            start_hub_index = i;
+
+            if (end_hub_index != UINT32_MAX) break;
+         }
+
+         if (string::iequals(group_out.planning_hubs[i].name, branch_weight.end_hub)) {
+            end_hub_index = i;
+
+            if (start_hub_index != UINT32_MAX) break;
+         }
+      }
+
+      for (uint32 i = 0; i < group_out.planning_connections.size(); ++i) {
+         if (string::iequals(group_out.planning_connections[i].name,
+                             branch_weight.connection)) {
+            connection_index = i;
+         }
+      }
+
+      if (start_hub_index == UINT32_MAX) {
+         output.write("Warning! Hub '{}' for branch weight has gone missing.\n",
+                      branch_weight.start_hub);
+
+         continue;
+      }
+
+      if (end_hub_index == UINT32_MAX) {
+         output.write("Warning! Branch weight for hub '{}' targets "
+                      "nonexistent hub '{}'. Discarding branch weight.\n",
+                      branch_weight.start_hub, branch_weight.end_hub);
+
+         continue;
+      }
+
+      if (connection_index == UINT32_MAX) {
+         output.write("Warning! Branch weight for hub '{}' references "
+                      "nonexistent connection '{}'.\n",
+                      branch_weight.start_hub, branch_weight.connection);
+
+         continue;
+      }
+
+      const planning_connection& connection =
+         group_out.planning_connections[connection_index];
+      planning_hub& hub = group_out.planning_hubs[start_hub_index];
+
+      if (connection.start_hub_index != start_hub_index and
+          connection.end_hub_index != start_hub_index) {
+         output.write("BranchWeight for hub '{}' is invalid. Referenced "
+                      "connection '{}' is not joined to the hub.\n",
+                      hub.name, connection.name);
+
+         continue;
+      }
+
+      planning_branch_weights& weights =
+         [&hub, end_hub_index, connection_index]() noexcept -> planning_branch_weights& {
+         for (planning_branch_weights& weights : hub.weights) {
+            if (weights.hub_index == end_hub_index and
+                weights.connection_index == connection_index) {
+               return weights;
+            }
+         }
+
+         return hub.weights.emplace_back(
+            planning_branch_weights{.hub_index = end_hub_index,
+                                    .connection_index = connection_index});
+      }();
+
+      switch (branch_weight.flag) {
+      case ai_path_flags::soldier:
+         weights.soldier = branch_weight.weight;
+         break;
+      case ai_path_flags::hover:
+         weights.hover = branch_weight.weight;
+         break;
+      case ai_path_flags::small:
+         weights.small = branch_weight.weight;
+         break;
+      case ai_path_flags::medium:
+         weights.medium = branch_weight.weight;
+         break;
+      case ai_path_flags::huge:
+         weights.huge = branch_weight.weight;
+         break;
+      case ai_path_flags::flyer:
+         weights.flyer = branch_weight.weight;
+         break;
+      default:
+         output.write("BranchWeight for Hub '{}' (targetting hub '{}' "
+                      "through connection '{}') is invalid. It must have "
+                      "one and only one "
+                      "path flag set.\n",
+                      hub.name, branch_weight.end_hub, branch_weight.connection);
+      }
+   }
+}
+
 }
 
 auto load_entity_group_from_string(const std::string_view entity_group_data,
@@ -469,6 +716,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
    try {
       utility::stopwatch load_timer;
       entity_group group;
+
+      std::vector<unlinked_branch_weight> branch_weights;
+      std::vector<unlinked_connection> unlinked_connections;
 
       for (auto& key_node : assets::config::read_config(entity_group_data)) {
          if (string::iequals(key_node.key, "Object"sv)) {
@@ -495,7 +745,18 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          else if (string::iequals(key_node.key, "Barrier"sv)) {
             group.barriers.emplace_back(read_barrier(key_node));
          }
+         else if (string::iequals(key_node.key, "Hub"sv)) {
+            group.planning_hubs.emplace_back(read_hub(key_node, branch_weights));
+         }
+         else if (string::iequals(key_node.key, "Connection"sv)) {
+            unlinked_connections.emplace_back(read_connection(key_node));
+         }
       }
+
+      group.planning_connections = link_connections(std::move(unlinked_connections),
+                                                    group.planning_hubs, output);
+
+      add_branch_weights(branch_weights, group, output);
 
       output.write("Loaded entity group (time taken {:f}ms)\n",
                    load_timer.elapsed_ms());

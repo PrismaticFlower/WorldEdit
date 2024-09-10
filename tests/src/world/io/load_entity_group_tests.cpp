@@ -318,4 +318,56 @@ TEST_CASE("world entity group loading (barriers)", "[World][IO]")
    CHECK(group.barriers[0].size == float2{7.20497799f, 17.0095882f});
    CHECK(group.barriers[0].rotation_angle == 2.71437049f);
 }
+
+TEST_CASE("world entity group loading (planning)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_planning.eng", out);
+
+   REQUIRE(group.planning_hubs.size() == 4);
+
+   CHECK(group.planning_hubs[0].name == "Hub0"sv);
+   CHECK(group.planning_hubs[0].position == float3{-63.822487f, 0.0f, -9.202278f});
+   CHECK(group.planning_hubs[0].radius == 8.0f);
+   CHECK(group.planning_hubs[0].weights.empty());
+
+   CHECK(group.planning_hubs[1].name == "Hub1"sv);
+   CHECK(group.planning_hubs[1].position == float3{-121.883095f, 1.0f, -30.046543f});
+   CHECK(group.planning_hubs[1].radius == 7.586431f);
+   REQUIRE(group.planning_hubs[1].weights.size() == 1);
+   CHECK(group.planning_hubs[1].weights[0].connection_index == 0);
+   CHECK(group.planning_hubs[1].weights[0].hub_index == 3);
+   CHECK(group.planning_hubs[1].weights[0].soldier == 20.0f);
+   CHECK(group.planning_hubs[1].weights[0].hover == 15.0f);
+   CHECK(group.planning_hubs[1].weights[0].small == 7.5f);
+   CHECK(group.planning_hubs[1].weights[0].medium == 25.0f);
+   CHECK(group.planning_hubs[1].weights[0].huge == 75.0f);
+   CHECK(group.planning_hubs[1].weights[0].flyer == 100.0f);
+
+   CHECK(group.planning_hubs[2].name == "Hub2"sv);
+   CHECK(group.planning_hubs[2].position == float3{-54.011314f, 2.0f, -194.037018f});
+   CHECK(group.planning_hubs[2].radius == 13.120973f);
+   CHECK(group.planning_hubs[2].weights.empty());
+
+   CHECK(group.planning_hubs[3].name == "Hub3"sv);
+   CHECK(group.planning_hubs[3].position == float3{-163.852570f, 3.0f, -169.116760f});
+   CHECK(group.planning_hubs[3].radius == 12.046540f);
+   CHECK(group.planning_hubs[3].weights.empty());
+
+   REQUIRE(group.planning_connections.size() == 2);
+
+   CHECK(group.planning_connections[0].name == "Connection0"sv);
+   CHECK(group.planning_connections[0].start_hub_index == 0);
+   CHECK(group.planning_connections[0].end_hub_index == 1);
+   CHECK(group.planning_connections[0].flags ==
+         (ai_path_flags::soldier | ai_path_flags::hover | ai_path_flags::small |
+          ai_path_flags::medium | ai_path_flags::huge | ai_path_flags::flyer));
+
+   CHECK(group.planning_connections[1].name == "Connection1"sv);
+   CHECK(group.planning_connections[1].start_hub_index == 3);
+   CHECK(group.planning_connections[1].end_hub_index == 2);
+   CHECK(group.planning_connections[1].flags == ai_path_flags::hover);
+}
+
 }
