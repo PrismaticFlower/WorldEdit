@@ -21,6 +21,12 @@ struct creation_entity_set final : edit<world::edit_context> {
 
          object_class_library.free(object.class_handle);
       }
+      else if (context.creation_entity.is<world::entity_group>()) {
+         for (world::object& object :
+              context.creation_entity.get<world::entity_group>().objects) {
+            object_class_library.free(object.class_handle);
+         }
+      }
 
       std::swap(context.creation_entity, creation_entity);
 
@@ -28,6 +34,12 @@ struct creation_entity_set final : edit<world::edit_context> {
          world::object& object = context.creation_entity.get<world::object>();
 
          object.class_handle = object_class_library.acquire(object.class_name);
+      }
+      else if (context.creation_entity.is<world::entity_group>()) {
+         for (world::object& object :
+              context.creation_entity.get<world::entity_group>().objects) {
+            object.class_handle = object_class_library.acquire(object.class_name);
+         }
       }
    }
 
