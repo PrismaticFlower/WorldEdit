@@ -578,6 +578,24 @@ auto read_boundary(const assets::config::node& node) -> boundary
    return boundary;
 }
 
+auto read_measurement(const assets::config::node& node) -> measurement
+{
+   measurement measurement;
+
+   measurement.name = node.values.get<std::string>(0);
+
+   for (auto& measurement_prop : node) {
+      if (string::iequals(measurement_prop.key, "Start"sv)) {
+         measurement.start = read_position(measurement_prop);
+      }
+      else if (string::iequals(measurement_prop.key, "End"sv)) {
+         measurement.end = read_position(measurement_prop);
+      }
+   }
+
+   return measurement;
+}
+
 auto link_connections(std::vector<unlinked_connection> unlinked_connections,
                       const std::vector<planning_hub>& hubs,
                       output_stream& output) -> std::vector<planning_connection>
@@ -785,6 +803,9 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
          }
          else if (string::iequals(key_node.key, "Boundary"sv)) {
             group.boundaries.emplace_back(read_boundary(key_node));
+         }
+         else if (string::iequals(key_node.key, "Measurement"sv)) {
+            group.measurements.emplace_back(read_measurement(key_node));
          }
       }
 

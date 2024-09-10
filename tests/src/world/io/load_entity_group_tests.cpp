@@ -382,4 +382,16 @@ TEST_CASE("world entity group loading (boundaries)", "[World][IO]")
    CHECK(group.boundaries[0].position == float3{-0.442565918f, 1.0f, 4.79779053f});
 }
 
+TEST_CASE("world entity group loading (measurements)", "[World][IO]")
+{
+   null_output_stream out;
+   const entity_group group =
+      load_entity_group("data/entity_groups/test_measurements.eng", out);
+
+   REQUIRE(group.measurements.size() == 1);
+   CHECK(group.measurements[0].name == "Measurement0"sv);
+   CHECK(group.measurements[0].start == float3{1.0f, 0.0f, -0.0f});
+   CHECK(group.measurements[0].end == float3{2.0f, 0.0f, -1.0f});
+}
+
 }
