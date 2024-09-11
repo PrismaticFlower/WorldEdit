@@ -119,6 +119,7 @@
     <ClCompile Include="src\edits\null_asset_libraries.cpp" />
     <ClCompile Include="src\edits\set_class_name_tests.cpp" />
     <ClCompile Include="src\world\io\load_entity_group_tests.cpp" />
+    <ClCompile Include="src\world\io\save_entity_group_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
