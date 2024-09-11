@@ -504,4 +504,67 @@ TEST_CASE("world save entity group (portals)", "[World][IO]")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (hintnodes)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_hintnodes.eng";
+
+   const std::string_view expected_eng =
+      R"(Hint("HintNode0", "5")
+{
+	Position(-70.045296, 1.000582, -19.298828);
+	Rotation(0.303753, 0.399004, -0.569245, -0.651529);
+	Radius(7.692307);
+	Mode(1);
+	CommandPost("cp1");
+}
+
+Hint("HintNode1", "5")
+{
+	Position(-136.048569, 0.500000, -25.761259);
+	Rotation(0.090763, 0.000000, -0.995872, 0.000000);
+	PrimaryStance(7);
+	Mode(3);
+	CommandPost("cp2");
+}
+
+)";
+
+   world::entity_group group = {
+      .hintnodes =
+         {
+            world::hintnode{
+               .name = "HintNode0",
+               .rotation = quaternion{-0.569245f, 0.651529f, 0.303753f, -0.399004f},
+               .position = float3{-70.045296f, 1.000582f, 19.298828f},
+               .type = hintnode_type::mine,
+               .mode = hintnode_mode::attack,
+               .radius = 7.692307f,
+               .primary_stance = stance_flags::none,
+               .secondary_stance = stance_flags::none,
+               .command_post = "cp1",
+            },
+
+            world::hintnode{
+               .name = "HintNode1",
+               .rotation = quaternion{-0.995872f, -0.000000f, 0.090763f, -0.000000f},
+               .position = float3{-136.048569f, 0.500000f, 25.761259f},
+               .type = hintnode_type::mine,
+               .mode = hintnode_mode::both,
+               .radius = 0.0f,
+               .primary_stance =
+                  (stance_flags::stand | stance_flags::crouch | stance_flags::prone),
+               .secondary_stance = stance_flags::none,
+               .command_post = "cp2",
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 }

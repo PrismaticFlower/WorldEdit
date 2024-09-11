@@ -296,7 +296,7 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
       const float3 position = flip_position(hint.position);
 
       // the quotes around the integer are not a mistake, this is how the type is saved by ZE.
-      file.write_ln("\nHint(\"{}\", \"{}\")", hint.name, static_cast<int>(hint.type));
+      file.write_ln("Hint(\"{}\", \"{}\")", hint.name, static_cast<int>(hint.type));
       file.write_ln("{");
 
       file.write_ln("\tPosition({:f}, {:f}, {:f});", position.x, position.y,
@@ -320,7 +320,7 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
          file.write_ln("\tCommandPost(\"{}\");", hint.command_post);
       }
 
-      file.write_ln("}");
+      file.write_ln("}\n");
    }
 
    for (const barrier& barrier : group.barriers) {
