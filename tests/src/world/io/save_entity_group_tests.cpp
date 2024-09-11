@@ -603,4 +603,121 @@ TEST_CASE("world save entity group (barriers)", "[World][IO]")
 
    CHECK(written_eng == expected_eng);
 }
+
+TEST_CASE("world save entity group (planning)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_planning.eng";
+
+   const std::string_view expected_eng =
+      R"(Hub("Hub0")
+{
+	Pos(-63.822487, 0.000000, 9.202278);
+	Radius(8.000000);
+}
+
+Hub("Hub1")
+{
+	Pos(-121.883095, 1.000000, 30.046543);
+	Radius(7.586431);
+	BranchWeight("Hub3",100.000000,"Connection0",32);
+	BranchWeight("Hub3",75.000000,"Connection0",16);
+	BranchWeight("Hub3",25.000000,"Connection0",8);
+	BranchWeight("Hub3",7.500000,"Connection0",4);
+	BranchWeight("Hub3",15.000000,"Connection0",2);
+	BranchWeight("Hub3",20.000000,"Connection0",1);
+}
+
+Hub("Hub2")
+{
+	Pos(-54.011314, 2.000000, 194.037018);
+	Radius(13.120973);
+}
+
+Hub("Hub3")
+{
+	Pos(-163.852570, 3.000000, 169.116760);
+	Radius(12.046540);
+}
+
+Connection("Connection0")
+{
+	Start("Hub0");
+	End("Hub1");
+	Flag(63);
+}
+
+Connection("Connection1")
+{
+	Start("Hub3");
+	End("Hub2");
+	Flag(2);
+}
+
+)";
+
+   world::entity_group group = {
+      .planning_hubs =
+         {
+            world::planning_hub{
+               .name = "Hub0",
+               .position = float3{-63.822487f, 0.0f, -9.202278f},
+               .radius = 8.0f,
+            },
+
+            world::planning_hub{
+               .name = "Hub1",
+               .position = float3{-121.883095f, 1.0f, -30.046543f},
+               .radius = 7.586431f,
+               .weights = {world::planning_branch_weights{
+                  .hub_index = 3,
+                  .connection_index = 0,
+                  .soldier = 20.0f,
+                  .hover = 15.0f,
+                  .small = 7.5f,
+                  .medium = 25.0f,
+                  .huge = 75.0f,
+                  .flyer = 100.0f,
+               }},
+            },
+
+            world::planning_hub{
+               .name = "Hub2",
+               .position = float3{-54.011314f, 2.0f, -194.037018f},
+               .radius = 13.120973f,
+            },
+
+            world::planning_hub{
+               .name = "Hub3",
+               .position = float3{-163.852570f, 3.0f, -169.116760f},
+               .radius = 12.046540f,
+            },
+         },
+
+      .planning_connections =
+         {
+            world::planning_connection{
+               .name = "Connection0",
+               .start_hub_index = 0,
+               .end_hub_index = 1,
+               .flags = (ai_path_flags::soldier | ai_path_flags::hover |
+                         ai_path_flags::small | ai_path_flags::medium |
+                         ai_path_flags::huge | ai_path_flags::flyer),
+            },
+
+            world::planning_connection{
+               .name = "Connection1",
+               .start_hub_index = 3,
+               .end_hub_index = 2,
+               .flags = ai_path_flags::hover,
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
 }

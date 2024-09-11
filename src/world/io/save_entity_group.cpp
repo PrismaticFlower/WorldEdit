@@ -340,7 +340,6 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
    for (uint32 i = 0; i < group.planning_hubs.size(); ++i) {
       const world::planning_hub& hub = group.planning_hubs[i];
 
-      file.write_ln("");
       file.write_ln("Hub(\"{}\")", hub.name);
       file.write_ln("{");
 
@@ -392,11 +391,10 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
          }
       }
 
-      file.write_ln("}");
+      file.write_ln("}\n");
    }
 
    for (const planning_connection& connection : group.planning_connections) {
-      file.write_ln("");
       file.write_ln("Connection(\"{}\")", connection.name);
       file.write_ln("{");
 
@@ -414,7 +412,7 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
       if (connection.jet_jump) file.write_ln("\tJetJump();");
       if (connection.one_way) file.write_ln("\tOneWay();");
 
-      file.write_ln("}");
+      file.write_ln("}\n");
    }
 
    for (const boundary& boundary : group.boundaries) {
