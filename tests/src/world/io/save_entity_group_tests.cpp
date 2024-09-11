@@ -354,4 +354,41 @@ Path("type_EntityPath Path 1")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (regions)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_regions.eng";
+
+   const std::string_view expected_eng =
+      R"(Region("foleyfx water", 0)
+{
+	Position(-32.000000, 16.000000, -32.000000);
+	Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+	Size(16.000000, 16.000000, 16.000000);
+	Name("Region0");
+}
+
+)";
+
+   world::entity_group group = {
+      .regions =
+         {
+            world::region{
+               .name = "Region0",
+               .rotation = quaternion{0.000f, -0.000f, 1.000f, -0.000f},
+               .position = float3{-32.000000f, 16.000000f, 32.000000f},
+               .size = float3{16.000000f, 16.000000f, 16.000000f},
+               .shape = region_shape::box,
+               .description = "foleyfx water",
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 }
