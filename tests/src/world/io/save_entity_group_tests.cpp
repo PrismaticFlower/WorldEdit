@@ -763,4 +763,37 @@ TEST_CASE("world save entity group (boundaries)", "[World][IO]")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (measurements)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path =
+      L"temp/entity_groups/test_measurements.eng";
+
+   const std::string_view expected_eng =
+      R"(Measurement("Measurement0")
+{
+	Start(1.000000, 0.000000, 0.000000);
+	End(2.000000, 0.000000, 1.000000);
+}
+
+)";
+
+   world::entity_group group = {
+      .measurements =
+         {
+            world::measurement{
+               .start = float3{1.0f, 0.0f, -0.0f},
+               .end = float3{2.0f, 0.0f, -1.0f},
+               .name = "Measurement0",
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 }

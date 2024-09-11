@@ -425,6 +425,18 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
 
       file.write_ln("}\n");
    }
+
+   for (const measurement& measurement : group.measurements) {
+      file.write_ln("Measurement(\"{}\")", measurement.name);
+      file.write_ln("{");
+
+      file.write_ln("\tStart({:f}, {:f}, {:f});", measurement.start.x,
+                    measurement.start.y, -measurement.start.z);
+      file.write_ln("\tEnd({:f}, {:f}, {:f});", measurement.end.x,
+                    measurement.end.y, -measurement.end.z);
+
+      file.write_ln("}\n");
+   }
 }
 
 }
