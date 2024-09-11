@@ -567,4 +567,40 @@ Hint("HintNode1", "5")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (barriers)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_barriers.eng";
+
+   const std::string_view expected_eng =
+      R"(Barrier("Barrier0")
+{
+	Corner(72.596146, 2.000000, -31.159695);
+	Corner(86.691788, 2.000000, -0.198154);
+	Corner(99.806580, 2.000000, -6.168838);
+	Corner(85.710938, 2.000000, -37.130379);
+	Flag(32);
+}
+
+)";
+
+   world::entity_group group = {
+      .barriers =
+         {
+            world::barrier{
+               .name = "Barrier0",
+               .position = float3{86.2013626f, 2.0f, 18.6642666f},
+               .size = float2{7.20497799f, 17.0095882f},
+               .rotation_angle = 2.71437049f,
+               .flags = ai_path_flags::flyer,
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
 }
