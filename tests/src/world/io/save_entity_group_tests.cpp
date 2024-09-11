@@ -9,8 +9,8 @@ namespace we::world::tests {
 
 TEST_CASE("world save entity group (objects)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/world");
-   const std::filesystem::path path = L"temp/world/test_objects.eng";
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_objects.eng";
 
    const std::string_view expected_eng =
       R"(Object("com_item_healthrecharge", "com_item_healthrecharge")
@@ -64,8 +64,8 @@ Object("com_inv_col_8", "com_inv_col_8")
 
 TEST_CASE("world save entity group (lights)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/world");
-   const std::filesystem::path path = L"temp/world/test_lights.eng";
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_lights.eng";
 
    const std::string_view expected_eng =
       R"(Light("Light 2")
@@ -216,4 +216,142 @@ Light("Light 4")
 
    CHECK(written_eng == expected_eng);
 }
+
+TEST_CASE("world save entity group (paths)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_paths.eng";
+
+   const std::string_view expected_eng =
+      R"(Path("Path 0")
+{
+	SplineType("Catmull-Rom");
+
+	Properties(2)
+	{
+		PropKey("PropValue");
+		PropEmpty("");
+	}
+
+	Nodes(3)
+	{
+		Node()
+		{
+			Position(-16.041691, 0.000000, -31.988783);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(2)
+			{
+				PropKey("PropValue");
+				PropEmpty("");
+			}
+		}
+
+		Node()
+		{
+			Position(-31.982189, 0.000000, -48.033310);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+		Node()
+		{
+			Position(-48.012756, 0.000000, -31.962399);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+	}
+
+}
+
+Path("type_EntityPath Path 1")
+{
+	SplineType("None");
+
+	Properties(0)
+	{
+	}
+
+	Nodes(1)
+	{
+		Node()
+		{
+			Position(-16.041691, 0.000000, -31.988783);
+			Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+			Properties(0)
+			{
+			}
+		}
+
+	}
+
+}
+
+)";
+
+   world::entity_group
+      group =
+         {
+            .paths =
+               {
+                  world::path{
+                     .name = "Path 0",
+                     .type = path_type::none,
+                     .spline_type = path_spline_type::catmull_rom,
+                     .properties =
+                        {
+                           world::path::property{.key = "PropKey", .value = "PropValue"},
+                           world::path::property{.key = "PropEmpty", .value = ""},
+                        },
+                     .nodes =
+                        {
+                           world::path::node{
+                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                              .position = float3{-16.041691f, 0.000000f, 31.988783f},
+                              .properties =
+                                 {
+                                    world::path::property{.key = "PropKey", .value = "PropValue"},
+                                    world::path::property{.key = "PropEmpty", .value = ""},
+                                 },
+                           },
+
+                           world::path::node{
+                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                              .position = float3{-31.982189f, 0.000000f, 48.033310f},
+                           },
+
+                           world::path::node{
+                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                              .position = float3{-48.012756f, 0.000000f, 31.962399f},
+                           },
+                        },
+                  },
+
+                  world::path{
+                     .name = "Path 1",
+                     .type = path_type::entity_follow,
+                     .spline_type = path_spline_type::none,
+
+                     .nodes =
+                        {
+                           world::path::node{
+                              .rotation = quaternion{0.0f, -0.0f, 1.0f, -0.0f},
+                              .position = float3{-16.041691f, 0.000000f, 31.988783f},
+                           },
+                        },
+                  },
+               },
+         };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 }
