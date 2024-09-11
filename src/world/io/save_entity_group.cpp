@@ -288,7 +288,7 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
       file.write_ln("\tSector1(\"{}\");", portal.sector1);
       file.write_ln("\tSector2(\"{}\");", portal.sector2);
 
-      file.write_ln("}");
+      file.write_ln("}\n");
    }
 
    for (const hintnode& hint : group.hintnodes) {

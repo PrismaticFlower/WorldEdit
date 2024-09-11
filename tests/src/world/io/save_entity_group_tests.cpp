@@ -464,4 +464,44 @@ Sector("Sector-1")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (portals)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_portals.eng";
+
+   const std::string_view expected_eng =
+      R"(Portal("Portal")
+{
+	Rotation(1.000000, 0.000000, 0.000000, 0.000000);
+	Position(-193.661575, 2.097009, -31.728502);
+	Width(2.920000);
+	Height(4.120000);
+	Sector1("sector");
+	Sector2("Sector-1");
+}
+
+)";
+
+   world::entity_group group = {
+      .portals =
+         {
+            world::portal{
+               .name = "Portal",
+               .rotation = quaternion{0.000f, -0.000f, 1.000f, -0.000f},
+               .position = float3{-193.661575f, 2.097009f, 31.728502f},
+               .width = 2.92f,
+               .height = 4.12f,
+               .sector1 = "sector",
+               .sector2 = "Sector-1",
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 }
