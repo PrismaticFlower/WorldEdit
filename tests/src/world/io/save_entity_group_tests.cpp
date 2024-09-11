@@ -720,4 +720,47 @@ Connection("Connection1")
 
    CHECK(written_eng == expected_eng);
 }
+
+TEST_CASE("world save entity group (boundaries)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_boundaries.eng";
+
+   const std::string_view expected_eng =
+      R"(Boundary("boundary")
+{
+	Node(383.557434, 1.000000, -4.797791);
+	Node(332.111023, 1.000000, 187.202209);
+	Node(191.557434, 1.000000, 327.755798);
+	Node(-0.442566, 1.000000, 379.202209);
+	Node(-192.442566, 1.000000, 327.755798);
+	Node(-332.996155, 1.000000, 187.202209);
+	Node(-384.442566, 1.000000, -4.797791);
+	Node(-332.996155, 1.000000, -196.797791);
+	Node(-192.442566, 1.000000, -337.351379);
+	Node(-0.442566, 1.000000, -388.797791);
+	Node(191.557434, 1.000000, -337.351379);
+	Node(332.111023, 1.000000, -196.797791);
+}
+
+)";
+
+   world::entity_group group = {
+      .boundaries =
+         {
+            world::boundary{
+               .name = "boundary",
+               .position = float3{-0.442565918f, 1.0f, 4.79779053f},
+               .size = float2{384.000000f, 384.000000f},
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 }
