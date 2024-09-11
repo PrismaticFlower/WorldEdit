@@ -267,7 +267,7 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
          file.write_ln("\tObject(\"{}\");", object);
       }
 
-      file.write_ln("}");
+      file.write_ln("}\n");
    }
 
    for (const portal& portal : group.portals) {

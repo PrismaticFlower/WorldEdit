@@ -391,4 +391,77 @@ TEST_CASE("world save entity group (regions)", "[World][IO]")
    CHECK(written_eng == expected_eng);
 }
 
+TEST_CASE("world save entity group (sectors)", "[World][IO]")
+{
+   std::filesystem::create_directory(L"temp/entity_groups");
+   const std::filesystem::path path = L"temp/entity_groups/test_sectors.eng";
+
+   const std::string_view expected_eng =
+      R"(Sector("sector")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-157.581009, 4.900336);
+	Point(-227.199097, 7.364827);
+	Point(-228.642029, -40.347687);
+	Point(-159.451279, -40.488800);
+	Object("tat3_bldg_keeper");
+}
+
+Sector("Sector-1")
+{
+	Base(0.000000);
+	Height(10.000000);
+	Point(-196.648041, -125.908623);
+	Point(-195.826218, -49.666763);
+	Point(-271.034851, -48.864563);
+	Point(-274.260132, -128.690567);
+	Object("lod_test120");
+	Object("lod_test2010");
+	Object("lod_test12");
+	Object("lod_test201");
+}
+
+)";
+
+   world::entity_group group = {
+      .sectors =
+         {
+            world::sector{
+               .name = "sector",
+               .base = 0.0f,
+               .height = 10.0f,
+               .points =
+                  {
+                     float2{-157.581009f, -4.900336f},
+                     float2{-227.199097f, -7.364827f},
+                     float2{-228.642029f, 40.347687f},
+                     float2{-159.451279f, 40.488800f},
+                  },
+               .objects = {"tat3_bldg_keeper"},
+            },
+
+            world::sector{
+               .name = "Sector-1",
+               .base = 0.0f,
+               .height = 10.0f,
+               .points =
+                  {
+                     float2{-196.648041f, 125.908623f},
+                     float2{-195.826218f, 49.666763f},
+                     float2{-271.034851f, 48.864563f},
+                     float2{-274.260132f, 128.690567f},
+                  },
+               .objects = {"lod_test120", "lod_test2010", "lod_test12", "lod_test201"},
+            },
+         },
+   };
+
+   world::save_entity_group(path, group);
+
+   const auto written_eng = io::read_file_to_string(path);
+
+   CHECK(written_eng == expected_eng);
+}
+
 }
