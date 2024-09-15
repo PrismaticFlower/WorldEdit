@@ -69,19 +69,21 @@ auto get_placed_entity_name_impl(std::string_view name, std::span<const T> world
 
 }
 
-auto entity_group_bbox(const entity_group& group,
-                       const object_class_library& object_classes) noexcept
-   -> math::bounding_box
+auto entity_group_metrics(const entity_group& group,
+                          const object_class_library& object_classes) noexcept
+   -> entity_group_placement_metrics
 {
+   float ground_distance = FLT_MAX;
    math::bounding_box group_bbox{.min = float3{FLT_MAX, FLT_MAX, FLT_MAX},
                                  .max = float3{-FLT_MAX, -FLT_MAX, -FLT_MAX}};
 
    for (const object& object : group.objects) {
-      math::bounding_box bbox = object_classes[object.class_handle].model->bounding_box;
+      const math::bounding_box bboxOS =
+         object_classes[object.class_handle].model->bounding_box;
+      const math::bounding_box bboxGS = object.rotation * bboxOS + object.position;
 
-      bbox = object.rotation * bbox + object.position;
-
-      group_bbox = math::combine(group_bbox, bbox);
+      ground_distance = std::min(ground_distance, bboxOS.min.y);
+      group_bbox = math::combine(group_bbox, bboxGS);
    }
 
    for (const path& path : group.paths) {
@@ -222,7 +224,7 @@ auto entity_group_bbox(const entity_group& group,
       group_bbox = math::integrate(group_bbox, measurement.end);
    }
 
-   return group_bbox;
+   return {.ground_distance = ground_distance, .visual_bbox = group_bbox};
 }
 
 void centre_entity_group(entity_group& group) noexcept

@@ -11,13 +11,18 @@
 
 namespace we::world {
 
-/// @brief Return a bounding box for the entity group.
+struct entity_group_placement_metrics {
+   float ground_distance;
+   math::bounding_box visual_bbox;
+};
+
+/// @brief Return the placement metrics for the entity group.
 /// @param group The entity group.
 /// @param object_classes The object class library.
-/// @return The bounding box.
-auto entity_group_bbox(const entity_group& group,
-                       const object_class_library& object_classes) noexcept
-   -> math::bounding_box;
+/// @return The metrics.
+auto entity_group_metrics(const entity_group& group,
+                          const object_class_library& object_classes) noexcept
+   -> entity_group_placement_metrics;
 
 /// @brief Centre the entity group on 0,0,0.
 /// @param group The entity group.

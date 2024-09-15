@@ -3797,6 +3797,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
    else if (creation_entity.is<world::entity_group>()) {
       world::entity_group& group = creation_entity.get<world::entity_group>();
 
+      const world::entity_group_placement_metrics metrics =
+         world::entity_group_metrics(group, _object_classes);
+
       float3 new_position = group.position;
       float new_rotation_angle =
          group.rotation_angle * 180.0f / std::numbers::pi_v<float>;
@@ -3827,6 +3830,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
             if (not _entity_creation_context.lock_y_axis) {
                new_position.y = _cursor_positionWS.y;
+
+               if (_entity_creation_config.placement_ground == placement_ground::bbox) {
+                  new_position.y -= metrics.ground_distance;
+               }
             }
 
             if (not _entity_creation_context.lock_z_axis) {
@@ -3872,9 +3879,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _edit_context, {.transparent = true});
       }
 
-      const math::bounding_box bbox = world::entity_group_bbox(group, _object_classes);
-
-      std::array<float3, 8> bbox_corners = math::to_corners(bbox);
+      std::array<float3, 8> bbox_corners = math::to_corners(metrics.visual_bbox);
 
       for (float3& v : bbox_corners) {
          v = (group.rotation * v) + group.position;
@@ -3903,7 +3908,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          .has_placement_rotation = false,
          .has_point_at = false,
          .has_placement_mode = false,
-         .has_placement_ground = false,
+         .has_placement_ground = true,
          .has_place_at_camera = false,
       };
    }
