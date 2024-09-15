@@ -671,7 +671,8 @@ void libraries_manager::register_asset(const std::filesystem::path& path,
    else if (string::iequals(extension.native(), L".sky"sv)) {
       skies.add(path, last_write_time);
    }
-   else if (string::iequals(extension.native(), L".obg"sv)) {
+   else if (string::iequals(extension.native(), L".eng"sv) or
+            string::iequals(extension.native(), L".obg"sv)) {
       entity_groups.add(path);
    }
 }
