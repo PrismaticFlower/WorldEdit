@@ -2,6 +2,7 @@
 
 #include "edits/creation_entity_set.hpp"
 #include "world/io/load_entity_group.hpp"
+#include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/world_utilities.hpp"
 
 #include <imgui.h>
@@ -65,6 +66,29 @@ void world_edit::ui_show_main_menu_bar() noexcept
 
          if (ImGui::MenuItem("Close World", nullptr, nullptr, loaded_world)) {
             close_world();
+         }
+
+         ImGui::Separator();
+
+         if (ImGui::MenuItem("Save Selection as Entity Group")) {
+            save_entity_group_with_picker(
+               world::make_entity_group_from_selection(_world,
+                                                       _interaction_targets.selection));
+         }
+
+         if (ImGui::MenuItem("Save World as Entity Group")) {
+            save_entity_group_with_picker(world::make_entity_group_from_world(_world));
+         }
+
+         if (ImGui::BeginMenu("Save Layer as Entity Group")) {
+            for (int32 i = 0; i < std::ssize(_world.layer_descriptions); ++i) {
+               if (ImGui::MenuItem(_world.layer_descriptions[i].name.c_str())) {
+                  save_entity_group_with_picker(
+                     world::make_entity_group_from_layer(_world, i));
+               }
+            }
+
+            ImGui::EndMenu();
          }
 
          ImGui::EndMenu();

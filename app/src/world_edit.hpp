@@ -379,6 +379,8 @@ private:
 
    void close_world() noexcept;
 
+   void save_entity_group_with_picker(const world::entity_group& group) noexcept;
+
    void enumerate_project_worlds() noexcept;
 
    void open_odfs_for_selected() noexcept;

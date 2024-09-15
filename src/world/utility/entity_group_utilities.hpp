@@ -1,7 +1,9 @@
 #pragma once
 
 #include "../entity_group.hpp"
+#include "../interaction_context.hpp"
 #include "../object_class_library.hpp"
+#include "../world.hpp"
 #include "math/bounding_box.hpp"
 
 #include <span>
@@ -46,4 +48,24 @@ auto get_placed_entity_name(std::string_view name, std::span<const path> world_p
 auto get_placed_entity_name(std::string_view name, std::span<const sector> world_sectors,
                             const entity_group& group,
                             const uint32 group_base_index) noexcept -> std::string_view;
+
+/// @brief Make an entity_group from a selection.
+/// @param world The world.
+/// @param selection The selection.
+/// @return The entity group.
+auto make_entity_group_from_selection(const world& world, const selection& selection) noexcept
+   -> entity_group;
+
+/// @brief Make an entity_group that includes all entities from a layer.
+/// @param world The world.
+/// @param layer The index of the layer.
+/// @return The entity group.
+auto make_entity_group_from_layer(const world& world, const int32 layer) noexcept
+   -> entity_group;
+
+/// @brief Make an entity_group from a world.
+/// @param world The world.
+/// @return The entity group.
+auto make_entity_group_from_world(const world& world) noexcept -> entity_group;
+
 }

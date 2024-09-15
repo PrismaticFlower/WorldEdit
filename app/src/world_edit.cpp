@@ -26,6 +26,7 @@
 #include "utility/string_ops.hpp"
 #include "world/io/load.hpp"
 #include "world/io/save.hpp"
+#include "world/io/save_entity_group.hpp"
 #include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
@@ -3432,6 +3433,41 @@ void world_edit::close_world() noexcept
 
    SetWindowTextA(_window, "WorldEdit");
    _window_unsaved_star = false;
+}
+
+void world_edit::save_entity_group_with_picker(const world::entity_group& group) noexcept
+{
+   static constexpr GUID save_entity_group_picker_guid =
+      {0xd9b928cb, 0xdb72, 0x4c25, {0xa5, 0xf, 0xb2, 0xd3, 0x54, 0xe2, 0xeb, 0xbb}};
+
+   auto path = utility::show_file_save_picker(
+      {.title = L"Save Entity Group"s,
+       .ok_button_label = L"Save"s,
+       .forced_start_folder = _world_path,
+       .filters = {utility::file_picker_filter{.name = L"Entity Group"s, .filter = L"*.eng"s}},
+       .picker_guid = save_entity_group_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+   if (not path->has_extension()) *path += L".eng";
+
+   try {
+      if (not std::filesystem::exists(path->parent_path())) {
+         std::filesystem::create_directories(path->parent_path());
+      }
+
+      world::save_entity_group(*path, group);
+   }
+   catch (std::exception& e) {
+      auto message =
+         fmt::format("Failed to save entity group!\n   Reason: \n{}",
+                     string::indent(2, e.what()));
+
+      _stream->write(message);
+
+      MessageBoxA(_window, message.data(), "Failed to save entity group!", MB_OK);
+   }
 }
 
 void world_edit::enumerate_project_worlds() noexcept
