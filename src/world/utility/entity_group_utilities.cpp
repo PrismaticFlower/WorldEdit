@@ -225,6 +225,126 @@ auto entity_group_bbox(const entity_group& group,
    return group_bbox;
 }
 
+void centre_entity_group(entity_group& group) noexcept
+{
+   float3 position;
+   float count = 0.0f;
+
+   for (const object& object : group.objects) {
+      position += object.position;
+      count += 1.0f;
+   }
+
+   for (const path& path : group.paths) {
+      for (const path::node& node : path.nodes) {
+         position += node.position;
+         count += 1.0f;
+      }
+   }
+
+   for (const light& light : group.lights) {
+      position += light.position;
+      count += 1.0f;
+   }
+
+   for (const region& region : group.regions) {
+      position += region.position;
+      count += 1.0f;
+   }
+
+   for (const sector& sector : group.sectors) {
+      for (const float2& point : sector.points) {
+         position += float3{point.x, sector.base, point.y};
+         count += 1.0f;
+      }
+   }
+
+   for (const portal& portal : group.portals) {
+      position += portal.position;
+      count += 1.0f;
+   }
+
+   for (const hintnode& hintnode : group.hintnodes) {
+      position += hintnode.position;
+      count += 1.0f;
+   }
+
+   for (const barrier& barrier : group.barriers) {
+      position += barrier.position;
+      count += 1.0f;
+   }
+
+   for (const planning_hub& hub : group.planning_hubs) {
+      position += hub.position;
+      count += 1.0f;
+   }
+
+   for (const boundary& boundary : group.boundaries) {
+      position += boundary.position;
+      count += 1.0f;
+   }
+
+   for (const measurement& measurement : group.measurements) {
+      position += measurement.start;
+      position += measurement.end;
+      count += 2.0f;
+   }
+
+   const float3 centre = position / count;
+
+   for (object& object : group.objects) {
+      object.position -= centre;
+   }
+
+   for (path& path : group.paths) {
+      for (path::node& node : path.nodes) {
+         node.position -= centre;
+      }
+   }
+
+   for (light& light : group.lights) {
+      light.position -= centre;
+   }
+
+   for (region& region : group.regions) {
+      region.position -= centre;
+   }
+
+   for (sector& sector : group.sectors) {
+      for (float2& point : sector.points) {
+         point.x -= centre.x;
+         point.y -= centre.z;
+      }
+
+      sector.base -= centre.y;
+   }
+
+   for (portal& portal : group.portals) {
+      portal.position -= centre;
+   }
+
+   for (hintnode& hintnode : group.hintnodes) {
+      hintnode.position -= centre;
+   }
+
+   for (barrier& barrier : group.barriers) {
+      barrier.position -= centre;
+   }
+
+   for (planning_hub& hub : group.planning_hubs) {
+      hub.position -= centre;
+   }
+
+   for (boundary& boundary : group.boundaries) {
+      boundary.position -= centre;
+   }
+
+   for (measurement& measurement : group.measurements) {
+      measurement.start -= centre;
+      measurement.end -= centre;
+   }
+}
+
 auto get_placed_entity_name(std::string_view name, std::span<const object> world_objects,
                             const entity_group& group,
                             const uint32 group_base_index) noexcept -> std::string_view

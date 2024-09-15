@@ -71,9 +71,13 @@ void world_edit::ui_show_main_menu_bar() noexcept
          ImGui::Separator();
 
          if (ImGui::MenuItem("Save Selection as Entity Group")) {
-            save_entity_group_with_picker(
+            world::entity_group group =
                world::make_entity_group_from_selection(_world,
-                                                       _interaction_targets.selection));
+                                                       _interaction_targets.selection);
+
+            world::centre_entity_group(group);
+
+            save_entity_group_with_picker(group);
          }
 
          if (ImGui::MenuItem("Save World as Entity Group")) {

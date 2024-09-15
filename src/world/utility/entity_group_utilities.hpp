@@ -19,6 +19,10 @@ auto entity_group_bbox(const entity_group& group,
                        const object_class_library& object_classes) noexcept
    -> math::bounding_box;
 
+/// @brief Centre the entity group on 0,0,0.
+/// @param group The entity group.
+void centre_entity_group(entity_group& group) noexcept;
+
 /// @brief Returns the new name of an object after it is was placed into the world.
 /// @param name The original name of the object in the entity group.
 /// @param world_objects The span of world objects.
