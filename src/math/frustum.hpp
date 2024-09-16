@@ -52,6 +52,9 @@ bool intersects_shadow_cascade(const frustum& frustum,
 bool intersects(const frustum& frustum, const float3& position,
                 const float radius) noexcept;
 
+bool intersects(const frustum& frustum, const float3& v0, const float3& v1,
+                const float3& v2) noexcept;
+
 auto transform(const frustum& world_frustum, const quaternion& rotation,
                const float3& position) noexcept -> frustum;
 

@@ -26,6 +26,8 @@
 #include "utility/string_ops.hpp"
 #include "world/io/load.hpp"
 #include "world/io/save.hpp"
+#include "world/io/save_entity_group.hpp"
+#include "world/utility/entity_group_utilities.hpp"
 #include "world/utility/grounding.hpp"
 #include "world/utility/make_command_post_linked_entities.hpp"
 #include "world/utility/mouse_pick_measurement.hpp"
@@ -930,7 +932,93 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          }
       }
 
-      // Skip connections
+      if (_world_hit_mask.planning_connections) {
+         for (auto& connection : _world.planning_connections) {
+            if (connection.hidden) continue;
+
+            const world::planning_hub& start =
+               _world.planning_hubs[connection.start_hub_index];
+            const world::planning_hub& end =
+               _world.planning_hubs[connection.end_hub_index];
+
+            const math::bounding_box start_bbox{
+               .min = float3{-start.radius, -_settings.graphics.planning_connection_height,
+                             -start.radius} +
+                      start.position,
+               .max = float3{start.radius, _settings.graphics.planning_connection_height,
+                             start.radius} +
+                      start.position};
+            const math::bounding_box end_bbox{
+               .min = float3{-end.radius, -_settings.graphics.planning_connection_height,
+                             -end.radius} +
+                      end.position,
+               .max = float3{end.radius, _settings.graphics.planning_connection_height,
+                             end.radius} +
+                      end.position};
+
+            const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
+
+            if (not intersects(frustumWS, bbox)) continue;
+
+            const float3 normal =
+               normalize(float3{-(start.position.z - end.position.z), 0.0f,
+                                start.position.x - end.position.x});
+
+            const std::array<float3, 4> quadWS = {start.position +
+                                                     normal * start.radius,
+                                                  start.position -
+                                                     normal * start.radius,
+                                                  end.position + normal * end.radius,
+                                                  end.position - normal * end.radius};
+
+            const float3 height_offset = {0.0f, _settings.graphics.planning_connection_height,
+                                          0.0f};
+
+            const std::array<float3, 8> cornersWS = {quadWS[0] + height_offset,
+                                                     quadWS[1] + height_offset,
+                                                     quadWS[2] + height_offset,
+                                                     quadWS[3] + height_offset,
+                                                     quadWS[0] - height_offset,
+                                                     quadWS[1] - height_offset,
+                                                     quadWS[2] - height_offset,
+                                                     quadWS[3] - height_offset};
+
+            constexpr static std::array<std::array<int8, 3>, 12> tris = {
+               // Top
+               3, 2, 0, //
+               3, 0, 1, //
+
+               // Bottom
+               4, 6, 7, //
+               5, 4, 7, //
+
+               // Side 0
+               0, 6, 4, //
+               0, 2, 6, //
+
+               // Side 1
+               1, 5, 7, //
+               7, 3, 1, //
+
+               // Back
+               4, 1, 0, //
+               5, 1, 4, //
+
+               // Front
+               2, 3, 6, //
+               6, 3, 7  //
+            };
+
+            for (const std::array<int8, 3>& tri : tris) {
+               if (intersects(frustumWS, cornersWS[tri[0]], cornersWS[tri[1]],
+                              cornersWS[tri[2]])) {
+                  _interaction_targets.selection.add(connection.id);
+
+                  break;
+               }
+            }
+         }
+      }
 
       if (_world_hit_mask.boundaries) {
          for (auto& boundary : _world.boundaries) {
@@ -1229,19 +1317,81 @@ void world_edit::finish_entity_deselect() noexcept
             const world::planning_hub& end =
                _world.planning_hubs[connection.end_hub_index];
 
-            const float height = _settings.graphics.planning_connection_height;
-
             const math::bounding_box start_bbox{
-               .min = float3{-start.radius, -height, -start.radius} + start.position,
-               .max = float3{start.radius, height, start.radius} + start.position};
+               .min = float3{-start.radius, -_settings.graphics.planning_connection_height,
+                             -start.radius} +
+                      start.position,
+               .max = float3{start.radius, _settings.graphics.planning_connection_height,
+                             start.radius} +
+                      start.position};
             const math::bounding_box end_bbox{
-               .min = float3{-end.radius, -height, -end.radius} + end.position,
-               .max = float3{end.radius, height, end.radius} + end.position};
+               .min = float3{-end.radius, -_settings.graphics.planning_connection_height,
+                             -end.radius} +
+                      end.position,
+               .max = float3{end.radius, _settings.graphics.planning_connection_height,
+                             end.radius} +
+                      end.position};
 
             const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
 
-            if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.remove(connection.id);
+            if (not intersects(frustumWS, bbox)) continue;
+
+            const float3 normal =
+               normalize(float3{-(start.position.z - end.position.z), 0.0f,
+                                start.position.x - end.position.x});
+
+            const std::array<float3, 4> quadWS = {start.position +
+                                                     normal * start.radius,
+                                                  start.position -
+                                                     normal * start.radius,
+                                                  end.position + normal * end.radius,
+                                                  end.position - normal * end.radius};
+
+            const float3 height_offset = {0.0f, _settings.graphics.planning_connection_height,
+                                          0.0f};
+
+            const std::array<float3, 8> cornersWS = {quadWS[0] + height_offset,
+                                                     quadWS[1] + height_offset,
+                                                     quadWS[2] + height_offset,
+                                                     quadWS[3] + height_offset,
+                                                     quadWS[0] - height_offset,
+                                                     quadWS[1] - height_offset,
+                                                     quadWS[2] - height_offset,
+                                                     quadWS[3] - height_offset};
+
+            constexpr static std::array<std::array<int8, 3>, 12> tris = {
+               // Top
+               3, 2, 0, //
+               3, 0, 1, //
+
+               // Bottom
+               4, 6, 7, //
+               5, 4, 7, //
+
+               // Side 0
+               0, 6, 4, //
+               0, 2, 6, //
+
+               // Side 1
+               1, 5, 7, //
+               7, 3, 1, //
+
+               // Back
+               4, 1, 0, //
+               5, 1, 4, //
+
+               // Front
+               2, 3, 6, //
+               6, 3, 7  //
+            };
+
+            for (const std::array<int8, 3>& tri : tris) {
+               if (intersects(frustumWS, cornersWS[tri[0]], cornersWS[tri[1]],
+                              cornersWS[tri[2]])) {
+                  _interaction_targets.selection.remove(connection.id);
+
+                  break;
+               }
             }
          }
       }
@@ -1766,6 +1916,376 @@ void world_edit::place_creation_entity() noexcept
          _entity_creation_context.measurement_started = true;
       }
    }
+   else if (_interaction_targets.creation_entity.is<world::entity_group>()) {
+
+      const world::entity_group& group =
+         _interaction_targets.creation_entity.get<world::entity_group>();
+
+      if (_world.objects.size() + group.objects.size() > _world.objects.max_size()) {
+         report_limit_reached("Max objects ({}) Reached", _world.objects.max_size());
+
+         return;
+      }
+      else if (_world.lights.size() + group.lights.size() > _world.lights.max_size()) {
+         report_limit_reached("Max lights ({}) Reached", _world.lights.max_size());
+
+         return;
+      }
+      else if (_world.paths.size() + group.paths.size() > _world.paths.max_size()) {
+         report_limit_reached("Max paths ({}) Reached", _world.paths.max_size());
+
+         return;
+      }
+      else if (_world.regions.size() + group.regions.size() >
+               _world.regions.max_size()) {
+         report_limit_reached("Max regions ({}) Reached", _world.regions.max_size());
+
+         return;
+      }
+      else if (_world.sectors.size() + group.sectors.size() >
+               _world.sectors.max_size()) {
+         report_limit_reached("Max sectors ({}) Reached", _world.sectors.max_size());
+
+         return;
+      }
+      else if (_world.portals.size() + group.portals.size() >
+               _world.portals.max_size()) {
+         report_limit_reached("Max portals ({}) Reached", _world.portals.max_size());
+
+         return;
+      }
+      else if (_world.hintnodes.size() + group.hintnodes.size() >
+               _world.hintnodes.max_size()) {
+         report_limit_reached("Max hintnodes ({}) Reached",
+                              _world.hintnodes.max_size());
+
+         return;
+      }
+      else if (_world.barriers.size() + group.barriers.size() >
+               _world.barriers.max_size()) {
+         report_limit_reached("Max barriers ({}) Reached", _world.barriers.max_size());
+
+         return;
+      }
+      else if (_world.planning_hubs.size() + group.planning_hubs.size() >
+               _world.planning_hubs.max_size()) {
+         report_limit_reached("Max AI planning hubs ({}) Reached",
+                              _world.planning_hubs.max_size());
+
+         return;
+      }
+      else if (_world.planning_connections.size() + group.planning_connections.size() >
+               _world.planning_connections.max_size()) {
+         report_limit_reached("Max AI planning connections ({}) Reached",
+                              _world.planning_connections.max_size());
+
+         return;
+      }
+      else if (_world.boundaries.size() + group.boundaries.size() >
+               _world.boundaries.max_size()) {
+         report_limit_reached("Max boundarys ({}) Reached",
+                              _world.boundaries.max_size());
+
+         return;
+      }
+      else if (_world.measurements.size() + group.measurements.size() >
+               _world.measurements.max_size()) {
+         report_limit_reached("Max measurements ({}) Reached",
+                              _world.measurements.max_size());
+
+         return;
+      }
+
+      const uint32 object_base_index = static_cast<uint32>(_world.objects.size());
+      const uint32 path_base_index = static_cast<uint32>(_world.paths.size());
+      const uint32 region_base_index = static_cast<uint32>(_world.regions.size());
+      const uint32 sector_base_index = static_cast<uint32>(_world.sectors.size());
+      const uint32 planning_hub_base_index =
+         static_cast<uint32>(_world.planning_hubs.size());
+      const uint32 planning_connection_base_index =
+         static_cast<uint32>(_world.planning_connections.size());
+
+      bool is_transparent_edit = false;
+
+      for (const world::object& object : group.objects) {
+         world::object new_object = object;
+
+         new_object.layer = group.layer;
+         new_object.rotation = group.rotation * new_object.rotation;
+         new_object.position = group.rotation * new_object.position + group.position;
+         new_object.name = world::create_unique_name(_world.objects, new_object.name);
+         new_object.id = _world.next_id.objects.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_object),
+                                                           _object_classes),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::light& light : group.lights) {
+         world::light new_light = light;
+
+         new_light.layer = group.layer;
+         new_light.rotation = group.rotation * new_light.rotation;
+         new_light.position = group.rotation * new_light.position + group.position;
+         new_light.region_rotation = group.rotation * new_light.region_rotation;
+         new_light.name = world::create_unique_name(_world.lights, new_light.name);
+         new_light.id = _world.next_id.lights.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_light)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::path& path : group.paths) {
+         world::path new_path = path;
+
+         for (world::path::node& node : new_path.nodes) {
+            node.rotation = group.rotation * node.rotation;
+            node.position = group.rotation * node.position + group.position;
+         }
+
+         new_path.layer = group.layer;
+         new_path.name = world::create_unique_name(_world.paths, new_path.name);
+         new_path.id = _world.next_id.paths.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_path)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::region& region : group.regions) {
+         world::region new_region = region;
+
+         new_region.layer = group.layer;
+         new_region.rotation = group.rotation * new_region.rotation;
+         new_region.position = group.rotation * new_region.position + group.position;
+         new_region.name = world::create_unique_name(_world.regions, _world.lights,
+                                                     new_region.name);
+         new_region.id = _world.next_id.regions.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_region)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::sector& sector : group.sectors) {
+         world::sector new_sector = sector;
+
+         float2 sector_centre = {0.0f, 0.0f};
+
+         for (const float2& point : new_sector.points) {
+            sector_centre += (point);
+         }
+
+         sector_centre /= static_cast<float>(new_sector.points.size());
+
+         const float3 rotated_sector_centre =
+            group.rotation * float3{sector_centre.x, 0.0f, sector_centre.y};
+
+         for (float2& point : new_sector.points) {
+            const float3 rotated_point =
+               group.rotation *
+               float3{point.x - sector_centre.x, 0.0f, point.y - sector_centre.y};
+
+            point = float2{rotated_point.x, rotated_point.z} +
+                    float2{rotated_sector_centre.x, rotated_sector_centre.z} +
+                    float2{group.position.x, group.position.z};
+         }
+
+         for (std::string& object : new_sector.objects) {
+            object = world::get_placed_entity_name(object, _world.objects,
+                                                   group, object_base_index);
+         }
+
+         new_sector.base += group.position.y;
+         new_sector.name = world::create_unique_name(_world.sectors, new_sector.name);
+         new_sector.id = _world.next_id.sectors.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_sector)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::portal& portal : group.portals) {
+         world::portal new_portal = portal;
+
+         if (not new_portal.sector1.empty()) {
+            new_portal.sector1 =
+               world::get_placed_entity_name(new_portal.sector1, _world.sectors,
+                                             group, sector_base_index);
+         }
+
+         if (not new_portal.sector2.empty()) {
+            new_portal.sector2 =
+               world::get_placed_entity_name(new_portal.sector2, _world.sectors,
+                                             group, sector_base_index);
+         }
+
+         new_portal.rotation = group.rotation * new_portal.rotation;
+         new_portal.position = group.rotation * new_portal.position + group.position;
+         new_portal.name = world::create_unique_name(_world.portals, new_portal.name);
+         new_portal.id = _world.next_id.portals.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_portal)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::hintnode& hintnode : group.hintnodes) {
+         world::hintnode new_hintnode = hintnode;
+
+         if (not new_hintnode.command_post.empty()) {
+            new_hintnode.command_post =
+               world::get_placed_entity_name(new_hintnode.command_post, _world.objects,
+                                             group, object_base_index);
+         }
+
+         new_hintnode.layer = group.layer;
+         new_hintnode.rotation = group.rotation * new_hintnode.rotation;
+         new_hintnode.position = group.rotation * new_hintnode.position + group.position;
+         new_hintnode.name =
+            world::create_unique_name(_world.hintnodes, new_hintnode.name);
+         new_hintnode.id = _world.next_id.hintnodes.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hintnode)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::barrier& barrier : group.barriers) {
+         world::barrier new_barrier = barrier;
+
+         new_barrier.rotation_angle = group.rotation_angle + new_barrier.rotation_angle;
+         new_barrier.position = group.rotation * new_barrier.position + group.position;
+         new_barrier.name =
+            world::create_unique_name(_world.barriers, new_barrier.name);
+         new_barrier.id = _world.next_id.barriers.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_barrier)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::planning_hub& hub : group.planning_hubs) {
+         world::planning_hub new_hub = hub;
+
+         for (world::planning_branch_weights& weight : new_hub.weights) {
+            weight.hub_index += planning_hub_base_index;
+            weight.connection_index += planning_connection_base_index;
+         }
+
+         new_hub.position = group.rotation * new_hub.position + group.position;
+         new_hub.name = world::create_unique_name(_world.planning_hubs, new_hub.name);
+         new_hub.id = _world.next_id.planning_hubs.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_hub)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::planning_connection& connection : group.planning_connections) {
+         world::planning_connection new_connection = connection;
+
+         new_connection.start_hub_index += planning_hub_base_index;
+         new_connection.end_hub_index += planning_hub_base_index;
+         new_connection.name = world::create_unique_name(_world.planning_connections,
+                                                         new_connection.name);
+         new_connection.id = _world.next_id.planning_connections.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_connection)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::boundary& boundary : group.boundaries) {
+         world::boundary new_boundary = boundary;
+
+         new_boundary.position = group.rotation * new_boundary.position + group.position;
+         new_boundary.name =
+            world::create_unique_name(_world.boundaries, new_boundary.name);
+         new_boundary.id = _world.next_id.boundaries.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_boundary)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (const world::measurement& measurement : group.measurements) {
+         world::measurement new_measurement = measurement;
+
+         new_measurement.start = group.rotation * new_measurement.start + group.position;
+         new_measurement.end = group.rotation * new_measurement.end + group.position;
+         new_measurement.id = _world.next_id.measurements.aquire();
+
+         _edit_stack_world.apply(edits::make_insert_entity(std::move(new_measurement)),
+                                 _edit_context,
+                                 {.transparent =
+                                     std::exchange(is_transparent_edit, true)});
+      }
+
+      for (uint32 object_index = object_base_index;
+           object_index < _world.objects.size(); ++object_index) {
+         world::object& object = _world.objects[object_index];
+
+         for (uint32 prop_index = 0;
+              prop_index < object.instance_properties.size(); ++prop_index) {
+            const world::instance_property& prop =
+               object.instance_properties[prop_index];
+
+            if (prop.value.empty()) continue;
+
+            std::string_view new_value;
+
+            if (string::iequals("ControlZone", prop.key)) {
+               new_value = world::get_placed_entity_name(prop.value, _world.objects,
+                                                         group, object_base_index);
+            }
+            else if (string::icontains(prop.key, "Path")) {
+               new_value = world::get_placed_entity_name(prop.value, _world.paths,
+                                                         group, path_base_index);
+            }
+            else if (string::icontains(prop.key, "Region")) {
+               for (uint32 i = 0; i < group.regions.size(); ++i) {
+                  if (not string::iequals(prop.value, group.regions[i].description)) {
+                     continue;
+                  }
+
+                  world::region& region = _world.regions[region_base_index + i];
+
+                  if (not string::iequals(region.name, region.description)) {
+                     _edit_stack_world.apply(edits::make_set_value(&region.description,
+                                                                   region.name),
+                                             _edit_context, {.transparent = true});
+                  }
+
+                  new_value = region.description;
+               }
+            }
+
+            if (not new_value.empty()) {
+               _edit_stack_world
+                  .apply(edits::make_set_vector_value(&object.instance_properties, prop_index,
+                                                      &world::instance_property::value,
+                                                      std::string{new_value}),
+                         _edit_context, {.transparent = true});
+            }
+         }
+      }
+
+      _last_created_entities.last_layer = group.layer;
+   }
 
    _entity_creation_config.placement_mode = placement_mode::cursor;
 }
@@ -1855,6 +2375,9 @@ void world_edit::place_creation_entity_at_camera() noexcept
       return;
    }
    else if (_interaction_targets.creation_entity.is<world::measurement>()) {
+      return;
+   }
+   else if (_interaction_targets.creation_entity.is<world::entity_group>()) {
       return;
    }
 
@@ -3058,6 +3581,41 @@ void world_edit::close_world() noexcept
 
    SetWindowTextA(_window, "WorldEdit");
    _window_unsaved_star = false;
+}
+
+void world_edit::save_entity_group_with_picker(const world::entity_group& group) noexcept
+{
+   static constexpr GUID save_entity_group_picker_guid =
+      {0xd9b928cb, 0xdb72, 0x4c25, {0xa5, 0xf, 0xb2, 0xd3, 0x54, 0xe2, 0xeb, 0xbb}};
+
+   auto path = utility::show_file_save_picker(
+      {.title = L"Save Entity Group"s,
+       .ok_button_label = L"Save"s,
+       .forced_start_folder = _world_path,
+       .filters = {utility::file_picker_filter{.name = L"Entity Group"s, .filter = L"*.eng"s}},
+       .picker_guid = save_entity_group_picker_guid,
+       .window = _window,
+       .must_exist = true});
+
+   if (not path) return;
+   if (not path->has_extension()) *path += L".eng";
+
+   try {
+      if (not std::filesystem::exists(path->parent_path())) {
+         std::filesystem::create_directories(path->parent_path());
+      }
+
+      world::save_entity_group(*path, group);
+   }
+   catch (std::exception& e) {
+      auto message =
+         fmt::format("Failed to save entity group!\n   Reason: \n{}",
+                     string::indent(2, e.what()));
+
+      _stream->write(message);
+
+      MessageBoxA(_window, message.data(), "Failed to save entity group!", MB_OK);
+   }
 }
 
 void world_edit::enumerate_project_worlds() noexcept

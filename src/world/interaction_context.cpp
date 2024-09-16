@@ -45,6 +45,7 @@ creation_entity::creation_entity(creation_entity&& other) noexcept
    else if (other._active == detail::active_entity::planning_connection) new (&_storage.planning_connection) planning_connection{std::move(other._storage.planning_connection)}; 
    else if (other._active == detail::active_entity::boundary) new (&_storage.boundary) boundary{std::move(other._storage.boundary)}; 
    else if (other._active == detail::active_entity::measurement) new (&_storage.measurement) measurement{std::move(other._storage.measurement)};
+   else if (other._active == detail::active_entity::entity_group) new (&_storage.entity_group) entity_group{std::move(other._storage.entity_group)};
 
    // clang-format on
 
@@ -72,6 +73,7 @@ auto creation_entity::operator=(creation_entity&& other) noexcept -> creation_en
    else if (other._active == detail::active_entity::planning_connection) new (&_storage.planning_connection) planning_connection{std::move(other._storage.planning_connection)}; 
    else if (other._active == detail::active_entity::boundary) new (&_storage.boundary) boundary{std::move(other._storage.boundary)}; 
    else if (other._active == detail::active_entity::measurement) new (&_storage.measurement) measurement{std::move(other._storage.measurement)};
+   else if (other._active == detail::active_entity::entity_group) new (&_storage.entity_group) entity_group{std::move(other._storage.entity_group)};
 
    // clang-format on
 
@@ -104,6 +106,7 @@ void creation_entity::storage::destroy(detail::active_entity active)
    else if (active == detail::active_entity::planning_connection) planning_connection.~planning_connection();
    else if (active == detail::active_entity::boundary) boundary.~boundary();
    else if (active == detail::active_entity::measurement) measurement.~measurement();
+   else if (active == detail::active_entity::entity_group) entity_group.~entity_group();
 
    // clang-format on
 }

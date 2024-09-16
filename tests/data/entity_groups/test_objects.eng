@@ -1,0 +1,20 @@
+Object("com_item_healthrecharge", "com_item_healthrecharge")
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(-32.000, 0.008, -32.000);
+	SeqNo(-1057495021);
+	Team(0);
+	NetworkId(-1);
+	EffectRegion("");
+	Radius("5.0");
+}
+
+Object("com_inv_col_8", "com_inv_col_8", -115076030)
+{
+	ChildRotation(1.000, 0.000, 0.000, 0.000);
+	ChildPosition(68.000, 0.000, 4.000);
+	SeqNo(-115076030);
+	Team(0);
+	NetworkId(-1);
+	Layer(1);
+}

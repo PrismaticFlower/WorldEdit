@@ -379,6 +379,8 @@ private:
 
    void close_world() noexcept;
 
+   void save_entity_group_with_picker(const world::entity_group& group) noexcept;
+
    void enumerate_project_worlds() noexcept;
 
    void open_odfs_for_selected() noexcept;
@@ -497,6 +499,9 @@ private:
 
    bool _terrain_light_map_baking = false;
    bool _env_map_render_requested = false;
+
+   std::string _entity_group_filter;
+   container::ring_set<lowercase_string, 4> _recent_entity_groups;
 
    std::string _layer_editor_new_name;
    std::string _game_mode_editor_new_name;

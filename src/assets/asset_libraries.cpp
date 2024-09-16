@@ -490,6 +490,105 @@ template struct library<msh::flat_model>;
 template struct library<texture::texture>;
 template struct library<sky::config>;
 
+struct directory::impl {
+   void add(const std::filesystem::path& asset_path) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      auto [state_pair, inserted] =
+         _assets.emplace(lowercase_string{asset_path.stem().string()}, asset_path);
+
+      if (not inserted) {
+         state_pair->second = asset_path;
+      }
+      else {
+         _existing_assets_sorted = false;
+         _existing_assets.push_back(stable_string{state_pair->first});
+      }
+   }
+
+   void remove(const std::filesystem::path& asset_path) noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      lowercase_string name{asset_path.stem().string()};
+
+      _assets.erase(name);
+
+      if (auto it = std::find(_existing_assets.begin(), _existing_assets.end(),
+                              std::string_view{name});
+          it != _existing_assets.end()) {
+      }
+   }
+
+   void clear() noexcept
+   {
+      std::scoped_lock lock{_mutex};
+
+      _assets.clear();
+      _existing_assets.clear();
+      _existing_assets_sorted = true;
+   }
+
+   void view_existing(
+      function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept
+   {
+      std::shared_lock lock{_mutex};
+
+      if (not _existing_assets_sorted) {
+         std::sort(_existing_assets.begin(), _existing_assets.end());
+
+         _existing_assets_sorted = true;
+      }
+
+      callback(_existing_assets);
+   }
+
+   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path
+   {
+      std::scoped_lock lock{_mutex};
+
+      if (auto it = _assets.find(name); it != _assets.end()) return it->second;
+
+      return {};
+   }
+
+private:
+   std::shared_mutex _mutex;
+   absl::flat_hash_map<lowercase_string, std::filesystem::path> _assets; // guarded by _assets_mutex
+   std::vector<stable_string> _existing_assets;
+   bool _existing_assets_sorted = true;
+};
+
+directory::directory() noexcept = default;
+
+void directory::add(const std::filesystem::path& asset_path) noexcept
+{
+   return self->add(asset_path);
+}
+
+void directory::remove(const std::filesystem::path& asset_path) noexcept
+{
+   return self->remove(asset_path);
+}
+
+void directory::clear() noexcept
+{
+   return self->clear();
+}
+
+void directory::view_existing(
+   function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept
+{
+   return self->view_existing(callback);
+}
+
+auto directory::query_path(const lowercase_string& name) noexcept
+   -> std::filesystem::path
+{
+   return self->query_path(name);
+}
+
 libraries_manager::libraries_manager(output_stream& stream,
                                      std::shared_ptr<async::thread_pool> thread_pool) noexcept
    : odfs{stream, thread_pool},
@@ -572,6 +671,10 @@ void libraries_manager::register_asset(const std::filesystem::path& path,
    else if (string::iequals(extension.native(), L".sky"sv)) {
       skies.add(path, last_write_time);
    }
+   else if (string::iequals(extension.native(), L".eng"sv) or
+            string::iequals(extension.native(), L".obg"sv)) {
+      entity_groups.add(path);
+   }
 }
 
 void libraries_manager::forget_asset(const std::filesystem::path& path) noexcept
@@ -588,6 +691,9 @@ void libraries_manager::forget_asset(const std::filesystem::path& path) noexcept
    }
    else if (string::iequals(extension.native(), L".sky"sv)) {
       skies.remove(path);
+   }
+   else if (string::iequals(extension.native(), L".obg"sv)) {
+      entity_groups.remove(path);
    }
 }
 

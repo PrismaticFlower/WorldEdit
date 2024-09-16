@@ -46,6 +46,8 @@ namespace sky {
 struct config;
 }
 
+/// @brief Tracks in the project folder and loads assets in the background using the thread pool when needed.
+/// @tparam T The type of the asset.
 template<typename T>
 struct library {
    explicit library(output_stream& stream,
@@ -114,6 +116,37 @@ private:
    implementation_storage<impl, 232> self;
 };
 
+/// @brief Tracks assets like library but does no loading or lifetime management.
+struct directory {
+   directory() noexcept;
+
+   /// @brief Adds an asset to the directory.
+   /// @param asset_path The path to the asset.
+   void add(const std::filesystem::path& asset_path) noexcept;
+
+   /// @brief Removes an asset from the directory.
+   /// @param asset_path The path to the asset.
+   void remove(const std::filesystem::path& asset_path) noexcept;
+
+   /// @brief Clears the asset directory.
+   void clear() noexcept;
+
+   /// @brief Allows you to view a span of existing (on disk) assets. A lock is taken on the underlying data as such other directory member functions must not be from the callback.
+   /// @param callback The function to call with a span of existing assets. The strings will be valid until clear is called.
+   void view_existing(
+      function_ptr<void(const std::span<const stable_string> assets) noexcept> callback) noexcept;
+
+   /// @brief Query the file path of an asset.
+   /// @param name The name of the asset.
+   /// @return The file path to the asset. Can be empty if the asset does not exist.
+   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path;
+
+private:
+   struct impl;
+
+   implementation_storage<impl, 80> self;
+};
+
 struct libraries_manager {
    explicit libraries_manager(output_stream& stream,
                               std::shared_ptr<async::thread_pool> thread_pool) noexcept;
@@ -131,6 +164,8 @@ struct libraries_manager {
    library<msh::flat_model> models;
    library<texture::texture> textures;
    library<sky::config> skies;
+
+   directory entity_groups;
 
 private:
    void clear() noexcept;

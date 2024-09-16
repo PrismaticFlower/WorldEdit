@@ -1,5 +1,6 @@
 
 #include "frustum.hpp"
+#include "intersectors.hpp"
 #include "matrix_funcs.hpp"
 #include "plane_funcs.hpp"
 #include "quaternion_funcs.hpp"
@@ -155,6 +156,113 @@ bool intersects(const frustum& frustum, const float3& position, const float radi
    }
 
    return true;
+}
+
+bool intersects(const frustum& frustum, const float3& v0, const float3& v1,
+                const float3& v2) noexcept
+{
+   if (intersects(frustum, v0, 0.0f) or intersects(frustum, v1, 0.0f) or
+       intersects(frustum, v2, 0.0f)) {
+      return true;
+   }
+
+   const std::array<float3, 3> tri_edge_vectors = {
+      v1 - v0, // origin 0
+      v2 - v1, // origin 1
+      v0 - v2, // origin 2
+   };
+
+   const std::array<float, 3> tri_edge_lengths = {
+      length(tri_edge_vectors[0]), // origin 0
+      length(tri_edge_vectors[1]), // origin 1
+      length(tri_edge_vectors[2]), // origin 2
+   };
+
+   const std::array<float3, 3> tri_edge_directions = {
+      tri_edge_vectors[0] / tri_edge_lengths[0], // origin 0
+      tri_edge_vectors[1] / tri_edge_lengths[1], // origin 1
+      tri_edge_vectors[2] / tri_edge_lengths[2], // origin 2
+   };
+
+   constexpr static std::array<std::array<frustum_corner, 4>, 6> frustum_faces = {{
+      // Near Face
+      {frustum_corner::bottom_left_near, frustum_corner::top_left_near,
+       frustum_corner::top_right_near, frustum_corner::bottom_right_near},
+
+      // Far Face
+      {frustum_corner::bottom_left_far, frustum_corner::top_left_far,
+       frustum_corner::top_right_far, frustum_corner::bottom_right_far},
+
+      // Left Face
+      {frustum_corner::bottom_left_near, frustum_corner::top_left_near,
+       frustum_corner::top_left_far, frustum_corner::bottom_left_far},
+
+      // Right Face
+      {frustum_corner::bottom_right_near, frustum_corner::top_right_near,
+       frustum_corner::top_right_far, frustum_corner::bottom_right_far},
+
+      // Top Face
+      {frustum_corner::top_left_near, frustum_corner::top_left_far,
+       frustum_corner::top_right_far, frustum_corner::top_right_near},
+
+      // Bottom Face
+      {frustum_corner::bottom_left_near, frustum_corner::bottom_left_far,
+       frustum_corner::bottom_right_far, frustum_corner::bottom_right_near},
+   }};
+
+   const std::array<float3, 3> tri = {v0, v1, v2};
+
+   for (int32 edge_index = 0; edge_index < 3; ++edge_index) {
+      for (const auto& [i0, i1, i2, i3] : frustum_faces) {
+
+         if (float distance = FLT_MAX;
+             intersect_tri(tri[edge_index], tri_edge_directions[edge_index],
+                           frustum.corners[i0], frustum.corners[i1],
+                           frustum.corners[i2], distance) and
+             distance <= tri_edge_lengths[edge_index]) {
+            return true;
+         }
+
+         if (float distance = FLT_MAX;
+             intersect_tri(tri[edge_index], tri_edge_directions[edge_index],
+                           frustum.corners[i2], frustum.corners[i3],
+                           frustum.corners[i0], distance) and
+             distance <= tri_edge_lengths[edge_index]) {
+            return true;
+         }
+      }
+   }
+
+   constexpr static std::array<std::array<frustum_corner, 2>, 12> frustum_edges = {{
+      {frustum_corner::top_left_near, frustum_corner::top_left_far},
+      {frustum_corner::top_left_far, frustum_corner::top_right_far},
+      {frustum_corner::top_right_far, frustum_corner::top_right_near},
+      {frustum_corner::top_right_near, frustum_corner::top_left_near},
+
+      {frustum_corner::bottom_left_near, frustum_corner::bottom_left_far},
+      {frustum_corner::bottom_left_far, frustum_corner::bottom_right_far},
+      {frustum_corner::bottom_right_far, frustum_corner::bottom_right_near},
+      {frustum_corner::bottom_right_near, frustum_corner::bottom_left_near},
+
+      {frustum_corner::bottom_left_near, frustum_corner::top_left_near},
+      {frustum_corner::bottom_left_far, frustum_corner::top_left_far},
+      {frustum_corner::bottom_right_far, frustum_corner::top_right_far},
+      {frustum_corner::bottom_right_near, frustum_corner::top_right_near},
+   }};
+
+   for (const auto& [i0, i1] : frustum_edges) {
+      const float3 edge_vector = frustum.corners[i1] - frustum.corners[i0];
+      const float edge_length = length(edge_vector);
+      const float3 edge_direction = edge_vector / edge_length;
+
+      if (float distance = FLT_MAX;
+          intersect_tri(frustum.corners[i0], edge_direction, v0, v1, v2, distance) and
+          distance <= edge_length) {
+         return true;
+      }
+   }
+
+   return false;
 }
 
 auto transform(const frustum& world_frustum, const quaternion& rotation,
