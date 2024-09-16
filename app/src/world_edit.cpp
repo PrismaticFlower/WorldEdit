@@ -932,7 +932,93 @@ void world_edit::finish_entity_select(const select_method method) noexcept
          }
       }
 
-      // Skip connections
+      if (_world_hit_mask.planning_connections) {
+         for (auto& connection : _world.planning_connections) {
+            if (connection.hidden) continue;
+
+            const world::planning_hub& start =
+               _world.planning_hubs[connection.start_hub_index];
+            const world::planning_hub& end =
+               _world.planning_hubs[connection.end_hub_index];
+
+            const math::bounding_box start_bbox{
+               .min = float3{-start.radius, -_settings.graphics.planning_connection_height,
+                             -start.radius} +
+                      start.position,
+               .max = float3{start.radius, _settings.graphics.planning_connection_height,
+                             start.radius} +
+                      start.position};
+            const math::bounding_box end_bbox{
+               .min = float3{-end.radius, -_settings.graphics.planning_connection_height,
+                             -end.radius} +
+                      end.position,
+               .max = float3{end.radius, _settings.graphics.planning_connection_height,
+                             end.radius} +
+                      end.position};
+
+            const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
+
+            if (not intersects(frustumWS, bbox)) continue;
+
+            const float3 normal =
+               normalize(float3{-(start.position.z - end.position.z), 0.0f,
+                                start.position.x - end.position.x});
+
+            const std::array<float3, 4> quadWS = {start.position +
+                                                     normal * start.radius,
+                                                  start.position -
+                                                     normal * start.radius,
+                                                  end.position + normal * end.radius,
+                                                  end.position - normal * end.radius};
+
+            const float3 height_offset = {0.0f, _settings.graphics.planning_connection_height,
+                                          0.0f};
+
+            const std::array<float3, 8> cornersWS = {quadWS[0] + height_offset,
+                                                     quadWS[1] + height_offset,
+                                                     quadWS[2] + height_offset,
+                                                     quadWS[3] + height_offset,
+                                                     quadWS[0] - height_offset,
+                                                     quadWS[1] - height_offset,
+                                                     quadWS[2] - height_offset,
+                                                     quadWS[3] - height_offset};
+
+            constexpr static std::array<std::array<int8, 3>, 12> tris = {
+               // Top
+               3, 2, 0, //
+               3, 0, 1, //
+
+               // Bottom
+               4, 6, 7, //
+               5, 4, 7, //
+
+               // Side 0
+               0, 6, 4, //
+               0, 2, 6, //
+
+               // Side 1
+               1, 5, 7, //
+               7, 3, 1, //
+
+               // Back
+               4, 1, 0, //
+               5, 1, 4, //
+
+               // Front
+               2, 3, 6, //
+               6, 3, 7  //
+            };
+
+            for (const std::array<int8, 3>& tri : tris) {
+               if (intersects(frustumWS, cornersWS[tri[0]], cornersWS[tri[1]],
+                              cornersWS[tri[2]])) {
+                  _interaction_targets.selection.add(connection.id);
+
+                  break;
+               }
+            }
+         }
+      }
 
       if (_world_hit_mask.boundaries) {
          for (auto& boundary : _world.boundaries) {
@@ -1231,19 +1317,81 @@ void world_edit::finish_entity_deselect() noexcept
             const world::planning_hub& end =
                _world.planning_hubs[connection.end_hub_index];
 
-            const float height = _settings.graphics.planning_connection_height;
-
             const math::bounding_box start_bbox{
-               .min = float3{-start.radius, -height, -start.radius} + start.position,
-               .max = float3{start.radius, height, start.radius} + start.position};
+               .min = float3{-start.radius, -_settings.graphics.planning_connection_height,
+                             -start.radius} +
+                      start.position,
+               .max = float3{start.radius, _settings.graphics.planning_connection_height,
+                             start.radius} +
+                      start.position};
             const math::bounding_box end_bbox{
-               .min = float3{-end.radius, -height, -end.radius} + end.position,
-               .max = float3{end.radius, height, end.radius} + end.position};
+               .min = float3{-end.radius, -_settings.graphics.planning_connection_height,
+                             -end.radius} +
+                      end.position,
+               .max = float3{end.radius, _settings.graphics.planning_connection_height,
+                             end.radius} +
+                      end.position};
 
             const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
 
-            if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.remove(connection.id);
+            if (not intersects(frustumWS, bbox)) continue;
+
+            const float3 normal =
+               normalize(float3{-(start.position.z - end.position.z), 0.0f,
+                                start.position.x - end.position.x});
+
+            const std::array<float3, 4> quadWS = {start.position +
+                                                     normal * start.radius,
+                                                  start.position -
+                                                     normal * start.radius,
+                                                  end.position + normal * end.radius,
+                                                  end.position - normal * end.radius};
+
+            const float3 height_offset = {0.0f, _settings.graphics.planning_connection_height,
+                                          0.0f};
+
+            const std::array<float3, 8> cornersWS = {quadWS[0] + height_offset,
+                                                     quadWS[1] + height_offset,
+                                                     quadWS[2] + height_offset,
+                                                     quadWS[3] + height_offset,
+                                                     quadWS[0] - height_offset,
+                                                     quadWS[1] - height_offset,
+                                                     quadWS[2] - height_offset,
+                                                     quadWS[3] - height_offset};
+
+            constexpr static std::array<std::array<int8, 3>, 12> tris = {
+               // Top
+               3, 2, 0, //
+               3, 0, 1, //
+
+               // Bottom
+               4, 6, 7, //
+               5, 4, 7, //
+
+               // Side 0
+               0, 6, 4, //
+               0, 2, 6, //
+
+               // Side 1
+               1, 5, 7, //
+               7, 3, 1, //
+
+               // Back
+               4, 1, 0, //
+               5, 1, 4, //
+
+               // Front
+               2, 3, 6, //
+               6, 3, 7  //
+            };
+
+            for (const std::array<int8, 3>& tri : tris) {
+               if (intersects(frustumWS, cornersWS[tri[0]], cornersWS[tri[1]],
+                              cornersWS[tri[2]])) {
+                  _interaction_targets.selection.remove(connection.id);
+
+                  break;
+               }
             }
          }
       }
