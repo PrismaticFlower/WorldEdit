@@ -19,21 +19,16 @@ auto integrate(const bounding_box& box, const float3& v) noexcept -> bounding_bo
 
 auto to_corners(const bounding_box& box) noexcept -> std::array<float3, 8>
 {
-   const float3 centre = (box.max + box.min) / 2.0f;
-   const float3 size = (box.max - box.min) / 2.0f;
-
-   // Don't change the ordering of the corners, other code is allowed to depend on it.
-
    return {// top corners
-           (centre + float3{size.x, size.y, size.z}),
-           (centre + float3{-size.x, size.y, size.z}),
-           (centre + float3{-size.x, size.y, -size.z}),
-           (centre + float3{size.x, size.y, -size.z}),
+           float3{box.max.x, box.max.y, box.max.z},
+           float3{box.min.x, box.max.y, box.max.z},
+           float3{box.min.x, box.max.y, box.min.z},
+           float3{box.max.x, box.max.y, box.min.z},
            // bottom corners
-           (centre + float3{size.x, -size.y, size.z}),
-           (centre + float3{-size.x, -size.y, size.z}),
-           (centre + float3{-size.x, -size.y, -size.z}),
-           (centre + float3{size.x, -size.y, -size.z})};
+           float3{box.max.x, box.min.y, box.max.z},
+           float3{box.min.x, box.min.y, box.max.z},
+           float3{box.min.x, box.min.y, box.min.z},
+           float3{box.max.x, box.min.y, box.min.z}};
 }
 
 auto operator*(const quaternion& quat, const bounding_box& box) noexcept -> bounding_box
