@@ -110,13 +110,6 @@ auto make_barrier_corners(const barrier& barrier) noexcept -> std::array<float3,
    return cornersWS;
 }
 
-struct hub_branch_weight_ref {
-   std::string_view end_hub;
-   float weight = 0.0f;
-   std::string_view connection;
-   ai_path_flags flag;
-};
-
 struct sequence_numbers {
    int objects = 0;
    int lights = 0;
@@ -186,17 +179,17 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
    for (auto& path : world.paths) {
       if (path.layer != layer_index) continue;
 
-      const std::string name_prefix = [&] {
+      const std::string_view name_prefix = [&] {
          switch (path.type) {
          default:
          case path_type::none:
-            return ""s;
+            return "";
          case path_type::entity_follow:
-            return "type_EntityPath "s;
+            return "type_EntityPath ";
          case path_type::formation:
-            return "type_EntityFormation "s;
+            return "type_EntityFormation ";
          case path_type::patrol:
-            return "type_PatrolPath "s;
+            return "type_PatrolPath ";
          }
       }();
 
