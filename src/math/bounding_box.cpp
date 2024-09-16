@@ -38,20 +38,20 @@ auto to_corners(const bounding_box& box) noexcept -> std::array<float3, 8>
 
 auto operator*(const quaternion& quat, const bounding_box& box) noexcept -> bounding_box
 {
-   const float3 centre = (box.max + box.min) / 2.0f;
-   const float3 size = (box.max - box.min) / 2.0f;
+   std::array<float3, 8> vertices = {
+      // top corners
+      float3{box.max.x, box.max.y, box.max.z},
+      float3{box.min.x, box.max.y, box.max.z},
+      float3{box.min.x, box.max.y, box.min.z},
+      float3{box.max.x, box.max.y, box.min.z},
+      // bottom corners
+      float3{box.max.x, box.min.y, box.max.z},
+      float3{box.min.x, box.min.y, box.max.z},
+      float3{box.min.x, box.min.y, box.min.z},
+      float3{box.max.x, box.min.y, box.min.z},
+   };
 
-   const std::array<float3, 8>
-      vertices{// top corners
-               quat * (centre + float3{size.x, size.y, size.z}),
-               quat * (centre + float3{-size.x, size.y, size.z}),
-               quat * (centre + float3{-size.x, size.y, -size.z}),
-               quat * (centre + float3{size.x, size.y, -size.z}),
-               // bottom corners
-               quat * (centre + float3{size.x, -size.y, size.z}),
-               quat * (centre + float3{-size.x, -size.y, size.z}),
-               quat * (centre + float3{-size.x, -size.y, -size.z}),
-               quat * (centre + float3{size.x, -size.y, -size.z})};
+   for (float3& v : vertices) v = quat * v;
 
    bounding_box new_box{vertices[0], vertices[0]};
 
