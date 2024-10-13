@@ -294,8 +294,7 @@ void world_edit::ui_show_world_active_context() noexcept
       "Height of the editor's 'floor' collision. Used for the grid and as "
       "collision when nothing else is hit.");
 
-   ImGui::DragFloat("Grid Size", &_editor_grid_size, 1.0f, 1.0f, 1e10f, "%.3f",
-                    ImGuiSliderFlags_AlwaysClamp);
+   ImGui::DragFloat("Grid Size", &_editor_grid_size, 1.0f, 1.0f, 1e10f, "%.3f");
 
    ImGui::Checkbox("Show Floor Grid", &_draw_overlay_grid);
 

@@ -4073,8 +4073,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
-            ImGui::DragFloat("Grid Size", &_editor_grid_size, 1.0f, 1.0f, 1e10f,
-                             "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::DragFloat("Grid Size", &_editor_grid_size, 1.0f, 1.0f, 1e10f, "%.3f");
          }
          else if (_entity_creation_config.placement_alignment ==
                   placement_alignment::snapping) {
