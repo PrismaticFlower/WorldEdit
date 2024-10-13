@@ -640,4 +640,25 @@ auto make_entity_group_from_world(const world& world) noexcept -> entity_group
       .measurements = {world.measurements.begin(), world.measurements.end()},
    };
 }
+
+bool is_entity_group_empty(const entity_group& group) noexcept
+{
+   bool empty = true;
+
+   empty &= group.objects.empty();
+   empty &= group.lights.empty();
+   empty &= group.paths.empty();
+   empty &= group.regions.empty();
+   empty &= group.sectors.empty();
+   empty &= group.portals.empty();
+   empty &= group.hintnodes.empty();
+   empty &= group.barriers.empty();
+   empty &= group.planning_hubs.empty();
+   empty &= group.planning_connections.empty();
+   empty &= group.boundaries.empty();
+   empty &= group.measurements.empty();
+
+   return empty;
+}
+
 }

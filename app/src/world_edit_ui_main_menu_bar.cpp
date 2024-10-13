@@ -118,9 +118,22 @@ void world_edit::ui_show_main_menu_bar() noexcept
             delete_selected();
          }
 
-         ImGui::MenuItem("Cut", nullptr, nullptr, false);
-         ImGui::MenuItem("Copy", nullptr, nullptr, false);
-         ImGui::MenuItem("Paste", nullptr, nullptr, false);
+         if (ImGui::MenuItem("Cut",
+                             get_display_string(_hotkeys.query_binding("Global", "Cut")))) {
+            cut_selected();
+         }
+
+         if (ImGui::MenuItem("Copy",
+                             get_display_string(
+                                _hotkeys.query_binding("Global", "Copy")))) {
+            copy_selected();
+         }
+
+         if (ImGui::MenuItem("Paste",
+                             get_display_string(
+                                _hotkeys.query_binding("Global", "Paste")))) {
+            paste();
+         }
 
          ImGui::Separator();
 

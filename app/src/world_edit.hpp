@@ -345,6 +345,12 @@ private:
 
    void redo() noexcept;
 
+   void paste() noexcept;
+
+   void copy_selected() noexcept;
+
+   void cut_selected() noexcept;
+
    void delete_selected() noexcept;
 
    void align_selection(const float alignment) noexcept;

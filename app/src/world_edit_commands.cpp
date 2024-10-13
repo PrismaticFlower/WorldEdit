@@ -118,6 +118,10 @@ void world_edit::initialize_commands() noexcept
    _commands.add("edit.redo"s, [this]() { redo(); });
    _commands.add("edit.delete"s, [this]() { delete_selected(); });
 
+   _commands.add("edit.cut"s, [this]() { cut_selected(); });
+   _commands.add("edit.copy"s, [this]() { copy_selected(); });
+   _commands.add("edit.paste"s, [this]() { paste(); });
+
    _commands.add("show.hotkeys"s, _hotkeys_view_show);
    _commands.add("show.camera_controls"s, _camera_controls_open);
    _commands.add("show.world_global_lights_editor"s, _world_global_lights_editor_open);
@@ -726,6 +730,10 @@ void world_edit::initialize_hotkeys() noexcept
           {"Undo", "edit.undo", {.key = key::z, .modifiers = {.ctrl = true}}},
           {"Redo", "edit.redo", {.key = key::y, .modifiers = {.ctrl = true}}},
           {"Delete", "edit.delete", {.key = key::del}},
+
+          {"Cut", "edit.cut", {.key = key::x, .modifiers = {.ctrl = true}}},
+          {"Copy", "edit.copy", {.key = key::c, .modifiers = {.ctrl = true}}},
+          {"Paste", "edit.paste", {.key = key::v, .modifiers = {.ctrl = true}}},
 
           {"Unhide All Entities",
            "entity_edit.unhide_all",

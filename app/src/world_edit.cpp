@@ -25,6 +25,7 @@
 #include "utility/string_icompare.hpp"
 #include "utility/string_ops.hpp"
 #include "world/io/load.hpp"
+#include "world/io/load_entity_group.hpp"
 #include "world/io/save.hpp"
 #include "world/io/save_entity_group.hpp"
 #include "world/utility/entity_group_utilities.hpp"
@@ -2568,6 +2569,49 @@ void world_edit::redo() noexcept
       _cursor_placement_lock_position = {ImGui::GetMousePos().x,
                                          ImGui::GetMousePos().y};
    }
+}
+
+void world_edit::paste() noexcept
+{
+   const char* clipboard_text_cstr = ImGui::GetClipboardText();
+
+   if (not clipboard_text_cstr) return;
+
+   std::string_view clipboard_text = clipboard_text_cstr;
+
+   if (clipboard_text.empty()) return;
+
+   try {
+      world::entity_group group =
+         world::load_entity_group_from_string(clipboard_text, *_stream);
+
+      if (world::is_entity_group_empty(group)) return;
+
+      _edit_stack_world.apply(edits::make_creation_entity_set(std::move(group),
+                                                              _object_classes),
+                              _edit_context);
+   }
+   catch (std::exception& e) {
+      _stream->write("Couldn't paste text from clipboard into "
+                     "world as entity group.\n   Reason: \n{}",
+                     string::indent(2, e.what()));
+   }
+}
+
+void world_edit::copy_selected() noexcept
+{
+   world::entity_group group =
+      world::make_entity_group_from_selection(_world, _interaction_targets.selection);
+
+   world::centre_entity_group(group);
+
+   ImGui::SetClipboardText(world::save_entity_group_to_string(group).c_str());
+}
+
+void world_edit::cut_selected() noexcept
+{
+   copy_selected();
+   delete_selected();
 }
 
 void world_edit::delete_selected() noexcept
