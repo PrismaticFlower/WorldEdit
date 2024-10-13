@@ -61,13 +61,44 @@ auto make_barrier_corners(const barrier& barrier) noexcept -> std::array<float3,
    return cornersWS;
 }
 
-}
+struct string_buffer {
+   string_buffer()
+   {
+      _str.reserve(65536);
+   }
 
-void save_entity_group(const std::filesystem::path& file_path, const entity_group& group)
+   template<typename... Args>
+   void write_ln(const fmt::format_string<Args...> str, const Args&... args) noexcept
+   {
+      vwrite_ln(str, fmt::make_format_args(args...));
+   }
+
+   void write_ln(const std::string_view write_str) noexcept
+   {
+      _str += write_str;
+
+      _str.push_back('\n');
+   }
+
+   void vwrite_ln(const fmt::string_view format, fmt::format_args args) noexcept
+   {
+      fmt::vformat_to(std::back_insert_iterator{_str}, format, args);
+
+      _str.push_back('\n');
+   }
+
+   auto finish() noexcept -> std::string
+   {
+      return std::move(_str);
+   }
+
+private:
+   std::string _str;
+};
+
+template<typename File>
+void save_entity_group_impl(File& file, const entity_group& group)
 {
-
-   io::output_file file{file_path};
-
    for (const object& object : group.objects) {
       const quaternion rotation = flip_rotation(object.rotation);
       const float3 position = flip_position(object.position);
@@ -437,6 +468,24 @@ void save_entity_group(const std::filesystem::path& file_path, const entity_grou
 
       file.write_ln("}\n");
    }
+}
+
+}
+
+void save_entity_group(const std::filesystem::path& file_path, const entity_group& group)
+{
+   io::output_file file{file_path};
+
+   save_entity_group_impl(file, group);
+}
+
+auto save_entity_group_to_string(const entity_group& group) noexcept -> std::string
+{
+   string_buffer buffer;
+
+   save_entity_group_impl(buffer, group);
+
+   return buffer.finish();
 }
 
 }
