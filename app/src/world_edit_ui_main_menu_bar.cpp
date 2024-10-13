@@ -474,7 +474,7 @@ void world_edit::ui_show_create_menu_items() noexcept
       }
       else {
          new_light =
-            world::light{.name = "", .layer = creation_layer, .id = world::max_id};
+            world::light{.name = "Light", .layer = creation_layer, .id = world::max_id};
       }
 
       _edit_stack_world.apply(edits::make_creation_entity_set(std::move(new_light),
