@@ -2116,15 +2116,15 @@ void world_edit::ui_show_world_creation_editor() noexcept
             math::bounding_box bbox =
                _object_classes[object->class_handle].model->bounding_box;
 
-            const float3 size = abs(bbox.max - bbox.min) / 2.0f;
-            const float3 position =
-               object->rotation * ((conjugate(object->rotation) * object->position) +
-                                   ((bbox.min + bbox.max) / 2.0f));
+            const float3 box_size = abs(bbox.max - bbox.min) / 2.0f;
+            const float3 box_centre = (bbox.max + bbox.min) / 2.0f;
+
+            const float3 position = object->rotation * box_centre + object->position;
 
             _edit_stack_world.apply(edits::make_set_multi_value(&region.rotation,
                                                                 object->rotation,
                                                                 &region.position, position,
-                                                                &region.size, size),
+                                                                &region.size, box_size),
                                     _edit_context);
          }
       }
