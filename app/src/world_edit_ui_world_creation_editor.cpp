@@ -3242,10 +3242,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
             math::bounding_box bbox =
                _object_classes[object->class_handle].model->bounding_box;
 
-            const float3 size = abs(bbox.max - bbox.min) / 2.0f;
-            const float3 position =
-               object->rotation * ((conjugate(object->rotation) * object->position) +
-                                   ((bbox.min + bbox.max) / 2.0f));
+            const float3 box_centre = (bbox.max + bbox.min) / 2.0f;
+            const float3 box_size = (bbox.max - bbox.min) / 2.0f;
+
+            const float3 position = object->rotation * box_centre + object->position;
 
             std::array<float3, 8> corners = math::to_corners(bbox);
 
@@ -3254,13 +3254,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
             }
 
             const float rotation_angle =
-               std::atan2(corners[1].z - corners[0].z, corners[1].x - corners[0].x);
+               std::atan2(corners[1].x - corners[2].x, corners[1].z - corners[2].z);
 
             _edit_stack_world
                .apply(edits::make_set_multi_value(&barrier.rotation_angle,
                                                   rotation_angle, &barrier.position,
                                                   position, &barrier.size,
-                                                  float2{size.x, size.z}),
+                                                  float2{box_size.x, box_size.z}),
                       _edit_context);
          }
       }
