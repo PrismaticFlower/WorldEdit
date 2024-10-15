@@ -241,9 +241,8 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
             ImGui::SetItemTooltip("Note this is relative to the terrain grid "
                                   "scale and is not in pixels!");
 
-            ImGui::DragFloat("Overlay Grid line Width",
-                             &graphics.overlay_grid_line_width, 0.005f, 0.005f,
-                             0.5f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::DragFloat("Overlay Grid Line Width", &graphics.overlay_grid_line_width,
+                             0.005f, 0.005f, 0.5f, "%.3f");
 
             ImGui::SetItemTooltip("Note this is relative to the grid "
                                   "size and is not in pixels!");
