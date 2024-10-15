@@ -107,7 +107,8 @@ void water::draw(const frustum& view_frustum,
          while (word) {
             const uint64 next_bit = std::countr_zero(word);
 
-            word >>= (next_bit + 1ull);
+            word >>= next_bit;
+            word >>= 1ull;
 
             const float2 point = {(static_cast<float>(x + current_bit + next_bit) *
                                    _water_grid_scale) -
