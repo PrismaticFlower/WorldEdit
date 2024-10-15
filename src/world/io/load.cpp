@@ -701,9 +701,11 @@ void load_barriers(const std::filesystem::path& filepath, output_stream& output,
          }
 
          barrier.position = (corners[0] + corners[1] + corners[2] + corners[3]) / 4.0f;
-         barrier.size = float2{distance(corners[0], corners[3]),
-                               distance(corners[0], corners[1])} /
-                        2.0f;
+         barrier.size = float2{distance(float2{corners[0].x, corners[0].z},
+                                        float2{corners[3].x, corners[3].z}),
+                               distance(float2{corners[0].x, corners[0].z},
+                                        float2{corners[1].x, corners[1].z})} *
+                        0.5f;
          barrier.rotation_angle =
             std::atan2(corners[1].x - corners[0].x, corners[1].z - corners[0].z);
 
