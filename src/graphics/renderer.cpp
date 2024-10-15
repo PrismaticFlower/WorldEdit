@@ -3351,7 +3351,7 @@ void renderer_impl::build_world_mesh_list(
    const std::size_t constants_data_end = objects_constants_buffer_size;
 
    std::array<std::span<const world::object>, 2> object_arrays =
-      {creation_entity->is<world::object>()
+      {creation_entity and creation_entity->is<world::object>()
           ? std::span{&creation_entity->get<world::object>(), 1}
           : std::span<const world::object>{},
        world.objects};
@@ -3421,7 +3421,7 @@ void renderer_impl::build_world_mesh_list(
       }
    }
 
-   if (creation_entity->is<world::entity_group>()) {
+   if (creation_entity and creation_entity->is<world::entity_group>()) {
       const world::entity_group& group = creation_entity->get<world::entity_group>();
 
       for (const world::object& object : group.objects) {
