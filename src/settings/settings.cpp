@@ -99,6 +99,9 @@ void show_imgui_editor(settings& settings, bool& open, scale_factor display_scal
             ImGui::Checkbox("Don't Ask to Add New Animations to Groups",
                             &preferences.dont_ask_to_add_animation_to_group);
 
+            ImGui::Checkbox("Don't Extrapolate New Animation Key Values",
+                            &preferences.dont_extrapolate_new_animation_keys);
+
             ImGui::SeparatorText("World Save Options");
 
             ImGui::Checkbox("Don't Save World Game Modes",

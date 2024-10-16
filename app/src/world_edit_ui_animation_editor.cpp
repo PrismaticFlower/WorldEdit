@@ -721,11 +721,22 @@ void world_edit::ui_show_animation_editor() noexcept
                      }
                   }
 
+                  const float new_key_time =
+                     _animation_editor_context.new_position_key_time;
+
                   const int32 insert_before_index =
                      previous_key_index ? *previous_key_index + 1 : 0;
-                  const world::position_key new_key =
-                     world::make_position_key_for_time(*selected_animation,
-                                                       _animation_editor_context.new_position_key_time);
+                  world::position_key new_key =
+                     world::make_position_key_for_time(*selected_animation, new_key_time);
+
+                  if (_settings.preferences.dont_extrapolate_new_animation_keys and
+                      not selected_animation->position_keys.empty()) {
+                     if (new_key_time >=
+                         selected_animation->position_keys.back().time) {
+                        new_key = selected_animation->position_keys.back();
+                        new_key.time = new_key_time;
+                     }
+                  }
 
                   _edit_stack_world.apply(edits::make_insert_animation_key(
                                              &selected_animation->position_keys,
@@ -839,11 +850,23 @@ void world_edit::ui_show_animation_editor() noexcept
                      }
                   }
 
+                  const float new_key_time =
+                     _animation_editor_context.new_rotation_key_time;
+
                   const int32 insert_before_index =
                      previous_key_index ? *previous_key_index + 1 : 0;
-                  const world::rotation_key new_key =
+                  world::rotation_key new_key =
                      world::make_rotation_key_for_time(*selected_animation,
                                                        _animation_editor_context.new_rotation_key_time);
+
+                  if (_settings.preferences.dont_extrapolate_new_animation_keys and
+                      not selected_animation->rotation_keys.empty()) {
+                     if (new_key_time >=
+                         selected_animation->rotation_keys.back().time) {
+                        new_key = selected_animation->rotation_keys.back();
+                        new_key.time = new_key_time;
+                     }
+                  }
 
                   _edit_stack_world.apply(edits::make_insert_animation_key(
                                              &selected_animation->rotation_keys,
