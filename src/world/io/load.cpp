@@ -81,6 +81,11 @@ auto read_location(const assets::config::node& node, const std::string_view rota
    std::swap(rotation.x, rotation.z);
    std::swap(rotation.y, rotation.w);
 
+   if (rotation.w == 0.0f and rotation.x == 0.0f and rotation.y == 0.0f and
+       rotation.z == 0.0f) {
+      rotation = {};
+   }
+
    return {rotation,
            {node.at(position_key).values.get<float>(0),
             node.at(position_key).values.get<float>(1),
@@ -97,6 +102,11 @@ auto read_rotation(const assets::config::node& node) -> quaternion
 
    std::swap(rotation.x, rotation.z);
    std::swap(rotation.y, rotation.w);
+
+   if (rotation.w == 0.0f and rotation.x == 0.0f and rotation.y == 0.0f and
+       rotation.z == 0.0f) {
+      rotation = {};
+   }
 
    return rotation;
 }

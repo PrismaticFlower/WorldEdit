@@ -52,6 +52,11 @@ auto read_rotation(const assets::config::node& node) -> quaternion
    std::swap(rotation.x, rotation.z);
    std::swap(rotation.y, rotation.w);
 
+   if (rotation.w == 0.0f and rotation.x == 0.0f and rotation.y == 0.0f and
+       rotation.z == 0.0f) {
+      rotation = {};
+   }
+
    return rotation;
 }
 

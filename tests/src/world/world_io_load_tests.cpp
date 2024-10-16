@@ -87,7 +87,7 @@ TEST_CASE("world loading", "[World][IO]")
 
    // object checks
    {
-      REQUIRE(world.objects.size() == 2);
+      REQUIRE(world.objects.size() == 3);
 
       // com_item_healthrecharge
       {
@@ -107,17 +107,29 @@ TEST_CASE("world loading", "[World][IO]")
          CHECK(world.objects[0].instance_properties[1].value == "5.0"sv);
       }
 
-      // com_inv_col_8
+      // invalid_rotation - Object with a ChildRotation of (0.0, 0.0, 0.0, 0.0). These can crash the game so we fix them up at load time.
       {
-         CHECK(world.objects[1].name == "com_inv_col_8"sv);
-         CHECK(world.objects[1].class_name == "com_inv_col_8"sv);
-         CHECK(approx_equals(world.objects[1].position, {68.000f, 0.000f, -4.000f}));
-         CHECK(approx_equals(world.objects[1].rotation,
-                             {0.000f, 0.000f, 1.000f, 0.000f}));
+         CHECK(world.objects[1].name == "invalid_rotation"sv);
+         CHECK(world.objects[1].class_name == "invalid_rotation"sv);
+         CHECK(approx_equals(world.objects[1].position, {0.0f, 0.0f, 0.0f}));
+         CHECK(approx_equals(world.objects[1].rotation, {1.0f, 0.0f, 0.0f, 0.0f}));
          CHECK(world.objects[1].team == 0);
-         CHECK(world.objects[1].layer == 1);
+         CHECK(world.objects[1].layer == 0);
          CHECK(is_unique_id(1, world.objects));
          CHECK(world.objects[1].instance_properties.size() == 0);
+      }
+
+      // com_inv_col_8
+      {
+         CHECK(world.objects[2].name == "com_inv_col_8"sv);
+         CHECK(world.objects[2].class_name == "com_inv_col_8"sv);
+         CHECK(approx_equals(world.objects[2].position, {68.000f, 0.000f, -4.000f}));
+         CHECK(approx_equals(world.objects[2].rotation,
+                             {0.000f, 0.000f, 1.000f, 0.000f}));
+         CHECK(world.objects[2].team == 0);
+         CHECK(world.objects[2].layer == 1);
+         CHECK(is_unique_id(2, world.objects));
+         CHECK(world.objects[2].instance_properties.size() == 0);
       }
    }
 
