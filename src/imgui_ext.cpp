@@ -233,6 +233,9 @@ bool DragQuat(const char* label, we::quaternion* v, float v_speed, float v_min,
       if (v->w != 0.0f or v->x != 0.0f or v->y != 0.0f or v->z != 0.0f) {
          *v = normalize(*v);
       }
+      else {
+         *v = {1.0f, 0.0f, 0.0f, 0.0f};
+      }
    }
 
    return value_changed;
