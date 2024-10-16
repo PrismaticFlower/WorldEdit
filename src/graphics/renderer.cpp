@@ -2382,11 +2382,12 @@ void renderer_impl::draw_world_meta_objects(
          const float3 centreWS = (measurement_startWS + measurement_endWS) * 0.5f;
          const float4 centrePS =
             camera.view_projection_matrix() * float4{centreWS, 1.0f};
-         const float2 centreNDC = {centrePS.x / centrePS.w,
-                                   centrePS.y / centrePS.w};
+         const float inv_w = 1.0f / centrePS.w;
+         const float3 centreNDC = {centrePS.x * inv_w, centrePS.y * inv_w,
+                                   centrePS.z * inv_w};
 
          if (centreNDC.x > 1.0f or centreNDC.x < -1.0f or centreNDC.y > 1.0f or
-             centreNDC.y < -1.0f) {
+             centreNDC.y < -1.0f or centreNDC.z < 0.0f or centreNDC.z > 1.0f) {
             return;
          }
 
