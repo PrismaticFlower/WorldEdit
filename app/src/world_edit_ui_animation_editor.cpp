@@ -695,13 +695,13 @@ void world_edit::ui_show_animation_editor() noexcept
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
                ImGui::SliderFloat("##new_key_time",
-                                  &_animation_editor_context.new_position_key_time,
+                                  &_animation_editor_context.selected.new_position_key_time,
                                   0.0f, selected_animation->runtime,
                                   "Time: %.2f", ImGuiSliderFlags_AlwaysClamp);
 
                ImGui::BeginDisabled(
                   not is_unique_key_time(selected_animation->position_keys,
-                                         _animation_editor_context.new_position_key_time));
+                                         _animation_editor_context.selected.new_position_key_time));
 
                const float button_width = (ImGui::GetContentRegionAvail().x -
                                            ImGui::GetStyle().ItemInnerSpacing.x) *
@@ -712,7 +712,7 @@ void world_edit::ui_show_animation_editor() noexcept
 
                   for (int32 i = 0;
                        i < std::ssize(selected_animation->position_keys); ++i) {
-                     if (_animation_editor_context.new_position_key_time >=
+                     if (_animation_editor_context.selected.new_position_key_time >=
                          selected_animation->position_keys[i].time) {
                         previous_key_index = i;
                      }
@@ -722,7 +722,7 @@ void world_edit::ui_show_animation_editor() noexcept
                   }
 
                   const float new_key_time =
-                     _animation_editor_context.new_position_key_time;
+                     _animation_editor_context.selected.new_position_key_time;
 
                   const int32 insert_before_index =
                      previous_key_index ? *previous_key_index + 1 : 0;
@@ -778,7 +778,7 @@ void world_edit::ui_show_animation_editor() noexcept
 
                if (ImGui::IsItemHovered()) {
                   hovered_position_time =
-                     _animation_editor_context.new_position_key_time;
+                     _animation_editor_context.selected.new_position_key_time;
                }
             }
 
@@ -828,20 +828,20 @@ void world_edit::ui_show_animation_editor() noexcept
                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
                ImGui::SliderFloat("##new_key_time",
-                                  &_animation_editor_context.new_rotation_key_time,
+                                  &_animation_editor_context.selected.new_rotation_key_time,
                                   0.0f, selected_animation->runtime,
                                   "Time: %.2f", ImGuiSliderFlags_AlwaysClamp);
 
                ImGui::BeginDisabled(
                   not is_unique_key_time(selected_animation->rotation_keys,
-                                         _animation_editor_context.new_rotation_key_time));
+                                         _animation_editor_context.selected.new_rotation_key_time));
 
                if (ImGui::Button("Add", {ImGui::GetContentRegionAvail().x, 0.0f})) {
                   std::optional<int32> previous_key_index;
 
                   for (int32 i = 0;
                        i < std::ssize(selected_animation->rotation_keys); ++i) {
-                     if (_animation_editor_context.new_rotation_key_time >=
+                     if (_animation_editor_context.selected.new_rotation_key_time >=
                          selected_animation->rotation_keys[i].time) {
                         previous_key_index = i;
                      }
@@ -851,13 +851,13 @@ void world_edit::ui_show_animation_editor() noexcept
                   }
 
                   const float new_key_time =
-                     _animation_editor_context.new_rotation_key_time;
+                     _animation_editor_context.selected.new_rotation_key_time;
 
                   const int32 insert_before_index =
                      previous_key_index ? *previous_key_index + 1 : 0;
-                  world::rotation_key new_key =
-                     world::make_rotation_key_for_time(*selected_animation,
-                                                       _animation_editor_context.new_rotation_key_time);
+                  world::rotation_key new_key = world::make_rotation_key_for_time(
+                     *selected_animation,
+                     _animation_editor_context.selected.new_rotation_key_time);
 
                   if (_settings.preferences.dont_extrapolate_new_animation_keys and
                       not selected_animation->rotation_keys.empty()) {
@@ -892,7 +892,7 @@ void world_edit::ui_show_animation_editor() noexcept
 
                if (ImGui::IsItemHovered()) {
                   hovered_rotation_time =
-                     _animation_editor_context.new_rotation_key_time;
+                     _animation_editor_context.selected.new_rotation_key_time;
                }
             }
 
@@ -1849,7 +1849,7 @@ void world_edit::ui_show_animation_editor() noexcept
          std::optional<int32> previous_key_index;
 
          for (int32 i = 0; i < std::ssize(selected_animation->position_keys); ++i) {
-            if (_animation_editor_context.new_position_key_time >=
+            if (_animation_editor_context.selected.new_position_key_time >=
                 selected_animation->position_keys[i].time) {
                previous_key_index = i;
             }
@@ -1884,8 +1884,9 @@ void world_edit::ui_show_animation_editor() noexcept
          if (_animation_editor_context.place.finish) {
             const int32 insert_before_index =
                previous_key_index ? *previous_key_index + 1 : 0;
-            world::position_key new_key = {.time = _animation_editor_context.new_position_key_time,
-                                           .position = _cursor_positionWS - base_position};
+            world::position_key new_key =
+               {.time = _animation_editor_context.selected.new_position_key_time,
+                .position = _cursor_positionWS - base_position};
 
             if (previous_key_index) {
                new_key.transition =

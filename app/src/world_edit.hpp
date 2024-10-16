@@ -804,6 +804,9 @@ private:
          float3 key_movement = {0.0f, 0.0f, 0.0f};
          float3 key_rotation_movement = {0.0f, 0.0f, 0.0f};
 
+         float new_position_key_time = 0.0f;
+         float new_rotation_key_time = 0.0f;
+
          bool delete_key = false;
          bool toggle_playback = false;
          bool stop_playback = false;
@@ -816,9 +819,6 @@ private:
 
       bool select = false;
       bool select_behind = false;
-
-      float new_position_key_time = 0.0f;
-      float new_rotation_key_time = 0.0f;
 
       struct place {
          bool active = false;
