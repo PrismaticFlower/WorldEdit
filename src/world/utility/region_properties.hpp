@@ -3,6 +3,7 @@
 #include "types.hpp"
 
 #include <optional>
+#include <string>
 #include <string_view>
 
 namespace we::world {
