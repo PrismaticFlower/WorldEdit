@@ -263,6 +263,7 @@ void world_edit::update_hovered_entity() noexcept
    _interaction_targets.hovered_entity = {};
    _cursor_surface_normalWS = std::nullopt;
    float hovered_entity_distance = std::numeric_limits<float>::max();
+   float cursor_distance = std::numeric_limits<float>::max();
 
    if (ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse()) return;
    if (_rotate_camera or _pan_camera) return;
@@ -311,8 +312,12 @@ void world_edit::update_hovered_entity() noexcept
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
-            _cursor_surface_normalWS = hit->normalWS;
             hovered_entity_distance = hit->distance;
+         }
+
+         if (hit->distance < cursor_distance) {
+            _cursor_surface_normalWS = hit->normalWS;
+            cursor_distance = hit->distance;
          }
       }
    }
@@ -360,8 +365,13 @@ void world_edit::update_hovered_entity() noexcept
           hit) {
          if (hit->distance < hovered_entity_distance) {
             _interaction_targets.hovered_entity = hit->id;
-            _cursor_surface_normalWS = hit->normalWS;
             hovered_entity_distance = hit->distance;
+         }
+
+         if (hit->distance < cursor_distance and
+             _interaction_targets.creation_entity.is<world::portal>()) {
+            _cursor_surface_normalWS = hit->normalWS;
+            cursor_distance = hit->distance;
          }
       }
    }
@@ -451,29 +461,35 @@ void world_edit::update_hovered_entity() noexcept
 
    if (raycast_mask.terrain and _world.terrain.active_flags.terrain) {
       if (auto hit = world::raycast(ray.origin, ray.direction, _world.terrain); hit) {
-         if (*hit < hovered_entity_distance) {
+         if (*hit < hovered_entity_distance or *hit < cursor_distance) {
             if (not raycast_mask.objects or
                 not world::point_inside_terrain_cut(ray.origin + ray.direction * *hit,
                                                     ray.direction, _world_layers_hit_mask,
                                                     _world.objects, _object_classes)) {
-               _interaction_targets.hovered_entity = std::nullopt;
-               hovered_entity_distance = *hit;
+               if (*hit < hovered_entity_distance) {
+                  _interaction_targets.hovered_entity = std::nullopt;
+                  hovered_entity_distance = *hit;
+               }
+
+               if (*hit < cursor_distance) {
+                  _cursor_surface_normalWS = std::nullopt;
+                  cursor_distance = *hit;
+               }
             }
          }
       }
    }
 
-   if (hovered_entity_distance == std::numeric_limits<float>::max()) {
+   if (cursor_distance == std::numeric_limits<float>::max()) {
       if (float hit = -(dot(ray.origin, float3{0.0f, 1.0f, 0.0f}) - _editor_floor_height) /
                       dot(ray.direction, float3{0.0f, 1.0f, 0.0f});
           hit > 0.0f) {
-         _interaction_targets.hovered_entity = std::nullopt;
-         hovered_entity_distance = hit;
+         cursor_distance = hit;
       }
    }
 
-   if (hovered_entity_distance != std::numeric_limits<float>::max()) {
-      _cursor_positionWS = ray.origin + ray.direction * hovered_entity_distance;
+   if (cursor_distance != std::numeric_limits<float>::max()) {
+      _cursor_positionWS = ray.origin + ray.direction * cursor_distance;
    }
 
    if (_interaction_targets.creation_entity.holds_entity() and
