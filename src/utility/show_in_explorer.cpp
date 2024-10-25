@@ -8,9 +8,9 @@
 
 namespace we::utility {
 
-void try_show_in_explorer(const std::filesystem::path& file) noexcept
+void try_show_in_explorer(const io::path& file) noexcept
 {
-   const std::filesystem::path parent_path = file.parent_path();
+   const io::path parent_path = file.parent_path();
 
    if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED))) {
       return;
@@ -18,13 +18,13 @@ void try_show_in_explorer(const std::filesystem::path& file) noexcept
 
    const auto co_uninit = wil::scope_exit([] { CoUninitialize(); });
 
-   LPITEMIDLIST folder_item = ILCreateFromPathW(parent_path.c_str());
+   LPITEMIDLIST folder_item = ILCreateFromPathA(parent_path.c_str());
 
    if (not folder_item) return;
 
    const auto folder_item_free = wil::scope_exit([&] { ILFree(folder_item); });
 
-   LPITEMIDLIST file_item = ILCreateFromPathW(file.c_str());
+   LPITEMIDLIST file_item = ILCreateFromPathA(file.c_str());
 
    if (not file_item) return;
 

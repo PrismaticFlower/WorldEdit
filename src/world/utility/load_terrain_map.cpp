@@ -10,17 +10,18 @@
 
 namespace we::world {
 
-auto load_heightmap(const std::filesystem::path& file_path)
+auto load_heightmap(const io::path& file_path)
    -> std::variant<container::dynamic_array_2d<uint8>, container::dynamic_array_2d<uint16>>
 {
    DirectX::ScratchImage image;
 
-   if (string::iequals(file_path.extension().string(), ".tga")) {
-      if (FAILED(DirectX::LoadFromTGAFile(file_path.c_str(), nullptr, image))) {
+   if (string::iequals(file_path.extension(), ".tga")) {
+      if (FAILED(DirectX::LoadFromTGAFile(io::wide_path{file_path}.c_str(),
+                                          nullptr, image))) {
          throw terrain_map_load_error{"Failed to load image."};
       }
    }
-   else if (string::iequals(file_path.extension().string(), ".png")) {
+   else if (string::iequals(file_path.extension(), ".png")) {
       if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
          throw terrain_map_load_error{"Failed to load image."};
       }
@@ -36,7 +37,8 @@ auto load_heightmap(const std::filesystem::path& file_path)
 
       utility::com_ptr<IWICBitmapDecoder> decoder;
 
-      if (FAILED(factory->CreateDecoderFromFilename(file_path.c_str(), nullptr, GENERIC_READ,
+      if (FAILED(factory->CreateDecoderFromFilename(io::wide_path{file_path}.c_str(),
+                                                    nullptr, GENERIC_READ,
                                                     WICDecodeMetadataCacheOnDemand,
                                                     decoder.clear_and_assign()))) {
          throw terrain_map_load_error{"Failed to load image."};
@@ -154,17 +156,18 @@ auto load_heightmap(const std::filesystem::path& file_path)
    }
 }
 
-auto load_texture_weight_map(const std::filesystem::path& file_path)
+auto load_texture_weight_map(const io::path& file_path)
    -> container::dynamic_array_2d<uint8>
 {
    DirectX::ScratchImage image;
 
-   if (string::iequals(file_path.extension().string(), ".tga")) {
-      if (FAILED(DirectX::LoadFromTGAFile(file_path.c_str(), nullptr, image))) {
+   if (string::iequals(file_path.extension(), ".tga")) {
+      if (FAILED(DirectX::LoadFromTGAFile(io::wide_path{file_path}.c_str(),
+                                          nullptr, image))) {
          throw terrain_map_load_error{"Failed to load image."};
       }
    }
-   else if (string::iequals(file_path.extension().string(), ".png")) {
+   else if (string::iequals(file_path.extension(), ".png")) {
       if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
          throw terrain_map_load_error{"Failed to load image."};
       }
@@ -180,7 +183,8 @@ auto load_texture_weight_map(const std::filesystem::path& file_path)
 
       utility::com_ptr<IWICBitmapDecoder> decoder;
 
-      if (FAILED(factory->CreateDecoderFromFilename(file_path.c_str(), nullptr, GENERIC_READ,
+      if (FAILED(factory->CreateDecoderFromFilename(io::wide_path{file_path}.c_str(),
+                                                    nullptr, GENERIC_READ,
                                                     WICDecodeMetadataCacheOnDemand,
                                                     decoder.clear_and_assign()))) {
          throw terrain_map_load_error{"Failed to load image."};
@@ -279,15 +283,15 @@ auto load_texture_weight_map(const std::filesystem::path& file_path)
    return weight_map;
 }
 
-auto load_color_map(const std::filesystem::path& file_path)
-   -> container::dynamic_array_2d<uint32>
+auto load_color_map(const io::path& file_path) -> container::dynamic_array_2d<uint32>
 {
    container::dynamic_array_2d<uint32> color_map;
 
-   if (string::iequals(file_path.extension().string(), ".tga")) {
+   if (string::iequals(file_path.extension(), ".tga")) {
       DirectX::ScratchImage image;
 
-      if (FAILED(DirectX::LoadFromTGAFile(file_path.c_str(), nullptr, image))) {
+      if (FAILED(DirectX::LoadFromTGAFile(io::wide_path{file_path}.c_str(),
+                                          nullptr, image))) {
          throw terrain_map_load_error{"Failed to load image."};
       }
 
@@ -330,7 +334,7 @@ auto load_color_map(const std::filesystem::path& file_path)
                      image.GetMetadata().width * sizeof(uint32));
       }
    }
-   else if (string::iequals(file_path.extension().string(), ".png")) {
+   else if (string::iequals(file_path.extension(), ".png")) {
       if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
          throw terrain_map_load_error{"Failed to load image."};
       }
@@ -346,7 +350,8 @@ auto load_color_map(const std::filesystem::path& file_path)
 
       utility::com_ptr<IWICBitmapDecoder> decoder;
 
-      if (FAILED(factory->CreateDecoderFromFilename(file_path.c_str(), nullptr, GENERIC_READ,
+      if (FAILED(factory->CreateDecoderFromFilename(io::wide_path{file_path}.c_str(),
+                                                    nullptr, GENERIC_READ,
                                                     WICDecodeMetadataCacheOnDemand,
                                                     decoder.clear_and_assign()))) {
          throw terrain_map_load_error{"Failed to load image."};

@@ -4,6 +4,7 @@
 #include "asset_traits.hpp"
 #include "async/thread_pool.hpp"
 #include "io/error.hpp"
+#include "io/path.hpp"
 #include "msh/flat_model.hpp"
 #include "odf/definition.hpp"
 #include "output_stream.hpp"
@@ -16,7 +17,6 @@
 #include <atomic>
 #include <mutex>
 #include <shared_mutex>
-#include <stop_token>
 #include <string_view>
 #include <vector>
 
@@ -33,25 +33,26 @@ constexpr std::chrono::milliseconds asset_retry_load_delay = 50ms;
 
 namespace {
 
-const absl::flat_hash_set<std::wstring_view> ignored_folders =
-   {L"_BUILD"sv, L"_LVL_PC"sv, L"_LVL_PS2"sv, L"_LVL_PSP"sv,  L"_LVL_XBOX"sv,
+const absl::flat_hash_set<std::string_view> ignored_folders =
+   {"_BUILD"sv, "_LVL_PC"sv, "_LVL_PS2"sv, "_LVL_PSP"sv,  "_LVL_XBOX"sv,
 
-    L".git"sv,   L".svn"sv,    L".vscode"sv,  L".WorldEdit"sv};
+    ".git"sv,   ".svn"sv,    ".vscode"sv,  ".WorldEdit"sv};
 
-auto try_get_last_write_time(const std::filesystem::path& asset_path) noexcept -> uint64
+bool is_parent_path_ignored(const io::path& asset_path) noexcept
 {
-   try {
-      return std::filesystem::last_write_time(asset_path).time_since_epoch().count();
-   }
-   catch (std::filesystem::filesystem_error&) {
-      return 0;
-   }
-}
+   std::string_view path_view = asset_path.parent_path();
 
-bool is_parent_path_ignored(const std::filesystem::path& asset_path) noexcept
-{
-   for (const auto& part : asset_path) {
-      if (ignored_folders.contains(part.native())) return true;
+   if (path_view.size() < 2) return false;
+
+   if (path_view[1] == ':') path_view.remove_prefix(2);
+   if (path_view.starts_with('\\')) path_view.remove_prefix(1);
+
+   while (not path_view.empty()) {
+      auto [directory, rest] = string::split_first_of_exclusive(path_view, "\\");
+
+      if (ignored_folders.contains(directory)) return true;
+
+      path_view = rest;
    }
 
    return false;
@@ -66,15 +67,9 @@ struct library<T>::impl {
    {
    }
 
-   void add(const std::filesystem::path& unpreferred_asset_path,
-            uint64 last_write_time) noexcept
+   void add(const io::path& asset_path, uint64 last_write_time) noexcept
    {
-      std::filesystem::path asset_path =
-         unpreferred_asset_path; // makes for prettier output messages
-
-      asset_path.make_preferred();
-
-      const lowercase_string name{asset_path.stem().string()};
+      const lowercase_string name{asset_path.stem()};
 
       auto new_state = make_asset_state(name, asset_path, last_write_time);
 
@@ -114,14 +109,9 @@ struct library<T>::impl {
       _change_event.broadcast(name);
    }
 
-   void remove(const std::filesystem::path& unpreferred_asset_path) noexcept
+   void remove(const io::path& asset_path) noexcept
    {
-      std::filesystem::path asset_path =
-         unpreferred_asset_path; // makes for prettier output messages
-
-      asset_path.make_preferred();
-
-      const lowercase_string name{asset_path.stem().string()};
+      const lowercase_string name{asset_path.stem()};
 
       const std::shared_ptr<asset_state<T>> asset_state = [&] {
          std::scoped_lock lock{_assets_mutex};
@@ -264,7 +254,7 @@ struct library<T>::impl {
       callback(_existing_assets);
    }
 
-   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path
+   auto query_path(const lowercase_string& name) noexcept -> io::path
    {
       std::shared_lock lock{_assets_mutex};
 
@@ -293,8 +283,7 @@ struct library<T>::impl {
    }
 
 private:
-   auto make_asset_state(const lowercase_string& name,
-                         const std::filesystem::path& asset_path,
+   auto make_asset_state(const lowercase_string& name, const io::path& asset_path,
                          uint64 last_write_time) -> std::shared_ptr<asset_state<T>>
    {
       return std::make_shared<asset_state<T>>(
@@ -305,7 +294,7 @@ private:
    auto make_placeholder_asset_state() -> std::shared_ptr<asset_state<T>>
    {
       return std::make_shared<asset_state<T>>(
-         std::weak_ptr<T>{}, false, std::filesystem::path{}, [] {}, 0);
+         std::weak_ptr<T>{}, false, io::path{}, [] {}, 0);
    }
 
    void enqueue_create_asset(lowercase_string name, bool preempt_current_load) noexcept
@@ -321,7 +310,7 @@ private:
       // Do not try reload assets that previously failed loading.
       if (asset->load_failure) return;
 
-      std::filesystem::path asset_path = [&] {
+      io::path asset_path = [&] {
          std::shared_lock asset_lock{asset->mutex};
 
          return asset->path;
@@ -355,7 +344,7 @@ private:
                         std::make_shared<const T>(asset_traits<T>::load(asset_path));
 
                      _output_stream.write("Loaded asset '{}'\n   Time Taken: {:f}ms\n"sv,
-                                          asset_path.string(),
+                                          asset_path.string_view(),
                                           load_timer.elapsed_ms());
 
                      return asset_data;
@@ -374,7 +363,7 @@ private:
             }
             catch (std::exception& e) {
                _output_stream.write("Error while loading asset:\n   File: {}\n   Message: \n{}\n"sv,
-                                    asset_path.string(),
+                                    asset_path.string_view(),
                                     string::indent(2, e.what()));
 
                _load_failed_event.broadcast(name, asset);
@@ -412,13 +401,13 @@ library<T>::library(output_stream& stream, std::shared_ptr<async::thread_pool> t
 }
 
 template<typename T>
-void library<T>::add(const std::filesystem::path& asset_path, uint64 last_write_time) noexcept
+void library<T>::add(const io::path& asset_path, uint64 last_write_time) noexcept
 {
    self->add(asset_path, last_write_time);
 }
 
 template<typename T>
-void library<T>::remove(const std::filesystem::path& asset_path) noexcept
+void library<T>::remove(const io::path& asset_path) noexcept
 {
    self->remove(asset_path);
 }
@@ -473,8 +462,7 @@ void library<T>::view_existing(
 }
 
 template<typename T>
-auto library<T>::query_path(const lowercase_string& name) noexcept
-   -> std::filesystem::path
+auto library<T>::query_path(const lowercase_string& name) noexcept -> io::path
 {
    return self->query_path(name);
 }
@@ -491,12 +479,12 @@ template struct library<texture::texture>;
 template struct library<sky::config>;
 
 struct directory::impl {
-   void add(const std::filesystem::path& asset_path) noexcept
+   void add(const io::path& asset_path) noexcept
    {
       std::scoped_lock lock{_mutex};
 
       auto [state_pair, inserted] =
-         _assets.emplace(lowercase_string{asset_path.stem().string()}, asset_path);
+         _assets.emplace(lowercase_string{asset_path.stem()}, asset_path);
 
       if (not inserted) {
          state_pair->second = asset_path;
@@ -507,11 +495,11 @@ struct directory::impl {
       }
    }
 
-   void remove(const std::filesystem::path& asset_path) noexcept
+   void remove(const io::path& asset_path) noexcept
    {
       std::scoped_lock lock{_mutex};
 
-      lowercase_string name{asset_path.stem().string()};
+      lowercase_string name{asset_path.stem()};
 
       _assets.erase(name);
 
@@ -544,7 +532,7 @@ struct directory::impl {
       callback(_existing_assets);
    }
 
-   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path
+   auto query_path(const lowercase_string& name) noexcept -> io::path
    {
       std::scoped_lock lock{_mutex};
 
@@ -555,19 +543,19 @@ struct directory::impl {
 
 private:
    std::shared_mutex _mutex;
-   absl::flat_hash_map<lowercase_string, std::filesystem::path> _assets; // guarded by _assets_mutex
+   absl::flat_hash_map<lowercase_string, io::path> _assets; // guarded by _assets_mutex
    std::vector<stable_string> _existing_assets;
    bool _existing_assets_sorted = true;
 };
 
 directory::directory() noexcept = default;
 
-void directory::add(const std::filesystem::path& asset_path) noexcept
+void directory::add(const io::path& asset_path) noexcept
 {
    return self->add(asset_path);
 }
 
-void directory::remove(const std::filesystem::path& asset_path) noexcept
+void directory::remove(const io::path& asset_path) noexcept
 {
    return self->remove(asset_path);
 }
@@ -583,8 +571,7 @@ void directory::view_existing(
    return self->view_existing(callback);
 }
 
-auto directory::query_path(const lowercase_string& name) noexcept
-   -> std::filesystem::path
+auto directory::query_path(const lowercase_string& name) noexcept -> io::path
 {
    return self->query_path(name);
 }
@@ -600,36 +587,33 @@ libraries_manager::libraries_manager(output_stream& stream,
 
 libraries_manager::~libraries_manager() = default;
 
-void libraries_manager::source_directory(const std::filesystem::path& source_directory) noexcept
+void libraries_manager::source_directory(const io::path& source_directory) noexcept
 {
    clear();
 
-   for (auto entry =
-           std::filesystem::recursive_directory_iterator{
-              source_directory,
-              std::filesystem::directory_options::follow_directory_symlink |
-                 std::filesystem::directory_options::skip_permission_denied};
-        entry != std::filesystem::end(entry); ++entry) {
-      const auto& path = entry->path();
+   for (auto entry = io::directory_iterator{source_directory};
+        entry != entry.end(); ++entry) {
+      const io::path& path = entry->path;
 
-      if (ignored_folders.contains((--path.end())->native())) {
-         entry.disable_recursion_pending();
+      if (entry->is_directory and ignored_folders.contains(path.stem())) {
+         entry.skip_directory();
 
          continue;
       }
 
-      register_asset(path, entry->last_write_time().time_since_epoch().count());
+      register_asset(path, entry->last_write_time);
    }
 
-   _file_watcher = std::make_unique<utility::file_watcher>(source_directory);
+   _file_watcher =
+      std::make_unique<utility::file_watcher>(source_directory.string_view());
    _file_changed_event =
-      _file_watcher->listen_file_changed([this](const std::filesystem::path& path) {
+      _file_watcher->listen_file_changed([this](const io::path& path) {
          if (is_parent_path_ignored(path)) return;
 
-         register_asset(path, try_get_last_write_time(path));
+         register_asset(path, io::get_last_write_time(path));
       });
    _file_removed_event =
-      _file_watcher->listen_file_removed([this](const std::filesystem::path& path) {
+      _file_watcher->listen_file_removed([this](const io::path& path) {
          if (is_parent_path_ignored(path)) return;
 
          forget_asset(path);
@@ -655,44 +639,41 @@ void libraries_manager::clear() noexcept
    skies.clear();
 }
 
-void libraries_manager::register_asset(const std::filesystem::path& path,
-                                       uint64 last_write_time) noexcept
+void libraries_manager::register_asset(const io::path& path, uint64 last_write_time) noexcept
 {
-   if (const auto extension = path.extension();
-       string::iequals(extension.native(), L".odf"sv)) {
+   if (const auto extension = path.extension(); string::iequals(extension, ".odf"sv)) {
       odfs.add(path, last_write_time);
    }
-   else if (string::iequals(extension.native(), L".msh"sv)) {
+   else if (string::iequals(extension, ".msh"sv)) {
       models.add(path, last_write_time);
    }
-   else if (string::iequals(extension.native(), L".tga"sv)) {
+   else if (string::iequals(extension, ".tga"sv)) {
       textures.add(path, last_write_time);
    }
-   else if (string::iequals(extension.native(), L".sky"sv)) {
+   else if (string::iequals(extension, ".sky"sv)) {
       skies.add(path, last_write_time);
    }
-   else if (string::iequals(extension.native(), L".eng"sv) or
-            string::iequals(extension.native(), L".obg"sv)) {
+   else if (string::iequals(extension, ".eng"sv) or
+            string::iequals(extension, ".obg"sv)) {
       entity_groups.add(path);
    }
 }
 
-void libraries_manager::forget_asset(const std::filesystem::path& path) noexcept
+void libraries_manager::forget_asset(const io::path& path) noexcept
 {
-   if (const auto extension = path.extension();
-       string::iequals(extension.native(), L".odf"sv)) {
+   if (const auto extension = path.extension(); string::iequals(extension, ".odf"sv)) {
       odfs.remove(path);
    }
-   else if (string::iequals(extension.native(), L".msh"sv)) {
+   else if (string::iequals(extension, ".msh"sv)) {
       models.remove(path);
    }
-   else if (string::iequals(extension.native(), L".tga"sv)) {
+   else if (string::iequals(extension, ".tga"sv)) {
       textures.remove(path);
    }
-   else if (string::iequals(extension.native(), L".sky"sv)) {
+   else if (string::iequals(extension, ".sky"sv)) {
       skies.remove(path);
    }
-   else if (string::iequals(extension.native(), L".obg"sv)) {
+   else if (string::iequals(extension, ".obg"sv)) {
       entity_groups.remove(path);
    }
 }

@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstddef>
-#include <optional>
 #include <system_error>
 
 #include <fmt/core.h>
@@ -14,31 +13,43 @@ namespace we::utility {
 
 namespace {
 
-auto get_long_path_name(const std::filesystem::path& path)
-   -> std::optional<std::filesystem::path>
+auto make_full_path(const io::path& parent_path, const FILE_NOTIFY_INFORMATION& info)
+   -> io::path
 {
-   std::wstring buffer;
+   const DWORD file_name_chars = info.FileNameLength / 2;
 
-   const auto needed_size = GetLongPathNameW(path.c_str(), buffer.data(),
-                                             static_cast<DWORD>(buffer.size()));
+   const int32 needed_bytes =
+      WideCharToMultiByte(CP_UTF8, 0, &info.FileName[0], file_name_chars,
+                          nullptr, 0, nullptr, nullptr);
 
-   if (needed_size == 0 or GetLastError() == ERROR_FILE_NOT_FOUND)
-      return std::nullopt;
+   if (needed_bytes == 0) std::terminate();
 
-   buffer.resize(needed_size - 1);
+   char utf8_small_str[MAX_PATH];
+   std::vector<char> utf8_large_str;
+   char* utf8_str = nullptr;
 
-   if (GetLongPathNameW(path.c_str(), buffer.data(),
-                        static_cast<DWORD>(buffer.size())) == 0 or
-       GetLastError() != ERROR_SUCCESS) {
-      return std::nullopt;
+   if (needed_bytes + 1 <= sizeof(utf8_small_str)) {
+      utf8_str = &utf8_small_str[0];
+   }
+   else {
+      utf8_large_str.resize(needed_bytes);
+      utf8_str = utf8_large_str.data();
    }
 
-   return std::filesystem::path{std::move(buffer)};
+   if (WideCharToMultiByte(CP_UTF8, 0, &info.FileName[0], file_name_chars,
+                           utf8_str, needed_bytes, nullptr, nullptr) == 0) {
+      std::terminate();
+   }
+
+   const std::string_view utf8_path = {utf8_str,
+                                       static_cast<std::size_t>(needed_bytes)};
+
+   return io::compose_path(parent_path, utf8_path);
 }
 
-bool is_file(const std::filesystem::path& path) noexcept
+bool is_file(const io::path& path) noexcept
 {
-   DWORD attributes = GetFileAttributesW(path.c_str());
+   DWORD attributes = GetFileAttributesW(io::wide_path{path}.c_str());
 
    if (attributes == INVALID_FILE_ATTRIBUTES) return false;
 
@@ -47,10 +58,10 @@ bool is_file(const std::filesystem::path& path) noexcept
 
 }
 
-file_watcher::file_watcher(const std::filesystem::path& path) : _path{path}
+file_watcher::file_watcher(const io::path& path) : _path{path}
 {
    _directory = wil::unique_hfile{
-      CreateFileW(path.c_str(), FILE_LIST_DIRECTORY,
+      CreateFileW(io::wide_path{path}.c_str(), FILE_LIST_DIRECTORY,
                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                   nullptr, OPEN_EXISTING,
                   FILE_FLAG_OVERLAPPED | FILE_FLAG_BACKUP_SEMANTICS, nullptr)};
@@ -60,7 +71,7 @@ file_watcher::file_watcher(const std::filesystem::path& path) : _path{path}
 
       throw std::system_error{std::error_code{error, std::system_category()},
                               fmt::format("Unable to open directory '{}'",
-                                          path.string())};
+                                          path.string_view())};
    }
 
    _thread =
@@ -125,16 +136,7 @@ void file_watcher::process_changes(const std::span<std::byte, 65536> buffer) noe
       head += info.NextEntryOffset;
       process = info.NextEntryOffset != 0;
 
-      const std::wstring_view str{&info.FileName[0], info.FileNameLength / 2};
-
-      std::filesystem::path path = _path / str;
-
-      path.make_preferred();
-
-      // TODO: Investigate why this doesn't work as expected.
-      // if (auto long_path = get_long_path_name(path); long_path) {
-      //    std::swap(*long_path, path);
-      // }
+      const io::path path = make_full_path(_path, info);
 
       switch (info.Action) {
       case FILE_ACTION_ADDED: {

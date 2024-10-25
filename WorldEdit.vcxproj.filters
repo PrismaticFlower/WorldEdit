@@ -227,6 +227,7 @@
     <ClCompile Include="src\world\utility\entity_group_utilities.cpp" />
     <ClCompile Include="src\world\io\load_entity_group.cpp" />
     <ClCompile Include="src\world\io\save_entity_group.cpp" />
+    <ClCompile Include="src\io\path.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
@@ -525,6 +526,7 @@
     <ClInclude Include="src\world\utility\entity_group_utilities.hpp" />
     <ClInclude Include="src\world\io\load_entity_group.hpp" />
     <ClInclude Include="src\world\io\save_entity_group.hpp" />
+    <ClInclude Include="src\io\path.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

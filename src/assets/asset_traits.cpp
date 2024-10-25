@@ -8,25 +8,22 @@
 
 namespace we::assets {
 
-auto asset_traits<odf::definition>::load(const std::filesystem::path& path)
-   -> odf::definition
+auto asset_traits<odf::definition>::load(const io::path& path) -> odf::definition
 {
    return odf::read_definition(io::read_file_to_chars(path));
 }
 
-auto asset_traits<msh::flat_model>::load(const std::filesystem::path& path)
-   -> msh::flat_model
+auto asset_traits<msh::flat_model>::load(const io::path& path) -> msh::flat_model
 {
    return msh::flat_model{msh::read_scene(path)};
 }
 
-auto asset_traits<texture::texture>::load(const std::filesystem::path& path)
-   -> texture::texture
+auto asset_traits<texture::texture>::load(const io::path& path) -> texture::texture
 {
    return texture::load_texture(path);
 }
 
-auto asset_traits<sky::config>::load(const std::filesystem::path& path) -> sky::config
+auto asset_traits<sky::config>::load(const io::path& path) -> sky::config
 {
    return sky::read(io::read_file_to_string(path), "PC");
 }

@@ -8,6 +8,7 @@
 
 #include "imgui.h"
 
+#include <algorithm>
 #include <array>
 #include <bit>
 

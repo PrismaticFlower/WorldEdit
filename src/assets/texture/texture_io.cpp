@@ -31,11 +31,11 @@ struct cube_offsets {
    uint32 y = 0;
 };
 
-auto load_options(std::filesystem::path path) -> texture_options
+auto load_options(io::path path) -> texture_options
 {
-   path += L".option"s;
+   path += ".option";
 
-   if (not std::filesystem::exists(path)) return {};
+   if (not io::exists(path)) return {};
 
    texture_options opts;
 
@@ -203,11 +203,12 @@ void generate_mipmaps(texture& texture)
 
 }
 
-auto load_texture(const std::filesystem::path& path) -> texture
+auto load_texture(const io::path& path) -> texture
 {
    DirectX::ScratchImage scratch_image;
 
-   if (const HRESULT hr = DirectX::LoadFromTGAFile(path.c_str(), nullptr, scratch_image);
+   if (const HRESULT hr = DirectX::LoadFromTGAFile(io::wide_path{path}.c_str(),
+                                                   nullptr, scratch_image);
        FAILED(hr)) {
       throw io::open_error{"Failed to load .TGA file.",
                            hr == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION)

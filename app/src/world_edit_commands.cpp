@@ -4,6 +4,8 @@
 #include "world/utility/selection_centre.hpp"
 #include "world_edit.hpp"
 
+#include <algorithm>
+
 #include <imgui.h>
 
 using namespace std::literals;

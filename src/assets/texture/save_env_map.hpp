@@ -2,11 +2,9 @@
 
 #include "types.hpp"
 
-#include <span>
+#include "io/path.hpp"
 
-namespace std::filesystem {
-class path;
-}
+#include <span>
 
 namespace we::assets::texture {
 
@@ -21,6 +19,6 @@ struct env_map_view {
 /// @brief Save an env map from a texture array in a 6x3 layout in a .tga file. Can throw we::io::error on failure.
 /// @param path The path to the file to save the env map to.
 /// @param env_map The env map to save.
-void save_env_map(const std::filesystem::path& path, const env_map_view env_map);
+void save_env_map(const io::path& path, const env_map_view env_map);
 
 }

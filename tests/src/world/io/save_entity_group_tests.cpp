@@ -9,8 +9,8 @@ namespace we::world::tests {
 
 TEST_CASE("world save entity group (objects)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_objects.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_objects.eng";
 
    const std::string_view expected_eng =
       R"(Object("com_item_healthrecharge", "com_item_healthrecharge")
@@ -64,8 +64,8 @@ Object("com_inv_col_8", "com_inv_col_8")
 
 TEST_CASE("world save entity group (lights)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_lights.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_lights.eng";
 
    const std::string_view expected_eng =
       R"(Light("Light 2")
@@ -219,8 +219,8 @@ Light("Light 4")
 
 TEST_CASE("world save entity group (paths)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_paths.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_paths.eng";
 
    const std::string_view expected_eng =
       R"(Path("Path 0")
@@ -356,8 +356,8 @@ Path("type_EntityPath Path 1")
 
 TEST_CASE("world save entity group (regions)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_regions.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_regions.eng";
 
    const std::string_view expected_eng =
       R"(Region("foleyfx water", 0)
@@ -393,8 +393,8 @@ TEST_CASE("world save entity group (regions)", "[World][IO]")
 
 TEST_CASE("world save entity group (sectors)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_sectors.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_sectors.eng";
 
    const std::string_view expected_eng =
       R"(Sector("sector")
@@ -466,8 +466,8 @@ Sector("Sector-1")
 
 TEST_CASE("world save entity group (portals)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_portals.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_portals.eng";
 
    const std::string_view expected_eng =
       R"(Portal("Portal")
@@ -506,8 +506,8 @@ TEST_CASE("world save entity group (portals)", "[World][IO]")
 
 TEST_CASE("world save entity group (hintnodes)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_hintnodes.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_hintnodes.eng";
 
    const std::string_view expected_eng =
       R"(Hint("HintNode0", "5")
@@ -569,8 +569,8 @@ Hint("HintNode1", "5")
 
 TEST_CASE("world save entity group (barriers)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_barriers.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_barriers.eng";
 
    const std::string_view expected_eng =
       R"(Barrier("Barrier0")
@@ -606,8 +606,8 @@ TEST_CASE("world save entity group (barriers)", "[World][IO]")
 
 TEST_CASE("world save entity group (planning)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_planning.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_planning.eng";
 
    const std::string_view expected_eng =
       R"(Hub("Hub0")
@@ -723,8 +723,8 @@ Connection("Connection1")
 
 TEST_CASE("world save entity group (boundaries)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path = L"temp/entity_groups/test_boundaries.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_boundaries.eng";
 
    const std::string_view expected_eng =
       R"(Boundary("boundary")
@@ -765,9 +765,8 @@ TEST_CASE("world save entity group (boundaries)", "[World][IO]")
 
 TEST_CASE("world save entity group (measurements)", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/entity_groups");
-   const std::filesystem::path path =
-      L"temp/entity_groups/test_measurements.eng";
+   (void)io::create_directory("temp/entity_groups");
+   const io::path path = "temp/entity_groups/test_measurements.eng";
 
    const std::string_view expected_eng =
       R"(Measurement("Measurement0")

@@ -7,7 +7,7 @@ using namespace std::literals;
 
 namespace we::io::tests {
 
-constexpr auto test_file_path = L"temp/output_file.txt"sv;
+constexpr auto test_file_path = "temp/output_file.txt"sv;
 
 TEST_CASE("output file create mode", "[IO][OutputFile]")
 {

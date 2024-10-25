@@ -12,10 +12,6 @@
 
 #include "asset_ref.hpp"
 
-namespace std::filesystem {
-class path;
-}
-
 namespace we {
 class output_stream;
 }
@@ -26,6 +22,10 @@ class thread_pool;
 
 namespace we::utility {
 class file_watcher;
+}
+
+namespace we::io {
+struct path;
 }
 
 namespace we::assets {
@@ -55,11 +55,11 @@ struct library {
 
    /// @brief Adds an asset to the library.
    /// @param asset_path The path to the asset.
-   void add(const std::filesystem::path& asset_path, uint64 last_write_time) noexcept;
+   void add(const io::path& asset_path, uint64 last_write_time) noexcept;
 
    /// @brief Removes an asset from the library.
    /// @param asset_path The path to the asset.
-   void remove(const std::filesystem::path& asset_path) noexcept;
+   void remove(const io::path& asset_path) noexcept;
 
    /// @brief Gets or creates a reference to an asset. The asset need not yet exist on disk.
    /// @param name The name of the asset.
@@ -103,7 +103,7 @@ struct library {
    /// @brief Query the file path of an asset.
    /// @param name The name of the asset.
    /// @return The file path to the asset. Can be empty if the asset does not exist.
-   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path;
+   auto query_path(const lowercase_string& name) noexcept -> io::path;
 
    /// @brief Query the last write time of an asset.
    /// @param name The name of the asset.
@@ -122,11 +122,11 @@ struct directory {
 
    /// @brief Adds an asset to the directory.
    /// @param asset_path The path to the asset.
-   void add(const std::filesystem::path& asset_path) noexcept;
+   void add(const io::path& asset_path) noexcept;
 
    /// @brief Removes an asset from the directory.
    /// @param asset_path The path to the asset.
-   void remove(const std::filesystem::path& asset_path) noexcept;
+   void remove(const io::path& asset_path) noexcept;
 
    /// @brief Clears the asset directory.
    void clear() noexcept;
@@ -139,7 +139,7 @@ struct directory {
    /// @brief Query the file path of an asset.
    /// @param name The name of the asset.
    /// @return The file path to the asset. Can be empty if the asset does not exist.
-   auto query_path(const lowercase_string& name) noexcept -> std::filesystem::path;
+   auto query_path(const lowercase_string& name) noexcept -> io::path;
 
 private:
    struct impl;
@@ -155,7 +155,7 @@ struct libraries_manager {
 
    /// @brief Sets the source directory for assets.
    /// @param path The directory to search through for assets.
-   void source_directory(const std::filesystem::path& path) noexcept;
+   void source_directory(const io::path& path) noexcept;
 
    /// @brief Handles broadcasting notifications of any loaded or updated assets.
    void update_loaded() noexcept;
@@ -170,13 +170,13 @@ struct libraries_manager {
 private:
    void clear() noexcept;
 
-   void register_asset(const std::filesystem::path& path, uint64 last_write_time) noexcept;
+   void register_asset(const io::path& path, uint64 last_write_time) noexcept;
 
-   void forget_asset(const std::filesystem::path& path) noexcept;
+   void forget_asset(const io::path& path) noexcept;
 
    std::unique_ptr<utility::file_watcher> _file_watcher;
-   event_listener<void(const std::filesystem::path& path)> _file_changed_event;
-   event_listener<void(const std::filesystem::path& path)> _file_removed_event;
+   event_listener<void(const io::path& path)> _file_changed_event;
+   event_listener<void(const io::path& path)> _file_removed_event;
    event_listener<void()> _unknown_files_changed;
 };
 

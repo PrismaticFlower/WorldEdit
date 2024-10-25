@@ -238,7 +238,7 @@ void world_edit::update_window_text() noexcept
    if (_window_unsaved_star != _edit_stack_world.modified_flag()) {
       SetWindowTextA(_window, fmt::format("WorldEdit - {}{}",
                                           _edit_stack_world.modified_flag() ? "*" : "",
-                                          _world_path.filename().string())
+                                          _world_path.filename())
                                  .c_str());
       _window_unsaved_star = _edit_stack_world.modified_flag();
    }
@@ -3453,9 +3453,9 @@ void world_edit::ask_to_save_world() noexcept
    if (result == IDYES) save_world(_world_path);
 }
 
-void world_edit::open_project(std::filesystem::path path) noexcept
+void world_edit::open_project(const io::path& path) noexcept
 {
-   if (not std::filesystem::exists(path / L"Worlds")) {
+   if (not io::exists(io::compose_path(path, "Worlds"))) {
       if (MessageBoxW(_window, L"The selected folder does not appear to be a mod data folder. Are you sure you wish to open it?",
                       L"Not a Data Folder", MB_YESNO) != IDYES) {
          return;
@@ -3464,20 +3464,20 @@ void world_edit::open_project(std::filesystem::path path) noexcept
 
    if (not _project_dir.empty()) {
       _renderer->async_save_thumbnail_disk_cache(
-         (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
+         io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
    }
 
    _project_dir = path;
    _asset_libraries.source_directory(_project_dir);
    _project_world_paths.clear();
 
-   const std::filesystem::path world_edit_project_files_path =
-      _project_dir / L".WorldEdit";
+   const io::path world_edit_project_files_path =
+      io::compose_path(_project_dir, ".WorldEdit");
 
-   if (not std::filesystem::exists(world_edit_project_files_path)) {
-      if (std::error_code ec;
-          std::filesystem::create_directory(world_edit_project_files_path, ec)) {
-         SetFileAttributesW(world_edit_project_files_path.c_str(), FILE_ATTRIBUTE_HIDDEN);
+   if (not io::exists(world_edit_project_files_path)) {
+      if (io::create_directory(world_edit_project_files_path)) {
+         SetFileAttributesW(io::wide_path{world_edit_project_files_path}.c_str(),
+                            FILE_ATTRIBUTE_HIDDEN);
       }
       else {
          MessageBoxW(_window, L"Unable to .WorldEdit folder in selected folder. This folder is used to store things like the thumbnail disk cache. You can proceed but features that depend on this folder will be broken.",
@@ -3486,7 +3486,7 @@ void world_edit::open_project(std::filesystem::path path) noexcept
    }
 
    _renderer->async_load_thumbnail_disk_cache(
-      (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
+      io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
 
    enumerate_project_worlds();
 }
@@ -3504,7 +3504,7 @@ void world_edit::open_project_with_picker() noexcept
                                             .picker_guid = open_project_picker_guid,
                                             .window = _window});
 
-   if (not path or not std::filesystem::exists(*path)) return;
+   if (not path or not io::exists(*path)) return;
 
    open_project(*path);
 }
@@ -3512,16 +3512,16 @@ void world_edit::open_project_with_picker() noexcept
 void world_edit::close_project() noexcept
 {
    _renderer->async_save_thumbnail_disk_cache(
-      (_project_dir / L".WorldEdit/thumbnails.bin").c_str());
+      io::compose_path(_project_dir, ".WorldEdit/thumbnails.bin").c_str());
 
-   _project_dir.clear();
+   _project_dir = "";
 
    close_world();
 }
 
-void world_edit::load_world(std::filesystem::path path) noexcept
+void world_edit::load_world(const io::path& path) noexcept
 {
-   if (not std::filesystem::exists(path)) return;
+   if (not io::exists(path)) return;
 
    close_world();
 
@@ -3538,14 +3538,12 @@ void world_edit::load_world(std::filesystem::path path) noexcept
       _camera.yaw(0.0f);
 
       SetWindowTextA(_window,
-                     fmt::format("WorldEdit - {}", _world_path.filename().string())
-                        .c_str());
+                     fmt::format("WorldEdit - {}", _world_path.filename()).c_str());
       _window_unsaved_star = false;
    }
    catch (std::exception& e) {
       _stream->write(fmt::format("Failed to load world '{}'!\n   Reason: \n{}",
-                                 path.filename().string(),
-                                 string::indent(2, e.what())));
+                                 path.filename(), string::indent(2, e.what())));
    }
 }
 
@@ -3571,13 +3569,9 @@ void world_edit::load_world_with_picker() noexcept
    load_world(*path);
 }
 
-void world_edit::save_world(std::filesystem::path path) noexcept
+void world_edit::save_world(const io::path& path) noexcept
 {
    try {
-      if (not std::filesystem::exists(path.parent_path())) {
-         std::filesystem::create_directories(path.parent_path());
-      }
-
       const world::save_flags flags =
          {.save_gamemodes = not _settings.preferences.dont_save_world_gamemodes,
           .save_effects = not _settings.preferences.dont_save_world_effects};
@@ -3634,7 +3628,7 @@ void world_edit::close_world() noexcept
    _world_hit_mask = {};
    _world_layers_draw_mask = {true};
    _world_layers_hit_mask = {true};
-   _world_path.clear();
+   _world_path = "";
 
    _edit_stack_world.clear();
    _edit_stack_world.clear_modified_flag();
@@ -3658,13 +3652,9 @@ void world_edit::save_entity_group_with_picker(const world::entity_group& group)
        .must_exist = true});
 
    if (not path) return;
-   if (not path->has_extension()) *path += L".eng";
+   if (not path->extension().empty()) *path += ".eng";
 
    try {
-      if (not std::filesystem::exists(path->parent_path())) {
-         std::filesystem::create_directories(path->parent_path());
-      }
-
       world::save_entity_group(*path, group);
    }
    catch (std::exception& e) {
@@ -3680,25 +3670,21 @@ void world_edit::save_entity_group_with_picker(const world::entity_group& group)
 
 void world_edit::enumerate_project_worlds() noexcept
 {
-   try {
-      for (auto& file : std::filesystem::recursive_directory_iterator{
-              _project_dir / L"Worlds"}) {
-         if (not file.is_regular_file()) continue;
+   const io::path worlds_path = io::compose_path(_project_dir, "Worlds");
 
-         auto extension = file.path().extension();
-         constexpr auto wld_extension = L".wld"sv;
-
-         if (CompareStringEx(LOCALE_NAME_INVARIANT, NORM_IGNORECASE,
-                             extension.native().c_str(), (int)extension.native().size(),
-                             wld_extension.data(), (int)wld_extension.size(),
-                             nullptr, nullptr, 0) == CSTR_EQUAL) {
-            _project_world_paths.push_back(file.path());
-         }
-      }
-   }
-   catch (std::filesystem::filesystem_error&) {
+   if (not io::exists(worlds_path)) {
       MessageBoxW(_window, L"Unable to enumerate data folder worlds. Loading worlds will require manual navigation.",
                   L"Error", MB_OK);
+
+      return;
+   }
+
+   for (const io::directory_entry& entry : io::directory_iterator{worlds_path}) {
+      if (not entry.is_file) continue;
+
+      if (string::iequals(entry.path.extension(), ".wld")) {
+         _project_world_paths.push_back(entry.path);
+      }
    }
 }
 
@@ -3723,7 +3709,8 @@ void world_edit::open_odf_in_text_editor(const lowercase_string& asset_name) noe
    if (asset_path.empty()) return;
 
    const std::string command_line =
-      fmt::format("{} {}", _settings.preferences.text_editor, asset_path.string());
+      fmt::format("{} {}", _settings.preferences.text_editor,
+                  asset_path.string_view());
 
    if (not utility::os_execute_async(command_line)) {
       MessageBoxA(_window,

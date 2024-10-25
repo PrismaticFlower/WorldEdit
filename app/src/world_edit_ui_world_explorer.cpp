@@ -4,6 +4,8 @@
 #include "edits/set_value.hpp"
 #include "utility/string_icompare.hpp"
 
+#include <algorithm>
+
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 

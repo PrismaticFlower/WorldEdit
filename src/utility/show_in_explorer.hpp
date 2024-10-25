@@ -1,9 +1,9 @@
 #pragma once
 
-#include <filesystem>
+#include "io/path.hpp"
 
 namespace we::utility {
 
-void try_show_in_explorer(const std::filesystem::path& file) noexcept;
+void try_show_in_explorer(const io::path& file) noexcept;
 
 }

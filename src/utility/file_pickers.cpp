@@ -7,8 +7,7 @@
 
 namespace we::utility {
 
-auto show_folder_picker(const folder_picker options) noexcept
-   -> std::optional<std::filesystem::path>
+auto show_folder_picker(const folder_picker options) noexcept -> std::optional<io::path>
 {
    utility::com_ptr<IFileOpenDialog> dialog;
 
@@ -43,9 +42,10 @@ auto show_folder_picker(const folder_picker options) noexcept
    if (options.default_folder) {
       utility::com_ptr<IShellItem> starting_item;
 
-      if (FAILED(SHCreateItemFromParsingName(options.default_folder->c_str(),
-                                             nullptr, IID_IShellItem,
-                                             starting_item.void_clear_and_assign()))) {
+      if (FAILED(
+             SHCreateItemFromParsingName(io::wide_path{*options.default_folder}.c_str(),
+                                         nullptr, IID_IShellItem,
+                                         starting_item.void_clear_and_assign()))) {
          return std::nullopt;
       }
 
@@ -79,11 +79,11 @@ auto show_folder_picker(const folder_picker options) noexcept
       return std::nullopt;
    }
 
-   return std::make_optional<std::filesystem::path>(name);
+   return io::make_path_from_wide_cstring(name);
 }
 
 auto show_file_open_picker(const file_picker options) noexcept
-   -> std::optional<std::filesystem::path>
+   -> std::optional<io::path>
 {
    utility::com_ptr<IFileOpenDialog> dialog;
 
@@ -121,11 +121,10 @@ auto show_file_open_picker(const file_picker options) noexcept
    if (options.default_folder) {
       utility::com_ptr<IShellItem> starting_item;
 
-      auto preferred_path = *options.default_folder;
-      preferred_path.make_preferred();
-
-      if (FAILED(SHCreateItemFromParsingName(preferred_path.c_str(), nullptr, IID_IShellItem,
-                                             starting_item.void_clear_and_assign()))) {
+      if (FAILED(
+             SHCreateItemFromParsingName(io::wide_path{*options.default_folder}.c_str(),
+                                         nullptr, IID_IShellItem,
+                                         starting_item.void_clear_and_assign()))) {
          return std::nullopt;
       }
 
@@ -137,11 +136,9 @@ auto show_file_open_picker(const file_picker options) noexcept
    if (options.forced_start_folder) {
       utility::com_ptr<IShellItem> starting_item;
 
-      auto preferred_path = *options.forced_start_folder;
-      preferred_path.make_preferred();
-
-      if (FAILED(SHCreateItemFromParsingName(preferred_path.c_str(), nullptr, IID_IShellItem,
-                                             starting_item.void_clear_and_assign()))) {
+      if (FAILED(SHCreateItemFromParsingName(
+             io::wide_path{*options.forced_start_folder}.c_str(), nullptr,
+             IID_IShellItem, starting_item.void_clear_and_assign()))) {
          return std::nullopt;
       }
 
@@ -190,17 +187,16 @@ auto show_file_open_picker(const file_picker options) noexcept
       return std::nullopt;
    }
 
-   return std::make_optional<std::filesystem::path>(name);
+   return io::make_path_from_wide_cstring(name);
 }
 
 auto show_file_save_picker(const file_picker options) noexcept
-   -> std::optional<std::filesystem::path>
+   -> std::optional<io::path>
 {
    // The very precisely and purpose written code follows.
    // It totally isn't just show_file_open_picker copied and edited slightly.
 
    utility::com_ptr<IFileSaveDialog> dialog;
-
    if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED))) {
       return std::nullopt;
    }
@@ -233,11 +229,10 @@ auto show_file_save_picker(const file_picker options) noexcept
    if (options.default_folder) {
       utility::com_ptr<IShellItem> starting_item;
 
-      auto preferred_path = *options.default_folder;
-      preferred_path.make_preferred();
-
-      if (FAILED(SHCreateItemFromParsingName(preferred_path.c_str(), nullptr, IID_IShellItem,
-                                             starting_item.void_clear_and_assign()))) {
+      if (FAILED(
+             SHCreateItemFromParsingName(io::wide_path{*options.default_folder}.c_str(),
+                                         nullptr, IID_IShellItem,
+                                         starting_item.void_clear_and_assign()))) {
          return std::nullopt;
       }
 
@@ -249,11 +244,9 @@ auto show_file_save_picker(const file_picker options) noexcept
    if (options.forced_start_folder) {
       utility::com_ptr<IShellItem> starting_item;
 
-      auto preferred_path = *options.forced_start_folder;
-      preferred_path.make_preferred();
-
-      if (FAILED(SHCreateItemFromParsingName(preferred_path.c_str(), nullptr, IID_IShellItem,
-                                             starting_item.void_clear_and_assign()))) {
+      if (FAILED(SHCreateItemFromParsingName(
+             io::wide_path{*options.forced_start_folder}.c_str(), nullptr,
+             IID_IShellItem, starting_item.void_clear_and_assign()))) {
          return std::nullopt;
       }
 
@@ -302,7 +295,7 @@ auto show_file_save_picker(const file_picker options) noexcept
       return std::nullopt;
    }
 
-   return std::make_optional<std::filesystem::path>(name);
+   return io::make_path_from_wide_cstring(name);
 }
 
 }

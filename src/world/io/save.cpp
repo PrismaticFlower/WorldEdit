@@ -115,9 +115,9 @@ struct sequence_numbers {
    int lights = 0;
 };
 
-void save_objects(const std::filesystem::path& path,
-                  const std::string_view layer_name, const int layer_index,
-                  const world& world, sequence_numbers& sequence_numbers)
+void save_objects(const io::path& path, const std::string_view layer_name,
+                  const int layer_index, const world& world,
+                  sequence_numbers& sequence_numbers)
 {
    io::output_file file{path};
 
@@ -161,8 +161,7 @@ void save_objects(const std::filesystem::path& path,
    }
 }
 
-void save_paths(const std::filesystem::path& file_path, const int layer_index,
-                const world& world)
+void save_paths(const io::path& file_path, const int layer_index, const world& world)
 {
    io::output_file file{file_path};
 
@@ -320,8 +319,7 @@ void save_paths(const std::filesystem::path& file_path, const int layer_index,
    }
 }
 
-void save_regions(const std::filesystem::path& path, const int layer_index,
-                  const world& world)
+void save_regions(const io::path& path, const int layer_index, const world& world)
 {
    io::output_file file{path};
 
@@ -392,7 +390,7 @@ void save_regions(const std::filesystem::path& path, const int layer_index,
    }
 }
 
-void save_lights(const std::filesystem::path& path, const int layer_index,
+void save_lights(const io::path& path, const int layer_index,
                  const world& world, sequence_numbers& sequence_numbers)
 {
    io::output_file file{path};
@@ -474,8 +472,7 @@ void save_lights(const std::filesystem::path& path, const int layer_index,
    }
 }
 
-void save_hintnodes(const std::filesystem::path& path, const int layer_index,
-                    const world& world)
+void save_hintnodes(const io::path& path, const int layer_index, const world& world)
 {
    io::output_file file{path};
 
@@ -514,7 +511,7 @@ void save_hintnodes(const std::filesystem::path& path, const int layer_index,
    }
 }
 
-void save_portals_sectors(const std::filesystem::path& path, const world& world)
+void save_portals_sectors(const io::path& path, const world& world)
 {
    io::output_file file{path};
 
@@ -558,7 +555,7 @@ void save_portals_sectors(const std::filesystem::path& path, const world& world)
    }
 }
 
-void save_barriers(const std::filesystem::path& path, const world& world)
+void save_barriers(const io::path& path, const world& world)
 {
    io::output_file file{path};
 
@@ -579,7 +576,7 @@ void save_barriers(const std::filesystem::path& path, const world& world)
    }
 }
 
-void save_planning(const std::filesystem::path& path, const world& world)
+void save_planning(const io::path& path, const world& world)
 {
    io::output_file file{path};
 
@@ -664,7 +661,7 @@ void save_planning(const std::filesystem::path& path, const world& world)
    }
 }
 
-void save_boundaries(const std::filesystem::path& path, const world& world)
+void save_boundaries(const io::path& path, const world& world)
 {
    io::output_file file{path};
 
@@ -678,7 +675,7 @@ void save_boundaries(const std::filesystem::path& path, const world& world)
    file.write_ln("}\n");
 }
 
-void save_measurements(const std::filesystem::path& path, const world& world)
+void save_measurements(const io::path& path, const world& world)
 {
    io::output_file file{path};
 
@@ -697,7 +694,7 @@ void save_measurements(const std::filesystem::path& path, const world& world)
    }
 }
 
-void save_animations(const std::filesystem::path& path, const world& world)
+void save_animations(const io::path& path, const world& world)
 {
    io::output_file file{path};
 
@@ -762,30 +759,31 @@ void save_animations(const std::filesystem::path& path, const world& world)
 /// @param layer_name The name of the layer ie `test` or `test_conquest`.
 /// @param layer_index The index of the layer, 0 is special and indicates the base layer.
 /// @param world The world that is being saved.
-void save_layer(const std::filesystem::path& world_dir,
-                const std::string_view layer_name, const int layer_index,
-                const world& world, sequence_numbers& sequence_numbers)
+void save_layer(const io::path& world_dir, const std::string_view layer_name,
+                const int layer_index, const world& world,
+                sequence_numbers& sequence_numbers)
 {
-   save_objects(world_dir / layer_name += (layer_index == 0 ? L".wld"sv : L".lyr"sv),
+   save_objects(io::compose_path(world_dir, layer_name,
+                                 (layer_index == 0 ? ".wld"sv : ".lyr"sv)),
                 layer_name, layer_index, world, sequence_numbers);
 
-   save_paths(world_dir / layer_name += L".pth"sv, layer_index, world);
-   save_regions(world_dir / layer_name += L".rgn"sv, layer_index, world);
-   save_lights(world_dir / layer_name += L".lgt"sv, layer_index, world, sequence_numbers);
-   save_hintnodes(world_dir / layer_name += L".hnt"sv, layer_index, world);
+   save_paths(io::compose_path(world_dir, layer_name, ".pth"sv), layer_index, world);
+   save_regions(io::compose_path(world_dir, layer_name, ".rgn"sv), layer_index, world);
+   save_lights(io::compose_path(world_dir, layer_name, ".lgt"sv), layer_index,
+               world, sequence_numbers);
+   save_hintnodes(io::compose_path(world_dir, layer_name, ".hnt"sv), layer_index, world);
 
    if (layer_index == 0) {
-      save_boundaries(world_dir / layer_name += L".bnd"sv, world);
-      save_barriers(world_dir / layer_name += L".bar"sv, world);
-      save_planning(world_dir / layer_name += L".pln"sv, world);
-      save_portals_sectors(world_dir / layer_name += L".pvs"sv, world);
-      save_measurements(world_dir / layer_name += L".msr"sv, world);
-      save_animations(world_dir / layer_name += L".anm"sv, world);
+      save_boundaries(io::compose_path(world_dir, layer_name, ".bnd"sv), world);
+      save_barriers(io::compose_path(world_dir, layer_name, ".bar"sv), world);
+      save_planning(io::compose_path(world_dir, layer_name, ".pln"sv), world);
+      save_portals_sectors(io::compose_path(world_dir, layer_name, ".pvs"sv), world);
+      save_measurements(io::compose_path(world_dir, layer_name, ".msr"sv), world);
+      save_animations(io::compose_path(world_dir, layer_name, ".anm"sv), world);
    }
 }
 
-void save_layer_index(const std::filesystem::path& path, const world& world,
-                      const save_flags flags)
+void save_layer_index(const io::path& path, const world& world, const save_flags flags)
 {
    io::output_file file{path};
 
@@ -814,12 +812,11 @@ void save_layer_index(const std::filesystem::path& path, const world& world,
    }
 }
 
-void save_requirements(const std::filesystem::path& world_dir,
-                       const std::string_view world_name, const world& world,
-                       const save_flags flags)
+void save_requirements(const io::path& world_dir, const std::string_view world_name,
+                       const world& world, const save_flags flags)
 {
    if (not world.requirements.empty()) {
-      assets::req::save(world_dir / fmt::format("{}.req", world_name),
+      assets::req::save(io::compose_path(world_dir, world_name, ".req"),
                         world.requirements);
    }
 
@@ -828,39 +825,32 @@ void save_requirements(const std::filesystem::path& world_dir,
    for (std::size_t i = 1; i < world.game_modes.size(); ++i) {
       if (world.game_modes[i].requirements.empty()) continue;
 
-      assets::req::save(world_dir / fmt::format("{}_{}.mrq", world_name,
-                                                world.game_modes[i].name),
+      assets::req::save(io::compose_path(world_dir,
+                                         fmt::format("{}_{}", world_name,
+                                                     world.game_modes[i].name),
+                                         ".mrq"),
                         world.game_modes[i].requirements);
    }
 }
 
-void garbage_collect_files(const std::filesystem::path& world_dir,
+void garbage_collect_files(const io::path& world_dir,
                            const std::string_view world_name, const world& world)
 {
-   constexpr std::array<std::string_view, 5> layer_files{"lyr", "pth", "rgn",
-                                                         "lgt", "hnt"};
+   constexpr std::array<std::string_view, 5> layer_files{".lyr", ".pth", ".rgn",
+                                                         ".lgt", ".hnt"};
 
    for (const auto& layer : world.deleted_layers) {
       for (const auto& file : layer_files) {
-         try {
-            [[maybe_unused]] std::error_code ec{};
-
-            std::filesystem::remove(world_dir / fmt::format("{}_{}.{}", world_name,
-                                                            layer, file),
-                                    ec);
-         }
-         catch (std::exception&) {
-            // ... No need to care about this.
-         }
+         (void)io::remove(
+            io::compose_path(world_dir, fmt::format("{}_{}", world_name, layer), file));
       }
    }
 
    for (const auto& game_mode : world.deleted_game_modes) {
       try {
-         [[maybe_unused]] std::error_code ec{};
-
-         std::filesystem::remove(world_dir / fmt::format("{}_{}.mrq", world_name, game_mode),
-                                 ec);
+         (void)io::remove(
+            io::compose_path(world_dir,
+                             fmt::format("{}_{}", world_name, game_mode), ".mrq"));
       }
       catch (std::exception&) {
          // ... No need to care about this.
@@ -870,35 +860,33 @@ void garbage_collect_files(const std::filesystem::path& world_dir,
 
 }
 
-void save_world(const std::filesystem::path& path, const world& world,
+void save_world(const io::path& path, const world& world,
                 const std::span<const terrain_cut> terrain_cuts, const save_flags flags)
 {
-   const auto world_dir = path.parent_path();
-   const auto world_name = path.stem().string();
+   const std::string_view world_dir = path.parent_path();
+   const std::string_view world_name = path.stem();
 
    sequence_numbers sequence_numbers;
 
    garbage_collect_files(world_dir, world_name, world);
 
-   save_layer_index(std::filesystem::path{path}.replace_extension(L".ldx"sv),
-                    world, flags);
+   save_layer_index(make_path_with_new_extension(path, ".ldx"sv), world, flags);
 
    save_layer(world_dir, world_name, 0, world, sequence_numbers);
 
    for (std::size_t i = 1; i < world.layer_descriptions.size(); ++i) {
       auto& layer = world.layer_descriptions[i];
 
-      save_layer(world_dir, world_name + "_"s + layer.name,
+      save_layer(world_dir, fmt::format("{}_{}", world_name, layer.name),
                  static_cast<uint32>(i), world, sequence_numbers);
    }
 
-   save_terrain(std::filesystem::path{path}.replace_extension(L".ter"sv),
-                world.terrain, terrain_cuts);
+   save_terrain(make_path_with_new_extension(path, ".ter"sv), world.terrain,
+                terrain_cuts);
    save_requirements(world_dir, world_name, world, flags);
 
    if (flags.save_effects) {
-      save_effects(std::filesystem::path{path}.replace_extension(L".fx"sv),
-                   world.effects);
+      save_effects(make_path_with_new_extension(path, ".fx"sv), world.effects);
    }
 }
 }

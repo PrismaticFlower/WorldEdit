@@ -472,7 +472,7 @@ void save_entity_group_impl(File& file, const entity_group& group)
 
 }
 
-void save_entity_group(const std::filesystem::path& file_path, const entity_group& group)
+void save_entity_group(const io::path& file_path, const entity_group& group)
 {
    io::output_file file{file_path};
 

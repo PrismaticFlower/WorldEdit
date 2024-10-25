@@ -4,6 +4,8 @@
 
 namespace we::io {
 
+struct path;
+
 /// @brief The map mode for the file.
 enum class map_mode {
    /// @brief Maps the file for reading.
@@ -13,8 +15,8 @@ enum class map_mode {
 };
 
 struct memory_mapped_file_params {
-   /// @brief Null-terminated path to the file.
-   const wchar_t* path;
+   /// @brief Path to the file.
+   const path& path;
    /// @brief Map mode/page protection for the file.
    const map_mode map_mode = map_mode::read_write;
    /// @brief Size to map in, if the file is smaller than this it will be extended.

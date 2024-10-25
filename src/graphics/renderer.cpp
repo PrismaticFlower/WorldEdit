@@ -120,12 +120,12 @@ struct renderer_impl final : renderer {
       return _thumbnail_manager.request_object_class_thumbnail(name);
    }
 
-   void async_save_thumbnail_disk_cache(const wchar_t* path) noexcept override
+   void async_save_thumbnail_disk_cache(const char* path) noexcept override
    {
       _thumbnail_manager.async_save_disk_cache(path);
    }
 
-   void async_load_thumbnail_disk_cache(const wchar_t* path) noexcept override
+   void async_load_thumbnail_disk_cache(const char* path) noexcept override
    {
       _thumbnail_manager.async_load_disk_cache(path);
    }

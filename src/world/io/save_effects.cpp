@@ -947,7 +947,7 @@ void save_sun_flares(io::output_file& out, std::span<const sun_flare> sun_flares
 
 }
 
-void save_effects(const std::filesystem::path& path, const effects& effects)
+void save_effects(const io::path& path, const effects& effects)
 {
    io::output_file out{path};
 

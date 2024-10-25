@@ -835,7 +835,7 @@ auto load_entity_group_from_string(const std::string_view entity_group_data,
    }
 }
 
-auto load_entity_group(const std::filesystem::path& path, output_stream& output) -> entity_group
+auto load_entity_group(const io::path& path, output_stream& output) -> entity_group
 {
    std::string file;
 
@@ -844,13 +844,13 @@ auto load_entity_group(const std::filesystem::path& path, output_stream& output)
 
       file = io::read_file_to_string(path);
 
-      output.write("Loaded {} (time taken {:f}ms)\n", path.string(),
+      output.write("Loaded {} (time taken {:f}ms)\n", path.string_view(),
                    load_timer.elapsed_ms());
    }
    catch (io::error& e) {
       output.write("Error while loading entity group:\n   Entity Group: {}\n   "
                    "Message: \n{}\n",
-                   path.string(), string::indent(2, e.what()));
+                   path.string_view(), string::indent(2, e.what()));
 
       throw load_failure{e.what()};
    }

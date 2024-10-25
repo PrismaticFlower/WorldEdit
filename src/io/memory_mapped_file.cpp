@@ -1,8 +1,9 @@
 #include "memory_mapped_file.hpp"
 #include "error.hpp"
+#include "path.hpp"
 #include "types.hpp"
 
-#include <filesystem>
+#include <system_error>
 #include <utility>
 
 #include <Windows.h>
@@ -43,14 +44,14 @@ auto page_protection(map_mode map_mode) noexcept -> int
 memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
 {
    wil::unique_handle file{
-      CreateFileW(params.path, desired_access(params.map_mode), 0x0, nullptr,
-                  OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr)};
+      CreateFileW(wide_path{params.path}.c_str(), desired_access(params.map_mode),
+                  0x0, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr)};
 
    if (not file) {
       const DWORD system_error = GetLastError();
 
       throw open_error{fmt::format("Failed to open file '{}'.\n   Reason: {}",
-                                   std::filesystem::path{params.path}.string(),
+                                   params.path.string_view(),
                                    std::system_category()
                                       .default_error_condition(system_error)
                                       .message()),
@@ -69,7 +70,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
 
          throw open_error{
             fmt::format("Failed to truncate file '{}'.\n   Reason: {}",
-                        std::filesystem::path{params.path}.string(),
+                        params.path.string_view(),
                         std::system_category()
                            .default_error_condition(system_error)
                            .message()),
@@ -81,7 +82,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
 
          throw open_error{
             fmt::format("Failed to truncate file '{}'.\n   Reason: {}",
-                        std::filesystem::path{params.path}.string(),
+                        params.path.string_view(),
                         std::system_category()
                            .default_error_condition(system_error)
                            .message()),
@@ -99,7 +100,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
       throw open_error{
          fmt::format(
             "Failed to create file mapping for '{}'.\n   Reason: {}",
-            std::filesystem::path{params.path}.string(),
+            params.path.string_view(),
             std::system_category().default_error_condition(system_error).message()),
          open_error_code::generic};
    }
@@ -114,7 +115,7 @@ memory_mapped_file::memory_mapped_file(const memory_mapped_file_params& params)
       throw open_error{
          fmt::format(
             "Failed to map file '{}' into memory.\n   Reason: {}",
-            std::filesystem::path{params.path}.string(),
+            params.path.string_view(),
             std::system_category().default_error_condition(system_error).message()),
          open_error_code::generic};
    }

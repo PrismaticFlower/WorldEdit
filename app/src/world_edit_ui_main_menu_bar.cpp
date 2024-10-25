@@ -27,13 +27,13 @@ void world_edit::ui_show_main_menu_bar() noexcept
          const bool loaded_project = not _project_dir.empty();
 
          if (ImGui::BeginMenu("Load World", loaded_project)) {
-            auto worlds_path = _project_dir / L"Worlds"sv;
+            auto worlds_path = io::compose_path(_project_dir, "Worlds"sv);
 
             for (auto& known_world : _project_world_paths) {
-               auto relative_path =
-                  std::filesystem::relative(known_world, worlds_path);
+               const std::string_view relative_world_path =
+                  known_world.string_view().substr(worlds_path.string_view().size() + 1);
 
-               if (ImGui::MenuItem(relative_path.string().c_str())) {
+               if (ImGui::MenuItem(relative_world_path.data())) { // string_views from paths are null terminated
                   load_world(known_world);
                }
             }

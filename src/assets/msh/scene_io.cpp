@@ -373,20 +373,19 @@ auto read_scene(const std::span<const std::byte> bytes) -> scene
    throw std::runtime_error{".msh file contained no scene."};
 }
 
-auto read_scene(const std::filesystem::path& path) -> scene
+auto read_scene(const io::path& path) -> scene
 {
    auto file = io::read_file_to_bytes(path);
    auto scene = read_scene(file);
 
-   if (auto option_path = std::filesystem::path{path} += ".option"sv;
-       std ::filesystem::exists(option_path)) {
+   if (auto option_path = io::path{path} += ".option"sv; io::exists(option_path)) {
       scene.options = read_scene_options(option_path);
    }
 
    return scene;
 }
 
-auto read_scene_options(const std::filesystem::path& path) -> options
+auto read_scene_options(const io::path& path) -> options
 {
    options results;
 

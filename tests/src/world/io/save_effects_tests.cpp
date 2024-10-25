@@ -695,11 +695,11 @@ SunFlare()
          },
    };
 
-   std::filesystem::create_directory(L"temp/world");
+   (void)io::create_directory("temp/world");
 
-   save_effects(L"temp/world/test.fx", effects);
+   save_effects("temp/world/test.fx", effects);
 
-   const auto written_fx = io::read_file_to_string(L"temp/world/test.fx");
+   const auto written_fx = io::read_file_to_string("temp/world/test.fx");
 
    CHECK(written_fx == expected_fx);
 }

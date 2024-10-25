@@ -4,6 +4,7 @@
 #include "utility/string_ops.hpp"
 
 #include <charconv>
+#include <stdexcept>
 
 #include <fmt/core.h>
 
@@ -177,8 +178,7 @@ auto read(std::string_view req_string) -> std::vector<requirement_list>
    return list;
 }
 
-void save(const std::filesystem::path& path,
-          const std::span<const requirement_list> requirements)
+void save(const io::path& path, const std::span<const requirement_list> requirements)
 {
    io::output_file out{path};
 

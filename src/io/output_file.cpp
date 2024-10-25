@@ -70,10 +70,10 @@ struct output_file::output_iterator {
    using reference = void;
 };
 
-output_file::output_file(const std::filesystem::path& path, output_open_mode output_mode)
+output_file::output_file(const io::path& path, output_open_mode output_mode)
 {
-   _file = {CreateFileW(path.c_str(), desired_access(output_mode), 0x0, nullptr,
-                        creation_disposition(output_mode),
+   _file = {CreateFileW(wide_path{path}.c_str(), desired_access(output_mode),
+                        0x0, nullptr, creation_disposition(output_mode),
                         FILE_ATTRIBUTE_NORMAL, nullptr),
             &close_file};
 
@@ -81,7 +81,7 @@ output_file::output_file(const std::filesystem::path& path, output_open_mode out
       const DWORD system_error = GetLastError();
 
       throw open_error{fmt::format("Failed to open file '{}'.\n   Reason: {}",
-                                   path.string(),
+                                   path.string_view(),
                                    std::system_category()
                                       .default_error_condition(system_error)
                                       .message()),

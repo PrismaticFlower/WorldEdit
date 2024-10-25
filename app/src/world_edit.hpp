@@ -10,6 +10,7 @@
 #include "graphics/gpu/exception.hpp"
 #include "graphics/renderer.hpp"
 #include "hotkeys.hpp"
+#include "io/path.hpp"
 #include "output_stream.hpp"
 #include "scale_factor.hpp"
 #include "settings/io.hpp"
@@ -23,7 +24,6 @@
 #include "world/world.hpp"
 
 #include <chrono>
-#include <filesystem>
 #include <memory>
 #include <vector>
 
@@ -369,17 +369,17 @@ private:
 
    void ask_to_save_world() noexcept;
 
-   void open_project(std::filesystem::path path) noexcept;
+   void open_project(const io::path& path) noexcept;
 
    void open_project_with_picker() noexcept;
 
    void close_project() noexcept;
 
-   void load_world(std::filesystem::path path) noexcept;
+   void load_world(const io::path& path) noexcept;
 
    void load_world_with_picker() noexcept;
 
-   void save_world(std::filesystem::path path) noexcept;
+   void save_world(const io::path& path) noexcept;
 
    void save_world_with_picker() noexcept;
 
@@ -433,10 +433,10 @@ private:
 
    std::unique_ptr<ImGuiContext, void (*)(ImGuiContext*)> _imgui_context;
 
-   std::filesystem::path _project_dir;
-   std::filesystem::path _world_path;
+   io::path _project_dir;
+   io::path _world_path;
 
-   std::vector<std::filesystem::path> _project_world_paths;
+   std::vector<io::path> _project_world_paths;
 
    assets::libraries_manager _asset_libraries{*_stream, _thread_pool};
    world::object_class_library _object_classes{_asset_libraries};
@@ -933,7 +933,7 @@ private:
 
    graphics::env_map_params _env_map_render_params;
    float3 _env_map_render_offset;
-   std::filesystem::path _env_map_save_path;
+   io::path _env_map_save_path;
    std::string _env_map_save_error;
 
    gizmo _gizmo;

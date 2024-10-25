@@ -423,7 +423,7 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain
    return terrain;
 }
 
-void save_terrain(const std::filesystem::path& path, const terrain& terrain,
+void save_terrain(const io::path& path, const terrain& terrain,
                   const std::span<const terrain_cut> terrain_cuts)
 {
    io::output_file file{path};

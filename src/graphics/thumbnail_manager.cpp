@@ -411,7 +411,7 @@ void texture_copy(std::byte* dest, const std::size_t dest_pitch,
 }
 
 void save_disk_cache(
-   const std::wstring& path,
+   const io::path& path,
    const absl::flat_hash_map<std::string, std::unique_ptr<std::byte[]>>& cpu_memory_cache,
    const uint32 thumbnail_length,
    std::span<const invalidation_save_entry> invalidation_save_data) noexcept
@@ -484,7 +484,7 @@ void save_disk_cache(
       const std::size_t size = output_to_memory(nullptr);
 
       io::memory_mapped_file file{
-         io::memory_mapped_file_params{.path = path.c_str(), .size = size}};
+         io::memory_mapped_file_params{.path = path, .size = size}};
 
       output_to_memory(file.data());
    }
@@ -498,7 +498,7 @@ struct loaded_cache {
    std::vector<invalidation_save_entry> invalidation_save_data;
 };
 
-auto load_disk_cache(const std::wstring& path) noexcept -> loaded_cache
+auto load_disk_cache(const io::path& path) noexcept -> loaded_cache
 {
    try {
       loaded_cache loaded;
@@ -831,7 +831,7 @@ struct thumbnail_manager::impl {
       create_gpu_resources();
    }
 
-   void async_save_disk_cache(const wchar_t* path) noexcept
+   void async_save_disk_cache(const char* path) noexcept
    {
       if (not _cpu_cache_dirty) return;
       if (_cpu_memory_cache.empty()) return;
@@ -839,7 +839,7 @@ struct thumbnail_manager::impl {
       if (_save_disk_cache_task) _save_disk_cache_task->wait();
 
       _save_disk_cache_task =
-         _thread_pool->exec([disk_cache_path = std::wstring{path},
+         _thread_pool->exec([disk_cache_path = io::path{path},
                              cpu_memory_cache = std::move(_cpu_memory_cache),
                              thumbnail_length = _thumbnail_length,
                              &invalidation_tracker = _invalidation_tracker] {
@@ -848,11 +848,11 @@ struct thumbnail_manager::impl {
          });
    }
 
-   void async_load_disk_cache(const wchar_t* path) noexcept
+   void async_load_disk_cache(const char* path) noexcept
    {
       _load_disk_cache_task =
          _thread_pool->exec(async::task_priority::low,
-                            [disk_cache_path = std::wstring{path}] {
+                            [disk_cache_path = io::path{path}] {
                                return load_disk_cache(disk_cache_path);
                             });
    }
@@ -1480,12 +1480,12 @@ void thumbnail_manager::display_scale_changed(const float new_display_scale)
    return _impl->display_scale_changed(new_display_scale);
 }
 
-void thumbnail_manager::async_save_disk_cache(const wchar_t* path) noexcept
+void thumbnail_manager::async_save_disk_cache(const char* path) noexcept
 {
    return _impl->async_save_disk_cache(path);
 }
 
-void thumbnail_manager::async_load_disk_cache(const wchar_t* path) noexcept
+void thumbnail_manager::async_load_disk_cache(const char* path) noexcept
 {
    return _impl->async_load_disk_cache(path);
 }

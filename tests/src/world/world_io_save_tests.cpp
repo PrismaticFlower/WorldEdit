@@ -807,7 +807,7 @@ constexpr auto expected_mrq = R"(ucft
 
 TEST_CASE("world saving", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/world");
+   (void)io::create_directory("temp/world");
 
    const world world{
       .name = "test",
@@ -1184,69 +1184,69 @@ TEST_CASE("world saving", "[World][IO]")
                                 }},
    };
 
-   save_world(L"temp/world/test.wld", world, {}, save_flags{});
+   save_world("temp/world/test.wld", world, {}, save_flags{});
 
-   const auto written_wld = io::read_file_to_string(L"temp/world/test.wld");
+   const auto written_wld = io::read_file_to_string("temp/world/test.wld");
 
    CHECK(written_wld == expected_wld);
 
-   const auto written_lgt = io::read_file_to_string(L"temp/world/test.lgt");
+   const auto written_lgt = io::read_file_to_string("temp/world/test.lgt");
 
    CHECK(written_lgt == expected_lgt);
 
-   const auto written_pth = io::read_file_to_string(L"temp/world/test.pth");
+   const auto written_pth = io::read_file_to_string("temp/world/test.pth");
 
    CHECK(written_pth == expected_pth);
 
-   const auto written_rgn = io::read_file_to_string(L"temp/world/test.rgn");
+   const auto written_rgn = io::read_file_to_string("temp/world/test.rgn");
 
    CHECK(written_rgn == expected_rgn);
 
-   const auto written_pvs = io::read_file_to_string(L"temp/world/test.pvs");
+   const auto written_pvs = io::read_file_to_string("temp/world/test.pvs");
 
    CHECK(written_pvs == expected_pvs);
 
-   const auto written_hnt = io::read_file_to_string(L"temp/world/test.hnt");
+   const auto written_hnt = io::read_file_to_string("temp/world/test.hnt");
 
    CHECK(written_hnt == expected_hnt);
 
-   const auto written_bar = io::read_file_to_string(L"temp/world/test.bar");
+   const auto written_bar = io::read_file_to_string("temp/world/test.bar");
 
    CHECK(written_bar == expected_bar);
 
-   const auto written_pln = io::read_file_to_string(L"temp/world/test.pln");
+   const auto written_pln = io::read_file_to_string("temp/world/test.pln");
 
    CHECK(written_pln == expected_pln);
 
-   const auto written_bnd = io::read_file_to_string(L"temp/world/test.bnd");
+   const auto written_bnd = io::read_file_to_string("temp/world/test.bnd");
 
    CHECK(written_bnd == expected_bnd);
 
-   const auto written_msr = io::read_file_to_string(L"temp/world/test.msr");
+   const auto written_msr = io::read_file_to_string("temp/world/test.msr");
 
    CHECK(written_msr == expected_msr);
 
-   const auto written_anm = io::read_file_to_string(L"temp/world/test.anm");
+   const auto written_anm = io::read_file_to_string("temp/world/test.anm");
 
    CHECK(written_anm == expected_anm);
 
-   const auto written_ldx = io::read_file_to_string(L"temp/world/test.ldx");
+   const auto written_ldx = io::read_file_to_string("temp/world/test.ldx");
 
    CHECK(written_ldx == expected_ldx);
 
-   const auto written_req = io::read_file_to_string(L"temp/world/test.req");
+   const auto written_req = io::read_file_to_string("temp/world/test.req");
 
    CHECK(written_req == expected_req);
 
    const auto written_mrq =
-      io::read_file_to_string(L"temp/world/test_conquest.mrq");
+      io::read_file_to_string("temp/world/test_conquest.mrq");
 
    CHECK(written_mrq == expected_mrq);
 }
 
 TEST_CASE("world saving garbage collect", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/world_gc");
+   (void)io::create_directory("temp/world_gc");
 
    const std::array<std::string_view, 5> layer_files{"lyr", "pth", "rgn", "lgt", "hnt"};
 
@@ -1260,7 +1260,7 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
    for (const auto& layer : world.deleted_layers) {
       for (const auto& file : layer_files) {
          [[maybe_unused]] io::output_file output_file{
-            fmt::format("temp/world_gc/test_{}.{}", layer, file)};
+            io::path{fmt::format("temp/world_gc/test_{}.{}", layer, file)}};
       }
    }
 
@@ -1271,24 +1271,24 @@ TEST_CASE("world saving garbage collect", "[World][IO]")
       // NB: Test that test_ctf.mrq already being gone causes no issues.
    }
 
-   save_world(L"temp/world_gc/test.wld", world, {}, save_flags{});
+   save_world("temp/world_gc/test.wld", world, {}, save_flags{});
 
    for (const auto& layer : world.deleted_layers) {
       for (const auto& file : layer_files) {
-         CHECK(not std::filesystem::exists(
-            fmt::format("temp/world_gc/test_{}.{}", layer, file)));
+         CHECK(not io::exists(
+            io::path{fmt::format("temp/world_gc/test_{}.{}", layer, file)}));
       }
    }
 
    for (const auto& game_mode : world.deleted_game_modes) {
-      CHECK(not std::filesystem::exists(
-         fmt::format("temp/world_gc/test_{}.mrq", game_mode)));
+      CHECK(not io::exists(
+         io::path{fmt::format("temp/world_gc/test_{}.mrq", game_mode)}));
    }
 }
 
 TEST_CASE("world saving no gamemodes", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/world");
+   (void)io::create_directory("temp/world");
 
    const world world{
       .name = "test_no_gamemodes",
@@ -1316,26 +1316,24 @@ TEST_CASE("world saving no gamemodes", "[World][IO]")
                          }}},
    };
 
-   save_world(L"temp/world/test_no_gamemodes.wld", world, {},
-              {.save_gamemodes = false});
+   save_world("temp/world/test_no_gamemodes.wld", world, {}, {.save_gamemodes = false});
 
    const auto written_ldx =
-      io::read_file_to_string(L"temp/world/test_no_gamemodes.ldx");
+      io::read_file_to_string("temp/world/test_no_gamemodes.ldx");
 
    CHECK(written_ldx == expected_ldx_no_gamemodes);
 
    const auto written_req =
-      io::read_file_to_string(L"temp/world/test_no_gamemodes.req");
+      io::read_file_to_string("temp/world/test_no_gamemodes.req");
 
    CHECK(written_req == expected_req);
 
-   CHECK(not std::filesystem::exists(
-      L"temp/world/test_no_gamemodes_conquest.mrq"));
+   CHECK(not io::exists("temp/world/test_no_gamemodes_conquest.mrq"));
 }
 
 TEST_CASE("world saving no effects", "[World][IO]")
 {
-   std::filesystem::create_directory(L"temp/world");
+   (void)io::create_directory("temp/world");
 
    const world world{
       .name = "test_no_effects",
@@ -1343,8 +1341,8 @@ TEST_CASE("world saving no effects", "[World][IO]")
       .layer_descriptions = {{.name = "[Base]"}},
    };
 
-   save_world(L"temp/world/test_no_effects.wld", world, {}, {.save_effects = false});
+   save_world("temp/world/test_no_effects.wld", world, {}, {.save_effects = false});
 
-   CHECK(not std::filesystem::exists(L"temp/world/test_no_effects.fx"));
+   CHECK(not io::exists("temp/world/test_no_effects.fx"));
 }
 }

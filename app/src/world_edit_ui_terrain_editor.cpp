@@ -400,7 +400,7 @@ void world_edit::ui_show_terrain_editor() noexcept
                      try {
                         container::dynamic_array_2d<uint8> falloff_map =
                            world::load_brush(*path);
-                        std::string name = path->stem().string();
+                        std::string name{path->stem()};
 
                         assert(falloff_map.width() % 2 == 1 and
                                falloff_map.height() % 2 == 1);

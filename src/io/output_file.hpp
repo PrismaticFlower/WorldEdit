@@ -1,8 +1,9 @@
 #pragma once
 
+#include "path.hpp"
+
 #include <cstddef>
 #include <cstdint>
-#include <filesystem>
 #include <memory>
 #include <span>
 #include <string_view>
@@ -26,7 +27,7 @@ public:
    /// @brief Creates an output_file.
    /// @param path The path to the file to open/create.
    /// @param output_mode The open mode for the file.
-   output_file(const std::filesystem::path& path,
+   output_file(const path& path,
                output_open_mode output_mode = output_open_mode::create);
 
    output_file(const output_file&) = delete;

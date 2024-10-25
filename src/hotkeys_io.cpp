@@ -5,17 +5,17 @@
 
 namespace we {
 
-auto load_bindings(const std::wstring_view path)
+auto load_bindings(const std::string_view path)
    -> absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>>
 {
-   const std::filesystem::path fs_path{path};
+   const io::path fs_path{path};
 
-   if (not std::filesystem::exists(fs_path)) return {};
+   if (not io::exists(fs_path)) return {};
 
    try {
       absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>> loaded;
 
-      auto string = io::read_file_to_string(path);
+      auto string = io::read_file_to_string(fs_path);
 
       std::string_view current_set = "";
 
@@ -50,7 +50,7 @@ auto load_bindings(const std::wstring_view path)
 }
 
 void save_bindings(
-   const std::wstring_view path,
+   const std::string_view path,
    const absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, hotkey_bind>>& bindings)
 {
    io::output_file file{path};

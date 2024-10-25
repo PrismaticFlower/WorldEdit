@@ -346,6 +346,7 @@
     <ClCompile Include="src\imgui_ext.cpp" />
     <ClCompile Include="src\io\memory_mapped_file.cpp" />
     <ClCompile Include="src\io\output_file.cpp" />
+    <ClCompile Include="src\io\path.cpp" />
     <ClCompile Include="src\io\read_file.cpp" />
     <ClCompile Include="src\key.cpp" />
     <ClCompile Include="src\math\bounding_box.cpp" />
@@ -588,6 +589,7 @@
     <ClInclude Include="src\hotkeys_io.hpp" />
     <ClInclude Include="src\imgui_ext.hpp" />
     <ClInclude Include="src\io\memory_mapped_file.hpp" />
+    <ClInclude Include="src\io\path.hpp" />
     <ClInclude Include="src\key.hpp" />
     <ClInclude Include="src\io\error.hpp" />
     <ClInclude Include="src\io\output_file.hpp" />

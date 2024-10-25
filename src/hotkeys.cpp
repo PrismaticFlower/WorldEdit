@@ -16,7 +16,7 @@ namespace we {
 
 namespace {
 
-const std::wstring_view save_path = L".bindings";
+const std::string_view save_path = ".bindings";
 
 constexpr bool is_mouse_key(const key key) noexcept
 {

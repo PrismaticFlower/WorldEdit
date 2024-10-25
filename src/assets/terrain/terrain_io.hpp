@@ -2,8 +2,9 @@
 
 #include "terrain.hpp"
 
+#include "io/path.hpp"
+
 #include <cstddef>
-#include <filesystem>
 #include <span>
 
 namespace we::assets::terrain {
@@ -17,7 +18,7 @@ auto read_terrain(const std::span<const std::byte> bytes) -> terrain;
 /// @param path The path to save the terrain to.
 /// @param terrain The terrain to save.
 /// @param terrain_cuts A span of terrain cuts to save into the terrain.
-void save_terrain(const std::filesystem::path& path, const terrain& terrain,
+void save_terrain(const io::path& path, const terrain& terrain,
                   const std::span<const terrain_cut> terrain_cuts);
 
 }

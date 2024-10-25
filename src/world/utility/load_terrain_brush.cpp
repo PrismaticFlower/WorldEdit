@@ -4,12 +4,11 @@
 
 namespace we::world {
 
-auto load_brush(const std::filesystem::path& file_path)
-   -> container::dynamic_array_2d<uint8>
+auto load_brush(const io::path& file_path) -> container::dynamic_array_2d<uint8>
 {
    DirectX::ScratchImage image;
 
-   if (FAILED(DirectX::LoadFromTGAFile(file_path.c_str(), nullptr, image))) {
+   if (FAILED(DirectX::LoadFromTGAFile(io::wide_path{file_path}.c_str(), nullptr, image))) {
       throw brush_load_error{"Failed to load image."};
    }
 

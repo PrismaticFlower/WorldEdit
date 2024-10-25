@@ -2,10 +2,10 @@
 
 #include "texture.hpp"
 
-#include <filesystem>
+#include "io/path.hpp"
 
 namespace we::assets::texture {
 
-auto load_texture(const std::filesystem::path& path) -> texture;
+auto load_texture(const io::path& path) -> texture;
 
 }

@@ -2,7 +2,6 @@
 #include "io/memory_mapped_file.hpp"
 
 #include <array>
-#include <filesystem>
 
 namespace we::assets::texture {
 
@@ -36,7 +35,7 @@ void clear_region(dest_texel* dest_data, uint32 length, uint32 row_pitch)
 
 }
 
-void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
+void save_env_map(const io::path& path, const env_map_view env_map)
 {
    io::memory_mapped_file file{
       io::memory_mapped_file_params{.path = path.c_str(),
@@ -102,7 +101,7 @@ void save_env_map(const std::filesystem::path& path, const env_map_view env_map)
 
    file.reset();
 
-   std::filesystem::last_write_time(path, std::chrono::file_clock::now());
+   io::update_last_write_time(path);
 }
 
 }

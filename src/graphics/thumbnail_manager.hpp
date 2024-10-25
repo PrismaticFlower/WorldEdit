@@ -67,9 +67,9 @@ struct thumbnail_manager {
 
    void display_scale_changed(const float new_display_scale);
 
-   void async_save_disk_cache(const wchar_t* path) noexcept;
+   void async_save_disk_cache(const char* path) noexcept;
 
-   void async_load_disk_cache(const wchar_t* path) noexcept;
+   void async_load_disk_cache(const char* path) noexcept;
 
    void reset() noexcept;
 
