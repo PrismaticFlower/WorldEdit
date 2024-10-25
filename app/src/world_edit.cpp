@@ -135,6 +135,8 @@ void world_edit::update()
 
    if (idling()) return;
 
+   if (_recreate_renderer_pending) recreate_renderer();
+
    wait_for_swap_chain_ready();
 
    if (_applied_user_display_scale != _settings.ui.extra_scaling) {
@@ -221,6 +223,39 @@ void world_edit::update()
 
       ImGui::EndFrame();
    }
+}
+
+void world_edit::recreate_renderer() noexcept
+{
+   _recreate_renderer_pending = false;
+
+   try {
+      _renderer = nullptr;
+      _renderer = graphics::make_renderer(get_renderer_init_params());
+      _renderer->recreate_imgui_font_atlas();
+   }
+   catch (graphics::gpu::exception& e) {
+      if (e.error() != graphics::gpu::error::device_removed) {
+         return handle_gpu_error(e);
+      }
+
+      switch (MessageBoxA(_window,
+                          "Failed to recover from GPU device "
+                          "removal.\n\nThe editor will now exit."
+                          "\n\nSave world?",
+                          "GPU Removed", MB_YESNO | MB_ICONERROR)) {
+      case IDYES:
+         save_world_with_picker();
+         [[fallthrough]];
+      case IDNO:
+      default:
+         std::terminate();
+      }
+   }
+
+   _stream->write("GPU Device was removed and has been recreated.\n");
+
+   _world.terrain.untracked_fill_dirty_rects();
 }
 
 void world_edit::wait_for_swap_chain_ready() noexcept
@@ -3974,36 +4009,7 @@ void world_edit::handle_gpu_error(graphics::gpu::exception& e) noexcept
       }
    } break;
    case error::device_removed: {
-      _renderer = nullptr;
-
-      try {
-         _renderer = graphics::make_renderer(get_renderer_init_params());
-
-         _renderer->recreate_imgui_font_atlas();
-
-         _stream->write("GPU Device was removed and has been recreated.\n");
-
-         _world.terrain.untracked_fill_dirty_rects();
-      }
-      catch (graphics::gpu::exception& e) {
-         if (e.error() != error::device_removed) {
-            return handle_gpu_error(e);
-         }
-
-         switch (MessageBoxA(_window,
-                             "Failed to recover from GPU device "
-                             "removal.\n\nThe editor will now exit."
-                             "\n\nSave world?",
-                             "GPU Removed", MB_YESNO | MB_ICONERROR)) {
-         case IDYES:
-            save_world_with_picker();
-            [[fallthrough]];
-         case IDNO:
-         default:
-            std::terminate();
-         }
-      }
-
+      _recreate_renderer_pending = true;
    } break;
    case error::no_suitable_device: {
       switch (MessageBoxA(

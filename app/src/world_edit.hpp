@@ -219,6 +219,8 @@ public:
    auto get_mouse_cursor() const noexcept -> mouse_cursor;
 
 private:
+   void recreate_renderer() noexcept;
+
    void wait_for_swap_chain_ready() noexcept;
 
    void update_window_text() noexcept;
@@ -415,6 +417,7 @@ private:
    bool _focused = true;
    bool _mouse_over = false;
    bool _window_unsaved_star = false;
+   bool _recreate_renderer_pending = false;
    float _applied_user_display_scale = 1.0f;
    int _current_dpi = 96;
    scale_factor _display_scale{.value = 1.0f};
