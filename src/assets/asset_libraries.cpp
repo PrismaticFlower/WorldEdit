@@ -673,7 +673,8 @@ void libraries_manager::forget_asset(const io::path& path) noexcept
    else if (string::iequals(extension, ".sky"sv)) {
       skies.remove(path);
    }
-   else if (string::iequals(extension, ".obg"sv)) {
+   else if (string::iequals(extension, ".eng"sv) or
+            string::iequals(extension, ".obg"sv)) {
       entity_groups.remove(path);
    }
 }
