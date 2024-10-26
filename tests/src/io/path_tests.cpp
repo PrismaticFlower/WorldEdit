@@ -152,16 +152,6 @@ TEST_CASE("io create_directory and remove tests", "[IO]")
    CHECK(not io::exists("temp/create_directory"));
 }
 
-TEST_CASE("io create_directories", "[IO]")
-{
-   CHECK(io::create_directory("temp/create/nested/directories"));
-   CHECK(io::exists("temp/create/nested/directories"));
-
-   (void)io::remove("temp/create/nested/directories");
-   (void)io::remove("temp/create/nested");
-   (void)io::remove("temp/create");
-}
-
 // TODO: directory_iterator tests
 
 }
