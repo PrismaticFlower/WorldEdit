@@ -171,8 +171,7 @@ void world_edit::ui_show_animation_group_editor() noexcept
                if (ImGui::Button("Play", {button_width, 0.0f})) {
                   _animation_group_editor_context.selected.playback_state =
                      animation_playback_state::play;
-                  _animation_group_editor_context.selected.playback_tick_start =
-                     std::chrono::steady_clock::now();
+                  _animation_group_editor_context.selected.playback_tick_timer.restart();
                }
             }
             else if (_animation_group_editor_context.selected.playback_state ==
@@ -180,8 +179,7 @@ void world_edit::ui_show_animation_group_editor() noexcept
                if (ImGui::Button("Resume", {button_width, 0.0f})) {
                   _animation_group_editor_context.selected.playback_state =
                      animation_playback_state::play;
-                  _animation_group_editor_context.selected.playback_tick_start =
-                     std::chrono::steady_clock::now();
+                  _animation_group_editor_context.selected.playback_tick_timer.restart();
                }
             }
             else if (_animation_group_editor_context.selected.playback_state ==
@@ -584,17 +582,10 @@ void world_edit::ui_show_animation_group_editor() noexcept
 
          if (_animation_group_editor_context.selected.playback_state ==
              animation_playback_state::play) {
-            std::chrono::steady_clock::time_point playback_tick_last =
-               _animation_group_editor_context.selected.playback_tick_start;
-
-            _animation_group_editor_context.selected.playback_tick_start =
-               std::chrono::steady_clock::now();
-
             _animation_group_editor_context.selected.playback_time +=
-               std::chrono::duration_cast<std::chrono::duration<float>>(
-                  _animation_group_editor_context.selected.playback_tick_start -
-                  playback_tick_last)
-                  .count();
+               _animation_group_editor_context.selected.playback_tick_timer.elapsed();
+
+            _animation_group_editor_context.selected.playback_tick_timer.restart();
 
             if (_animation_group_editor_context.selected.playback_time > runtime and
                 not loop) {

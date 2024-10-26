@@ -17,6 +17,9 @@ struct stopwatch {
    /// @return The time in seconds.
    auto elapsed_f64() const noexcept -> double;
 
+   /// @brief Restart the stopwatch.
+   void restart() noexcept;
+
 private:
    static auto init_timepoint() -> uint64;
 

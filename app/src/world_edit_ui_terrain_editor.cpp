@@ -12,6 +12,7 @@
 #include "imgui.h"
 #include "imgui_ext.hpp"
 
+#include <bit>
 #include <numbers>
 
 namespace we {
@@ -880,7 +881,7 @@ void world_edit::ui_show_terrain_editor() noexcept
             std::bit_cast<float2>(ImGui::GetMousePos());
          _terrain_editor_context.locked_terrain_point = terrain_point;
          _terrain_editor_context.brush_plane_height = cursor_positionWS.y;
-         _terrain_editor_context.last_brush_update = std::chrono::steady_clock::now();
+         _terrain_editor_context.last_brush_update_timer.restart();
 
          for (uint64& v : _terrain_editor_maps.active_mask) v = 0;
       }
@@ -962,11 +963,9 @@ void world_edit::ui_show_terrain_editor() noexcept
       }
 
       const float delta_time =
-         std::chrono::duration<float>(
-            std::chrono::steady_clock::now() -
-            std::exchange(_terrain_editor_context.last_brush_update,
-                          std::chrono::steady_clock::now()))
-            .count();
+         _terrain_editor_context.last_brush_update_timer.elapsed();
+
+      _terrain_editor_context.last_brush_update_timer.restart();
 
       int32 left = std::clamp(terrain_x - brush_size_x, 0, _world.terrain.length - 1);
       int32 top = std::clamp(terrain_y - brush_size_y, 0, _world.terrain.length - 1);

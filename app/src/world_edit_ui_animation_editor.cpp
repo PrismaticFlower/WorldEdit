@@ -614,8 +614,7 @@ void world_edit::ui_show_animation_editor() noexcept
                if (ImGui::Button("Play", {button_width, 0.0f})) {
                   _animation_editor_context.selected.playback_state =
                      animation_playback_state::play;
-                  _animation_editor_context.selected.playback_tick_start =
-                     std::chrono::steady_clock::now();
+                  _animation_editor_context.selected.playback_tick_timer.restart();
                }
             }
             else if (_animation_editor_context.selected.playback_state ==
@@ -623,8 +622,7 @@ void world_edit::ui_show_animation_editor() noexcept
                if (ImGui::Button("Resume", {button_width, 0.0f})) {
                   _animation_editor_context.selected.playback_state =
                      animation_playback_state::play;
-                  _animation_editor_context.selected.playback_tick_start =
-                     std::chrono::steady_clock::now();
+                  _animation_editor_context.selected.playback_tick_timer.restart();
                }
             }
             else if (_animation_editor_context.selected.playback_state ==
@@ -1783,8 +1781,7 @@ void world_edit::ui_show_animation_editor() noexcept
          else {
             _animation_editor_context.selected.playback_state =
                animation_playback_state::play;
-            _animation_editor_context.selected.playback_tick_start =
-               std::chrono::steady_clock::now();
+            _animation_editor_context.selected.playback_tick_timer.restart();
          }
 
          _animation_editor_context.selected.toggle_playback = false;
@@ -1802,16 +1799,10 @@ void world_edit::ui_show_animation_editor() noexcept
           animation_playback_state::stopped) {
          if (_animation_editor_context.selected.playback_state ==
              animation_playback_state::play) {
-            std::chrono::steady_clock::time_point playback_tick_last =
-               _animation_editor_context.selected.playback_tick_start;
-
-            _animation_editor_context.selected.playback_tick_start =
-               std::chrono::steady_clock::now();
-
             _animation_editor_context.selected.playback_time +=
-               std::chrono::duration_cast<std::chrono::duration<float>>(
-                  _animation_editor_context.selected.playback_tick_start - playback_tick_last)
-                  .count();
+               _animation_editor_context.selected.playback_tick_timer.elapsed();
+
+            _animation_editor_context.selected.playback_tick_timer.restart();
 
             if (_animation_editor_context.selected.playback_time >
                 selected_animation->runtime) {

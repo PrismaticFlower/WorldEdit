@@ -40,6 +40,7 @@
 #include "world/utility/terrain_cut.hpp"
 #include "world/utility/world_utilities.hpp"
 
+#include <bit>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -127,11 +128,9 @@ world_edit::~world_edit()
 
 void world_edit::update()
 {
-   const float delta_time =
-      std::chrono::duration<float>(
-         std::chrono::steady_clock::now() -
-         std::exchange(_last_update, std::chrono::steady_clock::now()))
-         .count();
+   const float delta_time = _last_update_timer.elapsed();
+
+   _last_update_timer.restart();
 
    if (idling()) return;
 
@@ -576,13 +575,12 @@ void world_edit::update_camera(const float delta_time)
    float sprint_factor = 1.0f;
 
    if (_move_sprint) {
-      const float sprint_time =
-         std::chrono::duration<float>(std::chrono::steady_clock::now() - _sprint_start)
-            .count();
+      const float sprint_time = _sprint_timer.elapsed();
+
       sprint_factor = std::pow(sprint_time + 1.0f, _settings.camera.sprint_power);
    }
    else {
-      _sprint_start = std::chrono::steady_clock::now();
+      _sprint_timer = _last_update_timer;
    }
 
    const float camera_movement_scale =

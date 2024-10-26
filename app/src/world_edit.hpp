@@ -16,6 +16,7 @@
 #include "settings/io.hpp"
 #include "settings/settings.hpp"
 #include "utility/command_line.hpp"
+#include "utility/stopwatch.hpp"
 #include "world/object_class.hpp"
 #include "world/object_class_library.hpp"
 #include "world/tool_visualizers.hpp"
@@ -23,7 +24,6 @@
 #include "world/utility/terrain_light_map_baker.hpp"
 #include "world/world.hpp"
 
-#include <chrono>
 #include <memory>
 #include <vector>
 
@@ -421,10 +421,8 @@ private:
    float _applied_user_display_scale = 1.0f;
    int _current_dpi = 96;
    scale_factor _display_scale{.value = 1.0f};
-   std::chrono::steady_clock::time_point _last_update =
-      std::chrono::steady_clock::now();
-   std::chrono::steady_clock::time_point _sprint_start =
-      std::chrono::steady_clock::now();
+   utility::stopwatch _last_update_timer;
+   utility::stopwatch _sprint_timer;
 
    int32 _queued_mouse_movement_x = 0;
    int32 _queued_mouse_movement_y = 0;
@@ -705,8 +703,7 @@ private:
       float2 locked_terrain_point;
 
       float brush_plane_height = 0.0f;
-      std::chrono::steady_clock::time_point last_brush_update =
-         std::chrono::steady_clock::now();
+      utility::stopwatch last_brush_update_timer;
    } _terrain_editor_context;
 
    struct terrain_editor_maps {
@@ -817,7 +814,7 @@ private:
          animation_playback_state playback_state = animation_playback_state::stopped;
          float playback_time = 0.0f;
 
-         std::chrono::steady_clock::time_point playback_tick_start;
+         utility::stopwatch playback_tick_timer;
       } selected;
 
       bool select = false;
@@ -851,7 +848,7 @@ private:
          animation_playback_state playback_state = animation_playback_state::stopped;
          float playback_time = 0.0f;
 
-         std::chrono::steady_clock::time_point playback_tick_start;
+         utility::stopwatch playback_tick_timer;
 
          struct playback_cache_entry {
             std::string animation_name;

@@ -39,4 +39,9 @@ auto stopwatch::elapsed_f64() const noexcept -> double
    return elapsed_impl<std::chrono::duration<double>>(_timepoint).count();
 }
 
+void stopwatch::restart() noexcept
+{
+   *this = {};
+}
+
 }
