@@ -1,12 +1,12 @@
 #pragma once
 
+#include "utility/implementation_storage.hpp"
+
 #include <concepts>
 #include <exception>
 #include <functional>
 #include <latch>
 #include <memory>
-#include <shared_mutex>
-#include <thread>
 #include <vector>
 
 namespace we::async {
@@ -207,20 +207,11 @@ struct thread_pool_init {
 class thread_pool : public std::enable_shared_from_this<thread_pool> {
 public:
    /// @brief Initialize the thread_pool with a default number of threads.
-   [[nodiscard]] static auto make() noexcept -> std::shared_ptr<thread_pool>
-   {
-      return make(thread_pool_init{.thread_count =
-                                      std::thread::hardware_concurrency() - 1,
-                                   .low_priority_thread_count =
-                                      std::thread::hardware_concurrency()});
-   }
+   [[nodiscard]] static auto make() noexcept -> std::shared_ptr<thread_pool>;
 
    /// @brief Initialize the thread_pool explicit settings.
-   [[nodiscard]] static auto make(const thread_pool_init init) noexcept
-      -> std::shared_ptr<thread_pool>
-   {
-      return std::shared_ptr<thread_pool>{new thread_pool{init}};
-   }
+   [[nodiscard]] static auto make(const thread_pool_init& init) noexcept
+      -> std::shared_ptr<thread_pool>;
 
    ~thread_pool();
 
@@ -239,9 +230,6 @@ public:
    [[nodiscard]] auto exec(const task_priority priority, Fn func) noexcept
       -> task<T>
    {
-      priority_level_context& priority_context =
-         select_priority_level_context(priority);
-
       auto task_context = std::make_shared<detail::task_context<T>>();
 
       task_context->execute_function = [task_context = task_context.get(),
@@ -262,19 +250,7 @@ public:
       };
       task_context->owning_thread_pool = shared_from_this();
 
-      if (not priority_context.threads.empty()) [[likely]] {
-         {
-            std::scoped_lock lock{priority_context.tasks_mutex};
-
-            priority_context.tasks.emplace_back(task_context);
-         }
-
-         priority_context.pending_tasks.fetch_add(1);
-         priority_context.pending_tasks.notify_one();
-      }
-      else [[unlikely]] {
-         task_context->execute_function();
-      }
+      submit_task(priority, task_context);
 
       return {task_context};
    }
@@ -300,47 +276,30 @@ public:
                    const Fn& func) noexcept
       requires(std::is_nothrow_invocable_v<Fn, std::size_t>)
    {
-      if (thread_count(priority) == 0) {
-         for (std::size_t i = 0; i < size; ++i) func(i);
-
-         return;
-      }
-
       // If we're being called from the "main" thread add an extra task for it to process.
       const std::size_t desired_task_count =
-         std::max(std::this_thread::get_id() == _creating_thread_id
-                     ? thread_count(priority) + 1
-                     : thread_count(priority),
+         std::max(is_main_thread() ? thread_count(priority) + 1 : thread_count(priority),
                   std::size_t{1});
-
-      priority_level_context& priority_context =
-         select_priority_level_context(priority);
 
       if (size <= desired_task_count) {
          auto tasks = std::make_shared<detail::task_context_base[]>(size);
 
          // Schedule the tasks!
-         {
-            std::shared_lock lock{priority_context.tasks_mutex};
+         for (std::size_t i = 0; i < size; ++i) {
+            auto& task = tasks[i];
 
-            for (std::size_t i = 0; i < size; ++i) {
-               auto& task = tasks[i];
+            task.execute_function = [&task, &func, i]() noexcept {
+               func(i);
 
-               task.execute_function = [&task, &func, i]() noexcept {
-                  func(i);
+               task.executed_latch.count_down();
+            };
+            task.owning_thread_pool = shared_from_this();
 
-                  task.executed_latch.count_down();
-               };
-               task.owning_thread_pool = shared_from_this();
-
-               priority_context.tasks.emplace_back(tasks, &task);
-
-               priority_context.pending_tasks.fetch_add(1);
-               priority_context.pending_tasks.notify_one();
-            }
+            submit_task(priority,
+                        std::shared_ptr<detail::task_context_base>{tasks, &task});
          }
 
-         for (std::size_t i = 0; i < size; ++i) {
+         for (std::ptrdiff_t i = static_cast<std::ptrdiff_t>(size) - 1; i >= 0; --i) {
             tasks[i].wait();
          }
       }
@@ -354,48 +313,43 @@ public:
 
          auto tasks = std::make_shared<detail::task_context_base[]>(final_task_count);
 
-         // Schedule the tasks!
-         {
-            std::shared_lock lock{priority_context.tasks_mutex};
+         for (std::size_t i = 0; i < desired_task_count; ++i) {
+            auto& task = tasks[i];
 
-            for (std::size_t i = 0; i < desired_task_count; ++i) {
-               auto& task = tasks[i];
+            task.execute_function = [&task, &func, start = i * task_work_size,
+                                     end = (i + 1) * task_work_size]() noexcept {
+               for (std::size_t i = start; i < end; ++i) {
+                  func(i);
+               }
 
-               task.execute_function = [&task, &func, start = i * task_work_size,
-                                        end = (i + 1) * task_work_size]() noexcept {
-                  for (std::size_t i = start; i < end; ++i) {
-                     func(i);
-                  }
+               task.executed_latch.count_down();
+            };
+            task.owning_thread_pool = shared_from_this();
 
-                  task.executed_latch.count_down();
-               };
-               task.owning_thread_pool = shared_from_this();
-
-               priority_context.tasks.emplace_back(tasks, &task);
-            }
-
-            if (remainder_task_work_size != 0) {
-               auto& task = tasks[desired_task_count];
-
-               task.execute_function = [&task, &func,
-                                        start = desired_task_count * task_work_size,
-                                        end = size]() noexcept {
-                  for (std::size_t i = start; i < end; ++i) {
-                     func(i);
-                  }
-
-                  task.executed_latch.count_down();
-               };
-               task.owning_thread_pool = shared_from_this();
-
-               priority_context.tasks.emplace_back(tasks, &task);
-            }
+            submit_task(priority,
+                        std::shared_ptr<detail::task_context_base>{tasks, &task});
          }
 
-         priority_context.pending_tasks.fetch_add(final_task_count);
-         priority_context.pending_tasks.notify_all();
+         if (remainder_task_work_size != 0) {
+            auto& task = tasks[desired_task_count];
 
-         for (std::size_t i = 0; i < final_task_count; ++i) {
+            task.execute_function = [&task, &func,
+                                     start = desired_task_count * task_work_size,
+                                     end = size]() noexcept {
+               for (std::size_t i = start; i < end; ++i) {
+                  func(i);
+               }
+
+               task.executed_latch.count_down();
+            };
+            task.owning_thread_pool = shared_from_this();
+
+            submit_task(priority,
+                        std::shared_ptr<detail::task_context_base>{tasks, &task});
+         }
+
+         for (std::ptrdiff_t i = static_cast<std::ptrdiff_t>(final_task_count) - 1;
+              i >= 0; --i) {
             tasks[i].wait();
          }
       }
@@ -409,57 +363,19 @@ public:
    /// @param priority The priority level to get the thread count for.
    /// @return The thread count.
    [[nodiscard]] auto thread_count(const task_priority priority) const noexcept
-      -> std::size_t
-   {
-      return select_priority_level_context(priority).threads.size();
-   }
+      -> std::size_t;
 
 private:
-   static constexpr std::ptrdiff_t pending_tasks_end_value = -1;
+   thread_pool(const thread_pool_init& init);
 
-   struct priority_level_context {
-      std::vector<std::jthread> threads;
+   void submit_task(const task_priority priority,
+                    std::shared_ptr<detail::task_context_base> task) noexcept;
 
-      std::shared_mutex tasks_mutex;
-      std::vector<std::shared_ptr<detail::task_context_base>> tasks;
+   bool is_main_thread() const noexcept;
 
-      std::atomic_ptrdiff_t pending_tasks = 0;
-   };
+   struct impl;
 
-   thread_pool(const thread_pool_init init);
-
-   auto select_priority_level_context(const task_priority priority) noexcept
-      -> priority_level_context&
-   {
-      switch (priority) {
-      case task_priority::low:
-         return _lowp_context;
-      case task_priority::normal:
-         return _normalp_context;
-      }
-
-      __assume(0);
-   }
-
-   auto select_priority_level_context(const task_priority priority) const noexcept
-      -> const priority_level_context&
-   {
-      switch (priority) {
-      case task_priority::low:
-         return _lowp_context;
-      case task_priority::normal:
-         return _normalp_context;
-      }
-
-      __assume(0);
-   }
-
-   static void worker_thread_main(priority_level_context& context) noexcept;
-
-   priority_level_context _lowp_context;
-   priority_level_context _normalp_context;
-
-   const std::thread::id _creating_thread_id = std::this_thread::get_id();
+   implementation_storage<impl, 168> impl;
 };
 
 }

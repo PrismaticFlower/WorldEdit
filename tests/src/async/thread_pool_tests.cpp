@@ -3,6 +3,7 @@
 #include "async/thread_pool.hpp"
 
 #include <array>
+#include <thread>
 
 using namespace std::literals;
 
