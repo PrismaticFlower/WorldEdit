@@ -87,7 +87,7 @@ void world_edit::ui_show_world_explorer() noexcept
          layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Objects", 4,
+         if (ImGui::BeginTable("Objects", 5,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
@@ -95,6 +95,7 @@ void world_edit::ui_show_world_explorer() noexcept
             ImGui::TableSetupColumn("Class Name");
             ImGui::TableSetupColumn("Class Label");
             ImGui::TableSetupColumn("Layer");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -116,6 +117,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int class_name_column = 1;
                const int class_label_column = 2;
                const int layer_column = 3;
+               const int hidden_column = 4;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(
@@ -154,6 +156,13 @@ void world_edit::ui_show_world_explorer() noexcept
                               .name);
                      });
                }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.objects[left].hidden <
+                                          _world.objects[right].hidden;
+                                });
+               }
             }
 
             for (uint32 unsorted_index = 0;
@@ -186,7 +195,8 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::TableNextColumn();
                const bool select =
                   ImGui::Selectable(object.name.c_str(), is_selected,
-                                    ImGuiSelectableFlags_SpanAllColumns);
+                                    ImGuiSelectableFlags_SpanAllColumns |
+                                       ImGuiSelectableFlags_AllowOverlap);
                const bool hover = ImGui::IsItemHovered();
                ImGui::TableNextColumn();
                ImGui::Text(object.class_name.c_str());
@@ -198,6 +208,8 @@ void world_edit::ui_show_world_explorer() noexcept
                                       class_label.data() + class_label.size());
                ImGui::TableNextColumn();
                ImGui::Text(_world.layer_descriptions[object.layer].name.c_str());
+               ImGui::TableNextColumn();
+               ImGui::Text(object.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -232,7 +244,7 @@ void world_edit::ui_show_world_explorer() noexcept
          layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Lights", 4,
+         if (ImGui::BeginTable("Lights", 5,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
@@ -240,6 +252,7 @@ void world_edit::ui_show_world_explorer() noexcept
             ImGui::TableSetupColumn("Type");
             ImGui::TableSetupColumn("Color");
             ImGui::TableSetupColumn("Layer");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -261,6 +274,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int type_column = 1;
                const int color_column = 2;
                const int layer_column = 3;
+               const int hidden_column = 4;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(
@@ -294,6 +308,13 @@ void world_edit::ui_show_world_explorer() noexcept
                            _world.layer_descriptions[_world.lights[left].layer].name,
                            _world.layer_descriptions[_world.lights[right].layer].name);
                      });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.lights[left].hidden <
+                                          _world.lights[right].hidden;
+                                });
                }
             }
 
@@ -349,6 +370,8 @@ void world_edit::ui_show_world_explorer() noexcept
                            light.color.z);
                ImGui::TableNextColumn();
                ImGui::Text(_world.layer_descriptions[light.layer].name.c_str());
+               ImGui::TableNextColumn();
+               ImGui::Text(light.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -387,16 +410,17 @@ void world_edit::ui_show_world_explorer() noexcept
 
          const bool show_all_nodes = _world_explorer_path_show_all_nodes;
 
-         if (ImGui::BeginTable("Paths", show_all_nodes ? 5 : 4,
+         if (ImGui::BeginTable("Paths", show_all_nodes ? 6 : 5,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
             // clang-format off
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Type"); 
-            if (show_all_nodes) ImGui::TableSetupColumn("Node", ImGuiTableColumnFlags_NoSort); 
             ImGui::TableSetupColumn("Nodes");
             ImGui::TableSetupColumn("Layer");
+            ImGui::TableSetupColumn("Hidden");
+            if (show_all_nodes) ImGui::TableSetupColumn("Node", ImGuiTableColumnFlags_NoSort);
             // clang-format on
             ImGui::TableHeadersRow();
 
@@ -419,6 +443,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int type_column = 1;
                const int nodes_column = 2;
                const int layer_column = 3;
+               const int hidden_column = 4;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
@@ -449,6 +474,13 @@ void world_edit::ui_show_world_explorer() noexcept
                            _world.layer_descriptions[_world.paths[left].layer].name,
                            _world.layer_descriptions[_world.paths[right].layer].name);
                      });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.paths[left].hidden <
+                                          _world.paths[right].hidden;
+                                });
                }
             }
 
@@ -497,14 +529,16 @@ void world_edit::ui_show_world_explorer() noexcept
                      }
                      // clang-format on
                   }());
-                  if (show_all_nodes) {
-                     ImGui::TableNextColumn();
-                     ImGui::Text("%i", i);
-                  }
                   ImGui::TableNextColumn();
                   ImGui::Text("%i", static_cast<int>(path.nodes.size()));
                   ImGui::TableNextColumn();
                   ImGui::Text(_world.layer_descriptions[path.layer].name.c_str());
+                  ImGui::TableNextColumn();
+                  ImGui::Text(path.hidden ? "X" : "-");
+                  if (show_all_nodes) {
+                     ImGui::TableNextColumn();
+                     ImGui::Text("%i", i);
+                  }
 
                   if (show_all_nodes) {
                      if (select and path.nodes.size() != 0) {
@@ -569,7 +603,7 @@ void world_edit::ui_show_world_explorer() noexcept
          layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Regions", 4,
+         if (ImGui::BeginTable("Regions", 5,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
@@ -577,6 +611,7 @@ void world_edit::ui_show_world_explorer() noexcept
             ImGui::TableSetupColumn("Description");
             ImGui::TableSetupColumn("Shape");
             ImGui::TableSetupColumn("Layer");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
             const bool sorting = table_sort_specs->SpecsCount >= 1;
@@ -597,6 +632,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int description_column = 1;
                const int shape_column = 2;
                const int layer_column = 3;
+               const int hidden_column = 4;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(
@@ -631,6 +667,13 @@ void world_edit::ui_show_world_explorer() noexcept
                               .layer_descriptions[_world.regions[right].layer]
                               .name);
                      });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.regions[left].hidden <
+                                          _world.regions[right].hidden;
+                                });
                }
             }
 
@@ -676,6 +719,8 @@ void world_edit::ui_show_world_explorer() noexcept
                }());
                ImGui::TableNextColumn();
                ImGui::Text(_world.layer_descriptions[region.layer].name.c_str());
+               ImGui::TableNextColumn();
+               ImGui::Text(region.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -708,13 +753,14 @@ void world_edit::ui_show_world_explorer() noexcept
          ImGui::InputTextWithHint("Name Filter", "e.g. sector", &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Sectors", 3,
+         if (ImGui::BeginTable("Sectors", 4,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Points");
             ImGui::TableSetupColumn("Objects");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -735,6 +781,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int name_column = 0;
                const int points_column = 1;
                const int objects_column = 2;
+               const int hidden_column = 3;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(
@@ -756,6 +803,13 @@ void world_edit::ui_show_world_explorer() noexcept
                                 [&](const uint32 left, const uint32 right) {
                                    return _world.sectors[left].objects.size() <
                                           _world.sectors[right].objects.size();
+                                });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.sectors[left].hidden <
+                                          _world.sectors[right].hidden;
                                 });
                }
             }
@@ -788,6 +842,8 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text("%i", static_cast<int>(sector.points.size()));
                ImGui::TableNextColumn();
                ImGui::Text("%i", static_cast<int>(sector.objects.size()));
+               ImGui::TableNextColumn();
+               ImGui::Text(sector.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -820,13 +876,14 @@ void world_edit::ui_show_world_explorer() noexcept
          ImGui::InputTextWithHint("Name Filter", "e.g. door", &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Portals", 3,
+         if (ImGui::BeginTable("Portals", 4,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Sector 1");
             ImGui::TableSetupColumn("Sector 2");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -847,6 +904,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int name_column = 0;
                const int sector1_column = 1;
                const int sector2_column = 2;
+               const int hidden_column = 3;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(
@@ -871,6 +929,13 @@ void world_edit::ui_show_world_explorer() noexcept
                         return string::iless_than(_world.portals[left].sector2,
                                                   _world.portals[right].sector2);
                      });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.portals[left].hidden <
+                                          _world.portals[right].hidden;
+                                });
                }
             }
 
@@ -902,6 +967,8 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text(portal.sector1.c_str());
                ImGui::TableNextColumn();
                ImGui::Text(portal.sector2.c_str());
+               ImGui::TableNextColumn();
+               ImGui::Text(portal.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -936,13 +1003,14 @@ void world_edit::ui_show_world_explorer() noexcept
          layer_filter(_world_explorer_layers_mask, _world);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Hintnodes", 3,
+         if (ImGui::BeginTable("Hintnodes", 4,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Type");
             ImGui::TableSetupColumn("Layer");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -963,6 +1031,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int name_column = 0;
                const int type_column = 1;
                const int layer_column = 2;
+               const int hidden_column = 3;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(
@@ -985,6 +1054,13 @@ void world_edit::ui_show_world_explorer() noexcept
                         _world.layer_descriptions[_world.hintnodes[left].layer].name,
                         _world.layer_descriptions[_world.hintnodes[right].layer].name);
                   });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.hintnodes[left].hidden <
+                                          _world.hintnodes[right].hidden;
+                                });
                }
             }
 
@@ -1034,6 +1110,8 @@ void world_edit::ui_show_world_explorer() noexcept
                }());
                ImGui::TableNextColumn();
                ImGui::Text(_world.layer_descriptions[hintnode.layer].name.c_str());
+               ImGui::TableNextColumn();
+               ImGui::Text(hintnode.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -1066,7 +1144,7 @@ void world_edit::ui_show_world_explorer() noexcept
          ImGui::InputTextWithHint("Name Filter", "e.g. Door", &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Barriers", 7,
+         if (ImGui::BeginTable("Barriers", 8,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
@@ -1077,6 +1155,7 @@ void world_edit::ui_show_world_explorer() noexcept
             ImGui::TableSetupColumn("Medium");
             ImGui::TableSetupColumn("Huge");
             ImGui::TableSetupColumn("Flyer");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -1101,6 +1180,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int medium_column = 4;
                const int huge_column = 5;
                const int flyer_column = 6;
+               const int hidden_column = 7;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(
@@ -1135,6 +1215,13 @@ void world_edit::ui_show_world_explorer() noexcept
                                 [&, flag](const uint32 left, const uint32 right) {
                                    return (_world.barriers[left].flags & flag) <
                                           (_world.barriers[right].flags & flag);
+                                });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.barriers[left].hidden <
+                                          _world.barriers[right].hidden;
                                 });
                }
             }
@@ -1184,6 +1271,8 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text(huge ? "X" : "-");
                ImGui::TableNextColumn();
                ImGui::Text(flyer ? "X" : "-");
+               ImGui::TableNextColumn();
+               ImGui::Text(barrier.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -1216,11 +1305,12 @@ void world_edit::ui_show_world_explorer() noexcept
          ImGui::InputTextWithHint("Name Filter", "e.g. Hub", &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("AI Planning Hubs", 1,
+         if (ImGui::BeginTable("AI Planning Hubs", 2,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
             ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -1238,12 +1328,24 @@ void world_edit::ui_show_world_explorer() noexcept
                const ImGuiTableColumnSortSpecs sort_specs =
                   table_sort_specs->Specs[0];
 
-               fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
-                             [&](const uint32 left, const uint32 right) {
-                                return string::iless_than(
-                                   _world.planning_hubs[left].name,
-                                   _world.planning_hubs[right].name);
-                             });
+               const int name_column = 0;
+               const int hidden_column = 1;
+
+               if (sort_specs.ColumnIndex == name_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return string::iless_than(
+                                      _world.planning_hubs[left].name,
+                                      _world.planning_hubs[right].name);
+                                });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.planning_hubs[left].hidden <
+                                          _world.planning_hubs[right].hidden;
+                                });
+               }
             }
 
             for (uint32 unsorted_index = 0;
@@ -1270,6 +1372,8 @@ void world_edit::ui_show_world_explorer() noexcept
                   ImGui::Selectable(hub.name.c_str(), is_selected,
                                     ImGuiSelectableFlags_SpanAllColumns);
                const bool hover = ImGui::IsItemHovered();
+               ImGui::TableNextColumn();
+               ImGui::Text(hub.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -1303,7 +1407,7 @@ void world_edit::ui_show_world_explorer() noexcept
                                   &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("AI Planning Connections", 9,
+         if (ImGui::BeginTable("AI Planning Connections", 10,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
@@ -1316,6 +1420,7 @@ void world_edit::ui_show_world_explorer() noexcept
             ImGui::TableSetupColumn("Medium");
             ImGui::TableSetupColumn("Huge");
             ImGui::TableSetupColumn("Flyer");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -1343,6 +1448,7 @@ void world_edit::ui_show_world_explorer() noexcept
                const int medium_column = 6;
                const int huge_column = 7;
                const int flyer_column = 8;
+               const int hidden_column = 9;
 
                if (sort_specs.ColumnIndex == name_column) {
                   fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
@@ -1406,6 +1512,13 @@ void world_edit::ui_show_world_explorer() noexcept
                                            flag);
                                 });
                }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.planning_connections[left].hidden <
+                                          _world.planning_connections[right].hidden;
+                                });
+               }
             }
 
             for (uint32 unsorted_index = 0;
@@ -1462,6 +1575,8 @@ void world_edit::ui_show_world_explorer() noexcept
                ImGui::Text(huge ? "X" : "-");
                ImGui::TableNextColumn();
                ImGui::Text(flyer ? "X" : "-");
+               ImGui::TableNextColumn();
+               ImGui::Text(connection.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
@@ -1495,11 +1610,12 @@ void world_edit::ui_show_world_explorer() noexcept
                                   &_world_explorer_filter);
          ImGui::PopItemWidth();
 
-         if (ImGui::BeginTable("Boundaries", 1,
+         if (ImGui::BeginTable("Boundaries", 2,
                                ImGuiTableFlags_Reorderable |
                                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
                                   ImGuiTableFlags_SortTristate)) {
             ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("Hidden");
             ImGui::TableHeadersRow();
 
             ImGuiTableSortSpecs* table_sort_specs = ImGui::TableGetSortSpecs();
@@ -1517,12 +1633,24 @@ void world_edit::ui_show_world_explorer() noexcept
                const ImGuiTableColumnSortSpecs sort_specs =
                   table_sort_specs->Specs[0];
 
-               fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
-                             [&](const uint32 left, const uint32 right) {
-                                return string::iless_than(
-                                   _world.boundaries[left].name,
-                                   _world.boundaries[right].name);
-                             });
+               const int name_column = 0;
+               const int hidden_column = 1;
+
+               if (sort_specs.ColumnIndex == name_column) {
+                  fill_sort_map(
+                     _world_explorer_sort_map, sort_specs.SortDirection,
+                     [&](const uint32 left, const uint32 right) {
+                        return string::iless_than(_world.boundaries[left].name,
+                                                  _world.boundaries[right].name);
+                     });
+               }
+               else if (sort_specs.ColumnIndex == hidden_column) {
+                  fill_sort_map(_world_explorer_sort_map, sort_specs.SortDirection,
+                                [&](const uint32 left, const uint32 right) {
+                                   return _world.boundaries[left].hidden <
+                                          _world.boundaries[right].hidden;
+                                });
+               }
             }
 
             for (uint32 unsorted_index = 0;
@@ -1549,6 +1677,8 @@ void world_edit::ui_show_world_explorer() noexcept
                   ImGui::Selectable(boundary.name.c_str(), is_selected,
                                     ImGuiSelectableFlags_SpanAllColumns);
                const bool hover = ImGui::IsItemHovered();
+               ImGui::TableNextColumn();
+               ImGui::Text(boundary.hidden ? "X" : "-");
 
                if (select) {
                   if (is_ctrl_down) {
