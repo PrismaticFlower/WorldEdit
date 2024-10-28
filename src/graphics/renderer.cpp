@@ -31,7 +31,6 @@
 #include "ui_texture_manager.hpp"
 #include "utility/overload.hpp"
 #include "utility/srgb_conversion.hpp"
-#include "utility/stopwatch.hpp"
 #include "water.hpp"
 #include "world/object_class_library.hpp"
 #include "world/utility/boundary_nodes.hpp"
@@ -144,7 +143,8 @@ struct renderer_impl final : renderer {
 
 private:
    void update_frame_constant_buffer(const camera& camera, const gpu::viewport viewport,
-                                     const bool scroll_textures, const float line_width,
+                                     const bool scroll_textures,
+                                     const float delta_time, const float line_width,
                                      gpu::copy_command_list& command_list);
 
    void draw_world(const frustum& view_frustum,
@@ -297,7 +297,7 @@ private:
 
    imgui_renderer _imgui_renderer{_device, _copy_command_list_pool};
 
-   utility::stopwatch _texture_scroll_timer;
+   float _texture_scroll_time = 0.0f;
 
    profiler _profiler{_device, 256};
 
@@ -416,8 +416,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
          _terrain_cut_list.clear();
       }
 
-      update_frame_constant_buffer(camera, viewport, true, settings.line_width,
-                                   _pre_render_command_list);
+      update_frame_constant_buffer(camera, viewport, true, frame_options.delta_time,
+                                   settings.line_width, _pre_render_command_list);
       clear_depth_minmax(_pre_render_command_list);
 
       const float4 scene_depth_min_max =
@@ -926,7 +926,7 @@ auto renderer_impl::draw_env_map(const env_map_params& params, const world::worl
       {
          pre_render_command_list.reset();
 
-         update_frame_constant_buffer(camera, viewport, false, 1.0f,
+         update_frame_constant_buffer(camera, viewport, false, 0.0f, 1.0f,
                                       pre_render_command_list);
 
          _light_clusters.prepare_lights(camera, view_frustum, world, nullptr,
@@ -1158,22 +1158,24 @@ void renderer_impl::window_resized(uint16 width, uint16 height)
 void renderer_impl::update_frame_constant_buffer(const camera& camera,
                                                  const gpu::viewport viewport,
                                                  const bool scroll_textures,
+                                                 const float delta_time,
                                                  const float line_width,
                                                  gpu::copy_command_list& command_list)
 {
-   frame_constant_buffer constants{
-      .view_projection_matrix = camera.view_projection_matrix(),
+   _texture_scroll_time = std::fmod(_texture_scroll_time + delta_time, 255.0f);
 
-      .view_positionWS = camera.position(),
-      .texture_scroll_duration =
-         scroll_textures
-            ? static_cast<float>(std::fmod(_texture_scroll_timer.elapsed_f64(), 255.0))
-            : 0.0f,
+   frame_constant_buffer constants{.view_projection_matrix =
+                                      camera.view_projection_matrix(),
 
-      .viewport_size = {viewport.width, viewport.height},
-      .viewport_topleft = {viewport.top_left_x, viewport.top_left_y},
+                                   .view_positionWS = camera.position(),
+                                   .texture_scroll_duration =
+                                      scroll_textures ? _texture_scroll_time : 0.0f,
 
-      .line_width = line_width * _display_scale};
+                                   .viewport_size = {viewport.width, viewport.height},
+                                   .viewport_topleft = {viewport.top_left_x,
+                                                        viewport.top_left_y},
+
+                                   .line_width = line_width * _display_scale};
 
    auto allocation = _dynamic_buffer_allocator.allocate_and_copy(constants);
 

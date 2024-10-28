@@ -188,6 +188,7 @@ void world_edit::update()
                                .draw_overlay_grid = _draw_overlay_grid,
                                .draw_foliage_map_overlay =
                                   _terrain_edit_tool == terrain_edit_tool::foliage_editor,
+                               .delta_time = delta_time,
                                .overlay_grid_height = _editor_floor_height,
                                .overlay_grid_size = _editor_grid_size,
                             },
