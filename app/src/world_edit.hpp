@@ -357,7 +357,7 @@ private:
 
    void align_selection(const float alignment) noexcept;
 
-   void hide_selection() noexcept;
+   void toggle_hide_selection() noexcept;
 
    void ground_selection() noexcept;
 

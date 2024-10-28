@@ -2909,26 +2909,32 @@ void world_edit::align_selection(const float alignment) noexcept
    }
 }
 
-void world_edit::hide_selection() noexcept
+void world_edit::toggle_hide_selection() noexcept
 {
    edits::bundle_vector bundle;
    bundle.reserve(_interaction_targets.selection.size());
+
+   world::selection new_selection;
 
    for (const auto& selected : _interaction_targets.selection) {
       if (selected.is<world::object_id>()) {
          world::object* object =
             world::find_entity(_world.objects, selected.get<world::object_id>());
 
-         if (object and not object->hidden) {
-            bundle.push_back(edits::make_set_value(&object->hidden, true));
+         if (object) {
+            bundle.push_back(edits::make_set_value(&object->hidden, not object->hidden));
+
+            if (object->hidden) new_selection.add(object->id);
          }
       }
       else if (selected.is<world::light_id>()) {
          world::light* light =
             world::find_entity(_world.lights, selected.get<world::light_id>());
 
-         if (light and not light->hidden) {
-            bundle.push_back(edits::make_set_value(&light->hidden, true));
+         if (light) {
+            bundle.push_back(edits::make_set_value(&light->hidden, not light->hidden));
+
+            if (light->hidden) new_selection.add(light->id);
          }
       }
       else if (selected.is<world::path_id_node_mask>()) {
@@ -2936,48 +2942,64 @@ void world_edit::hide_selection() noexcept
 
          world::path* path = world::find_entity(_world.paths, id);
 
-         if (path and not path->hidden) {
-            bundle.push_back(edits::make_set_value(&path->hidden, true));
+         if (path) {
+            bundle.push_back(edits::make_set_value(&path->hidden, not path->hidden));
+
+            if (path->hidden) {
+               new_selection.add(world::path_id_node_mask{path->id, node_mask});
+            }
          }
       }
       else if (selected.is<world::region_id>()) {
          world::region* region =
             world::find_entity(_world.regions, selected.get<world::region_id>());
 
-         if (region and not region->hidden) {
-            bundle.push_back(edits::make_set_value(&region->hidden, true));
+         if (region) {
+            bundle.push_back(edits::make_set_value(&region->hidden, not region->hidden));
+
+            if (region->hidden) new_selection.add(region->id);
          }
       }
       else if (selected.is<world::sector_id>()) {
          world::sector* sector =
             world::find_entity(_world.sectors, selected.get<world::sector_id>());
 
-         if (sector and not sector->hidden) {
-            bundle.push_back(edits::make_set_value(&sector->hidden, true));
+         if (sector) {
+            bundle.push_back(edits::make_set_value(&sector->hidden, not sector->hidden));
+
+            if (sector->hidden) new_selection.add(sector->id);
          }
       }
       else if (selected.is<world::portal_id>()) {
          world::portal* portal =
             world::find_entity(_world.portals, selected.get<world::portal_id>());
 
-         if (portal and not portal->hidden) {
-            bundle.push_back(edits::make_set_value(&portal->hidden, true));
+         if (portal) {
+            bundle.push_back(edits::make_set_value(&portal->hidden, not portal->hidden));
+
+            if (portal->hidden) new_selection.add(portal->id);
          }
       }
       else if (selected.is<world::hintnode_id>()) {
          world::hintnode* hintnode =
             world::find_entity(_world.hintnodes, selected.get<world::hintnode_id>());
 
-         if (hintnode and not hintnode->hidden) {
-            bundle.push_back(edits::make_set_value(&hintnode->hidden, true));
+         if (hintnode) {
+            bundle.push_back(
+               edits::make_set_value(&hintnode->hidden, not hintnode->hidden));
+
+            if (hintnode->hidden) new_selection.add(hintnode->id);
          }
       }
       else if (selected.is<world::barrier_id>()) {
          world::barrier* barrier =
             world::find_entity(_world.barriers, selected.get<world::barrier_id>());
 
-         if (barrier and not barrier->hidden) {
-            bundle.push_back(edits::make_set_value(&barrier->hidden, true));
+         if (barrier) {
+            bundle.push_back(
+               edits::make_set_value(&barrier->hidden, not barrier->hidden));
+
+            if (barrier->hidden) new_selection.add(barrier->id);
          }
       }
       else if (selected.is<world::planning_hub_id>()) {
@@ -2985,8 +3007,10 @@ void world_edit::hide_selection() noexcept
             world::find_entity(_world.planning_hubs,
                                selected.get<world::planning_hub_id>());
 
-         if (hub and not hub->hidden) {
-            bundle.push_back(edits::make_set_value(&hub->hidden, true));
+         if (hub) {
+            bundle.push_back(edits::make_set_value(&hub->hidden, not hub->hidden));
+
+            if (hub->hidden) new_selection.add(hub->id);
          }
       }
       else if (selected.is<world::planning_connection_id>()) {
@@ -2994,16 +3018,22 @@ void world_edit::hide_selection() noexcept
             world::find_entity(_world.planning_connections,
                                selected.get<world::planning_connection_id>());
 
-         if (connection and not connection->hidden) {
-            bundle.push_back(edits::make_set_value(&connection->hidden, true));
+         if (connection) {
+            bundle.push_back(edits::make_set_value(&connection->hidden,
+                                                   not connection->hidden));
+
+            if (connection->hidden) new_selection.add(connection->id);
          }
       }
       else if (selected.is<world::boundary_id>()) {
          world::boundary* boundary =
             world::find_entity(_world.boundaries, selected.get<world::boundary_id>());
 
-         if (boundary and not boundary->hidden) {
-            bundle.push_back(edits::make_set_value(&boundary->hidden, true));
+         if (boundary) {
+            bundle.push_back(
+               edits::make_set_value(&boundary->hidden, not boundary->hidden));
+
+            if (boundary->hidden) new_selection.add(boundary->id);
          }
       }
       else if (selected.is<world::measurement_id>()) {
@@ -3011,8 +3041,11 @@ void world_edit::hide_selection() noexcept
             world::find_entity(_world.measurements,
                                selected.get<world::measurement_id>());
 
-         if (measurement and not measurement->hidden) {
-            bundle.push_back(edits::make_set_value(&measurement->hidden, true));
+         if (measurement) {
+            bundle.push_back(edits::make_set_value(&measurement->hidden,
+                                                   not measurement->hidden));
+
+            if (measurement->hidden) new_selection.add(measurement->id);
          }
       }
    }
@@ -3026,7 +3059,7 @@ void world_edit::hide_selection() noexcept
                               _edit_context, {.closed = true});
    }
 
-   _interaction_targets.selection.clear();
+   _interaction_targets.selection = new_selection;
 }
 
 void world_edit::ground_selection() noexcept
