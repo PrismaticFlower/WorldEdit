@@ -1998,9 +1998,9 @@ void world_edit::ui_show_world_selection_editor() noexcept
          _hotkeys.query_binding("Entity Editing",
                                 "Align Selection (Terrain Grid)")));
 
-      ImGui::Text("Hide Selection");
+      ImGui::Text("Hide/Unhide Selection");
       ImGui::BulletText(get_display_string(
-         _hotkeys.query_binding("Entity Editing", "Hide Selection")));
+         _hotkeys.query_binding("Entity Editing", "Hide/Unhide Selection")));
 
       ImGui::Text("Ground Selection");
       ImGui::BulletText(get_display_string(

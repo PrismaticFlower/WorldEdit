@@ -820,7 +820,7 @@ void world_edit::initialize_hotkeys() noexcept
           {"Align Selection (Terrain Grid)",
            "entity_edit.align_selection_terrain",
            {.key = key::a, .modifiers = {.ctrl = true, .shift = true}}},
-          {"Hide Selection", "entity_edit.toggle_hide_selection", {.key = key::h}},
+          {"Hide/Unhide Selection", "entity_edit.toggle_hide_selection", {.key = key::h}},
           {"Ground Selection", "entity_edit.ground_selection", {.key = key::g}},
           {"New Entity from Selection", "entity_edit.new_from_selection", {.key = key::n}},
           {"Set Selection Layer",
