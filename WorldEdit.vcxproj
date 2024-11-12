@@ -269,6 +269,7 @@
     <ClCompile Include="src\edits\set_terrain_area.cpp" />
     <ClCompile Include="src\edits\set_value.cpp" />
     <ClCompile Include="src\gizmo.cpp" />
+    <ClCompile Include="src\gizmos.cpp" />
     <ClCompile Include="src\graphics\ai_overlay_batches.cpp" />
     <ClCompile Include="src\graphics\copy_command_list_pool.cpp" />
     <ClCompile Include="src\graphics\dynamic_buffer_allocator.cpp" />
@@ -545,6 +546,7 @@
     <ClInclude Include="src\edits\add_world_req_entry.hpp" />
     <ClInclude Include="src\edits\delete_world_req_entry.hpp" />
     <ClInclude Include="src\gizmo.hpp" />
+    <ClInclude Include="src\gizmos.hpp" />
     <ClInclude Include="src\graphics\ai_overlay_batches.hpp" />
     <ClInclude Include="src\graphics\camera.hpp" />
     <ClInclude Include="src\graphics\dynamic_buffer_allocator.hpp" />

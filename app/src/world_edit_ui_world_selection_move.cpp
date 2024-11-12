@@ -21,11 +21,6 @@ void world_edit::ui_show_world_selection_move() noexcept
       float3 selection_axis_count = {0.0f, 0.0f, 0.0f};
       quaternion gizmo_rotation;
 
-      const bool local_space =
-         _selection_move_space == selection_transform_space::local;
-      const bool draw_axis_lines =
-         local_space and _interaction_targets.selection.size() > 1;
-
       for (const auto& selected : _interaction_targets.selection) {
          if (selected.is<world::object_id>()) {
             const world::object* object =
@@ -47,11 +42,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                }
 
                gizmo_rotation = object->rotation;
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(object->rotation, object->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::path_id_node_mask>()) {
@@ -71,11 +61,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                   selection_centre += node.position;
                   selection_axis_count += {1.0f, 1.0f, 1.0f};
                   gizmo_rotation = node.rotation;
-
-                  if (draw_axis_lines) {
-                     _gizmo.draw_active_axis_line(node.rotation, node.position,
-                                                  _tool_visualizers);
-                  }
                }
             }
          }
@@ -87,11 +72,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += light->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = light->rotation;
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(light->rotation, light->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::region_id>()) {
@@ -102,11 +82,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += region->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = region->rotation;
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(region->rotation, region->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::sector_id>()) {
@@ -127,14 +102,6 @@ void world_edit::ui_show_world_selection_move() noexcept
 
                selection_centre += sector_centre;
                selection_axis_count += sector_axis_count;
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(quaternion{},
-                                               sector_centre /
-                                                  max(sector_axis_count,
-                                                      float3{1.0f, 1.0f, 1.0f}),
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::portal_id>()) {
@@ -145,11 +112,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += portal->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = portal->rotation;
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(portal->rotation, portal->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::hintnode_id>()) {
@@ -161,11 +123,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += hintnode->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation = hintnode->rotation;
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(hintnode->rotation, hintnode->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::barrier_id>()) {
@@ -177,11 +134,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_axis_count += {1.0f, 1.0f, 1.0f};
                gizmo_rotation =
                   make_quat_from_euler({0.0f, barrier->rotation_angle, 0.0f});
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(gizmo_rotation, barrier->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::planning_hub_id>()) {
@@ -192,11 +144,6 @@ void world_edit::ui_show_world_selection_move() noexcept
             if (planning_hub) {
                selection_centre += planning_hub->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(quaternion{}, planning_hub->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::boundary_id>()) {
@@ -207,11 +154,6 @@ void world_edit::ui_show_world_selection_move() noexcept
             if (boundary) {
                selection_centre += boundary->position;
                selection_axis_count += {1.0f, 1.0f, 1.0f};
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(quaternion{}, boundary->position,
-                                               _tool_visualizers);
-               }
             }
          }
          else if (selected.is<world::measurement_id>()) {
@@ -223,12 +165,6 @@ void world_edit::ui_show_world_selection_move() noexcept
                selection_centre += measurement->start;
                selection_centre += measurement->end;
                selection_axis_count += {2.0f, 2.0f, 2.0f};
-
-               if (draw_axis_lines) {
-                  _gizmo.draw_active_axis_line(quaternion{},
-                                               (measurement->start + measurement->end) * 0.5f,
-                                               _tool_visualizers);
-               }
             }
          }
       }
@@ -237,22 +173,25 @@ void world_edit::ui_show_world_selection_move() noexcept
 
       selection_centre /= selection_axis_count;
 
-      const float3 last_move_amount = _move_selection_amount;
-
-      if (not local_space or selection_axis_count.x > 1.0f) {
+      if (_selection_move_space != selection_transform_space::local) {
          gizmo_rotation = quaternion{};
       }
 
+      float3 new_selection_centre = selection_centre;
+
       const bool imgui_edited =
-         ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+         ImGui::DragFloat3("Position", &new_selection_centre, 0.05f);
       const bool imgui_deactivated = ImGui::IsItemDeactivated();
 
-      const bool gizmo_edited = _gizmo.show_translate(selection_centre, gizmo_rotation,
-                                                      _move_selection_amount);
-      const bool gizmo_close_edit = _gizmo.can_close_last_edit();
+      const bool gizmo_edited =
+         _gizmos.gizmo_position({.name = "Move Selection",
+                                 .alignment = _editor_grid_size,
+                                 .gizmo_rotation = gizmo_rotation},
+                                new_selection_centre);
+      const bool gizmo_close_edit = _gizmos.can_close_last_edit();
 
       if (imgui_edited or gizmo_edited) {
-         const float3 move_delta = (_move_selection_amount - last_move_amount);
+         const float3 move_delta = (new_selection_centre - selection_centre);
 
          edits::bundle_vector bundled_edits;
 
@@ -262,21 +201,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                   world::find_entity(_world.objects, selected.get<world::object_id>());
 
                if (object) {
-                  float3 new_position;
-
-                  if (not local_space) {
-                     new_position = object->position + move_delta;
-                  }
-                  else {
-                     const quaternion rotation = normalize(object->rotation);
-
-                     new_position =
-                        rotation *
-                        ((conjugate(rotation) * object->position) + move_delta);
-                  }
-
                   bundled_edits.push_back(
-                     edits::make_set_value(&object->position, new_position));
+                     edits::make_set_value(&object->position,
+                                           object->position + move_delta));
                }
             }
             else if (selected.is<world::path_id_node_mask>()) {
@@ -294,23 +221,10 @@ void world_edit::ui_show_world_selection_move() noexcept
 
                      const world::path::node& node = path->nodes[node_index];
 
-                     float3 new_position;
-
-                     if (not local_space) {
-                        new_position = node.position + move_delta;
-                     }
-                     else {
-                        const quaternion rotation = normalize(node.rotation);
-
-                        new_position =
-                           rotation *
-                           ((conjugate(rotation) * node.position) + move_delta);
-                     }
-
                      bundled_edits.push_back(
                         edits::make_set_vector_value(&path->nodes, node_index,
                                                      &world::path::node::position,
-                                                     new_position));
+                                                     node.position + move_delta));
                   }
                }
             }
@@ -319,21 +233,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                   world::find_entity(_world.lights, selected.get<world::light_id>());
 
                if (light) {
-                  float3 new_position;
-
-                  if (not local_space) {
-                     new_position = light->position + move_delta;
-                  }
-                  else {
-                     const quaternion rotation = normalize(light->rotation);
-
-                     new_position =
-                        rotation *
-                        ((conjugate(rotation) * light->position) + move_delta);
-                  }
-
                   bundled_edits.push_back(
-                     edits::make_set_value(&light->position, new_position));
+                     edits::make_set_value(&light->position,
+                                           light->position + move_delta));
                }
             }
             else if (selected.is<world::region_id>()) {
@@ -341,21 +243,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                   world::find_entity(_world.regions, selected.get<world::region_id>());
 
                if (region) {
-                  float3 new_position;
-
-                  if (not local_space) {
-                     new_position = region->position + move_delta;
-                  }
-                  else {
-                     const quaternion rotation = normalize(region->rotation);
-
-                     new_position =
-                        rotation *
-                        ((conjugate(rotation) * region->position) + move_delta);
-                  }
-
                   bundled_edits.push_back(
-                     edits::make_set_value(&region->position, new_position));
+                     edits::make_set_value(&region->position,
+                                           region->position + move_delta));
                }
             }
             else if (selected.is<world::sector_id>()) {
@@ -381,21 +271,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                   world::find_entity(_world.portals, selected.get<world::portal_id>());
 
                if (portal) {
-                  float3 new_position;
-
-                  if (not local_space) {
-                     new_position = portal->position + move_delta;
-                  }
-                  else {
-                     const quaternion rotation = normalize(portal->rotation);
-
-                     new_position =
-                        rotation *
-                        ((conjugate(rotation) * portal->position) + move_delta);
-                  }
-
                   bundled_edits.push_back(
-                     edits::make_set_value(&portal->position, new_position));
+                     edits::make_set_value(&portal->position,
+                                           portal->position + move_delta));
                }
             }
             else if (selected.is<world::hintnode_id>()) {
@@ -404,21 +282,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                                      selected.get<world::hintnode_id>());
 
                if (hintnode) {
-                  float3 new_position;
-
-                  if (not local_space) {
-                     new_position = hintnode->position + move_delta;
-                  }
-                  else {
-                     const quaternion rotation = normalize(hintnode->rotation);
-
-                     new_position =
-                        rotation *
-                        ((conjugate(rotation) * hintnode->position) + move_delta);
-                  }
-
                   bundled_edits.push_back(
-                     edits::make_set_value(&hintnode->position, new_position));
+                     edits::make_set_value(&hintnode->position,
+                                           hintnode->position + move_delta));
                }
             }
             else if (selected.is<world::barrier_id>()) {
@@ -427,22 +293,9 @@ void world_edit::ui_show_world_selection_move() noexcept
                                      selected.get<world::barrier_id>());
 
                if (barrier) {
-                  float3 new_position;
-
-                  if (not local_space) {
-                     new_position = barrier->position + move_delta;
-                  }
-                  else {
-                     const quaternion rotation =
-                        make_quat_from_euler({0.0f, barrier->rotation_angle, 0.0f});
-
-                     new_position =
-                        rotation *
-                        ((conjugate(rotation) * barrier->position) + move_delta);
-                  }
-
                   bundled_edits.push_back(
-                     edits::make_set_value(&barrier->position, new_position));
+                     edits::make_set_value(&barrier->position,
+                                           barrier->position + move_delta));
                }
             }
             else if (selected.is<world::planning_hub_id>()) {
@@ -509,18 +362,14 @@ void world_edit::ui_show_world_selection_move() noexcept
          if (ImGui::Selectable("Local", _selection_move_space ==
                                            selection_transform_space::local)) {
             _selection_move_space = selection_transform_space::local;
-            _move_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
-            _gizmo.deactivate();
          }
 
          ImGui::TableNextColumn();
          if (ImGui::Selectable("World", _selection_move_space ==
                                            selection_transform_space::world)) {
             _selection_move_space = selection_transform_space::world;
-            _move_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
-            _gizmo.deactivate();
          }
 
          ImGui::EndTable();

@@ -158,6 +158,17 @@ void world_edit::update()
                     _camera);
    }
 
+   _gizmos.update(make_camera_ray(_camera,
+                                  {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
+                                  {ImGui::GetMainViewport()->Size.x,
+                                   ImGui::GetMainViewport()->Size.y}),
+                  {.left_mouse_down = ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
+                                      not ImGui::GetIO().WantCaptureMouse,
+                   .ctrl_down = (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) or
+                                 ImGui::IsKeyDown(ImGuiKey_RightCtrl)) and
+                                not ImGui::GetIO().WantCaptureKeyboard},
+                  _camera, _settings.ui.gizmo_scale);
+
    // Input!
    update_input();
    update_hovered_entity();
@@ -178,6 +189,11 @@ void world_edit::update()
    _gizmo.draw(_tool_visualizers);
 
    ui_draw_select_box();
+
+   for (const gizmo_draw_line& line : _gizmos.get_draw_lists().lines) {
+      _tool_visualizers.add_line_overlay(line.position_start, line.position_end,
+                                         line.color);
+   }
 
    try {
       _renderer->draw_frame(_camera, _world, _interaction_targets,
@@ -281,8 +297,10 @@ void world_edit::update_window_text() noexcept
 
 void world_edit::update_input() noexcept
 {
-   _hotkeys.update(ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse(),
-                   ImGui::GetIO().WantCaptureKeyboard);
+   _hotkeys.update(ImGui::GetIO().WantCaptureMouse or
+                      _gizmo.want_capture_mouse() or _gizmos.want_capture_mouse(),
+                   ImGui::GetIO().WantCaptureKeyboard or
+                      _gizmos.want_capture_keyboard());
 
    _mouse_movement_x = std::exchange(_queued_mouse_movement_x, 0);
    _mouse_movement_y = std::exchange(_queued_mouse_movement_y, 0);
