@@ -297,8 +297,11 @@ void world_edit::update_window_text() noexcept
 
 void world_edit::update_input() noexcept
 {
-   _hotkeys.update(ImGui::GetIO().WantCaptureMouse or
-                      _gizmo.want_capture_mouse() or _gizmos.want_capture_mouse(),
+   const bool gizmos_want_mouse =
+      (_gizmo.want_capture_mouse() or _gizmos.want_capture_mouse()) and
+      not _rotate_camera and not _pan_camera;
+
+   _hotkeys.update(ImGui::GetIO().WantCaptureMouse or gizmos_want_mouse,
                    ImGui::GetIO().WantCaptureKeyboard or
                       _gizmos.want_capture_keyboard());
 
