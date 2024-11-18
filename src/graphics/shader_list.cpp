@@ -55,6 +55,8 @@ auto tile_lights_clearCS() noexcept -> shader_def;
 auto depth_reduce_minmaxCS() noexcept -> shader_def;
 auto grid_overlayVS() noexcept -> shader_def;
 auto grid_overlayPS() noexcept -> shader_def;
+auto gizmo_coneVS() noexcept -> shader_def;
+auto gizmo_conePS() noexcept -> shader_def;
 auto tile_lightsVS() noexcept -> shader_def;
 auto tile_lightsPS() noexcept -> shader_def;
 auto imguiVS() noexcept -> shader_def;
@@ -114,6 +116,8 @@ shaders::tile_lights_clearCS(),
 shaders::depth_reduce_minmaxCS(),
 shaders::grid_overlayVS(),
 shaders::grid_overlayPS(),
+shaders::gizmo_coneVS(),
+shaders::gizmo_conePS(),
 shaders::tile_lightsVS(),
 shaders::tile_lightsPS(),
 shaders::imguiVS(),

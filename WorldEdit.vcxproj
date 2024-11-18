@@ -285,6 +285,8 @@
     <ClCompile Include="src\graphics\shaders\ai_overlay_applyVS.cpp" />
     <ClCompile Include="src\graphics\shaders\ai_overlay_shapeVS.cpp" />
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayPS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayVS.cpp" />
     <ClCompile Include="src\graphics\shaders\imguiPS.cpp" />

@@ -190,15 +190,10 @@ void world_edit::update()
 
    ui_draw_select_box();
 
-   for (const gizmo_draw_line& line : _gizmos.get_draw_lists().lines) {
-      _tool_visualizers.add_line_overlay(line.position_start, line.position_end,
-                                         line.color);
-   }
-
    try {
-      _renderer->draw_frame(_camera, _world, _interaction_targets,
-                            _world_draw_mask, _world_layers_draw_mask,
-                            _tool_visualizers, _object_classes,
+      _renderer->draw_frame(_camera, _world, _interaction_targets, _world_draw_mask,
+                            _world_layers_draw_mask, _tool_visualizers,
+                            _object_classes, _gizmos.get_draw_lists(),
                             {
                                .draw_terrain_grid = _draw_terrain_grid,
                                .draw_overlay_grid = _draw_overlay_grid,

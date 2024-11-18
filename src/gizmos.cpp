@@ -37,16 +37,24 @@ struct gizmo_position_state {
    bool submitted_last_frame = true;
 };
 
-constexpr uint32 x_color = 0xff'e5'40'40;
-constexpr uint32 y_color = 0xff'40'60'e5;
-constexpr uint32 z_color = 0xff'30'e5'30;
+constexpr float3 x_color = {0.7835378f, 0.051269457f, 0.051269457f};
+constexpr float3 y_color = {0.051269457f, 0.116970666f, 0.7835378f};
+constexpr float3 z_color = {0.029556835f, 0.7835378f, 0.029556835f};
 
-constexpr uint32 x_color_hover = 0xff'ff'80'80;
-constexpr uint32 y_color_hover = 0xff'80'a0'ff;
-constexpr uint32 z_color_hover = 0xff'90'ff'90;
+constexpr float3 x_color_hover = {1.0f, 0.2158605f, 0.2158605f};
+constexpr float3 y_color_hover = {0.2158605f, 0.3515326f, 1.0f};
+constexpr float3 z_color_hover = {0.27889428f, 1.0f, 0.27889428f};
+
+constexpr uint32 x_color_u32 = 0xff'e5'40'40;
+constexpr uint32 y_color_u32 = 0xff'40'60'e5;
+constexpr uint32 z_color_u32 = 0xff'30'e5'30;
+
+constexpr uint32 x_color_hover_u32 = 0xff'ff'80'80;
+constexpr uint32 y_color_hover_u32 = 0xff'80'a0'ff;
+constexpr uint32 z_color_hover_u32 = 0xff'90'ff'90;
 
 constexpr float position_gizmo_length = 0.1f;
-constexpr float position_gizmo_hit_pad = 0.00625f;
+constexpr float position_gizmo_hit_pad = 0.0075f;
 
 auto align_value(const float value, const float alignment) noexcept -> float
 {
@@ -71,8 +79,6 @@ struct gizmos::impl {
                const graphics::camera& camera, const float gizmo_scale) noexcept
    {
       draw_lists.cones.clear();
-      draw_lists.cylinders.clear();
-      draw_lists.boxes.clear();
       draw_lists.lines.clear();
 
       _cursor_rayWS = cursor_rayWS;
@@ -294,26 +300,46 @@ struct gizmos::impl {
             if (x_active) {
                draw_lists.lines.emplace_back(active_positionWS - x_axis * _axis_line_length,
                                              active_positionWS + x_axis * _axis_line_length,
-                                             x_color);
+                                             x_color_u32);
             }
             else if (y_active) {
                draw_lists.lines.emplace_back(active_positionWS - y_axis * _axis_line_length,
                                              active_positionWS + y_axis * _axis_line_length,
-                                             y_color);
+                                             y_color_u32);
             }
             else if (z_active) {
                draw_lists.lines.emplace_back(active_positionWS - z_axis * _axis_line_length,
                                              active_positionWS + z_axis * _axis_line_length,
-                                             z_color);
+                                             z_color_u32);
             }
          }
 
-         draw_lists.lines.emplace_back(positionWS, positionWS + x_axis * gizmo_length,
+         const float cone_length = gizmo_hit_pad * 2.0f;
+         const float line_length = gizmo_length - cone_length;
+
+         const float3 x_line_endWS = positionWS + x_axis * line_length;
+         const float3 y_line_endWS = positionWS + y_axis * line_length;
+         const float3 z_line_endWS = positionWS + z_axis * line_length;
+
+         draw_lists.cones.emplace_back(x_line_endWS, x_line_endWS + x_axis * cone_length,
+                                       gizmo_hit_pad,
                                        is_hover and x_active ? x_color_hover : x_color);
-         draw_lists.lines.emplace_back(positionWS, positionWS + y_axis * gizmo_length,
+         draw_lists.cones.emplace_back(y_line_endWS, y_line_endWS + y_axis * cone_length,
+                                       gizmo_hit_pad,
                                        is_hover and y_active ? y_color_hover : y_color);
-         draw_lists.lines.emplace_back(positionWS, positionWS + z_axis * gizmo_length,
+         draw_lists.cones.emplace_back(z_line_endWS, z_line_endWS + z_axis * cone_length,
+                                       gizmo_hit_pad,
                                        is_hover and z_active ? z_color_hover : z_color);
+
+         draw_lists.lines.emplace_back(positionWS, x_line_endWS,
+                                       is_hover and x_active ? x_color_hover_u32
+                                                             : x_color_u32);
+         draw_lists.lines.emplace_back(positionWS, y_line_endWS,
+                                       is_hover and y_active ? y_color_hover_u32
+                                                             : y_color_u32);
+         draw_lists.lines.emplace_back(positionWS, z_line_endWS,
+                                       is_hover and z_active ? z_color_hover_u32
+                                                             : z_color_u32);
       }
 
       _want_mouse_input |= (gizmo.state == position_state::hovered or

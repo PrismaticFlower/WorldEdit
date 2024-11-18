@@ -229,6 +229,8 @@
     <ClCompile Include="src\io\path.cpp" />
     <ClCompile Include="src\gizmos.cpp" />
     <ClCompile Include="src\gizmo.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

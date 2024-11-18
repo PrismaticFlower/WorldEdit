@@ -7,6 +7,7 @@
 #include "cull_objects.hpp"
 #include "dynamic_buffer_allocator.hpp"
 #include "geometric_shapes.hpp"
+#include "gizmos.hpp"
 #include "gpu/rhi.hpp"
 #include "imgui_renderer.hpp"
 #include "light_clusters.hpp"
@@ -46,6 +47,7 @@ namespace {
 // TODO: Put this somewhere.
 struct alignas(256) frame_constant_buffer {
    float4x4 view_projection_matrix;
+   float4x4 projection_matrix;
 
    float3 view_positionWS;
    float texture_scroll_duration;
@@ -85,6 +87,7 @@ struct renderer_impl final : renderer {
                    const world::active_layers active_layers,
                    const world::tool_visualizers& tool_visualizers,
                    const world::object_class_library& world_classes,
+                   const gizmo_draw_lists& gizmo_draw_lists,
                    const draw_frame_options frame_options,
                    const settings::graphics& settings) override;
 
@@ -188,6 +191,9 @@ private:
                                  const world::tool_visualizers& tool_visualizers,
                                  const settings::graphics& settings,
                                  gpu::graphics_command_list& command_list);
+
+   void draw_gizmos(const camera& camera, const gizmo_draw_lists& draw_lists,
+                    gpu::graphics_command_list& command_list);
 
    void build_world_mesh_list(gpu::copy_command_list& command_list,
                               const world::world& world,
@@ -381,6 +387,7 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                                const world::active_layers active_layers,
                                const world::tool_visualizers& tool_visualizers,
                                const world::object_class_library& world_classes,
+                               const gizmo_draw_lists& gizmo_draw_lists,
                                const draw_frame_options frame_options,
                                const settings::graphics& settings)
 {
@@ -545,6 +552,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    draw_interaction_targets(view_frustum, world, interaction_targets, world_classes,
                             tool_visualizers, settings, command_list);
+
+   draw_gizmos(camera, gizmo_draw_lists, command_list);
 
    _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
                            _root_signatures, _pipelines, _geometric_shapes,
@@ -1166,6 +1175,7 @@ void renderer_impl::update_frame_constant_buffer(const camera& camera,
 
    frame_constant_buffer constants{.view_projection_matrix =
                                       camera.view_projection_matrix(),
+                                   .projection_matrix = camera.projection_matrix(),
 
                                    .view_positionWS = camera.position(),
                                    .texture_scroll_duration =
@@ -3330,6 +3340,119 @@ void renderer_impl::draw_interaction_targets(
 
    for (const auto& [entity, color] : tool_visualizers.connection_highlights()) {
       draw_target(entity, color);
+   }
+}
+
+void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& draw_lists,
+                                gpu::graphics_command_list& command_list)
+{
+   for (const gizmo_draw_line& line : draw_lists.lines) {
+      _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
+                                        line.color);
+   }
+
+   for (const gizmo_draw_cone& cone : draw_lists.cones) {
+      const float3 startVS = camera.view_matrix() * cone.position_start;
+      const float3 endVS = camera.view_matrix() * cone.position_end;
+
+      const float3 normalVS =
+         normalize(float3{-(startVS.y - endVS.y), startVS.x - endVS.x, 0.0f});
+
+      const math::bounding_box bboxVS = {
+         .min = min(startVS - cone.base_radius, endVS),
+         .max = max(startVS + cone.base_radius, endVS),
+      };
+
+#if 0
+      const std::array<float3, 8> bbox_cornersVS = to_corners(bboxVS);
+
+
+      std::array<float3, 8> bbox_cornersWS;
+
+      for (std::size_t i = 0; i < bbox_cornersVS.size(); ++i) {
+         bbox_cornersWS[i] = camera.world_matrix() * bbox_cornersVS[i];
+      }
+
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[0], bbox_cornersWS[1],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[1], bbox_cornersWS[2],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[2], bbox_cornersWS[3],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[3], bbox_cornersWS[0],
+                                        0x3f'ff'ff'ff);
+
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[4], bbox_cornersWS[5],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[5], bbox_cornersWS[6],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[6], bbox_cornersWS[7],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[7], bbox_cornersWS[4],
+                                        0x3f'ff'ff'ff);
+
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[0], bbox_cornersWS[4],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[1], bbox_cornersWS[5],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[2], bbox_cornersWS[6],
+                                        0x3f'ff'ff'ff);
+      _meta_draw_batcher.add_line_solid(bbox_cornersWS[3], bbox_cornersWS[7],
+                                        0x3f'ff'ff'ff);
+#endif
+
+      struct gizmo_cone_constants {
+         float3 bbox_positionVS;
+         uint32 padding0;
+         float3 bbox_scaleVS;
+         uint32 padding1;
+
+         float3 startVS;
+         float base_radius;
+         float3 endVS;
+         uint32 padding2;
+
+         float3 color;
+      };
+
+      const gpu_virtual_address gizmo_cbv =
+         _dynamic_buffer_allocator
+            .allocate_and_copy(
+               gizmo_cone_constants{.bbox_positionVS = (bboxVS.max + bboxVS.min) * 0.5f,
+                                    .bbox_scaleVS = (bboxVS.max - bboxVS.min) * 0.5f,
+
+                                    .startVS = startVS,
+                                    .base_radius = cone.base_radius,
+                                    .endVS = endVS,
+                                    .color = cone.color})
+            .gpu_address;
+
+      command_list.set_graphics_root_signature(_root_signatures.gizmo_shape.get());
+      command_list.set_graphics_cbv(rs::gizmo_shape::shape_cbv, gizmo_cbv);
+      command_list.set_graphics_cbv(rs::gizmo_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.gizmo_cone.get());
+
+      const geometric_shape& shape = _geometric_shapes.cube();
+
+      command_list.ia_set_index_buffer(shape.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+
+      const float3 normalWS = float3x3{camera.world_matrix()} * normalVS;
+
+      const uint32 color =
+         utility::pack_srgb_bgra({cone.color.x, cone.color.y, cone.color.z, 1.0f});
+
+      (void)color;
+#if 0
+      _meta_draw_batcher.add_line_solid(cone.position_start, cone.position_end, color);
+      _meta_draw_batcher.add_line_solid(cone.position_start + cone.base_radius * normalWS,
+                                        cone.position_start - cone.base_radius * normalWS,
+                                        color);
+#endif
    }
 }
 

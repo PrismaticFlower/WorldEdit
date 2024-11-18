@@ -12,6 +12,7 @@
 namespace we {
 
 class output_stream;
+struct gizmo_draw_lists;
 
 }
 
@@ -95,6 +96,7 @@ struct renderer {
                            const world::active_layers active_layers,
                            const world::tool_visualizers& tool_visualizers,
                            const world::object_class_library& world_classes,
+                           const gizmo_draw_lists& gizmo_draw_lists,
                            const draw_frame_options frame_options,
                            const settings::graphics& settings) = 0;
 

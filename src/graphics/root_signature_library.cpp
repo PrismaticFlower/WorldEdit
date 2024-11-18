@@ -16,6 +16,7 @@ constexpr uint32 sky_mesh_cb_register = 6;
 constexpr uint32 water_cb_register = 7;
 constexpr uint32 thumbnail_camera_cb_register = 8;
 constexpr uint32 grid_overlay_cb_register = 9;
+constexpr uint32 gizmo_shape_cb_register = 10;
 
 constexpr uint32 terrain_patch_data_register = 0;
 constexpr uint32 meta_draw_instance_data_register = 1;
@@ -320,6 +321,22 @@ const gpu::root_signature_desc ai_overlay_apply_desc{
    .debug_name = "ai_overlay_apply_root_signature",
 };
 
+const gpu::root_signature_desc gizmo_shape_desc{
+   .parameters =
+      {
+         gpu::root_parameter{
+            .type = gpu::root_parameter_type::constant_buffer_view,
+            .shader_register = gizmo_shape_cb_register,
+         },
+
+         frame_constant_buffer,
+      },
+
+   .flags = {.allow_input_assembler_input_layout = true},
+
+   .debug_name = "gizmo_shape",
+};
+
 const gpu::root_signature_desc tile_lights_clear_desc{
    .parameters =
       {
@@ -428,6 +445,8 @@ root_signature_library::root_signature_library(gpu::device& device)
                        device.direct_queue};
    ai_overlay_apply = {device.create_root_signature(ai_overlay_apply_desc),
                        device.direct_queue};
+
+   gizmo_shape = {device.create_root_signature(gizmo_shape_desc), device.direct_queue};
 
    tile_lights_clear = {device.create_root_signature(tile_lights_clear_desc),
                         device.direct_queue};

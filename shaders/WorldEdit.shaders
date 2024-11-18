@@ -71,6 +71,9 @@ depth_reduce_minmaxCS
 grid_overlayVS .entrypoint = mainVS .file = grid_overlay.hlsl
 grid_overlayPS .entrypoint = mainPS .file = grid_overlay.hlsl
 
+gizmo_coneVS
+gizmo_conePS
+
 tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
 tile_lightsPS .entrypoint = mainPS .file = tile_lights.hlsl
 
