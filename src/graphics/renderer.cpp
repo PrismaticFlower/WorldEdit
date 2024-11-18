@@ -3355,51 +3355,10 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
       const float3 startVS = camera.view_matrix() * cone.position_start;
       const float3 endVS = camera.view_matrix() * cone.position_end;
 
-      const float3 normalVS =
-         normalize(float3{-(startVS.y - endVS.y), startVS.x - endVS.x, 0.0f});
-
       const math::bounding_box bboxVS = {
          .min = min(startVS - cone.base_radius, endVS),
          .max = max(startVS + cone.base_radius, endVS),
       };
-
-#if 0
-      const std::array<float3, 8> bbox_cornersVS = to_corners(bboxVS);
-
-
-      std::array<float3, 8> bbox_cornersWS;
-
-      for (std::size_t i = 0; i < bbox_cornersVS.size(); ++i) {
-         bbox_cornersWS[i] = camera.world_matrix() * bbox_cornersVS[i];
-      }
-
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[0], bbox_cornersWS[1],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[1], bbox_cornersWS[2],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[2], bbox_cornersWS[3],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[3], bbox_cornersWS[0],
-                                        0x3f'ff'ff'ff);
-
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[4], bbox_cornersWS[5],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[5], bbox_cornersWS[6],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[6], bbox_cornersWS[7],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[7], bbox_cornersWS[4],
-                                        0x3f'ff'ff'ff);
-
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[0], bbox_cornersWS[4],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[1], bbox_cornersWS[5],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[2], bbox_cornersWS[6],
-                                        0x3f'ff'ff'ff);
-      _meta_draw_batcher.add_line_solid(bbox_cornersWS[3], bbox_cornersWS[7],
-                                        0x3f'ff'ff'ff);
-#endif
 
       struct gizmo_cone_constants {
          float3 bbox_positionVS;
@@ -3440,19 +3399,6 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
       command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
 
       command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
-
-      const float3 normalWS = float3x3{camera.world_matrix()} * normalVS;
-
-      const uint32 color =
-         utility::pack_srgb_bgra({cone.color.x, cone.color.y, cone.color.z, 1.0f});
-
-      (void)color;
-#if 0
-      _meta_draw_batcher.add_line_solid(cone.position_start, cone.position_end, color);
-      _meta_draw_batcher.add_line_solid(cone.position_start + cone.base_radius * normalWS,
-                                        cone.position_start - cone.base_radius * normalWS,
-                                        color);
-#endif
    }
 }
 
