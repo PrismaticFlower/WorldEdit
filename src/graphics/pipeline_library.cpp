@@ -931,7 +931,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                      .rasterizer_state =
                         {
                            .cull_mode = gpu::cull_mode::back,
-                           .forced_sample_count = 16,
+                           .forced_sample_count = 8,
                         },
 
                      .render_target_count = 1,
