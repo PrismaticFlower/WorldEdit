@@ -450,6 +450,8 @@ struct rasterizer_state_desc {
 
    bool antialiased_lines = false;
    bool conservative_raster = false;
+
+   uint32 forced_sample_count = 0;
 };
 
 struct stencil_op_desc {

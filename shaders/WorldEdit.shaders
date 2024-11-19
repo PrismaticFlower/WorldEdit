@@ -74,6 +74,9 @@ grid_overlayPS .entrypoint = mainPS .file = grid_overlay.hlsl
 gizmo_coneVS
 gizmo_conePS
 
+gizmo_lineVS
+gizmo_linePS
+
 tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
 tile_lightsPS .entrypoint = mainPS .file = tile_lights.hlsl
 

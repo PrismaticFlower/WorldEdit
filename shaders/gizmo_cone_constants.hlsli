@@ -13,4 +13,4 @@ struct gizmo_cone_constants {
    float3 color;
 };
 
-ConstantBuffer<gizmo_cone_constants> cb_gizmo_cone : register(GIZMO_CONE_CB_REGISTER);
+ConstantBuffer<gizmo_cone_constants> cb_gizmo_cone : register(GIZMO_SHAPE_CB_REGISTER);

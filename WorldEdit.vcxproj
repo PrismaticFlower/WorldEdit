@@ -287,6 +287,8 @@
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_linePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_lineVS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayPS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayVS.cpp" />
     <ClCompile Include="src\graphics\shaders\imguiPS.cpp" />

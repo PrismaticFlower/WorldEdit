@@ -90,7 +90,7 @@ struct cone_intersector {
    float hy;
 };
 
-[earlydepthstencil] float4 main(input_vertex input) : SV_TARGET
+float4 main(input_vertex input) : SV_TARGET
 {
    float coverage = 0.0;
 

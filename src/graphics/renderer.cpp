@@ -3346,9 +3346,47 @@ void renderer_impl::draw_interaction_targets(
 void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& draw_lists,
                                 gpu::graphics_command_list& command_list)
 {
-   for (const gizmo_draw_line& line : draw_lists.lines) {
+   for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
       _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
                                         line.color);
+   }
+
+   for (const gizmo_draw_line& line : draw_lists.lines) {
+      const float3 startVS = camera.view_matrix() * line.position_start;
+      const float3 endVS = camera.view_matrix() * line.position_end;
+
+      const float3 normalVS =
+         normalize(float3{-(startVS.y - endVS.y), startVS.x - endVS.x, 0.0f});
+
+      struct gizmo_line_constants {
+         float3 startVS;
+         uint32 padding0;
+         float3 endVS;
+         uint32 padding1;
+
+         float3 extensionVS;
+         uint32 padding2;
+
+         float3 color;
+      };
+
+      const gpu_virtual_address gizmo_cbv =
+         _dynamic_buffer_allocator
+            .allocate_and_copy(
+               gizmo_line_constants{.startVS = startVS,
+                                    .endVS = endVS,
+                                    .extensionVS = normalVS * line.half_width,
+                                    .color = line.color})
+            .gpu_address;
+
+      command_list.set_graphics_root_signature(_root_signatures.gizmo_shape.get());
+      command_list.set_graphics_cbv(rs::gizmo_shape::shape_cbv, gizmo_cbv);
+      command_list.set_graphics_cbv(rs::gizmo_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.gizmo_line.get());
+
+      command_list.draw_instanced(6, 1, 0, 0);
    }
 
    for (const gizmo_draw_cone& cone : draw_lists.cones) {

@@ -80,6 +80,7 @@ struct gizmos::impl {
    {
       draw_lists.cones.clear();
       draw_lists.lines.clear();
+      draw_lists.pixel_lines.clear();
 
       _cursor_rayWS = cursor_rayWS;
       _input = button_input;
@@ -298,19 +299,19 @@ struct gizmos::impl {
             const float3 active_positionWS = gizmo.active_positionWS;
 
             if (x_active) {
-               draw_lists.lines.emplace_back(active_positionWS - x_axis * _axis_line_length,
-                                             active_positionWS + x_axis * _axis_line_length,
-                                             x_color_u32);
+               draw_lists.pixel_lines.emplace_back(active_positionWS - x_axis * _axis_line_length,
+                                                   active_positionWS + x_axis * _axis_line_length,
+                                                   x_color_u32);
             }
             else if (y_active) {
-               draw_lists.lines.emplace_back(active_positionWS - y_axis * _axis_line_length,
-                                             active_positionWS + y_axis * _axis_line_length,
-                                             y_color_u32);
+               draw_lists.pixel_lines.emplace_back(active_positionWS - y_axis * _axis_line_length,
+                                                   active_positionWS + y_axis * _axis_line_length,
+                                                   y_color_u32);
             }
             else if (z_active) {
-               draw_lists.lines.emplace_back(active_positionWS - z_axis * _axis_line_length,
-                                             active_positionWS + z_axis * _axis_line_length,
-                                             z_color_u32);
+               draw_lists.pixel_lines.emplace_back(active_positionWS - z_axis * _axis_line_length,
+                                                   active_positionWS + z_axis * _axis_line_length,
+                                                   z_color_u32);
             }
          }
 
@@ -331,15 +332,12 @@ struct gizmos::impl {
                                        gizmo_hit_pad,
                                        is_hover and z_active ? z_color_hover : z_color);
 
-         draw_lists.lines.emplace_back(positionWS, x_line_endWS,
-                                       is_hover and x_active ? x_color_hover_u32
-                                                             : x_color_u32);
-         draw_lists.lines.emplace_back(positionWS, y_line_endWS,
-                                       is_hover and y_active ? y_color_hover_u32
-                                                             : y_color_u32);
-         draw_lists.lines.emplace_back(positionWS, z_line_endWS,
-                                       is_hover and z_active ? z_color_hover_u32
-                                                             : z_color_u32);
+         draw_lists.lines.emplace_back(positionWS, x_line_endWS, gizmo_hit_pad * 0.25f,
+                                       is_hover and x_active ? x_color_hover : x_color);
+         draw_lists.lines.emplace_back(positionWS, y_line_endWS, gizmo_hit_pad * 0.25f,
+                                       is_hover and y_active ? y_color_hover : y_color);
+         draw_lists.lines.emplace_back(positionWS, z_line_endWS, gizmo_hit_pad * 0.25f,
+                                       is_hover and z_active ? z_color_hover : z_color);
       }
 
       _want_mouse_input |= (gizmo.state == position_state::hovered or

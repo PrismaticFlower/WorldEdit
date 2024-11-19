@@ -231,6 +231,8 @@
     <ClCompile Include="src\gizmo.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_linePS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_lineVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

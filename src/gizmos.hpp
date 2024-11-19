@@ -24,14 +24,23 @@ struct gizmo_draw_cone {
    float3 color;
 };
 
-struct gizmo_draw_line {
+struct gizmo_draw_pixel_line {
    float3 position_start;
    float3 position_end;
    uint32 color;
 };
 
+struct gizmo_draw_line {
+   float3 position_start;
+   float3 position_end;
+   float half_width;
+
+   float3 color;
+};
+
 struct gizmo_draw_lists {
    std::vector<gizmo_draw_cone> cones;
+   std::vector<gizmo_draw_pixel_line> pixel_lines;
    std::vector<gizmo_draw_line> lines;
 };
 

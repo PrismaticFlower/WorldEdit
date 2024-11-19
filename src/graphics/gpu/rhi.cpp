@@ -913,15 +913,18 @@ auto device::create_graphics_pipeline(const graphics_pipeline_desc& desc) -> pip
       .BlendState = blend_state,
       .SampleMask = 0xffffffffu,
       .RasterizerState =
-         {.FillMode = D3D12_FILL_MODE_SOLID,
-          .CullMode = static_cast<D3D12_CULL_MODE>(desc.rasterizer_state.cull_mode),
-          .FrontCounterClockwise = true,
-          .DepthBias = desc.rasterizer_state.depth_bias,
-          .DepthBiasClamp = desc.rasterizer_state.depth_bias_clamp,
-          .AntialiasedLineEnable = desc.rasterizer_state.antialiased_lines,
-          .ConservativeRaster = desc.rasterizer_state.conservative_raster
-                                   ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON
-                                   : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF},
+         {
+            .FillMode = D3D12_FILL_MODE_SOLID,
+            .CullMode = static_cast<D3D12_CULL_MODE>(desc.rasterizer_state.cull_mode),
+            .FrontCounterClockwise = true,
+            .DepthBias = desc.rasterizer_state.depth_bias,
+            .DepthBiasClamp = desc.rasterizer_state.depth_bias_clamp,
+            .AntialiasedLineEnable = desc.rasterizer_state.antialiased_lines,
+            .ForcedSampleCount = desc.rasterizer_state.forced_sample_count,
+            .ConservativeRaster = desc.rasterizer_state.conservative_raster
+                                     ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON
+                                     : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF,
+         },
       .DepthStencilState =
          {.DepthEnable = desc.depth_stencil_state.depth_test_enabled,
           .DepthWriteMask = desc.depth_stencil_state.write_depth

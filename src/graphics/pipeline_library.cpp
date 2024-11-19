@@ -921,6 +921,25 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                      .debug_name = "gizmo_cone"sv}),
                  device.direct_queue};
 
+   gizmo_line = {device.create_graphics_pipeline(
+                    {.root_signature = root_signature_library.gizmo_shape.get(),
+
+                     .vs_bytecode = shader_library["gizmo_lineVS"sv],
+                     .ps_bytecode = shader_library["gizmo_linePS"sv],
+
+                     .blend_state = blend_alpha,
+                     .rasterizer_state =
+                        {
+                           .cull_mode = gpu::cull_mode::back,
+                           .forced_sample_count = 16,
+                        },
+
+                     .render_target_count = 1,
+                     .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+
+                     .debug_name = "gizmo_cone"sv}),
+                 device.direct_queue};
+
    depth_reduce_minmax = {device.create_compute_pipeline(
                              {.root_signature =
                                  root_signature_library.depth_reduce_minmax.get(),
