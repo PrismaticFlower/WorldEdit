@@ -7,5 +7,10 @@ struct input_vertex {
 
 float4 main(input_vertex input) : SV_TARGET
 {
-   return float4(cb_gizmo_line.color, input.outer_edge > 0.0 ? countbits(input.coverage) * 0.125 : 1.0);
+   return float4(cb_gizmo_line.color, input.outer_edge > 0.0 ? countbits(input.coverage) * 0.0625 : 1.0);
+}
+
+float4 main_no_aa(input_vertex input) : SV_TARGET
+{
+   return float4(cb_gizmo_line.color, 1.0);
 }

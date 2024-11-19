@@ -233,6 +233,7 @@
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_linePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_lineVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_line_TIR_fallbackPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

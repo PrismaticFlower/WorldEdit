@@ -24,3 +24,6 @@
 
 -gpu_no_relaxed_format_casting
   Never make use of Relaxed Format Casting. Even if it is supported by the GPU.
+
+-gpu_no_target_independent_rasterization
+  Never make use of Target Independent Rasterization. Even if it is supported by the GPU.

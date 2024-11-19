@@ -1191,6 +1191,9 @@ struct device_desc {
 
    /// @brief Force the device to not make use of Casting Fully Typed Format.
    bool force_no_casting_fully_typed_format = false;
+
+   /// @brief Force the device to report target independent rasterization as unsupported.
+   bool force_no_target_independent_rasterization = false;
 };
 
 /// Device Definitions ///
@@ -1317,6 +1320,8 @@ public:
    [[nodiscard]] bool supports_open_existing_heap() const noexcept;
 
    [[nodiscard]] bool supports_write_buffer_immediate() const noexcept;
+
+   [[nodiscard]] bool supports_target_independent_rasterization() const noexcept;
 
    /// Constructors/Destructor ///
 

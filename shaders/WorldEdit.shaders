@@ -76,6 +76,7 @@ gizmo_conePS
 
 gizmo_lineVS
 gizmo_linePS
+gizmo_line_TIR_fallbackPS .entrypoint = main_no_aa .file = gizmo_linePS.hlsl
 
 tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
 tile_lightsPS .entrypoint = mainPS .file = tile_lights.hlsl

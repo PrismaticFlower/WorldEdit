@@ -54,8 +54,8 @@ auto create_dxgi_factory(const device_desc& device_desc) -> com_ptr<IDXGIFactory
    return factory;
 }
 
-auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
-   -> com_ptr<ID3D12Device10>
+auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc,
+                         com_ptr<IDXGIAdapter4>& out_adapter) -> com_ptr<ID3D12Device10>
 {
    if (device_desc.enable_debug_layer) {
       com_ptr<ID3D12Debug5> debug;
@@ -165,6 +165,8 @@ auto create_d3d12_device(IDXGIFactory7& factory, const device_desc& device_desc)
       if (unsupported) continue;
 
       debug_ouput.write_ln("Requirements met. Using GPU.");
+
+      out_adapter = std::move(adapter);
 
       return device;
    }
@@ -286,6 +288,12 @@ bool check_casting_fully_typed_format_supported(ID3D12Device& device) noexcept
    return options3.CastingFullyTypedFormatSupported;
 }
 
+bool check_target_independent_rasterization_supported(IUnknown& adapter) noexcept
+{
+   return D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_1, IID_ID3D12Device,
+                            nullptr) == S_FALSE;
+}
+
 }
 
 struct command_queue_init {
@@ -297,7 +305,7 @@ struct command_queue_init {
 struct device_state {
    device_state(const device_desc& desc)
       : factory{create_dxgi_factory(desc)},
-        device{create_d3d12_device(*factory, desc)},
+        device{create_d3d12_device(*factory, desc, adapter)},
         supports_enhanced_barriers{desc.force_legacy_barriers
                                       ? false
                                       : check_enhanced_barriers_support(*device)},
@@ -314,11 +322,16 @@ struct device_state {
         supports_casting_fully_typed_format{
            desc.force_no_casting_fully_typed_format
               ? false
-              : check_casting_fully_typed_format_supported(*device)}
+              : check_casting_fully_typed_format_supported(*device)},
+        supports_target_independent_rasterization{
+           desc.force_no_target_independent_rasterization
+              ? false
+              : check_target_independent_rasterization_supported(*adapter)}
    {
    }
 
    com_ptr<IDXGIFactory7> factory;
+   com_ptr<IDXGIAdapter4> adapter;
    com_ptr<ID3D12Device10> device;
 
    com_ptr<ID3D12Fence> frame_fence =
@@ -349,6 +362,7 @@ struct device_state {
    const bool supports_open_existing_heap : 1;
    const bool supports_write_buffer_immediate : 1;
    const bool supports_casting_fully_typed_format : 1;
+   const bool supports_target_independent_rasterization : 1;
 };
 
 struct swap_chain_state {
@@ -1601,6 +1615,11 @@ void device::release_query_heap(query_heap_handle query_heap)
 [[msvc::forceinline]] bool device::supports_write_buffer_immediate() const noexcept
 {
    return state->supports_write_buffer_immediate;
+}
+
+[[msvc::forceinline]] bool device::supports_target_independent_rasterization() const noexcept
+{
+   return state->supports_target_independent_rasterization;
 }
 
 swap_chain::swap_chain() = default;

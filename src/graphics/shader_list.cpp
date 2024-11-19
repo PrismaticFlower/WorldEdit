@@ -59,6 +59,7 @@ auto gizmo_coneVS() noexcept -> shader_def;
 auto gizmo_conePS() noexcept -> shader_def;
 auto gizmo_lineVS() noexcept -> shader_def;
 auto gizmo_linePS() noexcept -> shader_def;
+auto gizmo_line_TIR_fallbackPS() noexcept -> shader_def;
 auto tile_lightsVS() noexcept -> shader_def;
 auto tile_lightsPS() noexcept -> shader_def;
 auto imguiVS() noexcept -> shader_def;
@@ -122,6 +123,7 @@ shaders::gizmo_coneVS(),
 shaders::gizmo_conePS(),
 shaders::gizmo_lineVS(),
 shaders::gizmo_linePS(),
+shaders::gizmo_line_TIR_fallbackPS(),
 shaders::tile_lightsVS(),
 shaders::tile_lightsPS(),
 shaders::imguiVS(),

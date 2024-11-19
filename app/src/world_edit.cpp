@@ -67,7 +67,9 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
      _renderer_never_use_write_buffer_immediate{
         command_line.get_flag("-gpu_no_write_buffer_immediate")},
      _renderer_never_use_relaxed_format_casting{
-        command_line.get_flag("-gpu_no_relaxed_format_casting")}
+        command_line.get_flag("-gpu_no_relaxed_format_casting")},
+     _renderer_never_use_target_independent_rasterization{
+        command_line.get_flag("-gpu_no_target_independent_rasterization")}
 {
    async::task<settings::settings> settings_load = _thread_pool->exec([]() {
       try {
@@ -4093,7 +4095,8 @@ auto world_edit::get_renderer_init_params() noexcept -> graphics::renderer_init
            .never_use_shader_model_6_6 = _renderer_never_use_shader_model_6_6,
            .never_use_open_existing_heap = _renderer_never_use_open_existing_heap,
            .never_use_write_buffer_immediate = _renderer_never_use_write_buffer_immediate,
-           .never_use_relaxed_format_casting =
-              _renderer_never_use_relaxed_format_casting};
+           .never_use_relaxed_format_casting = _renderer_never_use_relaxed_format_casting,
+           .never_use_target_independent_rasterization =
+              _renderer_never_use_target_independent_rasterization};
 }
 }
