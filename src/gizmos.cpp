@@ -291,26 +291,32 @@ struct gizmos::impl {
          const bool y_active = gizmo.active_widget == position_widget::y;
          const bool z_active = gizmo.active_widget == position_widget::z;
 
-         const float3 x_axis = gizmo.rotation * float3{1.0f, 0.0f, 0.0f};
-         const float3 y_axis = gizmo.rotation * float3{0.0f, 1.0f, 0.0f};
-         const float3 z_axis = gizmo.rotation * float3{0.0f, 0.0f, 1.0f};
+         const float3 x_axisWS = gizmo.rotation * float3{1.0f, 0.0f, 0.0f};
+         const float3 y_axisWS = gizmo.rotation * float3{0.0f, 1.0f, 0.0f};
+         const float3 z_axisWS = gizmo.rotation * float3{0.0f, 0.0f, 1.0f};
 
          if (is_active) {
             const float3 active_positionWS = gizmo.active_positionWS;
 
             if (x_active) {
-               draw_lists.pixel_lines.emplace_back(active_positionWS - x_axis * _axis_line_length,
-                                                   active_positionWS + x_axis * _axis_line_length,
+               draw_lists.pixel_lines.emplace_back(active_positionWS -
+                                                      x_axisWS * _axis_line_length,
+                                                   active_positionWS +
+                                                      x_axisWS * _axis_line_length,
                                                    x_color_u32);
             }
             else if (y_active) {
-               draw_lists.pixel_lines.emplace_back(active_positionWS - y_axis * _axis_line_length,
-                                                   active_positionWS + y_axis * _axis_line_length,
+               draw_lists.pixel_lines.emplace_back(active_positionWS -
+                                                      y_axisWS * _axis_line_length,
+                                                   active_positionWS +
+                                                      y_axisWS * _axis_line_length,
                                                    y_color_u32);
             }
             else if (z_active) {
-               draw_lists.pixel_lines.emplace_back(active_positionWS - z_axis * _axis_line_length,
-                                                   active_positionWS + z_axis * _axis_line_length,
+               draw_lists.pixel_lines.emplace_back(active_positionWS -
+                                                      z_axisWS * _axis_line_length,
+                                                   active_positionWS +
+                                                      z_axisWS * _axis_line_length,
                                                    z_color_u32);
             }
          }
@@ -318,17 +324,20 @@ struct gizmos::impl {
          const float cone_length = gizmo_hit_pad * 2.0f;
          const float line_length = gizmo_length - cone_length;
 
-         const float3 x_line_endWS = positionWS + x_axis * line_length;
-         const float3 y_line_endWS = positionWS + y_axis * line_length;
-         const float3 z_line_endWS = positionWS + z_axis * line_length;
+         const float3 x_line_endWS = positionWS + x_axisWS * line_length;
+         const float3 y_line_endWS = positionWS + y_axisWS * line_length;
+         const float3 z_line_endWS = positionWS + z_axisWS * line_length;
 
-         draw_lists.cones.emplace_back(x_line_endWS, x_line_endWS + x_axis * cone_length,
+         draw_lists.cones.emplace_back(x_line_endWS,
+                                       x_line_endWS + x_axisWS * cone_length,
                                        gizmo_hit_pad,
                                        is_hover and x_active ? x_color_hover : x_color);
-         draw_lists.cones.emplace_back(y_line_endWS, y_line_endWS + y_axis * cone_length,
+         draw_lists.cones.emplace_back(y_line_endWS,
+                                       y_line_endWS + y_axisWS * cone_length,
                                        gizmo_hit_pad,
                                        is_hover and y_active ? y_color_hover : y_color);
-         draw_lists.cones.emplace_back(z_line_endWS, z_line_endWS + z_axis * cone_length,
+         draw_lists.cones.emplace_back(z_line_endWS,
+                                       z_line_endWS + z_axisWS * cone_length,
                                        gizmo_hit_pad,
                                        is_hover and z_active ? z_color_hover : z_color);
 
