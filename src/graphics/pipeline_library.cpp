@@ -943,6 +943,28 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .debug_name = "gizmo_line"sv}),
        device.direct_queue};
 
+   gizmo_quad =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.gizmo_shape.get(),
+
+           .vs_bytecode = shader_library["gizmo_quadVS"sv],
+           .ps_bytecode =
+              shader_library[device.supports_target_independent_rasterization() ? "gizmo_quadPS"sv : "gizmo_quad_TIR_fallbackPS"],
+
+           .blend_state = blend_alpha,
+           .rasterizer_state =
+              {
+                 .cull_mode = gpu::cull_mode::none,
+                 .forced_sample_count =
+                    device.supports_target_independent_rasterization() ? 16u : 0u,
+              },
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+
+           .debug_name = "gizmo_quad"sv}),
+       device.direct_queue};
+
    depth_reduce_minmax = {device.create_compute_pipeline(
                              {.root_signature =
                                  root_signature_library.depth_reduce_minmax.get(),

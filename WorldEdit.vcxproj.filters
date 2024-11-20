@@ -234,6 +234,9 @@
     <ClCompile Include="src\graphics\shaders\gizmo_linePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_lineVS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_line_TIR_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_quad_TIR_fallbackPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_quadPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_quadVS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

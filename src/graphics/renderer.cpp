@@ -3440,6 +3440,43 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
 
       command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
    }
+
+   for (const gizmo_draw_quad& quad : draw_lists.quads) {
+      struct gizmo_quad_constants {
+         float3 corner0WS;
+         uint32 padding0;
+         float3 corner1WS;
+         uint32 padding1;
+         float3 corner2WS;
+         uint32 padding2;
+         float3 corner3WS;
+         float outline_width;
+
+         float3 color;
+         float inner_alpha;
+      };
+
+      const gpu_virtual_address gizmo_cbv =
+         _dynamic_buffer_allocator
+            .allocate_and_copy(
+               gizmo_quad_constants{.corner0WS = quad.cornersWS[0],
+                                    .corner1WS = quad.cornersWS[1],
+                                    .corner2WS = quad.cornersWS[2],
+                                    .corner3WS = quad.cornersWS[3],
+                                    .outline_width = (1.0f - quad.outline_width) * 0.5f,
+                                    .color = quad.color,
+                                    .inner_alpha = quad.inner_alpha})
+            .gpu_address;
+
+      command_list.set_graphics_root_signature(_root_signatures.gizmo_shape.get());
+      command_list.set_graphics_cbv(rs::gizmo_shape::shape_cbv, gizmo_cbv);
+      command_list.set_graphics_cbv(rs::gizmo_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.gizmo_quad.get());
+
+      command_list.draw_instanced(6, 1, 0, 0);
+   }
 }
 
 void renderer_impl::build_world_mesh_list(

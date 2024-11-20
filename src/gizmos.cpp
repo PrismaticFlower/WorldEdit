@@ -65,6 +65,8 @@ constexpr uint32 z_color_hover_u32 = 0xff'90'ff'90;
 constexpr float position_gizmo_length = 0.1f;
 constexpr float position_gizmo_hit_pad = 0.0075f;
 constexpr float position_gizmo_plane_cull_angle = 0.1f;
+constexpr float position_gizmo_plane_outline_width = 0.2f;
+constexpr float position_gizmo_plane_inner_alpha = 0.125f;
 
 auto align_value(const float value, const float alignment) noexcept -> float
 {
@@ -91,6 +93,7 @@ struct gizmos::impl {
       draw_lists.cones.clear();
       draw_lists.lines.clear();
       draw_lists.pixel_lines.clear();
+      draw_lists.quads.clear();
 
       _cursor_rayWS = cursor_rayWS;
       _input = button_input;
@@ -486,115 +489,82 @@ struct gizmos::impl {
          draw_lists.lines.emplace_back(positionWS, z_line_endWS, gizmo_hit_pad * 0.25f,
                                        is_hover and z_active ? z_color_hover : z_color);
 
-         const float3 yz_minGS = {0.0f, plane_selector_padding, plane_selector_padding};
-         const float3 yz_maxGS =
-            yz_minGS + float3{0.0f, plane_selector_length, plane_selector_length};
-
-         const float3 xz_minGS = {plane_selector_padding, 0.0f, plane_selector_padding};
-         const float3 xz_maxGS =
-            xz_minGS + float3{plane_selector_length, 0.0f, plane_selector_length};
-
-         const float3 xy_minGS = {plane_selector_padding, plane_selector_padding, 0.0f};
-         const float3 xy_maxGS =
-            xy_minGS + float3{plane_selector_length, plane_selector_length, 0.0f};
-
-         const float3 yz_quadGS[4] = {
-            float3{0.0f, yz_minGS.y, yz_minGS.z},
-            float3{0.0f, yz_minGS.y, yz_maxGS.z},
-            float3{0.0f, yz_maxGS.y, yz_maxGS.z},
-            float3{0.0f, yz_maxGS.y, yz_minGS.z},
-         };
-
-         const float3 yz_quadWS[4] = {
-            gizmo.rotation * yz_quadGS[0] + positionWS,
-            gizmo.rotation * yz_quadGS[1] + positionWS,
-            gizmo.rotation * yz_quadGS[2] + positionWS,
-            gizmo.rotation * yz_quadGS[3] + positionWS,
-         };
-
-         const float3 xz_quadGS[4] = {
-            float3{xz_minGS.x, 0.0f, xz_minGS.z},
-            float3{xz_minGS.x, 0.0f, xz_maxGS.z},
-            float3{xz_maxGS.x, 0.0f, xz_maxGS.z},
-            float3{xz_maxGS.x, 0.0f, xz_minGS.z},
-         };
-
-         const float3 xz_quadWS[4] = {
-            gizmo.rotation * xz_quadGS[0] + positionWS,
-            gizmo.rotation * xz_quadGS[1] + positionWS,
-            gizmo.rotation * xz_quadGS[2] + positionWS,
-            gizmo.rotation * xz_quadGS[3] + positionWS,
-         };
-
-         const float3 xy_quadGS[4] = {
-            float3{xy_minGS.x, xy_minGS.y, 0.0f},
-            float3{xy_maxGS.x, xy_minGS.y, 0.0f},
-            float3{xy_maxGS.x, xy_maxGS.y, 0.0f},
-            float3{xy_minGS.x, xy_maxGS.y, 0.0f},
-         };
-
-         const float3 xy_quadWS[4] = {
-            gizmo.rotation * xy_quadGS[0] + positionWS,
-            gizmo.rotation * xy_quadGS[1] + positionWS,
-            gizmo.rotation * xy_quadGS[2] + positionWS,
-            gizmo.rotation * xy_quadGS[3] + positionWS,
-         };
+         const float outline_width = position_gizmo_plane_outline_width;
+         const float inner_alpha = position_gizmo_plane_inner_alpha;
 
          if (yz_plane_visible) {
-            draw_lists.pixel_lines.emplace_back(yz_quadWS[0], yz_quadWS[1],
-                                                is_hover and yz_active
-                                                   ? x_color_hover_u32
-                                                   : x_color_u32);
-            draw_lists.pixel_lines.emplace_back(yz_quadWS[1], yz_quadWS[2],
-                                                is_hover and yz_active
-                                                   ? x_color_hover_u32
-                                                   : x_color_u32);
-            draw_lists.pixel_lines.emplace_back(yz_quadWS[2], yz_quadWS[3],
-                                                is_hover and yz_active
-                                                   ? x_color_hover_u32
-                                                   : x_color_u32);
-            draw_lists.pixel_lines.emplace_back(yz_quadWS[3], yz_quadWS[0],
-                                                is_hover and yz_active
-                                                   ? x_color_hover_u32
-                                                   : x_color_u32);
+            const float3 yz_minGS = {0.0f, plane_selector_padding,
+                                     plane_selector_padding};
+            const float3 yz_maxGS =
+               yz_minGS + float3{0.0f, plane_selector_length, plane_selector_length};
+
+            const std::array<float3, 4> yz_quadGS = {
+               float3{0.0f, yz_minGS.y, yz_minGS.z},
+               float3{0.0f, yz_minGS.y, yz_maxGS.z},
+               float3{0.0f, yz_maxGS.y, yz_maxGS.z},
+               float3{0.0f, yz_maxGS.y, yz_minGS.z},
+            };
+
+            const std::array<float3, 4> yz_quadWS = {
+               gizmo.rotation * yz_quadGS[0] + positionWS,
+               gizmo.rotation * yz_quadGS[1] + positionWS,
+               gizmo.rotation * yz_quadGS[2] + positionWS,
+               gizmo.rotation * yz_quadGS[3] + positionWS,
+            };
+
+            draw_lists.quads.emplace_back(yz_quadWS,
+                                          is_hover and yz_active ? x_color_hover : x_color,
+                                          outline_width, inner_alpha);
          }
 
          if (xz_plane_visible) {
-            draw_lists.pixel_lines.emplace_back(xz_quadWS[0], xz_quadWS[1],
-                                                is_hover and xz_active
-                                                   ? y_color_hover_u32
-                                                   : y_color_u32);
-            draw_lists.pixel_lines.emplace_back(xz_quadWS[1], xz_quadWS[2],
-                                                is_hover and xz_active
-                                                   ? y_color_hover_u32
-                                                   : y_color_u32);
-            draw_lists.pixel_lines.emplace_back(xz_quadWS[2], xz_quadWS[3],
-                                                is_hover and xz_active
-                                                   ? y_color_hover_u32
-                                                   : y_color_u32);
-            draw_lists.pixel_lines.emplace_back(xz_quadWS[3], xz_quadWS[0],
-                                                is_hover and xz_active
-                                                   ? y_color_hover_u32
-                                                   : y_color_u32);
+            const float3 xz_minGS = {plane_selector_padding, 0.0f,
+                                     plane_selector_padding};
+            const float3 xz_maxGS =
+               xz_minGS + float3{plane_selector_length, 0.0f, plane_selector_length};
+
+            const std::array<float3, 4> xz_quadGS = {
+               float3{xz_minGS.x, 0.0f, xz_minGS.z},
+               float3{xz_minGS.x, 0.0f, xz_maxGS.z},
+               float3{xz_maxGS.x, 0.0f, xz_maxGS.z},
+               float3{xz_maxGS.x, 0.0f, xz_minGS.z},
+            };
+
+            const std::array<float3, 4> xz_quadWS = {
+               gizmo.rotation * xz_quadGS[0] + positionWS,
+               gizmo.rotation * xz_quadGS[1] + positionWS,
+               gizmo.rotation * xz_quadGS[2] + positionWS,
+               gizmo.rotation * xz_quadGS[3] + positionWS,
+            };
+
+            draw_lists.quads.emplace_back(xz_quadWS,
+                                          is_hover and xz_active ? y_color_hover : y_color,
+                                          outline_width, inner_alpha);
          }
 
          if (xy_plane_visible) {
-            draw_lists.pixel_lines.emplace_back(xy_quadWS[0], xy_quadWS[1],
-                                                is_hover and xy_active
-                                                   ? z_color_hover_u32
-                                                   : z_color_u32);
-            draw_lists.pixel_lines.emplace_back(xy_quadWS[1], xy_quadWS[2],
-                                                is_hover and xy_active
-                                                   ? z_color_hover_u32
-                                                   : z_color_u32);
-            draw_lists.pixel_lines.emplace_back(xy_quadWS[2], xy_quadWS[3],
-                                                is_hover and xy_active
-                                                   ? z_color_hover_u32
-                                                   : z_color_u32);
-            draw_lists.pixel_lines.emplace_back(xy_quadWS[3], xy_quadWS[0],
-                                                is_hover and xy_active
-                                                   ? z_color_hover_u32
-                                                   : z_color_u32);
+            const float3 xy_minGS = {plane_selector_padding,
+                                     plane_selector_padding, 0.0f};
+            const float3 xy_maxGS =
+               xy_minGS + float3{plane_selector_length, plane_selector_length, 0.0f};
+
+            const std::array<float3, 4> xy_quadGS = {
+               float3{xy_minGS.x, xy_minGS.y, 0.0f},
+               float3{xy_maxGS.x, xy_minGS.y, 0.0f},
+               float3{xy_maxGS.x, xy_maxGS.y, 0.0f},
+               float3{xy_minGS.x, xy_maxGS.y, 0.0f},
+            };
+
+            const std::array<float3, 4> xy_quadWS = {
+               gizmo.rotation * xy_quadGS[0] + positionWS,
+               gizmo.rotation * xy_quadGS[1] + positionWS,
+               gizmo.rotation * xy_quadGS[2] + positionWS,
+               gizmo.rotation * xy_quadGS[3] + positionWS,
+            };
+
+            draw_lists.quads.emplace_back(xy_quadWS,
+                                          is_hover and xy_active ? z_color_hover : z_color,
+                                          outline_width, inner_alpha);
          }
       }
 

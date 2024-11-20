@@ -4,6 +4,7 @@
 #include "types.hpp"
 #include "utility/implementation_storage.hpp"
 
+#include <array>
 #include <string_view>
 #include <vector>
 
@@ -38,10 +39,19 @@ struct gizmo_draw_line {
    float3 color;
 };
 
+struct gizmo_draw_quad {
+   std::array<float3, 4> cornersWS;
+
+   float3 color;
+   float outline_width;
+   float inner_alpha;
+};
+
 struct gizmo_draw_lists {
    std::vector<gizmo_draw_cone> cones;
    std::vector<gizmo_draw_pixel_line> pixel_lines;
    std::vector<gizmo_draw_line> lines;
+   std::vector<gizmo_draw_quad> quads;
 };
 
 struct gizmo_button_input {
