@@ -64,7 +64,7 @@ constexpr uint32 z_color_hover_u32 = 0xff'90'ff'90;
 
 constexpr float position_gizmo_length = 0.1f;
 constexpr float position_gizmo_hit_pad = 0.0075f;
-constexpr float position_gizmo_plane_cull_angle = 0.1f;
+constexpr float position_gizmo_plane_cull_angle = 0.15f;
 constexpr float position_gizmo_plane_outline_width = 0.2f;
 constexpr float position_gizmo_plane_inner_alpha = 0.125f;
 
@@ -138,7 +138,7 @@ struct gizmos::impl {
       const float3 ray_originWS = _cursor_rayWS.origin;
       const float3 ray_directionWS = _cursor_rayWS.direction;
       const float3 view_directionGS =
-         normalize(gizmo.rotation * (_camera_positionWS - positionWS));
+         normalize(conjugate(gizmo.rotation) * (_camera_positionWS - positionWS));
 
       const bool yz_plane_visible =
          fabs(dot(view_directionGS, float3{1.0f, 0.0f, 0.0f})) >
