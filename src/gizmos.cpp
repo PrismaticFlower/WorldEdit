@@ -20,7 +20,9 @@ enum class position_widget : uint8 {
 
    yz,
    xz,
-   xy
+   xy,
+
+   xyz
 };
 enum class position_state : uint8 { idle, hovered, active, locked };
 
@@ -62,6 +64,8 @@ constexpr uint32 x_color_hover_u32 = 0xff'ff'80'80;
 constexpr uint32 y_color_hover_u32 = 0xff'80'a0'ff;
 constexpr uint32 z_color_hover_u32 = 0xff'90'ff'90;
 
+constexpr float xyz_hover_alpha = 0.25f;
+
 constexpr float position_gizmo_length = 0.1f;
 constexpr float position_gizmo_hit_pad = 0.0075f;
 constexpr float position_gizmo_plane_cull_angle = 0.15f;
@@ -71,6 +75,37 @@ constexpr float position_gizmo_plane_inner_alpha = 0.125f;
 auto align_value(const float value, const float alignment) noexcept -> float
 {
    return std::round(value / alignment) * alignment;
+}
+
+auto xyz_intersects(const float3& ray_originGS, const float3& ray_directionGS,
+                    const float3& camera_upGS, const float3& camera_rightGS,
+                    const float length) noexcept -> float
+{
+   const float half_length = length * 0.5f;
+
+   const std::array<float3, 2> xyz_lineGS = {
+      camera_rightGS * half_length,
+      -camera_rightGS * half_length,
+   };
+
+   const std::array<float3, 4> xyz_quadGS{
+      xyz_lineGS[0] + camera_upGS * half_length,
+      xyz_lineGS[1] + camera_upGS * half_length,
+      xyz_lineGS[1] - camera_upGS * half_length,
+      xyz_lineGS[0] - camera_upGS * half_length,
+   };
+
+   float hit = triIntersect(ray_originGS, ray_directionGS, xyz_quadGS[0],
+                            xyz_quadGS[1], xyz_quadGS[2])
+                  .x;
+
+   if (hit >= 0.0f) return hit;
+
+   hit = triIntersect(ray_originGS, ray_directionGS, xyz_quadGS[3],
+                      xyz_quadGS[0], xyz_quadGS[2])
+            .x;
+
+   return hit;
 }
 
 }
@@ -105,6 +140,9 @@ struct gizmos::impl {
 
       _gizmo_scale = gizmo_scale * camera.projection_matrix()[0].x;
       _camera_positionWS = camera.position();
+      _camera_forwardWS = camera.forward();
+      _camera_upWS = camera.up();
+      _camera_rightWS = camera.right();
       _axis_line_length = camera.far_clip();
 
       _closest_gizmo = _next_frame_closest_gizmo;
@@ -202,6 +240,12 @@ struct gizmos::impl {
                                   plane_selector_half_length, 0.0f})
                : -1.0f;
 
+         const float xyz_hit =
+            xyz_intersects(ray_originGS, ray_directionGS,
+                           conjugate(gizmo.rotation) * _camera_upWS,
+                           conjugate(gizmo.rotation) * _camera_rightWS,
+                           plane_selector_length);
+
          gizmo.active_widget = position_widget::none;
          gizmo.state = position_state::idle;
 
@@ -241,6 +285,12 @@ struct gizmos::impl {
             nearest = xy_hit;
             gizmo.state = position_state::hovered;
             gizmo.active_widget = position_widget::xy;
+         }
+
+         if (xyz_hit > 0.0f) {
+            nearest = xyz_hit;
+            gizmo.state = position_state::hovered;
+            gizmo.active_widget = position_widget::xyz;
          }
 
          if (gizmo.state == position_state::hovered) {
@@ -301,6 +351,9 @@ struct gizmos::impl {
             case position_widget::xy: {
                plane_normalGS = {0.0f, 0.0f, 1.0f};
             } break;
+            case position_widget::xyz: {
+               plane_normalGS = conjugate(gizmo.rotation) * _camera_forwardWS;
+            } break;
             }
 
             const float4 planeGS = make_plane_from_point(positionGS, plane_normalGS);
@@ -329,6 +382,9 @@ struct gizmos::impl {
                else if (gizmo.active_widget == position_widget::xy) {
                   gizmo.activation_offsetGS.x = positionGS.x - hit_positionGS.x;
                   gizmo.activation_offsetGS.y = positionGS.y - hit_positionGS.y;
+               }
+               else if (gizmo.active_widget == position_widget::xyz) {
+                  gizmo.activation_offsetGS = positionGS - hit_positionGS;
                }
             }
          }
@@ -371,6 +427,9 @@ struct gizmos::impl {
          } break;
          case position_widget::xy: {
             plane_normalGS = {0.0f, 0.0f, 1.0f};
+         } break;
+         case position_widget::xyz: {
+            plane_normalGS = conjugate(gizmo.rotation) * _camera_forwardWS;
          } break;
          }
 
@@ -415,6 +474,14 @@ struct gizmos::impl {
                new_positionGS.y = align ? align_value(hit_positionGS.y, alignment)
                                         : hit_positionGS.y;
             }
+            else if (gizmo.active_widget == position_widget::xyz) {
+               new_positionGS.x = align ? align_value(hit_positionGS.x, alignment)
+                                        : hit_positionGS.x;
+               new_positionGS.y = align ? align_value(hit_positionGS.y, alignment)
+                                        : hit_positionGS.y;
+               new_positionGS.z = align ? align_value(hit_positionGS.z, alignment)
+                                        : hit_positionGS.z;
+            }
 
             positionWS = gizmo.rotation * new_positionGS;
          }
@@ -429,6 +496,7 @@ struct gizmos::impl {
          const bool yz_active = gizmo.active_widget == position_widget::yz;
          const bool xz_active = gizmo.active_widget == position_widget::xz;
          const bool xy_active = gizmo.active_widget == position_widget::xy;
+         const bool xyz_active = gizmo.active_widget == position_widget::xyz;
 
          const float3 x_axisWS = gizmo.rotation * float3{1.0f, 0.0f, 0.0f};
          const float3 y_axisWS = gizmo.rotation * float3{0.0f, 1.0f, 0.0f};
@@ -566,6 +634,24 @@ struct gizmos::impl {
                                           is_hover and xy_active ? z_color_hover : z_color,
                                           outline_width, inner_alpha);
          }
+
+#
+         const std::array<float3, 2> xyz_lineWS = {
+            positionWS + _camera_rightWS * plane_selector_length * 0.5f,
+            positionWS - _camera_rightWS * plane_selector_length * 0.5f,
+         };
+
+         const std::array<float3, 4> xyz_quadWS = {
+            xyz_lineWS[0] + _camera_upWS * plane_selector_length * 0.5f,
+            xyz_lineWS[1] + _camera_upWS * plane_selector_length * 0.5f,
+            xyz_lineWS[1] - _camera_upWS * plane_selector_length * 0.5f,
+            xyz_lineWS[0] - _camera_upWS * plane_selector_length * 0.5f,
+         };
+
+         draw_lists.quads.emplace_back(xyz_quadWS, float3{1.0f, 1.0f, 1.0f},
+                                       outline_width,
+                                       is_hover and xyz_active ? xyz_hover_alpha
+                                                               : inner_alpha);
       }
 
       _want_mouse_input |= (gizmo.state == position_state::hovered or
@@ -600,6 +686,9 @@ private:
 
    float _gizmo_scale = 1.0f;
    float3 _camera_positionWS = {0.0f, 0.0f, 0.0f};
+   float3 _camera_forwardWS = {0.0f, 0.0f, 1.0f};
+   float3 _camera_upWS = {0.0f, 0.0f, 1.0f};
+   float3 _camera_rightWS = {0.0f, 0.0f, 1.0f};
    float _axis_line_length = 128.0f;
 
    float _closest_gizmo = 0.0f;
