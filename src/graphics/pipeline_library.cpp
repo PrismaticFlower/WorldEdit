@@ -940,7 +940,7 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .render_target_count = 1,
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
-           .debug_name = "gizmo_cone"sv}),
+           .debug_name = "gizmo_line"sv}),
        device.direct_queue};
 
    depth_reduce_minmax = {device.create_compute_pipeline(
