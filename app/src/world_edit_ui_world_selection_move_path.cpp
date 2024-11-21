@@ -35,7 +35,7 @@ void world_edit::ui_show_world_selection_move_path() noexcept
 
       const float3 start_path_centre = path_centre;
 
-      const bool imgui_edited = ImGui::DragFloat3("Amount", &path_centre, 0.05f);
+      const bool imgui_edited = ImGui::DragFloat3("Position", &path_centre, 0.05f);
       const bool imgui_deactivated = ImGui::IsItemDeactivated();
 
       const bool gizmo_edited =

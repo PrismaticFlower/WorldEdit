@@ -16,15 +16,13 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
    bool open = true;
 
    if (ImGui::Begin("Move Sector Point", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
-      const float3 last_move_amount = _move_selection_amount;
-
       if (world::sector* sector =
              world::find_entity(_world.sectors, _move_sector_point_id);
           sector and _move_sector_point_index < sector->points.size()) {
          float2 point = sector->points[_move_sector_point_index];
          float3 position = {point.x, sector->base, point.y};
 
-         const bool imgui_edited = ImGui::DragFloat3("Amount", &position, 0.05f);
+         const bool imgui_edited = ImGui::DragFloat3("Position", &position, 0.05f);
          const bool imgui_deactivated = ImGui::IsItemDeactivated();
 
          const bool gizmo_edited =
