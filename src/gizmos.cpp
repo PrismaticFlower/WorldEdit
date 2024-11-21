@@ -707,11 +707,6 @@ struct gizmos::impl {
       return _last_gizmo_deactivated;
    }
 
-   void deactivate() noexcept
-   {
-      abort();
-   }
-
    gizmo_draw_lists draw_lists;
 
 private:
@@ -838,11 +833,6 @@ bool gizmos::gizmo_movement(const gizmo_movement_desc& desc, float3& out_movemen
 bool gizmos::can_close_last_edit() const noexcept
 {
    return impl->can_close_last_edit();
-}
-
-void gizmos::deactivate() noexcept
-{
-   return impl->deactivate();
 }
 
 }

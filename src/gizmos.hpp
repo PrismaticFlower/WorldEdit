@@ -93,8 +93,6 @@ struct gizmos {
 
    bool can_close_last_edit() const noexcept;
 
-   void deactivate() noexcept;
-
 private:
    struct impl;
 
