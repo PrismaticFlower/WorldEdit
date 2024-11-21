@@ -16,8 +16,6 @@ void world_edit::ui_show_world_selection_move_path() noexcept
    bool open = true;
 
    if (ImGui::Begin("Move Path", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
-      const float3 last_move_amount = _move_selection_amount;
-
       float3 path_centre = {0.0f, 0.0f, 0.0f};
 
       if (const world::path* path =
@@ -35,16 +33,18 @@ void world_edit::ui_show_world_selection_move_path() noexcept
          open = false;
       }
 
-      const bool imgui_edited =
-         ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+      const float3 start_path_centre = path_centre;
+
+      const bool imgui_edited = ImGui::DragFloat3("Amount", &path_centre, 0.05f);
       const bool imgui_deactivated = ImGui::IsItemDeactivated();
 
       const bool gizmo_edited =
-         _gizmo.show_translate(path_centre, quaternion{}, _move_selection_amount);
-      const bool gizmo_close_edit = _gizmo.can_close_last_edit();
+         _gizmos.gizmo_position({.name = "Move Path", .alignment = _editor_grid_size},
+                                path_centre);
+      const bool gizmo_close_edit = _gizmos.can_close_last_edit();
 
       if (imgui_edited or gizmo_edited) {
-         const float3 move_delta = (_move_selection_amount - last_move_amount);
+         const float3 move_delta = (path_centre - start_path_centre);
 
          world::path* path = world::find_entity(_world.paths, _move_entire_path_id);
 
