@@ -170,6 +170,7 @@ private:
                                 const world::active_entity_types active_entity_types,
                                 const world::active_layers active_layers,
                                 const world::tool_visualizers& tool_visualizers,
+                                const gizmo_draw_lists& draw_lists,
                                 const settings::graphics& settings);
 
    void draw_terrain_cut_visualizers(const frustum& view_frustum,
@@ -548,18 +549,18 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
 
    draw_world_meta_objects(view_frustum, camera, world, interaction_targets,
                            active_entity_types, active_layers, tool_visualizers,
-                           settings);
+                           gizmo_draw_lists, settings);
 
    draw_ai_overlay(back_buffer_rtv, settings, command_list);
 
    draw_interaction_targets(view_frustum, world, interaction_targets, world_classes,
                             tool_visualizers, settings, command_list);
 
-   draw_gizmos(camera, gizmo_draw_lists, command_list);
-
    _meta_draw_batcher.draw(command_list, _camera_constant_buffer_view,
                            _root_signatures, _pipelines, _geometric_shapes,
                            _dynamic_buffer_allocator);
+
+   draw_gizmos(camera, gizmo_draw_lists, command_list);
 
    // Render ImGui
    ImGui::Render();
@@ -1379,7 +1380,8 @@ void renderer_impl::draw_world_meta_objects(
    const world::interaction_targets& interaction_targets,
    const world::active_entity_types active_entity_types,
    const world::active_layers active_layers,
-   const world::tool_visualizers& tool_visualizers, const settings::graphics& settings)
+   const world::tool_visualizers& tool_visualizers,
+   const gizmo_draw_lists& draw_lists, const settings::graphics& settings)
 {
    if (active_entity_types.paths and not world.paths.empty()) {
       constexpr bool draw_connections = true;
@@ -2473,6 +2475,11 @@ void renderer_impl::draw_world_meta_objects(
       _meta_draw_batcher.add_arrow_outline_solid(arrow.transform, 0.0f,
                                                  utility::pack_srgb_bgra(arrow.color));
    }
+
+   for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
+      _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
+                                        line.color);
+   }
 }
 
 void renderer_impl::draw_terrain_cut_visualizers(const frustum& view_frustum,
@@ -3348,11 +3355,6 @@ void renderer_impl::draw_interaction_targets(
 void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& draw_lists,
                                 gpu::graphics_command_list& command_list)
 {
-   for (const gizmo_draw_pixel_line& line : draw_lists.pixel_lines) {
-      _meta_draw_batcher.add_line_solid(line.position_start, line.position_end,
-                                        line.color);
-   }
-
    for (const gizmo_draw_line& line : draw_lists.lines) {
       const float3 startVS = camera.view_matrix() * line.position_start;
       const float3 endVS = camera.view_matrix() * line.position_end;
