@@ -911,12 +911,10 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
 
                      .blend_state = blend_alpha,
                      .rasterizer_state = rasterizer_cull_backfacing,
-                     .depth_stencil_state = depth_stencil_disabled,
                      .input_layout = meta_draw_input_layout,
 
                      .render_target_count = 1,
                      .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
-                     .dsv_format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
 
                      .debug_name = "gizmo_cone"sv}),
                  device.direct_queue};

@@ -560,6 +560,8 @@ void renderer_impl::draw_frame(const camera& camera, const world::world& world,
                            _root_signatures, _pipelines, _geometric_shapes,
                            _dynamic_buffer_allocator);
 
+   command_list.om_set_render_targets(back_buffer_rtv);
+
    draw_gizmos(camera, gizmo_draw_lists, command_list);
 
    // Render ImGui
