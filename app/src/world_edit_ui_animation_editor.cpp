@@ -670,8 +670,6 @@ void world_edit::ui_show_animation_editor() noexcept
                         _animation_editor_context.selected.key = i;
                         _animation_editor_context.selected.key_type =
                            animation_key_type::position;
-                        _animation_editor_context.selected.key_movement = {0.0f, 0.0f,
-                                                                           0.0f};
                      }
 
                      if (ImGui::IsItemHovered()) hovered_position_key = i;
@@ -1375,7 +1373,7 @@ void world_edit::ui_show_animation_editor() noexcept
             if (string::iequals(entry.animation, selected_animation->name)) {
                for (const world::object& object : _world.objects) {
                   if (string::iequals(entry.object, object.name)) {
-                     base_rotation = object.rotation;
+                     base_rotation = normalize(object.rotation);
                      base_position = object.position;
                      animated_object_id = object.id;
 
@@ -1458,8 +1456,6 @@ void world_edit::ui_show_animation_editor() noexcept
          const world::position_key& key =
             selected_animation->position_keys[selected_key];
 
-         const float3 last_move_amount = _animation_editor_context.selected.key_movement;
-
          float3 gizmo_position = base_position + base_rotation * key.position;
          quaternion gizmo_rotation = base_rotation;
 
@@ -1471,14 +1467,16 @@ void world_edit::ui_show_animation_editor() noexcept
             gizmo_position = {transform[3].x, transform[3].y, transform[3].z};
          }
 
-         if (_gizmo.show_translate(gizmo_position, gizmo_rotation,
-                                   _animation_editor_context.selected.key_movement)) {
-            const float3 move_delta =
-               (_animation_editor_context.selected.key_movement - last_move_amount);
-
+         if (float3 movementWS;
+             _gizmos.gizmo_movement({.name = "Animation Position Key",
+                                     .alignment = _editor_grid_size,
+                                     .gizmo_rotation = gizmo_rotation,
+                                     .gizmo_positionWS = gizmo_position,
+                                     .gizmo_space_output = true},
+                                    movementWS)) {
             if (_animation_editor_config.auto_tangents) {
                update_position_auto_tangents(*selected_animation, selected_key,
-                                             key.position + move_delta,
+                                             key.position + movementWS,
                                              _animation_editor_config.auto_tangent_smoothness,
                                              _edit_stack_world, _edit_context);
             }
@@ -1487,15 +1485,12 @@ void world_edit::ui_show_animation_editor() noexcept
                   .apply(edits::make_set_vector_value(&selected_animation->position_keys,
                                                       selected_key,
                                                       &world::position_key::position,
-                                                      key.position + move_delta),
+                                                      key.position + movementWS),
                          _edit_context);
             }
          }
 
-         if (_gizmo.can_close_last_edit()) {
-            _animation_editor_context.selected.key_movement = {};
-            _edit_stack_world.close_last();
-         }
+         if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
       }
       else if (_animation_editor_context.selected.key_type == animation_key_type::rotation and
                selected_key < std::ssize(selected_animation->rotation_keys)) {

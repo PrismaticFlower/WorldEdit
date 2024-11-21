@@ -48,6 +48,14 @@ struct gizmo_position_state {
    bool submitted_last_frame = true;
 };
 
+struct gizmo_movement_state {
+   gizmo_id id;
+   quaternion rotation;
+   float3 positionWS;
+
+   bool submitted_last_frame = true;
+};
+
 constexpr float3 x_color = {0.7835378f, 0.051269457f, 0.051269457f};
 constexpr float3 y_color = {0.051269457f, 0.116970666f, 0.7835378f};
 constexpr float3 z_color = {0.029556835f, 0.7835378f, 0.029556835f};
@@ -661,6 +669,39 @@ struct gizmos::impl {
       return gizmo.state == position_state::active;
    }
 
+   bool gizmo_movement(const gizmo_movement_desc& desc, float3& out_movement) noexcept
+   {
+      gizmo_movement_state& gizmo = add_movement_gizmo(desc.name, desc.instance);
+
+      if (add_position_gizmo(desc.name, desc.instance).state != position_state::active) {
+         gizmo.rotation = normalize(desc.gizmo_rotation);
+         gizmo.positionWS = desc.gizmo_positionWS;
+      }
+
+      const float3 start_positionWS = gizmo.positionWS;
+
+      const bool moved = gizmo_position({.name = desc.name,
+                                         .instance = desc.instance,
+                                         .alignment = desc.alignment,
+                                         .gizmo_rotation = desc.gizmo_rotation},
+                                        gizmo.positionWS);
+
+      if (moved) {
+         if (desc.gizmo_space_output) {
+            out_movement = conjugate(gizmo.rotation) * gizmo.positionWS -
+                           conjugate(gizmo.rotation) * start_positionWS;
+         }
+         else {
+            out_movement = gizmo.positionWS - start_positionWS;
+         }
+      }
+      else {
+         out_movement = {0.0f, 0.0f, 0.0f};
+      }
+
+      return moved;
+   }
+
    bool can_close_last_edit() const noexcept
    {
       return _last_gizmo_deactivated;
@@ -683,6 +724,7 @@ private:
    bool _last_gizmo_deactivated = false;
 
    std::vector<gizmo_position_state> _position_gizmos;
+   std::vector<gizmo_movement_state> _movement_gizmos;
 
    float _gizmo_scale = 1.0f;
    float3 _camera_positionWS = {0.0f, 0.0f, 0.0f};
@@ -712,6 +754,21 @@ private:
          .id = {.name = std::string{name}, .instance = instance}});
    }
 
+   auto add_movement_gizmo(const std::string_view name, const int64 instance) noexcept
+      -> gizmo_movement_state&
+   {
+      for (gizmo_movement_state& existing : _movement_gizmos) {
+         if (existing.id.name == name and existing.id.instance == instance) {
+            existing.submitted_last_frame = true;
+
+            return existing;
+         }
+      }
+
+      return _movement_gizmos.emplace_back(gizmo_movement_state{
+         .id = {.name = std::string{name}, .instance = instance}});
+   }
+
    void garbage_collect() noexcept
    {
       for (auto it = _position_gizmos.begin(); it != _position_gizmos.end();) {
@@ -719,6 +776,19 @@ private:
 
          if (not gizmo.submitted_last_frame) {
             it = _position_gizmos.erase(it);
+         }
+         else {
+            gizmo.submitted_last_frame = false;
+
+            it += 1;
+         }
+      }
+
+      for (auto it = _movement_gizmos.begin(); it != _movement_gizmos.end();) {
+         gizmo_movement_state& gizmo = *it;
+
+         if (not gizmo.submitted_last_frame) {
+            it = _movement_gizmos.erase(it);
          }
          else {
             gizmo.submitted_last_frame = false;
@@ -758,6 +828,11 @@ auto gizmos::get_draw_lists() const noexcept -> const gizmo_draw_lists&
 bool gizmos::gizmo_position(const gizmo_position_desc& desc, float3& positionWS) noexcept
 {
    return impl->gizmo_position(desc, positionWS);
+}
+
+bool gizmos::gizmo_movement(const gizmo_movement_desc& desc, float3& out_movement) noexcept
+{
+   return impl->gizmo_movement(desc, out_movement);
 }
 
 bool gizmos::can_close_last_edit() const noexcept

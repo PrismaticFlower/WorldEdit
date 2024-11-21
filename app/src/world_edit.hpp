@@ -803,7 +803,6 @@ private:
          int32 key = 0;
          animation_key_type key_type = animation_key_type::position;
 
-         float3 key_movement = {0.0f, 0.0f, 0.0f};
          float3 key_rotation_movement = {0.0f, 0.0f, 0.0f};
 
          float new_position_key_time = 0.0f;
