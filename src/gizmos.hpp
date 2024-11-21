@@ -12,14 +12,14 @@ namespace we {
 
 struct gizmo_position_desc {
    std::string_view name;
-   int64 instance;
+   int64 instance = 0;
    float alignment = 1.0f;
    quaternion gizmo_rotation;
 };
 
 struct gizmo_movement_desc {
    std::string_view name;
-   int64 instance;
+   int64 instance = 0;
    float alignment = 1.0f;
    quaternion gizmo_rotation;
    float3 gizmo_positionWS;
