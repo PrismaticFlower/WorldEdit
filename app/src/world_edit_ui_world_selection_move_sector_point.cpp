@@ -1,5 +1,6 @@
 #include "world_edit.hpp"
 
+#include "edits/bundle.hpp"
 #include "edits/set_value.hpp"
 #include "imgui_ext.hpp"
 #include "math/vector_funcs.hpp"
@@ -21,25 +22,26 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
              world::find_entity(_world.sectors, _move_sector_point_id);
           sector and _move_sector_point_index < sector->points.size()) {
          float2 point = sector->points[_move_sector_point_index];
-         float3 sector_centre = {0.0f, 0.0f, 0.0f};
+         float3 position = {point.x, sector->base, point.y};
 
-         const bool imgui_edited =
-            ImGui::DragFloat3("Amount", &_move_selection_amount, 0.05f);
+         const bool imgui_edited = ImGui::DragFloat3("Amount", &position, 0.05f);
          const bool imgui_deactivated = ImGui::IsItemDeactivated();
 
          const bool gizmo_edited =
-            _gizmo.show_translate(float3{point.x, sector->base + (sector->height / 2.0f),
-                                         point.y},
-                                  quaternion{}, _move_selection_amount);
+            _gizmos.gizmo_position({.name = "Move Sector Point",
+                                    .alignment = _editor_grid_size},
+                                   position);
          const bool gizmo_close_edit = _gizmo.can_close_last_edit();
 
          if (imgui_edited or gizmo_edited) {
-            const float3 move_delta = (_move_selection_amount - last_move_amount);
+            edits::bundle_vector bundle;
 
-            _edit_stack_world.apply(edits::make_set_vector_value(
-                                       &sector->points, _move_sector_point_index,
-                                       point + float2{move_delta.x, move_delta.z}),
-                                    _edit_context);
+            bundle.emplace_back(
+               edits::make_set_vector_value(&sector->points, _move_sector_point_index,
+                                            float2{position.x, position.z}));
+            bundle.emplace_back(edits::make_set_value(&sector->base, position.y));
+
+            _edit_stack_world.apply(edits::make_bundle(std::move(bundle)), _edit_context);
          }
 
          if (imgui_deactivated or gizmo_close_edit) {
