@@ -591,7 +591,6 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
             if (ImGui::Button("Move Path", {ImGui::CalcItemWidth(), 0.0f})) {
                _selection_edit_tool = selection_edit_tool::move_path;
-               _move_selection_amount = {0.0f, 0.0f, 0.0f};
                _move_entire_path_id = id;
             }
          }
@@ -1167,7 +1166,6 @@ void world_edit::ui_show_world_selection_editor() noexcept
                if (ImGui::Button("Move")) {
                   _move_sector_point_id = sector->id;
                   _move_sector_point_index = i;
-                  _move_selection_amount = {0.0f, 0.0f, 0.0f};
                   _selection_edit_tool = selection_edit_tool::move_sector_point;
                }
 
@@ -1909,7 +1907,6 @@ void world_edit::ui_show_world_selection_editor() noexcept
 
       if (ImGui::Button("Move Selection", {ImGui::CalcItemWidth(), 0.0f})) {
          _selection_edit_tool = selection_edit_tool::move;
-         _move_selection_amount = {0.0f, 0.0f, 0.0f};
       }
 
       if (ImGui::Button("Move Selection with Cursor", {ImGui::CalcItemWidth(), 0.0f})) {

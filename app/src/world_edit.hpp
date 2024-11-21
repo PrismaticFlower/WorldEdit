@@ -912,7 +912,6 @@ private:
    float _editor_floor_height = 0.0f;
    float _editor_grid_size = 4.0f;
 
-   float3 _move_selection_amount = {0.0f, 0.0f, 0.0f};
    float3 _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
    float3 _rotate_selection_centre = {0.0f, 0.0f, 0.0f};
    world::path_id _move_entire_path_id = {};

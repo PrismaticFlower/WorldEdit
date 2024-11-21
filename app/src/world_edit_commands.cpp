@@ -176,10 +176,8 @@ void world_edit::initialize_commands() noexcept
 
    _commands.add("save"s, [this]() { save_world(_world_path); });
 
-   _commands.add("entity_edit.move_selection"s, [this] {
-      _selection_edit_tool = selection_edit_tool::move;
-      _move_selection_amount = {0.0f, 0.0f, 0.0f};
-   });
+   _commands.add("entity_edit.move_selection"s,
+                 [this] { _selection_edit_tool = selection_edit_tool::move; });
    _commands.add("entity_edit.move_selection_with_cursor"s, [this] {
       _selection_edit_tool = selection_edit_tool::move_with_cursor;
    });
