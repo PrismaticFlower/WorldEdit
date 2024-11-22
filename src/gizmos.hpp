@@ -27,6 +27,13 @@ struct gizmo_movement_desc {
    bool gizmo_space_output = false;
 };
 
+struct gizmo_rotation_desc {
+   std::string_view name;
+   int64 instance = 0;
+   quaternion gizmo_rotation;
+   float3 gizmo_positionWS;
+};
+
 struct gizmo_draw_cone {
    float3 position_start;
    float3 position_end;
@@ -90,6 +97,8 @@ struct gizmos {
    bool gizmo_position(const gizmo_position_desc& desc, float3& positionWS) noexcept;
 
    bool gizmo_movement(const gizmo_movement_desc& desc, float3& out_movement) noexcept;
+
+   bool gizmo_rotation(const gizmo_rotation_desc& desc, float3& rotation) noexcept;
 
    bool can_close_last_edit() const noexcept;
 

@@ -154,9 +154,12 @@ void world_edit::ui_show_world_selection_rotate() noexcept
          gizmo_rotation = quaternion{};
       }
 
-      const bool gizmo_edited = _gizmo.show_rotate(selection_centre, gizmo_rotation,
-                                                   _rotate_selection_amount);
-      const bool gizmo_close_edit = _gizmo.can_close_last_edit();
+      const bool gizmo_edited =
+         _gizmos.gizmo_rotation({.name = "Rotate Selection",
+                                 .gizmo_rotation = gizmo_rotation,
+                                 .gizmo_positionWS = selection_centre},
+                                _rotate_selection_amount);
+      const bool gizmo_close_edit = _gizmos.can_close_last_edit();
 
       if (imgui_edited or gizmo_edited) {
          const float3 rotate_delta = (_rotate_selection_amount - last_rotation_amount);

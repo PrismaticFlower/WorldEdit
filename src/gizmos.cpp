@@ -5,6 +5,7 @@
 #include "math/plane_funcs.hpp"
 #include "math/quaternion_funcs.hpp"
 
+#include <numbers>
 #include <string>
 #include <vector>
 
@@ -24,7 +25,10 @@ enum class position_widget : uint8 {
 
    xyz
 };
-enum class position_state : uint8 { idle, hovered, active, locked };
+
+enum class rotation_widget : uint8 { none, x, y, z };
+
+enum class state : uint8 { idle, hovered, active, locked };
 
 struct gizmo_id {
    std::string name;
@@ -37,7 +41,7 @@ struct gizmo_position_state {
    gizmo_id id;
    quaternion rotation;
 
-   position_state state = position_state::idle;
+   state state = state::idle;
    position_widget active_widget = position_widget::none;
 
    float3 active_positionWS;
@@ -52,6 +56,21 @@ struct gizmo_movement_state {
    gizmo_id id;
    quaternion rotation;
    float3 positionWS;
+
+   bool submitted_last_frame = true;
+};
+
+struct gizmo_rotation_state {
+   gizmo_id id;
+   quaternion rotation;
+   float3 positionWS;
+
+   state state = state::idle;
+   rotation_widget active_widget = rotation_widget::none;
+   bool align_rotation = false;
+
+   float3 cursor_directionGS;
+   float3 buffered_rotation;
 
    bool submitted_last_frame = true;
 };
@@ -79,6 +98,10 @@ constexpr float position_gizmo_hit_pad = 0.0075f;
 constexpr float position_gizmo_plane_cull_angle = 0.15f;
 constexpr float position_gizmo_plane_outline_width = 0.2f;
 constexpr float position_gizmo_plane_inner_alpha = 0.125f;
+
+constexpr float rotate_gizmo_radius = 0.1f;
+constexpr float rotate_gizmo_hit_pad = 0.01f;
+constexpr float rotate_gizmo_alignment = 0.17453292519943295769f; // 10 degrees
 
 auto align_value(const float value, const float alignment) noexcept -> float
 {
@@ -114,6 +137,19 @@ auto xyz_intersects(const float3& ray_originGS, const float3& ray_directionGS,
             .x;
 
    return hit;
+}
+
+auto ring_intersect(const float3 ray_originGS, const float3 ray_directionGS,
+                    const float3 normalGS, const float nohit_radius,
+                    const float hit_radius) -> float
+{
+   if (diskIntersect(ray_originGS, ray_directionGS, float3{0.0f, 0.0f, 0.0f},
+                     normalGS, nohit_radius) > 0.0f) {
+      return -1.0f;
+   }
+
+   return diskIntersect(ray_originGS, ray_directionGS, float3{0.0f, 0.0f, 0.0f},
+                        normalGS, hit_radius);
 }
 
 }
@@ -197,11 +233,11 @@ struct gizmos::impl {
          position_gizmo_plane_cull_angle;
 
       if (not _input.left_mouse_down) {
-         _last_gizmo_deactivated = gizmo.state == position_state::active;
-         gizmo.state = position_state::idle;
+         _last_gizmo_deactivated = gizmo.state == state::active;
+         gizmo.state = state::idle;
       }
 
-      if (gizmo.state == position_state::idle or gizmo.state == position_state::hovered) {
+      if (gizmo.state == state::idle or gizmo.state == state::hovered) {
          const float3 ray_originGS =
             conjugate(gizmo.rotation) * (ray_originWS - positionWS);
          const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
@@ -255,55 +291,55 @@ struct gizmos::impl {
                            plane_selector_length);
 
          gizmo.active_widget = position_widget::none;
-         gizmo.state = position_state::idle;
+         gizmo.state = state::idle;
 
-         float nearest = std::numeric_limits<float>::max();
+         float nearest = FLT_MAX;
 
          if (x_hit > 0.0f and x_hit < nearest) {
             nearest = x_hit;
-            gizmo.state = position_state::hovered;
+            gizmo.state = state::hovered;
             gizmo.active_widget = position_widget::x;
          }
 
          if (y_hit > 0.0f and y_hit < nearest) {
             nearest = y_hit;
-            gizmo.state = position_state::hovered;
+            gizmo.state = state::hovered;
             gizmo.active_widget = position_widget::y;
          }
 
          if (z_hit > 0.0f and z_hit < nearest) {
             nearest = z_hit;
-            gizmo.state = position_state::hovered;
+            gizmo.state = state::hovered;
             gizmo.active_widget = position_widget::z;
          }
 
          if (yz_hit > 0.0f and yz_hit < nearest) {
             nearest = yz_hit;
-            gizmo.state = position_state::hovered;
+            gizmo.state = state::hovered;
             gizmo.active_widget = position_widget::yz;
          }
 
          if (xz_hit > 0.0f and xz_hit < nearest) {
             nearest = xz_hit;
-            gizmo.state = position_state::hovered;
+            gizmo.state = state::hovered;
             gizmo.active_widget = position_widget::xz;
          }
 
          if (xy_hit > 0.0f and xy_hit < nearest) {
             nearest = xy_hit;
-            gizmo.state = position_state::hovered;
+            gizmo.state = state::hovered;
             gizmo.active_widget = position_widget::xy;
          }
 
          if (xyz_hit > 0.0f) {
             nearest = xyz_hit;
-            gizmo.state = position_state::hovered;
+            gizmo.state = state::hovered;
             gizmo.active_widget = position_widget::xyz;
          }
 
-         if (gizmo.state == position_state::hovered) {
+         if (gizmo.state == state::hovered) {
             if (nearest >= _closest_gizmo and gizmo.id != _closest_gizmo_id) {
-               gizmo.state = position_state::idle;
+               gizmo.state = state::idle;
                gizmo.active_widget = position_widget::none;
             }
 
@@ -315,11 +351,11 @@ struct gizmos::impl {
       }
 
       if (_input.left_mouse_down) {
-         if (gizmo.state == position_state::idle) {
-            gizmo.state = position_state::locked;
+         if (gizmo.state == state::idle) {
+            gizmo.state = state::locked;
          }
-         else if (gizmo.state == position_state::hovered) {
-            gizmo.state = position_state::active;
+         else if (gizmo.state == state::hovered) {
+            gizmo.state = state::active;
             gizmo.active_positionWS = positionWS;
             gizmo.activation_offsetGS = {0.0f, 0.0f, 0.0f};
 
@@ -398,7 +434,7 @@ struct gizmos::impl {
          }
       }
 
-      if (gizmo.state == position_state::active) {
+      if (gizmo.state == state::active) {
          const float3 active_positionWS = gizmo.active_positionWS;
          const float3 ray_originGS = conjugate(gizmo.rotation) * ray_originWS;
          const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
@@ -496,8 +532,8 @@ struct gizmos::impl {
       }
 
       {
-         const bool is_hover = gizmo.state == position_state::hovered;
-         const bool is_active = gizmo.state == position_state::active;
+         const bool is_hover = gizmo.state == state::hovered;
+         const bool is_active = gizmo.state == state::active;
          const bool x_active = gizmo.active_widget == position_widget::x;
          const bool y_active = gizmo.active_widget == position_widget::y;
          const bool z_active = gizmo.active_widget == position_widget::z;
@@ -662,18 +698,18 @@ struct gizmos::impl {
                                                                : inner_alpha);
       }
 
-      _want_mouse_input |= (gizmo.state == position_state::hovered or
-                            gizmo.state == position_state::active);
-      _want_keyboard_input |= gizmo.state == position_state::active;
+      _want_mouse_input |=
+         (gizmo.state == state::hovered or gizmo.state == state::active);
+      _want_keyboard_input |= gizmo.state == state::active;
 
-      return gizmo.state == position_state::active;
+      return gizmo.state == state::active;
    }
 
    bool gizmo_movement(const gizmo_movement_desc& desc, float3& out_movement) noexcept
    {
       gizmo_movement_state& gizmo = add_movement_gizmo(desc.name, desc.instance);
 
-      if (add_position_gizmo(desc.name, desc.instance).state != position_state::active) {
+      if (add_position_gizmo(desc.name, desc.instance).state != state::active) {
          gizmo.rotation = normalize(desc.gizmo_rotation);
          gizmo.positionWS = desc.gizmo_positionWS;
       }
@@ -702,6 +738,278 @@ struct gizmos::impl {
       return moved;
    }
 
+   bool gizmo_rotation(const gizmo_rotation_desc& desc, float3& rotation) noexcept
+   {
+      gizmo_rotation_state& gizmo = add_rotation_gizmo(desc.name, desc.instance);
+
+      if (gizmo.state != state::active) {
+         gizmo.positionWS = desc.gizmo_positionWS;
+         gizmo.rotation = normalize(desc.gizmo_rotation);
+      }
+
+      const float gizmo_camera_scale = distance(_camera_positionWS, gizmo.positionWS);
+      const float gizmo_radius = rotate_gizmo_radius * _gizmo_scale * gizmo_camera_scale;
+      const float gizmo_hit_pad =
+         rotate_gizmo_hit_pad * _gizmo_scale * gizmo_camera_scale;
+
+      const float3 ray_originWS = _cursor_rayWS.origin;
+      const float3 ray_directionWS = _cursor_rayWS.direction;
+      const float3 ray_originGS =
+         conjugate(gizmo.rotation) * (ray_originWS - gizmo.positionWS);
+      const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
+
+      if (not _input.left_mouse_down) {
+         _last_gizmo_deactivated = gizmo.state == state::active;
+         gizmo.state = state::idle;
+      }
+
+      if (gizmo.state == state::idle or gizmo.state == state::hovered) {
+         gizmo.active_widget = rotation_widget::none;
+         gizmo.state = state::idle;
+
+         const float nohit_radius = gizmo_radius - gizmo_hit_pad;
+         const float hit_radius = gizmo_radius + gizmo_hit_pad;
+
+         const float x_hit =
+            ring_intersect(ray_originGS, ray_directionGS,
+                           float3{1.0f, 0.0f, 0.0f}, nohit_radius, hit_radius);
+         const float y_hit =
+            ring_intersect(ray_originGS, ray_directionGS,
+                           float3{0.0f, 1.0f, 0.0f}, nohit_radius, hit_radius);
+         const float z_hit =
+            ring_intersect(ray_originGS, ray_directionGS,
+                           float3{0.0f, 0.0f, 1.0f}, nohit_radius, hit_radius);
+
+         float nearest = FLT_MAX;
+
+         if (x_hit > 0.0f and x_hit < nearest) {
+            nearest = x_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = rotation_widget::x;
+         }
+
+         if (y_hit > 0.0f and y_hit < nearest) {
+            nearest = y_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = rotation_widget::y;
+         }
+
+         if (z_hit > 0.0f and z_hit < nearest) {
+            nearest = z_hit;
+            gizmo.state = state::hovered;
+            gizmo.active_widget = rotation_widget::z;
+         }
+
+         if (gizmo.state == state::hovered) {
+            if (nearest >= _closest_gizmo and gizmo.id != _closest_gizmo_id) {
+               gizmo.state = state::idle;
+               gizmo.active_widget = rotation_widget::none;
+            }
+
+            if (nearest < _next_frame_closest_gizmo) {
+               _next_frame_closest_gizmo = nearest;
+               _next_frame_closest_gizmo_id = gizmo.id;
+            }
+         }
+      }
+
+      if (_input.left_mouse_down) {
+         if (gizmo.state == state::idle) {
+            gizmo.state = state::locked;
+         }
+         else if (gizmo.state == state::hovered) {
+            gizmo.state = state::active;
+            gizmo.buffered_rotation = {};
+            gizmo.align_rotation = false;
+
+            float4 planeGS;
+
+            switch (gizmo.active_widget) {
+            case rotation_widget::x: {
+               planeGS = float4{1.0f, 0.0f, 0.0f, 0.0f};
+            } break;
+            case rotation_widget::y: {
+               planeGS = float4{0.0f, 1.0f, 0.0f, 0.0f};
+            } break;
+            case rotation_widget::z: {
+               planeGS = float4{0.0f, 0.0f, 1.0f, 0.0f};
+            } break;
+            }
+
+            if (const float plane_hit =
+                   intersect_plane(ray_originGS, ray_directionGS, planeGS);
+                plane_hit >= 0.0f) {
+               gizmo.cursor_directionGS =
+                  normalize(ray_originGS + ray_directionGS * plane_hit);
+            }
+         }
+      }
+
+      if (gizmo.state == state::active) {
+         if (_input.ctrl_down) gizmo.align_rotation = true;
+
+         const float3 last_cursor_directionGS = gizmo.cursor_directionGS;
+
+         float4 planeGS;
+
+         if (gizmo.active_widget == rotation_widget::x) {
+            planeGS = float4{1.0f, 0.0f, 0.0f, 0.0f};
+         }
+         else if (gizmo.active_widget == rotation_widget::y) {
+            planeGS = float4{0.0f, 1.0f, 0.0f, 0.0f};
+         }
+         else if (gizmo.active_widget == rotation_widget::z) {
+            planeGS = float4{0.0f, 0.0f, 1.0f, 0.0f};
+         }
+
+         if (const float plane_hit =
+                intersect_plane(ray_originGS, ray_directionGS, planeGS);
+             plane_hit >= 0.0f) {
+            gizmo.cursor_directionGS =
+               normalize(ray_originGS + ray_directionGS * plane_hit);
+         }
+
+         const float3 cursor_directionGS = gizmo.cursor_directionGS;
+
+         if (gizmo.active_widget == rotation_widget::x) {
+            const float start_angle =
+               std::atan2(last_cursor_directionGS.y, last_cursor_directionGS.z);
+            const float current_angle =
+               std::atan2(cursor_directionGS.y, cursor_directionGS.z);
+            const float angle_delta = (current_angle - start_angle);
+
+            if (gizmo.align_rotation) {
+               gizmo.buffered_rotation.x += angle_delta;
+
+               const float aligned_rotation =
+                  align_value(gizmo.buffered_rotation.x, rotate_gizmo_alignment);
+
+               gizmo.buffered_rotation.x -= aligned_rotation;
+
+               rotation.x += aligned_rotation;
+            }
+            else {
+               rotation.x += angle_delta;
+            }
+         }
+         else if (gizmo.active_widget == rotation_widget::y) {
+            const float start_angle =
+               std::atan2(last_cursor_directionGS.x, last_cursor_directionGS.z);
+            const float current_angle =
+               std::atan2(cursor_directionGS.x, cursor_directionGS.z);
+            const float angle_delta = (current_angle - start_angle);
+
+            if (gizmo.align_rotation) {
+               gizmo.buffered_rotation.y += angle_delta;
+
+               const float aligned_rotation =
+                  align_value(gizmo.buffered_rotation.y, rotate_gizmo_alignment);
+
+               gizmo.buffered_rotation.y -= aligned_rotation;
+
+               rotation.y += aligned_rotation;
+            }
+            else {
+               rotation.y += angle_delta;
+            }
+         }
+         else if (gizmo.active_widget == rotation_widget::z) {
+            const float start_angle =
+               std::atan2(last_cursor_directionGS.x, last_cursor_directionGS.y);
+            const float current_angle =
+               std::atan2(cursor_directionGS.x, cursor_directionGS.y);
+            const float angle_delta = (current_angle - start_angle);
+
+            if (gizmo.align_rotation) {
+               gizmo.buffered_rotation.z += angle_delta;
+
+               const float aligned_rotation =
+                  align_value(gizmo.buffered_rotation.z, rotate_gizmo_alignment);
+
+               gizmo.buffered_rotation.z -= aligned_rotation;
+
+               rotation.z += aligned_rotation;
+            }
+            else {
+               rotation.z += angle_delta;
+            }
+         }
+      }
+
+      {
+         constexpr float pi_2 = std::numbers::pi_v<float> * 2.0f;
+         constexpr int32 circle_divisions = 64;
+         constexpr float divisor = circle_divisions;
+
+         const bool is_hover = gizmo.state == state::hovered;
+         const bool is_active = gizmo.state == state::active;
+         const bool x_active = gizmo.active_widget == rotation_widget::x;
+         const bool y_active = gizmo.active_widget == rotation_widget::y;
+         const bool z_active = gizmo.active_widget == rotation_widget::z;
+
+         if (is_active) {
+            draw_lists.pixel_lines.emplace_back(gizmo.positionWS,
+                                                gizmo.rotation * (gizmo.cursor_directionGS *
+                                                                  gizmo_radius) +
+                                                   gizmo.positionWS,
+                                                0xff'ff'ff'ff);
+         }
+
+         const auto make_circle_point = [](const float angle,
+                                           const float radius) noexcept -> float2 {
+            return {radius * std::cos(angle), radius * std::sin(angle)};
+         };
+
+         for (uint32 i = 0; i <= circle_divisions; ++i) {
+            const float2 start =
+               make_circle_point((static_cast<float>(i) / divisor) * pi_2, gizmo_radius);
+            const float2 end =
+               make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) *
+                                    pi_2,
+                                 gizmo_radius);
+
+            draw_lists.pixel_lines.emplace_back(
+               gizmo.rotation * float3{0.0f, start.x, start.y} + gizmo.positionWS,
+               gizmo.rotation * float3{0.0f, end.x, end.y} + gizmo.positionWS,
+               is_hover and x_active ? x_color_hover_u32 : x_color_u32);
+         }
+
+         for (uint32 i = 0; i <= circle_divisions; ++i) {
+            const float2 start =
+               make_circle_point((static_cast<float>(i) / divisor) * pi_2, gizmo_radius);
+            const float2 end =
+               make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) *
+                                    pi_2,
+                                 gizmo_radius);
+
+            draw_lists.pixel_lines.emplace_back(
+               gizmo.rotation * float3{start.x, 0.0f, start.y} + gizmo.positionWS,
+               gizmo.rotation * float3{end.x, 0.0f, end.y} + gizmo.positionWS,
+               is_hover and y_active ? y_color_hover_u32 : y_color_u32);
+         }
+
+         for (uint32 i = 0; i <= circle_divisions; ++i) {
+            const float2 start =
+               make_circle_point((static_cast<float>(i) / divisor) * pi_2, gizmo_radius);
+            const float2 end =
+               make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) *
+                                    pi_2,
+                                 gizmo_radius);
+
+            draw_lists.pixel_lines.emplace_back(
+               gizmo.rotation * float3{start.x, start.y, 0.0f} + gizmo.positionWS,
+               gizmo.rotation * float3{end.x, end.y, 0.0f} + gizmo.positionWS,
+               is_hover and z_active ? z_color_hover_u32 : z_color_u32);
+         }
+      }
+
+      _want_mouse_input |=
+         (gizmo.state == state::hovered or gizmo.state == state::active);
+      _want_keyboard_input |= gizmo.state == state::active;
+
+      return gizmo.state == state::active;
+   }
+
    bool can_close_last_edit() const noexcept
    {
       return _last_gizmo_deactivated;
@@ -720,6 +1028,7 @@ private:
 
    std::vector<gizmo_position_state> _position_gizmos;
    std::vector<gizmo_movement_state> _movement_gizmos;
+   std::vector<gizmo_rotation_state> _rotation_gizmos;
 
    float _gizmo_scale = 1.0f;
    float3 _camera_positionWS = {0.0f, 0.0f, 0.0f};
@@ -764,6 +1073,21 @@ private:
          .id = {.name = std::string{name}, .instance = instance}});
    }
 
+   auto add_rotation_gizmo(const std::string_view name, const int64 instance) noexcept
+      -> gizmo_rotation_state&
+   {
+      for (gizmo_rotation_state& existing : _rotation_gizmos) {
+         if (existing.id.name == name and existing.id.instance == instance) {
+            existing.submitted_last_frame = true;
+
+            return existing;
+         }
+      }
+
+      return _rotation_gizmos.emplace_back(gizmo_rotation_state{
+         .id = {.name = std::string{name}, .instance = instance}});
+   }
+
    void garbage_collect() noexcept
    {
       for (auto it = _position_gizmos.begin(); it != _position_gizmos.end();) {
@@ -784,6 +1108,19 @@ private:
 
          if (not gizmo.submitted_last_frame) {
             it = _movement_gizmos.erase(it);
+         }
+         else {
+            gizmo.submitted_last_frame = false;
+
+            it += 1;
+         }
+      }
+
+      for (auto it = _rotation_gizmos.begin(); it != _rotation_gizmos.end();) {
+         gizmo_rotation_state& gizmo = *it;
+
+         if (not gizmo.submitted_last_frame) {
+            it = _rotation_gizmos.erase(it);
          }
          else {
             gizmo.submitted_last_frame = false;
@@ -828,6 +1165,11 @@ bool gizmos::gizmo_position(const gizmo_position_desc& desc, float3& positionWS)
 bool gizmos::gizmo_movement(const gizmo_movement_desc& desc, float3& out_movement) noexcept
 {
    return impl->gizmo_movement(desc, out_movement);
+}
+
+bool gizmos::gizmo_rotation(const gizmo_rotation_desc& desc, float3& rotation) noexcept
+{
+   return impl->gizmo_rotation(desc, rotation);
 }
 
 bool gizmos::can_close_last_edit() const noexcept
