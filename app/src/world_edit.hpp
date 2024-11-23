@@ -5,7 +5,6 @@
 #include "commands.hpp"
 #include "container/ring_set.hpp"
 #include "edits/stack.hpp"
-#include "gizmo.hpp"
 #include "gizmos.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/gpu/exception.hpp"
@@ -935,7 +934,6 @@ private:
    std::string _env_map_save_error;
 
    gizmos _gizmos;
-   gizmo _gizmo;
    commands _commands;
    hotkeys _hotkeys{_commands, *_stream};
 

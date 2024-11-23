@@ -29,7 +29,7 @@ void world_edit::ui_show_world_selection_move_sector_point() noexcept
             _gizmos.gizmo_position({.name = "Move Sector Point",
                                     .alignment = _editor_grid_size},
                                    position);
-         const bool gizmo_close_edit = _gizmo.can_close_last_edit();
+         const bool gizmo_close_edit = _gizmos.can_close_last_edit();
 
          if (imgui_edited or gizmo_edited) {
             edits::bundle_vector bundle;

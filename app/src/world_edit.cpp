@@ -149,17 +149,6 @@ void world_edit::update()
 
    _tool_visualizers.clear();
 
-   if (not _rotate_camera and not _pan_camera) {
-      _gizmo.update(make_camera_ray(_camera,
-                                    {ImGui::GetMousePos().x,
-                                     ImGui::GetMousePos().y},
-                                    {ImGui::GetMainViewport()->Size.x,
-                                     ImGui::GetMainViewport()->Size.y}),
-                    ImGui::IsKeyDown(ImGuiKey_MouseLeft) and
-                       not ImGui::GetIO().WantCaptureMouse,
-                    _camera);
-   }
-
    _gizmos.update(make_camera_ray(_camera,
                                   {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
                                   {ImGui::GetMainViewport()->Size.x,
@@ -183,12 +172,8 @@ void world_edit::update()
    _asset_libraries.update_loaded();
    _object_classes.update();
 
-   _gizmo.update_scale(_camera, _settings.ui.gizmo_scale);
-
    // Render!
    update_camera(delta_time);
-
-   _gizmo.draw(_tool_visualizers);
 
    ui_draw_select_box();
 
@@ -295,8 +280,7 @@ void world_edit::update_window_text() noexcept
 void world_edit::update_input() noexcept
 {
    const bool gizmos_want_mouse =
-      (_gizmo.want_capture_mouse() or _gizmos.want_capture_mouse()) and
-      not _rotate_camera and not _pan_camera;
+      _gizmos.want_capture_mouse() and not _rotate_camera and not _pan_camera;
 
    _hotkeys.update(ImGui::GetIO().WantCaptureMouse or gizmos_want_mouse,
                    ImGui::GetIO().WantCaptureKeyboard or
@@ -318,7 +302,7 @@ void world_edit::update_hovered_entity() noexcept
    float hovered_entity_distance = std::numeric_limits<float>::max();
    float cursor_distance = std::numeric_limits<float>::max();
 
-   if (ImGui::GetIO().WantCaptureMouse or _gizmo.want_capture_mouse()) return;
+   if (ImGui::GetIO().WantCaptureMouse or _gizmos.want_capture_mouse()) return;
    if (_rotate_camera or _pan_camera) return;
    if (_terrain_edit_tool != terrain_edit_tool::none) return;
 

@@ -339,7 +339,6 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             _selection_rotate_space = selection_transform_space::local;
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
-            _gizmo.deactivate();
          }
 
          ImGui::TableNextColumn();
@@ -348,7 +347,6 @@ void world_edit::ui_show_world_selection_rotate() noexcept
             _selection_rotate_space = selection_transform_space::world;
             _rotate_selection_amount = {0.0f, 0.0f, 0.0f};
             _edit_stack_world.close_last();
-            _gizmo.deactivate();
          }
 
          ImGui::EndTable();

@@ -228,7 +228,6 @@
     <ClCompile Include="src\world\io\save_entity_group.cpp" />
     <ClCompile Include="src\io\path.cpp" />
     <ClCompile Include="src\gizmos.cpp" />
-    <ClCompile Include="src\gizmo.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_linePS.cpp" />
@@ -536,7 +535,6 @@
     <ClInclude Include="src\world\io\save_entity_group.hpp" />
     <ClInclude Include="src\io\path.hpp" />
     <ClInclude Include="src\gizmos.hpp" />
-    <ClInclude Include="src\gizmo.hpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\WorldEdit.shaders" />

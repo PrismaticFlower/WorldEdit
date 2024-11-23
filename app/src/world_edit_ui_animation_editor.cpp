@@ -1387,7 +1387,7 @@ void world_edit::ui_show_animation_editor() noexcept
       std::optional<int32> hovered_background_position_key;
       std::optional<int32> hovered_background_rotation_key;
 
-      if (not _gizmo.want_capture_mouse()) {
+      if (not _gizmos.want_capture_mouse()) {
          const graphics::camera_ray cursor_ray =
             make_camera_ray(_camera,
                             {ImGui::GetMousePos().x, ImGui::GetMousePos().y},
