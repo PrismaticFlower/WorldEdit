@@ -33,9 +33,11 @@ void world_edit::ui_show_world_selection_rotate_light_region() noexcept
 
       world::light* light = world::find_entity(_world.lights, _rotate_light_region_id);
 
-      const bool gizmo_edited = _gizmo.show_rotate(light->position, quaternion{},
-                                                   _rotate_selection_amount);
-      const bool gizmo_close_edit = _gizmo.can_close_last_edit();
+      const bool gizmo_edited =
+         _gizmos.gizmo_rotation({.name = "Rotate Light Region",
+                                 .gizmo_positionWS = light->position},
+                                _rotate_selection_amount);
+      const bool gizmo_close_edit = _gizmos.can_close_last_edit();
 
       if (imgui_edited or gizmo_edited) {
          const float3 rotate_delta = (_rotate_selection_amount - last_rotation_amount);
