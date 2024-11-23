@@ -801,8 +801,6 @@ void world_edit::ui_show_animation_editor() noexcept
                         _animation_editor_context.selected.key = i;
                         _animation_editor_context.selected.key_type =
                            animation_key_type::rotation;
-                        _animation_editor_context.selected
-                           .key_rotation_movement = {0.0f, 0.0f, 0.0f};
                      }
 
                      if (ImGui::IsItemHovered()) hovered_rotation_key = i;
@@ -1503,37 +1501,31 @@ void world_edit::ui_show_animation_editor() noexcept
          const float3 key_position = {key_transform[3].x, key_transform[3].y,
                                       key_transform[3].z};
 
-         const float3 last_rotation_amount =
-            _animation_editor_context.selected.key_rotation_movement;
+         constexpr float radians_from_degrees = std ::numbers::pi_v<float> / 180.0f;
+         constexpr float degrees_from_radians = 180.0f / std ::numbers::pi_v<float>;
 
-         if (_gizmo.show_rotate(key_position, base_rotation,
-                                _animation_editor_context.selected.key_rotation_movement)) {
-            constexpr float radians_to_degrees = 180.0f / std ::numbers::pi_v<float>;
-
-            const float3 rotate_delta =
-               (_animation_editor_context.selected.key_rotation_movement -
-                last_rotation_amount) *
-               radians_to_degrees;
+         if (float3 radians = radians_from_degrees * key.rotation;
+             _gizmos.gizmo_rotation({.name = "Animation Rotation Key",
+                                     .gizmo_rotation = base_rotation,
+                                     .gizmo_positionWS = key_position},
+                                    radians)) {
+            const float3 new_rotation = degrees_from_radians * radians;
 
             if (_animation_editor_config.auto_tangents) {
                update_rotation_auto_tangents(*selected_animation, selected_key,
-                                             key.rotation + rotate_delta,
+                                             new_rotation,
                                              _animation_editor_config.auto_tangent_smoothness,
                                              _edit_stack_world, _edit_context);
             }
             else {
                _edit_stack_world.apply(edits::make_set_vector_value(
-                                          &selected_animation->rotation_keys,
-                                          selected_key, &world::rotation_key::rotation,
-                                          key.rotation + rotate_delta),
+                                          &selected_animation->rotation_keys, selected_key,
+                                          &world::rotation_key::rotation, new_rotation),
                                        _edit_context);
             }
          }
 
-         if (_gizmo.can_close_last_edit()) {
-            _animation_editor_context.selected.key_rotation_movement = {};
-            _edit_stack_world.close_last();
-         }
+         if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
       }
 
       for (auto& key : selected_animation->position_keys) {
