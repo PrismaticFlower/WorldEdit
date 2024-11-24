@@ -82,6 +82,9 @@ gizmo_quadVS
 gizmo_quadPS
 gizmo_quad_TIR_fallbackPS .entrypoint = main_no_aa .file = gizmo_quadPS.hlsl
 
+gizmo_rotation_widgetVS
+gizmo_rotation_widgetPS
+
 tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
 tile_lightsPS .entrypoint = mainPS .file = tile_lights.hlsl
 

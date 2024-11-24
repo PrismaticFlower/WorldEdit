@@ -963,6 +963,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .debug_name = "gizmo_quad"sv}),
        device.direct_queue};
 
+   gizmo_rotation_widget =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.gizmo_shape.get(),
+
+           .vs_bytecode = shader_library["gizmo_rotation_widgetVS"sv],
+           .ps_bytecode = shader_library["gizmo_rotation_widgetPS"sv],
+
+           .blend_state = blend_alpha,
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .input_layout = meta_draw_input_layout,
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+
+           .debug_name = "gizmo_rotation_widget"sv}),
+       device.direct_queue};
+
    depth_reduce_minmax = {device.create_compute_pipeline(
                              {.root_signature =
                                  root_signature_library.depth_reduce_minmax.get(),

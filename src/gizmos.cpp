@@ -100,7 +100,7 @@ constexpr float position_gizmo_plane_outline_width = 0.2f;
 constexpr float position_gizmo_plane_inner_alpha = 0.125f;
 
 constexpr float rotate_gizmo_radius = 0.1f;
-constexpr float rotate_gizmo_hit_pad = 0.01f;
+constexpr float rotate_gizmo_hit_pad = 0.005f;
 constexpr float rotate_gizmo_alignment = 0.17453292519943295769f; // 10 degrees
 
 auto align_value(const float value, const float alignment) noexcept -> float
@@ -173,6 +173,7 @@ struct gizmos::impl {
       draw_lists.lines.clear();
       draw_lists.pixel_lines.clear();
       draw_lists.quads.clear();
+      draw_lists.rotation_widgets.clear();
 
       _cursor_rayWS = cursor_rayWS;
       _input = button_input;
@@ -937,69 +938,71 @@ struct gizmos::impl {
       }
 
       {
-         constexpr float pi_2 = std::numbers::pi_v<float> * 2.0f;
-         constexpr int32 circle_divisions = 64;
-         constexpr float divisor = circle_divisions;
-
          const bool is_hover = gizmo.state == state::hovered;
          const bool is_active = gizmo.state == state::active;
          const bool x_active = gizmo.active_widget == rotation_widget::x;
          const bool y_active = gizmo.active_widget == rotation_widget::y;
          const bool z_active = gizmo.active_widget == rotation_widget::z;
 
+         const float3 x_axisWS = gizmo.rotation * float3{1.0f, 0.0f, 0.0f};
+         const float3 y_axisWS = gizmo.rotation * float3{0.0f, 1.0f, 0.0f};
+         const float3 z_axisWS = gizmo.rotation * float3{0.0f, 0.0f, 1.0f};
+
+         const float inner_radius = gizmo_radius - gizmo_hit_pad;
+         const float outer_radius = gizmo_radius + gizmo_hit_pad;
+
+         draw_lists.rotation_widgets.push_back({
+            .positionWS = gizmo.positionWS,
+
+            .x_axisWS = x_axisWS,
+            .y_axisWS = y_axisWS,
+            .z_axisWS = z_axisWS,
+
+            .inner_radius = inner_radius,
+            .outer_radius = outer_radius,
+
+            .x_color = is_hover and x_active ? x_color_hover : x_color,
+            .y_color = is_hover and y_active ? y_color_hover : y_color,
+            .z_color = is_hover and z_active ? z_color_hover : z_color,
+
+            .x_visible = x_active or not is_active,
+            .y_visible = y_active or not is_active,
+            .z_visible = z_active or not is_active,
+         });
+
          if (is_active) {
-            draw_lists.pixel_lines.emplace_back(gizmo.positionWS,
-                                                gizmo.rotation * (gizmo.cursor_directionGS *
-                                                                  gizmo_radius) +
-                                                   gizmo.positionWS,
-                                                0xff'ff'ff'ff);
-         }
+            const float3 directionGS = gizmo.cursor_directionGS;
+            float3 normalGS;
 
-         const auto make_circle_point = [](const float angle,
-                                           const float radius) noexcept -> float2 {
-            return {radius * std::cos(angle), radius * std::sin(angle)};
-         };
+            if (x_active) {
+               normalGS = normalize(float3{0.0f, -directionGS.z, directionGS.y});
+            }
+            else if (y_active) {
+               normalGS = normalize(float3{-directionGS.z, 0.0f, directionGS.x});
+            }
+            else if (z_active) {
+               normalGS = normalize(float3{-directionGS.y, directionGS.x, 0.0f});
+            }
 
-         for (uint32 i = 0; i <= circle_divisions; ++i) {
-            const float2 start =
-               make_circle_point((static_cast<float>(i) / divisor) * pi_2, gizmo_radius);
-            const float2 end =
-               make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) *
-                                    pi_2,
-                                 gizmo_radius);
+            const float half_width = gizmo_hit_pad * 0.25f;
+            const float3 startGS = directionGS * -gizmo_radius;
+            const float3 endGS = directionGS * gizmo_radius;
 
-            draw_lists.pixel_lines.emplace_back(
-               gizmo.rotation * float3{0.0f, start.x, start.y} + gizmo.positionWS,
-               gizmo.rotation * float3{0.0f, end.x, end.y} + gizmo.positionWS,
-               is_hover and x_active ? x_color_hover_u32 : x_color_u32);
-         }
+            const std::array<float3, 4> quadGS = {
+               startGS + normalGS * -half_width,
+               startGS + normalGS * half_width,
+               endGS + normalGS * half_width,
+               endGS + normalGS * -half_width,
+            };
 
-         for (uint32 i = 0; i <= circle_divisions; ++i) {
-            const float2 start =
-               make_circle_point((static_cast<float>(i) / divisor) * pi_2, gizmo_radius);
-            const float2 end =
-               make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) *
-                                    pi_2,
-                                 gizmo_radius);
+            const std::array<float3, 4> quadWS = {
+               gizmo.rotation * quadGS[0] + gizmo.positionWS,
+               gizmo.rotation * quadGS[1] + gizmo.positionWS,
+               gizmo.rotation * quadGS[2] + gizmo.positionWS,
+               gizmo.rotation * quadGS[3] + gizmo.positionWS,
+            };
 
-            draw_lists.pixel_lines.emplace_back(
-               gizmo.rotation * float3{start.x, 0.0f, start.y} + gizmo.positionWS,
-               gizmo.rotation * float3{end.x, 0.0f, end.y} + gizmo.positionWS,
-               is_hover and y_active ? y_color_hover_u32 : y_color_u32);
-         }
-
-         for (uint32 i = 0; i <= circle_divisions; ++i) {
-            const float2 start =
-               make_circle_point((static_cast<float>(i) / divisor) * pi_2, gizmo_radius);
-            const float2 end =
-               make_circle_point((static_cast<float>((i + 1) % circle_divisions) / divisor) *
-                                    pi_2,
-                                 gizmo_radius);
-
-            draw_lists.pixel_lines.emplace_back(
-               gizmo.rotation * float3{start.x, start.y, 0.0f} + gizmo.positionWS,
-               gizmo.rotation * float3{end.x, end.y, 0.0f} + gizmo.positionWS,
-               is_hover and z_active ? z_color_hover_u32 : z_color_u32);
+            draw_lists.quads.emplace_back(quadWS, float3{1.0f, 1.0f, 1.0f}, 1.0f, 1.0f);
          }
       }
 

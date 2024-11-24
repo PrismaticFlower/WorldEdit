@@ -236,6 +236,8 @@
     <ClCompile Include="src\graphics\shaders\gizmo_quad_TIR_fallbackPS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_quadPS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_quadVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_rotation_widgetVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_rotation_widgetPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />

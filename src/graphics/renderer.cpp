@@ -3481,6 +3481,78 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
 
       command_list.draw_instanced(6, 1, 0, 0);
    }
+
+   for (const gizmo_draw_rotation_widget& widget : draw_lists.rotation_widgets) {
+      const float3 positionVS = camera.view_matrix() * widget.positionWS;
+
+      const math::bounding_box bboxVS = {
+         .min = positionVS - widget.outer_radius,
+         .max = positionVS + widget.outer_radius,
+      };
+
+      struct gizmo_rotation_widget_constants {
+         float3 bbox_positionVS;
+         float inner_radius_sq;
+         float3 bbox_scaleVS;
+         float outer_radius_sq;
+
+         float3 positionVS;
+         uint32 padding0;
+
+         float3 x_axisVS;
+         uint32 x_visible;
+         float3 y_axisVS;
+         uint32 y_visible;
+         float3 z_axisVS;
+         uint32 z_visible;
+
+         float3 x_color;
+         uint32 padding4;
+         float3 y_color;
+         uint32 padding5;
+         float3 z_color;
+         uint32 padding6;
+      };
+
+      const gpu_virtual_address gizmo_cbv =
+         _dynamic_buffer_allocator
+            .allocate_and_copy(gizmo_rotation_widget_constants{
+               .bbox_positionVS = (bboxVS.max + bboxVS.min) * 0.5f,
+               .inner_radius_sq = widget.inner_radius * widget.inner_radius,
+               .bbox_scaleVS = (bboxVS.max - bboxVS.min) * 0.5f,
+               .outer_radius_sq = widget.outer_radius * widget.outer_radius,
+
+               .positionVS = positionVS,
+
+               .x_axisVS = float3x3{camera.view_matrix()} * widget.x_axisWS,
+               .x_visible = widget.x_visible,
+
+               .y_axisVS = float3x3{camera.view_matrix()} * widget.y_axisWS,
+               .y_visible = widget.y_visible,
+
+               .z_axisVS = float3x3{camera.view_matrix()} * widget.z_axisWS,
+               .z_visible = widget.z_visible,
+
+               .x_color = widget.x_color,
+               .y_color = widget.y_color,
+               .z_color = widget.z_color,
+            })
+            .gpu_address;
+
+      command_list.set_graphics_root_signature(_root_signatures.gizmo_shape.get());
+      command_list.set_graphics_cbv(rs::gizmo_shape::shape_cbv, gizmo_cbv);
+      command_list.set_graphics_cbv(rs::gizmo_shape::frame_cbv,
+                                    _camera_constant_buffer_view);
+
+      command_list.set_pipeline_state(_pipelines.gizmo_rotation_widget.get());
+
+      const geometric_shape& shape = _geometric_shapes.cube();
+
+      command_list.ia_set_index_buffer(shape.index_buffer_view);
+      command_list.ia_set_vertex_buffers(0, shape.position_vertex_buffer_view);
+
+      command_list.draw_indexed_instanced(shape.index_count, 1, 0, 0, 0);
+   }
 }
 
 void renderer_impl::build_world_mesh_list(

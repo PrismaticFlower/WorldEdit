@@ -64,11 +64,31 @@ struct gizmo_draw_quad {
    float inner_alpha;
 };
 
+struct gizmo_draw_rotation_widget {
+   float3 positionWS;
+
+   float3 x_axisWS;
+   float3 y_axisWS;
+   float3 z_axisWS;
+
+   float inner_radius;
+   float outer_radius;
+
+   float3 x_color;
+   float3 y_color;
+   float3 z_color;
+
+   bool x_visible = true;
+   bool y_visible = true;
+   bool z_visible = true;
+};
+
 struct gizmo_draw_lists {
    std::vector<gizmo_draw_cone> cones;
    std::vector<gizmo_draw_pixel_line> pixel_lines;
    std::vector<gizmo_draw_line> lines;
    std::vector<gizmo_draw_quad> quads;
+   std::vector<gizmo_draw_rotation_widget> rotation_widgets;
 };
 
 struct gizmo_button_input {
@@ -107,5 +127,4 @@ private:
 
    implementation_storage<impl, 1024> impl; // TODO: Resize
 };
-
 }
