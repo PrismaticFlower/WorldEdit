@@ -1,6 +1,9 @@
+#include "math/quaternion_funcs.hpp"
 #include "world_edit.hpp"
 
 #include <imgui.h>
+
+#include <fmt/core.h>
 
 namespace we {
 
@@ -77,6 +80,19 @@ void world_edit::ui_show_camera_controls() noexcept
       if (float3 position = _camera.position();
           ImGui::DragFloat3("Position", &position.x)) {
          _camera.position(position);
+      }
+
+      ImGui::Separator();
+
+      if (ImGui::Button("Copy Camera Shot", {ImGui::CalcItemWidth(), 0.0f})) {
+         const quaternion rotation = make_quat_from_matrix(_camera.world_matrix());
+         const float3 positionWS = _camera.position();
+
+         ImGui::SetClipboardText(
+            fmt::format("AddCameraShot({}, {}, {}, {}, {}, {}, {});",
+                        rotation.w, rotation.x, rotation.y, rotation.z,
+                        positionWS.x, positionWS.y, positionWS.z)
+               .c_str());
       }
    }
    ImGui::End();
