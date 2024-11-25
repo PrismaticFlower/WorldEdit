@@ -93,6 +93,8 @@ constexpr uint32 z_color_hover_u32 = 0xff'90'ff'90;
 
 constexpr float xyz_hover_alpha = 0.25f;
 
+constexpr float ortho_gizmo_scale = 0.5f;
+
 constexpr float position_gizmo_length = 0.1f;
 constexpr float position_gizmo_hit_pad = 0.0075f;
 constexpr float position_gizmo_plane_cull_angle = 0.15f;
@@ -183,8 +185,14 @@ struct gizmos::impl {
       _want_mouse_input = false;
       _want_keyboard_input = false;
       _last_gizmo_deactivated = false;
+      _orthographic_projection =
+         camera.projection() == graphics::camera_projection::orthographic;
 
-      _gizmo_scale = gizmo_scale * camera.projection_matrix()[0].x;
+      const float projection_scale = not _orthographic_projection
+                                        ? camera.projection_matrix()[0].x
+                                        : camera.view_width() * ortho_gizmo_scale;
+
+      _gizmo_scale = gizmo_scale * projection_scale;
       _camera_positionWS = camera.position();
       _camera_forwardWS = camera.forward();
       _camera_upWS = camera.up();
@@ -209,7 +217,8 @@ struct gizmos::impl {
       gizmo.rotation = normalize(desc.gizmo_rotation);
       gizmo.alignment = desc.alignment;
 
-      const float gizmo_camera_scale = distance(_camera_positionWS, positionWS);
+      const float gizmo_camera_scale =
+         not _orthographic_projection ? distance(_camera_positionWS, positionWS) : 1.0f;
       const float gizmo_length =
          position_gizmo_length * _gizmo_scale * gizmo_camera_scale;
       const float gizmo_hit_pad =
@@ -224,15 +233,15 @@ struct gizmos::impl {
       const float3 view_directionGS =
          normalize(conjugate(gizmo.rotation) * (_camera_positionWS - positionWS));
 
+      const float cull_angle =
+         not _orthographic_projection ? position_gizmo_plane_cull_angle : 0.0f;
+
       const bool yz_plane_visible =
-         fabs(dot(view_directionGS, float3{1.0f, 0.0f, 0.0f})) >
-         position_gizmo_plane_cull_angle;
+         fabs(dot(view_directionGS, float3{1.0f, 0.0f, 0.0f})) > cull_angle;
       const bool xz_plane_visible =
-         fabs(dot(view_directionGS, float3{0.0f, 1.0f, 0.0f})) >
-         position_gizmo_plane_cull_angle;
+         fabs(dot(view_directionGS, float3{0.0f, 1.0f, 0.0f})) > cull_angle;
       const bool xy_plane_visible =
-         fabs(dot(view_directionGS, float3{0.0f, 0.0f, 1.0f})) >
-         position_gizmo_plane_cull_angle;
+         fabs(dot(view_directionGS, float3{0.0f, 0.0f, 1.0f})) > cull_angle;
 
       if (not _input.left_mouse_down) {
          _last_gizmo_deactivated = gizmo.state == state::active;
@@ -749,7 +758,9 @@ struct gizmos::impl {
          gizmo.rotation = normalize(desc.gizmo_rotation);
       }
 
-      const float gizmo_camera_scale = distance(_camera_positionWS, gizmo.positionWS);
+      const float gizmo_camera_scale =
+         not _orthographic_projection ? distance(_camera_positionWS, gizmo.positionWS)
+                                      : 1.0f;
       const float gizmo_radius = rotate_gizmo_radius * _gizmo_scale * gizmo_camera_scale;
       const float gizmo_hit_pad =
          rotate_gizmo_hit_pad * _gizmo_scale * gizmo_camera_scale;
@@ -762,15 +773,15 @@ struct gizmos::impl {
       const float3 view_directionGS = normalize(
          conjugate(gizmo.rotation) * (_camera_positionWS - gizmo.positionWS));
 
+      const float cull_angle =
+         not _orthographic_projection ? rotate_gizmo_ring_cull_angle : 0.0f;
+
       const bool x_ring_visible =
-         fabs(dot(view_directionGS, float3{1.0f, 0.0f, 0.0f})) >
-         rotate_gizmo_ring_cull_angle;
+         fabs(dot(view_directionGS, float3{1.0f, 0.0f, 0.0f})) > cull_angle;
       const bool y_ring_visible =
-         fabs(dot(view_directionGS, float3{0.0f, 1.0f, 0.0f})) >
-         rotate_gizmo_ring_cull_angle;
+         fabs(dot(view_directionGS, float3{0.0f, 1.0f, 0.0f})) > cull_angle;
       const bool z_ring_visible =
-         fabs(dot(view_directionGS, float3{0.0f, 0.0f, 1.0f})) >
-         rotate_gizmo_ring_cull_angle;
+         fabs(dot(view_directionGS, float3{0.0f, 0.0f, 1.0f})) > cull_angle;
 
       if (not _input.left_mouse_down) {
          _last_gizmo_deactivated = gizmo.state == state::active;
@@ -1041,6 +1052,7 @@ private:
    bool _capture_mouse = false;
    bool _capture_keyboard = false;
    bool _last_gizmo_deactivated = false;
+   bool _orthographic_projection = false;
 
    std::vector<gizmo_position_state> _position_gizmos;
    std::vector<gizmo_movement_state> _movement_gizmos;

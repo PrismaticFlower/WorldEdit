@@ -280,7 +280,8 @@ auto make_camera_ray(const camera& camera, const float2 cursor_position,
                             float4{ndc_pos.x, ndc_pos.y, 1.0f, 1.0f};
 
       return {.origin = float3{origin.x, origin.y, origin.z},
-              .direction = transpose(camera.view_matrix()) * float3{0.0f, 0.0f, -1.0f}};
+              .direction = float3x3{transpose(camera.view_matrix())} *
+                           float3{0.0f, 0.0f, -1.0f}};
    }
 }
 }
