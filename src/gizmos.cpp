@@ -102,6 +102,7 @@ constexpr float position_gizmo_plane_inner_alpha = 0.125f;
 constexpr float rotate_gizmo_radius = 0.1f;
 constexpr float rotate_gizmo_hit_pad = 0.005f;
 constexpr float rotate_gizmo_alignment = 0.17453292519943295769f; // 10 degrees
+constexpr float rotate_gizmo_ring_cull_angle = 0.15f;
 
 auto align_value(const float value, const float alignment) noexcept -> float
 {
@@ -758,6 +759,18 @@ struct gizmos::impl {
       const float3 ray_originGS =
          conjugate(gizmo.rotation) * (ray_originWS - gizmo.positionWS);
       const float3 ray_directionGS = conjugate(gizmo.rotation) * ray_directionWS;
+      const float3 view_directionGS = normalize(
+         conjugate(gizmo.rotation) * (_camera_positionWS - gizmo.positionWS));
+
+      const bool x_ring_visible =
+         fabs(dot(view_directionGS, float3{1.0f, 0.0f, 0.0f})) >
+         rotate_gizmo_ring_cull_angle;
+      const bool y_ring_visible =
+         fabs(dot(view_directionGS, float3{0.0f, 1.0f, 0.0f})) >
+         rotate_gizmo_ring_cull_angle;
+      const bool z_ring_visible =
+         fabs(dot(view_directionGS, float3{0.0f, 0.0f, 1.0f})) >
+         rotate_gizmo_ring_cull_angle;
 
       if (not _input.left_mouse_down) {
          _last_gizmo_deactivated = gizmo.state == state::active;
@@ -783,19 +796,19 @@ struct gizmos::impl {
 
          float nearest = FLT_MAX;
 
-         if (x_hit > 0.0f and x_hit < nearest) {
+         if (x_ring_visible and x_hit > 0.0f and x_hit < nearest) {
             nearest = x_hit;
             gizmo.state = state::hovered;
             gizmo.active_widget = rotation_widget::x;
          }
 
-         if (y_hit > 0.0f and y_hit < nearest) {
+         if (y_ring_visible and y_hit > 0.0f and y_hit < nearest) {
             nearest = y_hit;
             gizmo.state = state::hovered;
             gizmo.active_widget = rotation_widget::y;
          }
 
-         if (z_hit > 0.0f and z_hit < nearest) {
+         if (z_ring_visible and z_hit > 0.0f and z_hit < nearest) {
             nearest = z_hit;
             gizmo.state = state::hovered;
             gizmo.active_widget = rotation_widget::z;
@@ -965,9 +978,9 @@ struct gizmos::impl {
             .y_color = is_hover and y_active ? y_color_hover : y_color,
             .z_color = is_hover and z_active ? z_color_hover : z_color,
 
-            .x_visible = x_active or not is_active,
-            .y_visible = y_active or not is_active,
-            .z_visible = z_active or not is_active,
+            .x_visible = x_active or not is_active and x_ring_visible,
+            .y_visible = y_active or not is_active and y_ring_visible,
+            .z_visible = z_active or not is_active and z_ring_visible,
          });
 
          if (is_active) {
