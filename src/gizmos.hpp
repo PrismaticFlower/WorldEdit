@@ -125,6 +125,6 @@ struct gizmos {
 private:
    struct impl;
 
-   implementation_storage<impl, 1024> impl; // TODO: Resize
+   implementation_storage<impl, 512> impl;
 };
 }
