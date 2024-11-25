@@ -286,6 +286,7 @@
     <ClCompile Include="src\graphics\shaders\depth_reduce_minmaxCS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_conePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_coneVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_cone_orthographicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_linePS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_lineVS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_line_TIR_fallbackPS.cpp" />
@@ -294,6 +295,7 @@
     <ClCompile Include="src\graphics\shaders\gizmo_quad_TIR_fallbackPS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_rotation_widgetPS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_rotation_widgetVS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_rotation_widget_orthographicPS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayPS.cpp" />
     <ClCompile Include="src\graphics\shaders\grid_overlayVS.cpp" />
     <ClCompile Include="src\graphics\shaders\imguiPS.cpp" />

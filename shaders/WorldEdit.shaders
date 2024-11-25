@@ -73,6 +73,7 @@ grid_overlayPS .entrypoint = mainPS .file = grid_overlay.hlsl
 
 gizmo_coneVS
 gizmo_conePS
+gizmo_cone_orthographicPS .entrypoint = main_orthographic .file = gizmo_conePS.hlsl
 
 gizmo_lineVS
 gizmo_linePS
@@ -84,6 +85,7 @@ gizmo_quad_TIR_fallbackPS .entrypoint = main_no_aa .file = gizmo_quadPS.hlsl
 
 gizmo_rotation_widgetVS
 gizmo_rotation_widgetPS
+gizmo_rotation_widget_orthographicPS .entrypoint = main_orthographic .file = gizmo_rotation_widgetPS.hlsl
 
 tile_lightsVS .entrypoint = mainVS .file = tile_lights.hlsl
 tile_lightsPS .entrypoint = mainPS .file = tile_lights.hlsl

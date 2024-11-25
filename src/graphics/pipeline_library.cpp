@@ -919,6 +919,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
                      .debug_name = "gizmo_cone"sv}),
                  device.direct_queue};
 
+   gizmo_cone_orthographic =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.gizmo_shape.get(),
+
+           .vs_bytecode = shader_library["gizmo_coneVS"sv],
+           .ps_bytecode = shader_library["gizmo_cone_orthographicPS"sv],
+
+           .blend_state = blend_alpha,
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .input_layout = meta_draw_input_layout,
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+
+           .debug_name = "gizmo_cone_orthographic"sv}),
+       device.direct_queue};
+
    gizmo_line =
       {device.create_graphics_pipeline(
           {.root_signature = root_signature_library.gizmo_shape.get(),
@@ -978,6 +995,23 @@ void pipeline_library::reload(gpu::device& device, const shader_library& shader_
            .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
 
            .debug_name = "gizmo_rotation_widget"sv}),
+       device.direct_queue};
+
+   gizmo_rotation_widget_orthographic =
+      {device.create_graphics_pipeline(
+          {.root_signature = root_signature_library.gizmo_shape.get(),
+
+           .vs_bytecode = shader_library["gizmo_rotation_widgetVS"sv],
+           .ps_bytecode = shader_library["gizmo_rotation_widget_orthographicPS"sv],
+
+           .blend_state = blend_alpha,
+           .rasterizer_state = rasterizer_cull_backfacing,
+           .input_layout = meta_draw_input_layout,
+
+           .render_target_count = 1,
+           .rtv_formats = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB},
+
+           .debug_name = "gizmo_rotation_widget_orthographic"sv}),
        device.direct_queue};
 
    depth_reduce_minmax = {device.create_compute_pipeline(

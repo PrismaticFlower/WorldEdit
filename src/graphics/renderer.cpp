@@ -3435,7 +3435,9 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
       command_list.set_graphics_cbv(rs::gizmo_shape::frame_cbv,
                                     _camera_constant_buffer_view);
 
-      command_list.set_pipeline_state(_pipelines.gizmo_cone.get());
+      command_list.set_pipeline_state(camera.projection() == camera_projection::perspective
+                                         ? _pipelines.gizmo_cone.get()
+                                         : _pipelines.gizmo_cone_orthographic.get());
 
       const geometric_shape& shape = _geometric_shapes.cube();
 
@@ -3544,7 +3546,10 @@ void renderer_impl::draw_gizmos(const camera& camera, const gizmo_draw_lists& dr
       command_list.set_graphics_cbv(rs::gizmo_shape::frame_cbv,
                                     _camera_constant_buffer_view);
 
-      command_list.set_pipeline_state(_pipelines.gizmo_rotation_widget.get());
+      command_list.set_pipeline_state(
+         camera.projection() == camera_projection::perspective
+            ? _pipelines.gizmo_rotation_widget.get()
+            : _pipelines.gizmo_rotation_widget_orthographic.get());
 
       const geometric_shape& shape = _geometric_shapes.cube();
 

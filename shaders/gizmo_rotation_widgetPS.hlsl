@@ -23,12 +23,12 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-float ring_intersect(float3 rd, float3 n)
+float ring_intersect(float3 ro, float3 rd, float3 n)
 {
    float outer_radius_sq = cb_gizmo.outer_radius_sq;
    float inner_radius_sq = cb_gizmo.inner_radius_sq;
 
-   float3 o = -cb_gizmo.positionVS;
+   float3 o = ro - cb_gizmo.positionVS;
    float t = -dot(n, o) / dot(rd, n);
    float3 q = o + rd * t;
 
@@ -36,13 +36,13 @@ float ring_intersect(float3 rd, float3 n)
    return (dist_sq < cb_gizmo.outer_radius_sq && dist_sq > cb_gizmo.inner_radius_sq) ? t : -1.0;
 }
 
-float4 sample_gizmo(float3 ray_directionVS)
+float4 sample_gizmo(float3 ray_originVS, float3 ray_directionVS)
 {
    float hit = 10e100;
    float4 color = 0.0;
 
    if (cb_gizmo.x_visible) {
-      const float x_hit = ring_intersect(ray_directionVS, cb_gizmo.x_axisVS);
+      const float x_hit = ring_intersect(ray_originVS, ray_directionVS, cb_gizmo.x_axisVS);
 
       if (x_hit >= 0.0) {
          hit = x_hit;
@@ -51,7 +51,7 @@ float4 sample_gizmo(float3 ray_directionVS)
    }
 
    if (cb_gizmo.y_visible) {
-      const float y_hit = ring_intersect(ray_directionVS, cb_gizmo.y_axisVS);
+      const float y_hit = ring_intersect(ray_originVS, ray_directionVS, cb_gizmo.y_axisVS);
 
       if (y_hit >= 0.0 && y_hit < hit) {
          hit = y_hit;
@@ -60,7 +60,7 @@ float4 sample_gizmo(float3 ray_directionVS)
    }
 
    if (cb_gizmo.z_visible) {
-      const float z_hit = ring_intersect(ray_directionVS, cb_gizmo.z_axisVS);
+      const float z_hit = ring_intersect(ray_originVS, ray_directionVS, cb_gizmo.z_axisVS);
 
       if (z_hit >= 0.0 && z_hit < hit) {
          hit = z_hit;
@@ -73,30 +73,32 @@ float4 sample_gizmo(float3 ray_directionVS)
 
 float4 main(float3 ray_directionVS : RAYDIRVS) : SV_TARGET
 {
+   const float3 ray_originVS = 0.0;
+
 #if NO_AA
 
-   return sample_gizmo(normalize(ray_directionVS));
+   return sample_gizmo(ray_originVS, normalize(ray_directionVS));
 
 #elif AA_X4
    float4 color = 0.0;
 
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-2, -6))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(6, -2))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-6, 2))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(2, 6))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-2, -6))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(6, -2))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-6, 2))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(2, 6))));
 
    return color * 0.25;
 #elif AA_X8
    float4 color = 0.0;
 
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(1, -3))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-1, 3))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(5, 1))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-3, -5))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-5, 5))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-7, -1))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(3, 7))));
-   color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(7, -7))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(1, -3))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-1, 3))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(5, 1))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-3, -5))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-5, 5))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-7, -1))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(3, 7))));
+   color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(7, -7))));
 
    return color * 0.125;
 #elif AA_X256
@@ -106,7 +108,53 @@ float4 main(float3 ray_directionVS : RAYDIRVS) : SV_TARGET
 
    for (int y = -8; y < 8; ++y) {
       for (int x = -8; x < 8; ++x) {
-         color += sample_gizmo(normalize(EvaluateAttributeSnapped(ray_directionVS, int2(x, y))));
+         color += sample_gizmo(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(x, y))));
+         samples += 1;
+      }
+   }
+
+   return color / samples;
+#endif
+}
+
+float4 main_orthographic(float3 ray_originVS : RAYDIRVS) : SV_TARGET
+{
+   const float3 ray_directionVS = float3(0.0, 0.0, -1.0);
+
+#if NO_AA
+
+   return sample_gizmo(ray_originVS, ray_directionVS);
+
+#elif AA_X4
+   float4 color = 0.0;
+
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(-2, -6)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(6, -2)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(-6, 2)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(2, 6)), ray_directionVS);
+
+   return color * 0.25;
+#elif AA_X8
+   float4 color = 0.0;
+
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(1, -3)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(-1, 3)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(5, 1)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(-3, -5)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(-5, 5)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(-7, -1)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(3, 7)), ray_directionVS);
+   color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(7, -7)), ray_directionVS);
+
+   return color * 0.125;
+#elif AA_X256
+
+   float4 color = 0.0;
+   float samples = 0;
+
+   for (int y = -8; y < 8; ++y) {
+      for (int x = -8; x < 8; ++x) {
+         color += sample_gizmo(EvaluateAttributeSnapped(ray_originVS, int2(x, y)), ray_directionVS);
          samples += 1;
       }
    }

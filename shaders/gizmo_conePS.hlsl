@@ -1,9 +1,5 @@
 #include "gizmo_cone_constants.hlsli"
 
-struct input_vertex {
-   float3 ray_directionVS : RAYDIRVS;
-};
-
 const static float intersects_coverage = 0.25;
 
 float dot2(float3 v)
@@ -18,14 +14,8 @@ struct cone_intersector {
       ra_sq = ra * ra;
 
       ba = cb_gizmo_cone.endVS - cb_gizmo_cone.startVS;
-      oa = -cb_gizmo_cone.startVS;
-      ob = -cb_gizmo_cone.endVS;
-
       m0 = dot(ba, ba);
-      m1 = dot(oa, ba);
-      m5 = dot(oa, oa);
 
-      m5 = dot(oa, oa);
       hy = m0 + ra_sq;
    }
 
@@ -45,8 +35,12 @@ struct cone_intersector {
    // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
    // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-   float intersects(float3 rd)
+   float intersects(float3 ro, float3 rd)
    {
+      float3 oa = ro - cb_gizmo_cone.startVS;
+      float3 ob = ro - cb_gizmo_cone.endVS;
+
+      float m1 = dot(oa, ba);
       float m3 = dot(rd, ba);
 
       // caps
@@ -58,6 +52,7 @@ struct cone_intersector {
 
       // body
       float m4 = dot(rd, oa);
+      float m5 = dot(oa, oa);
 
       float k2 = m0 * m0 - m3 * m3 * hy;
       float k1 = m0 * m0 * m4 - m1 * m3 * hy + m0 * ra * (ra * m3 * 1.0);
@@ -71,36 +66,48 @@ struct cone_intersector {
       float y = m1 + t * m3;
       if (y > 0.0 && y < m0) return intersects_coverage;
 
-
       return 0.0;
    }
-
 
    float ra;
    float ra_sq;
 
    float3 ba;
-   float3 oa;
-   float3 ob;
 
    float m0;
-   float m1;
    
-   float m5;
    float hy;
 };
 
-float4 main(input_vertex input) : SV_TARGET
+float4 main(float3 ray_directionVS : RAYDIRVS) : SV_TARGET
 {
+   const float3 ray_originVS = 0.0;
+
    float coverage = 0.0;
 
    cone_intersector cone;
    cone.init();
 
-   coverage += cone.intersects(normalize(EvaluateAttributeSnapped(input.ray_directionVS, int2(-2, -6))));
-   coverage += cone.intersects(normalize(EvaluateAttributeSnapped(input.ray_directionVS, int2(6, -2))));
-   coverage += cone.intersects(normalize(EvaluateAttributeSnapped(input.ray_directionVS, int2(-6, 2))));
-   coverage += cone.intersects(normalize(EvaluateAttributeSnapped(input.ray_directionVS, int2(2, 6))));
+   coverage += cone.intersects(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-2, -6))));
+   coverage += cone.intersects(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(6, -2))));
+   coverage += cone.intersects(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(-6, 2))));
+   coverage += cone.intersects(ray_originVS, normalize(EvaluateAttributeSnapped(ray_directionVS, int2(2, 6))));
+
+   return float4(cb_gizmo_cone.color, coverage);
+}
+
+float4 main_orthographic(float3 ray_originVS : RAYDIRVS) : SV_TARGET
+{
+   const float3 ray_directionVS = float3(0.0, 0.0, -1.0);
+   float coverage = 0.0;
+
+   cone_intersector cone;
+   cone.init();
+
+   coverage += cone.intersects(EvaluateAttributeSnapped(ray_originVS, int2(-2, -6)), ray_directionVS);
+   coverage += cone.intersects(EvaluateAttributeSnapped(ray_originVS, int2(6, -2)), ray_directionVS);
+   coverage += cone.intersects(EvaluateAttributeSnapped(ray_originVS, int2(-6, 2)), ray_directionVS);
+   coverage += cone.intersects(EvaluateAttributeSnapped(ray_originVS, int2(2, 6)), ray_directionVS);
 
    return float4(cb_gizmo_cone.color, coverage);
 }

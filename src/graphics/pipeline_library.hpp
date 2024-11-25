@@ -114,9 +114,11 @@ struct pipeline_library {
    gpu::unique_pipeline_handle ai_overlay_apply;
 
    gpu::unique_pipeline_handle gizmo_cone;
+   gpu::unique_pipeline_handle gizmo_cone_orthographic;
    gpu::unique_pipeline_handle gizmo_line;
    gpu::unique_pipeline_handle gizmo_quad;
    gpu::unique_pipeline_handle gizmo_rotation_widget;
+   gpu::unique_pipeline_handle gizmo_rotation_widget_orthographic;
 
    gpu::unique_pipeline_handle tile_lights_clear;
    gpu::unique_pipeline_handle tile_lights_spheres;

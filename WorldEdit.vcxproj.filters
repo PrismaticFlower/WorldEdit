@@ -238,6 +238,8 @@
     <ClCompile Include="src\graphics\shaders\gizmo_quadVS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_rotation_widgetVS.cpp" />
     <ClCompile Include="src\graphics\shaders\gizmo_rotation_widgetPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_rotation_widget_orthographicPS.cpp" />
+    <ClCompile Include="src\graphics\shaders\gizmo_cone_orthographicPS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\assets\config\io.hpp" />
