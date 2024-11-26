@@ -21,7 +21,7 @@ const we::world::world game_mode_unlink_layer_test_world = {
       },
    .game_modes =
       {
-         {.name = "Common", .layers = {0}},
+         {.name = "duel", .layers = {0}},
          {.name = "conquest",
           .layers = {1, 2, 3},
           .requirements = {{
@@ -48,7 +48,7 @@ const we::world::world game_mode_unlink_layer_empty_req_test_world = {
       },
    .game_modes =
       {
-         {.name = "Common", .layers = {0}},
+         {.name = "duel", .layers = {0}},
          {.name = "conquest", .layers = {1, 2, 3}},
       },
 };

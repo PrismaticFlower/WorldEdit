@@ -16,7 +16,7 @@ const we::world::world add_game_mode_test_world = {
       {
          {.file_type = "world"},
          {.file_type = "lvl",
-          .entries = {"Test_conquest", "Test_ctf", "Test_hunt", "Test_assault"}},
+          .entries = {"Test_duel", "Test_conquest", "Test_ctf", "Test_hunt", "Test_assault"}},
       },
 
    .layer_descriptions =
@@ -25,7 +25,7 @@ const we::world::world add_game_mode_test_world = {
       },
    .game_modes =
       {
-         {.name = "Common"},
+         {.name = "duel"},
          {.name = "conquest"},
          {.name = "ctf"},
          {.name = "hunt"},
@@ -62,7 +62,7 @@ TEST_CASE("edits add_game_mode", "[Edits]")
    action->apply(edit_context);
 
    REQUIRE(world.game_modes.size() == 6);
-   CHECK(world.game_modes[0].name == "Common");
+   CHECK(world.game_modes[0].name == "duel");
    CHECK(world.game_modes[1].name == "conquest");
    CHECK(world.game_modes[2].name == "ctf");
    CHECK(world.game_modes[3].name == "hunt");
@@ -71,12 +71,13 @@ TEST_CASE("edits add_game_mode", "[Edits]")
 
    REQUIRE(world.requirements.size() == 2);
    CHECK(world.requirements[1].file_type == "lvl");
-   REQUIRE(world.requirements[1].entries.size() == 5);
-   CHECK(world.requirements[1].entries[0] == "Test_conquest");
-   CHECK(world.requirements[1].entries[1] == "Test_ctf");
-   CHECK(world.requirements[1].entries[2] == "Test_hunt");
-   CHECK(world.requirements[1].entries[3] == "Test_assault");
-   CHECK(world.requirements[1].entries[4] == "Test_race");
+   REQUIRE(world.requirements[1].entries.size() == 6);
+   CHECK(world.requirements[1].entries[0] == "Test_duel");
+   CHECK(world.requirements[1].entries[1] == "Test_conquest");
+   CHECK(world.requirements[1].entries[2] == "Test_ctf");
+   CHECK(world.requirements[1].entries[3] == "Test_hunt");
+   CHECK(world.requirements[1].entries[4] == "Test_assault");
+   CHECK(world.requirements[1].entries[5] == "Test_race");
 
    REQUIRE(world.deleted_game_modes.empty());
 
@@ -100,7 +101,7 @@ TEST_CASE("edits add_game_mode empty req", "[Edits]")
    action->apply(edit_context);
 
    REQUIRE(world.game_modes.size() == 6);
-   CHECK(world.game_modes[0].name == "Common");
+   CHECK(world.game_modes[0].name == "duel");
    CHECK(world.game_modes[1].name == "conquest");
    CHECK(world.game_modes[2].name == "ctf");
    CHECK(world.game_modes[3].name == "hunt");

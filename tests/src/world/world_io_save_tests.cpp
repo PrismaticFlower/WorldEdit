@@ -1305,14 +1305,13 @@ TEST_CASE("world saving no gamemodes", "[World][IO]")
 
       .layer_descriptions = {{.name = "[Base]"}, {.name = "conquest"}},
 
-      .game_modes = {{.name = "Common", .layers = {0}},
-
-                     {.name = "conquest",
+      .game_modes = {{.name = "conquest",
                       .layers = {1},
                       .requirements =
                          {
                             {.file_type = "world", .entries = {"test_conquest"}},
                          }}},
+      .common_layers = {0},
    };
 
    save_world("temp/world/test_no_gamemodes.wld", world, {}, {.save_gamemodes = false});

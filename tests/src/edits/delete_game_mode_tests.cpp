@@ -13,7 +13,8 @@ const we::world::world game_mode_delete_test_world = {
    .name = "Test"s,
 
    .requirements = {{.file_type = "lvl",
-                     .entries = {"Test_conquest", "Test_ctf", "Test_hunt", "Test_assault"}}},
+                     .entries = {"Test_duel", "Test_conquest", "Test_ctf",
+                                 "Test_hunt", "Test_assault"}}},
 
    .layer_descriptions =
       {
@@ -21,7 +22,7 @@ const we::world::world game_mode_delete_test_world = {
       },
    .game_modes =
       {
-         {.name = "Common"},
+         {.name = "duel"},
          {.name = "conquest"},
          {.name = "ctf"},
          {.name = "hunt"},
@@ -41,13 +42,14 @@ TEST_CASE("edits delete_game_mode", "[Edits]")
 
    action->apply(edit_context);
 
-   REQUIRE(world.requirements[0].entries.size() == 3);
-   CHECK(world.requirements[0].entries[0] == "Test_conquest");
-   CHECK(world.requirements[0].entries[1] == "Test_hunt");
-   CHECK(world.requirements[0].entries[2] == "Test_assault");
+   REQUIRE(world.requirements[0].entries.size() == 4);
+   CHECK(world.requirements[0].entries[0] == "Test_duel");
+   CHECK(world.requirements[0].entries[1] == "Test_conquest");
+   CHECK(world.requirements[0].entries[2] == "Test_hunt");
+   CHECK(world.requirements[0].entries[3] == "Test_assault");
 
    REQUIRE(world.game_modes.size() == 4);
-   CHECK(world.game_modes[0].name == "Common");
+   CHECK(world.game_modes[0].name == "duel");
    CHECK(world.game_modes[1].name == "conquest");
    CHECK(world.game_modes[2].name == "hunt");
    CHECK(world.game_modes[3].name == "assault");

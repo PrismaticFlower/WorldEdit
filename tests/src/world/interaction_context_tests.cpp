@@ -14,7 +14,8 @@ const we::world::world test_world = {
    .requirements = {{.file_type = "world", .entries = {"Test"}}},
 
    .layer_descriptions = {{.name = "[Base]"}},
-   .game_modes = {{.name = "Common", .layers = {0}}},
+   .game_modes = {},
+   .common_layers = {0},
 
    .terrain = {},
    .global_lights = {.env_map_texture = "sky"},
