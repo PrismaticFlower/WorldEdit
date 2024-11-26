@@ -42,6 +42,7 @@ struct world {
 
    std::vector<layer_description> layer_descriptions;
    std::vector<game_mode_description> game_modes;
+   std::vector<int> common_layers;
 
    terrain terrain;
    global_lights global_lights;

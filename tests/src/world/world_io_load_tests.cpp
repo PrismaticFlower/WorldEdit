@@ -74,16 +74,15 @@ TEST_CASE("world loading", "[World][IO]")
    CHECK(world.layer_descriptions[0].name == "[Base]"sv);
    CHECK(world.layer_descriptions[1].name == "design"sv);
 
-   REQUIRE(world.game_modes.size() == 2);
-   CHECK(world.game_modes[0].name == "Common"sv);
-   CHECK(world.game_modes[0].layers == std::vector{0, 1});
+   CHECK(world.common_layers == std::vector{0, 1});
 
-   CHECK(world.game_modes[1].name == "conquest"sv);
-   CHECK(world.game_modes[1].layers == std::vector<int>{});
-   REQUIRE(world.game_modes[1].requirements.size() == 1);
-   CHECK(world.game_modes[1].requirements[0].file_type == "world"sv);
-   REQUIRE(world.game_modes[1].requirements[0].entries.size() == 1);
-   CHECK(world.game_modes[1].requirements[0].entries[0] == "test_conquest"sv);
+   REQUIRE(world.game_modes.size() == 1);
+   CHECK(world.game_modes[0].name == "conquest"sv);
+   CHECK(world.game_modes[0].layers == std::vector<int>{});
+   REQUIRE(world.game_modes[0].requirements.size() == 1);
+   CHECK(world.game_modes[0].requirements[0].file_type == "world"sv);
+   REQUIRE(world.game_modes[0].requirements[0].entries.size() == 1);
+   CHECK(world.game_modes[0].requirements[0].entries[0] == "test_conquest"sv);
 
    // object checks
    {

@@ -22,8 +22,8 @@ TEST_CASE("edits add_layer", "[Edits]")
    CHECK(world.layer_descriptions[0].name == "[Base]");
    CHECK(world.layer_descriptions[1].name == "Wow");
 
-   REQUIRE(world.game_modes[0].layers.size() == 2);
-   CHECK(world.game_modes[0].layers[1] == 1);
+   REQUIRE(world.common_layers.size() == 2);
+   CHECK(world.common_layers[1] == 1);
 
    REQUIRE(world.requirements.size() == 1);
    CHECK(world.requirements[0].file_type == "world");
@@ -35,7 +35,9 @@ TEST_CASE("edits add_layer", "[Edits]")
 
    REQUIRE(world.layer_descriptions.size() == 1);
    CHECK(world.layer_descriptions[0].name == "[Base]");
-   REQUIRE(world.game_modes[0].layers.size() == 1);
+
+   REQUIRE(world.common_layers.size() == 1);
+   CHECK(world.common_layers[0] == 0);
 
    REQUIRE(world.requirements == test_world.requirements);
 }
@@ -56,8 +58,8 @@ TEST_CASE("edits add_layer empty req", "[Edits]")
    CHECK(world.layer_descriptions[0].name == "[Base]");
    CHECK(world.layer_descriptions[1].name == "Wow");
 
-   REQUIRE(world.game_modes[0].layers.size() == 2);
-   CHECK(world.game_modes[0].layers[1] == 1);
+   REQUIRE(world.common_layers.size() == 2);
+   CHECK(world.common_layers[1] == 1);
 
    REQUIRE(world.requirements.empty());
 
@@ -65,7 +67,9 @@ TEST_CASE("edits add_layer empty req", "[Edits]")
 
    REQUIRE(world.layer_descriptions.size() == 1);
    CHECK(world.layer_descriptions[0].name == "[Base]");
-   REQUIRE(world.game_modes[0].layers.size() == 1);
+
+   REQUIRE(world.common_layers.size() == 1);
+   CHECK(world.common_layers[0] == 0);
 
    REQUIRE(world.requirements.empty());
 }
@@ -88,8 +92,8 @@ TEST_CASE("edits add_layer preivously deleted", "[Edits]")
    CHECK(world.layer_descriptions[0].name == "[Base]");
    CHECK(world.layer_descriptions[1].name == "Wow");
 
-   REQUIRE(world.game_modes[0].layers.size() == 2);
-   CHECK(world.game_modes[0].layers[1] == 1);
+   REQUIRE(world.common_layers.size() == 2);
+   CHECK(world.common_layers[1] == 1);
 
    REQUIRE(world.deleted_layers.size() == 2);
    CHECK(world.deleted_layers[0] == "Now");
@@ -98,7 +102,7 @@ TEST_CASE("edits add_layer preivously deleted", "[Edits]")
    action->revert(edit_context);
 
    REQUIRE(world.layer_descriptions == test_world_preivously_deleted.layer_descriptions);
-   REQUIRE(world.game_modes == test_world_preivously_deleted.game_modes);
+   REQUIRE(world.common_layers == test_world_preivously_deleted.common_layers);
    REQUIRE(world.requirements == test_world_preivously_deleted.requirements);
    REQUIRE(world.deleted_layers == test_world_preivously_deleted.deleted_layers);
 }

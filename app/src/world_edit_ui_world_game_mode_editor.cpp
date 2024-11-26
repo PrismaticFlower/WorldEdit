@@ -17,6 +17,8 @@ namespace {
 
 bool is_unique_game_mode_name(std::string_view name, const world::world& world) noexcept
 {
+   if (string::iequals(name, "common")) return false;
+
    for (const auto& desc : world.game_modes) {
       if (string::iequals(name, desc.name)) return false;
    }
@@ -100,6 +102,74 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
 
       ImGui::SeparatorText("Existing Game Modes");
 
+      if (ImGui::TreeNode("Common")) {
+         ImGui::SeparatorText("Included Layers");
+
+         for (int layer_index = 0;
+              layer_index < _world.layer_descriptions.size(); ++layer_index) {
+            const bool is_included_in_any_game_mode = [&] {
+               for (int i = 0; i < _world.game_modes.size(); ++i) {
+                  for (const int game_mode_layer : _world.game_modes[i].layers) {
+                     if (game_mode_layer == layer_index) return true;
+                  }
+               }
+
+               return false;
+            }();
+
+            if (is_included_in_any_game_mode) {
+               ImGui::Selectable(
+                  fmt::format("{} (used by Game Modes)",
+                              _world.layer_descriptions[layer_index].name)
+                     .c_str(),
+                  false, ImGuiSelectableFlags_Disabled);
+
+               if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+                  ImGui::SetTooltip("A layer can't be included by "
+                                    "both Common and game "
+                                    "modes at the same time. This "
+                                    "would cause duplicate "
+                                    "entities to appear ingame.");
+               }
+            }
+            else {
+               const bool included_in_common = [&] {
+                  for (const int game_mode_layer : _world.common_layers) {
+                     if (game_mode_layer == layer_index) return true;
+                  }
+
+                  return false;
+               }();
+
+               if (ImGui::Selectable(_world.layer_descriptions[layer_index].name.c_str(),
+                                     included_in_common)) {
+                  if (included_in_common) {
+                     const int common_layers_index = [&] {
+                        for (int i = 0; i < _world.common_layers.size(); ++i) {
+                           if (_world.common_layers[i] == layer_index) {
+                              return i;
+                           }
+                        }
+
+                        std::terminate();
+                     }();
+
+                     _edit_stack_world.apply(edits::make_game_mode_unlink_common_layer(common_layers_index,
+                                                                                       _world),
+                                             _edit_context);
+                  }
+                  else {
+                     _edit_stack_world.apply(edits::make_game_mode_link_common_layer(layer_index,
+                                                                                     _world),
+                                             _edit_context);
+                  }
+               }
+            }
+         }
+
+         ImGui::TreePop();
+      }
+
       for (int game_mode_index = 0; game_mode_index < _world.game_modes.size();
            ++game_mode_index) {
          const world::game_mode_description& game_mode =
@@ -109,48 +179,22 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
                              game_mode.name.c_str())) {
             ImGui::SeparatorText("Included Layers");
 
-            const bool is_common_game_mode = game_mode_index == 0;
-
             for (int layer_index = 0;
                  layer_index < _world.layer_descriptions.size(); ++layer_index) {
                const bool included_in_common = [&] {
-                  for (const int game_mode_layer : _world.game_modes[0].layers) {
+                  for (const int game_mode_layer : _world.common_layers) {
                      if (game_mode_layer == layer_index) return true;
                   }
 
                   return false;
                }();
-               const auto check_is_included_in_any_game_mode = [&] {
-                  for (int i = 1; i < _world.game_modes.size(); ++i) {
-                     for (const int game_mode_layer : _world.game_modes[i].layers) {
-                        if (game_mode_layer == layer_index) return true;
-                     }
-                  }
 
-                  return false;
-               };
-
-               if (not is_common_game_mode and included_in_common) {
+               if (included_in_common) {
                   ImGui::Selectable(
                      fmt::format("{} (included from Common)",
                                  _world.layer_descriptions[layer_index].name)
                         .c_str(),
                      true, ImGuiSelectableFlags_Disabled);
-               }
-               else if (is_common_game_mode and check_is_included_in_any_game_mode()) {
-                  ImGui::Selectable(
-                     fmt::format("{} (used by Game Modes)",
-                                 _world.layer_descriptions[layer_index].name)
-                        .c_str(),
-                     false, ImGuiSelectableFlags_Disabled);
-
-                  if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-                     ImGui::SetTooltip("A layer can't be included by "
-                                       "both Common and game "
-                                       "modes at the same time. This "
-                                       "would cause duplicate "
-                                       "entities to appear ingame.");
-                  }
                }
                else {
                   const bool included_in_game_mode = [&] {
@@ -190,33 +234,31 @@ void world_edit::ui_show_world_game_mode_editor() noexcept
                }
             }
 
-            if (not is_common_game_mode) {
-               ImGui::SeparatorText("Delete Game Mode");
+            ImGui::SeparatorText("Delete Game Mode");
 
-               if (ImGui::Button("Delete", {ImGui::CalcItemWidth(), 0.0f})) {
-                  _edit_stack_world.apply(edits::make_delete_game_mode(game_mode_index,
+            if (ImGui::Button("Delete", {ImGui::CalcItemWidth(), 0.0f})) {
+               _edit_stack_world.apply(edits::make_delete_game_mode(game_mode_index, _world),
+                                       _edit_context);
+            }
+
+            ImGui::SeparatorText("Rename Game Mode");
+
+            if (absl::InlinedVector<char, 256> name{game_mode.name.begin(),
+                                                    game_mode.name.end()};
+                ImGui::InputText("Name", &name, ImGuiInputTextFlags_CallbackCharFilter,
+                                 imgui_game_mode_letter_filter)) {
+               if (not name.empty() and
+                   is_unique_game_mode_name({name.data(), name.size()}, _world)) {
+                  _edit_stack_world.apply(edits::make_rename_game_mode(game_mode_index,
+                                                                       {name.data(),
+                                                                        name.size()},
                                                                        _world),
                                           _edit_context);
                }
+            }
 
-               ImGui::SeparatorText("Rename Game Mode");
-
-               if (absl::InlinedVector<char, 256> name{game_mode.name.begin(),
-                                                       game_mode.name.end()};
-                   ImGui::InputText("Name", &name, ImGuiInputTextFlags_CallbackCharFilter,
-                                    imgui_game_mode_letter_filter)) {
-                  if (not name.empty() and
-                      is_unique_game_mode_name({name.data(), name.size()}, _world)) {
-                     _edit_stack_world.apply(edits::make_rename_game_mode(
-                                                game_mode_index,
-                                                {name.data(), name.size()}, _world),
-                                             _edit_context);
-                  }
-               }
-
-               if (ImGui::IsItemDeactivatedAfterEdit()) {
-                  _edit_stack_world.close_last();
-               }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+               _edit_stack_world.close_last();
             }
 
             ImGui::TreePop();

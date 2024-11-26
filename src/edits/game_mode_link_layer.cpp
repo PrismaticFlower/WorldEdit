@@ -95,6 +95,62 @@ private:
    const req_edit_append _req_edit_append;
 };
 
+struct link_common_layer final : edit<world::edit_context> {
+   link_common_layer(int layer_index, req_edit_type req_edit_type,
+                     req_edit_append req_edit_append)
+      : _layer_index{layer_index},
+        _req_edit_type{req_edit_type},
+        _req_edit_append{req_edit_append}
+   {
+   }
+
+   void apply(world::edit_context& context) noexcept override
+   {
+      world::world& world = context.world;
+
+      world.common_layers.push_back(_layer_index);
+
+      if (_req_edit_type == req_edit_type::none) return;
+
+      const std::string req_entry_name =
+         fmt::format("{}_{}", world.name, world.layer_descriptions[_layer_index].name);
+
+      if (_req_edit_type == req_edit_type::append) {
+         world.requirements[_req_edit_append.list_index].entries.push_back(req_entry_name);
+      }
+      else if (_req_edit_type == req_edit_type::create) {
+         world.requirements.push_back(
+            {.file_type = "world", .entries = {req_entry_name}});
+      }
+   }
+
+   void revert(world::edit_context& context) noexcept override
+   {
+      world::world& world = context.world;
+
+      world.common_layers.pop_back();
+
+      if (_req_edit_type == req_edit_type::append) {
+         world.requirements[_req_edit_append.list_index].entries.pop_back();
+      }
+      else if (_req_edit_type == req_edit_type::create) {
+         world.requirements.pop_back();
+      }
+   }
+
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
+private:
+   const int _layer_index;
+   const req_edit_type _req_edit_type;
+   const req_edit_append _req_edit_append;
+};
+
 }
 
 auto make_game_mode_link_layer(int game_mode_index, int layer_index,
@@ -104,13 +160,23 @@ auto make_game_mode_link_layer(int game_mode_index, int layer_index,
    req_edit_type req_edit_type = req_edit_type::none;
    req_edit_append req_edit_append{};
 
-   if (game_mode_index != 0) {
-      get_req_edit_type(world.game_modes[game_mode_index].requirements,
-                        req_edit_type, req_edit_append);
-   }
+   get_req_edit_type(world.game_modes[game_mode_index].requirements,
+                     req_edit_type, req_edit_append);
 
    return std::make_unique<link_layer>(game_mode_index, layer_index,
                                        req_edit_type, req_edit_append);
+}
+
+auto make_game_mode_link_common_layer(int layer_index, const world::world& world)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   req_edit_type req_edit_type = req_edit_type::none;
+   req_edit_append req_edit_append{};
+
+   get_req_edit_type(world.requirements, req_edit_type, req_edit_append);
+
+   return std::make_unique<link_common_layer>(layer_index, req_edit_type,
+                                              req_edit_append);
 }
 
 }

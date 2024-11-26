@@ -40,7 +40,7 @@ const we::world::world add_game_mode_previously_deleted_test_world =
        {
           {.name = "[Base]"},
        },
-    .game_modes = {{.name = "Common"}},
+    .game_modes = {{.name = "duel"}},
 
     .deleted_game_modes = {
        "conquest",
@@ -135,7 +135,7 @@ TEST_CASE("edits add_game_mode previously deleted", "[Edits]")
    action->apply(edit_context);
 
    REQUIRE(world.game_modes.size() == 2);
-   CHECK(world.game_modes[0].name == "Common");
+   CHECK(world.game_modes[0].name == "duel");
    CHECK(world.game_modes[1].name == "hunt");
 
    REQUIRE(world.deleted_game_modes.size() == 3);

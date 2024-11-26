@@ -203,19 +203,33 @@ auto load_layer_index(const io::path& path, output_stream& output, world& world_
                          world_out.layer_descriptions.back().name);
          }
          else if (key_node.key == "GameMode"sv) {
-            auto& game_mode = world_out.game_modes.emplace_back();
+            std::string name = key_node.values.get<std::string>(0);
 
-            game_mode.name = key_node.values.get<std::string>(0);
+            if (string::iequals(name, "Common")) {
+               for (const auto& game_mode_key_node : key_node) {
+                  if (game_mode_key_node.key != "Layer"sv) continue;
 
-            for (const auto& game_mode_key_node : key_node) {
-               if (game_mode_key_node.key != "Layer"sv) continue;
-
-               game_mode.layers.push_back(game_mode_key_node.values.get<int>(0));
+                  world_out.common_layers.push_back(
+                     game_mode_key_node.values.get<int>(0));
+               }
             }
+            else {
+               auto& game_mode = world_out.game_modes.emplace_back();
 
-            output.write("Found game_mode '{}' in .ldx file\n", game_mode.name);
+               game_mode.name = std::move(name);
+
+               for (const auto& game_mode_key_node : key_node) {
+                  if (game_mode_key_node.key != "Layer"sv) continue;
+
+                  game_mode.layers.push_back(game_mode_key_node.values.get<int>(0));
+               }
+
+               output.write("Found game_mode '{}' in .ldx file\n", game_mode.name);
+            }
          }
       }
+
+      for (int& layer : world_out.common_layers) layer = layer_remap[layer];
 
       for (auto& game_mode : world_out.game_modes) {
          for (auto& layer : game_mode.layers) {

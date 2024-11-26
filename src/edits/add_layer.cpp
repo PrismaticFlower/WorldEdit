@@ -36,7 +36,7 @@ struct add_layer final : edit<world::edit_context> {
       const int index = static_cast<int>(context.world.layer_descriptions.size());
 
       context.world.layer_descriptions.push_back({.name = _name});
-      context.world.game_modes.at(0).layers.push_back(index);
+      context.world.common_layers.push_back(index);
 
       for (auto& requirements : context.world.requirements) {
          if (not string::iequals(requirements.file_type, "world")) continue;
@@ -57,7 +57,7 @@ struct add_layer final : edit<world::edit_context> {
    void revert(world::edit_context& context) noexcept override
    {
       context.world.layer_descriptions.pop_back();
-      context.world.game_modes.at(0).layers.pop_back();
+      context.world.common_layers.pop_back();
 
       for (auto& requirements : context.world.requirements) {
          if (not string::iequals(requirements.file_type, "world")) continue;

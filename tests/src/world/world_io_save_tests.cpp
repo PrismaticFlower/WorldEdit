@@ -825,14 +825,13 @@ TEST_CASE("world saving", "[World][IO]")
 
       .layer_descriptions = {{.name = "[Base]"}, {.name = "conquest"}},
 
-      .game_modes = {{.name = "Common", .layers = {0}},
-
-                     {.name = "conquest",
+      .game_modes = {{.name = "conquest",
                       .layers = {1},
                       .requirements =
                          {
                             {.file_type = "world", .entries = {"test_conquest"}},
                          }}},
+      .common_layers = {0},
 
       .global_lights = {.global_light_1 = "sun",
                         .global_light_2 = "",

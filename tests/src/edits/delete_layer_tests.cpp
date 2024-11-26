@@ -27,7 +27,6 @@ const we::world::world layer_delete_test_world = {
    .layer_descriptions = {{.name = "[Base]"}, {.name = "Middle"}, {.name = "Top"}},
    .game_modes =
       {
-         {.name = "Common", .layers = {0, 1, 2}},
          {
             .name = "conquest",
             .layers = {1},
@@ -37,6 +36,7 @@ const we::world::world layer_delete_test_world = {
             }},
          },
       },
+   .common_layers = {0, 1, 2},
 
    .objects = {world::entities_init,
                std::initializer_list{
@@ -98,11 +98,12 @@ TEST_CASE("edits delete_layer", "[Edits]")
    CHECK(world.requirements[0].entries[0] == "Test");
    CHECK(world.requirements[0].entries[1] == "Test_Top");
 
-   REQUIRE(world.game_modes[0].layers.size() == 2);
-   CHECK(world.game_modes[0].layers[0] == 0);
-   CHECK(world.game_modes[0].layers[1] == 1);
-   CHECK(world.game_modes[1].layers.empty());
-   CHECK(world.game_modes[1].requirements[0].entries.empty());
+   CHECK(world.game_modes[0].layers.empty());
+   CHECK(world.game_modes[0].requirements[0].entries.empty());
+
+   REQUIRE(world.common_layers.size() == 2);
+   CHECK(world.common_layers[0] == 0);
+   CHECK(world.common_layers[1] == 1);
 
    REQUIRE(world.objects.size() == 3);
    CHECK(world.objects[0].name == "Object0");
@@ -148,6 +149,7 @@ TEST_CASE("edits delete_layer", "[Edits]")
 
    CHECK(world.layer_descriptions == layer_delete_test_world.layer_descriptions);
    CHECK(world.game_modes == layer_delete_test_world.game_modes);
+   CHECK(world.common_layers == layer_delete_test_world.common_layers);
    CHECK(world.objects == layer_delete_test_world.objects);
    CHECK(world.lights == layer_delete_test_world.lights);
    CHECK(world.paths == layer_delete_test_world.paths);

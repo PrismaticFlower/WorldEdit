@@ -108,6 +108,56 @@ private:
    const std::vector<delete_entry_req> _delete_requirements;
 };
 
+struct unlink_layer_from_common final : edit<world::edit_context> {
+   unlink_layer_from_common(int common_layers_index, int layer_index,
+                            std::vector<delete_entry_req> delete_requirements)
+      : _common_layers_index{common_layers_index},
+        _layer_index{layer_index},
+        _delete_requirements{delete_requirements}
+   {
+   }
+
+   void apply(world::edit_context& context) noexcept override
+   {
+      world::world& world = context.world;
+
+      world.common_layers.erase(world.common_layers.begin() + _common_layers_index);
+
+      for (const auto& [list_index, entry_index, entry] : _delete_requirements) {
+         auto& list = world.requirements[list_index];
+
+         list.entries.erase(list.entries.begin() + entry_index);
+      }
+   }
+
+   void revert(world::edit_context& context) noexcept override
+   {
+      world::world& world = context.world;
+
+      world.common_layers.insert(world.common_layers.begin() + _common_layers_index,
+                                 _layer_index);
+
+      for (std::ptrdiff_t i = (std::ssize(_delete_requirements) - 1); i >= 0; --i) {
+         const auto& [list_index, entry_index, entry] = _delete_requirements[i];
+         auto& list = world.requirements[list_index];
+
+         list.entries.emplace(list.entries.begin() + entry_index, entry);
+      }
+   }
+
+   bool is_coalescable([[maybe_unused]] const edit& other) const noexcept override
+   {
+      return false;
+   }
+
+   void coalesce([[maybe_unused]] edit& other) noexcept override {}
+
+private:
+   const int _common_layers_index;
+   const int _layer_index;
+   const std::vector<delete_entry_req> _delete_requirements;
+};
+
 }
 
 auto make_game_mode_unlink_layer(int game_mode_index, int game_mode_layer_index,
@@ -121,10 +171,20 @@ auto make_game_mode_unlink_layer(int game_mode_index, int game_mode_layer_index,
 
    return std::make_unique<unlink_layer>(
       game_mode_index, game_mode_layer_index, layer_index,
-      game_mode_index != 0
-         ? make_delete_req_entries(layer_file_name,
-                                   world.game_modes[game_mode_index].requirements)
-         : std::vector<delete_entry_req>{});
+      make_delete_req_entries(layer_file_name,
+                              world.game_modes[game_mode_index].requirements));
+}
+
+auto make_game_mode_unlink_common_layer(int common_layers_index, const world::world& world)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   const int layer_index = world.common_layers[common_layers_index];
+   const std::string layer_file_name =
+      fmt::format("{}_{}", world.name, world.layer_descriptions[layer_index].name);
+
+   return std::make_unique<unlink_layer_from_common>(
+      common_layers_index, layer_index,
+      make_delete_req_entries(layer_file_name, world.requirements));
 }
 
 }

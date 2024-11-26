@@ -802,6 +802,11 @@ void save_layer_index(const io::path& path, const world& world, const save_flags
 
    if (not flags.save_gamemodes) return;
 
+   file.write_ln("GameMode(\"Common\")");
+   file.write_ln("{");
+   for (auto& layer : world.common_layers) file.write_ln("\tLayer({});", layer);
+   file.write_ln("}\n");
+
    for (auto& game_mode : world.game_modes) {
       file.write_ln("GameMode(\"{}\")", game_mode.name);
       file.write_ln("{");
