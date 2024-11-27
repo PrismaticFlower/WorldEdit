@@ -310,18 +310,56 @@ void run_application(command_line command_line)
    };
 
    do {
-      MSG message{};
+      HANDLE swap_chain_waitable_object = app.get_swap_chain_waitable_object();
 
-      while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
-         TranslateMessage(&message);
-         DispatchMessageW(&message);
+      switch (MsgWaitForMultipleObjects(1, &swap_chain_waitable_object, false,
+                                        INFINITE, QS_ALLINPUT)) {
+      case WAIT_OBJECT_0: {
+         app.update();
+      } break;
+      case WAIT_OBJECT_0 + 1: {
+         MSG message{};
 
-         if (message.message == WM_QUIT) return;
+         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+
+            if (message.message == WM_QUIT) return;
+         }
+      } break;
+      case WAIT_FAILED: {
+         const DWORD error_code = GetLastError();
+
+         if (app.can_close()) {
+            MessageBoxA(
+               window_handle.get(),
+               fmt::format("An unexpected fatal error (last-error "
+                           "code: {}) occured in the "
+                           "message loop. The editor will now close and must "
+                           "be reopened. There are no unsaved changes.",
+                           error_code)
+                  .c_str(),
+               "Fatal Error", MB_OK);
+         }
+         else {
+            switch (MessageBoxA(
+               window_handle.get(),
+               "Failed to recover from GPU device "
+               "removal.\n\nThe editor will now exit and must be reopened."
+               "\n\nSave world?",
+               "Fatal Error", MB_YESNO | MB_ICONERROR)) {
+            case IDYES:
+               app.save_world_with_picker();
+               [[fallthrough]];
+            case IDNO:
+            default:
+               return;
+            }
+         }
+
+         return;
+      } break;
       }
-
-      if (app.idling()) WaitMessage();
-
-      app.update();
 
       if (app.mouse_over()) {
          const we::mouse_cursor old_app_cursor = app_cursor;
@@ -331,6 +369,21 @@ void run_application(command_line command_line)
          if (app_cursor != old_app_cursor) {
             SetCursor(mouse_cursors[app_cursor]);
          }
+      }
+
+      while (app.idling()) {
+         WaitMessage();
+
+         MSG message{};
+
+         while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+
+            if (message.message == WM_QUIT) return;
+         }
+
+         if (not app.idling()) app.idle_exit();
       }
    } while (true);
 }

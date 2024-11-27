@@ -128,17 +128,23 @@ world_edit::~world_edit()
    ImGui_ImplWin32_Shutdown();
 }
 
+auto world_edit::get_swap_chain_waitable_object() noexcept -> HANDLE
+{
+   return _renderer->get_swap_chain_waitable_object();
+}
+
 void world_edit::update()
 {
    const float delta_time = _last_update_timer.elapsed();
 
    _last_update_timer.restart();
 
-   if (idling()) return;
+   if (_recreate_renderer_pending) {
+      recreate_renderer();
 
-   if (_recreate_renderer_pending) recreate_renderer();
-
-   wait_for_swap_chain_ready();
+      // Return control to the event loop as the swap chain must now be waited on before rendering resumes.
+      return;
+   }
 
    if (_applied_user_display_scale != _settings.ui.extra_scaling) {
       dpi_changed(_current_dpi);
@@ -223,6 +229,11 @@ void world_edit::update()
    }
 }
 
+void world_edit::idle_exit() noexcept
+{
+   _last_update_timer.restart();
+}
+
 void world_edit::recreate_renderer() noexcept
 {
    _recreate_renderer_pending = false;
@@ -254,16 +265,6 @@ void world_edit::recreate_renderer() noexcept
    _stream->write("GPU Device was removed and has been recreated.\n");
 
    _world.terrain.untracked_fill_dirty_rects();
-}
-
-void world_edit::wait_for_swap_chain_ready() noexcept
-{
-   try {
-      _renderer->wait_for_swap_chain_ready();
-   }
-   catch (graphics::gpu::exception& e) {
-      handle_gpu_error(e);
-   }
 }
 
 void world_edit::update_window_text() noexcept

@@ -45,6 +45,7 @@ namespace we::graphics {
 
 class camera;
 using window_handle = void*;
+using waitable_handle = void*;
 
 struct renderer_init {
    const window_handle window;
@@ -89,7 +90,7 @@ struct env_map_result {
 struct renderer {
    virtual ~renderer() = default;
 
-   virtual void wait_for_swap_chain_ready() = 0;
+   virtual auto get_swap_chain_waitable_object() noexcept -> waitable_handle = 0;
 
    virtual void draw_frame(const camera& camera, const world::world& world,
                            const world::interaction_targets& interaction_targets,

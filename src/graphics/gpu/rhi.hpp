@@ -1120,8 +1120,9 @@ struct current_backbuffer {
 };
 
 struct swap_chain {
-   /// @brief Wait for the swap chain to be ready for rendering. Or does nothing if swap_chain_desc::frame_latency_waitable is false.
-   void wait_for_ready();
+   /// @brief Gets the frame latency waitable object for the swap chain.
+   /// @return The waitable object.
+   auto waitable_object() noexcept -> void*;
 
    /// @brief Present the frame.
    /// @param allow_tearing Allow tearing/disable V-Sync.

@@ -79,7 +79,10 @@ static_assert(sizeof(meta_outlined_constant_buffer) == 256);
 struct renderer_impl final : renderer {
    renderer_impl(const renderer_init& init);
 
-   void wait_for_swap_chain_ready() override;
+   auto get_swap_chain_waitable_object() noexcept -> void* override
+   {
+      return _swap_chain.waitable_object();
+   }
 
    void draw_frame(const camera& camera, const world::world& world,
                    const world::interaction_targets& interaction_targets,
@@ -377,11 +380,6 @@ renderer_impl::renderer_impl(const renderer_init& init)
       .reserve(2048);
 
    _world_mesh_list.transparent.reserve(256);
-}
-
-void renderer_impl::wait_for_swap_chain_ready()
-{
-   _swap_chain.wait_for_ready();
 }
 
 void renderer_impl::draw_frame(const camera& camera, const world::world& world,

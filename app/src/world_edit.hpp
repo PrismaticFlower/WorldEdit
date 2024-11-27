@@ -192,6 +192,10 @@ public:
 
    void update();
 
+   void idle_exit() noexcept;
+
+   void save_world_with_picker() noexcept;
+
    void resized(uint16 width, uint16 height);
 
    void focused();
@@ -218,10 +222,10 @@ public:
 
    auto get_mouse_cursor() const noexcept -> mouse_cursor;
 
+   auto get_swap_chain_waitable_object() noexcept -> HANDLE;
+
 private:
    void recreate_renderer() noexcept;
-
-   void wait_for_swap_chain_ready() noexcept;
 
    void update_window_text() noexcept;
 
@@ -382,8 +386,6 @@ private:
    void load_world_with_picker() noexcept;
 
    void save_world(const io::path& path) noexcept;
-
-   void save_world_with_picker() noexcept;
 
    void close_world() noexcept;
 

@@ -1646,11 +1646,9 @@ swap_chain::swap_chain(swap_chain&& other) noexcept = default;
 
 auto swap_chain::operator=(swap_chain&& other) noexcept -> swap_chain& = default;
 
-void swap_chain::wait_for_ready()
+auto swap_chain::waitable_object() noexcept -> void*
 {
-   if (state->frame_latency_event) {
-      state->frame_latency_event.wait();
-   }
+   return state->frame_latency_event.get();
 }
 
 void swap_chain::present(bool allow_tearing)
