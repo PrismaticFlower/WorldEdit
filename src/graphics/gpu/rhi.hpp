@@ -1204,8 +1204,8 @@ private:
 
 public:
    command_queue direct_queue;
-   command_queue compute_queue;
    command_queue copy_queue;
+   command_queue async_compute_queue;
    command_queue background_copy_queue;
 
    /// @brief Return the index to use for buffered resources (exluding swap chains) this frame.

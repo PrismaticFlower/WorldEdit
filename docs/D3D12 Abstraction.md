@@ -112,7 +112,9 @@ Fences are not directly exposed. Instead command queues contain functions for sy
 ### Frame Index
 Buffering CPU visible resources across frames is not abstracted away but there is functionality to assist with it. First `frame_pipeline_length` defines the number of resources needed for all frames in flight and `gpu::device::frame_index` returns the index of the resource to use on the current frame.
 
-All this depends on `gpu::device::end_frame`. Which must always be called at the end of a frame to update `frame_index` and perform end-of-frame tasks. It is important to note `frame_index` is synchronized for the `direct_queue` only.
+All this depends on `gpu::device::end_frame`. Which must always be called at the end of a frame to update `frame_index` and perform end-of-frame tasks. It is important to note `frame_index` is synchronized for the `direct_queue` and `copy_queue` (see below) only. The `async_compute_queue` and `background_copy_queue` require manual synchronization when used.
+
+After `gpu::device::end_frame` the `copy_queue` is synced with the `direct_queue`. This means that the final command list of the frame is required to be completed by the `direct_queue`, if this is not the case you should manually syncrhonize the `direct_queue` with the `copy_queue` before calling  `gpu::device::end_frame`.
 
 ```c++
 constexpr inline uint32 frame_pipeline_length = 2;

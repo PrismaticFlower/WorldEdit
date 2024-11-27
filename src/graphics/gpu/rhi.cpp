@@ -447,12 +447,13 @@ device::device(const device_desc& desc)
      direct_queue{command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_DIRECT,
                                      .device_state = &state.get(),
                                      .debug_name = "Direct Queue"}},
-     compute_queue{command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_COMPUTE,
-                                      .device_state = &state.get(),
-                                      .debug_name = "Compute Queue"}},
      copy_queue{command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_COPY,
                                    .device_state = &state.get(),
                                    .debug_name = "Copy Queue"}},
+     async_compute_queue{
+        command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_COMPUTE,
+                           .device_state = &state.get(),
+                           .debug_name = "Async Compute Queue"}},
      background_copy_queue{
         command_queue_init{.type = D3D12_COMMAND_LIST_TYPE_COPY,
                            .device_state = &state.get(),
@@ -498,27 +499,30 @@ void device::end_frame()
    // Signal for the current frame.
    direct_queue.state->command_queue->Signal(state->frame_fence.get(),
                                              state->current_frame);
+   copy_queue.state->command_queue->Wait(state->frame_fence.get(), state->current_frame);
 
    // Onto the next frame.
    state->current_frame += 1;
 
    const uint64 direct_queue_sync_value =
       direct_queue.state->sync_fence->GetCompletedValue();
-   const uint64 compute_queue_sync_value =
-      compute_queue.state->sync_fence->GetCompletedValue();
    const uint64 copy_queue_sync_value =
       copy_queue.state->sync_fence->GetCompletedValue();
+   const uint64 async_compute_queue_sync_value =
+      async_compute_queue.state->sync_fence->GetCompletedValue();
    const uint64 background_copy_queue_sync_value =
       background_copy_queue.state->sync_fence->GetCompletedValue();
 
    direct_queue.state->release_queue_device_children.process(direct_queue_sync_value);
    direct_queue.state->release_queue_descriptors.process(direct_queue_sync_value);
 
-   compute_queue.state->release_queue_device_children.process(compute_queue_sync_value);
-   compute_queue.state->release_queue_descriptors.process(compute_queue_sync_value);
-
    copy_queue.state->release_queue_device_children.process(copy_queue_sync_value);
    copy_queue.state->release_queue_descriptors.process(copy_queue_sync_value);
+
+   async_compute_queue.state->release_queue_device_children.process(
+      async_compute_queue_sync_value);
+   async_compute_queue.state->release_queue_descriptors.process(
+      async_compute_queue_sync_value);
 
    background_copy_queue.state->release_queue_device_children.process(
       background_copy_queue_sync_value);
@@ -539,18 +543,20 @@ void device::wait_for_idle()
    };
 
    const uint64 direct_queue_sync_value = insert_queue_signal(direct_queue);
-   const uint64 compute_queue_sync_value = insert_queue_signal(compute_queue);
    const uint64 copy_queue_sync_value = insert_queue_signal(copy_queue);
+   const uint64 async_compute_queue_sync_value =
+      insert_queue_signal(async_compute_queue);
    const uint64 background_copy_queue_sync_value =
       insert_queue_signal(background_copy_queue);
 
    std::array fences{direct_queue.state->sync_fence.get(),
-                     compute_queue.state->sync_fence.get(),
                      copy_queue.state->sync_fence.get(),
+                     async_compute_queue.state->sync_fence.get(),
                      background_copy_queue.state->sync_fence.get()};
 
-   std::array sync_values{direct_queue_sync_value, compute_queue_sync_value,
-                          copy_queue_sync_value, background_copy_queue_sync_value};
+   std::array sync_values{direct_queue_sync_value, copy_queue_sync_value,
+                          async_compute_queue_sync_value,
+                          background_copy_queue_sync_value};
 
    static_assert(fences.size() == sync_values.size());
 
@@ -566,11 +572,13 @@ void device::wait_for_idle()
    direct_queue.state->release_queue_device_children.process(direct_queue_sync_value);
    direct_queue.state->release_queue_descriptors.process(direct_queue_sync_value);
 
-   compute_queue.state->release_queue_device_children.process(compute_queue_sync_value);
-   compute_queue.state->release_queue_descriptors.process(compute_queue_sync_value);
-
    copy_queue.state->release_queue_device_children.process(copy_queue_sync_value);
    copy_queue.state->release_queue_descriptors.process(copy_queue_sync_value);
+
+   async_compute_queue.state->release_queue_device_children.process(
+      async_compute_queue_sync_value);
+   async_compute_queue.state->release_queue_descriptors.process(
+      async_compute_queue_sync_value);
 
    background_copy_queue.state->release_queue_device_children.process(
       background_copy_queue_sync_value);
@@ -1965,7 +1973,7 @@ command_list::~command_list()
    case D3D12_COMMAND_LIST_TYPE_COMPUTE:
       state->allocator_pool.view_and_clear(
          [&](utility::com_ptr<ID3D12CommandAllocator> allocator) {
-            state->device->compute_queue.release_command_allocator(
+            state->device->async_compute_queue.release_command_allocator(
                pack_command_allocator_handle(allocator.release()));
          });
    case D3D12_COMMAND_LIST_TYPE_COPY:

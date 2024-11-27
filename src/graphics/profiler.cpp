@@ -48,7 +48,7 @@ struct profiler::impl {
       _timestamp_frequencies[profiler_queue::direct] =
          static_cast<double>(_device.direct_queue.get_timestamp_frequency());
       _timestamp_frequencies[profiler_queue::compute] =
-         static_cast<double>(_device.compute_queue.get_timestamp_frequency());
+         static_cast<double>(_device.async_compute_queue.get_timestamp_frequency());
    }
 
    auto begin(const char* name, gpu::compute_command_list& command_list,
