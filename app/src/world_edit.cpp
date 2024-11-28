@@ -658,11 +658,6 @@ void world_edit::update_camera(const float delta_time)
       _camera.pitch(_camera.pitch() + (-_mouse_movement_y * camera_look_scale));
    }
 
-   if (_rotate_camera or _pan_camera) {
-      SetCursorPos(_rotate_camera_cursor_position.x,
-                   _rotate_camera_cursor_position.y);
-   }
-
    if (_orbit_camera_active) {
       if (_move_camera_forward) _camera_orbit_distance -= camera_movement_scale;
       if (_move_camera_back) _camera_orbit_distance += camera_movement_scale;

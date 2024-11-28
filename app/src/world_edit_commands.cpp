@@ -46,11 +46,25 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("camera.rotate_with_mouse"s, [this]() {
       _rotate_camera = not _rotate_camera;
+
+      if (_rotate_camera) {
       GetCursorPos(&_rotate_camera_cursor_position);
+      }
+      else {
+         SetCursorPos(_rotate_camera_cursor_position.x,
+                      _rotate_camera_cursor_position.y);
+      }
    });
    _commands.add("camera.pan_with_mouse"s, [this]() {
       _pan_camera = not _pan_camera;
+
+      if (_pan_camera) {
       GetCursorPos(&_rotate_camera_cursor_position);
+      }
+      else {
+         SetCursorPos(_rotate_camera_cursor_position.x,
+                      _rotate_camera_cursor_position.y);
+      }
    });
    _commands.add("camera.zoom_in"s,
                  [this] { _camera.zoom(_camera.zoom() + 0.25f); });

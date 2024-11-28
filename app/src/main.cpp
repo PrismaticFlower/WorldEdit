@@ -293,7 +293,35 @@ void run_application(command_line command_line)
             return 0;
          }
 
-         if (raw->header.dwType == RIM_TYPEMOUSE) {
+         if (raw->header.dwType != RIM_TYPEMOUSE) return 0;
+
+         const RAWMOUSE& mouse = raw->data.mouse;
+
+         if (mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
+            double width = 0.0;
+            double height = 0.0;
+
+            if (mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) {
+               width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+               height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+            }
+            else {
+               width = GetSystemMetrics(SM_CXSCREEN);
+               height = GetSystemMetrics(SM_CYSCREEN);
+            }
+
+            int x = static_cast<int>((mouse.lLastX / 65535.0) * width);
+            int y = static_cast<int>((mouse.lLastY / 65535.0) * height);
+
+            static int last_x = 0;
+            static int last_y = 0;
+
+            app.mouse_movement(x - last_x, y - last_y);
+
+            last_x = x;
+            last_y = y;
+         }
+         else {
             app.mouse_movement(raw->data.mouse.lLastX, raw->data.mouse.lLastY);
          }
 
