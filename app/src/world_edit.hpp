@@ -194,6 +194,8 @@ public:
 
    void idle_exit() noexcept;
 
+   void recreate_renderer_pending() noexcept;
+
    void save_world_with_picker() noexcept;
 
    void resized(uint16 width, uint16 height);
@@ -420,8 +422,11 @@ private:
    bool _mouse_over = false;
    bool _window_unsaved_star = false;
    bool _recreate_renderer_pending = false;
+   bool _window_resized = false;
    float _applied_user_display_scale = 1.0f;
    int _current_dpi = 96;
+   uint16 _window_width = 0;
+   uint16 _window_height = 0;
    scale_factor _display_scale{.value = 1.0f};
    utility::stopwatch _last_update_timer;
    utility::stopwatch _sprint_timer;

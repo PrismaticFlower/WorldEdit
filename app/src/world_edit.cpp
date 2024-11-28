@@ -115,8 +115,11 @@ world_edit::world_edit(const HWND window, utility::command_line command_line)
    RECT rect{};
    GetClientRect(window, &rect);
 
-   _camera.aspect_ratio(static_cast<float>(rect.right - rect.left) /
-                        static_cast<float>(rect.bottom - rect.top));
+   _window_width = static_cast<uint16>(rect.right - rect.left);
+   _window_height = static_cast<uint16>(rect.bottom - rect.top);
+
+   _camera.aspect_ratio(static_cast<float>(_window_width) /
+                        static_cast<float>(_window_height));
 
    _settings = settings_load.get();
 }
@@ -139,11 +142,29 @@ void world_edit::update()
 
    _last_update_timer.restart();
 
-   if (_recreate_renderer_pending) {
-      recreate_renderer();
+   if (_window_resized) {
+      RECT rect{};
+      GetClientRect(_window, &rect);
 
-      // Return control to the event loop as the swap chain must now be waited on before rendering resumes.
-      return;
+      const uint16 new_width = static_cast<uint16>(rect.right - rect.left);
+      const uint16 new_height = static_cast<uint16>(rect.bottom - rect.top);
+
+      if (new_width != _window_width or new_height != _window_height) {
+         _window_width = new_width;
+         _window_height = new_height;
+
+         _camera.aspect_ratio(static_cast<float>(_window_width) /
+                              static_cast<float>(_window_height));
+
+         try {
+            _renderer->window_resized(_window_width, _window_height);
+         }
+         catch (graphics::gpu::exception& e) {
+            handle_gpu_error(e);
+         }
+
+         printf("Window Resized\n");
+      }
    }
 
    if (_applied_user_display_scale != _settings.ui.extra_scaling) {
@@ -232,6 +253,11 @@ void world_edit::update()
 void world_edit::idle_exit() noexcept
 {
    _last_update_timer.restart();
+}
+
+void world_edit::recreate_renderer_pending() noexcept
+{
+   if (_recreate_renderer_pending) recreate_renderer();
 }
 
 void world_edit::recreate_renderer() noexcept
@@ -3802,17 +3828,9 @@ void world_edit::show_odf_in_explorer(const lowercase_string& asset_name) noexce
 void world_edit::resized(uint16 width, uint16 height)
 {
    if (width == 0 or height == 0) return;
+   if (width == _window_width or height == _window_height) return;
 
-   _camera.aspect_ratio(float(width) / float(height));
-
-   try {
-      _renderer->window_resized(width, height);
-   }
-   catch (graphics::gpu::exception& e) {
-      handle_gpu_error(e);
-   }
-
-   update();
+   _window_resized = true;
 }
 
 void world_edit::focused()

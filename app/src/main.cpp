@@ -385,6 +385,8 @@ void run_application(command_line command_line)
 
          if (not app.idling()) app.idle_exit();
       }
+
+      app.recreate_renderer_pending();
    } while (true);
 }
 
