@@ -181,6 +181,27 @@ TEST_CASE("edits set_multi_value5", "[Edits]")
    REQUIRE(not barrier.hidden);
 }
 
+TEST_CASE("edits set_sector_position", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_sector_position(&world.sectors[0].points, 1, float2{8.0f, 8.0f},
+                               &world.sectors[0].base, 4.0f);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.sectors[0].points[1] == float2{8.0f, 8.0f});
+   REQUIRE(world.sectors[0].base == 4.0f);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].points[1] == float2{0.0f, 10.0f});
+   REQUIRE(world.sectors[0].base == 0.0f);
+}
+
 TEST_CASE("edits make_set_path_node_property_value", "[Edits]")
 {
    world::world world = test_world;
@@ -449,6 +470,35 @@ TEST_CASE("edits set_multi_value5 coalesce", "[Edits]")
    REQUIRE(barrier.flags == world::ai_path_flags::medium);
    REQUIRE(not barrier.hidden);
 }
+
+TEST_CASE("edits set_sector_position coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_sector_position(&world.sectors[0].points, 1, float2{8.0f, 8.0f},
+                               &world.sectors[0].base, 4.0f);
+   auto other_edit =
+      make_set_sector_position(&world.sectors[0].points, 1, float2{16.0f, 16.0f},
+                               &world.sectors[0].base, 8.0f);
+
+   REQUIRE(edit->is_coalescable(*other_edit));
+
+   edit->coalesce(*other_edit);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.sectors[0].points[1] == float2{16.0f, 16.0f});
+   REQUIRE(world.sectors[0].base == 8.0f);
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.sectors[0].points[1] == float2{0.0f, 10.0f});
+   REQUIRE(world.sectors[0].base == 0.0f);
+}
+
 TEST_CASE("edits make_set_path_node_property_value coalesce", "[Edits]")
 {
    world::world world = test_world;
@@ -635,6 +685,22 @@ TEST_CASE("edits set_multi_value5 no coalesce", "[Edits]")
                            &world.planning_hubs[0].position, float3{2.0f, 2.0f, 2.0f},
                            &barrier.size, float2{4.0f, 4.0f}, &barrier.hidden,
                            true, &barrier.flags, world::ai_path_flags::huge);
+
+   REQUIRE(not edit->is_coalescable(*other_edit));
+}
+
+TEST_CASE("edits set_sector_position no coalesce", "[Edits]")
+{
+   world::world world = test_world;
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit =
+      make_set_sector_position(&world.sectors[0].points, 1, float2{8.0f, 8.0f},
+                               &world.sectors[0].base, 4.0f);
+   auto other_edit =
+      make_set_sector_position(&world.sectors[0].points, 0, float2{16.0f, 16.0f},
+                               &world.sectors[0].base, 4.0f);
 
    REQUIRE(not edit->is_coalescable(*other_edit));
 }

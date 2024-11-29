@@ -489,6 +489,11 @@ inline auto make_set_multi_value(T1* value1_address, T1 new_value1, //
       std::move(new_value4), value5_address, std::move(new_value5));
 }
 
+auto make_set_sector_position(std::vector<float2>* points_address,
+                              const uint32 point_index, float2 new_point_position,
+                              float* base_address, float new_base)
+   -> std::unique_ptr<edit<world::edit_context>>;
+
 auto make_set_path_node_property_value(std::vector<world::path::node>* nodes,
                                        const we::uint32 node_index,
                                        const we::uint32 property_index,

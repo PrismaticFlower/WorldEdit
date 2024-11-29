@@ -1711,6 +1711,22 @@ void world_edit::place_creation_entity() noexcept
                                                           sector.points[0]),
                                  _edit_context);
 
+         if (sector.base < existing_sector->base or
+             sector.base + sector.height >
+                existing_sector->base + existing_sector->height) {
+            const float new_base = std::min(sector.base, existing_sector->base);
+            const float new_height =
+               std::max((existing_sector->base + existing_sector->height),
+                        (sector.base + sector.height)) -
+               new_base;
+
+            _edit_stack_world.apply(edits::make_set_multi_value(&existing_sector->height,
+                                                                new_height,
+                                                                &existing_sector->base,
+                                                                new_base),
+                                    _edit_context, {.transparent = true});
+         }
+
          if (_entity_creation_config.auto_fill_sector) {
             _edit_stack_world
                .apply(edits::make_set_value(&existing_sector->objects,

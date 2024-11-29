@@ -4,6 +4,49 @@ namespace we::edits {
 
 namespace {
 
+struct set_sector_position final : edit<world::edit_context> {
+   set_sector_position(std::vector<float2>* points_address, const uint32 point_index,
+                       float2 new_point_position, float* base_address, float new_base)
+      : set_point{points_address, point_index, 0, new_point_position},
+        set_base{base_address, new_base}
+   {
+   }
+
+   void apply(world::edit_context& context) noexcept override
+   {
+      set_point.apply(context);
+      set_base.apply(context);
+   }
+
+   void revert(world::edit_context& context) noexcept override
+   {
+      set_point.revert(context);
+      set_base.revert(context);
+   }
+
+   bool is_coalescable(const edit& other_unknown) const noexcept override
+   {
+      const set_sector_position* other =
+         dynamic_cast<const set_sector_position*>(&other_unknown);
+
+      if (not other) return false;
+
+      return other->set_point.is_coalescable(this->set_point) and
+             other->set_base.is_coalescable(this->set_base);
+   }
+
+   void coalesce(edit& other_unknown) noexcept override
+   {
+      set_sector_position& other = dynamic_cast<set_sector_position&>(other_unknown);
+
+      set_point.coalesce(other.set_point);
+      set_base.coalesce(other.set_base);
+   }
+
+   set_vector_value<float2, float2> set_point;
+   set_memory_value<float> set_base;
+};
+
 struct set_path_node_property_value final : edit<world::edit_context> {
    set_path_node_property_value(std::vector<world::path::node>* nodes,
                                 const we::uint32 node_index,
@@ -107,6 +150,16 @@ struct set_creation_path_node_location final : edit<world::edit_context> {
    float3 euler_rotation;
 };
 
+}
+
+auto make_set_sector_position(std::vector<float2>* points_address,
+                              const uint32 point_index, float2 new_point_position,
+                              float* base_address, float new_base)
+   -> std::unique_ptr<edit<world::edit_context>>
+{
+   return std::make_unique<set_sector_position>(points_address, point_index,
+                                                new_point_position,
+                                                base_address, new_base);
 }
 
 auto make_set_path_node_property_value(std::vector<world::path::node>* nodes,

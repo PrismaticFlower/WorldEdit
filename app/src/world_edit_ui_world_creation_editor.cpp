@@ -2474,10 +2474,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
             new_position.y = sector.points[0].y;
          }
 
-         if (new_position != sector.points[0]) {
-            _edit_stack_world.apply(edits::make_set_vector_value(&sector.points,
-                                                                 0, new_position),
-                                    _edit_context, {.transparent = true});
+         if (new_position != sector.points[0] or _cursor_positionWS.y != sector.base) {
+            _edit_stack_world
+               .apply(edits::make_set_sector_position(&sector.points, 0,
+                                                      new_position, &sector.base,
+                                                      _cursor_positionWS.y),
+                      _edit_context, {.transparent = true});
          }
       }
 
