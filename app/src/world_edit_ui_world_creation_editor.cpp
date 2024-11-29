@@ -2425,6 +2425,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
    }
    else if (creation_entity.is<world::sector>()) {
       world::sector& sector = creation_entity.get<world::sector>();
+      world::sector* existing_sector =
+         world::find_entity(_world.sectors, sector.name);
 
       ImGui::InputText("Name", &sector.name, _edit_stack_world, _edit_context,
                        [&](std::string* edited_value) noexcept {
@@ -2439,7 +2441,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       ImGui::DragFloat("Base", &sector.base, _edit_stack_world, _edit_context,
                        1.0f, 0.0f, 0.0f, "Y:%.3f");
-      ImGui::DragFloat("Height", &sector.height, _edit_stack_world, _edit_context);
+      ImGui::DragFloat("Height",
+                       existing_sector ? &existing_sector->height : &sector.height,
+                       _edit_stack_world, _edit_context);
 
       if (sector.points.empty()) std::terminate();
 
@@ -2515,9 +2519,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _entity_creation_context.activate_tool = entity_creation_tool::from_object_bbox;
       }
 
-      if (const world::sector* existing_sector =
-             world::find_entity(_world.sectors, sector.name);
-          existing_sector and not existing_sector->points.empty() and
+      if (existing_sector and not existing_sector->points.empty() and
           not using_from_object_bbox) {
          float2 start_point = existing_sector->points.back();
          const float2 mid_point = sector.points[0];
