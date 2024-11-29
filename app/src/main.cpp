@@ -45,6 +45,37 @@ const static we::container::enum_array<HCURSOR, we::mouse_cursor> mouse_cursors 
    }(),
 };
 
+void static process_mouse_input(we::world_edit& app, const RAWMOUSE& mouse) noexcept
+{
+   if (mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
+      double width = 0.0;
+      double height = 0.0;
+
+      if (mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) {
+         width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+         height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+      }
+      else {
+         width = GetSystemMetrics(SM_CXSCREEN);
+         height = GetSystemMetrics(SM_CYSCREEN);
+      }
+
+      int x = static_cast<int>((mouse.lLastX / 65535.0) * width);
+      int y = static_cast<int>((mouse.lLastY / 65535.0) * height);
+
+      static int last_x = 0;
+      static int last_y = 0;
+
+      app.mouse_movement(x - last_x, y - last_y);
+
+      last_x = x;
+      last_y = y;
+   }
+   else {
+      app.mouse_movement(mouse.lLastX, mouse.lLastY);
+   }
+}
+
 void run_application(command_line command_line)
 {
    static std::atomic_flag entered{};
@@ -278,51 +309,62 @@ void run_application(command_line command_line)
          return 0;
       };
       case WM_INPUT: {
-         const HRAWINPUT raw_input_handle = reinterpret_cast<HRAWINPUT>(lparam);
+         static std::vector<std::byte> raw_input_buffer{sizeof(RAWINPUT) * 16};
 
-         UINT data_size = 0;
+         // Process WM_INPUT
+         {
+            const HRAWINPUT raw_input_handle = reinterpret_cast<HRAWINPUT>(lparam);
 
-         GetRawInputData(raw_input_handle, RID_INPUT, nullptr, &data_size,
-                         sizeof(RAWINPUTHEADER));
+            UINT data_size = 0;
 
-         std::byte* const header_bytes = static_cast<std::byte*>(alloca(data_size));
-         RAWINPUT* raw = new (header_bytes) RAWINPUT;
+            GetRawInputData(raw_input_handle, RID_INPUT, nullptr, &data_size,
+                            sizeof(RAWINPUTHEADER));
 
-         if (GetRawInputData(raw_input_handle, RID_INPUT, raw, &data_size,
-                             sizeof(RAWINPUTHEADER)) == static_cast<UINT>(-1)) {
-            return 0;
+            if (raw_input_buffer.size() < data_size) {
+               raw_input_buffer.resize(data_size);
+            }
+
+            RAWINPUT* raw = new (raw_input_buffer.data()) RAWINPUT;
+
+            if (GetRawInputData(raw_input_handle, RID_INPUT, raw, &data_size,
+                                sizeof(RAWINPUTHEADER)) != static_cast<UINT>(-1)) {
+               if (raw->header.dwType == RIM_TYPEMOUSE) {
+                  process_mouse_input(app, raw->data.mouse);
+               }
+            }
          }
 
-         if (raw->header.dwType != RIM_TYPEMOUSE) return 0;
+         // Now do a buffered read of RawInput to clear out any other messages.
+         // I've read this can avoid a performance pitfall on high poll rate
+         // mice. Testing on even my humble (compared to 8khz mice) 1khz mouse
+         // shows it can provide a benefit.
+         //
+         // It also apparently helps mitigate the impact of system wide input
+         // hooks but I'm not keen to install many of those for testing.
+         while (true) {
+            RAWINPUT* raw = new (raw_input_buffer.data()) RAWINPUT;
+            UINT data_size = static_cast<UINT>(raw_input_buffer.size());
 
-         const RAWMOUSE& mouse = raw->data.mouse;
+            const UINT input_count =
+               GetRawInputBuffer(raw, &data_size, sizeof(RAWINPUTHEADER));
 
-         if (mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
-            double width = 0.0;
-            double height = 0.0;
-
-            if (mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) {
-               width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-               height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+            if (input_count == static_cast<UINT>(-1)) {
+               raw_input_buffer.resize(raw_input_buffer.size() + sizeof(RAWINPUT) * 2);
+            }
+            else if (input_count == 0) {
+               break;
             }
             else {
-               width = GetSystemMetrics(SM_CXSCREEN);
-               height = GetSystemMetrics(SM_CYSCREEN);
+               for (UINT i = 0; i < input_count; ++i) {
+                  using QWORD = UINT64; // For NEXTRAWINPUTBLOCK
+
+                  if (raw->header.dwType == RIM_TYPEMOUSE) {
+                     process_mouse_input(app, raw->data.mouse);
+                  }
+
+                  raw = NEXTRAWINPUTBLOCK(raw);
+               }
             }
-
-            int x = static_cast<int>((mouse.lLastX / 65535.0) * width);
-            int y = static_cast<int>((mouse.lLastY / 65535.0) * height);
-
-            static int last_x = 0;
-            static int last_y = 0;
-
-            app.mouse_movement(x - last_x, y - last_y);
-
-            last_x = x;
-            last_y = y;
-         }
-         else {
-            app.mouse_movement(raw->data.mouse.lLastX, raw->data.mouse.lLastY);
          }
 
          return 0;
