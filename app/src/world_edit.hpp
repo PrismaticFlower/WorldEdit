@@ -618,6 +618,7 @@ private:
       placement_node_insert placement_node_insert = placement_node_insert::append;
 
       float snap_distance = 0.25f;
+      float from_bbox_padding = 0.0f;
 
       bool command_post_auto_place_meta_entities = true;
       bool auto_fill_sector = true;

@@ -2116,7 +2116,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
             math::bounding_box bbox =
                _object_classes[object->class_handle].model->bounding_box;
 
-            const float3 box_size = abs(bbox.max - bbox.min) / 2.0f;
+            const float padding = _entity_creation_config.from_bbox_padding;
+            const float3 box_size = abs(bbox.max - bbox.min) / 2.0f + padding;
             const float3 box_centre = (bbox.max + bbox.min) / 2.0f;
 
             const float3 position = object->rotation * box_centre + object->position;
@@ -2128,6 +2129,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                     _edit_context);
          }
       }
+
+      ImGui::DragFloat("Bounds Padding", &_entity_creation_config.from_bbox_padding,
+                       0.05f, 0.0f, 1e10f);
+
+      ImGui::SetItemTooltip(
+         "Padding to apply to a region's size when using From Object Bounds.");
 
       if (ImGui::Button("Draw Region", {ImGui::CalcItemWidth(), 0.0f})) {
          _entity_creation_context.activate_tool = entity_creation_tool::draw;
@@ -3233,6 +3240,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _entity_creation_context.activate_tool = entity_creation_tool::from_object_bbox;
       }
 
+      ImGui::DragFloat("Bounds Padding", &_entity_creation_config.from_bbox_padding,
+                       0.05f, 0.0f, 1e10f);
+
+      ImGui::SetItemTooltip(
+         "Padding to apply to a barrier's size using From Object Bounds.");
+
       if (_entity_creation_context.tool == entity_creation_tool::from_object_bbox and
           _interaction_targets.hovered_entity and
           _interaction_targets.hovered_entity->is<world::object_id>()) {
@@ -3246,8 +3259,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
             math::bounding_box bbox =
                _object_classes[object->class_handle].model->bounding_box;
 
+            const float padding = _entity_creation_config.from_bbox_padding;
             const float3 box_centre = (bbox.max + bbox.min) / 2.0f;
-            const float3 box_size = (bbox.max - bbox.min) / 2.0f;
+            const float3 box_size = (bbox.max - bbox.min) / 2.0f + padding;
 
             const float3 position = object->rotation * box_centre + object->position;
 
