@@ -54,12 +54,14 @@ struct delete_object final : edit<world::edit_context> {
    };
 
    delete_object(world::object object, uint32 object_index,
+                 std::vector<unlinked_object_property> unlinked_object_properties,
                  std::vector<unlinked_path_property> unlinked_path_properties,
                  std::vector<unlinked_sector_entry> unlinked_sector_entries,
                  std::vector<unlinked_hintnode> unlinked_hintnodes,
                  world::object_class_library& object_class_library)
       : _object{std::move(object)},
         _object_index{object_index},
+        _unlinked_object_properties{std::move(unlinked_object_properties)},
         _unlinked_path_properties{std::move(unlinked_path_properties)},
         _unlinked_sector_entries{std::move(unlinked_sector_entries)},
         _unlinked_hintnodes{std::move(unlinked_hintnodes)},
@@ -69,9 +71,12 @@ struct delete_object final : edit<world::edit_context> {
 
    void apply(world::edit_context& context) noexcept override
    {
-      _object_class_library.free(context.world.objects[_object_index].class_handle);
-
-      context.world.objects.erase(context.world.objects.begin() + _object_index);
+      for (unlinked_object_property& unlinked : _unlinked_object_properties) {
+         std::swap(context.world.objects[unlinked.object_index]
+                      .instance_properties[unlinked.property_index]
+                      .value,
+                   unlinked.value);
+      }
 
       for (unlinked_path_property& unlinked : _unlinked_path_properties) {
          std::vector<world::path::property>& properties =
@@ -95,12 +100,23 @@ struct delete_object final : edit<world::edit_context> {
          std::swap(context.world.hintnodes[unlinked.hintnode_index].command_post,
                    unlinked.value);
       }
+
+      _object_class_library.free(context.world.objects[_object_index].class_handle);
+
+      context.world.objects.erase(context.world.objects.begin() + _object_index);
    }
 
    void revert(world::edit_context& context) noexcept override
    {
       context.world.objects.insert(context.world.objects.begin() + _object_index,
                                    _object);
+
+      for (unlinked_object_property& unlinked : _unlinked_object_properties) {
+         std::swap(context.world.objects[unlinked.object_index]
+                      .instance_properties[unlinked.property_index]
+                      .value,
+                   unlinked.value);
+      }
 
       for (std::ptrdiff_t i = (std::ssize(_unlinked_path_properties) - 1);
            i >= 0; --i) {
@@ -144,6 +160,7 @@ struct delete_object final : edit<world::edit_context> {
 private:
    const world::object _object;
    const uint32 _object_index;
+   std::vector<unlinked_object_property> _unlinked_object_properties;
    std::vector<unlinked_path_property> _unlinked_path_properties;
    std::vector<unlinked_sector_entry> _unlinked_sector_entries;
    std::vector<unlinked_hintnode> _unlinked_hintnodes;
@@ -563,9 +580,18 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
    const uint32 object_index = get_entity_index(world.objects, object_id);
    const world::object& object = world.objects[object_index];
 
+   uint32 object_property_count = 0;
    uint32 path_property_count = 0;
    uint32 sector_entry_count = 0;
    uint32 hintnode_count = 0;
+
+   for (const auto& other_object : world.objects) {
+      for (const auto& prop : other_object.instance_properties) {
+         if (iequals(prop.key, "ControlZone") and iequals(prop.value, object.name)) {
+            object_property_count += 1;
+         }
+      }
+   }
 
    for (const auto& path : world.paths) {
       for (const auto& [key, value] : path.properties) {
@@ -585,13 +611,30 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
       if (iequals(hintnode.command_post, object.name)) hintnode_count += 1;
    }
 
+   std::vector<unlinked_object_property> object_property_refs;
    std::vector<delete_object::unlinked_path_property> path_property_refs;
    std::vector<delete_object::unlinked_sector_entry> sector_entry_refs;
    std::vector<delete_object::unlinked_hintnode> hintnode_refs;
 
+   object_property_refs.reserve(object_property_count);
    path_property_refs.reserve(path_property_count);
    sector_entry_refs.reserve(sector_entry_count);
    hintnode_refs.reserve(hintnode_count);
+
+   for (uint32 other_object_index = 0;
+        other_object_index < world.objects.size(); ++other_object_index) {
+      const world::object& other_object = world.objects[other_object_index];
+
+      for (uint32 property_index = 0;
+           property_index < other_object.instance_properties.size(); ++property_index) {
+         const world::instance_property& prop =
+            other_object.instance_properties[property_index];
+
+         if (iequals(prop.key, "ControlZone") and iequals(prop.value, object.name)) {
+            object_property_refs.emplace_back(other_object_index, property_index);
+         }
+      }
+   }
 
    for (uint32 path_index = 0; path_index < world.paths.size(); ++path_index) {
       const world::path& path = world.paths[path_index];
@@ -634,6 +677,7 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
    }
 
    return std::make_unique<delete_object>(object, object_index,
+                                          std::move(object_property_refs),
                                           std::move(path_property_refs),
                                           std::move(sector_entry_refs),
                                           std::move(hintnode_refs),

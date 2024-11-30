@@ -795,6 +795,54 @@ TEST_CASE("edits delete_entity multiple refs object", "[Edits]")
    CHECK(world.sectors[0].objects[3] == "test_object");
 }
 
+TEST_CASE("edits delete_entity ControlZone ref object", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .layer_descriptions = {{.name = "[Base]"s}},
+      .common_layers = {0},
+
+      .objects =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::object{
+                  .name = "test_object"s,
+
+                  .id = world::object_id{0},
+               },
+               world::object{
+                  .instance_properties =
+                     {world::instance_property{"ControlZone", "test_object"}},
+
+                  .id = world::object_id{1},
+               },
+            },
+         },
+   };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_entity(world.objects[0].id, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.objects.size() == 1);
+   REQUIRE(world.objects[0].instance_properties.size() == 1);
+   CHECK(world.objects[0].instance_properties[0].key == "ControlZone");
+   CHECK(world.objects[0].instance_properties[0].value.empty());
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.objects.size() == 2);
+   REQUIRE(world.objects[1].instance_properties.size() == 1);
+   CHECK(world.objects[1].instance_properties[0].key == "ControlZone");
+   CHECK(world.objects[1].instance_properties[0].value == "test_object");
+}
+
 TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")
 {
    world::world world = test_world;
