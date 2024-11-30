@@ -1988,7 +1988,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       switch (region.shape) {
       case world::region_shape::box: {
-         ImGui::DragFloat3("Size", &region_size, 0.0f, 1e10f);
+         ImGui::DragFloat3("Size", &region_size, 0.1f, 0.0f, 1e10f);
       } break;
       case world::region_shape::sphere: {
          float radius = length(region_size);
