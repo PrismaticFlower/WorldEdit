@@ -865,4 +865,46 @@ TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")
    CHECK(object_class_library.debug_ref_count(class_name) == 1);
 }
 
+TEST_CASE("edits delete_entity light gloabl ref", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .layer_descriptions = {{.name = "[Base]"s}},
+      .common_layers = {0},
+
+      .global_lights =
+         {
+            .global_light_1 = "sun",
+            .global_light_2 = "Sun",
+         },
+
+      .lights =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::light{
+                  .name = "sun",
+
+                  .id = world::light_id{0},
+               },
+            },
+         },
+   };
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+
+   auto edit = make_delete_entity(world.lights[0].id, world);
+
+   edit->apply(edit_context);
+
+   CHECK(world.global_lights.global_light_1.empty());
+   CHECK(world.global_lights.global_light_2.empty());
+
+   edit->revert(edit_context);
+
+   CHECK(world.global_lights.global_light_1 == "sun");
+   CHECK(world.global_lights.global_light_2 == "Sun");
+}
+
 }
