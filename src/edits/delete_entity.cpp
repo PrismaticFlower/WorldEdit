@@ -48,6 +48,23 @@ struct delete_object final : edit<world::edit_context> {
       std::string entry;
    };
 
+   struct unlinked_animation_group {
+      uint32 group_index = 0;
+      uint32 entry_index = 0;
+      world::animation_group::entry entry;
+   };
+
+   struct unlinked_animation_hierarchy {
+      uint32 hierarchy_index = 0;
+      uint32 object_index = 0;
+      std::string object;
+   };
+
+   struct unlinked_animation_hierarchy_root {
+      uint32 hierarchy_index = 0;
+      world::animation_hierarchy hierarchy;
+   };
+
    struct unlinked_hintnode {
       uint32 hintnode_index = 0;
       std::string value;
@@ -58,6 +75,9 @@ struct delete_object final : edit<world::edit_context> {
                  std::vector<unlinked_path_property> unlinked_path_properties,
                  std::vector<unlinked_sector_entry> unlinked_sector_entries,
                  std::vector<unlinked_hintnode> unlinked_hintnodes,
+                 std::vector<unlinked_animation_group> unlinked_animation_groups,
+                 std::vector<unlinked_animation_hierarchy> unlinked_animation_hierarchies,
+                 std::vector<unlinked_animation_hierarchy_root> unlinked_animation_hierarchy_roots,
                  world::object_class_library& object_class_library)
       : _object{std::move(object)},
         _object_index{object_index},
@@ -65,6 +85,10 @@ struct delete_object final : edit<world::edit_context> {
         _unlinked_path_properties{std::move(unlinked_path_properties)},
         _unlinked_sector_entries{std::move(unlinked_sector_entries)},
         _unlinked_hintnodes{std::move(unlinked_hintnodes)},
+        _unlinked_animation_groups{std::move(unlinked_animation_groups)},
+        _unlinked_animation_hierarchies{std::move(unlinked_animation_hierarchies)},
+        _unlinked_animation_hierarchy_roots{
+           std::move(unlinked_animation_hierarchy_roots)},
         _object_class_library{object_class_library}
    {
    }
@@ -99,6 +123,33 @@ struct delete_object final : edit<world::edit_context> {
       for (unlinked_hintnode& unlinked : _unlinked_hintnodes) {
          std::swap(context.world.hintnodes[unlinked.hintnode_index].command_post,
                    unlinked.value);
+      }
+
+      for (unlinked_animation_group& unlinked : _unlinked_animation_groups) {
+         std::vector<world::animation_group::entry>& entries =
+            context.world.animation_groups[unlinked.group_index].entries;
+
+         std::swap(entries[unlinked.entry_index], unlinked.entry);
+
+         entries.erase(entries.begin() + unlinked.entry_index);
+      }
+
+      for (unlinked_animation_hierarchy& unlinked : _unlinked_animation_hierarchies) {
+         std::vector<std::string>& objects =
+            context.world.animation_hierarchies[unlinked.hierarchy_index].objects;
+
+         std::swap(objects[unlinked.object_index], unlinked.object);
+
+         objects.erase(objects.begin() + unlinked.object_index);
+      }
+
+      for (unlinked_animation_hierarchy_root& unlinked :
+           _unlinked_animation_hierarchy_roots) {
+         std::swap(context.world.animation_hierarchies[unlinked.hierarchy_index],
+                   unlinked.hierarchy);
+
+         context.world.animation_hierarchies.erase(
+            context.world.animation_hierarchies.begin() + unlinked.hierarchy_index);
       }
 
       _object_class_library.free(context.world.objects[_object_index].class_handle);
@@ -146,6 +197,38 @@ struct delete_object final : edit<world::edit_context> {
                    unlinked.value);
       }
 
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_groups) - 1);
+           i >= 0; --i) {
+         unlinked_animation_group& unlinked = _unlinked_animation_groups[i];
+
+         std::vector<world::animation_group::entry>& entries =
+            context.world.animation_groups[unlinked.group_index].entries;
+
+         entries.insert(entries.begin() + unlinked.entry_index,
+                        std::move(unlinked.entry));
+      }
+
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchies) - 1);
+           i >= 0; --i) {
+         unlinked_animation_hierarchy& unlinked = _unlinked_animation_hierarchies[i];
+
+         std::vector<std::string>& objects =
+            context.world.animation_hierarchies[unlinked.hierarchy_index].objects;
+
+         objects.insert(objects.begin() + unlinked.object_index,
+                        std::move(unlinked.object));
+      }
+
+      for (std::ptrdiff_t i = (std::ssize(_unlinked_animation_hierarchy_roots) - 1);
+           i >= 0; --i) {
+         unlinked_animation_hierarchy_root& unlinked =
+            _unlinked_animation_hierarchy_roots[i];
+
+         context.world.animation_hierarchies
+            .insert(context.world.animation_hierarchies.begin() + unlinked.hierarchy_index,
+                    std::move(unlinked.hierarchy));
+      }
+
       context.world.objects[_object_index].class_handle =
          _object_class_library.acquire(context.world.objects[_object_index].class_name);
    }
@@ -164,6 +247,9 @@ private:
    std::vector<unlinked_path_property> _unlinked_path_properties;
    std::vector<unlinked_sector_entry> _unlinked_sector_entries;
    std::vector<unlinked_hintnode> _unlinked_hintnodes;
+   std::vector<unlinked_animation_group> _unlinked_animation_groups;
+   std::vector<unlinked_animation_hierarchy> _unlinked_animation_hierarchies;
+   std::vector<unlinked_animation_hierarchy_root> _unlinked_animation_hierarchy_roots;
    world::object_class_library& _object_class_library;
 };
 
@@ -644,6 +730,9 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
    uint32 path_property_count = 0;
    uint32 sector_entry_count = 0;
    uint32 hintnode_count = 0;
+   uint32 animation_group_count = 0;
+   uint32 animation_hierarchy_count = 0;
+   uint32 animation_hierarchy_root_count = 0;
 
    for (const auto& other_object : world.objects) {
       for (const auto& prop : other_object.instance_properties) {
@@ -671,15 +760,37 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
       if (iequals(hintnode.command_post, object.name)) hintnode_count += 1;
    }
 
+   for (const auto& group : world.animation_groups) {
+      for (const auto& entry : group.entries) {
+         if (iequals(entry.object, object.name)) animation_group_count += 1;
+      }
+   }
+
+   for (const auto& hierarchy : world.animation_hierarchies) {
+      for (const auto& other_object : hierarchy.objects) {
+         if (iequals(other_object, object.name)) animation_hierarchy_count += 1;
+      }
+
+      if (iequals(hierarchy.root_object, object.name)) {
+         animation_hierarchy_root_count += 1;
+      }
+   }
+
    std::vector<unlinked_object_property> object_property_refs;
    std::vector<delete_object::unlinked_path_property> path_property_refs;
    std::vector<delete_object::unlinked_sector_entry> sector_entry_refs;
    std::vector<delete_object::unlinked_hintnode> hintnode_refs;
+   std::vector<delete_object::unlinked_animation_group> animation_group_refs;
+   std::vector<delete_object::unlinked_animation_hierarchy> animation_hierarchy_refs;
+   std::vector<delete_object::unlinked_animation_hierarchy_root> animation_hierarchy_root_refs;
 
    object_property_refs.reserve(object_property_count);
    path_property_refs.reserve(path_property_count);
    sector_entry_refs.reserve(sector_entry_count);
    hintnode_refs.reserve(hintnode_count);
+   animation_group_refs.reserve(animation_group_count);
+   animation_hierarchy_refs.reserve(animation_hierarchy_count);
+   animation_hierarchy_root_refs.reserve(animation_hierarchy_root_count);
 
    for (uint32 other_object_index = 0;
         other_object_index < world.objects.size(); ++other_object_index) {
@@ -736,11 +847,56 @@ auto make_delete_entity(world::object_id object_id, const world::world& world,
       }
    }
 
+   for (uint32 group_index = 0; group_index < world.animation_groups.size();
+        ++group_index) {
+      const world::animation_group& group = world.animation_groups[group_index];
+
+      uint32 delete_offset = 0;
+
+      for (uint32 entry_index = 0; entry_index < group.entries.size(); ++entry_index) {
+         if (iequals(group.entries[entry_index].object, object.name)) {
+            animation_group_refs.emplace_back(group_index, entry_index - delete_offset);
+
+            delete_offset += 1;
+         }
+      }
+   }
+
+   uint32 hierarchy_delete_offset = 0;
+
+   for (uint32 hierarchy_index = 0;
+        hierarchy_index < world.animation_hierarchies.size(); ++hierarchy_index) {
+      const world::animation_hierarchy& hierarchy =
+         world.animation_hierarchies[hierarchy_index];
+
+      uint32 delete_offset = 0;
+
+      for (uint32 entry_index = 0; entry_index < hierarchy.objects.size();
+           ++entry_index) {
+         if (iequals(hierarchy.objects[entry_index], object.name)) {
+            animation_hierarchy_refs.emplace_back(hierarchy_index,
+                                                  entry_index - delete_offset);
+
+            delete_offset += 1;
+         }
+      }
+
+      if (iequals(hierarchy.root_object, object.name)) {
+         animation_hierarchy_root_refs.emplace_back(hierarchy_index -
+                                                    hierarchy_delete_offset);
+
+         hierarchy_delete_offset += 1;
+      }
+   }
+
    return std::make_unique<delete_object>(object, object_index,
                                           std::move(object_property_refs),
                                           std::move(path_property_refs),
                                           std::move(sector_entry_refs),
                                           std::move(hintnode_refs),
+                                          std::move(animation_group_refs),
+                                          std::move(animation_hierarchy_refs),
+                                          std::move(animation_hierarchy_root_refs),
                                           object_class_library);
 }
 

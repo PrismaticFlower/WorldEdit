@@ -843,6 +843,96 @@ TEST_CASE("edits delete_entity ControlZone ref object", "[Edits]")
    CHECK(world.objects[1].instance_properties[0].value == "test_object");
 }
 
+TEST_CASE("edits delete_entity animation ref object", "[Edits]")
+{
+   world::world world = {
+      .name = "Test"s,
+
+      .layer_descriptions = {{.name = "[Base]"s}},
+      .common_layers = {0},
+
+      .objects =
+         {
+            world::entities_init,
+            std::initializer_list{
+               world::object{
+                  .name = "test_object"s,
+
+                  .id = world::object_id{0},
+               },
+            },
+         },
+      .animation_groups =
+         {
+            pinned_vector_init{world::max_animation_groups, 256},
+            std::initializer_list{
+               world::animation_group{
+                  .entries =
+                     {
+
+                        world::animation_group::entry{"anim0", "other_object"},
+                        world::animation_group::entry{"anim1", "test_object"},
+                        world::animation_group::entry{"anim2",
+                                                      "other_other_object"},
+
+                     },
+               },
+            },
+         },
+      .animation_hierarchies =
+         {
+            pinned_vector_init{world::max_animation_hierarchies, 256},
+            std::initializer_list{
+               world::animation_hierarchy{
+                  .objects = {"other_object", "test_object", "other_other_object"},
+               },
+               world::animation_hierarchy{
+                  .root_object = "test_object",
+               },
+            },
+         },
+   };
+
+   world::interaction_targets interaction_targets;
+   world::edit_context edit_context{world, interaction_targets.creation_entity};
+   world::object_class_library object_class_library{null_asset_libraries()};
+
+   auto edit = make_delete_entity(world.objects[0].id, world, object_class_library);
+
+   edit->apply(edit_context);
+
+   REQUIRE(world.animation_groups[0].entries.size() == 2);
+   CHECK(world.animation_groups[0].entries[0].animation == "anim0");
+   CHECK(world.animation_groups[0].entries[0].object == "other_object");
+   CHECK(world.animation_groups[0].entries[1].animation == "anim2");
+   CHECK(world.animation_groups[0].entries[1].object == "other_other_object");
+
+   REQUIRE(world.animation_hierarchies.size() == 1);
+
+   REQUIRE(world.animation_hierarchies[0].objects.size() == 2);
+   CHECK(world.animation_hierarchies[0].objects[0] == "other_object");
+   CHECK(world.animation_hierarchies[0].objects[1] == "other_other_object");
+
+   edit->revert(edit_context);
+
+   REQUIRE(world.animation_groups[0].entries.size() == 3);
+   CHECK(world.animation_groups[0].entries[0].animation == "anim0");
+   CHECK(world.animation_groups[0].entries[0].object == "other_object");
+   CHECK(world.animation_groups[0].entries[1].animation == "anim1");
+   CHECK(world.animation_groups[0].entries[1].object == "test_object");
+   CHECK(world.animation_groups[0].entries[2].animation == "anim2");
+   CHECK(world.animation_groups[0].entries[2].object == "other_other_object");
+
+   REQUIRE(world.animation_hierarchies.size() == 2);
+
+   REQUIRE(world.animation_hierarchies[0].objects.size() == 3);
+   CHECK(world.animation_hierarchies[0].objects[0] == "other_object");
+   CHECK(world.animation_hierarchies[0].objects[1] == "test_object");
+   CHECK(world.animation_hierarchies[0].objects[2] == "other_other_object");
+
+   CHECK(world.animation_hierarchies[1].root_object == "test_object");
+}
+
 TEST_CASE("edits delete_entity object class handle liftime", "[Edits]")
 {
    world::world world = test_world;
