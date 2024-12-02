@@ -48,7 +48,7 @@ void world_edit::initialize_commands() noexcept
       _rotate_camera = not _rotate_camera;
 
       if (_rotate_camera) {
-      GetCursorPos(&_rotate_camera_cursor_position);
+         GetCursorPos(&_rotate_camera_cursor_position);
       }
       else {
          SetCursorPos(_rotate_camera_cursor_position.x,
@@ -59,7 +59,7 @@ void world_edit::initialize_commands() noexcept
       _pan_camera = not _pan_camera;
 
       if (_pan_camera) {
-      GetCursorPos(&_rotate_camera_cursor_position);
+         GetCursorPos(&_rotate_camera_cursor_position);
       }
       else {
          SetCursorPos(_rotate_camera_cursor_position.x,
@@ -299,6 +299,16 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("entity_creation.cycle_object_class"s,
                  [this] { cycle_creation_entity_object_class(); });
+   _commands.add("entity_creation.cycle_gizmo_position_space"s, [this] {
+      switch (_entity_creation_config.gizmo_position_space) {
+      case gizmo_transform_space::world:
+         _entity_creation_config.gizmo_position_space = gizmo_transform_space::local;
+         return;
+      case gizmo_transform_space::local:
+         _entity_creation_config.gizmo_position_space = gizmo_transform_space::world;
+         return;
+      }
+   });
    _commands.add("entity_creation.toggle_planning_entity"s,
                  [this] { toggle_planning_entity_type(); });
 
@@ -863,6 +873,9 @@ void world_edit::initialize_hotkeys() noexcept
            "entity_creation.cycle_ground_mode",
            {.key = key::r, .modifiers = {.ctrl = true}}},
           {"Cycle Object Class", "entity_creation.cycle_object_class", {.key = key::q}},
+          {"Cycle Position Gizmo Space",
+           "entity_creation.cycle_gizmo_position_space",
+           {.key = key::q, .modifiers = {.shift = true}}},
 
           {"Start Point At", "entity_creation.activate_point_at", {.key = key::v}},
           {"Start Extend To", "entity_creation.activate_extend_to", {.key = key::t}},

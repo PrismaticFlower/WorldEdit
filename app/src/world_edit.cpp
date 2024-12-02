@@ -731,6 +731,24 @@ void world_edit::setup_orbit_camera() noexcept
    }
 }
 
+bool world_edit::edit_stack_gizmo_position(const gizmo_position_desc& desc,
+                                           float3* value) noexcept
+{
+   assert(_edit_context.is_memory_valid(value));
+
+   float3 position = *value;
+
+   const bool activated = _gizmos.gizmo_position(desc, position);
+
+   if (activated) {
+      _edit_stack_world.apply(edits::make_set_value(value, position), _edit_context);
+   }
+
+   if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
+
+   return activated;
+}
+
 void world_edit::ui_draw_select_box() noexcept
 {
    if (not _selecting_entity) return;

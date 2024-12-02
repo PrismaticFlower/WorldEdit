@@ -247,6 +247,9 @@ void world_edit::ui_show_world_creation_editor() noexcept
       not _cursor_placement_undo_lock;
    const bool using_point_at =
       _entity_creation_context.tool == entity_creation_tool::point_at;
+   const bool show_gizmo_position =
+      _entity_creation_config.placement_mode == placement_mode::manual and
+      _entity_creation_context.tool == entity_creation_tool::none;
 
    if (creation_entity.is<world::object>()) {
       world::object& object = creation_entity.get<world::object>();
@@ -414,6 +417,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Object",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation =
+                                       _entity_creation_config.gizmo_position_space ==
+                                             gizmo_transform_space::local
+                                          ? object.rotation
+                                          : quaternion{}},
+                                   &object.position);
+      }
+
       ImGui::Separator();
 
       ImGui::SliderInt("Team", &object.team, _edit_stack_world, _edit_context,
@@ -536,6 +550,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _edit_stack_world.apply(edits::make_set_value(&light.rotation, new_rotation),
                                     _edit_context);
          }
+      }
+
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Light",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation =
+                                       _entity_creation_config.gizmo_position_space ==
+                                             gizmo_transform_space::local
+                                          ? light.rotation
+                                          : quaternion{}},
+                                   &light.position);
       }
 
       ImGui::Separator();
@@ -1400,6 +1425,24 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (show_gizmo_position) {
+         if (float3 position = path.nodes[0].position;
+             _gizmos.gizmo_position({.name = "New Path",
+                                     .alignment = _editor_grid_size,
+                                     .gizmo_rotation = _entity_creation_config.gizmo_position_space ==
+                                                             gizmo_transform_space::local
+                                                          ? path.nodes[0].rotation
+                                                          : quaternion{}},
+                                    position)) {
+            _edit_stack_world.apply(edits::make_set_vector_value(&path.nodes, 0,
+                                                                 &world::path::node::position,
+                                                                 position),
+                                    _edit_context);
+         }
+
+         if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
+      }
+
       if (existing_path and not existing_path->nodes.empty()) {
          if (_entity_creation_config.placement_node_insert ==
              placement_node_insert::nearest) {
@@ -1980,6 +2023,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Region",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation =
+                                       _entity_creation_config.gizmo_position_space ==
+                                             gizmo_transform_space::local
+                                          ? region.rotation
+                                          : quaternion{}},
+                                   &region.position);
+      }
+
       ImGui::Separator();
 
       switch (world::get_region_allowed_shapes(region_type)) {
@@ -2522,6 +2576,23 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (show_gizmo_position) {
+         if (float3 position = {sector.points[0].x, sector.base,
+                                sector.points[0].y};
+             _gizmos.gizmo_position({.name = "New Sector",
+                                     .alignment = _editor_grid_size,
+                                     .gizmo_rotation = quaternion{}},
+                                    position)) {
+            _edit_stack_world
+               .apply(edits::make_set_sector_position(&sector.points, 0,
+                                                      {position.x, position.z},
+                                                      &sector.base, position.y),
+                      _edit_context);
+         }
+
+         if (_gizmos.can_close_last_edit()) _edit_stack_world.close_last();
+      }
+
       if (ImGui::Button("New Sector", {ImGui::CalcItemWidth(), 0.0f}) or
           std::exchange(_entity_creation_context.finish_current_sector, false)) {
 
@@ -2803,6 +2874,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Portal",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation =
+                                       _entity_creation_config.gizmo_position_space ==
+                                             gizmo_transform_space::local
+                                          ? portal.rotation
+                                          : quaternion{}},
+                                   &portal.position);
+      }
+
       if (ImGui::Button("Extend To", {ImGui::CalcItemWidth(), 0.0f})) {
          _entity_creation_context.activate_tool = entity_creation_tool::extend_to;
       }
@@ -2994,6 +3076,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Hintnode",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation =
+                                       _entity_creation_config.gizmo_position_space ==
+                                             gizmo_transform_space::local
+                                          ? hintnode.rotation
+                                          : quaternion{}},
+                                   &hintnode.position);
+      }
+
       ImGui::Separator();
 
       ImGui::EnumSelect(
@@ -3155,6 +3248,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                                           new_angle),
                                     _edit_context);
          }
+      }
+
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Barrier",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation =
+                                       _entity_creation_config.gizmo_position_space ==
+                                             gizmo_transform_space::local
+                                          ? make_quat_from_euler(
+                                               {0.0f, barrier.rotation_angle, 0.0f})
+                                          : quaternion{}},
+                                   &barrier.position);
       }
 
       ImGui::DragFloat2XZ("Size", &barrier.size, _edit_stack_world,
@@ -3538,6 +3643,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Planning Hub",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = quaternion{}},
+                                   &hub.position);
+      }
+
       ImGui::DragFloat("Radius", &hub.radius, _edit_stack_world, _edit_context,
                        1.0f, 0.0f, 1e10f);
 
@@ -3683,6 +3795,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _edit_stack_world.apply(edits::make_set_value(&boundary.position, new_position),
                                     _edit_context, {.transparent = true});
          }
+      }
+
+      if (show_gizmo_position) {
+         edit_stack_gizmo_position({.name = "New Boundary",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation = quaternion{}},
+                                   &boundary.position);
       }
 
       ImGui::DragFloat2XZ("Size", &boundary.size, _edit_stack_world,
@@ -3861,6 +3980,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
             new_position.y != group.position.y;
          _entity_creation_context.lock_z_axis |=
             new_position.z != group.position.z;
+      }
+
+      if (show_gizmo_position) {
+         transform_modified |=
+            _gizmos.gizmo_position({.name = "New EG Instance",
+                                    .alignment = _editor_grid_size,
+                                    .gizmo_rotation =
+                                       _entity_creation_config.gizmo_position_space ==
+                                             gizmo_transform_space::local
+                                          ? group.rotation
+                                          : quaternion{}},
+                                   new_position);
       }
 
       transform_modified |= ImGui::DragFloat("Rotation", &new_rotation_angle,
@@ -4069,6 +4200,30 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
          ImGui::EndTable();
       }
+
+      if (_entity_creation_config.placement_mode == placement_mode::manual) {
+         ImGui::SeparatorText("Gizmo Space");
+
+         if (ImGui::BeginTable("Gizmo Position Space", 2,
+                               ImGuiTableFlags_NoSavedSettings |
+                                  ImGuiTableFlags_SizingStretchSame)) {
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("World", _entity_creation_config.gizmo_position_space ==
+                                              gizmo_transform_space::world)) {
+               _entity_creation_config.gizmo_position_space =
+                  gizmo_transform_space::world;
+            }
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Local", _entity_creation_config.gizmo_position_space ==
+                                              gizmo_transform_space::local)) {
+               _entity_creation_config.gizmo_position_space =
+                  gizmo_transform_space::local;
+            }
+            ImGui::EndTable();
+         }
+      }
    }
 
    if (_entity_creation_config.placement_mode == placement_mode::cursor) {
@@ -4214,6 +4369,13 @@ void world_edit::ui_show_world_creation_editor() noexcept
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation",
                                    "Change Placement Mode")));
+
+         if (_entity_creation_config.placement_mode == placement_mode::manual) {
+            ImGui::Text("Cycle Position Gizmo Space");
+            ImGui::BulletText(get_display_string(
+               _hotkeys.query_binding("Entity Creation",
+                                      "Cycle Position Gizmo Space")));
+         }
       }
 
       if (traits.has_lock_axis) {

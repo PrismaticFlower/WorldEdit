@@ -173,7 +173,7 @@ void world_edit::ui_show_world_selection_move() noexcept
 
       selection_centre /= selection_axis_count;
 
-      if (_selection_move_space != selection_transform_space::local) {
+      if (_selection_move_space != gizmo_transform_space::local) {
          gizmo_rotation = quaternion{};
       }
 
@@ -360,15 +360,15 @@ void world_edit::ui_show_world_selection_move() noexcept
                                ImGuiTableFlags_SizingStretchSame)) {
          ImGui::TableNextColumn();
          if (ImGui::Selectable("Local", _selection_move_space ==
-                                           selection_transform_space::local)) {
-            _selection_move_space = selection_transform_space::local;
+                                           gizmo_transform_space::local)) {
+            _selection_move_space = gizmo_transform_space::local;
             _edit_stack_world.close_last();
          }
 
          ImGui::TableNextColumn();
          if (ImGui::Selectable("World", _selection_move_space ==
-                                           selection_transform_space::world)) {
-            _selection_move_space = selection_transform_space::world;
+                                           gizmo_transform_space::world)) {
+            _selection_move_space = gizmo_transform_space::world;
             _edit_stack_world.close_last();
          }
 
