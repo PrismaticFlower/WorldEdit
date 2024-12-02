@@ -51,6 +51,27 @@ struct placement_traits {
    bool has_place_at_camera = true;
 };
 
+auto window_name(const world::creation_entity& creation_entity) noexcept -> const char*
+{
+   // clang-format off
+   if (creation_entity.is<world::object>()) return "New Object";
+   if (creation_entity.is<world::light>()) return "New Light";
+   if (creation_entity.is<world::path>()) return "New Path Node";
+   if (creation_entity.is<world::region>()) return "New Region";
+   if (creation_entity.is<world::sector>()) return "New Sector Point";
+   if (creation_entity.is<world::portal>()) return "New Portal";
+   if (creation_entity.is<world::hintnode>()) return "New Hintnode";
+   if (creation_entity.is<world::barrier>()) return "New Barrier";
+   if (creation_entity.is<world::planning_hub>()) return "New AI Planning Hub";
+   if (creation_entity.is<world::planning_connection>()) return "New AI Planning Connection";
+   if (creation_entity.is<world::boundary>()) return "New Boundary";
+   if (creation_entity.is<world::measurement>()) return "New Measurement";
+   if (creation_entity.is<world::entity_group>()) return "New Entity Group Instance";
+   // clang-format on
+
+   return "Create";
+}
+
 auto surface_rotation(const float3 surface_normal,
                       const surface_rotation_axis rotation_axis) noexcept -> quaternion
 {
@@ -205,16 +226,16 @@ void world_edit::ui_show_world_creation_editor() noexcept
    const bool rotate_entity_back =
       std::exchange(_entity_creation_context.rotate_back, false);
 
+   world::creation_entity& creation_entity = _interaction_targets.creation_entity;
+
    bool continue_creation = true;
 
    ImGui::SetNextWindowPos({tool_window_start_x * _display_scale, 32.0f * _display_scale},
                            ImGuiCond_Once, {0.0f, 0.0f});
 
-   ImGui::Begin("Create", &continue_creation,
+   ImGui::Begin(window_name(creation_entity), &continue_creation,
                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
                    ImGuiWindowFlags_AlwaysAutoResize);
-
-   world::creation_entity& creation_entity = _interaction_targets.creation_entity;
 
    placement_traits traits{};
 
