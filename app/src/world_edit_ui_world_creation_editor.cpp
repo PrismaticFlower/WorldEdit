@@ -1204,7 +1204,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
       world::path* existing_path = world::find_entity(_world.paths, path.name);
 
       if (existing_path) {
-         ImGui::LabelText("Name", existing_path->name.c_str());
+         ImGui::LabelText("Name", "%s (Adding to existing path)",
+                          existing_path->name.c_str());
          ImGui::LayerPick("Layer", &existing_path->layer, _edit_stack_world,
                           _edit_context);
 
@@ -2456,11 +2457,17 @@ void world_edit::ui_show_world_creation_editor() noexcept
       world::sector* existing_sector =
          world::find_entity(_world.sectors, sector.name);
 
-      ImGui::InputText("Name", &sector.name, _edit_stack_world, _edit_context,
-                       [&](std::string* edited_value) noexcept {
-                          *edited_value =
-                             world::create_unique_name(_world.sectors, *edited_value);
-                       });
+      if (existing_sector) {
+         ImGui::LabelText("Name", "%s (Adding to existing sector)",
+                          sector.name.c_str());
+      }
+      else {
+         ImGui::InputText("Name", &sector.name, _edit_stack_world, _edit_context,
+                          [&](std::string* edited_value) noexcept {
+                             *edited_value =
+                                world::create_unique_name(_world.sectors, *edited_value);
+                          });
+      }
 
       const bool using_from_object_bbox =
          _entity_creation_context.tool == entity_creation_tool::from_object_bbox;
