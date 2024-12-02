@@ -895,14 +895,12 @@ struct gizmos::impl {
          }
 
          const float3 cursor_directionGS = gizmo.cursor_directionGS;
+         const float angle_delta =
+            atan2f(dot(cross(last_cursor_directionGS, cursor_directionGS),
+                       float3{planeGS.x, planeGS.y, planeGS.z}),
+                   dot(cursor_directionGS, last_cursor_directionGS));
 
          if (gizmo.active_widget == rotation_widget::x) {
-            const float start_angle =
-               std::atan2(last_cursor_directionGS.y, last_cursor_directionGS.z);
-            const float current_angle =
-               std::atan2(cursor_directionGS.y, cursor_directionGS.z);
-            const float angle_delta = (current_angle - start_angle);
-
             if (gizmo.align_rotation) {
                gizmo.buffered_rotation.x += angle_delta;
 
@@ -918,12 +916,6 @@ struct gizmos::impl {
             }
          }
          else if (gizmo.active_widget == rotation_widget::y) {
-            const float start_angle =
-               std::atan2(last_cursor_directionGS.x, last_cursor_directionGS.z);
-            const float current_angle =
-               std::atan2(cursor_directionGS.x, cursor_directionGS.z);
-            const float angle_delta = (current_angle - start_angle);
-
             if (gizmo.align_rotation) {
                gizmo.buffered_rotation.y += angle_delta;
 
@@ -939,12 +931,6 @@ struct gizmos::impl {
             }
          }
          else if (gizmo.active_widget == rotation_widget::z) {
-            const float start_angle =
-               std::atan2(last_cursor_directionGS.x, last_cursor_directionGS.y);
-            const float current_angle =
-               std::atan2(cursor_directionGS.x, cursor_directionGS.y);
-            const float angle_delta = (current_angle - start_angle);
-
             if (gizmo.align_rotation) {
                gizmo.buffered_rotation.z += angle_delta;
 
