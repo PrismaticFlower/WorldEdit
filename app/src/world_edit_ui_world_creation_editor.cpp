@@ -363,10 +363,16 @@ void world_edit::ui_show_world_creation_editor() noexcept
             }
             else if (_entity_creation_config.placement_alignment ==
                      placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(object, new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
+               const std::optional<float3> snapped_position = world::get_snapped_position(
+                  object, new_position, _world.objects,
+                  _entity_creation_config.snap_distance,
+                  {
+                     .snap_to_surfaces = _entity_creation_config.snap_to_surfaces,
+                     .snap_to_corners = _entity_creation_config.snap_to_corners,
+                     .snap_to_edge_midpoints = _entity_creation_config.snap_to_edge_midpoints,
+                     .snap_to_face_midpoints = _entity_creation_config.snap_to_face_midpoints,
+                  },
+                  _world_layers_draw_mask, _object_classes);
 
                if (snapped_position) new_position = *snapped_position;
             }
@@ -4278,6 +4284,24 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
          else if (_entity_creation_config.placement_alignment ==
                   placement_alignment::snapping) {
+            ImGui::SeparatorText("Snap To");
+
+            ImGui::Checkbox("Surfaces", &_entity_creation_config.snap_to_surfaces);
+            ImGui::SetItemTooltip("Snap to nearby surfaces.");
+            ImGui::SameLine();
+
+            ImGui::Checkbox("Corners", &_entity_creation_config.snap_to_corners);
+            ImGui::SetItemTooltip("Snap with bounding box corners.");
+            ImGui::SameLine();
+
+            ImGui::Checkbox("Edges", &_entity_creation_config.snap_to_edge_midpoints);
+            ImGui::SetItemTooltip("Snap with bounding box edge midpoints.");
+            ImGui::SameLine();
+
+            ImGui::Checkbox("Faces", &_entity_creation_config.snap_to_face_midpoints);
+            ImGui::SetItemTooltip(
+               "Snap with bounding box top and bottom face midpoints.");
+
             ImGui::DragFloat("Snap Distance",
                              &_entity_creation_config.snap_distance, 0.1f, 0.0f,
                              1e10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
