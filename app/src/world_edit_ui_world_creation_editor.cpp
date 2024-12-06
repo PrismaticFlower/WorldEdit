@@ -37,7 +37,8 @@ struct placement_traits {
    bool has_point_at = true;
    bool has_placement_mode = true;
    bool has_lock_axis = true;
-   bool has_placement_alignment = true;
+   bool has_cursor_alignment = true;
+   bool has_cursor_snapping = false;
    bool has_placement_ground = true;
    bool has_node_placement_insert = false;
    bool has_resize_to = false;
@@ -357,12 +358,11 @@ void world_edit::ui_show_world_creation_editor() noexcept
             if (_entity_creation_context.lock_z_axis) {
                new_position.z = object.position.z;
             }
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
             }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
+
+            if (_entity_creation_config.placement_cursor_snapping) {
                const std::optional<float3> snapped_position = world::get_snapped_position(
                   object, new_position, _world.objects,
                   _entity_creation_config.snap_distance,
@@ -439,7 +439,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
       ImGui::SliderInt("Team", &object.team, _edit_stack_world, _edit_context,
                        0, 15, "%d", ImGuiSliderFlags_AlwaysClamp);
 
-      traits = {.has_cycle_object_class = true};
+      traits = {
+         .has_cycle_object_class = true,
+         .has_cursor_snapping = true,
+      };
    }
    else if (creation_entity.is<world::light>()) {
       world::light& light = creation_entity.get<world::light>();
@@ -489,18 +492,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          if (using_cursor_placement) {
             new_position = _cursor_positionWS;
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) new_position = *snapped_position;
             }
 
             if (_entity_creation_context.lock_x_axis) {
@@ -1361,18 +1354,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) new_position = *snapped_position;
             }
 
             if (_entity_creation_context.lock_x_axis) {
@@ -1958,19 +1941,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                } break;
                }
             }
-
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) new_position = *snapped_position;
             }
 
             if (_entity_creation_context.lock_x_axis) {
@@ -2556,14 +2528,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          new_position = {_cursor_positionWS.x, _cursor_positionWS.z};
 
-         if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
+         if (_entity_creation_config.placement_cursor_align) {
             new_position = align_position_to_grid(new_position, _editor_grid_size);
-         }
-         else if (_entity_creation_config.placement_alignment ==
-                  placement_alignment::snapping) {
-            // What should snapping for sectors do?
-            ImGui::Text("Snapping is currently unimplemented for "
-                        "sectors. Sorry!");
          }
 
          if (_entity_creation_context.lock_x_axis) {
@@ -2824,6 +2790,10 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_position.y += (portal.height / 2.0f);
             }
 
+            if (_entity_creation_config.placement_cursor_align) {
+               new_position = align_position_to_grid(new_position, _editor_grid_size);
+            }
+
             if (_entity_creation_context.lock_x_axis) {
                new_position.x = portal.position.x;
             }
@@ -2960,7 +2930,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
          _entity_creation_context.resize_portal_start_height = std::nullopt;
       }
 
-      traits = {.has_placement_alignment = false, .has_resize_to = true};
+      traits = {.has_resize_to = true};
    }
    else if (creation_entity.is<world::hintnode>()) {
       world::hintnode& hintnode = creation_entity.get<world::hintnode>();
@@ -3012,18 +2982,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) new_position = *snapped_position;
             }
 
             if (_entity_creation_context.lock_x_axis) {
@@ -3194,20 +3154,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) {
-                  new_position = *snapped_position;
-               }
             }
 
             if (_entity_creation_context.lock_x_axis) {
@@ -3613,23 +3561,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position({new_position.x,
-                                               _cursor_positionWS.y,
-                                               new_position.y},
-                                              _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) {
-                  new_position = *snapped_position;
-               }
             }
 
             if (_entity_creation_context.lock_x_axis) {
@@ -3741,7 +3674,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
                 .has_point_at = false,
                 .has_placement_mode = false,
                 .has_lock_axis = false,
-                .has_placement_alignment = false,
+                .has_cursor_alignment = false,
                 .has_placement_ground = false,
                 .has_cycle_ai_planning = true,
                 .has_place_at_camera = false};
@@ -3772,18 +3705,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
          if (using_cursor_placement) {
             new_position = _cursor_positionWS;
 
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) new_position = *snapped_position;
             }
 
             if (_entity_creation_context.lock_x_axis) {
@@ -3921,17 +3844,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
          new_position = _cursor_positionWS;
 
-         if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
+         if (_entity_creation_config.placement_cursor_align) {
             new_position = align_position_to_grid(new_position, _editor_grid_size);
-         }
-         else if (_entity_creation_config.placement_alignment ==
-                  placement_alignment::snapping) {
-            const std::optional<float3> snapped_position =
-               world::get_snapped_position(new_position, _world.objects,
-                                           _entity_creation_config.snap_distance,
-                                           _object_classes);
-
-            if (snapped_position) new_position = *snapped_position;
          }
 
          if (_entity_creation_context.lock_x_axis) {
@@ -4023,20 +3937,8 @@ void world_edit::ui_show_world_creation_editor() noexcept
                new_position.z = _cursor_positionWS.z;
             }
 
-            if (_entity_creation_config.placement_alignment ==
-                placement_alignment::grid) {
+            if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
-            }
-            else if (_entity_creation_config.placement_alignment ==
-                     placement_alignment::snapping) {
-               const std::optional<float3> snapped_position =
-                  world::get_snapped_position(new_position, _world.objects,
-                                              _entity_creation_config.snap_distance,
-                                              _object_classes);
-
-               if (snapped_position) {
-                  new_position = *snapped_position;
-               }
             }
          }
 
@@ -4251,41 +4153,51 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
       }
 
-      if (traits.has_placement_alignment) {
-         ImGui::SeparatorText("Align To");
+      if (traits.has_cursor_alignment) {
+         ImGui::SeparatorText("Alignment");
 
-         if (ImGui::BeginTable("Align To", 3,
+         if (ImGui::BeginTable("Alignment", 2,
                                ImGuiTableFlags_NoSavedSettings |
                                   ImGuiTableFlags_SizingStretchSame)) {
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("None", _entity_creation_config.placement_alignment ==
-                                             placement_alignment::none)) {
-               _entity_creation_config.placement_alignment = placement_alignment::none;
+            if (ImGui::Selectable("None", not _entity_creation_config.placement_cursor_align)) {
+               _entity_creation_config.placement_cursor_align = false;
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Grid", _entity_creation_config.placement_alignment ==
-                                             placement_alignment::grid)) {
-               _entity_creation_config.placement_alignment = placement_alignment::grid;
-            }
-
-            ImGui::TableNextColumn();
-            if (ImGui::Selectable("Snapping", _entity_creation_config.placement_alignment ==
-                                                 placement_alignment::snapping)) {
-               _entity_creation_config.placement_alignment =
-                  placement_alignment::snapping;
+            if (ImGui::Selectable("Grid", _entity_creation_config.placement_cursor_align)) {
+               _entity_creation_config.placement_cursor_align = true;
             }
 
             ImGui::EndTable();
          }
 
-         if (_entity_creation_config.placement_alignment == placement_alignment::grid) {
+         if (_entity_creation_config.placement_cursor_align) {
             ImGui::DragFloat("Grid Size", &_editor_grid_size, 1.0f, 1.0f, 1e10f, "%.3f");
          }
-         else if (_entity_creation_config.placement_alignment ==
-                  placement_alignment::snapping) {
-            ImGui::SeparatorText("Snap To");
+      }
 
+      if (traits.has_cursor_snapping) {
+
+         ImGui::SeparatorText("Snapping");
+
+         if (ImGui::BeginTable("Snapping", 2,
+                               ImGuiTableFlags_NoSavedSettings |
+                                  ImGuiTableFlags_SizingStretchSame)) {
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("On", not _entity_creation_config.placement_cursor_snapping)) {
+               _entity_creation_config.placement_cursor_snapping = false;
+            }
+
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable("Off", _entity_creation_config.placement_cursor_snapping)) {
+               _entity_creation_config.placement_cursor_snapping = true;
+            }
+
+            ImGui::EndTable();
+         }
+
+         if (_entity_creation_config.placement_cursor_snapping) {
             ImGui::Checkbox("Surfaces", &_entity_creation_config.snap_to_surfaces);
             ImGui::SetItemTooltip("Snap to nearby surfaces.");
             ImGui::SameLine();
@@ -4416,11 +4328,18 @@ void world_edit::ui_show_world_creation_editor() noexcept
             _hotkeys.query_binding("Entity Creation", "Lock Z Axis")));
       }
 
-      if (traits.has_placement_alignment) {
-         ImGui::Text("Change Alignment Mode");
+      if (traits.has_cursor_alignment) {
+         ImGui::Text("Toggle Cursor Alignment");
          ImGui::BulletText(get_display_string(
             _hotkeys.query_binding("Entity Creation",
-                                   "Change Alignment Mode")));
+                                   "Toggle Cursor Alignment")));
+      }
+
+      if (traits.has_cursor_snapping) {
+         ImGui::Text("Toggle Cursor Snapping");
+         ImGui::BulletText(get_display_string(
+            _hotkeys.query_binding("Entity Creation",
+                                   "Toggle Cursor Snapping")));
       }
 
       if (traits.has_placement_ground) {

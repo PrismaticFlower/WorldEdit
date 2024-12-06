@@ -274,19 +274,10 @@ void world_edit::initialize_commands() noexcept
          return;
       }
    });
-   _commands.add("entity_creation.cycle_alignment_mode"s, [this] {
-      switch (_entity_creation_config.placement_alignment) {
-      case placement_alignment::none:
-         _entity_creation_config.placement_alignment = placement_alignment::grid;
-         return;
-      case placement_alignment::grid:
-         _entity_creation_config.placement_alignment = placement_alignment::snapping;
-         return;
-      case placement_alignment::snapping:
-         _entity_creation_config.placement_alignment = placement_alignment::none;
-         return;
-      }
-   });
+   _commands.add("entity_creation.toggle_cursor_alignment"s,
+                 _entity_creation_config.placement_cursor_align);
+   _commands.add("entity_creation.toggle_cursor_snapping"s,
+                 _entity_creation_config.placement_cursor_snapping);
    _commands.add("entity_creation.cycle_ground_mode"s, [this] {
       switch (_entity_creation_config.placement_ground) {
       case placement_ground::origin:
@@ -866,9 +857,6 @@ void world_edit::initialize_hotkeys() noexcept
           {"Change Placement Mode",
            "entity_creation.cycle_placement_mode",
            {.key = key::w, .modifiers = {.ctrl = true}}},
-          {"Change Alignment Mode",
-           "entity_creation.cycle_alignment_mode",
-           {.key = key::e, .modifiers = {.ctrl = true}}},
           {"Change Grounding Mode",
            "entity_creation.cycle_ground_mode",
            {.key = key::r, .modifiers = {.ctrl = true}}},
@@ -892,6 +880,13 @@ void world_edit::initialize_hotkeys() noexcept
            "entity_creation.activate_draw",
            {.key = key::d, .modifiers = {.ctrl = true}}},
 
+          {"Toggle Cursor Alignment",
+           "entity_creation.toggle_cursor_alignment",
+           {.key = key::g}},
+          {"Toggle Cursor Snapping",
+           "entity_creation.toggle_cursor_snapping",
+           {.key = key::s, .modifiers = {.alt = true}}},
+
           {"Lock X Axis", "entity_creation.lock_x_axis", {.key = key::z}},
           {"Lock Y Axis", "entity_creation.lock_y_axis", {.key = key::x}},
           {"Lock Z Axis", "entity_creation.lock_z_axis", {.key = key::c}},
@@ -903,7 +898,9 @@ void world_edit::initialize_hotkeys() noexcept
           {"Place Entity at Camera", "entity_creation.place_at_camera", {.key = key::e}},
           {"Cancel", "entity_creation.cancel", {.key = key::escape}},
 
-          {"Finish Path", "entity_creation.finish_path", {.key = key::g}},
+          {"Finish Path",
+           "entity_creation.finish_path",
+           {.key = key::g, .modifiers = {.ctrl = true}}},
        }});
 
    _hotkeys.add_set({

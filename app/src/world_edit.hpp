@@ -56,8 +56,6 @@ enum class select_method : uint8 { replace, add };
 
 enum class placement_mode : uint8 { manual, cursor };
 
-enum class placement_alignment : uint8 { none, grid, snapping };
-
 enum class placement_ground : uint8 { origin, bbox };
 
 enum class placement_rotation : uint8 {
@@ -615,7 +613,6 @@ private:
       placement_rotation placement_rotation = placement_rotation::manual_euler;
       surface_rotation_axis surface_rotation_axis = surface_rotation_axis::y;
       placement_mode placement_mode = placement_mode::cursor;
-      placement_alignment placement_alignment = placement_alignment::none;
       placement_ground placement_ground = placement_ground::origin;
       placement_node_insert placement_node_insert = placement_node_insert::append;
       gizmo_transform_space gizmo_position_space = gizmo_transform_space::world;
@@ -626,6 +623,8 @@ private:
       bool command_post_auto_place_meta_entities = true;
       bool auto_fill_sector = true;
       bool auto_add_object_to_sectors = true;
+      bool placement_cursor_align = false;
+      bool placement_cursor_snapping = false;
       bool snap_to_surfaces = true;
       bool snap_to_corners = true;
       bool snap_to_edge_midpoints = true;
