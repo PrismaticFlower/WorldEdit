@@ -3920,24 +3920,42 @@ void world_edit::ui_show_world_creation_editor() noexcept
 
       if (using_cursor_placement or rotate_entity_forward or rotate_entity_back) {
          if (using_cursor_placement) {
-            if (not _entity_creation_context.lock_x_axis) {
-               new_position.x = _cursor_positionWS.x;
-            }
+            new_position = _cursor_positionWS;
 
-            if (not _entity_creation_context.lock_y_axis) {
-               new_position.y = _cursor_positionWS.y;
-
-               if (_entity_creation_config.placement_ground == placement_ground::bbox) {
-                  new_position.y -= metrics.ground_distance;
-               }
-            }
-
-            if (not _entity_creation_context.lock_z_axis) {
-               new_position.z = _cursor_positionWS.z;
+            if (_entity_creation_config.placement_ground == placement_ground::bbox) {
+               new_position.y -= metrics.ground_distance;
             }
 
             if (_entity_creation_config.placement_cursor_align) {
                new_position = align_position_to_grid(new_position, _editor_grid_size);
+            }
+
+            if (_entity_creation_config.placement_cursor_snapping) {
+               new_position = world::get_snapped_position(
+                  {
+                     .rotation = group.rotation,
+                     .positionWS = new_position,
+                     .bboxOS = metrics.visual_bbox,
+                  },
+                  _world.objects, _entity_creation_config.snap_distance,
+                  {
+                     .snap_to_corners = _entity_creation_config.snap_to_corners,
+                     .snap_to_edge_midpoints = _entity_creation_config.snap_to_edge_midpoints,
+                     .snap_to_face_midpoints = _entity_creation_config.snap_to_face_midpoints,
+                  },
+                  _world_layers_draw_mask, _object_classes);
+            }
+
+            if (_entity_creation_context.lock_x_axis) {
+               new_position.x = group.position.x;
+            }
+
+            if (_entity_creation_context.lock_y_axis) {
+               new_position.y = group.position.y;
+            }
+
+            if (_entity_creation_context.lock_z_axis) {
+               new_position.z = group.position.z;
             }
          }
 
