@@ -625,7 +625,6 @@ private:
       bool auto_add_object_to_sectors = true;
       bool placement_cursor_align = false;
       bool placement_cursor_snapping = false;
-      bool snap_to_surfaces = true;
       bool snap_to_corners = true;
       bool snap_to_edge_midpoints = true;
       bool snap_to_face_midpoints = true;

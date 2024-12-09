@@ -4215,10 +4215,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
          }
 
          if (_entity_creation_config.placement_cursor_snapping) {
-            ImGui::Checkbox("Surfaces", &_entity_creation_config.snap_to_surfaces);
-            ImGui::SetItemTooltip("Snap to nearby surfaces.");
-            ImGui::SameLine();
-
             ImGui::Checkbox("Corners", &_entity_creation_config.snap_to_corners);
             ImGui::SetItemTooltip("Snap with bounding box corners.");
             ImGui::SameLine();
