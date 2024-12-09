@@ -4202,12 +4202,12 @@ void world_edit::ui_show_world_creation_editor() noexcept
                                ImGuiTableFlags_NoSavedSettings |
                                   ImGuiTableFlags_SizingStretchSame)) {
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("On", not _entity_creation_config.placement_cursor_snapping)) {
+            if (ImGui::Selectable("Off", not _entity_creation_config.placement_cursor_snapping)) {
                _entity_creation_config.placement_cursor_snapping = false;
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("Off", _entity_creation_config.placement_cursor_snapping)) {
+            if (ImGui::Selectable("ON", _entity_creation_config.placement_cursor_snapping)) {
                _entity_creation_config.placement_cursor_snapping = true;
             }
 
