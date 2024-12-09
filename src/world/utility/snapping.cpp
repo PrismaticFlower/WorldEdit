@@ -4,8 +4,6 @@
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
-#include <optional>
-
 namespace we::world {
 
 namespace {
@@ -52,8 +50,19 @@ auto get_snapped_position(const snapping_entity& snapping,
                           const active_layers active_layers,
                           const object_class_library& object_classes) noexcept -> float3
 {
-   float closest_object_distance = FLT_MAX;
-   std::optional<uint32> closest_object_index;
+   const float cull_distance =
+      distance(snapping.bboxOS.min, snapping.bboxOS.max) + snap_radius;
+
+   const std::array<float3, 8> snapping_object_cornersWS =
+      get_snapping_corners(snapping.rotation, snapping.positionWS, snapping.bboxOS);
+   const std::array<float3, 12> snapping_object_edgesWS =
+      get_snapping_edge_midpoints(snapping_object_cornersWS);
+   const std::array<float3, 2> snapping_object_facesWS =
+      get_snapping_face_midpoints(snapping_object_cornersWS);
+
+   float3 closest_pointWS;
+   float closest_distance = FLT_MAX;
+   float3 snapping_pointWS;
 
    for (uint32 object_index = 0; object_index < world_objects.size(); ++object_index) {
       const object& object = world_objects[object_index];
@@ -74,105 +83,89 @@ auto get_snapped_position(const snapping_entity& snapping,
       const float3 positionAS = positionOS - box_centreOS;
       const float3 distances = abs(positionAS) - box_size;
 
-      const float distance =
-         std::max(std::max(distances.x, distances.y), distances.z);
+      const float box_distance = length(
+         max(distances, float3{0.0f, 0.0f, 0.0f}) +
+         std::min(std::max(std::max(distances.x, distances.y), distances.z), 0.0f));
 
-      if (distance >= 0.0f and distance < closest_object_distance) {
-         closest_object_distance = distance;
-         closest_object_index = object_index;
-      }
-   }
+      if (box_distance > cull_distance) continue;
 
-   if (not closest_object_index) return snapping.positionWS;
+      const std::array<float3, 8> closest_object_cornersWS =
+         get_snapping_corners(object.rotation, object.position,
+                              object_classes[object.class_handle].model->bounding_box);
 
-   const object& closest_object = world_objects[*closest_object_index];
+      if (flags.snap_to_corners) {
+         for (const float3& cornerWS : closest_object_cornersWS) {
+            for (uint32 i = 0; i < snapping_object_cornersWS.size(); ++i) {
+               const float corner_distance =
+                  distance(cornerWS, snapping_object_cornersWS[i]);
 
-   const std::array<float3, 8> snapping_object_cornersWS =
-      get_snapping_corners(snapping.rotation, snapping.positionWS, snapping.bboxOS);
-   const std::array<float3, 8> closest_object_cornersWS =
-      get_snapping_corners(closest_object.rotation, closest_object.position,
-                           object_classes[closest_object.class_handle].model->bounding_box);
-
-   float3 closest_pointWS;
-   float closest_distance = FLT_MAX;
-   float3 snapping_pointWS;
-
-   if (flags.snap_to_corners) {
-      for (const float3& cornerWS : closest_object_cornersWS) {
-         for (uint32 i = 0; i < snapping_object_cornersWS.size(); ++i) {
-            const float corner_distance =
-               distance(cornerWS, snapping_object_cornersWS[i]);
-
-            if (corner_distance < closest_distance) {
-               closest_pointWS = cornerWS;
-               closest_distance = corner_distance;
-               snapping_pointWS = snapping_object_cornersWS[i];
-            }
-         }
-      }
-   }
-
-   const std::array<float3, 12> snapping_object_edgesWS =
-      get_snapping_edge_midpoints(snapping_object_cornersWS);
-   const std::array<float3, 12> closest_object_edgesWS =
-      get_snapping_edge_midpoints(closest_object_cornersWS);
-
-   if (flags.snap_to_edge_midpoints) {
-      for (const float3& pointWS : closest_object_edgesWS) {
-         for (uint32 i = 0; i < snapping_object_edgesWS.size(); ++i) {
-            const float point_distance =
-               distance(pointWS, snapping_object_edgesWS[i]);
-
-            if (point_distance < closest_distance) {
-               closest_pointWS = pointWS;
-               closest_distance = point_distance;
-               snapping_pointWS = snapping_object_edgesWS[i];
-            }
-         }
-      }
-   }
-
-   if (flags.snap_to_face_midpoints) {
-      const std::array<float3, 2> snapping_object_facesWS =
-         get_snapping_face_midpoints(snapping_object_cornersWS);
-      const std::array<float3, 2> closest_object_facesWS =
-         get_snapping_face_midpoints(closest_object_cornersWS);
-
-      for (const float3& pointWS : closest_object_facesWS) {
-         for (uint32 i = 0; i < snapping_object_facesWS.size(); ++i) {
-            const float point_distance =
-               distance(pointWS, snapping_object_facesWS[i]);
-
-            if (point_distance < closest_distance) {
-               closest_pointWS = pointWS;
-               closest_distance = point_distance;
-               snapping_pointWS = snapping_object_facesWS[i];
+               if (corner_distance < closest_distance) {
+                  closest_pointWS = cornerWS;
+                  closest_distance = corner_distance;
+                  snapping_pointWS = snapping_object_cornersWS[i];
+               }
             }
          }
       }
 
-      for (const float3& pointWS : closest_object_facesWS) {
-         for (uint32 i = 0; i < snapping_object_edgesWS.size(); ++i) {
-            const float point_distance =
-               distance(pointWS, snapping_object_edgesWS[i]);
+      const std::array<float3, 12> closest_object_edgesWS =
+         get_snapping_edge_midpoints(closest_object_cornersWS);
 
-            if (point_distance < closest_distance) {
-               closest_pointWS = pointWS;
-               closest_distance = point_distance;
-               snapping_pointWS = snapping_object_edgesWS[i];
+      if (flags.snap_to_edge_midpoints) {
+         for (const float3& pointWS : closest_object_edgesWS) {
+            for (uint32 i = 0; i < snapping_object_edgesWS.size(); ++i) {
+               const float point_distance =
+                  distance(pointWS, snapping_object_edgesWS[i]);
+
+               if (point_distance < closest_distance) {
+                  closest_pointWS = pointWS;
+                  closest_distance = point_distance;
+                  snapping_pointWS = snapping_object_edgesWS[i];
+               }
             }
          }
       }
 
-      for (const float3& pointWS : closest_object_edgesWS) {
-         for (uint32 i = 0; i < snapping_object_facesWS.size(); ++i) {
-            const float point_distance =
-               distance(pointWS, snapping_object_facesWS[i]);
+      if (flags.snap_to_face_midpoints) {
+         const std::array<float3, 2> closest_object_facesWS =
+            get_snapping_face_midpoints(closest_object_cornersWS);
 
-            if (point_distance < closest_distance) {
-               closest_pointWS = pointWS;
-               closest_distance = point_distance;
-               snapping_pointWS = snapping_object_facesWS[i];
+         for (const float3& pointWS : closest_object_facesWS) {
+            for (uint32 i = 0; i < snapping_object_facesWS.size(); ++i) {
+               const float point_distance =
+                  distance(pointWS, snapping_object_facesWS[i]);
+
+               if (point_distance < closest_distance) {
+                  closest_pointWS = pointWS;
+                  closest_distance = point_distance;
+                  snapping_pointWS = snapping_object_facesWS[i];
+               }
+            }
+         }
+
+         for (const float3& pointWS : closest_object_facesWS) {
+            for (uint32 i = 0; i < snapping_object_edgesWS.size(); ++i) {
+               const float point_distance =
+                  distance(pointWS, snapping_object_edgesWS[i]);
+
+               if (point_distance < closest_distance) {
+                  closest_pointWS = pointWS;
+                  closest_distance = point_distance;
+                  snapping_pointWS = snapping_object_edgesWS[i];
+               }
+            }
+         }
+
+         for (const float3& pointWS : closest_object_edgesWS) {
+            for (uint32 i = 0; i < snapping_object_facesWS.size(); ++i) {
+               const float point_distance =
+                  distance(pointWS, snapping_object_facesWS[i]);
+
+               if (point_distance < closest_distance) {
+                  closest_pointWS = pointWS;
+                  closest_distance = point_distance;
+                  snapping_pointWS = snapping_object_facesWS[i];
+               }
             }
          }
       }
