@@ -15,7 +15,6 @@ struct snapping_entity {
 };
 
 struct snapping_flags {
-   bool snap_to_surfaces : 1 = true;
    bool snap_to_corners : 1 = true;
    bool snap_to_edge_midpoints : 1 = true;
    bool snap_to_face_midpoints : 1 = true;

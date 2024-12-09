@@ -1,7 +1,6 @@
 #include "snapping.hpp"
 #include "../object_class.hpp"
 
-#include "math/intersectors.hpp"
 #include "math/quaternion_funcs.hpp"
 #include "math/vector_funcs.hpp"
 
@@ -53,17 +52,6 @@ auto get_snapped_position(const snapping_entity& snapping,
                           const active_layers active_layers,
                           const object_class_library& object_classes) noexcept -> float3
 {
-   const float3 ray_originWS =
-      snapping.positionWS + (snapping.bboxOS.min + snapping.bboxOS.max) * 0.5f;
-
-   const float3 x_dirWS = normalize(snapping.rotation * float3{1.0f, 0.0f, 0.0f});
-   const float3 y_dirWS = normalize(snapping.rotation * float3{0.0f, 1.0f, 0.0f});
-   const float3 z_dirWS = normalize(snapping.rotation * float3{0.0f, 0.0f, 1.0f});
-
-   float closest_hit = FLT_MAX;
-   float3 closest_hit_dirWS = {};
-   std::optional<uint32> closest_hit_object_index;
-
    float closest_object_distance = FLT_MAX;
    std::optional<uint32> closest_object_index;
 
@@ -76,71 +64,23 @@ auto get_snapped_position(const snapping_entity& snapping,
       const assets::msh::flat_model& model =
          *object_classes[object.class_handle].model;
 
-      // Trace rays for surface snapping.
-      if (flags.snap_to_surfaces) {
-         const quaternion object_from_world = conjugate(object.rotation);
-         const float3 position_offsetOS = object_from_world * -object.position;
+      const math::bounding_box& bboxOS = model.bounding_box;
 
-         const float3 ray_originOS =
-            object_from_world * ray_originWS + position_offsetOS;
+      const float3 positionOS =
+         conjugate(object.rotation) * (snapping.positionWS - object.position);
+      const float3 box_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
+      const float3 box_size = (bboxOS.max - bboxOS.min) * 0.5f;
 
-         const float3 snap_x_directionOS = normalize(object_from_world * x_dirWS);
-         const float3 snap_y_directionOS = normalize(object_from_world * y_dirWS);
-         const float3 snap_z_directionOS = normalize(object_from_world * z_dirWS);
+      const float3 positionAS = positionOS - box_centreOS;
+      const float3 distances = abs(positionAS) - box_size;
 
-         struct ray_data {
-            float3 directionOS;
-            float bbox_length;
-            float3 directionWS;
-         };
+      const float distance =
+         std::max(std::max(distances.x, distances.y), distances.z);
 
-         const std::array<ray_data, 6> rays = {{
-            {snap_x_directionOS, std::abs(snapping.bboxOS.max.x), x_dirWS},
-            {snap_y_directionOS, std::abs(snapping.bboxOS.max.y), y_dirWS},
-            {snap_z_directionOS, std::abs(snapping.bboxOS.max.z), z_dirWS},
-            {-snap_x_directionOS, std::abs(snapping.bboxOS.min.x), -x_dirWS},
-            {-snap_y_directionOS, std::abs(snapping.bboxOS.min.y), -y_dirWS},
-            {-snap_z_directionOS, std::abs(snapping.bboxOS.min.z), -z_dirWS},
-         }};
-
-         for (const ray_data& ray : rays) {
-            if (float bbox_hit = FLT_MAX;
-                intersect_aabb(ray_originOS, 1.0f / ray.directionOS,
-                               model.bounding_box, closest_hit, bbox_hit)) {
-               if (auto hit = model.bvh.query(ray_originOS, ray.directionOS);
-                   hit and hit->distance - ray.bbox_length < closest_hit) {
-                  closest_hit = hit->distance - ray.bbox_length;
-                  closest_hit_dirWS = ray.directionWS;
-                  closest_hit_object_index = object_index;
-               }
-            }
-         }
+      if (distance >= 0.0f and distance < closest_object_distance) {
+         closest_object_distance = distance;
+         closest_object_index = object_index;
       }
-
-      // Calculate nearest box for point snapping.
-      {
-         const math::bounding_box& bboxOS = model.bounding_box;
-
-         const float3 positionOS =
-            conjugate(object.rotation) * (snapping.positionWS - object.position);
-         const float3 box_centreOS = (bboxOS.min + bboxOS.max) * 0.5f;
-         const float3 box_size = (bboxOS.max - bboxOS.min) * 0.5f;
-
-         const float3 positionAS = positionOS - box_centreOS;
-         const float3 distances = abs(positionAS) - box_size;
-
-         const float distance =
-            std::max(std::max(distances.x, distances.y), distances.z);
-
-         if (distance >= 0.0f and distance < closest_object_distance) {
-            closest_object_distance = distance;
-            closest_object_index = object_index;
-         }
-      }
-   }
-
-   if (closest_hit <= snap_radius) {
-      closest_object_index = closest_hit_object_index;
    }
 
    if (not closest_object_index) return snapping.positionWS;
@@ -242,9 +182,6 @@ auto get_snapped_position(const snapping_entity& snapping,
       const float3 snap_directionWS = normalize(closest_pointWS - snapping_pointWS);
 
       return snapping.positionWS + snap_directionWS * closest_distance;
-   }
-   else if (closest_hit <= snap_radius) {
-      return snapping.positionWS + closest_hit_dirWS * closest_hit;
    }
    else {
       return snapping.positionWS;

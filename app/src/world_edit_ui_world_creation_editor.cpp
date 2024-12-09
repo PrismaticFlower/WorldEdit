@@ -367,7 +367,6 @@ void world_edit::ui_show_world_creation_editor() noexcept
                   object, new_position, _world.objects,
                   _entity_creation_config.snap_distance,
                   {
-                     .snap_to_surfaces = _entity_creation_config.snap_to_surfaces,
                      .snap_to_corners = _entity_creation_config.snap_to_corners,
                      .snap_to_edge_midpoints = _entity_creation_config.snap_to_edge_midpoints,
                      .snap_to_face_midpoints = _entity_creation_config.snap_to_face_midpoints,
