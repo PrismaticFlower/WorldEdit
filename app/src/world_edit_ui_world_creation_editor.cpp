@@ -4009,6 +4009,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
       traits = {
          .has_placement_rotation = false,
          .has_point_at = false,
+         .has_cursor_snapping = true,
          .has_placement_ground = true,
          .has_place_at_camera = false,
       };
