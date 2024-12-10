@@ -4220,7 +4220,7 @@ void world_edit::ui_show_world_creation_editor() noexcept
             }
 
             ImGui::TableNextColumn();
-            if (ImGui::Selectable("ON", _entity_creation_config.placement_cursor_snapping)) {
+            if (ImGui::Selectable("On", _entity_creation_config.placement_cursor_snapping)) {
                _entity_creation_config.placement_cursor_snapping = true;
             }
 
