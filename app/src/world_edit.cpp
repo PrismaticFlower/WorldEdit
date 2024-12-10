@@ -823,7 +823,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                transform(frustumWS, inverse_rotation, inverse_position);
 
             if (_object_classes[object.class_handle].model->bvh.intersects(frustumOS)) {
-               _interaction_targets.selection.add(object.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(object.id);
+               }
+               else {
+                  _interaction_targets.selection.add(object.id);
+               }
             }
          }
       }
@@ -884,7 +889,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }();
 
             if (inside) {
-               _interaction_targets.selection.add(light.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(light.id);
+               }
+               else {
+                  _interaction_targets.selection.add(light.id);
+               }
             }
          }
       }
@@ -898,8 +908,14 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             for (uint32 i = 0; i < path.nodes.size(); ++i) {
                if (intersects(frustumWS, path.nodes[i].position,
                               0.707f * (_settings.graphics.path_node_size / 0.5f))) {
-                  _interaction_targets.selection.add(
-                     world::make_path_id_node_mask(path.id, i));
+                  if (method == select_method::remove) {
+                     _interaction_targets.selection.remove(
+                        world::make_path_id_node_mask(path.id, i));
+                  }
+                  else {
+                     _interaction_targets.selection.add(
+                        world::make_path_id_node_mask(path.id, i));
+                  }
                }
             }
          }
@@ -941,7 +957,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }();
 
             if (inside) {
-               _interaction_targets.selection.add(region.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(region.id);
+               }
+               else {
+                  _interaction_targets.selection.add(region.id);
+               }
             }
          }
       }
@@ -963,7 +984,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                      point_max.y}};
 
             if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.add(sector.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(sector.id);
+               }
+               else {
+                  _interaction_targets.selection.add(sector.id);
+               }
             }
          }
       }
@@ -974,7 +1000,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
             if (intersects(frustumWS, portal.position,
                            std::max(portal.height, portal.width))) {
-               _interaction_targets.selection.add(portal.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(portal.id);
+               }
+               else {
+                  _interaction_targets.selection.add(portal.id);
+               }
             }
          }
       }
@@ -986,7 +1017,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             }
 
             if (intersects(frustumWS, hintnode.position, 2.0f)) {
-               _interaction_targets.selection.add(hintnode.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(hintnode.id);
+               }
+               else {
+                  _interaction_targets.selection.add(hintnode.id);
+               }
             }
          }
       }
@@ -1003,7 +1039,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                    barrier.position;
 
             if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.add(barrier.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(barrier.id);
+               }
+               else {
+                  _interaction_targets.selection.add(barrier.id);
+               }
             }
          }
       }
@@ -1019,7 +1060,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             bbox = bbox + hub.position;
 
             if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.add(hub.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(hub.id);
+               }
+               else {
+                  _interaction_targets.selection.add(hub.id);
+               }
             }
          }
       }
@@ -1104,7 +1150,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
             for (const std::array<int8, 3>& tri : tris) {
                if (intersects(frustumWS, cornersWS[tri[0]], cornersWS[tri[1]],
                               cornersWS[tri[2]])) {
-                  _interaction_targets.selection.add(connection.id);
+                  if (method == select_method::remove) {
+                     _interaction_targets.selection.remove(connection.id);
+                  }
+                  else {
+                     _interaction_targets.selection.add(connection.id);
+                  }
 
                   break;
                }
@@ -1124,7 +1175,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                      boundary.size.y + boundary.position.y}};
 
             if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.add(boundary.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(boundary.id);
+               }
+               else {
+                  _interaction_targets.selection.add(boundary.id);
+               }
             }
          }
       }
@@ -1137,7 +1193,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
                                     max(measurement.start, measurement.end)};
 
             if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.add(measurement.id);
+               if (method == select_method::remove) {
+                  _interaction_targets.selection.remove(measurement.id);
+               }
+               else {
+                  _interaction_targets.selection.add(measurement.id);
+               }
             }
          }
       }
@@ -1149,379 +1210,12 @@ void world_edit::finish_entity_select(const select_method method) noexcept
 
       if (not _interaction_targets.hovered_entity) return;
 
-      _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
-   }
-}
-
-void world_edit::start_entity_deselect() noexcept
-{
-   start_entity_select();
-}
-
-void world_edit::finish_entity_deselect() noexcept
-{
-   _selecting_entity = false;
-
-   const float2 current_cursor_position =
-      std::bit_cast<float2>(ImGui::GetMousePos());
-   const float2 rect_min = min(current_cursor_position, _select_start_position);
-   const float2 rect_max = max(current_cursor_position, _select_start_position);
-   const bool drag_select = distance(rect_max, rect_min) >= (8.0f * _display_scale);
-
-   if (drag_select) {
-      const float2 window_size =
-         std::bit_cast<float2>(ImGui::GetMainViewport()->Size);
-
-      const float2 start_ndc_pos =
-         ((rect_min + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
-      const float2 end_ndc_pos =
-         ((rect_max + 0.5f) / window_size * 2.0f - 1.0f) * float2{1.0f, -1.0f};
-
-      const float2 min_ndc_pos = min(start_ndc_pos, end_ndc_pos);
-      const float2 max_ndc_pos = max(start_ndc_pos, end_ndc_pos);
-
-      using namespace graphics;
-
-      frustum frustumWS{_camera.inv_view_projection_matrix(),
-                        {min_ndc_pos.x, min_ndc_pos.y, 0.0f},
-                        {max_ndc_pos.x, max_ndc_pos.y, 1.0f}};
-
-      if (_world_hit_mask.objects) {
-         for (auto& object : _world.objects) {
-            if (not _world_layers_hit_mask[object.layer] or object.hidden) {
-               continue;
-            }
-
-            const quaternion inverse_rotation = conjugate(object.rotation);
-            const float3 inverse_position = inverse_rotation * -object.position;
-
-            const frustum frustumOS =
-               transform(frustumWS, inverse_rotation, inverse_position);
-
-            if (_object_classes[object.class_handle].model->bvh.intersects(frustumOS)) {
-               _interaction_targets.selection.remove(object.id);
-            }
-         }
+      if (method == select_method::remove) {
+         _interaction_targets.selection.remove(*_interaction_targets.hovered_entity);
       }
-
-      if (_world_hit_mask.lights) {
-         for (auto& light : _world.lights) {
-            if (not _world_layers_hit_mask[light.layer] or light.hidden) {
-               continue;
-            }
-
-            const bool inside = [&] {
-               switch (light.light_type) {
-               case world::light_type::directional:
-                  return intersects(frustumWS, light.position, 2.8284f);
-               case world::light_type::point:
-                  return intersects(frustumWS, light.position, light.range);
-               case world::light_type::spot: {
-                  const float outer_cone_radius =
-                     light.range * std::tan(light.outer_cone_angle * 0.5f);
-                  const float inner_cone_radius =
-                     light.range * std::tan(light.inner_cone_angle * 0.5f);
-                  const float radius = std::min(outer_cone_radius, inner_cone_radius);
-
-                  math::bounding_box bbox{.min = {-radius, -radius, 0.0f},
-                                          .max = {radius, radius, light.range}};
-
-                  bbox = light.rotation * bbox + light.position;
-
-                  return intersects(frustumWS, bbox);
-               }
-               case world::light_type::directional_region_box: {
-                  math::bounding_box bbox{.min = {-light.region_size},
-                                          .max = {light.region_size}};
-
-                  bbox = light.region_rotation * bbox + light.position;
-
-                  return intersects(frustumWS, bbox);
-               }
-               case world::light_type::directional_region_sphere:
-                  return intersects(frustumWS, light.position,
-                                    length(light.region_size));
-               case world::light_type::directional_region_cylinder: {
-                  const float cylinder_length =
-                     length(float2{light.region_size.x, light.region_size.z});
-
-                  math::bounding_box bbox{.min = {-cylinder_length,
-                                                  -light.region_size.y, -cylinder_length},
-                                          .max = {cylinder_length,
-                                                  light.region_size.y, cylinder_length}};
-
-                  bbox = light.region_rotation * bbox + light.position;
-
-                  return intersects(frustumWS, bbox);
-               }
-               default:
-                  return false;
-               }
-            }();
-
-            if (inside) {
-               _interaction_targets.selection.remove(light.id);
-            }
-         }
+      else {
+         _interaction_targets.selection.add(*_interaction_targets.hovered_entity);
       }
-
-      if (_world_hit_mask.paths) {
-         for (auto& path : _world.paths) {
-            if (not _world_layers_hit_mask[path.layer] or path.hidden) {
-               continue;
-            }
-
-            for (uint32 i = 0; i < path.nodes.size(); ++i) {
-               if (intersects(frustumWS, path.nodes[i].position,
-                              0.707f * (_settings.graphics.path_node_size / 0.5f))) {
-                  _interaction_targets.selection.remove(
-                     world::make_path_id_node_mask(path.id, i));
-               }
-            }
-         }
-      }
-
-      if (_world_hit_mask.regions) {
-         for (auto& region : _world.regions) {
-            if (not _world_layers_hit_mask[region.layer] or region.hidden) {
-               continue;
-            }
-
-            const bool inside = [&] {
-               switch (region.shape) {
-               case world::region_shape::box: {
-                  math::bounding_box bbox{.min = {-region.size}, .max = {region.size}};
-
-                  bbox = region.rotation * bbox + region.position;
-
-                  return intersects(frustumWS, bbox);
-               }
-               case world::region_shape::sphere:
-                  return intersects(frustumWS, region.position, length(region.size));
-               case world::region_shape::cylinder: {
-                  const float cylinder_length =
-                     length(float2{region.size.x, region.size.z});
-
-                  math::bounding_box bbox{.min = {-cylinder_length, -region.size.y,
-                                                  -cylinder_length},
-                                          .max = {cylinder_length, region.size.y,
-                                                  cylinder_length}};
-
-                  bbox = region.rotation * bbox + region.position;
-
-                  return intersects(frustumWS, bbox);
-               }
-               default:
-                  return false;
-               }
-            }();
-
-            if (inside) {
-               _interaction_targets.selection.remove(region.id);
-            }
-         }
-      }
-
-      if (_world_hit_mask.sectors) {
-         for (auto& sector : _world.sectors) {
-            if (sector.hidden) continue;
-
-            float2 point_min{FLT_MAX, FLT_MAX};
-            float2 point_max{-FLT_MAX, -FLT_MAX};
-
-            for (auto& point : sector.points) {
-               point_min = min(point, point_min);
-               point_max = max(point, point_max);
-            }
-
-            math::bounding_box bbox{{point_min.x, sector.base, point_min.y},
-                                    {point_max.x, sector.base + sector.height,
-                                     point_max.y}};
-
-            if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.remove(sector.id);
-            }
-         }
-      }
-
-      if (_world_hit_mask.portals) {
-         for (auto& portal : _world.portals) {
-            if (portal.hidden) continue;
-
-            if (intersects(frustumWS, portal.position,
-                           std::max(portal.height, portal.width))) {
-               _interaction_targets.selection.remove(portal.id);
-            }
-         }
-      }
-
-      if (_world_hit_mask.hintnodes) {
-         for (auto& hintnode : _world.hintnodes) {
-            if (not _world_layers_hit_mask[hintnode.layer] or hintnode.hidden) {
-               continue;
-            }
-
-            if (intersects(frustumWS, hintnode.position, 2.0f)) {
-               _interaction_targets.selection.remove(hintnode.id);
-            }
-         }
-      }
-
-      if (_world_hit_mask.barriers) {
-         for (auto& barrier : _world.barriers) {
-            if (barrier.hidden) continue;
-
-            math::bounding_box bbox{{-barrier.size.x, -_settings.graphics.barrier_height,
-                                     -barrier.size.y},
-                                    {barrier.size.x, _settings.graphics.barrier_height,
-                                     barrier.size.y}};
-            bbox = make_quat_from_euler({0.0f, barrier.rotation_angle, 0.0f}) * bbox +
-                   barrier.position;
-
-            if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.remove(barrier.id);
-            }
-         }
-      }
-
-      if (_world_hit_mask.planning_hubs) {
-         for (auto& hub : _world.planning_hubs) {
-            if (hub.hidden) continue;
-
-            math::bounding_box bbox{{-hub.radius, -_settings.graphics.planning_hub_height,
-                                     -hub.radius},
-                                    {hub.radius, _settings.graphics.planning_hub_height,
-                                     hub.radius}};
-            bbox = bbox + hub.position;
-
-            if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.remove(hub.id);
-            }
-         }
-      }
-
-      if (_world_hit_mask.planning_connections) {
-         for (auto& connection : _world.planning_connections) {
-            if (connection.hidden) continue;
-
-            const world::planning_hub& start =
-               _world.planning_hubs[connection.start_hub_index];
-            const world::planning_hub& end =
-               _world.planning_hubs[connection.end_hub_index];
-
-            const math::bounding_box start_bbox{
-               .min = float3{-start.radius, -_settings.graphics.planning_connection_height,
-                             -start.radius} +
-                      start.position,
-               .max = float3{start.radius, _settings.graphics.planning_connection_height,
-                             start.radius} +
-                      start.position};
-            const math::bounding_box end_bbox{
-               .min = float3{-end.radius, -_settings.graphics.planning_connection_height,
-                             -end.radius} +
-                      end.position,
-               .max = float3{end.radius, _settings.graphics.planning_connection_height,
-                             end.radius} +
-                      end.position};
-
-            const math::bounding_box bbox = math::combine(start_bbox, end_bbox);
-
-            if (not intersects(frustumWS, bbox)) continue;
-
-            const float3 normal =
-               normalize(float3{-(start.position.z - end.position.z), 0.0f,
-                                start.position.x - end.position.x});
-
-            const std::array<float3, 4> quadWS = {start.position +
-                                                     normal * start.radius,
-                                                  start.position -
-                                                     normal * start.radius,
-                                                  end.position + normal * end.radius,
-                                                  end.position - normal * end.radius};
-
-            const float3 height_offset = {0.0f, _settings.graphics.planning_connection_height,
-                                          0.0f};
-
-            const std::array<float3, 8> cornersWS = {quadWS[0] + height_offset,
-                                                     quadWS[1] + height_offset,
-                                                     quadWS[2] + height_offset,
-                                                     quadWS[3] + height_offset,
-                                                     quadWS[0] - height_offset,
-                                                     quadWS[1] - height_offset,
-                                                     quadWS[2] - height_offset,
-                                                     quadWS[3] - height_offset};
-
-            constexpr static std::array<std::array<int8, 3>, 12> tris = {
-               // Top
-               3, 2, 0, //
-               3, 0, 1, //
-
-               // Bottom
-               4, 6, 7, //
-               5, 4, 7, //
-
-               // Side 0
-               0, 6, 4, //
-               0, 2, 6, //
-
-               // Side 1
-               1, 5, 7, //
-               7, 3, 1, //
-
-               // Back
-               4, 1, 0, //
-               5, 1, 4, //
-
-               // Front
-               2, 3, 6, //
-               6, 3, 7  //
-            };
-
-            for (const std::array<int8, 3>& tri : tris) {
-               if (intersects(frustumWS, cornersWS[tri[0]], cornersWS[tri[1]],
-                              cornersWS[tri[2]])) {
-                  _interaction_targets.selection.remove(connection.id);
-
-                  break;
-               }
-            }
-         }
-      }
-
-      if (_world_hit_mask.boundaries) {
-         for (auto& boundary : _world.boundaries) {
-            if (boundary.hidden) continue;
-
-            math::bounding_box bbox{{-boundary.size.x + boundary.position.x,
-                                     -_settings.graphics.boundary_height,
-                                     -boundary.size.y + boundary.position.y},
-                                    {boundary.size.x + boundary.position.x,
-                                     _settings.graphics.boundary_height,
-                                     boundary.size.y + boundary.position.y}};
-
-            if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.remove(boundary.id);
-            }
-         }
-      }
-
-      if (_world_hit_mask.measurements) {
-         for (auto& measurement : _world.measurements) {
-            if (measurement.hidden) continue;
-
-            math::bounding_box bbox{min(measurement.start, measurement.end),
-                                    max(measurement.start, measurement.end)};
-
-            if (intersects(frustumWS, bbox)) {
-               _interaction_targets.selection.remove(measurement.id);
-            }
-         }
-      }
-   }
-   else {
-      if (not _interaction_targets.hovered_entity) return;
-
-      _interaction_targets.selection.remove(*_interaction_targets.hovered_entity);
    }
 }
 

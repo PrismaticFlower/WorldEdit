@@ -52,7 +52,7 @@ enum class mouse_cursor {
    COUNT
 };
 
-enum class select_method : uint8 { replace, add };
+enum class select_method : uint8 { replace, add, remove };
 
 enum class placement_mode : uint8 { manual, cursor };
 
@@ -332,10 +332,6 @@ private:
    void start_entity_select() noexcept;
 
    void finish_entity_select(const select_method method) noexcept;
-
-   void start_entity_deselect() noexcept;
-
-   void finish_entity_deselect() noexcept;
 
    void place_creation_entity() noexcept;
 

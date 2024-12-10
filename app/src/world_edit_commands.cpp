@@ -121,10 +121,10 @@ void world_edit::initialize_commands() noexcept
    });
    _commands.add("selection.remove"s, [this]() {
       if (not _selecting_entity) {
-         start_entity_deselect();
+         start_entity_select();
       }
       else {
-         finish_entity_deselect();
+         finish_entity_select(select_method::remove);
       }
    });
    _commands.add("selection.clear"s,
