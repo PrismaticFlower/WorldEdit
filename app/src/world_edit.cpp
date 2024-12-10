@@ -163,8 +163,6 @@ void world_edit::update()
          catch (graphics::gpu::exception& e) {
             handle_gpu_error(e);
          }
-
-         printf("Window Resized\n");
       }
    }
 
